@@ -6,8 +6,8 @@
         </record>
 
         <record id="base.user_admin" model="res.users">
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" eval="False"/>
             <field name="sc_post_id" eval="False"/>
             <field name="lang">zh_CN</field>
@@ -27,11 +27,11 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_project"/>
             <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_chairman"/>
-            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_business_admin')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
         </record>
         <record id="user_sc_baosheng_yangdesheng" model="res.users">
             <field name="name">杨德胜</field>
@@ -41,8 +41,8 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_engineering"/>
             <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
         </record>
@@ -54,11 +54,11 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_business"/>
             <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_general_manager"/>
-            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_business_admin'))]"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
         </record>
         <record id="user_sc_baosheng_xudan" model="res.users">
             <field name="name">徐丹</field>
@@ -68,8 +68,8 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_admin"/>
             <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
         </record>
@@ -81,8 +81,8 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_engineering"/>
             <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
         </record>
@@ -94,11 +94,11 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_finance"/>
             <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_finance_manager"/>
-            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_business_admin')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
+            <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
         </record>
         <record id="user_sc_baosheng_lilinxu" model="res.users">
             <field name="name">李林旭</field>
@@ -108,8 +108,8 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_admin"/>
             <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
         </record>
@@ -121,8 +121,8 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_finance"/>
             <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_finance_assistant"/>
             <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
@@ -135,8 +135,8 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_business"/>
             <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_finance_assistant"/>
             <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
@@ -149,8 +149,8 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_finance"/>
             <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
         </record>
@@ -162,8 +162,8 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_business"/>
             <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
         </record>
@@ -175,8 +175,8 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_business"/>
             <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_project_lead"/>
             <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
@@ -189,8 +189,8 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_business"/>
             <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
         </record>
@@ -202,8 +202,8 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_project"/>
             <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_temp_project_lead"/>
             <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
@@ -216,8 +216,8 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_cost"/>
             <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_general_manager"/>
             <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
@@ -230,8 +230,8 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" eval="False"/>
             <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_finance_manager"/>
             <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_business_admin'))]"/>
@@ -244,8 +244,8 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_business"/>
             <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_project_lead"/>
             <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
@@ -258,8 +258,8 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_finance"/>
             <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_finance_assistant"/>
             <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
@@ -272,8 +272,8 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_project"/>
             <field name="sc_post_id" ref="smart_construction_custom.post_sc_baosheng_project_lead"/>
             <field name="groups_id" eval="[(4, ref('base.group_user')), (4, ref('smart_construction_custom.group_sc_role_owner'))]"/>
@@ -287,8 +287,8 @@
             <field name="share" eval="False"/>
             <field name="lang">zh_CN</field>
             <field name="tz">Asia/Shanghai</field>
-            <field name="company_id" ref="smart_construction_custom.company_sc_baosheng"/>
-            <field name="company_ids" eval="[(6, 0, [ref('smart_construction_custom.company_sc_baosheng')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="sc_department_id" ref="smart_construction_custom.department_sc_baosheng_admin"/>
             <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
         </record>

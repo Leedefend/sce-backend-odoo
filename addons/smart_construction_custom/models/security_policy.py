@@ -76,12 +76,12 @@ class ScSecurityPolicy(models.TransientModel):
         "通用角色": ("smart_construction_custom.group_sc_role_owner",),
     }
     _CUSTOMER_USER_SYSTEM_ROLES = {
-        "wutao": ("通用角色",),
+        "wutao": ("管理员角色", "通用角色"),
         "yangdesheng": ("通用角色",),
-        "duanyijun": ("管理员角色",),
+        "duanyijun": ("通用角色",),
         "xudan": ("通用角色",),
         "chentianyou": ("通用角色",),
-        "wennan": ("管理员角色", "通用角色"),
+        "wennan": ("通用角色",),
         "lilinxu": ("通用角色",),
         "yinjiamei": ("通用角色",),
         "admin": ("管理员角色", "通用角色"),
@@ -221,17 +221,23 @@ class ScSecurityPolicy(models.TransientModel):
     def bootstrap_customer_company_departments(self):
         Company = self.env["res.company"].sudo()
         Department = self.env["hr.department"].sudo()
+        Currency = self.env["res.currency"].sudo().with_context(active_test=False)
+
+        currency = self.env.ref("base.CNY", raise_if_not_found=False)
+        if not currency:
+            currency = Currency.search([("name", "=", "CNY")], limit=1)
+        if currency and not currency.active:
+            currency.write({"active": True})
+
+        company_values = {"sc_is_active": True}
+        if currency:
+            company_values["currency_id"] = currency.id
 
         company = Company.search([("name", "=", self._CUSTOMER_COMPANY_NAME)], limit=1)
         if company:
-            company.write({"sc_is_active": True})
+            company.write(company_values)
         else:
-            company = Company.create(
-                {
-                    "name": self._CUSTOMER_COMPANY_NAME,
-                    "sc_is_active": True,
-                }
-            )
+            company = Company.create({"name": self._CUSTOMER_COMPANY_NAME, **company_values})
 
         created_departments = []
         updated_departments = []
@@ -373,6 +379,10 @@ class ScSecurityPolicy(models.TransientModel):
         updated_users = []
         unresolved_users = []
         role_mapping = self.customer_system_role_group_xmlids()
+        admin_stale_xmlids = {
+            *role_mapping.get("管理员角色", []),
+            "smart_construction_core.group_sc_business_full",
+        }
 
         for login, role_labels in self._CUSTOMER_USER_SYSTEM_ROLES.items():
             user = Users.search([("login", "=", login)], limit=1)
@@ -391,6 +401,11 @@ class ScSecurityPolicy(models.TransientModel):
             for group_id in target_group_ids:
                 if group_id not in user.groups_id.ids:
                     commands.append((4, group_id))
+            if "管理员角色" not in role_labels:
+                for xmlid in admin_stale_xmlids:
+                    group = self.env.ref(xmlid, raise_if_not_found=False)
+                    if group and group.id in user.groups_id.ids:
+                        commands.append((3, group.id))
             if commands:
                 user.write({"groups_id": commands})
 

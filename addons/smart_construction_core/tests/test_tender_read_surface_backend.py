@@ -37,10 +37,12 @@ class TestTenderReadSurfaceBackend(TransactionCase):
             "executive",
         )
         cls.project = cls.env["project.project"].create({"name": "Tender Read Surface Project"})
+        cls.owner = cls.env["res.partner"].create({"name": "Tender Read Surface Owner"})
         cls.tender = cls.env["tender.bid"].with_user(cls.pm_user).create(
             {
                 "project_id": cls.project.id,
                 "tender_name": "Tender Read Surface Bid",
+                "owner_id": cls.owner.id,
             }
         )
 
@@ -100,7 +102,7 @@ class TestTenderReadSurfaceBackend(TransactionCase):
         self.assertFalse(clickable)
         self.assertTrue(readonly)
 
-    def test_execution_forms_keep_clickable_statusbar(self):
+    def test_execution_forms_use_object_buttons_not_clickable_statusbar(self):
         for user in (self.pm_user, self.executive_user):
             view = (
                 self.env["tender.bid"]
@@ -114,6 +116,49 @@ class TestTenderReadSurfaceBackend(TransactionCase):
             arch = etree.fromstring(view["arch"].encode())
             clickable = arch.xpath("//header/field[@name='state' and contains(@options, \"clickable\")]")
             readonly = arch.xpath("//header/field[@name='state' and @readonly='1']")
+            button_names = {
+                button.get("name")
+                for button in arch.xpath("//header/button[@type='object']")
+            }
 
-            self.assertTrue(clickable)
-            self.assertFalse(readonly)
+            self.assertFalse(clickable)
+            self.assertTrue(readonly)
+            self.assertTrue(
+                {
+                    "action_to_prepare",
+                    "action_to_estimating",
+                    "action_to_submitted",
+                    "action_to_waiting",
+                    "action_mark_won",
+                    "action_mark_lost",
+                }.issubset(button_names)
+            )
+
+    def test_finance_form_does_not_expose_tender_workflow_buttons(self):
+        view = (
+            self.env["tender.bid"]
+            .with_user(self.finance_user)
+            .get_view(
+                self.env.ref("smart_construction_core.view_tender_bid_form").id,
+                view_type="form",
+            )
+        )
+
+        arch = etree.fromstring(view["arch"].encode())
+        buttons = arch.xpath("//header/button[@type='object']")
+
+        self.assertFalse(buttons)
+
+    def test_mark_won_uses_business_method_and_materializes_contract(self):
+        tender = self.tender.with_user(self.pm_user)
+
+        tender.action_to_estimating()
+        tender.action_to_submitted()
+        tender.action_to_waiting()
+        tender.action_mark_won()
+
+        self.assertEqual(tender.state, "won")
+        self.assertTrue(tender.contract_id)
+        self.assertEqual(tender.contract_id.type, "out")
+        self.assertEqual(tender.contract_id.project_id, self.project)
+        self.assertEqual(tender.contract_id.partner_id, self.owner)

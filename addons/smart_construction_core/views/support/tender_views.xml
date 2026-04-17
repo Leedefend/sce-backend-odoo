@@ -25,10 +25,46 @@
         <field name="arch" type="xml">
             <form string="投标记录">
                 <header>
-                    <!-- 执行角色：可点击状态条 -->
+                    <button name="action_to_prepare"
+                            type="object"
+                            string="退回准备"
+                            class="btn-secondary"
+                            invisible="state not in ['estimating', 'submitted', 'waiting', 'lost']"
+                            groups="smart_construction_core.group_sc_cap_project_user,smart_construction_core.group_sc_cap_project_manager"/>
+                    <button name="action_to_estimating"
+                            type="object"
+                            string="进入造价测算"
+                            class="btn-primary"
+                            invisible="state != 'prepare'"
+                            groups="smart_construction_core.group_sc_cap_project_user,smart_construction_core.group_sc_cap_project_manager"/>
+                    <button name="action_to_submitted"
+                            type="object"
+                            string="提交投标"
+                            class="btn-primary"
+                            invisible="state != 'estimating'"
+                            groups="smart_construction_core.group_sc_cap_project_user,smart_construction_core.group_sc_cap_project_manager"/>
+                    <button name="action_to_waiting"
+                            type="object"
+                            string="等待开标"
+                            class="btn-primary"
+                            invisible="state != 'submitted'"
+                            groups="smart_construction_core.group_sc_cap_project_user,smart_construction_core.group_sc_cap_project_manager"/>
+                    <button name="action_mark_won"
+                            type="object"
+                            string="标记中标"
+                            class="oe_highlight"
+                            invisible="state != 'waiting'"
+                            groups="smart_construction_core.group_sc_cap_project_user,smart_construction_core.group_sc_cap_project_manager"/>
+                    <button name="action_mark_lost"
+                            type="object"
+                            string="标记未中标"
+                            class="btn-secondary"
+                            invisible="state != 'waiting'"
+                            groups="smart_construction_core.group_sc_cap_project_user,smart_construction_core.group_sc_cap_project_manager"/>
+                    <!-- 执行角色：通过 object buttons 办理，状态条只展示当前事实。 -->
                     <field name="state" widget="statusbar"
                            groups="smart_construction_core.group_sc_cap_project_user,smart_construction_core.group_sc_cap_project_manager"
-                           options="{'clickable': '1'}"
+                           readonly="1"
                            statusbar_visible="prepare,estimating,submitted,waiting,won,lost"
                            statusbar_colors="{'won':'success','lost':'danger','waiting':'warning','estimating':'info'}"/>
                     <!-- 只读查询角色：只展示状态，不允许状态流转 -->

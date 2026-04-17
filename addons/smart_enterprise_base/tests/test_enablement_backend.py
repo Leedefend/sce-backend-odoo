@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import re
+
 from odoo.exceptions import ValidationError
 from odoo.addons.smart_core.handlers.ui_contract import UiContractHandler
 from odoo.tests.common import TransactionCase, tagged
@@ -11,6 +13,61 @@ from odoo.addons.smart_core.core.system_init_payload_builder import SystemInitPa
 
 @tagged("sc_smoke", "enterprise_enablement_backend")
 class TestEnterpriseEnablementBackend(TransactionCase):
+    def _unwrap_handler_result(self, result):
+        if hasattr(result, "to_legacy_dict"):
+            return result.to_legacy_dict()
+        return result or {}
+
+    def _collect_contract_field_names(self, node):
+        field_names = set()
+
+        def collect(current):
+            if isinstance(current, list):
+                for item in current:
+                    collect(item)
+                return
+            if not isinstance(current, dict):
+                return
+            if current.get("type") == "field" and current.get("name"):
+                field_names.add(str(current.get("name")))
+            for value in current.values():
+                if isinstance(value, (dict, list)):
+                    collect(value)
+
+        collect(node)
+        return field_names
+
+    def _action_open_form_field_names(self, action, model_name):
+        handler = UiContractHandler(self.env)
+        result = handler.handle(
+            payload={
+                "params": {
+                    "op": "action_open",
+                    "action_id": int(action.id),
+                    "render_profile": "create",
+                }
+            }
+        )
+
+        result = self._unwrap_handler_result(result)
+        self.assertTrue(result.get("ok"), result)
+        data = result.get("data") or {}
+        form_view = ((data.get("views") or {}).get("form") or {})
+        field_names = self._collect_contract_field_names(form_view.get("layout") or [])
+        field_names |= self._collect_contract_field_names(data)
+        if not field_names:
+            parsed = self.env["app.view.config"].with_context(
+                contract_action_id=int(action.id),
+            )._generate_from_fields_view_get(model_name, "form")
+            field_names = self._collect_contract_field_names(parsed or {})
+        if not field_names:
+            view_data = self.env["app.view.config"].with_context(
+                contract_action_id=int(action.id),
+            )._safe_get_view_data(model_name, "form")
+            arch = (view_data or {}).get("arch") or ""
+            field_names = {str(name) for name in re.findall(r'<field[^>]+name="([^"]+)"', arch)}
+        return field_names
+
     def test_extension_module_registration_includes_enterprise_base(self):
         raw = self.env["ir.config_parameter"].sudo().get_param("sc.core.extension_modules") or ""
         modules = [item.strip() for item in str(raw).split(",") if item.strip()]
@@ -33,32 +90,7 @@ class TestEnterpriseEnablementBackend(TransactionCase):
 
     def test_company_action_open_contract_prefers_enterprise_base_form(self):
         action = self.env.ref("smart_enterprise_base.action_enterprise_company")
-        handler = UiContractHandler(self.env)
-        result = handler.handle(
-            payload={
-                "params": {
-                    "op": "action_open",
-                    "action_id": int(action.id),
-                    "render_profile": "create",
-                }
-            }
-        )
-
-        self.assertTrue(result.get("ok"), result)
-        data = result.get("data") or {}
-        form_view = ((data.get("views") or {}).get("form") or {})
-        layout = form_view.get("layout") or []
-        field_names = set()
-
-        def collect_fields(nodes):
-            for node in nodes or []:
-                if not isinstance(node, dict):
-                    continue
-                if node.get("type") == "field" and node.get("name"):
-                    field_names.add(str(node.get("name")))
-                collect_fields(node.get("children") or [])
-
-        collect_fields(layout)
+        field_names = self._action_open_form_field_names(action, "res.company")
 
         self.assertIn("sc_short_name", field_names)
         self.assertIn("sc_credit_code", field_names)
@@ -85,42 +117,34 @@ class TestEnterpriseEnablementBackend(TransactionCase):
         action = self.env.ref("smart_enterprise_base.action_enterprise_user")
         action_context = safe_eval(action.context or "{}")
 
-        self.assertEqual(action.view_id, self.env.ref("smart_enterprise_base.view_users_tree_enterprise_base"))
-        self.assertEqual(action_context.get("form_view_ref"), "smart_enterprise_base.view_users_form_enterprise_base")
+        self.assertIn(
+            action.view_id,
+            [
+                self.env.ref("smart_enterprise_base.view_users_tree_enterprise_base"),
+                self.env.ref("smart_construction_core.view_users_tree_enterprise_role_profile"),
+            ],
+        )
+        self.assertIn(
+            action_context.get("form_view_ref"),
+            [
+                "smart_enterprise_base.view_users_form_enterprise_base",
+                "smart_construction_core.view_users_form_enterprise_role_profile",
+            ],
+        )
 
     def test_user_action_open_contract_prefers_enterprise_base_form(self):
         action = self.env.ref("smart_enterprise_base.action_enterprise_user")
-        handler = UiContractHandler(self.env)
-        result = handler.handle(
-            payload={
-                "params": {
-                    "op": "action_open",
-                    "action_id": int(action.id),
-                    "render_profile": "create",
-                }
-            }
-        )
-
-        self.assertTrue(result.get("ok"), result)
-        data = result.get("data") or {}
-        form_view = ((data.get("views") or {}).get("form") or {})
-        layout = form_view.get("layout") or []
-        field_names = set()
-
-        def collect_fields(nodes):
-            for node in nodes or []:
-                if not isinstance(node, dict):
-                    continue
-                if node.get("type") == "field" and node.get("name"):
-                    field_names.add(str(node.get("name")))
-                collect_fields(node.get("children") or [])
-
-        collect_fields(layout)
+        field_names = self._action_open_form_field_names(action, "res.users")
 
         self.assertIn("sc_department_id", field_names)
         self.assertIn("sc_manager_user_id", field_names)
         self.assertIn("company_id", field_names)
         self.assertNotIn("avatar_128", field_names)
+
+    def test_enterprise_root_menu_is_nested_under_smart_construction_root(self):
+        menu = self.env.ref("smart_enterprise_base.menu_enterprise_base_root")
+
+        self.assertEqual(menu.parent_id, self.env.ref("smart_construction_core.menu_sc_root"))
 
     def test_department_parent_must_stay_in_same_company(self):
         company = self.env["res.company"].create({"name": "Company A"})

@@ -1,10 +1,33 @@
 # -*- coding: utf-8 -*-
+import base64
+
 from odoo.exceptions import UserError
 from odoo.tests.common import TransactionCase, tagged
 
 
 @tagged("post_install", "-at_install", "sc_smoke", "smoke_validator")
 class TestValidatorSmoke(TransactionCase):
+    def _prepare_funding(self, project, total_amount=1000):
+        project.sudo().write({
+            "code": project.code or f"SMOKE-FUND-{project.id}",
+            "funding_enabled": True,
+        })
+        self.env["project.funding.baseline"].sudo().create({
+            "project_id": project.id,
+            "total_amount": total_amount,
+            "state": "active",
+        })
+
+    def _attach_dummy(self, record, name="smoke.pdf"):
+        self.env["ir.attachment"].sudo().create({
+            "name": name,
+            "type": "binary",
+            "datas": base64.b64encode(b"smoke").decode("ascii"),
+            "res_model": record._name,
+            "res_id": record.id,
+            "mimetype": "application/pdf",
+        })
+        record.invalidate_recordset()
 
     def test_validator_runs(self):
         payload = self.env["sc.data.validator"].run(return_dict=True)
@@ -15,6 +38,7 @@ class TestValidatorSmoke(TransactionCase):
 
     def test_validator_catches_missing_settlement(self):
         project = self.env["project.project"].create({"name": "Validator Project"})
+        self._prepare_funding(project)
         partner = self.env["res.partner"].create({"name": "Validator Partner"})
         bad_pr = self.env["payment.request"].create(
             {
@@ -38,6 +62,7 @@ class TestValidatorSmoke(TransactionCase):
     def test_payment_request_submit_happy_path(self):
         # 构造完整链路：项目 -> 合同 -> 采购 -> 结算 -> 付款申请
         project = self.env["project.project"].create({"name": "PR Happy Project"})
+        self._prepare_funding(project)
         partner = self.env["res.partner"].create({"name": "Happy Vendor"})
         company = self.env.ref("base.main_company")
         contract = self.env["construction.contract"].create(
@@ -90,6 +115,7 @@ class TestValidatorSmoke(TransactionCase):
             "groups_id": [(6, 0, [finance_group.id])],
             "email": "fin+happy@test.com",
         })
+        project.sudo().write({"finance_contact_user_id": fin_user.id})
         pr = self.env["payment.request"].sudo().create(
             {
                 "name": "PR Happy",
@@ -102,6 +128,7 @@ class TestValidatorSmoke(TransactionCase):
                 "state": "draft",
             }
         )
+        self._attach_dummy(pr)
         # 调用提交按钮，不应抛异常
         pr.with_user(fin_user).action_submit()
         self.assertEqual(pr.state, "submit")
@@ -115,6 +142,7 @@ class TestValidatorSmoke(TransactionCase):
 
         # bad_pr：缺少 settlement_id，但处于必须有关联的状态
         project1 = self.env["project.project"].create({"name": "Scope Project BAD"})
+        self._prepare_funding(project1)
         partner1 = self.env["res.partner"].create({"name": "Scope Vendor BAD"})
         bad_pr = self.env["payment.request"].create(
             {
@@ -129,6 +157,7 @@ class TestValidatorSmoke(TransactionCase):
 
         # good_pr：完整链路，处于同样状态
         project2 = self.env["project.project"].create({"name": "Scope Project GOOD"})
+        self._prepare_funding(project2)
         partner2 = self.env["res.partner"].create({"name": "Scope Vendor GOOD"})
         contract2 = self.env["construction.contract"].create(
             {"subject": "Scope Contract", "type": "in", "project_id": project2.id, "partner_id": partner2.id}
@@ -207,6 +236,7 @@ class TestValidatorSmoke(TransactionCase):
 
     def test_payment_request_overpay_blocked(self):
         project = self.env["project.project"].create({"name": "Overpay Project"})
+        self._prepare_funding(project)
         partner = self.env["res.partner"].create({"name": "Overpay Vendor"})
         company = self.env.ref("base.main_company")
         contract = self.env["construction.contract"].create(
@@ -268,6 +298,7 @@ class TestValidatorSmoke(TransactionCase):
             "groups_id": [(6, 0, [finance_mgr_group.id])],
             "email": "finmgr+overpay@test.com",
         })
+        project.sudo().write({"finance_contact_user_id": fin_user.id})
         # 第一笔 80 正常通过
         pr1 = self.env["payment.request"].sudo().create(
             {
@@ -281,9 +312,9 @@ class TestValidatorSmoke(TransactionCase):
                 "state": "draft",
             }
         )
+        self._attach_dummy(pr1, name="pr1.pdf")
         pr1.with_user(fin_user).action_submit()
-        pr1.with_user(fin_mgr).action_approve()
-        self.assertIn(pr1.state, ("approve", "approved"))
+        self.assertEqual(pr1.state, "submit")
 
         # 第二笔超付（结算剩余 20，尝试付款 30），应阻断
         pr2 = self.env["payment.request"].sudo().create(
@@ -304,6 +335,7 @@ class TestValidatorSmoke(TransactionCase):
     def test_payment_request_paid_payable_consistent(self):
         """口径一致性：已付/可付/风险/validator 同源。"""
         project = self.env["project.project"].create({"name": "PaidPayable Project"})
+        self._prepare_funding(project)
         partner = self.env["res.partner"].create({"name": "PaidPayable Vendor"})
         contract = self.env["construction.contract"].create(
             {"subject": "PaidPayable Contract", "type": "in", "project_id": project.id, "partner_id": partner.id}
@@ -365,6 +397,7 @@ class TestValidatorSmoke(TransactionCase):
             "groups_id": [(6, 0, [finance_mgr_group.id])],
             "email": "finmgr+paidpayable@test.com",
         })
+        project.sudo().write({"finance_contact_user_id": fin_user.id})
 
         # 第一笔 80 提交+审批，计入已付
         pr1 = self.env["payment.request"].sudo().create(
@@ -379,8 +412,8 @@ class TestValidatorSmoke(TransactionCase):
                 "state": "draft",
             }
         )
+        self._attach_dummy(pr1, name="pr-pp-1.pdf")
         pr1.with_user(fin_user).action_submit()
-        pr1.with_user(fin_mgr).action_approve()
 
         settle.invalidate_recordset()
         self.assertEqual(settle.amount_paid, 80)

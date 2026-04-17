@@ -204,7 +204,10 @@
                         <field name="start_date"/>
                         <field name="end_date"/>
                     </group>
-                    <group col="4" string="旧系统导入标识" data-sc-anchor="legacy-project-import">
+                    <group col="4"
+                           string="旧系统导入标识"
+                           data-sc-anchor="legacy-project-import"
+                           groups="base.group_system,smart_construction_core.group_sc_super_admin">
                         <field name="legacy_project_id"/>
                         <field name="legacy_parent_id"/>
                         <field name="other_system_id"/>
@@ -218,7 +221,10 @@
                         <field name="legacy_sort"/>
                         <field name="legacy_attachment_ref"/>
                     </group>
-                    <group col="4" string="旧系统阶段与地区" data-sc-anchor="legacy-project-stage-region">
+                    <group col="4"
+                           string="旧系统阶段与地区"
+                           data-sc-anchor="legacy-project-stage-region"
+                           groups="base.group_system,smart_construction_core.group_sc_super_admin">
                         <field name="legacy_stage_id"/>
                         <field name="legacy_stage_name"/>
                         <field name="legacy_region_id"/>

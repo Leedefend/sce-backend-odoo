@@ -19,6 +19,7 @@
             <field name="state">code</field>
             <field name="code">env['sc.security.policy'].bootstrap_customer_company_departments()</field>
         </record>
+        <function model="sc.security.policy" name="bootstrap_customer_company_departments"/>
         <record id="action_bootstrap_customer_users_primary_departments" model="ir.actions.server">
             <field name="name">Bootstrap Customer Users (Primary Department Only)</field>
             <field name="model_id" ref="model_sc_security_policy"/>
@@ -49,5 +50,272 @@
             <field name="state">code</field>
             <field name="code">env['sc.security.policy'].bootstrap_customer_user_extra_departments()</field>
         </record>
+
+        <!-- 旧系统高频入口兼容：仅作为客户侧原生菜单别名，权限沿用现有能力组。 -->
+        <record id="action_legacy_entry_project_overview" model="ir.actions.act_window">
+            <field name="name">项目总览</field>
+            <field name="res_model">project.project</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="view_id" ref="smart_construction_core.view_project_project_kanban_dashboard"/>
+            <field name="context">{'group_by': 'lifecycle_state'}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
+        </record>
+        <record id="action_legacy_entry_todo_activity" model="ir.actions.act_window">
+            <field name="name">待办提醒</field>
+            <field name="res_model">mail.activity</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('user_id', '=', uid)]</field>
+            <field name="context">{'search_default_my_activities': 1}</field>
+            <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="action_legacy_entry_construction_contract" model="ir.actions.act_window">
+            <field name="name">施工合同</field>
+            <field name="res_model">construction.contract</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('type', '=', 'out')]</field>
+            <field name="context">{'default_type': 'out'}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read')), (4, ref('smart_construction_core.group_sc_cap_contract_user')), (4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
+        </record>
+        <record id="action_legacy_entry_supplier_contract" model="ir.actions.act_window">
+            <field name="name">供货合同</field>
+            <field name="res_model">construction.contract</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('type', '=', 'in')]</field>
+            <field name="context">{'default_type': 'in'}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read')), (4, ref('smart_construction_core.group_sc_cap_contract_user')), (4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
+        </record>
+        <record id="action_legacy_entry_payment_request" model="ir.actions.act_window">
+            <field name="name">支付申请</field>
+            <field name="res_model">payment.request</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('type', '=', 'pay')]</field>
+            <field name="context">{'default_type': 'pay', 'search_default_group_by_project_id': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+        <record id="action_legacy_entry_counterparty_payment" model="ir.actions.act_window">
+            <field name="name">往来单位付款</field>
+            <field name="res_model">payment.request</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('type', '=', 'pay')]</field>
+            <field name="context">{'default_type': 'pay', 'group_by': 'partner_id'}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+        <record id="action_legacy_entry_progress_receipt" model="ir.actions.act_window">
+            <field name="name">工程进度收款</field>
+            <field name="res_model">payment.request</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('type', '=', 'receive')]</field>
+            <field name="context">{'default_type': 'receive', 'search_default_group_by_project_id': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+        <record id="action_legacy_entry_tender_registration" model="ir.actions.act_window">
+            <field name="name">投标报名管理</field>
+            <field name="res_model">tender.bid</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="smart_construction_core.view_tender_bid_search"/>
+            <field name="context">{'default_state': 'prepare'}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
+        </record>
+        <record id="action_legacy_entry_fund_daily" model="ir.actions.act_window">
+            <field name="name">资金日报</field>
+            <field name="res_model">sc.legacy.fund.daily.snapshot.fact</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_fund_daily_snapshot_fact_search"/>
+            <field name="context">{'sc_manual_entry': 1, 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
+        </record>
+        <record id="action_legacy_entry_input_tax_report" model="ir.actions.act_window">
+            <field name="name">进项上报</field>
+            <field name="res_model">sc.legacy.invoice.tax.fact</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_invoice_tax_fact_search"/>
+            <field name="domain">[('source_family', '=', 'input_invoice_handover')]</field>
+            <field name="context">{'sc_manual_entry': 1, 'default_source_family': 'input_invoice_handover', 'default_direction': 'input_invoice', 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
+        </record>
+        <record id="action_legacy_entry_invoice_register" model="ir.actions.act_window">
+            <field name="name">开票登记</field>
+            <field name="res_model">sc.legacy.invoice.tax.fact</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_invoice_tax_fact_search"/>
+            <field name="domain">[('source_family', '=', 'output_invoice_register')]</field>
+            <field name="context">{'sc_manual_entry': 1, 'default_source_family': 'output_invoice_register', 'default_direction': 'output_invoice', 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
+        </record>
+        <record id="action_legacy_entry_receipt_confirmation" model="ir.actions.act_window">
+            <field name="name">到款确认表</field>
+            <field name="res_model">sc.legacy.receipt.income.fact</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_receipt_income_fact_search"/>
+            <field name="domain">[('source_family', '=', 'receipt_confirmation')]</field>
+            <field name="context">{'sc_manual_entry': 1, 'default_source_family': 'receipt_confirmation', 'default_direction': 'inflow', 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
+        </record>
+        <record id="action_legacy_entry_pay_guarantee_deposit" model="ir.actions.act_window">
+            <field name="name">付保证金</field>
+            <field name="res_model">sc.legacy.expense.deposit.fact</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_expense_deposit_fact_search"/>
+            <field name="domain">[('source_family', '=', 'pay_guarantee_deposit')]</field>
+            <field name="context">{'sc_manual_entry': 1, 'default_source_family': 'pay_guarantee_deposit', 'default_direction': 'outflow', 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
+        </record>
+        <record id="action_legacy_entry_received_guarantee_deposit" model="ir.actions.act_window">
+            <field name="name">收保证金登记</field>
+            <field name="res_model">sc.legacy.expense.deposit.fact</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_expense_deposit_fact_search"/>
+            <field name="domain">[('source_family', '=', 'received_guarantee_deposit_register')]</field>
+            <field name="context">{'sc_manual_entry': 1, 'default_source_family': 'received_guarantee_deposit_register', 'default_direction': 'inflow', 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
+        </record>
+        <record id="action_legacy_entry_guarantee_refund" model="ir.actions.act_window">
+            <field name="name">保证金/垫付款退回</field>
+            <field name="res_model">sc.legacy.expense.deposit.fact</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_expense_deposit_fact_search"/>
+            <field name="domain">[('source_family', 'in', ('pay_guarantee_deposit_refund', 'received_guarantee_deposit_refund', 'project_deduction_refund', 'self_funded_income_refund'))]</field>
+            <field name="context">{'sc_manual_entry': 1, 'default_source_family': 'pay_guarantee_deposit_refund', 'default_direction': 'inflow_or_refund', 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
+        </record>
+        <record id="action_legacy_entry_financing_loan_registration" model="ir.actions.act_window">
+            <field name="name">借款/贷款登记</field>
+            <field name="res_model">sc.legacy.financing.loan.fact</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_financing_loan_fact_search"/>
+            <field name="context">{'sc_manual_entry': 1, 'default_source_family': 'loan_registration', 'default_source_direction': 'financing_in', 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager')), (4, ref('smart_construction_core.group_sc_super_admin'))]"/>
+        </record>
+
+        <menuitem id="menu_legacy_frequent_entries_root"
+                  name="常用入口"
+                  parent="smart_construction_core.menu_sc_root"
+                  sequence="5"
+                  groups="smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_finance_read"/>
+        <menuitem id="menu_legacy_entry_todo_center"
+                  name="待办中心"
+                  parent="menu_legacy_frequent_entries_root"
+                  sequence="5"
+                  groups="base.group_user,smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_cap_material_manager"/>
+        <menuitem id="menu_legacy_entry_todo_activity"
+                  name="待办提醒"
+                  parent="menu_legacy_entry_todo_center"
+                  action="action_legacy_entry_todo_activity"
+                  sequence="10"
+                  groups="base.group_user"/>
+        <menuitem id="menu_legacy_entry_todo_payment_review"
+                  name="付款审批"
+                  parent="menu_legacy_entry_todo_center"
+                  action="smart_construction_core.action_sc_tier_review_my_payment_request"
+                  sequence="20"
+                  groups="smart_construction_core.group_sc_cap_finance_manager"/>
+        <menuitem id="menu_legacy_entry_todo_material_review"
+                  name="物资审批"
+                  parent="menu_legacy_entry_todo_center"
+                  action="smart_construction_core.action_sc_tier_review_my_material_plan"
+                  sequence="30"
+                  groups="smart_construction_core.group_sc_cap_material_manager"/>
+        <menuitem id="menu_legacy_entry_project_overview"
+                  name="项目总览"
+                  parent="menu_legacy_frequent_entries_root"
+                  action="action_legacy_entry_project_overview"
+                  sequence="10"
+                  groups="smart_construction_core.group_sc_cap_project_read"/>
+        <menuitem id="menu_legacy_entry_construction_contract"
+                  name="施工合同"
+                  parent="menu_legacy_frequent_entries_root"
+                  action="action_legacy_entry_construction_contract"
+                  sequence="20"
+                  groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+        <menuitem id="menu_legacy_entry_supplier_contract"
+                  name="供货合同"
+                  parent="menu_legacy_frequent_entries_root"
+                  action="action_legacy_entry_supplier_contract"
+                  sequence="30"
+                  groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+        <menuitem id="menu_legacy_entry_tender_registration"
+                  name="投标报名管理"
+                  parent="menu_legacy_frequent_entries_root"
+                  action="action_legacy_entry_tender_registration"
+                  sequence="40"
+                  groups="smart_construction_core.group_sc_cap_project_read"/>
+        <menuitem id="menu_legacy_entry_payment_request"
+                  name="支付申请"
+                  parent="menu_legacy_frequent_entries_root"
+                  action="action_legacy_entry_payment_request"
+                  sequence="50"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+        <menuitem id="menu_legacy_entry_counterparty_payment"
+                  name="往来单位付款"
+                  parent="menu_legacy_frequent_entries_root"
+                  action="action_legacy_entry_counterparty_payment"
+                  sequence="60"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+        <menuitem id="menu_legacy_entry_progress_receipt"
+                  name="工程进度收款"
+                  parent="menu_legacy_frequent_entries_root"
+                  action="action_legacy_entry_progress_receipt"
+                  sequence="70"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+        <menuitem id="menu_legacy_entry_fund_daily"
+                  name="资金日报"
+                  parent="menu_legacy_frequent_entries_root"
+                  action="action_legacy_entry_fund_daily"
+                  sequence="80"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_super_admin"/>
+        <menuitem id="menu_legacy_entry_input_tax_report"
+                  name="进项上报"
+                  parent="menu_legacy_frequent_entries_root"
+                  action="action_legacy_entry_input_tax_report"
+                  sequence="90"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_super_admin"/>
+        <menuitem id="menu_legacy_entry_invoice_register"
+                  name="开票登记"
+                  parent="menu_legacy_frequent_entries_root"
+                  action="action_legacy_entry_invoice_register"
+                  sequence="100"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_super_admin"/>
+        <menuitem id="menu_legacy_entry_project_ar_ap_report"
+                  name="应收应付报表（项目）"
+                  parent="menu_legacy_frequent_entries_root"
+                  action="smart_construction_core.action_sc_operating_metrics_project"
+                  sequence="110"
+                  groups="smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
+        <menuitem id="menu_legacy_entry_company_operation_report"
+                  name="公司经营情况表"
+                  parent="menu_legacy_frequent_entries_root"
+                  action="smart_construction_core.action_sc_operating_metrics_project"
+                  sequence="120"
+                  groups="smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
+        <menuitem id="menu_legacy_entry_receipt_confirmation"
+                  name="到款确认表"
+                  parent="menu_legacy_frequent_entries_root"
+                  action="action_legacy_entry_receipt_confirmation"
+                  sequence="130"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_super_admin"/>
+        <menuitem id="menu_legacy_entry_pay_guarantee_deposit"
+                  name="付保证金"
+                  parent="menu_legacy_frequent_entries_root"
+                  action="action_legacy_entry_pay_guarantee_deposit"
+                  sequence="140"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_super_admin"/>
+        <menuitem id="menu_legacy_entry_received_guarantee_deposit"
+                  name="收保证金登记"
+                  parent="menu_legacy_frequent_entries_root"
+                  action="action_legacy_entry_received_guarantee_deposit"
+                  sequence="150"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_super_admin"/>
+        <menuitem id="menu_legacy_entry_guarantee_refund"
+                  name="保证金/垫付款退回"
+                  parent="menu_legacy_frequent_entries_root"
+                  action="action_legacy_entry_guarantee_refund"
+                  sequence="160"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_super_admin"/>
+        <menuitem id="menu_legacy_entry_financing_loan_registration"
+                  name="借款/贷款登记"
+                  parent="menu_legacy_frequent_entries_root"
+                  action="action_legacy_entry_financing_loan_registration"
+                  sequence="170"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_super_admin"/>
     </data>
 </odoo>

@@ -44,3 +44,4 @@ from . import test_intent_surface_coverage_gate
 from . import test_risk_action_execute_backend
 from . import test_user_role_profile_backend
 from . import test_project_object_button_runtime_backend
+from . import test_tender_read_surface_backend

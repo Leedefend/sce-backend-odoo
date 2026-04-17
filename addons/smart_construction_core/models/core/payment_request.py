@@ -275,16 +275,17 @@ class PaymentRequest(models.Model):
         records.filtered(
             lambda r: r.type == "pay" and r.state in ("submit", "approve", "approved")
         )._enforce_funding_gate()
-        tracked = records.filtered(lambda r: r.project_id)
-        tracked._sync_payment_evidence(
-            event_code="payment_request_created"
-        )
-        self.env["sc.evidence.policy"].ensure_records(
-            tracked,
-            evidence_type="payment",
-            auto_build=False,
-            event_code="payment_request_created",
-        )
+        if not self.env.context.get("sc_legacy_asset_replay_skip_payment_evidence"):
+            tracked = records.filtered(lambda r: r.project_id)
+            tracked._sync_payment_evidence(
+                event_code="payment_request_created"
+            )
+            self.env["sc.evidence.policy"].ensure_records(
+                tracked,
+                evidence_type="payment",
+                auto_build=False,
+                event_code="payment_request_created",
+            )
         return records
 
     def write(self, vals):
@@ -322,15 +323,16 @@ class PaymentRequest(models.Model):
                 "partner_id",
             )
         ):
-            event_code = f"payment_request_{vals.get('state')}" if vals.get("state") else "payment_request_updated"
-            tracked = self.filtered(lambda r: r.project_id)
-            tracked._sync_payment_evidence(event_code=event_code)
-            self.env["sc.evidence.policy"].ensure_records(
-                tracked,
-                evidence_type="payment",
-                auto_build=False,
-                event_code=event_code,
-            )
+            if not self.env.context.get("sc_legacy_asset_replay_skip_payment_evidence"):
+                event_code = f"payment_request_{vals.get('state')}" if vals.get("state") else "payment_request_updated"
+                tracked = self.filtered(lambda r: r.project_id)
+                tracked._sync_payment_evidence(event_code=event_code)
+                self.env["sc.evidence.policy"].ensure_records(
+                    tracked,
+                    evidence_type="payment",
+                    auto_build=False,
+                    event_code=event_code,
+                )
         return res
 
     def _get_attachment_count(self):
@@ -483,6 +485,8 @@ class PaymentRequest(models.Model):
 
     @api.constrains("contract_id", "type")
     def _check_contract_direction(self):
+        if self.env.context.get("sc_legacy_asset_replay_allow_contract_direction_mismatch"):
+            return
         for rec in self:
             if not rec.contract_id:
                 continue
@@ -551,7 +555,6 @@ class PaymentRequest(models.Model):
     def action_submit(self):
         has_finance_submit_access = (
             self.env.user.has_group("smart_construction_core.group_sc_cap_finance_user")
-            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
         )
         if not has_finance_submit_access:
             raise ValidationError(_("你没有提交付款/收款申请的权限。"))
@@ -647,7 +650,6 @@ class PaymentRequest(models.Model):
     def action_done(self):
         has_finance_done_access = (
             self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
-            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
         )
         if not has_finance_done_access:
             raise ValidationError(_("你没有完成付款/收款申请的权限。"))
@@ -699,7 +701,6 @@ class PaymentRequest(models.Model):
     def action_cancel(self):
         has_finance_cancel_access = (
             self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
-            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
         )
         if not has_finance_cancel_access:
             raise ValidationError(_("你没有取消付款/收款申请的权限。"))

@@ -65,25 +65,25 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
         "submit": {
             "required_role_key": "finance",
             "required_role_label": "财务",
-            "required_group_xmlid": "smart_construction_custom.group_sc_role_finance",
+            "required_group_xmlid": "smart_construction_core.group_sc_cap_finance_user",
             "handoff_hint": "请由财务提交申请后进入审批链路。",
         },
         "approve": {
             "required_role_key": "executive",
             "required_role_label": "管理层",
-            "required_group_xmlid": "smart_construction_custom.group_sc_role_executive",
+            "required_group_xmlid": "smart_core.group_smart_core_finance_approver",
             "handoff_hint": "请由管理层执行审批决策。",
         },
         "reject": {
             "required_role_key": "executive",
             "required_role_label": "管理层",
-            "required_group_xmlid": "smart_construction_custom.group_sc_role_executive",
+            "required_group_xmlid": "smart_core.group_smart_core_finance_approver",
             "handoff_hint": "请由管理层执行驳回并填写原因。",
         },
         "done": {
             "required_role_key": "finance",
             "required_role_label": "财务",
-            "required_group_xmlid": "smart_construction_custom.group_sc_role_finance",
+            "required_group_xmlid": "smart_construction_core.group_sc_cap_finance_manager",
             "handoff_hint": "审批完成后由财务确认办结。",
         },
     }

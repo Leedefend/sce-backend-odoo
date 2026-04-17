@@ -18,6 +18,8 @@ class TestUserRoleProfileBackend(TransactionCase):
             data = result[0] if len(result) > 0 else None
             meta = result[1] if len(result) > 1 and isinstance(result[1], dict) else {}
             return {"ok": True, "data": data, "meta": meta}
+        if hasattr(result, "to_legacy_dict"):
+            return result.to_legacy_dict()
         return result
 
     def _group_xmlids(self, group):
@@ -133,6 +135,7 @@ class TestUserRoleProfileBackend(TransactionCase):
             }
         )
 
+        result = self._unwrap_handler_result(result)
         self.assertTrue(result.get("ok"), result)
         data = result.get("data") or {}
         form_view = ((data.get("views") or {}).get("form") or {})

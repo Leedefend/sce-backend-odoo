@@ -14,6 +14,11 @@ from odoo.addons.smart_construction_scene.services.capability_scene_targets impo
 
 CAPABILITY_KEY_REGEX = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")
 
+RUNTIME_ORCHESTRATION_SCENE_KEYS = {
+    "project.plan_bootstrap",
+    "project.execution",
+}
+
 CAPABILITY_GROUPS: list[dict[str, Any]] = [
     {"key": "project_management", "label": "项目管理", "icon": "briefcase", "sequence": 10},
     {"key": "finance_management", "label": "财务管理", "icon": "wallet", "sequence": 20},
@@ -351,6 +356,7 @@ def lint_registry(env=None) -> list[dict[str, Any]]:
             for row in (scene_registry.load_scene_configs(env) or [])
             if isinstance(row, dict) and str(row.get("code") or row.get("key") or "").strip()
         }
+        scene_keys.update(RUNTIME_ORCHESTRATION_SCENE_KEYS)
         for item in capability_definitions():
             key = str(item.get("key") or "").strip()
             scene_key = resolve_capability_entry_scene_key(key)
