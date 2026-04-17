@@ -25,6 +25,33 @@ Each entry must include:
 - active_commit: `d243d59`
 - next_step: `Open verification-recovery batch to replace the missing verify.restricted command with the repository's valid restricted-equivalent gate, then run smart_construction_core module upgrade`
 
+### 2026-04-16T15:44:40+08:00
+- blocker_key: `project_detail_legacy_provenance_frontend_group_projection_pass_v1`
+- layer_target: `frontend contract-consumer runtime`
+- module: `frontend/apps/web ContractFormPage`
+- reason: 用户反馈原生项目详情页已隐藏旧系统区块，但自定义前端在 wutao 登录后仍可见，需要把结构节点也纳入组可见性投影
+- completed_step: `已完成 ITER-2026-04-16-PROJECT-DETAIL-LEGACY-PROVENANCE-FRONTEND-HIDE：前端 layoutTrees 为结构节点补齐 groups_xmlids 解析与剪枝；validate_task、git diff --check、pnpm -C frontend/apps/web build、make frontend.restart 全 PASS`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Continue with any remaining project detail custom frontend structure leakage reports only if the user reports another visible technical-only block`
+
+### 2026-04-16T15:51:38+08:00
+- blocker_key: `project_detail_legacy_provenance_frontend_inherited_group_filter_pass_v1`
+- layer_target: `frontend contract-consumer runtime`
+- module: `frontend/apps/web ContractFormPage`
+- reason: 用户继续反馈隐藏分组内的旧系统字段仍在自定义前端可见，需要把父级 group 约束继承到子节点并同步过滤回退路径
+- completed_step: `已完成 ITER-2026-04-16-PROJECT-DETAIL-LEGACY-PROVENANCE-GROUP-INHERIT：layoutNodes/layoutTrees 向下继承 group gates；validate_task、git diff --check、pnpm -C frontend/apps/web build、make frontend.restart 全 PASS`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Continue only if user reports another project detail technical block leakage after this inherited-group filter lands`
+
+### 2026-04-16T15:56:45+08:00
+- blocker_key: `project_detail_legacy_provenance_frontend_runtime_reference_fix_v1`
+- layer_target: `frontend contract-consumer runtime`
+- module: `frontend/apps/web ContractFormPage`
+- reason: 前端重启后用户仍反馈 render 报错，实际是 prune 分支引用了不存在的 `groups` 局部变量
+- completed_step: `已完成 ContractFormPage prune 运行时修复；git diff --check、pnpm -C frontend/apps/web build、make frontend.restart 全 PASS`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Wait for the user to confirm the legacy blocks are gone or report any remaining technical-only leak`
+
 ### 2026-04-13T13:54:04+08:00
 - blocker_key: `project_model_field_alignment_upgrade_recovered_pass_v1`
 - layer_target: `Verification Gate + Odoo Module Upgrade`
@@ -21503,3 +21530,120 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - completed_step: `ITER-2026-04-15-CONTRACT-LINE-READINESS-SCREEN PASS：raw_contract_rows=1694, fresh_overlap=1389, independent_line_source=0, fallback_single_line_candidates=1342, zero_amount=47, not_replayed=240, deleted=65`
 - active_commit: `25dc6bc`
 - next_step: `open contract line policy screen for fallback single-line candidates`
+
+### 2026-04-16T16:08:20+08:00
+- blocker_key: `iter_2083_project_detail_visible_field_gate_pass`
+- layer_target: `frontend contract-consumer runtime`
+- module: `frontend/apps/web ContractFormPage`
+- reason: backend ui.contract already excludes legacy provenance fields from visible_fields, but project detail alignment mode was bypassing that allow-list
+- completed_step: `ITER-2026-04-16-PROJECT-DETAIL-LEGACY-PROVENANCE-VISIBLE-FIELD-GATE PASS：visible_fields authority restored, legacy provenance fields stay hidden in custom frontend`
+- active_commit: `25dc6bc`
+- next_step: `monitor custom frontend project detail rendering after restart`
+
+### 2026-04-16T16:39:28+08:00
+- blocker_key: `iter_2084_project_detail_layout_backfill_order_fix_pass`
+- layer_target: `scene-orchestration layer`
+- module: `smart_core contract_governance project form override`
+- reason: project form `visible_fields` was finalized after the generic form semantic backfill step, so the backfill never saw the authoritative business field set
+- completed_step: `ITER-2026-04-16-PROJECT-DETAIL-LAYOUT-BACKFILL PASS：project form now backfills layout after visible_fields selection, keeping stage_id/owner_id/budget_total in the structure`
+- active_commit: `b17cfed`
+- next_step: `observe the restarted backend/frontend pair and confirm project detail stays aligned without reintroducing legacy provenance fields`
+
+### 2026-04-16T16:39:28+08:00
+- blocker_key: `iter_2085_contract_output_boundary_freeze_scan_pass`
+- layer_target: `scene-orchestration layer`
+- module: `smart_core contract-output pipeline`
+- reason: backend contract output currently spreads responsibility across parser, assembler, policy, governance, handler, and response wrapping stages; the overlap must be mapped before any freeze/refactor
+- completed_step: `ITER-2026-04-16-CONTRACT-OUTPUT-BOUNDARY-FREEZE-SCAN PASS：candidate boundary map collected for parser/assembler/policy/governance/handler/v2 adapter`
+- active_commit: `b17cfed`
+- next_step: `screen the candidate map into a single ownership decision per stage and identify the overlap that must be removed next`
+
+### 2026-04-16T16:46:06+08:00
+- blocker_key: `iter_2086_contract_output_boundary_freeze_screen_pass`
+- layer_target: `scene-orchestration layer`
+- module: `smart_core contract-output pipeline`
+- reason: scan-stage candidates must be reduced to a frozen single-owner matrix before any boundary-removal implementation batch
+- completed_step: `ITER-2026-04-16-CONTRACT-OUTPUT-BOUNDARY-FREEZE-SCREEN PASS：frozen ownership matrix set for parser/assembler/policy/governance/handler/v2 adapter with overlap removal candidates`
+- active_commit: `b17cfed`
+- next_step: `verify the frozen boundary against the canonical request path and then open the first implementation batch for overlap removal`
+
+### 2026-04-16T16:51:51+08:00
+- blocker_key: `iter_2087_contract_output_boundary_freeze_implement_classifier_pass`
+- layer_target: `scene-orchestration layer`
+- module: `smart_core page_policy_service`
+- reason: policy classification needed to stop mutating the contract structure so visible_fields becomes metadata and layout mutation stays in governance
+- completed_step: `ITER-2026-04-16-CONTRACT-OUTPUT-BOUNDARY-FREEZE-IMPLEMENT-CLASSIFIER PASS：page_policy_service now keeps full field facts and emits visible_fields only`
+- active_commit: `b17cfed`
+- next_step: `remove the next overlap candidate in the page assembler call site or the governance adapter, one batch at a time`
+
+### 2026-04-16T17:10:00+08:00
+- blocker_key: `contract_output_page_assembler_boundary_cleanup_pass_v1`
+- layer_target: `scene-orchestration layer`
+- module: `smart_core page_assembler`
+- reason: the assembler still carried a residual field-restriction delegation, which blurred the contract boundary between assembly and policy classification
+- completed_step: `已完成 ITER-2026-04-16-CONTRACT-OUTPUT-BOUNDARY-FREEZE-IMPLEMENT-ASSEMBLER：assemble_page_contract no longer calls _restrict_form_fields_to_layout；narrow test moved to PagePolicyService and source-smoke PASS`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Continue with the next overlap candidate only if another contract-output leak is reported; otherwise keep the current boundary closed`
+
+### 2026-04-16T17:28:00+08:00
+- blocker_key: `contract_output_generic_semantic_governance_backfill_cleanup_v1`
+- layer_target: `scene-orchestration layer`
+- module: `smart_core contract_governance`
+- reason: generic semantic-governance still backfilled form layout from visible_fields and blurred the boundary between semantic injection and structural mutation
+- completed_step: `已完成 ITER-2026-04-16-CONTRACT-OUTPUT-BOUNDARY-FREEZE-IMPLEMENT-GOVERNANCE：_apply_form_render_semantics no longer backfills layout；narrow AST smoke PASS`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Continue only if another contract-output overlap is reported; otherwise keep the generic semantic-governance boundary closed`
+
+### 2026-04-16T17:09:52+08:00
+- blocker_key: `project_form_fact_to_frontend_diversion_scan_v1`
+- layer_target: `scene-orchestration layer`
+- module: `smart_core contract-output pipeline + frontend contract consumer`
+- reason: user requested a fresh trace from project form backend facts through governance into custom frontend consumption to identify the exact fork
+- completed_step: `已完成 ITER-2026-04-16-PROJECT-FORM-FACT-TO-FRONTEND-DIVERSION-SCAN：frozen candidate fork points in backend scenario governance, frontend isFieldVisible/layoutTrees, and normalizedDetailShells`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open screen batch to classify the shortlist into backend facts vs frontend over-filtering`
+
+### 2026-04-16T17:22:00+08:00
+- blocker_key: `project_form_fact_to_frontend_diversion_screen_v1`
+- layer_target: `scene-orchestration layer`
+- module: `smart_core contract-governance + frontend contract consumer`
+- reason: scan shortlist needed to be reduced to a single root-cause judgment before any implementation batch
+- completed_step: `已完成 ITER-2026-04-16-PROJECT-FORM-FACT-TO-FRONTEND-DIVERSION-SCREEN：classified root mismatch as frontend consumer over-filtering, with backend facts remaining complete`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open frontend-consumer implementation batch to relax the project-detail advanced-field gate and shell pruning`
+
+### 2026-04-16T17:18:14+08:00
+- blocker_key: `project_form_fact_to_frontend_diversion_fix_v1`
+- layer_target: `scene-orchestration layer`
+- module: `frontend/apps/web ContractFormPage`
+- reason: frontend was still hiding contract-backed project-detail fields via a local advanced-field visibility gate, despite backend contract facts being complete
+- completed_step: `已完成 ITER-2026-04-16-PROJECT-FORM-FACT-TO-FRONTEND-DIVERSION-FIX：removed the project-detail special-case from isFieldVisible；pnpm build PASS；make frontend.restart PASS；frontend dev ready at http://127.0.0.1:5174/`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `If the user reports any remaining mismatch, inspect only layout-shape projection, not field visibility`
+
+### 2026-04-16T18:10:31+0800
+- blocker_key: `project_action_open_richer_default_surface_v1`
+- layer_target: `scene-orchestration layer`
+- module: `smart_core app_view_config`
+- reason: ui.contract(action_open) was selecting a narrower action-specific project form surface instead of comparing it with the richer runtime default form surface
+- completed_step: `已完成 ITER-2026-04-16-PROJECT-ACTION-OPEN-RICHER-DEFAULT-FORM：_safe_get_view_data now prefers the richer runtime default project form when an action-bound form is narrower；project_form_surface tag PASS`
+- active_commit: `codex/next-round @ b17cfed (unstaged)`
+- next_step: `Keep the boundary closed unless another project action-open contract divergence is reported`
+
+### 2026-04-16T18:31:30+08:00
+- blocker_key: `project_form_semantic_layout_restore_v1`
+- layer_target: `scene-orchestration layer`
+- module: `smart_core contract output pipeline + project form governance`
+- reason: semantic_page.form_semantics.layout and notebook/page metadata were being under-exported, and project-form backfill nodes were emitted without fieldInfo/widget for relation fields
+- completed_step: `已完成 ITER-2026-04-16-PROJECT-FORM-SEMANTIC-LAYOUT-RESTORE：ui.contract now preserves semantic layout, notebook tab titles, and governance backfill fieldInfo/widget；layout audit PASS (issues=0)，render profile audit PASS`
+- active_commit: `codex/next-round @ b17cfed (unstaged)`
+- next_step: `Keep the contract-output boundary closed unless another live contract audit reports a new divergence`
+
+### 2026-04-17T10:55:44+08:00
+- blocker_key: `iter_codex_trace_layer_v1`
+- layer_target: `Runtime Observation Layer`
+- module: `Codex process trace sidecar`
+- reason: user requested opt-in bypass observation logs for Codex execution replay without polluting delivery, release, or verification artifacts
+- completed_step: `ITER-2026-04-17-CODEX-TRACE-LAYER PASS：trace wrapper, local ignore boundary, usage doc, syntax check, ignored latest.log, and dry-run trace artifact creation verified`
+- active_commit: `codex/next-round @ b17cfed (unstaged)`
+- next_step: `Trace layer is ready for opt-in use; next eligible low-risk enhancement would be diff intelligence only if a new task contract is opened`
