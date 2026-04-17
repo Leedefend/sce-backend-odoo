@@ -249,7 +249,27 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
 
             parse_service = NativeParseService(self)
             fallback_service = ParseFallbackService(self)
-            if action_specific_view and not force_parser:
+            if action_specific_view and view_type == 'form' and not force_fallback:
+                _logger.info(
+                    "VIEW_PARSE_DEBUG: action-specific form view detected for %s.%s source=%s, parse selected arch with primary parser",
+                    model_name,
+                    view_type,
+                    action_specific_source,
+                )
+                parsed_json = parse_service.parse_view_data_with_primary_parser(
+                    model_name,
+                    view_type,
+                    view_data,
+                    force_fallback=force_fallback,
+                )
+                parsed_json = fallback_service.resolve_parsed_contract(
+                    model_name=model_name,
+                    view_type=view_type,
+                    view_data=view_data,
+                    parsed_json=parsed_json,
+                    force_fallback=force_fallback,
+                )
+            elif action_specific_view and not force_parser:
                 _logger.info(
                     "VIEW_PARSE_DEBUG: action-specific view detected for %s.%s source=%s, prefer fallback parser on bound arch",
                     model_name,
@@ -258,13 +278,6 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
                 )
                 parsed_json = self._fallback_parse(model_name, view_type, view_data)
             else:
-                if action_specific_view and view_type == 'form':
-                    _logger.info(
-                        "VIEW_PARSE_DEBUG: action-specific form view detected for %s.%s source=%s, keep primary parser and use fallback only as safety",
-                        model_name,
-                        view_type,
-                        action_specific_source,
-                    )
                 parsed_json = parse_service.parse_with_primary_parser(
                     model_name,
                     view_type,

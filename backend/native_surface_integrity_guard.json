@@ -12,26 +12,34 @@
       "role": "pm",
       "login": "sc_fx_pm",
       "ok": true,
-      "reason": "native_ui_contract_disabled_by_policy",
+      "reason": "",
       "debug": {
-        "status": 200,
-        "ok": false,
-        "error_code": "INTERNAL_ERROR",
-        "error_message": "native ui.contract op is disabled for frontend delivery; use scene-ready contract",
-        "policy_mode": "native_disabled_expected"
+        "contract_surface": "native",
+        "meta_contract_surface": "native",
+        "render_mode": "native",
+        "source_mode": "native_parser",
+        "governed_from_native": false,
+        "layout_type": "list",
+        "layout_field_count": 61,
+        "field_count": 240,
+        "has_mapping": true
       }
     },
     {
       "role": "executive",
       "login": "sc_fx_executive",
       "ok": true,
-      "reason": "native_ui_contract_disabled_by_policy",
+      "reason": "",
       "debug": {
-        "status": 200,
-        "ok": false,
-        "error_code": "INTERNAL_ERROR",
-        "error_message": "native ui.contract op is disabled for frontend delivery; use scene-ready contract",
-        "policy_mode": "native_disabled_expected"
+        "contract_surface": "native",
+        "meta_contract_surface": "native",
+        "render_mode": "native",
+        "source_mode": "native_parser",
+        "governed_from_native": false,
+        "layout_type": "list",
+        "layout_field_count": 74,
+        "field_count": 240,
+        "has_mapping": true
       }
     }
   ],

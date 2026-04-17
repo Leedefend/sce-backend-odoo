@@ -1851,11 +1851,16 @@ def _search_surface_from_contract(data: dict) -> dict:
         ("searchpanel", "searchpanel"),
         ("search_panel", "searchpanel"),
         ("searchPanel", "searchpanel"),
+        ("native_search_menu", "native_search_menu"),
+        ("nativeSearchMenu", "native_search_menu"),
         ("default_state", "default_state"),
     ):
         value = search.get(source_key)
         if isinstance(value, (list, dict)) and value:
             surface[target_key] = _deep_clone_json_like(value)
+    interaction_model = _safe_text(search.get("interaction_model") or search.get("interactionModel"))
+    if interaction_model:
+        surface["interaction_model"] = interaction_model
     default_sort = _safe_text(search.get("default_sort") or search.get("defaultSort") or data.get("default_sort"))
     if default_sort:
         surface["default_sort"] = default_sort
