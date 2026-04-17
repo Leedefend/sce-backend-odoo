@@ -10,8 +10,11 @@ type UseActionViewBatchArtifactGlueRuntimeOptions = {
   failedCsvFileName: Ref<string>;
   failedCsvContentB64: Ref<string>;
   pageText: (key: string, fallback: string) => string;
-  resolveSuggestedAction: (raw?: string) => string;
-  describeSuggestedAction: (raw?: string) => string;
+  resolveSuggestedAction: (suggestedAction: unknown, reasonCode: unknown, retryable: unknown) => string;
+  describeSuggestedAction: (
+    suggestedAction: unknown,
+    options: { hasRetryHandler: boolean; hasActionHandler: boolean },
+  ) => { canRun: boolean; parsed: { raw: string }; label: string };
   runSuggestedAction: (raw?: string, options?: { onRetry?: () => void }) => void;
   reload: () => void;
   resolveBatchFailurePreviewState: (result: Record<string, unknown>) => Array<Record<string, unknown>>;
@@ -26,9 +29,12 @@ type UseActionViewBatchArtifactGlueRuntimeOptions = {
     retryableText: string;
     nonRetryableText: string;
   }) => BatchDetailLine[];
-  resolveBatchFailureHintResolver: (input: { resolveSuggestedActionFn: (raw?: string) => string }) => (row: Record<string, unknown>) => string;
+  resolveBatchFailureHintResolver: (input: { resolveSuggestedActionFn: (suggestedAction: unknown, reasonCode: unknown, retryable: unknown) => string }) => (row: Record<string, unknown>) => string;
   resolveBatchFailureActionMetaResolver: (input: {
-    describeSuggestedActionFn: (raw?: string) => string;
+    describeSuggestedActionFn: (
+      suggestedAction: unknown,
+      options: { hasRetryHandler: boolean; hasActionHandler: boolean },
+    ) => { canRun: boolean; parsed: { raw: string }; label: string };
     hasRetryHandler: boolean;
     hasActionHandler: boolean;
   }) => (row: Record<string, unknown>) => Record<string, unknown>;
@@ -127,4 +133,3 @@ export function useActionViewBatchArtifactGlueRuntime(options: UseActionViewBatc
     handleBatchDetailAction,
   };
 }
-

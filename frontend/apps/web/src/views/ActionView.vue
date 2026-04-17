@@ -462,6 +462,7 @@ import { isHudEnabled } from '../config/debug';
 import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { resolveSuggestedAction, useStatus } from '../composables/useStatus';
+import type { StatusError } from '../composables/useStatus';
 import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
 import {
   parseContractContextRaw,
@@ -476,7 +477,7 @@ import { findSceneReadyEntryByTarget, resolveListSceneReady } from '../app/resol
 import { normalizeSceneActionProtocol, type MutationContract, type ProjectionRefreshPolicy } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
-import { buildNativeFallbackUrl, resolveContractViewRenderPolicy } from '../app/contractTakeover';
+import { buildNativeFallbackUrl, resolveContractListSemantics, resolveContractViewRenderPolicy } from '../app/contractTakeover';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { useActionViewActionRuntime } from '../app/action_runtime/useActionViewActionRuntime';
 import { useActionViewBatchRuntime } from '../app/action_runtime/useActionViewBatchRuntime';
@@ -907,6 +908,7 @@ const displayHeaderActions = computed(() => {
         key: 'open_workbench',
         label: '返回工作台',
         enabled: true,
+        hint: '',
       },
     ];
   }
@@ -954,8 +956,7 @@ const appliedPresetLabel = ref('');
 const routeContextSource = ref('');
 const lastTrackedPreset = ref('');
 const statusApi = useStatus?.();
-type StatusErrorLike = { code?: unknown; message?: string };
-const error = statusApi?.error ?? ref<StatusErrorLike | null>(null);
+const error = statusApi?.error ?? ref<StatusError | null>(null);
 const clearError = statusApi?.clearError ?? (() => {});
 const setError = statusApi?.setError ?? (() => {});
 type ContractColumnSchema = { name?: string };
@@ -1083,9 +1084,6 @@ const scene = computed<Scene | null>(() => {
 const pageMode = computed(() => resolvePageMode(sceneKey.value, String(scene.value?.layout?.kind || '')));
 const hasLedgerOverviewStrip = computed(() => pageMode.value === 'ledger');
 
-const listProfile = computed<SceneListProfile | null>(() => {
-  return (scene.value?.list_profile as SceneListProfile) || null;
-});
 const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
   return findSceneReadyEntryByTarget(session.sceneReadyContractV1, {
     sceneKey: sceneKey.value,
@@ -1094,9 +1092,12 @@ const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
     route: String(route.path || ''),
   });
 });
-const sceneReadyListSurface = computed(() => resolveListSceneReady(sceneReadyEntry.value));
+const sceneReadyListSurface = computed(() => {
+  const fallback = resolveListSceneReady(sceneReadyEntry.value);
+  return resolveSceneFirstListSurface(sceneContractV1.value, fallback);
+});
 const listOptimizationRefreshAttempted = ref(false);
-function applyDefaultMarkerLabel<T extends { label?: string; isDefault?: boolean }>(rows: T[]): Array<T & { label: string }> {
+function applyDefaultMarkerLabel<T extends { key?: string; label?: string; isDefault?: boolean }>(rows: T[]): Array<T & { label: string }> {
   return rows.map((row) => {
     const baseLabel = String(row.label || '').trim();
     return {
@@ -1486,6 +1487,94 @@ const sceneContractV1 = computed<Record<string, unknown>>(() => {
   if (String((raw as Record<string, unknown>).contract_version || '') !== 'v1') return {};
   return raw as Record<string, unknown>;
 });
+function actionViewRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function sceneListColumns(semantics: Record<string, unknown>) {
+  const columnsRaw = Array.isArray(semantics.columns) ? semantics.columns : [];
+  const columnLabels: Record<string, string> = {};
+  const columns = columnsRaw
+    .map((item) => {
+      if (typeof item === 'string') return item.trim();
+      if (!item || typeof item !== 'object' || Array.isArray(item)) return '';
+      const row = item as Record<string, unknown>;
+      const name = String(row.name || row.field || row.key || '').trim();
+      const label = String(row.label || row.string || '').trim();
+      if (name && label) columnLabels[name] = label;
+      return name;
+    })
+    .filter(Boolean);
+  return { columns, columnLabels };
+}
+
+function sceneDefaultSort(raw: unknown): string {
+  if (typeof raw === 'string') return raw.trim();
+  const row = actionViewRecord(raw);
+  return String(row.raw || row.value || '').trim();
+}
+
+function resolveSceneFirstListSurface(contract: Record<string, unknown>, fallback: ReturnType<typeof resolveListSceneReady>) {
+  const semanticPage = actionViewRecord(contract.semantic_page);
+  const semantics = actionViewRecord(semanticPage.list_semantics);
+  const searchSurface = actionViewRecord(contract.search_surface);
+  const { columns } = sceneListColumns(semantics);
+  const defaultSort = sceneDefaultSort(searchSurface.default_sort);
+  const mode = String(searchSurface.mode || '').trim();
+  const filters = Array.isArray(searchSurface.filters) ? searchSurface.filters : [];
+  const groupBy = Array.isArray(searchSurface.group_by) ? searchSurface.group_by : [];
+  const searchPanel = Array.isArray(searchSurface.searchpanel) ? searchSurface.searchpanel : [];
+  const searchableFields = Array.isArray(searchSurface.fields)
+    ? searchSurface.fields
+    : Array.isArray(searchSurface.searchable_fields)
+      ? searchSurface.searchable_fields
+      : [];
+  const hasSceneSurface = Boolean(
+    columns.length
+    || defaultSort
+    || mode
+    || filters.length
+    || groupBy.length
+    || searchPanel.length
+    || searchableFields.length,
+  );
+  if (!hasSceneSurface) return fallback;
+  return {
+    ...fallback,
+    columns: columns.length ? columns : fallback.columns,
+    defaultSort: defaultSort || fallback.defaultSort,
+    mode: mode || fallback.mode,
+    filters: filters.length ? filters : fallback.filters,
+    groupBy: groupBy.length ? groupBy : fallback.groupBy,
+    searchPanel: searchPanel.length ? searchPanel : fallback.searchPanel,
+    searchableFields: searchableFields.length ? searchableFields : fallback.searchableFields,
+  };
+}
+
+function normalizeSceneListProfile(contract: Record<string, unknown>): SceneListProfile | null {
+  const semantics = resolveContractListSemantics(contract);
+  const { columns, columnLabels } = sceneListColumns(semantics);
+  const hiddenColumns = Array.isArray(semantics.hidden_columns)
+    ? semantics.hidden_columns.map((item) => String(item || '').trim()).filter(Boolean)
+    : [];
+  const rowPrimary = String(semantics.row_primary || '').trim();
+  const rowSecondary = String(semantics.row_secondary || '').trim();
+  if (!columns.length && !hiddenColumns.length && !rowPrimary && !rowSecondary) return null;
+  return {
+    columns,
+    hidden_columns: hiddenColumns,
+    column_labels: columnLabels,
+    row_primary: rowPrimary,
+    row_secondary: rowSecondary,
+  };
+}
+const listProfile = computed<SceneListProfile | null>(() => {
+  return normalizeSceneListProfile(sceneContractV1.value)
+    || (scene.value?.list_profile as SceneListProfile)
+    || null;
+});
 const {
   contractColumnLabels,
   extractColumnsFromContract,
@@ -1656,6 +1745,7 @@ const {
   contractOverflowActionGroups,
 } = useActionViewActionPresentationRuntime({
   actionContract,
+  sceneContractV1,
   sceneReadyListSurface,
   strictContractMode,
   toContractActionButton: (row, dedup) => toContractActionButton(row, dedup) as ContractActionButton | null,
@@ -1903,7 +1993,7 @@ const {
   resolveWorkspaceContextQuery,
   replaceCurrentRouteQuery: (query) => {
     const routeState = resolveReplaceCurrentRouteState({ routePath: route.path, query });
-    router.replace(routeState.target).catch(() => {});
+    router.replace(routeState.target as Parameters<typeof router.replace>[0]).catch(() => {});
   },
   trackUsageEvent,
   load: requestLoad,

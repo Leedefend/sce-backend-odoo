@@ -338,6 +338,7 @@ const DB_SCOPE = String(config.odooDb || 'default').trim() || 'default';
 const STORAGE_KEY = `sc_frontend_session_v0_4:${DB_SCOPE}`;
 const TOKEN_STORAGE_KEY_LEGACY = 'sc_auth_token';
 const TOKEN_STORAGE_KEY_SCOPED = `sc_auth_token:${DB_SCOPE}`;
+let loadAppInitPromise: Promise<unknown> | null = null;
 
 function resolveUserCompanyId(user: unknown): number | null {
   if (!user || typeof user !== 'object') return null;
@@ -672,6 +673,20 @@ export const useSessionStore = defineStore('session', {
       this.clearSession();
     },
     async loadAppInit() {
+      if (loadAppInitPromise) {
+        return loadAppInitPromise as Promise<AppInitResponse>;
+      }
+      const promise = this.loadAppInitInternal();
+      loadAppInitPromise = promise;
+      try {
+        return await promise;
+      } finally {
+        if (loadAppInitPromise === promise) {
+          loadAppInitPromise = null;
+        }
+      }
+    },
+    async loadAppInitInternal() {
       const requestSeq = this.initRequestSeq + 1;
       this.initRequestSeq = requestSeq;
       this.initStatus = 'loading';

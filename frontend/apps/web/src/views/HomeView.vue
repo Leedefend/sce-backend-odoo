@@ -599,6 +599,7 @@ type SuggestionItem = {
   progress?: SemanticProgress;
   ready?: boolean;
   entryId: string;
+  source?: string;
 };
 type CoreMetric = {
   key: string;
@@ -631,6 +632,7 @@ type RiskActionItem = {
   riskActionId?: number;
   projectId?: number;
   riskLevel?: string;
+  source?: string;
 };
 type FilterChip = { key: string; label: string };
 
@@ -678,10 +680,16 @@ const heroQuickActions = computed(() => {
     if (item.key === 'open_usage_analytics' && !isAdmin.value) return false;
     return true;
   });
-  if (actions.length) return actions;
-  const fallback = [{ key: 'open_my_work', label: homeLayoutText('hero.open_my_work_action', '我的工作'), intent: 'ui.contract' }];
+  if (actions.length) {
+    return actions.map((item) => ({
+      ...item,
+      disabled: Boolean((item as { disabled?: boolean }).disabled),
+      disabledReason: String((item as { disabledReason?: string }).disabledReason || ''),
+    }));
+  }
+  const fallback = [{ key: 'open_my_work', label: homeLayoutText('hero.open_my_work_action', '我的工作'), intent: 'ui.contract', disabled: false, disabledReason: '' }];
   if (isAdmin.value) {
-    fallback.push({ key: 'open_usage_analytics', label: homeLayoutText('hero.open_usage_action', '使用分析'), intent: 'ui.contract' });
+    fallback.push({ key: 'open_usage_analytics', label: homeLayoutText('hero.open_usage_action', '使用分析'), intent: 'ui.contract', disabled: false, disabledReason: '' });
   }
   return fallback;
 });
@@ -857,7 +865,7 @@ const useUnifiedHomeRenderer = computed(() => {
   const page = contract.page && typeof contract.page === 'object'
     ? contract.page as Record<string, unknown>
     : {};
-  const hasV1 = asText(contract.schema_version) === 'v1';
+  const hasV1 = asText((contract as Record<string, unknown>).schema_version) === 'v1';
   const isDashboard = asText(page.key) === 'workspace.home';
   const hasSceneContract = asText(workspaceSceneContractV1.value.contract_version) === 'v1' && sceneZones.length > 0;
   if (hasSceneContract) return true;
@@ -1960,7 +1968,7 @@ async function handleHomeBlockAction(event: PageBlockActionEvent) {
   const item = event.item && typeof event.item === 'object' ? event.item as Record<string, unknown> : {};
   const linkedEntry = findEntryForActionItem(item);
   if (linkedEntry) {
-    await openScene(linkedEntry);
+    await openScene(linkedEntry as CapabilityEntry);
     return;
   }
 
@@ -1977,7 +1985,7 @@ async function handleHomeBlockAction(event: PageBlockActionEvent) {
     actionTarget: orchestrationActionTarget,
     query: workspaceContextQuery.value,
     onRefresh: async () => {
-      await session.bootstrap();
+      await session.loadAppInit();
     },
     onFallback: async (key) => {
       if (key === 'open_my_work') {
@@ -2004,7 +2012,7 @@ async function handleHomeBlockAction(event: PageBlockActionEvent) {
   });
 
   if (!handled && actionKey === 'refresh') {
-    await session.bootstrap();
+    await session.loadAppInit();
   }
 }
 

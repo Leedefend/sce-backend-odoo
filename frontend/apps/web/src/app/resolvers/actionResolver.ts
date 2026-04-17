@@ -88,7 +88,7 @@ function resolveMetaFromContract(contract: unknown, actionId: number): NavMeta {
     out.context = head.context as unknown as string;
   }
   if (head.order !== undefined) {
-    out.order = String(head.order || '');
+    (out as Record<string, unknown>).order = String(head.order || '');
   }
   if (model) out.model = model;
   if (name) out.name = name;

@@ -82,7 +82,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
 import ActionView from './ActionViewShell.vue';
 import ContractFormPage from '../pages/ContractFormPage.vue';
 import StatusPanel from '../components/StatusPanel.vue';
@@ -234,7 +234,7 @@ function openSiblingScene(sceneKey: string) {
   const target = getSceneByKey(sceneKey);
   router.replace({
     path: target?.route || `/s/${sceneKey}`,
-    query: target ? resolveSceneSwitchQuery(target) : resolveSceneSwitchFallbackQuery(),
+    query: (target ? resolveSceneSwitchQuery(target) : resolveSceneSwitchFallbackQuery()) as LocationQueryRaw,
   }).catch(() => {});
 }
 
@@ -321,7 +321,7 @@ function resolveVisibleActionTarget(target: SceneTarget, sceneKey = '') {
     }
     const walk = (nodes: NavNode[]): boolean => {
       for (const node of nodes || []) {
-        if (String(node.meta?.scene_source || '') === 'scene_contract') {
+        if (String((node.meta as Record<string, unknown> | undefined)?.scene_source || '') === 'scene_contract') {
           return true;
         }
         if (node.children?.length && walk(node.children)) {
@@ -488,7 +488,7 @@ async function resolveScene() {
           return;
         }
         if (normalizedRoute !== route.fullPath) {
-          await router.replace({ path: normalizedRoute, query: workspaceContextQuery });
+          await router.replace({ path: normalizedRoute, query: workspaceContextQuery as LocationQueryRaw });
           return;
         }
         // Keep evaluating action/menu/model targets for self-routed scene entries
@@ -563,7 +563,7 @@ async function resolveScene() {
         if (menuNode?.menu_id || menuNode?.id) {
           await router.replace({
             path: `/m/${menuNode.menu_id || menuNode.id}`,
-            query: workspaceContextQuery,
+            query: workspaceContextQuery as LocationQueryRaw,
           });
           return;
         }
@@ -599,7 +599,7 @@ async function resolveScene() {
           && currentMenuId === Number(resolvedAction.menuId || 0)
           && String(route.query.scene_key || '') === sceneKey;
         if (!sameEmbeddedRouteState) {
-          await router.replace({ path: route.path, query: nextQuery });
+          await router.replace({ path: route.path, query: nextQuery as LocationQueryRaw });
           return;
         }
         embeddedActionId.value = resolvedAction.actionId;
@@ -628,7 +628,7 @@ async function resolveScene() {
         return;
       }
       if (!isSameRouteTarget(target.route, workspaceContextQuery)) {
-        await router.replace({ path: target.route, query: workspaceContextQuery });
+        await router.replace({ path: target.route, query: workspaceContextQuery as LocationQueryRaw });
         return;
       }
       setError(

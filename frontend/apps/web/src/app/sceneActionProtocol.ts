@@ -1,4 +1,5 @@
 export interface MutationContract {
+  [key: string]: unknown;
   type: string;
   model: string;
   operation: string;
@@ -7,6 +8,7 @@ export interface MutationContract {
 }
 
 export interface ProjectionRefreshPolicy {
+  [key: string]: unknown;
   on_success: string[];
   on_failure?: string[];
   mode?: string;
@@ -54,7 +56,7 @@ export function normalizeSceneActionProtocol(row: unknown): SceneActionProtocol 
         type: asText(mutationRaw.type),
         model: asText(mutationRaw.model),
         operation: asText(mutationRaw.operation),
-        execute_intent: asText(mutationRaw.execute_intent || mutationRaw.payload_schema?.execute_intent) || undefined,
+        execute_intent: asText(mutationRaw.execute_intent || asDict(mutationRaw.payload_schema).execute_intent) || undefined,
         payload_schema: asDict(mutationRaw.payload_schema),
       }
     : undefined;

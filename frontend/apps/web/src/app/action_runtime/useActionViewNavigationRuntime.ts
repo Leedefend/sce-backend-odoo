@@ -48,7 +48,7 @@ export function useActionViewNavigationRuntime(options: UseActionViewNavigationR
 
   function handleRowClick(row: Dict) {
     const targetModel = options.resolvedModelRef.value || options.modelRef.value;
-    const carryQuery = resolveCarryQuery();
+    const carryQuery = resolveCarryQuery() as Dict;
     if (targetModel === 'project.project') {
       delete carryQuery.scene;
       delete carryQuery.scene_key;

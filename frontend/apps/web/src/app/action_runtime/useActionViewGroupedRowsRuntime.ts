@@ -46,7 +46,7 @@ type UseActionViewGroupedRowsRuntimeOptions = {
   routeQueryMap: Ref<Record<string, unknown>>;
   resolvedModelRef: Ref<string>;
   modelRef: Ref<string>;
-  actionMetaContext: () => Dict | undefined;
+  actionMetaContext: () => Dict | string | undefined;
   resolveEffectiveRequestContext: () => Dict;
   resolveEffectiveRequestContextRaw: () => string;
   mergeContext: (base: Dict | string | undefined, extra?: Dict) => Dict;

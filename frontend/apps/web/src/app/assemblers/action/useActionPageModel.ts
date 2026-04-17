@@ -50,7 +50,7 @@ type UseActionPageModelOptions = {
     groupByOverflow: MaybeRef<unknown[]>;
   };
   focus: {
-    surfaceIntent: MaybeRef<SurfaceIntentInput>;
+    surfaceIntent: MaybeRef<unknown>;
   };
   strict: {
     missingSummary: MaybeRef<string>;
@@ -58,7 +58,13 @@ type UseActionPageModelOptions = {
     title: MaybeRef<string>;
   };
   groupSummary: {
-    items: MaybeRef<Array<Record<string, unknown>>>;
+    items: MaybeRef<Array<{
+      key: string;
+      label: string;
+      count: number;
+      domain: unknown[];
+      value?: unknown;
+    }>>;
   };
   actions: {
     primary: MaybeRef<unknown[]>;
@@ -122,6 +128,12 @@ function asList(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
+function asDict(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
 function toAdvancedRowInput(row: unknown, idx: number) {
   const rowRecord = row && typeof row === 'object' ? (row as Record<string, unknown>) : {};
   const rowId = String(rowRecord.id || idx).trim() || String(idx);
@@ -170,7 +182,13 @@ function buildHudEntries(input: UseActionPageModelOptions['hud']['state']) {
     { label: 'trace_id', value: unref(input.traceId) || unref(input.lastTraceId) || '-' },
     { label: 'latency_ms', value: unref(input.lastLatencyMs) ?? '-' },
     { label: 'route', value: unref(input.routeFullPath) || '' },
-  ];
+  ].map((item) => ({ label: item.label, value: normalizeHudValue(item.value) }));
+}
+
+function normalizeHudValue(value: unknown): string | number | boolean {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value;
+  if (value == null) return '-';
+  return String(value);
 }
 
 export function useActionPageModel(options: UseActionPageModelOptions) {
@@ -215,7 +233,7 @@ export function useActionPageModel(options: UseActionPageModelOptions) {
       showHud: Boolean(unref(options.hud.visible)),
     });
 
-    const focusIntent = unref(options.focus.surfaceIntent);
+    const focusIntent = asDict(unref(options.focus.surfaceIntent)) as Partial<SurfaceIntentInput>;
 
     const actionPrimary = asList(unref(options.actions.primary))
       .map((item) => toActionButtonVM(item))
@@ -302,7 +320,13 @@ export function useActionPageModel(options: UseActionPageModelOptions) {
       groupSummary: sectionVisibility.groupSummary
         ? {
             visible: true,
-            items: asList(unref(options.groupSummary.items)) as Array<Record<string, unknown>>,
+            items: asList(unref(options.groupSummary.items)) as Array<{
+              key: string;
+              label: string;
+              count: number;
+              domain: unknown[];
+              value?: unknown;
+            }>,
           }
         : undefined,
       actions: {

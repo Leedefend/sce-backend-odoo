@@ -10,8 +10,8 @@ type UseActionViewAssigneeRuntimeOptions = {
   pageText: (key: string, fallback: string) => string;
   resolveAssigneeOptionsLoadGuard: (input: { hasAssigneeField: boolean }) => {
     ok: boolean;
-    assigneeOptions: Array<{ id: number; name: string }>;
-    selectedAssigneeId: number | null;
+    assigneeOptions?: Array<{ id: number; name: string }>;
+    selectedAssigneeId?: number | null;
   };
   resolveAssigneeLoadSuccessState: (input: {
     selectedAssigneeId: number | null;
@@ -42,8 +42,8 @@ export function useActionViewAssigneeRuntime(options: UseActionViewAssigneeRunti
       hasAssigneeField: options.hasAssigneeField.value,
     });
     if (!loadGuard.ok) {
-      options.assigneeOptions.value = loadGuard.assigneeOptions;
-      options.selectedAssigneeId.value = loadGuard.selectedAssigneeId;
+      options.assigneeOptions.value = loadGuard.assigneeOptions || [];
+      options.selectedAssigneeId.value = loadGuard.selectedAssigneeId ?? null;
       return;
     }
     try {
@@ -82,4 +82,3 @@ export function useActionViewAssigneeRuntime(options: UseActionViewAssigneeRunti
     loadAssigneeOptions,
   };
 }
-

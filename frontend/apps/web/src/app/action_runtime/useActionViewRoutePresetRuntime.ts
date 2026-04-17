@@ -8,11 +8,11 @@ type RouteSnapshot = {
   savedFilter: string;
   groupBy: string;
   groupValue: string;
-  groupSampleLimitRaw: string;
+  groupSampleLimitRaw: number;
   groupSortRaw: string;
   groupCollapsedRaw: string;
   groupPageRaw: string;
-  groupOffsetRaw: string;
+  groupOffsetRaw: number;
   groupFingerprintRaw: string;
   groupWindowIdRaw: string;
   groupWindowDigestRaw: string;
@@ -257,4 +257,3 @@ export function useActionViewRoutePresetRuntime(options: UseActionViewRoutePrese
     restartLoadWithRouteSync,
   };
 }
-

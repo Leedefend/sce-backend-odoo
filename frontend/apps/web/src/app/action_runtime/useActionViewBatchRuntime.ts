@@ -15,17 +15,24 @@ type BatchRequestLike = {
 type BatchErrorLine = { text: string; actionRaw?: string; actionLabel?: string };
 
 type BatchCatchState = {
+  batchMessage?: string;
+  batchDetails: BatchErrorLine[];
+  failedCsvFileName?: string;
+  failedCsvContentB64?: string;
+  batchFailedOffset?: number;
+  batchHasMoreFailures?: boolean;
+  lastBatchRequest?: BatchRequestLike | null;
+};
+
+type BatchResetState = {
   batchMessage: string;
   batchDetails: BatchErrorLine[];
   failedCsvFileName: string;
   failedCsvContentB64: string;
-  batchFailedOffset: number;
-  batchHasMoreFailures: boolean;
-  lastBatchRequest: BatchRequestLike | null;
-};
-
-type BatchResetState = BatchCatchState & {
-  batchFailedLimit: number;
+  batchFailedOffset?: number;
+  batchHasMoreFailures?: boolean;
+  lastBatchRequest?: BatchRequestLike | null;
+  batchFailedLimit?: number;
 };
 
 type UseActionViewBatchRuntimeOptions = {
@@ -62,7 +69,7 @@ type UseActionViewBatchRuntimeOptions = {
   exportRecordsCsv: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
 
   buildBatchUpdateRequest: (payload: Record<string, unknown>) => Record<string, unknown>;
-  buildBatchErrorLine: (payload: Record<string, unknown>) => BatchErrorLine;
+  buildBatchErrorLine: (payload: Record<string, unknown>) => string;
   applyBatchFailureArtifacts: (result: Record<string, unknown>, plan?: Record<string, unknown>) => void;
 
   resolveBatchOperationResetState: (input: { batchFailedLimit: number }) => BatchResetState;
@@ -121,7 +128,7 @@ type UseActionViewBatchRuntimeOptions = {
   resolveBatchExportCatchState: (input: Record<string, unknown>) => BatchCatchState;
   resolveBatchExportErrorFallback: (input: Record<string, unknown>) => Record<string, unknown>;
 
-  resolveLoadMoreFailuresGuardPlan: (input: Record<string, unknown>) => { ok: boolean; request: BatchRequestLike };
+  resolveLoadMoreFailuresGuardPlan: (input: Record<string, unknown>) => { ok: boolean; request?: BatchRequestLike };
   resolveLoadMoreFailuresRequestPayload: (input: Record<string, unknown>) => Record<string, unknown>;
   resolveLoadMoreFailuresApplyPlan: () => Record<string, unknown>;
   resolveLoadMoreFailuresCatchState: (input: Record<string, unknown>) => BatchCatchState;
@@ -141,7 +148,7 @@ export function useActionViewBatchRuntime(options: UseActionViewBatchRuntimeOpti
     options.failedCsvFileName.value = resetState.failedCsvFileName;
     options.failedCsvContentB64.value = resetState.failedCsvContentB64;
     options.batchFailedOffset.value = resetState.batchFailedOffset;
-    options.batchFailedLimit.value = resetState.batchFailedLimit;
+    options.batchFailedLimit.value = resetState.batchFailedLimit ?? options.batchFailedLimit.value;
     options.batchHasMoreFailures.value = resetState.batchHasMoreFailures;
     options.lastBatchRequest.value = resetState.lastBatchRequest;
 
@@ -249,13 +256,13 @@ export function useActionViewBatchRuntime(options: UseActionViewBatchRuntimeOpti
           text: options.pageText,
         }),
       });
-      options.batchMessage.value = catchState.batchMessage;
+      options.batchMessage.value = catchState.batchMessage || options.batchMessage.value;
       options.batchDetails.value = catchState.batchDetails;
-      options.failedCsvFileName.value = catchState.failedCsvFileName;
-      options.failedCsvContentB64.value = catchState.failedCsvContentB64;
-      options.batchFailedOffset.value = catchState.batchFailedOffset;
-      options.batchHasMoreFailures.value = catchState.batchHasMoreFailures;
-      options.lastBatchRequest.value = catchState.lastBatchRequest;
+      options.failedCsvFileName.value = catchState.failedCsvFileName || '';
+      options.failedCsvContentB64.value = catchState.failedCsvContentB64 || '';
+      options.batchFailedOffset.value = catchState.batchFailedOffset || 0;
+      options.batchHasMoreFailures.value = Boolean(catchState.batchHasMoreFailures);
+      options.lastBatchRequest.value = catchState.lastBatchRequest || null;
     } finally {
       options.batchBusy.value = false;
     }
@@ -322,11 +329,11 @@ export function useActionViewBatchRuntime(options: UseActionViewBatchRuntimeOpti
         }),
       });
       options.batchDetails.value = catchState.batchDetails;
-      options.failedCsvFileName.value = catchState.failedCsvFileName;
-      options.failedCsvContentB64.value = catchState.failedCsvContentB64;
-      options.batchFailedOffset.value = catchState.batchFailedOffset;
-      options.batchHasMoreFailures.value = catchState.batchHasMoreFailures;
-      options.lastBatchRequest.value = catchState.lastBatchRequest;
+      options.failedCsvFileName.value = catchState.failedCsvFileName || '';
+      options.failedCsvContentB64.value = catchState.failedCsvContentB64 || '';
+      options.batchFailedOffset.value = catchState.batchFailedOffset || 0;
+      options.batchHasMoreFailures.value = Boolean(catchState.batchHasMoreFailures);
+      options.lastBatchRequest.value = catchState.lastBatchRequest || null;
     } finally {
       options.batchBusy.value = false;
     }
@@ -375,7 +382,7 @@ export function useActionViewBatchRuntime(options: UseActionViewBatchRuntimeOpti
         options.batchMessage.value = options.resolveExportNoContentMessage(options.pageText);
         return;
       }
-      options.downloadCsv(result.file_name, result.mime_type, result.content_b64);
+      options.downloadCsv(String(result.file_name || ''), String(result.mime_type || ''), String(result.content_b64 || ''));
       options.batchMessage.value = options.resolveExportDoneMessage({ countRaw: result.count, text: options.pageText });
     } catch (err) {
       options.reportBatchError(err, 'batch export failed');
@@ -412,6 +419,7 @@ export function useActionViewBatchRuntime(options: UseActionViewBatchRuntimeOpti
     });
     if (!loadMoreGuard.ok) return;
     const req = loadMoreGuard.request;
+    if (!req) return;
     options.batchBusy.value = true;
     try {
       const result = await options.batchUpdateRecords(options.resolveLoadMoreFailuresRequestPayload({
