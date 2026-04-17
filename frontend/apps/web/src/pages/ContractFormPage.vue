@@ -30,7 +30,7 @@
       v-else
       :title="pageDisplayTitle"
       :subtitle="pageDisplaySubtitle || undefined"
-      :compact="projectDetailStructureAlignMode"
+      :compact="nativeLikeFormSurface"
     >
       <template #meta>
         <p v-if="showHud" class="meta">model={{ model }} · id={{ recordIdDisplay }} · action={{ actionId || '-' }}</p>
@@ -94,7 +94,7 @@
       :class="['card', {
         'card--flow': isProjectCreatePage,
         'card--compact': effectiveCompactMode,
-        'card--project-align': projectDetailStructureAlignMode,
+        'card--project-align': nativeLikeFormSurface,
       }]"
     >
       <section v-if="showPageOverviewStrip" class="page-overview-strip">
@@ -108,7 +108,7 @@
         :steps="statusbarSteps"
         :actions="contractActionStrip"
         :busy="busy"
-        :native-like="projectDetailStructureAlignMode"
+        :native-like="nativeLikeFormSurface"
         @run-action="runAction"
       />
       <StatusPanel
@@ -162,7 +162,7 @@
         </div>
       </section>
 
-      <section :class="['form-grid', { 'form-grid--project-align': projectDetailStructureAlignMode }]">
+      <section :class="['form-grid', { 'form-grid--project-align': nativeLikeFormSurface }]">
         <section v-if="showStructureProjectionSummary" class="block zone-block structure-projection-block">
           <h3>结构投影摘要</h3>
           <p class="zone-collaboration-line">shell 数：{{ structureProjectionSummary.shellCount }}，section 数：{{ structureProjectionSummary.sectionCount }}，tab 数：{{ structureProjectionSummary.tabCount }}</p>
@@ -204,7 +204,7 @@
           :shells="normalizedDetailShells"
           :busy="busy"
           :is-project-create-page="isProjectCreatePage"
-          :native-like="isProjectFormPage && !isProjectCreatePage && !forceStructureVisibilityMode"
+          :native-like="nativeLikeFormSurface"
           :advanced-expanded="advancedExpanded"
           :relation-fallback-adapter="relationFallbackAdapter"
           @field-change="onTemplateFieldChange"
@@ -229,7 +229,7 @@
           <p class="zone-collaboration-line">讨论区：{{ semanticHasChatter ? '已启用' : '未启用' }}</p>
           <p class="zone-collaboration-line">附件区：{{ semanticHasAttachments ? '已启用' : '未启用' }}</p>
         </section>
-        <div v-if="hasAdvancedFields && !isProjectCreatePage && !isProjectFormPage" class="layout-divider advanced-toggle">
+        <div v-if="hasAdvancedFields && !isProjectCreatePage && !nativeLikeFormSurface" class="layout-divider advanced-toggle">
           <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
             {{ advancedExpanded ? '收起高级信息' : '展开高级信息' }}
           </button>
@@ -348,6 +348,8 @@ type ContractAction = {
   enabled: boolean;
   hint: string;
   semantic: string;
+  buttonType?: string;
+  order?: number;
   visibleProfiles: Array<'create' | 'edit' | 'readonly'>;
   mutation?: {
     type: string;
@@ -939,7 +941,7 @@ const contractActionStrip = computed(() => {
     const key = String(action.key || '').trim();
     if (!key || dedup.has(key)) return false;
     dedup.add(key);
-    if (projectDetailStructureAlignMode.value && isTechnicalLabel(action.label)) return false;
+    if ((projectDetailStructureAlignMode.value || nativeLikeFormSurface.value) && isTechnicalLabel(action.label)) return false;
     return true;
   });
   return out;
@@ -976,7 +978,7 @@ const structureAuditMode = computed(() => {
   return String(import.meta.env.VITE_FORM_STRUCTURE_AUDIT || '0').trim() === '1';
 });
 const forceStructureVisibilityMode = computed(() => projectDetailStructureAlignMode.value && structureAuditMode.value);
-const effectiveCompactMode = computed(() => formCompactMode.value && !projectDetailStructureAlignMode.value);
+const effectiveCompactMode = computed(() => formCompactMode.value && !nativeLikeFormSurface.value);
 const layoutShellFlow = computed(() => isProjectCreatePage.value && !effectiveCompactMode.value);
 const pageOverviewItems = computed(() => {
   const items: Array<{ label: string; value: string }> = [];
@@ -995,20 +997,27 @@ const pageOverviewItems = computed(() => {
 });
 const preferNativeFormSurface = computed(() => {
   if (isProjectCreatePage.value) return false;
-  if (!recordId.value) return false;
   if (showFormNativeFallback.value) return false;
   if (isProjectFormPage.value) return true;
-  const viewType = String(contract.value?.head?.view_type || contract.value?.view_type || '').trim().toLowerCase();
-  if (viewType && viewType !== 'form') return false;
+  const deliveredViewType = String(contract.value?.view_type || '').trim().toLowerCase();
+  const head = asRecord(contract.value?.head);
+  const headViewModes = String(head.view_type || head.view_mode || '').trim().toLowerCase();
+  const isFormDelivery = deliveredViewType === 'form'
+    || (!deliveredViewType && (headViewModes === 'form' || headViewModes.split(',').map((item) => item.trim()).includes('form')));
+  if (!isFormDelivery) return false;
   return contractReadiness.value.usable && layoutNodes.value.some((node) => node.kind === 'field');
 });
+const nativeLikeFormSurface = computed(() => (
+  preferNativeFormSurface.value
+  && !forceStructureVisibilityMode.value
+));
 const showPageOverviewStrip = computed(() => {
-  if (projectDetailStructureAlignMode.value) return false;
+  if (nativeLikeFormSurface.value) return false;
   return pageOverviewItems.value.length > 0 && !preferNativeFormSurface.value && !effectiveCompactMode.value;
 });
 const showCommandBar = computed(() => {
   if (effectiveCompactMode.value) return false;
-  if (projectDetailStructureAlignMode.value) {
+  if (nativeLikeFormSurface.value) {
     return statusbarSteps.value.length > 0 || contractActionStrip.value.length > 0;
   }
   if (!semanticHasSummaryZone.value && !semanticHasActionZone.value) return false;
@@ -1016,11 +1025,12 @@ const showCommandBar = computed(() => {
 });
 const showDetailShellZone = computed(() => semanticHasDetailZone.value);
 const showRelationZoneBlock = computed(() => {
-  if (projectDetailStructureAlignMode.value) return false;
+  if (nativeLikeFormSurface.value) return false;
   if (!semanticHasRelationZone.value) return false;
   return semanticRelationZoneItems.value.length > 0 && !preferNativeFormSurface.value && !effectiveCompactMode.value;
 });
 const showCollaborationZoneBlock = computed(() => {
+  if (nativeLikeFormSurface.value) return false;
   if (!semanticHasCollaborationZone.value) return false;
   return (semanticHasChatter.value || semanticHasAttachments.value) && !effectiveCompactMode.value;
 });
@@ -1065,17 +1075,17 @@ const hideBodyActionsSection = computed(() => Boolean(formGovernance.value.hide_
 const showContractWarnings = computed(() => warnings.value.length > 0 && !isProjectCreatePage.value && (!preferNativeFormSurface.value || showHud.value));
 const showStrictContractGuard = computed(() => Boolean(strictContractMissingSummary.value) && !isProjectCreatePage.value && (!preferNativeFormSurface.value || showHud.value));
 const showWorkflowTransitions = computed(() => {
-  if (projectDetailStructureAlignMode.value) return false;
+  if (nativeLikeFormSurface.value) return false;
   if (!semanticHasActionZone.value) return false;
   return workflowTransitions.value.length > 0 && !isProjectCreatePage.value && !hideWorkflowSection.value && !preferNativeFormSurface.value && !effectiveCompactMode.value;
 });
 const showInlineSearchFilters = computed(() => {
-  if (projectDetailStructureAlignMode.value) return false;
+  if (nativeLikeFormSurface.value) return false;
   if (!semanticHasActionZone.value) return false;
   return showSearchFilters.value && searchFilters.value.length > 0 && !isProjectCreatePage.value && !hideSearchFiltersSection.value && !preferNativeFormSurface.value && !effectiveCompactMode.value;
 });
 const showBodyActionStrip = computed(() => {
-  if (projectDetailStructureAlignMode.value) return false;
+  if (nativeLikeFormSurface.value) return false;
   if (!semanticHasActionZone.value) return false;
   return bodyActions.value.length > 0 && !isProjectCreatePage.value && !hideBodyActionsSection.value && !preferNativeFormSurface.value && !effectiveCompactMode.value;
 });
@@ -1354,6 +1364,17 @@ function many2oneLabel(name: string) {
   const matched = relationOptionsForField(name).find((item) => item.id === ids[0]);
   if (matched?.label) return matched.label;
   return relationKeyword(name) || `#${ids[0]}`;
+}
+
+function mergeRelationOptions(current: RelationOption[], incoming: RelationOption[]): RelationOption[] {
+  const merged = new Map<number, RelationOption>();
+  for (const option of current) {
+    if (option.id > 0) merged.set(option.id, option);
+  }
+  for (const option of incoming) {
+    if (option.id > 0) merged.set(option.id, option);
+  }
+  return Array.from(merged.values());
 }
 
 function relationOptionsForField(name: string) {
@@ -1907,7 +1928,7 @@ async function queryRelationOptions(name: string, keyword: string) {
       .filter((item): item is RelationOption => Boolean(item));
     relationOptions.value = {
       ...relationOptions.value,
-      [name]: mapped,
+      [name]: mergeRelationOptions(relationOptions.value[name] || [], mapped),
     };
   } catch (err) {
     if (err instanceof ApiError) {
@@ -2061,7 +2082,7 @@ async function loadRelationOptions() {
         silentErrors: true,
       });
       const records = Array.isArray(listed?.records) ? listed.records : [];
-      next[name] = records
+      const mapped = records
         .map((row) => {
           const id = Number((row as Record<string, unknown>).id);
           if (!Number.isFinite(id) || id <= 0) return null;
@@ -2073,6 +2094,7 @@ async function loadRelationOptions() {
           return { id: Math.trunc(id), label };
         })
         .filter((item): item is RelationOption => Boolean(item));
+      next[name] = mergeRelationOptions(next[name] || [], mapped);
     } catch (err) {
       if (err instanceof ApiError) {
         const denied = err.status === 403 || String(err.reasonCode || '').toUpperCase() === 'PERMISSION_DENIED';
@@ -2166,6 +2188,7 @@ const contractActions = computed<ContractAction[]>(() => {
       enabled: gated.enabled,
       hint: gated.hint,
       semantic,
+      buttonType: kind === 'object' ? 'object' : '',
       visibleProfiles: ['create', 'edit', 'readonly'],
       mutation: protocol?.mutation,
       refreshPolicy: protocol?.refresh_policy,
@@ -2179,6 +2202,12 @@ const contractActions = computed<ContractAction[]>(() => {
   const merged: Array<Record<string, unknown>> = [];
   if (preferSceneReadyActions) {
     merged.push(...sceneReadyActions);
+  } else if (nativeLikeFormSurface.value) {
+    merged.push(...formViewSurfaceActions.value);
+    if (Array.isArray(contract.value?.buttons)) merged.push(...(contract.value?.buttons as Array<Record<string, unknown>>));
+    if (Array.isArray(contract.value?.toolbar?.header)) merged.push(...(contract.value?.toolbar?.header as Array<Record<string, unknown>>));
+    if (Array.isArray(contract.value?.toolbar?.sidebar)) merged.push(...(contract.value?.toolbar?.sidebar as Array<Record<string, unknown>>));
+    if (Array.isArray(contract.value?.toolbar?.footer)) merged.push(...(contract.value?.toolbar?.footer as Array<Record<string, unknown>>));
   } else {
     if (Array.isArray(contract.value?.buttons)) merged.push(...(contract.value?.buttons as Array<Record<string, unknown>>));
     merged.push(...formViewSurfaceActions.value);
@@ -2189,11 +2218,14 @@ const contractActions = computed<ContractAction[]>(() => {
 
   const dedup = new Set<string>();
   const out: ContractAction[] = [];
+  let actionOrder = 0;
   for (const row of merged) {
     if (preferSceneReadyActions) {
       const mapped = mapSceneReadyAction(row);
       if (!mapped || dedup.has(mapped.key)) continue;
       dedup.add(mapped.key);
+      mapped.order = actionOrder;
+      actionOrder += 1;
       out.push(mapped);
       continue;
     }
@@ -2202,6 +2234,7 @@ const contractActions = computed<ContractAction[]>(() => {
     dedup.add(key);
     const payload = parseMaybeJsonRecord(row.payload);
     const kind = normalizeActionKind(row.kind);
+    const buttonType = (asText(payload.type) || asText(row.type)).toLowerCase();
     const level = String(row.level || 'body').trim().toLowerCase();
     const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref);
     const methodName = detectMethodName(key, String(payload.method || '').trim());
@@ -2239,17 +2272,33 @@ const contractActions = computed<ContractAction[]>(() => {
       enabled: gated.enabled,
       hint: gated.hint,
       semantic: policy.semantic,
+      buttonType,
+      order: actionOrder,
       visibleProfiles,
     });
+    actionOrder += 1;
   }
+  const levelRank = (level: string): number => {
+    if (level === 'header') return 0;
+    if (level === 'toolbar') return 1;
+    if (level === 'smart') return 2;
+    if (level === 'row') return 3;
+    if (level === 'footer') return 4;
+    return 5;
+  };
   return out.sort((a, b) => {
-    const levelDelta = a.level.localeCompare(b.level);
+    const levelDelta = levelRank(a.level) - levelRank(b.level);
     if (levelDelta !== 0) return levelDelta;
-    return a.label.localeCompare(b.label, 'zh-CN');
+    const orderDelta = (a.order ?? 0) - (b.order ?? 0);
+    if (orderDelta !== 0) return orderDelta;
+    return a.key.localeCompare(b.key);
   });
 });
 
-const headerActions = computed(() => contractActions.value.filter((item) => item.level === 'header' || item.level === 'toolbar'));
+const headerActions = computed(() => contractActions.value.filter((item) => {
+  if (nativeLikeFormSurface.value) return item.level === 'header';
+  return item.level === 'header' || item.level === 'toolbar';
+}));
 const bodyActions = computed(() => {
   if (isProjectFormPage.value) return [];
   return contractActions.value.filter((item) => item.level !== 'header' && item.level !== 'toolbar');
@@ -2988,7 +3037,7 @@ function visibleTreeSectionFields(section: LayoutTreeSection) {
 }
 
 function treeSectionTemplateFields(section: LayoutTreeSection): FormSectionFieldSchema[] {
-  return buildSectionFieldSchemas(visibleTreeSectionFields(section));
+  return applyFieldDisplayValues(buildSectionFieldSchemas(visibleTreeSectionFields(section)));
 }
 
 const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
@@ -3009,6 +3058,18 @@ const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
   resolveRelationCreateMode: (fieldName, descriptor) => relationCreateMode(fieldName, descriptor),
   many2oneCreateToken: MANY2ONE_CREATE_OPTION,
 });
+
+function applyFieldDisplayValues(fields: FormSectionFieldSchema[]): FormSectionFieldSchema[] {
+  return fields.map((field) => {
+    if (field.type !== 'many2one') return field;
+    const label = many2oneLabel(field.name);
+    if (!label) return field;
+    return {
+      ...field,
+      value: label,
+    };
+  });
+}
 
 const detailShells = computed<DetailShellView[]>(() => buildDetailShellViewsFromTree({
   layoutTrees: layoutTrees.value,
@@ -3052,11 +3113,44 @@ function isRenderableSection(section: DetailSectionView): boolean {
   return true;
 }
 
+function dedupeNativeSectionFields(section: DetailSectionView, seenFields: Set<string>): DetailSectionView {
+  const fields = section.fields.filter((field) => {
+    const name = String(field.name || '').trim();
+    if (!name) return true;
+    if (seenFields.has(name)) return false;
+    seenFields.add(name);
+    return true;
+  });
+  return {
+    ...section,
+    fields,
+  };
+}
+
+function dedupeNativeShellFields(shell: DetailShellView, seenFields: Set<string>): DetailShellView {
+  const sections = Array.isArray(shell.sections)
+    ? shell.sections.map((section) => dedupeNativeSectionFields(section, seenFields))
+    : shell.sections;
+  const tabs = Array.isArray(shell.tabs)
+    ? shell.tabs.map((tab) => ({
+      ...tab,
+      sections: tab.sections.map((section) => dedupeNativeSectionFields(section, seenFields)),
+    }))
+    : shell.tabs;
+  return {
+    ...shell,
+    sections,
+    tabs,
+  };
+}
+
 const normalizedDetailShells = computed<DetailShellView[]>(() => {
   const shells = detailShells.value;
-  if (!projectDetailStructureAlignMode.value) return shells;
+  if (!nativeLikeFormSurface.value) return shells;
+  const seenFields = new Set<string>();
   return shells
     .filter((shell) => shell.kind !== 'header')
+    .map((shell) => dedupeNativeShellFields(shell, seenFields))
     .map((shell) => {
       const normalizedSections = Array.isArray(shell.sections)
         ? shell.sections.filter((section) => isRenderableSection(section))
@@ -3977,6 +4071,20 @@ watchEffect(() => {
     model: model.value,
     actionId: actionId.value,
     recordId: recordId.value,
+    preferNativeFormSurface: preferNativeFormSurface.value,
+    nativeLikeFormSurface: nativeLikeFormSurface.value,
+    deliveredViewType: String(contract.value?.view_type || '').trim(),
+    headViewType: String(asRecord(contract.value?.head).view_type || '').trim(),
+    contractActionLabels: contractActions.value.map((action) => ({
+      key: action.key,
+      label: action.label,
+      level: action.level,
+      kind: action.kind,
+      buttonType: action.buttonType,
+      order: action.order,
+    })),
+    headerActionLabels: headerActions.value.map((action) => action.label),
+    contractActionStripLabels: contractActionStrip.value.map((action) => action.label),
     contractLoaded: Boolean(contract.value),
     contractHeadTitle: String(contract.value?.head?.title || '').trim(),
     fieldCount: Object.keys(contract.value?.fields || {}).length,
@@ -4079,10 +4187,11 @@ async function runAction(action: ContractAction) {
   if ((action.kind === 'object' || action.kind === 'server') && action.methodName && recordId.value) {
     busyKind.value = 'action';
     try {
+      const executeButtonType = action.buttonType === 'action' ? 'action' : 'object';
       const response = await executeButton({
         model: action.targetModel || model.value,
         res_id: recordId.value,
-        button: { name: action.methodName, type: action.kind === 'server' ? 'server' : 'object' },
+        button: { name: action.methodName, type: executeButtonType },
         context: action.context,
         meta: {
           menu_id: Number(route.query.menu_id || 0) || undefined,

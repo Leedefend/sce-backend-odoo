@@ -21,17 +21,110 @@
           <strong>{{ title }}</strong>
           <span>{{ recordCountSafe }} 条</span>
         </div>
-        <div class="topbar-search">
+        <div class="topbar-search" :class="{ 'topbar-search--native': nativeLike }">
           <input
             v-model="searchInputValue"
             type="search"
             :placeholder="searchPlaceholder || '搜索'"
             :disabled="loading"
+            @focus="openNativeSearchMenu"
+            @click="openNativeSearchMenu"
+            @keydown.escape="closeNativeSearchMenu"
             @keyup.enter="submitSearch"
           />
+          <button
+            v-if="nativeLike"
+            type="button"
+            class="search-menu-toggle"
+            :class="{ active: searchMenuOpen }"
+            :disabled="loading"
+            @click="toggleNativeSearchMenu"
+          >
+            ▾
+          </button>
           <button type="button" :disabled="loading" @click="submitSearch">搜索</button>
+          <div v-if="showNativeSearchMenu" class="native-search-menu" @mousedown.prevent>
+            <p v-if="!nativeSearchMenuHasItems" class="native-search-menu-empty">
+              当前搜索视图没有可用筛选或分组
+            </p>
+            <section
+              v-for="section in nativeSearchMenuSections"
+              :key="section.key"
+              class="native-search-menu-section"
+            >
+              <p>{{ section.label }}</p>
+              <button
+                v-for="item in section.items"
+                :key="`${section.key}-${item.key}`"
+                type="button"
+                :class="{ active: isNativeSearchMenuItemActive(section.key, item.key, item.kind) }"
+                :disabled="loading || !isNativeSearchMenuItemExecutable(section.key, item)"
+                @click="applyNativeSearchMenuItem(section.key, item)"
+              >
+                {{ item.label }}
+              </button>
+              <button
+                v-if="section.key === 'filters' && activeContractFilterKey"
+                type="button"
+                class="native-search-menu-clear"
+                :disabled="loading"
+                @click="clearNativeSearchMenuSection(section.key)"
+              >
+                清除筛选器
+              </button>
+              <button
+                v-if="section.key === 'group_by' && activeGroupByField"
+                type="button"
+                class="native-search-menu-clear"
+                :disabled="loading"
+                @click="clearNativeSearchMenuSection(section.key)"
+              >
+                清除分组
+              </button>
+            </section>
+          </div>
         </div>
-        <div class="topbar-tabs">
+        <div v-if="showNativeFilterChips" class="topbar-tabs topbar-tabs--contract">
+          <button
+            v-for="chip in quickFilters || []"
+            :key="`quick-filter-${chip.key}`"
+            type="button"
+            :class="{ active: activeContractFilterKey === chip.key }"
+            :disabled="loading"
+            @click="onApplyContractFilter?.(chip.key)"
+          >
+            {{ chip.label }}
+          </button>
+          <button
+            v-if="activeContractFilterKey"
+            type="button"
+            :disabled="loading"
+            @click="onClearContractFilter?.()"
+          >
+            清除
+          </button>
+        </div>
+        <div v-if="showNativeGroupChips" class="topbar-tabs topbar-tabs--group">
+          <button
+            v-for="chip in groupByOptions || []"
+            :key="`group-by-${chip.key}`"
+            type="button"
+            :class="{ active: activeGroupByField === chip.key }"
+            :disabled="loading"
+            @click="onApplyGroupBy?.(chip.key)"
+          >
+            {{ chip.label }}
+          </button>
+          <button
+            v-if="activeGroupByField"
+            type="button"
+            :disabled="loading"
+            @click="onClearGroupBy?.()"
+          >
+            清除分组
+          </button>
+        </div>
+        <div v-else-if="!nativeLike" class="topbar-tabs">
           <button
             type="button"
             :class="{ active: (filterValue || 'all') === 'all' }"
@@ -164,11 +257,11 @@
     </section>
 
     <section v-if="status === 'ok' && showDetailZone" class="table">
-      <div v-if="!compactDeliveryMode" class="table-hint">{{ rowActionHintText }}</div>
+      <div v-if="!compactDeliveryMode && !nativeLike" class="table-hint">{{ rowActionHintText }}</div>
       <section v-if="groupedRows.length" class="grouped-table">
         <header class="grouped-toolbar">
-          <span>分组结果</span>
-          <div class="grouped-toolbar-actions">
+          <span>{{ groupToolbarLabel }}</span>
+          <div v-if="!nativeLike" class="grouped-toolbar-actions">
             <button
               type="button"
               class="grouped-sort-btn"
@@ -207,7 +300,7 @@
             </button>
             <p>{{ group.label }}</p>
             <span>{{ group.count }} 条</span>
-            <div v-if="onGroupPageChange" class="group-page">
+            <div v-if="!nativeLike && onGroupPageChange" class="group-page">
               <button
                 type="button"
                 class="group-page-btn"
@@ -243,7 +336,7 @@
               </button>
             </div>
             <button
-              v-if="onOpenGroup"
+              v-if="!nativeLike && onOpenGroup"
               type="button"
               class="group-open-btn"
               :disabled="loading || Boolean(group.loading)"
@@ -356,6 +449,32 @@ type ToolbarChip = {
   label: string;
 };
 
+type NativeSearchMenuItem = {
+  key: string;
+  label: string;
+  kind?: string;
+  field?: string;
+  section?: string;
+  source?: string;
+  domain_raw?: string;
+  context_raw?: string;
+  default?: boolean;
+  is_default?: boolean;
+  executable?: boolean;
+};
+
+type NativeSearchMenuSection = {
+  key: string;
+  label: string;
+  items: NativeSearchMenuItem[];
+};
+
+type NativeSearchMenu = {
+  interaction_model?: string;
+  sections?: NativeSearchMenuSection[];
+  controls?: NativeSearchMenuItem[];
+};
+
 type ToolbarSection = {
   key: string;
   kind: string;
@@ -408,6 +527,7 @@ const props = defineProps<{
   quickFilters?: ToolbarChip[];
   savedFilters?: ToolbarChip[];
   groupByOptions?: ToolbarChip[];
+  nativeSearchMenu?: NativeSearchMenu | null;
   searchPanelOptions?: ToolbarChip[];
   searchableFieldOptions?: ToolbarChip[];
   searchableFieldTotalCount?: number;
@@ -503,6 +623,7 @@ const props = defineProps<{
   onGroupSortChange?: (next: 'asc' | 'desc') => void;
   collapsedGroupKeys?: string[];
   onGroupCollapsedChange?: (keys: string[]) => void;
+  nativeLike?: boolean;
 }>();
 const errorCopy = computed(() =>
   resolveErrorCopy(
@@ -514,6 +635,7 @@ const emptyCopy = computed(() =>
   resolveEmptyCopy('list', { primaryActionLabel: props.primaryActionLabel }),
 );
 const emptyMessageText = computed(() => {
+  if (props.nativeLike) return emptyCopy.value.message;
   const pageTitle = String(props.title || '').trim();
   if (pageTitle.includes('投标')) {
     const actionLabel = String(props.primaryActionLabel || '').trim() || '新建记录';
@@ -528,6 +650,7 @@ const groupJumpPageInput = ref<Record<string, string>>({});
 const groupSortDesc = computed(() => (props.groupSort || 'desc') === 'desc');
 const sortedGroupedRows = computed(() => {
   const rows = [...groupedRows.value];
+  if (props.nativeLike) return rows;
   rows.sort((a, b) => {
     const cmp = Number(a.count || 0) - Number(b.count || 0);
     if (cmp === 0) return String(a.label || '').localeCompare(String(b.label || ''));
@@ -536,7 +659,53 @@ const sortedGroupedRows = computed(() => {
   return rows;
 });
 const groupSortLabel = computed(() => (groupSortDesc.value ? '按数量降序' : '按数量升序'));
+const groupToolbarLabel = computed(() => {
+  const activeLabel = String(props.groupByOptions?.find((item) => item.key === props.activeGroupByField)?.label || '').trim();
+  if (activeLabel) return activeLabel;
+  return props.nativeLike ? '分组' : '分组结果';
+});
+const searchMenuOpen = ref(false);
+const nativeSearchMenuSections = computed<NativeSearchMenuSection[]>(() => {
+  if (!props.nativeLike) return [];
+  const fallbackSections: NativeSearchMenuSection[] = [
+    { key: 'filters', label: '筛选', items: nativeMenuItemsFromChips(props.quickFilters || [], 'filters') },
+    { key: 'group_by', label: '分组方式', items: nativeMenuItemsFromChips(props.groupByOptions || [], 'group_by') },
+    { key: 'favorites', label: '收藏夹', items: nativeMenuItemsFromChips(props.savedFilters || [], 'favorites') },
+    { key: 'searchpanel', label: '搜索面板', items: nativeMenuItemsFromChips(props.searchPanelOptions || [], 'searchpanel') },
+  ];
+  const sections = Array.isArray(props.nativeSearchMenu?.sections) ? props.nativeSearchMenu.sections : fallbackSections;
+  const controls = Array.isArray(props.nativeSearchMenu?.controls)
+    ? props.nativeSearchMenu.controls
+    : [];
+  const normalized = sections
+    .map((section) => {
+      const key = String(section?.key || '').trim();
+      const label = String(section?.label || key).trim();
+      const items = Array.isArray(section?.items) ? section.items : [];
+      const sectionControls = controls.filter((item) => String((item as { section?: string })?.section || '').trim() === key);
+      return {
+        key,
+        label,
+        items: [...items, ...sectionControls]
+          .map((item) => normalizeNativeSearchMenuItem(item, key))
+          .filter((item) => item.key && item.label),
+      };
+    })
+    .filter((section) => section.key && section.label);
+  if (normalized.some((section) => section.items.length > 0)) return normalized;
+  return fallbackSections;
+});
+const nativeSearchMenuDeclared = computed(() =>
+  props.nativeLike,
+);
+const nativeSearchMenuHasItems = computed(() =>
+  nativeSearchMenuSections.value.some((section) => section.items.length > 0),
+);
+const showNativeSearchMenu = computed(() => props.nativeLike && searchMenuOpen.value && nativeSearchMenuDeclared.value);
+const showNativeFilterChips = computed(() => false);
+const showNativeGroupChips = computed(() => false);
 const rowActionHintText = computed(() => {
+  if (props.nativeLike) return '';
   if (groupedRows.value.length > 0) {
     return '点击分组内记录查看详情；可使用“展开/收起”“查看全部”继续处理分组数据';
   }
@@ -597,8 +766,8 @@ const canPageNext = computed(() => paginationOffset.value + paginationLimit.valu
 const paginationPageText = computed(() => `${paginationCurrentPage.value} / ${paginationTotalPages.value} 页`);
 const pageModeLabelText = computed(() => pageModeLabel(props.pageMode || 'list'));
 const compactDeliveryMode = computed(() => String(import.meta.env.VITE_UI_COMPACT_MODE || '1').trim() !== '0');
-const headerSubtitle = computed(() => compactDeliveryMode.value ? '' : props.subtitle);
-const headerModeLabel = computed(() => compactDeliveryMode.value ? '' : pageModeLabelText.value);
+const headerSubtitle = computed(() => compactDeliveryMode.value || props.nativeLike ? '' : props.subtitle);
+const headerModeLabel = computed(() => compactDeliveryMode.value || props.nativeLike ? '' : pageModeLabelText.value);
 const showUnifiedTopbar = computed(() => showActionZone.value);
 const searchInputValue = ref(String(props.searchTerm || ''));
 const collapsedSet = computed(() => new Set(Array.isArray(props.collapsedGroupKeys) ? props.collapsedGroupKeys : []));
@@ -791,6 +960,93 @@ watch(
   { immediate: true },
 );
 
+function openNativeSearchMenu() {
+  if (!props.nativeLike || props.loading || !nativeSearchMenuDeclared.value) return;
+  searchMenuOpen.value = true;
+}
+
+function closeNativeSearchMenu() {
+  searchMenuOpen.value = false;
+}
+
+function toggleNativeSearchMenu() {
+  if (!props.nativeLike || props.loading || !nativeSearchMenuDeclared.value) return;
+  searchMenuOpen.value = !searchMenuOpen.value;
+}
+
+function nativeMenuItemsFromChips(rows: ToolbarChip[], kind: string): NativeSearchMenuItem[] {
+  return rows
+    .map((item) => ({
+      key: String(item?.key || '').trim(),
+      label: String(item?.label || item?.key || '').trim(),
+      kind,
+      executable: true,
+    }))
+    .filter((item) => item.key && item.label);
+}
+
+function normalizeNativeSearchMenuItem(item: NativeSearchMenuItem, fallbackKind: string): NativeSearchMenuItem {
+  const source = String((item as { source?: string })?.source || '').trim();
+  const domainRaw = String((item as { domain_raw?: string })?.domain_raw || '').trim();
+  const contextRaw = String((item as { context_raw?: string })?.context_raw || '').trim();
+  const isDefault = item?.default === true || item?.is_default === true;
+  const executable = item?.executable === true
+    || (source !== 'action_domain' && !isDefault && Boolean(domainRaw || contextRaw || item?.field));
+  return {
+    key: String(item?.key || '').trim(),
+    label: String(item?.label || item?.key || '').trim(),
+    kind: String(item?.kind || fallbackKind).trim() || fallbackKind,
+    field: String(item?.field || '').trim(),
+    section: String(item?.section || '').trim(),
+    source,
+    domain_raw: domainRaw,
+    context_raw: contextRaw,
+    default: item?.default,
+    is_default: item?.is_default,
+    executable,
+  };
+}
+
+function isNativeSearchMenuItemExecutable(sectionKey: string, item: NativeSearchMenuItem) {
+  if (item.kind === 'control') return false;
+  if (sectionKey === 'searchpanel') return false;
+  return item.executable === true;
+}
+
+function isNativeSearchMenuItemActive(sectionKey: string, itemKey: string, kind?: string) {
+  if (kind === 'control') return false;
+  if (sectionKey === 'filters') return String(props.activeContractFilterKey || '') === itemKey;
+  if (sectionKey === 'favorites') return String(props.activeSavedFilterKey || '') === itemKey;
+  if (sectionKey === 'group_by') return String(props.activeGroupByField || '') === itemKey;
+  return false;
+}
+
+function applyNativeSearchMenuItem(sectionKey: string, item: NativeSearchMenuItem) {
+  const itemKey = String(item?.key || '').trim();
+  if (props.loading || !itemKey) return;
+  if (!isNativeSearchMenuItemExecutable(sectionKey, item)) return;
+  if (sectionKey === 'filters') {
+    props.onApplyContractFilter?.(itemKey);
+  } else if (sectionKey === 'favorites') {
+    props.onApplySavedFilter?.(itemKey);
+  } else if (sectionKey === 'group_by') {
+    props.onApplyGroupBy?.(itemKey);
+  }
+  closeNativeSearchMenu();
+}
+
+function clearNativeSearchMenuSection(sectionKey: string) {
+  if (props.loading) return;
+  if (sectionKey === 'filters') {
+    props.onClearContractFilter?.();
+  } else if (sectionKey === 'favorites') {
+    props.onClearSavedFilter?.();
+  } else if (sectionKey === 'group_by') {
+    props.onClearGroupBy?.();
+  }
+  closeNativeSearchMenu();
+}
+
 function submitSearch() {
   if (props.loading) return;
   props.onSearch(searchInputValue.value || '');
@@ -859,7 +1115,7 @@ const batchDetails = computed<Array<string | BatchDetailLine>>(() =>
 );
 const selectableRows = computed(() => props.records.map((row) => rowId(row)).filter((id): id is number => typeof id === 'number'));
 const showSelectionColumn = computed(() => !!props.onToggleSelection && !!props.onToggleSelectionAll && !!props.onBatchAction);
-const showBatchBar = computed(() => showSelectionColumn.value && groupedRows.value.length === 0);
+const showBatchBar = computed(() => !props.nativeLike && showSelectionColumn.value && groupedRows.value.length === 0);
 const showArchive = computed(() => props.showArchive !== false);
 const showActivate = computed(() => props.showActivate !== false);
 const allSelected = computed(() => {
@@ -1035,6 +1291,7 @@ function columnLabel(col: string) {
 }
 
 .topbar-search {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1049,10 +1306,94 @@ function columnLabel(col: string) {
   padding: 0 10px;
 }
 
+.topbar-search--native input {
+  padding-right: 28px;
+}
+
+.search-menu-toggle {
+  width: 32px;
+  padding: 0;
+}
+
+.search-menu-toggle.active {
+  border-color: #1d4ed8;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.native-search-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 10px;
+  width: min(620px, calc(100vw - 48px));
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.16);
+}
+
+.native-search-menu-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.native-search-menu-section p {
+  margin: 0;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.native-search-menu-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 8px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 12px;
+  background: #f8fafc;
+}
+
+.native-search-menu-section button {
+  justify-content: flex-start;
+  width: 100%;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.native-search-menu-section button.active {
+  border-color: #1d4ed8;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.native-search-menu-section button:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+  background: #f8fafc;
+}
+
+.native-search-menu-clear {
+  color: #991b1b;
+}
+
 .topbar-search button,
 .topbar-tabs button,
 .topbar-pagination button,
 .topbar-sort select {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   height: 32px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
