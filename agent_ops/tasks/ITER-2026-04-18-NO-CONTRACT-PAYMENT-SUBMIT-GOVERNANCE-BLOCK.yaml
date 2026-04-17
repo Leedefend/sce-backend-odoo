@@ -1,0 +1,83 @@
+task_id: ITER-2026-04-18-NO-CONTRACT-PAYMENT-SUBMIT-GOVERNANCE-BLOCK
+title: Prepare no-contract payment submit semantic fix and record governance block
+type: high-risk-governance-block
+status: blocked_by_governance
+priority: high
+mode: screen
+
+goal: >
+  Prepare the backend semantic fix for no-contract daily/non-contract payment
+  submission and record why implementation is blocked by current AGENTS high-risk
+  payment stop rules.
+
+user_visible_outcome:
+  - "确认用户已授权补齐无合同付款办理能力，但当前仓库治理规则还没有开放 payment 业务语义修改例外。"
+
+scope:
+  allowed_paths:
+    - docs/ops/business_continuity/no_contract_payment_submit_governance_block_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - agent_ops/tasks/ITER-2026-04-18-NO-CONTRACT-PAYMENT-SUBMIT-GOVERNANCE-BLOCK.yaml
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - deploy/**
+    - scripts/**
+    - security/**
+    - record_rules/**
+    - ir.model.access.csv
+    - __manifest__.py
+
+context:
+  branch: codex/next-round
+  baseline_sha: 215d40d
+  prior_task: ITER-2026-04-18-NO-CONTRACT-PAYMENT-OPERATION-GAP-SCREEN
+  explicit_user_authorization: true
+  authorization_message: "这个已经是新系统能力缺口了，授权完善"
+
+architecture:
+  layer_target: Business Fact Rule
+  module: no-contract payment submit semantics
+  module_owner: construction industry business continuity
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Allowing payment submission without contract_id for daily/non-contract
+    outflows is a payment business rule. It is not a frontend rendering concern
+    and must not be patched in scene orchestration.
+  reason: >
+    User confirmed this is a new-system capability gap and authorized fixing it.
+    However, the current AGENTS stop rules require immediate stop on any
+    *payment* file touch. The only payment/settlement exception is scoped to
+    orchestration-boundary recovery and explicitly excludes payment business
+    semantics.
+
+change_rules:
+  - do not modify payment files in this blocked governance batch
+  - record the required exact file scope and verification plan
+  - require a new governance exception before implementation
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-18-NO-CONTRACT-PAYMENT-SUBMIT-GOVERNANCE-BLOCK.yaml
+
+risk:
+  level: high
+  manual_approval_required: true
+  approval_received: true
+  blocked_reason: payment_business_semantics_not_allowed_by_current_exception_set
+
+stop_conditions:
+  - payment_file_touch_without_governance_exception
+  - frontend_special_case_suggested
+  - settlement_or_account_semantics_changed
+
+deliverables:
+  - governance block report with required next exception and exact implementation scope
+
+rollback:
+  - git restore docs/ops/business_continuity/no_contract_payment_submit_governance_block_v1.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-18-NO-CONTRACT-PAYMENT-SUBMIT-GOVERNANCE-BLOCK.yaml
+
+depends_on:
+  - ITER-2026-04-18-NO-CONTRACT-PAYMENT-OPERATION-GAP-SCREEN

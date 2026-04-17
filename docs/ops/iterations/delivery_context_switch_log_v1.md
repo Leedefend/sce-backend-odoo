@@ -22161,3 +22161,12 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - status: `PASS_WITH_RISK`
 - verification: `validate_task PASS; static read-only inspection found action_submit and available_actions still require contract_id before submit`
 - next_step: `STOP before code change; open dedicated high-risk backend payment business-semantics task to allow no-contract daily/non-contract payments without weakening settlement/contract-selected checks`
+- date: 2026-04-18
+- task: ITER-2026-04-18-NO-CONTRACT-PAYMENT-SUBMIT-GOVERNANCE-BLOCK
+- branch: codex/next-round
+- layer_target: Business Fact Rule
+- module: no-contract payment submit semantics
+- reason: user authorized fixing no-contract payment submit, but implementation requires touching *payment* business semantics outside current AGENTS exceptions
+- status: `BLOCKED_BY_GOVERNANCE`
+- verification: `validate_task PASS; no payment code touched; required paths identified as payment_request.py and payment_request_available_actions.py`
+- next_step: `add a narrow AGENTS/governance exception for dedicated no-contract payment business-continuity batches, then implement and verify the two-file backend semantic fix`
