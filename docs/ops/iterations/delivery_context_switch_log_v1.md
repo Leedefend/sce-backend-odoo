@@ -21854,3 +21854,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; py_compile PASS; dry-run PASS; write PASS; post-write check PASS; SQL distribution PASS`
 - next_step: `Payment continuity is a dedicated high-risk track and must not be mixed into contract sync.`
 - stop_condition: `none`
+### 2026-04-17T21:30:06+08:00
+- blocker_key: `iter_legacy_payment_approval_downstream_fact_state_sync_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-LEGACY-PAYMENT-APPROVAL-DOWNSTREAM-FACT-STATE-SYNC`
+- completed_step: `Payment continuity high-risk sync verified: 12194 imported outflow payment requests with downstream actual-outflow facts are already done and validated; write mode was idempotent with db_writes=0`
+- verification: `validate_task PASS; py_compile PASS; downstream screen PASS; sync check PASS; sync write PASS; result JSON PASS; snapshot/rollback CSV PASS; git diff --check PASS`
+- next_step: `Continue with fresh-work operational usability checks for creating and processing new-system daily business after imported continuity facts are usable.`
+- stop_condition: `none`
