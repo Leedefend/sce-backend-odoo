@@ -22022,3 +22022,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; metadata screen PASS; settlement order schema screen PASS; rollback-only linked payment flow classified draft-settlement and zero-balance blockers; source field screen PASS`
 - next_step: `Open dedicated procurement-to-settlement prerequisite screen to decide whether to replay purchase source facts, materialize settlement orders from existing business facts, or expose an existing source action.`
 - stop_condition: `none`
+### 2026-04-17T23:32:00+08:00
+- blocker_key: `iter_procurement_source_lifecycle_screen_pass_with_next_legacy_orphan_payment_blocker`
+- status: `PASS_WITH_NEXT_BLOCKER`
+- active_task: `ITER-2026-04-17-PROCUREMENT-SOURCE-LIFECYCLE-SCREEN`
+- completed_step: `Rollback-only source screen proved purchase orders can be created and confirmed, settlement amount comes from sc.settlement.order.line rather than purchase_order_ids alone, and downstream payment can reach done once an amount-bearing settlement is approved; normal settlement submit/approve is still blocked by existing imported payment requests missing settlement_id`
+- verification: `validate_task PASS; procurement metadata screen PASS; rollback-only procurement source flow classified zero settlement amount; settlement line schema screen PASS; rollback-only settlement-line downstream payment flow PASS after forced approved state for downstream classification`
+- next_step: `Open dedicated legacy orphan payment compliance screen to count and classify imported payment requests missing settlement_id before choosing replay strategy.`
+- stop_condition: `none`

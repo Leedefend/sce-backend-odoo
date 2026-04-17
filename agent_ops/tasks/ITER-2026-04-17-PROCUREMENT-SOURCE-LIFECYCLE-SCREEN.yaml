@@ -1,0 +1,75 @@
+task_id: ITER-2026-04-17-PROCUREMENT-SOURCE-LIFECYCLE-SCREEN
+title: Procurement source lifecycle screen
+type: business-flow-screen
+status: active
+priority: high
+
+goal: >
+  Verify whether purchase source facts can supply the upstream approved
+  lifecycle facts required for payable settlement and downstream payment
+  completion.
+
+user_visible_outcome:
+  - "Determine whether daily payable operation should start from purchase source facts before payment."
+
+scope:
+  allowed_paths:
+    - docs/ops/business_continuity/procurement_source_lifecycle_screen_v1.md
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+    - agent_ops/tasks/ITER-2026-04-17-PROCUREMENT-SOURCE-LIFECYCLE-SCREEN.yaml
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - scripts/**
+    - migrations/**
+    - deploy/**
+
+context:
+  branch: codex/next-round
+  baseline_sha: 919ce7a
+  prior_task: ITER-2026-04-17-PAYMENT-PREREQUISITE-LIFECYCLE-SCREEN
+
+architecture:
+  layer_target: Business Flow Verification
+  module: procurement source to payable lifecycle
+  module_owner: construction industry business flow
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    Purchase source, payable settlement, ledger, and payment completion are
+    business facts. This screen must not introduce frontend or orchestration
+    substitutions.
+  reason: >
+    Payment completion is blocked because approved settlement facts with
+    payable remaining amount do not exist. The source of those facts must be
+    verified before any replay or implementation batch.
+
+change_rules:
+  - screen only
+  - use read-only metadata and rollback-only runtime records
+  - do not persist purchase, settlement, payment, or ledger records
+  - do not modify addons, frontend, ACL, finance, or lifecycle code
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-17-PROCUREMENT-SOURCE-LIFECYCLE-SCREEN.yaml
+    - DB_NAME=sc_demo make odoo.shell.exec
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - screen_persists_business_data
+  - acceptance_failed
+
+deliverables:
+  - procurement source lifecycle screen result
+  - next implementation recommendation
+
+rollback:
+  - git restore docs/ops/business_continuity/procurement_source_lifecycle_screen_v1.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-17-PROCUREMENT-SOURCE-LIFECYCLE-SCREEN.yaml
+
+depends_on:
+  - ITER-2026-04-17-PAYMENT-PREREQUISITE-LIFECYCLE-SCREEN
