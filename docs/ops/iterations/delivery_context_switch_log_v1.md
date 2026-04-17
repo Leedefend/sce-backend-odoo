@@ -21894,3 +21894,11 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; Odoo shell read-only verify PASS`
 - next_step: `Use verified state for UI/business-flow testing; ambiguous payment links require separate source-fact enrichment if needed.`
 - stop_condition: `none`
+### 2026-04-17T22:02:21+08:00
+- blocker_key: `iter_business_topic_replay_layer_pass`
+- status: `PASS`
+- active_task: `ITER-2026-04-17-BUSINESS-TOPIC-REPLAY-LAYER`
+- completed_step: `Business topic replay layer added for imported_business_continuity_v1 with plan/check/write modes; check-mode replay passed all six steps and wrote artifact result.json under artifacts/migration/replay`
+- verification: `validate_task PASS; py_compile PASS; replay plan PASS; replay check PASS`
+- next_step: `Use replay --mode check after legacy data load; use replay --mode write only in controlled replay windows.`
+- stop_condition: `none`

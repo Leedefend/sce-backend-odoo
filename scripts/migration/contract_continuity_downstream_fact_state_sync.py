@@ -21,6 +21,7 @@ EXPECTED_CONFIRMED = 1902
 OUTPUT_JSON = Path("/mnt/artifacts/migration/contract_continuity_downstream_fact_state_sync_result_v1.json")
 SNAPSHOT_CSV = Path("/mnt/artifacts/migration/contract_continuity_downstream_fact_state_sync_snapshot_v1.csv")
 ROLLBACK_CSV = Path("/mnt/artifacts/migration/contract_continuity_downstream_fact_state_sync_rollback_v1.csv")
+PAYMENT_LINKAGE_ROLLBACK_CSV = Path("/mnt/artifacts/migration/payment_linkage_fact_sync_rollback_v1.csv")
 
 
 def clean(value):
@@ -46,13 +47,39 @@ def write_csv(path, fieldnames, rows):
         writer.writerows(rows)
 
 
+def replay_inferred_payment_request_ids():
+    """Exclude contract links produced by the later payment-linkage replay step.
+
+    Contract continuity must be based on original downstream/source facts. After
+    payment linkage sync has run, inferred payment_request.contract_id values
+    would otherwise feed back into this script and change the historical target
+    count. The rollback CSV records which payment requests had no original
+    contract link; those links are replay-derived and must not affect contract
+    continuity.
+    """
+    if not PAYMENT_LINKAGE_ROLLBACK_CSV.exists():
+        return []
+    excluded_ids = []
+    with PAYMENT_LINKAGE_ROLLBACK_CSV.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            if clean(row.get("restore_contract_id")):
+                continue
+            payment_id = clean(row.get("payment_request_id"))
+            if payment_id:
+                excluded_ids.append(int(payment_id))
+    return excluded_ids
+
+
 def target_rows():
+    excluded_payment_ids = replay_inferred_payment_request_ids()
     return fetchall_dict(
         """
         WITH pr AS (
               SELECT contract_id, count(*) request_count
                 FROM payment_request
                WHERE contract_id IS NOT NULL
+                 AND NOT (id = ANY(%s))
                GROUP BY contract_id
              ),
              pla AS (
@@ -104,8 +131,10 @@ def target_rows():
              OR COALESCE(pla.line_count, 0) > 0
              OR COALESCE(wa.approved_audit_count, 0) > 0
            )
-         ORDER BY cc.id
+        ORDER BY cc.id
         """
+        ,
+        (excluded_payment_ids,),
     )
 
 
