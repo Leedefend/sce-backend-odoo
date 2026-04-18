@@ -22224,3 +22224,12 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - status: `PASS_WITH_RISK`
 - verification: `validate_task PASS; py_compile PASS; XML parse PASS; rollback-only inheritance check PASS canonical approver users 0->8; daily payment E2E PASS only after rollback-only sender email fact supplied`
 - next_step: `STOP; open sender email/user master-data continuity screen because message_post blocks payment submit for payment approvers without personal email`
+- date: 2026-04-18
+- task: ITER-2026-04-18-USER-DEFAULT-EMAIL-SYNC
+- branch: codex/next-round
+- layer_target: User Master Data Fact
+- module: sender email continuity
+- reason: fill unified default email for real business users so Odoo message_post has sender email during payment submit
+- status: `PASS`
+- verification: `validate_task PASS; real DB default email sync PASS updated=8 default_email=default@smartconstruction.local; verify sender email PASS missing=0; rollback-only daily payment E2E PASS using temporary role inheritance only`
+- next_step: `apply or upgrade authority role matrix in running DB so committed payment manager approver inheritance takes effect without rollback-only temporary role patch`
