@@ -22188,3 +22188,12 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - status: `PASS`
 - verification: `validate_task PASS; py_compile PASS; rollback-only no-contract submit PASS; rollback-only selected-contract submit PASS; selected-settlement without contract blocked PASS; verify.imported_business_continuity.v1 PASS`
 - next_step: `continue business continuity operability screening on remaining imported payment lifecycle actions and daily business paths`
+- date: 2026-04-18
+- task: ITER-2026-04-18-PAYMENT-LIFECYCLE-CONTINUITY-SCREEN
+- branch: codex/next-round
+- layer_target: Business Fact Screening
+- module: imported payment lifecycle continuity
+- reason: screen whether imported payments have submit/approval/done/ledger blockers after no-contract submit alignment
+- status: `PASS`
+- verification: `validate_task PASS; read-only Odoo shell screen PASS; scope=30102 done_validated=12194 draft_no_validation=17908 ledger_linked=12194 done_without_ledger=0 submit_or_approved_blockers=0 draft_no_contract_no_settlement=10429`
+- next_step: `run rollback-only end-to-end daily payment lifecycle probe for no-contract/no-settlement payment continuation`
