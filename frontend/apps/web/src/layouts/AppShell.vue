@@ -38,6 +38,14 @@
       </div>
 
       <div class="nav-shell">
+        <div class="nav-shell__header">
+          <div>
+            <p class="nav-shell__eyebrow">导航菜单</p>
+            <p class="nav-shell__title">按业务分组浏览入口</p>
+          </div>
+          <span class="nav-shell__count">{{ menuCount }} 项</span>
+        </div>
+
         <div class="search">
           <input v-model="query" type="search" placeholder="搜索菜单..." />
         </div>
@@ -205,7 +213,6 @@ const navigationTree = computed(() => navigationMenu.tree.value);
 const rootNode = computed(() => (navigationTree.value.length === 1 ? navigationTree.value[0] : null));
 const menuNodes = computed(() => rootNode.value?.children ?? navigationTree.value);
 const menuCount = computed(() => menuNodes.value.length);
-const nativePreviewGroupKey = computed(() => asText(releaseNavigationMeta.value?.native_preview_group_key) || '');
 const stableGroupCount = computed(() => asInteger(releaseNavigationMeta.value?.stable_group_count) || 0);
 const nativePreviewGroupCount = computed(() => asInteger(releaseNavigationMeta.value?.native_preview_group_count) || 0);
 const stableLeafCount = computed(() => asInteger(releaseNavigationMeta.value?.stable_leaf_count) || 0);
@@ -899,9 +906,11 @@ async function logout() {
   padding: 18px 14px 14px;
   display: grid;
   grid-template-rows: auto auto auto minmax(0, 1fr) auto;
-  gap: 10px;
-  border-right: 1px solid #e5e7eb;
-  background: transparent;
+  gap: 12px;
+  border-right: 1px solid rgba(148, 163, 184, 0.18);
+  background:
+    radial-gradient(circle at top left, rgba(186, 230, 253, 0.28), transparent 34%),
+    linear-gradient(180deg, #f8fbff 0%, #f3f7fb 48%, #eef3f8 100%);
   height: 100vh;
   overflow: hidden;
   position: sticky;
@@ -969,18 +978,21 @@ async function logout() {
 
 .brand {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
-  padding: 1px 2px 6px;
+  padding: 12px 12px 10px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(226, 232, 240, 0.76));
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow: 0 20px 32px rgba(15, 23, 42, 0.07);
 }
 
 .enterprise-line {
   margin: 0;
-  padding: 0 2px 6px;
+  padding: 0 6px;
   font-size: 12px;
-  font-weight: 500;
-  color: #64748b;
-  border-bottom: 1px solid #e5e7eb;
+  font-weight: 600;
+  color: #475569;
 }
 
 .logo {
@@ -1007,19 +1019,55 @@ async function logout() {
 .subtitle {
   margin: 0;
   font-size: 11px;
-  color: #9ca3af;
+  color: #64748b;
 }
 
 .nav-shell {
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  padding: 0;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.96));
+  padding: 12px;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
-  gap: 6px;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  gap: 8px;
   min-height: 0;
   overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 18px 32px rgba(15, 23, 42, 0.06);
+}
+
+.nav-shell__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 4px 2px 0;
+}
+
+.nav-shell__eyebrow {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0369a1;
+}
+
+.nav-shell__title {
+  margin: 3px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.nav-shell__count {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(224, 242, 254, 0.92);
+  color: #0f766e;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .release-summary {
@@ -1049,58 +1097,57 @@ async function logout() {
 
 .search input {
   width: 100%;
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(255, 255, 255, 0.96);
   font-size: 13px;
   color: #0f172a;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03);
 }
 
 .role-surface {
-  padding: 8px 4px 10px;
-  border-bottom: 1px solid #e5e7eb;
-  border-radius: 0;
-  border-left: 0;
-  border-right: 0;
-  border-top: 0;
-  background: transparent;
+  padding: 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(241, 245, 249, 0.86));
   display: grid;
-  gap: 6px;
+  gap: 8px;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.05);
 }
 
 .role-label {
   margin: 0;
   font-size: 12px;
-  font-weight: 500;
-  color: #64748b;
+  font-weight: 600;
+  color: #475569;
 }
 
 .role-actions {
   display: flex;
-  gap: 4px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .role-menus {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
 }
 
 .role-menu-item {
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(224, 242, 254, 0.88));
   border-radius: 999px;
-  padding: 4px 8px;
+  padding: 5px 10px;
   font-size: 12px;
-  font-weight: 500;
-  color: #334155;
+  font-weight: 600;
+  color: #155e75;
 }
 
 .menu {
   overflow: auto;
-  padding-right: 2px;
-  padding-top: 0;
+  padding: 4px 4px 2px 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -1111,20 +1158,20 @@ async function logout() {
 .footer {
   display: grid;
   gap: 6px;
-  border-top: 1px solid #e5e7eb;
-  padding-top: 8px;
+  border-top: 1px solid rgba(148, 163, 184, 0.16);
+  padding-top: 10px;
   padding-bottom: calc(8px + env(safe-area-inset-bottom));
   background: transparent;
 }
 
 .ghost {
-  padding: 7px 9px;
-  border-radius: 6px;
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  background: transparent;
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.78);
   cursor: pointer;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: #475569;
 }
 
@@ -1296,6 +1343,9 @@ async function logout() {
   .content {
     height: auto;
     overflow: visible;
+  }
+  .nav-shell__header {
+    align-items: center;
   }
 
 }
