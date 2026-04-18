@@ -150,6 +150,7 @@ class ScSecurityPolicy(models.TransientModel):
             ("smart_construction_custom.group_sc_role_payment_read", "smart_construction_core.group_sc_cap_finance_read"),
             ("smart_construction_custom.group_sc_role_payment_user", "smart_construction_core.group_sc_cap_finance_user"),
             ("smart_construction_custom.group_sc_role_payment_manager", "smart_construction_core.group_sc_cap_finance_manager"),
+            ("smart_construction_custom.group_sc_role_payment_manager", "smart_core.group_smart_core_finance_approver"),
         ]
         updated = False
         for role_xmlid, cap_xmlid in role_specs:

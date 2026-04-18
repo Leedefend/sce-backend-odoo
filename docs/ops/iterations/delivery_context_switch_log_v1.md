@@ -22215,3 +22215,12 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - status: `PASS_WITH_RISK`
 - verification: `validate_task PASS; read-only Odoo shell role fact screen PASS; canonical group exists users=0; finance_manager users=11; custom_payment_manager users=8; payment_manager implies finance_manager but not smart_core.group_smart_core_finance_approver`
 - next_step: `STOP; open dedicated high-risk permission-governance authority-surface alignment batch to make payment manager/finance manager inherit canonical finance approver, then rerun daily payment E2E probe`
+- date: 2026-04-18
+- task: ITER-2026-04-18-FINANCE-APPROVER-AUTHORITY-ALIGN
+- branch: codex/next-round
+- layer_target: Business Authority Fact
+- module: finance approver authority surface
+- reason: align customer payment manager authority with canonical finance approver required by payment intent approval
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; py_compile PASS; XML parse PASS; rollback-only inheritance check PASS canonical approver users 0->8; daily payment E2E PASS only after rollback-only sender email fact supplied`
+- next_step: `STOP; open sender email/user master-data continuity screen because message_post blocks payment submit for payment approvers without personal email`
