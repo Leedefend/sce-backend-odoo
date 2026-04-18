@@ -11,6 +11,16 @@ LOGFILE="${FRONTEND_DEV_LOGFILE:-/tmp/sc-frontend-dev.log}"
 READY_URL="${FRONTEND_DEV_READY_URL:-http://${HOST}:${PORT}/}"
 NVM_SH="${NVM_SH:-$HOME/.nvm/nvm.sh}"
 TMUX_SESSION="${FRONTEND_DEV_TMUX_SESSION:-sc-frontend-dev}"
+DEFAULT_HMR_HOST="${HOST}"
+if [[ "${DEFAULT_HMR_HOST}" == "0.0.0.0" ]]; then
+  DEFAULT_HMR_HOST="127.0.0.1"
+fi
+WATCH_USE_POLLING="${VITE_WATCH_USE_POLLING:-1}"
+WATCH_INTERVAL="${VITE_WATCH_INTERVAL:-200}"
+WATCH_AWAIT_WRITE_MS="${VITE_WATCH_AWAIT_WRITE_MS:-150}"
+HMR_HOST="${VITE_HMR_HOST:-${DEFAULT_HMR_HOST}}"
+HMR_CLIENT_PORT="${VITE_HMR_CLIENT_PORT:-${PORT}}"
+HMR_PROTOCOL="${VITE_HMR_PROTOCOL:-}"
 
 resolve_profile_defaults() {
   case "${FRONTEND_PROFILE}" in
@@ -94,10 +104,10 @@ stop_tmux_session_if_exists
 kill_existing_port_listener "${PORT}"
 
 resolve_profile_defaults
-log "start frontend dev host=${HOST} port=${PORT} profile=${FRONTEND_PROFILE} db=${PROFILE_DB} proxy=${PROFILE_PROXY_TARGET}"
+log "start frontend dev host=${HOST} port=${PORT} profile=${FRONTEND_PROFILE} db=${PROFILE_DB} proxy=${PROFILE_PROXY_TARGET} hmr_host=${HMR_HOST} hmr_client_port=${HMR_CLIENT_PORT} polling=${WATCH_USE_POLLING}"
 cd "${ROOT_DIR}"
 rm -f "${LOGFILE}"
-START_CMD="cd \"${ROOT_DIR}\" && export VITE_API_PROXY_TARGET=\"${PROFILE_PROXY_TARGET}\" VITE_ODOO_DB=\"${PROFILE_DB}\" && exec pnpm -C frontend/apps/web dev --host \"${HOST}\" --port \"${PORT}\" > \"${LOGFILE}\" 2>&1"
+START_CMD="cd \"${ROOT_DIR}\" && export VITE_API_PROXY_TARGET=\"${PROFILE_PROXY_TARGET}\" VITE_ODOO_DB=\"${PROFILE_DB}\" VITE_WATCH_USE_POLLING=\"${WATCH_USE_POLLING}\" VITE_WATCH_INTERVAL=\"${WATCH_INTERVAL}\" VITE_WATCH_AWAIT_WRITE_MS=\"${WATCH_AWAIT_WRITE_MS}\" VITE_HMR_HOST=\"${HMR_HOST}\" VITE_HMR_CLIENT_PORT=\"${HMR_CLIENT_PORT}\" VITE_HMR_PROTOCOL=\"${HMR_PROTOCOL}\" CHOKIDAR_USEPOLLING=\"${WATCH_USE_POLLING}\" CHOKIDAR_INTERVAL=\"${WATCH_INTERVAL}\" && exec pnpm -C frontend/apps/web dev --host \"${HOST}\" --port \"${PORT}\" > \"${LOGFILE}\" 2>&1"
 
 new_pid=""
 if command -v setsid >/dev/null 2>&1; then
