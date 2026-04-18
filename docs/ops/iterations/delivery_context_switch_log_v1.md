@@ -22233,3 +22233,12 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - status: `PASS`
 - verification: `validate_task PASS; real DB default email sync PASS updated=8 default_email=default@smartconstruction.local; verify sender email PASS missing=0; rollback-only daily payment E2E PASS using temporary role inheritance only`
 - next_step: `apply or upgrade authority role matrix in running DB so committed payment manager approver inheritance takes effect without rollback-only temporary role patch`
+- date: 2026-04-18
+- task: ITER-2026-04-18-APPLY-AUTHORITY-RUNTIME-UPGRADE
+- branch: codex/next-round
+- layer_target: Runtime Authority Application
+- module: smart_construction_custom role matrix runtime state
+- reason: apply committed payment manager canonical approver inheritance to sc_demo runtime DB
+- status: `PASS`
+- verification: `validate_task PASS; mod.upgrade smart_construction_custom PASS; runtime role check PASS canonical approver users=8; rollback-only daily no-contract payment E2E without temporary patches PASS final_state=done ledger_created rollback_clean`
+- next_step: `continue business continuity screening on the next daily business path now that no-contract payment lifecycle is operable`
