@@ -22206,3 +22206,12 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - status: `FAIL`
 - verification: `validate_task PASS; rollback-only e2e probe FAIL because no active user has smart_core.group_smart_core_finance_approver; diagnostic PASS carriers=10429 ready_first_2000=1907 finance_user=11 finance_manager=11 finance_approver=0 all_three=0`
 - next_step: `STOP; open role-fact screen for finance approver assignment/seed path before rerunning the daily payment e2e probe`
+- date: 2026-04-18
+- task: ITER-2026-04-18-FINANCE-APPROVER-ROLE-FACT-SCREEN
+- branch: codex/next-round
+- layer_target: Business Authority Fact Screening
+- module: finance approver role facts
+- reason: classify why daily payment approval has no active canonical finance approver
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; read-only Odoo shell role fact screen PASS; canonical group exists users=0; finance_manager users=11; custom_payment_manager users=8; payment_manager implies finance_manager but not smart_core.group_smart_core_finance_approver`
+- next_step: `STOP; open dedicated high-risk permission-governance authority-surface alignment batch to make payment manager/finance manager inherit canonical finance approver, then rerun daily payment E2E probe`
