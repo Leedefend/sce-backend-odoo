@@ -7,6 +7,11 @@
           active: activeMenuId === node.menu_id,
           ancestor: activeParents.has(nodeKey(node)),
           disabled: isNodeDisabled(node),
+          directory: hasChildren(node),
+          leaf: !hasChildren(node),
+          expanded: hasChildren(node) && expanded.has(nodeKey(node)),
+          'level-root': level === 0,
+          'level-child': level > 0,
         }"
       >
         <button v-if="node.children?.length" class="toggle" @click="toggle(nodeKey(node))">
@@ -19,8 +24,13 @@
           :title="nodeDisabledTitle(node)"
           @click="onSelect(node)"
         >
-          <span>{{ nodeLabel(node) }}</span>
-          <span v-if="nodeBadge(node)" class="badge" :class="badgeClass(node)">{{ nodeBadge(node) }}</span>
+          <span class="label-copy">
+            <span class="label-title">{{ nodeLabel(node) }}</span>
+            <span v-if="nodeMeta(node)" class="label-meta">{{ nodeMeta(node) }}</span>
+          </span>
+          <span class="label-tags">
+            <span v-if="nodeBadge(node)" class="badge" :class="badgeClass(node)">{{ nodeBadge(node) }}</span>
+          </span>
         </button>
       </div>
       <transition name="expand">
@@ -97,8 +107,19 @@ function nodeBadge(node: ExplainedMenuNode) {
   return '';
 }
 
+function nodeMeta(node: ExplainedMenuNode) {
+  if (node.target_type === 'directory' && node.children?.length) {
+    return `${node.children.length} 项`;
+  }
+  return '';
+}
+
 function badgeClass(node: ExplainedMenuNode) {
   return node.target_type === 'unavailable' ? 'badge--preview' : 'badge--stable';
+}
+
+function hasChildren(node: ExplainedMenuNode) {
+  return Array.isArray(node.children) && node.children.length > 0;
 }
 
 function onSelect(node: ExplainedMenuNode) {
@@ -181,82 +202,197 @@ onMounted(() => {
 <style scoped>
 .tree {
   list-style: none;
-  padding-left: 6px;
+  padding-left: 0;
   margin: 0;
   display: grid;
-  gap: 4px;
+  gap: 6px;
 }
 
 .node {
   display: flex;
   align-items: center;
   gap: 6px;
+  position: relative;
+}
+
+.node::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 7px;
+  bottom: 7px;
+  width: 2px;
+  border-radius: 999px;
+  background: transparent;
 }
 
 .label {
-  background: transparent;
-  border: none;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.16);
   text-align: left;
   cursor: pointer;
   color: #0f172a;
+  width: 100%;
+  justify-content: space-between;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
 }
 
 .node.active .label {
   font-weight: 600;
-  color: #1f3b77;
-  background: #f1f5f9;
+  color: #173b78;
+  background: linear-gradient(135deg, rgba(224, 242, 254, 0.96), rgba(255, 255, 255, 0.98));
+  border-color: rgba(56, 189, 248, 0.34);
+  box-shadow: 0 16px 28px rgba(14, 116, 144, 0.14);
+}
+
+.node.active::before {
+  background: linear-gradient(180deg, #0284c7, #38bdf8);
 }
 
 .node.ancestor .label {
-  color: #475569;
+  color: #334155;
+  border-color: rgba(96, 165, 250, 0.24);
+  background: rgba(241, 245, 249, 0.9);
+}
+
+.node.ancestor::before {
+  background: rgba(125, 211, 252, 0.7);
 }
 
 .node.disabled .label {
   cursor: not-allowed;
   color: #94a3b8;
+  background: rgba(248, 250, 252, 0.92);
+  box-shadow: none;
 }
 
 .node.disabled .label:hover {
   background-color: transparent;
 }
 
+.node.directory .label {
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(255, 255, 255, 0.98));
+}
+
+.node.directory.level-root .label {
+  border-radius: 14px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.node.leaf .label {
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.node.expanded .label {
+  border-color: rgba(59, 130, 246, 0.24);
+}
+
 .toggle {
-  width: 18px;
+  width: 20px;
   border: none;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.76);
   cursor: pointer;
   color: #64748b;
   font-size: 12px;
+  border-radius: 999px;
+  height: 20px;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
 }
 
 .toggle-spacer {
-  width: 18px;
+  width: 20px;
   display: inline-block;
-  flex: 0 0 18px;
+  flex: 0 0 20px;
 }
 
 .label {
-  padding: 5px 8px;
-  border-radius: 4px;
+  padding: 8px 10px;
+  border-radius: 12px;
   font-size: 13px;
   font-weight: 500;
   line-height: 1.35;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .label:hover {
-  background-color: #f3f4f6;
+  background-color: #f8fafc;
+  border-color: rgba(59, 130, 246, 0.2);
+  transform: translateX(1px);
 }
 
-.label--group-stable {
-  color: #1e3a5f;
+.label-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
 }
 
-.label--group-preview {
-  color: #8a4b00;
+.label-title {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.label-meta {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.label-tags {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.badge--stable {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.badge--preview {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.depth-0 {
+  gap: 8px;
+}
+
+.depth-0 > li + li {
+  margin-top: 2px;
+}
+
+.depth-1,
+.depth-2,
+.depth-3,
+.depth-4 {
+  gap: 4px;
+}
+
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.2s ease;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 
 .label--leaf-preview {
