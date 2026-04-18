@@ -22197,3 +22197,12 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - status: `PASS`
 - verification: `validate_task PASS; read-only Odoo shell screen PASS; scope=30102 done_validated=12194 draft_no_validation=17908 ledger_linked=12194 done_without_ledger=0 submit_or_approved_blockers=0 draft_no_contract_no_settlement=10429`
 - next_step: `run rollback-only end-to-end daily payment lifecycle probe for no-contract/no-settlement payment continuation`
+- date: 2026-04-18
+- task: ITER-2026-04-18-DAILY-PAYMENT-E2E-PROBE
+- branch: codex/next-round
+- layer_target: Business Fact Verification
+- module: daily no-contract payment lifecycle
+- reason: verify no-contract/no-settlement payment can complete submit, approval, ledger, and done using real imported carriers
+- status: `FAIL`
+- verification: `validate_task PASS; rollback-only e2e probe FAIL because no active user has smart_core.group_smart_core_finance_approver; diagnostic PASS carriers=10429 ready_first_2000=1907 finance_user=11 finance_manager=11 finance_approver=0 all_three=0`
+- next_step: `STOP; open role-fact screen for finance approver assignment/seed path before rerunning the daily payment e2e probe`
