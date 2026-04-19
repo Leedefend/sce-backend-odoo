@@ -1,0 +1,71 @@
+.page-container {
+  width: min(100%, var(--ui-page-max-width));
+  margin: 0 auto;
+}
+
+.router-host.page-container {
+  display: grid;
+  align-content: start;
+  gap: var(--ui-space-4);
+  padding-bottom: var(--ui-space-6);
+}
+
+button,
+input,
+select,
+textarea {
+  border-radius: var(--ui-radius-sm);
+}
+
+button {
+  border: 1px solid transparent;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+input,
+select,
+textarea {
+  min-height: 40px;
+  padding: 0 var(--ui-space-3);
+  border: 1px solid var(--ui-color-border);
+  background: var(--ui-color-surface-strong);
+  box-shadow: inset 0 1px 2px rgba(17, 31, 44, 0.03);
+}
+
+textarea {
+  min-height: 96px;
+  padding-top: var(--ui-space-3);
+  padding-bottom: var(--ui-space-3);
+  resize: vertical;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--ui-color-border-strong);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: rgba(46, 98, 143, 0.42);
+  box-shadow:
+    inset 0 1px 2px rgba(17, 31, 44, 0.03),
+    0 0 0 4px rgba(61, 120, 159, 0.12);
+}
+
+:where(button, .pill, .contract-chip, .chip, .chip-btn, .status-chip, .kanban-filter-tab) {
+  transition:
+    background-color var(--ui-transition-fast),
+    border-color var(--ui-transition-fast),
+    color var(--ui-transition-fast),
+    box-shadow var(--ui-transition-fast),
+    transform var(--ui-transition-fast);
+}

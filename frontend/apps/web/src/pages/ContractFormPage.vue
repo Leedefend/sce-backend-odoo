@@ -37,10 +37,17 @@
         <p v-if="showHud && contractMetaLine" class="meta">{{ contractMetaLine }}</p>
       </template>
       <template #status>
-        <template v-if="isProjectCreatePage">
-          <p class="header-status-item">当前进度：{{ intakeRequiredSummary }}</p>
-          <p class="header-status-item" :class="{ 'header-status-item--danger': intakeMissingSummary !== '无' }">缺少：{{ intakeMissingSummary }}</p>
-        </template>
+        <div v-if="headerStatusCards.length" class="header-status-cards">
+          <article
+            v-for="card in headerStatusCards"
+            :key="card.label"
+            class="header-status-card"
+            :class="`header-status-card--${card.tone}`"
+          >
+            <span class="header-status-card__label">{{ card.label }}</span>
+            <strong class="header-status-card__value">{{ card.value }}</strong>
+          </article>
+        </div>
       </template>
       <template #actions>
         <button
@@ -98,9 +105,17 @@
       }]"
     >
       <section v-if="showPageOverviewStrip" class="page-overview-strip">
-        <div v-for="item in pageOverviewItems" :key="item.label" class="page-overview-pill">
-          <span class="page-overview-pill__label">{{ item.label }}</span>
-          <strong class="page-overview-pill__value">{{ item.value }}</strong>
+        <article v-if="pageOverviewLeadItem" class="page-overview-hero" :class="`page-overview-hero--${pageOverviewLeadItem.tone}`">
+          <span class="page-overview-hero__eyebrow">{{ objectConsoleEyebrow }}</span>
+          <strong class="page-overview-hero__value">{{ pageOverviewLeadItem.value }}</strong>
+          <span class="page-overview-hero__label">{{ pageOverviewLeadItem.label }}</span>
+          <p v-if="pageDisplaySubtitle" class="page-overview-hero__meta">{{ pageDisplaySubtitle }}</p>
+        </article>
+        <div v-if="pageOverviewSecondaryItems.length" class="page-overview-grid">
+          <div v-for="item in pageOverviewSecondaryItems" :key="item.label" class="page-overview-pill" :class="`page-overview-pill--${item.tone}`">
+            <span class="page-overview-pill__label">{{ item.label }}</span>
+            <strong class="page-overview-pill__value">{{ item.value }}</strong>
+          </div>
         </div>
       </section>
       <DetailCommandBar
@@ -216,18 +231,44 @@
           message="semantic_page 未声明 detail_zone，已按契约隐藏详情布局。"
           variant="info"
         />
-        <section v-if="showRelationZoneBlock" class="block zone-block">
-          <h3>关联数据</h3>
-          <div class="zone-chip-list">
-            <span v-for="item in semanticRelationZoneItems" :key="item.field" class="zone-chip">
-              {{ item.label }} · {{ item.viewType }} · {{ item.editableLabel }}
-            </span>
-          </div>
-        </section>
-        <section v-if="showCollaborationZoneBlock" class="block zone-block">
-          <h3>协作区</h3>
-          <p class="zone-collaboration-line">讨论区：{{ semanticHasChatter ? '已启用' : '未启用' }}</p>
-          <p class="zone-collaboration-line">附件区：{{ semanticHasAttachments ? '已启用' : '未启用' }}</p>
+        <section v-if="showSupportZoneGrid" class="support-zone-grid">
+          <section v-if="showRelationZoneBlock" class="block zone-block zone-block--support">
+            <header class="support-zone-header">
+              <div>
+                <p class="support-zone-header__eyebrow">辅助信息</p>
+                <h3>关联数据</h3>
+              </div>
+              <span class="support-zone-header__count">{{ semanticRelationZoneItems.length }} 项</span>
+            </header>
+            <div class="zone-card-list">
+              <article v-for="item in semanticRelationZoneItems" :key="item.field" class="zone-card">
+                <span class="zone-card__label">{{ item.label }}</span>
+                <strong class="zone-card__value">{{ item.viewType }}</strong>
+                <span class="zone-card__meta">{{ item.editableLabel }}</span>
+              </article>
+            </div>
+          </section>
+          <section v-if="showCollaborationZoneBlock" class="block zone-block zone-block--support">
+            <header class="support-zone-header">
+              <div>
+                <p class="support-zone-header__eyebrow">协作辅助</p>
+                <h3>活动与沟通</h3>
+              </div>
+              <span class="support-zone-header__count">{{ collaborationEnabledCount }} / 2</span>
+            </header>
+            <div class="zone-card-list zone-card-list--compact">
+              <article class="zone-card" :class="{ 'zone-card--active': semanticHasChatter }">
+                <span class="zone-card__label">讨论区</span>
+                <strong class="zone-card__value">{{ semanticHasChatter ? '已启用' : '未启用' }}</strong>
+                <span class="zone-card__meta">承接沟通与活动记录</span>
+              </article>
+              <article class="zone-card" :class="{ 'zone-card--active': semanticHasAttachments }">
+                <span class="zone-card__label">附件区</span>
+                <strong class="zone-card__value">{{ semanticHasAttachments ? '已启用' : '未启用' }}</strong>
+                <span class="zone-card__meta">承接交付材料与留痕</span>
+              </article>
+            </div>
+          </section>
         </section>
         <div v-if="hasAdvancedFields && !isProjectCreatePage && !nativeLikeFormSurface" class="layout-divider advanced-toggle">
           <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
@@ -442,6 +483,7 @@ const showOne2manyErrors = ref(false);
 const busyKind = ref<BusyKind>(null);
 const contract = ref<ActionContract | null>(null);
 const contractMeta = ref<Record<string, unknown> | null>(null);
+const relationOptionsLoadToken = ref(0);
 const activeFilterKey = ref('');
 const originalValues = ref<Record<string, unknown>>({});
 const formData = reactive<Record<string, unknown>>({});
@@ -980,21 +1022,64 @@ const structureAuditMode = computed(() => {
 const forceStructureVisibilityMode = computed(() => projectDetailStructureAlignMode.value && structureAuditMode.value);
 const effectiveCompactMode = computed(() => formCompactMode.value && !nativeLikeFormSurface.value);
 const layoutShellFlow = computed(() => isProjectCreatePage.value && !effectiveCompactMode.value);
+type OverviewTone = 'status' | 'owner' | 'schedule' | 'identity' | 'context';
+
+function firstFilledText(entries: Array<{ field: string; label: string }>) {
+  for (const entry of entries) {
+    const value = String(formData[entry.field] || '').trim();
+    if (value) return { label: entry.label, value };
+  }
+  return null;
+}
+
+function firstFilledMany2one(entries: Array<{ field: string; label: string }>) {
+  for (const entry of entries) {
+    const value = many2oneLabel(entry.field);
+    if (value) return { label: entry.label, value };
+  }
+  return null;
+}
+
+const objectConsoleEyebrow = computed(() => {
+  const currentModel = String(model.value || '').trim();
+  if (currentModel === 'project.project') return '项目对象控制台';
+  if (currentModel === 'project.task') return '任务对象控制台';
+  return '业务对象控制台';
+});
 const pageOverviewItems = computed(() => {
-  const items: Array<{ label: string; value: string }> = [];
-  if (recordId.value) items.push({ label: '记录ID', value: String(recordId.value) });
-  const manager = many2oneLabel('manager_id');
-  if (manager) items.push({ label: '项目经理', value: manager });
-  const owner = many2oneLabel('owner_id');
-  if (owner) items.push({ label: '业主单位', value: owner });
-  const startDate = String(formData.start_date || '').trim();
-  if (startDate) items.push({ label: '开工日期', value: startDate });
-  const contractNo = String(formData.contract_no || '').trim();
-  if (contractNo) items.push({ label: '项目编号', value: contractNo });
+  const items: Array<{ label: string; value: string; tone: OverviewTone }> = [];
   const statusLabel = activeStatusbarLabel.value;
-  if (statusLabel) items.push({ label: '项目状态', value: statusLabel });
+  if (statusLabel) items.push({ label: '当前状态', value: statusLabel, tone: 'status' });
+  const ownerEntry = firstFilledMany2one([
+    { field: 'manager_id', label: '项目经理' },
+    { field: 'user_id', label: '负责人' },
+    { field: 'owner_id', label: '业主单位' },
+    { field: 'project_id', label: '所属项目' },
+  ]);
+  if (ownerEntry) items.push({ ...ownerEntry, tone: 'owner' });
+  const scheduleEntry = firstFilledText([
+    { field: 'date_deadline', label: '截止日期' },
+    { field: 'start_date', label: '开工日期' },
+    { field: 'date_start', label: '开始时间' },
+    { field: 'end_date', label: '结束时间' },
+  ]);
+  if (scheduleEntry) items.push({ ...scheduleEntry, tone: 'schedule' });
+  const identityEntry = firstFilledText([
+    { field: 'contract_no', label: '项目编号' },
+    { field: 'code', label: '业务编号' },
+    { field: 'project_code', label: '项目编码' },
+  ]);
+  if (identityEntry) items.push({ ...identityEntry, tone: 'identity' });
+  const projectEntry = firstFilledMany2one([
+    { field: 'project_id', label: '所属项目' },
+    { field: 'partner_id', label: '客户单位' },
+  ]);
+  if (projectEntry) items.push({ ...projectEntry, tone: 'context' });
+  if (recordId.value) items.push({ label: '记录ID', value: String(recordId.value), tone: 'context' });
   return items.slice(0, 6);
 });
+const pageOverviewLeadItem = computed(() => pageOverviewItems.value[0] || null);
+const pageOverviewSecondaryItems = computed(() => pageOverviewItems.value.slice(1));
 const preferNativeFormSurface = computed(() => {
   if (isProjectCreatePage.value) return false;
   if (showFormNativeFallback.value) return false;
@@ -1033,6 +1118,30 @@ const showCollaborationZoneBlock = computed(() => {
   if (nativeLikeFormSurface.value) return false;
   if (!semanticHasCollaborationZone.value) return false;
   return (semanticHasChatter.value || semanticHasAttachments.value) && !effectiveCompactMode.value;
+});
+const showSupportZoneGrid = computed(() => showRelationZoneBlock.value || showCollaborationZoneBlock.value);
+const collaborationEnabledCount = computed(() => [semanticHasChatter.value, semanticHasAttachments.value].filter(Boolean).length);
+const headerStatusCards = computed<Array<{ label: string; value: string; tone: 'status' | 'action' | 'warning' | 'support' }>>(() => {
+  if (isProjectCreatePage.value) {
+    return [
+      { label: '当前进度', value: intakeRequiredSummary.value, tone: 'status' },
+      { label: '缺失项', value: intakeMissingSummary.value, tone: intakeMissingSummary.value !== '无' ? 'warning' : 'support' },
+    ];
+  }
+  const cards: Array<{ label: string; value: string; tone: 'status' | 'action' | 'warning' | 'support' }> = [];
+  if (activeStatusbarLabel.value) {
+    cards.push({ label: '当前状态', value: activeStatusbarLabel.value, tone: 'status' });
+  }
+  if (contractActionStrip.value.length) {
+    cards.push({ label: '可执行动作', value: `${contractActionStrip.value.length} 项`, tone: 'action' });
+  }
+  if (showRelationZoneBlock.value || showCollaborationZoneBlock.value) {
+    const supportParts: string[] = [];
+    if (showRelationZoneBlock.value) supportParts.push(`关联 ${semanticRelationZoneItems.value.length}`);
+    if (showCollaborationZoneBlock.value) supportParts.push(`协作 ${collaborationEnabledCount.value}/2`);
+    cards.push({ label: '辅助区', value: supportParts.join(' · '), tone: 'support' });
+  }
+  return cards.slice(0, 3);
 });
 
 const hasPrimaryHeaderAction = computed(() => headerActionsVisible.value.some((item) => item.semantic === 'primary_action'));
@@ -2037,13 +2146,15 @@ async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescr
   }
 }
 
-async function loadRelationOptions() {
+async function loadRelationOptions(loadToken = relationOptionsLoadToken.value) {
+  if (loadToken !== relationOptionsLoadToken.value) return;
   loadStage.value = 'load_relation_options';
   const fields = contract.value?.fields || {};
   const one2manyNames = Object.entries(fields)
     .filter(([, descriptor]) => fieldType(descriptor) === 'one2many')
     .map(([name]) => name);
   await Promise.all(one2manyNames.map((name) => ensureRelationFieldDescriptors(name)));
+  if (loadToken !== relationOptionsLoadToken.value) return;
   const visibleRelationFields = new Set(
     layoutNodes.value
       .filter((node) => node.kind === 'field' && isFieldVisible(node.name))
@@ -2103,6 +2214,7 @@ async function loadRelationOptions() {
       next[name] = [];
     }
   }));
+  if (loadToken !== relationOptionsLoadToken.value) return;
   relationOptions.value = next;
 }
 
@@ -4006,18 +4118,32 @@ async function loadRecord() {
 }
 
 async function reload() {
+  const loadToken = relationOptionsLoadToken.value + 1;
+  relationOptionsLoadToken.value = loadToken;
   status.value = 'loading';
   loadStage.value = 'reload_start';
   errorMessage.value = '';
   validationErrors.value = [];
   showOne2manyErrors.value = false;
+  relationOptions.value = {};
   try {
     await loadContract();
     await loadRecord();
-    await loadRelationOptions();
-    loadStage.value = 'reload_done';
+    if (loadToken !== relationOptionsLoadToken.value) return;
     status.value = 'ok';
+    loadStage.value = 'reload_shell_ready';
+    // Do not block the first detail render on relation hydration.
+    void loadRelationOptions(loadToken)
+      .then(() => {
+        if (loadToken !== relationOptionsLoadToken.value || status.value !== 'ok') return;
+        loadStage.value = 'reload_done';
+      })
+      .catch(() => {
+        if (loadToken !== relationOptionsLoadToken.value || status.value !== 'ok') return;
+        loadStage.value = 'relation_options_degraded';
+      });
   } catch (err) {
+    if (loadToken !== relationOptionsLoadToken.value) return;
     loadStage.value = 'reload_error';
     if (err instanceof ContractAccessPolicyError) {
       await router.push({
@@ -4505,14 +4631,14 @@ watch(
 <style scoped>
 .page {
   display: grid;
-  gap: 6px;
-  padding-bottom: 24px;
+  gap: var(--ui-space-2);
+  padding-bottom: var(--ui-space-6);
 }
 
 .page--flow {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 24px 32px;
+  padding: var(--ui-space-6) var(--ui-space-7);
 }
 
 .header {
@@ -4523,9 +4649,9 @@ watch(
 }
 
 .header--flow {
-  border-bottom: 1px solid #f0f0f0;
-  padding-bottom: 12px;
-  margin-bottom: 16px;
+  border-bottom: 1px solid var(--ui-color-border);
+  padding-bottom: var(--ui-space-3);
+  margin-bottom: var(--ui-space-4);
 }
 
 .header-main {
@@ -4535,20 +4661,21 @@ watch(
 
 .page-subtitle {
   margin: 2px 0 0;
-  font-size: 12px;
-  color: #94a3b8;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-soft);
 }
 
 .page-status-line {
   margin: 2px 0 0;
-  font-size: 12px;
-  color: #64748b;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-muted);
 }
 
 .header-main h1 {
   margin: 0;
-  font-size: 36px;
+  font-size: var(--ui-font-size-3xl);
   line-height: 1.12;
+  color: var(--ui-color-ink-strong);
 }
 
 .form-compact-topbar {
@@ -4566,14 +4693,14 @@ watch(
 }
 
 .form-compact-title strong {
-  font-size: 24px;
+  font-size: var(--ui-font-size-2xl);
   line-height: 1.2;
-  color: #0f172a;
+  color: var(--ui-color-ink-strong);
 }
 
 .form-compact-title span {
-  font-size: 12px;
-  color: #64748b;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-muted);
 }
 
 .form-compact-actions {
@@ -4584,8 +4711,8 @@ watch(
 
 .meta {
   margin: 1px 0;
-  color: #64748b;
-  font-size: 12px;
+  color: var(--ui-color-ink-muted);
+  font-size: var(--ui-font-size-xs);
 }
 
 .actions {
@@ -4599,49 +4726,30 @@ watch(
   display: none;
 }
 
-.header-status {
-  display: grid;
-  gap: 4px;
-  margin-left: auto;
-  text-align: right;
-  min-width: 240px;
-  padding-top: 3px;
-}
-
-.header-status-item {
-  margin: 0;
-  font-size: 12px;
-  color: #737b87;
-  line-height: 1.3;
-}
-
-.header-status-item--danger {
-  color: #9a7a3e;
-}
-
 .action-hint {
   width: 100%;
   margin: 0;
-  font-size: 12px;
-  color: #64748b;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-muted);
   text-align: right;
 }
 
 .card {
-  border: 1px solid #eef0f2;
-  border-radius: 8px;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
   padding: 18px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.94);
   max-width: 1360px;
   width: 100%;
   margin: 0 auto;
+  box-shadow: var(--ui-shadow-sm);
 }
 
 .card--compact {
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
   padding: 12px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.94);
   box-shadow: none;
   max-width: none;
   margin: 0;
@@ -4670,75 +4778,134 @@ watch(
 }
 
 .block {
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 10px;
-  margin-bottom: 10px;
-  background: #f8fafc;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  padding: var(--ui-space-3);
+  margin-bottom: var(--ui-space-3);
+  background: rgba(248, 245, 239, 0.72);
 }
 
 .card--compact .block {
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-xs);
   padding: 8px;
   margin-bottom: 8px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .block.warn {
-  border-color: #fdba74;
-  background: #fff7ed;
+  border-color: rgba(165, 107, 22, 0.24);
+  background: var(--ui-color-warning-050);
 }
 
 .contract-missing-block {
-  border-color: #fca5a5;
-  background: #fff5f5;
+  border-color: rgba(177, 76, 67, 0.24);
+  background: var(--ui-color-danger-050);
 }
 
 .contract-missing-summary,
 .contract-missing-defaults {
   margin: 4px 0 0;
-  color: #7a271a;
-  font-size: 12px;
+  color: var(--ui-color-danger-600);
+  font-size: var(--ui-font-size-xs);
 }
 
 .block h3 {
   margin: 0 0 8px;
-  font-size: 12px;
+  font-size: var(--ui-font-size-xs);
 }
 
 .page-overview-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.page-overview-strip {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.4fr);
+  gap: 12px;
+  margin-bottom: 14px;
   padding: 12px 14px;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 245, 239, 0.92));
+  box-shadow: var(--ui-shadow-xs);
+}
+
+.page-overview-hero {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  min-height: 116px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(203, 213, 225, 0.92);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.95));
+}
+
+.page-overview-hero--status {
+  background: linear-gradient(180deg, #eff6ff, #ffffff);
+  border-color: #bfdbfe;
+}
+
+.page-overview-hero__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ui-color-ink-soft);
+}
+
+.page-overview-hero__value {
+  font-size: 22px;
+  line-height: 1.15;
+  color: var(--ui-color-ink-strong);
+}
+
+.page-overview-hero__label,
+.page-overview-hero__meta {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.page-overview-hero__label {
+  color: var(--ui-color-ink);
+}
+
+.page-overview-hero__meta {
+  margin: 0;
+  color: var(--ui-color-ink-muted);
+}
+
+.page-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .page-overview-pill {
   min-width: 132px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  padding: 10px 12px;
+  border-radius: var(--ui-radius-sm);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--ui-color-border);
   display: grid;
-  gap: 2px;
+  gap: 4px;
+}
+
+.page-overview-pill--owner,
+.page-overview-pill--context {
+  background: rgba(248, 250, 252, 0.96);
+}
+
+.page-overview-pill--schedule {
+  background: rgba(255, 251, 235, 0.72);
+  border-color: rgba(251, 191, 36, 0.22);
 }
 
 .page-overview-pill__label {
   font-size: 11px;
-  color: #64748b;
+  color: var(--ui-color-ink-muted);
 }
 
 .page-overview-pill__value {
-  font-size: 13px;
-  color: #0f172a;
+  font-size: var(--ui-font-size-sm);
+  color: var(--ui-color-ink-strong);
   line-height: 1.3;
 }
 
@@ -4749,30 +4916,31 @@ watch(
 }
 
 .chip {
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
+  font-size: var(--ui-font-size-xs);
+  padding: 5px 9px;
+  border-radius: var(--ui-radius-pill);
+  border: 1px solid var(--ui-color-border);
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .chip-btn {
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
+  font-size: var(--ui-font-size-xs);
+  padding: 5px 9px;
+  border-radius: var(--ui-radius-pill);
+  border: 1px solid var(--ui-color-border);
+  background: rgba(255, 255, 255, 0.92);
   cursor: pointer;
 }
 
 .chip-btn.active {
-  border-color: #0f766e;
-  box-shadow: inset 0 0 0 1px #0f766e;
+  border-color: var(--ui-color-primary-700);
+  box-shadow: inset 0 0 0 1px var(--ui-color-primary-700);
+  color: var(--ui-color-primary-700);
 }
 
 .form-grid {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
 .form-grid--project-align {
@@ -4868,6 +5036,80 @@ watch(
   margin-top: 6px;
 }
 
+.zone-block--support {
+  margin-top: 0;
+  background: rgba(248, 250, 252, 0.9);
+}
+
+.support-zone-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.support-zone-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.support-zone-header__eyebrow {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ui-color-ink-soft);
+}
+
+.support-zone-header__count {
+  font-size: 11px;
+  color: var(--ui-color-ink-muted);
+}
+
+.zone-card-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.zone-card-list--compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.zone-card {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.zone-card--active {
+  border-color: rgba(96, 165, 250, 0.6);
+  background: rgba(239, 246, 255, 0.9);
+}
+
+.zone-card__label {
+  font-size: 11px;
+  color: var(--ui-color-ink-soft);
+}
+
+.zone-card__value {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--ui-color-ink-strong);
+}
+
+.zone-card__meta {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ui-color-ink-muted);
+}
+
 .zone-chip-list {
   display: flex;
   flex-wrap: wrap;
@@ -4892,6 +5134,14 @@ watch(
 }
 
 @media (max-width: 860px) {
+  .page-overview-strip,
+  .page-overview-grid,
+  .support-zone-grid,
+  .zone-card-list,
+  .zone-card-list--compact {
+    grid-template-columns: 1fr;
+  }
+
   .form-grid {
     grid-template-columns: 1fr;
   }

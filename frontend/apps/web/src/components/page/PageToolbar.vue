@@ -761,20 +761,22 @@ onBeforeUnmount(() => {
 .toolbar {
   display: grid;
   grid-template-columns: 1fr auto auto;
-  gap: 12px;
-  background: white;
-  border-radius: 12px;
-  padding: 12px 16px;
-  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.08);
+  gap: var(--ui-space-3);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 245, 239, 0.94));
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+  padding: var(--ui-space-3) var(--ui-space-4);
+  box-shadow: var(--ui-shadow-sm);
   align-items: center;
 }
 
 .search input {
   width: 100%;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  background: #f8fafc;
+  min-height: 40px;
+  padding: 0 var(--ui-space-3);
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-color-border);
+  background: rgba(255, 255, 255, 0.84);
 }
 
 .search {
@@ -785,12 +787,14 @@ onBeforeUnmount(() => {
 }
 
 .search-btn {
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  background: #111827;
+  padding: 10px 14px;
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-color-primary-700);
+  background: var(--ui-color-primary-700);
   color: #f8fafc;
   cursor: pointer;
+  font-weight: var(--ui-font-weight-semibold);
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .search-btn:disabled {
@@ -801,21 +805,23 @@ onBeforeUnmount(() => {
 .filters {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .filter {
-  border: 1px solid transparent;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #f1f5f9;
-  font-size: 12px;
-  color: #475569;
+  border: 1px solid var(--ui-color-border);
+  padding: 6px 12px;
+  border-radius: var(--ui-radius-pill);
+  background: rgba(255, 255, 255, 0.84);
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-muted);
   cursor: pointer;
+  font-weight: var(--ui-font-weight-medium);
 }
 
 .filter.active {
-  border-color: #111827;
-  background: #111827;
+  border-color: var(--ui-color-primary-700);
+  background: var(--ui-color-primary-700);
   color: #f8fafc;
 }
 
@@ -829,7 +835,7 @@ onBeforeUnmount(() => {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #94a3b8;
+  color: var(--ui-color-ink-soft);
 }
 
 .sort-options {
@@ -846,53 +852,56 @@ onBeforeUnmount(() => {
 }
 
 .sort-current {
-  color: #475569;
-  font-size: 13px;
-  font-weight: 600;
+  color: var(--ui-color-ink-muted);
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .sort-source {
-  color: #94a3b8;
-  font-size: 12px;
+  color: var(--ui-color-ink-soft);
+  font-size: var(--ui-font-size-xs);
 }
 
 .sort-option {
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  background: #f8fafc;
-  font-size: 12px;
-  color: #475569;
+  padding: 6px 12px;
+  border-radius: var(--ui-radius-pill);
+  border: 1px solid var(--ui-color-border);
+  background: rgba(255, 255, 255, 0.84);
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-muted);
 }
 
 .sort-option.active {
-  background: #111827;
+  background: var(--ui-color-primary-700);
   color: #f8fafc;
+  border-color: var(--ui-color-primary-700);
 }
 
 .contract-toolbar {
   display: grid;
-  gap: 10px;
-  margin-top: 10px;
-  background: white;
-  border-radius: 12px;
-  padding: 12px 16px;
-  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.06);
+  gap: var(--ui-space-3);
+  margin-top: var(--ui-space-3);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 245, 239, 0.94));
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+  padding: var(--ui-space-3) var(--ui-space-4);
+  box-shadow: var(--ui-shadow-sm);
 }
 
 .contract-toolbar--optimized {
-  border: 1px solid rgba(14, 116, 144, 0.14);
+  border: 1px solid rgba(61, 120, 159, 0.18);
   background:
-    linear-gradient(180deg, rgba(240, 249, 255, 0.9), rgba(255, 255, 255, 0.98));
+    linear-gradient(180deg, rgba(238, 245, 250, 0.94), rgba(255, 255, 255, 0.98));
 }
 
 .contract-group {
   display: grid;
-  gap: 6px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-3);
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-color-border);
   background: rgba(255, 255, 255, 0.82);
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .contract-group--quick_filters,
@@ -902,14 +911,14 @@ onBeforeUnmount(() => {
 }
 
 .contract-group__label {
-  font-size: 12px;
-  font-weight: 700;
-  color: #475569;
+  font-size: var(--ui-font-size-xs);
+  font-weight: var(--ui-font-weight-bold);
+  color: var(--ui-color-ink);
 }
 
 .contract-group__caption {
-  font-size: 12px;
-  color: #64748b;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-soft);
 }
 
 .contract-group__chips {
@@ -929,34 +938,41 @@ onBeforeUnmount(() => {
 }
 
 .contract-advanced__label {
-  font-size: 12px;
-  color: #64748b;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-soft);
 }
 
 .contract-chip {
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  border: 1px solid var(--ui-color-border);
   padding: 6px 10px;
-  border-radius: 999px;
-  background: #f8fafc;
-  font-size: 12px;
-  color: #334155;
+  border-radius: var(--ui-radius-pill);
+  background: rgba(255, 255, 255, 0.84);
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink);
   cursor: pointer;
+  font-weight: var(--ui-font-weight-medium);
 }
 
 .contract-chip.active {
-  background: #111827;
-  border-color: #111827;
+  background: var(--ui-color-primary-700);
+  border-color: var(--ui-color-primary-700);
   color: #f8fafc;
 }
 
 .contract-chip.ghost {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .contract-chip.static {
   cursor: default;
-  background: #eef2ff;
-  border-color: rgba(79, 70, 229, 0.16);
-  color: #4338ca;
+  background: var(--ui-color-primary-050);
+  border-color: rgba(61, 120, 159, 0.16);
+  color: var(--ui-color-primary-700);
+}
+
+@media (max-width: 960px) {
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

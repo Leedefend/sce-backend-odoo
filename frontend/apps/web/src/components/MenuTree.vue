@@ -72,9 +72,9 @@ const level = computed(() => Number(props.level || 0));
 const treeStyle = computed<Record<string, string>>(() => {
   if (level.value <= 0) return {};
   return {
-    marginLeft: '12px',
-    paddingLeft: '12px',
-    borderLeft: '1px dashed #dbe3ee',
+    marginLeft: 'var(--ui-space-3)',
+    paddingLeft: 'var(--ui-space-3)',
+    borderLeft: '1px dashed rgba(49, 76, 104, 0.16)',
   };
 });
 
@@ -222,47 +222,47 @@ onMounted(() => {
   top: 7px;
   bottom: 7px;
   width: 2px;
-  border-radius: 999px;
+  border-radius: var(--ui-radius-pill);
   background: transparent;
 }
 
 .label {
   background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  border: 1px solid var(--ui-color-border);
   text-align: left;
   cursor: pointer;
-  color: #0f172a;
+  color: var(--ui-color-ink-strong);
   width: 100%;
   justify-content: space-between;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .node.active .label {
-  font-weight: 600;
-  color: #173b78;
-  background: linear-gradient(135deg, rgba(224, 242, 254, 0.96), rgba(255, 255, 255, 0.98));
-  border-color: rgba(56, 189, 248, 0.34);
-  box-shadow: 0 16px 28px rgba(14, 116, 144, 0.14);
+  font-weight: var(--ui-font-weight-semibold);
+  color: var(--ui-color-primary-700);
+  background: linear-gradient(135deg, rgba(238, 245, 250, 0.98), rgba(255, 255, 255, 0.98));
+  border-color: rgba(61, 120, 159, 0.28);
+  box-shadow: var(--ui-shadow-sm);
 }
 
 .node.active::before {
-  background: linear-gradient(180deg, #0284c7, #38bdf8);
+  background: linear-gradient(180deg, var(--ui-color-primary-700), var(--ui-color-primary-500));
 }
 
 .node.ancestor .label {
-  color: #334155;
-  border-color: rgba(96, 165, 250, 0.24);
-  background: rgba(241, 245, 249, 0.9);
+  color: var(--ui-color-ink);
+  border-color: rgba(61, 120, 159, 0.18);
+  background: rgba(248, 245, 239, 0.92);
 }
 
 .node.ancestor::before {
-  background: rgba(125, 211, 252, 0.7);
+  background: rgba(61, 120, 159, 0.42);
 }
 
 .node.disabled .label {
   cursor: not-allowed;
-  color: #94a3b8;
-  background: rgba(248, 250, 252, 0.92);
+  color: var(--ui-color-ink-soft);
+  background: rgba(248, 247, 244, 0.92);
   box-shadow: none;
 }
 
@@ -271,7 +271,7 @@ onMounted(() => {
 }
 
 .node.directory .label {
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(255, 255, 255, 0.98));
+  background: linear-gradient(180deg, rgba(248, 247, 244, 0.96), rgba(255, 255, 255, 0.98));
 }
 
 .node.directory.level-root .label {
@@ -293,11 +293,11 @@ onMounted(() => {
   border: none;
   background: rgba(255, 255, 255, 0.76);
   cursor: pointer;
-  color: #64748b;
-  font-size: 12px;
-  border-radius: 999px;
+  color: var(--ui-color-ink-soft);
+  font-size: var(--ui-font-size-xs);
+  border-radius: var(--ui-radius-pill);
   height: 20px;
-  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+  box-shadow: inset 0 0 0 1px var(--ui-color-border);
 }
 
 .toggle-spacer {
@@ -308,9 +308,9 @@ onMounted(() => {
 
 .label {
   padding: 8px 10px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 500;
+  border-radius: var(--ui-radius-sm);
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-medium);
   line-height: 1.35;
   transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
   display: inline-flex;
@@ -319,8 +319,8 @@ onMounted(() => {
 }
 
 .label:hover {
-  background-color: #f8fafc;
-  border-color: rgba(59, 130, 246, 0.2);
+  background-color: rgba(248, 245, 239, 0.98);
+  border-color: rgba(61, 120, 159, 0.22);
   transform: translateX(1px);
 }
 
@@ -339,7 +339,7 @@ onMounted(() => {
 
 .label-meta {
   font-size: 11px;
-  color: #64748b;
+  color: var(--ui-color-ink-soft);
 }
 
 .label-tags {
@@ -352,21 +352,13 @@ onMounted(() => {
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 7px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.badge--stable {
-  background: #e0f2fe;
-  color: #0369a1;
-}
-
-.badge--preview {
-  background: #fef3c7;
-  color: #b45309;
+  justify-content: center;
+  min-width: 36px;
+  padding: 2px 8px;
+  border-radius: var(--ui-radius-pill);
+  font-size: 11px;
+  font-weight: var(--ui-font-weight-semibold);
+  letter-spacing: 0.01em;
 }
 
 .depth-0 {
@@ -396,29 +388,17 @@ onMounted(() => {
 }
 
 .label--leaf-preview {
-  color: #7c4a03;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 36px;
-  padding: 1px 6px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  color: var(--ui-color-warning-600);
 }
 
 .badge--stable {
-  background: #e8f1ff;
-  color: #2454a6;
+  background: var(--ui-color-primary-050);
+  color: var(--ui-color-primary-700);
 }
 
 .badge--preview {
-  background: #fff2d8;
-  color: #9a5a00;
+  background: var(--ui-color-warning-050);
+  color: var(--ui-color-warning-600);
 }
 
 .expand-enter-active,

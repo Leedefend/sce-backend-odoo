@@ -1,0 +1,81 @@
+:root {
+  --ui-font-sans: "IBM Plex Sans", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --ui-font-mono: "IBM Plex Mono", "SFMono-Regular", "Cascadia Code", monospace;
+
+  --ui-color-primary-700: #1f4c82;
+  --ui-color-primary-600: #2e628f;
+  --ui-color-primary-500: #3d789f;
+  --ui-color-primary-100: #dbeaf4;
+  --ui-color-primary-050: #eef5fa;
+  --ui-color-success-600: #1f7a5b;
+  --ui-color-success-050: #ebf8f2;
+  --ui-color-warning-600: #a56b16;
+  --ui-color-warning-050: #fff5df;
+  --ui-color-danger-600: #b14c43;
+  --ui-color-danger-050: #fff0ee;
+
+  --ui-color-bg-app: #f4f1eb;
+  --ui-color-bg-app-alt: #ebe7df;
+  --ui-color-surface: rgba(255, 255, 255, 0.84);
+  --ui-color-surface-strong: #ffffff;
+  --ui-color-surface-muted: #f8f5ef;
+  --ui-color-surface-accent: #f0f6fa;
+  --ui-color-ink-strong: #15202b;
+  --ui-color-ink: #243240;
+  --ui-color-ink-muted: #5d6b79;
+  --ui-color-ink-soft: #83909d;
+  --ui-color-border-strong: rgba(32, 59, 88, 0.18);
+  --ui-color-border: rgba(49, 76, 104, 0.12);
+  --ui-color-border-muted: rgba(73, 95, 119, 0.08);
+  --ui-color-overlay: rgba(17, 31, 44, 0.08);
+
+  --ui-shadow-xs: 0 1px 2px rgba(17, 31, 44, 0.05);
+  --ui-shadow-sm: 0 8px 20px rgba(20, 38, 56, 0.08);
+  --ui-shadow-md: 0 18px 40px rgba(18, 33, 48, 0.12);
+  --ui-shadow-lg: 0 28px 56px rgba(16, 29, 41, 0.16);
+
+  --ui-radius-xs: 8px;
+  --ui-radius-sm: 12px;
+  --ui-radius-md: 18px;
+  --ui-radius-lg: 24px;
+  --ui-radius-pill: 999px;
+
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-5: 20px;
+  --ui-space-6: 24px;
+  --ui-space-7: 32px;
+  --ui-space-8: 40px;
+
+  --ui-font-size-xs: 12px;
+  --ui-font-size-sm: 13px;
+  --ui-font-size-md: 14px;
+  --ui-font-size-lg: 16px;
+  --ui-font-size-xl: 20px;
+  --ui-font-size-2xl: 28px;
+  --ui-font-size-3xl: 34px;
+
+  --ui-font-weight-medium: 500;
+  --ui-font-weight-semibold: 600;
+  --ui-font-weight-bold: 700;
+
+  --ui-line-height-tight: 1.2;
+  --ui-line-height-base: 1.45;
+  --ui-line-height-loose: 1.65;
+
+  --ui-page-max-width: 1480px;
+  --ui-page-padding-x: clamp(16px, 2.8vw, 32px);
+  --ui-page-padding-y: clamp(16px, 2vw, 24px);
+  --ui-sidebar-width: 288px;
+  --ui-sidebar-width-compact: 232px;
+
+  --ui-z-base: 1;
+  --ui-z-dropdown: 20;
+  --ui-z-sticky: 30;
+  --ui-z-overlay: 100;
+
+  --ui-transition-fast: 160ms ease;
+  --ui-transition-base: 220ms ease;
+}

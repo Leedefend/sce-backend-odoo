@@ -161,7 +161,7 @@ function emitFieldChange(field: FormSectionFieldSchema, value: string | number |
   border-top: 1px solid #f1f3f6;
   border-radius: 0;
   background: transparent;
-  padding: 14px 0 0;
+  padding: 16px 0 0;
 }
 
 .template-form-section--core {
@@ -178,26 +178,28 @@ function emitFieldChange(field: FormSectionFieldSchema, value: string | number |
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .template-form-section-title {
   margin: 0;
   font-size: 14px;
-  color: #374151;
-  font-weight: 500;
+  color: #0f172a;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .template-form-section-hint {
-  margin: -4px 0 10px;
+  margin: -2px 0 12px;
   font-size: 12px;
-  color: #9ca3af;
+  color: #64748b;
+  line-height: 1.45;
 }
 
 .template-form-section-grid {
   display: grid;
-  row-gap: 16px;
+  row-gap: 18px;
   column-gap: 24px;
 }
 
@@ -213,7 +215,7 @@ function emitFieldChange(field: FormSectionFieldSchema, value: string | number |
 
 .field {
   display: grid;
-  gap: 0;
+  gap: 6px;
   min-width: 0;
   align-content: start;
 }
@@ -243,10 +245,11 @@ function emitFieldChange(field: FormSectionFieldSchema, value: string | number |
 }
 
 .label {
-  font-size: 13px;
-  color: #111827;
-  font-weight: 600;
-  margin-bottom: 4px;
+  font-size: 12px;
+  color: #475569;
+  font-weight: 700;
+  margin-bottom: 0;
+  letter-spacing: 0.01em;
 }
 
 .template-form-section--native .label {
@@ -265,10 +268,11 @@ function emitFieldChange(field: FormSectionFieldSchema, value: string | number |
 
 .readonly-value {
   font-size: 13px;
-  color: #475569;
+  color: #0f172a;
   min-height: 40px;
   display: inline-flex;
   align-items: center;
+  line-height: 1.45;
 }
 
 .template-form-section--native .readonly-value {
