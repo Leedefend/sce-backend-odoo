@@ -386,12 +386,12 @@ function formatValue(value: unknown) {
 <style scoped>
 .page {
   display: grid;
-  gap: 16px;
+  gap: var(--ui-space-4);
 }
 
 .kanban-detail-zone {
   display: grid;
-  gap: 12px;
+  gap: var(--ui-space-3);
 }
 
 .kanban-filter-tabs {
@@ -401,20 +401,21 @@ function formatValue(value: unknown) {
 }
 
 .kanban-filter-tab {
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #334155;
-  border-radius: 999px;
+  border: 1px solid var(--ui-color-border);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ui-color-ink);
+  border-radius: var(--ui-radius-pill);
   padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--ui-font-size-xs);
+  font-weight: var(--ui-font-weight-semibold);
   cursor: pointer;
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .kanban-filter-tab--active {
-  background: #2563eb;
+  background: var(--ui-color-primary-700);
   color: #ffffff;
-  border-color: #2563eb;
+  border-color: var(--ui-color-primary-700);
 }
 
 
@@ -435,9 +436,9 @@ function formatValue(value: unknown) {
   display: grid;
   gap: 12px;
   padding: 12px;
-  border-radius: 18px;
-  border: 1px solid #dbe4f0;
-  background: linear-gradient(180deg, #f8fbff 0%, #f3f7fc 100%);
+  border-radius: var(--ui-radius-md);
+  border: 1px solid var(--ui-color-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.84) 0%, rgba(240, 245, 248, 0.94) 100%);
 }
 
 .kanban-column-header {
@@ -449,15 +450,15 @@ function formatValue(value: unknown) {
 
 .kanban-column-label {
   margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: #0f172a;
+  font-size: var(--ui-font-size-md);
+  font-weight: var(--ui-font-weight-bold);
+  color: var(--ui-color-ink-strong);
 }
 
 .kanban-column-field {
   margin: 4px 0 0;
   font-size: 11px;
-  color: #64748b;
+  color: var(--ui-color-ink-muted);
 }
 
 .kanban-column-count {
@@ -466,11 +467,12 @@ function formatValue(value: unknown) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
-  background: #e2e8f0;
-  color: #334155;
-  font-size: 12px;
-  font-weight: 700;
+  border-radius: var(--ui-radius-pill);
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--ui-color-ink);
+  font-size: var(--ui-font-size-xs);
+  font-weight: var(--ui-font-weight-bold);
+  border: 1px solid var(--ui-color-border);
 }
 
 .kanban-column-body {
@@ -479,27 +481,28 @@ function formatValue(value: unknown) {
 }
 
 .card {
-  background: white;
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: var(--ui-radius-md);
   padding: 16px;
-  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--ui-color-border);
+  box-shadow: var(--ui-shadow-sm);
   cursor: pointer;
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
 .card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 20px 34px rgba(15, 23, 42, 0.12);
+  box-shadow: var(--ui-shadow-md);
 }
 
-.card.tone-danger { border: 1px solid #fecaca; background: #fff7f7; }
-.card.tone-warning { border: 1px solid #fde68a; background: #fffcf2; }
-.card.tone-success { border: 1px solid #a7f3d0; background: #f7fffb; }
+.card.tone-danger { border-color: rgba(177, 76, 67, 0.24); background: rgba(255, 240, 238, 0.92); }
+.card.tone-warning { border-color: rgba(165, 107, 22, 0.24); background: rgba(255, 245, 223, 0.9); }
+.card.tone-success { border-color: rgba(31, 122, 91, 0.2); background: rgba(235, 248, 242, 0.92); }
 
 .card-title {
   margin: 0 0 10px;
-  font-size: 16px;
-  color: #0f172a;
+  font-size: var(--ui-font-size-lg);
+  color: var(--ui-color-ink-strong);
 }
 
 .status-chips {
@@ -513,10 +516,10 @@ function formatValue(value: unknown) {
   font-size: 11px;
   line-height: 1;
   padding: 5px 8px;
-  border-radius: 999px;
-  background: #ecfeff;
-  border: 1px solid #99f6e4;
-  color: #0f766e;
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-success-050);
+  border: 1px solid rgba(31, 122, 91, 0.2);
+  color: var(--ui-color-success-600);
 }
 
 .card-meta {

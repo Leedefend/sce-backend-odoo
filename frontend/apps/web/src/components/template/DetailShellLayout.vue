@@ -268,11 +268,11 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
 <style scoped>
 .contract-detail-shell {
   grid-column: 1 / -1;
-  border: 1px solid #d9e2ee;
-  border-radius: 22px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-  padding: 18px 20px;
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(203, 213, 225, 0.95);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  padding: 16px 18px;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.05);
 }
 
 .contract-detail-shell--native {
@@ -284,16 +284,16 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
 }
 
 .contract-detail-shell--sheet {
-  border-color: #cfe0fb;
+  border-color: #dbeafe;
   background:
-    linear-gradient(180deg, rgba(219, 234, 254, 0.22) 0%, rgba(255, 255, 255, 0) 72px),
+    linear-gradient(180deg, rgba(219, 234, 254, 0.18) 0%, rgba(255, 255, 255, 0) 68px),
     linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
 }
 
 .contract-detail-shell--page {
-  border-color: #ddd6fe;
+  border-color: #e9d5ff;
   background:
-    linear-gradient(180deg, rgba(237, 233, 254, 0.28) 0%, rgba(255, 255, 255, 0) 72px),
+    linear-gradient(180deg, rgba(237, 233, 254, 0.18) 0%, rgba(255, 255, 255, 0) 68px),
     linear-gradient(180deg, #ffffff 0%, #faf7ff 100%);
 }
 
@@ -302,9 +302,9 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
 }
 
 .contract-detail-shell__title-wrap {
@@ -322,7 +322,7 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
 
 .contract-detail-shell__title {
   margin: 0;
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1.25;
   color: #0f172a;
 }
@@ -335,7 +335,7 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
 .contract-detail-shell__body {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
 }
 
 .contract-detail-shell__body--stacked {
@@ -356,30 +356,36 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  padding: 4px;
+  border: 1px solid rgba(203, 213, 225, 0.72);
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.92);
 }
 
 .contract-detail-tabs__tab {
-  border: 1px solid #cbd5e1;
-  background: #fff;
+  border: 1px solid transparent;
+  background: transparent;
   color: #334155;
   border-radius: 999px;
-  padding: 6px 12px;
+  padding: 7px 12px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .contract-detail-tabs__tab--active {
-  border-color: #0f172a;
-  background: #0f172a;
-  color: #fff;
+  border-color: rgba(191, 219, 254, 0.9);
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
 }
 
 .contract-detail-tabs--native .contract-detail-tabs__rail {
+  border: 0;
   border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 6px;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 0 6px;
 }
 
 .contract-detail-tabs--native .contract-detail-tabs__tab {
@@ -405,11 +411,11 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
 
 .contract-form-shell {
   grid-column: 1 / -1;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 14px;
   background: #fff;
   padding: 14px 16px 12px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
 }
 
 .contract-form-shell--native {
@@ -436,9 +442,9 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
 
 .contract-form-shell--nested {
   grid-column: auto;
-  border-radius: 16px;
-  border-color: #edf2f7;
-  background: rgba(255, 255, 255, 0.84);
+  border-radius: 12px;
+  border-color: #e2e8f0;
+  background: rgba(248, 250, 252, 0.92);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
   padding: 12px 14px 10px;
 }
@@ -489,7 +495,7 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .contract-form-shell__eyebrow {

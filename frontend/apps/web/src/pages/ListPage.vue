@@ -206,20 +206,25 @@
     />
 
     <section v-if="status === 'ok' && showBatchBar && (!compactDeliveryMode || selectedCount > 0)" class="batch-bar">
-      <span>已选 {{ selectedCount }} 条</span>
-      <button v-if="showArchive" type="button" :disabled="loading || !selectedCount" @click="callBatchAction('archive')">批量归档</button>
-      <button v-if="showActivate" type="button" :disabled="loading || !selectedCount" @click="callBatchAction('activate')">批量激活</button>
-      <button v-if="showDelete" type="button" :disabled="loading || !selectedCount" @click="callBatchAction('delete')">批量删除</button>
-      <template v-if="showAssign">
-        <select :value="String(selectedAssigneeId || '')" :disabled="loading" @change="onAssigneeSelectChange">
-          <option value="">选择负责人</option>
-          <option v-for="opt in assigneeOptions || []" :key="opt.id" :value="String(opt.id)">{{ opt.name }}</option>
-        </select>
-        <button type="button" :disabled="loading || !selectedCount || !selectedAssigneeId" @click="callBatchAssign">批量指派</button>
-      </template>
-      <button type="button" :disabled="loading || !selectedCount" @click="callBatchExport('selected')">导出选中 CSV</button>
-      <button type="button" :disabled="loading || !records.length" @click="callBatchExport('all')">导出当前页 CSV</button>
-      <button type="button" class="ghost" :disabled="loading" @click="clearSelection">清空</button>
+      <div class="batch-bar__summary">
+        <span class="batch-bar__eyebrow">批量处理</span>
+        <strong class="batch-bar__count">已选 {{ selectedCount }} 条</strong>
+      </div>
+      <div class="batch-bar__actions">
+        <button v-if="showArchive" type="button" :disabled="loading || !selectedCount" @click="callBatchAction('archive')">批量归档</button>
+        <button v-if="showActivate" type="button" :disabled="loading || !selectedCount" @click="callBatchAction('activate')">批量激活</button>
+        <button v-if="showDelete" type="button" class="danger" :disabled="loading || !selectedCount" @click="callBatchAction('delete')">批量删除</button>
+        <template v-if="showAssign">
+          <select :value="String(selectedAssigneeId || '')" :disabled="loading" @change="onAssigneeSelectChange">
+            <option value="">选择负责人</option>
+            <option v-for="opt in assigneeOptions || []" :key="opt.id" :value="String(opt.id)">{{ opt.name }}</option>
+          </select>
+          <button type="button" class="primary" :disabled="loading || !selectedCount || !selectedAssigneeId" @click="callBatchAssign">批量指派</button>
+        </template>
+        <button type="button" :disabled="loading || !selectedCount" @click="callBatchExport('selected')">导出选中 CSV</button>
+        <button type="button" :disabled="loading || !records.length" @click="callBatchExport('all')">导出当前页 CSV</button>
+        <button type="button" class="ghost" :disabled="loading" @click="clearSelection">清空</button>
+      </div>
       <span v-if="batchMessage" class="batch-message">{{ batchMessage }}</span>
     </section>
 
@@ -254,6 +259,18 @@
       >
         下载失败清单 CSV
       </button>
+    </section>
+
+    <section v-if="status === 'ok' && summaryItemsSafe.length" class="summary-strip">
+      <article
+        v-for="item in summaryItemsSafe"
+        :key="item.key"
+        class="summary-card"
+        :class="`tone-${item.tone || 'neutral'}`"
+      >
+        <p class="summary-label">{{ item.label }}</p>
+        <p class="summary-value">{{ item.value }}</p>
+      </article>
     </section>
 
     <section v-if="status === 'ok' && showDetailZone" class="table">
@@ -355,6 +372,7 @@
               <tr
                 v-for="(row, index) in group.sampleRows"
                 :key="`group-row-${group.key}-${String(row.id ?? index)}`"
+                :class="rowToneClass(row)"
                 @click="handleRow(row)"
               >
                 <td v-for="col in displayedColumns" :key="`group-cell-${group.key}-${String(row.id ?? index)}-${col}`">
@@ -365,6 +383,14 @@
                   >
                     {{ semanticCell(col, row[col]).text }}
                   </span>
+                  <div v-else-if="isOwnerColumn(col)" class="cell-inline-meta">
+                    <span class="cell-inline-meta__label">{{ columnLabel(col) }}</span>
+                    <strong class="cell-inline-meta__value">{{ semanticCell(col, row[col]).text }}</strong>
+                  </div>
+                  <div v-else-if="isProgressColumn(col)" class="cell-progress">
+                    <span class="cell-progress__label">{{ columnLabel(col) }}</span>
+                    <strong class="cell-progress__value">{{ semanticCell(col, row[col]).text }}</strong>
+                  </div>
                   <span v-else>{{ semanticCell(col, row[col]).text }}</span>
                 </td>
               </tr>
@@ -388,7 +414,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(row, index) in records" :key="String(row.id ?? index)" @click="handleRow(row)">
+          <tr v-for="(row, index) in records" :key="String(row.id ?? index)" :class="rowToneClass(row)" @click="handleRow(row)">
             <td v-if="showSelectionColumn" class="cell-select" @click.stop>
               <input
                 v-if="rowId(row)"
@@ -403,10 +429,18 @@
                 <div class="primary">{{ semanticCell(col, row[col]).text }}</div>
                 <div v-if="rowSecondary" class="secondary">{{ semanticCell(rowSecondary, row[rowSecondary]).text }}</div>
               </div>
-              <div v-else-if="isStatusColumn(col)">
+              <div v-else-if="isStatusColumn(col) || isRiskColumn(col)">
                 <span class="status-badge" :class="`tone-${semanticCell(col, row[col]).tone}`">
                   {{ semanticCell(col, row[col]).text }}
                 </span>
+              </div>
+              <div v-else-if="isOwnerColumn(col)" class="cell-inline-meta">
+                <span class="cell-inline-meta__label">{{ columnLabel(col) }}</span>
+                <strong class="cell-inline-meta__value">{{ semanticCell(col, row[col]).text }}</strong>
+              </div>
+              <div v-else-if="isProgressColumn(col)" class="cell-progress">
+                <span class="cell-progress__label">{{ columnLabel(col) }}</span>
+                <strong class="cell-progress__value">{{ semanticCell(col, row[col]).text }}</strong>
               </div>
               <div v-else>
                 {{ semanticCell(col, row[col]).text }}
@@ -769,6 +803,7 @@ const compactDeliveryMode = computed(() => String(import.meta.env.VITE_UI_COMPAC
 const headerSubtitle = computed(() => compactDeliveryMode.value || props.nativeLike ? '' : props.subtitle);
 const headerModeLabel = computed(() => compactDeliveryMode.value || props.nativeLike ? '' : pageModeLabelText.value);
 const showUnifiedTopbar = computed(() => showActionZone.value);
+const summaryItemsSafe = computed(() => Array.isArray(props.summaryItems) ? props.summaryItems.slice(0, 4) : []);
 const searchInputValue = ref(String(props.searchTerm || ''));
 const collapsedSet = computed(() => new Set(Array.isArray(props.collapsedGroupKeys) ? props.collapsedGroupKeys : []));
 const allGroupsCollapsed = computed(() => {
@@ -786,6 +821,33 @@ function semanticCell(field: string, value: unknown) {
 function isStatusColumn(field: string) {
   const key = String(field || '').toLowerCase();
   return key.includes('state') || key.includes('status') || key.includes('stage');
+}
+
+function isRiskColumn(field: string) {
+  const key = String(field || '').toLowerCase();
+  return key.includes('risk') || key.includes('warning') || key.includes('alert') || key.includes('priority');
+}
+
+function isOwnerColumn(field: string) {
+  const key = String(field || '').toLowerCase();
+  return key.includes('manager') || key.includes('owner') || key.includes('assignee') || key.includes('user');
+}
+
+function isProgressColumn(field: string) {
+  const key = String(field || '').toLowerCase();
+  return key.includes('progress') || key.includes('rate') || key.includes('percent') || key.includes('completion');
+}
+
+function rowToneClass(row: Record<string, unknown>) {
+  for (const col of displayedColumns.value) {
+    if (!isStatusColumn(col) && !isRiskColumn(col)) continue;
+    const tone = String(semanticCell(col, row[col]).tone || '').trim();
+    if (tone === 'danger') return 'row-tone-danger';
+    if (tone === 'warning') return 'row-tone-warning';
+    if (tone === 'success') return 'row-tone-success';
+    if (tone === 'info') return 'row-tone-info';
+  }
+  return '';
 }
 
 function toggleGroupCollapsed(key: string) {
@@ -1258,18 +1320,19 @@ function columnLabel(col: string) {
 <style scoped>
 .page {
   display: grid;
-  gap: 10px;
+  gap: var(--ui-space-3);
 }
 
 .unified-topbar {
   display: grid;
-  grid-template-columns: auto minmax(280px, 1.4fr) auto auto auto;
+  grid-template-columns: auto minmax(320px, 1.4fr) auto auto auto;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  background: #fff;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-3);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 245, 239, 0.92));
+  box-shadow: var(--ui-shadow-sm);
 }
 
 .topbar-title {
@@ -1280,14 +1343,14 @@ function columnLabel(col: string) {
 }
 
 .topbar-title strong {
-  font-size: 16px;
-  color: #0f172a;
+  font-size: var(--ui-font-size-lg);
+  color: var(--ui-color-ink-strong);
   line-height: 1;
 }
 
 .topbar-title span {
-  color: #64748b;
-  font-size: 12px;
+  color: var(--ui-color-ink-muted);
+  font-size: var(--ui-font-size-xs);
 }
 
 .topbar-search {
@@ -1300,10 +1363,10 @@ function columnLabel(col: string) {
 .topbar-search input {
   flex: 1;
   min-width: 180px;
-  height: 34px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 0 10px;
+  height: 40px;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  padding: 0 var(--ui-space-3);
 }
 
 .topbar-search--native input {
@@ -1316,25 +1379,25 @@ function columnLabel(col: string) {
 }
 
 .search-menu-toggle.active {
-  border-color: #1d4ed8;
-  color: #1d4ed8;
-  background: #eff6ff;
+  border-color: var(--ui-color-primary-700);
+  color: var(--ui-color-primary-700);
+  background: var(--ui-color-primary-050);
 }
 
 .native-search-menu {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  z-index: 20;
+  z-index: var(--ui-z-dropdown);
   display: grid;
   grid-template-columns: repeat(2, minmax(180px, 1fr));
   gap: 10px;
   width: min(620px, calc(100vw - 48px));
   padding: 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.16);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: var(--ui-shadow-md);
 }
 
 .native-search-menu-section {
@@ -1346,20 +1409,20 @@ function columnLabel(col: string) {
 
 .native-search-menu-section p {
   margin: 0;
-  color: #475569;
-  font-size: 12px;
-  font-weight: 600;
+  color: var(--ui-color-ink-muted);
+  font-size: var(--ui-font-size-xs);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .native-search-menu-empty {
   grid-column: 1 / -1;
   margin: 0;
   padding: 8px;
-  border: 1px dashed #cbd5e1;
-  border-radius: 8px;
-  color: #64748b;
-  font-size: 12px;
-  background: #f8fafc;
+  border: 1px dashed var(--ui-color-border-strong);
+  border-radius: var(--ui-radius-sm);
+  color: var(--ui-color-ink-muted);
+  font-size: var(--ui-font-size-xs);
+  background: rgba(248, 245, 239, 0.72);
 }
 
 .native-search-menu-section button {
@@ -1372,19 +1435,19 @@ function columnLabel(col: string) {
 }
 
 .native-search-menu-section button.active {
-  border-color: #1d4ed8;
-  color: #1d4ed8;
-  background: #eff6ff;
+  border-color: var(--ui-color-primary-700);
+  color: var(--ui-color-primary-700);
+  background: var(--ui-color-primary-050);
 }
 
 .native-search-menu-section button:disabled {
-  color: #94a3b8;
+  color: var(--ui-color-ink-soft);
   cursor: not-allowed;
-  background: #f8fafc;
+  background: rgba(248, 245, 239, 0.72);
 }
 
 .native-search-menu-clear {
-  color: #991b1b;
+  color: var(--ui-color-danger-600);
 }
 
 .topbar-search button,
@@ -1394,25 +1457,27 @@ function columnLabel(col: string) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 32px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #fff;
-  color: #0f172a;
-  padding: 0 10px;
-  font-size: 12px;
+  height: 36px;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  background: rgba(255, 255, 255, 0.84);
+  color: var(--ui-color-ink-strong);
+  padding: 0 12px;
+  font-size: var(--ui-font-size-xs);
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .topbar-tabs {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .topbar-tabs button.active {
-  border-color: #1d4ed8;
-  color: #1d4ed8;
-  background: #eff6ff;
+  border-color: var(--ui-color-primary-700);
+  color: var(--ui-color-primary-700);
+  background: var(--ui-color-primary-050);
 }
 
 .topbar-sort {
@@ -1423,33 +1488,38 @@ function columnLabel(col: string) {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #64748b;
-  font-size: 12px;
+  color: var(--ui-color-ink-muted);
+  font-size: var(--ui-font-size-xs);
 }
 
 .topbar-primary {
-  height: 32px;
-  border: 1px solid #0f172a;
-  border-radius: 8px;
-  background: #0f172a;
+  height: 38px;
+  border: 1px solid var(--ui-color-primary-700);
+  border-radius: 10px;
+  background: var(--ui-color-primary-700);
   color: #fff;
-  padding: 0 12px;
-  font-size: 12px;
-  font-weight: 600;
+  padding: 0 16px;
+  font-size: var(--ui-font-size-xs);
+  font-weight: var(--ui-font-weight-semibold);
+  box-shadow: 0 10px 20px rgba(61, 120, 159, 0.18);
 }
 
+.topbar-primary:disabled {
+  opacity: 0.55;
+}
 
 .table {
   overflow: auto;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+  box-shadow: var(--ui-shadow-md);
 }
 
 .table-hint {
   padding: 10px 16px 0;
-  color: #64748b;
-  font-size: 13px;
+  color: var(--ui-color-ink-muted);
+  font-size: var(--ui-font-size-sm);
 }
 
 .table-pagination {
@@ -1458,8 +1528,8 @@ function columnLabel(col: string) {
   justify-content: space-between;
   gap: 12px;
   padding: 12px 16px 16px;
-  border-top: 1px solid rgba(15, 23, 42, 0.08);
-  background: #fff;
+  border-top: 1px solid var(--ui-color-border);
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .table-pagination-meta,
@@ -1467,16 +1537,16 @@ function columnLabel(col: string) {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #475569;
-  font-size: 12px;
+  color: var(--ui-color-ink-muted);
+  font-size: var(--ui-font-size-xs);
 }
 
 .table-page-btn {
   padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  background: #f8fafc;
-  color: #0f172a;
+  border-radius: var(--ui-radius-pill);
+  border: 1px solid var(--ui-color-border);
+  background: rgba(255, 255, 255, 0.84);
+  color: var(--ui-color-ink-strong);
 }
 
 .table-page-btn:disabled {
@@ -1491,28 +1561,30 @@ function columnLabel(col: string) {
 }
 
 .summary-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  background: #fff;
-  padding: 10px;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  background: rgba(255, 255, 255, 0.92);
+  padding: var(--ui-space-3);
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .summary-label {
   margin: 0;
-  font-size: 12px;
-  color: #64748b;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-muted);
 }
 
 .summary-value {
   margin: 6px 0 0;
-  font-size: 20px;
-  font-weight: 700;
+  font-size: var(--ui-font-size-xl);
+  font-weight: var(--ui-font-weight-bold);
 }
 
 .summary-card.tone-danger { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
 .summary-card.tone-warning { background: #fffbeb; border-color: #fde68a; color: #b45309; }
 .summary-card.tone-success { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
 .summary-card.tone-info { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+.summary-card.tone-neutral { background: rgba(255, 255, 255, 0.94); }
 
 .grouped-table {
   display: grid;
@@ -1632,21 +1704,58 @@ function columnLabel(col: string) {
 }
 
 .batch-bar {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 14px;
   padding: 10px 12px;
+}
+
+.batch-bar__summary {
+  display: grid;
+  gap: 2px;
+}
+
+.batch-bar__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.batch-bar__count {
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.batch-bar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .batch-bar button {
   border: 1px solid #cbd5e1;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 6px 10px;
   cursor: pointer;
+}
+
+.batch-bar button.primary {
+  border-color: #1d4ed8;
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.batch-bar button.danger {
+  border-color: #fecaca;
+  color: #b91c1c;
+  background: #fff5f5;
 }
 
 .batch-bar button.ghost {
@@ -1739,13 +1848,63 @@ tr:hover {
   cursor: pointer;
 }
 
+tr.row-tone-danger td:first-child,
+tr.row-tone-warning td:first-child,
+tr.row-tone-success td:first-child,
+tr.row-tone-info td:first-child {
+  box-shadow: inset 3px 0 0 transparent;
+}
+
+tr.row-tone-danger td:first-child { box-shadow: inset 3px 0 0 #ef4444; }
+tr.row-tone-warning td:first-child { box-shadow: inset 3px 0 0 #f59e0b; }
+tr.row-tone-success td:first-child { box-shadow: inset 3px 0 0 #10b981; }
+tr.row-tone-info td:first-child { box-shadow: inset 3px 0 0 #3b82f6; }
+
+.cell-primary {
+  display: grid;
+  gap: 4px;
+}
+
+.cell-primary .primary {
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.45;
+}
+
+.cell-primary .secondary {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.cell-inline-meta,
+.cell-progress {
+  display: grid;
+  gap: 2px;
+}
+
+.cell-inline-meta__label,
+.cell-progress__label {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.cell-inline-meta__value,
+.cell-progress__value {
+  font-size: 13px;
+  line-height: 1.4;
+  color: #0f172a;
+  font-weight: 600;
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  padding: 2px 8px;
+  padding: 3px 9px;
   font-size: 12px;
   border: 1px solid #d1d5db;
+  font-weight: 600;
 }
 
 .status-badge.tone-success { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
@@ -1760,6 +1919,19 @@ td:first-child {
   left: 0;
   background: #fff;
   z-index: 2;
+}
+
+@media (max-width: 1180px) {
+  .unified-topbar {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 860px) {
+  .batch-bar {
+    grid-template-columns: 1fr;
+  }
 }
 
 </style>

@@ -137,62 +137,65 @@ function copyTrace() {
 
 <style scoped>
 .panel {
-  padding: 24px;
-  border-radius: 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #0f172a;
+  padding: var(--ui-space-6);
+  border-radius: var(--ui-radius-md);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 245, 239, 0.92));
+  border: 1px solid var(--ui-color-border);
+  color: var(--ui-color-ink-strong);
   display: grid;
-  gap: 8px;
+  gap: var(--ui-space-2);
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .panel.error {
-  border-color: #fecaca;
-  background: #fff1f2;
+  border-color: rgba(177, 76, 67, 0.24);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 240, 238, 0.96));
 }
 
 .panel.forbidden_capability {
-  border-color: #fde68a;
-  background: #fffbeb;
+  border-color: rgba(165, 107, 22, 0.24);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 245, 223, 0.96));
 }
 
 .error-meta {
   display: grid;
-  gap: 4px;
+  gap: var(--ui-space-1);
 }
 
 .error-context {
   margin: 0;
-  font-size: 12px;
-  color: #475569;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-muted);
 }
 
 .trace {
-  font-size: 12px;
-  color: #64748b;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-soft);
 }
 
 button {
   justify-self: start;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 8px;
-  background: #111827;
+  padding: 9px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-color-primary-700);
   color: white;
   cursor: pointer;
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .trace-copy {
   justify-self: start;
   padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: var(--ui-radius-xs);
+  border: 1px solid var(--ui-color-border);
   background: transparent;
-  color: #111827;
-  font-size: 12px;
+  color: var(--ui-color-ink-strong);
+  font-size: var(--ui-font-size-xs);
+  box-shadow: none;
 }
 
 .action-feedback {
-  color: #334155;
+  color: var(--ui-color-ink);
 }
 </style>

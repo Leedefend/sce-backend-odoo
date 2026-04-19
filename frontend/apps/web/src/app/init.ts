@@ -10,6 +10,17 @@ const EXTENSION_NOISE_PATTERNS = [
 ];
 
 let extensionNoiseGuardInstalled = false;
+const STARTUP_STATUS_EVENT = 'sc:startup-status';
+
+function emitStartupStatus(status: 'bootstrapping' | 'ready' | 'auth_redirect' | 'error', detail?: Record<string, unknown>) {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(STARTUP_STATUS_EVENT, {
+    detail: {
+      status,
+      ...(detail || {}),
+    },
+  }));
+}
 
 function looksLikeExtensionNoise(input: unknown): boolean {
   const text = String(input || '').trim().toLowerCase();
@@ -49,10 +60,13 @@ export async function bootstrapApp() {
   const session = useSessionStore();
   session.restore();
   if (!session.token) {
+    emitStartupStatus('ready', { reason: 'anonymous' });
     return;
   }
+  emitStartupStatus('bootstrapping', { hasToken: true });
   try {
     await session.loadAppInit();
+    emitStartupStatus('ready', { initStatus: session.initStatus });
   } catch (error) {
     if (
       error instanceof ApiError &&
@@ -60,6 +74,7 @@ export async function bootstrapApp() {
         || String(error.reasonCode || '').trim().toUpperCase() === 'AUTH_REQUIRED'
         || String(error.reasonCode || '').trim().toUpperCase() === 'AUTH_401')
     ) {
+      emitStartupStatus('auth_redirect', { reasonCode: error.reasonCode || 'AUTH_401' });
       session.clearSession();
       const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
       if (!window.location.pathname.startsWith('/login')) {
@@ -67,6 +82,12 @@ export async function bootstrapApp() {
       }
       return;
     }
+    emitStartupStatus('error', {
+      message: error instanceof Error ? error.message : 'bootstrap failed',
+      initStatus: session.initStatus,
+    });
     // initStatus handled in store; avoid unhandled promise
   }
 }
+
+export { STARTUP_STATUS_EVENT };

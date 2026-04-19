@@ -1,0 +1,7 @@
+[data-component="LayoutShell"] {
+  position: relative;
+}
+
+[data-component="LayoutShell"] .router-host > * {
+  min-width: 0;
+}

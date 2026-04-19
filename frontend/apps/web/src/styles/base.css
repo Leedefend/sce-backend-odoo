@@ -1,0 +1,103 @@
+html {
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--ui-font-sans);
+  font-size: var(--ui-font-size-md);
+  line-height: var(--ui-line-height-base);
+  color: var(--ui-color-ink);
+  background:
+    radial-gradient(circle at top, rgba(206, 224, 236, 0.55), transparent 30%),
+    linear-gradient(180deg, var(--ui-color-bg-app) 0%, var(--ui-color-bg-app-alt) 100%);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: var(--ui-color-primary-600);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--ui-color-primary-700);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  transition:
+    background-color var(--ui-transition-fast),
+    border-color var(--ui-transition-fast),
+    color var(--ui-transition-fast),
+    box-shadow var(--ui-transition-fast),
+    transform var(--ui-transition-fast);
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgba(46, 98, 143, 0.24);
+  outline-offset: 2px;
+}
+
+input,
+select,
+textarea {
+  color: var(--ui-color-ink-strong);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--ui-color-ink-soft);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  color: var(--ui-color-ink-strong);
+  line-height: var(--ui-line-height-tight);
+}
+
+::selection {
+  background: rgba(61, 120, 159, 0.18);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: var(--ui-radius-pill);
+  background: rgba(70, 88, 108, 0.26);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}

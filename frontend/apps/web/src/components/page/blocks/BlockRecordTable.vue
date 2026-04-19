@@ -1,7 +1,10 @@
 <template>
   <article class="block block-record-table" :class="tableClass">
     <header class="block-header">
-      <h4>{{ block.title || '表格' }}</h4>
+      <div>
+        <h4>{{ block.title || '表格' }}</h4>
+        <p class="block-subtitle">{{ rows.length }} 条记录</p>
+      </div>
     </header>
 
     <div v-if="rows.length" class="table-wrap">
@@ -76,14 +79,43 @@ function stringify(value: unknown) {
 </script>
 
 <style scoped>
-.block { border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; padding: 10px; min-height: 170px; }
-.block-header h4 { margin: 0 0 8px; font-size: 15px; font-weight: 700; }
+.block {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  padding: 12px;
+  min-height: 170px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.block-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.block-header h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.block-subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
 .table-wrap { overflow: auto; }
 .mini-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .mini-table th,
-.mini-table td { border: 1px solid #e5e7eb; padding: 8px 10px; text-align: left; }
-.mini-table th { border: 1px solid #e5e7eb; background: #f8fafc; font-weight: 700; color: #334155; padding: 8px 10px; }
+.mini-table td { border: 1px solid #e5e7eb; padding: 9px 10px; text-align: left; }
+.mini-table th { border: 1px solid #e5e7eb; background: #f8fafc; font-weight: 700; color: #334155; padding: 9px 10px; }
 .mini-table tbody tr:nth-child(2n) td { background: #fcfdff; }
+.mini-table tbody tr:hover td { background: #f8fafc; }
 .empty-text { margin: 6px 0 0; color: #6b7280; font-size: 13px; }
 
 .table-zone-contract {
