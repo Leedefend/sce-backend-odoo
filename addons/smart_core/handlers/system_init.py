@@ -20,6 +20,7 @@ from odoo.addons.smart_core.core.scene_provider import (
 from odoo.addons.smart_core.core.capability_provider import (
     build_capability_groups as provider_build_capability_groups,
     load_capabilities_for_user as provider_load_capabilities_for_user,
+    load_capabilities_for_user_with_timings as provider_load_capabilities_for_user_with_timings,
 )
 from odoo.addons.smart_core.core.intent_surface_builder import IntentSurfaceBuilder
 from odoo.addons.smart_core.core.hash_utils import stable_fingerprint
@@ -92,6 +93,10 @@ _INDUSTRY_EXTENSION_MODULES = (
 
 def _load_capabilities_for_user(env, user) -> List[dict]:
     return provider_load_capabilities_for_user(env, user)
+
+
+def _load_capabilities_for_user_with_timings(env, user) -> tuple[List[dict], dict[str, int]]:
+    return provider_load_capabilities_for_user_with_timings(env, user)
 
 
 def _bind_scene_assets(*args, **kwargs):
@@ -391,9 +396,15 @@ class SystemInitHandler(BaseIntentHandler):
             params = payload if isinstance(payload, dict) else {}
         build_mode = SystemInitPayloadBuilder.resolve_build_mode(params)
         startup_timings_ms: dict[str, int] = {}
+        startup_subtimings_ms: dict[str, dict[str, int]] = {}
 
         def _mark(stage: str, started_at: float) -> float:
             startup_timings_ms[stage] = int((time.perf_counter() - started_at) * 1000)
+            return time.perf_counter()
+
+        def _mark_substage(stage: str, substage: str, started_at: float) -> float:
+            stage_timings = startup_subtimings_ms.setdefault(stage, {})
+            stage_timings[substage] = int((time.perf_counter() - started_at) * 1000)
             return time.perf_counter()
 
         contract_mode = resolve_contract_mode(params)
@@ -497,6 +508,23 @@ class SystemInitHandler(BaseIntentHandler):
             )
         stage_ts = _mark("build_preload_refs", stage_ts)
 
+        prepare_runtime_context_ts = time.perf_counter()
+
+        capabilities_raw, capability_load_timings_ms = _load_capabilities_for_user_with_timings(env, user)
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "load_capabilities_for_user",
+            prepare_runtime_context_ts,
+        )
+        if capability_load_timings_ms:
+            startup_subtimings_ms["capability_load"] = dict(capability_load_timings_ms)
+        capabilities = normalize_capabilities(capabilities_raw)
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "normalize_capabilities",
+            prepare_runtime_context_ts,
+        )
+
         # -------- 5) 汇总返回（统一蛇形命名 + 导航指纹 + 动态意图）--------
         data = SystemInitPayloadBuilder.build_base(
             user_dict=user_dict,
@@ -510,12 +538,17 @@ class SystemInitHandler(BaseIntentHandler):
             default_route=nav_data.get("defaultRoute") or {"menu_id": None},
             intents=intents,
             feature_flags=nav_data.get("feature_flags") or {"ai_enabled": True},
-            capabilities=normalize_capabilities(_load_capabilities_for_user(env, user)),
+            capabilities=capabilities,
             scene_channel=scene_channel,
             channel_selector=channel_selector,
             channel_source_ref=channel_source_ref,
             contract_mode=contract_mode,
             contract_version=CONTRACT_VERSION,
+        )
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "build_base_call",
+            prepare_runtime_context_ts,
         )
         # Keep explicit contract_mode mapping in handler for governance coverage guard.
         data.update({"contract_mode": contract_mode})
@@ -527,25 +560,70 @@ class SystemInitHandler(BaseIntentHandler):
                 channel_source_ref=channel_source_ref,
             ),
         }
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "initialize_scene_diagnostics",
+            prepare_runtime_context_ts,
+        )
         components = SystemInitComponentsFactory.create()
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "create_components",
+            prepare_runtime_context_ts,
+        )
         scene_normalizer = components["scene_normalizer"]
         scene_drift_engine = components["scene_drift_engine"]
         auto_degrade_engine = components["auto_degrade_engine"]
         capability_surface_engine = components["capability_surface_engine"]
         contract_assembler = components["contract_assembler"]
         scene_normalizer.append_act_url_deprecations(nav_tree, scene_diagnostics["normalize_warnings"])
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "append_act_url_deprecations",
+            prepare_runtime_context_ts,
+        )
         if build_mode in {SystemInitPayloadBuilder.BUILD_MODE_PRELOAD, SystemInitPayloadBuilder.BUILD_MODE_DEBUG}:
             SystemInitPayloadBuilder.attach_preload(data, home_contract, etags, preload_items)
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "attach_preload_when_enabled",
+            prepare_runtime_context_ts,
+        )
 
         # 扩展模块 facts contribution（平台 merge owner）
         apply_extension_fact_contributions(data, env, user, context=params)
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "apply_extension_fact_contributions",
+            prepare_runtime_context_ts,
+        )
         merge_extension_facts(data, include_workspace_collections=False)
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "merge_extension_facts",
+            prepare_runtime_context_ts,
+        )
         data["scene_validation_recovery_strategy"] = _load_scene_validation_recovery_strategy(env, params, data)
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "load_scene_validation_recovery_strategy",
+            prepare_runtime_context_ts,
+        )
         data["scene_action_surface_strategy"] = _load_scene_action_surface_strategy(env, params, data)
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "load_scene_action_surface_strategy",
+            prepare_runtime_context_ts,
+        )
         data["scene_action_surface_strategy"] = _normalize_scene_action_surface_strategy(
             dict(
                 action_surface_strategy=data.get("scene_action_surface_strategy")
             ).get("action_surface_strategy")
+        )
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "normalize_scene_action_surface_strategy",
+            prepare_runtime_context_ts,
         )
         stage_ts = _mark("prepare_runtime_context", stage_ts)
 
@@ -803,6 +881,7 @@ class SystemInitHandler(BaseIntentHandler):
         startup_profile = {
             "build_mode": build_mode,
             "timings_ms": startup_timings_ms,
+            "subtimings_ms": startup_subtimings_ms,
             "total_ms": int((time.perf_counter() - perf0) * 1000),
             "response_key_count": len(data.keys()) if isinstance(data, dict) else 0,
         }

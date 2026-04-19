@@ -4,6 +4,7 @@ import logging
 import os
 import time
 import uuid
+from typing import Any, Dict
 from odoo.http import request
 from odoo import http, SUPERUSER_ID, api
 from odoo.exceptions import AccessDenied
@@ -127,6 +128,13 @@ def authenticate_user(login, password, db: str | None = None):
     """
     基于用户名和密码校验用户身份，并返回登录用户对象
     """
+    timings_ms: Dict[str, int] = {}
+
+    def _mark(stage: str, started_at: float) -> float:
+        timings_ms[stage] = int((time.perf_counter() - started_at) * 1000)
+        return time.perf_counter()
+
+    stage_ts = time.perf_counter()
     session_db = getattr(getattr(request, "session", None), "db", None)
     query_db = None
     if getattr(request, "httprequest", None) is not None:
@@ -142,13 +150,16 @@ def authenticate_user(login, password, db: str | None = None):
         config_db = next((str(item).strip() for item in config_db if str(item).strip()), None)
 
     db = db or session_db or query_db or env_db or config_db
+    stage_ts = _mark("db_resolution", stage_ts)
     if not db:
         raise AccessDenied("未指定数据库")
     registry = Registry(db)
+    stage_ts = _mark("registry_acquire", stage_ts)
 
     with registry.cursor() as cr:
         env = api.Environment(cr, SUPERUSER_ID, {})
         user_record = env["res.users"].sudo().search([("login", "=", login)], limit=1)
+        stage_ts = _mark("user_lookup", stage_ts)
 
         if not user_record:
             raise AccessDenied("用户名不存在")
@@ -156,15 +167,18 @@ def authenticate_user(login, password, db: str | None = None):
         # ✅ 正确方式：构建含 interactive 的 context
         context = dict(env.context, interactive=True)
         user_env = api.Environment(cr, user_record.id, context)
+        stage_ts = _mark("user_env_build", stage_ts)
 
         try:
             user_record.with_env(user_env)._check_credentials(password,user_env)
         except AccessDenied:
             raise AccessDenied("密码错误")
+        _mark("check_credentials", stage_ts)
 
         return {
             "id": user_record.id,
             "login": user_record.login,
             "name": user_record.name,
             "db": db,
+            "timings_ms": timings_ms,
         }

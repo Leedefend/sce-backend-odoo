@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from typing import List
+import time
+from typing import List, Tuple
 
 from .capability_group_defaults import (
     DEFAULT_CAPABILITY_GROUPS,
@@ -9,8 +10,11 @@ from .capability_group_defaults import (
     default_group_order_map,
     infer_group_key,
 )
-from odoo.addons.smart_core.app_config_engine.capability.services.capability_query_service import (
-    CapabilityQueryService,
+from odoo.addons.smart_core.app_config_engine.capability.projection.capability_list_projection import (
+    build_capability_list_projection,
+)
+from odoo.addons.smart_core.app_config_engine.capability.services.capability_registry_service import (
+    CapabilityRegistryService,
 )
 from .capability_contribution_loader import (
     collect_capability_contributions,
@@ -93,37 +97,67 @@ def build_capability_groups(capabilities: List[dict]) -> List[dict]:
 
 
 def load_capabilities_for_user(env, user) -> List[dict]:
+    capabilities, _timings = load_capabilities_for_user_with_timings(env, user)
+    return capabilities
+
+
+def load_capabilities_for_user_with_timings(env, user) -> Tuple[List[dict], dict[str, int]]:
+    timings_ms: dict[str, int] = {}
+
+    def _mark(stage: str, started_at: float) -> float:
+        timings_ms[stage] = int((time.perf_counter() - started_at) * 1000)
+        return time.perf_counter()
+
     legacy_fallback_enabled = _capability_legacy_fallback_enabled(env)
+    stage_ts = time.perf_counter()
     try:
-        query_service = CapabilityQueryService(platform_owner="smart_core")
-        runtime_caps = query_service.list_capabilities_for_user(env, user=user)
+        registry_service = CapabilityRegistryService(platform_owner="smart_core")
+        artifact, registry_timings_ms = registry_service.get_registry_artifact_with_timings(env, user=user)
+        stage_ts = _mark("runtime_query_registry_build", stage_ts)
+        if registry_timings_ms:
+            for key, value in registry_timings_ms.items():
+                timings_ms[f"runtime_query_registry.{key}"] = int(value)
+        if isinstance(artifact, dict):
+            timings_ms["runtime_query_registry.artifact_fallback_used"] = int(bool(artifact.get("fallback_used")))
+            if artifact.get("source"):
+                timings_ms["runtime_query_registry.artifact_source_present"] = 1
+            if artifact.get("fallback_reason"):
+                timings_ms["runtime_query_registry.artifact_fallback_reason_present"] = 1
+        rows = artifact.get("rows") if isinstance(artifact, dict) else []
+        runtime_caps = build_capability_list_projection(rows)
+        stage_ts = _mark("runtime_query_list_projection", stage_ts)
         if isinstance(runtime_caps, list):
             if runtime_caps or not legacy_fallback_enabled:
-                return runtime_caps
+                return runtime_caps, timings_ms
     except Exception:
+        stage_ts = _mark("runtime_query_registry_build", stage_ts)
         if not legacy_fallback_enabled:
-            return []
+            return [], timings_ms
 
     extension_caps, _errors = collect_capability_contributions(env, user)
+    stage_ts = _mark("extension_contributions_fallback", stage_ts)
     if extension_caps:
-        return extension_caps
+        return extension_caps, timings_ms
 
     try:
         extension_groups = collect_capability_group_contributions(env)
+        stage_ts = _mark("extension_group_contributions", stage_ts)
         if isinstance(extension_groups, list) and extension_groups:
             global DEFAULT_CAPABILITY_GROUPS
             DEFAULT_CAPABILITY_GROUPS = [dict(item) for item in extension_groups if isinstance(item, dict)]
     except Exception:
-        pass
+        stage_ts = _mark("extension_group_contributions", stage_ts)
 
     try:
         cap_model = env["sc.capability"].sudo()
+        stage_ts = _mark("capability_model_access", stage_ts)
     except Exception:
-        return []
+        return [], timings_ms
     try:
         caps = cap_model.search([("active", "=", True)], order="sequence, id")
+        stage_ts = _mark("capability_model_search", stage_ts)
     except Exception:
-        return []
+        return [], timings_ms
     out: List[dict] = []
     for rec in caps:
         try:
@@ -131,4 +165,5 @@ def load_capabilities_for_user(env, user) -> List[dict]:
                 out.append(rec.to_public_dict(user))
         except Exception:
             continue
-    return out
+    _mark("capability_model_projection", stage_ts)
+    return out, timings_ms
