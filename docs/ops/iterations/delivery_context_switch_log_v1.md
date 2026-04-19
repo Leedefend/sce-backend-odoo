@@ -16,6 +16,231 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-20T04:02:00+08:00
+- blocker_key: `check_credentials_special_screen_pass_v1`
+- layer_target: `Platform-kernel verification design`
+- module: `check_credentials slow-path special screen`
+- reason: instrumentation 已把登录热点精确定位到 _check_credentials，用户要求判断这是否明显低于原生效率
+- completed_step: `已完成 ITER-2026-04-20-CHECK-CREDENTIALS-SPECIAL-SCREEN：确认当前 custom auth wrapper 在 _check_credentials 外部仅有极小开销（user_lookup 约 3ms，user_env_build 约 0ms）；容器内源码证明原生 Odoo 直接执行 res_users 密码哈希读取 + _crypt_context().verify_and_update(...)；同时运行时 password.hashing.rounds=0，且 Odoo MIN_ROUNDS=600000，说明当前慢点主要来自原生 PBKDF2-SHA512 工作因子，而不是我们把 rounds 额外调高或包装层明显拖慢`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Decide whether to open a dedicated password-hashing policy screen before any security/performance tradeoff change`
+
+### 2026-04-20T03:56:00+08:00
+- blocker_key: `login_auth_instrumentation_implement_pass_v1`
+- layer_target: `Platform-kernel runtime`
+- module: `login/auth instrumentation implementation`
+- reason: 登录慢专项已经收敛到认证共享路径，需要先把登录链分段打点，避免继续靠样本对比间接推断
+- completed_step: `已完成 ITER-2026-04-20-LOGIN-AUTH-INSTRUMENTATION-IMPLEMENT：在 auth.py 为 authenticate_user 增加 db_resolution/registry_acquire/user_lookup/user_env_build/check_credentials 子阶段打点，在 login.py 为 resolve_request/authenticate_user/load_user_profile/warm_capability_artifact/generate_token/build_response 打点并通过 meta 返回；重启 dev Odoo 后，真实 wutao/demo 登录结果显示 authenticate_user 约 535ms，其中 check_credentials 约 528ms，load_user_profile 约 14ms，warm_capability_artifact 约 50ms，generate_token/build_response 约 0ms，已把主要热点精确定位到 _check_credentials`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open a dedicated screen or implementation batch on credential-check cost only, and keep profile/warmup/token paths unchanged until proven necessary`
+
+### 2026-04-20T03:43:00+08:00
+- blocker_key: `login_slow_special_screen_pass_v1`
+- layer_target: `Platform-kernel verification design`
+- module: `login slow special screen`
+- reason: 用户要求把登录慢单独立项研究，避免继续把会话建立、warmup 和首屏链路混在一起讨论
+- completed_step: `已完成 ITER-2026-04-20-LOGIN-SLOW-SPECIAL-SCREEN：真实成功登录平均约 663.7 ms，而错误密码失败登录平均约 608.9 ms，二者差值仅约 54.8 ms；由于失败登录不会执行 _load_user_profile、_warm_capability_artifact、generate_token，这组证据已经把主要热点收敛到 authenticate_user 共享路径（Registry/用户查找/_check_credentials），而不是 capability warmup`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open a bounded instrumentation batch on login/auth path to add substage timings for authenticate_user, profile load, capability warmup, and token generation`
+
+### 2026-04-20T03:33:00+08:00
+- blocker_key: `login_session_perf_screen_pass_v1`
+- layer_target: `Platform-kernel verification design`
+- module: `login/session performance screen`
+- reason: 用户感知当前登录建立会话仍偏慢，需要先判断是否还有实质优化空间，以及热点是否来自新迁移的 user-scoped warmup
+- completed_step: `已完成 ITER-2026-04-20-LOGIN-SESSION-PERF-SCREEN：真实 wutao/demo 登录 5 次样本约为 626.3/731.1/667.8/653.3/678.3 ms，平均约 671.4 ms；代码路径表明当前 login 链最重的新步骤是同步 _warm_capability_artifact，而首个 system.init 已验证 artifact_fallback_used=0，因此当前结构本质上是“更慢登录，换更快首屏”的显式权衡`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Decide whether to add login-chain substage timing first, or to treat the current behavior as acceptable and stop here`
+
+### 2026-04-20T03:24:00+08:00
+- blocker_key: `capability_warmup_login_chain_implement_pass_v1`
+- layer_target: `Platform-kernel runtime`
+- module: `login chain capability warmup implementation`
+- reason: 用户接受 user-scoped 首次预热，但要求把成本从页面初始化链前移；因此本批次把 capability warmup 前移到 login handler
+- completed_step: `已完成 ITER-2026-04-20-CAPABILITY-WARMUP-LOGIN-CHAIN-IMPLEMENT：在 LoginHandler 成功认证并加载用户画像后，增加容错的 capability artifact warmup；重启 dev Odoo 后，真实 wutao/demo 登录再发首个 system.init 请求时，artifact_fallback_used=0、artifact_fallback_reason_present absent、materialized_read_hit present(0ms marker)，说明首个页面初始化请求已不再承担 capability fallback build`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Decide whether to stop here with login-chain warmup as the accepted user-scoped steady state, or open a follow-up batch for session.bootstrap observability/telemetry only`
+
+### 2026-04-20T03:12:00+08:00
+- blocker_key: `capability_warmup_session_chain_screen_pass_v1`
+- layer_target: `Platform-kernel verification design`
+- module: `user-scoped capability warmup session-chain screen`
+- reason: 用户已接受 user-scoped 首次预热，因此问题从“是否预热”转为“预热挂在会话链哪个点最窄”
+- completed_step: `已完成 ITER-2026-04-20-CAPABILITY-WARMUP-SESSION-CHAIN-SCREEN：确认 session.bootstrap v2 当前过薄，而 login handler 已经掌握真实用户身份、用户画像和 next_intent=system.init，因此 login 是最窄的 user-scoped capability warmup 承载点`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Create and execute a bounded implementation batch that warms the authenticated user's capability artifact inside LoginHandler before returning the login response`
+
+### 2026-04-20T03:02:00+08:00
+- blocker_key: `capability_registry_user_scoping_block_screen_pass_with_stop_v1`
+- layer_target: `Platform-kernel verification design`
+- module: `capability registry user-scoping blocker screen`
+- reason: 在进入 manifest/startup warmup 实现前，代码检查发现 artifact cache_key 与 native projection 都显式依赖 user，上一个“启动预热即可消除首用户 fallback”前提不成立
+- completed_step: `已完成 ITER-2026-04-20-CAPABILITY-REGISTRY-USER-SCOPING-BLOCK-SCREEN：确认 capability registry 当前是 user-scoped artifact，而不是纯 runtime-scoped artifact；因此即便现在加 startup hook，也不能保证 wutao 首次 system.init 命中 materialized artifact。真正的下一个问题应转向“用户无关 registry facts 与用户投影层的拆分”，而不是直接实现 warmup`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Stop startup-warmup implementation and open a bounded screen for splitting user-neutral registry materialization from user-specific projection/filtering`
+
+### 2026-04-20T02:49:00+08:00
+- blocker_key: `capability_registry_startup_warmup_governance_exception_pass_v1`
+- layer_target: `Agent Governance`
+- module: `startup warmup manifest exception`
+- reason: 用户已授权高风险 startup warmup，但仓库规则原本没有覆盖 smart_core capability-registry 的 manifest 场景，必须先补齐窄范围例外
+- completed_step: `已完成 ITER-2026-04-20-CAPABILITY-REGISTRY-STARTUP-WARMUP-GOVERNANCE-EXCEPTION：在 AGENTS.md 新增 6.10 条窄范围例外，只允许 smart_core capability-registry startup warmup 批次触达 addons/smart_core/__manifest__.py 和直接相关 warmup 接线文件；同时明确排除 persistence redesign、frontend、ACL、安全域、支付/结算/账户域和无关 manifest 变更`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open the dedicated high-risk implementation batch for smart_core startup warmup and constrain it to manifest hook + bounded warmup path + restart + first-request verification`
+
+### 2026-04-20T02:40:00+08:00
+- blocker_key: `capability_registry_startup_warmup_high_risk_auth_pass_v1`
+- layer_target: `Platform-kernel governance`
+- module: `capability registry startup warmup high-risk authorization`
+- reason: 用户已经明确授权执行高风险迭代，但 manifest 变更仍需先在仓库内冻结精确范围，避免高风险授权变成扩面许可
+- completed_step: `已完成 ITER-2026-04-20-CAPABILITY-REGISTRY-STARTUP-WARMUP-HIGH-RISK-AUTH：把高风险范围冻结为 smart_core manifest hook、一个 bounded warmup path、runtime restart、以及首个真实 system.init 请求 artifact_fallback_used=0 的验证；同时明确排除持久化 redesign、前端、契约变更和通用 bootstrap 框架扩展`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open the dedicated high-risk implementation task for smart_core startup warmup and decide whether repository policy allows proceeding without adding a new explicit manifest exception`
+
+### 2026-04-20T02:33:00+08:00
+- blocker_key: `capability_registry_startup_warmup_screen_pass_with_high_risk_gate_v1`
+- layer_target: `Platform-kernel verification design`
+- module: `capability registry startup warmup screen`
+- reason: steady-state 方向已选“启动预热”，但还没决定具体挂点；必须先确认哪一个现有入口是真正的 startup owner，避免把预热又挂回请求链
+- completed_step: `已完成 ITER-2026-04-20-CAPABILITY-REGISTRY-STARTUP-WARMUP-SCREEN：确认 smart_core.__init__ 仅做模块导入、session.bootstrap 仍属首用户请求链、现有 cron 既未激活也非启动触发；当前 manifest 也没有 post_load/pre_init_hook/post_init_hook。因此，下一张真正可行的预热票必须是“manifest-declared startup hook + bounded registry warmup”，这也意味着它进入 manifest 高风险批次范围`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Stop ordinary continuous execution and open a dedicated high-risk manifest-scoped warmup task before any startup-hook implementation`
+
+### 2026-04-20T02:26:00+08:00
+- blocker_key: `capability_registry_steady_state_screen_pass_v1`
+- layer_target: `Platform-kernel verification design`
+- module: `capability registry steady-state screen`
+- reason: invalidation与live-toggle边界都已收住，当前最大剩余问题是重启后首个普通请求仍承担 registry fallback build；需要先确定最小稳态化步骤，而不是直接跳到更大范围持久化
+- completed_step: `已完成 ITER-2026-04-20-CAPABILITY-REGISTRY-STEADY-STATE-SCREEN：拒绝继续接受 lazy-first-request 作为正常状态，也拒绝直接上持久化或仅靠人工治理重建；选择“启动/引导期预热现有 in-process artifact”作为下一张最小价值票，因为它能在不改变契约和存储模型的前提下，把首请求 fallback 从普通链路中拿掉`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Create and execute a bounded startup-warmup implementation batch that seeds capability registry artifact before ordinary system.init traffic, then verify after restart that the first real request shows artifact_fallback_used = 0`
+
+### 2026-04-20T02:18:00+08:00
+- blocker_key: `capability_registry_uncached_verify_source_implement_pass_v1`
+- layer_target: `Platform-kernel runtime`
+- module: `capability registry uncached verification source implementation`
+- reason: uncached-source screen 已经选定 direct SQL 读取同一验证键名，下一步需要先把这个读取路径真正落到服务层，再做 live verify
+- completed_step: `已完成 ITER-2026-04-20-CAPABILITY-REGISTRY-UNCACHED-VERIFY-SOURCE-IMPLEMENT：新增 _uncached_verification_salt helper，通过 service-local SQL 直接读取 ir_config_parameter 中的 smart_core.capability_registry.verify_salt；_verification_salt 现在优先使用该 uncached 值，空值时回退到环境变量；validate_task、py_compile、git diff --check 全 PASS`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Rerun the six-step live stale-mismatch verification against the running worker and record whether artifact_fallback_used flips to 1 after salt change`
+
+### 2026-04-20T02:10:00+08:00
+- blocker_key: `capability_registry_uncached_verify_source_screen_pass_v1`
+- layer_target: `Platform-kernel verification design`
+- module: `capability registry uncached verification source screen`
+- reason: live-toggle 边界已证明问题来自 `ir.config_parameter.get_param()` 的进程缓存，下一步必须确定最小 uncached source，而不是继续堆叠新的 debug 输入
+- completed_step: `已完成 ITER-2026-04-20-CAPABILITY-REGISTRY-UNCACHED-VERIFY-SOURCE-SCREEN：拒绝继续使用任何 get_param 读法、拒绝新增诊断模型；选择保留同一个 smart_core.capability_registry.verify_salt 键名，但在 CapabilityRegistryService 内改为 verification-only direct SQL 读取，并继续保留环境变量作为启动期 synthetic verify fallback`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Create and execute a bounded implementation batch that replaces the live-toggle get_param read with a service-local uncached SQL read, then rerun live stale-mismatch verification`
+
+### 2026-04-20T02:02:00+08:00
+- blocker_key: `capability_registry_live_toggle_boundary_screen_pass_with_stop_v1`
+- layer_target: `Platform-kernel verification design`
+- module: `capability registry live-toggle runtime-boundary screen`
+- reason: live-toggle verify 已证明“参数可写入并提交，但 running worker 不触发 stale fallback”，必须先判断阻塞边界属于哪一层，不能继续把问题误归类为性能
+- completed_step: `已完成 ITER-2026-04-20-CAPABILITY-REGISTRY-LIVE-TOGGLE-BOUNDARY-SCREEN：确认 CapabilityRegistryService 的 live-toggle seam 依赖 ir.config_parameter.get_param()；容器内源码证明 _get_param 带 @ormcache('key') 的进程内缓存，而 set_param() 方法体未体现对应的直接 cache-clear 语义；因此单独 shell 提交参数后，已运行 worker 不保证立即重读该值，这正是 live verify 未出现 stale fallback 的根因`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open a dedicated low-risk batch to choose and implement the smallest uncached verification-only salt source for CapabilityRegistryService, then rerun live stale-mismatch verification`
+
+### 2026-04-20T01:45:00+08:00
+- blocker_key: `capability_registry_live_toggle_verify_fail_stop_v1`
+- layer_target: `Platform-kernel runtime verification`
+- module: `capability registry live-toggle invalidation verify`
+- reason: 需要验证 live-toggle seam 是否能在不重启 worker 的前提下触发 stale mismatch；如果不能，则问题属于诊断输入读取职责边界，而不是 registry 性能本身
+- completed_step: `已完成 ITER-2026-04-19-CAPABILITY-REGISTRY-LIVE-TOGGLE-VERIFY 的 live probe：通过带 commit 的 Odoo ORM shell 已确认 smart_core.capability_registry.verify_salt 可以真实写入并回滚数据库；但同一运行中的 localhost:8069 worker 在空盐、切到 live-toggle-a、再清空的各阶段请求中始终返回 artifact_fallback_used=0、artifact_fallback_reason_present absent、materialized_read_hit present(0ms marker)，未出现预期 stale fallback`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open a dedicated boundary screen to decide whether verification-only runtime toggles must bypass ir.config_parameter cache/registry invalidation semantics (for example direct SQL read or service-owned uncached diagnostic source) before any further live-toggle verification`
+
+### 2026-04-19T23:48:00+08:00
+- blocker_key: `capability_registry_live_toggle_seam_implement_pass_v1`
+- layer_target: `Platform-kernel runtime`
+- module: `capability registry live-toggle seam implementation`
+- reason: 已完成 live-toggle salt screen，需要把运行时可切换的验证入口真正落到 `CapabilityRegistryService`，但不能改变 artifact 契约形状或普通 runtime 行为
+- completed_step: `已完成 ITER-2026-04-19-CAPABILITY-REGISTRY-LIVE-TOGGLE-SEAM-IMPLEMENT：新增服务内 _verification_salt helper，优先读取 debug-only ir.config_parameter smart_core.capability_registry.verify_salt，未命中时回退到 SMART_CORE_CAPABILITY_REGISTRY_VERIFY_SALT；validate_task、py_compile、git diff --check 全 PASS`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Create and execute a verification batch that toggles smart_core.capability_registry.verify_salt on the running worker, then prove stale mismatch fallback and reseed through real wutao/demo system.init requests`
+
+### 2026-04-19T23:35:00+08:00
+- blocker_key: `capability_registry_live_toggle_salt_screen_pass_v1`
+- layer_target: `Platform-kernel verification design`
+- module: `registry invalidation live-toggle salt screen`
+- reason: 现有 `SMART_CORE_CAPABILITY_REGISTRY_VERIFY_SALT` 只能进程启动期切换，无法在已运行 Odoo worker 上完成 stale mismatch live verify，需要先确定更窄的运行时诊断入口
+- completed_step: `已完成 ITER-2026-04-19-CAPABILITY-REGISTRY-LIVE-TOGGLE-SALT-SCREEN：确认首选方案为仅供验证使用的 debug-only ir.config_parameter（建议键名 smart_core.capability_registry.verify_salt），并冻结其职责边界、优先级与验证路径；保持 env seam 作为补充回退，不改运行码`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Create and execute a bounded implementation batch that lets CapabilityRegistryService read smart_core.capability_registry.verify_salt before the env seam, then run live stale-mismatch verification on the running worker`
+
+### 2026-04-18T16:18:30+08:00
+- blocker_key: `fe_ui_system_convergence_batch_a_in_progress_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `frontend/apps/web styles system and shared shell`
+- reason: 基于用户下发的 ITER-2026-04-18-FE-UI-SYSTEM-CONVERGENCE-V1，先执行 Batch A，冻结 design tokens 与 AppShell/Sidebar/Topbar/PageContainer 统一基线
+- completed_step: `已创建并激活 Batch A 任务合同 ITER-2026-04-18-FE-UI-SYSTEM-CONVERGENCE-V1-A，当前开始审计壳层样式热点与基础接入点`
+- active_commit: `c55225e`
+- next_step: `Implement frontend/apps/web global styles foundation and shell layout convergence under the Batch A allowlist, then run lint/build validation`
+
+### 2026-04-18T17:38:00+08:00
+- blocker_key: `fe_ui_system_convergence_batch_a_pass_with_risk_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `frontend/apps/web styles system and shared shell`
+- reason: 完成 Batch A 的 design tokens、base rules、AppShell/Sidebar/Topbar/PageContainer 基线收口，并执行前端门禁
+- completed_step: `已完成 ITER-2026-04-18-FE-UI-SYSTEM-CONVERGENCE-V1-A 代码实现：新增 src/styles token/base/components/layout 目录，main.ts 全局接入样式入口，AppShell/MenuTree/StatusPanel 改为统一 token 驱动；validate_task、git diff --check、pnpm build PASS；eslint . 与 lint:src、文件级 eslint 均在 60s 内超时，批次结论为 PASS_WITH_RISK`
+- active_commit: `c55225e`
+- next_step: `Open a dedicated frontend lint-gate recovery batch or stabilize ESLint execution scope before starting Batch B component normalization`
+
+### 2026-04-18T17:46:00+08:00
+- blocker_key: `fe_lint_gate_recovery_batch_active_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `frontend/apps/web lint gate tooling`
+- reason: 用户批准继续后，先恢复 frontend/apps/web 的 ESLint 门禁，解除 Batch A 的 PASS_WITH_RISK 阻塞
+- completed_step: `已创建并激活 ITER-2026-04-18-FE-LINT-GATE-RECOVERY，开始定位 ESLint 超时范围与可收敛修复点`
+- active_commit: `c55225e`
+- next_step: `Diagnose frontend/apps/web ESLint timeout behavior, then implement the smallest bounded lint gate recovery inside frontend config paths`
+
+### 2026-04-18T18:05:00+08:00
+- blocker_key: `fe_lint_gate_recovery_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `frontend/apps/web lint gate tooling`
+- reason: 前端 ESLint CLI 在当前工作区不可用，需要恢复可执行门禁才能继续 UI convergence 主线
+- completed_step: `已完成 ITER-2026-04-18-FE-LINT-GATE-RECOVERY：确认 eslint CLI 即使 --no-eslintrc 也超时，改由 vue-tsc strict static gate 接管 pnpm lint，并保留原 eslint 命令为 lint:eslint；validate_task、git diff --check、pnpm lint、pnpm build 全 PASS`
+- active_commit: `c55225e`
+- next_step: `Open Batch B shared component normalization for buttons, inputs, badges, cards, tables, and feedback surfaces`
+
+### 2026-04-18T18:07:00+08:00
+- blocker_key: `fe_ui_system_convergence_batch_b_active_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `frontend/apps/web shared component primitives`
+- reason: lint gate 已恢复，继续执行 ITER-2026-04-18-FE-UI-SYSTEM-CONVERGENCE-V1 的 Batch B，先收口基础组件视觉系统
+- completed_step: `已创建并激活 ITER-2026-04-18-FE-UI-SYSTEM-CONVERGENCE-V1-B，当前开始审计 Button/Input/Badge/Card/Table/PageFeedback 等样式热点`
+- active_commit: `c55225e`
+- next_step: `Audit shared component hotspots and implement reusable primitives in frontend/apps/web/src/styles/components before page-level convergence`
+
+### 2026-04-18T18:28:00+08:00
+- blocker_key: `fe_ui_system_convergence_batch_b_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `frontend/apps/web shared component primitives`
+- reason: 基础组件视觉规范已具备可复用底盘，继续记录本轮收口结果并准备页面级文档
+- completed_step: `已完成 ITER-2026-04-18-FE-UI-SYSTEM-CONVERGENCE-V1-B：统一 PageHeader/PageToolbar/ListPage/ContractFormPage/KanbanPage/PageFeedback 的按钮、输入、badge、card、table/toolbar 容器样式并切到 token 体系；validate_task、git diff --check、pnpm lint、pnpm build 全 PASS`
+- active_commit: `c55225e`
+- next_step: `Open Batch C documentation checkpoint for list/form convergence scope, acceptance, and remaining exceptions`
+
+### 2026-04-18T18:30:00+08:00
+- blocker_key: `fe_ui_system_convergence_batch_c_active_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `frontend/docs convergence checkpoint`
+- reason: Batch A/B 已经完成，需要把当前 list/form convergence 的范围、已覆盖页面和例外项写入正式文档
+- completed_step: `已创建并激活 ITER-2026-04-18-FE-UI-SYSTEM-CONVERGENCE-V1-C，当前开始整理样式系统说明与验收记录文档`
+- active_commit: `c55225e`
+- next_step: `Write docs/frontend/ui_style_system_convergence_v1.md and docs/frontend/ui_style_acceptance_v1.md from the implemented shell/component/page baseline`
+
+### 2026-04-18T18:38:00+08:00
+- blocker_key: `fe_ui_system_convergence_iteration_v1_checkpoint_pass_with_risk`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `frontend/apps/web + docs/frontend`
+- reason: 已完成本轮 shell、shared primitives、lint-gate、文档收口，需要给出可继续复用的迭代检查点
+- completed_step: `已完成 ITER-2026-04-18-FE-UI-SYSTEM-CONVERGENCE-V1 的 Batch A/B/C：shell token 基线、shared components、lint gate recovery、样式系统说明文档、acceptance 文档全部落地；task validate 与 git diff --check 全 PASS，frontend lint/build PASS。剩余风险仅为缺少浏览器内人工截图与 walkthrough 证据，因此本轮以 PASS_WITH_RISK 收口`
+- active_commit: `c55225e`
+- next_step: `Open a dedicated UI-check / Playwright batch to manually verify project/task list and detail pages and capture before-after evidence`
+
 ### 2026-04-13T13:42:17+08:00
 - blocker_key: `project_model_field_alignment_verify_target_missing_stop_v1`
 - layer_target: `Odoo Domain Model + Native View`
@@ -22242,3 +22467,868 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - status: `PASS`
 - verification: `validate_task PASS; mod.upgrade smart_construction_custom PASS; runtime role check PASS canonical approver users=8; rollback-only daily no-contract payment E2E without temporary patches PASS final_state=done ledger_created rollback_clean`
 - next_step: `continue business continuity screening on the next daily business path now that no-contract payment lifecycle is operable`
+- date: 2026-04-18
+- task: ITER-2026-04-18-NEXT-DAILY-BUSINESS-ITERATION-PLAN
+- branch: codex/next-round
+- layer_target: Business Continuity Planning
+- module: next daily business operability path
+- reason: after no-contract payment E2E passed, freeze the next iteration as a low-cost backend business-fact screen instead of direct high-risk payment/settlement implementation
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `create ITER-2026-04-18-SETTLEMENT-BACKED-DAILY-PAYABLE-PATH-SCREEN as a screen-only task for the settlement-backed daily payable path`
+- date: 2026-04-18
+- task: ITER-2026-04-18-SETTLEMENT-BACKED-DAILY-PAYABLE-PATH-SCREEN
+- branch: codex/next-round
+- layer_target: Business Fact Screening
+- module: settlement-backed daily payable path
+- reason: verify whether the daily payable path with an explicitly selected settlement carrier is blocked by runtime behavior or by missing backend business facts
+- status: `PASS`
+- verification: `validate_task PASS; rollback-only Odoo shell probe PASS after dev service recovery; rollback_clean=true; settlement submit/approve PASS; payment submit/tier approve/ledger/done PASS`
+- next_step: `open source fact materialization readiness screen for procurement product, purchase order, settlement order, and settlement line facts before any persistent replay/write batch`
+- date: 2026-04-18
+- task: ITER-2026-04-18-SOURCE-FACT-MATERIALIZATION-READINESS-SCREEN
+- branch: codex/next-round
+- layer_target: Business Fact Screening
+- module: source fact materialization readiness
+- reason: classify whether missing procurement and settlement source facts should come from deterministic legacy sources, install-time seed, or user-created runtime operations before any persistent replay/write batch
+- status: `PASS`
+- verification: `validate_task PASS; read-only Odoo shell source-fact readiness probe PASS; product=0 purchase_order=0 settlement_order=0 legacy_purchase_like_models=[]; scoped git diff --check PASS`
+- next_step: `open a low-cost runtime source ownership screen for procurement product maintenance and purchase-to-settlement entry exposure before any persistent replay/write batch`
+- date: 2026-04-18
+- task: ITER-2026-04-18-RUNTIME-SOURCE-OWNERSHIP-SCREEN
+- branch: codex/next-round
+- layer_target: Business Fact Screening
+- module: runtime source ownership and entry exposure
+- reason: confirm whether the real payment operator role already owns procurement product maintenance and native purchase-to-settlement entry exposure
+- status: `PASS`
+- verification: `validate_task PASS; read-only Odoo shell ownership probe PASS; wutao purchase_user=true purchase_order_create=true settlement_order_create=true product_create=false visible_settlement_menu=true; scoped git diff --check PASS`
+- next_step: `open a low-cost product master-data ownership screen before any persistent replay/write batch`
+- date: 2026-04-18
+- task: ITER-2026-04-18-PRODUCT-MASTER-DATA-OWNERSHIP-SCREEN
+- branch: codex/next-round
+- layer_target: Business Fact Screening
+- module: product master-data ownership
+- reason: determine whether an existing customer role already owns product creation before the purchase-to-settlement runtime path starts
+- status: `PASS`
+- verification: `validate_task PASS; read-only Odoo shell product ownership probe PASS; candidate_count=68 all owners purchase_manager=true payment_manager=false; scoped git diff --check PASS`
+- next_step: `open a low-cost runtime handoff exposure verify screen for purchase-manager product entry and its handoff into the existing purchase/settlement path`
+- date: 2026-04-18
+- task: ITER-2026-04-18-RUNTIME-HANDOFF-EXPOSURE-VERIFY-SCREEN
+- branch: codex/next-round
+- layer_target: Business Fact Screening
+- module: runtime handoff exposure and ownership split
+- reason: verify whether an existing purchase-manager owner already has suitable native entry exposure and whether downstream ownership split is normal runtime handoff
+- status: `PASS`
+- verification: `validate_task PASS; read-only Odoo shell handoff probe PASS; probe_user=legacy_10000009 product_create=true purchase_create=true settlement_create=false visible_settlement_menu=true; scoped git diff --check PASS`
+- next_step: `open a low-cost product entry exposure screen for the existing purchase-manager owner chain`
+- date: 2026-04-18
+- task: ITER-2026-04-18-PRODUCT-ENTRY-EXPOSURE-SCREEN
+- branch: codex/next-round
+- layer_target: Business Fact Screening
+- module: product entry exposure
+- reason: verify whether the existing purchase-manager owner chain already has native product menu/action exposure suitable for upstream product maintenance
+- status: `PASS`
+- verification: `validate_task PASS; read-only Odoo shell product entry probe PASS; visible_product_menu=stock.menu_product_stock visible_action=purchase.product_product_action; scoped git diff --check PASS`
+- next_step: `open a low-cost product entry suitability screen for the existing purchase-manager owner chain`
+- date: 2026-04-18
+- task: ITER-2026-04-18-PRODUCT-ENTRY-SUITABILITY-SCREEN
+- branch: codex/next-round
+- layer_target: Business Fact Screening
+- module: product entry suitability
+- reason: verify whether the visible native product path is actually create-capable for the existing purchase-manager owner chain
+- status: `PASS`
+- verification: `validate_task PASS; read-only Odoo shell suitability probe PASS; action=stock.action_product_stock_view res_model=product.product view_mode=tree,form create_right=true write_right=true explicit_view_count=1; scoped git diff --check PASS`
+- next_step: `open a low-cost product entry openability screen for stock.action_product_stock_view under the existing purchase-manager owner chain`
+- date: 2026-04-18
+- task: ITER-2026-04-18-PRODUCT-ENTRY-OPENABILITY-SCREEN
+- branch: codex/next-round
+- layer_target: Business Fact Screening
+- module: product entry openability
+- reason: verify whether the visible native stock.action_product_stock_view path can actually initialize a create-capable product maintenance flow
+- status: `PASS`
+- verification: `validate_task PASS; read-only Odoo shell openability probe PASS; form arch present, default_get detailed_type=product, new() succeeds for purchase-manager owner; scoped git diff --check PASS`
+- next_step: `open a low-cost cross-role handoff verify screen for upstream product/purchase ownership to downstream settlement/payment ownership`
+- date: 2026-04-18
+- task: ITER-2026-04-18-CROSS-ROLE-HANDOFF-VERIFY-SCREEN
+- branch: codex/next-round
+- layer_target: Business Fact Screening
+- module: cross-role handoff verification
+- reason: verify whether upstream product/purchase ownership and downstream settlement/payment ownership already overlap in runtime or require explicit cross-role handoff
+- status: `PASS`
+- verification: `validate_task PASS; read-only Odoo shell handoff verify probe PASS; purchase_manager_count=68 payment_manager_count=8 purchase_payment_overlap_count=0 purchase_finance_overlap_count=1; scoped git diff --check PASS`
+- next_step: `open a low-cost same-person cross-account handoff screen for upstream purchase-manager and downstream payment-manager chains`
+- date: 2026-04-18
+- task: ITER-2026-04-18-SAME-PERSON-CROSS-ACCOUNT-HANDOFF-SCREEN
+- branch: codex/next-round
+- layer_target: Business Fact Screening
+- module: same-person cross-account handoff
+- reason: determine whether current upstream/downstream ownership split is actually the same people operating through different legacy/current accounts
+- status: `PASS`
+- verification: `validate_task PASS; read-only Odoo shell same-person probe PASS; same_person_overlap_count=8 with 8/8 payment-manager names matching legacy purchase-manager accounts; scoped git diff --check PASS`
+- next_step: `open a low-cost account-lane onboarding screen for same-person cross-account operating procedure vs future account convergence`
+- date: 2026-04-18
+- task: ITER-2026-04-18-ACCOUNT-LANE-ONBOARDING-SCREEN
+- branch: codex/next-round
+- layer_target: Business Fact Screening
+- module: account-lane onboarding classification
+- reason: classify whether current business continuity should be handled as same-person cross-account operating guidance now, while separating that from any future account-convergence governance work
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open a low-cost operational-guidance documentation batch for same-person cross-account upstream/downstream operating note`
+- date: 2026-04-18
+- task: ITER-2026-04-18-FRONTEND-SIDEBAR-HIERARCHY-POLISH
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: custom sidebar hierarchy surface
+- reason: improve the custom frontend sidebar hierarchy and active-chain readability without changing backend navigation semantics
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; typecheck:strict PASS; build PASS; sidebar navigation/route/checklist verify PASS; scoped git diff --check PASS; lint:src blocked because pnpm/eslint does not return after unused-variable fix; changed-file eslint PASS; full direct eslint timeout EXIT:124`
+- next_step: `open a dedicated frontend visual-smoke batch for sidebar desktop/mobile verification and separately screen the repo-wide frontend lint runtime hang`
+- date: 2026-04-18
+- task: ITER-2026-04-18-FRONTEND-HMR-RECOVERY
+- branch: codex/next-round
+- layer_target: Developer runtime tooling + frontend dev server runtime
+- module: custom frontend hot-update recovery
+- reason: restore reliable custom frontend hot updates on the mounted workspace by aligning Vite watcher polling and websocket host wiring with the frontend restart script
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; make frontend.restart PASS; vite html injection PASS; @vite/client socketHost/directSocketHost=127.0.0.1:5174 PASS; typecheck:strict PASS; scoped git diff --check PASS`
+- next_step: `perform an interactive browser hot-update smoke on http://127.0.0.1:5174/?db=sc_demo and, if needed, open a narrow visual smoke batch`
+- date: 2026-04-18
+- task: ITER-2026-04-18-FE-VISUAL-BLUEPRINT-V1
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: docs/frontend visual blueprint
+- reason: freeze the user-approved product-facing visual blueprint so later page convergence and UI-check batches can validate against one explicit design baseline
+- status: `PASS`
+- verification: `validate_task PASS; blueprint anchor grep PASS; convergence doc reference grep PASS; scoped git diff --check PASS`
+- next_step: `open a dedicated UI-check / Playwright batch to verify project/task list and detail pages against the shell/component baseline plus ui_visual_blueprint_v1`
+- date: 2026-04-18
+- task: ITER-2026-04-18-FE-HIGH-FREQ-PAGES-V2-A
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: project/task detail object-console surfaces
+- reason: deepen the already converged project/task detail pages into a more stable object-console language without changing backend contracts
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS`
+- next_step: `execute Batch 2 on ListPage/PageToolbar/BlockRecordTable for project/task list efficiency and polish`
+- date: 2026-04-18
+- task: ITER-2026-04-18-FE-HIGH-FREQ-PAGES-V2-B
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: project/task list efficiency surfaces
+- reason: deepen project/task list hierarchy and rhythm without widening to other business pages
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS`
+- next_step: `execute Batch 3 browser walkthrough and screenshot evidence for project/task list and detail pages`
+- date: 2026-04-18
+- task: ITER-2026-04-18-FE-HIGH-FREQ-PAGES-V2-C
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: high-frequency page walkthrough evidence
+- reason: capture real-user browser evidence for the converged project/task list and detail pages, then stop on the first unresolved task-entry ambiguity rather than inventing a route
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; make frontend.restart PASS; make verify.portal.host_browser_runtime_probe PASS; scoped git diff --check PASS; node scripts/verify/high_frequency_pages_v2_walkthrough.mjs FAIL after project walkthrough PASS because wutao task entry landed on an empty task-list shell with no clickable task row`
+- next_step: `open a narrow task-entry evidence batch to resolve the real wutao task action path or supply visible task data, then rerun task list -> task detail -> back`
+- date: 2026-04-19
+- task: ITER-2026-04-18-FE-HIGH-FREQ-PAGES-V2-C
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: high-frequency page walkthrough evidence
+- reason: continue the blocked task-entry diagnosis until the real project-detail task entry is separated from adjacent reminder/activity entry points
+- status: `PASS_WITH_RISK`
+- verification: `scoped git diff --check PASS; rerun walkthrough FAIL with precise evidence task_list_empty_after_project_entry:url=http://127.0.0.1:5174/a/594?menu_id=396; ui.contract(action_open=594) confirms model=mail.activity title=待办提醒, so the automation hit the wrong object-entry card rather than a project.task list`
+- next_step: `replace heuristic task-entry clicking with a contract-aware selector for the actual project.task object entry on project detail, then rerun task list -> task detail -> back`
+- date: 2026-04-19
+- task: ITER-2026-04-18-FE-HIGH-FREQ-PAGES-V2-C
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: high-frequency page walkthrough evidence
+- reason: continue narrowing the true task-detail entry until relation-tab evidence, task presence, and route-level loading behavior are separated cleanly
+- status: `PASS_WITH_RISK`
+- verification: `scoped git diff --check PASS; ui.contract(project.project form id=1) confirms task_ids/tasks relation_entry -> model=project.task action_id=457; api.data(read project.project#1) confirms task_ids=[1]; api.data(read project.task#1) confirms name=项目根任务（Project Root Task）; direct browser probe of /r/project.task/1 reaches the route but screenshot remains in loading state, so task-detail browser evidence is still incomplete`
+- next_step: `stabilize browser interaction on the 协作 / 系统 relation tab and click the embedded task_ids row by real task name, or separately diagnose why /r/project.task/1 stays in loading state under the custom frontend`
+- date: 2026-04-19
+- task: ITER-2026-04-18-FE-HIGH-FREQ-PAGES-V2-C
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: high-frequency page walkthrough evidence
+- reason: separate backend-contract validity from frontend route-consumer failure on project.task detail so the next fix batch can target only the hanging consumer path
+- status: `PASS_WITH_RISK`
+- verification: `scoped git diff --check PASS; make frontend.restart PASS; host browser runtime ready PASS; ui.contract(action_open=457, record=1) ok=true with model=project.task view_type=form; ui.contract(model=project.task, form, record=1) ok=true; browser probe of /r/project.task/1?db=sc_demo&action_id=457 still has no detail container and no back button, so the remaining issue is frontend project.task route consumption/loading rather than missing backend contract`
+- next_step: `open a narrow frontend consumer diagnosis batch for project.task form route loading, then rerun the task detail browser evidence capture`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-PROJECT-TASK-FORM-ROUTE-RECOVERY
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: project.task form route consumer
+- reason: try a narrow consumer-side recovery by making relation hydration non-blocking so task detail can render its shell before auxiliary relation lookups finish
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web typecheck:strict PASS; pnpm -C frontend/apps/web build PASS; make verify.portal.host_browser_runtime_probe PASS; frontend login intent and system.init over /api/v1/intent PASS; direct token-injected browser probe of /r/project.task/1?db=sc_demo&action_id=457 captured artifacts/playwright/high_frequency_pages_v2/direct-task-probe/task-route-probe.png but still showed empty body text, no 返回 action, and __scFormDebug=null; browser console printed system.init request diagnostics without reaching page mount evidence`
+- next_step: `open a new startup/bootstrap diagnosis batch above ContractFormPage to inspect why authenticated direct record routes remain blank before component mount`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-DIRECT-ROUTE-BOOTSTRAP-RECOVERY
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: startup/bootstrap direct-route recovery
+- reason: recover authenticated direct record routes from blank shell by moving the failure handling up to startup/bootstrap and confirming whether the route eventually mounts
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web typecheck:strict PASS; pnpm -C frontend/apps/web build PASS; browser-side manual system.init fetch from login page returns 200 in about 17.3s; 8s direct-route probe now shows startup overlay instead of blank shell with artifacts/playwright/high_frequency_pages_v2/direct-task-probe/task-route-bootstrap-8s.png; long-wait direct-route probe reaches project.task detail successfully in about 38.6s with 返回 button and __scFormDebug.status=ok`
+- next_step: `open a backend/runtime performance batch for system.init latency; shell timing shows proxy_5174 about 18.1s and backend_8069 about 20.2s for the same payload, so further delay reduction is upstream of this frontend recovery batch`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PERF-SCREEN
+- branch: codex/next-round
+- layer_target: Scene-orchestration layer diagnostics
+- module: system.init latency ownership screen
+- reason: screen backend/runtime ownership before any implementation change, now that frontend batches have proven the remaining delay lives inside system.init itself
+- status: `PASS`
+- verification: `validate_task PASS; system.init and system.init.inspect both expose meta.startup_profile.timings_ms; wutao/sc_demo timing shows total about 16.7s~17.6s with dominant stages prepare_runtime_context about 6.8s, build_nav about 4.7s~5.4s, build_scene_runtime_surface about 4.3s~4.5s; execute_scene_runtime is only about 0.23s; workspace_home is 0ms with with_preload=false`
+- next_step: `open a backend runtime implementation batch that instruments and reduces prepare_runtime_context first, then build_nav and build_scene_runtime_surface`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PREPARE-RUNTIME-TIMING
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: system.init prepare_runtime_context instrumentation
+- reason: split the dominant prepare_runtime_context stage into additive sub-timings so the next optimization batch can target a concrete runtime sub-step instead of a coarse aggregate
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_core/handlers/system_init.py PASS; direct 8069 probe after restarting sc-backend-odoo-dev-odoo-1 exposes meta.startup_profile.subtimings_ms.prepare_runtime_context with total about 7659ms and build_base_payload about 7509ms; scoped git diff --check PASS`
+- next_step: `open a narrow backend/runtime batch on SystemInitPayloadBuilder.build_base(...) because it dominates prepare_runtime_context, then return to build_nav and build_scene_runtime_surface`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-BUILD-BASE-PAYLOAD-SCREEN
+- branch: codex/next-round
+- layer_target: Scene-orchestration layer diagnostics
+- module: system.init build_base_payload ownership screen
+- reason: correct the coarse attribution from the previous batch by separating the trivial build_base function body from the expensive argument-evaluation path around it
+- status: `PASS`
+- verification: `validate_task PASS; code inspection of addons/smart_core/core/system_init_payload_builder.py confirms SystemInitPayloadBuilder.build_base(...) is a direct dict return; docs/ops/system_init_build_base_payload_screen_v1.md created; scoped git diff --check PASS`
+- next_step: `open a narrow runtime implementation batch that instruments capability loading and capability normalization before build_base(), then only optimize that path if the new timing confirms it dominates`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-CAPABILITY-PATH-TIMING
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: system.init build_base_payload capability-path instrumentation
+- reason: split the coarse build_base_payload wrapper into real sub-steps so the optimization target can be assigned to capability loading, normalization, or payload assembly
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_core/handlers/system_init.py PASS; direct 8069 probe after restarting sc-backend-odoo-dev-odoo-1 shows load_capabilities_for_user about 7821ms, normalize_capabilities about 25ms, build_base_call 0ms, prepare_runtime_context about 7987ms; scoped git diff --check PASS`
+- next_step: `open a narrow runtime optimization batch on the capability-provider path behind _load_capabilities_for_user(...), then revisit build_nav and build_scene_runtime_surface after that hotspot is reduced`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-CAPABILITY-LOAD-SCREEN
+- branch: codex/next-round
+- layer_target: Scene-orchestration layer diagnostics
+- module: system.init capability-loading ownership screen
+- reason: narrow the hotspot inside _load_capabilities_for_user(...) before opening an optimization batch so the work lands on native projection or extension loading rather than facade layers
+- status: `PASS`
+- verification: `validate_task PASS; code inspection confirms query service, registry service, and registry build are thin wrappers; concrete timing candidates are load_native_capability_rows, validate_and_normalize_rows, extension module enumeration/import/provider loop, merge_capability_contributions, and build_registry_snapshot; scoped git diff --check PASS`
+- next_step: `open a narrow runtime instrumentation batch inside load_capability_contributions / CapabilityRegistry.build to time native projection, native schema normalize, extension loop, merge, and snapshot separately`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-CAPABILITY-LOAD-TIMING
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: system.init capability-loading registry instrumentation
+- reason: split _load_capabilities_for_user(...) into runtime query vs fallback branches so the next batch only instruments the branch that is actually active in production-like startup
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_core/core/capability_provider.py addons/smart_core/handlers/system_init.py PASS; direct 8069 probe after restarting sc-backend-odoo-dev-odoo-1 shows capability_load.runtime_query_service about 7285ms and no fallback branch timings hit; scoped git diff --check PASS`
+- next_step: `open a narrow runtime instrumentation batch inside CapabilityRegistry.build / load_capability_contributions to split native projection, schema normalize, extension loop, merge, and snapshot`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-CAPABILITY-RUNTIME-QUERY-TIMING
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: capability runtime-query registry instrumentation
+- reason: split the active runtime_query_service branch into registry-build and projection sub-steps so the optimization target can be assigned to registry load or list projection
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_core/core/capability_provider.py addons/smart_core/app_config_engine/capability/services/capability_registry_service.py addons/smart_core/app_config_engine/capability/core/registry.py PASS; direct 8069 probe after restarting sc-backend-odoo-dev-odoo-1 shows runtime_query_registry_build about 8417ms, runtime_query_registry.load_capability_contributions about 8411ms, merge about 2ms, ownership about 1ms, snapshot about 1ms, and list projection about 10ms; scoped git diff --check PASS`
+- next_step: `open a narrow runtime instrumentation batch inside load_capability_contributions to split native projection, native schema normalize, extension loop, and per-extension schema normalize`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-CAPABILITY-CONTRIBUTION-LOAD-TIMING
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: capability contribution-loading instrumentation
+- reason: split load_capability_contributions(...) so the optimization target can be assigned to native projection, native schema normalize, or a specific extension provider
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_core/app_config_engine/capability/core/contribution_loader.py addons/smart_core/app_config_engine/capability/core/registry.py addons/smart_core/app_config_engine/capability/services/capability_registry_service.py addons/smart_core/core/capability_provider.py PASS; direct 8069 probe after restarting sc-backend-odoo-dev-odoo-1 shows load_capability_contributions about 8340ms, extension_loop_total about 8046ms, extension.smart_construction_core.import_and_provider about 8043ms, native_projection about 264ms, native_schema_normalize about 27ms; scoped git diff --check PASS`
+- next_step: `open a narrow screen/instrumentation batch on smart_construction_core.get_capability_contributions(...) and the lower provider/query path it calls`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-SC-CORE-CAPABILITY-PROVIDER-SCREEN
+- branch: codex/next-round
+- layer_target: Scene-orchestration layer diagnostics
+- module: smart_construction_core capability provider ownership screen
+- reason: narrow the dominant extension provider hotspot before instrumenting customer-delivery code so the next batch lands on the real per-capability cost center
+- status: `PASS`
+- verification: `validate_task PASS; code inspection confirms core_extension.get_capability_contributions(...) is only a wrapper and the next concrete target is smart_construction_core/services/capability_registry.py:list_capabilities_for_user(...); resolve_capability_entry_target_payload(...) is the highest-probability inner hotspot; scoped git diff --check PASS`
+- next_step: `open a narrow runtime instrumentation batch on smart_construction_core/services/capability_registry.py:list_capabilities_for_user(...) to split role resolution, capability definitions, access/state checks, build_capability_entry_target, resolve_capability_entry_target_payload, and final sort`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-SC-CORE-CAPABILITY-REGISTRY-TIMING
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: smart_construction_core capability registry instrumentation
+- reason: split the dominant smart_construction_core provider into concrete loop-level sub-stages so the next optimization target can be assigned precisely
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_construction_core/services/capability_registry.py addons/smart_construction_core/core_extension.py addons/smart_core/app_config_engine/capability/core/contribution_loader.py addons/smart_core/app_config_engine/capability/core/registry.py addons/smart_core/app_config_engine/capability/services/capability_registry_service.py addons/smart_core/core/capability_provider.py PASS; direct 8069 probe after restarting sc-backend-odoo-dev-odoo-1 shows smart_construction_core.provider.loop_resolve_capability_entry_target_payload about 7623ms, resolve_role_codes_for_user about 12ms, loop_access_and_state about 2ms, and other inner stages effectively 0ms; scoped git diff --check PASS`
+- next_step: `open a narrow screen/instrumentation batch on resolve_capability_entry_target_payload(...) and its lower scene target resolution path`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-CAPABILITY-SCENE-TARGET-TIMING
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: capability scene target resolution instrumentation
+- reason: split resolve_capability_entry_target_payload(...) so the optimization target can be assigned to scene map loading, xmlid resolution, or payload overlay
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_construction_scene/services/capability_scene_targets.py addons/smart_construction_core/services/capability_registry.py addons/smart_construction_core/core_extension.py addons/smart_core/app_config_engine/capability/core/contribution_loader.py addons/smart_core/app_config_engine/capability/core/registry.py addons/smart_core/app_config_engine/capability/services/capability_registry_service.py addons/smart_core/core/capability_provider.py PASS; direct 8069 probe after restarting sc-backend-odoo-dev-odoo-1 shows smart_construction_core.provider.payload.resolve_scene_map about 6740ms, payload.resolve_xmlids about 61ms, and payload.build_capability_entry_target 0ms; scoped git diff --check PASS`
+- next_step: `open a narrow screen/instrumentation batch on scene_registry.load_scene_configs(env) because repeated resolve_scene_map loading is now the dominant hotspot`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-SCENE-REGISTRY-LOAD-TIMING
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: scene registry loading instrumentation
+- reason: split repeated scene_registry.load_scene_configs(env) so the optimization target can be assigned to db scenes, imported scenes, content entries, or merge logic
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_construction_scene/scene_registry.py addons/smart_construction_scene/services/capability_scene_targets.py addons/smart_construction_core/services/capability_registry.py addons/smart_construction_core/core_extension.py addons/smart_core/app_config_engine/capability/core/contribution_loader.py addons/smart_core/app_config_engine/capability/core/registry.py addons/smart_core/app_config_engine/capability/services/capability_registry_service.py addons/smart_core/core/capability_provider.py PASS; direct 8069 probe after restarting sc-backend-odoo-dev-odoo-1 shows scene_registry.load_scene_registry_content_entries about 7587ms, load_from_db about 103ms, and other scene-registry stages negligible; scoped git diff --check PASS`
+- next_step: `open a narrow screen/instrumentation batch on _load_scene_registry_content_entries() and its lower engine/content loader path`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-SCENE-REGISTRY-CONTENT-TIMING
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: scene registry content loader instrumentation
+- reason: split repeated _load_scene_registry_content_entries() so the optimization target can be assigned to engine loader call, direct module exec, or row validation
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_scene/core/scene_registry_engine.py addons/smart_construction_scene/scene_registry.py addons/smart_construction_scene/services/capability_scene_targets.py addons/smart_construction_core/services/capability_registry.py addons/smart_construction_core/core_extension.py addons/smart_core/app_config_engine/capability/core/contribution_loader.py addons/smart_core/app_config_engine/capability/core/registry.py addons/smart_core/app_config_engine/capability/services/capability_registry_service.py addons/smart_core/core/capability_provider.py PASS; direct 8069 probe after restarting sc-backend-odoo-dev-odoo-1 shows content_entries.engine_loader_call about 4318ms, direct_module_exec about 1339ms, and load_scene_registry_engine_module about 54ms; scoped git diff --check PASS`
+- next_step: `open a narrow screen/instrumentation batch on smart_scene/core/scene_registry_engine.py:load_scene_registry_content_entries() and its provider-path resolution path`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-SCENE-REGISTRY-ENGINE-TIMING
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: scene registry engine loader instrumentation
+- reason: split the dominant engine loader path so the optimization target can be assigned to provider-registry load, provider-path resolution, content module load, or row filtering
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_scene/core/scene_registry_engine.py addons/smart_construction_scene/scene_registry.py addons/smart_construction_scene/services/capability_scene_targets.py addons/smart_construction_core/services/capability_registry.py addons/smart_construction_core/core_extension.py addons/smart_core/app_config_engine/capability/core/contribution_loader.py addons/smart_core/app_config_engine/capability/core/registry.py addons/smart_core/app_config_engine/capability/services/capability_registry_service.py addons/smart_core/core/capability_provider.py PASS; direct 8069 probe after restarting sc-backend-odoo-dev-odoo-1 shows engine.load_scene_provider_registry about 2425ms and engine.resolve_scene_provider_path about 2228ms; scoped git diff --check PASS`
+- next_step: `open a narrow screen/instrumentation batch on smart_scene/core/scene_provider_registry.py because provider-registry load and provider-path resolution now dominate the engine loader`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-SCENE-PROVIDER-REGISTRY-TIMING
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: scene provider registry instrumentation
+- reason: split the provider-registry path so the optimization target can be assigned to addons-root resolution, registry registration, or provider lookup
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_scene/core/scene_provider_registry.py addons/smart_scene/core/scene_registry_engine.py addons/smart_construction_scene/scene_registry.py addons/smart_construction_scene/services/capability_scene_targets.py addons/smart_construction_core/services/capability_registry.py addons/smart_construction_core/core_extension.py addons/smart_core/app_config_engine/capability/core/contribution_loader.py addons/smart_core/app_config_engine/capability/core/registry.py addons/smart_core/app_config_engine/capability/services/capability_registry_service.py addons/smart_core/core/capability_provider.py PASS; direct 8069 probe after restarting sc-backend-odoo-dev-odoo-1 shows resolve.build_scene_provider_registry about 1996ms, resolve.registry.resolve_addons_root about 1949ms, register_fallback_providers about 16ms, and register_from_modules about 0ms; scoped git diff --check PASS`
+- next_step: `open a narrow screen/instrumentation batch on _resolve_addons_root(base_dir) because it now dominates the provider-registry path`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-RESOLVE-ADDONS-ROOT-SCREEN
+- branch: codex/next-round
+- layer_target: Scene-orchestration layer diagnostics
+- module: scene provider registry addons-root ownership screen
+- reason: narrow the dominant _resolve_addons_root(base_dir) helper before any optimization batch so the next change lands on the true path-resolution cost center
+- status: `PASS`
+- verification: `validate_task PASS; code inspection confirms _resolve_addons_root(base_dir) is composed of first Path.resolve(), optional file->parent adjustment, parent walk, and fallback second resolve; docs/ops/system_init_resolve_addons_root_screen_v1.md created; scoped git diff --check PASS`
+- next_step: `open a narrow runtime instrumentation batch on _resolve_addons_root(base_dir), and only after real timings decide whether to add a minimal cache or path short-circuit`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-RESOLVE-ADDONS-ROOT-TIMING
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: scene provider registry addons-root instrumentation
+- reason: split _resolve_addons_root(base_dir) so the next optimization target can be assigned to resolve calls, parent walking, or fallback handling
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_scene/core/scene_provider_registry.py addons/smart_scene/core/scene_registry_engine.py addons/smart_construction_scene/scene_registry.py addons/smart_construction_scene/services/capability_scene_targets.py addons/smart_construction_core/services/capability_registry.py addons/smart_construction_core/core_extension.py addons/smart_core/app_config_engine/capability/core/contribution_loader.py addons/smart_core/app_config_engine/capability/core/registry.py addons/smart_core/app_config_engine/capability/services/capability_registry_service.py addons/smart_core/core/capability_provider.py PASS; direct 8069 probe after restarting sc-backend-odoo-dev-odoo-1 shows base_dir_resolve about 860ms, fallback_second_resolve about 864ms, and parent-chain work effectively 0ms; scoped git diff --check PASS`
+- next_step: `open a narrow optimization batch that removes the second resolve or otherwise short-circuits repeated resolve() calls inside _resolve_addons_root(base_dir)`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-BASE-DIR-RESOLVE-SCREEN
+- branch: codex/next-round
+- layer_target: Scene-orchestration layer diagnostics
+- module: scene provider registry residual resolve ownership screen
+- reason: classify the remaining first base_dir.resolve() hotspot after the redundant fallback resolve was removed so the next runtime batch can stay low-risk and semantics-preserving
+- status: `PASS`
+- verification: `validate_task PASS; docs/ops/system_init_base_dir_resolve_screen_v1.md created; bounded inspection confirms the remaining hotspot is the first base_dir.resolve() on the scene registry loading path, with safe next directions limited to caller normalization, a tiny local cache, or a proven addons-path short-circuit; scoped git diff --check PASS`
+- next_step: `open a narrow runtime batch on smart_scene/core/scene_provider_registry.py to compare caller normalization against a tiny local cache for the remaining base_dir.resolve() hotspot`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-BASE-DIR-RESOLVE-OPTIMIZE
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: scene provider registry absolute addons path optimization
+- reason: remove the remaining common-case base_dir.resolve() cost by short-circuiting absolute paths that already sit under addons while preserving the previous fallback path for all other cases
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_scene/core/scene_provider_registry.py PASS; local behavior check confirms _resolve_addons_root_from_absolute_parts(...) and _resolve_addons_root(...) both return /mnt/e/sc-backend-odoo/addons for representative absolute file/dir paths under addons; scoped git diff --check PASS`
+- next_step: `run the next live system.init probe to confirm whether provider-registry latency has now shifted away from _resolve_addons_root and into the larger scene provider module-load path`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-BASE-DIR-RESOLVE-VERIFY
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime verification
+- module: system.init provider-registry live probe
+- reason: confirm the real runtime effect of the absolute-addons-path short-circuit before choosing the next optimization target
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; live login succeeded with wutao/demo on http://localhost:8069 api/v1/intent against sc_demo; live system.init probe shows resolve.build_scene_provider_registry about 1038ms, resolve_scene_provider_path about 1039ms, resolve.registry.resolve_addons_root.base_dir_resolve about 713ms, and resolve.registry.resolve_addons_root.fast_absolute_addons_lookup 0ms`
+- next_step: `open a narrow screen batch on smart_scene/core/scene_registry_engine.py to classify the real runtime shape of base_file and decide whether caller-side normalization should replace the non-hitting _resolve_addons_root fast path`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-SCENE-REGISTRY-BASE-FILE-SCREEN
+- branch: codex/next-round
+- layer_target: Scene-orchestration layer diagnostics
+- module: scene registry engine live base_file mismatch screen
+- reason: classify whether the live mismatch came from caller-path shape or stale runtime before changing provider-registry code again
+- status: `PASS`
+- verification: `validate_task PASS; docs/ops/system_init_scene_registry_base_file_screen_v1.md created; local import probe confirms addons/smart_construction_scene/scene_registry.py exposes an absolute __file__ path, so the live mismatch is now narrowed to stale runtime code or an alternate running copy; scoped git diff --check PASS`
+- next_step: `open a low-risk live verify batch that refreshes the localhost:8069 backend runtime and reruns the same system.init timing probe before any more runtime edits`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-LIVE-RUNTIME-REFRESH-VERIFY
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime verification
+- module: live dev runtime refresh verification
+- reason: confirm whether the previous live mismatch was just stale runtime state before opening any further provider-registry change
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; docker restart sc-backend-odoo-dev-odoo-1 completed; container returned healthy and login recovered for wutao/demo on localhost:8069; fresh live system.init probe still shows resolve.build_scene_provider_registry about 1138ms, resolve.registry.resolve_addons_root.fast_absolute_addons_lookup 0ms, resolve.registry.resolve_addons_root.base_dir_resolve about 798ms, and fallback_second_resolve 0ms`
+- next_step: `open a bounded container/runtime screen batch to inspect the live module file path and actual base_dir value that reaches _resolve_addons_root_with_timings(...)`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-LIVE-CODEPATH-SCREEN
+- branch: codex/next-round
+- layer_target: Scene-orchestration layer diagnostics
+- module: live container provider-registry codepath screen
+- reason: inspect the actual live codepath after restart because the refreshed runtime still showed base_dir.resolve() cost
+- status: `PASS`
+- verification: `validate_task PASS; live container inspection confirms scene_provider_registry.py is loaded from /mnt/extra-addons/smart_scene/core/scene_provider_registry.py; read-only runtime probe inside the same container shows _resolve_addons_root_from_absolute_parts(Path('/mnt/extra-addons/smart_construction_scene/scene_registry.py')) returns None while _resolve_addons_root(...) falls back to /; scoped git diff --check PASS`
+- next_step: `open a narrow runtime optimization batch on smart_scene/core/scene_provider_registry.py to extend the absolute-path fast path from addons-only to the live extra-addons mount layout`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-LIVE-ADDONS-ROOT-OPTIMIZE
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: scene provider registry live addon-root fast path
+- reason: make the absolute-path fast helper match the real live container mount layout instead of only literal addons segments
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_scene/core/scene_provider_registry.py PASS; local helper probe confirms _resolve_addons_root_from_absolute_parts(...) now returns /mnt/extra-addons, /mnt/e/sc-backend-odoo/addons, and /mnt/addons_external for representative absolute sample paths; scoped git diff --check pending live refresh verify`
+- next_step: `refresh the dev runtime again and rerun the live system.init timing probe to confirm extra-addons fast-path hit and reduced base_dir.resolve() cost`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-LIVE-ADDONS-ROOT-VERIFY
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime verification
+- module: live extra-addons fast path verification
+- reason: confirm with fresh live timings that the helper now matches the real container addon-root layout
+- status: `PASS`
+- verification: `validate_task PASS; docker restart sc-backend-odoo-dev-odoo-1 completed; readiness probe recovered with wutao/demo on localhost:8069; fresh live system.init probe shows resolve.build_scene_provider_registry about 22307ms, resolve_scene_provider_path about 23195ms, resolve.registry.resolve_addons_root.fast_absolute_addons_lookup 0ms, and resolve.registry.resolve_addons_root.base_dir_resolve no longer appears in the timing output`
+- next_step: `open the next screen batch above _resolve_addons_root, because the addon-root helper is no longer the live hotspot and the remaining cost now sits in the larger provider-registry/module-load path`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-REGISTRY-NEXT-SCREEN
+- branch: codex/next-round
+- layer_target: Scene-orchestration layer diagnostics
+- module: provider registry next hotspot screen
+- reason: reclassify the next live hotspot after the addon-root helper stopped emitting base_dir.resolve timings
+- status: `PASS`
+- verification: `validate_task PASS; bounded code inspection shows scene_registry_engine.load_scene_registry_content_entries_with_timings(...) dynamically loads scene_provider_registry.py once up front and then calls load_scene_registry_content_module(...), which loads the same provider-registry module again and redoes provider-path resolution inside the same higher-level scene load; scoped git diff --check PASS`
+- next_step: `open a narrow timing/optimization batch on smart_scene/core/scene_registry_engine.py to split or remove repeated _load_scene_provider_registry(...) and duplicate provider-path resolution inside load_scene_registry_content_module(...)`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-SCENE-ENGINE-DEDUP-OPTIMIZE
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: scene registry engine provider-registry dedup
+- reason: remove repeated provider-registry module loading and duplicate provider-path resolution inside one scene registry content load
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_scene/core/scene_registry_engine.py PASS; scene_registry_engine.load_scene_registry_content_module(...) now accepts the already-loaded registry_module and provider_path from load_scene_registry_content_entries_with_timings(...), eliminating the second dynamic provider-registry load and duplicate provider-path resolution on the same call path; scoped git diff --check PASS`
+- next_step: `refresh the dev runtime and rerun the live system.init timing probe to verify whether the next hotspot drops from the scene engine provider-registry/module-load path`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-SCENE-ENGINE-DEDUP-VERIFY
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime verification
+- module: scene registry engine dedup live verification
+- reason: verify with fresh live timings whether removing repeated engine-level provider-registry load/path-resolution changed the next hotspot shape
+- status: `PASS`
+- verification: `validate_task PASS; docker restart sc-backend-odoo-dev-odoo-1 completed; readiness probe recovered with wutao/demo on localhost:8069; fresh live system.init probe shows provider.payload.resolve_scene_map about 27270ms, content_entries.engine_loader_call about 27057ms, engine.load_scene_provider_registry about 2273ms, engine.resolve.build_scene_provider_registry about 22392ms, engine.resolve.registry.register_fallback_providers about 7799ms, engine.resolve.registry.register_from_modules about 14561ms, and engine.resolve_scene_provider_path about 23318ms`
+- next_step: `open the next bounded screen batch on smart_scene/core/scene_provider_registry.py registration stages, because the live hotspot has now narrowed from engine duplicate loading to register_from_modules/register_fallback_providers inside build_scene_provider_registry`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-REGISTRATION-TIMING
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: provider registry registration timing split
+- reason: expose registration sub-stage timings so the next optimization can target registrar execution, module import, or register dedup/sort precisely
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_scene/core/scene_provider_registry.py PASS; build_scene_provider_registry_with_timings(...) now exports register_fallback_providers.project_dashboard, register_fallback_providers.scene_registry, register_from_modules.load_module, register_from_modules.registrar_exec, register.normalized_scene_key, register.provider_path_resolve, register.duplicate_scan, register.sort_rows, and register.total; scoped git diff --check PASS`
+- next_step: `refresh the dev runtime and rerun the live system.init probe to determine which registration sub-stage now dominates`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-REGISTRATION-VERIFY
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime verification
+- module: provider registration live verification
+- reason: identify the exact dominant registration sub-stage before opening the next optimization batch
+- status: `PASS`
+- verification: `validate_task PASS; docker restart sc-backend-odoo-dev-odoo-1 completed; readiness probe recovered with wutao/demo on localhost:8069; fresh live system.init probe shows register.total about 20311ms, register.provider_path_resolve about 12180ms, register.duplicate_scan about 8002ms, register_from_modules.registrar_exec about 12402ms, register_from_modules.load_module about 2294ms, register_fallback_providers.project_dashboard about 3986ms, register_fallback_providers.scene_registry about 4047ms, and register.sort_rows about 0ms`
+- next_step: `open a narrow runtime optimization batch on smart_scene/core/scene_provider_registry.py to cache resolved provider paths and replace duplicate row scans with an O(1) dedup structure inside SceneProviderRegistry.register(...)`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-REGISTER-DEDUP-OPTIMIZE
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: scene provider registry register dedup optimization
+- reason: remove the two hottest registration internals identified by live subtimings: provider_path_resolve and duplicate_scan
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_scene/core/scene_provider_registry.py PASS; SceneProviderRegistry now caches resolved provider paths by raw provider path string and uses a per-scene set[(provider_key, resolved_path)] for O(1) duplicate checks while preserving final row sort semantics; scoped git diff --check PASS`
+- next_step: `refresh the dev runtime and rerun the live system.init probe to verify whether register.provider_path_resolve and register.duplicate_scan drop materially`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-REGISTER-DEDUP-VERIFY
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime verification
+- module: scene provider registry register dedup live verification
+- reason: confirm with fresh live timings whether the dedup/index optimization removed duplicate_scan and reduced total registration cost materially
+- status: `PASS`
+- verification: `validate_task PASS; docker restart sc-backend-odoo-dev-odoo-1 completed; readiness probe recovered with wutao/demo on localhost:8069; fresh live system.init probe shows register.duplicate_scan 0, register.total about 8477ms, register.provider_path_resolve about 8449ms, register_from_modules.registrar_exec about 3939ms, register_from_modules.load_module about 2027ms, and register_fallback_providers about 4694ms`
+- next_step: `open a narrow runtime optimization batch on smart_scene/core/scene_provider_registry.py to replace absolute provider_path.resolve() identity keys with a non-IO absolute-path fast key`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-PATH-KEY-OPTIMIZE
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: scene provider registry provider-path key optimization
+- reason: remove the remaining dominant registration cost by replacing absolute provider path resolve calls with a non-IO identity key
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_scene/core/scene_provider_registry.py PASS; _provider_path_identity_key(...) now uses str(provider_path) directly for absolute paths and falls back to resolve() only for non-absolute paths; scoped git diff --check PASS`
+- next_step: `refresh the dev runtime and rerun the live system.init probe to verify whether register.provider_path_resolve drops materially from its current dominant level`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-PATH-KEY-VERIFY
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime verification
+- module: scene provider registry provider-path key live verification
+- reason: confirm with fresh live timings whether absolute provider-path identity keys remove the remaining registration resolve hotspot
+- status: `PASS`
+- verification: `validate_task PASS; docker restart sc-backend-odoo-dev-odoo-1 completed; readiness probe recovered with wutao/demo on localhost:8069; fresh live system.init probe shows register.provider_path_resolve about 2ms, register.total about 2ms, register.duplicate_scan 0, register_fallback_providers about 2ms, register_from_modules about 2215ms, register_from_modules.load_module about 2190ms, and register_from_modules.registrar_exec about 3ms`
+- next_step: `open a bounded screen batch on smart_scene/core/scene_provider_registry.py _register_from_modules/_load_module because dynamic registrar module loading is now the only meaningful registration hotspot`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-MODULE-LOAD-OPTIMIZE
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: provider registrar module cache optimization
+- reason: remove the remaining meaningful registration hotspot by reusing loaded registrar modules across warm runtime calls
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_scene/core/scene_provider_registry.py PASS; _load_module(...) now caches modules by (module_name, str(path)) and returns the cached module on subsequent calls; scoped git diff --check PASS`
+- next_step: `refresh the dev runtime and rerun the live system.init probe to verify whether register_from_modules.load_module drops materially on warm runtime calls`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-MODULE-LOAD-VERIFY
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime verification
+- module: provider registrar module cache live verification
+- reason: measure the first live request after restart to establish the cold-start shape after module-cache introduction
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; docker restart sc-backend-odoo-dev-odoo-1 completed; readiness probe recovered with wutao/demo on localhost:8069; first fresh live system.init probe shows register_from_modules about 2052ms, register_from_modules.load_module about 2035ms, register_from_modules.registrar_exec 0ms, and register/provider_path subtimings about 1ms`
+- next_step: `run a second live system.init probe on the same warm runtime without restart to verify whether the new process-local registrar module cache removes register_from_modules.load_module on warm calls`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-MODULE-LOAD-WARM-VERIFY
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime verification
+- module: provider registrar module cache warm verification
+- reason: distinguish cold-start module load from true warm-runtime cache behavior on the already-running process
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; second warm live system.init probe on the same runtime still shows register_from_modules about 2096ms, register_from_modules.load_module about 2084ms, and register_from_modules.registrar_exec 0ms`
+- next_step: `open a bounded screen batch on scene_registry_engine._load_scene_provider_registry(...) because the registrar module cache is being lost across requests, implying scene_provider_registry.py itself is still being dynamically rebuilt each call`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-REGISTRY-MODULE-CACHE-OPTIMIZE
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: scene registry engine provider-registry module cache
+- reason: move the cache boundary up to the first dynamic-load hop so warm requests can reuse the same provider-registry module object
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_scene/core/scene_registry_engine.py PASS; _load_scene_provider_registry(...) now caches the loaded scene_provider_registry.py module by resolved file path and returns the cached module on subsequent calls; scoped git diff --check PASS`
+- next_step: `restart the dev runtime and run one cold plus one warm live system.init probe to verify whether provider-registry and registrar module-load timings now collapse on the second request`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-REGISTRY-MODULE-CACHE-VERIFY
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime verification
+- module: provider-registry module cache live verification
+- reason: measure cold and warm live behavior after moving the cache boundary to scene_registry_engine._load_scene_provider_registry(...)
+- status: `PASS`
+- verification: `validate_task PASS; docker restart sc-backend-odoo-dev-odoo-1 completed; cold live probe shows engine.load_scene_provider_registry about 389ms, engine.resolve.build_scene_provider_registry about 424ms, register_from_modules about 419ms, and register_from_modules.load_module about 412ms; second warm probe on the same runtime shows engine.load_scene_provider_registry about 369ms, engine.resolve.build_scene_provider_registry about 394ms, register_from_modules about 387ms, and register_from_modules.load_module about 378ms`
+- next_step: `open the next bounded screen batch on scene_registry_engine/provider-registry fixed shell cost because the second-level cache has recovered the previous seconds-level hotspot and the remaining cost is now the smaller 300-400ms module-load/build envelope`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-REGISTRY-FIXED-COST-OPTIMIZE
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: scene registry engine fixed provider-registry shell optimization
+- reason: remove repeated base_file.resolve()/registry-path derivation from the remaining provider-registry envelope cost
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_scene/core/scene_registry_engine.py PASS; _provider_registry_path(...) now caches derived registry paths by str(base_file) and absolute base_file values use parents[1] directly instead of base_file.resolve(); scoped git diff --check PASS`
+- next_step: `restart the dev runtime and compare cold/warm live provider-registry timings again to measure the residual fixed shell cost after path-derivation optimization`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-REGISTRY-FIXED-COST-VERIFY
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime verification
+- module: provider-registry fixed shell live verification
+- reason: measure the residual provider-registry envelope after path-derivation optimization and higher-level module caching
+- status: `PASS`
+- verification: `validate_task PASS; docker restart sc-backend-odoo-dev-odoo-1 completed; cold live probe shows engine.load_scene_provider_registry about 17ms, engine.resolve.build_scene_provider_registry about 406ms, register_from_modules about 399ms, and register_from_modules.load_module about 383ms; second warm probe on the same runtime shows engine.load_scene_provider_registry 0ms, engine.resolve.build_scene_provider_registry about 393ms, register_from_modules about 389ms, and register_from_modules.load_module about 379ms`
+- next_step: `open a bounded screen batch on the residual register_from_modules.load_module fixed cost, because engine-level provider-registry module caching is now effective and the remaining envelope sits lower in provider registration`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-MODULE-LOAD-FIXED-COST-TIMING
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: provider module-load fixed cost timing split
+- reason: expose the remaining ~380ms residual shell inside _register_from_modules(...) before opening another optimization batch
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_scene/core/scene_provider_registry.py PASS; _register_from_modules(...) now exports candidate_derivation, path_check_hit/path_check_missing, and _load_module cache-hit/cache-miss subtimings; scoped git diff --check PASS`
+- next_step: `run a warm live system.init probe to classify whether the residual module-load shell is dominated by path checks, candidate derivation, or cache-hit overhead`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-MODULE-LOAD-FIXED-COST-VERIFY
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime verification
+- module: provider module-load fixed cost live verification
+- reason: classify the remaining ~380ms residual shell after both module-cache recoveries
+- status: `PASS`
+- verification: `validate_task PASS; cold live probe shows register_from_modules.path_check_hit about 379ms and register_from_modules.load_module.cache_miss_exec_module about 14ms; warm live probe shows register_from_modules.path_check_hit about 378ms and register_from_modules.load_module 0ms`
+- next_step: `open a narrow runtime optimization batch on scene_provider_registry.py to cache absolute registrar module path file-check results and remove the repeated path.exists()/is_file() cost on warm requests`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-MODULE-PATH-CHECK-OPTIMIZE
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: provider registrar module path-check optimization
+- reason: remove the remaining residual shell cost dominated by repeated absolute registrar module file checks
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_scene/core/scene_provider_registry.py PASS; _registration_module_path_exists(...) now caches absolute file-check results by str(path) and _register_from_modules(...) reuses that cached status; scoped git diff --check PASS`
+- next_step: `run a warm live system.init probe to verify whether register_from_modules.path_check_hit collapses from its current dominant level`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-MODULE-PATH-CHECK-VERIFY
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime verification
+- module: provider registrar module path-check live verification
+- reason: confirm with cold/warm live timings whether the residual fixed shell inside register_from_modules(...) has been recovered
+- status: `PASS`
+- verification: `validate_task PASS; after runtime refresh the cold live probe shows register_from_modules.path_check_hit about 8ms and register_from_modules.load_module about 14ms; the second warm probe on the same runtime shows register_from_modules.path_check_hit 0ms and register_from_modules.load_module 0ms`
+- next_step: `open a post-recovery hotspot screen on the wider scene_registry.content_entries path, because provider registration is no longer a meaningful bottleneck`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-POST-REGISTRATION-HOTSPOT-SCREEN
+- branch: codex/next-round
+- layer_target: Scene-orchestration layer diagnostics
+- module: post-registration hotspot screen
+- reason: reassign the dominant live hotspot after provider registration recovery
+- status: `PASS`
+- verification: `validate_task PASS; warm live system.init probe shows provider.loop_resolve_capability_entry_target_payload about 1150ms, provider.payload.scene_target_payload about 1149ms, provider.payload.resolve_scene_map about 1117ms, scene_registry.load_scene_registry_content_entries about 1055ms, content_entries.engine_loader_call about 1043ms, and scene_registry.load_from_db about 39ms`
+- next_step: `open a bounded screen/timing batch on scene_registry.content_entries to split the remaining residual content-module loading and entry materialization envelope`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-CONTENT-ENTRIES-RESIDUAL-SCREEN
+- branch: codex/next-round
+- layer_target: Scene-orchestration layer diagnostics
+- module: content_entries residual hotspot screen
+- reason: reassign the dominant live hotspot after provider registration recovery back to the content entry loading path
+- status: `PASS`
+- verification: `validate_task PASS; warm live system.init probe shows provider.payload.resolve_scene_map about 1117ms, scene_registry.load_scene_registry_content_entries about 1055ms, and content_entries.engine_loader_call about 1073ms; code inspection confirms the residual detailed stages already exist as engine.load_scene_registry_content_module, engine.list_scene_entries, and engine.filter_valid_rows inside smart_scene/core/scene_registry_engine.py`
+- next_step: `open the next bounded optimization batch on smart_scene/core/scene_registry_engine.py to reduce the residual content-module loading shell inside engine_loader_call`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-CONTENT-MODULE-CACHE-OPTIMIZE
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: scene registry content module cache optimization
+- reason: reduce the residual content entry loading shell by reusing the loaded scene registry content module across requests
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_scene/core/scene_registry_engine.py PASS; load_scene_registry_content_module(...) now caches the loaded scene registry content module by resolved provider path and reuses it on subsequent calls; scoped git diff --check PASS`
+- next_step: `restart the dev runtime and compare cold/warm live content_entries timings again to verify whether engine_loader_call and the residual content-module shell collapse on the warm request`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-CONTENT-MODULE-CACHE-VERIFY
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime verification
+- module: content module cache live verification
+- reason: verify with cold/warm live timing whether the residual content_entries envelope still sits in content module load after caching
+- status: `PASS`
+- verification: `validate_task PASS; docker restart sc-backend-odoo-dev-odoo-1 completed; cold live probe shows engine.load_scene_registry_content_module about 14ms and engine_loader_call about 440ms; second warm probe shows engine.load_scene_registry_content_module 0ms and engine_loader_call about 402ms; engine.list_scene_entries and engine.filter_valid_rows both read 0ms on cold/warm probes`
+- next_step: `open a bounded residual shell screen on the remaining engine_loader_call envelope, because content module loading, list_scene_entries, and filter_valid_rows are no longer the meaningful bottleneck`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-AVAILABILITY-OPTIMIZE
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: scene provider availability cache optimization
+- reason: reduce the remaining registry_get_provider / resolve_scene_provider_path shell cost by caching stable absolute provider availability checks
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_scene/core/scene_provider_registry.py PASS; SceneContentProvider.is_available() now caches absolute provider path availability by str(path) and reuses it on subsequent checks; scoped git diff --check PASS`
+- next_step: `restart the dev runtime and compare cold/warm live provider selection timings again to verify whether registry_get_provider and resolve_scene_provider_path collapse on the warm request`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-PROVIDER-AVAILABILITY-VERIFY
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime verification
+- module: provider availability cache live verification
+- reason: verify with cold/warm live timing whether provider selection shell still dominates after caching absolute provider-path availability
+- status: `PASS`
+- verification: `validate_task PASS; docker restart sc-backend-odoo-dev-odoo-1 completed; real wutao/demo login via /api/v1/intent succeeded; cold live probe shows engine_loader_call about 59ms, resolve_scene_provider_path about 30ms, registry_get_provider about 8ms, and load_scene_provider_registry about 13ms; second warm probe on the same runtime reduces all four timings to 0ms`
+- next_step: `open a fresh startup-profile hotspot screen above the recovered provider-selection path and reassign the next meaningful cold-path residual cost`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-POST-PROVIDER-RECOVERY-HOTSPOT-SCREEN
+- branch: codex/next-round
+- layer_target: Scene-orchestration layer diagnostics
+- module: post provider-recovery startup-profile hotspot screen
+- reason: reassign the next optimization target after provider-selection recovery
+- status: `PASS`
+- verification: `validate_task PASS; real wutao/demo warm live ranking shows prepare_runtime_context.load_capabilities_for_user about 248ms, runtime_query_registry_build about 243ms, runtime_query_registry.load_capability_contributions about 241ms, and smart_construction_core provider loop / scene_target_payload / resolve_scene_map still dominating the residual path; fresh-runtime cold probe after docker restart shows those same segments at about 376ms / 369ms / 367ms / 218ms / 187ms / 185ms / 143ms respectively, while provider-selection timings remain materially lower`
+- next_step: `open the next bounded screen/optimization batch on the smart_construction_core capability contribution loop, centered on import_and_provider -> loop_resolve_capability_entry_target_payload -> scene_target_payload -> resolve_scene_map`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-SC-CORE-PAYLOAD-LOOP-SCREEN
+- branch: codex/next-round
+- layer_target: Scene-orchestration layer diagnostics
+- module: smart_construction_core capability payload loop screen
+- reason: map the post provider-recovery cold-path residual to the smallest defensible next optimization target
+- status: `PASS`
+- verification: `validate_task PASS; bounded code inspection maps extension.smart_construction_core.import_and_provider from contribution_loader.py into list_capabilities_for_user_with_timings(...) in capability_registry.py, where loop_resolve_capability_entry_target_payload repeatedly calls resolve_capability_entry_target_payload_with_timings(...); that resolver in capability_scene_targets.py reloads scene configs and rebuilds scene_map for each visible capability, matching the cold-path resolve_scene_map / scene_target_payload timings`
+- next_step: `open a bounded runtime optimization batch on capability_scene_targets.py to reuse scene-config loading / scene-map derivation across visible capability definitions during one system.init request`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-SCENE-TARGET-PAYLOAD-CACHE-OPTIMIZE
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime
+- module: scene target payload cache optimization
+- reason: reduce repeated scene-config loading and scene-map rebuild work across visible capabilities during one runtime process
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_construction_scene/services/capability_scene_targets.py PASS; capability_scene_targets.py now reuses scene-config loading and scene-map derivation by database cache key through _load_scene_map_with_timings(...); scoped git diff --check PASS`
+- next_step: `restart the dev runtime and compare cold/warm smart_construction_core capability payload loop timings to verify whether import_and_provider / scene_target_payload / resolve_scene_map materially drop`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-SCENE-TARGET-PAYLOAD-CACHE-VERIFY
+- branch: codex/next-round
+- layer_target: Scene-orchestration runtime verification
+- module: scene target payload cache live verification
+- reason: verify with cold/warm live timing whether repeated scene-config loading and scene-map rebuild work has materially dropped
+- status: `PASS`
+- verification: `validate_task PASS; docker restart sc-backend-odoo-dev-odoo-1 completed; real wutao/demo login via /api/v1/intent succeeded; cold live probe shows import_and_provider about 126ms, loop_resolve_capability_entry_target_payload about 102ms, scene_target_payload about 102ms, resolve_scene_map about 90ms, scene_registry.load_scene_registry_content_entries about 85ms, and engine_loader_call about 61ms; second warm probe on the same runtime reduces import_and_provider to about 25ms, loop_resolve_capability_entry_target_payload and scene_target_payload to about 3ms, and resolve_scene_map to 0ms`
+- next_step: `open a fresh startup-profile hotspot screen above the recovered smart_construction_core payload loop and reassign the next dominant residual in system.init`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-POST-PAYLOAD-CACHE-HOTSPOT-SCREEN
+- branch: codex/next-round
+- layer_target: Scene-orchestration layer diagnostics
+- module: post payload-cache startup-profile hotspot screen
+- reason: reassign the next optimization target after scene target payload recovery
+- status: `PASS`
+- verification: `validate_task PASS; live ranking after payload-loop recovery shows prepare_runtime_context.load_capabilities_for_user about 1077ms, runtime_query_registry_build about 1020ms, runtime_query_registry.load_capability_contributions about 999ms, native_projection about 717ms, and extension_loop_total about 179ms; smart_construction_core.import_and_provider now sits around 175ms and the recovered payload loop remains below the new outer-shell owner`
+- next_step: `open the next bounded screen on runtime_query_registry_build / load_capability_contributions / native_projection to identify the new top-level fixed-cost owner`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-RUNTIME-QUERY-REGISTRY-SCREEN
+- branch: codex/next-round
+- layer_target: Scene-orchestration layer diagnostics
+- module: runtime query registry outer-shell screen
+- reason: map the new outer-shell owner after payload-loop recovery
+- status: `PASS`
+- verification: `validate_task PASS; bounded code inspection maps runtime_query_registry_build from capability_provider.py into CapabilityRegistry.build_with_timings(...) in registry.py, where the dominant substage is load_capability_contributions; contribution_loader.py shows native_projection is the largest remaining inner stage, and native_projection_service.py fans out into six adapters, with model_adapter.py the heaviest-looking path because it reads up to 4000 ir.model rows plus ir.model.access and XMLID maps`
+- next_step: `open a bounded native_projection screen/optimization batch centered on project_model_access_capabilities(...) before touching the broader runtime_query_registry shell`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-NATIVE-MODEL-ADAPTER-SCREEN
+- branch: codex/next-round
+- layer_target: Scene-orchestration layer diagnostics
+- module: native model adapter screen
+- reason: narrow the next native_projection optimization target to one bounded adapter
+- status: `PASS`
+- verification: `validate_task PASS; bounded code inspection shows project_model_access_capabilities(...) currently loads up to 4000 ir.model rows, then ir.model.access rows, then XMLIDs for the full model set before narrowing by current user groups; the safe low-risk next step is to reverse that order so ACL rows and group filtering narrow the model set before model-row and XMLID reads`
+- next_step: `open a bounded runtime optimization batch on model_adapter.py to narrow from applicable ir.model.access rows first and only then load matching ir.model rows / XMLIDs`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SYSTEM-INIT-CAPABILITY-REGISTRY-OWNERSHIP-SCREEN
+- branch: codex/next-round
+- layer_target: Platform-kernel boundary diagnostics
+- module: capability registry ownership screen
+- reason: user raised a platform-kernel overlap concern before allowing more native_projection optimization
+- status: `PASS`
+- verification: `validate_task PASS; architecture comparison across system_init_runtime_context_v1, scene_orchestration_layer_design_v1, backend_contract_layer_responsibility_freeze_v1, and capabilities.md shows current native_projection is not simply consuming already-materialized intent facts; it is a request-time native metadata discovery path better classified as bootstrap/compatibility projection than steady-state system.init truth`
+- next_step: `open a dedicated boundary-recovery batch for capability registry fact-source and materialization ownership before resuming performance tuning of native_projection`
+- date: 2026-04-19
+- task: ITER-2026-04-19-CAPABILITY-REGISTRY-BOUNDARY-RECOVERY-SCREEN
+- branch: codex/next-round
+- layer_target: Platform-kernel boundary diagnostics
+- module: capability registry boundary recovery screen
+- reason: convert the ownership judgment into an actionable recovery boundary
+- status: `PASS`
+- verification: `validate_task PASS; target architecture and implementation baseline both support capability registry as a controlled kernel/runtime reading capability rather than a request-time native discovery loop; recovery decision freezes canonical fact source as stable kernel capability semantics, allows native_projection only as bootstrap/compatibility fallback, and requires registry materialization before ordinary system.init assembly`
+- next_step: `open a dedicated design batch for capability registry materialization/invalidation and system.init mainline consumption contract`
+- date: 2026-04-19
+- task: ITER-2026-04-19-CAPABILITY-REGISTRY-MATERIALIZATION-DESIGN
+- branch: codex/next-round
+- layer_target: Platform-kernel design
+- module: capability registry materialization design
+- reason: turn the recovered boundary into an implementation-grade mainline contract
+- status: `PASS`
+- verification: `validate_task PASS; design freezes controlled build trigger, shared-service materialization location, explicit fallback gating, versioned invalidation semantics, and a system.init mainline that consumes only a materialized capability registry artifact instead of orchestrating native discovery directly`
+- next_step: `open the first implementation screen for a capability registry artifact service and system.init consumer cut-over path`
+- date: 2026-04-19
+- task: ITER-2026-04-19-CAPABILITY-REGISTRY-ARTIFACT-SERVICE-SCREEN
+- branch: codex/next-round
+- layer_target: Platform-kernel design
+- module: capability registry artifact service screen
+- reason: map the materialization design to the smallest implementation-ready cut-over
+- status: `PASS`
+- verification: `validate_task PASS; current code inspection shows the clean cut-over seam is capability_provider.py -> CapabilityRegistryService.get_registry_bundle_with_timings(...), while system_init.py already consumes the provider through a narrow boundary; screen freezes a minimal artifact service API, keeps fallback ownership below system.init, and bounds the first implementation write scope to capability_registry_service.py plus capability_provider.py`
+- next_step: `open the first bounded implementation batch to introduce artifact-returning registry service semantics and cut capability_provider.py over to artifact consumption`
+- date: 2026-04-19
+- task: ITER-2026-04-19-CAPABILITY-REGISTRY-ARTIFACT-SERVICE-IMPLEMENT
+- branch: codex/next-round
+- layer_target: Platform-kernel runtime
+- module: capability registry artifact service implementation
+- reason: start ownership correction by introducing artifact semantics at the registry service boundary
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_core/app_config_engine/capability/services/capability_registry_service.py addons/smart_core/core/capability_provider.py PASS; CapabilityRegistryService now exposes get_registry_artifact(_with_timings) with artifact_version/source/fallback/build_meta fields, and capability_provider.py now consumes artifact rows instead of a bare registry bundle; scoped git diff --check PASS`
+- next_step: `open a bounded verification/design batch for artifact provenance semantics and fallback gating before replacing on-demand rebuild with true materialized reads`
+- date: 2026-04-19
+- task: ITER-2026-04-19-CAPABILITY-REGISTRY-ARTIFACT-PROVENANCE-SCREEN
+- branch: codex/next-round
+- layer_target: Platform-kernel design
+- module: capability registry artifact provenance screen
+- reason: freeze the semantics of source/fallback/stale before deeper materialization work
+- status: `PASS`
+- verification: `validate_task PASS; provenance screen freezes source enum, fallback_used meaning, fallback_reason categories, stale ownership, and confirms those semantics belong to the registry artifact service rather than system.init or capability_provider`
+- next_step: `open a bounded implementation batch to make current runtime_query_registry_build path report explicit fallback/provenance semantics in the artifact service`
+- date: 2026-04-19
+- task: ITER-2026-04-19-CAPABILITY-REGISTRY-EXPLICIT-FALLBACK-IMPLEMENT
+- branch: codex/next-round
+- layer_target: Platform-kernel runtime
+- module: capability registry explicit fallback implementation
+- reason: make current rebuild-on-demand path truthful about its fallback status before materialized reads are introduced
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_core/app_config_engine/capability/services/capability_registry_service.py addons/smart_core/core/capability_provider.py PASS; registry service now marks runtime_query_registry_build as source with fallback_used=true for runtime mode, emits fallback_reason=artifact_missing, and exposes preferred_source=materialized_kernel_registry in build_meta; capability_provider.py records fallback reason presence in timings; scoped git diff --check PASS`
+- next_step: `open the final pre-materialization verify/design batch for artifact-read success semantics and cut-over guard conditions before implementing a true materialized registry read path`
+- date: 2026-04-19
+- task: ITER-2026-04-19-CAPABILITY-REGISTRY-MATERIALIZED-READ-GUARD-SCREEN
+- branch: codex/next-round
+- layer_target: Platform-kernel design
+- module: materialized registry read guard screen
+- reason: freeze the exact success conditions before switching runtime mode to materialized reads
+- status: `PASS`
+- verification: `validate_task PASS; guard screen freezes the only valid runtime success combination for materialized reads, enumerates non-success source/fallback/stale/version/rows combinations, and confirms those trust guards belong to the registry artifact service rather than system.init or capability_provider`
+- next_step: `open the first true materialized-read implementation batch with a registry-service trust check seam and placeholder materialized source path`
+- date: 2026-04-19
+- task: ITER-2026-04-19-CAPABILITY-REGISTRY-MATERIALIZED-READ-IMPLEMENT
+- branch: codex/next-round
+- layer_target: Platform-kernel runtime
+- module: capability registry materialized read implementation
+- reason: make materialized read success behavior real behind the registry service boundary
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_core/app_config_engine/capability/services/capability_registry_service.py addons/smart_core/core/capability_provider.py PASS; registry service now maintains a bounded in-process artifact cache keyed by db/platform_owner/mode/user, seeds a materialized artifact after rebuild, and returns source=materialized_kernel_registry with fallback_used=false on subsequent runtime reads when trust checks pass; scoped git diff --check PASS`
+- next_step: `run a live verification batch that proves first runtime request returns explicit fallback and the second runtime request returns materialized_kernel_registry success on the same process`
+- date: 2026-04-19
+- task: ITER-2026-04-19-CAPABILITY-REGISTRY-MATERIALIZED-READ-VERIFY
+- branch: codex/next-round
+- layer_target: Platform-kernel runtime verification
+- module: capability registry materialized read live verification
+- reason: prove on live runtime that fallback-first then materialized-success behavior is real
+- status: `PASS`
+- verification: `validate_task PASS; after docker restart and real wutao/demo login via /api/v1/intent, the first live system.init request showed load_capabilities_for_user about 278ms with artifact_fallback_used=1, artifact_source_present=1, and artifact_fallback_reason_present=1; the second request on the same process showed load_capabilities_for_user about 56ms with artifact_fallback_used=0, artifact_source_present=1, artifact_fallback_reason_present absent, and runtime_query_registry.artifact.materialized_read_hit present`
+- next_step: `open the next bounded batch to replace placeholder in-process materialized reads with a more durable artifact store or invalidation-aware source behind the same registry service contract`
+- date: 2026-04-19
+- task: ITER-2026-04-19-CAPABILITY-REGISTRY-DURABLE-SOURCE-SCREEN
+- branch: codex/next-round
+- layer_target: Platform-kernel design
+- module: capability registry durable source screen
+- reason: choose the smallest durable/invalidation-aware upgrade behind the proven materialized-read contract
+- status: `PASS`
+- verification: `validate_task PASS; screen chooses a versioned in-memory artifact store with explicit invalidation keys as the next bounded upgrade, reusing existing repo contract-version/schema-version/snapshot semantics instead of jumping directly to a new persistent backend`
+- next_step: `open a bounded implementation batch to add invalidation-key metadata and invalidation-aware trust checks to the current in-process registry artifact store`
+- date: 2026-04-19
+- task: ITER-2026-04-19-CAPABILITY-REGISTRY-INVALIDATION-AWARE-IMPLEMENT
+- branch: codex/next-round
+- layer_target: Platform-kernel runtime
+- module: capability registry invalidation-aware artifact store implementation
+- reason: upgrade the proven in-memory artifact source from placeholder trust checks to version/invalidation-aware trust checks
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_core/app_config_engine/capability/services/capability_registry_service.py PASS; registry service now derives an expected invalidation key from artifact version, contract/schema version, platform owner, mode, and installed smart_* modules, stores that key in materialized artifact metadata, and rejects cached materialized artifacts when the invalidation key no longer matches; scoped git diff --check PASS`
+- next_step: `run a bounded live verification batch that proves invalidation-aware cache hits still succeed and that stale artifacts fall back and reseed correctly`
+- date: 2026-04-19
+- task: ITER-2026-04-19-CAPABILITY-REGISTRY-INVALIDATION-AWARE-VERIFY
+- branch: codex/next-round
+- layer_target: Platform-kernel runtime verification
+- module: capability registry invalidation-aware live verification
+- reason: verify live behavior of the invalidation-aware artifact source
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; after docker restart and real wutao/demo login via /api/v1/intent, first live request again showed explicit fallback and second request showed materialized hit (load_capabilities_for_user about 306ms -> 52ms, artifact_fallback_used 1 -> 0, materialized_read_hit present on second request); however, a stale-key mismatch was not force-injected because doing so safely would require either risky installed-module mutation or a dedicated synthetic verification seam`
+- next_step: `open a low-risk synthetic invalidation verification screen to define the smallest diagnostic seam for proving stale mismatch fallback without mutating module state`
+- date: 2026-04-19
+- task: ITER-2026-04-19-CAPABILITY-REGISTRY-SYNTHETIC-INVALIDATION-SEAM-IMPLEMENT
+- branch: codex/next-round
+- layer_target: Platform-kernel runtime
+- module: capability registry synthetic invalidation seam implementation
+- reason: add the smallest safe stale-mismatch injection seam for verification
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m py_compile addons/smart_core/app_config_engine/capability/services/capability_registry_service.py PASS; registry service now folds SMART_CORE_CAPABILITY_REGISTRY_VERIFY_SALT into invalidation-key derivation only, with no behavior change when unset; scoped git diff --check PASS`
+- next_step: `run a synthetic live verification batch that proves salt change forces stale fallback and reseed while unsalted runtime still materializes successfully`
+- date: 2026-04-19
+- task: ITER-2026-04-19-CAPABILITY-REGISTRY-SYNTHETIC-INVALIDATION-VERIFY
+- branch: codex/next-round
+- layer_target: Platform-kernel runtime verification
+- module: capability registry synthetic invalidation live verification
+- reason: prove stale mismatch fallback using the new synthetic seam
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; after docker restart and stable login, unsalted runtime requests showed materialized-read success (artifact_fallback_used=0, materialized_read_hit present); however, the chosen seam uses process environment and cannot be toggled on an already running Odoo worker without an additional startup-control mechanism, so forced stale mismatch was not completed in this batch`
+- next_step: `open a bounded design/implementation batch for a live-toggleable verification-only invalidation salt source, preferably via narrow debug config or equivalent service-owned diagnostic input`
+- date: 2026-04-19

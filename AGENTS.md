@@ -467,6 +467,42 @@ When this exception is used:
 - if uncertainty remains about financial semantics, authority leakage, or
   runtime safety, the agent MUST stop immediately
 
+### 6.10 Narrow Exception For Dedicated Smart Core Capability-Registry Startup-Warmup Batches
+
+The generic stop condition for `__manifest__.py` remains the default and MUST
+still trigger an immediate stop in ordinary batches.
+
+Exception:
+
+The agent MAY implement controlled `__manifest__.py` changes only when all of
+the following are simultaneously true:
+
+- an active task contract explicitly declares a dedicated startup-warmup
+  objective for `smart_core` capability-registry materialization
+- the task allowlist explicitly includes the exact
+  `addons/smart_core/__manifest__.py` path plus only the directly related
+  warmup hook/runtime files needed to seed the existing capability-registry
+  artifact
+- the user has explicitly authorized proceeding with that high-risk batch
+- the planned changes are additive and scoped only to:
+  - adding the minimal startup hook declaration for `smart_core`
+  - wiring one bounded warmup path that seeds the existing capability-registry
+    artifact before ordinary `system.init` traffic
+  - restarting runtime and verifying the first real request no longer uses
+    fallback build
+- `security/**`, `record_rules/**`, `ir.model.access.csv`, frontend paths,
+  persistence redesign, payment/settlement/account domains, and unrelated
+  manifest or dependency changes remain outside scope unless separately
+  authorized by a new task line
+
+When this exception is used:
+
+- the batch MUST be treated as high-risk
+- verification and reporting MUST be completed in the same batch
+- if uncertainty remains about module lifecycle safety, startup ownership, or
+  scope expansion beyond bounded warmup behavior, the agent MUST stop
+  immediately
+
 ### 6.9 Narrow Exception For Dedicated No-Contract Payment Business-Continuity Batches
 
 The generic stop condition for `*payment*` remains the default and MUST still
