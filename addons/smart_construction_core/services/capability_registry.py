@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+import time
 from typing import Any
 
 from odoo import _
@@ -10,6 +11,7 @@ from odoo.addons.smart_construction_scene.services.capability_scene_targets impo
     build_capability_entry_target,
     resolve_capability_entry_scene_key,
     resolve_capability_entry_target_payload,
+    resolve_capability_entry_target_payload_with_timings,
 )
 
 CAPABILITY_KEY_REGEX = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")
@@ -231,17 +233,38 @@ def _capability_state(defn: dict[str, Any], allowed: bool) -> tuple[str, str]:
 
 
 def list_capabilities_for_user(env, user) -> list[dict[str, Any]]:
+    rows, _timings = list_capabilities_for_user_with_timings(env, user)
+    return rows
+
+
+def list_capabilities_for_user_with_timings(env, user) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    timings_ms: dict[str, int] = {}
+
+    def _mark(stage: str, started_at: float) -> float:
+        timings_ms[stage] = int((time.perf_counter() - started_at) * 1000)
+        return time.perf_counter()
+
+    stage_ts = time.perf_counter()
     group_meta = _group_meta_map()
+    stage_ts = _mark("group_meta_map", stage_ts)
     role_codes = _resolve_role_codes_for_user(user)
+    stage_ts = _mark("resolve_role_codes_for_user", stage_ts)
+    definitions = capability_definitions()
+    stage_ts = _mark("capability_definitions", stage_ts)
 
     out: list[dict[str, Any]] = []
-    for idx, defn in enumerate(capability_definitions(), start=1):
+    access_state_total_ms = 0
+    entry_target_total_ms = 0
+    resolve_payload_total_ms = 0
+    for idx, defn in enumerate(definitions, start=1):
+        iter_ts = time.perf_counter()
         visible, allowed, reason_code, reason = _capability_access(defn, role_codes, user)
+        cap_state, cap_state_reason = _capability_state(defn, allowed)
+        access_state_total_ms += int((time.perf_counter() - iter_ts) * 1000)
         if not visible:
             continue
         group_key = str(defn.get("group_key") or "others").strip() or "others"
         group = group_meta.get(group_key) or group_meta["others"]
-        cap_state, cap_state_reason = _capability_state(defn, allowed)
         state = "READY"
         if cap_state in {"pending", "coming_soon"}:
             state = "PREVIEW"
@@ -249,8 +272,19 @@ def list_capabilities_for_user(env, user) -> list[dict[str, Any]]:
             state = "LOCKED"
 
         capability_key = str(defn.get("key") or "").strip()
+        iter_ts = time.perf_counter()
         entry_target = build_capability_entry_target(capability_key, explicit_target=defn.get("entry_target") or {})
-        payload = resolve_capability_entry_target_payload(env, capability_key, explicit_target=defn.get("entry_target") or {})
+        entry_target_total_ms += int((time.perf_counter() - iter_ts) * 1000)
+        iter_ts = time.perf_counter()
+        payload, payload_timings_ms = resolve_capability_entry_target_payload_with_timings(
+            env,
+            capability_key,
+            explicit_target=defn.get("entry_target") or {},
+        )
+        resolve_payload_total_ms += int((time.perf_counter() - iter_ts) * 1000)
+        if isinstance(payload_timings_ms, dict):
+            for key, value in payload_timings_ms.items():
+                timings_ms[f"payload.{key}"] = int(timings_ms.get(f"payload.{key}", 0) + int(value))
         item = {
             "key": capability_key,
             "name": str(defn.get("label") or defn.get("key") or "").strip(),
@@ -277,8 +311,13 @@ def list_capabilities_for_user(env, user) -> list[dict[str, Any]]:
         }
         out.append(item)
 
+    timings_ms["loop_access_and_state"] = access_state_total_ms
+    timings_ms["loop_build_capability_entry_target"] = entry_target_total_ms
+    timings_ms["loop_resolve_capability_entry_target_payload"] = resolve_payload_total_ms
+    stage_ts = time.perf_counter()
     out.sort(key=lambda row: (int(row.get("group_sequence") or 0), int(row.get("sequence") or 0), str(row.get("key") or "")))
-    return out
+    _mark("final_sort", stage_ts)
+    return out, timings_ms
 
 
 def build_capability_matrix_for_user(env, user) -> dict[str, Any]:

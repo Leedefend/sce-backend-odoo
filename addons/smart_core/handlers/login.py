@@ -5,6 +5,9 @@ from typing import Dict, Any
 
 from odoo import SUPERUSER_ID, api
 from odoo.modules.registry import Registry
+from odoo.addons.smart_core.app_config_engine.capability.services.capability_registry_service import (
+    CapabilityRegistryService,
+)
 from ..core.base_handler import BaseIntentHandler
 from ..core.intent_execution_result import IntentExecutionResult
 from ..security.auth import authenticate_user, generate_token, get_token_exp_seconds, get_user_from_token
@@ -93,6 +96,20 @@ def _is_internal_user(profile: Dict[str, Any]) -> bool:
     return "base.group_user" in groups
 
 
+def _warm_capability_artifact(db_name: str, user_id: int) -> None:
+    registry = Registry(db_name)
+    with registry.cursor() as cr:
+        env = api.Environment(cr, user_id, {})
+        user = env["res.users"].sudo().browse(int(user_id))
+        if not user.exists():
+            return
+        CapabilityRegistryService(platform_owner="smart_core").get_registry_artifact(
+            env,
+            user=user,
+            mode="runtime",
+        )
+
+
 class LoginHandler(BaseIntentHandler):
     """
     用户登录处理器
@@ -105,7 +122,14 @@ class LoginHandler(BaseIntentHandler):
     ETAG_ENABLED = False
 
     def handle(self):
+        timings_ms: Dict[str, int] = {}
+
+        def _mark(stage: str, started_at: float) -> float:
+            timings_ms[stage] = int((time.perf_counter() - started_at) * 1000)
+            return time.perf_counter()
+
         # 1) 取参（支持 db / database / company_id 可选）
+        stage_ts = time.perf_counter()
         params: Dict[str, Any] = self.params or {}
         login    = (params.get("login") or "").strip()
         password = (params.get("password") or "").strip()
@@ -117,6 +141,7 @@ class LoginHandler(BaseIntentHandler):
         compat_enabled = _resolve_compat_enabled(self.env, params)
         if compat_requested and not compat_enabled:
             contract_mode = "default"
+        stage_ts = _mark("resolve_request", stage_ts)
 
         if not login or not password:
             return self.err(400, "缺少登录信息")
@@ -129,6 +154,10 @@ class LoginHandler(BaseIntentHandler):
             # 避免回显敏感信息
             _logger.info("Login failed for %s: %s", login, e)
             return self.err(401, "用户名或密码错误")
+        auth_timings = user_dict.get("timings_ms") if isinstance(user_dict, dict) else None
+        if isinstance(auth_timings, dict):
+            timings_ms["authenticate_user"] = sum(int(v) for v in auth_timings.values())
+        stage_ts = _mark("authenticate_user", stage_ts)
 
         user_id = int(user_dict["id"])
         auth_db = (user_dict.get("db") or db or "").strip()
@@ -139,12 +168,20 @@ class LoginHandler(BaseIntentHandler):
         except Exception as e:
             _logger.info("Login profile load failed for %s on %s: %s", login, auth_db, e)
             return self.err(401, "用户名或密码错误")
+        stage_ts = _mark("load_user_profile", stage_ts)
+
+        try:
+            _warm_capability_artifact(auth_db, user_id)
+        except Exception as e:
+            _logger.info("Capability warmup failed for %s on %s: %s", login, auth_db, e)
+        stage_ts = _mark("warm_capability_artifact", stage_ts)
 
         # 4) 生成访问令牌（JWT/HMAC 等）
         token_version = int(profile.get("token_version") or 0)
         token = generate_token(user_id, token_version=token_version, db=auth_db)
         token_type = "Bearer"
         expires_at = int(time.time()) + get_token_exp_seconds()
+        stage_ts = _mark("generate_token", stage_ts)
 
         # 可选：切换公司（若传入）
         if want_company_id:
@@ -217,7 +254,11 @@ class LoginHandler(BaseIntentHandler):
                 "groups": profile["groups"],
                 "intents": _list_available_intents(),
             }
-        return IntentExecutionResult(ok=True, data=data, meta={})
+        _mark("build_response", stage_ts)
+        meta = {"login_timings_ms": timings_ms}
+        if isinstance(auth_timings, dict):
+            meta["login_auth_timings_ms"] = {str(k): int(v) for k, v in auth_timings.items()}
+        return IntentExecutionResult(ok=True, data=data, meta=meta)
 
 
 class LogoutHandler(BaseIntentHandler):
