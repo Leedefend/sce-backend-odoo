@@ -1,0 +1,58 @@
+task_id: ITER-2026-04-22-GOV-RESIDUAL-SCENE-READY-ORCHESTRATION-PA87
+title: Split residual smart_core scene-ready orchestration slice from 56b7eba
+objective: >
+  Isolate the platform-layer smart_core scene-ready orchestration residual slice
+  from commit 56b7eba into a bounded child batch for mainline review.
+context:
+  layer_target: Platform Layer
+  module: smart_core
+  module_ownership: Platform kernel
+  kernel_or_scenario: kernel
+  architecture_reason: >
+    This batch recovers scene-ready orchestration and contract governance
+    semantics that belong to smart_core platform runtime assembly. It must stay
+    separate from construction scene providers and domain semantic carriers.
+scope:
+  allowed_paths:
+    - addons/smart_core/core/page_contracts_builder.py
+    - addons/smart_core/core/scene_contract_builder.py
+    - addons/smart_core/core/scene_merge_resolver.py
+    - addons/smart_core/core/scene_ready_semantic_orchestration_bridge.py
+    - addons/smart_core/handlers/system_init.py
+    - addons/smart_core/handlers/ui_contract.py
+    - addons/smart_core/utils/contract_governance.py
+    - addons/smart_core/tests/test_backend_semantic_copy_supply.py
+    - addons/smart_core/tests/test_contract_governance_project_form.py
+    - addons/smart_core/tests/test_release_operator_surface_copy_backend.py
+    - addons/smart_core/tests/test_scene_contract_builder_semantics.py
+    - addons/smart_core/tests/test_scene_ready_semantic_orchestration_bridge.py
+    - addons/smart_core/tests/test_scene_runtime_contract_chain.py
+    - agent_ops/tasks/ITER-2026-04-22-GOV-RESIDUAL-SCENE-READY-ORCHESTRATION-PA87.yaml
+  forbidden_paths:
+    - addons/smart_construction_scene/**
+    - addons/smart_construction_core/**
+    - addons/smart_core/controllers/platform_menu_api.py
+    - addons/smart_core/delivery/menu_target_interpreter_service.py
+    - addons/smart_core/governance/scene_normalizer.py
+    - addons/smart_core/identity/identity_resolver.py
+    - addons/smart_core/orchestration/**
+    - addons/smart_core/delivery/**
+    - addons/smart_core/**/payment*
+    - addons/smart_core/**/settlement*
+    - addons/smart_core/**/account*
+change_rules:
+  additive_only: true
+  no_contract_breaking_changes: true
+  no_acl_or_manifest_changes: true
+  no_financial_semantic_changes: true
+acceptance:
+  verification_commands:
+    - python3 -m py_compile addons/smart_core/core/page_contracts_builder.py addons/smart_core/core/scene_contract_builder.py addons/smart_core/core/scene_merge_resolver.py addons/smart_core/core/scene_ready_semantic_orchestration_bridge.py addons/smart_core/handlers/system_init.py addons/smart_core/handlers/ui_contract.py addons/smart_core/utils/contract_governance.py
+reporting:
+  iteration_report_required: true
+  include:
+    - changed_files
+    - verification_result
+    - risk_summary
+    - rollback_suggestion
+    - next_iteration_suggestion
