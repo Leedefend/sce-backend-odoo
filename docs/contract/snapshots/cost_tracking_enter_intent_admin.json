@@ -1,0 +1,11 @@
+{
+  "case": "cost_tracking_enter_intent_admin",
+  "op": "intent.invoke",
+  "user": "admin",
+  "contract_version": "v1",
+  "ui_contract_raw": {
+    "project_id": 1,
+    "scene_key": "cost.tracking"
+  },
+  "error": null
+}
