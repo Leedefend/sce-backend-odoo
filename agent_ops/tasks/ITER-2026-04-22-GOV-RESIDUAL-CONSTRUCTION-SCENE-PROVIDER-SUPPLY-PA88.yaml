@@ -1,0 +1,69 @@
+task_id: ITER-2026-04-22-GOV-RESIDUAL-CONSTRUCTION-SCENE-PROVIDER-SUPPLY-PA88
+title: Split residual construction scene provider supply slice from 56b7eba
+objective: >
+  Isolate the scene-layer provider/profile/registry runtime supply slice from
+  commit 56b7eba into a bounded child batch for mainline review.
+context:
+  layer_target: Scene Layer
+  module: smart_construction_scene
+  module_ownership: Industry scene layer
+  kernel_or_scenario: scenario
+  architecture_reason: >
+    This batch supplies construction scene providers, registry helpers, and
+    scene-target runtime composition for generic frontend and smart_core
+    consumers. It must remain separate from platform smart_core orchestration,
+    construction_core semantic carriers, and scene asset data registration.
+scope:
+  allowed_paths:
+    - addons/smart_construction_scene/bootstrap/register_scene_providers.py
+    - addons/smart_construction_scene/core_extension.py
+    - addons/smart_construction_scene/profiles/project_dashboard_scene_content.py
+    - addons/smart_construction_scene/profiles/scene_registry_content.py
+    - addons/smart_construction_scene/providers/approval_workbench_provider.py
+    - addons/smart_construction_scene/providers/contract_center_provider.py
+    - addons/smart_construction_scene/providers/contracts_workspace_provider.py
+    - addons/smart_construction_scene/providers/cost_project_budget_provider.py
+    - addons/smart_construction_scene/providers/enterprise_bootstrap_provider.py
+    - addons/smart_construction_scene/providers/finance_center_provider.py
+    - addons/smart_construction_scene/providers/finance_workspace_provider.py
+    - addons/smart_construction_scene/providers/projects_detail_provider.py
+    - addons/smart_construction_scene/providers/projects_ledger_provider.py
+    - addons/smart_construction_scene/providers/projects_list_provider.py
+    - addons/smart_construction_scene/providers/task_board_provider.py
+    - addons/smart_construction_scene/providers/task_center_provider.py
+    - addons/smart_construction_scene/scene_registry.py
+    - addons/smart_construction_scene/scenes/cost/cost.project_budget.scene.yaml
+    - addons/smart_construction_scene/scenes/projects/projects.ledger.scene.yaml
+    - addons/smart_construction_scene/services/__init__.py
+    - addons/smart_construction_scene/services/capability_scene_targets.py
+    - addons/smart_construction_scene/services/my_work_scene_targets.py
+    - addons/smart_construction_scene/services/workflow_rollout_handoff.py
+    - addons/smart_construction_scene/tests/test_action_only_scene_semantic_supply.py
+    - addons/smart_construction_scene/tests/test_my_work_scene_targets.py
+    - addons/smart_construction_scene/tests/test_project_list_scene_profile_columns.py
+    - addons/smart_construction_scene/tests/test_scene_registry_yaml_asset_merge.py
+    - agent_ops/tasks/ITER-2026-04-22-GOV-RESIDUAL-CONSTRUCTION-SCENE-PROVIDER-SUPPLY-PA88.yaml
+  forbidden_paths:
+    - addons/smart_construction_scene/__init__.py
+    - addons/smart_construction_scene/data/**
+    - addons/smart_construction_core/**
+    - addons/smart_core/**
+    - addons/smart_construction_scene/**/payment*
+    - addons/smart_construction_scene/**/settlement*
+    - addons/smart_construction_scene/**/account*
+change_rules:
+  additive_only: true
+  no_contract_breaking_changes: true
+  no_acl_or_manifest_changes: true
+  no_financial_semantic_changes: true
+acceptance:
+  verification_commands:
+    - python3 -m py_compile addons/smart_construction_scene/bootstrap/register_scene_providers.py addons/smart_construction_scene/core_extension.py addons/smart_construction_scene/scene_registry.py addons/smart_construction_scene/services/capability_scene_targets.py addons/smart_construction_scene/services/my_work_scene_targets.py addons/smart_construction_scene/services/workflow_rollout_handoff.py
+reporting:
+  iteration_report_required: true
+  include:
+    - changed_files
+    - verification_result
+    - risk_summary
+    - rollback_suggestion
+    - next_iteration_suggestion
