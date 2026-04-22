@@ -11,7 +11,7 @@ cost.cost_compare,,,false,true,fallback_only
 cost.forecast,,,false,true,fallback_only
 cost.profit_compare,,,false,true,fallback_only
 cost.project_boq,,,false,true,fallback_only
-cost.project_budget,,,false,true,fallback_only
+cost.project_budget,construction.cost_project_budget_provider.v1,/mnt/e/sc-backend-odoo/addons/smart_construction_scene/providers/cost_project_budget_provider.py,true,true,provider_registered
 cost.project_cost_ledger,,,false,true,fallback_only
 cost.project_progress,,,false,true,fallback_only
 cost.warning.center,,,false,true,fallback_only
