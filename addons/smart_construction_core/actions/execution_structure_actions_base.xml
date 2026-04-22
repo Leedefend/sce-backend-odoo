@@ -6,26 +6,39 @@
         <field name="state">code</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
         <field name="code"><![CDATA[
-next_action = {
-    'type': 'ir.actions.act_window',
-    'name': '项目列表',
-    'res_model': 'project.project',
-    'view_mode': 'kanban,tree,form',
-    'views': [(False, 'kanban'), (False, 'tree'), (False, 'form')],
-    'target': 'current',
-    'context': dict(env.context),
-}
-action = {
-    'type': 'ir.actions.client',
-    'tag': 'display_notification',
-    'params': {
-        'title': '执行结构',
-        'message': '请先选择项目，将跳转到项目列表。',
-        'type': 'warning',
-        'sticky': False,
-        'next': next_action,
+ctx = dict(env.context or {})
+Project = env['project.project']
+my_project_domain = ['|', ('manager_id', '=', env.uid), '|', ('owner_id', '=', env.uid), ('user_id', '=', env.uid)]
+my_projects = Project.search(my_project_domain, limit=2)
+
+if len(my_projects) == 1:
+    project = my_projects[0]
+    direct_action = project.action_open_exec_wbs()
+    action_ctx = Project._normalize_action_context(direct_action.get('context'))
+    action_ctx.update(ctx)
+    action_ctx['default_project_id'] = project.id
+    action_ctx['search_default_project_id'] = project.id
+    direct_action['context'] = action_ctx
+    direct_action['domain'] = [('project_id', '=', project.id)]
+    action = direct_action
+else:
+    next_action = env['ir.actions.act_window']._for_xml_id('smart_construction_core.action_sc_project_kanban_lifecycle')
+    next_ctx = Project._normalize_action_context(next_action.get('context'))
+    next_ctx.update(ctx)
+    next_ctx['search_default_filter_my_projects'] = 1
+    next_ctx['sc_exec_entry_mode'] = 'wbs'
+    next_action['context'] = next_ctx
+    action = {
+        'type': 'ir.actions.client',
+        'tag': 'display_notification',
+        'params': {
+            'title': '执行结构',
+            'message': '请先选择项目，再进入执行结构。',
+            'type': 'warning',
+            'sticky': False,
+            'next': next_action,
+        }
     }
-}
         ]]></field>
     </record>
 
