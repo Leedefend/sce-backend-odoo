@@ -150,8 +150,6 @@ CRITICAL_SCENE_TARGET_OVERRIDES = {
 CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES = {
     "my_work.workspace": "/my-work",
 }
-
-
 INDUSTRY_CREATE_FIELD_FALLBACKS = {
     "project.project": {
         "selection_defaults": {
@@ -484,8 +482,6 @@ def get_api_data_unlink_allowed_model_contributions(env):
 
 def get_model_code_mapping_contributions(env):
     return dict(MODEL_CODE_MAPPING)
-
-
 def _build_role_entry_contract_rows(env) -> List[Dict[str, Any]]:
     rows = _safe_search_read(
         env,

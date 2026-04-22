@@ -5,6 +5,10 @@ from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import re
 from typing import Any, Dict
+from odoo.addons.smart_core.core.page_contract_semantic_orchestration_bridge import (
+    apply_page_contract_semantic_orchestration_bridge,
+)
+from odoo.addons.smart_core.core.page_contract_parser_semantic_bridge import apply_page_contract_parser_semantic_bridge
 
 def _load_semantics_registry() -> Dict[str, Any]:
     registry_path = Path(__file__).with_name("orchestration_semantics.py")
@@ -311,6 +315,19 @@ def _zone_from_tag(tag: str) -> Dict[str, str]:
     return {"key": "primary", "title": "主体内容", "zone_type": "primary", "display_mode": "stack"}
 
 
+def _zone_for_section(page_key: str, section_key: str, tag: str) -> Dict[str, str]:
+    provider = _load_data_provider()
+    if provider:
+        fn = getattr(provider, "build_zone_for_section", None)
+        if callable(fn):
+            payload = fn(page_key, section_key, tag)
+            if isinstance(payload, dict) and payload:
+                return payload
+    payload = _zone_from_tag(tag)
+    payload["description"] = ""
+    return payload
+
+
 def _semantic_from_section(page_key: str, section_key: str, tag: str) -> Dict[str, Any]:
     provider = _load_data_provider()
     if provider:
@@ -365,6 +382,28 @@ def _action_templates(section_key: str) -> list[Dict[str, Any]]:
     if any(token in key for token in ("table", "list", "records")):
         return [{"key": "open_list", "label": "查看明细", "intent": "ui.contract"}]
     return []
+
+
+def _action_templates_for_page(page_key: str, section_key: str) -> list[Dict[str, Any]]:
+    provider = _load_data_provider()
+    if provider:
+        fn = getattr(provider, "build_action_templates_for_page", None)
+        if callable(fn):
+            payload = fn(page_key, section_key)
+            if isinstance(payload, list):
+                return payload
+    return _action_templates(section_key)
+
+
+def _block_title(page_key: str, section_key: str) -> str:
+    provider = _load_data_provider()
+    if provider:
+        fn = getattr(provider, "build_block_title", None)
+        if callable(fn):
+            value = str(fn(page_key, section_key) or "").strip()
+            if value:
+                return value
+    return str(section_key or "").strip()
 
 
 def _action_target(action_key: str, page_key: str) -> Dict[str, Any]:
@@ -426,7 +465,7 @@ def _default_page_actions(page_key: str, profile_overrides: Dict[str, Any] | Non
         fn = getattr(provider, "build_default_page_actions", None)
         if callable(fn):
             payload = fn(page_key)
-            if isinstance(payload, list) and payload:
+            if isinstance(payload, list):
                 return payload
     key = str(page_key or "").strip().lower()
     if key == "home":
@@ -496,14 +535,14 @@ def _build_page_orchestration_v1(
         enabled = bool(section.get("enabled") is True)
         order_raw = section.get("order")
         order = int(order_raw) if isinstance(order_raw, int) and order_raw > 0 else idx + 1
-        zone_cfg = _zone_from_tag(tag)
+        zone_cfg = _zone_for_section(page_key, section_key, tag)
         zone_key = zone_cfg["key"]
         zone = zone_buckets.get(zone_key)
         if zone is None:
             zone = {
                 "key": zone_key,
-                "title": zone_cfg["title"],
-                "description": f"{page_key}::{zone_key}",
+                "title": zone_cfg.get("title", ""),
+                "description": zone_cfg.get("description", ""),
                 "zone_type": zone_cfg["zone_type"],
                 "display_mode": zone_cfg["display_mode"],
                 "priority": 100 - (len(zone_buckets) * 10),
@@ -519,7 +558,7 @@ def _build_page_orchestration_v1(
             {
                 "key": f"{page_key}.{section_key}",
                 "block_type": semantic["block_type"],
-                "title": section_key,
+                "title": _block_title(page_key, section_key),
                 "priority": max(1, 100 - order),
                 "importance": semantic["importance"],
                 "tone": semantic["tone"],
@@ -530,7 +569,7 @@ def _build_page_orchestration_v1(
                 "refreshable": True,
                 "collapsible": bool(tag == "details"),
                 "visibility": {"roles": audience, "capabilities": [], "expr": None},
-                "actions": _action_templates(section_key),
+                "actions": _action_templates_for_page(page_key, section_key),
                 "payload": {"tag": tag, "enabled": enabled, "open": bool(section.get("open") is True)},
             }
         )
@@ -820,6 +859,58 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "params_label": "Params",
                 },
             },
+            "capability_matrix": {
+                "schema_version": "v1",
+                "sections": [
+                    {"key": "hero", "enabled": True, "order": 1, "tag": "header"},
+                    {"key": "summary", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "matrix", "enabled": True, "order": 3, "tag": "section"},
+                ],
+                "texts": {
+                    "title": "能力矩阵",
+                    "hero_subtitle": "按能力分组查看当前账号的可用能力、受限能力与目标入口。",
+                    "summary_groups": "能力组数",
+                    "summary_total": "能力总数",
+                    "summary_allow": "可用能力",
+                    "summary_blocked": "受限 / 待开放",
+                    "empty_title": "暂无能力入口",
+                    "empty_message": "当前账号暂无可展示的能力矩阵条目。",
+                    "item_desc_missing": "后端未提供能力说明",
+                    "target_missing": "后端未提供跳转目标",
+                    "deny_reason_prefix": "原因：",
+                    "state_allow": "可用",
+                    "state_deny": "受限",
+                    "state_readonly": "只读",
+                    "state_pending": "待开放",
+                    "state_coming_soon": "建设中",
+                    "error_fallback": "能力矩阵加载失败",
+                },
+            },
+            "release_operator": {
+                "schema_version": "v1",
+                "sections": [
+                    {"key": "hero", "enabled": True, "order": 1, "tag": "header"},
+                    {"key": "release_state", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "candidate_snapshots", "enabled": True, "order": 3, "tag": "section"},
+                    {"key": "pending_approvals", "enabled": True, "order": 4, "tag": "section"},
+                    {"key": "rollback", "enabled": True, "order": 5, "tag": "section"},
+                ],
+                "texts": {
+                    "title": "发布控制台",
+                    "description": "查看当前发布状态、候选快照、待审批动作与回滚目标。",
+                    "error_title": "加载失败",
+                    "action_retry": "重试",
+                    "section_release_state": "当前发布状态",
+                    "section_candidate": "可 Promote 候选",
+                    "section_pending": "待审批动作",
+                    "section_rollback": "回滚",
+                    "hint_candidate": "仅展示当前 edition 下 candidate / approved snapshot。",
+                    "hint_pending_count_prefix": "当前数量：",
+                    "hint_rollback": "仅当当前 active released snapshot 存在 rollback target 时可执行。",
+                    "empty_candidate": "当前没有可 Promote 的候选快照。",
+                    "empty_pending": "当前没有待审批动作。",
+                },
+            },
             "workbench": {
                 "schema_version": "v1",
                 "sections": [
@@ -859,13 +950,13 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "reason_act_unsupported_type": "动作类型暂不支持",
                     "reason_contract_context_missing": "契约上下文缺失",
                     "reason_capability_missing": "缺少能力权限",
-                    "reason_unknown": "未知原因",
-                    "message_nav_menu_no_action": "当前菜单是目录，暂时没有可进入的子菜单。",
-                    "message_act_no_model": "当前动作对应的是自定义工作区，未绑定数据模型。",
-                    "message_act_unsupported_type": "当前动作类型暂未在门户壳层支持。",
-                    "message_contract_context_missing": "页面缺少契约必需上下文（例如 action_id）。",
-                    "message_capability_missing": "当前账号尚未开通该能力。",
-                    "message_default": "你可以返回工作台或打开菜单继续操作。",
+                    "reason_unknown": "页面入口未返回可识别原因",
+                    "message_nav_menu_no_action": "当前入口是目录菜单，本身不承载可打开页面。请改为进入下一级菜单。",
+                    "message_act_no_model": "当前入口未绑定可直接承接的数据模型，请改走专用页面或已注册场景。",
+                    "message_act_unsupported_type": "当前入口类型暂未接入门户前端承接，请改走原生页面或已注册场景。",
+                    "message_contract_context_missing": "当前入口缺少页面契约所需上下文，请补齐 action_id、menu_id 或 scene 参数后重试。",
+                    "message_capability_missing": "当前账号尚未开通该入口所需能力，请联系管理员确认授权范围。",
+                    "message_default": "请返回工作台、重新选择菜单，或刷新后重试。",
                 },
             },
             "my_work": {
@@ -879,7 +970,7 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                 "texts": {
                     "title": "我的工作",
                     "loading_title": "加载我的工作中...",
-                    "hero_subtitle": "聚合待办并直接处理，默认从“待我处理”开工。",
+                    "hero_subtitle": "聚合待办、提醒与辅助入口，默认先从“待我处理”开始。",
                     "action_refresh": "刷新",
                     "context_preset_prefix": "推荐视图：",
                     "action_clear_preset": "清除推荐",
@@ -957,7 +1048,7 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "action_apply_preset": "应用常用筛选",
                     "action_clear_saved_preset": "清除预设",
                     "filter_empty_title": "当前筛选条件没有匹配结果",
-                    "filter_empty_desc": "建议先恢复推荐视图，或一键清空筛选后重试。",
+                    "filter_empty_desc": "当前筛选未命中任何待办，建议恢复推荐视图，或清空筛选后重试。",
                     "action_restore_recommended_view": "恢复推荐视图",
                     "action_clear_filters": "清空筛选",
                     "batch_selected_prefix": "已选 ",
@@ -977,12 +1068,12 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "pager_middle_sep": " / ",
                     "pager_middle_suffix": " 页",
                     "pager_next": "下一页",
-                    "empty_desc": "状态良好。你可以返回工作台查看整体态势，或进入风险驾驶舱继续巡检。",
+                    "empty_desc": "当前没有待处理事项。你可以返回工作台查看其他入口，或进入风险驾驶舱继续巡检。",
                     "error_request_failed": "请求失败",
                     "feedback_save_preset_failed": "保存常用筛选失败",
                     "feedback_apply_preset_failed": "应用常用筛选失败",
                     "feedback_clear_preset_failed": "清除常用筛选失败",
-                    "visibility_notice_suffix": "，请联系管理员开通对应权限。",
+                    "visibility_notice_suffix": "，当前视图仅展示你有权访问的事项。",
                     "partial_data_hidden": "部分数据未显示",
                     "model_label_sc_workflow_workitem": "流程待办",
                     "model_label_tier_review": "审批复核",
@@ -999,8 +1090,8 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "feedback_apply_preset_ok": "已应用常用筛选",
                     "feedback_clear_preset_ok": "已清除常用筛选",
                     "feedback_filters_reset": "筛选条件已重置",
-                    "feedback_suggest_action_ok_prefix": "已执行建议动作：",
-                    "feedback_suggest_action_failed_prefix": "建议动作执行失败：",
+                    "feedback_suggest_action_ok_prefix": "已执行系统建议动作：",
+                    "feedback_suggest_action_failed_prefix": "系统建议动作执行失败：",
                     "feedback_none_retryable": "当前没有可重试失败项",
                     "feedback_none_non_retryable": "当前没有不可重试失败项",
                     "feedback_none_failed_selectable": "当前没有失败项可选择",
@@ -1034,7 +1125,7 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "confirm_batch_complete_suffix": " 条待办？",
                     "error_complete_todo_failed": "完成待办失败",
                     "error_batch_complete_failed": "批量完成待办失败",
-                    "enter_error_message_fallback": "功能入口暂时不可用",
+                    "enter_error_message_fallback": "当前入口暂时无法继续处理，请稍后重试。",
                     "feedback_reason_group_no_retry_prefix": "原因组 ",
                     "feedback_reason_group_no_retry_suffix": " 没有可重试项",
                     "feedback_selected_reason_retryable_prefix": "已选中 ",
@@ -1080,7 +1171,11 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     {"key": "status_forbidden", "enabled": True, "order": 3, "tag": "section"},
                 ],
                 "texts": {
+                    "scene_view_switch_label": "视图切换",
                     "loading_title": "正在加载场景...",
+                    "status_idle_diag_title": "场景已加载，但没有可渲染目标",
+                    "status_idle_diag_scene_prefix": "场景",
+                    "status_idle_diag_hint": "当前场景尚未解析出可渲染目标，请检查 scene target、action/menu 映射以及 scene-ready 渲染供给。",
                     "validation_surface_title": "场景校验",
                     "error_fallback": "场景加载失败",
                     "forbidden_title": "能力未开通",
@@ -1094,8 +1189,18 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "forbidden_hint_license_prefix": "当前 License：",
                     "forbidden_hint_license_suffix": "，可联系管理员评估升级或开通。",
                     "forbidden_hint_default": "可联系管理员开通对应能力。",
-                    "error_scene_target_unsupported": "scene target unsupported",
-                    "error_scene_resolve_failed": "scene resolve failed",
+                    "error_scene_render_target_missing": "场景缺少可渲染目标，请检查 scene target 与页面承接关系。",
+                    "error_scene_target_unsupported": "当前场景目标暂不支持前端承接，请改走已注册页面或原生入口。",
+                    "error_scene_resolve_failed": "场景解析失败，请稍后重试。",
+                    "runtime_diag_title_readonly": "当前场景处于只读运行态",
+                    "runtime_diag_title_empty": "当前场景处于空态",
+                    "runtime_diag_title_restricted": "当前场景访问受限",
+                    "runtime_diag_title_default": "场景运行态提示",
+                    "runtime_diag_status_prefix": "运行态状态",
+                    "runtime_diag_state_prefix": "当前记录状态",
+                    "runtime_diag_missing_required_prefix": "缺失必填项数量",
+                    "runtime_diag_transition_prefix": "可用流转数量",
+                    "runtime_diag_alignment_mismatch": "场景 contract diagnostics 与前端消费状态未完全对齐，请优先检查后端 diagnostics 供给。",
                 },
             },
             "action": {
@@ -1113,16 +1218,18 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     {"key": "dev_context", "enabled": True, "order": 10, "tag": "div"},
                 ],
                 "texts": {
-                    "error_fallback": "操作暂不可用",
+                    "error_fallback": "当前操作暂时不可用，请刷新后重试。",
                     "status_loading": "加载中",
                     "status_error": "加载失败",
                     "status_empty": "暂无数据",
                     "status_ready": "已就绪",
+                    "label.view_switch": "视图切换",
                     "label.quick_filters": "快速筛选",
                     "label.saved_filters": "已保存筛选",
                     "label.group_view": "分组查看",
                     "label.quick_actions": "快捷操作",
                     "label.contract_summary": "契约摘要",
+                    "strict_contract_missing_title": "契约缺口提示",
                     "intent_title_risk": "风险驾驶舱：先处理严重与逾期风险",
                     "intent_summary_risk": "优先完成分派、关闭或发起审批，避免风险停留在“仅可见”状态。",
                     "intent_action_risk_todo": "待我处理风险",
@@ -1323,7 +1430,8 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "view_node_unsupported_title": "View node unsupported",
                     "view_node_unsupported_message": "Layout nodes are present but renderer support is incomplete.",
                     "banner_saved": "Saved. Changes have been applied.",
-                    "summary_status_stage": "项目状态与阶段",
+                    "summary_status_stage": "项目执行阶段",
+                    "summary_document_status": "单据状态",
                     "summary_risk": "关键风险摘要",
                     "summary_finance": "资金/产值指标",
                     "next_actions_title": "下一步动作",
@@ -1489,11 +1597,13 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             continue
         if isinstance(page.get("page_orchestration_v1"), dict):
             continue
-        page["page_orchestration_v1"] = _build_page_orchestration_v1(
+        page_orchestration = _build_page_orchestration_v1(
             str(key),
             page,
             role_code,
             role_source_code=role_source_code,
             profile_overrides=profile_overrides,
         )
+        page_orchestration = apply_page_contract_parser_semantic_bridge(page_orchestration, safe_data)
+        page["page_orchestration_v1"] = apply_page_contract_semantic_orchestration_bridge(page_orchestration)
     return payload

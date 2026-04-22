@@ -50,11 +50,12 @@
                     'view_type': 'list',
                     'columns': [
                         'name',
-                        'stage_id',
                         'user_id',
-                        'dashboard_invoice_amount',
                         'partner_id',
-                        'write_date'
+                        'stage_id',
+                        'lifecycle_state',
+                        'date_start',
+                        'date'
                     ],
                     'hidden_columns': [
                         'message_needaction',
@@ -64,12 +65,13 @@
                         '__last_update'
                     ],
                     'column_labels': {
-                        'name': '项目名称',
-                        'stage_id': '状态',
-                        'user_id': '负责人',
-                        'dashboard_invoice_amount': '合同额',
-                        'partner_id': '建设单位',
-                        'write_date': '更新时间'
+                        'name': '名称',
+                        'user_id': '项目管理员',
+                        'partner_id': '客户',
+                        'stage_id': '阶段',
+                        'lifecycle_state': '项目状态',
+                        'date_start': '开始日期',
+                        'date': '有效期'
                     },
                     'row_primary': 'name',
                     'row_secondary': 'partner_id'
@@ -125,7 +127,7 @@
             <field name="source">system</field>
             <field name="payload_json" eval="{
                 'code': 'projects.ledger',
-                'name': '项目台账（试点）',
+                'name': '项目台账',
                 'version': 'v2',
                 'page': {
                     'key': 'projects.ledger.main',

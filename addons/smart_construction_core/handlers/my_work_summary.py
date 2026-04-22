@@ -21,6 +21,14 @@ from odoo.addons.smart_core.utils.reason_codes import (
 )
 from odoo.addons.smart_construction_core.services.my_work_aggregate_service import WorkItemAggregateService
 from odoo.exceptions import AccessError
+from odoo.addons.smart_construction_core.services.project_execution_item_projection_service import (
+    ProjectExecutionItemProjectionService,
+)
+from odoo.addons.smart_construction_scene.services.my_work_scene_targets import (
+    build_my_work_section_rows,
+    build_my_work_summary_rows,
+    build_my_work_target,
+)
 
 
 class MyWorkSummaryHandler(BaseIntentHandler):
@@ -39,6 +47,17 @@ class MyWorkSummaryHandler(BaseIntentHandler):
     STATUS_EMPTY = "EMPTY"
     STATUS_FILTER_EMPTY = "FILTER_EMPTY"
     SORT_FIELDS = WorkItemAggregateService.SORT_FIELDS
+    SOURCE_LABELS = {
+        "mail.activity": "待办提醒",
+        "tier.review": "审批复核",
+        "sc.workflow.workitem": "流程待办",
+        "project.task": "项目任务",
+        "project.risk": "项目风险",
+        "project.project": "负责项目",
+        "construction.contract": "合同执行事项",
+        "payment.request": "付款执行事项",
+        "sc.settlement.order": "结算执行事项",
+    }
 
     def _get_model(self, model_name, *, sudo=False):
         try:
@@ -73,17 +92,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         except Exception:
             return {"model": model_name, "readable": False, "reason": "ACCESS_CHECK_FAILED"}
 
-    def _scene_for_model(self, model_name):
-        mapping = {
-            "project.project": "projects.list",
-            "project.task": "projects.list",
-            "payment.request": "finance.payment_requests",
-            "sc.workflow.instance": "projects.list",
-            "sale.order": "contracts.list",
-            "account.move": "finance.vouchers.list",
-        }
-        return mapping.get(model_name, "projects.list")
-
     def _resolve_action_context_for_model(self, model_name):
         model = str(model_name or "").strip()
         if not model:
@@ -117,24 +125,75 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         for row in attached:
             model = str(row.get("model") or "").strip()
             record_id = self._coerce_record_id(row.get("record_id"))
-            scene_key = str(row.get("scene_key") or self._scene_for_model(model)).strip() or "projects.list"
-            target = {
-                "kind": "record" if model and record_id else "scene",
-                "scene_key": scene_key,
-            }
-            if model:
-                target["model"] = model
-            if record_id:
-                target["record_id"] = record_id
             action_ctx = self._resolve_action_context_for_model(model)
             action_id = int(action_ctx.get("action_id") or 0)
             menu_id = int(action_ctx.get("menu_id") or 0)
-            if action_id > 0:
-                target["action_id"] = action_id
-            if menu_id > 0:
-                target["menu_id"] = menu_id
+            target = build_my_work_target(
+                model_name=model,
+                record_id=record_id,
+                action_id=action_id,
+                menu_id=menu_id,
+                explicit_scene_key=str(row.get("scene_key") or ""),
+                source_key=str(row.get("source") or ""),
+                section_key=str(row.get("section") or ""),
+            )
+            row["scene_key"] = str(target.get("scene_key") or "")
             row["target"] = target
+            row.setdefault("source_label", self._source_label(row))
+            row.setdefault("project_name", self._row_project_name(model, record_id, row))
+            row.setdefault("action_summary", self._action_summary(row))
+            row["can_complete"] = self._can_complete(row)
+            complete_action = self._complete_action(row)
+            if complete_action:
+                row["complete_action"] = complete_action
         return attached
+
+    def _can_complete(self, row):
+        return str(row.get("source") or "").strip() == "mail.activity"
+
+    def _complete_action(self, row):
+        if not self._can_complete(row):
+            return None
+        return {
+            "intent": "my.work.complete",
+            "label": "完成",
+            "enabled": True,
+            "source": "mail.activity",
+        }
+
+    def _source_label(self, row):
+        source = str(row.get("source") or "").strip()
+        model = str(row.get("model") or "").strip()
+        return self.SOURCE_LABELS.get(source) or self.SOURCE_LABELS.get(model) or source or model or "执行事项"
+
+    def _row_project_name(self, model_name, record_id, row):
+        existing = str(row.get("project_name") or "").strip()
+        if existing:
+            return existing
+        model = str(model_name or "").strip()
+        rid = int(record_id or 0)
+        if not model or not rid:
+            return ""
+        Model = self._get_model(model, sudo=True)
+        if Model is None:
+            return ""
+        try:
+            rec = Model.browse(rid).exists()
+            if not rec:
+                return ""
+            project = getattr(rec, "project_id", False)
+            return str(getattr(project, "display_name", "") or getattr(project, "name", "") or "").strip()
+        except Exception:
+            return ""
+
+    def _action_summary(self, row):
+        label = str(row.get("action_label") or "").strip()
+        if label:
+            return label
+        reason = str(row.get("reason_code") or "").strip()
+        if reason:
+            return reason
+        return "进入处理"
 
     def _coerce_record_id(self, raw):
         value = raw
@@ -265,7 +324,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "model": rec.res_model,
                     "record_id": rec.res_id,
                     "deadline": fields.Date.to_string(rec.date_deadline) if rec.date_deadline else "",
-                    "scene_key": self._scene_for_model(rec.res_model),
                     "source": "mail.activity",
                     "action_label": followup.get("action_label") or "",
                     "action_key": followup.get("action_key") or "",
@@ -315,7 +373,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "model": model,
                     "record_id": record_id,
                     "deadline": "",
-                    "scene_key": self._scene_for_model(model),
                     "source": "tier.review",
                     "action_label": "审批处理",
                     "action_key": "tier.review.approve",
@@ -363,7 +420,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "model": model,
                     "record_id": record_id,
                     "deadline": "",
-                    "scene_key": self._scene_for_model(model),
                     "source": "sc.workflow.workitem",
                     "action_label": node_name or "流程处理",
                     "action_key": "sc.workflow.approve",
@@ -400,7 +456,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "model": "project.task",
                     "record_id": rec.id,
                     "deadline": fields.Date.to_string(rec.date_deadline) if getattr(rec, "date_deadline", False) else "",
-                    "scene_key": self._scene_for_model("project.task"),
                     "source": "project.task",
                     "action_label": "任务处理",
                     "action_key": "project.task.open",
@@ -409,6 +464,14 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                 })
         except Exception:
             return []
+        return self._attach_targets(rows)
+
+    def _load_project_execution_items(self, user, limit):
+        try:
+            service = ProjectExecutionItemProjectionService(self.env)
+            rows = service.user_items(user, limit=limit)
+        except Exception:
+            rows = []
         return self._attach_targets(rows)
 
     def _project_risk_domain_for_user(self, user):
@@ -454,7 +517,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "model": "project.project",
                     "record_id": rec.id,
                     "deadline": "",
-                    "scene_key": self._scene_for_model("project.project"),
                     "source": "project.risk",
                     "action_label": "风险处理",
                     "action_key": "project.risk.resolve",
@@ -497,7 +559,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "model": "project.project",
                     "record_id": rec.id,
                     "deadline": "",
-                    "scene_key": self._scene_for_model("project.project"),
                     "source": "project.project",
                     "reason_code": REASON_RESPONSIBLE_OWNER,
                     "priority": "medium",
@@ -525,7 +586,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "model": model,
                     "record_id": record_id,
                     "deadline": "",
-                    "scene_key": self._scene_for_model(model),
                     "source": "mail.message",
                     "reason_code": REASON_MENTIONED,
                     "priority": "low",
@@ -552,7 +612,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "model": model,
                     "record_id": record_id,
                     "deadline": "",
-                    "scene_key": self._scene_for_model(model),
                     "source": "mail.followers",
                     "reason_code": REASON_FOLLOWING,
                     "priority": "low",
@@ -590,12 +649,20 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             self._task_domain_for_user(user) or [("id", "=", -1)],
             ["id"],
         )
+        projected_execution_count = len(self._load_project_execution_items(user, limit_each))
         risk_todo_count = self._safe_count(
             "project.project",
             self._project_risk_domain_for_user(user) or [("id", "=", -1)],
             ["health_state"],
         )
-        todo_count = int(mail_todo_count + tier_review_count + workflow_todo_count + task_todo_count + risk_todo_count)
+        todo_count = int(
+            mail_todo_count
+            + tier_review_count
+            + workflow_todo_count
+            + task_todo_count
+            + projected_execution_count
+            + risk_todo_count
+        )
         project_responsible_domain = self._project_responsible_domain(user)
         responsible_count = self._safe_count(
             "project.project",
@@ -610,6 +677,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         self._append_items(items, "todo", self._load_tier_review_items(user, limit_each))
         self._append_items(items, "todo", self._load_workflow_todo_items(user, limit_each))
         self._append_items(items, "todo", self._load_task_items(user, limit_each))
+        self._append_items(items, "todo", self._load_project_execution_items(user, limit_each))
         self._append_items(items, "todo", self._load_project_risk_items(user, limit_each))
         self._append_items(items, "owned", self._load_owned_items(user, limit_each))
         self._append_items(items, "mentions", self._load_mention_items(partner, limit_each))
@@ -642,6 +710,9 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             "sc.workflow.workitem",
             "project.task",
             "project.project",
+            "construction.contract",
+            "payment.request",
+            "sc.settlement.order",
             "mail.message",
             "mail.followers",
         )
@@ -661,18 +732,15 @@ class MyWorkSummaryHandler(BaseIntentHandler):
 
         data = {
             "generated_at": fields.Datetime.now(),
-            "sections": [
-                {"key": "todo", "label": self.SECTION_LABELS["todo"], "scene_key": "projects.list"},
-                {"key": "owned", "label": self.SECTION_LABELS["owned"], "scene_key": "projects.list"},
-                {"key": "mentions", "label": self.SECTION_LABELS["mentions"], "scene_key": "projects.list"},
-                {"key": "following", "label": self.SECTION_LABELS["following"], "scene_key": "projects.list"},
-            ],
-            "summary": [
-                {"key": "todo", "label": "待我处理", "count": todo_count, "scene_key": "projects.list"},
-                {"key": "owned", "label": "我负责", "count": responsible_count, "scene_key": "projects.list"},
-                {"key": "mentions", "label": "@我的", "count": mentioned_count, "scene_key": "projects.list"},
-                {"key": "following", "label": "我关注的", "count": following_count, "scene_key": "projects.list"},
-            ],
+            "sections": build_my_work_section_rows(self.SECTION_LABELS),
+            "summary": build_my_work_summary_rows(
+                [
+                    {"key": "todo", "label": "待我处理", "count": todo_count},
+                    {"key": "owned", "label": "我负责", "count": responsible_count},
+                    {"key": "mentions", "label": "@我的", "count": mentioned_count},
+                    {"key": "following", "label": "我关注的", "count": following_count},
+                ]
+            ),
             "items": items,
             "facets": facets,
             "filters": {

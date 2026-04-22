@@ -65,7 +65,21 @@ def build_project_dashboard_scene_content() -> Dict[str, Any]:
             "key": "project.management.dashboard",
             "title": "项目驾驶舱",
             "route": "/s/project.management",
+            "page_type": "dashboard",
+            "layout_mode": "dashboard",
         },
         "zone_blocks": zone_blocks,
     }
 
+
+def build(*, scene_key: str = "", runtime: Dict[str, Any] | None = None, context: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    """Scene-ready provider entry expected by the startup contract loader."""
+    _scene_key = str(scene_key or "").strip()
+    payload = build_project_dashboard_scene_content()
+    if _scene_key and _scene_key not in {"project.management", "project.dashboard"}:
+      return {}
+    return payload
+
+
+def get_scene_content(*, scene_key: str = "", runtime: Dict[str, Any] | None = None, context: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    return build(scene_key=scene_key, runtime=runtime, context=context)
