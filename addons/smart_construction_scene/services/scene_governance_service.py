@@ -63,14 +63,32 @@ class SceneGovernanceService:
         config = self.env["ir.config_parameter"].sudo()
         key = f"sc.scene.channel.company.{company_id}"
         before = config.get_param(key)
+        user_key = f"sc.scene.channel.user.{self.user.id}" if self.user and self.user.id else ""
+        user_before = config.get_param(user_key) if user_key else ""
+        rollback_before = str(config.get_param("sc.scene.rollback") or "")
+        pinned_before = str(config.get_param("sc.scene.use_pinned") or "")
         config.set_param(key, channel)
+        if user_key:
+            config.set_param(user_key, channel)
+        # set_channel is an explicit operator choice and should exit rollback forcing mode.
+        config.set_param("sc.scene.rollback", "0")
+        config.set_param("sc.scene.use_pinned", "0")
         self._log(
             "switch_channel",
             company_id=company_id,
             from_channel=before,
             to_channel=channel,
             reason=reason,
-            payload={"key": key},
+            payload={
+                "key": key,
+                "rollback_before": rollback_before,
+                "use_pinned_before": pinned_before,
+                "rollback_after": "0",
+                "use_pinned_after": "0",
+                "user_key": user_key,
+                "user_before": user_before or "",
+                "user_after": channel if user_key else "",
+            },
             trace_id=trace_id,
         )
         return {
@@ -78,6 +96,7 @@ class SceneGovernanceService:
             "company_id": company_id,
             "from_channel": before or "stable",
             "to_channel": channel,
+            "rollback_active": False,
             "trace_id": trace_id or "",
         }
 
