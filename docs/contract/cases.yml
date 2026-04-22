@@ -691,7 +691,7 @@
     "user": "pm",
     "op": "action_open",
     "model": "project.project",
-    "view_type": "tree",
+    "view_type": "list",
     "action_xmlid": "smart_construction_core.action_sc_project_list",
     "include_meta": true
   },
@@ -700,7 +700,7 @@
     "user": "pm",
     "op": "action_open",
     "model": "construction.contract",
-    "view_type": "tree",
+    "view_type": "list",
     "action_xmlid": "smart_construction_core.action_construction_contract",
     "include_meta": true
   },
@@ -709,7 +709,7 @@
     "user": "pm",
     "op": "action_open",
     "model": "construction.contract",
-    "view_type": "tree",
+    "view_type": "list",
     "action_xmlid": "smart_construction_core.action_construction_contract_income",
     "include_meta": true
   },
@@ -718,7 +718,7 @@
     "user": "pm",
     "op": "action_open",
     "model": "construction.contract",
-    "view_type": "tree",
+    "view_type": "list",
     "action_xmlid": "smart_construction_core.action_construction_contract_expense",
     "include_meta": true
   },
@@ -727,7 +727,7 @@
     "user": "pm",
     "op": "action_open",
     "model": "project.cost.ledger",
-    "view_type": "tree",
+    "view_type": "list",
     "action_xmlid": "smart_construction_core.action_project_cost_ledger",
     "include_meta": true
   },
@@ -736,7 +736,7 @@
     "user": "pm",
     "op": "action_open",
     "model": "project.cost.ledger",
-    "view_type": "pivot",
+    "view_type": "list",
     "action_xmlid": "smart_construction_core.action_project_cost_compare",
     "include_meta": true
   },
@@ -745,7 +745,7 @@
     "user": "pm",
     "op": "action_open",
     "model": "payment.request",
-    "view_type": "tree",
+    "view_type": "list",
     "action_xmlid": "smart_construction_core.action_payment_request",
     "include_meta": true
   },
@@ -754,7 +754,7 @@
     "user": "pm",
     "op": "action_open",
     "model": "payment.request",
-    "view_type": "tree",
+    "view_type": "list",
     "action_xmlid": "smart_construction_core.action_sc_operating_drill_overpay_risk_pr",
     "include_meta": true
   },
@@ -763,7 +763,7 @@
     "user": "pm",
     "op": "action_open",
     "model": "project.task",
-    "view_type": "tree",
+    "view_type": "list",
     "action_xmlid": "project.action_view_all_task",
     "include_meta": true
   },
