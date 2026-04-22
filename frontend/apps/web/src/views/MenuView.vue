@@ -46,8 +46,8 @@ import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
-import { getSceneByKey } from '../app/resolvers/sceneRegistry';
-import { buildSceneRegistryFallbackPath } from '../app/routeQuery';
+import { findSceneByEntryAuthority, getSceneByKey } from '../app/resolvers/sceneRegistry';
+import { buildSceneRegistryFallbackPath, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { PROJECT_INITIATION_MENU_XMLID, PROJECT_INTAKE_SCENE_KEY } from '../app/projectCreationBaseline';
 
 const route = useRoute();
@@ -84,12 +84,71 @@ function resolveCarryQuery(extra?: Record<string, unknown>) {
   return pickContractNavQuery(route.query as Record<string, unknown>, extra);
 }
 
+async function replaceToWorkbenchMissingScene(payload?: Record<string, unknown>) {
+  await router.replace({
+    name: 'workbench',
+    query: resolveCarryQuery({
+      reason: ErrorCodes.CONTRACT_CONTEXT_MISSING,
+      ...(payload || {}),
+    }),
+  });
+}
+
+function resolveMenuXmlid(node: { meta?: unknown; xmlid?: unknown } | null | undefined) {
+  if (!node || typeof node !== 'object') return '';
+  const meta = node.meta && typeof node.meta === 'object'
+    ? node.meta as Record<string, unknown>
+    : {};
+  return String(node.xmlid || meta.menu_xmlid || '').trim();
+}
+
 function normalizeMenuSceneKey(sceneKey: unknown) {
   const normalized = String(sceneKey || '').trim();
   if (normalized === 'project.initiation') {
     return PROJECT_INTAKE_SCENE_KEY;
   }
   return normalized;
+}
+
+function resolveSceneLocationFromSceneKey(sceneKey: unknown, menuId?: number, menuXmlid?: string, label?: string) {
+  const normalizedSceneKey = normalizeMenuSceneKey(sceneKey);
+  if (!normalizedSceneKey) return null;
+  void menuId;
+  void menuXmlid;
+  if (getSceneByKey(normalizedSceneKey)) {
+    return {
+      path: `/s/${normalizedSceneKey}`,
+      query: resolveCarryQuery({
+        scene_key: normalizedSceneKey,
+        menu_id: undefined,
+        menu_xmlid: undefined,
+        action_id: undefined,
+      }),
+    };
+  }
+  return buildSceneRegistryFallbackPath({
+    sceneKey: normalizedSceneKey,
+    menuId: Number(menuId || 0) || undefined,
+    label: label || normalizedSceneKey,
+  });
+}
+
+function resolveSceneLocationFromAction(actionId: number, menuId?: number, menuXmlid?: string) {
+  const scene = findSceneByEntryAuthority({
+    actionId,
+    menuId: Number(menuId || 0),
+  });
+  if (!scene) return null;
+  void menuXmlid;
+  return {
+    path: scene.route || `/s/${scene.key}`,
+    query: resolveCarryQuery({
+      scene_key: scene.key,
+      menu_id: undefined,
+      menu_xmlid: undefined,
+      action_id: undefined,
+    }),
+  };
 }
 
 function isProjectIntakeMenuNode(node: { meta?: unknown } | null | undefined) {
@@ -118,7 +177,11 @@ async function resolve() {
       if (isProjectIntakeMenuNode(result.node)) {
         await router.replace({
           path: `/s/${PROJECT_INTAKE_SCENE_KEY}`,
-          query: resolveCarryQuery({ menu_id: menuId }),
+          query: resolveCarryQuery({
+            scene_key: PROJECT_INTAKE_SCENE_KEY,
+            menu_id: undefined,
+            action_id: undefined,
+          }),
         });
         return;
       }
@@ -136,16 +199,44 @@ async function resolve() {
         return;
       }
       session.setActionMeta(result.meta);
-      await router.replace({
-        name: 'action',
-        params: { actionId: result.meta.action_id },
-        query: resolveCarryQuery({ menu_id: menuId, action_id: result.meta.action_id }),
+      const menuXmlid = resolveMenuXmlid(result.node as { meta?: unknown; xmlid?: unknown } | null | undefined);
+      const carriedSceneKey = parseSceneKeyFromQuery(route.query as Record<string, unknown>);
+      const nodeSceneLocation = resolveSceneLocationFromSceneKey(
+        carriedSceneKey || (result.node?.meta as Record<string, unknown> | undefined)?.scene_key,
+        menuId,
+        menuXmlid || undefined,
+        result.node?.title || result.node?.name || result.node?.label || '',
+      );
+      if (nodeSceneLocation) {
+        await router.replace(nodeSceneLocation);
+        return;
+      }
+      const sceneLocation = resolveSceneLocationFromAction(result.meta.action_id, menuId, menuXmlid || undefined);
+      if (sceneLocation) {
+        await router.replace(sceneLocation);
+        return;
+      }
+      await replaceToWorkbenchMissingScene({
+        diag: 'menu_leaf_missing_scene_identity',
+        menu_id: menuId,
+        menu_xmlid: menuXmlid || undefined,
+        action_id: result.meta.action_id,
       });
       return;
     }
     if (result.kind === 'redirect') {
       const targetSceneKey = normalizeMenuSceneKey(result.target.scene_key);
       if (targetSceneKey) {
+        const directSceneLocation = resolveSceneLocationFromSceneKey(
+          targetSceneKey,
+          result.target.menu_id,
+          String(result.target.meta?.menu_xmlid || '').trim() || undefined,
+          result.node?.title || result.node?.name || result.node?.label || targetSceneKey,
+        );
+        if (directSceneLocation) {
+          await router.replace(directSceneLocation);
+          return;
+        }
         if (!getSceneByKey(targetSceneKey)) {
           if (result.target.action_id) {
             const policy = evaluateCapabilityPolicy({ source: result.target.meta, available: session.capabilities });
@@ -164,16 +255,15 @@ async function resolve() {
             if (result.target.meta) {
               session.setActionMeta(result.target.meta);
             }
-            await router.replace({
-              name: 'action',
-              params: { actionId: result.target.action_id },
-              query: resolveCarryQuery({
-                menu_id: result.target.menu_id,
-                action_id: result.target.action_id,
-                scene_key: targetSceneKey,
-              }),
-            });
-            return;
+            const sceneLocation = resolveSceneLocationFromAction(
+              result.target.action_id,
+              result.target.menu_id,
+              String(result.target.meta?.menu_xmlid || '').trim() || undefined,
+            );
+            if (sceneLocation) {
+              await router.replace(sceneLocation);
+              return;
+            }
           }
           const targetRoute = String(result.target.route || '').trim();
           if (targetRoute) {
@@ -197,7 +287,12 @@ async function resolve() {
         }
         await router.replace({
           path: `/s/${targetSceneKey}`,
-          query: resolveCarryQuery({ menu_id: result.target.menu_id }),
+          query: resolveCarryQuery({
+            scene_key: targetSceneKey,
+            menu_id: undefined,
+            menu_xmlid: undefined,
+            action_id: undefined,
+          }),
         });
         return;
       }
@@ -218,10 +313,20 @@ async function resolve() {
         if (result.target.meta) {
           session.setActionMeta(result.target.meta);
         }
-        await router.replace({
-          name: 'action',
-          params: { actionId: result.target.action_id },
-          query: resolveCarryQuery({ menu_id: result.target.menu_id, action_id: result.target.action_id }),
+        const sceneLocation = resolveSceneLocationFromAction(
+          result.target.action_id,
+          result.target.menu_id,
+          String(result.target.meta?.menu_xmlid || '').trim() || undefined,
+        );
+        if (sceneLocation) {
+          await router.replace(sceneLocation);
+          return;
+        }
+        await replaceToWorkbenchMissingScene({
+          diag: 'menu_redirect_missing_scene_identity',
+          menu_id: result.target.menu_id,
+          menu_xmlid: String(result.target.meta?.menu_xmlid || '').trim() || undefined,
+          action_id: result.target.action_id,
         });
         return;
       }

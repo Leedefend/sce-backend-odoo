@@ -4,6 +4,7 @@ import type {
   SuggestedActionExecuteOptions,
   SuggestedActionParsed,
 } from './types';
+import { findSceneByEntryAuthority } from '../resolvers/sceneRegistry';
 
 const ROUTE_ACTIONS = new Set<SuggestedActionKind>(['open_route', 'open_url']);
 const RETRY_ACTIONS = new Set<SuggestedActionKind>(['refresh', 'retry']);
@@ -106,6 +107,56 @@ function appendHash(path: string, hash?: string) {
   const h = String(hash || '').trim().replace(/^#+/, '');
   if (!h) return path;
   return `${path}#${h}`;
+}
+
+function queryValue(query: string | undefined, key: string) {
+  const cleaned = String(query || '').trim().replace(/^\?+/, '');
+  if (!cleaned) return '';
+  const params = new URLSearchParams(cleaned);
+  return String(params.get(key) || '').trim();
+}
+
+function resolveCarriedSceneKey(query: string | undefined) {
+  return queryValue(query, 'scene_key') || queryValue(query, 'scene');
+}
+
+function buildCarriedScenePath(query: string | undefined, hash: string | undefined) {
+  const carriedSceneKey = resolveCarriedSceneKey(query);
+  if (!carriedSceneKey) return '';
+  return appendHash(appendQuery(`/s/${encodeURIComponent(carriedSceneKey)}`, query), hash);
+}
+
+function resolveSceneFirstPath(options: {
+  actionId?: number;
+  menuId?: number;
+  model?: string;
+  recordId?: number;
+  viewMode?: string;
+  query?: string;
+  hash?: string;
+}) {
+  const scene = findSceneByEntryAuthority({
+    sceneKey: queryValue(options.query, 'scene_key') || undefined,
+    actionId: options.actionId,
+    menuId: options.menuId,
+    model: options.model,
+    recordId: options.recordId,
+    viewMode: options.viewMode,
+  });
+  if (!scene) return '';
+  const merged = appendQuery(
+    scene.route || `/s/${scene.key}`,
+    [
+      `scene_key=${encodeURIComponent(scene.key)}`,
+      options.actionId ? `action_id=${encodeURIComponent(String(options.actionId))}` : '',
+      options.menuId ? `menu_id=${encodeURIComponent(String(options.menuId))}` : '',
+      options.model ? `model=${encodeURIComponent(options.model)}` : '',
+      options.recordId ? `record_id=${encodeURIComponent(String(options.recordId))}` : '',
+      options.viewMode ? `view_mode=${encodeURIComponent(options.viewMode)}` : '',
+      String(options.query || '').trim().replace(/^\?+/, ''),
+    ].filter(Boolean).join('&'),
+  );
+  return appendHash(merged, options.hash);
 }
 
 function compactErrorLine(options: SuggestedActionExecuteOptions) {
@@ -252,6 +303,19 @@ export function executeSuggestedAction(
     return finish(safeNavigate(appendQuery('/', parsed.query)));
   }
   if (parsed.kind === 'open_project' && parsed.projectId) {
+    const scenePath = resolveSceneFirstPath({
+      model: 'project.project',
+      recordId: parsed.projectId,
+      query: parsed.query,
+      hash: parsed.hash,
+    });
+    if (scenePath) {
+      return finish(safeNavigate(scenePath));
+    }
+    const carriedScenePath = buildCarriedScenePath(parsed.query, parsed.hash);
+    if (carriedScenePath) {
+      return finish(safeNavigate(carriedScenePath));
+    }
     return finish(
       safeNavigate(appendHash(appendQuery(`/r/${encodeURIComponent('project.project')}/${parsed.projectId}`, parsed.query), parsed.hash)),
     );
@@ -263,9 +327,37 @@ export function executeSuggestedAction(
     return finish(safeNavigate(appendHash(appendQuery(`/m/${parsed.menuId}`, parsed.query), parsed.hash)));
   }
   if (parsed.kind === 'open_action' && parsed.actionId) {
-    return finish(safeNavigate(appendHash(appendQuery(`/a/${parsed.actionId}`, parsed.query), parsed.hash)));
+    const scenePath = resolveSceneFirstPath({
+      actionId: parsed.actionId,
+      menuId: Number(queryValue(parsed.query, 'menu_id') || 0) || undefined,
+      model: queryValue(parsed.query, 'model') || undefined,
+      viewMode: queryValue(parsed.query, 'view_mode') || undefined,
+      query: parsed.query,
+      hash: parsed.hash,
+    });
+    const carriedScenePath = buildCarriedScenePath(parsed.query, parsed.hash);
+    return finish(safeNavigate(
+      scenePath
+        || carriedScenePath
+        || appendHash(appendQuery(`/compat/action/${parsed.actionId}`, parsed.query), parsed.hash),
+    ));
   }
   if (parsed.kind === 'open_record' && parsed.model && parsed.recordId) {
+    const scenePath = resolveSceneFirstPath({
+      actionId: Number(queryValue(parsed.query, 'action_id') || 0) || undefined,
+      menuId: Number(queryValue(parsed.query, 'menu_id') || 0) || undefined,
+      model: parsed.model,
+      recordId: parsed.recordId,
+      query: parsed.query,
+      hash: parsed.hash,
+    });
+    if (scenePath) {
+      return finish(safeNavigate(scenePath));
+    }
+    const carriedScenePath = buildCarriedScenePath(parsed.query, parsed.hash);
+    if (carriedScenePath) {
+      return finish(safeNavigate(carriedScenePath));
+    }
     return finish(
       safeNavigate(
         appendHash(appendQuery(`/r/${encodeURIComponent(parsed.model)}/${parsed.recordId}`, parsed.query), parsed.hash),

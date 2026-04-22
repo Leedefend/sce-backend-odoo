@@ -1,10 +1,13 @@
 export type ProjectEntryContext = {
   project_id: number;
   project_name: string;
+  execution_stage: string;
+  execution_stage_label: string;
   stage: string;
   stage_label: string;
   milestone: string;
   milestone_label: string;
+  project_condition: string;
   status: string;
   source?: string;
   confidence?: string;
@@ -21,10 +24,13 @@ export function normalizeProjectEntryContext(raw: unknown): ProjectEntryContext 
   return {
     project_id: projectId,
     project_name: String(row.project_name || ''),
+    execution_stage: String(row.execution_stage || ''),
+    execution_stage_label: String(row.execution_stage_label || ''),
     stage: String(row.stage || ''),
     stage_label: String(row.stage_label || ''),
     milestone: String(row.milestone || ''),
     milestone_label: String(row.milestone_label || ''),
+    project_condition: String(row.project_condition || ''),
     status: String(row.status || ''),
     source: String(row.source || ''),
     confidence: String(row.confidence || ''),

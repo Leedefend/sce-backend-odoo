@@ -1,5 +1,5 @@
 <template>
-  <PageLayout class="page">
+  <PageLayout :class="['page', { 'page--native-like': nativeLike, 'page--list-focus': compactListDensity }]">
     <template #header v-if="!compactDeliveryMode">
       <PageHeader
         :title="title"
@@ -16,7 +16,13 @@
     </template>
 
     <template #filter>
-      <section v-if="showUnifiedTopbar" class="unified-topbar">
+      <section
+        v-if="showUnifiedTopbar"
+        :class="['unified-topbar', {
+          'unified-topbar--native': nativeLike,
+          'unified-topbar--list-focus': compactListDensity,
+        }]"
+      >
         <div class="topbar-title">
           <strong>{{ title }}</strong>
           <span>{{ recordCountSafe }} 条</span>
@@ -363,9 +369,22 @@
             </button>
           </header>
           <table v-if="!isGroupCollapsed(group.key)">
+            <colgroup>
+              <col
+                v-for="col in displayedColumns"
+                :key="`group-col-width-${group.key}-${col}`"
+                :class="columnWidthClass(col)"
+              />
+            </colgroup>
             <thead>
               <tr>
-                <th v-for="col in displayedColumns" :key="`group-col-${group.key}-${col}`">{{ columnLabel(col) }}</th>
+                <th
+                  v-for="col in displayedColumns"
+                  :key="`group-col-${group.key}-${col}`"
+                  :class="columnCellClass(col)"
+                >
+                  {{ columnLabel(col) }}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -375,7 +394,11 @@
                 :class="rowToneClass(row)"
                 @click="handleRow(row)"
               >
-                <td v-for="col in displayedColumns" :key="`group-cell-${group.key}-${String(row.id ?? index)}-${col}`">
+                <td
+                  v-for="col in displayedColumns"
+                  :key="`group-cell-${group.key}-${String(row.id ?? index)}-${col}`"
+                  :class="columnCellClass(col)"
+                >
                   <span
                     v-if="isStatusColumn(col)"
                     class="status-badge"
@@ -399,6 +422,14 @@
         </article>
       </section>
       <table v-if="!groupedRows.length">
+        <colgroup>
+          <col v-if="showSelectionColumn" class="column-width-select" />
+          <col
+            v-for="col in displayedColumns"
+            :key="`col-width-${col}`"
+            :class="columnWidthClass(col)"
+          />
+        </colgroup>
         <thead>
           <tr>
             <th v-if="showSelectionColumn" class="cell-select">
@@ -410,7 +441,7 @@
                 @change="onSelectAllChange"
               />
             </th>
-            <th v-for="col in displayedColumns" :key="col">{{ columnLabel(col) }}</th>
+            <th v-for="col in displayedColumns" :key="col" :class="columnCellClass(col)">{{ columnLabel(col) }}</th>
           </tr>
         </thead>
         <tbody>
@@ -424,7 +455,7 @@
                 @change="onRowCheckboxChange(row, $event)"
               />
             </td>
-            <td v-for="col in displayedColumns" :key="col">
+            <td v-for="col in displayedColumns" :key="col" :class="columnCellClass(col)">
               <div v-if="col === rowPrimary" class="cell-primary">
                 <div class="primary">{{ semanticCell(col, row[col]).text }}</div>
                 <div v-if="rowSecondary" class="secondary">{{ semanticCell(rowSecondary, row[rowSecondary]).text }}</div>
@@ -659,6 +690,8 @@ const props = defineProps<{
   onGroupCollapsedChange?: (keys: string[]) => void;
   nativeLike?: boolean;
 }>();
+
+const compactListDensity = computed(() => String(props.sceneKey || '').trim() === 'projects.list');
 const errorCopy = computed(() =>
   resolveErrorCopy(
     props.error || null,
@@ -669,12 +702,6 @@ const emptyCopy = computed(() =>
   resolveEmptyCopy('list', { primaryActionLabel: props.primaryActionLabel }),
 );
 const emptyMessageText = computed(() => {
-  if (props.nativeLike) return emptyCopy.value.message;
-  const pageTitle = String(props.title || '').trim();
-  if (pageTitle.includes('投标')) {
-    const actionLabel = String(props.primaryActionLabel || '').trim() || '新建记录';
-    return `当前暂无投标数据。建议先点击“${actionLabel}”创建一条示例投标，再返回列表继续办理。`;
-  }
   return emptyCopy.value.message;
 });
 const groupedRows = computed(() =>
@@ -692,22 +719,16 @@ const sortedGroupedRows = computed(() => {
   });
   return rows;
 });
-const groupSortLabel = computed(() => (groupSortDesc.value ? '按数量降序' : '按数量升序'));
+const groupSortLabel = computed(() => (groupSortDesc.value ? 'DESC' : 'ASC'));
 const groupToolbarLabel = computed(() => {
   const activeLabel = String(props.groupByOptions?.find((item) => item.key === props.activeGroupByField)?.label || '').trim();
   if (activeLabel) return activeLabel;
-  return props.nativeLike ? '分组' : '分组结果';
+  return '当前分组';
 });
 const searchMenuOpen = ref(false);
 const nativeSearchMenuSections = computed<NativeSearchMenuSection[]>(() => {
   if (!props.nativeLike) return [];
-  const fallbackSections: NativeSearchMenuSection[] = [
-    { key: 'filters', label: '筛选', items: nativeMenuItemsFromChips(props.quickFilters || [], 'filters') },
-    { key: 'group_by', label: '分组方式', items: nativeMenuItemsFromChips(props.groupByOptions || [], 'group_by') },
-    { key: 'favorites', label: '收藏夹', items: nativeMenuItemsFromChips(props.savedFilters || [], 'favorites') },
-    { key: 'searchpanel', label: '搜索面板', items: nativeMenuItemsFromChips(props.searchPanelOptions || [], 'searchpanel') },
-  ];
-  const sections = Array.isArray(props.nativeSearchMenu?.sections) ? props.nativeSearchMenu.sections : fallbackSections;
+  const sections = Array.isArray(props.nativeSearchMenu?.sections) ? props.nativeSearchMenu.sections : [];
   const controls = Array.isArray(props.nativeSearchMenu?.controls)
     ? props.nativeSearchMenu.controls
     : [];
@@ -726,8 +747,7 @@ const nativeSearchMenuSections = computed<NativeSearchMenuSection[]>(() => {
       };
     })
     .filter((section) => section.key && section.label);
-  if (normalized.some((section) => section.items.length > 0)) return normalized;
-  return fallbackSections;
+  return normalized.filter((section) => section.items.length > 0);
 });
 const nativeSearchMenuDeclared = computed(() =>
   props.nativeLike,
@@ -740,17 +760,7 @@ const showNativeFilterChips = computed(() => false);
 const showNativeGroupChips = computed(() => false);
 const rowActionHintText = computed(() => {
   if (props.nativeLike) return '';
-  if (groupedRows.value.length > 0) {
-    return '点击分组内记录查看详情；可使用“展开/收起”“查看全部”继续处理分组数据';
-  }
-  const pageTitle = String(props.title || '').trim();
-  const actionLabel = String(props.primaryActionLabel || '').trim();
-  if (pageTitle.includes('预算') || pageTitle.includes('成本')) {
-    if (actionLabel) return `先选择一条记录查看详情；新增请点击右上角“${actionLabel}”`;
-    return '先选择一条记录查看详情，再继续预算/成本处理';
-  }
-  if (actionLabel) return `点击列表行可查看详情；新增请使用右上角“${actionLabel}”`;
-  return '点击列表行可查看详情并继续处理';
+  return '选择记录后可执行列表操作';
 });
 const semanticZoneKeySet = computed(() => {
   const rows = Array.isArray(props.semanticZones) ? props.semanticZones : [];
@@ -836,6 +846,38 @@ function isOwnerColumn(field: string) {
 function isProgressColumn(field: string) {
   const key = String(field || '').toLowerCase();
   return key.includes('progress') || key.includes('rate') || key.includes('percent') || key.includes('completion');
+}
+
+function isDateColumn(field: string) {
+  const key = String(field || '').toLowerCase();
+  return key.includes('date') || key.includes('deadline') || key.includes('expire') || key.includes('valid');
+}
+
+function isPrimaryColumn(field: string) {
+  return String(field || '') === String(rowPrimary.value || '');
+}
+
+function isNameLikeColumn(field: string) {
+  const key = String(field || '').toLowerCase();
+  return key.includes('name') || key.includes('title') || key.includes('code') || key.includes('number');
+}
+
+function isPartyColumn(field: string) {
+  const key = String(field || '').toLowerCase();
+  return key.includes('customer') || key.includes('partner') || key.includes('company') || key.includes('client');
+}
+
+function columnWidthClass(field: string) {
+  if (isPrimaryColumn(field) || isNameLikeColumn(field)) return 'column-width-primary';
+  if (isOwnerColumn(field) || isPartyColumn(field)) return 'column-width-medium';
+  if (isStatusColumn(field) || isRiskColumn(field)) return 'column-width-status';
+  if (isDateColumn(field)) return 'column-width-date';
+  if (isProgressColumn(field)) return 'column-width-status';
+  return 'column-width-default';
+}
+
+function columnCellClass(field: string) {
+  return `column-cell ${columnWidthClass(field)}`;
 }
 
 function rowToneClass(row: Record<string, unknown>) {
@@ -1323,6 +1365,14 @@ function columnLabel(col: string) {
   gap: var(--ui-space-3);
 }
 
+.page--native-like {
+  gap: var(--ui-space-2);
+}
+
+.page--list-focus {
+  gap: 4px;
+}
+
 .unified-topbar {
   display: grid;
   grid-template-columns: auto minmax(320px, 1.4fr) auto auto auto;
@@ -1333,6 +1383,20 @@ function columnLabel(col: string) {
   border-radius: var(--ui-radius-md);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 245, 239, 0.92));
   box-shadow: var(--ui-shadow-sm);
+}
+
+.unified-topbar--native {
+  grid-template-columns: auto minmax(260px, 1fr) auto auto auto;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--ui-radius-sm);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: none;
+}
+
+.unified-topbar--list-focus {
+  gap: 6px;
+  padding: 6px 8px;
 }
 
 .topbar-title {
@@ -1348,9 +1412,22 @@ function columnLabel(col: string) {
   line-height: 1;
 }
 
+.unified-topbar--native .topbar-title strong {
+  font-size: var(--ui-font-size-md);
+}
+
 .topbar-title span {
   color: var(--ui-color-ink-muted);
   font-size: var(--ui-font-size-xs);
+}
+
+.unified-topbar--native .topbar-title span {
+  font-size: 11px;
+}
+
+.unified-topbar--list-focus .topbar-title {
+  min-width: 104px;
+  gap: 6px;
 }
 
 .topbar-search {
@@ -1367,6 +1444,21 @@ function columnLabel(col: string) {
   border: 1px solid var(--ui-color-border);
   border-radius: var(--ui-radius-sm);
   padding: 0 var(--ui-space-3);
+}
+
+.unified-topbar--native .topbar-search input {
+  height: 34px;
+  padding: 0 10px;
+}
+
+.unified-topbar--list-focus .topbar-search {
+  gap: 6px;
+}
+
+.unified-topbar--list-focus .topbar-search input {
+  height: 32px;
+  min-width: 160px;
+  padding: 0 9px;
 }
 
 .topbar-search--native input {
@@ -1467,11 +1559,32 @@ function columnLabel(col: string) {
   box-shadow: var(--ui-shadow-xs);
 }
 
+.unified-topbar--native .topbar-search button,
+.unified-topbar--native .topbar-tabs button,
+.page--native-like .topbar-pagination button,
+.page--native-like .topbar-sort select {
+  height: 32px;
+  padding: 0 10px;
+  box-shadow: none;
+}
+
+.unified-topbar--list-focus .topbar-search button,
+.unified-topbar--list-focus .topbar-tabs button,
+.page--list-focus .topbar-pagination button,
+.page--list-focus .topbar-sort select {
+  height: 30px;
+  padding: 0 9px;
+}
+
 .topbar-tabs {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+}
+
+.unified-topbar--native .topbar-tabs {
+  gap: 4px;
 }
 
 .topbar-tabs button.active {
@@ -1504,6 +1617,18 @@ function columnLabel(col: string) {
   box-shadow: 0 10px 20px rgba(61, 120, 159, 0.18);
 }
 
+.unified-topbar--native .topbar-primary {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: var(--ui-radius-sm);
+  box-shadow: none;
+}
+
+.unified-topbar--list-focus .topbar-primary {
+  height: 32px;
+  padding: 0 11px;
+}
+
 .topbar-primary:disabled {
   opacity: 0.55;
 }
@@ -1514,6 +1639,12 @@ function columnLabel(col: string) {
   border: 1px solid var(--ui-color-border);
   border-radius: var(--ui-radius-md);
   box-shadow: var(--ui-shadow-md);
+}
+
+.page--native-like .table {
+  border-radius: var(--ui-radius-sm);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: none;
 }
 
 .table-hint {
@@ -1530,6 +1661,11 @@ function columnLabel(col: string) {
   padding: 12px 16px 16px;
   border-top: 1px solid var(--ui-color-border);
   background: rgba(255, 255, 255, 0.72);
+}
+
+.page--native-like .table-pagination {
+  padding: 10px 12px 12px;
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .table-pagination-meta,
@@ -1560,12 +1696,22 @@ function columnLabel(col: string) {
   gap: 10px;
 }
 
+.page--native-like .summary-strip {
+  gap: 8px;
+}
+
 .summary-card {
   border: 1px solid var(--ui-color-border);
   border-radius: var(--ui-radius-sm);
   background: rgba(255, 255, 255, 0.92);
   padding: var(--ui-space-3);
   box-shadow: var(--ui-shadow-xs);
+}
+
+.page--native-like .summary-card {
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: none;
 }
 
 .summary-label {
@@ -1580,6 +1726,11 @@ function columnLabel(col: string) {
   font-weight: var(--ui-font-weight-bold);
 }
 
+.page--native-like .summary-value {
+  margin-top: 4px;
+  font-size: var(--ui-font-size-lg);
+}
+
 .summary-card.tone-danger { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
 .summary-card.tone-warning { background: #fffbeb; border-color: #fde68a; color: #b45309; }
 .summary-card.tone-success { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
@@ -1592,6 +1743,12 @@ function columnLabel(col: string) {
   padding: 12px;
   border-bottom: 1px solid #e2e8f0;
   background: #f8fafc;
+}
+
+.page--native-like .grouped-table {
+  gap: 10px;
+  padding: 10px;
+  background: rgba(248, 250, 252, 0.68);
 }
 
 .grouped-toolbar {
@@ -1714,6 +1871,13 @@ function columnLabel(col: string) {
   padding: 10px 12px;
 }
 
+.page--native-like .batch-bar {
+  gap: 10px;
+  border-radius: var(--ui-radius-sm);
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.96);
+}
+
 .batch-bar__summary {
   display: grid;
   gap: 2px;
@@ -1727,9 +1891,17 @@ function columnLabel(col: string) {
   color: #64748b;
 }
 
+.page--native-like .batch-bar__eyebrow {
+  letter-spacing: 0.04em;
+}
+
 .batch-bar__count {
   font-size: 14px;
   color: #0f172a;
+}
+
+.page--native-like .batch-bar__count {
+  font-size: 13px;
 }
 
 .batch-bar__actions {
@@ -1744,6 +1916,11 @@ function columnLabel(col: string) {
   border-radius: 10px;
   padding: 6px 10px;
   cursor: pointer;
+}
+
+.page--native-like .batch-bar button {
+  border-radius: var(--ui-radius-xs);
+  padding: 5px 9px;
 }
 
 .batch-bar button.primary {
@@ -1821,6 +1998,7 @@ function columnLabel(col: string) {
 table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 th,
@@ -1829,6 +2007,7 @@ td {
   border-bottom: 1px solid #e2e8f0;
   text-align: left;
   font-size: 14px;
+  vertical-align: top;
 }
 
 .cell-select {
@@ -1836,11 +2015,46 @@ td {
   padding-right: 4px;
 }
 
+.column-width-select {
+  width: 44px;
+}
+
+.column-width-primary {
+  width: 30%;
+}
+
+.column-width-medium {
+  width: 16%;
+}
+
+.column-width-status {
+  width: 10%;
+}
+
+.column-width-date {
+  width: 11%;
+}
+
+.column-width-default {
+  width: 13%;
+}
+
+.column-cell {
+  overflow: hidden;
+}
+
+.column-cell.column-width-primary,
+.column-cell.column-width-medium,
+.column-cell.column-width-default {
+  word-break: break-word;
+}
+
 thead th {
   position: sticky;
   top: 0;
   background: white;
   z-index: 1;
+  font-weight: 700;
 }
 
 tr:hover {
@@ -1863,6 +2077,7 @@ tr.row-tone-info td:first-child { box-shadow: inset 3px 0 0 #3b82f6; }
 .cell-primary {
   display: grid;
   gap: 4px;
+  min-width: 0;
 }
 
 .cell-primary .primary {
@@ -1881,6 +2096,7 @@ tr.row-tone-info td:first-child { box-shadow: inset 3px 0 0 #3b82f6; }
 .cell-progress {
   display: grid;
   gap: 2px;
+  min-width: 0;
 }
 
 .cell-inline-meta__label,

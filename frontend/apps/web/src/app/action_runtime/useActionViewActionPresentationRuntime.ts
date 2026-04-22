@@ -91,10 +91,10 @@ export function useActionViewActionPresentationRuntime(options: UseActionViewAct
   const contractActionButtons = computed<ContractActionButton[]>(() => {
     const contract = options.actionContract.value;
     const merged: Array<Record<string, unknown>> = [];
-    if (sceneContractActionRows.value.length) {
-      merged.push(...sceneContractActionRows.value);
-    } else if (options.sceneReadyListSurface.value.actions.length) {
+    if (options.sceneReadyListSurface.value.actions.length) {
       merged.push(...options.sceneReadyListSurface.value.actions);
+    } else if (sceneContractActionRows.value.length) {
+      merged.push(...sceneContractActionRows.value);
     } else {
       if (!contract) return [];
       if (Array.isArray(contract.actions)) merged.push(...(contract.actions as Array<Record<string, unknown>>));

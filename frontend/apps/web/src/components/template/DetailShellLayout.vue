@@ -268,11 +268,13 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
 <style scoped>
 .contract-detail-shell {
   grid-column: 1 / -1;
-  border: 1px solid rgba(203, 213, 225, 0.95);
-  border-radius: 18px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  padding: 16px 18px;
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.05);
+  border: 1px solid var(--ui-color-border-strong);
+  border-radius: var(--ui-radius-md);
+  background:
+    linear-gradient(180deg, rgba(240, 246, 250, 0.42), rgba(255, 255, 255, 0) 76px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 245, 239, 0.94) 100%);
+  padding: var(--ui-space-4);
+  box-shadow: var(--ui-shadow-sm);
 }
 
 .contract-detail-shell--native {
@@ -284,27 +286,27 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
 }
 
 .contract-detail-shell--sheet {
-  border-color: #dbeafe;
+  border-color: rgba(61, 120, 159, 0.18);
   background:
-    linear-gradient(180deg, rgba(219, 234, 254, 0.18) 0%, rgba(255, 255, 255, 0) 68px),
-    linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    linear-gradient(180deg, rgba(219, 234, 244, 0.42) 0%, rgba(255, 255, 255, 0) 68px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 246, 250, 0.62) 100%);
 }
 
 .contract-detail-shell--page {
-  border-color: #e9d5ff;
+  border-color: rgba(61, 120, 159, 0.14);
   background:
-    linear-gradient(180deg, rgba(237, 233, 254, 0.18) 0%, rgba(255, 255, 255, 0) 68px),
-    linear-gradient(180deg, #ffffff 0%, #faf7ff 100%);
+    linear-gradient(180deg, rgba(244, 241, 235, 0.82) 0%, rgba(255, 255, 255, 0) 68px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 245, 239, 0.94) 100%);
 }
 
 .contract-detail-shell__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  gap: var(--ui-space-3);
+  margin-bottom: var(--ui-space-3);
+  padding-bottom: var(--ui-space-3);
+  border-bottom: 1px solid var(--ui-color-border);
 }
 
 .contract-detail-shell__title-wrap {
@@ -313,29 +315,29 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
 }
 
 .contract-detail-shell__eyebrow {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--ui-font-size-xs);
+  font-weight: var(--ui-font-weight-bold);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--ui-color-ink-soft);
 }
 
 .contract-detail-shell__title {
   margin: 0;
-  font-size: 17px;
+  font-size: var(--ui-font-size-xl);
   line-height: 1.25;
-  color: #0f172a;
+  color: var(--ui-color-ink-strong);
 }
 
 .contract-detail-shell__summary {
-  font-size: 12px;
-  color: #64748b;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-muted);
 }
 
 .contract-detail-shell__body {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: var(--ui-space-3);
 }
 
 .contract-detail-shell__body--stacked {
@@ -349,40 +351,40 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
 
 .contract-detail-tabs {
   display: grid;
-  gap: 14px;
+  gap: var(--ui-space-3);
 }
 
 .contract-detail-tabs__rail {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 4px;
-  border: 1px solid rgba(203, 213, 225, 0.72);
-  border-radius: 14px;
-  background: rgba(248, 250, 252, 0.92);
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-1);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  background: rgba(248, 245, 239, 0.84);
 }
 
 .contract-detail-tabs__tab {
   border: 1px solid transparent;
   background: transparent;
-  color: #334155;
-  border-radius: 999px;
+  color: var(--ui-color-ink-muted);
+  border-radius: var(--ui-radius-pill);
   padding: 7px 12px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--ui-font-size-xs);
+  font-weight: var(--ui-font-weight-semibold);
   cursor: pointer;
 }
 
 .contract-detail-tabs__tab--active {
-  border-color: rgba(191, 219, 254, 0.9);
-  background: #fff;
-  color: #0f172a;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+  border-color: rgba(61, 120, 159, 0.2);
+  background: rgba(255, 255, 255, 0.98);
+  color: var(--ui-color-ink-strong);
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .contract-detail-tabs--native .contract-detail-tabs__rail {
   border: 0;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--ui-color-border);
   border-radius: 0;
   background: transparent;
   padding: 0 0 6px;
@@ -393,29 +395,29 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
   border-bottom: 2px solid transparent;
   border-radius: 0;
   background: transparent;
-  color: #4b5563;
+  color: var(--ui-color-ink-muted);
   padding: 6px 8px;
-  font-weight: 500;
+  font-weight: var(--ui-font-weight-medium);
 }
 
 .contract-detail-tabs--native .contract-detail-tabs__tab--active {
-  border-color: #6b7280;
+  border-color: var(--ui-color-primary-700);
   background: transparent;
-  color: #111827;
+  color: var(--ui-color-ink-strong);
 }
 
 .contract-detail-tabs__panel {
   display: grid;
-  gap: 4px;
+  gap: var(--ui-space-1);
 }
 
 .contract-form-shell {
   grid-column: 1 / -1;
-  border: 1px solid rgba(226, 232, 240, 0.95);
-  border-radius: 14px;
-  background: #fff;
-  padding: 14px 16px 12px;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  background: rgba(255, 255, 255, 0.94);
+  padding: var(--ui-space-4);
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .contract-form-shell--native {
@@ -427,26 +429,26 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
 }
 
 .contract-form-shell--sheet {
-  border-color: #dbeafe;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border-color: rgba(61, 120, 159, 0.18);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 246, 250, 0.6) 100%);
 }
 
 .contract-form-shell--group {
-  border-color: #e2e8f0;
+  border-color: var(--ui-color-border);
 }
 
 .contract-form-shell--page {
-  border-color: #ddd6fe;
-  background: linear-gradient(180deg, #ffffff 0%, #faf7ff 100%);
+  border-color: rgba(61, 120, 159, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 245, 239, 0.9) 100%);
 }
 
 .contract-form-shell--nested {
   grid-column: auto;
-  border-radius: 12px;
-  border-color: #e2e8f0;
-  background: rgba(248, 250, 252, 0.92);
+  border-radius: var(--ui-radius-sm);
+  border-color: var(--ui-color-border);
+  background: rgba(248, 245, 239, 0.78);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
-  padding: 12px 14px 10px;
+  padding: var(--ui-space-3);
 }
 
 .contract-form-shell--native.contract-form-shell--nested {
@@ -494,27 +496,27 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: var(--ui-space-2);
+  margin-bottom: var(--ui-space-3);
 }
 
 .contract-form-shell__eyebrow {
   display: inline-flex;
   align-items: center;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--ui-font-size-xs);
+  font-weight: var(--ui-font-weight-bold);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #475569;
+  color: var(--ui-color-ink-muted);
 }
 
 .contract-form-shell__summary {
-  font-size: 12px;
-  color: #64748b;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-soft);
 }
 
 .contract-form-shell--nested :deep(.template-form-section) {
-  border-top-color: #edf2f7;
+  border-top-color: var(--ui-color-border-muted);
 }
 
 .contract-form-shell--nested :deep(.template-form-section--core) {
@@ -523,15 +525,17 @@ function resolveSectionColumns(section: DetailSectionView): 1 | 2 {
 
 .contract-form-shell--nested :deep(.template-form-section-title) {
   font-size: 13px;
-  color: #1f2937;
+  color: var(--ui-color-ink);
 }
 
 .chip-btn {
-  font-size: 12px;
   padding: 4px 8px;
-  border-radius: 999px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
+  border-radius: var(--ui-radius-pill);
+  border: 1px solid var(--ui-color-border);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ui-color-ink);
+  font-size: var(--ui-font-size-xs);
+  font-weight: var(--ui-font-weight-medium);
   cursor: pointer;
 }
 

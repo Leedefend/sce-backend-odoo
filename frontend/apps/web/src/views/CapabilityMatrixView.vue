@@ -1,17 +1,17 @@
 <template>
   <section class="capability-matrix-page">
     <section v-if="loading" class="status-wrap">
-      <StatusPanel title="加载能力矩阵中..." variant="info" />
+      <StatusPanel :title="pageText('loading_title', '加载能力矩阵中...')" variant="info" />
     </section>
     <section v-else-if="errorText" class="status-wrap">
-      <StatusPanel title="能力矩阵加载失败" :message="errorText" :trace-id="traceId || undefined" variant="error" />
+      <StatusPanel :title="pageText('error_fallback', '能力矩阵加载失败')" :message="errorText" :trace-id="traceId || undefined" variant="error" />
     </section>
     <section v-else class="page-shell">
       <header class="hero-card">
         <div>
           <p class="eyebrow">治理配置</p>
-          <h1>能力矩阵</h1>
-          <p class="hero-subtitle">按能力分组查看当前账号可用入口、只读能力和待后续补位项。</p>
+          <h1>{{ pageText('title', '能力矩阵') }}</h1>
+          <p class="hero-subtitle">{{ pageText('hero_subtitle', '查看当前账号的能力矩阵与可用范围。') }}</p>
           <p class="hero-trace">Trace {{ traceId || '-' }}</p>
         </div>
         <div class="hero-actions">
@@ -23,25 +23,25 @@
 
       <section class="summary-grid">
         <article class="summary-card">
-          <span class="summary-label">能力组数</span>
+          <span class="summary-label">{{ pageText('summary_groups', '能力组数') }}</span>
           <strong class="summary-value">{{ sections.length }}</strong>
         </article>
         <article class="summary-card">
-          <span class="summary-label">能力总数</span>
+          <span class="summary-label">{{ pageText('summary_total', '能力总数') }}</span>
           <strong class="summary-value">{{ totalCount }}</strong>
         </article>
         <article class="summary-card">
-          <span class="summary-label">可进入</span>
+          <span class="summary-label">{{ pageText('summary_allow', '可用能力') }}</span>
           <strong class="summary-value ready">{{ allowedCount }}</strong>
         </article>
         <article class="summary-card">
-          <span class="summary-label">受限 / 待补位</span>
+          <span class="summary-label">{{ pageText('summary_blocked', '受限 / 待补位') }}</span>
           <strong class="summary-value blocked">{{ deniedCount }}</strong>
         </article>
       </section>
 
       <section v-if="!sections.length" class="empty-wrap">
-        <StatusPanel title="暂无能力入口" message="当前账号没有可展示的能力矩阵条目。" variant="info" />
+        <StatusPanel :title="pageText('empty_title', '暂无能力入口')" :message="pageText('empty_message', '当前账号没有可展示的能力矩阵条目。')" variant="info" />
       </section>
 
       <section v-else class="section-list">
@@ -68,13 +68,13 @@
                 <strong>{{ item.label || item.key }}</strong>
                 <span class="state-chip" :class="stateClass(item)">{{ stateText(item) }}</span>
               </div>
-              <p class="item-desc">{{ item.desc || '未提供说明' }}</p>
+              <p class="item-desc">{{ item.desc || pageText('item_desc_missing', '查看当前能力说明') }}</p>
               <p class="item-meta">
                 <span v-if="item.scene_key">scene={{ item.scene_key }}</span>
                 <span v-else-if="item.target_url">{{ item.target_url }}</span>
-                <span v-else>暂无跳转目标</span>
+                <span v-else>{{ pageText('target_missing', '当前未配置跳转目标') }}</span>
               </p>
-              <p v-if="item.deny_reason?.length" class="item-reason">原因：{{ item.deny_reason.join(' / ') }}</p>
+              <p v-if="item.deny_reason?.length" class="item-reason">{{ pageText('deny_reason_prefix', '原因：') }}{{ item.deny_reason.join(' / ') }}</p>
             </button>
           </div>
         </article>
@@ -86,6 +86,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { usePageContract } from '../app/pageContract';
 import StatusPanel from '../components/StatusPanel.vue';
 import {
   fetchCapabilityMatrix,
@@ -94,6 +95,8 @@ import {
 } from '../api/capabilityMatrix';
 
 const router = useRouter();
+const pageContract = usePageContract('capability_matrix');
+const pageText = pageContract.text;
 const loading = ref(false);
 const errorText = ref('');
 const traceId = ref('');
@@ -115,20 +118,20 @@ function isInternalRoute(url: string) {
   return (
     url === '/'
     || url.startsWith('/s/')
-    || url.startsWith('/a/')
+    || url.startsWith('/compat/action/')
     || url.startsWith('/m/')
-    || url.startsWith('/r/')
-    || url.startsWith('/f/')
+    || url.startsWith('/compat/record/')
+    || url.startsWith('/compat/form/')
   );
 }
 
 function stateText(item: CapabilityMatrixItem) {
   const state = String(item.capability_state || '').toLowerCase();
-  if (!item.allowed || state === 'deny') return '受限';
-  if (state === 'readonly') return '只读';
-  if (state === 'pending') return '待开放';
-  if (state === 'coming_soon') return '建设中';
-  return '可进入';
+  if (!item.allowed || state === 'deny') return pageText('state_deny', 'DENY');
+  if (state === 'readonly') return pageText('state_readonly', 'READONLY');
+  if (state === 'pending') return pageText('state_pending', 'PENDING');
+  if (state === 'coming_soon') return pageText('state_coming_soon', 'COMING_SOON');
+  return pageText('state_allow', 'ALLOW');
 }
 
 function stateClass(item: CapabilityMatrixItem) {
@@ -163,7 +166,7 @@ async function load() {
     sections.value = Array.isArray(response.data.sections) ? response.data.sections : [];
     traceId.value = response.traceId;
   } catch (error) {
-    errorText.value = error instanceof Error ? error.message : '能力矩阵加载失败';
+    errorText.value = error instanceof Error ? error.message : pageText('error_fallback', '能力矩阵加载失败');
   } finally {
     loading.value = false;
   }

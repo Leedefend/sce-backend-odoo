@@ -67,7 +67,7 @@ export function useActionViewHeaderRuntime(options: UseActionViewHeaderRuntimeOp
       },
     });
     if (!handled) {
-      options.batchMessage.value = options.pageText('error_fallback', '操作暂不可用');
+      options.batchMessage.value = options.pageText('error_fallback', '当前动作执行失败');
     }
   }
 

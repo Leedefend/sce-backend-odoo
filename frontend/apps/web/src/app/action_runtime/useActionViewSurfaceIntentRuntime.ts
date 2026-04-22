@@ -24,13 +24,7 @@ export function useActionViewSurfaceIntentRuntime(options: UseActionViewSurfaceI
     if (fromSurfacePolicies && typeof fromSurfacePolicies === 'object' && !Array.isArray(fromSurfacePolicies)) {
       return fromSurfacePolicies as Dict;
     }
-    const extensions = options.sceneContractV1.value.extensions;
-    const fromExtensions = extensions && typeof extensions === 'object'
-      ? (extensions as Dict).surface_intent
-      : null;
-    return fromExtensions && typeof fromExtensions === 'object' && !Array.isArray(fromExtensions)
-      ? fromExtensions as Dict
-      : {};
+    return {};
   });
 
   const surfaceIntent = computed(() => {
@@ -48,4 +42,3 @@ export function useActionViewSurfaceIntentRuntime(options: UseActionViewSurfaceI
     surfaceIntent,
   };
 }
-

@@ -3,11 +3,9 @@ import { useSessionStore } from '../stores/session';
 import LoginView from '../views/LoginView.vue';
 import HomeView from '../views/HomeView.vue';
 import MenuView from '../views/MenuView.vue';
-import ActionView from '../views/ActionViewShell.vue';
-import ContractFormPage from '../pages/ContractFormPage.vue';
+import ActionViewShell from '../views/ActionViewShell.vue';
 import WorkbenchView from '../views/WorkbenchView.vue';
 import SceneView from '../views/SceneView.vue';
-import ProjectManagementDashboardView from '../views/ProjectManagementDashboardView.vue';
 import ProjectsIntakeView from '../views/ProjectsIntakeView.vue';
 import ReleaseProductEntryView from '../views/ReleaseProductEntryView.vue';
 import ReleaseOperatorView from '../views/ReleaseOperatorView.vue';
@@ -16,9 +14,12 @@ import SceneHealthView from '../views/SceneHealthView.vue';
 import ScenePackagesView from '../views/ScenePackagesView.vue';
 import UsageAnalyticsView from '../views/UsageAnalyticsView.vue';
 import CapabilityMatrixView from '../views/CapabilityMatrixView.vue';
+import ModelFormPage from '../pages/ModelFormPage.vue';
 import { ApiError } from '../api/client';
+import { ErrorCodes } from '../app/error_codes';
 import { normalizeEditionQuery, parseEditionKeyFromQuery } from '../app/routeQuery';
 import { PROJECT_INTAKE_SCENE_PATH } from '../app/projectCreationBaseline';
+import { resolveMenuAction, resolveScenePathFromMenuResolve } from '../app/resolvers/menuResolver';
 
 const APP_TITLE = '智能施工企业管理平台';
 
@@ -33,21 +34,29 @@ function routeTitle(routeName: string | symbol | null | undefined): string {
     'release-operator': '发布控制台',
     scene: '业务场景',
     menu: '业务菜单',
-    action: '业务动作',
     workbench: '工作台',
     'scene-health': '场景健康',
     'scene-packages': '场景发布包',
     'usage-analytics': '使用分析',
     'capability-matrix': '能力矩阵',
     'scene-capability-matrix': '能力矩阵',
-    'model-form': '业务表单',
-    record: '业务记录',
   };
   return map[name] || '系统';
 }
 
 function applyDocumentTitle(routeName: string | symbol | null | undefined) {
   document.title = `${routeTitle(routeName)} - ${APP_TITLE}`;
+}
+
+function resolveMenuAcrossNavigationTrees(session: ReturnType<typeof useSessionStore>, menuId: number) {
+  const primary = resolveMenuAction(session.releaseNavigationTree, menuId);
+  if (primary.kind !== 'broken' || !session.releaseNavigationTree.length) {
+    return primary;
+  }
+  if (primary.reason && primary.reason !== 'menu not found') {
+    return primary;
+  }
+  return resolveMenuAction(session.menuTree, menuId);
 }
 
 const router = createRouter({
@@ -59,7 +68,7 @@ const router = createRouter({
     { path: '/capability-matrix', name: 'capability-matrix', component: CapabilityMatrixView, meta: { layout: 'shell' } },
     { path: '/portal/capability-matrix', redirect: '/s/portal.capability_matrix', meta: { layout: 'shell' } },
     { path: '/pm/dashboard', name: 'project-management-dashboard', redirect: '/s/project.management', meta: { layout: 'shell' } },
-    { path: '/s/project.management', name: 'scene-project-management', component: ProjectManagementDashboardView, meta: { layout: 'shell' } },
+    { path: '/s/project.management', name: 'scene-project-management', component: SceneView, meta: { layout: 'shell', sceneKey: 'project.management' } },
     { path: PROJECT_INTAKE_SCENE_PATH, name: 'scene-projects-intake', component: ProjectsIntakeView, meta: { layout: 'shell' } },
     { path: '/s/project.initiation', redirect: PROJECT_INTAKE_SCENE_PATH, meta: { layout: 'shell' } },
     { path: '/s/portal.capability_matrix', name: 'scene-capability-matrix', component: CapabilityMatrixView, meta: { layout: 'shell' } },
@@ -67,14 +76,16 @@ const router = createRouter({
     { path: '/release/operator', name: 'release-operator', component: ReleaseOperatorView, meta: { layout: 'shell' } },
     { path: '/s/:sceneKey', name: 'scene', component: SceneView, meta: { layout: 'shell' } },
     { path: '/m/:menuId', name: 'menu', component: MenuView, meta: { layout: 'shell' } },
+    { path: '/a/:actionId', name: 'action', component: ActionViewShell, meta: { layout: 'shell' } },
+    { path: '/compat/action/:actionId', name: 'compat-action', component: ActionViewShell, meta: { layout: 'shell' } },
+    { path: '/r/:model/:id', name: 'record', component: ModelFormPage, meta: { layout: 'shell' } },
+    { path: '/f/:model/:id', name: 'model-form', component: ModelFormPage, meta: { layout: 'shell' } },
+    { path: '/compat/record/:model/:id', name: 'compat-record', component: ModelFormPage, meta: { layout: 'shell' } },
     // Diagnostic-only surface; must not be used as product navigation.
     { path: '/workbench', name: 'workbench', component: WorkbenchView, meta: { layout: 'shell' } },
     { path: '/admin/scene-health', name: 'scene-health', component: SceneHealthView, meta: { layout: 'shell', adminOnly: true } },
     { path: '/admin/scene-packages', name: 'scene-packages', component: ScenePackagesView, meta: { layout: 'shell', adminOnly: true } },
     { path: '/admin/usage-analytics', name: 'usage-analytics', component: UsageAnalyticsView, meta: { layout: 'shell', adminOnly: true } },
-    { path: '/a/:actionId', name: 'action', component: ActionView, meta: { layout: 'shell' } },
-    { path: '/f/:model/:id', name: 'model-form', component: ContractFormPage, meta: { layout: 'shell' } },
-    { path: '/r/:model/:id', name: 'record', component: ContractFormPage, meta: { layout: 'shell' } },
   ],
 });
 
@@ -103,6 +114,41 @@ router.beforeEach(async (to) => {
         return { name: 'login', query: { redirect: to.fullPath } };
       }
       return true;
+    }
+  }
+  if (to.name === 'menu') {
+    const menuId = Number(to.params.menuId || 0);
+    if (Number.isFinite(menuId) && menuId > 0) {
+      const result = resolveMenuAcrossNavigationTrees(session, menuId);
+      const scenePath = resolveScenePathFromMenuResolve(result, menuId);
+      if (scenePath?.path) {
+        return {
+          path: scenePath.path,
+          query: {
+            ...to.query,
+            menu_id: scenePath.menuId || menuId,
+            scene_key: scenePath.sceneKey,
+            action_id: scenePath.actionId || undefined,
+          },
+          replace: true,
+        };
+      }
+      const actionId = result.kind === 'leaf'
+        ? Number(result.meta.action_id || 0)
+        : Number(result.kind === 'redirect' ? result.target.action_id || 0 : 0);
+      if (actionId > 0) {
+        return {
+          name: 'workbench',
+          query: {
+            ...to.query,
+            reason: ErrorCodes.CONTRACT_CONTEXT_MISSING,
+            diag: 'menu_route_missing_scene_identity',
+            action_id: actionId,
+            menu_id: result.kind === 'leaf' ? menuId : (result.target.menu_id || menuId),
+          },
+          replace: true,
+        };
+      }
     }
   }
   if (to.meta?.adminOnly) {

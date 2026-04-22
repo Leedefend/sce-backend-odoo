@@ -1,5 +1,7 @@
 import type { NavMeta } from '@sc/schema';
 import type { Router } from 'vue-router';
+import { ErrorCodes } from '../app/error_codes';
+import { resolveSceneFirstActionLocation, resolveSceneFirstFormOrRecordLocation } from '../app/sceneNavigation';
 import { useSessionStore } from '../stores/session';
 import { recordTrace, digestParams, createTraceId } from './trace';
 
@@ -42,7 +44,25 @@ export function openAction(router: Router, action: NavMeta, menuId?: number) {
     params_digest: digestParams({ domain: normalizeDomain(action.domain), context: normalizeContext(action.context) }),
   });
 
-  router.push({ path: `/a/${action.action_id}`, query });
+  const sceneLocation = resolveSceneFirstActionLocation({
+    sourceQuery: query,
+    actionId: action.action_id,
+    menuId,
+    model: model || undefined,
+    viewMode: viewMode || undefined,
+    extraQuery: query,
+  });
+  router.push(sceneLocation || {
+    name: 'workbench',
+    query: {
+      reason: ErrorCodes.CONTRACT_CONTEXT_MISSING,
+      diag: 'action_service_missing_scene_identity',
+      action_id: action.action_id?.toString(),
+      menu_id: menuId?.toString(),
+      model: model || undefined,
+      view_mode: viewMode || undefined,
+    },
+  });
 }
 
 export function openForm(router: Router, model: string, id: number, action?: NavMeta, menuId?: number) {
@@ -64,5 +84,25 @@ export function openForm(router: Router, model: string, id: number, action?: Nav
     params_digest: digestParams({ id }),
   });
 
-  router.push({ path: `/r/${model}/${id}`, query });
+  const sceneLocation = resolveSceneFirstFormOrRecordLocation({
+    sourceQuery: query,
+    actionId: action?.action_id,
+    menuId,
+    model,
+    recordId: id,
+    viewMode: 'form',
+    extraQuery: query,
+  });
+  router.push(sceneLocation || {
+    name: 'workbench',
+    query: {
+      reason: ErrorCodes.CONTRACT_CONTEXT_MISSING,
+      diag: 'action_service_form_missing_scene_identity',
+      action_id: action?.action_id?.toString(),
+      menu_id: menuId?.toString(),
+      model,
+      record_id: String(id),
+      view_mode: 'form',
+    },
+  });
 }

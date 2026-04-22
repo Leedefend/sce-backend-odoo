@@ -23,7 +23,7 @@
           class="enterprise-enablement-primary"
           @click="openEnterpriseEnablementTarget(enterprisePrimaryAction)"
         >
-          进入公司管理
+          {{ enterprisePrimaryActionLabel }}
         </button>
       </header>
       <div class="enterprise-enablement-steps">
@@ -35,7 +35,7 @@
         >
           <div class="enterprise-step-head">
             <strong>{{ step.label }}</strong>
-            <span>{{ enterpriseStepStatusLabel(step.status) }}</span>
+            <span>{{ enterpriseStepStatusLabel(step) }}</span>
           </div>
           <p class="enterprise-step-hint">{{ step.next_hint }}</p>
           <button
@@ -55,7 +55,6 @@
   </section>
 
   <section v-else class="capability-home">
-    <!-- Page intent: 优先处理风险与审批，快速判断经营状态并进入下一步动作。 -->
     <header v-if="isHomeSectionEnabled('hero') && isHomeSectionTag('hero', 'header')" class="hero" :class="homeSectionClass('hero')" :style="homeSectionStyle('hero')">
       <div class="hero-main">
         <h2>{{ heroTitle }}</h2>
@@ -127,7 +126,7 @@
           class="enterprise-enablement-primary"
           @click="openEnterpriseEnablementTarget(enterprisePrimaryAction)"
         >
-          进入公司管理
+          {{ enterprisePrimaryActionLabel }}
         </button>
       </header>
       <div class="enterprise-enablement-steps">
@@ -139,7 +138,7 @@
         >
           <div class="enterprise-step-head">
             <strong>{{ step.label }}</strong>
-            <span>{{ enterpriseStepStatusLabel(step.status) }}</span>
+            <span>{{ enterpriseStepStatusLabel(step) }}</span>
           </div>
           <p class="enterprise-step-hint">{{ step.next_hint }}</p>
           <button
@@ -158,7 +157,7 @@
         <header class="today-actions-header">
           <div>
             <h3>{{ homeLayoutText('today_actions.title', '今日待办') }}</h3>
-            <p>{{ homeLayoutText('today_actions.subtitle', '点击可直接进入处理界面。') }}</p>
+            <p>{{ homeLayoutText('today_actions.subtitle', '聚焦今日需要优先处理的事项') }}</p>
           </div>
           <button v-if="hasMoreTodos" class="today-view-all" @click="openAllTodos">查看全部</button>
         </header>
@@ -183,22 +182,22 @@
         <header class="risk-header">
           <div>
             <h3>{{ homeLayoutText('risk.title', '系统提醒') }}</h3>
-            <p>{{ homeLayoutText('risk.subtitle', '优先处理系统当前提醒你的关键事项。') }}</p>
+            <p>{{ homeLayoutText('risk.subtitle', '跟踪当前需要关注的风险与处理动作') }}</p>
           </div>
           <button class="today-view-all" @click="openRiskCenter">进入风险中心</button>
         </header>
         <p class="risk-summary">{{ riskSummaryLine }}</p>
         <div class="risk-grid">
           <article class="risk-card risk-red" :class="{ glow: riskBuckets.red >= 3 }">
-            <p>{{ homeLayoutText('risk.bucket.red', '严重 ⚠') }}</p>
+            <p>{{ homeLayoutText('risk.bucket.red', 'RED') }}</p>
             <strong>{{ riskBuckets.red }}</strong>
           </article>
           <article class="risk-card risk-amber" :class="{ glow: riskBuckets.amber >= 4 }">
-            <p>{{ homeLayoutText('risk.bucket.amber', '关注 ⏳') }}</p>
+            <p>{{ homeLayoutText('risk.bucket.amber', 'AMBER') }}</p>
             <strong>{{ riskBuckets.amber }}</strong>
           </article>
           <article class="risk-card risk-green">
-            <p>{{ homeLayoutText('risk.bucket.green', '正常 ✓') }}</p>
+            <p>{{ homeLayoutText('risk.bucket.green', 'GREEN') }}</p>
             <strong>{{ riskBuckets.green }}</strong>
           </article>
         </div>
@@ -250,18 +249,18 @@
     </section>
 
     <details v-if="isHomeSectionEnabled('ops') && isHomeSectionTag('ops', 'details')" class="secondary-panel" :class="homeSectionClass('ops')" :style="homeSectionStyle('ops')" :open="isHomeSectionOpenDefault('ops')">
-      <summary>{{ homeLayoutText('ops.title', '项目总体状态') }}</summary>
-      <section class="ops-section" :aria-label="homeLayoutText('ops.aria_label', '项目总体状态区')">
+      <summary>{{ homeLayoutText('ops.title', '经营概览') }}</summary>
+      <section class="ops-section" :aria-label="homeLayoutText('ops.aria_label', '经营概览')">
         <div class="ops-grid">
           <article class="ops-card">
-            <p>{{ homeLayoutText('ops.compare.title', '合同额 vs 累计产值') }}</p>
+            <p>{{ homeLayoutText('ops.compare.title', '合同与产值对比') }}</p>
             <div class="compare-line">
-              <span>{{ homeLayoutText('ops.compare.contract', '合同额') }}</span>
+              <span>{{ homeLayoutText('ops.compare.contract', '合同') }}</span>
               <div class="compare-track"><div class="compare-fill contract" :style="{ width: `${opsBars.contract}%` }"></div></div>
               <strong>{{ opsBars.contract }}%</strong>
             </div>
             <div class="compare-line">
-              <span>{{ homeLayoutText('ops.compare.output', '累计产值') }}</span>
+              <span>{{ homeLayoutText('ops.compare.output', '产值') }}</span>
               <div class="compare-track"><div class="compare-fill output" :style="{ width: `${opsBars.output}%` }"></div></div>
               <strong>{{ opsBars.output }}%</strong>
             </div>
@@ -272,14 +271,14 @@
             <small>{{ trendText(opsKpi.costRateDelta) }}</small>
           </article>
           <article class="ops-card">
-            <p>{{ homeLayoutText('ops.kpi.payment_rate', '资金支付率') }}</p>
+            <p>{{ homeLayoutText('ops.kpi.payment_rate', '回款达成率') }}</p>
             <h4>{{ opsKpi.paymentRate }}%</h4>
             <small>{{ trendText(opsKpi.paymentRateDelta) }}</small>
           </article>
           <article class="ops-card">
-            <p>{{ homeLayoutText('ops.kpi.output_trend', '本月产值趋势') }}</p>
+            <p>{{ homeLayoutText('ops.kpi.output_trend', '产值趋势') }}</p>
             <h4>{{ trendText(opsKpi.outputTrendDelta) }}</h4>
-            <small>{{ homeLayoutText('ops.kpi.output_note', '基于当前可见业务数据') }}</small>
+            <small>{{ homeLayoutText('ops.kpi.output_note', '查看近期产值变化趋势') }}</small>
           </article>
         </div>
       </section>
@@ -301,7 +300,7 @@
     <section v-if="isHomeSectionEnabled('group_overview') && isHomeSectionTag('group_overview', 'section') && capabilityGroupCards.length" class="group-overview" :class="homeSectionClass('group_overview')" :style="homeSectionStyle('group_overview')" :aria-label="homeLayoutText('group_overview.aria_label', '常用功能区')">
       <header class="group-overview-header">
         <h3>{{ homeLayoutText('group_overview.title', '常用功能') }}</h3>
-        <p>{{ homeLayoutText('group_overview.subtitle', '按业务域快速进入当前最常用的场景。') }}</p>
+        <p>{{ homeLayoutText('group_overview.subtitle', '按功能分组进入常用工作区') }}</p>
       </header>
       <div class="group-overview-grid">
         <article v-for="group in capabilityGroupCards" :key="`group-${group.key}`" class="group-card module" @click="openGroupCard(group.key)">
@@ -439,7 +438,7 @@
           </button>
         </div>
         <p v-if="showEmptyHelp" class="empty-help">
-          {{ pageText('empty_help_detail', '建议先点击“切换角色”确认当前角色；若仍无功能，请联系管理员开通角色权限或配置工作台目录。') }}
+          {{ pageText('empty_help_detail', '可联系管理员确认角色权限与首页配置。') }}
         </p>
       </template>
     </div>
@@ -453,7 +452,7 @@
       <header class="home-action-deck-header">
         <div>
           <h3>{{ pageText('home_action_deck_title', '继续处理常用事项') }}</h3>
-          <p>{{ pageText('home_action_deck_subtitle', '保留最常用的入口；更多功能统一进入“我的工作”查看。') }}</p>
+          <p>{{ pageText('home_action_deck_subtitle', '从这里继续处理常用事项') }}</p>
         </div>
         <button class="today-view-all" @click="goToMyWork">{{ pageText('home_action_deck_view_all', '进入我的工作') }}</button>
       </header>
@@ -555,6 +554,7 @@ import { deriveHomeSectionMaps, flattenHomeOrchestrationBlocks } from '../app/ho
 import { findEntryForHomeActionItem, resolveHomeActionIntent, resolveHomeActionTarget } from '../app/homeActionResolver';
 import { findSceneReadyEntry } from '../app/resolvers/sceneReadyResolver';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
+import { resolveSceneFirstActionLocation, resolveSceneFirstFormOrRecordLocation } from '../app/sceneNavigation';
 import PageRenderer from '../components/page/PageRenderer.vue';
 import type { PageBlockActionEvent, PageOrchestrationContract } from '../app/pageOrchestration';
 
@@ -695,21 +695,22 @@ const heroQuickActions = computed(() => {
 });
 const enterpriseEnablement = computed(() => session.enterpriseEnablement);
 const enterpriseEnablementTitle = computed(() => {
-  const phase = asText(enterpriseEnablement.value?.phase).toLowerCase();
-  if (phase === 'sprint1') {
-    return '完成用户设置，并验证角色首页入口';
-  }
-  return '先建立公司、组织，再完成用户设置';
+  const companyName = asText(enterpriseEnablement.value?.current_company_name);
+  if (companyName) return `${companyName} · 企业启用`;
+  return '企业启用';
 });
 const enterpriseEnablementLead = computed(() => {
-  const phase = asText(enterpriseEnablement.value?.phase).toLowerCase();
-  if (phase === 'sprint1') {
-    return '当前企业启用主路径已进入用户与角色可见结果阶段。请完成用户、部门、产品角色和初始密码设置，再用新账号登录验证首页入口。';
-  }
-  return '当前企业启用主路径已接入公司、组织和用户设置三步。先完成公司信息，再继续补齐组织和执行主体。';
+  const phase = asText(enterpriseEnablement.value?.phase);
+  if (phase) return `当前阶段：${phase}`;
+  return '查看当前企业启用阶段';
 });
 const enterpriseEnablementSteps = computed(() => enterpriseEnablement.value?.steps || []);
 const enterprisePrimaryAction = computed(() => enterpriseEnablement.value?.primary_action || enterpriseEnablementSteps.value[0]?.target || null);
+const enterprisePrimaryActionLabel = computed(() => {
+  const firstStepLabel = asText(enterpriseEnablementSteps.value[0]?.label);
+  if (firstStepLabel) return `打开${firstStepLabel}`;
+  return '打开主入口';
+});
 const showEnterpriseEnablementCard = computed(() => {
   return isAdmin.value && enterpriseEnablementSteps.value.length > 0;
 });
@@ -934,7 +935,7 @@ const workspaceHeroEffective = computed<Record<string, unknown>>(() => {
     : {};
 });
 const heroTitle = computed(() => asText(workspaceHeroEffective.value.title) || pageText('title', '工作台'));
-const heroLead = computed(() => asText(workspaceHeroEffective.value.lead) || pageText('hero_lead', '围绕项目经营、风险与审批，优先处理今天最关键事项。'));
+const heroLead = computed(() => asText(workspaceHeroEffective.value.lead) || pageText('hero_lead', '查看当前工作重点与关键入口'));
 const heroProductTags = computed(() => {
   const raw = Array.isArray(workspaceHeroEffective.value.product_tags) ? workspaceHeroEffective.value.product_tags : [];
   return raw.map((item) => asText(item)).filter(Boolean);
@@ -945,11 +946,8 @@ const partialDataDetailLine = computed(() => asText(workspaceHeroEffective.value
 const hasRoleSwitch = computed(() => Object.keys(session.roleSurfaceMap || {}).length > 1);
 const roleLabel = computed(() => {
   const raw = asText(roleSurface.value?.role_label) || asText(roleSurface.value?.role_code);
-  const normalized = raw.toLowerCase();
-  if (!raw) return pageText('role_fallback_owner', '负责人');
-  if (normalized === 'executive') return pageText('role_label_executive', '高管');
-  if (normalized === 'owner') return pageText('role_label_owner', '负责人');
-  return raw;
+  if (raw) return raw;
+  return pageText('role_fallback_owner', '当前角色');
 });
 const sceneTitleMap = computed(() => {
   const map = new Map<string, string>();
@@ -992,7 +990,7 @@ const defaultSceneKey = computed(() => {
   return first ? asText(first.key) : '';
 });
 const roleLandingScene = computed(() => asText(roleSurface.value?.landing_scene_key) || defaultSceneKey.value);
-const roleLandingLabel = computed(() => sceneTitleMap.value.get(roleLandingScene.value) || pageText('role_landing_fallback', '工作台首页'));
+const roleLandingLabel = computed(() => sceneTitleMap.value.get(roleLandingScene.value) || pageText('role_landing_fallback', '默认入口'));
 const internalTileCount = computed(() => {
   let count = 0;
   session.scenes.forEach((scene) => {
@@ -1351,7 +1349,7 @@ const concreteTodos = computed<SuggestionItem[]>(() => {
     return {
       id: asText(row.id) || `todo-${idx + 1}`,
       title: asText(row.title) || `${pageText('todo_title_fallback_prefix', '待办 ')}${idx + 1}`,
-      description: asText(row.description) || pageText('todo_desc_fallback', '点击进入处理'),
+      description: asText(row.description) || pageText('todo_desc_fallback', '查看当前待处理事项'),
       actionLabel: asText(row.action_label) || matched?.actionLabel || '',
       count: Number(row.count || 0),
       status: statusRaw === 'urgent' ? 'urgent' : 'normal',
@@ -1399,7 +1397,7 @@ const riskTrend = computed(() => {
 
 const riskSummaryLine = computed(() => {
   const risk = workspaceRisk.value;
-  return asText(risk.summary) || pageText('risk_summary_fallback', '当前未出现严重风险，建议保持日常巡检节奏。');
+  return asText(risk.summary) || pageText('risk_summary_fallback', '当前暂无风险摘要说明');
 });
 
 function parseRiskActionId(raw: unknown): number {
@@ -1475,16 +1473,16 @@ const opsKpi = computed(() => {
 });
 
 function levelLabel(level: MetricLevel) {
-  if (level === 'red') return pageText('level_red', '严重');
-  if (level === 'amber') return pageText('level_amber', '关注');
-  return pageText('level_green', '正常');
+  const normalized = String(level || '').toUpperCase();
+  if (!normalized) return pageText('level_default', '未分级');
+  return pageText(`level_${normalized.toLowerCase()}`, normalized);
 }
 
 function trendText(delta: number) {
   const value = Number(delta || 0);
-  if (value > 0) return `${pageText('trend_up_prefix', '↑ ')}${Math.abs(value)}%`;
-  if (value < 0) return `${pageText('trend_down_prefix', '↓ ')}${Math.abs(value)}%`;
-  return pageText('trend_flat', '→ 0%');
+  if (!Number.isFinite(value)) return pageText('trend_default', '0%');
+  const signed = value > 0 ? `+${Math.abs(value)}` : value < 0 ? `-${Math.abs(value)}` : '0';
+  return pageText('trend_numeric', `${signed}%`);
 }
 
 function todoActionLabel(item: SuggestionItem) {
@@ -1801,7 +1799,7 @@ const homeOrchestrationDatasets = computed<Record<string, unknown>>(() => {
         id: group.key,
         key: group.key,
         title: group.label,
-        hint: matched?.sceneTitle || '点击进入业务模块',
+        hint: matched?.sceneTitle || '查看对应场景',
         action_key: 'open_scene',
         entry_id: matched?.id || '',
         scene_key: matched?.sceneKey || '',
@@ -1899,29 +1897,20 @@ function collapseAllSceneGroups() {
 
 function lockReasonLabel(reasonCode: string) {
   const code = String(reasonCode || '').toUpperCase();
-  if (code === 'PERMISSION_DENIED') return pageText('lock_reason_permission_denied', '权限不足');
-  if (code === 'FEATURE_DISABLED') return pageText('lock_reason_feature_disabled', '订阅未开通');
-  if (code === 'ROLE_SCOPE_MISMATCH') return pageText('lock_reason_role_scope_mismatch', '角色范围不匹配');
-  if (code === 'CAPABILITY_SCOPE_MISSING') return pageText('lock_reason_scope_missing', '缺少前置条件');
-  if (code === 'CAPABILITY_SCOPE_CYCLE') return pageText('lock_reason_scope_cycle', '功能依赖异常');
-  if (code === 'COMING_SOON') return pageText('lock_reason_coming_soon', '功能建设中');
-  if (code === 'PENDING_APPROVAL') return pageText('lock_reason_waiting_open', '待审批开放');
-  return pageText('lock_reason_default', '当前不可用');
+  if (!code) return pageText('lock_reason_default', '未知锁定原因');
+  return pageText(`lock_reason_${code.toLowerCase()}`, code);
 }
 
 function capabilityStateLabel(state: string) {
   const normalized = String(state || '').toLowerCase();
-  if (normalized === 'readonly') return pageText('capability_state_readonly', '只读');
-  if (normalized === 'deny') return pageText('capability_state_deny', '禁止');
-  if (normalized === 'pending') return pageText('capability_state_pending', '待开放');
-  if (normalized === 'coming_soon') return pageText('capability_state_coming_soon', '建设中');
-  return pageText('capability_state_allow', '可用');
+  if (!normalized) return pageText('capability_state_default', 'unknown');
+  return pageText(`capability_state_${normalized}`, normalized);
 }
 
 function stateLabel(state: EntryState) {
-  if (state === 'READY') return pageText('state_ready', '可进入');
-  if (state === 'LOCKED') return pageText('state_locked', '暂不可用');
-  return pageText('state_preview', '即将开放');
+  const normalized = String(state || '').toUpperCase();
+  if (!normalized) return pageText('state_default', 'UNKNOWN');
+  return pageText(`state_${normalized.toLowerCase()}`, normalized);
 }
 
 function hasNativeEntryTarget(entry: CapabilityEntry) {
@@ -1943,12 +1932,12 @@ function canEnter(entry: CapabilityEntry) {
 }
 
 function actionLabel(entry: CapabilityEntry) {
-  if (entry.state === 'LOCKED') return pageText('action_enter_disabled', '暂不可用');
-  if (isPreReleaseEnterable(entry)) return pageText('action_enter_prerelease', '预发布进入');
-  if (entry.state === 'PREVIEW') return pageText('action_enter_preview', '即将开放');
-  if (entry.capabilityState === 'readonly') return pageText('action_enter_readonly', '只读进入');
+  if (entry.state === 'LOCKED') return pageText('action_enter_disabled', 'LOCKED');
+  if (isPreReleaseEnterable(entry)) return pageText('action_enter_prerelease', 'PREVIEW');
+  if (entry.state === 'PREVIEW') return pageText('action_enter_preview', 'PREVIEW');
+  if (entry.capabilityState === 'readonly') return pageText('action_enter_readonly', 'readonly');
   if (entry.actionLabel) return entry.actionLabel;
-  return pageText('action_enter_default', '进入处理');
+  return pageText('action_enter_default', '进入');
 }
 
 function orchestrationActionIntent(key: string, fallback = 'ui.contract') {
@@ -2024,18 +2013,59 @@ async function openScene(entry: CapabilityEntry) {
   try {
     void trackCapabilityOpen(entry.key).catch(() => {});
     if (entry.route) {
-      await router.push({ path: entry.route, query: entry.contextQuery });
+      const routePath = String(entry.route || '').trim();
+      const legacyActionRoute = /^\/(?:a\/|compat\/action\/)/.test(routePath);
+      if (legacyActionRoute && entry.targetActionId) {
+        const sceneLocation = resolveSceneFirstActionLocation({
+          sourceQuery: route.query as Record<string, unknown>,
+          sceneKey: entry.sceneKey,
+          actionId: entry.targetActionId,
+          menuId: entry.targetMenuId || undefined,
+          model: entry.targetModel || undefined,
+          extraQuery: { menu_id: entry.targetMenuId || undefined, ...entry.contextQuery },
+        });
+        await router.push(sceneLocation || { path: routePath, query: entry.contextQuery });
+      } else {
+        await router.push({ path: routePath, query: entry.contextQuery });
+      }
     } else if (entry.targetActionId) {
-      await router.push({
-        path: `/a/${entry.targetActionId}`,
-        query: { menu_id: entry.targetMenuId || undefined, ...entry.contextQuery },
+      const sceneLocation = resolveSceneFirstActionLocation({
+        sourceQuery: route.query as Record<string, unknown>,
+        sceneKey: entry.sceneKey,
+        actionId: entry.targetActionId,
+        menuId: entry.targetMenuId || undefined,
+        model: entry.targetModel || undefined,
+        extraQuery: { menu_id: entry.targetMenuId || undefined, ...entry.contextQuery },
+      });
+      await router.push(sceneLocation || {
+        path: `/s/${entry.sceneKey}`,
+        query: {
+          menu_id: entry.targetMenuId || undefined,
+          action_id: entry.targetActionId,
+          ...entry.contextQuery,
+        },
       });
     } else if (entry.targetModel && entry.targetRecordId) {
-      await router.push({
-        path: `/r/${entry.targetModel}/${entry.targetRecordId}`,
+      const sceneLocation = resolveSceneFirstFormOrRecordLocation({
+        sourceQuery: route.query as Record<string, unknown>,
+        sceneKey: entry.sceneKey,
+        actionId: entry.targetActionId || undefined,
+        menuId: entry.targetMenuId || undefined,
+        model: entry.targetModel,
+        recordId: entry.targetRecordId,
+        extraQuery: {
+          menu_id: entry.targetMenuId || undefined,
+          action_id: entry.targetActionId || undefined,
+          ...entry.contextQuery,
+        },
+      });
+      await router.push(sceneLocation || {
+        path: `/s/${entry.sceneKey}`,
         query: {
           menu_id: entry.targetMenuId || undefined,
           action_id: entry.targetActionId || undefined,
+          model: entry.targetModel,
+          record_id: entry.targetRecordId,
           ...entry.contextQuery,
         },
       });
@@ -2086,10 +2116,12 @@ function goToMyWork() {
   router.push({ path: '/my-work', query: workspaceContextQuery.value }).catch(() => {});
 }
 
-function enterpriseStepStatusLabel(status: string) {
-  if (status === 'active') return '当前步骤';
-  if (status === 'done' || status === 'completed') return '已完成';
-  return '下一步';
+function enterpriseStepStatusLabel(step: { status?: string; status_label?: string } | null | undefined) {
+  const statusLabel = asText(step?.status_label);
+  if (statusLabel) return statusLabel;
+  const status = asText(step?.status);
+  if (status) return status;
+  return '待确认';
 }
 
 function openEnterpriseEnablementTarget(target: { action_id?: number; menu_id?: number; route?: string } | null | undefined) {
@@ -2103,12 +2135,24 @@ function openEnterpriseEnablementTarget(target: { action_id?: number; menu_id?: 
     action_id: actionId || undefined,
     menu_id: menuId || undefined,
   }).catch(() => {});
-  if (routePath && actionId > 0) {
+  if (actionId > 0) {
+    const sceneLocation = resolveSceneFirstActionLocation({
+      sourceQuery: route.query as Record<string, unknown>,
+      actionId,
+      menuId: menuId || undefined,
+      extraQuery: { ...workspaceContextQuery.value, menu_id: menuId || undefined },
+    });
+    if (sceneLocation) {
+      router.push(sceneLocation).catch(() => {});
+      return;
+    }
+  }
+  if (routePath) {
     router.push({ path: routePath, query: { ...workspaceContextQuery.value, menu_id: menuId || undefined } }).catch(() => {});
     return;
   }
   if (actionId > 0) {
-    router.push({ path: `/a/${actionId}`, query: { ...workspaceContextQuery.value, menu_id: menuId || undefined } }).catch(() => {});
+    router.push({ path: `/compat/action/${actionId}`, query: { ...workspaceContextQuery.value, menu_id: menuId || undefined } }).catch(() => {});
   }
 }
 
@@ -2294,10 +2338,9 @@ function resolveEnterErrorMessage(error: unknown) {
 }
 
 function resolveEnterErrorHint(code: string) {
-  if (code === 'PERMISSION_DENIED') return pageText('enter_error_hint_permission_denied', '请联系管理员开通对应权限后重试。');
-  if (code === 'ROUTE_NOT_FOUND') return pageText('enter_error_hint_route_not_found', '入口配置异常，请稍后重试或联系管理员。');
-  if (code === 'TIMEOUT') return pageText('enter_error_hint_timeout', '网络连接超时，请检查网络后点击重试。');
-  return pageText('enter_error_hint_default', '请稍后重试；如果问题持续，请联系管理员。');
+  const normalized = String(code || '').toUpperCase();
+  if (!normalized) return pageText('enter_error_hint_default', '当前入口暂时不可用');
+  return pageText(`enter_error_hint_${normalized.toLowerCase()}`, `入口错误：${normalized}`);
 }
 
 onMounted(() => {

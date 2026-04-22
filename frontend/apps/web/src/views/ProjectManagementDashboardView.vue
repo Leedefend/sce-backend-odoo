@@ -397,8 +397,10 @@ type SummaryItem = {
 type ProjectSwitchOption = {
   project_id: number;
   project_name: string;
+  execution_stage_label?: string;
   stage_label: string;
   milestone_label: string;
+  project_condition?: string;
   status: string;
   active?: boolean;
   project_context?: Record<string, unknown>;
@@ -521,72 +523,48 @@ const currentSceneLabel = computed(() => {
 });
 
 const blockDescriptors = computed(() => entry.value?.blocks || []);
+const backendSummaryRows = computed<SummaryItem[]>(() => {
+  const raw = Array.isArray(entry.value?.summary_rows) ? entry.value?.summary_rows : [];
+  return raw
+    .map((item) => {
+      const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+      const key = asText(row.key || '');
+      if (!key) return null;
+      return {
+        key,
+        label: asText(row.label || key) || key,
+        value: asText(row.value || '--') || '--',
+        copy: asText(row.copy || '') || undefined,
+      } satisfies SummaryItem;
+    })
+    .filter((item): item is SummaryItem => Boolean(item));
+});
 
 const summaryRows = computed<SummaryItem[]>(() => {
-  const summary = (entry.value?.summary && typeof entry.value.summary === 'object') ? entry.value.summary : {};
-  if (currentSceneKey.value === 'cost.tracking') {
-    const total = asNumber(summary.cost_total_amount);
-    const currency = asText(summary.currency_name || '');
-    return [
-      { key: 'project_code', label: '项目编码', value: asText(summary.project_code || '--') || '--' },
-      { key: 'manager_name', label: '项目经理', value: asText(summary.manager_name || '--') || '--' },
-      { key: 'stage_name', label: '当前阶段', value: asText(summary.stage_name || '--') || '--' },
-      { key: 'cost_record_count', label: '成本记录数', value: `${asNumber(summary.cost_record_count)} 条` },
-      { key: 'cost_total_amount', label: '成本合计', value: currency ? `${total} ${currency}` : `${total}` },
-      { key: 'draft_cost_amount', label: '草稿金额', value: currency ? `${asNumber(summary.draft_cost_amount)} ${currency}` : `${asNumber(summary.draft_cost_amount)}` },
-    ];
-  }
-  if (currentSceneKey.value === 'payment') {
-    const total = asNumber(summary.payment_total_amount);
-    const currency = asText(summary.currency_name || '');
-    return [
-      { key: 'project_code', label: '项目编码', value: asText(summary.project_code || '--') || '--' },
-      { key: 'manager_name', label: '项目经理', value: asText(summary.manager_name || '--') || '--' },
-      { key: 'stage_name', label: '当前阶段', value: asText(summary.stage_name || '--') || '--' },
-      { key: 'payment_record_count', label: '付款记录数', value: `${asNumber(summary.payment_record_count)} 条` },
-      { key: 'payment_total_amount', label: '付款合计', value: currency ? `${total} ${currency}` : `${total}` },
-      { key: 'draft_payment_amount', label: '草稿金额', value: currency ? `${asNumber(summary.draft_payment_amount)} ${currency}` : `${asNumber(summary.draft_payment_amount)}` },
-    ];
-  }
-  if (isDashboardSurface.value) {
-    return [
-      { key: 'stage_label', label: '当前阶段', value: asText(currentProjectContext.value.stage_label || summary.stage_name || '--') || '--', copy: '主流程位置' },
-      { key: 'milestone_label', label: '当前里程碑', value: asText(currentProjectContext.value.milestone_label || '--') || '--', copy: '执行推进节点' },
-      { key: 'progress_percent', label: '执行进度', value: `${asNumber(summary.progress_percent)}%`, copy: metricsExplainMap.value.progress?.explain || '任务与里程碑综合进度' },
-      { key: 'cost_total', label: '成本合计', value: `${asNumber(summary.cost_total)}`, copy: metricsExplainMap.value.cost?.explain || '当前经营事实' },
-      { key: 'payment_total', label: '付款合计', value: `${asNumber(summary.payment_total)}`, copy: metricsExplainMap.value.payment?.explain || '当前资金事实' },
-      { key: 'payment_executed_total', label: '已支付证据', value: `${asNumber(summary.payment_executed_total)}`, copy: `${asNumber(summary.payment_executed_record_count)} 条 payment.ledger 台账` },
-      { key: 'status', label: '当前状态', value: asText(currentProjectContext.value.status || summary.status || '--') || '--', copy: '系统综合判断' },
-    ];
-  }
-  return [
-    { key: 'project_code', label: '项目编码', value: asText(summary.project_code || '--') || '--' },
-    { key: 'manager_name', label: '项目经理', value: asText(summary.manager_name || '--') || '--' },
-    { key: 'partner_name', label: '建设单位', value: asText(summary.partner_name || '--') || '--' },
-    { key: 'stage_name', label: '当前阶段', value: asText(summary.stage_name || '--') || '--' },
-    { key: 'health_state', label: '健康度', value: asText(summary.health_state || '--') || '--' },
-    { key: 'date_start', label: '计划开始', value: asText(summary.date_start || '--') || '--' },
-    { key: 'date_end', label: '计划结束', value: asText(summary.date_end || '--') || '--' },
-  ];
+  if (backendSummaryRows.value.length) return backendSummaryRows.value;
+  return [];
 });
 
 const dashboardHeadline = computed(() => {
   const projectName = asText(currentProjectContext.value.project_name || entry.value?.title || '--') || '--';
-  const stageLabel = asText(currentProjectContext.value.stage_label || '--') || '--';
+  const stageLabel = asText(currentProjectContext.value.execution_stage_label || '--') || '--';
   const milestoneLabel = asText(currentProjectContext.value.milestone_label || '--') || '--';
   return {
     title: projectName,
-    subtitle: `当前处于 ${stageLabel} · ${milestoneLabel}，驾驶舱会给出推荐动作与风险提示。`,
+    subtitle: [stageLabel !== '--' ? `stage=${stageLabel}` : '', milestoneLabel !== '--' ? `milestone=${milestoneLabel}` : ''].filter(Boolean).join(' · ')
+      || '',
   };
 });
 
 const stateExplain = computed(() => {
   const raw = entry.value?.state_explain;
   const data = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+  const statusExplain = asText(data.status_explain || '') || asText(data.project_condition_explain || '') || '';
   return {
-    stageExplain: asText(data.stage_explain || '') || '系统会根据当前主阶段解释项目所处位置。',
-    milestoneExplain: asText(data.milestone_explain || '') || '系统会根据当前里程碑解释项目推进状态。',
-    statusExplain: asText(data.status_explain || '') || '系统会结合业务事实解释当前状态与下一步。',
+    stageExplain: asText(data.execution_stage_explain || '') || '--',
+    milestoneExplain: asText(data.milestone_explain || '') || '--',
+    projectConditionExplain: asText(data.project_condition_explain || '') || '--',
+    statusExplain: statusExplain || '--',
   };
 });
 
@@ -602,7 +580,7 @@ function blockCaption(blockKey: string) {
   const descriptor = blockDescriptors.value.find((row) => asText(row.key || '') === blockKey);
   const contractCaption = asText(descriptor?.caption || '');
   if (contractCaption) return contractCaption;
-  return '区块按需加载。';
+  return '--';
 }
 
 const progressRows = computed(() => {
@@ -677,7 +655,7 @@ function taskRows(blockKey: string) {
       key: asText(row.task_id || row.id || row.key || `${blockKey}_${index + 1}`),
       title: asText(row.title || row.name || '未命名记录'),
       subtitle: asText(row.subtitle || '') || [asText(row.stage_name || ''), asText(row.deadline || '')].filter(Boolean).join(' · ') || '暂无补充信息',
-      stateLabel: stateLabel || state || '待处理',
+      stateLabel: stateLabel || state || '--',
       stateTone: stateTone || 'info',
     };
   });
@@ -692,16 +670,11 @@ function blockEmptyText(blockKey: string) {
   const summary = (data.summary && typeof data.summary === 'object') ? data.summary as Record<string, unknown> : {};
   const hint = asText(summary.empty_hint || '');
   if (hint) return hint;
-  if (blockKey === 'plan_tasks') return '当前项目还没有计划任务。';
-  if (blockKey === 'execution_tasks') return '当前项目还没有执行任务。';
-  if (blockKey === 'pilot_precheck') return '当前项目还没有试点前检查结果。';
-  if (blockKey === 'cost_list') return '当前项目还没有成本记录。';
-  if (blockKey === 'payment_list') return '当前项目还没有付款记录。';
-  return '当前区块暂无数据。';
+  return '--';
 }
 
 function actionStateLabel(state: string) {
-  return asText(state || '') || '待处理';
+  return asText(state || '') || '--';
 }
 
 function actionButtonLabel(row: Record<string, unknown>, state: string) {
@@ -715,7 +688,7 @@ function actionButtonLabel(row: Record<string, unknown>, state: string) {
 
 function actionHint(row: Record<string, unknown>) {
   const rawHint = asText(row.hint || row.message || '');
-  return rawHint || '等待后续场景接入';
+  return rawHint || '查看该动作的当前执行提示';
 }
 
 const pilotPrecheckSummary = computed(() => {
@@ -772,7 +745,7 @@ const costEntryHint = computed(() => {
   const payload = blockData('cost_entry');
   const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
   const summary = (data.summary && typeof data.summary === 'object') ? data.summary as Record<string, unknown> : {};
-  return asText(summary.state_fallback_text || '') || '录入后会刷新成本记录与成本汇总。';
+  return asText(summary.state_fallback_text || '') || '--';
 });
 
 const costListRows = computed(() => {
@@ -822,7 +795,7 @@ const paymentEntryHint = computed(() => {
   const payload = blockData('payment_entry');
   const data = (payload?.data && typeof payload.data === 'object') ? payload.data : {};
   const summary = (data.summary && typeof data.summary === 'object') ? data.summary as Record<string, unknown> : {};
-  return asText(summary.state_fallback_text || '') || '录入后会刷新付款记录与付款汇总。';
+  return asText(summary.state_fallback_text || '') || '--';
 });
 
 const paymentListRows = computed(() => {
@@ -933,12 +906,12 @@ const currentStateText = computed(() => {
   const stateLabel = asText(summary.current_state_label || '');
   const pilotState = asText(summary.pilot_precheck_state || '');
   if (pilotState === 'blocked') {
-    return stateLabel ? `当前状态：${stateLabel}` : '当前状态：未通过首轮试点检查';
+    return stateLabel || '--';
   }
   if (stateLabel) {
-    return `当前状态：${stateLabel}`;
+    return stateLabel;
   }
-  return asText(entry.value?.state_fallback_text || '') || '当前状态：正在查看场景状态。';
+  return asText(entry.value?.state_fallback_text || '') || '--';
 });
 
 const nextStepText = computed(() => {
@@ -948,14 +921,14 @@ const nextStepText = computed(() => {
   const pilotState = asText(summary.pilot_precheck_state || '');
   const pilotMessage = asText(summary.pilot_primary_message || '');
   if (pilotState === 'blocked' && pilotMessage) {
-    return `下一步：${pilotMessage}`;
+    return pilotMessage;
   }
   const nextStepLabel = asText(summary.next_step_label || '');
   if (nextStepLabel) {
-    return `下一步：${nextStepLabel}`;
+    return nextStepLabel;
   }
   const firstAction = nextActions.value[0];
-  return firstAction ? `下一步：${firstAction.label}` : '下一步：刷新区块并继续查看建议动作。';
+  return firstAction ? firstAction.label : '--';
 });
 
 function resetRuntimeBlocks() {
@@ -1151,8 +1124,10 @@ async function loadProjectSwitcherOptions() {
     ? {
       project_id: fallbackProjectId,
       project_name: asText(fallbackContext.project_name || `项目 ${fallbackProjectId}`),
+      execution_stage_label: asText(fallbackContext.execution_stage_label || ''),
       stage_label: asText(fallbackContext.stage_label || ''),
       milestone_label: asText(fallbackContext.milestone_label || ''),
+      project_condition: asText(fallbackContext.project_condition || ''),
       status: asText(fallbackContext.status || ''),
       active: true,
       project_context: fallbackContext,

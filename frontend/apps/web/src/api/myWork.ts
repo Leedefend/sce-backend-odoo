@@ -36,6 +36,13 @@ export type MyWorkRecordItem = {
   action_key?: string;
   reason_code?: string;
   priority?: 'high' | 'medium' | 'low' | string;
+  can_complete?: boolean;
+  complete_action?: {
+    intent?: string;
+    label?: string;
+    enabled?: boolean;
+    source?: string;
+  };
   target?: {
     kind?: 'record' | 'scene' | 'action' | string;
     scene_key?: string;

@@ -1,6 +1,5 @@
 <template>
   <section class="page">
-    <!-- Page intent: 判断项目是否可控，先看风险与关键指标，再执行下一步动作。 -->
     <header class="header">
       <div>
         <h2>{{ title }}</h2>
@@ -80,8 +79,12 @@
       </div>
       <section v-if="pageSectionEnabled('project_summary', true) && pageSectionTagIs('project_summary', 'section') && showProjectSummary" class="record-l1" :style="pageSectionStyle('project_summary')">
         <article class="l1-card">
-          <p class="l1-label">{{ pageText('summary_status_stage', '项目状态与阶段') }}</p>
-          <p class="l1-value">{{ projectStatusSummary }}</p>
+          <p class="l1-label">{{ pageText('summary_status_stage', '项目执行阶段') }}</p>
+          <p class="l1-value">{{ projectExecutionStageSummary }}</p>
+        </article>
+        <article v-if="documentStatusSummary" class="l1-card">
+          <p class="l1-label">{{ pageText('summary_document_status', '单据状态') }}</p>
+          <p class="l1-value">{{ documentStatusSummary }}</p>
         </article>
         <article class="l1-card">
           <p class="l1-label">{{ pageText('summary_risk', '关键风险摘要') }}</p>
@@ -205,6 +208,8 @@ import { ErrorCodes } from '../app/error_codes';
 import { parseExecuteResult, semanticButtonLabel } from '../app/action_semantics';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
+import { findSceneByEntryAuthority } from '../app/resolvers/sceneRegistry';
+import { resolveSceneFirstFormOrRecordLocation } from '../app/sceneNavigation';
 
 const route = useRoute();
 const router = useRouter();
@@ -254,10 +259,10 @@ const subtitle = computed(() => (
 const showProjectSummary = computed(() => {
   const payload = recordData.value || {};
   const summarySignals = [
+    payload.execution_stage,
+    payload.execution_stage_label,
     payload.stage_id,
     payload.stage,
-    payload.state,
-    payload.status,
     payload.health,
     payload.risk_count,
     payload.warning_count,
@@ -266,32 +271,54 @@ const showProjectSummary = computed(() => {
     payload.payment_ratio,
     payload.payment_rate,
   ];
-  return summarySignals.some((item) => item !== undefined && item !== null && String(item).trim() !== '');
+  const hasProjectSignals = summarySignals.some((item) => item !== undefined && item !== null && String(item).trim() !== '');
+  return hasProjectSignals || Boolean(documentStatusSummary.value);
 });
-const projectStatusSummary = computed(() => {
-  const phase = String(recordData.value?.stage_id || recordData.value?.stage || recordData.value?.state || pageText('project_phase_unset', '未配置阶段'));
-  const health = String(recordData.value?.status || recordData.value?.health || '');
-  if (health) return `${phase} · ${health}`;
+const projectExecutionStageSummary = computed(() => {
+  const phase = String(
+    recordData.value?.execution_stage_label
+    || recordData.value?.stage_label
+    || recordData.value?.execution_stage
+    || recordData.value?.stage_id
+    || recordData.value?.stage
+    || pageText('project_phase_missing_contract', '当前项目执行阶段待更新'),
+  );
   return phase;
 });
+const documentStatusSummary = computed(() => {
+  const statusValue = [
+    recordData.value?.status_label,
+    recordData.value?.state_label,
+    recordData.value?.sc_state_label,
+    recordData.value?.approval_state_label,
+    recordData.value?.workflow_state_label,
+    recordData.value?.status,
+    recordData.value?.state,
+    recordData.value?.sc_state,
+    recordData.value?.approval_state,
+    recordData.value?.workflow_state,
+  ].find((item) => item !== undefined && item !== null && String(item).trim() !== '');
+  return String(statusValue || '');
+});
 const projectRiskSummary = computed(() => {
-  const risk = Number(recordData.value?.risk_count || recordData.value?.warning_count || 0);
-  if (!Number.isFinite(risk) || risk <= 0) return pageText('project_risk_ok', '正常，暂无高风险告警');
-  if (risk >= 3) {
-    return `${pageText('project_risk_critical_prefix', '严重，当前高风险 ')}${risk}${pageText('project_risk_critical_suffix', ' 项，需优先闭环')}`;
+  const rawRisk = recordData.value?.risk_count ?? recordData.value?.warning_count;
+  if (rawRisk === undefined || rawRisk === null || String(rawRisk).trim() === '') {
+    return pageText('project_risk_missing_contract', '当前暂无风险摘要');
   }
-  return `${pageText('project_risk_attention_prefix', '关注，当前风险 ')}${risk}${pageText('project_risk_attention_suffix', ' 项')}`;
+  const risk = Number(rawRisk || 0);
+  return Number.isFinite(risk) ? `${risk}` : pageText('project_risk_invalid_contract', '后端风险摘要格式无效');
 });
 const projectFinanceSummary = computed(() => {
-  const output = Number(recordData.value?.output_value || recordData.value?.amount_output || 0);
-  const pay = Number(recordData.value?.payment_ratio || recordData.value?.payment_rate || 0);
-  const outputText = Number.isFinite(output) && output > 0
-    ? `${pageText('project_output_prefix', '产值 ')}${output}`
-    : pageText('project_output_unset', '产值未配置');
-  const payText = Number.isFinite(pay) && pay > 0
-    ? `${pageText('project_pay_prefix', '付款比 ')}${pay}${pageText('project_pay_suffix', '%')}`
-    : pageText('project_pay_unset', '付款比未配置');
-  return `${outputText} · ${payText}`;
+  const items: string[] = [];
+  const outputRaw = recordData.value?.output_value ?? recordData.value?.amount_output;
+  if (outputRaw !== undefined && outputRaw !== null && String(outputRaw).trim() !== '') {
+    items.push(`output=${outputRaw}`);
+  }
+  const payRaw = recordData.value?.payment_ratio ?? recordData.value?.payment_rate;
+  if (payRaw !== undefined && payRaw !== null && String(payRaw).trim() !== '') {
+    items.push(`payment_ratio=${payRaw}`);
+  }
+  return items.join(' · ') || pageText('project_finance_missing_contract', '当前暂无资金/产值指标');
 });
 const canEdit = computed(() => contractWriteAllowed.value);
 const readonlyHint = computed(() => {
@@ -421,6 +448,47 @@ const hudEntries = computed(() => [
 
 function resolveCarryQuery(extra?: Record<string, unknown>) {
   return pickContractNavQuery(route.query as Record<string, unknown>, extra);
+}
+
+async function pushSceneOrAction(actionId: number, extra?: Record<string, unknown>) {
+  const currentSceneKey = String(route.query.scene_key || '').trim();
+  const currentMenuId = Number(route.query.menu_id || 0);
+  const scene = findSceneByEntryAuthority({
+    sceneKey: currentSceneKey,
+    actionId,
+    menuId: currentMenuId,
+    model: model.value,
+  }) || findSceneByEntryAuthority({
+    actionId,
+    menuId: currentMenuId,
+    model: model.value,
+  });
+  if (scene) {
+    await router.push({
+      path: scene.route || `/s/${scene.key}`,
+      query: resolveCarryQuery({
+        action_id: actionId,
+        menu_id: currentMenuId || scene.target.menu_id || undefined,
+        scene_key: scene.key,
+        model: model.value || undefined,
+        record_id: recordId.value || undefined,
+        ...(extra || {}),
+      }),
+    });
+    return;
+  }
+  await router.push({
+    name: 'workbench',
+    query: resolveCarryQuery({
+      reason: ErrorCodes.CONTRACT_CONTEXT_MISSING,
+      diag: 'record_shell_missing_scene_identity',
+      action_id: actionId,
+      menu_id: currentMenuId || undefined,
+      model: model.value || undefined,
+      record_id: recordId.value || undefined,
+      ...(extra || {}),
+    }),
+  });
 }
 
 function openProjectAction(path: string, query?: Record<string, string>) {
@@ -727,8 +795,30 @@ function reload() {
 function handleSuggestedAction(action: string): boolean {
   if (action !== 'open_record') return false;
   if (!model.value || !recordId.value) return false;
+  const query = resolveCarryQuery({ model: model.value, record_id: recordId.value });
+  const sceneLocation = resolveSceneFirstFormOrRecordLocation({
+    sourceQuery: route.query as Record<string, unknown>,
+    sceneKey: String(route.query.scene_key || '').trim(),
+    actionId: actionId.value || undefined,
+    menuId: Number(route.query.menu_id || 0) || undefined,
+    model: model.value,
+    recordId: recordId.value,
+    extraQuery: query,
+  });
   router
-    .push({ name: 'record', params: { model: model.value, id: recordId.value }, query: resolveCarryQuery() })
+    .push(sceneLocation
+      ? sceneLocation
+      : {
+          name: 'workbench',
+          query: resolveCarryQuery({
+            reason: ErrorCodes.CONTRACT_CONTEXT_MISSING,
+            diag: 'record_view_open_record_missing_scene_identity',
+            action_id: actionId.value || undefined,
+            menu_id: Number(route.query.menu_id || 0) || undefined,
+            model: model.value,
+            record_id: recordId.value,
+          }),
+        })
     .catch(() => {});
   return true;
 }
@@ -817,18 +907,13 @@ async function runHeaderButton(btn: ViewButton) {
         domainRaw?: string;
         actionTarget?: string;
       };
-      await router.push({
-        name: 'action',
-        params: { actionId: openActionId },
-        query: resolveCarryQuery({
-          action_id: openActionId,
-          target: enriched.actionTarget || undefined,
-          domain_raw: enriched.domainRaw || undefined,
-          context_raw:
-            enriched.buttonContext && Object.keys(enriched.buttonContext).length
-              ? JSON.stringify(enriched.buttonContext)
-              : undefined,
-        }),
+      await pushSceneOrAction(openActionId, {
+        target: enriched.actionTarget || undefined,
+        domain_raw: enriched.domainRaw || undefined,
+        context_raw:
+          enriched.buttonContext && Object.keys(enriched.buttonContext).length
+            ? JSON.stringify(enriched.buttonContext)
+            : undefined,
       });
     }
     return;
@@ -852,7 +937,7 @@ async function runHeaderButton(btn: ViewButton) {
     } else if (response?.result?.type === 'refresh') {
       await load();
     } else if (response?.result?.action_id) {
-      await router.push({ name: 'action', params: { actionId: response.result.action_id } });
+      await pushSceneOrAction(response.result.action_id);
     }
     actionFeedback.value = parseExecuteResult(response);
   } catch (err) {
@@ -888,19 +973,32 @@ async function applyButtonEffect(effect: ButtonEffect) {
   if (effect.type === 'navigate' && effect.target) {
     const target = effect.target as ButtonEffectTarget;
     if (target.kind === 'record' && target.model && target.id) {
-      await router.push({
-        name: 'record',
-        params: { model: target.model, id: target.id },
-        query: resolveCarryQuery(),
+      const sceneLocation = resolveSceneFirstFormOrRecordLocation({
+        sourceQuery: route.query as Record<string, unknown>,
+        sceneKey: String(route.query.scene_key || '').trim(),
+        actionId: actionId.value || undefined,
+        menuId: Number(route.query.menu_id || 0) || undefined,
+        model: target.model,
+        recordId: target.id,
+        extraQuery: resolveCarryQuery({ model: target.model, record_id: target.id }),
       });
+      await router.push(sceneLocation
+        ? sceneLocation
+        : {
+            name: 'workbench',
+            query: resolveCarryQuery({
+              reason: ErrorCodes.CONTRACT_CONTEXT_MISSING,
+              diag: 'record_view_target_record_missing_scene_identity',
+              action_id: actionId.value || undefined,
+              menu_id: Number(route.query.menu_id || 0) || undefined,
+              model: target.model,
+              record_id: target.id,
+            }),
+          });
       return;
     }
     if (target.kind === 'action' && target.action_id) {
-      await router.push({
-        name: 'action',
-        params: { actionId: target.action_id },
-        query: resolveCarryQuery({ action_id: target.action_id }),
-      });
+      await pushSceneOrAction(target.action_id);
       return;
     }
     if (target.kind === 'url' && target.url) {
@@ -1057,132 +1155,141 @@ onMounted(load);
 <style scoped>
 .page {
   display: grid;
-  gap: 16px;
-  color: #0f172a;
+  gap: var(--ui-space-4);
+  color: var(--ui-color-ink-strong);
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--ui-space-4);
 }
 
 .actions {
   display: flex;
-  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ui-space-2);
 }
 
 .meta {
-  color: #64748b;
-  font-size: 14px;
+  color: var(--ui-color-ink-muted);
+  font-size: var(--ui-font-size-md);
 }
 
 .readonly-hint {
-  margin-top: 6px;
-  color: #92400e;
-  background: #fffbeb;
-  border: 1px solid #fcd34d;
-  border-radius: 8px;
+  margin-top: var(--ui-space-2);
+  color: var(--ui-color-warning-600);
+  background: rgba(255, 245, 223, 0.88);
+  border: 1px solid rgba(165, 107, 22, 0.2);
+  border-radius: var(--ui-radius-sm);
   padding: 6px 10px;
 }
 
 .action-feedback {
-  margin-top: 6px;
-  color: #166534;
+  margin-top: var(--ui-space-2);
+  color: var(--ui-color-success-600);
 }
 
 .action-feedback.error {
-  color: #b91c1c;
+  color: var(--ui-color-danger-600);
 }
 
 .action-feedback .code {
-  color: #64748b;
+  color: var(--ui-color-ink-muted);
 }
 
 .pill {
   padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 11px;
+  border-radius: var(--ui-radius-pill);
+  font-size: var(--ui-font-size-xs);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  background: #e2e8f0;
-  color: #1e293b;
+  background: rgba(248, 245, 239, 0.88);
+  color: var(--ui-color-ink);
+  border: 1px solid var(--ui-color-border);
 }
 
 .pill.ok {
-  background: #dcfce7;
-  color: #14532d;
+  background: rgba(235, 248, 242, 0.9);
+  color: var(--ui-color-success-600);
+  border-color: rgba(31, 122, 91, 0.18);
 }
 
 .pill.warn {
-  background: #fef9c3;
-  color: #713f12;
+  background: rgba(255, 245, 223, 0.88);
+  color: var(--ui-color-warning-600);
+  border-color: rgba(165, 107, 22, 0.2);
 }
 
 .pill.danger {
-  background: #fee2e2;
-  color: #991b1b;
+  background: rgba(255, 240, 238, 0.92);
+  color: var(--ui-color-danger-600);
+  border-color: rgba(177, 76, 67, 0.2);
 }
 
 .card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+  padding: var(--ui-space-6);
+  box-shadow: var(--ui-shadow-sm);
   display: grid;
-  gap: 12px;
+  gap: var(--ui-space-3);
 }
 
 .card.editing {
-  border: 1px dashed #94a3b8;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+  border: 1px dashed var(--ui-color-border-strong);
+  box-shadow: var(--ui-shadow-md);
 }
 
 .record-l1 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
+  gap: var(--ui-space-3);
 }
 
 .l1-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 10px;
-  background: #f8fafc;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  padding: var(--ui-space-3);
+  background: rgba(248, 245, 239, 0.78);
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .l1-label {
   margin: 0;
-  color: #64748b;
-  font-size: 12px;
+  color: var(--ui-color-ink-muted);
+  font-size: var(--ui-font-size-xs);
 }
 
 .l1-value {
-  margin: 6px 0 0;
-  color: #0f172a;
-  font-size: 13px;
-  font-weight: 600;
+  margin: var(--ui-space-2) 0 0;
+  color: var(--ui-color-ink-strong);
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .record-next {
-  border: 1px dashed #cbd5e1;
-  border-radius: 10px;
-  padding: 10px;
-  background: #fff;
+  border: 1px dashed var(--ui-color-border-strong);
+  border-radius: var(--ui-radius-sm);
+  padding: var(--ui-space-3);
+  background: rgba(255, 255, 255, 0.96);
 }
 
 .next-label {
   margin: 0;
-  font-size: 12px;
-  color: #334155;
-  font-weight: 700;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink);
+  font-weight: var(--ui-font-weight-bold);
 }
 
 .next-actions {
-  margin-top: 8px;
+  margin-top: var(--ui-space-2);
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--ui-space-2);
 }
 
 .field {
@@ -1212,43 +1319,45 @@ onMounted(load);
 
 .banner {
   padding: 10px 14px;
-  border-radius: 10px;
-  font-size: 14px;
+  border-radius: var(--ui-radius-sm);
+  font-size: var(--ui-font-size-md);
 }
 
 .banner.success {
-  background: #ecfeff;
-  border: 1px solid #a5f3fc;
-  color: #155e75;
+  background: rgba(235, 248, 242, 0.9);
+  border: 1px solid rgba(31, 122, 91, 0.18);
+  color: var(--ui-color-success-600);
 }
 
 .ribbon {
   align-self: start;
   padding: 6px 12px;
-  border-radius: 999px;
-  background: #fee2e2;
-  color: #991b1b;
-  font-size: 12px;
-  font-weight: 600;
+  border-radius: var(--ui-radius-pill);
+  background: rgba(255, 240, 238, 0.92);
+  color: var(--ui-color-danger-600);
+  font-size: var(--ui-font-size-xs);
+  font-weight: var(--ui-font-weight-semibold);
+  border: 1px solid rgba(177, 76, 67, 0.2);
   width: fit-content;
 }
 
 .stat-buttons {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
+  gap: var(--ui-space-3);
 }
 
 .stat-button {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  background: #f8fafc;
-  color: #0f172a;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-3);
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-color-border);
+  background: rgba(248, 245, 239, 0.78);
+  color: var(--ui-color-ink-strong);
   cursor: pointer;
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .stat-label {
@@ -1260,10 +1369,10 @@ onMounted(load);
 }
 
 .fallback-fields {
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px;
-  background: #f8fafc;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  padding: var(--ui-space-3);
+  background: rgba(248, 245, 239, 0.78);
 }
 
 .fallback-fields ul {
@@ -1281,21 +1390,21 @@ onMounted(load);
 }
 
 .fallback-label {
-  color: #334155;
-  font-weight: 600;
+  color: var(--ui-color-ink);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .fallback-value {
-  color: #0f172a;
+  color: var(--ui-color-ink-strong);
   text-align: right;
 }
 
 .chatter {
-  margin-top: 16px;
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px dashed rgba(148, 163, 184, 0.5);
-  background: #f8fafc;
+  margin-top: var(--ui-space-4);
+  padding: var(--ui-space-4);
+  border-radius: var(--ui-radius-md);
+  border: 1px dashed var(--ui-color-border-strong);
+  background: rgba(248, 245, 239, 0.78);
 }
 
 .chatter-grid {
@@ -1318,12 +1427,12 @@ onMounted(load);
 }
 
 .chatter-item {
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  background: #fff;
+  padding: var(--ui-space-3);
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-color-border);
+  background: rgba(255, 255, 255, 0.96);
   display: grid;
-  gap: 4px;
+  gap: var(--ui-space-1);
 }
 
 .chatter-title {
@@ -1331,13 +1440,13 @@ onMounted(load);
 }
 
 .chatter-meta {
-  font-size: 12px;
-  color: #64748b;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-muted);
 }
 
 .chatter-body {
-  font-size: 13px;
-  color: #1f2937;
+  font-size: var(--ui-font-size-sm);
+  color: var(--ui-color-ink);
 }
 
 .chatter-compose {
@@ -1354,10 +1463,11 @@ onMounted(load);
 
 .chatter-compose textarea {
   min-height: 80px;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-color-border);
   padding: 10px;
-  font-size: 13px;
+  font-size: var(--ui-font-size-sm);
+  background: var(--ui-color-surface-strong);
 }
 .chatter-upload {
   display: grid;
@@ -1376,39 +1486,39 @@ onMounted(load);
 .timeline-item {
   display: grid;
   grid-template-columns: 56px 1fr;
-  gap: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  border-radius: 10px;
-  background: #fff;
-  padding: 10px;
+  gap: var(--ui-space-3);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  background: rgba(255, 255, 255, 0.96);
+  padding: var(--ui-space-3);
 }
 
 .timeline-type {
-  border: 1px solid #cbd5e1;
-  border-radius: 999px;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-pill);
   text-align: center;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: var(--ui-font-size-xs);
+  font-weight: var(--ui-font-weight-bold);
   padding: 4px 6px;
   align-self: start;
 }
 
 .timeline-type.type-message {
-  color: #1d4ed8;
-  background: #eff6ff;
-  border-color: #bfdbfe;
+  color: var(--ui-color-primary-700);
+  background: rgba(240, 246, 250, 0.9);
+  border-color: rgba(61, 120, 159, 0.18);
 }
 
 .timeline-type.type-attachment {
-  color: #166534;
-  background: #f0fdf4;
-  border-color: #bbf7d0;
+  color: var(--ui-color-success-600);
+  background: rgba(235, 248, 242, 0.9);
+  border-color: rgba(31, 122, 91, 0.18);
 }
 
 .timeline-type.type-audit {
-  color: #7c2d12;
-  background: #fff7ed;
-  border-color: #fdba74;
+  color: var(--ui-color-warning-600);
+  background: rgba(255, 245, 223, 0.88);
+  border-color: rgba(165, 107, 22, 0.2);
 }
 
 .timeline-main {
@@ -1416,17 +1526,18 @@ onMounted(load);
 }
 button {
   padding: 10px 14px;
-  border: none;
-  border-radius: 10px;
-  background: #111827;
+  border: 1px solid var(--ui-color-primary-700);
+  border-radius: var(--ui-radius-sm);
+  background: linear-gradient(135deg, var(--ui-color-primary-700), var(--ui-color-primary-600));
   color: white;
   cursor: pointer;
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .ghost {
-  background: transparent;
-  color: #111827;
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--ui-color-ink);
+  border: 1px solid var(--ui-color-border);
 }
 
 button:disabled {

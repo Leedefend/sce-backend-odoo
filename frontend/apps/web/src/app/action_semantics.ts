@@ -71,10 +71,8 @@ export function parseExecuteResult(response: ExecuteButtonResponse | null | unde
 }
 
 function defaultMessage(reasonCode: string, success: boolean) {
-  if (success) return '操作成功';
-  if (reasonCode === 'PERMISSION_DENIED') return '无权限执行该操作';
-  if (reasonCode === 'NOT_FOUND') return '记录不存在或已删除';
-  if (reasonCode === 'BUSINESS_RULE_FAILED') return '当前状态不允许此操作';
-  if (reasonCode === 'MISSING_PARAMS') return '操作参数不完整';
-  return '操作失败';
+  if (success) return '后端已执行动作';
+  if (reasonCode === 'MISSING_PARAMS') return '后端未收到完整按钮执行参数';
+  if (reasonCode) return `后端返回动作失败：${reasonCode}`;
+  return '当前动作未返回更多反馈';
 }

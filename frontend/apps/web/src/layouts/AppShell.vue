@@ -1,13 +1,23 @@
 <template>
   <div
     class="shell layout-shell"
-    :class="{ 'layout-shell--sidebar-compact': compactSidebarEnabled }"
+    :class="{
+      'layout-shell--sidebar-compact': compactSidebarEnabled,
+      'layout-shell--worksurface': compactWorksurfaceShell,
+    }"
     data-component="LayoutShell"
     :data-layout-kind="activeLayout.kind"
     :data-sidebar-mode="activeLayout.sidebar"
     :data-header-mode="activeLayout.header"
   >
-    <aside class="sidebar sidebar-nav" :class="[sidebarClass, { 'sidebar--delivery-compact': compactSidebarEnabled }]" data-component="SidebarNav">
+    <aside
+      class="sidebar sidebar-nav"
+      :class="[sidebarClass, {
+        'sidebar--delivery-compact': compactSidebarEnabled,
+        'sidebar--worksurface': compactWorksurfaceShell,
+      }]"
+      data-component="SidebarNav"
+    >
       <div class="brand">
         <div class="logo">SC</div>
         <div>
@@ -37,7 +47,7 @@
         </div>
       </div>
 
-      <div class="nav-shell">
+      <div class="nav-shell" :class="{ 'nav-shell--worksurface': compactWorksurfaceShell }">
         <div class="nav-shell__header">
           <div>
             <p class="nav-shell__eyebrow">导航菜单</p>
@@ -74,14 +84,27 @@
       </div>
     </aside>
 
-    <section class="content" :class="{ 'content--scene-compact': sceneHeaderMinimal, 'content--flat-action': hideTopbarForActionList }">
+    <section
+      class="content"
+      :class="{
+        'content--scene-compact': sceneHeaderMinimal,
+        'content--flat-action': hideTopbarForActionList,
+        'content--worksurface': compactWorksurfaceShell,
+      }"
+    >
       <header
         v-if="!hideTopbarForActionList"
         class="topbar"
-        :class="{ 'topbar--compact': activeLayout.header === 'compact', 'topbar--minimal': useMinimalTopbar, 'topbar--scene-minimal': sceneHeaderMinimal }"
+        :class="{
+          'topbar--compact': activeLayout.header === 'compact',
+          'topbar--minimal': useMinimalTopbar,
+          'topbar--scene-minimal': sceneHeaderMinimal,
+          'topbar--worksurface': compactWorksurfaceShell,
+          'topbar--list-focus': compactListTopbar,
+        }"
       >
         <div class="topbar-main">
-          <p v-if="!useMinimalTopbar && !sceneHeaderMinimal" class="eyebrow">智能工程协作平台</p>
+          <p v-if="!useMinimalTopbar && !sceneHeaderMinimal && !compactListTopbar" class="eyebrow">智能工程协作平台</p>
           <div v-if="!sceneHeaderMinimal" class="breadcrumb">
             <button
               v-for="(item, index) in breadcrumb"
@@ -95,8 +118,13 @@
             </button>
           </div>
           <p v-if="!useMinimalTopbar && sceneHeaderMinimal" class="scene-anchor-line">{{ sceneHeaderAnchorLine }}</p>
-          <h1 v-if="!useMinimalTopbar && !sceneHeaderMinimal" class="headline">{{ pageTitle }}</h1>
-          <p v-if="!useMinimalTopbar && !sceneHeaderMinimal && topbarSubtitle" class="headline-subtitle">{{ topbarSubtitle }}</p>
+          <h1 v-if="!useMinimalTopbar && !sceneHeaderMinimal && !compactListTopbar" class="headline">{{ pageTitle }}</h1>
+          <p
+            v-if="!useMinimalTopbar && !sceneHeaderMinimal && topbarSubtitle && !compactListTopbar"
+            class="headline-subtitle"
+          >
+            {{ topbarSubtitle }}
+          </p>
         </div>
       </header>
 
@@ -306,12 +334,27 @@ const activeLayout = computed(() => {
   const scene = sceneKey ? getSceneByKey(sceneKey) : null;
   return resolveSceneLayout(scene);
 });
+const routeActionId = computed(() => {
+  const parsed = Number(route.query.action_id || route.params.actionId || 0);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+});
+const routeRecordId = computed(() => {
+  const parsed = Number(route.query.record_id || route.params.id || 0);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+});
+const routeModelParam = computed(() => asText(route.query.model) || asText(route.params.model));
+const isCompactWorksurfaceLayout = computed(() => {
+  const kind = String(activeLayout.value.kind || '').trim();
+  return kind === 'list' || kind === 'record';
+});
 const compactActionShellEnabled = computed(() => String(import.meta.env.VITE_ACTION_SHELL_COMPACT || '1').trim() !== '0');
 const hideTopbarForActionList = computed(() => {
   if (!compactActionShellEnabled.value) return false;
-  return route.name === 'action' || route.name === 'model-form' || route.name === 'record';
+  return isCompactWorksurfaceLayout.value;
 });
 const compactSidebarEnabled = computed(() => String(import.meta.env.VITE_SIDEBAR_COMPACT || '1').trim() !== '0');
+const compactWorksurfaceShell = computed(() => isCompactWorksurfaceLayout.value);
+const compactListTopbar = computed(() => routeSceneKey.value === 'projects.list');
 const useMinimalTopbar = computed(() => route.name === 'workbench' || route.name === 'home');
 const sidebarClass = computed(() =>
   activeLayout.value.sidebar === 'scroll' ? 'sidebar--scroll' : 'sidebar--fixed'
@@ -376,11 +419,8 @@ function resolveActionBusinessTitle(action: unknown) {
 
 const pageTitle = computed(() => {
   const routeName = String(route.name || '').trim();
-  const routeModel = asText(route.params.model);
-  if (routeName === 'record') {
-    if (routeModel === 'project.project') {
-      return '项目详情';
-    }
+  const routeModel = routeModelParam.value;
+  if (routeRecordId.value > 0) {
     if (routeModel) {
       return `${routeModel} 详情`;
     }
@@ -409,7 +449,7 @@ const pageTitle = computed(() => {
   if (route.name === 'workbench') {
     return '导航异常';
   }
-  if (route.name === 'record') {
+  if (routeRecordId.value > 0) {
     return '记录';
   }
   return '工作台';
@@ -435,7 +475,7 @@ const runtimeNavigationRegistry = computed(() =>
 );
 const currentEntrySource = computed(() => {
   if (routeSceneKey.value) return 'scene';
-  if (route.name === 'action' || route.name === 'record') return 'capability';
+  if (routeActionId.value > 0 || routeRecordId.value > 0) return 'capability';
   return '-';
 });
 const roleSceneCoverage = computed(() => {
@@ -690,7 +730,7 @@ function parseSceneKeyFromPath(path: string): string {
 }
 
 function parseActionIdFromPath(path: string): number | undefined {
-  const actionMatched = String(path || '').match(/^\/(?:a|native\/action)\/(\d+)/);
+  const actionMatched = String(path || '').match(/^\/(?:compat\/action|native\/action)\/(\d+)/);
   return actionMatched?.[1] ? asInteger(actionMatched[1]) : undefined;
 }
 
@@ -750,16 +790,13 @@ const breadcrumb = computed(() => {
       crumbs.push({ label, to: routePath });
     });
   }
-  if (route.name === 'action') {
-    const label = session.currentAction?.name || `动作 ${route.params.actionId ?? ''}`.trim();
+  if (!routeSceneKey.value && routeActionId.value > 0 && routeRecordId.value <= 0) {
+    const label = session.currentAction?.name || `动作 ${routeActionId.value}`.trim();
     crumbs.push({ label });
   }
-  if (route.name === 'record') {
-    const recordModel = asText(route.params.model);
-    const recordId = String(route.params.id ?? '').trim();
-    const recordLabel = recordModel === 'project.project'
-      ? '项目详情'
-      : `记录 ${recordId}`.trim();
+  if (!routeSceneKey.value && routeRecordId.value > 0) {
+    const recordId = String(routeRecordId.value).trim();
+    const recordLabel = `记录 ${recordId}`.trim();
     crumbs.push({ label: recordLabel });
   }
   if (!crumbs.length) {
@@ -895,6 +932,10 @@ async function logout() {
   grid-template-columns: var(--ui-sidebar-width-compact) minmax(0, 1fr);
 }
 
+.layout-shell--worksurface.layout-shell--sidebar-compact {
+  grid-template-columns: calc(var(--ui-sidebar-width-compact) - 20px) minmax(0, 1fr);
+}
+
 .sidebar {
   padding: var(--ui-space-5) var(--ui-space-4) var(--ui-space-4);
   display: grid;
@@ -916,8 +957,21 @@ async function logout() {
   gap: var(--ui-space-2);
 }
 
+.sidebar--worksurface {
+  padding: var(--ui-space-3) 10px 10px;
+  gap: var(--ui-space-2);
+  background:
+    linear-gradient(180deg, rgba(250, 249, 246, 0.92) 0%, rgba(244, 240, 233, 0.9) 48%, rgba(238, 235, 228, 0.94) 100%);
+}
+
 .sidebar--delivery-compact .brand {
   padding: 0 1px 4px;
+}
+
+.sidebar--worksurface .brand {
+  padding: 0 1px 2px;
+  border-radius: 12px;
+  box-shadow: none;
 }
 
 .sidebar--delivery-compact .logo {
@@ -927,12 +981,27 @@ async function logout() {
   font-size: 11px;
 }
 
+.sidebar--worksurface .logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
 .sidebar--delivery-compact .title {
   font-size: var(--ui-font-size-md);
 }
 
+.sidebar--worksurface .title {
+  font-size: var(--ui-font-size-sm);
+}
+
 .sidebar--delivery-compact .subtitle {
   font-size: 11px;
+}
+
+.sidebar--worksurface .subtitle {
+  font-size: 10px;
 }
 
 .sidebar--delivery-compact .role-surface {
@@ -944,6 +1013,11 @@ async function logout() {
   font-size: var(--ui-font-size-sm);
 }
 
+.sidebar--worksurface :deep(.label) {
+  padding: 5px 8px;
+  font-size: var(--ui-font-size-xs);
+}
+
 .sidebar--delivery-compact :deep(.tree) {
   gap: 1px;
   margin-left: 0 !important;
@@ -953,6 +1027,10 @@ async function logout() {
 
 .sidebar--delivery-compact :deep(.node) {
   gap: 3px;
+}
+
+.sidebar--worksurface :deep(.node) {
+  gap: 2px;
 }
 
 .sidebar--delivery-compact :deep(.toggle),
@@ -1028,12 +1106,24 @@ async function logout() {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), var(--ui-shadow-sm);
 }
 
+.nav-shell--worksurface {
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 8px;
+  box-shadow: none;
+}
+
 .nav-shell__header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
   padding: 4px 2px 0;
+}
+
+.nav-shell--worksurface .nav-shell__header {
+  gap: 8px;
+  padding-top: 0;
 }
 
 .nav-shell__eyebrow {
@@ -1052,6 +1142,11 @@ async function logout() {
   color: var(--ui-color-ink-strong);
 }
 
+.nav-shell--worksurface .nav-shell__title {
+  margin-top: 1px;
+  font-size: var(--ui-font-size-sm);
+}
+
 .nav-shell__count {
   display: inline-flex;
   align-items: center;
@@ -1061,6 +1156,11 @@ async function logout() {
   color: var(--ui-color-primary-700);
   font-size: 11px;
   font-weight: var(--ui-font-weight-bold);
+}
+
+.nav-shell--worksurface .nav-shell__count {
+  padding: 4px 8px;
+  font-size: 10px;
 }
 
 .release-summary {
@@ -1098,6 +1198,13 @@ async function logout() {
   font-size: var(--ui-font-size-sm);
   color: var(--ui-color-ink-strong);
   box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.nav-shell--worksurface .search input {
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 10px;
+  box-shadow: none;
 }
 
 .role-surface {
@@ -1194,6 +1301,12 @@ async function logout() {
   background: transparent;
 }
 
+.content--worksurface {
+  gap: var(--ui-space-2);
+  padding-top: 8px;
+  padding-bottom: 10px;
+}
+
 .content--scene-compact {
   gap: var(--ui-space-2);
   padding: var(--ui-page-padding-y) var(--ui-page-padding-x);
@@ -1216,8 +1329,31 @@ async function logout() {
   box-shadow: var(--ui-shadow-sm);
 }
 
+.topbar--worksurface {
+  padding: 8px 10px 6px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: none;
+}
+
+.topbar--list-focus {
+  padding: 2px 8px 0;
+  border-radius: 8px;
+  background: transparent;
+  border: 0;
+}
+
 .topbar-main {
   min-width: 0;
+}
+
+.topbar--worksurface .topbar-main {
+  display: grid;
+  gap: 2px;
+}
+
+.topbar--list-focus .topbar-main {
+  gap: 0;
 }
 
 .topbar--compact {
@@ -1229,6 +1365,10 @@ async function logout() {
   box-shadow: none;
   border: 0;
   border-radius: 0;
+  padding: 0;
+}
+
+.topbar--worksurface.topbar--scene-minimal {
   padding: 0;
 }
 
@@ -1244,6 +1384,22 @@ async function logout() {
 
 .topbar--compact .headline {
   font-size: 20px;
+}
+
+.topbar--worksurface .breadcrumb {
+  gap: 6px;
+}
+
+.topbar--list-focus .breadcrumb {
+  flex-wrap: nowrap;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: 0;
+}
+
+.topbar--list-focus .breadcrumb::-webkit-scrollbar {
+  display: none;
 }
 
 .topbar--minimal {
@@ -1283,6 +1439,11 @@ async function logout() {
   color: var(--ui-color-ink-muted);
 }
 
+.topbar--worksurface .eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
 .headline {
   margin: 6px 0 0;
   font-size: var(--ui-font-size-2xl);
@@ -1291,10 +1452,26 @@ async function logout() {
   color: var(--ui-color-ink-strong);
 }
 
+.topbar--worksurface .headline {
+  margin-top: 2px;
+  font-size: 20px;
+  line-height: 1.1;
+}
+
+.topbar--list-focus .headline {
+  margin-top: 0;
+  font-size: 16px;
+  line-height: 1;
+}
+
 .headline-subtitle {
   margin: 6px 0 0;
   font-size: var(--ui-font-size-xs);
   color: var(--ui-color-ink-soft);
+}
+
+.topbar--worksurface .headline-subtitle {
+  margin-top: 2px;
 }
 
 .breadcrumb {
@@ -1317,11 +1494,27 @@ async function logout() {
   cursor: pointer;
 }
 
+.topbar--list-focus .crumb {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
 .crumb.active {
   border-color: rgba(61, 120, 159, 0.24);
   background: var(--ui-color-primary-050);
   color: var(--ui-color-primary-700);
   font-weight: var(--ui-font-weight-bold);
+}
+
+.topbar--worksurface .crumb.active {
+  background: rgba(238, 245, 250, 0.72);
+}
+
+.topbar--list-focus .crumb.active {
+  background: rgba(238, 245, 250, 0.92);
 }
 
 .crumb:disabled {
@@ -1332,6 +1525,10 @@ async function logout() {
 .router-host {
   min-height: 0;
   min-width: 0;
+}
+
+.content--worksurface .router-host {
+  padding-top: 0;
 }
 
 @media (max-width: 960px) {

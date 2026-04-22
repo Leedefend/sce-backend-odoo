@@ -80,51 +80,57 @@ function stringify(value: unknown) {
 
 <style scoped>
 .block {
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  background: #fff;
-  padding: 12px;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  background: rgba(255, 255, 255, 0.94);
+  padding: var(--ui-space-3);
   min-height: 170px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .block-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: var(--ui-space-3);
+  margin-bottom: var(--ui-space-3);
 }
 
 .block-header h4 {
   margin: 0;
   font-size: 15px;
-  font-weight: 700;
-  color: #0f172a;
+  font-weight: var(--ui-font-weight-bold);
+  color: var(--ui-color-ink-strong);
 }
 
 .block-subtitle {
   margin: 4px 0 0;
-  font-size: 12px;
-  color: #64748b;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-muted);
 }
 
 .table-wrap { overflow: auto; }
 .mini-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .mini-table th,
-.mini-table td { border: 1px solid #e5e7eb; padding: 9px 10px; text-align: left; }
-.mini-table th { border: 1px solid #e5e7eb; background: #f8fafc; font-weight: 700; color: #334155; padding: 9px 10px; }
-.mini-table tbody tr:nth-child(2n) td { background: #fcfdff; }
-.mini-table tbody tr:hover td { background: #f8fafc; }
-.empty-text { margin: 6px 0 0; color: #6b7280; font-size: 13px; }
+.mini-table td { border: 1px solid var(--ui-color-border); padding: 9px 10px; text-align: left; }
+.mini-table th {
+  border: 1px solid var(--ui-color-border);
+  background: rgba(240, 246, 250, 0.72);
+  color: var(--ui-color-ink);
+  font-weight: var(--ui-font-weight-bold);
+  padding: 9px 10px;
+}
+.mini-table tbody tr:nth-child(2n) td { background: rgba(248, 245, 239, 0.52); }
+.mini-table tbody tr:hover td { background: rgba(240, 246, 250, 0.62); }
+.empty-text { margin: 6px 0 0; color: var(--ui-color-ink-muted); font-size: 13px; }
 
 .table-zone-contract {
-  border-color: #dbeafe;
-  background: #f8fbff;
+  border-color: rgba(61, 120, 159, 0.18);
+  background: linear-gradient(180deg, rgba(240, 246, 250, 0.58), rgba(255, 255, 255, 0.92));
 }
 
 .table-zone-finance {
-  border-color: #dcfce7;
-  background: #f6fff9;
+  border-color: rgba(31, 122, 91, 0.18);
+  background: linear-gradient(180deg, rgba(235, 248, 242, 0.72), rgba(255, 255, 255, 0.92));
 }
 </style>

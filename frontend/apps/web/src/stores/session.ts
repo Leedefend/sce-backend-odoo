@@ -6,6 +6,7 @@ import { config } from '../config';
 import { getSceneByKey, setSceneRegistry, setSceneRegistryFromSceneReadyContract } from '../app/resolvers/sceneRegistry';
 import type { Scene } from '../app/resolvers/sceneRegistry';
 import { buildSceneRegistryFallbackPath, normalizeEditionKey, normalizeLegacyWorkbenchPath } from '../app/routeQuery';
+import { resolveMenuAction, resolveScenePathFromMenuResolve } from '../app/resolvers/menuResolver';
 import { applySceneValidationRecoveryStrategyRuntime, setSceneValidationRecoveryStrategy } from '../app/sceneValidationRecoveryStrategy';
 import { resolveActiveDb, setActiveDb } from '../services/dbContext';
 import { MY_WORK_PATH, normalizeProjectEntryContext, PROJECT_MANAGEMENT_PATH } from '../app/projectEntryContext';
@@ -80,6 +81,7 @@ export interface EnterpriseEnablementStep {
   key: string;
   label: string;
   status: string;
+  status_label?: string;
   entry_xmlid: string;
   action_xmlid: string;
   next_hint: string;
@@ -335,10 +337,64 @@ export interface SessionState {
 }
 
 const DB_SCOPE = String(config.odooDb || 'default').trim() || 'default';
-const STORAGE_KEY = `sc_frontend_session_v0_4:${DB_SCOPE}`;
+const STORAGE_KEY = `sc_frontend_session_v0_5:${DB_SCOPE}`;
+const LEGACY_STORAGE_KEYS = [
+  `sc_frontend_session_v0_4:${DB_SCOPE}`,
+];
 const TOKEN_STORAGE_KEY_LEGACY = 'sc_auth_token';
 const TOKEN_STORAGE_KEY_SCOPED = `sc_auth_token:${DB_SCOPE}`;
 let loadAppInitPromise: Promise<unknown> | null = null;
+
+function clearLegacySessionStorage() {
+  LEGACY_STORAGE_KEYS.forEach((key) => {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // Ignore browser storage failures during cleanup.
+    }
+  });
+}
+
+function buildPersistedSessionSnapshot(
+  state: SessionState,
+  mode: 'standard' | 'minimal' = 'standard',
+): Partial<SessionState> {
+  const snapshot: Partial<SessionState> = {
+    user: mode === 'standard' ? state.user : null,
+    requestedEditionKey: state.requestedEditionKey,
+    effectiveEditionKey: state.effectiveEditionKey,
+    menuExpandedKeys: mode === 'standard' ? state.menuExpandedKeys : [],
+    currentAction: mode === 'standard' ? state.currentAction : null,
+    lastTraceId: mode === 'standard' ? state.lastTraceId : '',
+    lastIntent: mode === 'standard' ? state.lastIntent : '',
+    lastLatencyMs: mode === 'standard' ? state.lastLatencyMs : null,
+    lastWriteMode: mode === 'standard' ? state.lastWriteMode : '',
+    defaultRoute: mode === 'standard' ? state.defaultRoute : null,
+    bootstrapNextIntent: String(state.bootstrapNextIntent || 'system.init').trim() || 'system.init',
+  };
+  return snapshot;
+}
+
+function persistSessionSnapshot(state: SessionState) {
+  clearLegacySessionStorage();
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(buildPersistedSessionSnapshot(state, 'standard')));
+  } catch (error) {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(buildPersistedSessionSnapshot(state, 'minimal')));
+    } catch {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // Ignore final cleanup failure.
+      }
+      if (import.meta.env.DEV) {
+        console.warn('[session.persist] localStorage quota recovery failed', error);
+      }
+    }
+  }
+}
 
 function resolveUserCompanyId(user: unknown): number | null {
   if (!user || typeof user !== 'object') return null;
@@ -419,47 +475,28 @@ export const useSessionStore = defineStore('session', {
       sessionStorage.removeItem(TOKEN_STORAGE_KEY_LEGACY);
     },
     restore() {
+      clearLegacySessionStorage();
       const cached = localStorage.getItem(STORAGE_KEY);
       if (cached) {
         try {
           const parsed = JSON.parse(cached) as Partial<SessionState>;
           this.user = parsed.user ?? null;
-          this.menuTree = parsed.menuTree ?? [];
-          this.releaseNavigationTree = parsed.releaseNavigationTree ?? [];
-          this.deliveryEngineV1 = parsed.deliveryEngineV1 ?? null;
-          this.editionRuntimeV1 = parsed.editionRuntimeV1 ?? null;
           this.requestedEditionKey = normalizeEditionKey(parsed.requestedEditionKey) || 'standard';
           this.effectiveEditionKey = normalizeEditionKey(parsed.effectiveEditionKey) || 'standard';
           this.menuExpandedKeys = parsed.menuExpandedKeys ?? [];
           this.currentAction = parsed.currentAction ?? null;
-          this.capabilities = parsed.capabilities ?? [];
-          this.scenes = parsed.scenes ?? [];
-          this.sceneVersion = parsed.sceneVersion ?? null;
-          this.roleSurface = parsed.roleSurface ?? null;
-          this.roleSurfaceMap = parsed.roleSurfaceMap ?? {};
-          this.capabilityCatalog = parsed.capabilityCatalog ?? {};
-          this.sceneActionHints = parsed.sceneActionHints ?? {};
-          this.capabilityGroups = parsed.capabilityGroups ?? [];
-          this.productFacts = parsed.productFacts ?? { license: null, bundle: null };
-          this.enterpriseEnablement = parsed.enterpriseEnablement ?? null;
-          this.workspaceHome = parsed.workspaceHome ?? null;
-          this.workspaceHomeRef = parsed.workspaceHomeRef ?? null;
-          this.pageContracts = parsed.pageContracts ?? {};
-          this.sceneReadyContractV1 = parsed.sceneReadyContractV1 ?? null;
-          this.sceneGovernanceV1 = parsed.sceneGovernanceV1 ?? null;
-          this.roleEntries = parsed.roleEntries ?? [];
-          this.homeBlocks = parsed.homeBlocks ?? [];
-          // Only hydrate the runtime registry from fresh startup responses.
-          // Cached scene contracts can lag behind the current frontend validator.
           this.lastTraceId = parsed.lastTraceId ?? '';
           this.lastIntent = parsed.lastIntent ?? '';
           this.lastLatencyMs = parsed.lastLatencyMs ?? null;
           this.lastWriteMode = parsed.lastWriteMode ?? '';
-          this.initMeta = parsed.initMeta ?? null;
           this.defaultRoute = parsed.defaultRoute ?? null;
           this.bootstrapNextIntent = String(parsed.bootstrapNextIntent || 'system.init').trim() || 'system.init';
         } catch {
-          // ignore corrupted cache
+          try {
+            localStorage.removeItem(STORAGE_KEY);
+          } catch {
+            // ignore corrupted cache cleanup failure
+          }
         }
       }
       const token = sessionStorage.getItem(TOKEN_STORAGE_KEY_SCOPED);
@@ -519,6 +556,7 @@ export const useSessionStore = defineStore('session', {
       this.initTraceId = null;
       this.initMeta = null;
       localStorage.removeItem(STORAGE_KEY);
+      clearLegacySessionStorage();
       sessionStorage.removeItem(TOKEN_STORAGE_KEY_SCOPED);
       sessionStorage.removeItem(TOKEN_STORAGE_KEY_LEGACY);
     },
@@ -551,42 +589,7 @@ export const useSessionStore = defineStore('session', {
       }
     },
     persist() {
-      const snapshot: Partial<SessionState> = {
-        user: this.user,
-        menuTree: this.menuTree,
-        releaseNavigationTree: this.releaseNavigationTree,
-        deliveryEngineV1: this.deliveryEngineV1,
-        editionRuntimeV1: this.editionRuntimeV1,
-        requestedEditionKey: this.requestedEditionKey,
-        effectiveEditionKey: this.effectiveEditionKey,
-        menuExpandedKeys: this.menuExpandedKeys,
-        currentAction: this.currentAction,
-        capabilities: this.capabilities,
-        scenes: this.scenes,
-        sceneVersion: this.sceneVersion,
-        roleSurface: this.roleSurface,
-        roleSurfaceMap: this.roleSurfaceMap,
-        capabilityCatalog: this.capabilityCatalog,
-        sceneActionHints: this.sceneActionHints,
-        capabilityGroups: this.capabilityGroups,
-        productFacts: this.productFacts,
-        enterpriseEnablement: this.enterpriseEnablement,
-        workspaceHome: this.workspaceHome,
-        workspaceHomeRef: this.workspaceHomeRef,
-        pageContracts: this.pageContracts,
-        sceneReadyContractV1: this.sceneReadyContractV1,
-        sceneGovernanceV1: this.sceneGovernanceV1,
-        roleEntries: this.roleEntries,
-        homeBlocks: this.homeBlocks,
-        lastTraceId: this.lastTraceId,
-        lastIntent: this.lastIntent,
-        lastLatencyMs: this.lastLatencyMs,
-        lastWriteMode: this.lastWriteMode,
-        initMeta: this.initMeta,
-        defaultRoute: this.defaultRoute,
-        bootstrapNextIntent: this.bootstrapNextIntent,
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+      persistSessionSnapshot(this.$state);
     },
     recordIntentTrace(params: { traceId?: string; intent: string; latencyMs?: number | null; writeMode?: string }) {
       if (params.traceId) {
@@ -962,6 +965,7 @@ export const useSessionStore = defineStore('session', {
                     key: String(row.key || ''),
                     label: String(row.label || row.key || ''),
                     status: String(row.status || ''),
+                    status_label: String(row.status_label || ''),
                     entry_xmlid: String(row.entry_xmlid || ''),
                     action_xmlid: String(row.action_xmlid || ''),
                     next_hint: String(row.next_hint || ''),
@@ -1238,6 +1242,10 @@ export const useSessionStore = defineStore('session', {
       const defaultRoutePath = String(this.defaultRoute?.route || '').trim();
       const defaultRouteSceneKey = String(this.defaultRoute?.scene_key || '').trim();
       const startsWithNativeActionRoute = /^\/(a|f|r)\//.test(defaultRoutePath);
+      const normalizedMenuPath = this.resolveCompatibilityMenuPath(defaultRoutePath);
+      if (normalizedMenuPath) {
+        return normalizedMenuPath;
+      }
       if (defaultRoutePath.startsWith('/') && !startsWithNativeActionRoute) {
         if (
           defaultRoutePath.startsWith('/workbench')
@@ -1267,6 +1275,8 @@ export const useSessionStore = defineStore('session', {
       }
       const candidate = String(this.roleSurface?.landing_path || '').trim();
       if (candidate.startsWith('/')) {
+        const normalizedMenuCandidate = this.resolveCompatibilityMenuPath(candidate);
+        if (normalizedMenuCandidate) return normalizedMenuCandidate;
         const normalized = normalizeLegacyWorkbenchPath(candidate);
         if (isUnifiedHomePath(normalized)) return '/';
         return normalized || fallback;
@@ -1283,6 +1293,25 @@ export const useSessionStore = defineStore('session', {
         return normalized || `/s/${sceneKey}`;
       }
       return fallback;
+    },
+    resolveCompatibilityMenuPath(rawPath: string) {
+      const match = String(rawPath || '').trim().match(/^\/m\/(\d+)(?:\?.*)?$/);
+      if (!match) {
+        return '';
+      }
+      const menuId = Number(match[1] || 0);
+      if (!Number.isFinite(menuId) || menuId <= 0) {
+        return '';
+      }
+      const primary = resolveMenuAction(this.releaseNavigationTree, menuId);
+      const resolved = (primary.kind !== 'broken' || !this.releaseNavigationTree.length)
+        ? primary
+        : resolveMenuAction(this.menuTree, menuId);
+      const scenePath = resolveScenePathFromMenuResolve(resolved, menuId);
+      if (scenePath?.path) {
+        return scenePath.path;
+      }
+      return '';
     },
   },
 });

@@ -70,8 +70,8 @@ export function useActionViewActionMetaRuntime(options: UseActionViewActionMetaR
       url === '/'
       || url.startsWith('/s/')
       || url.startsWith('/m/')
-      || url.startsWith('/a/')
-      || url.startsWith('/r/')
+      || url.startsWith('/compat/action/')
+      || url.startsWith('/compat/record/')
       || url.startsWith('/login')
       || url.startsWith('/admin/')
     );

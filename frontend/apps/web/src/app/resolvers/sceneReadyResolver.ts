@@ -77,13 +77,14 @@ export function findSceneReadyEntryByTarget(
 export function resolveListSceneReady(entry: SceneReadyEntry | null) {
   const row = asDict(entry);
   const searchSurface = asDict(row.search_surface);
+  const listSurface = asDict(row.list_surface);
   const permissionSurface = asDict(row.permission_surface);
   const actionSurface = asDict(row.action_surface);
   const workflowSurface = asDict(row.workflow_surface);
   const actions = Array.isArray(row.actions) ? row.actions as Array<Record<string, unknown>> : [];
   const blockRows = Array.isArray(row.blocks) ? row.blocks : [];
 
-  const columns = blockRows
+  const blockColumns = blockRows
     .map((item) => asDict(item))
     .map((item) => {
       const raw = item.fields;
@@ -95,11 +96,25 @@ export function resolveListSceneReady(entry: SceneReadyEntry | null) {
       }).filter(Boolean);
     })
     .find((list) => list.length > 0) || [];
+  const listSurfaceColumns = Array.isArray(listSurface.columns)
+    ? listSurface.columns
+      .map((item) => {
+        if (typeof item === 'string') return asText(item);
+        const payload = asDict(item);
+        return asText(payload.field || payload.name || payload.key);
+      })
+      .filter(Boolean)
+    : [];
+  const columns = listSurfaceColumns.length ? listSurfaceColumns : blockColumns;
+  const defaultSortPayload = asDict(listSurface.default_sort);
+  const defaultSort = typeof listSurface.default_sort === 'string'
+    ? asText(listSurface.default_sort)
+    : asText(defaultSortPayload.raw || defaultSortPayload.value);
 
   return {
     columns,
-    defaultSort: asText(searchSurface.default_sort),
-    mode: asText(searchSurface.mode),
+    defaultSort: defaultSort || asText(searchSurface.default_sort),
+    mode: asText(listSurface.default_mode) || asText(searchSurface.mode),
     filters: Array.isArray(searchSurface.filters) ? searchSurface.filters : [],
     groupBy: Array.isArray(searchSurface.group_by) ? searchSurface.group_by : [],
     searchPanel: Array.isArray(searchSurface.searchpanel) ? searchSurface.searchpanel : [],

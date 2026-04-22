@@ -7,10 +7,15 @@ type LoadActionContractOptions = {
   renderProfile?: 'create' | 'edit' | 'readonly' | null;
   surface?: 'user' | 'native' | 'hud' | null;
   sourceMode?: string | null;
+  sceneKey?: string | null;
 };
 
 type LoadModelContractOptions = LoadActionContractOptions & {
   viewType?: 'form' | 'tree' | 'kanban';
+  menuId?: number | null;
+  menuXmlid?: string | null;
+  actionId?: number | null;
+  sceneKey?: string | null;
 };
 
 function rethrowContractError(err: unknown, context: { op: 'action_open' | 'model'; model?: string; actionId?: number }): never {
@@ -66,6 +71,10 @@ function buildActionContractParams(actionId: number, options?: LoadActionContrac
   if (sourceMode) {
     params.source_mode = sourceMode;
   }
+  const sceneKey = String(options?.sceneKey || '').trim();
+  if (sceneKey) {
+    params.scene_key = sceneKey;
+  }
   return params;
 }
 
@@ -100,6 +109,22 @@ function buildModelContractParams(model: string, options?: LoadModelContractOpti
   const recordId = Number(options?.recordId || 0);
   if (Number.isFinite(recordId) && recordId > 0) {
     params.record_id = recordId;
+  }
+  const menuId = Number(options?.menuId || 0);
+  if (Number.isFinite(menuId) && menuId > 0) {
+    params.menu_id = menuId;
+  }
+  const menuXmlid = String(options?.menuXmlid || '').trim();
+  if (menuXmlid) {
+    params.menu_xmlid = menuXmlid;
+  }
+  const actionId = Number(options?.actionId || 0);
+  if (Number.isFinite(actionId) && actionId > 0) {
+    params.action_id = actionId;
+  }
+  const sceneKey = String(options?.sceneKey || '').trim();
+  if (sceneKey) {
+    params.scene_key = sceneKey;
   }
   const profile = String(options?.renderProfile || '').trim().toLowerCase();
   if (profile === 'create' || profile === 'edit' || profile === 'readonly') {
