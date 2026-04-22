@@ -148,6 +148,36 @@ def _resolve_scene_action_id(env, scene: dict) -> int:
         return 0
 
 
+def _is_canonical_scene_root(scene: dict) -> bool:
+    payload = scene if isinstance(scene, dict) else {}
+    scene_key = _text(payload.get("code") or payload.get("key"))
+    if not scene_key:
+        return False
+    target = payload.get("target") if isinstance(payload.get("target"), dict) else {}
+    route = _text(target.get("route"))
+    action_xmlid = _text(target.get("action_xmlid"))
+    model = _text(target.get("model"))
+    record_id = _safe_int(target.get("record_id"), 0)
+    action_id = _safe_int(target.get("action_id"), 0)
+    return (
+        route == f"/s/{scene_key}"
+        and action_id <= 0
+        and not action_xmlid
+        and not model
+        and record_id <= 0
+    )
+
+
+def _asset_is_stale_for_scene(asset: dict | None, scene: dict) -> bool:
+    payload = asset if isinstance(asset, dict) else {}
+    if not payload:
+        return False
+    if not _is_canonical_scene_root(scene):
+        return False
+    source_ref = _text(payload.get("source_ref"))
+    return source_ref.startswith("action:")
+
+
 def _minimal_ui_base_contract(scene_key: str) -> dict:
     return {
         "model": "res.partner",
@@ -355,7 +385,9 @@ def bind_scene_assets(
         for row in rows:
             scene_key = _text(row.get("code") or row.get("key"))
             entry = dict(row)
-            if scene_key and isinstance(asset_map.get(scene_key), dict):
+            asset = asset_map.get(scene_key) if scene_key else {}
+            asset_usable = isinstance(asset, dict) and asset and not _asset_is_stale_for_scene(asset, entry)
+            if scene_key and asset_usable:
                 asset = asset_map.get(scene_key) or {}
                 if not isinstance(entry.get("ui_base_contract"), dict):
                     entry["ui_base_contract"] = asset.get("payload") or {}
