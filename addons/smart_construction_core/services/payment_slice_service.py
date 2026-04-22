@@ -151,6 +151,47 @@ class PaymentSliceService:
             "today": str(fields.Date.today()),
         }
 
+    def build_summary_rows(self, project):
+        summary = self.project_payload(project)
+        currency_name = str(summary.get("currency_name") or "").strip()
+
+        def _amount(value):
+            text = str(value or 0)
+            return "%s %s" % (text, currency_name) if currency_name else text
+
+        return [
+            {
+                "key": "project_code",
+                "label": "项目编码",
+                "value": str(summary.get("project_code") or "--"),
+            },
+            {
+                "key": "manager_name",
+                "label": "项目经理",
+                "value": str(summary.get("manager_name") or "--"),
+            },
+            {
+                "key": "stage_name",
+                "label": "当前阶段",
+                "value": str(summary.get("stage_name") or "--"),
+            },
+            {
+                "key": "payment_record_count",
+                "label": "付款记录数",
+                "value": "%s 条" % str(summary.get("payment_record_count") or 0),
+            },
+            {
+                "key": "payment_total_amount",
+                "label": "付款合计",
+                "value": _amount(summary.get("payment_total_amount")),
+            },
+            {
+                "key": "draft_payment_amount",
+                "label": "草稿金额",
+                "value": _amount(summary.get("draft_payment_amount")),
+            },
+        ]
+
     def create_payment_entry(self, project=None, values=None, context=None):
         return self._entry_service.create(project=project, values=values, context=context)
 
