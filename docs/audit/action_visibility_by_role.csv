@@ -20,15 +20,30 @@ demo_pm,base.action_rule,Record Rules,ir.rule,"tree,form",0,,1
 demo_pm,base.ir_sequence_form,Sequences,ir.sequence,"tree,form",0,,1
 demo_pm,base.grant_menu_access,Menu Items,ir.ui.menu,"tree,form",0,,1
 demo_pm,base.action_ui_view,Views,ir.ui.view,"tree,form",0,,1
+demo_pm,hr.hr_contract_type_action,Employment Types,hr.contract.type,tree,0,,1
+demo_pm,hr.action_hr_job,Job Positions,hr.job,"tree,form",0,,1
 demo_pm,base.action_ui_view_custom,Customized Views,ir.ui.view.custom,"tree,form",0,,1
+demo_pm,hr.hr_employee_public_action,Employees,hr.employee.public,"kanban,tree,form,hierarchy",0,,1
+demo_pm,hr.hr_departure_reason_action,Departure Reasons,hr.departure.reason,tree,0,,1
+demo_pm,hr.open_view_employee_list_my,Employees,hr.employee,"kanban,tree,form,activity,graph,pivot,hierarchy",0,,1
 demo_pm,base.ir_default_menu_action,User-defined Defaults,ir.default,"tree,form",0,,1
-demo_pm,base.ir_logging_all_act,Logging,ir.logging,"tree,form",0,,1
 demo_pm,base.open_module_tree,Apps,ir.module.module,"kanban,tree,form",0,,1
+demo_pm,base.ir_logging_all_act,Logging,ir.logging,"tree,form",0,,1
+demo_pm,hr.hr_department_kanban_action,Departments,hr.department,"kanban,tree,hierarchy,form",0,,1
+demo_pm,hr.hr_department_tree_action,Departments,hr.department,"tree,kanban,hierarchy,form",0,,1
+demo_pm,hr.hr_work_location_action,Work Locations,hr.work.location,"tree,form",0,,1
+demo_pm,hr.hr_config_settings_action,Settings,res.config.settings,form,0,,1
 demo_pm,base.action_view_base_import_language,Import Translation,base.language.import,form,0,,1
+demo_pm,hr_org_chart.action_hr_employee_org_chart,Org Chart,hr.employee,"hierarchy,kanban,tree,form,activity,graph,pivot",0,,1
 demo_pm,base.action_wizard_lang_export,Export Translation,base.language.export,form,0,,1
+demo_pm,hr_skills.hr_skill_type_action,Skill Types,hr.skill.type,"list,form",0,,1
 demo_pm,base.action_menu_ir_profile,Ir profile,ir.profile,"tree,form",0,,1
 demo_pm,base.action_res_company_form,Companies,res.company,"tree,kanban,form",0,,1
 demo_pm,base.res_lang_act_window,Languages,res.lang,"tree,form",0,,1
+demo_pm,hr_skills.hr_employee_skill_report_action,Employee Skills,hr.employee.skill.report,"tree,pivot",0,,1
+demo_pm,smart_enterprise_base.action_enterprise_company,公司信息,res.company,"tree,form",1,base.group_system,0
+demo_pm,smart_enterprise_base.action_enterprise_department,组织架构,hr.department,"tree,form",1,base.group_system,0
+demo_pm,smart_enterprise_base.action_enterprise_user,用户设置,res.users,"tree,form",1,base.group_system,0
 demo_pm,base.action_currency_form,Currencies,res.currency,"tree,kanban,form",0,,1
 demo_pm,base.action_res_users,Users,res.users,"tree,kanban,form",0,,1
 demo_pm,base.ir_property_form,Company Properties,ir.property,"tree,form",0,,1
@@ -61,6 +76,7 @@ demo_pm,mail.mail_blacklist_action,Blacklisted Email Addresses,mail.blacklist,"t
 demo_pm,base_tier_validation.tier_definition_action,Tier Definition,tier.definition,"tree,form",0,,1
 demo_pm,base_tier_validation.tier_validation_exception_action,Tier Validation Exception,tier.validation.exception,"tree,form",0,,1
 demo_pm,phone_validation.phone_blacklist_action,Blacklisted Phone Numbers,phone.blacklist,"tree,form",0,,1
+demo_pm,hr.mail_activity_plan_action,On/Offboarding Plans,mail.activity.plan,"tree,form",0,,1
 demo_pm,privacy_lookup.privacy_log_action,Privacy Logs,privacy.log,"tree,form",0,,1
 demo_pm,product.product_category_action_form,Product Categories,product.category,"tree,form",0,,1
 demo_pm,product.product_supplierinfo_type_action,Vendor Pricelists,product.supplierinfo,"tree,form,kanban",0,,1
@@ -122,6 +138,7 @@ demo_pm,purchase.action_purchase_configuration,Settings,res.config.settings,form
 demo_pm,purchase.action_purchase_order_report_all,Purchase Analysis,purchase.report,"graph,pivot",1,purchase.group_purchase_user,0
 demo_pm,stock_account.stock_valuation_layer_action,Stock Valuation,stock.valuation.layer,"tree,form,pivot",0,,1
 demo_pm,stock_account.inventory_aging_action,Inventory Aging,stock.valuation.layer,"pivot,tree,graph",0,,1
+demo_pm,smart_construction_core.action_sc_settlement_order,结算单,sc.settlement.order,"tree,form",1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_settlement_read;smart_construction_core.group_sc_cap_settlement_manager;smart_construction_core.group_sc_cap_settlement_user;smart_construction_core.group_sc_cap_finance_read;smart_construction_core.group_sc_cap_project_read,1
 demo_cost,base.action_decimal_precision_form,Decimal Accuracy,decimal.precision,"tree,form",0,,1
 demo_cost,base.ir_sequence_actions,Actions,ir.actions.actions,"tree,form",0,,1
 demo_cost,base.ir_action_report,Reports,ir.actions.report,"tree,form",0,,1
@@ -143,15 +160,30 @@ demo_cost,base.action_rule,Record Rules,ir.rule,"tree,form",0,,1
 demo_cost,base.ir_sequence_form,Sequences,ir.sequence,"tree,form",0,,1
 demo_cost,base.grant_menu_access,Menu Items,ir.ui.menu,"tree,form",0,,1
 demo_cost,base.action_ui_view,Views,ir.ui.view,"tree,form",0,,1
+demo_cost,hr.hr_contract_type_action,Employment Types,hr.contract.type,tree,0,,1
+demo_cost,hr.action_hr_job,Job Positions,hr.job,"tree,form",0,,1
 demo_cost,base.action_ui_view_custom,Customized Views,ir.ui.view.custom,"tree,form",0,,1
+demo_cost,hr.hr_employee_public_action,Employees,hr.employee.public,"kanban,tree,form,hierarchy",0,,1
+demo_cost,hr.hr_departure_reason_action,Departure Reasons,hr.departure.reason,tree,0,,1
+demo_cost,hr.open_view_employee_list_my,Employees,hr.employee,"kanban,tree,form,activity,graph,pivot,hierarchy",0,,1
 demo_cost,base.ir_default_menu_action,User-defined Defaults,ir.default,"tree,form",0,,1
-demo_cost,base.ir_logging_all_act,Logging,ir.logging,"tree,form",0,,1
 demo_cost,base.open_module_tree,Apps,ir.module.module,"kanban,tree,form",0,,1
+demo_cost,base.ir_logging_all_act,Logging,ir.logging,"tree,form",0,,1
+demo_cost,hr.hr_department_kanban_action,Departments,hr.department,"kanban,tree,hierarchy,form",0,,1
+demo_cost,hr.hr_department_tree_action,Departments,hr.department,"tree,kanban,hierarchy,form",0,,1
+demo_cost,hr.hr_work_location_action,Work Locations,hr.work.location,"tree,form",0,,1
+demo_cost,hr.hr_config_settings_action,Settings,res.config.settings,form,0,,1
 demo_cost,base.action_view_base_import_language,Import Translation,base.language.import,form,0,,1
+demo_cost,hr_org_chart.action_hr_employee_org_chart,Org Chart,hr.employee,"hierarchy,kanban,tree,form,activity,graph,pivot",0,,1
 demo_cost,base.action_wizard_lang_export,Export Translation,base.language.export,form,0,,1
+demo_cost,hr_skills.hr_skill_type_action,Skill Types,hr.skill.type,"list,form",0,,1
 demo_cost,base.action_menu_ir_profile,Ir profile,ir.profile,"tree,form",0,,1
 demo_cost,base.action_res_company_form,Companies,res.company,"tree,kanban,form",0,,1
 demo_cost,base.res_lang_act_window,Languages,res.lang,"tree,form",0,,1
+demo_cost,hr_skills.hr_employee_skill_report_action,Employee Skills,hr.employee.skill.report,"tree,pivot",0,,1
+demo_cost,smart_enterprise_base.action_enterprise_company,公司信息,res.company,"tree,form",1,base.group_system,0
+demo_cost,smart_enterprise_base.action_enterprise_department,组织架构,hr.department,"tree,form",1,base.group_system,0
+demo_cost,smart_enterprise_base.action_enterprise_user,用户设置,res.users,"tree,form",1,base.group_system,0
 demo_cost,base.action_currency_form,Currencies,res.currency,"tree,kanban,form",0,,1
 demo_cost,base.action_res_users,Users,res.users,"tree,kanban,form",0,,1
 demo_cost,base.ir_property_form,Company Properties,ir.property,"tree,form",0,,1
@@ -184,6 +216,7 @@ demo_cost,mail.mail_blacklist_action,Blacklisted Email Addresses,mail.blacklist,
 demo_cost,base_tier_validation.tier_definition_action,Tier Definition,tier.definition,"tree,form",0,,1
 demo_cost,base_tier_validation.tier_validation_exception_action,Tier Validation Exception,tier.validation.exception,"tree,form",0,,1
 demo_cost,phone_validation.phone_blacklist_action,Blacklisted Phone Numbers,phone.blacklist,"tree,form",0,,1
+demo_cost,hr.mail_activity_plan_action,On/Offboarding Plans,mail.activity.plan,"tree,form",0,,1
 demo_cost,privacy_lookup.privacy_log_action,Privacy Logs,privacy.log,"tree,form",0,,1
 demo_cost,product.product_category_action_form,Product Categories,product.category,"tree,form",0,,1
 demo_cost,product.product_supplierinfo_type_action,Vendor Pricelists,product.supplierinfo,"tree,form,kanban",0,,1
@@ -245,6 +278,7 @@ demo_cost,purchase.action_purchase_configuration,Settings,res.config.settings,fo
 demo_cost,purchase.action_purchase_order_report_all,Purchase Analysis,purchase.report,"graph,pivot",1,purchase.group_purchase_user,0
 demo_cost,stock_account.stock_valuation_layer_action,Stock Valuation,stock.valuation.layer,"tree,form,pivot",0,,1
 demo_cost,stock_account.inventory_aging_action,Inventory Aging,stock.valuation.layer,"pivot,tree,graph",0,,1
+demo_cost,smart_construction_core.action_sc_settlement_order,结算单,sc.settlement.order,"tree,form",1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_settlement_read;smart_construction_core.group_sc_cap_settlement_manager;smart_construction_core.group_sc_cap_settlement_user;smart_construction_core.group_sc_cap_finance_read;smart_construction_core.group_sc_cap_project_read,1
 demo_readonly,base.action_decimal_precision_form,Decimal Accuracy,decimal.precision,"tree,form",0,,1
 demo_readonly,base.ir_sequence_actions,Actions,ir.actions.actions,"tree,form",0,,1
 demo_readonly,base.ir_action_report,Reports,ir.actions.report,"tree,form",0,,1
@@ -266,15 +300,30 @@ demo_readonly,base.action_rule,Record Rules,ir.rule,"tree,form",0,,1
 demo_readonly,base.ir_sequence_form,Sequences,ir.sequence,"tree,form",0,,1
 demo_readonly,base.grant_menu_access,Menu Items,ir.ui.menu,"tree,form",0,,1
 demo_readonly,base.action_ui_view,Views,ir.ui.view,"tree,form",0,,1
+demo_readonly,hr.hr_contract_type_action,Employment Types,hr.contract.type,tree,0,,1
+demo_readonly,hr.action_hr_job,Job Positions,hr.job,"tree,form",0,,1
 demo_readonly,base.action_ui_view_custom,Customized Views,ir.ui.view.custom,"tree,form",0,,1
+demo_readonly,hr.hr_employee_public_action,Employees,hr.employee.public,"kanban,tree,form,hierarchy",0,,1
+demo_readonly,hr.hr_departure_reason_action,Departure Reasons,hr.departure.reason,tree,0,,1
+demo_readonly,hr.open_view_employee_list_my,Employees,hr.employee,"kanban,tree,form,activity,graph,pivot,hierarchy",0,,1
 demo_readonly,base.ir_default_menu_action,User-defined Defaults,ir.default,"tree,form",0,,1
-demo_readonly,base.ir_logging_all_act,Logging,ir.logging,"tree,form",0,,1
 demo_readonly,base.open_module_tree,Apps,ir.module.module,"kanban,tree,form",0,,1
+demo_readonly,base.ir_logging_all_act,Logging,ir.logging,"tree,form",0,,1
+demo_readonly,hr.hr_department_kanban_action,Departments,hr.department,"kanban,tree,hierarchy,form",0,,1
+demo_readonly,hr.hr_department_tree_action,Departments,hr.department,"tree,kanban,hierarchy,form",0,,1
+demo_readonly,hr.hr_work_location_action,Work Locations,hr.work.location,"tree,form",0,,1
+demo_readonly,hr.hr_config_settings_action,Settings,res.config.settings,form,0,,1
 demo_readonly,base.action_view_base_import_language,Import Translation,base.language.import,form,0,,1
+demo_readonly,hr_org_chart.action_hr_employee_org_chart,Org Chart,hr.employee,"hierarchy,kanban,tree,form,activity,graph,pivot",0,,1
 demo_readonly,base.action_wizard_lang_export,Export Translation,base.language.export,form,0,,1
+demo_readonly,hr_skills.hr_skill_type_action,Skill Types,hr.skill.type,"list,form",0,,1
 demo_readonly,base.action_menu_ir_profile,Ir profile,ir.profile,"tree,form",0,,1
 demo_readonly,base.action_res_company_form,Companies,res.company,"tree,kanban,form",0,,1
 demo_readonly,base.res_lang_act_window,Languages,res.lang,"tree,form",0,,1
+demo_readonly,hr_skills.hr_employee_skill_report_action,Employee Skills,hr.employee.skill.report,"tree,pivot",0,,1
+demo_readonly,smart_enterprise_base.action_enterprise_company,公司信息,res.company,"tree,form",1,base.group_system,0
+demo_readonly,smart_enterprise_base.action_enterprise_department,组织架构,hr.department,"tree,form",1,base.group_system,0
+demo_readonly,smart_enterprise_base.action_enterprise_user,用户设置,res.users,"tree,form",1,base.group_system,0
 demo_readonly,base.action_currency_form,Currencies,res.currency,"tree,kanban,form",0,,1
 demo_readonly,base.action_res_users,Users,res.users,"tree,kanban,form",0,,1
 demo_readonly,base.ir_property_form,Company Properties,ir.property,"tree,form",0,,1
@@ -307,6 +356,7 @@ demo_readonly,mail.mail_blacklist_action,Blacklisted Email Addresses,mail.blackl
 demo_readonly,base_tier_validation.tier_definition_action,Tier Definition,tier.definition,"tree,form",0,,1
 demo_readonly,base_tier_validation.tier_validation_exception_action,Tier Validation Exception,tier.validation.exception,"tree,form",0,,1
 demo_readonly,phone_validation.phone_blacklist_action,Blacklisted Phone Numbers,phone.blacklist,"tree,form",0,,1
+demo_readonly,hr.mail_activity_plan_action,On/Offboarding Plans,mail.activity.plan,"tree,form",0,,1
 demo_readonly,privacy_lookup.privacy_log_action,Privacy Logs,privacy.log,"tree,form",0,,1
 demo_readonly,product.product_category_action_form,Product Categories,product.category,"tree,form",0,,1
 demo_readonly,product.product_supplierinfo_type_action,Vendor Pricelists,product.supplierinfo,"tree,form,kanban",0,,1
@@ -368,6 +418,7 @@ demo_readonly,purchase.action_purchase_configuration,Settings,res.config.setting
 demo_readonly,purchase.action_purchase_order_report_all,Purchase Analysis,purchase.report,"graph,pivot",1,purchase.group_purchase_user,0
 demo_readonly,stock_account.stock_valuation_layer_action,Stock Valuation,stock.valuation.layer,"tree,form,pivot",0,,1
 demo_readonly,stock_account.inventory_aging_action,Inventory Aging,stock.valuation.layer,"pivot,tree,graph",0,,1
+demo_readonly,smart_construction_core.action_sc_settlement_order,结算单,sc.settlement.order,"tree,form",1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_settlement_read;smart_construction_core.group_sc_cap_settlement_manager;smart_construction_core.group_sc_cap_settlement_user;smart_construction_core.group_sc_cap_finance_read;smart_construction_core.group_sc_cap_project_read,1
 admin,base.action_decimal_precision_form,Decimal Accuracy,decimal.precision,"tree,form",0,,1
 admin,base.ir_sequence_actions,Actions,ir.actions.actions,"tree,form",0,,1
 admin,base.ir_action_report,Reports,ir.actions.report,"tree,form",0,,1
@@ -389,15 +440,30 @@ admin,base.action_rule,Record Rules,ir.rule,"tree,form",0,,1
 admin,base.ir_sequence_form,Sequences,ir.sequence,"tree,form",0,,1
 admin,base.grant_menu_access,Menu Items,ir.ui.menu,"tree,form",0,,1
 admin,base.action_ui_view,Views,ir.ui.view,"tree,form",0,,1
+admin,hr.hr_contract_type_action,Employment Types,hr.contract.type,tree,0,,1
+admin,hr.action_hr_job,Job Positions,hr.job,"tree,form",0,,1
 admin,base.action_ui_view_custom,Customized Views,ir.ui.view.custom,"tree,form",0,,1
+admin,hr.hr_employee_public_action,Employees,hr.employee.public,"kanban,tree,form,hierarchy",0,,1
+admin,hr.hr_departure_reason_action,Departure Reasons,hr.departure.reason,tree,0,,1
+admin,hr.open_view_employee_list_my,Employees,hr.employee,"kanban,tree,form,activity,graph,pivot,hierarchy",0,,1
 admin,base.ir_default_menu_action,User-defined Defaults,ir.default,"tree,form",0,,1
-admin,base.ir_logging_all_act,Logging,ir.logging,"tree,form",0,,1
 admin,base.open_module_tree,Apps,ir.module.module,"kanban,tree,form",0,,1
+admin,base.ir_logging_all_act,Logging,ir.logging,"tree,form",0,,1
+admin,hr.hr_department_kanban_action,Departments,hr.department,"kanban,tree,hierarchy,form",0,,1
+admin,hr.hr_department_tree_action,Departments,hr.department,"tree,kanban,hierarchy,form",0,,1
+admin,hr.hr_work_location_action,Work Locations,hr.work.location,"tree,form",0,,1
+admin,hr.hr_config_settings_action,Settings,res.config.settings,form,0,,1
 admin,base.action_view_base_import_language,Import Translation,base.language.import,form,0,,1
+admin,hr_org_chart.action_hr_employee_org_chart,Org Chart,hr.employee,"hierarchy,kanban,tree,form,activity,graph,pivot",0,,1
 admin,base.action_wizard_lang_export,Export Translation,base.language.export,form,0,,1
+admin,hr_skills.hr_skill_type_action,Skill Types,hr.skill.type,"list,form",0,,1
 admin,base.action_menu_ir_profile,Ir profile,ir.profile,"tree,form",0,,1
 admin,base.action_res_company_form,Companies,res.company,"tree,kanban,form",0,,1
 admin,base.res_lang_act_window,Languages,res.lang,"tree,form",0,,1
+admin,hr_skills.hr_employee_skill_report_action,Employee Skills,hr.employee.skill.report,"tree,pivot",0,,1
+admin,smart_enterprise_base.action_enterprise_company,公司信息,res.company,"tree,form",1,base.group_system,1
+admin,smart_enterprise_base.action_enterprise_department,组织架构,hr.department,"tree,form",1,base.group_system,1
+admin,smart_enterprise_base.action_enterprise_user,用户设置,res.users,"tree,form",1,base.group_system,1
 admin,base.action_currency_form,Currencies,res.currency,"tree,kanban,form",0,,1
 admin,base.action_res_users,Users,res.users,"tree,kanban,form",0,,1
 admin,base.ir_property_form,Company Properties,ir.property,"tree,form",0,,1
@@ -430,6 +496,7 @@ admin,mail.mail_blacklist_action,Blacklisted Email Addresses,mail.blacklist,"tre
 admin,base_tier_validation.tier_definition_action,Tier Definition,tier.definition,"tree,form",0,,1
 admin,base_tier_validation.tier_validation_exception_action,Tier Validation Exception,tier.validation.exception,"tree,form",0,,1
 admin,phone_validation.phone_blacklist_action,Blacklisted Phone Numbers,phone.blacklist,"tree,form",0,,1
+admin,hr.mail_activity_plan_action,On/Offboarding Plans,mail.activity.plan,"tree,form",0,,1
 admin,privacy_lookup.privacy_log_action,Privacy Logs,privacy.log,"tree,form",0,,1
 admin,product.product_category_action_form,Product Categories,product.category,"tree,form",0,,1
 admin,product.product_supplierinfo_type_action,Vendor Pricelists,product.supplierinfo,"tree,form,kanban",0,,1
@@ -491,3 +558,4 @@ admin,purchase.action_purchase_configuration,Settings,res.config.settings,form,1
 admin,purchase.action_purchase_order_report_all,Purchase Analysis,purchase.report,"graph,pivot",1,purchase.group_purchase_user,0
 admin,stock_account.stock_valuation_layer_action,Stock Valuation,stock.valuation.layer,"tree,form,pivot",0,,1
 admin,stock_account.inventory_aging_action,Inventory Aging,stock.valuation.layer,"pivot,tree,graph",0,,1
+admin,smart_construction_core.action_sc_settlement_order,结算单,sc.settlement.order,"tree,form",1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_settlement_read;smart_construction_core.group_sc_cap_settlement_manager;smart_construction_core.group_sc_cap_settlement_user;smart_construction_core.group_sc_cap_finance_read;smart_construction_core.group_sc_cap_project_read,1
