@@ -1,0 +1,72 @@
+task_id: ITER-2026-04-23-GOV-CONTRACT-CATALOG-VIEWTYPE-NORMALIZE-PB01
+title: Normalize contract catalog case view_type samples onto canonical catalog values
+type: governance_task
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Remove the remaining `verify.contract.catalog` blocker by normalizing
+  `docs/contract/cases.yml` sample `view_type` values onto the canonical
+  catalog vocabulary already enforced by the validator.
+
+user_visible_outcome:
+  - "verify.contract.catalog no longer fails on tree/pivot sample values."
+  - "contract catalog samples stay aligned with the canonical form/list/kanban vocabulary."
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-23-GOV-CONTRACT-CATALOG-VIEWTYPE-NORMALIZE-PB01.yaml
+    - docs/contract/cases.yml
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - scripts/**
+    - migrations/**
+    - security/**
+
+limits:
+  max_files: 3
+  max_lines_changed: 40
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - normalize sample vocabulary only
+  - keep case ids, models, action_xmlids, and include_meta flags unchanged
+  - no contract schema change
+  - no addon/runtime code change
+
+architecture:
+  layer_target: Governance Layer
+  module: contract catalog sample normalization
+  module_owner: docs contract catalog
+  kernel_or_scenario: kernel
+  reason: >
+    The validator now enforces canonical contract catalog view types
+    (`form/list/kanban`). A bounded docs-only batch is required to align the
+    remaining sample cases that still use raw Odoo view labels (`tree/pivot`).
+
+acceptance:
+  commands:
+    - git diff --check -- docs/contract/cases.yml agent_ops/tasks/ITER-2026-04-23-GOV-CONTRACT-CATALOG-VIEWTYPE-NORMALIZE-PB01.yaml docs/ops/iterations/delivery_context_switch_log_v1.md
+    - make verify.contract.catalog
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - contract_schema_uncertain
+
+deliverables:
+  - normalized contract catalog sample task contract
+  - docs-only view_type sample normalization
+  - delivery log checkpoint
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-23-GOV-CONTRACT-CATALOG-VIEWTYPE-NORMALIZE-PB01.yaml docs/contract/cases.yml docs/ops/iterations/delivery_context_switch_log_v1.md

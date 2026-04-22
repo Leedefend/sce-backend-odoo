@@ -792,6 +792,19 @@ def get_intent_handler_contributions():
     ]
 
 
+def smart_core_register(registry):
+    """Legacy loader shim for smart_core.core.extension_loader."""
+    if not isinstance(registry, dict):
+        return
+    for item in get_intent_handler_contributions():
+        if not isinstance(item, dict):
+            continue
+        intent_name = str(item.get("intent") or "").strip()
+        handler = item.get("handler")
+        if intent_name and handler is not None:
+            registry[intent_name] = handler
+
+
 def get_capability_contributions(env, user):
     try:
         from odoo.addons.smart_construction_core.services.capability_registry import (
@@ -1046,9 +1059,24 @@ def get_capability_group_contributions(env):
     return out
 
 
+def smart_core_list_capabilities_for_user(env, user):
+    """Legacy hook shim consumed by smart_core capability provider."""
+    return get_capability_contributions(env, user)
+
+
+def smart_core_capability_groups(env):
+    """Legacy hook shim consumed by smart_core capability provider."""
+    return get_capability_group_contributions(env)
+
+
 def get_create_field_fallback_contributions(env, model_name):
     del env
     return dict(INDUSTRY_CREATE_FIELD_FALLBACKS.get(str(model_name or ""), {}))
+
+
+def smart_core_create_field_fallbacks(env, model_name):
+    """Legacy hook shim consumed by smart_core api.data handlers."""
+    return get_create_field_fallback_contributions(env, model_name)
 
 
 def get_system_init_fact_contributions(env, user, context=None):
@@ -1123,6 +1151,48 @@ def smart_core_extend_system_init(data, env, user):
         ext_facts[module_key] = dict(facts_payload)
     data["ext_facts"] = ext_facts
     return data
+
+
+def smart_core_server_action_window_map(env):
+    return get_server_action_window_map_contributions(env)
+
+
+def smart_core_file_upload_allowed_models(env):
+    return get_file_upload_allowed_model_contributions(env)
+
+
+def smart_core_file_download_allowed_models(env):
+    return get_file_download_allowed_model_contributions(env)
+
+
+def smart_core_api_data_write_allowlist(env):
+    return get_api_data_write_allowlist_contributions(env)
+
+
+def smart_core_api_data_unlink_allowed_models(env):
+    return get_api_data_unlink_allowed_model_contributions(env)
+
+
+def smart_core_model_code_mapping(env):
+    return get_model_code_mapping_contributions(env)
+
+
+def smart_core_scene_package_service_class(env):
+    del env
+    from odoo.addons.smart_construction_scene.services.scene_package_service import (
+        ScenePackageService,
+    )
+
+    return ScenePackageService
+
+
+def smart_core_scene_governance_service_class(env):
+    del env
+    from odoo.addons.smart_construction_scene.services.scene_governance_service import (
+        SceneGovernanceService,
+    )
+
+    return SceneGovernanceService
 
 
 def smart_core_describe_project_capabilities(env, project):
