@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import textwrap
 
 from odoo import api, fields, models
 from odoo.tools.safe_eval import safe_eval
@@ -29,7 +30,8 @@ class ProjectNextActionService(models.AbstractModel):
         seen = set()
         for rule in rules:
             if rule.condition_expr:
-                if not self._is_expr_safe(rule.condition_expr):
+                expr = self._normalize_expr(rule.condition_expr)
+                if not self._is_expr_safe(expr):
                     _logger.warning(
                         "[sc_next_action] rule=%s expr blocked by safety guard",
                         rule.id,
@@ -38,7 +40,7 @@ class ProjectNextActionService(models.AbstractModel):
                 try:
                     ok = bool(
                         safe_eval(
-                            rule.condition_expr,
+                            expr,
                             {
                                 "p": project,
                                 "s": stats,
@@ -90,6 +92,13 @@ class ProjectNextActionService(models.AbstractModel):
             return template.format(**data)
         except Exception:
             return template
+
+    def _normalize_expr(self, expr):
+        if not expr:
+            return ""
+        expr = textwrap.dedent(expr).strip()
+        lines = [line.strip() for line in expr.splitlines() if line.strip()]
+        return " ".join(lines)
 
     def _is_expr_safe(self, expr):
         if not expr:
