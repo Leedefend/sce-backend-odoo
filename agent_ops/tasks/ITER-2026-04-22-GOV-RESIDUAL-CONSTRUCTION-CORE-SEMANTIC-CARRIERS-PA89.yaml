@@ -1,0 +1,55 @@
+task_id: ITER-2026-04-22-GOV-RESIDUAL-CONSTRUCTION-CORE-SEMANTIC-CARRIERS-PA89
+title: Split residual construction core semantic carriers slice from 56b7eba
+objective: >
+  Isolate the domain-layer construction semantic carrier slice from commit
+  56b7eba into a bounded child batch for mainline review.
+context:
+  layer_target: Domain Layer
+  module: smart_construction_core
+  module_ownership: Industry domain layer
+  kernel_or_scenario: scenario
+  architecture_reason: >
+    This batch carries project dashboard, project context, my-work, and
+    capability-registry semantic supply that belongs to construction domain
+    services. It must remain separate from smart_core platform orchestration
+    and smart_construction_scene provider/runtime supply.
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/core_extension.py
+    - addons/smart_construction_core/handlers/my_work_summary.py
+    - addons/smart_construction_core/services/capability_registry.py
+    - addons/smart_construction_core/services/contract_governance_overrides.py
+    - addons/smart_construction_core/services/cost_tracking_service.py
+    - addons/smart_construction_core/services/project_context_contract.py
+    - addons/smart_construction_core/services/project_dashboard_service.py
+    - addons/smart_construction_core/services/project_entry_context_service.py
+    - addons/smart_construction_core/services/project_state_explain_service.py
+    - addons/smart_construction_core/tests/test_my_work_backend.py
+    - addons/smart_construction_core/tests/test_project_dashboard_entry_backend.py
+    - addons/smart_construction_core/tests/test_project_intake_contract_governance.py
+    - addons/smart_construction_core/tests/test_project_semantic_carriers.py
+    - agent_ops/tasks/ITER-2026-04-22-GOV-RESIDUAL-CONSTRUCTION-CORE-SEMANTIC-CARRIERS-PA89.yaml
+  forbidden_paths:
+    - addons/smart_construction_core/handlers/cost_tracking_enter.py
+    - addons/smart_construction_core/handlers/project_dashboard_enter.py
+    - addons/smart_construction_scene/**
+    - addons/smart_core/**
+    - addons/smart_construction_core/**/payment*
+    - addons/smart_construction_core/**/settlement*
+    - addons/smart_construction_core/**/account*
+change_rules:
+  additive_only: true
+  no_contract_breaking_changes: true
+  no_acl_or_manifest_changes: true
+  no_financial_semantic_changes: true
+acceptance:
+  verification_commands:
+    - python3 -m py_compile addons/smart_construction_core/core_extension.py addons/smart_construction_core/handlers/my_work_summary.py addons/smart_construction_core/services/capability_registry.py addons/smart_construction_core/services/contract_governance_overrides.py addons/smart_construction_core/services/cost_tracking_service.py addons/smart_construction_core/services/project_context_contract.py addons/smart_construction_core/services/project_dashboard_service.py addons/smart_construction_core/services/project_entry_context_service.py addons/smart_construction_core/services/project_state_explain_service.py
+reporting:
+  iteration_report_required: true
+  include:
+    - changed_files
+    - verification_result
+    - risk_summary
+    - rollback_suggestion
+    - next_iteration_suggestion
