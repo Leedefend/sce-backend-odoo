@@ -1,0 +1,50 @@
+task_id: ITER-2026-04-22-GOV-RESIDUAL-SMART-CORE-DELIVERY-ORCHESTRATION-TAIL-PA90
+title: Split residual smart_core delivery orchestration tail from 56b7eba
+objective: >
+  Isolate the remaining smart_core delivery/operator/orchestration tail from
+  commit 56b7eba into a bounded child batch for mainline review.
+context:
+  layer_target: Platform Layer
+  module: smart_core
+  module_ownership: Platform kernel
+  kernel_or_scenario: kernel
+  architecture_reason: >
+    This batch carries release-operator delivery helpers, scene-service policy
+    supply, and bounded scene orchestrator wiring that still belongs to
+    smart_core. It must remain separate from construction scene assets and
+    construction entry handlers.
+scope:
+  allowed_paths:
+    - addons/smart_core/__init__.py
+    - addons/smart_core/delivery/product_policy_service.py
+    - addons/smart_core/delivery/release_operator_read_model_service.py
+    - addons/smart_core/delivery/release_operator_surface_service.py
+    - addons/smart_core/delivery/scene_service.py
+    - addons/smart_core/handlers/execute_button.py
+    - addons/smart_core/orchestration/cost_tracking_contract_orchestrator.py
+    - addons/smart_core/orchestration/project_dashboard_scene_orchestrator.py
+    - addons/smart_core/orchestration/project_plan_bootstrap_scene_orchestrator.py
+    - addons/smart_core/tests/__init__.py
+    - agent_ops/tasks/ITER-2026-04-22-GOV-RESIDUAL-SMART-CORE-DELIVERY-ORCHESTRATION-TAIL-PA90.yaml
+  forbidden_paths:
+    - addons/smart_core/**/payment*
+    - addons/smart_core/**/settlement*
+    - addons/smart_core/**/account*
+    - addons/smart_construction_scene/**
+    - addons/smart_construction_core/**
+change_rules:
+  additive_only: true
+  no_contract_breaking_changes: true
+  no_acl_or_manifest_changes: true
+  no_financial_semantic_changes: true
+acceptance:
+  verification_commands:
+    - python3 -m py_compile addons/smart_core/delivery/product_policy_service.py addons/smart_core/delivery/release_operator_read_model_service.py addons/smart_core/delivery/release_operator_surface_service.py addons/smart_core/delivery/scene_service.py addons/smart_core/handlers/execute_button.py addons/smart_core/orchestration/cost_tracking_contract_orchestrator.py addons/smart_core/orchestration/project_dashboard_scene_orchestrator.py addons/smart_core/orchestration/project_plan_bootstrap_scene_orchestrator.py
+reporting:
+  iteration_report_required: true
+  include:
+    - changed_files
+    - verification_result
+    - risk_summary
+    - rollback_suggestion
+    - next_iteration_suggestion
