@@ -1,195 +1,68 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from importlib.util import module_from_spec, spec_from_file_location
-from pathlib import Path
-
 from odoo import fields
+
+from odoo.addons.smart_construction_core.services.evidence_chain_service import EvidenceChainService
+from odoo.addons.smart_construction_core.services.project_decision_engine_service import ProjectDecisionEngineService
+from odoo.addons.smart_construction_core.services.project_metrics_explain_service import ProjectMetricsExplainService
+from odoo.addons.smart_construction_core.services.project_state_explain_service import (
+    ProjectStateExplainService,
+    lifecycle_state_label,
+)
+from odoo.addons.smart_construction_core.services.project_task_state_support import (
+    ProjectTaskStateSupport,
+)
 
 from .project_dashboard_builders import BUILDERS
 
 
-_SCENE_CONTENT_MODULE = None
-_KERNEL_MODULE = None
-_SCENE_ENGINE_MODULE = None
-
-
-def _load_scene_content_module():
-    global _SCENE_CONTENT_MODULE
-    if _SCENE_CONTENT_MODULE is not None:
-        return _SCENE_CONTENT_MODULE
-    content_path = None
-    try:
-        registry_path = Path(__file__).resolve().parents[2] / "smart_scene" / "core" / "scene_provider_registry.py"
-        locator_spec = spec_from_file_location("smart_scene_provider_registry_project_dashboard", registry_path)
-        if locator_spec is not None and locator_spec.loader is not None:
-            locator_module = module_from_spec(locator_spec)
-            locator_spec.loader.exec_module(locator_module)
-            resolver = getattr(locator_module, "resolve_scene_provider_path", None)
-            if callable(resolver):
-                content_path = resolver("project.dashboard", Path(__file__))
-    except Exception:
-        content_path = None
-    if content_path is None:
-        _SCENE_CONTENT_MODULE = False
-        return None
-    try:
-        spec = spec_from_file_location("smart_construction_project_dashboard_scene_content", content_path)
-        if spec is None or spec.loader is None:
-            raise RuntimeError("spec unavailable")
-        module = module_from_spec(spec)
-        spec.loader.exec_module(module)
-        _SCENE_CONTENT_MODULE = module
-        return module
-    except Exception:
-        _SCENE_CONTENT_MODULE = False
-        return None
-
-
-def _load_orchestration_kernel_module():
-    global _KERNEL_MODULE
-    if _KERNEL_MODULE is not None:
-        return _KERNEL_MODULE
-    kernel_path = Path(__file__).resolve().parents[2] / "smart_scene" / "core" / "dashboard_orchestration_kernel.py"
-    try:
-        spec = spec_from_file_location("smart_scene_dashboard_orchestration_kernel", kernel_path)
-        if spec is None or spec.loader is None:
-            raise RuntimeError("spec unavailable")
-        module = module_from_spec(spec)
-        spec.loader.exec_module(module)
-        _KERNEL_MODULE = module
-        return module
-    except Exception:
-        _KERNEL_MODULE = False
-        return None
-
-
-def _load_scene_engine_module():
-    global _SCENE_ENGINE_MODULE
-    if _SCENE_ENGINE_MODULE is not None:
-        return _SCENE_ENGINE_MODULE
-    engine_path = Path(__file__).resolve().parents[2] / "smart_scene" / "core" / "scene_engine.py"
-    try:
-        spec = spec_from_file_location("smart_scene_core_scene_engine", engine_path)
-        if spec is None or spec.loader is None:
-            raise RuntimeError("spec unavailable")
-        module = module_from_spec(spec)
-        spec.loader.exec_module(module)
-        _SCENE_ENGINE_MODULE = module
-        return module
-    except Exception:
-        _SCENE_ENGINE_MODULE = False
-        return None
+class _NullEvidenceSummaryService:
+    def summary_for_project(self, _project):
+        return {}
 
 
 class ProjectDashboardService:
-    """Assemble project.dashboard contract using block builders."""
+    """Provide business-truth-backed dashboard data for orchestration carriers."""
 
-    ZONE_BLOCKS = (
-        ("header", "项目头部信息", "hero", "stack", "block.project.header"),
-        ("metrics", "关键指标", "primary", "grid", "block.project.metrics"),
-        ("progress", "项目进度", "primary", "stack", "block.project.progress"),
-        ("contract", "合同执行", "secondary", "stack", "block.project.contract"),
-        ("cost", "成本控制", "secondary", "stack", "block.project.cost"),
-        ("finance", "资金情况", "secondary", "stack", "block.project.finance"),
-        ("risk", "风险提醒", "supporting", "stack", "block.project.risk"),
+    ENTRY_BLOCKS = (
+        ("progress", "项目进度", "deferred"),
+        ("risks", "风险提醒", "deferred"),
+        ("next_actions", "下一步动作", "deferred"),
     )
+    RUNTIME_BLOCK_MAP = {
+        "progress": "block.project.progress",
+        "risks": "block.project.risk",
+        "risk": "block.project.risk",
+        "next_actions": "block.project.next_actions",
+    }
 
     def __init__(self, env):
         self.env = env
+        self._evidence_chain_service = EvidenceChainService(env)
+        evidence_summary_service = self._model("sc.evidence.summary.service")
+        self._evidence_summary_service = evidence_summary_service or _NullEvidenceSummaryService()
+        self._decision_engine = ProjectDecisionEngineService(env)
+        self._state_explain_service = ProjectStateExplainService(env)
+        self._metrics_explain_service = ProjectMetricsExplainService(env)
         self._builders = [builder_cls(env) for builder_cls in BUILDERS]
         self._builder_map = {builder.block_key: builder for builder in self._builders}
-        self._scene_content = self._scene_content_payload()
 
-    def _scene_content_payload(self):
-        module = _load_scene_content_module()
-        fn = getattr(module, "build_project_dashboard_scene_content", None) if module else None
-        if callable(fn):
+    def build_block(self, block_key, project=None, context=None):
+        normalized_key = str(block_key or "").strip().lower()
+        builder_key = self.RUNTIME_BLOCK_MAP.get(normalized_key)
+        if not builder_key:
+            return self.error_block(normalized_key or "unknown", "UNSUPPORTED_BLOCK_KEY")
+
+        builder = self._builder_map.get(builder_key)
+        if builder is None:
+            block = self.error_block(builder_key, "BLOCK_BUILDER_NOT_FOUND")
+        else:
             try:
-                payload = fn()
-                if isinstance(payload, dict) and payload:
-                    return payload
+                block = builder.build(project=project, context=dict(context or {}))
             except Exception:
-                pass
-        return {
-            "scene": {"key": "project.management", "page": "project.management.dashboard"},
-            "page": {"key": "project.management.dashboard", "title": "项目驾驶舱", "route": "/s/project.management"},
-            "zone_blocks": [
-                {"key": key, "title": title, "zone_type": zone_type, "display_mode": display_mode, "block_key": block_key}
-                for key, title, zone_type, display_mode, block_key in self.ZONE_BLOCKS
-            ],
-        }
-
-    def build(self, project_id=None, context=None):
-        ctx = dict(context or {})
-        project, project_resolution = self._resolve_project_with_diagnostics(project_id)
-        project_payload = self._project_payload(project)
-        zones = self._build_zones(project=project, context=ctx)
-        scene = self._scene_content.get("scene") if isinstance(self._scene_content.get("scene"), dict) else {}
-        page = self._scene_content.get("page") if isinstance(self._scene_content.get("page"), dict) else {}
-        diagnostics = {
-            "project_resolution": project_resolution,
-        }
-        scene_engine = _load_scene_engine_module()
-        engine_fn = getattr(scene_engine, "build_scene_contract_from_specs", None) if scene_engine else None
-        if callable(engine_fn):
-            contract = engine_fn(
-                scene_hint=scene,
-                page_hint=page,
-                zone_specs=self._scene_content.get("zone_blocks") if isinstance(self._scene_content.get("zone_blocks"), list) else [],
-                built_zones=zones,
-                record={"project": project_payload},
-                diagnostics=diagnostics,
-            )
-            contract["route_context"] = self._route_context(project)
-            contract["project"] = project_payload
-            return contract
-
-        return {
-            "scene": {
-                "key": str(scene.get("key") or "project.management"),
-                "page": str(scene.get("page") or "project.management.dashboard"),
-            },
-            "page": {
-                "key": str(page.get("key") or "project.management.dashboard"),
-                "title": str(page.get("title") or "项目驾驶舱"),
-                "route": str(page.get("route") or "/s/project.management"),
-            },
-            "route_context": self._route_context(project),
-            "project": project_payload,
-            "diagnostics": diagnostics,
-            "zones": zones,
-        }
-
-    def _build_zones(self, project, context):
-        zone_specs = self._scene_content.get("zone_blocks") if isinstance(self._scene_content.get("zone_blocks"), list) else []
-        kernel = _load_orchestration_kernel_module()
-        fn = getattr(kernel, "build_single_block_zones", None) if kernel else None
-        if callable(fn):
-            try:
-                payload = fn(zone_specs, self._builder_map, project, context, self._error_block)
-                if isinstance(payload, dict) and payload:
-                    return payload
-            except Exception:
-                pass
-        zones = {}
-        for spec in zone_specs:
-            if not isinstance(spec, dict):
-                continue
-            key = str(spec.get("key") or "").strip()
-            if not key:
-                continue
-            block_key = str(spec.get("block_key") or "").strip()
-            builder = self._builder_map.get(block_key)
-            block = builder.build(project=project, context=context) if builder else self._error_block(block_key, "BLOCK_BUILDER_NOT_FOUND")
-            zones[key] = {
-                "zone_key": str(spec.get("zone_key") or ("zone.%s" % key)),
-                "title": str(spec.get("title") or key),
-                "zone_type": str(spec.get("zone_type") or "secondary"),
-                "display_mode": str(spec.get("display_mode") or "stack"),
-                "blocks": [block],
-            }
-        return zones
+                block = self.error_block(builder_key, "BLOCK_BUILD_FAILED")
+        return block if isinstance(block, dict) else self.error_block(builder_key, "INVALID_BLOCK_PAYLOAD")
 
     def _model(self, model_name):
         try:
@@ -207,6 +80,8 @@ class ProjectDashboardService:
         for field in ("manager_id", "owner_id", "user_id"):
             if field in f:
                 ors.append((field, "=", uid))
+        if "create_uid" in f:
+            ors.append(("create_uid", "=", uid))
         for field in ("user_ids", "member_ids", "member_user_ids"):
             if field in f:
                 ors.append((field, "in", [uid]))
@@ -217,10 +92,10 @@ class ProjectDashboardService:
         return (["|"] * (len(ors) - 1)) + ors
 
     def _resolve_project(self, project_id):
-        project, _diag = self._resolve_project_with_diagnostics(project_id)
+        project, _diag = self.resolve_project_with_diagnostics(project_id)
         return project
 
-    def _resolve_project_with_diagnostics(self, project_id):
+    def resolve_project_with_diagnostics(self, project_id):
         model_in_env = False
         model_error = ""
         try:
@@ -268,6 +143,25 @@ class ProjectDashboardService:
                 diagnostics["reason"] = "explicit project_id not found or inaccessible"
             except Exception:
                 diagnostics["reason"] = "explicit project_id browse failed"
+        try:
+            if "create_uid" in getattr(Project, "_fields", {}):
+                creator_domain = [("create_uid", "=", int(self.env.user.id))]
+                diagnostics["candidate_counts"]["creator_domain"] = int(Project.search_count(creator_domain))
+                record = Project.search(creator_domain, order="create_date desc,id desc", limit=1)
+                if record:
+                    diagnostics.update(
+                        {
+                            "resolved_project_id": int(record.id),
+                            "resolution_path": "creator_domain",
+                            "reason": "matched latest project created by current user",
+                        }
+                    )
+                    return record, diagnostics
+            else:
+                diagnostics["candidate_counts"]["creator_domain"] = 0
+        except Exception:
+            diagnostics["candidate_counts"]["creator_domain"] = -1
+            diagnostics["reason"] = "creator_domain search failed"
         domain = self._project_domain_for_user()
         diagnostics["user_domain"] = domain
         try:
@@ -334,7 +228,32 @@ class ProjectDashboardService:
         )
         return None, diagnostics
 
-    def _project_payload(self, project):
+    def project_payload(self, project):
+        if project:
+            try:
+                project = project.sudo()
+            except Exception:
+                pass
+
+        def _safe_text(value):
+            try:
+                return str(value or "")
+            except Exception:
+                return ""
+
+        def _safe_rel_name(record, field_name):
+            try:
+                relation = getattr(record, field_name, None)
+            except Exception:
+                return ""
+            return _safe_text(getattr(relation, "display_name", ""))
+
+        def _safe_field(record, field_name):
+            try:
+                return getattr(record, field_name, "")
+            except Exception:
+                return ""
+
         if not project:
             return {
                 "id": 0,
@@ -343,37 +262,308 @@ class ProjectDashboardService:
                 "partner_name": "",
                 "manager_name": "",
                 "stage_name": "",
+                "lifecycle_state": "",
+                "milestone": "",
                 "state": "empty",
+                "progress_percent": "0",
+                "cost_total": "0",
+                "payment_total": "0",
+                "status": "",
                 "date": str(fields.Date.today()),
             }
+        progress_percent = 0.0
+        try:
+            task_model = self._model("project.task")
+            if task_model is not None:
+                total = int(task_model.search_count([("project_id", "=", int(project.id))]))
+                done = int(
+                    task_model.search_count(
+                        [("project_id", "=", int(project.id))] + ProjectTaskStateSupport.done_domain()
+                    )
+                )
+                if total > 0:
+                    progress_percent = round((done / float(total)) * 100.0, 2)
+        except Exception:
+            progress_percent = 0.0
+        evidence_summary = self._evidence_summary_service.summary_for_project(project)
+        evidence_chain = self._evidence_chain_service.build_project_chain(int(project.id), limit=20)
+        risk_analysis = self._decision_engine.analyze(project)
+        risk_count = int(risk_analysis.get("risk_count") or 0)
+        exception_model = self._model("sc.evidence.exception")
+        exception_open_count = 0
+        exception_resolved_count = 0
+        if exception_model is not None:
+            try:
+                exception_open_count = int(
+                    exception_model.search_count([("project_id", "=", int(project.id)), ("status", "in", ["open", "processing"])])
+                )
+                exception_resolved_count = int(
+                    exception_model.search_count([("project_id", "=", int(project.id)), ("status", "=", "resolved")])
+                )
+            except Exception:
+                exception_open_count = 0
+                exception_resolved_count = 0
+        fact_metrics = [
+            {
+                "key": "payment_total",
+                "label": "已付款",
+                "value": float(evidence_summary.get("pay_total") or 0.0),
+                "unit": "元",
+                "trace_action": {
+                    "intent": "business.evidence.trace",
+                    "payload": {
+                        "business_model": "project.project",
+                        "business_id": int(project.id),
+                        "evidence_type": "payment",
+                    },
+                },
+            },
+            {
+                "key": "cost_total",
+                "label": "已发生成本",
+                "value": float(evidence_summary.get("cost_total") or 0.0),
+                "unit": "元",
+                "trace_action": {
+                    "intent": "business.evidence.trace",
+                    "payload": {
+                        "business_model": "project.project",
+                        "business_id": int(project.id),
+                        "evidence_type": "cost",
+                    },
+                },
+            },
+            {
+                "key": "settlement_total",
+                "label": "已结算",
+                "value": float(evidence_summary.get("settlement_total") or 0.0),
+                "unit": "元",
+                "trace_action": {
+                    "intent": "business.evidence.trace",
+                    "payload": {
+                        "business_model": "project.project",
+                        "business_id": int(project.id),
+                        "evidence_type": "settlement",
+                    },
+                },
+            },
+            {
+                "key": "risk_count",
+                "label": "风险事项",
+                "value": risk_count,
+                "unit": "项",
+                "trace_action": {
+                    "intent": "business.evidence.trace",
+                    "payload": {
+                        "business_model": "project.project",
+                        "business_id": int(project.id),
+                        "evidence_type": "risk",
+                    },
+                },
+            },
+        ]
         return {
             "id": int(project.id),
-            "name": str(getattr(project, "name", "") or ""),
-            "project_code": str(getattr(project, "project_code", "") or ""),
-            "partner_name": str(getattr(getattr(project, "partner_id", None), "display_name", "") or ""),
-            "manager_name": str(getattr(getattr(project, "user_id", None), "display_name", "") or ""),
-            "stage_name": str(getattr(getattr(project, "stage_id", None), "display_name", "") or ""),
+            "name": _safe_text(_safe_field(project, "name")),
+            "project_code": _safe_text(_safe_field(project, "project_code")),
+            "partner_name": _safe_rel_name(project, "partner_id"),
+            "manager_name": _safe_rel_name(project, "user_id"),
+            "stage_name": lifecycle_state_label(project),
+            "health_state": _safe_text(_safe_field(project, "health_state")),
+            "lifecycle_state": _safe_text(_safe_field(project, "lifecycle_state")),
+            "milestone": _safe_text(_safe_field(project, "sc_execution_state")),
             "state": "ready",
+            "progress_percent": str(progress_percent),
+            "cost_total": str(evidence_summary.get("cost_total") or 0.0),
+            "payment_total": str(evidence_summary.get("pay_total") or 0.0),
+            "payment_executed_total": str(evidence_summary.get("pay_done_total") or 0.0),
+            "payment_executed_record_count": str(evidence_summary.get("pay_done_count") or 0),
+            "evidence_refs": evidence_chain.get("evidence_refs") or [],
+            "evidence_summary": evidence_summary,
+            "fact_metrics": fact_metrics,
+            "facts": {
+                "cost_total": str(evidence_summary.get("cost_total") or 0.0),
+                "payment_total": str(evidence_summary.get("pay_total") or 0.0),
+                "payment_executed_total": str(evidence_summary.get("pay_done_total") or 0.0),
+                "evidence_count": int(evidence_summary.get("evidence_count") or 0),
+                "cost_evidence_count": int(evidence_summary.get("cost_count") or 0),
+                "payment_evidence_count": int(evidence_summary.get("payment_count") or 0),
+                "settlement_evidence_count": int(evidence_summary.get("settlement_count") or 0),
+                "risk_count": risk_count,
+                "exception_open_count": exception_open_count,
+                "exception_resolved_count": exception_resolved_count,
+            },
+            "status": _safe_text(_safe_field(project, "health_state") or _safe_field(project, "state")),
             "date": str(fields.Date.today()),
         }
 
-    @staticmethod
-    def _route_context(project):
-        route = "/s/project.management"
-        query_key = "project_id"
-        out = {
-            "primary_protocol": "/s/project.management?project_id=<id>",
-            "query_key": query_key,
-            "scene_route": route,
-            "project_route_template": "/s/project.management?project_id={project_id}",
-            "project_route": route,
+    def build_state_explain(self, project):
+        state_explain = self._state_explain_service.build(project)
+        if not project:
+            return {
+                "execution_stage_label": state_explain.get("execution_stage_label") or state_explain.get("stage_label") or "未选择项目",
+                "stage_label": state_explain.get("stage_label") or "未选择项目",
+                "execution_stage_explain": state_explain.get("execution_stage_explain") or state_explain.get("stage_explain") or "当前没有可用项目，无法进入项目驾驶舱。",
+                "stage_explain": state_explain.get("stage_explain") or state_explain.get("execution_stage_explain") or "当前没有可用项目，无法进入项目驾驶舱。",
+                "milestone_explain": "暂无项目里程碑。",
+                "project_condition_explain": state_explain.get("project_condition_explain") or state_explain.get("status_explain") or "请先选择项目或创建项目。",
+                "status_explain": state_explain.get("status_explain") or state_explain.get("project_condition_explain") or "请先选择项目或创建项目。",
+            }
+        milestone = str(getattr(project, "sc_execution_state", "") or "").strip().lower()
+        milestone_explain_map = {
+            "ready": "当前执行准备已完成，可以进入执行推进。",
+            "in_progress": "当前执行正在推进，建议优先补齐成本与付款事实。",
+            "done": "当前执行动作已完成，可继续检查成本、付款与结算结果。",
         }
-        if project:
-            out["project_route"] = "/s/project.management?project_id=%s" % int(project.id)
-        return out
+        return {
+            "execution_stage_label": state_explain.get("execution_stage_label") or state_explain.get("stage_label") or "未设置阶段",
+            "stage_label": state_explain.get("stage_label") or "未设置阶段",
+            "execution_stage_explain": state_explain.get("execution_stage_explain") or state_explain.get("stage_explain") or "当前项目处于已发布主线中，请按下一步动作推进。",
+            "stage_explain": state_explain.get("stage_explain") or state_explain.get("execution_stage_explain") or "当前项目处于已发布主线中，请按下一步动作推进。",
+            "milestone_explain": milestone_explain_map.get(milestone, "当前里程碑尚未进入显式执行状态。"),
+            "project_condition_explain": state_explain.get("project_condition_explain") or state_explain.get("status_explain") or "当前项目整体正常。",
+            "status_explain": state_explain.get("status_explain") or state_explain.get("project_condition_explain") or "当前项目整体正常。",
+        }
+
+    def build_summary_rows(self, project):
+        project_payload = self.project_payload(project)
+        state_explain = self.build_state_explain(project)
+        metrics_explain = self.build_metrics_explain(project)
+        metrics_map = {}
+        for item in metrics_explain or []:
+            if not isinstance(item, dict):
+                continue
+            key = str(item.get("key") or "").strip()
+            if not key:
+                continue
+            metrics_map[key] = item
+        return [
+            {
+                "key": "stage_label",
+                "label": "项目执行阶段",
+                "value": str(state_explain.get("execution_stage_label") or "未设置阶段"),
+                "copy": "主流程位置",
+            },
+            {
+                "key": "milestone_label",
+                "label": "当前里程碑",
+                "value": str(project_payload.get("milestone") or ""),
+                "copy": "执行推进节点",
+            },
+            {
+                "key": "progress_percent",
+                "label": "执行进度",
+                "value": "%s%%" % str(project_payload.get("progress_percent") or 0),
+                "copy": str((metrics_map.get("progress") or {}).get("explain") or "任务与里程碑综合进度"),
+            },
+            {
+                "key": "cost_total",
+                "label": "成本合计",
+                "value": str(project_payload.get("cost_total") or 0),
+                "copy": str((metrics_map.get("cost") or {}).get("explain") or "当前经营事实"),
+            },
+            {
+                "key": "payment_total",
+                "label": "付款合计",
+                "value": str(project_payload.get("payment_total") or 0),
+                "copy": str((metrics_map.get("payment") or {}).get("explain") or "当前资金事实"),
+            },
+            {
+                "key": "payment_executed_total",
+                "label": "已支付证据",
+                "value": str(project_payload.get("payment_executed_total") or 0),
+                "copy": "%s 条 payment.ledger 台账" % str(project_payload.get("payment_executed_record_count") or 0),
+            },
+        ]
+
+    def build_metrics_explain(self, project):
+        return self._metrics_explain_service.build(self.project_payload(project))
+
+    def build_flow_map(self, project):
+        project_payload = self.project_payload(project)
+        decision = self._decision_engine.decide(project)
+        signals = (decision.get("facts") or {}).get("signals") or {}
+        lifecycle_state = str(project_payload.get("lifecycle_state") or "").strip().lower()
+        facts = decision.get("facts") or {}
+        payment_count = int(facts.get("payment_count") or 0)
+        cost_count = int(facts.get("cost_count") or 0)
+
+        current_stage = "initiation"
+        is_completed = bool(signals.get("settlement_completed"))
+        if lifecycle_state == "draft":
+            current_stage = "initiation"
+        elif lifecycle_state in {"closing", "warranty", "done"}:
+            current_stage = "settlement"
+        elif payment_count > 0:
+            current_stage = "payment"
+        elif cost_count > 0:
+            current_stage = "cost"
+        elif lifecycle_state in {"in_progress"}:
+            current_stage = "execution"
+        elif signals.get("payment_exceeds_cost") or signals.get("ready_for_settlement"):
+            current_stage = "settlement"
+
+        stage_order = ["initiation", "execution", "cost", "payment", "settlement"]
+        stage_labels = {
+            "initiation": "立项",
+            "execution": "执行",
+            "cost": "成本",
+            "payment": "付款",
+            "settlement": "结算",
+        }
+        current_index = stage_order.index(current_stage)
+        items = []
+        for index, key in enumerate(stage_order):
+            if is_completed:
+                status = "done"
+            else:
+                status = "done" if index < current_index else "current" if index == current_index else "todo"
+            items.append(
+                {
+                    "key": key,
+                    "label": stage_labels.get(key) or key,
+                    "status": status,
+                }
+            )
+        return {
+            "current_stage": current_stage,
+            "items": items,
+        }
+
+    def build_completion(self, project):
+        decision = self._decision_engine.decide(project)
+        facts = decision.get("facts") or {}
+        signals = facts.get("signals") or {}
+        lifecycle_state = str(facts.get("lifecycle_state") or "").strip().lower()
+        percent = 20
+        next_target = "进入执行"
+        if signals.get("settlement_completed"):
+            percent = 100
+            next_target = "项目已完成"
+        elif signals.get("is_draft"):
+            percent = 20
+            next_target = "开始执行"
+        elif lifecycle_state in {"closing", "warranty", "done"}:
+            percent = 90
+            next_target = "完成结算确认"
+        elif signals.get("no_tasks"):
+            percent = 35
+            next_target = "创建任务"
+        elif signals.get("no_cost"):
+            percent = 50
+            next_target = "完成成本录入"
+        elif signals.get("no_payment"):
+            percent = 70
+            next_target = "完成付款记录"
+        elif signals.get("ready_for_settlement") or signals.get("payment_exceeds_cost"):
+            percent = 85
+            next_target = "完成结算检查"
+        return {
+            "percent": percent,
+            "next_target": next_target,
+        }
 
     @staticmethod
-    def _error_block(block_key, code):
+    def error_block(block_key, code):
         return {
             "block_key": block_key,
             "block_type": "unknown",
