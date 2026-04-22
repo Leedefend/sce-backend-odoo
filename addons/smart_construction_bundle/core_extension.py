@@ -13,9 +13,8 @@ from .services.bundle_registry import (
 _logger = logging.getLogger(__name__)
 
 
-def smart_core_register(registry):
-    # Bundle module does not register new handler endpoints in v1.
-    return registry
+def get_intent_handler_contributions():
+    return []
 
 
 def smart_core_extend_system_init(data, env, user):
