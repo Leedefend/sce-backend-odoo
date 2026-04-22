@@ -1,33 +1,8 @@
 import fs from 'node:fs';
-import { createRequire } from 'node:module';
 import path from 'node:path';
+import { bootstrapPortalBrowserAuth, launchPortalChromium, resolvePortalSmokeConfig, waitForPortalBootstrapReady } from './playwright_portal_bootstrap.mjs';
 
-const require = createRequire(import.meta.url);
-const playwrightEntry = require.resolve('playwright', { paths: [path.resolve(process.cwd(), 'frontend')] });
-const { chromium } = require(playwrightEntry);
-const LOCAL_RUNTIME_LIB_ROOT = path.resolve(process.cwd(), '.codex-runtime', 'playwright-libs');
-
-function primeLocalRuntimeLibraries() {
-  const candidateDirs = [
-    path.join(LOCAL_RUNTIME_LIB_ROOT, 'lib', 'x86_64-linux-gnu'),
-    path.join(LOCAL_RUNTIME_LIB_ROOT, 'usr', 'lib', 'x86_64-linux-gnu'),
-    path.join(LOCAL_RUNTIME_LIB_ROOT, 'usr', 'lib'),
-    path.join(LOCAL_RUNTIME_LIB_ROOT, 'lib'),
-  ].filter((dir) => fs.existsSync(dir));
-  if (!candidateDirs.length) return;
-  const existing = String(process.env.LD_LIBRARY_PATH || '').trim();
-  const segments = existing ? existing.split(':').filter(Boolean) : [];
-  process.env.LD_LIBRARY_PATH = [...candidateDirs, ...segments].join(':');
-}
-
-primeLocalRuntimeLibraries();
-
-const BASE_URL = String(process.env.BASE_URL || 'http://127.0.0.1').replace(/\/+$/, '');
-const API_BASE_URL = String(process.env.API_BASE_URL || 'http://127.0.0.1:18069').replace(/\/+$/, '');
-const DB_NAME = String(process.env.DB_NAME || 'sc_prod_sim').trim();
-const LOGIN = String(process.env.E2E_LOGIN || 'demo_pm').trim();
-const PASSWORD = String(process.env.E2E_PASSWORD || 'demo').trim();
-const ARTIFACTS_DIR = String(process.env.ARTIFACTS_DIR || 'artifacts').trim() || 'artifacts';
+const { baseUrl: BASE_URL, apiBaseUrl: API_BASE_URL, dbName: DB_NAME, login: LOGIN, password: PASSWORD, artifactsDir: ARTIFACTS_DIR } = resolvePortalSmokeConfig();
 const ts = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
 const outDir = path.join(ARTIFACTS_DIR, 'codex', 'release-navigation-browser-smoke', ts);
 const EXPECTED_ROOT_LABEL = '系统菜单';
@@ -110,7 +85,7 @@ async function waitForReleaseNavigation(page) {
     try {
       await expandSidebarTree(page);
       await page.waitForFunction(({ expectedRoot, minLeafCount }) => {
-        const cacheKey = Object.keys(localStorage).find((key) => key.startsWith('sc_frontend_session_v0_4'));
+        const cacheKey = Object.keys(localStorage).find((key) => key.startsWith('sc_frontend_session_v0_5'));
         const cache = cacheKey ? JSON.parse(localStorage.getItem(cacheKey) || 'null') : null;
         const roots = Array.isArray(cache?.releaseNavigationTree) ? cache.releaseNavigationTree : [];
         if (!roots.length) {
@@ -145,66 +120,10 @@ async function waitForReleaseNavigation(page) {
   throw lastError;
 }
 
-async function fillLoginForm(page) {
-  await page.locator('input[autocomplete="username"]').fill(LOGIN);
-  await page.locator('input[autocomplete="current-password"]').fill(PASSWORD);
-  await page.locator('input[placeholder*="数据库"]').fill(DB_NAME);
-}
-
-async function fetchLoginToken() {
-  let payload = null;
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    const response = await fetch(`${API_BASE_URL}/api/v1/intent?db=${encodeURIComponent(DB_NAME)}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Anonymous-Intent': 'true',
-      },
-      body: JSON.stringify({
-        intent: 'login',
-        params: {
-          login: LOGIN,
-          password: PASSWORD,
-          contract_mode: 'default',
-          db: DB_NAME,
-        },
-      }),
-    });
-    payload = {
-      status: response.status,
-      text: await response.text(),
-    };
-    if (Number(payload?.status || 0) === 200) {
-      const parsed = JSON.parse(String(payload?.text || '{}'));
-      const data = parsed?.data && typeof parsed.data === 'object' ? parsed.data : parsed;
-      const token = String(data?.session?.token || data?.token || '').trim();
-      assert(token, 'login response missing token');
-      return token;
-    }
-    await page.waitForTimeout(1500);
-  }
-  assert(Number(payload?.status || 0) === 200, `login http status drift: ${payload?.status}`);
-  return '';
-}
-
-async function bootstrapLogin(page) {
-  const token = await fetchLoginToken();
-  await page.addInitScript(({ token, dbName }) => {
-    sessionStorage.setItem(`sc_auth_token:${dbName}`, token);
-    sessionStorage.setItem('sc_auth_token:default', token);
-    sessionStorage.setItem('sc_auth_token:test', token);
-    sessionStorage.setItem('sc_auth_token', token);
-    sessionStorage.setItem('sc_active_db:default', dbName);
-    sessionStorage.setItem('sc_active_db:test', dbName);
-    localStorage.setItem('sc_active_db:default', dbName);
-    localStorage.setItem('sc_active_db:test', dbName);
-  }, { token, dbName: DB_NAME });
-}
-
 let browser;
 let page;
 try {
-  browser = await chromium.launch({ headless: true, timeout: 20000 });
+  browser = await launchPortalChromium();
   page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
 
   page.on('console', (msg) => {
@@ -215,14 +134,19 @@ try {
   });
 
   log('login demo_pm');
-  await bootstrapLogin(page);
+  await bootstrapPortalBrowserAuth(page, {
+    apiBaseUrl: API_BASE_URL || BASE_URL,
+    dbName: DB_NAME,
+    login: LOGIN,
+    password: PASSWORD,
+  });
   await page.goto(`${BASE_URL}/?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: 'domcontentloaded' });
-  await page.waitForLoadState('networkidle');
+  await waitForPortalBootstrapReady(page);
   await waitForSidebar(page);
   await waitForReleaseNavigation(page);
 
   const snapshot = await page.evaluate(() => {
-    const cacheKey = Object.keys(localStorage).find((key) => key.startsWith('sc_frontend_session_v0_4'));
+    const cacheKey = Object.keys(localStorage).find((key) => key.startsWith('sc_frontend_session_v0_5'));
     const cache = cacheKey ? JSON.parse(localStorage.getItem(cacheKey) || 'null') : null;
     const sidebarText = Array.from(
       document.querySelectorAll('.sidebar .label, .sidebar .role-menu-item, .sidebar .title, .sidebar .role-label')

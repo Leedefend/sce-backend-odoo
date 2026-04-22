@@ -503,6 +503,41 @@ When this exception is used:
   scope expansion beyond bounded warmup behavior, the agent MUST stop
   immediately
 
+### 6.11 Narrow Exception For Dedicated Payment-Entry Provider-Handoff Batches
+
+The generic stop condition for `*payment*` remains the default and MUST still
+trigger an immediate stop in ordinary batches.
+
+Exception:
+
+The agent MAY implement controlled `*payment*` path changes only when all of
+the following are simultaneously true:
+
+- an active task contract explicitly declares a dedicated payment-entry
+  provider-handoff objective
+- the task allowlist explicitly includes only these exact implementation paths:
+  - `addons/smart_construction_scene/providers/payment_entry_workbench_provider.py`
+  - `addons/smart_construction_scene/tests/test_action_only_scene_semantic_supply.py`
+- the task allowlist may additionally include only payment-entry-specific
+  task/doc/log governance paths needed for the same batch
+- the user has explicitly authorized proceeding with that high-risk batch
+- the planned changes are additive and scoped only to:
+  - exposing `delivery_handoff_v1` from the payment-entry scene provider
+  - updating the semantic-supply unittest assertions for that provider handoff
+  - synchronizing the matching task/doc/log artifacts
+- `payment_approval`, `addons/smart_construction_core/**`, security,
+  record-rule, manifest, settlement, account, runtime-contract, and payment
+  business-rule changes remain outside scope unless separately authorized by a
+  new task line
+
+When this exception is used:
+
+- the batch MUST be treated as high-risk
+- verification and reporting MUST be completed in the same batch
+- if uncertainty remains about provider-only scope, implied deep payment-path
+  changes, or business-semantic leakage beyond the handoff surface, the agent
+  MUST stop immediately
+
 ### 6.9 Narrow Exception For Dedicated No-Contract Payment Business-Continuity Batches
 
 The generic stop condition for `*payment*` remains the default and MUST still

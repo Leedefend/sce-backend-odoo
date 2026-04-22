@@ -7,7 +7,11 @@ const http = require('http');
 const https = require('https');
 const { assertIntentEnvelope } = require('./intent_smoke_utils');
 
-const BASE_URL = process.env.API_BASE || process.env.BASE_URL || 'http://localhost:8070';
+const BASE_URL =
+  process.env.API_BASE ||
+  process.env.BASE_URL ||
+  process.env.E2E_BASE_URL ||
+  'http://127.0.0.1:8069';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
 const LOGIN = process.env.SCENE_LOGIN || process.env.SVC_LOGIN || process.env.E2E_LOGIN || 'admin';
 const PASSWORD =
@@ -15,7 +19,7 @@ const PASSWORD =
   process.env.SVC_PASSWORD ||
   process.env.E2E_PASSWORD ||
   process.env.ADMIN_PASSWD ||
-  'demo';
+  'admin';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 const EXEMPTIONS_FILE =
   process.env.MENU_SCENE_EXEMPTIONS || path.resolve(__dirname, '../../docs/ops/verify/menu_scene_exemptions.yml');
@@ -25,6 +29,7 @@ const ENFORCE_XMLID_PREFIXES = String(
   .split(',')
   .map((item) => item.trim())
   .filter(Boolean);
+const REQUEST_TIMEOUT_MS = Number(process.env.MENU_SCENE_REQUEST_TIMEOUT_MS || 15000);
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
@@ -32,6 +37,14 @@ const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-menu-scene-resolve', ts
 
 function log(msg) {
   console.log(`[fe_menu_scene_resolve_smoke] ${msg}`);
+}
+
+function fallbackApiBase(url) {
+  const raw = String(url || '').trim();
+  if (raw === 'http://localhost:8070') {
+    return 'http://localhost:8069';
+  }
+  return '';
 }
 
 function writeJson(file, obj) {
@@ -98,6 +111,16 @@ function requestJson(url, payload, headers = {}) {
       },
     };
     const client = u.protocol === 'https:' ? https : http;
+    let settled = false;
+    const done = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      fn(value);
+    };
+    const timer = setTimeout(() => {
+      req.destroy(new Error(`request timeout after ${REQUEST_TIMEOUT_MS}ms`));
+    }, REQUEST_TIMEOUT_MS);
     const req = client.request(opts, (res) => {
       let data = '';
       res.on('data', (chunk) => (data += chunk));
@@ -108,10 +131,13 @@ function requestJson(url, payload, headers = {}) {
         } catch {
           parsed = { raw: data };
         }
-        resolve({ status: res.statusCode || 0, body: parsed });
+        done(resolve, { status: res.statusCode || 0, body: parsed });
       });
     });
-    req.on('error', reject);
+    req.setTimeout(REQUEST_TIMEOUT_MS, () => {
+      req.destroy(new Error(`request timeout after ${REQUEST_TIMEOUT_MS}ms`));
+    });
+    req.on('error', (err) => done(reject, err));
     req.write(body);
     req.end();
   });
@@ -152,11 +178,24 @@ function preflightUrl(url) {
       path: u.pathname || '/',
     };
     const client = u.protocol === 'https:' ? https : http;
+    let settled = false;
+    const done = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      fn(value);
+    };
+    const timer = setTimeout(() => {
+      req.destroy(new Error(`preflight timeout after ${REQUEST_TIMEOUT_MS}ms`));
+    }, REQUEST_TIMEOUT_MS);
     const req = client.request(opts, (res) => {
       res.resume();
-      resolve(res.statusCode || 0);
+      done(resolve, res.statusCode || 0);
     });
-    req.on('error', reject);
+    req.setTimeout(REQUEST_TIMEOUT_MS, () => {
+      req.destroy(new Error(`preflight timeout after ${REQUEST_TIMEOUT_MS}ms`));
+    });
+    req.on('error', (err) => done(reject, err));
     req.end();
   });
 }
@@ -178,19 +217,27 @@ async function preflightWithRetry(url, retries = 8, delayMs = 2000) {
 async function main() {
   if (!DB_NAME) throw new Error('DB_NAME is required');
 
-  log(`api_base: ${BASE_URL}`);
+  let apiBase = BASE_URL;
+  log(`api_base: ${apiBase}`);
   try {
-    const status = await preflightWithRetry(BASE_URL);
+    const status = await preflightWithRetry(apiBase);
     log(`preflight: ${status}`);
   } catch (err) {
-    const msg = err && err.message ? err.message : String(err);
-    console.error(`[fe_menu_scene_resolve_smoke] PRECHECK FAIL: ${msg}`);
-    console.error('[fe_menu_scene_resolve_smoke] HINT: verify API base URL and service reachability.');
-    console.error('[fe_menu_scene_resolve_smoke] HINT: host mode uses http://localhost:8070; container mode should use http://localhost:8069 or service name.');
-    process.exit(1);
+    const fallback = fallbackApiBase(apiBase);
+    if (!fallback) {
+      const msg = err && err.message ? err.message : String(err);
+      console.error(`[fe_menu_scene_resolve_smoke] PRECHECK FAIL: ${msg}`);
+      console.error('[fe_menu_scene_resolve_smoke] HINT: verify API base URL and service reachability.');
+      console.error('[fe_menu_scene_resolve_smoke] HINT: host mode uses http://localhost:8070; container mode should use http://localhost:8069 or service name.');
+      process.exit(1);
+    }
+    log(`preflight fallback: ${apiBase} -> ${fallback}`);
+    apiBase = fallback;
+    const status = await preflightWithRetry(apiBase);
+    log(`preflight: ${status}`);
   }
 
-  const intentUrl = `${BASE_URL}/api/v1/intent?db=${encodeURIComponent(DB_NAME)}`;
+  const intentUrl = `${apiBase}/api/v1/intent?db=${encodeURIComponent(DB_NAME)}`;
   log(`login: ${LOGIN} db=${DB_NAME}`);
   const loginPayload = { intent: 'login', params: { db: DB_NAME, login: LOGIN, password: PASSWORD } };
   const loginResp = await requestJson(intentUrl, loginPayload, {

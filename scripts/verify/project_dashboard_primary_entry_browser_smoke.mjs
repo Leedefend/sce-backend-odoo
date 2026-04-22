@@ -48,12 +48,42 @@ const summary = {
   page_errors: [],
 };
 
+const stageTrace = [];
+
 function isConnectEpermMessage(message) {
   return String(message || '').toLowerCase().includes('connect eperm');
 }
 
 function writeJson(fileName, payload) {
   fs.writeFileSync(path.join(outDir, fileName), `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+}
+
+function recordStage(stage, payload = {}) {
+  stageTrace.push({
+    ts: new Date().toISOString(),
+    stage,
+    ...payload,
+  });
+  writeJson('stage_trace.json', stageTrace);
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    const message = String(error?.message || error);
+    if (error?.name === 'AbortError') {
+      throw new Error(`fetch_timeout:${timeoutMs}:${url}`);
+    }
+    throw new Error(message);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function assert(condition, message) {
@@ -502,27 +532,42 @@ async function probeCustomFrontendEntryReachability(baseUrl, dbName, diagnostics
 
 async function fetchLoginTokenByApi() {
   const intentUrl = `${RUNTIME_INTENT_BASE_URL}/api/v1/intent?db=${encodeURIComponent(DB_NAME)}`;
-  const loginResp = await fetch(intentUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Anonymous-Intent': 'true',
-    },
-    body: JSON.stringify({
-      intent: 'login',
-      params: {
-        login: LOGIN,
-        password: PASSWORD,
-        db: DB_NAME,
-        contract_mode: 'default',
-      },
-    }),
-  });
-  if (!loginResp.ok) throw new Error(`login intent failed: ${loginResp.status}`);
-  const loginPayload = JSON.parse(await loginResp.text());
-  const token = String(loginPayload?.data?.session?.token || loginPayload?.data?.token || '').trim();
-  if (!token) throw new Error('login intent missing token');
-  return token;
+  recordStage('login_intent:start', { intentUrl });
+  const errors = [];
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const loginResp = await fetchWithTimeout(intentUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Anonymous-Intent': 'true',
+        },
+        body: JSON.stringify({
+          intent: 'login',
+          params: {
+            login: LOGIN,
+            password: PASSWORD,
+            db: DB_NAME,
+            contract_mode: 'default',
+          },
+        }),
+      }, 12000);
+      if (!loginResp.ok) throw new Error(`login intent failed: ${loginResp.status}`);
+      const loginPayload = JSON.parse(await loginResp.text());
+      const token = String(loginPayload?.data?.session?.token || loginPayload?.data?.token || '').trim();
+      if (!token) throw new Error('login intent missing token');
+      recordStage('login_intent:done', { attempt });
+      return token;
+    } catch (error) {
+      const message = String(error?.message || error);
+      errors.push({ attempt, error: message });
+      recordStage('login_intent:retry', { attempt, error: message });
+      if (attempt >= 3) break;
+      await sleep(500 * attempt);
+    }
+  }
+  writeJson('login_intent_errors.json', errors);
+  throw new Error(`login intent token recovery failed after ${errors.length} tries`);
 }
 
 async function bootstrapLoginToken(page, token) {
@@ -550,10 +595,38 @@ async function bootstrapLoginToken(page, token) {
   }, { runtimeToken: token, dbName: DB_NAME });
 }
 
+async function persistLoginToken(page, token) {
+  const runtimeToken = String(token || '').trim();
+  if (!runtimeToken) return;
+  await bootstrapLoginToken(page, runtimeToken);
+  await page.evaluate(({ injectedToken, dbName }) => {
+    const tokenScopes = new Set([
+      dbName,
+      'default',
+      'test',
+      'sc_demo',
+      'sc_prod_sim',
+      'sc_p2',
+      'sc_p3',
+    ]);
+    for (const scope of tokenScopes) {
+      if (!scope) continue;
+      sessionStorage.setItem(`sc_auth_token:${scope}`, injectedToken);
+    }
+    sessionStorage.setItem('sc_auth_token', injectedToken);
+    const dbScopes = new Set([dbName, 'default', 'test']);
+    for (const scope of dbScopes) {
+      if (!scope) continue;
+      sessionStorage.setItem(`sc_active_db:${scope}`, dbName);
+      localStorage.setItem(`sc_active_db:${scope}`, dbName);
+    }
+  }, { injectedToken: runtimeToken, dbName: DB_NAME });
+}
+
 async function resolveProjectEntryRouteByApi(token) {
   const runtimeToken = String(token || '').trim() || await fetchLoginTokenByApi();
   const intentUrl = `${RUNTIME_INTENT_BASE_URL}/api/v1/intent?db=${encodeURIComponent(DB_NAME)}`;
-  const entryResp = await fetch(intentUrl, {
+  const entryResp = await fetchWithTimeout(intentUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -563,7 +636,7 @@ async function resolveProjectEntryRouteByApi(token) {
       intent: 'project.entry.context.resolve',
       params: {},
     }),
-  });
+  }, 12000);
   if (!entryResp.ok) throw new Error(`project.entry.context.resolve failed: ${entryResp.status}`);
   const entryPayload = JSON.parse(await entryResp.text());
   const route = String(entryPayload?.data?.route || '').trim();
@@ -571,7 +644,7 @@ async function resolveProjectEntryRouteByApi(token) {
   const projectId = Number(entryPayload?.data?.project_context?.project_id || 0);
   let sceneKey = '';
   if (Number.isFinite(projectId) && projectId > 0) {
-    const dashboardResp = await fetch(intentUrl, {
+    const dashboardResp = await fetchWithTimeout(intentUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -581,7 +654,7 @@ async function resolveProjectEntryRouteByApi(token) {
         intent: 'project.dashboard.enter',
         params: { project_id: projectId },
       }),
-    });
+    }, 12000);
     if (dashboardResp.ok) {
       const dashboardPayload = JSON.parse(await dashboardResp.text());
       sceneKey = String(dashboardPayload?.data?.scene_key || '').trim();
@@ -745,7 +818,37 @@ async function fillLoginForm(page) {
   }
 }
 
+async function collectLoginSnapshot(page) {
+  return await page.evaluate(() => {
+    const text = document.body?.innerText || '';
+    const visibleText = text.replace(/\s+/g, ' ').trim();
+    const loginErrorCandidates = [
+      '.alert',
+      '.alert-danger',
+      '.o_login_error_message',
+      '.oe_login_form .text-danger',
+      '.invalid-feedback',
+      '.error',
+      '[role="alert"]',
+    ];
+    const loginErrors = Array.from(document.querySelectorAll(loginErrorCandidates.join(',')))
+      .map((node) => (node.textContent || '').replace(/\s+/g, ' ').trim())
+      .filter(Boolean)
+      .slice(0, 10);
+    return {
+      url: window.location.href,
+      has_login_user: Boolean(document.querySelector('input[autocomplete="username"], input[name="login"], input[type="email"]')),
+      has_login_password: Boolean(document.querySelector('input[autocomplete="current-password"], input[name="password"], input[type="password"]')),
+      has_token: Boolean(sessionStorage.getItem('sc_auth_token')),
+      login_errors: loginErrors,
+      visible_text_excerpt: visibleText.slice(0, 800),
+    };
+  });
+}
+
 async function submitLogin(page) {
+  const beforeSubmit = await collectLoginSnapshot(page);
+  recordStage('login_submit:before', beforeSubmit);
   const submitButton = await pickVisibleLocator(
     page,
     [
@@ -759,22 +862,62 @@ async function submitLogin(page) {
     ],
     5000,
   );
+  let submitMethod = 'keyboard_enter';
   if (submitButton) {
+    submitMethod = 'button_click';
     await submitButton.click();
   } else {
     await page.keyboard.press('Enter');
   }
+  recordStage('login_submit:triggered', { method: submitMethod, url: page.url() });
   try {
     await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 12000, waitUntil: 'commit' });
+    const afterUrlChange = await collectLoginSnapshot(page);
+    writeJson('login_submit_result.json', {
+      outcome: 'url_changed',
+      method: submitMethod,
+      before: beforeSubmit,
+      after: afterUrlChange,
+    });
+    recordStage('login_submit:url_changed', afterUrlChange);
     return;
   } catch {}
-  await page.waitForFunction(() => {
-    const hasLoginUser = Boolean(document.querySelector('input[autocomplete="username"], input[name="login"], input[type="email"]'));
-    const hasLoginPassword = Boolean(document.querySelector('input[autocomplete="current-password"], input[name="password"], input[type="password"]'));
-    const hasLoginSurface = hasLoginUser && hasLoginPassword;
-    const hasToken = Boolean(sessionStorage.getItem('sc_auth_token'));
-    return !hasLoginSurface || hasToken;
-  }, null, { timeout: 12000 });
+  try {
+    await page.waitForFunction(() => {
+      const hasLoginUser = Boolean(document.querySelector('input[autocomplete="username"], input[name="login"], input[type="email"]'));
+      const hasLoginPassword = Boolean(document.querySelector('input[autocomplete="current-password"], input[name="password"], input[type="password"]'));
+      const hasLoginSurface = hasLoginUser && hasLoginPassword;
+      const hasToken = Boolean(sessionStorage.getItem('sc_auth_token'));
+      const errorText = (document.body?.innerText || '').toLowerCase();
+      const hasLoginError =
+        errorText.includes('wrong login/password') ||
+        errorText.includes('incorrect login/password') ||
+        errorText.includes('invalid login') ||
+        errorText.includes('用户名或密码') ||
+        errorText.includes('账号或密码') ||
+        errorText.includes('登录失败');
+      return !hasLoginSurface || hasToken || hasLoginError;
+    }, null, { timeout: 12000 });
+    const afterSurfaceChange = await collectLoginSnapshot(page);
+    writeJson('login_submit_result.json', {
+      outcome: 'surface_changed',
+      method: submitMethod,
+      before: beforeSubmit,
+      after: afterSurfaceChange,
+    });
+    recordStage('login_submit:surface_changed', afterSurfaceChange);
+  } catch (error) {
+    const timeoutState = await collectLoginSnapshot(page);
+    writeJson('login_submit_result.json', {
+      outcome: 'timeout',
+      method: submitMethod,
+      error: String(error?.message || error),
+      before: beforeSubmit,
+      after: timeoutState,
+    });
+    recordStage('login_submit:timeout', { ...timeoutState, error: String(error?.message || error) });
+    throw error;
+  }
 }
 
 async function ensureProjectDashboardSurface(page) {
@@ -843,8 +986,23 @@ function buildSemanticEntryUrlCandidates(baseUrl, dbName, backendEntry = null) {
   return Array.from(out);
 }
 
-async function gotoSemanticEntryWithRecovery(page, backendEntry = null) {
+function isLoginLikeUrl(rawUrl) {
+  const text = String(rawUrl || '').trim();
+  if (!text) return false;
+  try {
+    const parsed = new URL(text);
+    return parsed.pathname.includes('/login');
+  } catch {
+    return text.includes('/login');
+  }
+}
+
+async function gotoSemanticEntryWithRecovery(page, backendEntry = null, options = {}) {
   const candidates = buildSemanticEntryUrlCandidates(summary.effective_base_url || BASE_URL, DB_NAME, backendEntry);
+  const bootstrapUrl = String(options.bootstrapUrl || '').trim();
+  if (!backendEntry?.route && !backendEntry?.scene_key && bootstrapUrl) {
+    candidates.unshift(bootstrapUrl);
+  }
   const errors = [];
   for (const candidate of candidates) {
     for (let attempt = 1; attempt <= 3; attempt += 1) {
@@ -889,6 +1047,23 @@ async function detectDashboardProfile(page, timeoutMs = 8000) {
     return null;
   }, null, { timeout: timeoutMs });
   return await profile.jsonValue();
+}
+
+async function collectDashboardTimeoutSnapshot(page) {
+  return await page.evaluate(() => {
+    const text = (document.body?.innerText || '').replace(/\s+/g, ' ').trim();
+    return {
+      url: window.location.href,
+      pathname: window.location.pathname || '',
+      title: document.title || '',
+      has_native_navbar: Boolean(document.querySelector('.o_main_navbar')),
+      has_discuss_token: Boolean(document.querySelector('.o-mail-Discuss')),
+      has_scene_eyebrow: Boolean(document.querySelector('.eyebrow')),
+      has_status_panel: Boolean(document.querySelector('[data-component="StatusPanel"], .status-panel')),
+      has_menu_tree: Boolean(document.querySelector('[data-component="SidebarNav"], .menu, .nav-shell')),
+      visible_text_excerpt: text.slice(0, 1600),
+    };
+  });
 }
 
 async function tryNavigateDashboardViaUi(page) {
@@ -939,6 +1114,22 @@ async function waitForDashboard(page, semanticEntryUrl = '') {
       return value;
     } catch (error) {
       lastError = error;
+      const timeoutSnapshot = await collectDashboardTimeoutSnapshot(page).catch(() => null);
+      if (timeoutSnapshot) {
+        writeJson('dashboard_timeout_snapshot.json', {
+          round,
+          error: String(error?.message || error),
+          snapshot: timeoutSnapshot,
+        });
+        recordStage('dashboard_wait:retry', {
+          round,
+          error: String(error?.message || error),
+          url: timeoutSnapshot.url,
+          pathname: timeoutSnapshot.pathname,
+          has_native_navbar: timeoutSnapshot.has_native_navbar,
+          has_scene_eyebrow: timeoutSnapshot.has_scene_eyebrow,
+        });
+      }
       if (semanticEntryUrl) {
         try {
           await page.goto(semanticEntryUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
@@ -954,17 +1145,41 @@ async function waitForDashboard(page, semanticEntryUrl = '') {
 
 async function ensureAuthenticatedSession(page, semanticEntryUrl = '') {
   for (let attempt = 1; attempt <= 2; attempt += 1) {
+    recordStage('auth_attempt:start', { attempt, url: page.url() });
     const onLoginSurface = await isLoginSurfaceReady(page);
-    if (!onLoginSurface) return false;
+    if (!onLoginSurface) {
+      recordStage('auth_attempt:skipped', { attempt, reason: 'login_surface_not_ready', url: page.url() });
+      return false;
+    }
     await fillLoginForm(page);
     await submitLogin(page);
     await sleep(1200);
-    if (semanticEntryUrl) {
+    const postSubmitSnapshot = await collectLoginSnapshot(page);
+    if (!postSubmitSnapshot.has_token) {
+      try {
+        const runtimeToken = await fetchLoginTokenByApi();
+        await persistLoginToken(page, runtimeToken);
+        recordStage('auth_attempt:token_restored', { attempt, url: page.url() });
+      } catch (error) {
+        recordStage('auth_attempt:token_restore_failed', {
+          attempt,
+          url: page.url(),
+          error: String(error?.message || error),
+        });
+      }
+    }
+    if (semanticEntryUrl && !isLoginLikeUrl(semanticEntryUrl)) {
+      recordStage('auth_attempt:semantic_entry_reload', { attempt, target: semanticEntryUrl });
       await page.goto(semanticEntryUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
       await page.waitForLoadState('domcontentloaded');
       await sleep(600);
     }
     const stillOnLogin = await isLoginSurfaceReady(page);
+    recordStage('auth_attempt:after_submit', {
+      attempt,
+      still_on_login: stillOnLogin,
+      url: page.url(),
+    });
     if (!stillOnLogin) return true;
   }
   throw new Error('login surface remains after credential submit');
@@ -995,14 +1210,19 @@ async function clickPrimaryRecommendedAction(page) {
 }
 
 async function waitForScene(page, sceneLabel) {
+  recordStage('wait_for_scene:start', { sceneLabel, url: page.url() });
   await page.waitForURL((url) => url.pathname === '/s/project.management' || url.pathname === '/', { timeout: 20000 });
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded', { timeout: 10000 });
+  await sleep(1200);
   await page.locator('.eyebrow').filter({ hasText: sceneLabel }).first().waitFor({ timeout: 20000 });
+  recordStage('wait_for_scene:done', { sceneLabel, url: page.url() });
 }
 
 async function waitForAnyMainlineScene(page) {
+  recordStage('wait_for_any_mainline_scene:start', { url: page.url() });
   await page.waitForURL((url) => url.pathname === '/s/project.management' || url.pathname === '/', { timeout: 20000 });
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded', { timeout: 10000 });
+  await sleep(1200);
   const allowed = ['执行推进', '成本记录', '付款记录', '结算结果'];
   await page.waitForFunction((labels) => {
     const text = Array.from(document.querySelectorAll('.eyebrow'))
@@ -1010,11 +1230,14 @@ async function waitForAnyMainlineScene(page) {
       .filter(Boolean);
     return labels.some((label) => text.includes(label));
   }, allowed, { timeout: 20000 });
+  recordStage('wait_for_any_mainline_scene:done', { url: page.url() });
 }
 
 async function waitForPrimaryActionResult(page) {
+  recordStage('wait_for_primary_action_result:start', { url: page.url() });
   await page.waitForURL((url) => url.pathname === '/s/project.management' || url.pathname === '/', { timeout: 20000 });
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded', { timeout: 10000 });
+  await sleep(1200);
   const result = await page.waitForFunction(() => {
     const eyebrowTexts = Array.from(document.querySelectorAll('.eyebrow'))
       .map((el) => (el.textContent || '').trim())
@@ -1032,7 +1255,9 @@ async function waitForPrimaryActionResult(page) {
     }
     return null;
   }, { timeout: 20000 });
-  return await result.jsonValue();
+  const value = await result.jsonValue();
+  recordStage('wait_for_primary_action_result:done', { url: page.url(), mode: value?.mode || '' });
+  return value;
 }
 
 let browser;
@@ -1148,20 +1373,31 @@ try {
   let backendEntry = null;
   if (bootstrapToken) {
     try {
+      recordStage('backend_entry:resolve:start');
       backendEntry = await resolveProjectEntryRouteByApi(bootstrapToken);
       summary.backend_entry_route = backendEntry.route;
       summary.backend_scene_key = backendEntry.scene_key || '';
       summary.backend_project_context = backendEntry.project_context;
+      recordStage('backend_entry:resolve:done', { route: backendEntry.route, scene_key: backendEntry.scene_key || '' });
     } catch (error) {
       summary.backend_entry_route_error = String(error?.message || error);
+      recordStage('backend_entry:resolve:fail', { error: summary.backend_entry_route_error });
     }
   }
-  summary.project_route_url_used = await gotoSemanticEntryWithRecovery(page, backendEntry);
+  recordStage('semantic_entry:start');
+  summary.project_route_url_used = await gotoSemanticEntryWithRecovery(page, backendEntry, {
+    bootstrapUrl: summary.effective_login_url || '',
+  });
+  recordStage('semantic_entry:done', { url: summary.project_route_url_used });
   summary.backend_scene_entry_url = summary.project_route_url_used;
   await sleep(1200);
+  recordStage('auth_fallback:start', { url: summary.project_route_url_used });
   summary.login_form_fallback_used = await ensureAuthenticatedSession(page, summary.project_route_url_used);
+  recordStage('auth_fallback:done', { used: Boolean(summary.login_form_fallback_used), url: page.url() });
+  recordStage('dashboard_wait:start', { url: page.url() });
   const dashboardProfile = await waitForDashboard(page, summary.project_route_url_used);
   summary.dashboard_profile = dashboardProfile;
+  recordStage('dashboard_wait:done', { profile: dashboardProfile, url: page.url() });
 
   const dashboardText = await page.locator('body').innerText();
   const hasLegacyDashboard = dashboardProfile === 'old';
