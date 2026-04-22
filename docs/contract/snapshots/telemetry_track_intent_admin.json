@@ -1,0 +1,10 @@
+{
+  "case": "telemetry_track_intent_admin",
+  "op": "intent.invoke",
+  "user": "admin",
+  "contract_version": "v1",
+  "ui_contract_raw": {
+    "event_type": "scene_open"
+  },
+  "error": null
+}

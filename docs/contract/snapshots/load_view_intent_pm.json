@@ -1,0 +1,13 @@
+{
+  "case": "load_view_intent_pm",
+  "op": "intent.invoke",
+  "user": "pm",
+  "contract_version": "v1",
+  "ui_contract_raw": {
+    "head": {
+      "model": "project.project",
+      "view_type": "form"
+    }
+  },
+  "error": null
+}
