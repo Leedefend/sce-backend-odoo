@@ -1,0 +1,99 @@
+task_id: ITER-2026-04-22-GOV-RESIDUAL-SMART-CORE-ENTRY-TARGET-PA86
+title: Split smart_core entry-target residual slice from codex-next-round
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Extract the smallest platform-layer residual slice from commit 56b7eba so it
+  can be reviewed and merged independently into main as a bounded child PR.
+
+user_visible_outcome:
+  - "A new child branch is created for the smart_core entry-target and normalizer slice."
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-22-GOV-RESIDUAL-SMART-CORE-ENTRY-TARGET-PA86.yaml
+    - addons/smart_core/controllers/platform_menu_api.py
+    - addons/smart_core/delivery/menu_target_interpreter_service.py
+    - addons/smart_core/governance/scene_normalizer.py
+    - addons/smart_core/identity/identity_resolver.py
+    - addons/smart_core/tests/test_identity_resolver_entry_target.py
+    - addons/smart_core/tests/test_menu_target_interpreter_entry_target.py
+    - addons/smart_core/tests/test_platform_menu_api_scene_map.py
+    - addons/smart_core/tests/test_scene_normalizer_entry_target.py
+    - addons/smart_core/tests/test_scene_normalizer_target_resolution.py
+  forbidden_paths:
+    - main
+    - master
+    - release/**
+    - security/**
+    - record_rules/**
+    - addons/smart_construction_core/**
+    - addons/smart_construction_scene/**
+    - frontend/**
+    - scripts/**
+
+limits:
+  max_files: 10
+  max_candidates: 10
+  max_output_lines: 120
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+role_parallel:
+  enabled: false
+  allowed_roles:
+    - executor
+  require_disjoint_writes: true
+  require_new_session_per_role: true
+  stop_on_conflict: true
+
+change_rules:
+  - only extract the smart_core entry-target and normalizer slice
+  - do not mix scene provider or construction-core files
+  - do not mix payment residual files
+  - branch must be based on origin/main
+
+context:
+  branch: feature/pr-split-verify-generated-assets
+  baseline_sha: c47d4db
+  explicit_user_authorization: true
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Platform Layer
+  module: smart_core entry-target and normalizer residual slice
+  module_owner: smart_core
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This batch extracts platform target-resolution and scene normalizer
+    semantics without carrying domain-specific scene provider logic.
+  reason: >
+    After the first child-PR merge wave, the next clean residual slice is the
+    platform entry-target path from 56b7eba.
+
+acceptance:
+  commands:
+    - test -f agent_ops/tasks/ITER-2026-04-22-GOV-RESIDUAL-SMART-CORE-ENTRY-TARGET-PA86.yaml
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - residual_slice_conflict
+  - slice_spills_into_non_platform_scope
+
+deliverables:
+  - bounded smart_core residual child branch
+  - commit for platform entry-target slice
+
+rollback:
+  - git restore --staged .
+
+depends_on: []
