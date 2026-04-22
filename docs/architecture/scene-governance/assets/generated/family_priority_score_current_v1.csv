@@ -1,0 +1,8 @@
+family,canonical_gap_score,compatibility_score,provider_gap_score,high_frequency_weight,closed_discount,total_score
+projects,0,17,0,5,-5,17
+finance_center,0,7,0,5,-5,7
+tasks,0,7,0,5,-5,7
+contracts,8,1,2,0,-5,6
+payment_approval,0,5,0,5,-5,5
+payment_entry,0,4,0,5,-5,4
+enterprise_bootstrap,0,4,0,0,-5,-1
