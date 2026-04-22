@@ -13,6 +13,10 @@ type UseActionViewNavigationRuntimeOptions = {
   actionId: Ref<number | null>;
   resolvedModelRef: Ref<string>;
   modelRef: Ref<string>;
+  recordOpenPolicyRef: Ref<{
+    carry_query_mode?: string;
+    carry_query_keys?: string[];
+  } | null>;
   routerPush: (target: unknown) => Promise<unknown>;
 };
 
@@ -26,6 +30,26 @@ export function useActionViewNavigationRuntime(options: UseActionViewNavigationR
       ...pickContractNavQuery(options.routeQueryMap.value, extra),
       ...resolveWorkspaceContextQuery(),
     };
+  }
+
+  function applyRecordOpenPolicy(carryQuery: Dict) {
+    const policy = options.recordOpenPolicyRef.value;
+    const mode = String(policy?.carry_query_mode || 'preserve').trim().toLowerCase();
+    if (mode === 'clear_scene_context') {
+      delete carryQuery.scene;
+      delete carryQuery.scene_key;
+      return carryQuery;
+    }
+    if (mode === 'whitelist') {
+      const keys = Array.isArray(policy?.carry_query_keys)
+        ? policy.carry_query_keys.map((item) => String(item || '').trim()).filter(Boolean)
+        : [];
+      return keys.reduce<Dict>((result, key) => {
+        if (key in carryQuery) result[key] = carryQuery[key];
+        return result;
+      }, {});
+    }
+    return carryQuery;
   }
 
   function resolveWorkbenchQuery(
@@ -48,11 +72,7 @@ export function useActionViewNavigationRuntime(options: UseActionViewNavigationR
 
   function handleRowClick(row: Dict) {
     const targetModel = options.resolvedModelRef.value || options.modelRef.value;
-    const carryQuery = resolveCarryQuery() as Dict;
-    if (targetModel === 'project.project') {
-      delete carryQuery.scene;
-      delete carryQuery.scene_key;
-    }
+    const carryQuery = applyRecordOpenPolicy(resolveCarryQuery() as Dict);
     const routeTarget = buildActionViewRowClickTarget({
       targetModel,
       rawId: row.id,

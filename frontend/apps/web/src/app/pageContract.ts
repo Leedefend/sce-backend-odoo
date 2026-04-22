@@ -230,6 +230,13 @@ export function usePageContract(pageKey: string) {
     });
     return map;
   });
+  const sceneRuntimePermissions = computed(() => {
+    const permissions = asRecord(sceneContractV1.value.permissions);
+    return {
+      canEdit: typeof permissions.can_edit === 'boolean' ? permissions.can_edit : undefined,
+      canCreate: typeof permissions.can_create === 'boolean' ? permissions.can_create : undefined,
+    };
+  });
   const orchestrationActions = computed<Record<string, unknown>>(() => {
     const raw = contract.value?.page_orchestration_v1?.action_schema;
     if (!raw || typeof raw !== 'object') return {};
@@ -412,7 +419,9 @@ export function usePageContract(pageKey: string) {
     hasDataSource,
     globalActions,
     consumerRuntime,
+    sceneDisabledActions,
     consumerRuntimeStatus,
     consumerRuntimeBridgeAligned,
+    sceneRuntimePermissions,
   };
 }

@@ -65,12 +65,11 @@ export function useActionViewSurfaceDisplayRuntime(options: UseActionViewSurface
   });
 
   const surfaceKind = computed(() => {
-    const extensions = (options.sceneContractV1.value.extensions as Dict | undefined) || {};
     return options.resolveActionViewSurfaceKind({
       strictContractMode: options.strictContractMode.value,
       strictSurfaceContract: options.strictSurfaceContract.value,
       contractSurfaceKind: options.actionContract.value?.surface_policies?.kind,
-      extensionSurfaceKind: extensions.surface_kind,
+      extensionSurfaceKind: undefined,
     });
   });
 

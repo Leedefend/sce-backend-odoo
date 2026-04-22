@@ -27,29 +27,6 @@ type ProductDescriptor = {
   scope: string;
 };
 
-const PRODUCT_TEXT: Record<string, ProductDescriptor> = {
-  fr2: {
-    title: 'FR-2 项目推进',
-    description: '从项目上下文进入驾驶舱、计划和执行链路。',
-    scope: '范围固定为 项目创建 -> 驾驶舱 -> 计划 -> 执行。',
-  },
-  fr3: {
-    title: 'FR-3 成本记录',
-    description: '在项目执行上下文中录入和查看成本记录与汇总。',
-    scope: '范围固定为 项目创建 -> 驾驶舱 -> 计划 -> 执行 -> 成本记录 -> 成本汇总。',
-  },
-  fr4: {
-    title: 'FR-4 付款记录',
-    description: '在项目执行与成本链路基础上进入付款记录和汇总。',
-    scope: '范围固定为 项目创建 -> 驾驶舱 -> 计划 -> 执行 -> 成本 -> 付款记录 -> 付款汇总。',
-  },
-  fr5: {
-    title: 'FR-5 结算结果',
-    description: '基于当前项目的成本与付款数据查看只读结算汇总。',
-    scope: '范围固定为 项目创建 -> 驾驶舱 -> 计划 -> 执行 -> 成本 -> 付款 -> 结算结果。',
-  },
-};
-
 const router = useRouter();
 const route = useRoute();
 const session = useSessionStore();
@@ -77,17 +54,20 @@ const releasedState = computed<Record<string, unknown>>(() => {
   const raw = releasedSceneContract.value.state;
   return raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
 });
-const product = computed<ProductDescriptor>(() => {
-  return PRODUCT_TEXT[productKey.value] ?? {
-    title: '产品入口',
-    description: '当前产品切片需要项目上下文后才能继续。',
-    scope: '请先新建项目，或从已有项目继续。',
-  };
-});
 const productView = computed<ProductDescriptor>(() => ({
-  title: String(releasedIdentity.value.title || '').trim() || product.value.title,
-  description: String(releasedState.value.message || '').trim() || product.value.description,
-  scope: product.value.scope,
+  title:
+    String(releasedIdentity.value.title || '').trim()
+    || String(releasedScene.value.title || '').trim()
+    || (productKey.value ? productKey.value.toUpperCase() : '产品入口'),
+  description:
+    String(releasedIdentity.value.description || '').trim()
+    || String(releasedScene.value.description || '').trim()
+    || String(releasedState.value.message || '').trim()
+    || '查看当前产品入口说明',
+  scope:
+    String(releasedIdentity.value.scope || '').trim()
+    || String(releasedScene.value.scope || '').trim()
+    || '查看当前产品入口范围',
 }));
 function openProjectsIntake() {
   router.push(PROJECT_INTAKE_SCENE_PATH).catch(() => {});

@@ -83,17 +83,6 @@ function collectContractViewModes(contract: Dict | null): string[] {
   addModes(contract.view_type);
   addModes(uiHead.view_type);
   addModes(uiContract.view_type);
-
-  const views = asDict(contract.views);
-  const nestedViews = asDict(uiContract.views);
-  if (views.tree || views.list || nestedViews.tree || nestedViews.list) addMode('tree');
-  if (views.kanban || nestedViews.kanban) addMode('kanban');
-  if (views.pivot || nestedViews.pivot) addMode('pivot');
-  if (views.graph || nestedViews.graph) addMode('graph');
-  if (views.calendar || nestedViews.calendar) addMode('calendar');
-  if (views.gantt || nestedViews.gantt) addMode('gantt');
-  if (views.activity || nestedViews.activity) addMode('activity');
-  if (views.dashboard || nestedViews.dashboard) addMode('dashboard');
   return out;
 }
 

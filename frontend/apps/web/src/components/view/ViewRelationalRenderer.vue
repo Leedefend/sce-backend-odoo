@@ -46,8 +46,10 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { createRecord, listRecords, unlinkRecord, writeRecord } from '../../api/data';
+import { ErrorCodes } from '../../app/error_codes';
 import { useEditTx } from '../../composables/useEditTx';
 import { pickContractNavQuery } from '../../app/navigationContext';
+import { resolveSceneFirstFormOrRecordLocation } from '../../app/sceneNavigation';
 
 const props = defineProps<{
   ids: number[];
@@ -118,7 +120,27 @@ async function load() {
 function openRecord(id: number) {
   if (!props.model) return;
   const carry = pickContractNavQuery(route.query as Record<string, unknown>);
-  router.push({ name: 'record', params: { model: props.model, id }, query: carry });
+  const sceneLocation = resolveSceneFirstFormOrRecordLocation({
+    sourceQuery: route.query as Record<string, unknown>,
+    sceneKey: String(route.query.scene_key || '').trim(),
+    actionId: Number(route.query.action_id || 0) || undefined,
+    menuId: Number(route.query.menu_id || 0) || undefined,
+    model: props.model,
+    recordId: id,
+    extraQuery: carry,
+  });
+  router.push(sceneLocation || {
+    name: 'workbench',
+    query: {
+      ...carry,
+      reason: ErrorCodes.CONTRACT_CONTEXT_MISSING,
+      diag: 'relational_record_open_missing_scene_identity',
+      action_id: Number(route.query.action_id || 0) || undefined,
+      menu_id: Number(route.query.menu_id || 0) || undefined,
+      model: props.model,
+      record_id: id,
+    },
+  });
 }
 
 function startCreate() {

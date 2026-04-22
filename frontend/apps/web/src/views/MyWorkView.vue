@@ -382,7 +382,7 @@
       <p v-if="summaryStatus?.hint && summaryStatus?.state !== 'FILTER_EMPTY'" class="status-hint">{{ summaryStatus.hint }}</p>
       <section v-if="showFilterEmptyGuide" class="filter-empty-guide">
         <p class="guide-title">{{ pageText('filter_empty_title', '当前筛选条件没有匹配结果') }}</p>
-        <p class="guide-text">{{ pageText('filter_empty_desc', '建议先恢复推荐视图，或一键清空筛选后重试。') }}</p>
+        <p class="guide-text">{{ pageText('filter_empty_desc', '当前筛选条件没有匹配结果') }}</p>
         <div class="guide-actions">
           <button class="guide-btn primary" @click="applyRecommendedView">{{ pageText('action_restore_recommended_view', '恢复推荐视图') }}</button>
           <button class="guide-btn" @click="resetFilters">{{ pageText('action_clear_filters', '清空筛选') }}</button>
@@ -483,6 +483,7 @@ import { describeSuggestedAction, runSuggestedAction } from '../composables/useS
 import { parseWorkspaceEntryContext, readWorkspaceContext } from '../app/workspaceContext';
 import { getSceneByKey } from '../app/resolvers/sceneRegistry';
 import { findActionMeta, findActionNodeByModel } from '../app/menu';
+import { resolveSceneFirstActionLocation, resolveSceneFirstFormOrRecordLocation } from '../app/sceneNavigation';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { resolvePageOrchestrationContractFromSceneV1 } from '../app/sceneContractV1';
@@ -604,7 +605,7 @@ const generatedAtText = computed(() => {
 const visibilityNotice = computed(() => {
   if (!summaryVisibility.value?.partial_data_hidden) return '';
   const base = String(summaryVisibility.value?.message || pageText('partial_data_hidden', '部分数据未显示'));
-  return `${base}${pageText('visibility_notice_suffix', '，请联系管理员开通对应权限。')}`;
+  return `${base}${pageText('visibility_notice_suffix', '，请根据当前权限范围查看。')}`;
 });
 const restrictedSourceText = computed(() => {
   const rows = Array.isArray(summaryVisibility.value?.restricted_sources)
@@ -762,23 +763,12 @@ function formatMyWorkSourceLabel(item: MyWorkRecordItem) {
 }
 
 function formatMyWorkActionLabel(item: MyWorkRecordItem) {
-  const source = String(item.source || item.model || '').trim();
-  const fallback = String(item.action_label || '').trim() || '进入处理';
-  if (source === 'payment.request') return '查看付款申请';
-  if (source === 'construction.contract') return '查看合同事项';
-  if (source === 'sc.settlement.order') return '查看结算事项';
-  if (source === 'project.task') return '进入任务';
-  if (source === 'mail.activity') return '处理待办';
+  const fallback = String(item.action_label || '').trim() || '查看详情';
   return fallback;
 }
 
 function formatMyWorkCardTitle(item: MyWorkRecordItem) {
-  const source = String(item.source || item.model || '').trim();
   const rawTitle = String(item.title || '').trim();
-  if (source === 'payment.request') return rawTitle ? `处理付款申请 · ${rawTitle}` : '处理付款申请';
-  if (source === 'construction.contract') return rawTitle ? `处理合同事项 · ${rawTitle}` : '处理合同事项';
-  if (source === 'sc.settlement.order') return rawTitle ? `处理结算事项 · ${rawTitle}` : '处理结算事项';
-  if (source === 'project.task') return rawTitle || '处理项目任务';
   return rawTitle || '处理执行事项';
 }
 
@@ -875,16 +865,7 @@ function findRecommendedSectionKey() {
 }
 
 function mapRestrictedModelLabel(modelName: string) {
-  const mapping: Record<string, string> = {
-    'sc.workflow.workitem': pageText('model_label_sc_workflow_workitem', '流程待办'),
-    'tier.review': pageText('model_label_tier_review', '审批复核'),
-    'mail.activity': pageText('model_label_mail_activity', '待办活动'),
-    'project.task': pageText('model_label_project_task', '项目任务'),
-    'project.project': pageText('model_label_project_project', '项目主数据'),
-    'mail.message': pageText('model_label_mail_message', '消息提醒'),
-    'mail.followers': pageText('model_label_mail_followers', '关注记录'),
-  };
-  return mapping[modelName] || modelName;
+  return modelName;
 }
 
 function formatPriority(priority: string | undefined) {
@@ -1150,14 +1131,14 @@ async function executeHeaderAction(actionKey: string) {
     },
   });
   if (!handled) {
-    setActionFeedback(pageText('enter_error_message_fallback', '功能入口暂时不可用'), true);
+    setActionFeedback(pageText('enter_error_message_fallback', '当前入口暂时不可用'), true);
   }
 }
 
 function onErrorSuggestedActionExecuted(payload: { action: string; success: boolean }) {
   actionFeedback.value = payload.success
-    ? `${pageText('feedback_suggest_action_ok_prefix', '已执行建议动作：')}${payload.action || 'unknown'}`
-    : `${pageText('feedback_suggest_action_failed_prefix', '建议动作执行失败：')}${payload.action || 'unknown'}`;
+    ? `${pageText('feedback_suggest_action_ok_prefix', '后端返回建议动作已执行：')}${payload.action || 'unknown'}`
+    : `${pageText('feedback_suggest_action_failed_prefix', '后端返回建议动作执行失败：')}${payload.action || 'unknown'}`;
   actionFeedbackError.value = !payload.success;
 }
 
@@ -1194,7 +1175,18 @@ function openScene(sceneKey: string, directTarget?: MyWorkRecordItem['target']) 
   const targetActionId = Number(target.action_id || 0);
   const actionMeta = targetActionId > 0 ? findActionMeta(session.menuTree || [], targetActionId) : null;
   if (targetActionId > 0 && actionMeta) {
-    router.push({ path: `/a/${targetActionId}`, query: { menu_id: target.menu_id || undefined, ...query } }).catch(() => {});
+    const sceneLocation = resolveSceneFirstActionLocation({
+      sourceQuery: route.query as Record<string, unknown>,
+      sceneKey: key,
+      actionId: targetActionId,
+      menuId: Number(target.menu_id || 0) || undefined,
+      model: String(target.model || '') || undefined,
+      extraQuery: { menu_id: target.menu_id || undefined, ...query },
+    });
+    router.push(sceneLocation || {
+      path: `/s/${key}`,
+      query: { menu_id: target.menu_id || undefined, action_id: targetActionId, ...query },
+    }).catch(() => {});
     return;
   }
   if (target.model && target.record_id) {
@@ -1206,11 +1198,26 @@ function openScene(sceneKey: string, directTarget?: MyWorkRecordItem['target']) 
       router.push({ path: `/s/${key}`, query }).catch(() => {});
       return;
     }
+    const sceneLocation = resolveSceneFirstFormOrRecordLocation({
+      sourceQuery: route.query as Record<string, unknown>,
+      sceneKey: key,
+      actionId: context.action_id,
+      menuId: context.menu_id,
+      model: String(target.model || ''),
+      recordId: Number(target.record_id || 0) || undefined,
+      extraQuery: { menu_id: context.menu_id, action_id: context.action_id, ...query },
+    });
     router
-      .push({
-        path: `/r/${target.model}/${target.record_id}`,
-        query: { menu_id: context.menu_id, action_id: context.action_id, ...query },
-      })
+        .push(sceneLocation || {
+          path: `/s/${key}`,
+          query: {
+            menu_id: context.menu_id,
+            action_id: context.action_id,
+            model: target.model,
+            record_id: target.record_id,
+            ...query,
+          },
+        })
       .catch(() => {});
     return;
   }
@@ -1226,18 +1233,40 @@ function openRecord(item: MyWorkRecordItem) {
   const targetActionId = Number(target.action_id || 0);
   if (targetActionId > 0) {
     if (target.model && target.record_id) {
+      const sceneLocation = resolveSceneFirstFormOrRecordLocation({
+        sourceQuery: route.query as Record<string, unknown>,
+        sceneKey: item.scene_key,
+        actionId: targetActionId,
+        menuId: target.menu_id || undefined,
+        model: target.model,
+        recordId: target.record_id,
+        extraQuery: { ...resolveWorkspaceContextQuery(), menu_id: target.menu_id || undefined, action_id: targetActionId },
+      });
       router
-        .push({
+        .push(sceneLocation || {
           path: `/r/${target.model}/${target.record_id}`,
           query: { ...resolveWorkspaceContextQuery(), menu_id: target.menu_id || undefined, action_id: targetActionId },
         })
         .catch(() => {});
       return;
     }
+    const sceneLocation = resolveSceneFirstActionLocation({
+      sourceQuery: route.query as Record<string, unknown>,
+      sceneKey: item.scene_key,
+      actionId: targetActionId,
+      menuId: target.menu_id || undefined,
+      model: target.model || undefined,
+      extraQuery: { ...resolveWorkspaceContextQuery(), menu_id: target.menu_id || undefined },
+    });
+    const fallbackSceneKey = String(item.scene_key || '').trim();
     router
-      .push({
-        path: `/a/${targetActionId}`,
-        query: { ...resolveWorkspaceContextQuery(), menu_id: target.menu_id || undefined },
+      .push(sceneLocation || {
+        path: fallbackSceneKey ? `/s/${fallbackSceneKey}` : `/compat/action/${targetActionId}`,
+        query: {
+          ...resolveWorkspaceContextQuery(),
+          menu_id: target.menu_id || undefined,
+          action_id: targetActionId,
+        },
       })
       .catch(() => {});
     return;
@@ -1254,8 +1283,17 @@ function openRecord(item: MyWorkRecordItem) {
       openScene(item.scene_key, target);
       return;
     }
+    const sceneLocation = resolveSceneFirstFormOrRecordLocation({
+      sourceQuery: route.query as Record<string, unknown>,
+      sceneKey: item.scene_key,
+      actionId: context.action_id,
+      menuId: context.menu_id,
+      model: item.model,
+      recordId: item.record_id,
+      extraQuery: { ...resolveWorkspaceContextQuery(), menu_id: context.menu_id, action_id: context.action_id },
+    });
     router
-      .push({
+      .push(sceneLocation || {
         path: `/r/${item.model}/${item.record_id}`,
         query: { ...resolveWorkspaceContextQuery(), menu_id: context.menu_id, action_id: context.action_id },
       })
@@ -1271,7 +1309,18 @@ function openPrimaryEntry(item: MyWorkRecordItem) {
 }
 
 function isCompletableTodo(item: MyWorkRecordItem) {
-  return item.section === 'todo' && item.source === 'mail.activity';
+  return item.section === 'todo' && item.can_complete === true;
+}
+
+function selectedTodoCompletionSource() {
+  const sources = new Set<string>();
+  todoSelectionIds.value.forEach((id) => {
+    const item = todoItemMap.value.get(id);
+    const source = String(item?.complete_action?.source || '').trim();
+    if (source) sources.add(source);
+  });
+  if (sources.size !== 1) return '';
+  return Array.from(sources)[0] || '';
 }
 
 function toggleTodoSelection(id: number, event: Event) {
@@ -1643,6 +1692,12 @@ function exportRetryFailedCsv() {
 
 async function completeSelectedTodos() {
   if (!todoSelectionIds.value.length) return;
+  const completionSource = selectedTodoCompletionSource();
+  if (!completionSource) {
+    actionFeedback.value = pageText('error_batch_complete_source_mismatch', '当前选中待办缺少统一完成能力，无法批量完成');
+    actionFeedbackError.value = true;
+    return;
+  }
   if (!window.confirm(
     `${pageText('confirm_batch_complete_prefix', '确认批量完成 ')}${todoSelectionIds.value.length}${pageText('confirm_batch_complete_suffix', ' 条待办？')}`,
   )) return;
@@ -1655,7 +1710,7 @@ async function completeSelectedTodos() {
   try {
     const result = await completeMyWorkItemsBatch({
       ids: [...todoSelectionIds.value],
-      source: 'mail.activity',
+      source: completionSource,
       note: 'Completed from my-work batch action.',
       request_id: buildBatchRequestId('mw_batch_ui'),
     });
@@ -1999,16 +2054,19 @@ watch(
 <style scoped>
 .my-work {
   display: grid;
-  gap: 16px;
+  gap: var(--ui-space-4);
 }
 
 .hero {
   display: grid;
-  gap: 10px;
-  padding: 16px;
-  border: 1px solid #dbeafe;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(14, 116, 144, 0.06), rgba(37, 99, 235, 0.05));
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-4);
+  border: 1px solid var(--ui-color-border-strong);
+  border-radius: var(--ui-radius-md);
+  background:
+    linear-gradient(135deg, rgba(240, 246, 250, 0.68), rgba(248, 245, 239, 0.88)),
+    rgba(255, 255, 255, 0.96);
+  box-shadow: var(--ui-shadow-sm);
 }
 
 .hero-main {
@@ -2021,7 +2079,7 @@ watch(
 .hero-tools {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ui-space-2);
 }
 
 .hero h2 {
@@ -2064,7 +2122,7 @@ watch(
 
 .hero p {
   margin: 0;
-  color: #334155;
+  color: var(--ui-color-ink);
 }
 
 .hero-context {
@@ -2075,33 +2133,34 @@ watch(
 }
 
 .context-chip {
-  border: 1px solid #dbeafe;
-  border-radius: 999px;
-  background: #f8fafc;
-  color: #334155;
-  font-size: 12px;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-pill);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ui-color-ink);
+  font-size: var(--ui-font-size-xs);
   line-height: 1.2;
   padding: 4px 10px;
 }
 
 .context-chip.warn {
-  border-color: #fde68a;
-  background: #fffbeb;
-  color: #92400e;
+  border-color: rgba(165, 107, 22, 0.2);
+  background: rgba(255, 245, 223, 0.88);
+  color: var(--ui-color-warning-600);
 }
 
 .context-chip.subtle {
-  border-color: #e2e8f0;
-  color: #64748b;
+  border-color: var(--ui-color-border);
+  color: var(--ui-color-ink-muted);
 }
 
 .secondary {
-  border: 1px solid #93c5fd;
-  border-radius: 8px;
-  background: #eff6ff;
-  color: #1e3a8a;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--ui-color-ink);
   padding: 8px 10px;
   cursor: pointer;
+  box-shadow: var(--ui-shadow-xs);
 }
 
 @media (max-width: 780px) {
@@ -2118,33 +2177,36 @@ watch(
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 10px;
+  gap: var(--ui-space-3);
 }
 
 .summary-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px;
-  background: #fff;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  padding: var(--ui-space-3);
+  background: rgba(255, 255, 255, 0.96);
   cursor: pointer;
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .summary-card.active {
-  border-color: #2563eb;
-  box-shadow: inset 0 0 0 1px #2563eb;
+  border-color: rgba(61, 120, 159, 0.28);
+  box-shadow:
+    inset 0 0 0 1px rgba(61, 120, 159, 0.18),
+    var(--ui-shadow-xs);
 }
 
 .summary-card .label {
   margin: 0;
-  color: #475569;
-  font-size: 13px;
+  color: var(--ui-color-ink-muted);
+  font-size: var(--ui-font-size-sm);
 }
 
 .summary-card .count {
-  margin: 6px 0 0;
+  margin: var(--ui-space-2) 0 0;
   font-size: 24px;
-  font-weight: 700;
-  color: #0f172a;
+  font-weight: var(--ui-font-weight-bold);
+  color: var(--ui-color-ink-strong);
 }
 
 .tabs {
@@ -2154,28 +2216,29 @@ watch(
 
 .filters {
   display: grid;
-  gap: 8px;
+  gap: var(--ui-space-2);
 }
 
 .filter-bar {
   display: grid;
   grid-template-columns: minmax(240px, 1fr) repeat(3, auto);
-  gap: 8px;
+  gap: var(--ui-space-2);
 }
 
 .filter-advanced {
   display: grid;
   grid-template-columns: repeat(5, auto);
-  gap: 8px;
+  gap: var(--ui-space-2);
   align-items: center;
 }
 
 .search-input,
 .filter-select {
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
   padding: 8px 10px;
-  background: #fff;
+  background: var(--ui-color-surface-strong);
+  color: var(--ui-color-ink-strong);
 }
 
 .preset-actions {
@@ -2186,72 +2249,77 @@ watch(
 }
 
 .tab {
-  border: 1px solid #cbd5e1;
-  border-radius: 999px;
-  background: #fff;
-  color: #334155;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-pill);
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--ui-color-ink);
   padding: 6px 10px;
   cursor: pointer;
 }
 
 .tab.active {
-  background: #eff6ff;
-  border-color: #3b82f6;
-  color: #1d4ed8;
+  background: rgba(240, 246, 250, 0.92);
+  border-color: rgba(61, 120, 159, 0.28);
+  color: var(--ui-color-primary-700);
 }
 
 .table-wrap {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
   overflow: hidden;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .empty-guide {
-  padding: 12px;
-  border-bottom: 1px solid #f1f5f9;
-  background: #f8fafc;
+  padding: var(--ui-space-3);
+  border-bottom: 1px solid var(--ui-color-border);
+  background: rgba(248, 245, 239, 0.78);
 }
 
 .empty-title {
   margin: 0;
-  color: #0f172a;
-  font-weight: 700;
+  color: var(--ui-color-ink-strong);
+  font-weight: var(--ui-font-weight-bold);
 }
 
 .empty-desc {
-  margin: 6px 0 0;
-  color: #475569;
-  font-size: 13px;
+  margin: var(--ui-space-2) 0 0;
+  color: var(--ui-color-ink-muted);
+  font-size: var(--ui-font-size-sm);
 }
 
 .batch-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  background: rgba(248, 245, 239, 0.78);
 }
 
 .status-hint {
   margin: 0;
-  color: #475569;
+  color: var(--ui-color-ink-muted);
 }
 
 .filter-empty-guide {
-  border: 1px solid #fcd34d;
-  border-radius: 10px;
-  background: #fff7ed;
-  padding: 12px;
+  border: 1px solid rgba(165, 107, 22, 0.2);
+  border-radius: var(--ui-radius-sm);
+  background: rgba(255, 245, 223, 0.88);
+  padding: var(--ui-space-3);
 }
 
 .guide-title {
   margin: 0;
-  color: #9a3412;
-  font-weight: 700;
+  color: var(--ui-color-warning-600);
+  font-weight: var(--ui-font-weight-bold);
 }
 
 .guide-text {
-  margin: 6px 0 0;
-  color: #7c2d12;
+  margin: var(--ui-space-2) 0 0;
+  color: var(--ui-color-warning-600);
 }
 
 .guide-actions {
@@ -2261,18 +2329,19 @@ watch(
 }
 
 .guide-btn {
-  border: 1px solid #fed7aa;
-  border-radius: 8px;
-  background: #fff;
-  color: #7c2d12;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--ui-color-ink);
   padding: 6px 10px;
   cursor: pointer;
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .guide-btn.primary {
-  border-color: #fb923c;
-  background: #fed7aa;
-  color: #7c2d12;
+  border-color: rgba(165, 107, 22, 0.2);
+  background: rgba(255, 245, 223, 0.88);
+  color: var(--ui-color-warning-600);
 }
 
 .pager {
@@ -2284,14 +2353,14 @@ watch(
 .retry-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ui-space-2);
   cursor: pointer;
 }
 
 .retry-panel {
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  background: #fff1f2;
+  border: 1px solid rgba(177, 76, 67, 0.2);
+  border-radius: var(--ui-radius-sm);
+  background: rgba(255, 240, 238, 0.82);
 }
 
 .retry-panel > summary {
@@ -2305,8 +2374,8 @@ watch(
 
 .retry-expand-hint {
   margin-left: auto;
-  color: #7f1d1d;
-  font-size: 12px;
+  color: var(--ui-color-danger-600);
+  font-size: var(--ui-font-size-xs);
 }
 
 .retry-actions {
@@ -2317,7 +2386,7 @@ watch(
 }
 
 .retry-details {
-  border-top: 1px solid #fecaca;
+  border-top: 1px solid rgba(177, 76, 67, 0.18);
   padding: 10px 12px 12px;
 }
 
@@ -2328,11 +2397,11 @@ watch(
 .retry-request-preview pre {
   margin: 6px 0 0;
   padding: 8px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  background: #fff;
-  color: #334155;
-  font-size: 12px;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-xs);
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--ui-color-ink);
+  font-size: var(--ui-font-size-xs);
   overflow-x: auto;
 }
 
@@ -2340,8 +2409,8 @@ watch(
   margin-top: 6px;
   display: grid;
   gap: 4px;
-  font-size: 12px;
-  color: #475569;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-muted);
 }
 
 .retry-note-presets {
@@ -2352,12 +2421,12 @@ watch(
 }
 
 .retry-note-editor textarea {
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-xs);
   padding: 6px 8px;
   font-family: inherit;
-  font-size: 12px;
-  background: #fff;
+  font-size: var(--ui-font-size-xs);
+  background: var(--ui-color-surface-strong);
 }
 
 .retry-details ul {
@@ -2372,22 +2441,22 @@ watch(
 }
 
 .retry-group-block {
-  border: 1px dashed #fecaca;
-  border-radius: 6px;
+  border: 1px dashed rgba(177, 76, 67, 0.2);
+  border-radius: var(--ui-radius-xs);
   padding: 6px 8px;
 }
 
 .retry-group-title {
   margin: 0;
-  color: #9f1239;
-  font-size: 12px;
-  font-weight: 700;
+  color: var(--ui-color-danger-600);
+  font-size: var(--ui-font-size-xs);
+  font-weight: var(--ui-font-weight-bold);
 }
 
 .retry-title {
   margin: 0;
-  color: #b91c1c;
-  font-weight: 600;
+  color: var(--ui-color-danger-600);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .retry-toggle {
@@ -2403,7 +2472,7 @@ watch(
 
 .retry-summary {
   margin: 8px 0 0;
-  color: #9f1239;
+  color: var(--ui-color-danger-600);
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
@@ -2421,23 +2490,23 @@ watch(
 
 .failed-code {
   margin-left: 8px;
-  color: #9f1239;
+  color: var(--ui-color-danger-600);
 }
 
 .failed-msg {
   margin-left: 8px;
-  color: #7f1d1d;
+  color: var(--ui-color-danger-600);
 }
 
 .failed-hint {
   margin-left: 8px;
-  color: #64748b;
-  font-size: 12px;
+  color: var(--ui-color-ink-muted);
+  font-size: var(--ui-font-size-xs);
 }
 
 .item-meta {
-  color: #64748b;
-  font-size: 12px;
+  color: var(--ui-color-ink-muted);
+  font-size: var(--ui-font-size-xs);
 }
 
 .mini-btn {
@@ -2454,7 +2523,7 @@ th,
 td {
   text-align: left;
   padding: 10px 12px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--ui-color-border-muted);
 }
 
 .cell-select {
@@ -2463,15 +2532,16 @@ td {
 }
 
 th {
-  font-size: 12px;
+  font-size: var(--ui-font-size-xs);
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--ui-color-ink-muted);
+  background: rgba(248, 245, 239, 0.72);
 }
 
 .empty {
   text-align: center;
-  color: #64748b;
+  color: var(--ui-color-ink-muted);
   padding: 20px 0;
 }
 
@@ -2480,15 +2550,17 @@ th {
 }
 
 .clickable-row:hover {
-  background: #f8fafc;
+  background: rgba(240, 246, 250, 0.52);
 }
 
 .link-btn {
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: #fff;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  background: rgba(255, 255, 255, 0.96);
   padding: 6px 10px;
   cursor: pointer;
+  color: var(--ui-color-ink);
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .secondary-btn {
@@ -2496,30 +2568,30 @@ th {
 }
 
 .done-btn {
-  border-color: #86efac;
-  background: #f0fdf4;
-  color: #166534;
+  border-color: rgba(31, 122, 91, 0.18);
+  background: rgba(235, 248, 242, 0.92);
+  color: var(--ui-color-success-600);
   margin-right: 8px;
 }
 
 .action-feedback {
   margin: 0;
   padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #bbf7d0;
-  background: #f0fdf4;
-  color: #166534;
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid rgba(31, 122, 91, 0.18);
+  background: rgba(235, 248, 242, 0.92);
+  color: var(--ui-color-success-600);
 }
 
 .action-feedback.error {
-  border-color: #fecaca;
-  background: #fff1f2;
-  color: #b91c1c;
+  border-color: rgba(177, 76, 67, 0.2);
+  background: rgba(255, 240, 238, 0.92);
+  color: var(--ui-color-danger-600);
 }
 
 .batch-evidence {
   margin: -6px 0 0;
-  color: #64748b;
-  font-size: 12px;
+  color: var(--ui-color-ink-muted);
+  font-size: var(--ui-font-size-xs);
 }
 </style>

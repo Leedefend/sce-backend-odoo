@@ -87,17 +87,7 @@ function nodeKey(node: ExplainedMenuNode) {
 }
 
 function nodeLabel(node: ExplainedMenuNode) {
-  const raw = String(node.name || 'Unnamed');
-  return raw
-    .replace(/\s*\(\d+\)\s*$/g, '')
-    .replace(/^project\s*manager$/i, '项目经理')
-    .replace(/^purchase\s*manager$/i, '采购经理')
-    .replace(/^finance$/i, '财务主管')
-    .replace(/^executive$/i, '管理层')
-    .replace(/^ops$/i, '运维专员')
-    .replace(/^admin$/i, '系统管理员')
-    .replace(/^workbench$/i, '工作台')
-    .replace(/^dashboard$/i, '看板');
+  return String(node.name || 'Unnamed').replace(/\s*\(\d+\)\s*$/g, '').trim();
 }
 
 function nodeBadge(node: ExplainedMenuNode) {
@@ -173,10 +163,10 @@ function isNodeDisabled(node: ExplainedMenuNode) {
 
 function nodeDisabledTitle(node: ExplainedMenuNode) {
   if (node.target_type === 'unavailable') {
-    return node.reason_code ? `不可用：${node.reason_code}` : '不可用菜单';
+    return '当前菜单暂不可用';
   }
   if (node.is_clickable === false) {
-    return '当前节点不可点击';
+    return '当前菜单暂不可点击';
   }
   return undefined;
 }

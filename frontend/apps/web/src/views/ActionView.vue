@@ -1,6 +1,5 @@
 <template>
   <section class="page">
-    <!-- Page intent: 在列表场景中先判断状态，再给出下一步可执行动作。 -->
     <section v-if="displayHeaderActions.length" class="page-actions">
       <button
         v-for="action in displayHeaderActions"
@@ -475,12 +474,13 @@ import {
 } from '../app/contractActionRuntime';
 import { detectObjectMethodFromActionKey, normalizeActionKind, toPositiveInt } from '../app/contractRuntime';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
-import { findSceneReadyEntryByTarget, resolveListSceneReady } from '../app/resolvers/sceneReadyResolver';
+import { findSceneReadyEntry, findSceneReadyEntryByTarget, resolveListSceneReady } from '../app/resolvers/sceneReadyResolver';
 import { normalizeSceneActionProtocol, type MutationContract, type ProjectionRefreshPolicy } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
-import { buildNativeFallbackUrl, resolveContractListSemantics, resolveContractViewRenderPolicy } from '../app/contractTakeover';
+import { buildNativeFallbackUrl, resolveContractViewRenderPolicy } from '../app/contractTakeover';
 import { pickContractNavQuery } from '../app/navigationContext';
+import { resolveSceneFirstFormOrRecordLocation } from '../app/sceneNavigation';
 import { useActionViewActionRuntime } from '../app/action_runtime/useActionViewActionRuntime';
 import { useActionViewBatchRuntime } from '../app/action_runtime/useActionViewBatchRuntime';
 import { useActionViewSelectionRuntime } from '../app/action_runtime/useActionViewSelectionRuntime';
@@ -1014,6 +1014,17 @@ type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
     actions_max?: number;
     kind?: string;
     delete_mode?: string;
+    batch_policy?: {
+      enabled?: boolean;
+      delete_allowed?: boolean;
+      delete_only_mode?: boolean;
+      available_actions?: string[];
+    };
+    record_open_policy?: {
+      carry_query_mode?: string;
+      carry_query_keys?: string[];
+      reason?: string;
+    };
     intent_profile?: SurfaceIntentContract;
     empty_reason?: string;
   };
@@ -1061,19 +1072,11 @@ type ContractActionGroupRaw = {
   overflow_actions?: Array<Record<string, unknown>>;
   overflow_count?: number;
 };
-const actionId = computed(() => {
-  const fromParam = Number(route.params.actionId || 0);
-  if (Number.isFinite(fromParam) && fromParam > 0) return fromParam;
-  const fromQuery = Number(route.query.action_id || 0);
-  return Number.isFinite(fromQuery) && fromQuery > 0 ? fromQuery : 0;
-});
-const actionMeta = computed(() => session.currentAction);
-const routeSceneLabel = computed(() => String(route.query.scene_label || '').trim());
-const menuId = computed(() => Number(route.query.menu_id ?? 0));
-const keepSceneRoute = computed(() => String(route.name || '').toLowerCase() === 'scene');
 const sceneKey = computed(() => {
   const metaKey = route.meta?.sceneKey as string | undefined;
   if (metaKey) return metaKey;
+  const paramKey = route.params.sceneKey as string | undefined;
+  if (paramKey) return String(paramKey);
   const queryKey = (route.query.scene_key || route.query.scene) as string | undefined;
   if (queryKey) return String(queryKey);
   const node = findMenuNode(session.menuTree, menuId.value);
@@ -1086,7 +1089,35 @@ const scene = computed<Scene | null>(() => {
 const pageMode = computed(() => resolvePageMode(sceneKey.value, String(scene.value?.layout?.kind || '')));
 const hasLedgerOverviewStrip = computed(() => pageMode.value === 'ledger');
 
+const actionId = computed(() => {
+  const sceneReadyBySceneKey = sceneKey.value
+    ? findSceneReadyEntry(session.sceneReadyContractV1, sceneKey.value)
+    : null;
+  const sceneTarget = (sceneReadyBySceneKey?.meta && typeof sceneReadyBySceneKey.meta === 'object')
+    ? ((sceneReadyBySceneKey.meta as Record<string, unknown>).target as Record<string, unknown> | undefined)
+    : undefined;
+  const fromSceneTarget = Number(sceneTarget?.action_id || 0);
+  if (Number.isFinite(fromSceneTarget) && fromSceneTarget > 0) return fromSceneTarget;
+  const fromParam = Number(route.params.actionId || 0);
+  if (Number.isFinite(fromParam) && fromParam > 0) return fromParam;
+  const fromQuery = Number(route.query.action_id || 0);
+  return Number.isFinite(fromQuery) && fromQuery > 0 ? fromQuery : 0;
+});
+const actionMeta = computed(() => session.currentAction);
+const routeSceneLabel = computed(() => String(route.query.scene_label || '').trim());
+const menuId = computed(() => Number(route.query.menu_id ?? 0));
+const keepSceneRoute = computed(() => {
+  if (String(route.name || '').toLowerCase() === 'scene') return true;
+  if (String(route.meta?.sceneKey || '').trim()) return true;
+  if (String(route.params.sceneKey || '').trim()) return true;
+  return String(route.path || '').startsWith('/s/');
+});
+
 const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
+  const bySceneKey = sceneKey.value ? findSceneReadyEntry(session.sceneReadyContractV1, sceneKey.value) : null;
+  if (bySceneKey) {
+    return bySceneKey;
+  }
   return findSceneReadyEntryByTarget(session.sceneReadyContractV1, {
     sceneKey: sceneKey.value,
     actionId: actionId.value,
@@ -1095,8 +1126,12 @@ const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
   });
 });
 const sceneReadyListSurface = computed(() => {
-  const fallback = resolveListSceneReady(sceneReadyEntry.value);
-  return resolveSceneFirstListSurface(sceneContractV1.value, fallback);
+  return resolveListSceneReady(sceneReadyEntry.value);
+});
+const sceneReadyBaseDomain = computed<unknown[]>(() => {
+  // sceneReadyListSurface.filters carries filter metadata for chip rendering,
+  // not Odoo ORM domain clauses for list requests.
+  return [];
 });
 const listOptimizationRefreshAttempted = ref(false);
 function applyDefaultMarkerLabel<T extends { key?: string; label?: string; isDefault?: boolean }>(rows: T[]): Array<T & { label: string }> {
@@ -1127,9 +1162,7 @@ function normalizeMetadataModeLabel(mode: string): string {
   return raw.replace(/[_-]+/g, ' ');
 }
 const nativeDefaultSortLabel = computed(() => {
-  const sceneReadyDefault = String(sceneReadyListSurface.value.defaultSort || '').trim();
-  if (sceneReadyDefault) return sceneReadyDefault;
-  return String(scene.value?.default_sort || '').trim();
+  return String(sceneReadyListSurface.value.defaultSort || '').trim();
 });
 const listSearchPlaceholder = computed(() => {
   const labels = listSearchableFieldMetadata.value
@@ -1378,18 +1411,24 @@ const model = computed(() => {
 const contractRights = computed(() => resolveContractRights(actionContract.value));
 const enterpriseBootstrapCreateLabel = computed(() => {
   if (vm.value.content.kind !== 'list') return '';
-  if (model.value === 'res.company') return '新建公司';
-  if (model.value === 'hr.department') return '新建部门';
-  if (model.value === 'res.users') return '新建用户';
   return '';
 });
-const canBatchDelete = computed(() => {
-  if (String(model.value || '').trim() === 'project.project') return false;
-  return contractRights.value.unlink === true && viewMode.value === 'tree';
+const contractBatchPolicy = computed(() => {
+  return actionContract.value?.surface_policies?.batch_policy ?? null;
 });
-const batchDeleteOnlyModels = new Set(['project.task', 'res.company', 'hr.department', 'res.users']);
+const canBatchDelete = computed(() => {
+  if (viewMode.value !== 'tree') return false;
+  const batchPolicy = contractBatchPolicy.value;
+  if (batchPolicy && batchPolicy.enabled === true) {
+    return batchPolicy.delete_allowed === true;
+  }
+  return contractRights.value.unlink === true
+    && String(actionContract.value?.surface_policies?.delete_mode || '').trim().toLowerCase() === 'unlink';
+});
 const useDeleteOnlyBatchMode = computed(() => {
-  return viewMode.value === 'tree' && batchDeleteOnlyModels.has(String(model.value || '').trim());
+  if (viewMode.value !== 'tree') return false;
+  return contractBatchPolicy.value?.enabled === true
+    && contractBatchPolicy.value?.delete_only_mode === true;
 });
 const activeGroupByField = ref('');
 const {
@@ -1451,10 +1490,29 @@ watch(
       action_id: actionId.value || undefined,
       menu_id: menuId.value || undefined,
     });
-    void router.push({
-      name: 'model-form',
-      params: { model: normalizedModel, id: resolveFormTargetId() },
-      query: carryQuery,
+    const sceneLocation = resolveSceneFirstFormOrRecordLocation({
+      sourceQuery: route.query as Record<string, unknown>,
+      sceneKey: String(route.query.scene_key || route.query.scene || '').trim(),
+      actionId: actionId.value || undefined,
+      menuId: menuId.value || undefined,
+      model: normalizedModel,
+      recordId: resolveFormTargetId(),
+      extraQuery: {
+        ...carryQuery,
+        view_mode: 'form',
+      },
+    });
+    void router.push(sceneLocation || {
+      name: 'workbench',
+      query: {
+        ...carryQuery,
+        reason: ErrorCodes.CONTRACT_CONTEXT_MISSING,
+        diag: 'action_view_form_open_missing_scene_identity',
+        action_id: actionId.value || undefined,
+        menu_id: menuId.value || undefined,
+        model: normalizedModel,
+        record_id: resolveFormTargetId(),
+      },
     }).catch(() => {});
   },
   { immediate: true },
@@ -1495,91 +1553,7 @@ function actionViewRecord(value: unknown): Record<string, unknown> {
     : {};
 }
 
-function sceneListColumns(semantics: Record<string, unknown>) {
-  const columnsRaw = Array.isArray(semantics.columns) ? semantics.columns : [];
-  const columnLabels: Record<string, string> = {};
-  const columns = columnsRaw
-    .map((item) => {
-      if (typeof item === 'string') return item.trim();
-      if (!item || typeof item !== 'object' || Array.isArray(item)) return '';
-      const row = item as Record<string, unknown>;
-      const name = String(row.name || row.field || row.key || '').trim();
-      const label = String(row.label || row.string || '').trim();
-      if (name && label) columnLabels[name] = label;
-      return name;
-    })
-    .filter(Boolean);
-  return { columns, columnLabels };
-}
-
-function sceneDefaultSort(raw: unknown): string {
-  if (typeof raw === 'string') return raw.trim();
-  const row = actionViewRecord(raw);
-  return String(row.raw || row.value || '').trim();
-}
-
-function resolveSceneFirstListSurface(contract: Record<string, unknown>, fallback: ReturnType<typeof resolveListSceneReady>) {
-  const semanticPage = actionViewRecord(contract.semantic_page);
-  const semantics = actionViewRecord(semanticPage.list_semantics);
-  const searchSurface = actionViewRecord(contract.search_surface);
-  const { columns } = sceneListColumns(semantics);
-  const defaultSort = sceneDefaultSort(searchSurface.default_sort);
-  const mode = String(searchSurface.mode || '').trim();
-  const filters = Array.isArray(searchSurface.filters) ? searchSurface.filters : [];
-  const groupBy = Array.isArray(searchSurface.group_by) ? searchSurface.group_by : [];
-  const searchPanel = Array.isArray(searchSurface.searchpanel) ? searchSurface.searchpanel : [];
-  const nativeSearchMenu = actionViewRecord(searchSurface.native_search_menu);
-  const searchableFields = Array.isArray(searchSurface.fields)
-    ? searchSurface.fields
-    : Array.isArray(searchSurface.searchable_fields)
-      ? searchSurface.searchable_fields
-      : [];
-  const hasSceneSurface = Boolean(
-    columns.length
-    || defaultSort
-    || mode
-    || filters.length
-    || groupBy.length
-    || searchPanel.length
-    || Object.keys(nativeSearchMenu).length
-    || searchableFields.length,
-  );
-  if (!hasSceneSurface) return fallback;
-  return {
-    ...fallback,
-    columns: columns.length ? columns : fallback.columns,
-    defaultSort: defaultSort || fallback.defaultSort,
-    mode: mode || fallback.mode,
-    filters: filters.length ? filters : fallback.filters,
-    groupBy: groupBy.length ? groupBy : fallback.groupBy,
-    searchPanel: searchPanel.length ? searchPanel : fallback.searchPanel,
-    searchableFields: searchableFields.length ? searchableFields : fallback.searchableFields,
-    nativeSearchMenu: Object.keys(nativeSearchMenu).length ? nativeSearchMenu : fallback.nativeSearchMenu,
-  };
-}
-
-function normalizeSceneListProfile(contract: Record<string, unknown>): SceneListProfile | null {
-  const semantics = resolveContractListSemantics(contract);
-  const { columns, columnLabels } = sceneListColumns(semantics);
-  const hiddenColumns = Array.isArray(semantics.hidden_columns)
-    ? semantics.hidden_columns.map((item) => String(item || '').trim()).filter(Boolean)
-    : [];
-  const rowPrimary = String(semantics.row_primary || '').trim();
-  const rowSecondary = String(semantics.row_secondary || '').trim();
-  if (!columns.length && !hiddenColumns.length && !rowPrimary && !rowSecondary) return null;
-  return {
-    columns,
-    hidden_columns: hiddenColumns,
-    column_labels: columnLabels,
-    row_primary: rowPrimary,
-    row_secondary: rowSecondary,
-  };
-}
-const listProfile = computed<SceneListProfile | null>(() => {
-  return normalizeSceneListProfile(sceneContractV1.value)
-    || (scene.value?.list_profile as SceneListProfile)
-    || null;
-});
+const listProfile = computed<SceneListProfile | null>(() => null);
 const {
   contractColumnLabels,
   extractColumnsFromContract,
@@ -1793,8 +1767,8 @@ const nativeFallbackUrl = computed(() => {
 });
 const showNativeFallbackPanel = computed(() => nativeFallbackPolicy.value.recommendedRuntime === 'native' && Boolean(nativeFallbackUrl.value));
 const nativeFallbackMessage = computed(() => {
-  const reason = nativeFallbackPolicy.value.notes[0] || '当前页面命中了原生兜底条件。';
-  return `${reason} 请使用原生页面完成本次操作。`;
+  const reason = nativeFallbackPolicy.value.notes[0] || '当前动作页暂不支持前端直接承接。';
+  return `${reason} 请打开原生页面继续当前操作。`;
 });
 
 const { vm } = useActionPageModel({
@@ -1903,12 +1877,33 @@ const listPrimaryActionLabel = computed(() => {
 function openListCreateForm() {
   if (isListInteractionLocked.value) return;
   if (!canCreateListRecord.value || !model.value) return;
-  router.push({
-    name: 'model-form',
-    params: { model: model.value, id: 'new' },
-    query: pickContractNavQuery(route.query as Record<string, unknown>, {
+  const carryQuery = pickContractNavQuery(route.query as Record<string, unknown>, {
+    action_id: actionId.value || undefined,
+  });
+  const sceneLocation = resolveSceneFirstFormOrRecordLocation({
+    sourceQuery: route.query as Record<string, unknown>,
+    sceneKey: String(route.query.scene_key || route.query.scene || '').trim(),
+    actionId: actionId.value || undefined,
+    menuId: menuId.value || undefined,
+    model: model.value,
+    recordId: 'new',
+    extraQuery: {
+      ...carryQuery,
+      view_mode: 'form',
+    },
+  });
+  router.push(sceneLocation || {
+    name: 'workbench',
+    query: {
+      ...carryQuery,
+      reason: ErrorCodes.CONTRACT_CONTEXT_MISSING,
+      diag: 'action_view_create_missing_scene_identity',
       action_id: actionId.value || undefined,
-    }),
+      menu_id: menuId.value || undefined,
+      model: model.value,
+      record_id: 'new',
+      view_mode: 'form',
+    },
   });
 }
 const listPrimaryAction = computed(() => (canCreateListRecord.value ? openListCreateForm : null));
@@ -1960,6 +1955,7 @@ const {
   actionId,
   resolvedModelRef,
   modelRef: model,
+  recordOpenPolicyRef: computed(() => actionContract.value?.surface_policies?.record_open_policy ?? null),
   routerPush: (target) => router.push(target),
 });
 
@@ -2484,7 +2480,7 @@ const {
     routeSavedFilterRaw: route.query.saved_filter,
     routeGroupByRaw: route.query.group_by,
     sceneReadyDefaultSortRaw: sceneReadyListSurface.value.defaultSort,
-    sceneDefaultSortRaw: scene.value?.default_sort,
+    sceneDefaultSortRaw: '',
     sessionCapabilities: session.capabilities,
     currentSortRaw: sortValue.value,
     activeContractFilterKey: activeContractFilterKey.value,
@@ -2615,7 +2611,7 @@ const {
     groupSampleLimit: groupSampleLimit.value,
     contractLimit: contractLimit.value,
     groupPageOffsets: groupPageOffsets.value,
-    sceneFiltersRaw: scene.value?.filters,
+    sceneFiltersRaw: sceneReadyBaseDomain.value,
     executeLoadPreflightPhase,
     executeLoadRequestPhase,
     executeLoadDataRequest,
@@ -2861,7 +2857,7 @@ const {
   resolveExportGuardMessage,
   resolveBatchExportDomainState,
   actionMetaDomain: () => actionMeta.value?.domain,
-  sceneFilters: () => scene.value?.filters,
+  sceneFilters: () => sceneReadyBaseDomain.value,
   resolveEffectiveFilterDomain,
   mergeSceneDomain,
   mergeActiveFilterDomain,

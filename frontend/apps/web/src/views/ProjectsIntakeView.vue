@@ -51,7 +51,7 @@ function buildTargetQuery() {
 
 function openIntakeForm() {
   void router.replace({
-    path: '/f/project.project/new',
+    path: `/s/${resolveTargetSceneKey()}`,
     query: buildTargetQuery(),
   });
 }

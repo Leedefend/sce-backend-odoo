@@ -2,9 +2,9 @@
   <section class="release-operator" :data-read-model-version="readModel.contract_version || ''">
     <header class="hero">
       <div>
-        <p class="eyebrow">Release Operator Surface</p>
-        <h1>发布控制台</h1>
-        <p class="description">查看当前发布状态、待审批动作和发布历史；所有操作仍通过 release policy 与 orchestrator 执行。</p>
+        <p class="eyebrow">{{ surfaceText('eyebrow', 'Release Operator Surface') }}</p>
+        <h1>{{ pageText('title', '发布控制台') }}</h1>
+        <p class="description">{{ surfaceText('description', pageText('description', '发布控制台说明暂不可用。')) }}</p>
       </div>
       <div class="product-switch">
         <button
@@ -20,32 +20,32 @@
     </header>
 
     <section v-if="errorMessage" class="panel panel-error">
-      <h2>加载失败</h2>
+      <h2>{{ surfaceText('error_title', pageText('error_title', '加载失败')) }}</h2>
       <p>{{ errorMessage }}</p>
-      <button class="ghost" @click="loadSurface">重试</button>
+      <button class="ghost" @click="loadSurface">{{ surfaceText('action_retry', pageText('action_retry', '重试')) }}</button>
     </section>
 
     <template v-else>
       <section class="panel">
         <div class="panel-head">
-          <h2>当前发布状态</h2>
-          <button class="ghost" :disabled="loading" @click="loadSurface">刷新</button>
+          <h2>{{ surfaceText('section_release_state', pageText('section_release_state', '当前发布状态')) }}</h2>
+          <button class="ghost" :disabled="loading" @click="loadSurface">{{ surfaceText('action_refresh', '刷新') }}</button>
         </div>
         <div class="state-grid">
           <article class="metric">
-            <span class="label">当前产品</span>
+            <span class="label">{{ surfaceText('metric_current_product', '当前产品') }}</span>
             <strong>{{ releaseState.product_key || currentProductKey }}</strong>
           </article>
           <article class="metric">
-            <span class="label">Active Released Snapshot</span>
+            <span class="label">{{ surfaceText('metric_active_snapshot', 'Active Released Snapshot') }}</span>
             <strong>{{ releaseState.active_version || 'N/A' }}</strong>
           </article>
           <article class="metric">
-            <span class="label">Latest Action</span>
+            <span class="label">{{ surfaceText('metric_latest_action', 'Latest Action') }}</span>
             <strong>{{ releaseState.latest_action_type || 'N/A' }}</strong>
           </article>
           <article class="metric">
-            <span class="label">Approval State</span>
+            <span class="label">{{ surfaceText('metric_approval_state', 'Approval State') }}</span>
             <strong>{{ releaseState.latest_action_approval_state || 'N/A' }}</strong>
           </article>
         </div>
@@ -53,8 +53,8 @@
 
       <section class="panel">
         <div class="panel-head">
-          <h2>可 Promote 候选</h2>
-          <span class="hint">仅展示当前 edition 下 candidate / approved snapshot</span>
+          <h2>{{ surfaceText('section_candidate', pageText('section_candidate', '可 Promote 候选')) }}</h2>
+          <span class="hint">{{ surfaceText('hint_candidate', pageText('hint_candidate', '候选快照说明暂不可用。')) }}</span>
         </div>
         <div v-if="candidateSnapshots.length" class="list">
           <article v-for="row in candidateSnapshots" :key="`candidate-${row.id}`" class="list-row">
@@ -67,17 +67,17 @@
               :disabled="loading || !row.promote_action?.enabled"
               @click="runPromote(row.promote_action)"
             >
-              发起 Promote
+              {{ row.promote_action?.label || '发起 Promote' }}
             </button>
           </article>
         </div>
-        <p v-else class="empty">当前没有可 Promote 的候选快照。</p>
+        <p v-else class="empty">{{ surfaceText('empty_candidate', pageText('empty_candidate', '候选快照空态说明暂不可用。')) }}</p>
       </section>
 
       <section class="panel">
         <div class="panel-head">
-          <h2>待审批动作</h2>
-          <span class="hint">当前数量：{{ pendingApprovals.length }}</span>
+          <h2>{{ surfaceText('section_pending', pageText('section_pending', '待审批动作')) }}</h2>
+          <span class="hint">{{ surfaceText('hint_pending_count_prefix', pageText('hint_pending_count_prefix', '当前数量：')) }}{{ pendingApprovals.length }}</span>
         </div>
         <div v-if="pendingApprovals.length" class="list">
           <article v-for="row in pendingApprovals" :key="`pending-${row.id}`" class="list-row">
@@ -90,21 +90,21 @@
               :disabled="loading || !row.can_approve"
               @click="approveAction(row.id)"
             >
-              审批并执行
+              {{ surfaceText('approve_action_label', '审批并执行') }}
             </button>
           </article>
         </div>
-        <p v-else class="empty">当前没有待审批动作。</p>
+        <p v-else class="empty">{{ surfaceText('empty_pending', pageText('empty_pending', '待审批空态说明暂不可用。')) }}</p>
       </section>
 
       <section class="panel">
         <div class="panel-head">
-          <h2>回滚</h2>
-          <span class="hint">仅当当前 active released snapshot 存在 rollback target 时可执行</span>
+          <h2>{{ surfaceText('section_rollback', pageText('section_rollback', '回滚')) }}</h2>
+          <span class="hint">{{ surfaceText('hint_rollback', pageText('hint_rollback', '回滚说明暂不可用。')) }}</span>
         </div>
         <div class="list-row">
           <div>
-            <strong>Rollback Target</strong>
+            <strong>{{ surfaceText('rollback_target_label', 'Rollback Target') }}</strong>
             <p>snapshot {{ rollbackAction.params?.target_snapshot_id || 0 }}</p>
           </div>
           <button
@@ -112,19 +112,19 @@
             :disabled="loading || !rollbackAction.enabled"
             @click="runRollback"
           >
-            执行回滚
+            {{ surfaceText('rollback_action_label', '执行回滚') }}
           </button>
         </div>
       </section>
 
       <section class="panel">
         <div class="panel-head">
-          <h2>发布历史</h2>
-          <span class="hint">最近 action 与 snapshot</span>
+          <h2>{{ surfaceText('section_history', '发布历史') }}</h2>
+          <span class="hint">{{ surfaceText('hint_history', '最近 action 与 snapshot。') }}</span>
         </div>
         <div class="history-grid">
           <div>
-            <h3>Actions</h3>
+            <h3>{{ surfaceText('history_actions_title', 'Actions') }}</h3>
             <ul class="history">
               <li v-for="row in historyActions" :key="`action-${row.id}`">
                 <strong>{{ row.action_type }}</strong>
@@ -133,7 +133,7 @@
             </ul>
           </div>
           <div>
-            <h3>Snapshots</h3>
+            <h3>{{ surfaceText('history_snapshots_title', 'Snapshots') }}</h3>
             <ul class="history">
               <li v-for="row in historySnapshots" :key="`snapshot-${row.id}`">
                 <strong>{{ row.version }}</strong>
@@ -151,6 +151,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { intentRequest } from '../api/intents';
+import { usePageContract } from '../app/pageContract';
 
 type OperatorAction = {
   key?: string;
@@ -178,6 +179,7 @@ type OperatorPendingAction = {
 };
 
 type OperatorSurface = {
+  copy?: Record<string, unknown>;
   read_model_v1?: Record<string, unknown>;
   identity?: Record<string, unknown>;
   products?: Array<Record<string, unknown>>;
@@ -200,6 +202,8 @@ type OperatorSurface = {
 
 const router = useRouter();
 const route = useRoute();
+const pageContract = usePageContract('release_operator');
+const pageText = pageContract.text;
 
 const loading = ref(false);
 const errorMessage = ref('');
@@ -225,6 +229,23 @@ const readModel = computed<Record<string, unknown>>(() => {
   }
   return buildLegacyReadModel(surface.value);
 });
+
+const surfaceCopy = computed<Record<string, unknown>>(() => {
+  const readModelCopy = readModel.value.copy;
+  if (readModelCopy && typeof readModelCopy === 'object') {
+    return readModelCopy as Record<string, unknown>;
+  }
+  const topLevelCopy = surface.value.copy;
+  if (topLevelCopy && typeof topLevelCopy === 'object') {
+    return topLevelCopy as Record<string, unknown>;
+  }
+  return {};
+});
+
+function surfaceText(key: string, fallback = ''): string {
+  const value = surfaceCopy.value[key];
+  return typeof value === 'string' && value.trim() ? value.trim() : fallback;
+}
 
 function syncReadModelRuntimeMarker(contractVersion: string) {
   if (typeof window === 'undefined') return;

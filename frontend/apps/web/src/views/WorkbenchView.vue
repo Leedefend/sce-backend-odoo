@@ -129,6 +129,8 @@ import { normalizeEmbeddedSceneQuery, parseSceneKeyFromQuery } from '../app/rout
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { resolvePageOrchestrationContractFromSceneV1 } from '../app/sceneContractV1';
+import { resolveMenuAction, resolveScenePathFromMenuResolve } from '../app/resolvers/menuResolver';
+import { resolveSceneFirstActionLocation, resolveSceneFirstFormOrRecordLocation } from '../app/sceneNavigation';
 import PageRenderer from '../components/page/PageRenderer.vue';
 import type { PageBlockActionEvent, PageOrchestrationContract } from '../app/pageOrchestration';
 import type { Scene } from '../app/resolvers/sceneRegistry';
@@ -311,36 +313,25 @@ const tiles = computed<EnrichedWorkbenchTile[]>(() => {
 });
 
 const reasonLabel = computed(() => {
-  switch (reason.value) {
-    case ErrorCodes.NAV_MENU_NO_ACTION:
-      return pageText('reason_nav_menu_no_action', '菜单分组（无可执行动作）');
-    case ErrorCodes.ACT_NO_MODEL:
-      return pageText('reason_act_no_model', '动作未绑定模型');
-    case ErrorCodes.ACT_UNSUPPORTED_TYPE:
-      return pageText('reason_act_unsupported_type', '动作类型暂不支持');
-    case ErrorCodes.CONTRACT_CONTEXT_MISSING:
-      return pageText('reason_contract_context_missing', '契约上下文缺失');
-    case ErrorCodes.CAPABILITY_MISSING:
-      return pageText('reason_capability_missing', '缺少能力权限');
-    default:
-      return reason.value || pageText('reason_unknown', '未知原因');
-  }
+  const code = String(reason.value || '').trim();
+  if (!code) return pageText('reason_unknown', '未知原因');
+  return pageText(`reason_${code.toLowerCase()}`, code);
 });
 
 const message = computed(() => {
   switch (reason.value) {
     case ErrorCodes.NAV_MENU_NO_ACTION:
-      return pageText('message_nav_menu_no_action', '当前菜单是目录，暂时没有可进入的子菜单。');
+      return pageText('message_nav_menu_no_action', '当前目录暂时没有可执行入口。');
     case ErrorCodes.ACT_NO_MODEL:
-      return pageText('message_act_no_model', '当前动作对应的是自定义工作区，未绑定数据模型。');
+      return pageText('message_act_no_model', '当前动作缺少可用模型信息。');
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
       return pageText('message_act_unsupported_type', '');
     case ErrorCodes.CONTRACT_CONTEXT_MISSING:
-      return pageText('message_contract_context_missing', '页面缺少契约必需上下文（例如 action_id）。');
+      return pageText('message_contract_context_missing', '当前页面缺少必要的契约上下文。');
     case ErrorCodes.CAPABILITY_MISSING:
       return pageText('message_capability_missing', '');
     default:
-      return pageText('message_default', '你可以返回工作台或打开菜单继续操作。');
+      return pageText('message_default', '当前页面暂时无法打开。');
   }
 });
 
@@ -376,9 +367,43 @@ async function goToProjects() {
   await router.push({ path: session.resolveLandingPath('/'), query: workspaceContextQuery.value });
 }
 
-async function openFirstReachableMenu() {
-  if (firstReachableMenuId.value) {
-    await router.push({ path: `/m/${firstReachableMenuId.value}`, query: workspaceContextQuery.value });
+async function openResolvedMenuTarget(menuId?: number | null) {
+  const normalizedMenuId = Number(menuId || 0);
+  if (!Number.isFinite(normalizedMenuId) || normalizedMenuId <= 0) {
+    await router.push({ path: session.resolveLandingPath('/'), query: workspaceContextQuery.value });
+    return;
+  }
+  const primary = resolveMenuAction(session.releaseNavigationTree, normalizedMenuId);
+  const resolved = (primary.kind !== 'broken' || !session.releaseNavigationTree.length)
+    ? primary
+    : resolveMenuAction(session.menuTree, normalizedMenuId);
+  const scenePath = resolveScenePathFromMenuResolve(resolved, normalizedMenuId);
+  if (scenePath?.path) {
+    await router.push({
+      path: scenePath.path,
+      query: {
+        menu_id: scenePath.menuId || normalizedMenuId,
+        scene_key: scenePath.sceneKey,
+        action_id: scenePath.actionId || undefined,
+        ...workspaceContextQuery.value,
+      },
+    });
+    return;
+  }
+  const actionId = resolved.kind === 'leaf'
+    ? Number(resolved.meta.action_id || 0)
+    : Number(resolved.kind === 'redirect' ? resolved.target.action_id || 0 : 0);
+  if (actionId > 0) {
+    await router.push({
+      name: 'workbench',
+      query: {
+        reason: ErrorCodes.CONTRACT_CONTEXT_MISSING,
+        diag: 'workbench_menu_target_missing_scene_identity',
+        action_id: actionId,
+        menu_id: resolved.kind === 'leaf' ? normalizedMenuId : (resolved.target.menu_id || normalizedMenuId),
+        ...workspaceContextQuery.value,
+      },
+    });
     return;
   }
   await router.push({ path: session.resolveLandingPath('/'), query: workspaceContextQuery.value });
@@ -398,7 +423,7 @@ async function executeWorkbenchAction(actionKey: string) {
     onRefresh: refresh,
     onOpenMenuFirstReachable: async () => {
       if (!firstReachableMenuId.value) return false;
-      await router.push({ path: `/m/${firstReachableMenuId.value}`, query: workspaceContextQuery.value });
+      await openResolvedMenuTarget(firstReachableMenuId.value);
       return true;
     },
     onFallback: async (key) => {
@@ -407,7 +432,7 @@ async function executeWorkbenchAction(actionKey: string) {
         return true;
       }
       if (key === 'open_menu') {
-        await openFirstReachableMenu();
+        await openResolvedMenuTarget(firstReachableMenuId.value);
         return true;
       }
       if (key === 'refresh_page') {
@@ -440,23 +465,72 @@ async function handleTileClick(tile: EnrichedWorkbenchTile) {
     return;
   }
   if (tile.route) {
-    await router.push({ path: String(tile.route), query: workspaceContextQuery.value });
+    const routePath = String(tile.route).trim();
+    const menuRouteMatch = routePath.match(/^\/m\/(\d+)$/);
+    if (menuRouteMatch) {
+      await openResolvedMenuTarget(Number(menuRouteMatch[1] || 0));
+      return;
+    }
+    const payload = tile.payload || {};
+    const legacyActionRoute = /^\/(?:a\/|compat\/action\/)/.test(routePath);
+    if (legacyActionRoute && payload.action_id) {
+      const sceneLocation = resolveSceneFirstActionLocation({
+        sourceQuery: route.query as Record<string, unknown>,
+        sceneKey: parseSceneKeyFromQuery(route.query),
+        actionId: payload.action_id,
+        menuId: payload.menu_id || undefined,
+        model: payload.model || undefined,
+        extraQuery: { menu_id: payload.menu_id || undefined, ...workspaceContextQuery.value },
+      });
+      await router.push(sceneLocation || { path: routePath, query: workspaceContextQuery.value });
+      return;
+    }
+    await router.push({ path: routePath, query: workspaceContextQuery.value });
     return;
   }
   const payload = tile.payload || {};
   if (payload.action_id) {
-    await router.push({
-      path: `/a/${payload.action_id}`,
-      query: { menu_id: payload.menu_id || undefined, ...workspaceContextQuery.value },
+    const sceneLocation = resolveSceneFirstActionLocation({
+      sourceQuery: route.query as Record<string, unknown>,
+      sceneKey: parseSceneKeyFromQuery(route.query),
+      actionId: payload.action_id,
+      menuId: payload.menu_id || undefined,
+      model: payload.model || undefined,
+      extraQuery: { menu_id: payload.menu_id || undefined, ...workspaceContextQuery.value },
+    });
+    const fallbackSceneKey = parseSceneKeyFromQuery(route.query);
+    await router.push(sceneLocation || {
+      path: fallbackSceneKey ? `/s/${fallbackSceneKey}` : `/compat/action/${payload.action_id}`,
+      query: {
+        menu_id: payload.menu_id || undefined,
+        action_id: payload.action_id,
+        ...workspaceContextQuery.value,
+      },
     });
     return;
   }
   if (payload.model && payload.record_id) {
-    await router.push({
-      path: `/r/${payload.model}/${payload.record_id}`,
+    const sceneLocation = resolveSceneFirstFormOrRecordLocation({
+      sourceQuery: route.query as Record<string, unknown>,
+      sceneKey: parseSceneKeyFromQuery(route.query),
+      actionId: payload.action_id || undefined,
+      menuId: payload.menu_id || undefined,
+      model: payload.model,
+      recordId: payload.record_id,
+      extraQuery: {
+        menu_id: payload.menu_id || undefined,
+        action_id: payload.action_id || undefined,
+        ...workspaceContextQuery.value,
+      },
+    });
+    const fallbackSceneKey = parseSceneKeyFromQuery(route.query);
+    await router.push(sceneLocation || {
+      path: fallbackSceneKey ? `/s/${fallbackSceneKey}` : `/r/${payload.model}/${payload.record_id}`,
       query: {
         menu_id: payload.menu_id || undefined,
         action_id: payload.action_id || undefined,
+        model: payload.model,
+        record_id: payload.record_id,
         ...workspaceContextQuery.value,
       },
     });

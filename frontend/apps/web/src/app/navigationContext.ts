@@ -2,6 +2,7 @@ import type { LocationQueryRaw, LocationQueryValueRaw } from 'vue-router';
 
 export const CONTRACT_NAV_QUERY_KEYS = [
   'menu_id',
+  'menu_xmlid',
   'action_id',
   'hud',
   'surface',

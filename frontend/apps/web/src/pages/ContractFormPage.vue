@@ -1,6 +1,9 @@
 <template>
   <LayoutShell :flow="layoutShellFlow">
-    <header v-if="effectiveCompactMode" class="form-compact-topbar">
+    <header
+      v-if="effectiveCompactMode"
+      :class="['form-compact-topbar', { 'form-compact-topbar--native': nativeLikeFormSurface }]"
+    >
       <div class="form-compact-title">
         <strong>{{ pageDisplayTitle }}</strong>
         <span v-if="pageDisplaySubtitle">{{ pageDisplaySubtitle }}</span>
@@ -232,7 +235,7 @@
           variant="info"
         />
         <section v-if="showSupportZoneGrid" class="support-zone-grid">
-          <section v-if="showRelationZoneBlock" class="block zone-block zone-block--support">
+          <section v-if="showRelationZoneBlock" class="block zone-block zone-block--support zone-block--relation">
             <header class="support-zone-header">
               <div>
                 <p class="support-zone-header__eyebrow">辅助信息</p>
@@ -244,11 +247,14 @@
               <article v-for="item in semanticRelationZoneItems" :key="item.field" class="zone-card">
                 <span class="zone-card__label">{{ item.label }}</span>
                 <strong class="zone-card__value">{{ item.viewType }}</strong>
-                <span class="zone-card__meta">{{ item.editableLabel }}</span>
+                <div class="zone-card__footer">
+                  <span class="zone-card__meta">{{ item.editableLabel }}</span>
+                  <span class="zone-card__badge">{{ item.editableLabel }}</span>
+                </div>
               </article>
             </div>
           </section>
-          <section v-if="showCollaborationZoneBlock" class="block zone-block zone-block--support">
+          <section v-if="showCollaborationZoneBlock" class="block zone-block zone-block--support zone-block--collaboration">
             <header class="support-zone-header">
               <div>
                 <p class="support-zone-header__eyebrow">协作辅助</p>
@@ -260,12 +266,22 @@
               <article class="zone-card" :class="{ 'zone-card--active': semanticHasChatter }">
                 <span class="zone-card__label">讨论区</span>
                 <strong class="zone-card__value">{{ semanticHasChatter ? '已启用' : '未启用' }}</strong>
-                <span class="zone-card__meta">承接沟通与活动记录</span>
+                <div class="zone-card__footer">
+                  <span class="zone-card__meta">承接沟通与活动记录</span>
+                  <span class="zone-card__badge" :class="{ 'zone-card__badge--active': semanticHasChatter }">
+                    {{ semanticHasChatter ? '可用' : '未开放' }}
+                  </span>
+                </div>
               </article>
               <article class="zone-card" :class="{ 'zone-card--active': semanticHasAttachments }">
                 <span class="zone-card__label">附件区</span>
                 <strong class="zone-card__value">{{ semanticHasAttachments ? '已启用' : '未启用' }}</strong>
-                <span class="zone-card__meta">承接交付材料与留痕</span>
+                <div class="zone-card__footer">
+                  <span class="zone-card__meta">承接交付材料与留痕</span>
+                  <span class="zone-card__badge" :class="{ 'zone-card__badge--active': semanticHasAttachments }">
+                    {{ semanticHasAttachments ? '可用' : '未开放' }}
+                  </span>
+                </div>
               </article>
             </div>
           </section>
@@ -357,9 +373,10 @@ import { buildRuntimeFieldStates } from '../app/modifierEngine';
 import { buildOne2ManyInlineCommands, buildX2ManyCommands, extractX2ManyIds } from '../app/x2manyCommands';
 import { resolveSceneValidationSuggestedAction } from '../app/sceneValidationRecoveryStrategy';
 import { findSceneReadyEntry, resolveFormSceneReady } from '../app/resolvers/sceneReadyResolver';
+import { findSceneByEntryAuthority } from '../app/resolvers/sceneRegistry';
 import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
-import { normalizeRenderProfile } from '../app/pageContract';
+import { normalizeRenderProfile, usePageContract } from '../app/pageContract';
 import {
   buildDetailShellViewsFromTree,
   type LayoutNodeView,
@@ -369,6 +386,7 @@ import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
 import { buildNativeFallbackUrl, resolveContractViewRenderPolicy } from '../app/contractTakeover';
 import { PROJECT_INTAKE_SCENE_KEY, setPendingProjectContext } from '../app/projectCreationBaseline';
+import { resolveSceneFirstFormOrRecordLocation } from '../app/sceneNavigation';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -459,6 +477,7 @@ class ContractAccessPolicyError extends Error {
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
+const pageContract = usePageContract('model_form');
 
 function asText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
@@ -501,7 +520,7 @@ const changedFieldSet = new Set<string>();
 let onchangeTimer: ReturnType<typeof setTimeout> | null = null;
 const applyingOnchangePatch = ref(false);
 
-const model = computed(() => String(route.params.model || contract.value?.head?.model || contract.value?.model || ''));
+const model = computed(() => String(route.params.model || route.query.model || contract.value?.head?.model || contract.value?.model || ''));
 const isProjectFormPage = computed(() => String(model.value || '').trim() === 'project.project');
 const isWorkBreakdownFormPage = computed(() => String(model.value || '').trim() === 'construction.work.breakdown');
 const actionId = computed(() => {
@@ -512,8 +531,44 @@ const actionId = computed(() => {
     model: model.value,
   });
 });
+function findMenuNodeByXmlid(nodes: Array<Record<string, unknown>>, menuXmlid: string): Record<string, unknown> | null {
+  if (!menuXmlid) return null;
+  const wanted = String(menuXmlid || '').trim();
+  const walk = (items: Array<Record<string, unknown>>): Record<string, unknown> | null => {
+    for (const rawNode of items) {
+      const node = rawNode && typeof rawNode === 'object' ? rawNode : {};
+      const meta = node.meta && typeof node.meta === 'object'
+        ? node.meta as Record<string, unknown>
+        : {};
+      const xmlid = String((node.xmlid || meta.menu_xmlid || '')).trim();
+      if (xmlid && xmlid === wanted) {
+        return node;
+      }
+      const children = Array.isArray(node.children)
+        ? node.children.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === 'object'))
+        : [];
+      const found = walk(children);
+      if (found) return found;
+    }
+    return null;
+  };
+  return walk(nodes);
+}
+const contractEntryMenuId = computed(() => {
+  const fromQuery = Number(route.query.menu_id || 0);
+  if (Number.isFinite(fromQuery) && fromQuery > 0) return fromQuery;
+  const menuXmlid = String(route.query.menu_xmlid || '').trim();
+  if (!menuXmlid) return 0;
+  const menuNode = findMenuNodeByXmlid(
+    (session.releaseNavigationTree.length ? session.releaseNavigationTree : session.menuTree) as Array<Record<string, unknown>>,
+    menuXmlid,
+  );
+  const resolved = Number(menuNode?.menu_id || menuNode?.id || 0);
+  return Number.isFinite(resolved) && resolved > 0 ? resolved : 0;
+});
+const contractEntryMenuXmlid = computed(() => String(route.query.menu_xmlid || '').trim());
 const recordId = computed(() => {
-  const raw = String(route.params.id || '').trim();
+  const raw = String(route.params.id || route.query.record_id || '').trim();
   if (!raw || raw === 'new') return null;
   const parsed = Number(raw);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
@@ -540,8 +595,6 @@ const showFormNativeFallback = computed(() => formRenderPolicy.value.recommended
 const formNativeFallbackMessage = computed(() => (
   formRenderPolicy.value.notes[0] || '当前表单命中了原生兜底条件，请使用原生页面完成操作。'
 ));
-const sceneContractV1 = computed<Record<string, unknown>>(() => asRecord((contract.value as Record<string, unknown> | null)?.scene_contract_v1));
-const sceneContractPermissions = computed<Record<string, unknown>>(() => asRecord(sceneContractV1.value.permissions));
 const semanticPage = computed<Record<string, unknown>>(() => asRecord((contract.value as Record<string, unknown> | null)?.semantic_page));
 const semanticFormSemantics = computed<Record<string, unknown>>(() => asRecord(semanticPage.value.form_semantics));
 const semanticFormLayout = computed<unknown[]>(() => (Array.isArray(semanticFormSemantics.value.layout) ? semanticFormSemantics.value.layout : []));
@@ -651,22 +704,10 @@ const semanticActionStateByKey = computed<Record<string, { enabled: boolean; rea
   }
   return out;
 });
-const sceneConsumerRuntime = computed<Record<string, unknown>>(() => {
-  const diagnostics = asRecord(sceneContractV1.value.diagnostics);
-  return asRecord(diagnostics.consumer_runtime);
-});
-const sceneDisabledActions = computed<Record<string, string>>(() => {
-  const out: Record<string, string> = {};
-  Object.entries(asRecord(sceneContractPermissions.value.disabled_actions)).forEach(([key, value]) => {
-    const reason = asText(value);
-    if (!key || !reason) return;
-    out[key] = reason;
-  });
-  return out;
-});
-const sceneRuntimePageStatus = computed(() => (
-  asText(sceneConsumerRuntime.value.runtime_page_status) || asText(sceneConsumerRuntime.value.page_status)
-));
+const sceneConsumerRuntime = computed<Record<string, unknown>>(() => asRecord(pageContract.consumerRuntime?.value));
+const sceneDisabledActions = computed<Record<string, string>>(() => asRecord(pageContract.sceneDisabledActions?.value));
+const sceneRuntimePermissions = computed(() => pageContract.sceneRuntimePermissions?.value ?? {});
+const sceneRuntimePageStatus = computed(() => pageContract.consumerRuntimeStatus?.() || '');
 const sceneWriteDisabledReason = computed(() => {
   const disabled = sceneDisabledActions.value;
   const statusKey = sceneRuntimePageStatus.value;
@@ -674,7 +715,7 @@ const sceneWriteDisabledReason = computed(() => {
   if (recordId.value) {
     if (disabled.edit) return disabled.edit;
     if (disabled.submit) return disabled.submit;
-    if (sceneContractPermissions.value.can_edit === false) {
+    if (sceneRuntimePermissions.value.canEdit === false) {
       return currentState
         ? `当前记录状态 ${currentState} 不允许编辑`
         : (statusKey === 'readonly' ? '当前页面为只读状态' : '当前页面不允许编辑');
@@ -682,7 +723,7 @@ const sceneWriteDisabledReason = computed(() => {
   } else {
     if (disabled.create) return disabled.create;
     if (disabled.submit) return disabled.submit;
-    if (sceneContractPermissions.value.can_create === false) {
+    if (sceneRuntimePermissions.value.canCreate === false) {
       return statusKey === 'restricted' ? '当前页面不允许新建' : '当前页面暂不可创建';
     }
   }
@@ -703,11 +744,11 @@ const sceneRuntimeStatusPanel = computed(() => {
   if (activeTransitionCount > 0) parts.push(`可用流转数：${activeTransitionCount}`);
   return {
     title: statusKey === 'readonly'
-      ? '当前表单为只读状态'
+      ? '表单当前为只读'
       : statusKey === 'restricted'
-        ? '当前表单访问受限'
-        : '当前表单运行态提示',
-    message: parts.join('；') || '当前页面的可写能力受 scene contract runtime 限制。',
+        ? '表单当前受限'
+        : '表单运行状态提示',
+    message: parts.join('；') || '当前表单状态已更新。',
     hint: '当前交互状态来自后端 scene contract runtime。',
   };
 });
@@ -747,8 +788,8 @@ const rights = computed(() => {
 
 const canPersistBySceneRuntime = computed(() => {
   if (recordId.value) {
-    if (sceneContractPermissions.value.can_edit === false) return false;
-  } else if (sceneContractPermissions.value.can_create === false) {
+    if (sceneRuntimePermissions.value.canEdit === false) return false;
+  } else if (sceneRuntimePermissions.value.canCreate === false) {
     return false;
   }
   if (sceneRuntimePageStatus.value === 'restricted') return false;
@@ -761,24 +802,24 @@ const canSave = computed(() => (
   && !isSemanticStateWriteBlocked.value
 ));
 const isProjectQuickIntakeMode = computed(() => {
-  if (String(model.value || '').trim() !== 'project.project') return false;
-  if (recordId.value) return false;
-  return String(route.query.intake_mode || '').trim().toLowerCase() === 'quick';
+  return projectCreateFlowMode.value === 'quick';
 });
 const isProjectStandardIntakeMode = computed(() => {
-  if (String(model.value || '').trim() !== 'project.project') return false;
-  if (recordId.value) return false;
-  if (isProjectQuickIntakeMode.value) return false;
-  return String(route.query.scene_key || '').trim() === PROJECT_INTAKE_SCENE_KEY;
+  return projectCreateFlowMode.value === 'standard';
 });
 const isProjectCreatePage = computed(() => {
-  const routeModel = String(route.params.model || '').trim();
-  const routeId = String(route.params.id || '').trim().toLowerCase();
+  const routeModel = String(route.params.model || route.query.model || '').trim();
+  const routeId = String(route.params.id || route.query.record_id || '').trim().toLowerCase();
   return routeModel === 'project.project' && routeId === 'new';
 });
 const isProjectIntakeCreateMode = computed(() => isProjectQuickIntakeMode.value || isProjectStandardIntakeMode.value);
 const intakeAutosaveKey = computed(() => {
   if (!isProjectCreatePage.value) return '';
+  const autosaveScope = String(formGovernance.value.autosave_scope || '').trim().toLowerCase();
+  if (autosaveScope === 'project_intake_standard') {
+    const userId = Number(session.user?.id || 0) || 0;
+    return `sc:intake:autosave:project.project:standard:u${userId}`;
+  }
   const mode = isProjectQuickIntakeMode.value ? 'quick' : 'standard';
   const userId = Number(session.user?.id || 0) || 0;
   return `sc:intake:autosave:project.project:${mode}:u${userId}`;
@@ -894,26 +935,14 @@ const pageDisplayTitle = computed(() => {
   return pageTitle.value;
 });
 
+const contractHeadMeta = computed<Record<string, unknown>>(() => {
+  const head = contract.value?.head;
+  return head && typeof head === 'object' ? head as unknown as Record<string, unknown> : {};
+});
+
 const pageDisplaySubtitle = computed(() => {
-  if (isProjectCreatePage.value) {
-    return '填写核心信息即可完成项目立项';
-  }
-  if (isWorkBreakdownFormPage.value) {
-    return '查看或编辑工程结构节点信息';
-  }
-  if (isProjectFormPage.value) {
-    const statusLabel = activeStatusbarLabel.value;
-    return statusLabel ? `项目详情页 · 当前阶段：${statusLabel}` : '项目详情页';
-  }
-  if (enterpriseFormSurface.value === 'enterprise_enablement' && isEnterpriseCompanyFormPage.value) {
-    return '这里只维护企业启用所需的基础信息。保存后请继续进入组织架构。';
-  }
-  if (enterpriseFormSurface.value === 'enterprise_enablement' && isEnterpriseDepartmentFormPage.value) {
-    return '先搭建部门层级，再进入用户设置，把执行主体挂到部门下。';
-  }
-  if (enterpriseFormSurface.value === 'enterprise_enablement' && isEnterpriseUserFormPage.value) {
-    return '这里只维护用户主数据。角色、安全策略和高级权限治理继续保留在原生页面。';
-  }
+  const contractSubtitle = asText(contractHeadMeta.value.subtitle);
+  if (contractSubtitle) return contractSubtitle;
   return '';
 });
 
@@ -926,6 +955,11 @@ const formGovernance = computed<Record<string, unknown>>(() => {
 });
 const enterpriseFormSurface = computed(() => String(formGovernance.value.surface || '').trim());
 const isEnterpriseBootstrapFormPage = computed(() => enterpriseFormSurface.value === 'enterprise_enablement');
+const projectCreateFlowMode = computed(() => String(formGovernance.value.create_flow_mode || '').trim().toLowerCase());
+const projectPostCreateTarget = computed<Record<string, unknown>>(() => {
+  const raw = formGovernance.value.post_create_target;
+  return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+});
 
 const isEnterpriseUserEnablementCreatePage = computed(() => {
   const enterprisePrimaryActionId = Number(session.enterpriseEnablement?.primary_action?.action_id || 0);
@@ -950,6 +984,8 @@ const enterpriseCurrentCompanyId = computed(() => {
 });
 
 const intakeCreateButtonLabel = computed(() => {
+  const governedLabel = String(formGovernance.value.primary_action_label || '').trim();
+  if (governedLabel) return busy.value && busyKind.value === 'save' ? '创建中…' : governedLabel;
   if (!isProjectCreatePage.value) return '创建项目';
   return busy.value && busyKind.value === 'save' ? '创建中…' : '创建项目';
 });
@@ -1049,7 +1085,7 @@ const objectConsoleEyebrow = computed(() => {
 const pageOverviewItems = computed(() => {
   const items: Array<{ label: string; value: string; tone: OverviewTone }> = [];
   const statusLabel = activeStatusbarLabel.value;
-  if (statusLabel) items.push({ label: '当前状态', value: statusLabel, tone: 'status' });
+  if (statusLabel) items.push({ label: '单据状态', value: statusLabel, tone: 'status' });
   const ownerEntry = firstFilledMany2one([
     { field: 'manager_id', label: '项目经理' },
     { field: 'user_id', label: '负责人' },
@@ -2125,16 +2161,34 @@ async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescr
   });
   const returnUrl = `${window.location.pathname}${window.location.search}`;
   try {
-    await router.push({
-      name: 'model-form',
-      params: { model: relation, id: 'new' },
+    const targetQuery = {
+      ...nextQuery,
+      return_url: encodeURIComponent(returnUrl),
+      return_field: fieldName,
+      return_model: model.value,
+      return_action_id: actionId.value || undefined,
+      return_menu_id: Number(route.query.menu_id || 0) || undefined,
+    };
+    const sceneLocation = resolveSceneFirstFormOrRecordLocation({
+      sourceQuery: route.query as Record<string, unknown>,
+      sceneKey: String(route.query.scene_key || route.params.sceneKey || '').trim(),
+      actionId: relationActionId,
+      menuId: menuId || undefined,
+      model: relation,
+      recordId: 'new',
+      extraQuery: targetQuery,
+    });
+    await router.push(sceneLocation || {
+      name: 'workbench',
       query: {
-        ...nextQuery,
-        return_url: encodeURIComponent(returnUrl),
-        return_field: fieldName,
-        return_model: model.value,
-        return_action_id: actionId.value || undefined,
-        return_menu_id: Number(route.query.menu_id || 0) || undefined,
+        ...targetQuery,
+        reason: ErrorCodes.CONTRACT_CONTEXT_MISSING,
+        diag: 'contract_form_relation_create_missing_scene_identity',
+        model: relation,
+        record_id: 'new',
+        action_id: relationActionId || undefined,
+        menu_id: menuId || undefined,
+        view_mode: 'form',
       },
     });
   } catch (err) {
@@ -3927,11 +3981,13 @@ async function loadContract() {
   loadStage.value = 'load_contract';
   const profile = recordId.value ? 'edit' : 'create';
   const currentModel = String(model.value || '').trim();
+  const currentSceneKey = String(route.query.scene_key || route.params.sceneKey || '').trim();
   let response: Awaited<ReturnType<typeof loadActionContractRaw>> | null = null;
   if (actionId.value) {
     try {
       response = await loadActionContractRaw(actionId.value, {
         recordId: recordId.value,
+        sceneKey: currentSceneKey,
         renderProfile: profile,
         surface: requestedSurface.value,
         sourceMode: requestedSourceMode.value,
@@ -3948,6 +4004,10 @@ async function loadContract() {
     response = await loadModelContractRaw(currentModel, {
       viewType: 'form',
       recordId: recordId.value,
+      actionId: actionId.value,
+      menuId: contractEntryMenuId.value,
+      menuXmlid: contractEntryMenuXmlid.value,
+      sceneKey: currentSceneKey,
       renderProfile: profile,
       surface: requestedSurface.value,
       sourceMode: requestedSourceMode.value,
@@ -4266,14 +4326,10 @@ async function runAction(action: ContractAction) {
   }
   if (action.kind === 'open') {
     if (action.actionId) {
-      await router.push({
-        name: 'action',
-        params: { actionId: String(action.actionId) },
-        query: pickContractNavQuery(route.query as Record<string, unknown>, {
-          action_id: action.actionId,
-          target: action.target || undefined,
-          domain_raw: action.domainRaw || undefined,
-        }),
+      await pushSceneOrWorkbench(action.actionId, {
+        target: action.target || undefined,
+        domain_raw: action.domainRaw || undefined,
+        diag: 'contract_form_open_missing_scene_identity',
       });
       return;
     }
@@ -4332,10 +4388,8 @@ async function runAction(action: ContractAction) {
       }
       const nextActionId = toPositiveInt(result?.action_id);
       if (nextActionId) {
-        await router.push({
-          name: 'action',
-          params: { actionId: String(nextActionId) },
-          query: pickContractNavQuery(route.query as Record<string, unknown>, { action_id: nextActionId }),
+        await pushSceneOrWorkbench(nextActionId, {
+          diag: 'contract_form_execute_missing_scene_identity',
         });
         if (action.refreshPolicy) {
           await applyProjectionRefreshPolicy(action.refreshPolicy);
@@ -4354,17 +4408,55 @@ async function runAction(action: ContractAction) {
   }
 }
 
+async function pushSceneOrWorkbench(nextActionId: number, extra?: Record<string, unknown>) {
+  const currentSceneKey = String(route.query.scene_key || route.params.sceneKey || '').trim();
+  const currentMenuId = Number(route.query.menu_id || 0);
+  const scene = findSceneByEntryAuthority({
+    sceneKey: currentSceneKey,
+    actionId: nextActionId,
+    menuId: currentMenuId,
+    model: model.value,
+    recordId: recordId.value || undefined,
+  }) || findSceneByEntryAuthority({
+    actionId: nextActionId,
+    menuId: currentMenuId,
+    model: model.value,
+    recordId: recordId.value || undefined,
+  });
+  if (scene) {
+    await router.push({
+      path: scene.route || `/s/${scene.key}`,
+      query: pickContractNavQuery(route.query as Record<string, unknown>, {
+        action_id: nextActionId,
+        menu_id: currentMenuId || scene.target.menu_id || undefined,
+        scene_key: scene.key,
+        model: model.value || undefined,
+        record_id: recordId.value || undefined,
+        ...(extra || {}),
+      }),
+    });
+    return;
+  }
+  await router.push({
+    name: 'workbench',
+    query: pickContractNavQuery(route.query as Record<string, unknown>, {
+      reason: ErrorCodes.CONTRACT_CONTEXT_MISSING,
+      action_id: nextActionId,
+      menu_id: currentMenuId || undefined,
+      model: model.value || undefined,
+      record_id: recordId.value || undefined,
+      ...(extra || {}),
+    }),
+  });
+}
+
 async function openEnterpriseNextAction() {
   if (isInteractionLocked.value) return;
   const target = enterpriseNextActionTarget.value;
   if (!target) return;
-  await router.push({
-    name: 'action',
-    params: { actionId: String(target.actionId) },
-    query: pickContractNavQuery(route.query as Record<string, unknown>, {
-      action_id: target.actionId,
-      menu_id: target.menuId || undefined,
-    }),
+  await pushSceneOrWorkbench(target.actionId, {
+    menu_id: target.menuId || undefined,
+    diag: 'contract_form_enterprise_next_missing_scene_identity',
   });
 }
 
@@ -4394,15 +4486,11 @@ async function openFilter(filterKey: string) {
   if (!actionId.value) return;
   const selected = searchFilters.value.find((item) => item.key === filterKey);
   activeFilterKey.value = filterKey;
-  await router.push({
-    name: 'action',
-    params: { actionId: String(actionId.value) },
-    query: pickContractNavQuery(route.query as Record<string, unknown>, {
-      action_id: actionId.value,
-      preset_filter: filterKey,
-      domain_raw: selected?.domainRaw || undefined,
-      context_raw: selected?.contextRaw || undefined,
-    }),
+  await pushSceneOrWorkbench(actionId.value, {
+    preset_filter: filterKey,
+    domain_raw: selected?.domainRaw || undefined,
+    context_raw: selected?.contextRaw || undefined,
+    diag: 'contract_form_filter_missing_scene_identity',
   });
 }
 
@@ -4515,14 +4603,10 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
         setPendingProjectContext({
           project_id: Number(created.id),
           project_name: String(values.name || formData.name || ''),
-          stage: 'initiated',
-          stage_label: '已立项',
-          milestone: '',
-          milestone_label: '',
-          status: 'active',
         });
       }
-      const nextSceneRoute = String(sceneReadyFormSurface.value.nextSceneRoute || '').trim();
+      const governanceRoute = String(projectPostCreateTarget.value.route || '').trim();
+      const nextSceneRoute = governanceRoute || String(sceneReadyFormSurface.value.nextSceneRoute || '').trim();
       const nextSceneKey = String(sceneReadyFormSurface.value.nextSceneKey || '').trim();
       const resolvedNextRoute = nextSceneRoute || (nextSceneKey ? `/s/${nextSceneKey}` : '');
       if (isProjectQuickIntakeMode.value && model.value === 'project.project') {
@@ -4546,10 +4630,31 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
         });
         return;
       }
-      await router.replace({
-        name: 'model-form',
-        params: { model: model.value, id: String(created.id) },
-        query: pickContractNavQuery(route.query as Record<string, unknown>),
+      const carryQuery = pickContractNavQuery(route.query as Record<string, unknown>);
+      const sceneLocation = resolveSceneFirstFormOrRecordLocation({
+        sourceQuery: route.query as Record<string, unknown>,
+        sceneKey: String(route.query.scene_key || route.params.sceneKey || '').trim(),
+        actionId: actionId.value || undefined,
+        menuId: menuId.value || undefined,
+        model: model.value,
+        recordId: String(created.id),
+        extraQuery: {
+          ...carryQuery,
+          view_mode: 'form',
+        },
+      });
+      await router.replace(sceneLocation || {
+        name: 'workbench',
+        query: {
+          ...carryQuery,
+          reason: ErrorCodes.CONTRACT_CONTEXT_MISSING,
+          diag: 'contract_form_created_record_missing_scene_identity',
+          action_id: actionId.value || undefined,
+          menu_id: menuId.value || undefined,
+          model: model.value,
+          record_id: String(created.id),
+          view_mode: 'form',
+        },
       });
       return;
     }
@@ -4603,7 +4708,7 @@ function exportContractJson() {
 }
 
 watch(
-  () => `${String(route.params.model || '')}|${String(route.params.id || '')}|${String(route.query.action_id || '')}`,
+  () => `${String(route.params.model || route.query.model || '')}|${String(route.params.id || route.query.record_id || '')}|${String(route.query.action_id || '')}`,
   () => {
     void reload();
   },
@@ -4686,6 +4791,11 @@ watch(
   padding: 6px 4px 2px;
 }
 
+.form-compact-topbar--native {
+  gap: 8px;
+  padding: 2px 0 0;
+}
+
 .form-compact-title {
   display: inline-flex;
   align-items: baseline;
@@ -4698,6 +4808,10 @@ watch(
   color: var(--ui-color-ink-strong);
 }
 
+.form-compact-topbar--native .form-compact-title strong {
+  font-size: var(--ui-font-size-xl);
+}
+
 .form-compact-title span {
   font-size: var(--ui-font-size-xs);
   color: var(--ui-color-ink-muted);
@@ -4707,6 +4821,10 @@ watch(
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.form-compact-topbar--native .form-compact-actions {
+  gap: 6px;
 }
 
 .meta {
@@ -4772,9 +4890,48 @@ watch(
 .card--project-align {
   border: 0;
   border-radius: 0;
-  padding: 2px 0 0;
+  padding: 0;
   background: transparent;
   max-width: none;
+}
+
+.card--project-align :deep(.template-page-header--compact) {
+  margin-bottom: 10px;
+  padding: 8px 0 8px;
+}
+
+.card--project-align :deep(.template-page-header-main h1) {
+  font-size: 20px;
+  line-height: 1.18;
+}
+
+.card--project-align :deep(.template-page-subtitle) {
+  font-size: 11px;
+}
+
+.card--project-align :deep(.template-page-header-status) {
+  min-width: 220px;
+}
+
+.card--project-align :deep(.header-status-cards) {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 6px;
+}
+
+.card--project-align :deep(.header-status-card) {
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.card--project-align :deep(.template-page-header-actions) {
+  gap: 8px;
+}
+
+.card--project-align :deep(.template-page-header-actions button) {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: var(--ui-radius-sm);
 }
 
 .block {
@@ -4827,6 +4984,15 @@ watch(
   box-shadow: var(--ui-shadow-xs);
 }
 
+.card--project-align .page-overview-strip {
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border-radius: var(--ui-radius-sm);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: none;
+}
+
 .page-overview-hero {
   display: grid;
   gap: 6px;
@@ -4836,6 +5002,12 @@ watch(
   border-radius: 16px;
   border: 1px solid rgba(203, 213, 225, 0.92);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.95));
+}
+
+.card--project-align .page-overview-hero {
+  min-height: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
 }
 
 .page-overview-hero--status {
@@ -4855,6 +5027,10 @@ watch(
   font-size: 22px;
   line-height: 1.15;
   color: var(--ui-color-ink-strong);
+}
+
+.card--project-align .page-overview-hero__value {
+  font-size: 18px;
 }
 
 .page-overview-hero__label,
@@ -4878,6 +5054,10 @@ watch(
   gap: 10px;
 }
 
+.card--project-align .page-overview-grid {
+  gap: 8px;
+}
+
 .page-overview-pill {
   min-width: 132px;
   padding: 10px 12px;
@@ -4886,6 +5066,11 @@ watch(
   border: 1px solid var(--ui-color-border);
   display: grid;
   gap: 4px;
+}
+
+.card--project-align .page-overview-pill {
+  min-width: 0;
+  padding: 8px 10px;
 }
 
 .page-overview-pill--owner,
@@ -4948,8 +5133,10 @@ watch(
 }
 
 .structure-projection-block {
-  border-color: #c7d2fe;
-  background: #eef2ff;
+  border-color: rgba(61, 120, 159, 0.18);
+  background:
+    linear-gradient(180deg, rgba(240, 246, 250, 0.56), rgba(255, 255, 255, 0) 78px),
+    rgba(248, 245, 239, 0.82);
 }
 
 .card--compact .form-grid {
@@ -4972,56 +5159,64 @@ watch(
 
 .form-flow-guide-main {
   margin: 0;
-  font-size: 12px;
-  color: #334155;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink);
 }
 
 .validation-error {
   grid-column: 1 / -1;
   margin: 0;
-  color: #b91c1c;
-  font-size: 12px;
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid rgba(177, 76, 67, 0.2);
+  background: rgba(255, 240, 238, 0.92);
+  color: var(--ui-color-danger-600);
+  font-size: var(--ui-font-size-xs);
 }
 
 .validation-warn {
   grid-column: 1 / -1;
   margin: 0;
-  color: #92400e;
-  font-size: 12px;
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid rgba(165, 107, 22, 0.2);
+  background: rgba(255, 245, 223, 0.88);
+  color: var(--ui-color-warning-600);
+  font-size: var(--ui-font-size-xs);
 }
 
 .submission-feedback {
   grid-column: 1 / -1;
   margin: 0;
-  font-size: 12px;
-  border-radius: 8px;
-  padding: 8px 10px;
+  font-size: var(--ui-font-size-xs);
+  border-radius: var(--ui-radius-sm);
+  padding: var(--ui-space-2) var(--ui-space-3);
 }
 
 .submission-feedback--success {
-  color: #065f46;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
+  color: var(--ui-color-success-600);
+  background: rgba(235, 248, 242, 0.92);
+  border: 1px solid rgba(31, 122, 91, 0.18);
 }
 
 .submission-feedback--warn {
-  color: #92400e;
-  background: #fffbeb;
-  border: 1px solid #fcd34d;
+  color: var(--ui-color-warning-600);
+  background: rgba(255, 245, 223, 0.88);
+  border: 1px solid rgba(165, 107, 22, 0.2);
 }
 
 .submission-feedback--error {
-  color: #991b1b;
-  background: #fef2f2;
-  border: 1px solid #fca5a5;
+  color: var(--ui-color-danger-600);
+  background: rgba(255, 240, 238, 0.92);
+  border: 1px solid rgba(177, 76, 67, 0.2);
 }
 
 .layout-divider {
   grid-column: 1 / -1;
-  font-size: 12px;
-  color: #475569;
-  border-bottom: 1px dashed #cbd5e1;
-  padding-bottom: 4px;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-muted);
+  border-bottom: 1px dashed var(--ui-color-border-strong);
+  padding-bottom: var(--ui-space-1);
 }
 
 .layout-divider.advanced-toggle {
@@ -5038,41 +5233,79 @@ watch(
 
 .zone-block--support {
   margin-top: 0;
-  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  background:
+    linear-gradient(180deg, rgba(240, 246, 250, 0.38), rgba(255, 255, 255, 0) 78px),
+    rgba(248, 245, 239, 0.72);
+  box-shadow: var(--ui-shadow-xs);
+}
+
+.card--project-align .zone-block--support {
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: none;
+}
+
+.zone-block--relation {
+  background:
+    linear-gradient(180deg, rgba(240, 246, 250, 0.52), rgba(255, 255, 255, 0) 86px),
+    rgba(248, 245, 239, 0.82);
+}
+
+.zone-block--collaboration {
+  background:
+    linear-gradient(180deg, rgba(235, 248, 242, 0.46), rgba(255, 255, 255, 0) 86px),
+    rgba(248, 245, 239, 0.82);
 }
 
 .support-zone-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--ui-space-3);
+}
+
+.card--project-align .support-zone-grid {
+  gap: var(--ui-space-2);
 }
 
 .support-zone-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: var(--ui-space-3);
+  margin-bottom: var(--ui-space-3);
+}
+
+.card--project-align .support-zone-header {
+  gap: var(--ui-space-2);
+  margin-bottom: var(--ui-space-2);
 }
 
 .support-zone-header__eyebrow {
   margin: 0 0 2px;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--ui-font-size-xs);
+  font-weight: var(--ui-font-weight-bold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ui-color-ink-soft);
 }
 
 .support-zone-header__count {
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 var(--ui-space-3);
+  border-radius: var(--ui-radius-pill);
+  border: 1px solid var(--ui-color-border);
+  background: rgba(255, 255, 255, 0.88);
+  font-size: var(--ui-font-size-xs);
   color: var(--ui-color-ink-muted);
 }
 
 .zone-card-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--ui-space-2);
 }
 
 .zone-card-list--compact {
@@ -5081,33 +5314,85 @@ watch(
 
 .zone-card {
   display: grid;
-  gap: 4px;
-  padding: 10px 12px;
-  border: 1px solid rgba(203, 213, 225, 0.9);
-  border-radius: 12px;
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-3);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
   background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--ui-shadow-xs);
+}
+
+.card--project-align .zone-card {
+  padding: 10px;
+  box-shadow: none;
 }
 
 .zone-card--active {
-  border-color: rgba(96, 165, 250, 0.6);
-  background: rgba(239, 246, 255, 0.9);
+  border-color: rgba(61, 120, 159, 0.24);
+  background: linear-gradient(180deg, rgba(240, 246, 250, 0.62), rgba(255, 255, 255, 0.96));
 }
 
 .zone-card__label {
-  font-size: 11px;
+  font-size: var(--ui-font-size-xs);
   color: var(--ui-color-ink-soft);
 }
 
 .zone-card__value {
-  font-size: 13px;
+  font-size: var(--ui-font-size-md);
   line-height: 1.35;
   color: var(--ui-color-ink-strong);
 }
 
+.zone-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-2);
+}
+
 .zone-card__meta {
-  font-size: 11px;
+  font-size: var(--ui-font-size-xs);
   line-height: 1.45;
   color: var(--ui-color-ink-muted);
+}
+
+.zone-card__badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: var(--ui-radius-pill);
+  border: 1px solid var(--ui-color-border);
+  background: rgba(248, 245, 239, 0.9);
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-muted);
+  white-space: nowrap;
+}
+
+.card--project-align :deep(.page-command-bar--native) {
+  margin-bottom: 10px;
+  padding: 4px 0 8px;
+}
+
+.card--project-align :deep(.page-command-group) {
+  gap: 6px;
+}
+
+.card--project-align :deep(.page-statusbar-chip) {
+  min-height: 28px;
+  padding: 0 10px;
+}
+
+.card--project-align :deep(.page-action-button) {
+  min-height: 30px;
+  padding: 0 10px;
+  box-shadow: none;
+}
+
+.zone-card__badge--active {
+  border-color: rgba(31, 122, 91, 0.18);
+  background: rgba(235, 248, 242, 0.9);
+  color: var(--ui-color-success-600);
 }
 
 .zone-chip-list {
@@ -5119,18 +5404,18 @@ watch(
 .zone-chip {
   display: inline-flex;
   align-items: center;
-  border: 1px solid #cbd5e1;
-  border-radius: 999px;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-pill);
   padding: 4px 10px;
-  font-size: 12px;
-  color: #0f172a;
-  background: #f8fafc;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink-strong);
+  background: rgba(248, 245, 239, 0.82);
 }
 
 .zone-collaboration-line {
   margin: 0;
-  font-size: 12px;
-  color: #334155;
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-ink);
 }
 
 @media (max-width: 860px) {
@@ -5149,20 +5434,21 @@ watch(
 
 .ghost,
 .primary {
-  border-radius: 6px;
+  border-radius: var(--ui-radius-xs);
   padding: 8px 10px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
+  border: 1px solid var(--ui-color-border);
+  background: rgba(255, 255, 255, 0.96);
   font-weight: 500;
+  box-shadow: var(--ui-shadow-xs);
 }
 
 .primary {
-  background: #111827;
+  background: linear-gradient(135deg, var(--ui-color-primary-700), var(--ui-color-primary-600));
   color: #fff;
-  border-color: #111827;
+  border-color: var(--ui-color-primary-700);
 }
 
 .ghost {
-  color: #6b7280;
+  color: var(--ui-color-ink-muted);
 }
 </style>

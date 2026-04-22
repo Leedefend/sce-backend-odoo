@@ -36,12 +36,10 @@ export function useActionViewPageDisplayStateRuntime(options: UseActionViewPageD
 
   const emptyReasonText = computed(() => {
     if (options.searchTerm.value.trim() || options.activeContractFilterKey.value) {
-      return options.t('empty_reason_filter', '可能由当前筛选条件导致无数据，建议先清除筛选后重试。');
+      return options.t('empty_reason_filter', '当前筛选条件没有匹配结果。');
     }
     const fromSurfacePolicy = String(options.actionContract.value?.surface_policies?.empty_reason || '').trim();
     if (fromSurfacePolicy) return fromSurfacePolicy;
-    const fromExtensions = String((options.sceneContractV1.value.extensions as Dict | undefined)?.empty_reason || '').trim();
-    if (fromExtensions) return fromExtensions;
     return options.t('empty_reason_default', '');
   });
 
@@ -54,4 +52,3 @@ export function useActionViewPageDisplayStateRuntime(options: UseActionViewPageD
     errorMessage: options.errorMessage,
   };
 }
-
