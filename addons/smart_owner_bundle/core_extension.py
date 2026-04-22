@@ -13,9 +13,8 @@ from .services.bundle_registry import (
 _logger = logging.getLogger(__name__)
 
 
-def smart_core_register(registry):
-    # Owner bundle does not add extra handlers (owner intents live in smart_owner_core).
-    return registry
+def get_intent_handler_contributions():
+    return []
 
 
 def smart_core_extend_system_init(data, env, user):
