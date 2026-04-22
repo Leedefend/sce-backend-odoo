@@ -1,0 +1,94 @@
+task_id: ITER-2026-04-22-BE-PAYMENT-ENTRY-PROVIDER-HANDOFF-COMMIT-PA78
+title: Commit payment-entry provider handoff residuals
+type: governance-optimization
+status: active
+priority: high
+mode: scan
+
+goal: >
+  Commit only the already-implemented payment-entry provider-handoff residuals
+  and their payment-entry-specific governance assets, without expanding into
+  broader payment or settlement business semantics.
+
+user_visible_outcome:
+  - "Payment-entry provider handoff residuals are committed in one bounded high-risk batch."
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-22-BE-PAYMENT-ENTRY-PROVIDER-HANDOFF-COMMIT-PA78.yaml
+    - addons/smart_construction_scene/providers/payment_entry_workbench_provider.py
+    - docs/architecture/scene-governance/assets/generated/payment_entry_closure_current_v1.csv
+    - scripts/verify/scene_governance_payment_entry_branch_closure_export.py
+  forbidden_paths:
+    - addons/smart_construction_core/**
+    - addons/smart_core/**
+    - docs/**/payment_approval*
+    - scripts/verify/payment_slice_browser_smoke.mjs
+    - scripts/verify/settlement_slice_browser_smoke.mjs
+    - security/**
+    - record_rules/**
+
+limits:
+  max_files: 8
+  max_candidates: 8
+  max_output_lines: 80
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+role_parallel:
+  enabled: false
+  allowed_roles:
+    - executor
+  require_disjoint_writes: true
+  require_new_session_per_role: true
+  stop_on_conflict: true
+
+change_rules:
+  - single-stage execution only
+  - commit only payment-entry provider-handoff residuals
+  - do not expand into payment approval, payment slice, or settlement semantics
+  - do not modify implementation content during commit classification
+
+context:
+  branch: codex/next-round
+  baseline_sha: b3d963d
+  explicit_user_authorization: true
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend governance over scene-orchestration residuals
+  module: payment-entry provider handoff residual commit
+  module_owner: smart_construction_scene payment-entry provider surface
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This batch only commits scene-orchestration handoff semantics for the
+    payment-entry provider and its governance closure asset, without adding new
+    payment business facts.
+  reason: >
+    The remaining dirty set contains one bounded payment-entry provider-handoff
+    residual that is explicitly covered by the repository's dedicated
+    high-risk exception, while broader payment/settlement changes remain out of
+    scope.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-22-BE-PAYMENT-ENTRY-PROVIDER-HANDOFF-COMMIT-PA78.yaml
+
+risk:
+  level: high
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - payment_scope_expands_beyond_provider_handoff
+  - payment_approval_or_settlement_file_enters_stage
+
+deliverables:
+  - bounded payment-entry provider handoff commit
+
+rollback:
+  - git restore --staged addons/smart_construction_scene/providers/payment_entry_workbench_provider.py docs/architecture/scene-governance/assets/generated/payment_entry_closure_current_v1.csv scripts/verify/scene_governance_payment_entry_branch_closure_export.py
+
+depends_on: []
