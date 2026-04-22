@@ -1,0 +1,11 @@
+{
+  "case": "payment_request_available_actions_intent_admin",
+  "op": "intent.invoke",
+  "user": "admin",
+  "contract_version": "v1",
+  "ui_contract_raw": {
+    "success": true,
+    "actions": []
+  },
+  "error": null
+}

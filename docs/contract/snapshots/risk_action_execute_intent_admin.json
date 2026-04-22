@@ -1,0 +1,11 @@
+{
+  "case": "risk_action_execute_intent_admin",
+  "op": "intent.invoke",
+  "user": "admin",
+  "contract_version": "v1",
+  "ui_contract_raw": {
+    "success": true,
+    "intent_action": "claim"
+  },
+  "error": null
+}

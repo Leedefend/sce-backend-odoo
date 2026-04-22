@@ -1,12 +1,19 @@
 # -*- coding: utf-8 -*-
 # 📁 smart_core/handlers/load_contract.py
+import hashlib
+import json
+import re
+
+from odoo import SUPERUSER_ID, api
+
 from ..core.base_handler import BaseIntentHandler
 from ..utils.extension_hooks import call_extension_hook_first
-from odoo import api, SUPERUSER_ID
-import json, re, hashlib
+from ..utils.reason_codes import REASON_OK, REASON_PERMISSION_DENIED
 
 VALID_VIEWS   = {'form','tree','kanban','search','pivot','graph','calendar','gantt','activity','dashboard'}
 VALID_INCLUDE = {'model','view','action','permission'}
+REASON_DISABLED = "DISABLED"
+REASON_STATE_BLOCKED = "STATE_BLOCKED"
 
 def _json(obj):
     return json.dumps(obj, ensure_ascii=False, default=str, separators=(",",":"))
@@ -223,7 +230,7 @@ class LoadContractHandler(BaseIntentHandler):
                     "label": fallback_label or key,
                     "type": "action",
                     "enabled": True,
-                    "reason_code": "OK",
+                    "reason_code": REASON_OK,
                 }
             if not isinstance(raw, dict):
                 return None
@@ -240,7 +247,7 @@ class LoadContractHandler(BaseIntentHandler):
             label = str(raw.get("label") or raw.get("string") or fallback_label or key)
             action_type = str(raw.get("action_type") or raw.get("type") or "action")
             enabled = bool(raw.get("enabled", True))
-            reason_code = str(raw.get("reason_code") or ("OK" if enabled else "DISABLED"))
+            reason_code = str(raw.get("reason_code") or (REASON_OK if enabled else REASON_DISABLED))
             reason = str(raw.get("reason") or "")
             return {
                 "key": key,
@@ -344,7 +351,7 @@ class LoadContractHandler(BaseIntentHandler):
             allowed = bool(value)
             return {
                 "allowed": allowed,
-                "reason_code": "OK" if allowed else "PERMISSION_DENIED",
+                "reason_code": REASON_OK if allowed else REASON_PERMISSION_DENIED,
                 "reason": "" if allowed else "permission denied",
             }
 
@@ -356,7 +363,7 @@ class LoadContractHandler(BaseIntentHandler):
         }
         permission_verdicts["execute"] = {
             "allowed": bool(permission_verdicts["read"]["allowed"]),
-            "reason_code": "OK" if permission_verdicts["read"]["allowed"] else "PERMISSION_DENIED",
+            "reason_code": REASON_OK if permission_verdicts["read"]["allowed"] else REASON_PERMISSION_DENIED,
             "reason": "" if permission_verdicts["read"]["allowed"] else "permission denied",
         }
 
@@ -390,17 +397,17 @@ class LoadContractHandler(BaseIntentHandler):
             state_blocked = is_closed_state and requires_write
             current_enabled = bool(action.get("enabled", True))
             allowed = bool(current_enabled and permission_allowed and not state_blocked)
-            reason_code = "OK"
+            reason_code = REASON_OK
             reason = ""
             if not allowed:
                 if not current_enabled:
-                    reason_code = str(action.get("reason_code") or "DISABLED")
+                    reason_code = str(action.get("reason_code") or REASON_DISABLED)
                     reason = str(action.get("reason") or "")
                 elif not permission_allowed:
-                    reason_code = "PERMISSION_DENIED"
+                    reason_code = REASON_PERMISSION_DENIED
                     reason = "permission denied"
                 elif state_blocked:
-                    reason_code = "STATE_BLOCKED"
+                    reason_code = REASON_STATE_BLOCKED
                     reason = "record state blocks action"
 
             return {
@@ -486,9 +493,9 @@ class LoadContractHandler(BaseIntentHandler):
                             "can_unlink": can_unlink,
                         },
                         "row_actions": _with_action_gate_list([
-                            {"key": "open", "label": "打开", "enabled": True, "reason_code": "OK"},
-                            {"key": "create", "label": "新增", "enabled": can_create, "reason_code": "OK" if can_create else "PERMISSION_DENIED"},
-                            {"key": "unlink", "label": "移除", "enabled": can_unlink, "reason_code": "OK" if can_unlink else "PERMISSION_DENIED"},
+                            {"key": "open", "label": "打开", "enabled": True, "reason_code": REASON_OK},
+                            {"key": "create", "label": "新增", "enabled": can_create, "reason_code": REASON_OK if can_create else REASON_PERMISSION_DENIED},
+                            {"key": "unlink", "label": "移除", "enabled": can_unlink, "reason_code": REASON_OK if can_unlink else REASON_PERMISSION_DENIED},
                         ]),
                     })
                 _add_zone("relation_zone", {
@@ -506,12 +513,12 @@ class LoadContractHandler(BaseIntentHandler):
             tree_view = views.get("tree") or {}
             tree_columns = tree_view.get("columns") or []
             tree_row_actions = [
-                {"key": "open", "label": "打开", "enabled": True, "reason_code": "OK"},
+                {"key": "open", "label": "打开", "enabled": True, "reason_code": REASON_OK},
                 {
                     "key": "edit",
                     "label": "编辑",
                     "enabled": bool(permissions.get("write", False)),
-                    "reason_code": "OK" if permissions.get("write") else "PERMISSION_DENIED",
+                    "reason_code": REASON_OK if permissions.get("write") else REASON_PERMISSION_DENIED,
                 },
             ]
             _add_zone("detail_zone", {"type": "relation_table_block", "data": {"columns": tree_columns, "row_actions": _with_action_gate_list(tree_row_actions)}})
@@ -521,12 +528,12 @@ class LoadContractHandler(BaseIntentHandler):
             kanban_view = views.get("kanban") or {}
             kanban_semantics = _extract_kanban_semantics(kanban_view)
             kanban_card_actions = [
-                {"key": "open", "label": "查看详情", "enabled": True, "reason_code": "OK"},
+                {"key": "open", "label": "查看详情", "enabled": True, "reason_code": REASON_OK},
                 {
                     "key": "edit",
                     "label": "编辑",
                     "enabled": bool(permissions.get("write", False)),
-                    "reason_code": "OK" if permissions.get("write") else "PERMISSION_DENIED",
+                    "reason_code": REASON_OK if permissions.get("write") else REASON_PERMISSION_DENIED,
                 },
             ]
             _add_zone(
@@ -565,7 +572,7 @@ class LoadContractHandler(BaseIntentHandler):
             },
             "verdict": {
                 "is_closed_state": is_closed_state,
-                "reason_code": "STATE_BLOCKED" if is_closed_state else "OK",
+                "reason_code": REASON_STATE_BLOCKED if is_closed_state else REASON_OK,
             },
         }
 
