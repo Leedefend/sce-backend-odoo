@@ -10,6 +10,13 @@ def get_intent_handler_contributions():
     return []
 
 
+_SCENE_ROUTE_BY_ACTION_XMLID = {
+    "smart_enterprise_base.action_enterprise_company": "/s/enterprise.company",
+    "smart_enterprise_base.action_enterprise_department": "/s/enterprise.department",
+    "smart_enterprise_base.action_enterprise_user": "/s/enterprise.user",
+}
+
+
 def _resolve_action_target(env, action_xmlid: str, menu_xmlid: str) -> dict:
     action = env.ref(action_xmlid, raise_if_not_found=False)
     menu = env.ref(menu_xmlid, raise_if_not_found=False)
@@ -18,7 +25,7 @@ def _resolve_action_target(env, action_xmlid: str, menu_xmlid: str) -> dict:
         "menu_id": int(menu.id) if menu else 0,
         "action_xmlid": action_xmlid,
         "menu_xmlid": menu_xmlid,
-        "route": f"/a/{int(action.id)}" if action else "",
+        "route": _SCENE_ROUTE_BY_ACTION_XMLID.get(action_xmlid, "") or (f"/a/{int(action.id)}" if action else ""),
     }
 
 

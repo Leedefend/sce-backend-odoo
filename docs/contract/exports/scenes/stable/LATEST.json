@@ -1,8 +1,37 @@
 {
-  "schema_version": "v2",
-  "scene_version": "v2",
-  "profiles_version": "v2",
+  "schema_version": "v1",
+  "scene_version": "",
+  "profiles_version": "v1",
   "scenes": [
+    {
+      "code": "config.project_cost_code",
+      "name": "成本科目",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "action_id": 486,
+        "menu_id": 342,
+        "route": "/s/config.project_cost_code"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [],
+      "tiles": []
+    },
     {
       "code": "contract.center",
       "name": "合同中心",
@@ -17,8 +46,8 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 486,
-        "menu_id": 289
+        "menu_id": 324,
+        "route": "/s/contract.center"
       },
       "list_profile": {
         "columns": [],
@@ -29,6 +58,140 @@
       },
       "default_sort": "",
       "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "contracts.execution",
+      "name": "合同执行跟踪",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "route": "/s/contracts.execution"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "contracts.monitor",
+      "name": "合同履约监控",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "menu_id": 324,
+        "route": "/s/contracts.monitor"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "contracts.workspace",
+      "name": "合同管理工作台",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "action_id": 522,
+        "menu_id": 324,
+        "route": "/s/contracts.workspace"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "cost.analysis",
+      "name": "成本控制工作台",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "action_id": 489,
+        "menu_id": 332,
+        "route": "/s/cost.analysis"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [
+        {
+          "key": "filter_current_month",
+          "label": "本月",
+          "domain": []
+        },
+        {
+          "key": "group_cost",
+          "label": "按科目",
+          "domain": []
+        },
+        {
+          "key": "group_project",
+          "label": "按项目",
+          "domain": []
+        },
+        {
+          "key": "group_wbs",
+          "label": "按WBS",
+          "domain": []
+        }
+      ],
       "tiles": []
     },
     {
@@ -45,8 +208,9 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 456,
-        "menu_id": 294
+        "action_id": 491,
+        "menu_id": 329,
+        "route": "/s/cost.budget_alloc"
       },
       "list_profile": {
         "columns": [],
@@ -57,6 +221,56 @@
       },
       "default_sort": "",
       "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "cost.control",
+      "name": "成本控制驾驶舱",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "action_id": 489,
+        "menu_id": 332,
+        "route": "/s/cost.control"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [
+        {
+          "key": "filter_current_month",
+          "label": "本月",
+          "domain": []
+        },
+        {
+          "key": "group_cost",
+          "label": "按科目",
+          "domain": []
+        },
+        {
+          "key": "group_project",
+          "label": "按项目",
+          "domain": []
+        },
+        {
+          "key": "group_wbs",
+          "label": "按WBS",
+          "domain": []
+        }
+      ],
       "tiles": []
     },
     {
@@ -73,8 +287,36 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 452,
-        "menu_id": 292
+        "action_id": 487,
+        "menu_id": 327,
+        "route": "/s/cost.cost_compare"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "cost.forecast",
+      "name": "成本预测",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "route": "/s/cost.forecast"
       },
       "list_profile": {
         "columns": [],
@@ -101,8 +343,9 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 453,
-        "menu_id": 299
+        "action_id": 488,
+        "menu_id": 334,
+        "route": "/s/cost.profit_compare"
       },
       "list_profile": {
         "columns": [],
@@ -129,8 +372,9 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 465,
-        "menu_id": 286
+        "action_id": 500,
+        "menu_id": 321,
+        "route": "/s/cost.project_boq"
       },
       "list_profile": {
         "columns": [],
@@ -140,7 +384,91 @@
         "row_secondary": ""
       },
       "default_sort": "",
-      "filters": [],
+      "filters": [
+        {
+          "key": "group_by_category",
+          "label": "按类别",
+          "domain": []
+        },
+        {
+          "key": "group_by_division",
+          "label": "按分部",
+          "domain": []
+        },
+        {
+          "key": "group_by_line_type",
+          "label": "按行类型",
+          "domain": []
+        },
+        {
+          "key": "group_by_major",
+          "label": "按专业",
+          "domain": []
+        },
+        {
+          "key": "group_by_project",
+          "label": "按项目",
+          "domain": []
+        },
+        {
+          "key": "group_by_section",
+          "label": "按工程类别",
+          "domain": []
+        },
+        {
+          "key": "group_by_single",
+          "label": "按单项工程",
+          "domain": []
+        },
+        {
+          "key": "group_by_source",
+          "label": "按来源",
+          "domain": []
+        },
+        {
+          "key": "group_by_unit",
+          "label": "按单位工程",
+          "domain": []
+        },
+        {
+          "key": "group_by_version",
+          "label": "按版本",
+          "domain": []
+        },
+        {
+          "key": "only_item",
+          "label": "仅清单项",
+          "domain": [
+            [
+              "line_type",
+              "=",
+              "item"
+            ]
+          ]
+        },
+        {
+          "key": "only_provisional",
+          "label": "仅暂列/暂估",
+          "domain": [
+            [
+              "is_provisional",
+              "=",
+              true
+            ]
+          ]
+        },
+        {
+          "key": "only_warning",
+          "label": "仅有警告",
+          "domain": [
+            [
+              "has_warning",
+              "=",
+              true
+            ]
+          ]
+        }
+      ],
       "tiles": []
     },
     {
@@ -157,8 +485,7 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 450,
-        "menu_id": 293
+        "route": "/s/cost.project_budget"
       },
       "list_profile": {
         "columns": [],
@@ -185,8 +512,9 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 454,
-        "menu_id": 297
+        "action_id": 489,
+        "menu_id": 332,
+        "route": "/s/cost.project_cost_ledger"
       },
       "list_profile": {
         "columns": [],
@@ -196,7 +524,28 @@
         "row_secondary": ""
       },
       "default_sort": "",
-      "filters": [],
+      "filters": [
+        {
+          "key": "filter_current_month",
+          "label": "本月",
+          "domain": []
+        },
+        {
+          "key": "group_cost",
+          "label": "按科目",
+          "domain": []
+        },
+        {
+          "key": "group_project",
+          "label": "按项目",
+          "domain": []
+        },
+        {
+          "key": "group_wbs",
+          "label": "按WBS",
+          "domain": []
+        }
+      ],
       "tiles": []
     },
     {
@@ -213,8 +562,36 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 458,
-        "menu_id": 296
+        "action_id": 493,
+        "menu_id": 331,
+        "route": "/s/cost.project_progress"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "cost.warning.center",
+      "name": "成本预警中心",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "route": "/s/cost.warning.center"
       },
       "list_profile": {
         "columns": [],
@@ -241,8 +618,58 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 504,
-        "menu_id": 323
+        "action_id": 547,
+        "menu_id": 362,
+        "route": "/s/data.dictionary"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [
+        {
+          "key": "active",
+          "label": "启用",
+          "domain": [
+            [
+              "active",
+              "=",
+              true
+            ]
+          ]
+        },
+        {
+          "key": "chapter",
+          "label": "章节",
+          "domain": []
+        },
+        {
+          "key": "discipline",
+          "label": "专业",
+          "domain": []
+        }
+      ],
+      "tiles": []
+    },
+    {
+      "code": "default.dashboard",
+      "name": "默认工作台",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "route": "/s/default.dashboard"
       },
       "list_profile": {
         "columns": [],
@@ -256,13 +683,9 @@
       "tiles": []
     },
     {
-      "code": "default",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
+      "code": "delivery.command",
+      "name": "交付指挥台",
+      "layout": {},
       "access": {
         "visible": true,
         "allowed": true,
@@ -273,7 +696,7 @@
         "has_access_clause": false
       },
       "target": {
-        "route": "/workbench?scene=default"
+        "route": "/s/delivery.command"
       },
       "list_profile": {
         "columns": [],
@@ -284,35 +707,12 @@
       },
       "default_sort": "",
       "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
+      "tiles": []
     },
     {
-      "code": "default__pkg1",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
+      "code": "enterprise.company",
+      "name": "企业信息",
+      "layout": {},
       "access": {
         "visible": true,
         "allowed": true,
@@ -323,7 +723,10 @@
         "has_access_clause": false
       },
       "target": {
-        "route": "/workbench?scene=default"
+        "action_id": 246,
+        "menu_id": 144,
+        "model": "res.company",
+        "route": "/s/enterprise.company"
       },
       "list_profile": {
         "columns": [],
@@ -333,36 +736,36 @@
         "row_secondary": ""
       },
       "default_sort": "",
-      "filters": [],
-      "tiles": [
+      "filters": [
         {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
+          "key": "sc_company_active_false",
+          "label": "已停用",
+          "domain": [
+            [
+              "sc_is_active",
+              "=",
+              false
+            ]
+          ]
         },
         {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
+          "key": "sc_company_active_true",
+          "label": "启用中",
+          "domain": [
+            [
+              "sc_is_active",
+              "=",
+              true
+            ]
+          ]
         }
-      ]
+      ],
+      "tiles": []
     },
     {
-      "code": "default__pkg10",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
+      "code": "enterprise.department",
+      "name": "组织架构",
+      "layout": {},
       "access": {
         "visible": true,
         "allowed": true,
@@ -373,7 +776,10 @@
         "has_access_clause": false
       },
       "target": {
-        "route": "/workbench?scene=default"
+        "action_id": 247,
+        "menu_id": 145,
+        "model": "hr.department",
+        "route": "/s/enterprise.department"
       },
       "list_profile": {
         "columns": [],
@@ -383,36 +789,51 @@
         "row_secondary": ""
       },
       "default_sort": "",
-      "filters": [],
-      "tiles": [
+      "filters": [
         {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
+          "key": "group_by_company_id",
+          "label": "所属公司",
+          "domain": []
         },
         {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
+          "key": "group_by_parent_id",
+          "label": "上级部门",
+          "domain": []
+        },
+        {
+          "key": "group_by_sc_manager_user_id",
+          "label": "部门负责人",
+          "domain": []
+        },
+        {
+          "key": "sc_department_active_false",
+          "label": "已停用",
+          "domain": [
+            [
+              "sc_is_active",
+              "=",
+              false
+            ]
+          ]
+        },
+        {
+          "key": "sc_department_active_true",
+          "label": "启用中",
+          "domain": [
+            [
+              "sc_is_active",
+              "=",
+              true
+            ]
+          ]
         }
-      ]
+      ],
+      "tiles": []
     },
     {
-      "code": "default__pkg11",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
+      "code": "enterprise.post",
+      "name": "岗位管理",
+      "layout": {},
       "access": {
         "visible": true,
         "allowed": true,
@@ -423,7 +844,10 @@
         "has_access_clause": false
       },
       "target": {
-        "route": "/workbench?scene=default"
+        "action_id": 249,
+        "menu_id": 146,
+        "model": "sc.enterprise.post",
+        "route": "/s/enterprise.post"
       },
       "list_profile": {
         "columns": [],
@@ -433,36 +857,41 @@
         "row_secondary": ""
       },
       "default_sort": "",
-      "filters": [],
-      "tiles": [
+      "filters": [
         {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
+          "key": "group_by_company_id",
+          "label": "所属公司",
+          "domain": []
         },
         {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
+          "key": "sc_enterprise_post_active_false",
+          "label": "已停用",
+          "domain": [
+            [
+              "active",
+              "=",
+              false
+            ]
+          ]
+        },
+        {
+          "key": "sc_enterprise_post_active_true",
+          "label": "启用中",
+          "domain": [
+            [
+              "active",
+              "=",
+              true
+            ]
+          ]
         }
-      ]
+      ],
+      "tiles": []
     },
     {
-      "code": "default__pkg12",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
+      "code": "enterprise.user",
+      "name": "用户设置",
+      "layout": {},
       "access": {
         "visible": true,
         "allowed": true,
@@ -473,7 +902,10 @@
         "has_access_clause": false
       },
       "target": {
-        "route": "/workbench?scene=default"
+        "action_id": 248,
+        "menu_id": 147,
+        "model": "res.users",
+        "route": "/s/enterprise.user"
       },
       "list_profile": {
         "columns": [],
@@ -483,1227 +915,51 @@
         "row_secondary": ""
       },
       "default_sort": "",
-      "filters": [],
-      "tiles": [
+      "filters": [
         {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
+          "key": "group_by_company_id",
+          "label": "所属公司",
+          "domain": []
         },
         {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg13",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
+          "key": "group_by_sc_department_id",
+          "label": "所属部门",
+          "domain": []
         },
         {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg14",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
+          "key": "group_by_sc_post_id",
+          "label": "主岗位",
+          "domain": []
         },
         {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg15",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
+          "key": "group_by_sc_role_profile",
+          "label": "产品角色",
+          "domain": []
         },
         {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg16",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
+          "key": "sc_user_active_false",
+          "label": "已停用",
+          "domain": [
+            [
+              "active",
+              "=",
+              false
+            ]
+          ]
         },
         {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
+          "key": "sc_user_active_true",
+          "label": "启用中",
+          "domain": [
+            [
+              "active",
+              "=",
+              true
+            ]
+          ]
         }
-      ]
-    },
-    {
-      "code": "default__pkg17",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg18",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg19",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg2",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg20",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg21",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg22",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg23",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg24",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg25",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg26",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg27",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg28",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg3",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg4",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg5",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg6",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg7",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg8",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
-    },
-    {
-      "code": "default__pkg9",
-      "name": "默认场景",
-      "layout": {
-        "kind": "workspace",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/workbench?scene=default"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": [
-        {
-          "key": "capability.matrix",
-          "title": "能力矩阵",
-          "subtitle": "查看角色可用能力",
-          "icon": "M",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        },
-        {
-          "key": "project.work",
-          "title": "项目工作",
-          "subtitle": "项目看板与概览入口",
-          "icon": "P",
-          "scene_key": "",
-          "required_capabilities": [],
-          "payload": {}
-        }
-      ]
+      ],
+      "tiles": []
     },
     {
       "code": "finance.center",
@@ -1719,8 +975,9 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 490,
-        "menu_id": 270
+        "action_id": 505,
+        "menu_id": 301,
+        "route": "/s/finance.center"
       },
       "list_profile": {
         "columns": [],
@@ -1747,8 +1004,9 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 481,
-        "menu_id": 268
+        "action_id": 517,
+        "menu_id": 299,
+        "route": "/s/finance.operating_metrics"
       },
       "list_profile": {
         "columns": [],
@@ -1775,8 +1033,9 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 492,
-        "menu_id": 272
+        "action_id": 528,
+        "menu_id": 303,
+        "route": "/s/finance.payment_ledger"
       },
       "list_profile": {
         "columns": [],
@@ -1803,8 +1062,9 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 493,
-        "menu_id": 273
+        "action_id": 532,
+        "menu_id": 304,
+        "route": "/s/finance.payment_requests"
       },
       "list_profile": {
         "columns": [],
@@ -1831,8 +1091,9 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 496,
-        "menu_id": 275
+        "action_id": 534,
+        "menu_id": 308,
+        "route": "/s/finance.settlement_orders"
       },
       "list_profile": {
         "columns": [],
@@ -1859,8 +1120,174 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 497,
-        "menu_id": 276
+        "action_id": 535,
+        "menu_id": 309,
+        "route": "/s/finance.treasury_ledger"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "finance.workspace",
+      "name": "资金管理工作台",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "menu_id": 301,
+        "route": "/s/finance.workspace"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "my_work.workspace",
+      "name": "我的工作",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "route": "/my-work"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "operation.overview",
+      "name": "经营总览",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "route": "/s/operation.overview"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "payments.approval",
+      "name": "收付款审批中心",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "action_id": 526,
+        "menu_id": 302,
+        "route": "/s/payments.approval"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "payments.collection.center",
+      "name": "收款管理中心",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "route": "/s/payments.collection.center"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "payments.risk.control",
+      "name": "付款风险控制",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "route": "/s/payments.risk.control"
       },
       "list_profile": {
         "columns": [],
@@ -1887,7 +1314,7 @@
         "has_access_clause": false
       },
       "target": {
-        "route": "/portal/capability-matrix"
+        "route": "/s/portal.capability_matrix"
       },
       "list_profile": {
         "columns": [],
@@ -1914,7 +1341,7 @@
         "has_access_clause": false
       },
       "target": {
-        "route": "/portal/dashboard"
+        "route": "/"
       },
       "list_profile": {
         "columns": [],
@@ -1941,7 +1368,356 @@
         "has_access_clause": false
       },
       "target": {
-        "route": "/portal/lifecycle"
+        "route": "/s/projects.dashboard"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "portfolio.center",
+      "name": "项目组合中心",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "route": "/s/portfolio.center"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "portfolio.monitor",
+      "name": "项目组合监控",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "route": "/s/portfolio.monitor"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "project.dashboard",
+      "name": "项目驾驶舱（产品场景）",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "action_id": 520,
+        "menu_id": 313,
+        "route": "/s/project.dashboard"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [
+        {
+          "key": "activities_overdue",
+          "label": "Late Activities",
+          "domain": []
+        },
+        {
+          "key": "activities_today",
+          "label": "Today Activities",
+          "domain": []
+        },
+        {
+          "key": "activities_upcoming_all",
+          "label": "Future Activities",
+          "domain": []
+        },
+        {
+          "key": "end_date",
+          "label": "End Date",
+          "domain": []
+        },
+        {
+          "key": "filter_draft",
+          "label": "草稿",
+          "domain": [
+            [
+              "lifecycle_state",
+              "=",
+              "draft"
+            ]
+          ]
+        },
+        {
+          "key": "filter_in_progress",
+          "label": "进行中",
+          "domain": [
+            [
+              "lifecycle_state",
+              "=",
+              "in_progress"
+            ]
+          ]
+        },
+        {
+          "key": "filter_my_projects",
+          "label": "我的项目",
+          "domain": []
+        },
+        {
+          "key": "groupby_stage",
+          "label": "Stage",
+          "domain": []
+        },
+        {
+          "key": "inactive",
+          "label": "Archived",
+          "domain": [
+            [
+              "active",
+              "=",
+              false
+            ]
+          ]
+        },
+        {
+          "key": "manager",
+          "label": "Project Manager",
+          "domain": []
+        },
+        {
+          "key": "my_projects",
+          "label": "My Favorites",
+          "domain": []
+        },
+        {
+          "key": "own_projects",
+          "label": "My Projects",
+          "domain": []
+        },
+        {
+          "key": "start_date",
+          "label": "Start Date",
+          "domain": []
+        },
+        {
+          "key": "status",
+          "label": "Status",
+          "domain": []
+        },
+        {
+          "key": "tags",
+          "label": "Tags",
+          "domain": []
+        },
+        {
+          "key": "unassigned_projects",
+          "label": "Unassigned",
+          "domain": [
+            [
+              "user_id",
+              "=",
+              false
+            ]
+          ]
+        }
+      ],
+      "tiles": []
+    },
+    {
+      "code": "project.initiation",
+      "name": "项目立项（产品场景）",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "route": "/s/project.initiation"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [
+        {
+          "key": "activities_overdue",
+          "label": "最近活动",
+          "domain": []
+        },
+        {
+          "key": "activities_today",
+          "label": "今日活动",
+          "domain": []
+        },
+        {
+          "key": "activities_upcoming_all",
+          "label": "未来活动",
+          "domain": []
+        },
+        {
+          "key": "end_date",
+          "label": "结束日期",
+          "domain": []
+        },
+        {
+          "key": "filter_draft",
+          "label": "草稿",
+          "domain": [
+            [
+              "lifecycle_state",
+              "=",
+              "draft"
+            ]
+          ]
+        },
+        {
+          "key": "filter_in_progress",
+          "label": "进行中",
+          "domain": [
+            [
+              "lifecycle_state",
+              "=",
+              "in_progress"
+            ]
+          ]
+        },
+        {
+          "key": "filter_my_projects",
+          "label": "我的项目",
+          "domain": []
+        },
+        {
+          "key": "groupby_stage",
+          "label": "阶段",
+          "domain": []
+        },
+        {
+          "key": "inactive",
+          "label": "已存档",
+          "domain": [
+            [
+              "active",
+              "=",
+              false
+            ]
+          ]
+        },
+        {
+          "key": "manager",
+          "label": "项目管理员",
+          "domain": []
+        },
+        {
+          "key": "my_projects",
+          "label": "我的收藏夹",
+          "domain": []
+        },
+        {
+          "key": "own_projects",
+          "label": "我的项目",
+          "domain": []
+        },
+        {
+          "key": "start_date",
+          "label": "开始日期",
+          "domain": []
+        },
+        {
+          "key": "status",
+          "label": "状态",
+          "domain": []
+        },
+        {
+          "key": "tags",
+          "label": "标签",
+          "domain": []
+        },
+        {
+          "key": "unassigned_projects",
+          "label": "未指派",
+          "domain": [
+            [
+              "user_id",
+              "=",
+              false
+            ]
+          ]
+        }
+      ],
+      "tiles": []
+    },
+    {
+      "code": "project.management",
+      "name": "项目驾驶舱",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "action_id": 520,
+        "menu_id": 315,
+        "route": "/s/project.management"
       },
       "list_profile": {
         "columns": [],
@@ -1968,8 +1744,142 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 484,
-        "menu_id": 279
+        "action_id": 520,
+        "menu_id": 313,
+        "route": "/pm/dashboard"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [
+        {
+          "key": "activities_overdue",
+          "label": "Late Activities",
+          "domain": []
+        },
+        {
+          "key": "activities_today",
+          "label": "Today Activities",
+          "domain": []
+        },
+        {
+          "key": "activities_upcoming_all",
+          "label": "Future Activities",
+          "domain": []
+        },
+        {
+          "key": "end_date",
+          "label": "End Date",
+          "domain": []
+        },
+        {
+          "key": "filter_draft",
+          "label": "草稿",
+          "domain": [
+            [
+              "lifecycle_state",
+              "=",
+              "draft"
+            ]
+          ]
+        },
+        {
+          "key": "filter_in_progress",
+          "label": "进行中",
+          "domain": [
+            [
+              "lifecycle_state",
+              "=",
+              "in_progress"
+            ]
+          ]
+        },
+        {
+          "key": "filter_my_projects",
+          "label": "我的项目",
+          "domain": []
+        },
+        {
+          "key": "groupby_stage",
+          "label": "Stage",
+          "domain": []
+        },
+        {
+          "key": "inactive",
+          "label": "Archived",
+          "domain": [
+            [
+              "active",
+              "=",
+              false
+            ]
+          ]
+        },
+        {
+          "key": "manager",
+          "label": "Project Manager",
+          "domain": []
+        },
+        {
+          "key": "my_projects",
+          "label": "My Favorites",
+          "domain": []
+        },
+        {
+          "key": "own_projects",
+          "label": "My Projects",
+          "domain": []
+        },
+        {
+          "key": "start_date",
+          "label": "Start Date",
+          "domain": []
+        },
+        {
+          "key": "status",
+          "label": "Status",
+          "domain": []
+        },
+        {
+          "key": "tags",
+          "label": "Tags",
+          "domain": []
+        },
+        {
+          "key": "unassigned_projects",
+          "label": "Unassigned",
+          "domain": [
+            [
+              "user_id",
+              "=",
+              false
+            ]
+          ]
+        }
+      ],
+      "tiles": []
+    },
+    {
+      "code": "projects.detail",
+      "name": "项目详情",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "menu_id": 314,
+        "route": "/s/projects.detail"
       },
       "list_profile": {
         "columns": [],
@@ -1980,16 +1890,146 @@
       },
       "default_sort": "",
       "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "projects.execution",
+      "name": "项目执行中心",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "action_id": 484,
+        "menu_id": 296,
+        "route": "/s/projects.execution"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [
+        {
+          "key": "activities_overdue",
+          "label": "Late Activities",
+          "domain": []
+        },
+        {
+          "key": "activities_today",
+          "label": "Today Activities",
+          "domain": []
+        },
+        {
+          "key": "activities_upcoming_all",
+          "label": "Future Activities",
+          "domain": []
+        },
+        {
+          "key": "end_date",
+          "label": "End Date",
+          "domain": []
+        },
+        {
+          "key": "filter_draft",
+          "label": "草稿",
+          "domain": [
+            [
+              "lifecycle_state",
+              "=",
+              "draft"
+            ]
+          ]
+        },
+        {
+          "key": "filter_in_progress",
+          "label": "进行中",
+          "domain": [
+            [
+              "lifecycle_state",
+              "=",
+              "in_progress"
+            ]
+          ]
+        },
+        {
+          "key": "filter_my_projects",
+          "label": "我的项目",
+          "domain": []
+        },
+        {
+          "key": "groupby_stage",
+          "label": "Stage",
+          "domain": []
+        },
+        {
+          "key": "inactive",
+          "label": "Archived",
+          "domain": [
+            [
+              "active",
+              "=",
+              false
+            ]
+          ]
+        },
+        {
+          "key": "manager",
+          "label": "Project Manager",
+          "domain": []
+        },
+        {
+          "key": "my_projects",
+          "label": "My Favorites",
+          "domain": []
+        },
+        {
+          "key": "own_projects",
+          "label": "My Projects",
+          "domain": []
+        },
+        {
+          "key": "start_date",
+          "label": "Start Date",
+          "domain": []
+        },
+        {
+          "key": "status",
+          "label": "Status",
+          "domain": []
+        },
+        {
+          "key": "tags",
+          "label": "Tags",
+          "domain": []
+        },
+        {
+          "key": "unassigned_projects",
+          "label": "Unassigned",
+          "domain": [
+            [
+              "user_id",
+              "=",
+              false
+            ]
+          ]
+        }
+      ],
       "tiles": []
     },
     {
       "code": "projects.intake",
       "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
+      "layout": {},
       "access": {
         "visible": true,
         "allowed": true,
@@ -2000,38 +2040,8 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 502,
-        "menu_id": 278
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg1",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
+        "action_id": 540,
+        "menu_id": 311,
         "route": "/s/projects.intake"
       },
       "list_profile": {
@@ -2042,854 +2052,118 @@
         "row_secondary": ""
       },
       "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg10",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg11",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg12",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg13",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg14",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg15",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg16",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg17",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg18",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg19",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg2",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg20",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg21",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg22",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg23",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg24",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg25",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg26",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg27",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg28",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg3",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg4",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg5",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg6",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg7",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg8",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.intake__pkg9",
-      "name": "项目立项",
-      "layout": {
-        "kind": "record",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "route": "/s/projects.intake"
-      },
-      "list_profile": {
-        "columns": [],
-        "hidden_columns": [],
-        "column_labels": {},
-        "row_primary": "",
-        "row_secondary": ""
-      },
-      "default_sort": "",
-      "filters": [],
+      "filters": [
+        {
+          "key": "activities_overdue",
+          "label": "最近活动",
+          "domain": []
+        },
+        {
+          "key": "activities_today",
+          "label": "今日活动",
+          "domain": []
+        },
+        {
+          "key": "activities_upcoming_all",
+          "label": "未来活动",
+          "domain": []
+        },
+        {
+          "key": "end_date",
+          "label": "结束日期",
+          "domain": []
+        },
+        {
+          "key": "filter_draft",
+          "label": "草稿",
+          "domain": [
+            [
+              "lifecycle_state",
+              "=",
+              "draft"
+            ]
+          ]
+        },
+        {
+          "key": "filter_in_progress",
+          "label": "进行中",
+          "domain": [
+            [
+              "lifecycle_state",
+              "=",
+              "in_progress"
+            ]
+          ]
+        },
+        {
+          "key": "filter_my_projects",
+          "label": "我的项目",
+          "domain": []
+        },
+        {
+          "key": "groupby_stage",
+          "label": "阶段",
+          "domain": []
+        },
+        {
+          "key": "inactive",
+          "label": "已存档",
+          "domain": [
+            [
+              "active",
+              "=",
+              false
+            ]
+          ]
+        },
+        {
+          "key": "manager",
+          "label": "项目管理员",
+          "domain": []
+        },
+        {
+          "key": "my_projects",
+          "label": "我的收藏夹",
+          "domain": []
+        },
+        {
+          "key": "own_projects",
+          "label": "我的项目",
+          "domain": []
+        },
+        {
+          "key": "start_date",
+          "label": "开始日期",
+          "domain": []
+        },
+        {
+          "key": "status",
+          "label": "状态",
+          "domain": []
+        },
+        {
+          "key": "tags",
+          "label": "标签",
+          "domain": []
+        },
+        {
+          "key": "unassigned_projects",
+          "label": "未指派",
+          "domain": [
+            [
+              "user_id",
+              "=",
+              false
+            ]
+          ]
+        }
+      ],
       "tiles": []
     },
     {
       "code": "projects.ledger",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
+      "name": "项目台账",
+      "layout": {},
       "access": {
         "visible": true,
         "allowed": true,
@@ -2900,1504 +2174,130 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 495,
-        "menu_id": 280
+        "action_id": 533,
+        "menu_id": 314,
+        "route": "/s/projects.ledger"
       },
       "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [
+        {
+          "key": "activities_overdue",
+          "label": "最近活动",
+          "domain": []
         },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg1",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
+        {
+          "key": "activities_today",
+          "label": "今日活动",
+          "domain": []
         },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg10",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
+        {
+          "key": "activities_upcoming_all",
+          "label": "未来活动",
+          "domain": []
         },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg11",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
+        {
+          "key": "end_date",
+          "label": "结束日期",
+          "domain": []
         },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg12",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
+        {
+          "key": "filter_draft",
+          "label": "草稿",
+          "domain": [
+            [
+              "lifecycle_state",
+              "=",
+              "draft"
+            ]
+          ]
         },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg13",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
+        {
+          "key": "filter_in_progress",
+          "label": "进行中",
+          "domain": [
+            [
+              "lifecycle_state",
+              "=",
+              "in_progress"
+            ]
+          ]
         },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg14",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
+        {
+          "key": "filter_my_projects",
+          "label": "我的项目",
+          "domain": []
         },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg15",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
+        {
+          "key": "groupby_stage",
+          "label": "阶段",
+          "domain": []
         },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg16",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
+        {
+          "key": "inactive",
+          "label": "已存档",
+          "domain": [
+            [
+              "active",
+              "=",
+              false
+            ]
+          ]
         },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg17",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
+        {
+          "key": "manager",
+          "label": "项目管理员",
+          "domain": []
         },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg18",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
+        {
+          "key": "my_projects",
+          "label": "我的收藏夹",
+          "domain": []
         },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg19",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
+        {
+          "key": "own_projects",
+          "label": "我的项目",
+          "domain": []
         },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg2",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
+        {
+          "key": "start_date",
+          "label": "开始日期",
+          "domain": []
         },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg20",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
+        {
+          "key": "status",
+          "label": "状态",
+          "domain": []
         },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg21",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
+        {
+          "key": "tags",
+          "label": "标签",
+          "domain": []
         },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg22",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg23",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg24",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg25",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg26",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg27",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg28",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg3",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg4",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg5",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg6",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg7",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg8",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.ledger__pkg9",
-      "name": "项目台账（试点）",
-      "layout": {
-        "kind": "ledger",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 495,
-        "menu_id": 280
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
+        {
+          "key": "unassigned_projects",
+          "label": "未指派",
+          "domain": [
+            [
+              "user_id",
+              "=",
+              false
+            ]
+          ]
+        }
+      ],
       "tiles": []
     },
     {
       "code": "projects.list",
       "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
+      "layout": {},
       "access": {
         "visible": true,
         "allowed": true,
@@ -4408,48 +2308,157 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 519,
-        "menu_id": 329
+        "action_id": 484,
+        "menu_id": 296,
+        "route": "/s/projects.list"
       },
       "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
       },
-      "default_sort": "write_date desc",
+      "default_sort": "",
+      "filters": [
+        {
+          "key": "activities_overdue",
+          "label": "最近活动",
+          "domain": []
+        },
+        {
+          "key": "activities_today",
+          "label": "今日活动",
+          "domain": []
+        },
+        {
+          "key": "activities_upcoming_all",
+          "label": "未来活动",
+          "domain": []
+        },
+        {
+          "key": "end_date",
+          "label": "结束日期",
+          "domain": []
+        },
+        {
+          "key": "filter_draft",
+          "label": "草稿",
+          "domain": [
+            [
+              "lifecycle_state",
+              "=",
+              "draft"
+            ]
+          ]
+        },
+        {
+          "key": "filter_in_progress",
+          "label": "进行中",
+          "domain": [
+            [
+              "lifecycle_state",
+              "=",
+              "in_progress"
+            ]
+          ]
+        },
+        {
+          "key": "filter_my_projects",
+          "label": "我的项目",
+          "domain": []
+        },
+        {
+          "key": "groupby_stage",
+          "label": "阶段",
+          "domain": []
+        },
+        {
+          "key": "inactive",
+          "label": "已存档",
+          "domain": [
+            [
+              "active",
+              "=",
+              false
+            ]
+          ]
+        },
+        {
+          "key": "manager",
+          "label": "项目管理员",
+          "domain": []
+        },
+        {
+          "key": "my_projects",
+          "label": "我的收藏夹",
+          "domain": []
+        },
+        {
+          "key": "own_projects",
+          "label": "我的项目",
+          "domain": []
+        },
+        {
+          "key": "start_date",
+          "label": "开始日期",
+          "domain": []
+        },
+        {
+          "key": "status",
+          "label": "状态",
+          "domain": []
+        },
+        {
+          "key": "tags",
+          "label": "标签",
+          "domain": []
+        },
+        {
+          "key": "unassigned_projects",
+          "label": "未指派",
+          "domain": [
+            [
+              "user_id",
+              "=",
+              false
+            ]
+          ]
+        }
+      ],
+      "tiles": []
+    },
+    {
+      "code": "quality.center",
+      "name": "质量管理中心",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "route": "/s/quality.center"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
       "filters": [],
       "tiles": []
     },
     {
-      "code": "projects.list__pkg1",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
+      "code": "resource.center",
+      "name": "资源调配中心",
+      "layout": {},
       "access": {
         "visible": true,
         "allowed": true,
@@ -4460,48 +2469,23 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 519,
-        "menu_id": 329
+        "route": "/s/resource.center"
       },
       "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
       },
-      "default_sort": "write_date desc",
+      "default_sort": "",
       "filters": [],
       "tiles": []
     },
     {
-      "code": "projects.list__pkg10",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
+      "code": "risk.center",
+      "name": "风险提醒工作台",
+      "layout": {},
       "access": {
         "visible": true,
         "allowed": true,
@@ -4513,1388 +2497,16 @@
       },
       "target": {
         "action_id": 519,
-        "menu_id": 329
+        "route": "/s/risk.center"
       },
       "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg11",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg12",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg13",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg14",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg15",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg16",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg17",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg18",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg19",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg2",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg20",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg21",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg22",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg23",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg24",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg25",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg26",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg27",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg28",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg3",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg4",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg5",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg6",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg7",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg8",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
-      "filters": [],
-      "tiles": []
-    },
-    {
-      "code": "projects.list__pkg9",
-      "name": "项目列表",
-      "layout": {
-        "kind": "list",
-        "sidebar": "fixed",
-        "header": "full"
-      },
-      "access": {
-        "visible": true,
-        "allowed": true,
-        "reason_code": "OK",
-        "suggested_action": "",
-        "required_capabilities": [],
-        "required_capabilities_count": 0,
-        "has_access_clause": false
-      },
-      "target": {
-        "action_id": 519,
-        "menu_id": 329
-      },
-      "list_profile": {
-        "columns": [
-          "name",
-          "partner_id",
-          "project_code",
-          "stage_id",
-          "user_id",
-          "write_date"
-        ],
-        "hidden_columns": [
-          "__last_update",
-          "display_name",
-          "is_favorite",
-          "message_needaction",
-          "message_unread"
-        ],
-        "column_labels": {
-          "name": "项目名称",
-          "partner_id": "客户",
-          "project_code": "项目编号",
-          "stage_id": "状态",
-          "user_id": "负责人",
-          "write_date": "更新时间"
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id"
-      },
-      "default_sort": "write_date desc",
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
       "filters": [],
       "tiles": []
     },
@@ -5912,7 +2524,62 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 483
+        "action_id": 519,
+        "route": "/s/risk.monitor"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "safety.center",
+      "name": "安全管理中心",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "route": "/s/safety.center"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [],
+      "tiles": []
+    },
+    {
+      "code": "task.board",
+      "name": "任务看板",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "route": "/s/task.board"
       },
       "list_profile": {
         "columns": [],
@@ -5939,7 +2606,237 @@
         "has_access_clause": false
       },
       "target": {
-        "action_id": 312
+        "action_id": 347,
+        "route": "/s/task.center"
+      },
+      "list_profile": {
+        "columns": [],
+        "hidden_columns": [],
+        "column_labels": {},
+        "row_primary": "",
+        "row_secondary": ""
+      },
+      "default_sort": "",
+      "filters": [
+        {
+          "key": "_action_domain_347",
+          "label": "All Tasks",
+          "domain": [
+            [
+              "display_in_project",
+              "=",
+              true
+            ]
+          ]
+        },
+        {
+          "key": "activities_overdue",
+          "label": "Late Activities",
+          "domain": []
+        },
+        {
+          "key": "activities_today",
+          "label": "Today Activities",
+          "domain": []
+        },
+        {
+          "key": "activities_upcoming_all",
+          "label": "Future Activities",
+          "domain": []
+        },
+        {
+          "key": "closed_on",
+          "label": "Closed On",
+          "domain": [
+            [
+              "state",
+              "in",
+              [
+                "1_done",
+                "1_canceled"
+              ]
+            ]
+          ]
+        },
+        {
+          "key": "closed_tasks",
+          "label": "Closed Tasks",
+          "domain": [
+            [
+              "state",
+              "in",
+              [
+                "1_done",
+                "1_canceled"
+              ]
+            ]
+          ]
+        },
+        {
+          "key": "create_date",
+          "label": "Creation Date",
+          "domain": []
+        },
+        {
+          "key": "customer",
+          "label": "Customer",
+          "domain": []
+        },
+        {
+          "key": "date_assign",
+          "label": "Assignement Date",
+          "domain": []
+        },
+        {
+          "key": "date_deadline",
+          "label": "Deadline",
+          "domain": []
+        },
+        {
+          "key": "date_last_stage_update",
+          "label": "Last Stage Update",
+          "domain": []
+        },
+        {
+          "key": "deadline",
+          "label": "Deadline",
+          "domain": []
+        },
+        {
+          "key": "favorite_projects",
+          "label": "Favorite Projects",
+          "domain": [
+            [
+              "project_id.is_favorite",
+              "=",
+              true
+            ]
+          ]
+        },
+        {
+          "key": "followed_by_me",
+          "label": "Followed",
+          "domain": [
+            [
+              "message_is_follower",
+              "=",
+              true
+            ]
+          ]
+        },
+        {
+          "key": "group_by_properties",
+          "label": "Properties",
+          "domain": []
+        },
+        {
+          "key": "inactive",
+          "label": "Archived",
+          "domain": [
+            [
+              "active",
+              "=",
+              false
+            ]
+          ]
+        },
+        {
+          "key": "last_stage_update",
+          "label": "Last Stage Update",
+          "domain": []
+        },
+        {
+          "key": "my_tasks",
+          "label": "My Tasks",
+          "domain": []
+        },
+        {
+          "key": "open_tasks",
+          "label": "Open Tasks",
+          "domain": [
+            [
+              "state",
+              "in",
+              [
+                "01_in_progress",
+                "02_changes_requested",
+                "03_approved",
+                "04_waiting_normal"
+              ]
+            ]
+          ]
+        },
+        {
+          "key": "private_tasks",
+          "label": "Private Tasks",
+          "domain": [
+            [
+              "project_id",
+              "=",
+              false
+            ]
+          ]
+        },
+        {
+          "key": "project",
+          "label": "Project",
+          "domain": []
+        },
+        {
+          "key": "stage",
+          "label": "Stage",
+          "domain": []
+        },
+        {
+          "key": "starred_tasks",
+          "label": "Starred Tasks",
+          "domain": [
+            [
+              "priority",
+              "=",
+              "1"
+            ]
+          ]
+        },
+        {
+          "key": "tags",
+          "label": "Tags",
+          "domain": []
+        },
+        {
+          "key": "unassigned",
+          "label": "Unassigned",
+          "domain": [
+            [
+              "user_ids",
+              "=",
+              false
+            ]
+          ]
+        },
+        {
+          "key": "user",
+          "label": "Assignees",
+          "domain": []
+        }
+      ],
+      "tiles": []
+    },
+    {
+      "code": "workspace.home",
+      "name": "工作台首页",
+      "layout": {},
+      "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "target": {
+        "route": "/my-work"
       },
       "list_profile": {
         "columns": [],

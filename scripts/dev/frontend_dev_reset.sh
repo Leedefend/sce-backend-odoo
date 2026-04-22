@@ -104,7 +104,7 @@ stop_tmux_session_if_exists
 kill_existing_port_listener "${PORT}"
 
 resolve_profile_defaults
-log "start frontend dev host=${HOST} port=${PORT} profile=${FRONTEND_PROFILE} db=${PROFILE_DB} proxy=${PROFILE_PROXY_TARGET} hmr_host=${HMR_HOST} hmr_client_port=${HMR_CLIENT_PORT} polling=${WATCH_USE_POLLING}"
+log "start frontend dev host=${HOST} port=${PORT} profile=${FRONTEND_PROFILE} db=${PROFILE_DB} proxy=${PROFILE_PROXY_TARGET} hmr_host=${HMR_HOST} hmr_client_port=${HMR_CLIENT_PORT} polling=${WATCH_USE_POLLING} interval=${WATCH_INTERVAL}"
 cd "${ROOT_DIR}"
 rm -f "${LOGFILE}"
 START_CMD="cd \"${ROOT_DIR}\" && export VITE_API_PROXY_TARGET=\"${PROFILE_PROXY_TARGET}\" VITE_ODOO_DB=\"${PROFILE_DB}\" VITE_WATCH_USE_POLLING=\"${WATCH_USE_POLLING}\" VITE_WATCH_INTERVAL=\"${WATCH_INTERVAL}\" VITE_WATCH_AWAIT_WRITE_MS=\"${WATCH_AWAIT_WRITE_MS}\" VITE_HMR_HOST=\"${HMR_HOST}\" VITE_HMR_CLIENT_PORT=\"${HMR_CLIENT_PORT}\" VITE_HMR_PROTOCOL=\"${HMR_PROTOCOL}\" CHOKIDAR_USEPOLLING=\"${WATCH_USE_POLLING}\" CHOKIDAR_INTERVAL=\"${WATCH_INTERVAL}\" && exec pnpm -C frontend/apps/web dev --host \"${HOST}\" --port \"${PORT}\" > \"${LOGFILE}\" 2>&1"

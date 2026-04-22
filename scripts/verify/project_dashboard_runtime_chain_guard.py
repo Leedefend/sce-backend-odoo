@@ -21,7 +21,7 @@ def _check_core_extension() -> None:
     required = [
         "from odoo.addons.smart_construction_core.handlers.project_dashboard import (",
         "ProjectDashboardHandler",
-        'registry["project.dashboard"] = ProjectDashboardHandler',
+        '("project.dashboard", ProjectDashboardHandler)',
     ]
     for frag in required:
         _must(frag in text, f"core_extension missing fragment: {frag}")

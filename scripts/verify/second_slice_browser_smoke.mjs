@@ -1,32 +1,8 @@
 import fs from 'node:fs';
-import { createRequire } from 'node:module';
 import path from 'node:path';
+import { bootstrapPortalBrowserAuth, launchPortalChromium, resolvePortalSmokeConfig, waitForPortalBootstrapReady } from './playwright_portal_bootstrap.mjs';
 
-const require = createRequire(import.meta.url);
-const playwrightEntry = require.resolve('playwright', { paths: [path.resolve(process.cwd(), 'frontend')] });
-const { chromium } = require(playwrightEntry);
-const LOCAL_RUNTIME_LIB_ROOT = path.resolve(process.cwd(), '.codex-runtime', 'playwright-libs');
-
-function primeLocalRuntimeLibraries() {
-  const candidateDirs = [
-    path.join(LOCAL_RUNTIME_LIB_ROOT, 'lib', 'x86_64-linux-gnu'),
-    path.join(LOCAL_RUNTIME_LIB_ROOT, 'usr', 'lib', 'x86_64-linux-gnu'),
-    path.join(LOCAL_RUNTIME_LIB_ROOT, 'usr', 'lib'),
-    path.join(LOCAL_RUNTIME_LIB_ROOT, 'lib'),
-  ].filter((dir) => fs.existsSync(dir));
-  if (!candidateDirs.length) return;
-  const existing = String(process.env.LD_LIBRARY_PATH || '').trim();
-  const segments = existing ? existing.split(':').filter(Boolean) : [];
-  process.env.LD_LIBRARY_PATH = [...candidateDirs, ...segments].join(':');
-}
-
-primeLocalRuntimeLibraries();
-
-const BASE_URL = String(process.env.BASE_URL || 'http://127.0.0.1').replace(/\/+$/, '');
-const DB_NAME = String(process.env.DB_NAME || 'sc_prod_sim').trim();
-const LOGIN = String(process.env.E2E_LOGIN || 'svc_e2e_smoke').trim();
-const PASSWORD = String(process.env.E2E_PASSWORD || 'demo').trim();
-const ARTIFACTS_DIR = String(process.env.ARTIFACTS_DIR || 'artifacts').trim() || 'artifacts';
+const { baseUrl: BASE_URL, apiBaseUrl: API_BASE_URL, dbName: DB_NAME, login: LOGIN, password: PASSWORD, artifactsDir: ARTIFACTS_DIR } = resolvePortalSmokeConfig();
 const ts = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
 const outDir = path.join(ARTIFACTS_DIR, 'codex', 'second-slice-browser-smoke', ts);
 
@@ -51,17 +27,6 @@ function writeJson(fileName, payload) {
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
-}
-
-async function fillLoginForm(page) {
-  await page.locator('input[autocomplete="username"]').fill(LOGIN);
-  await page.locator('input[autocomplete="current-password"]').fill(PASSWORD);
-  await page.locator('input[placeholder*="数据库"]').fill(DB_NAME);
-}
-
-async function submitLogin(page) {
-  await page.locator('button.submit').click();
-  await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 20000, waitUntil: 'commit' });
 }
 
 async function fillPrimaryName(page, value) {
@@ -132,7 +97,7 @@ async function snapshot(page) {
 let browser;
 let page;
 try {
-  browser = await chromium.launch({ headless: true, timeout: 20000 });
+  browser = await launchPortalChromium();
   page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
 
   page.on('console', (msg) => {
@@ -143,10 +108,14 @@ try {
   });
 
   log('login');
-  await page.goto(`${BASE_URL}/login?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: 'networkidle' });
-  await fillLoginForm(page);
-  await submitLogin(page);
-  await page.waitForLoadState('networkidle');
+  await bootstrapPortalBrowserAuth(page, {
+    apiBaseUrl: API_BASE_URL || BASE_URL,
+    dbName: DB_NAME,
+    login: LOGIN,
+    password: PASSWORD,
+  });
+  await page.goto(`${BASE_URL}/?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: 'domcontentloaded' });
+  await waitForPortalBootstrapReady(page);
 
   log('open quick create');
   await page.goto(`${BASE_URL}/f/project.project/new?scene_key=projects.intake&intake_mode=quick`, { waitUntil: 'networkidle' });

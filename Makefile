@@ -121,9 +121,9 @@ endif
 MODULE       ?= smart_construction_core
 WITHOUT_DEMO ?= --without-demo=all
 ODOO_ARGS    ?=
-E2E_LOGIN    ?=
-E2E_PASSWORD ?=
-PORTAL_SMOKE_LOGIN ?= svc_e2e_smoke
+E2E_LOGIN    ?= wutao
+E2E_PASSWORD ?= demo
+PORTAL_SMOKE_LOGIN ?= wutao
 PORTAL_SMOKE_PASSWORD ?= demo
 MVP_MENU_XMLID ?= scene.contract.projects_list
 ROOT_XMLID   ?= smart_construction_core.menu_sc_root
@@ -593,6 +593,7 @@ db.reset.manual: guard.prod.forbid check-compose-env
 .PHONY: verify.portal.scene_package_dry_run_smoke.container verify.portal.scene_package_import_smoke.container verify.portal.scene_package_ui_smoke.container
 .PHONY: verify.portal.scene_package_installed_smoke.container
 .PHONY: verify.portal.ui.v0_8.semantic.strict.container
+.PHONY: verify.scene.governance.release_gate
 .PHONY: verify.platform_baseline verify.business_baseline verify.baseline.all gate.platform_baseline gate.business_baseline gate.baseline.all
 verify.baseline: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
@@ -625,37 +626,37 @@ verify.portal.fe_smoke.host: guard.prod.forbid check-compose-project check-compo
 		bash scripts/diag/fe_smoke.sh
 verify.portal.login_browser_smoke.host: guard.prod.forbid check-compose-project check-compose-env
 	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
-	@$(RUN_ENV) BASE_URL=$(BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
+	@$(RUN_ENV) BASE_URL=$(BASE_URL) API_BASE_URL=$(API_BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
 		node scripts/verify/fe_login_browser_smoke.mjs
 .PHONY: verify.portal.first_release_slice_browser_smoke.host
 verify.portal.first_release_slice_browser_smoke.host: guard.prod.forbid check-compose-project check-compose-env
 	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
-	@$(RUN_ENV) BASE_URL=$(BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
+	@$(RUN_ENV) BASE_URL=$(BASE_URL) API_BASE_URL=$(API_BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
 		node scripts/verify/first_release_slice_browser_smoke.mjs
 .PHONY: verify.portal.second_slice_browser_smoke.host
 verify.portal.second_slice_browser_smoke.host: guard.prod.forbid check-compose-project check-compose-env
 	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
-	@$(RUN_ENV) BASE_URL=$(BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
+	@$(RUN_ENV) BASE_URL=$(BASE_URL) API_BASE_URL=$(API_BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
 		node scripts/verify/second_slice_browser_smoke.mjs
 .PHONY: verify.portal.cost_slice_browser_smoke.host
 verify.portal.cost_slice_browser_smoke.host: guard.prod.forbid check-compose-project check-compose-env
 	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
-	@$(RUN_ENV) BASE_URL=$(BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
+	@$(RUN_ENV) BASE_URL=$(BASE_URL) API_BASE_URL=$(API_BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
 		node scripts/verify/cost_slice_browser_smoke.mjs
 .PHONY: verify.portal.payment_slice_browser_smoke.host
 verify.portal.payment_slice_browser_smoke.host: guard.prod.forbid check-compose-project check-compose-env
 	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
-	@$(RUN_ENV) BASE_URL=$(BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
+	@$(RUN_ENV) BASE_URL=$(BASE_URL) API_BASE_URL=$(API_BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
 		node scripts/verify/payment_slice_browser_smoke.mjs
 .PHONY: verify.portal.settlement_slice_browser_smoke.host
 verify.portal.settlement_slice_browser_smoke.host: guard.prod.forbid check-compose-project check-compose-env
 	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
-	@$(RUN_ENV) BASE_URL=$(BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
+	@$(RUN_ENV) BASE_URL=$(BASE_URL) API_BASE_URL=$(API_BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
 		node scripts/verify/settlement_slice_browser_smoke.mjs
 .PHONY: verify.portal.release_navigation_browser_smoke.host
 verify.portal.release_navigation_browser_smoke.host: guard.prod.forbid check-compose-project check-compose-env
 	@bash scripts/verify/bootstrap_playwright_host_runtime.sh
-	@$(RUN_ENV) BASE_URL=$(BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
+	@$(RUN_ENV) BASE_URL=$(BASE_URL) API_BASE_URL=$(API_BASE_URL) ARTIFACTS_DIR=$(ARTIFACTS_DIR) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
 		node scripts/verify/release_navigation_browser_smoke.mjs
 .PHONY: verify.portal.unified_system_menu_click_usability_smoke.host
 verify.portal.unified_system_menu_click_usability_smoke.host: guard.prod.forbid check-compose-project check-compose-env
@@ -684,7 +685,7 @@ verify.portal.login_browser_smoke.prod_sim: guard.prod.forbid
 verify.portal.fe_smoke.container: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) AUTH_TOKEN=$(AUTH_TOKEN) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) bash /mnt/scripts/diag/fe_smoke.sh"
 verify.portal.view_state: guard.prod.forbid check-compose-project check-compose-env
-	@# RC smoke user: demo_pm/demo. svc_* accounts are service-only and may 401 in UI smokes.
+	@# RC smoke baseline: admin/admin on current dev runtime. svc_* and legacy demo_* accounts may drift across seeded environments.
 	@$(RUN_ENV) node scripts/verify/fe_view_state_smoke.js
 verify.portal.guard_groups: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) node scripts/verify/fe_guard_groups_smoke.js
@@ -1829,6 +1830,7 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 	@$(MAKE) --no-print-directory verify.contract.preflight
 	@$(MAKE) --no-print-directory verify.frontend.home_suggestion_semantics.guard
 	@$(MAKE) --no-print-directory verify.frontend.page_contract_boundary.guard
+	@$(MAKE) --no-print-directory verify.scene.governance.release_gate
 	@KEEP_TEST_CONTAINER=1 $(MAKE) test TEST_TAGS=sc_gate BD=$(DB_NAME)
 	@$(MAKE) verify.demo BD=$(DB_NAME)
 	@$(MAKE) --no-print-directory gate.scene.r3.runtime.strict
@@ -3739,6 +3741,10 @@ verify.scene.drift.smoke.report: guard.prod.forbid
 .PHONY: verify.scene.governance.smoke
 verify.scene.governance.smoke: guard.prod.forbid
 	@python3 scripts/verify/scene_governance_smoke.py
+
+verify.scene.governance.release_gate: guard.prod.forbid
+	@python3 scripts/verify/scene_governance_suite.py
+	@echo "[OK] verify.scene.governance.release_gate done"
 
 .PHONY: verify.intent.write.smoke
 verify.intent.write.smoke: guard.prod.forbid
