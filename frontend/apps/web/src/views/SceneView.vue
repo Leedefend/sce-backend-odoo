@@ -1,31 +1,37 @@
 <template>
-  <section class="scene">
-    <section v-if="headerActions.length" class="scene-actions">
-      <button
-        v-for="action in headerActions"
-        :key="`scene-header-${action.key}`"
-        class="ghost"
-        :disabled="status === 'loading' || action.disabled"
-        :title="action.disabledReason || ''"
-        @click="executeHeaderAction(action.key)"
-      >
-        {{ action.label || action.key }}
-      </button>
-    </section>
-    <section v-if="sceneViewSwitchOptions.length > 1" class="scene-view-switch">
-      <p class="scene-view-switch__label">{{ pageText('scene_view_switch_label', '视图切换') }}</p>
-      <div class="scene-view-switch__chips">
+  <section class="scene" :class="{ 'scene--compact-controls': compactSceneControls }">
+    <section
+      v-if="headerActions.length || sceneViewSwitchOptions.length > 1"
+      class="scene-top-controls"
+      :class="{ 'scene-top-controls--compact': compactSceneControls }"
+    >
+      <section v-if="headerActions.length" class="scene-actions" :class="{ 'scene-actions--compact': compactSceneControls }">
         <button
-          v-for="item in sceneViewSwitchOptions"
-          :key="`scene-view-switch-${item.key}`"
-          class="scene-view-switch__chip"
-          :class="{ active: item.active }"
-          :disabled="item.active || status === 'loading'"
-          @click="openSiblingScene(item.key)"
+          v-for="action in headerActions"
+          :key="`scene-header-${action.key}`"
+          class="ghost"
+          :disabled="status === 'loading' || action.disabled"
+          :title="action.disabledReason || ''"
+          @click="executeHeaderAction(action.key)"
         >
-          {{ item.label }}
+          {{ action.label || action.key }}
         </button>
-      </div>
+      </section>
+      <section v-if="sceneViewSwitchOptions.length > 1" class="scene-view-switch" :class="{ 'scene-view-switch--compact': compactSceneControls }">
+        <p v-if="!compactSceneControls" class="scene-view-switch__label">{{ pageText('scene_view_switch_label', '视图切换') }}</p>
+        <div class="scene-view-switch__chips">
+          <button
+            v-for="item in sceneViewSwitchOptions"
+            :key="`scene-view-switch-${item.key}`"
+            class="scene-view-switch__chip"
+            :class="{ active: item.active }"
+            :disabled="item.active || status === 'loading'"
+            @click="openSiblingScene(item.key)"
+          >
+            {{ item.label }}
+          </button>
+        </div>
+      </section>
     </section>
     <StatusPanel
       v-if="pageSectionEnabled('status_loading', true) && pageSectionTagIs('status_loading', 'section') && status === 'loading'"
@@ -58,25 +64,48 @@
       :style="pageSectionStyle('status_forbidden')"
     />
     <StatusPanel
-      v-else-if="status === 'idle' && embeddedRecordActionId <= 0 && embeddedActionId <= 0"
+      v-else-if="status === 'idle' && !shouldRenderDashboardSurface && !productDeliverySurface.visible && embeddedRecordActionId <= 0 && embeddedActionId <= 0"
       :title="pageText('status_idle_diag_title', '场景已加载，但没有可渲染目标')"
       :message="idleDiagnosticMessage"
       variant="info"
     />
+    <ProjectManagementDashboardView v-if="status === 'idle' && shouldRenderDashboardSurface" />
     <StatusPanel
-      v-if="status === 'idle' && validationHint"
+      v-if="status === 'idle' && !shouldRenderDashboardSurface && validationHint"
       :title="pageText('validation_surface_title', '表单约束提示')"
       :message="validationHint"
       variant="info"
     />
+    <section
+      v-if="status === 'idle' && !shouldRenderDashboardSurface && productDeliverySurface.visible"
+      class="scene-delivery"
+      :class="{ 'scene-delivery--advisory': productDeliverySurface.advisoryOnly }"
+    >
+      <div class="scene-delivery__copy">
+        <p class="scene-delivery__eyebrow">
+          {{ productDeliverySurface.advisoryOnly ? pageText('scene_delivery_eyebrow_advisory', '交付提示') : pageText('scene_delivery_eyebrow_direct', '交付入口') }}
+        </p>
+        <h3 class="scene-delivery__title">{{ productDeliverySurface.title }}</h3>
+        <p class="scene-delivery__message">{{ productDeliverySurface.message }}</p>
+      </div>
+      <button
+        v-if="productDeliverySurface.actionLabel"
+        class="ghost scene-delivery__cta"
+        type="button"
+        :disabled="productDeliverySurface.actionDisabled || status === 'loading'"
+        @click="openProductDeliveryTarget()"
+      >
+        {{ productDeliverySurface.actionLabel }}
+      </button>
+    </section>
     <StatusPanel
-      v-if="status === 'idle' && runtimeDiagnosticMessage"
+      v-if="status === 'idle' && !shouldRenderDashboardSurface && runtimeDiagnosticMessage"
       :title="runtimeDiagnosticTitle"
       :message="runtimeDiagnosticMessage"
       variant="info"
     />
-    <ContractFormPage v-if="status === 'idle' && embeddedRecordActionId > 0" />
-    <ActionView v-else-if="status === 'idle' && embeddedActionId > 0" />
+    <ContractFormPage v-if="status === 'idle' && !shouldRenderDashboardSurface && embeddedRecordActionId > 0" />
+    <ActionView v-else-if="status === 'idle' && !shouldRenderDashboardSurface && embeddedActionId > 0" />
   </section>
 </template>
 
@@ -84,6 +113,7 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
 import ActionView from './ActionViewShell.vue';
+import ProjectManagementDashboardView from './ProjectManagementDashboardView.vue';
 import ContractFormPage from '../pages/ContractFormPage.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import { getSceneByKey, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
@@ -115,7 +145,9 @@ const pageConsumerRuntime = pageContract.consumerRuntime;
 const pageConsumerRuntimeStatus = pageContract.consumerRuntimeStatus;
 const pageConsumerRuntimeBridgeAligned = pageContract.consumerRuntimeBridgeAligned;
 const headerActions = computed(() => pageGlobalActions.value);
+const currentSceneKey = computed(() => String(route.params.sceneKey || route.meta?.sceneKey || '').trim());
 const findActionNodeByModelRef = findActionNodeByModel;
+const scene = ref<Scene | null>(null);
 const status = ref<'loading' | 'error' | 'forbidden' | 'idle'>('loading');
 const { error, clearError, setError } = useStatus();
 const errorCopy = ref(resolveErrorCopy(null, pageText('error_fallback', '场景加载失败')));
@@ -127,32 +159,32 @@ const forbiddenCopy = ref({
 const validationHint = ref('');
 const embeddedActionId = ref(0);
 const embeddedRecordActionId = ref(0);
-const PROJECT_SCENE_SWITCH_MAP: Record<string, Array<{ key: string; label: string }>> = {
-  'projects.list': [
-    { key: 'projects.list', label: '列表' },
-    { key: 'projects.ledger', label: '看板' },
-  ],
-  'projects.ledger': [
-    { key: 'projects.list', label: '列表' },
-    { key: 'projects.ledger', label: '看板' },
-  ],
-};
+const compactSceneControls = computed(() => currentSceneKey.value === 'projects.list');
+const shouldRenderDashboardSurface = computed(() => {
+  const page = scene.value?.page;
+  const pageType = String(page?.page_type || '').trim().toLowerCase();
+  const layoutMode = String(page?.layout_mode || '').trim().toLowerCase();
+  return (
+    status.value === 'idle'
+    && embeddedRecordActionId.value <= 0
+    && embeddedActionId.value <= 0
+    && (pageType === 'dashboard' || layoutMode === 'dashboard')
+  );
+});
 
 const idleDiagnosticMessage = computed(() => {
   const sceneKey = String(route.meta?.sceneKey || route.params.sceneKey || '').trim();
   const hint = pageText(
     'status_idle_diag_hint',
-    '请检查 scene registry target/action 映射，或确认该场景是否已切换到 scene-ready 渲染路径。',
+    '当前场景暂无可展示内容。',
   );
-  return `${pageText('status_idle_diag_scene_prefix', '场景')}：${sceneKey || '-'}；${hint}`;
+  return `${pageText('status_idle_diag_scene_prefix', 'scene')}：${sceneKey || '-'}；${hint}`;
 });
 
 const runtimeDiagnosticTitle = computed(() => {
   const statusKey = String(pageConsumerRuntimeStatus() || '').trim();
-  if (statusKey === 'readonly') return pageText('runtime_diag_title_readonly', '场景当前为只读状态');
-  if (statusKey === 'empty') return pageText('runtime_diag_title_empty', '场景当前为空态');
-  if (statusKey === 'restricted') return pageText('runtime_diag_title_restricted', '场景访问受限');
-  return pageText('runtime_diag_title_default', '场景运行态提示');
+  if (!statusKey) return pageText('runtime_diag_title_default', '场景运行状态');
+  return pageText(`runtime_diag_title_${statusKey.toLowerCase()}`, statusKey);
 });
 
 const runtimeDiagnosticMessage = computed(() => {
@@ -165,26 +197,62 @@ const runtimeDiagnosticMessage = computed(() => {
   const parts: string[] = [];
 
   if (statusKey && statusKey !== 'ready') {
-    parts.push(`${pageText('runtime_diag_status_prefix', '运行态状态')}：${statusKey}`);
+    parts.push(`${pageText('runtime_diag_status_prefix', 'runtime_status')}：${statusKey}`);
   }
   if (currentState) {
-    parts.push(`${pageText('runtime_diag_state_prefix', '当前记录状态')}：${currentState}`);
+    parts.push(`${pageText('runtime_diag_state_prefix', 'record_state')}：${currentState}`);
   }
   if (missingRequiredCount > 0) {
-    parts.push(`${pageText('runtime_diag_missing_required_prefix', '缺失必填项')}：${missingRequiredCount}`);
+    parts.push(`${pageText('runtime_diag_missing_required_prefix', 'missing_required')}：${missingRequiredCount}`);
   }
   if (activeTransitionCount > 0) {
-    parts.push(`${pageText('runtime_diag_transition_prefix', '可用流转数')}：${activeTransitionCount}`);
+    parts.push(`${pageText('runtime_diag_transition_prefix', 'active_transitions')}：${activeTransitionCount}`);
   }
   if (!bridgeAligned) {
-    parts.push(pageText('runtime_diag_alignment_mismatch', '前端消费状态与桥接断言存在未对齐项，请优先检查 contract diagnostics。'));
+    parts.push(pageText('runtime_diag_alignment_mismatch', '当前场景语义尚未完全对齐。'));
   }
 
   return parts.join('；');
 });
 
+const sceneResolveSignature = computed(() => JSON.stringify({
+  path: route.path,
+  sceneKey: String(route.params.sceneKey || route.meta?.sceneKey || '').trim(),
+  actionId: Number(route.query.action_id || 0) || 0,
+  menuId: Number(route.query.menu_id || 0) || 0,
+  model: String(route.query.model || '').trim(),
+  recordId: String(route.query.record_id || '').trim(),
+  sceneQueryKey: String(route.query.scene_key || '').trim(),
+  releaseProduct: String(route.query.release_product || '').trim(),
+  preset: String(route.query.preset || '').trim(),
+  ctxSource: String(route.query.ctx_source || '').trim(),
+  search: String(route.query.search || '').trim(),
+  projectId: String(route.query.project_id || '').trim(),
+  entryContext: String(route.query.entry_context || '').trim(),
+}));
+
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
+}
+
+function resolveTargetRecordEntry(target: SceneTarget) {
+  const entryTarget = (target.entry_target && typeof target.entry_target === 'object')
+    ? target.entry_target
+    : undefined;
+  const recordEntry = (entryTarget?.record_entry && typeof entryTarget.record_entry === 'object')
+    ? entryTarget.record_entry
+    : undefined;
+  const model = String(recordEntry?.model || target.model || route.query.model || '').trim();
+  const rawRecordId = recordEntry?.record_id ?? target.record_id ?? route.query.record_id;
+  const recordId = resolveRecordId(rawRecordId);
+  const actionId = Number(recordEntry?.action_id || target.action_id || route.query.action_id || 0);
+  const menuId = Number(recordEntry?.menu_id || target.menu_id || route.query.menu_id || 0);
+  return {
+    model,
+    recordId,
+    actionId: Number.isFinite(actionId) && actionId > 0 ? actionId : 0,
+    menuId: Number.isFinite(menuId) && menuId > 0 ? menuId : 0,
+  };
 }
 
 function resolveSceneSwitchQuery(scene: Scene) {
@@ -212,28 +280,106 @@ function resolveSceneSwitchFallbackQuery() {
   return next;
 }
 
+
 const sceneViewSwitchOptions = computed(() => {
-  const currentSceneKey = String(route.params.sceneKey || route.meta?.sceneKey || '').trim();
-  const group = PROJECT_SCENE_SWITCH_MAP[currentSceneKey] || [];
-  if (!group.length) return [];
-  return group
+  const currentScene = scene.value;
+  const switchSurface = (currentScene?.scene_ready?.switch_surface || {}) as Record<string, unknown>;
+  const items = Array.isArray(switchSurface.items)
+    ? switchSurface.items as Array<Record<string, unknown>>
+    : [];
+  if (!items.length) return [];
+  return items
     .map((item) => {
-      const scene = getSceneByKey(item.key);
+      const key = String(item.key || '').trim();
+      if (!key) return null;
+      const scene = getSceneByKey(key);
+      const route = String(item.route || scene?.route || `/s/${key}`).trim();
       return {
-        key: item.key,
-        label: item.label,
-        route: scene?.route || `/s/${item.key}`,
-        active: item.key === currentSceneKey,
+        key,
+        label: String(item.label || scene?.label || key).trim(),
+        route,
+        active: Boolean(item.active),
         menuId: Number(scene?.target?.menu_id || 0) || undefined,
       };
     })
+    .filter((item): item is { key: string; label: string; route: string; active: boolean; menuId?: number } => Boolean(item))
     .filter((item) => Boolean(item.key && item.route));
 });
+
+const productDeliverySurface = computed(() => {
+  const currentScene = scene.value;
+  const surface = (currentScene?.scene_ready?.product_delivery_surface || {}) as Record<string, unknown>;
+  const deliveryMode = String(surface.delivery_mode || '').trim();
+  if (!deliveryMode) {
+    return {
+      visible: false,
+      advisoryOnly: false,
+      title: '',
+      message: '',
+      actionLabel: '',
+      actionDisabled: true,
+      finalScene: '',
+    };
+  }
+
+  const entryAction = (surface.entry_action && typeof surface.entry_action === 'object')
+    ? surface.entry_action as Record<string, unknown>
+    : {};
+  const finalScene = String(surface.final_scene || '').trim();
+  const advisoryOnly = deliveryMode === 'advisory_only';
+  const actionLabel = String(entryAction.label || '').trim();
+  const title = advisoryOnly
+    ? pageText('scene_delivery_title_advisory', '当前场景提供下一步建议')
+    : pageText('scene_delivery_title_direct', '当前场景已准备好交付入口');
+  const message = advisoryOnly
+    ? pageText('scene_delivery_message_advisory', '当前阶段保持 advisory-only，由后端语义决定下一步提示，不在前端扩展深链行为。')
+    : pageText('scene_delivery_message_direct', '当前阶段使用后端提供的交付语义，统一呈现 direct delivery 入口，不在前端推导业务规则。');
+
+  return {
+    visible: true,
+    advisoryOnly,
+    title,
+    message,
+    actionLabel,
+    actionDisabled: !finalScene || finalScene === currentSceneKey.value,
+    finalScene,
+  };
+});
+
+function hasConsumableDeliveryRoot(scene: Scene | null) {
+  const currentScene = scene || null;
+  if (!currentScene) {
+    return false;
+  }
+  const runtimeHandoff = (currentScene.runtime_handoff_surface && typeof currentScene.runtime_handoff_surface === 'object')
+    ? currentScene.runtime_handoff_surface as Record<string, unknown>
+    : {};
+  const productDelivery = (currentScene.scene_ready?.product_delivery_surface && typeof currentScene.scene_ready.product_delivery_surface === 'object')
+    ? currentScene.scene_ready.product_delivery_surface as Record<string, unknown>
+    : {};
+  return Boolean(
+    String(runtimeHandoff.final_scene || '').trim()
+    || String(productDelivery.final_scene || '').trim()
+    || String(productDelivery.delivery_mode || '').trim(),
+  );
+}
 
 function openSiblingScene(sceneKey: string) {
   const target = getSceneByKey(sceneKey);
   router.replace({
     path: target?.route || `/s/${sceneKey}`,
+    query: (target ? resolveSceneSwitchQuery(target) : resolveSceneSwitchFallbackQuery()) as LocationQueryRaw,
+  }).catch(() => {});
+}
+
+function openProductDeliveryTarget() {
+  const targetSceneKey = productDeliverySurface.value.finalScene;
+  if (!targetSceneKey || targetSceneKey === currentSceneKey.value) {
+    return;
+  }
+  const target = getSceneByKey(targetSceneKey);
+  router.replace({
+    path: target?.route || `/s/${targetSceneKey}`,
     query: (target ? resolveSceneSwitchQuery(target) : resolveSceneSwitchFallbackQuery()) as LocationQueryRaw,
   }).catch(() => {});
 }
@@ -418,22 +564,64 @@ function isSameRouteTarget(targetRoute: string, query: Record<string, unknown>) 
   return targetQuery.toString() === currentQuery.toString();
 }
 
+function resolveRoutePathOnly(targetRoute: string) {
+  const raw = String(targetRoute || '').trim();
+  if (!raw) return '';
+  return raw.split('?', 2)[0] || '';
+}
+
+function resolveCanonicalSceneOwnerQuery(sceneKey: string, workspaceContextQuery: Record<string, unknown>) {
+  return {
+    scene_key: sceneKey || undefined,
+    ...workspaceContextQuery,
+  };
+}
+
+function isCanonicalSceneOwnerTarget(target: SceneTarget, sceneKey: string) {
+  const normalizedSceneKey = String(sceneKey || '').trim();
+  if (!normalizedSceneKey) {
+    return false;
+  }
+  const targetPath = resolveRoutePathOnly(String(target.route || ''));
+  if (targetPath !== `/s/${normalizedSceneKey}`) {
+    return false;
+  }
+  if (Number(target.action_id || 0) > 0) {
+    return false;
+  }
+  if (Number(target.record_id || 0) > 0) {
+    return false;
+  }
+  if (String(target.model || '').trim()) {
+    return false;
+  }
+  const entryTarget = (target.entry_target && typeof target.entry_target === 'object')
+    ? target.entry_target as Record<string, unknown>
+    : {};
+  const recordEntry = (entryTarget.record_entry && typeof entryTarget.record_entry === 'object')
+    ? entryTarget.record_entry as Record<string, unknown>
+    : {};
+  return Number(recordEntry.action_id || 0) <= 0 && Number(recordEntry.record_id || 0) <= 0;
+}
+
 async function resolveScene() {
   try {
     status.value = 'loading';
     clearError();
+    scene.value = null;
     embeddedActionId.value = 0;
     embeddedRecordActionId.value = 0;
     validationHint.value = '';
     const sceneKey = String(route.meta?.sceneKey || route.params.sceneKey || '');
-    const scene = getSceneByKey(sceneKey);
-    if (!scene) {
+    const resolvedScene = getSceneByKey(sceneKey);
+    if (!resolvedScene) {
       goWorkbench(ErrorCodes.CONTRACT_CONTEXT_MISSING);
       return;
     }
+    scene.value = resolvedScene;
 
-    const validationSurface = (scene.validation_surface && typeof scene.validation_surface === 'object')
-      ? scene.validation_surface as Record<string, unknown>
+    const validationSurface = (resolvedScene.validation_surface && typeof resolvedScene.validation_surface === 'object')
+      ? resolvedScene.validation_surface as Record<string, unknown>
       : {};
     const requiredFields = Array.isArray(validationSurface.required_fields)
       ? validationSurface.required_fields.map((item) => String(item || '').trim()).filter(Boolean)
@@ -442,7 +630,7 @@ async function resolveScene() {
       validationHint.value = `必填字段：${requiredFields.slice(0, 5).join('、')}${requiredFields.length > 5 ? ' 等' : ''}`;
     }
 
-    const policy = evaluateCapabilityPolicy({ required: scene.capabilities || [], available: session.capabilities });
+    const policy = evaluateCapabilityPolicy({ required: resolvedScene.capabilities || [], available: session.capabilities });
     if (policy.state !== 'enabled') {
       const missing = Array.isArray(policy.missing) ? policy.missing : [];
       const details = missing
@@ -472,13 +660,23 @@ async function resolveScene() {
     }
     void trackSceneOpen(sceneKey).catch(() => {});
 
-    const target = scene.target || {};
-    const sceneLabel = String(scene.label || sceneKey || '').trim();
-    const layout = resolveSceneLayout(scene);
+    const target = resolvedScene.target || {};
+    const sceneLabel = String(resolvedScene.label || sceneKey || '').trim();
+    const layout = resolveSceneLayout(resolvedScene);
     const workspaceContextQuery = sanitizeWorkspaceContextForLayout(
       layout.kind,
       resolveWorkspaceContextQuery() as Record<string, unknown>,
     );
+    const canonicalOwnerQuery = resolveCanonicalSceneOwnerQuery(sceneKey, workspaceContextQuery);
+    const hasForeignSceneQuery = Boolean(
+      route.query.menu_id
+      || route.query.action_id
+      || route.query.scene_label
+    );
+    if (hasForeignSceneQuery && isCanonicalSceneOwnerTarget(target, sceneKey)) {
+      await router.replace({ path: route.path, query: canonicalOwnerQuery as LocationQueryRaw });
+      return;
+    }
     if (layout.kind === 'workspace') {
       if (typeof target.route === 'string' && target.route.trim()) {
         const normalizedRoute = normalizeLegacyWorkbenchPath(target.route);
@@ -487,34 +685,69 @@ async function resolveScene() {
           goUnifiedHome();
           return;
         }
-        if (normalizedRoute !== route.fullPath) {
+        const normalizedPathOnly = resolveRoutePathOnly(normalizedRoute);
+        if (normalizedPathOnly && normalizedPathOnly !== route.path) {
           await router.replace({ path: normalizedRoute, query: workspaceContextQuery as LocationQueryRaw });
           return;
         }
         // Keep evaluating action/menu/model targets for self-routed scene entries
         // such as /s/project.management?project_id=<id>.
       }
+      const page = resolvedScene.page;
+      const pageType = String(page?.page_type || '').trim().toLowerCase();
+      const layoutMode = String(page?.layout_mode || '').trim().toLowerCase();
+      if (pageType === 'dashboard' || layoutMode === 'dashboard') {
+        status.value = 'idle';
+        return;
+      }
       // Workspace scene may still provide action/menu/model targets.
       const resolvedAction = resolveVisibleActionTarget(target, sceneKey);
       if (resolvedAction) {
-        await router.replace({
-          path: `/a/${resolvedAction.actionId}`,
-          query: {
-            menu_id: resolvedAction.menuId,
-            scene_key: sceneKey || undefined,
-            scene_label: sceneLabel || undefined,
-            ...workspaceContextQuery,
-          },
-        });
+        const nextQuery = {
+          menu_id: resolvedAction.menuId,
+          action_id: resolvedAction.actionId,
+          scene_key: sceneKey || undefined,
+          scene_label: sceneLabel || undefined,
+          ...workspaceContextQuery,
+        };
+        const currentActionId = Number(route.query.action_id || 0);
+        const currentMenuId = Number(route.query.menu_id || 0);
+        const sameEmbeddedRouteState =
+          currentActionId === resolvedAction.actionId
+          && currentMenuId === Number(resolvedAction.menuId || 0)
+          && String(route.query.scene_key || '') === sceneKey;
+        if (!sameEmbeddedRouteState) {
+          await router.replace({ path: route.path, query: nextQuery as LocationQueryRaw });
+          return;
+        }
+        embeddedActionId.value = resolvedAction.actionId;
+        status.value = 'idle';
         return;
       }
-      if (target.model && target.record_id) {
-        const recordId = resolveRecordId(target.record_id);
-        if (recordId) {
-          await router.replace({
-            path: `/r/${target.model}/${recordId}`,
-            query: { menu_id: target.menu_id || undefined, action_id: target.action_id || undefined, ...workspaceContextQuery },
-          });
+      {
+        const recordEntry = resolveTargetRecordEntry(target);
+        if (recordEntry.model && recordEntry.recordId && recordEntry.actionId > 0) {
+          const nextQuery = {
+            menu_id: recordEntry.menuId || undefined,
+            action_id: recordEntry.actionId,
+            scene_key: sceneKey || undefined,
+            scene_label: sceneLabel || undefined,
+            model: recordEntry.model || undefined,
+            record_id: recordEntry.recordId,
+            ...workspaceContextQuery,
+          };
+          const sameEmbeddedRouteState =
+            Number(route.query.action_id || 0) === recordEntry.actionId
+            && Number(route.query.menu_id || 0) === Number(recordEntry.menuId || 0)
+            && Number(route.query.record_id || 0) === recordEntry.recordId
+            && String(route.query.model || '').trim() === String(recordEntry.model || '').trim()
+            && String(route.query.scene_key || '') === sceneKey;
+          if (!sameEmbeddedRouteState) {
+            await router.replace({ path: route.path, query: nextQuery as LocationQueryRaw });
+            return;
+          }
+          embeddedRecordActionId.value = recordEntry.actionId;
+          status.value = 'idle';
           return;
         }
       }
@@ -544,17 +777,30 @@ async function resolveScene() {
         status.value = 'idle';
         return;
       }
-      if (target.model) {
-        const recordId = resolveRecordId(target.record_id ?? route.params.id);
-        if (recordId) {
-          await router.replace({
-            path: `/r/${target.model}/${recordId}`,
-            query: {
-              menu_id: target.menu_id || undefined,
-              action_id: target.action_id || undefined,
-              ...workspaceContextQuery,
-            },
-          });
+      {
+        const recordEntry = resolveTargetRecordEntry(target);
+        if (recordEntry.model && recordEntry.recordId && recordEntry.actionId > 0) {
+          const nextQuery = {
+            menu_id: recordEntry.menuId || undefined,
+            action_id: recordEntry.actionId,
+            scene_key: sceneKey || undefined,
+            scene_label: sceneLabel || undefined,
+            model: recordEntry.model,
+            record_id: recordEntry.recordId,
+            ...workspaceContextQuery,
+          };
+          const sameEmbeddedRouteState =
+            Number(route.query.action_id || 0) === recordEntry.actionId
+            && Number(route.query.menu_id || 0) === Number(recordEntry.menuId || 0)
+            && Number(route.query.record_id || 0) === recordEntry.recordId
+            && String(route.query.model || '').trim() === recordEntry.model
+            && String(route.query.scene_key || '') === sceneKey;
+          if (!sameEmbeddedRouteState) {
+            await router.replace({ path: route.path, query: nextQuery as LocationQueryRaw });
+            return;
+          }
+          embeddedRecordActionId.value = recordEntry.actionId;
+          status.value = 'idle';
           return;
         }
       }
@@ -569,15 +815,23 @@ async function resolveScene() {
         }
       }
       if (target.action_id && !session.menuTree.length) {
-        await router.replace({
-          path: `/a/${target.action_id}`,
-          query: {
-            menu_id: target.menu_id || undefined,
-            scene_key: sceneKey || undefined,
-            scene_label: sceneLabel || undefined,
-            ...workspaceContextQuery,
-          },
-        });
+        const nextQuery = {
+          menu_id: target.menu_id || undefined,
+          action_id: target.action_id,
+          scene_key: sceneKey || undefined,
+          scene_label: sceneLabel || undefined,
+          ...workspaceContextQuery,
+        };
+        const sameEmbeddedRouteState =
+          Number(route.query.action_id || 0) === Number(target.action_id || 0)
+          && Number(route.query.menu_id || 0) === Number(target.menu_id || 0)
+          && String(route.query.scene_key || '') === sceneKey;
+        if (!sameEmbeddedRouteState) {
+          await router.replace({ path: route.path, query: nextQuery as LocationQueryRaw });
+          return;
+        }
+        embeddedRecordActionId.value = Number(target.action_id || 0);
+        status.value = 'idle';
         return;
       }
     }
@@ -606,17 +860,30 @@ async function resolveScene() {
         status.value = 'idle';
         return;
       }
-      if (target.model && target.record_id) {
-        const recordId = resolveRecordId(target.record_id);
-        if (recordId) {
-          await router.replace({
-            path: `/r/${target.model}/${recordId}`,
-            query: {
-              menu_id: target.menu_id || undefined,
-              action_id: target.action_id || undefined,
-              ...workspaceContextQuery,
-            },
-          });
+      {
+        const recordEntry = resolveTargetRecordEntry(target);
+        if (recordEntry.model && recordEntry.recordId && recordEntry.actionId > 0) {
+          const nextQuery = {
+            menu_id: recordEntry.menuId || undefined,
+            action_id: recordEntry.actionId,
+            scene_key: sceneKey || undefined,
+            scene_label: sceneLabel || undefined,
+            model: recordEntry.model || undefined,
+            record_id: recordEntry.recordId,
+            ...workspaceContextQuery,
+          };
+          const sameEmbeddedRouteState =
+            Number(route.query.action_id || 0) === recordEntry.actionId
+            && Number(route.query.menu_id || 0) === Number(recordEntry.menuId || 0)
+            && Number(route.query.record_id || 0) === recordEntry.recordId
+            && String(route.query.model || '').trim() === String(recordEntry.model || '').trim()
+            && String(route.query.scene_key || '') === sceneKey;
+          if (!sameEmbeddedRouteState) {
+            await router.replace({ path: route.path, query: nextQuery as LocationQueryRaw });
+            return;
+          }
+          embeddedRecordActionId.value = recordEntry.actionId;
+          status.value = 'idle';
           return;
         }
       }
@@ -629,6 +896,10 @@ async function resolveScene() {
       }
       if (!isSameRouteTarget(target.route, workspaceContextQuery)) {
         await router.replace({ path: target.route, query: workspaceContextQuery as LocationQueryRaw });
+        return;
+      }
+      if (hasConsumableDeliveryRoot(resolvedScene)) {
+        status.value = 'idle';
         return;
       }
       setError(
@@ -701,7 +972,7 @@ function findActionNodeBySceneKey(nodes: NavNode[], sceneKey: string): NavNode |
 }
 
 watch(
-  () => route.fullPath,
+  sceneResolveSignature,
   () => {
     resolveScene();
   },
@@ -714,17 +985,49 @@ watch(
   padding: 12px;
 }
 
+.scene--compact-controls {
+  padding: 2px 0 0;
+}
+
+.scene-top-controls {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.scene-top-controls--compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+  min-width: 0;
+}
+
 .scene-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 12px;
+}
+
+.scene-actions--compact {
+  flex-wrap: nowrap;
+  gap: 4px;
+  margin: 0;
 }
 
 .scene-view-switch {
   display: grid;
   gap: 8px;
   margin-bottom: 12px;
+}
+
+.scene-view-switch--compact {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  min-width: 0;
 }
 
 .scene-view-switch__label {
@@ -738,6 +1041,12 @@ watch(
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.scene-view-switch--compact .scene-view-switch__chips {
+  flex-wrap: nowrap;
+  gap: 4px;
+  min-width: 0;
 }
 
 .scene-view-switch__chip {
@@ -760,5 +1069,78 @@ watch(
 .scene-view-switch__chip:disabled {
   cursor: default;
   opacity: 0.75;
+}
+
+.scene-delivery {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f8fafc 0%, #eef6ff 100%);
+}
+
+.scene-delivery--advisory {
+  background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%);
+  border-color: #fdba74;
+}
+
+.scene-delivery__copy {
+  display: grid;
+  gap: 6px;
+}
+
+.scene-delivery__eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.scene-delivery__title {
+  margin: 0;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.scene-delivery__message {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.scene-delivery__cta {
+  white-space: nowrap;
+}
+
+.scene-top-controls--compact :deep(.ghost) {
+  padding: 5px 11px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.scene-top-controls--compact .scene-view-switch__chip {
+  padding: 5px 11px;
+}
+
+@media (max-width: 860px) {
+  .scene-top-controls--compact {
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .scene-actions--compact,
+  .scene-view-switch--compact .scene-view-switch__chips {
+    flex-wrap: wrap;
+  }
+
+  .scene-delivery {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 </style>
