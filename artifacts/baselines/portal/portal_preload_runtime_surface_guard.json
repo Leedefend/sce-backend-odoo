@@ -1,0 +1,37 @@
+{
+  "checks": [
+    {
+      "boot_keys": [
+        "default_route",
+        "feature_flags",
+        "init_meta",
+        "intents",
+        "nav",
+        "nav_meta",
+        "role_surface",
+        "user",
+        "version"
+      ],
+      "preload_keys": [
+        "default_route",
+        "feature_flags",
+        "init_meta",
+        "intents",
+        "nav",
+        "nav_meta",
+        "role_surface",
+        "scene_ready_contract_v1",
+        "user",
+        "version",
+        "workspace_home"
+      ],
+      "boot_forbidden": [],
+      "preload_forbidden": [],
+      "workspace_home_loaded": true,
+      "scene_ready_loaded": true,
+      "block_count": 4
+    }
+  ],
+  "status": "PASS",
+  "errors": []
+}

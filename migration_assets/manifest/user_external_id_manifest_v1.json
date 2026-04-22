@@ -1,0 +1,1223 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "user_sc_v1",
+  "records": [
+    {
+      "external_id": "legacy_user_sc_8888888",
+      "legacy_login": "no1hl",
+      "legacy_user_id": "8888888",
+      "legacy_user_pid": "8888888",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_8888888"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000000",
+      "legacy_login": "admin",
+      "legacy_user_id": "10000000",
+      "legacy_user_pid": "10000000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000000"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000001",
+      "legacy_login": "duanyijun",
+      "legacy_user_id": "10000001",
+      "legacy_user_pid": "10000001",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000001"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000002",
+      "legacy_login": "denghongying",
+      "legacy_user_id": "10000002",
+      "legacy_user_pid": "10000002",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000002"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000003",
+      "legacy_login": "zhangzhi",
+      "legacy_user_id": "10000003",
+      "legacy_user_pid": "10000003",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000003"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000004",
+      "legacy_login": "denghongying",
+      "legacy_user_id": "10000004",
+      "legacy_user_pid": "10000004",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000004"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000005",
+      "legacy_login": "jiangyijiao",
+      "legacy_user_id": "10000005",
+      "legacy_user_pid": "10000005",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000005"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000006",
+      "legacy_login": "jiangyijiao",
+      "legacy_user_id": "10000006",
+      "legacy_user_pid": "10000006",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000006"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000007",
+      "legacy_login": "chenshuai",
+      "legacy_user_id": "10000007",
+      "legacy_user_pid": "10000007",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000007"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000008",
+      "legacy_login": "mi",
+      "legacy_user_id": "10000008",
+      "legacy_user_pid": "10000008",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000008"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000009",
+      "legacy_login": "wutao",
+      "legacy_user_id": "10000009",
+      "legacy_user_pid": "10000009",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000009"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000010",
+      "legacy_login": "weiling",
+      "legacy_user_id": "10000010",
+      "legacy_user_pid": "10000010",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000010"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000011",
+      "legacy_login": "hujun",
+      "legacy_user_id": "10000011",
+      "legacy_user_pid": "10000011",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000011"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000012",
+      "legacy_login": "madan",
+      "legacy_user_id": "10000012",
+      "legacy_user_pid": "10000012",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000012"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000013",
+      "legacy_login": "jiangyijiao",
+      "legacy_user_id": "10000013",
+      "legacy_user_pid": "10000013",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000013"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000014",
+      "legacy_login": "zhutieming",
+      "legacy_user_id": "10000014",
+      "legacy_user_pid": "10000014",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000014"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000015",
+      "legacy_login": "wennan",
+      "legacy_user_id": "10000015",
+      "legacy_user_pid": "10000015",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000015"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000016",
+      "legacy_login": "chentianzuo",
+      "legacy_user_id": "10000016",
+      "legacy_user_pid": "10000016",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000016"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000017",
+      "legacy_login": "jiaoling",
+      "legacy_user_id": "10000017",
+      "legacy_user_pid": "10000017",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000017"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000018",
+      "legacy_login": "yinjiamei",
+      "legacy_user_id": "10000018",
+      "legacy_user_pid": "10000018",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000018"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000019",
+      "legacy_login": "yidefu",
+      "legacy_user_id": "10000019",
+      "legacy_user_pid": "10000019",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000019"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000020",
+      "legacy_login": "yangdesheng",
+      "legacy_user_id": "10000020",
+      "legacy_user_pid": "10000020",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000020"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000021",
+      "legacy_login": "yangyongtian",
+      "legacy_user_id": "10000021",
+      "legacy_user_pid": "10000021",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000021"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000022",
+      "legacy_login": "xierui",
+      "legacy_user_id": "10000022",
+      "legacy_user_pid": "10000022",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000022"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000023",
+      "legacy_login": "nidezhen",
+      "legacy_user_id": "10000023",
+      "legacy_user_pid": "10000023",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000023"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000024",
+      "legacy_login": "chentianyou",
+      "legacy_user_id": "10000024",
+      "legacy_user_pid": "10000024",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000024"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000025",
+      "legacy_login": "yangyongtian",
+      "legacy_user_id": "10000025",
+      "legacy_user_pid": "10000025",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000025"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000026",
+      "legacy_login": "qiujie",
+      "legacy_user_id": "10000026",
+      "legacy_user_pid": "10000026",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000026"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000027",
+      "legacy_login": "zhengjianhua",
+      "legacy_user_id": "10000027",
+      "legacy_user_pid": "10000027",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000027"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000028",
+      "legacy_login": "dengshijiao",
+      "legacy_user_id": "10000028",
+      "legacy_user_pid": "10000028",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000028"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000029",
+      "legacy_login": "chentianyou",
+      "legacy_user_id": "10000029",
+      "legacy_user_pid": "10000029",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000029"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000030",
+      "legacy_login": "qianguanghai",
+      "legacy_user_id": "10000030",
+      "legacy_user_pid": "10000030",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000030"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000031",
+      "legacy_login": "wuran",
+      "legacy_user_id": "10000031",
+      "legacy_user_pid": "10000031",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000031"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000032",
+      "legacy_login": "weiling",
+      "legacy_user_id": "10000032",
+      "legacy_user_pid": "10000032",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000032"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000033",
+      "legacy_login": "liwei",
+      "legacy_user_id": "10000033",
+      "legacy_user_pid": "10000033",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000033"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000034",
+      "legacy_login": "lilinxu",
+      "legacy_user_id": "10000034",
+      "legacy_user_pid": "10000034",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000034"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000035",
+      "legacy_login": "liuyingmu",
+      "legacy_user_id": "10000035",
+      "legacy_user_pid": "10000035",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000035"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000036",
+      "legacy_login": "hexiangyu",
+      "legacy_user_id": "10000036",
+      "legacy_user_pid": "10000036",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000036"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000037",
+      "legacy_login": "liuhandan",
+      "legacy_user_id": "10000037",
+      "legacy_user_pid": "10000037",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000037"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000038",
+      "legacy_login": "weijinghua",
+      "legacy_user_id": "10000038",
+      "legacy_user_pid": "10000038",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000038"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000039",
+      "legacy_login": "zhanglonggen",
+      "legacy_user_id": "10000039",
+      "legacy_user_pid": "10000039",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000039"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000040",
+      "legacy_login": "fanxiaolong",
+      "legacy_user_id": "10000040",
+      "legacy_user_pid": "10000040",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000040"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000041",
+      "legacy_login": "wutao",
+      "legacy_user_id": "10000041",
+      "legacy_user_pid": "10000041",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000041"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000042",
+      "legacy_login": "liulin",
+      "legacy_user_id": "10000042",
+      "legacy_user_pid": "10000042",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000042"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000043",
+      "legacy_login": "wanghaochen",
+      "legacy_user_id": "10000043",
+      "legacy_user_pid": "10000043",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000043"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000044",
+      "legacy_login": "jiangyi",
+      "legacy_user_id": "10000044",
+      "legacy_user_pid": "10000044",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000044"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000045",
+      "legacy_login": "luyan",
+      "legacy_user_id": "10000045",
+      "legacy_user_pid": "10000045",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000045"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000046",
+      "legacy_login": "ceshi",
+      "legacy_user_id": "10000046",
+      "legacy_user_pid": "10000046",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000046"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000047",
+      "legacy_login": "ceshiwang",
+      "legacy_user_id": "10000047",
+      "legacy_user_pid": "10000047",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000047"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000048",
+      "legacy_login": "laiyuxuan",
+      "legacy_user_id": "10000048",
+      "legacy_user_pid": "10000048",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000048"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000049",
+      "legacy_login": "zengxiaodong",
+      "legacy_user_id": "10000049",
+      "legacy_user_pid": "10000049",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000049"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000050",
+      "legacy_login": "tanxinkun",
+      "legacy_user_id": "10000050",
+      "legacy_user_pid": "10000050",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000050"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000051",
+      "legacy_login": "yanzongbo",
+      "legacy_user_id": "10000051",
+      "legacy_user_pid": "10000051",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000051"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000052",
+      "legacy_login": "liwenhui",
+      "legacy_user_id": "10000052",
+      "legacy_user_pid": "10000052",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000052"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000053",
+      "legacy_login": "yelingyue",
+      "legacy_user_id": "10000053",
+      "legacy_user_pid": "10000053",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000053"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000054",
+      "legacy_login": "lijianfeng",
+      "legacy_user_id": "10000054",
+      "legacy_user_pid": "10000054",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000054"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000055",
+      "legacy_login": "wangyin",
+      "legacy_user_id": "10000055",
+      "legacy_user_pid": "10000055",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000055"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000056",
+      "legacy_login": "xiaohuijiu",
+      "legacy_user_id": "10000056",
+      "legacy_user_pid": "10000056",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000056"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000057",
+      "legacy_login": "wenyong",
+      "legacy_user_id": "10000057",
+      "legacy_user_pid": "10000057",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000057"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000058",
+      "legacy_login": "zhangwencui",
+      "legacy_user_id": "10000058",
+      "legacy_user_pid": "10000058",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000058"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000059",
+      "legacy_login": "liuwenxian",
+      "legacy_user_id": "10000059",
+      "legacy_user_pid": "10000059",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000059"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000060",
+      "legacy_login": "wangliwanglei",
+      "legacy_user_id": "10000060",
+      "legacy_user_pid": "10000060",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000060"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000061",
+      "legacy_login": "ceshili",
+      "legacy_user_id": "10000061",
+      "legacy_user_pid": "10000061",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000061"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000062",
+      "legacy_login": "ceshixiang",
+      "legacy_user_id": "10000062",
+      "legacy_user_pid": "10000062",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000062"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000063",
+      "legacy_login": "13990299533",
+      "legacy_user_id": "10000063",
+      "legacy_user_pid": "10000063",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000063"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000064",
+      "legacy_login": "liangbing",
+      "legacy_user_id": "10000064",
+      "legacy_user_pid": "10000064",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000064"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000065",
+      "legacy_login": "houzhonglei",
+      "legacy_user_id": "10000065",
+      "legacy_user_pid": "10000065",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000065"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000066",
+      "legacy_login": "chenjiaguo",
+      "legacy_user_id": "10000066",
+      "legacy_user_pid": "10000066",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000066"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000067",
+      "legacy_login": "nidemo",
+      "legacy_user_id": "10000067",
+      "legacy_user_pid": "10000067",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000067"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000068",
+      "legacy_login": "weiyanglei",
+      "legacy_user_id": "10000068",
+      "legacy_user_pid": "10000068",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000068"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000069",
+      "legacy_login": "weiyanglei2",
+      "legacy_user_id": "10000069",
+      "legacy_user_pid": "10000069",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000069"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000070",
+      "legacy_login": "xudan",
+      "legacy_user_id": "10000070",
+      "legacy_user_pid": "10000070",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000070"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000071",
+      "legacy_login": "ceshilong",
+      "legacy_user_id": "10000071",
+      "legacy_user_pid": "10000071",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000071"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000072",
+      "legacy_login": "liujun",
+      "legacy_user_id": "10000072",
+      "legacy_user_pid": "10000072",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000072"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000073",
+      "legacy_login": "13541712294",
+      "legacy_user_id": "10000073",
+      "legacy_user_pid": "10000073",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000073"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000074",
+      "legacy_login": "yindanmei",
+      "legacy_user_id": "10000074",
+      "legacy_user_pid": "10000074",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000074"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000075",
+      "legacy_login": "wangyin",
+      "legacy_user_id": "10000075",
+      "legacy_user_pid": "10000075",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000075"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000076",
+      "legacy_login": "liuxiting",
+      "legacy_user_id": "10000076",
+      "legacy_user_pid": "10000076",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000076"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000077",
+      "legacy_login": "caisiqi",
+      "legacy_user_id": "10000077",
+      "legacy_user_pid": "10000077",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000077"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000078",
+      "legacy_login": "kangxiaoyu",
+      "legacy_user_id": "10000078",
+      "legacy_user_pid": "10000078",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000078"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000079",
+      "legacy_login": "linshizhanghao",
+      "legacy_user_id": "10000079",
+      "legacy_user_pid": "10000079",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000079"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_10000080",
+      "legacy_login": "hualuepan",
+      "legacy_user_id": "10000080",
+      "legacy_user_pid": "10000080",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_10000080"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_14c5f56b013e4c1282c4003d9ea3adba",
+      "legacy_login": "tangminglong",
+      "legacy_user_id": "14c5f56b013e4c1282c4003d9ea3adba",
+      "legacy_user_pid": "16943070058580000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_14c5f56b013e4c1282c4003d9ea3adba"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_5ccaaf8e7007408d9590486a9a0e8189",
+      "legacy_login": "zhangyuting",
+      "legacy_user_id": "5ccaaf8e7007408d9590486a9a0e8189",
+      "legacy_user_pid": "16943076516780000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_5ccaaf8e7007408d9590486a9a0e8189"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_d215084d524f4090b822347eaa186f37",
+      "legacy_login": "qinjun",
+      "legacy_user_id": "d215084d524f4090b822347eaa186f37",
+      "legacy_user_pid": "16943096204340000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_d215084d524f4090b822347eaa186f37"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_637416bf2ff94fce8b9476a02fb601d6",
+      "legacy_login": "nidezhen",
+      "legacy_user_id": "637416bf2ff94fce8b9476a02fb601d6",
+      "legacy_user_pid": "16943104400170000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_637416bf2ff94fce8b9476a02fb601d6"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_5fa1c183823140d1a907235682bc2215",
+      "legacy_login": "chenmao",
+      "legacy_user_id": "5fa1c183823140d1a907235682bc2215",
+      "legacy_user_pid": "16970715125410000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_5fa1c183823140d1a907235682bc2215"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_7528691b8b78486b8c54ae4576af2db1",
+      "legacy_login": "wanglei",
+      "legacy_user_id": "7528691b8b78486b8c54ae4576af2db1",
+      "legacy_user_pid": "16971110540250000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_7528691b8b78486b8c54ae4576af2db1"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_8f60d70e74974863ac514c7f4ba87e0f",
+      "legacy_login": "yidefu",
+      "legacy_user_id": "8f60d70e74974863ac514c7f4ba87e0f",
+      "legacy_user_pid": "16971121027110000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_8f60d70e74974863ac514c7f4ba87e0f"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_8522b4a54bec4a09a2561440eedbe7c7",
+      "legacy_login": "linglin",
+      "legacy_user_id": "8522b4a54bec4a09a2561440eedbe7c7",
+      "legacy_user_pid": "16971963434730000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_8522b4a54bec4a09a2561440eedbe7c7"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_6b92871645c0413695fa3a42657e9199",
+      "legacy_login": "liaozhongxing",
+      "legacy_user_id": "6b92871645c0413695fa3a42657e9199",
+      "legacy_user_pid": "16971965711110000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_6b92871645c0413695fa3a42657e9199"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_6a5aeff488c641e8b6ff8ef77b5a97bd",
+      "legacy_login": "ceshiceshi",
+      "legacy_user_id": "6a5aeff488c641e8b6ff8ef77b5a97bd",
+      "legacy_user_pid": "17013393037060000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_6a5aeff488c641e8b6ff8ef77b5a97bd"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_a74a3dd36c004a4b8491675919c6be4c",
+      "legacy_login": "lina",
+      "legacy_user_id": "a74a3dd36c004a4b8491675919c6be4c",
+      "legacy_user_pid": "17035594418750000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_a74a3dd36c004a4b8491675919c6be4c"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_cda47176b5bd4ad38a6eb8984a7feeca",
+      "legacy_login": "yangyuxue",
+      "legacy_user_id": "cda47176b5bd4ad38a6eb8984a7feeca",
+      "legacy_user_pid": "17036402971430000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_cda47176b5bd4ad38a6eb8984a7feeca"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_4e8191d3bad04354aebfe26315ac2614",
+      "legacy_login": "luomeng",
+      "legacy_user_id": "4e8191d3bad04354aebfe26315ac2614",
+      "legacy_user_pid": "17041646036900000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_4e8191d3bad04354aebfe26315ac2614"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_f612d87666434c9c90a1c32e5fc64fe8",
+      "legacy_login": "jishuli",
+      "legacy_user_id": "f612d87666434c9c90a1c32e5fc64fe8",
+      "legacy_user_pid": "17050491618610000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_f612d87666434c9c90a1c32e5fc64fe8"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_d4885f319a7b4e3692838730afc50206",
+      "legacy_login": "jiangyi",
+      "legacy_user_id": "d4885f319a7b4e3692838730afc50206",
+      "legacy_user_pid": "17056292129550000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_d4885f319a7b4e3692838730afc50206"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_8d9e7a4e37a94228882bd4ec8a0da424",
+      "legacy_login": "xieqinlin",
+      "legacy_user_id": "8d9e7a4e37a94228882bd4ec8a0da424",
+      "legacy_user_pid": "17066800595870000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_8d9e7a4e37a94228882bd4ec8a0da424"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_94ab9e22f4e9488e9b83b6e7eadb819c",
+      "legacy_login": "lidexue",
+      "legacy_user_id": "94ab9e22f4e9488e9b83b6e7eadb819c",
+      "legacy_user_pid": "17248971398710000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_94ab9e22f4e9488e9b83b6e7eadb819c"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_27cf86a8c528456da17abb6e6eec0d24",
+      "legacy_login": "liangmingyang",
+      "legacy_user_id": "27cf86a8c528456da17abb6e6eec0d24",
+      "legacy_user_pid": "17399481906560000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_27cf86a8c528456da17abb6e6eec0d24"
+      },
+      "target_model": "res.users"
+    },
+    {
+      "external_id": "legacy_user_sc_2afb101f2d3d41058b33517895db14f9",
+      "legacy_login": "shuiwujingbanren",
+      "legacy_user_id": "2afb101f2d3d41058b33517895db14f9",
+      "legacy_user_pid": "17496992562250000",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_user_sc_2afb101f2d3d41058b33517895db14f9"
+      },
+      "target_model": "res.users"
+    }
+  ],
+  "summary": {
+    "discarded": 0,
+    "inactive": 34,
+    "loadable": 101
+  }
+}

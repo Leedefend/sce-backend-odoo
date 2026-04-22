@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "blocks": {
+    "progress": {
+      "state": "ready",
+      "block_type": "progress_summary",
+      "degraded": false
+    },
+    "risks": {
+      "state": "ready",
+      "block_type": "alert_panel",
+      "degraded": false
+    },
+    "next_actions": {
+      "state": "ready",
+      "block_type": "action_list",
+      "degraded": false
+    }
+  }
+}

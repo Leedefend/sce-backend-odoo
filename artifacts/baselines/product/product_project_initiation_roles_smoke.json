@@ -1,0 +1,58 @@
+{
+  "status": "PASS",
+  "db": "sc_demo",
+  "roles": [
+    {
+      "role": "owner",
+      "login": "demo_role_owner",
+      "expect_capability_allow": true,
+      "expect_create": false,
+      "open_subject": "ui.contract",
+      "open_scene_key": "workspace.home",
+      "capability_allow": true,
+      "create_ok": false,
+      "create_error_code": "PERMISSION_DENIED",
+      "deny_suggested_action": "request_access",
+      "status": "PASS"
+    },
+    {
+      "role": "pm",
+      "login": "demo_role_pm",
+      "expect_capability_allow": true,
+      "expect_create": true,
+      "open_subject": "ui.contract",
+      "open_scene_key": "workspace.home",
+      "capability_allow": true,
+      "create_ok": true,
+      "create_error_code": "",
+      "suggested_action": "open_project_dashboard",
+      "status": "PASS"
+    },
+    {
+      "role": "finance",
+      "login": "demo_role_finance",
+      "expect_capability_allow": true,
+      "expect_create": false,
+      "open_subject": "ui.contract",
+      "open_scene_key": "workspace.home",
+      "capability_allow": true,
+      "create_ok": false,
+      "create_error_code": "PERMISSION_DENIED",
+      "deny_suggested_action": "request_access",
+      "status": "PASS"
+    },
+    {
+      "role": "executive",
+      "login": "demo_role_executive",
+      "expect_capability_allow": true,
+      "expect_create": true,
+      "open_subject": "ui.contract",
+      "open_scene_key": "workspace.home",
+      "capability_allow": true,
+      "create_ok": true,
+      "create_error_code": "",
+      "suggested_action": "open_project_dashboard",
+      "status": "PASS"
+    }
+  ]
+}

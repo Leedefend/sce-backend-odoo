@@ -1,0 +1,15 @@
+{
+  "checks": {
+    "landing_scene_key": "workspace.home",
+    "scene_subset_count": 1,
+    "page_contract_keys": [
+      "page_orchestration_v1",
+      "schema_version",
+      "texts"
+    ],
+    "catalog_count": 1,
+    "collections_keys": []
+  },
+  "status": "PASS",
+  "errors": []
+}

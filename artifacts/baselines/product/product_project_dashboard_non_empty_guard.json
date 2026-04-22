@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "blocks_total": 3,
+  "blocks_non_empty": 3,
+  "block_keys": [
+    "next_actions",
+    "progress",
+    "risks"
+  ]
+}

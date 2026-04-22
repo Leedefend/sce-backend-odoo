@@ -1,0 +1,19 @@
+{
+  "checks": [
+    {
+      "nav_source": "platform_minimum_surface",
+      "platform_minimum_surface": true,
+      "default_route": {
+        "menu_id": null,
+        "scene_key": "workspace.home",
+        "route": "/",
+        "reason": "platform_minimum_surface"
+      },
+      "scene_keys": [
+        "workspace.home"
+      ]
+    }
+  ],
+  "status": "PASS",
+  "errors": []
+}

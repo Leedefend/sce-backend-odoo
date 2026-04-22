@@ -12,15 +12,46 @@ COMPANY_CSV = Path("tmp/raw/partner/company.csv")
 SUPPLIER_CSV = Path("tmp/raw/partner/supplier.csv")
 OUTPUT_JSON = Path("artifacts/migration/partner_dry_run_result_v1.json")
 SAFE_SLICE_CSV = Path("artifacts/migration/partner_safe_slice_v1.csv")
+FULL_AUDIT_CSV = Path("artifacts/migration/partner_l4_nodb_refresh_rows_v1.csv")
+NEXT_SAFE_SLICE_500_CSV = Path("artifacts/migration/partner_l4_next_safe_slice_500_v1.csv")
+NEXT_SAFE_SLICE_1000_CSV = Path("artifacts/migration/partner_l4_next_safe_slice_1000_v1.csv")
+WRITTEN_TARGETS = (
+    Path("artifacts/migration/partner_30_row_rollback_target_list_v1.csv"),
+    Path("artifacts/migration/partner_rollback_targets_v1.csv"),
+    Path("artifacts/migration/partner_l4_500_pre_write_snapshot_v1.csv"),
+    Path("artifacts/migration/partner_l4_500_rollback_targets_v1.csv"),
+    Path("artifacts/migration/partner_l4_1000_pre_write_snapshot_v1.csv"),
+    Path("artifacts/migration/partner_l4_1000_retry_rollback_targets_v1.csv"),
+    Path("artifacts/migration/partner_l4_final30_rollback_targets_v1.csv"),
+    Path("artifacts/migration/partner_l4_company_supplier_pair_1713_rollback_targets_v1.csv"),
+    Path("artifacts/migration/partner_l4_missing_tax_single_source_1554_rollback_targets_v1.csv"),
+    Path("artifacts/migration/partner_l4_remaining_missing_tax_company_supplier_652_rollback_targets_v1.csv"),
+    Path("artifacts/migration/partner_l4_missing_tax_duplicate_group_175_rollback_targets_v1.csv"),
+    Path("artifacts/migration/partner_l4_same_tax_company_supplier_canonical_102_rollback_targets_v1.csv"),
+    Path("artifacts/migration/partner_l4_company_supplier_duplicate_26_rollback_targets_v1.csv"),
+    Path("artifacts/migration/partner_l4_company_duplicate_24_rollback_targets_v1.csv"),
+    Path("artifacts/migration/partner_l4_same_tax_company_canonical_20_rollback_targets_v1.csv"),
+)
+DISCARD_TARGETS = (
+    Path("artifacts/migration/partner_l4_unsafe_name_discard_targets_v1.csv"),
+    Path("artifacts/migration/partner_l4_remaining18_discard_targets_v1.csv"),
+)
 EXPECTED_COMPANY_ROWS = 7864
 EXPECTED_SUPPLIER_ROWS = 3041
 SAFE_SLICE_LIMIT = 100
+NEXT_SAFE_SLICE_LIMIT = 500
+EXPANDED_SAFE_SLICE_LIMIT = 1000
 
 
 def clean(value: object) -> str:
     text = "" if value is None else str(value)
     text = text.replace("\u3000", " ").strip()
     return re.sub(r"\s+", " ", text)
+
+
+def source_carrier(value: object) -> str:
+    text = clean(value)
+    return "company_supplier" if text == "company;supplier" else text
 
 
 def clean_phone(value: object) -> str:
@@ -149,9 +180,78 @@ def write_csv(path: Path, fieldnames: list[str], rows: list[dict[str, object]]) 
         writer.writerows(rows)
 
 
+def read_partner_keys(paths: tuple[Path, ...]) -> set[tuple[str, str]]:
+    keys: set[tuple[str, str]] = set()
+    for path in paths:
+        if not path.exists():
+            continue
+        _, rows = read_csv(path)
+        for row in rows:
+            source = source_carrier(row.get("legacy_partner_source"))
+            legacy_id = clean(row.get("legacy_partner_id"))
+            if source and legacy_id:
+                keys.add((source, legacy_id))
+    return keys
+
+
+def serialize(value: object) -> str:
+    if isinstance(value, list):
+        return ";".join(clean(item) for item in value)
+    return clean(value)
+
+
+def is_primary_company_row(row: dict[str, object]) -> bool:
+    return row.get("sources") == ["company"]
+
+
+def audit_legacy_source(row: dict[str, object]) -> str:
+    return "cooperat_company" if is_primary_company_row(row) else source_carrier(serialize(row["sources"]))
+
+
+def audit_identity_key(row: dict[str, object]) -> tuple[str, str]:
+    return (audit_legacy_source(row), clean(row["legacy_partner_id"]))
+
+
+def row_blockers(
+    row: dict[str, object],
+    written_keys: set[tuple[str, str]],
+    discard_keys: set[tuple[str, str]],
+) -> list[str]:
+    blockers = [clean(item) for item in row["conflicts"]]
+    if not clean(row["legacy_partner_id"]):
+        blockers.append("missing_legacy_partner_id")
+    if not safe_name(row["partner_name"]):
+        blockers.append("unsafe_partner_name")
+    if not clean(row["tax_number"]):
+        blockers.append("missing_tax_number")
+    if row["dedup_key_type"] == "missing_identity":
+        blockers.append("missing_identity_key")
+    if row["source_row_count"] != 1:
+        blockers.append("deduplicated_group_not_create_only")
+    if not is_primary_company_row(row):
+        blockers.append("non_primary_partner_source")
+    if ("cooperat_company", clean(row["legacy_partner_id"])) in written_keys or audit_identity_key(row) in written_keys:
+        blockers.append("already_written_validation")
+    if audit_identity_key(row) in discard_keys:
+        blockers.append("discarded_by_policy_validation")
+    return blockers
+
+
+def action_for_row(row: dict[str, object], blockers: list[str]) -> str:
+    if "discarded_by_policy_validation" in blockers:
+        return "discarded_validation"
+    if "already_written_validation" in blockers:
+        return "skip_existing_validation"
+    if blockers:
+        return "blocked"
+    return "create_candidate"
+
+
 def main() -> int:
     company_columns, company_rows = read_csv(COMPANY_CSV)
     supplier_columns, supplier_rows = read_csv(SUPPLIER_CSV)
+    written_keys = read_partner_keys(WRITTEN_TARGETS)
+    discard_keys = read_partner_keys(DISCARD_TARGETS)
     missing_fields = []
     for field in ["Id", "DWMC"]:
         if field not in company_columns:
@@ -169,17 +269,40 @@ def main() -> int:
     conflict_rows = [row for row in merged if row["conflicts"]]
     duplicate_groups = [row for row in merged if row["source_row_count"] > 1]
     create_ready_rows = [row for row in merged if not row["conflicts"]]
-    safe_slice = [
-        row for row in merged
-        if not row["conflicts"]
-        and row["source_row_count"] == 1
-        and row["legacy_partner_id"]
-        and safe_name(row["partner_name"])
-        and row["tax_number"]
-        and row["dedup_key_type"] != "missing_identity"
-    ][:SAFE_SLICE_LIMIT]
+    audit_rows = []
+    next_safe_candidates = []
+    for row_no, row in enumerate(merged, start=1):
+        blockers = row_blockers(row, written_keys, discard_keys)
+        action = action_for_row(row, blockers)
+        audit_row = {
+            "row_no": row_no,
+            "legacy_partner_source": audit_legacy_source(row),
+            "legacy_partner_id": clean(row["legacy_partner_id"]),
+            "partner_name": clean(row["partner_name"]),
+            "tax_number": clean(row["tax_number"]),
+            "phone": clean(row["phone"]),
+            "email": clean(row["email"]),
+            "supplier_flag": serialize(row["supplier_flag"]),
+            "customer_flag": serialize(row["customer_flag"]),
+            "dedup_key_type": clean(row["dedup_key_type"]),
+            "dedup_key": clean(row["dedup_key"]),
+            "sources": serialize(row["sources"]),
+            "source_codes": serialize(row["source_codes"]),
+            "source_row_count": clean(row["source_row_count"]),
+            "merge_strategy": clean(row["merge_strategy"]),
+            "dry_run_action": action,
+            "blockers": ";".join(blockers),
+        }
+        audit_rows.append(audit_row)
+        if action == "create_candidate":
+            next_safe_candidates.append(row)
+
+    safe_slice = next_safe_candidates[:SAFE_SLICE_LIMIT]
+    next_safe_slice_500 = next_safe_candidates[:NEXT_SAFE_SLICE_LIMIT]
+    next_safe_slice_1000 = next_safe_candidates[:EXPANDED_SAFE_SLICE_LIMIT]
 
     fieldnames = [
+        "legacy_partner_source",
         "legacy_partner_id",
         "partner_name",
         "tax_number",
@@ -192,21 +315,75 @@ def main() -> int:
         "sources",
         "source_codes",
         "merge_strategy",
+        "dry_run_action",
+        "blockers",
     ]
+
+    audit_fieldnames = [
+        "row_no",
+        "legacy_partner_source",
+        "legacy_partner_id",
+        "partner_name",
+        "tax_number",
+        "phone",
+        "email",
+        "supplier_flag",
+        "customer_flag",
+        "dedup_key_type",
+        "dedup_key",
+        "sources",
+        "source_codes",
+        "source_row_count",
+        "merge_strategy",
+        "dry_run_action",
+        "blockers",
+    ]
+    write_csv(FULL_AUDIT_CSV, audit_fieldnames, audit_rows)
+
+    def output_slice_rows(rows: list[dict[str, object]]) -> list[dict[str, object]]:
+        output = []
+        for row in rows:
+            output.append(
+                {
+                    "legacy_partner_source": "cooperat_company",
+                    "legacy_partner_id": clean(row["legacy_partner_id"]),
+                    "partner_name": clean(row["partner_name"]),
+                    "tax_number": clean(row["tax_number"]),
+                    "phone": clean(row["phone"]),
+                    "email": clean(row["email"]),
+                    "supplier_flag": serialize(row["supplier_flag"]),
+                    "customer_flag": serialize(row["customer_flag"]),
+                    "dedup_key_type": clean(row["dedup_key_type"]),
+                    "dedup_key": clean(row["dedup_key"]),
+                    "sources": serialize(row["sources"]),
+                    "source_codes": serialize(row["source_codes"]),
+                    "merge_strategy": clean(row["merge_strategy"]),
+                    "dry_run_action": "create_candidate",
+                    "blockers": "",
+                }
+            )
+        return output
+
     write_csv(
         SAFE_SLICE_CSV,
         fieldnames,
-        [
-            {key: ";".join(value) if isinstance(value, list) else value for key, value in row.items() if key in fieldnames}
-            for row in safe_slice
-        ],
+        output_slice_rows(safe_slice),
     )
+    write_csv(NEXT_SAFE_SLICE_500_CSV, fieldnames, output_slice_rows(next_safe_slice_500))
+    write_csv(NEXT_SAFE_SLICE_1000_CSV, fieldnames, output_slice_rows(next_safe_slice_1000))
 
     key_counts = Counter(row["dedup_key_type"] for row in merged)
     merge_counts = Counter(row["merge_strategy"] for row in merged)
+    action_counts = Counter(row["dry_run_action"] for row in audit_rows)
+    blocker_counts = Counter(
+        blocker
+        for row in audit_rows
+        for blocker in str(row["blockers"]).split(";")
+        if blocker
+    )
     result = {
         "status": "PASS" if not missing_fields else "FAIL",
-        "mode": "partner_rebuild_l1_no_db_dry_run",
+        "mode": "partner_l4_nodb_refresh",
         "inputs": {
             "company": str(COMPANY_CSV),
             "supplier": str(SUPPLIER_CSV),
@@ -220,6 +397,10 @@ def main() -> int:
         "deduplicated": len(merged),
         "to_create": len(create_ready_rows),
         "to_merge": len(duplicate_groups),
+        "written_validation_identity_count": len(written_keys),
+        "discard_validation_identity_count": len(discard_keys),
+        "action_counts": dict(sorted(action_counts.items())),
+        "blocker_counts": dict(sorted(blocker_counts.items())),
         "missing_fields": missing_fields,
         "conflicts": conflict_rows[:200],
         "conflict_count": len(conflict_rows),
@@ -233,10 +414,24 @@ def main() -> int:
         "safe_slice": {
             "path": str(SAFE_SLICE_CSV),
             "rows": len(safe_slice),
-            "requirements": ["no duplicate group", "no conflicts", "legacy_partner_id present", "partner_name present", "tax_number present"],
+            "requirements": ["company source only", "not already written", "no duplicate group", "no conflicts", "legacy_partner_id present", "partner_name present", "tax_number present"],
         },
-        "promotion_level": "L1 dry-run",
-        "next_gate": "L2 safe-slice review; no DB write authorized by this result",
+        "full_audit": {
+            "path": str(FULL_AUDIT_CSV),
+            "rows": len(audit_rows),
+        },
+        "next_safe_slice": {
+            "path": str(NEXT_SAFE_SLICE_500_CSV),
+            "rows": len(next_safe_slice_500),
+            "limit": NEXT_SAFE_SLICE_LIMIT,
+        },
+        "expanded_next_safe_slice": {
+            "path": str(NEXT_SAFE_SLICE_1000_CSV),
+            "rows": len(next_safe_slice_1000),
+            "limit": EXPANDED_SAFE_SLICE_LIMIT,
+        },
+        "promotion_level": "L4 candidate no-DB refresh",
+        "next_gate": "L3 expanded create-only write gate; no DB write authorized by this result",
     }
     OUTPUT_JSON.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT_JSON.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -247,7 +442,11 @@ def main() -> int:
         "to_create": result["to_create"],
         "to_merge": result["to_merge"],
         "conflict_count": result["conflict_count"],
+        "skip_existing_validation": result["action_counts"].get("skip_existing_validation", 0),
+        "discarded_validation": result["action_counts"].get("discarded_validation", 0),
         "safe_slice_rows": result["safe_slice"]["rows"],
+        "next_safe_slice_rows": result["next_safe_slice"]["rows"],
+        "expanded_next_safe_slice_rows": result["expanded_next_safe_slice"]["rows"],
     }, ensure_ascii=False, sort_keys=True))
     return 0 if result["status"] == "PASS" else 1
 

@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "contract_ref": {
+    "intent": "ui.contract",
+    "params": {
+      "op": "menu",
+      "menu_id": 279,
+      "menu_xmlid": "smart_construction_core.menu_sc_project_dashboard",
+      "project_id": 330,
+      "scene_key": "project.dashboard"
+    }
+  },
+  "suggested_action_payload": {
+    "intent": "project.dashboard.enter",
+    "reason_code": "PROJECT_INITIATION_CREATED",
+    "params": {
+      "project_id": 330,
+      "reason_code": "PROJECT_INITIATION_CREATED"
+    }
+  },
+  "shape": {
+    "menu_primary": true,
+    "model_fallback": false
+  }
+}

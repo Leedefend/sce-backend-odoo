@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "flow": {
+    "project_id": 336,
+    "dashboard_plan_action_state": "available",
+    "plan_execution_action_state": "available",
+    "plan_execution_reason_code": "PLAN_READY_FOR_EXECUTION",
+    "execution_state": ""
+  }
+}

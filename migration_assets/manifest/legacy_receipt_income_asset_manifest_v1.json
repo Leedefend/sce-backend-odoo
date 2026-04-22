@@ -1,0 +1,70 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "legacy_receipt_income_sc_v1",
+  "assets": [
+    {
+      "path": "30_relation/legacy_receipt_income/legacy_receipt_income_v1.xml",
+      "sha256": "7cc545a2e23acbfaf4485c69de72a23fb4f7b463275847da0591034ba00aea8f",
+      "type": "xml"
+    },
+    {
+      "path": "manifest/legacy_receipt_income_external_id_manifest_v1.json",
+      "sha256": "11ce46d243cadc3eee55f75a752321f58e21bc1290a2a2d9f4a382887feaf76a",
+      "type": "external_id_manifest"
+    },
+    {
+      "path": "manifest/legacy_receipt_income_validation_manifest_v1.json",
+      "sha256": "a318acdabe6cc6ad7c7d39f03285cded80664861ce3ebe27a09732ff35bc8e3c",
+      "type": "validation_manifest"
+    }
+  ],
+  "baseline_package": true,
+  "counts": {
+    "already_assetized_rows": 5355,
+    "blocked_reason_counts": {
+      "amount_not_positive_or_missing": 1976,
+      "deleted": 110,
+      "missing_project_id": 1884,
+      "project_not_assetized": 118
+    },
+    "blocked_records": 2194,
+    "family_counts": {
+      "company_financial_income": 4674,
+      "customer_receipt": 10,
+      "receipt_confirmation": 2536
+    },
+    "loadable_records": 7220,
+    "partner_counts": {
+      "partner_missing": 65,
+      "partner_name_text": 2481,
+      "partner_ref": 3476,
+      "partner_text_id": 1198
+    },
+    "raw_rows": 14769,
+    "source_table_counts": {
+      "C_CWSFK_GSCWSR": 4702,
+      "C_JFHKLR": 7412,
+      "ZJGL_SZQR_DKQRB": 2655
+    }
+  },
+  "db_writes": 0,
+  "dependencies": [
+    "project_sc_v1",
+    "partner_sc_v1"
+  ],
+  "generated_at": "2026-04-15T18:45:00+00:00",
+  "lane": {
+    "lane_id": "legacy_receipt_income",
+    "layer": "30_relation",
+    "load_phase": 30
+  },
+  "odoo_shell": false,
+  "target": {
+    "model": "sc.legacy.receipt.income.fact",
+    "source_tables": [
+      "C_CWSFK_GSCWSR",
+      "C_JFHKLR",
+      "ZJGL_SZQR_DKQRB"
+    ]
+  }
+}

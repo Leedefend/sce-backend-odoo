@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "entry": {
+    "project_id": 341,
+    "entry_keys": [
+      "blocks",
+      "project_id",
+      "runtime_fetch_hints",
+      "suggested_action",
+      "summary",
+      "title"
+    ],
+    "summary_keys": [
+      "health_state",
+      "manager_name",
+      "partner_name",
+      "project_code",
+      "stage_name"
+    ],
+    "block_keys": [
+      "next_actions",
+      "progress",
+      "risks"
+    ]
+  }
+}

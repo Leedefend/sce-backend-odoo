@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "default_route": {
+        "menu_id": 829601246,
+        "scene_key": "portal.dashboard",
+        "route": "/workbench?scene=portal.dashboard",
+        "reason": "role_landing"
+      },
+      "default_route_is_workbench": true,
+      "created_record_id": 328,
+      "suggested_action": "open_project_dashboard",
+      "contract_intent": "ui.contract"
+    }
+  ]
+}

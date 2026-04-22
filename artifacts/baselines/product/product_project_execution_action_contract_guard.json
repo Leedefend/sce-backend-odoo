@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "action": {
+    "project_id": 347,
+    "result": "blocked",
+    "from_state": "ready",
+    "to_state": "ready",
+    "reason_code": "EXECUTION_TRANSITION_NOT_ALLOWED",
+    "suggested_action_intent": "project.execution.block.fetch"
+  }
+}

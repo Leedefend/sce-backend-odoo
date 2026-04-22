@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "flow": {
+    "project_id": 334,
+    "suggested_action_intent": "project.dashboard.enter",
+    "dashboard_entry_keys": [
+      "blocks",
+      "project_id",
+      "runtime_fetch_hints",
+      "suggested_action",
+      "summary",
+      "title"
+    ],
+    "runtime_block_key": "progress",
+    "runtime_block_state": "ready",
+    "runtime_next_actions_state": "ready"
+  }
+}

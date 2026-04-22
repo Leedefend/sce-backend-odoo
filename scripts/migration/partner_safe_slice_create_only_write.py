@@ -4,20 +4,21 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 from collections import Counter
 from pathlib import Path
 
 
-SAFE_SLICE_CSV = Path("/mnt/artifacts/migration/partner_safe_slice_v1.csv")
-DRY_RUN_JSON = Path("/mnt/artifacts/migration/partner_dry_run_result_v1.json")
-PRE_WRITE_SNAPSHOT_CSV = Path("/mnt/artifacts/migration/partner_safe_slice_pre_write_snapshot_v1.csv")
-POST_WRITE_SNAPSHOT_CSV = Path("/mnt/artifacts/migration/partner_safe_slice_post_write_snapshot_v1.csv")
-WRITE_RESULT_JSON = Path("/mnt/artifacts/migration/partner_write_result_v1.json")
-ROLLBACK_TARGET_CSV = Path("/mnt/artifacts/migration/partner_rollback_targets_v1.csv")
+SAFE_SLICE_CSV = Path(os.environ.get("PARTNER_SAFE_SLICE_INPUT", "/mnt/artifacts/migration/partner_l4_next_safe_slice_1000_v1.csv"))
+DRY_RUN_JSON = Path(os.environ.get("PARTNER_DRY_RUN_JSON", "/mnt/artifacts/migration/partner_dry_run_result_v1.json"))
+PRE_WRITE_SNAPSHOT_CSV = Path(os.environ.get("PARTNER_PRE_WRITE_SNAPSHOT", "/mnt/artifacts/migration/partner_l4_final30_pre_write_snapshot_v1.csv"))
+POST_WRITE_SNAPSHOT_CSV = Path(os.environ.get("PARTNER_POST_WRITE_SNAPSHOT", "/mnt/artifacts/migration/partner_l4_final30_post_write_snapshot_v1.csv"))
+WRITE_RESULT_JSON = Path(os.environ.get("PARTNER_WRITE_RESULT_JSON", "/mnt/artifacts/migration/partner_l4_final30_write_result_v1.json"))
+ROLLBACK_TARGET_CSV = Path(os.environ.get("PARTNER_ROLLBACK_TARGET_CSV", "/mnt/artifacts/migration/partner_l4_final30_rollback_targets_v1.csv"))
 
-EXPECTED_COUNT = 100
+EXPECTED_COUNT = int(os.environ.get("PARTNER_EXPECTED_COUNT", "30"))
 LEGACY_SOURCE = "cooperat_company"
-RUN_ID = "ITER-2026-04-14-0029"
+RUN_ID = os.environ.get("PARTNER_WRITE_RUN_ID", "ITER-2026-04-14-PARTNER-L4-FINAL30-WRITE")
 SAFE_FIELDS = [
     "name",
     "company_type",
@@ -125,7 +126,7 @@ def build_create_vals(row):
         "legacy_credit_code": tax_number,
         "legacy_tax_no": tax_number,
         "legacy_deleted_flag": "",
-        "legacy_source_evidence": "partner_safe_slice_v1:company:tax_number",
+        "legacy_source_evidence": f"{SAFE_SLICE_CSV.name}:company:tax_number",
     }
 
 
@@ -141,8 +142,21 @@ def main():
     dry_run = json.loads(DRY_RUN_JSON.read_text(encoding="utf-8"))
     if dry_run.get("status") != "PASS":
         raise RuntimeError({"dry_run_not_pass": dry_run.get("status")})
-    if dry_run.get("safe_slice", {}).get("rows") != EXPECTED_COUNT:
-        raise RuntimeError({"safe_slice_rows_not_100": dry_run.get("safe_slice", {}).get("rows")})
+    next_slice = dry_run.get("next_safe_slice") or {}
+    expanded_slice = dry_run.get("expanded_next_safe_slice") or {}
+    legacy_slice = dry_run.get("safe_slice") or {}
+    expected_input = str(SAFE_SLICE_CSV).replace("/mnt/", "")
+    allowed_input_paths = {str(SAFE_SLICE_CSV), expected_input}
+    if SAFE_SLICE_CSV.name == "partner_safe_slice_v1.csv":
+        expected_rows = legacy_slice.get("rows")
+    elif next_slice.get("path") in allowed_input_paths:
+        expected_rows = next_slice.get("rows")
+    elif expanded_slice.get("path") in allowed_input_paths:
+        expected_rows = expanded_slice.get("rows")
+    else:
+        expected_rows = None
+    if expected_rows is not None and expected_rows != EXPECTED_COUNT:
+        raise RuntimeError({"safe_slice_rows_not_expected": expected_rows, "expected": EXPECTED_COUNT})
 
     columns, rows = read_csv(SAFE_SLICE_CSV)
     required_columns = {"legacy_partner_id", "partner_name", "tax_number", "sources", "merge_strategy"}
@@ -154,7 +168,7 @@ def main():
     id_counts = Counter(ids)
     precheck_errors = []
     if len(rows) != EXPECTED_COUNT:
-        precheck_errors.append({"error": "safe_slice_not_100_rows", "rows": len(rows)})
+        precheck_errors.append({"error": "safe_slice_not_expected_rows", "rows": len(rows), "expected": EXPECTED_COUNT})
     if any(count > 1 for count in id_counts.values()):
         precheck_errors.append({"error": "duplicate_legacy_partner_id_in_safe_slice", "ids": sorted([identity for identity, count in id_counts.items() if count > 1])})
 
@@ -247,11 +261,11 @@ def main():
 
     post_errors = []
     if len(created) != EXPECTED_COUNT:
-        post_errors.append({"error": "created_count_not_100", "created": len(created)})
+        post_errors.append({"error": "created_count_not_expected", "created": len(created), "expected": EXPECTED_COUNT})
     if len(post_records) != EXPECTED_COUNT:
-        post_errors.append({"error": "post_write_snapshot_not_100", "rows": len(post_records)})
+        post_errors.append({"error": "post_write_snapshot_not_expected", "rows": len(post_records), "expected": EXPECTED_COUNT})
     if len(rollback_rows) != EXPECTED_COUNT:
-        post_errors.append({"error": "rollback_target_not_100", "rows": len(rollback_rows)})
+        post_errors.append({"error": "rollback_target_not_expected", "rows": len(rollback_rows), "expected": EXPECTED_COUNT})
     if missing_ids:
         post_errors.append({"error": "missing_ids_after_write", "ids": missing_ids})
     if duplicate_matches:

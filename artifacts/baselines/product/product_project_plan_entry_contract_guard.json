@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "entry": {
+    "project_id": 343,
+    "entry_keys": [
+      "blocks",
+      "project_id",
+      "runtime_fetch_hints",
+      "suggested_action",
+      "summary",
+      "title"
+    ],
+    "summary_keys": [
+      "date_end",
+      "date_start",
+      "manager_name",
+      "project_code",
+      "stage_name"
+    ],
+    "block_keys": [
+      "next_actions",
+      "plan_summary_detail",
+      "plan_tasks"
+    ]
+  }
+}

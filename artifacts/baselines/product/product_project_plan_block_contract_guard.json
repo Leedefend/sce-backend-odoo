@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "blocks": {
+    "plan_summary_detail": {
+      "state": "ready",
+      "block_type": "plan_summary_detail",
+      "degraded": false
+    },
+    "plan_tasks": {
+      "state": "ready",
+      "block_type": "plan_task_list",
+      "degraded": false
+    },
+    "next_actions": {
+      "state": "ready",
+      "block_type": "action_list",
+      "degraded": false
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "flow": {
+    "project_id": 340,
+    "first_transition": [
+      "ready",
+      "in_progress"
+    ],
+    "second_transition": [
+      "in_progress",
+      "done"
+    ],
+    "done_action_state": "blocked",
+    "done_action_reason_code": "EXECUTION_ALREADY_DONE"
+  }
+}

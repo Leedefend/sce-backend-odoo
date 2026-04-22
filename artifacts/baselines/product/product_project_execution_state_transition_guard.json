@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "transition": {
+    "project_id": 339,
+    "legal_from_state": "ready",
+    "legal_to_state": "in_progress",
+    "legal_reason_code": "EXECUTION_TRANSITION_READY_TO_IN_PROGRESS",
+    "illegal_from_state": "in_progress",
+    "illegal_to_state": "in_progress",
+    "illegal_reason_code": "EXECUTION_TRANSITION_NOT_ALLOWED"
+  }
+}

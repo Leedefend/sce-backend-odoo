@@ -1,0 +1,50 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "legacy_financing_loan_sc_v1",
+  "business_boundary": {
+    "approval_runtime": "excluded",
+    "legacy_financing_loan_fact": "included",
+    "management_balance_snapshot": "excluded",
+    "runtime_financial_execution": "excluded"
+  },
+  "counts": {
+    "blocked_reason_counts": {
+      "amount_not_positive_or_missing": 4,
+      "deleted": 26,
+      "missing_balance_amounts": 2,
+      "missing_counterparty_name": 24,
+      "missing_document_date": 1,
+      "project_not_assetized": 18
+    },
+    "blocked_records": 59,
+    "family_counts": {
+      "borrowing_request": 166,
+      "loan_registration": 152
+    },
+    "loadable_records": 318,
+    "management_snapshot_records": 496,
+    "partner_counts": {
+      "counterparty_name_text": 58,
+      "counterparty_text_id": 159,
+      "partner_ref": 101
+    },
+    "raw_rows": 873,
+    "source_table_counts": {
+      "D_SCBSJS_ZJGL_ZJSZ_ZJRBB": 511,
+      "ZJGL_ZCDFSZ_FXJK_JK": 169,
+      "ZJGL_ZJSZ_DKGL_DKDJ": 193
+    }
+  },
+  "validation_gates": {
+    "generate_time": [
+      "legacy_source_key_unique",
+      "project_external_id_required_and_resolves",
+      "counterparty_name_required",
+      "source_amount_positive",
+      "management_snapshot_excluded",
+      "blocked_rows_excluded",
+      "no_runtime_financial_execution_generated",
+      "no_runtime_approval_records_generated"
+    ]
+  }
+}

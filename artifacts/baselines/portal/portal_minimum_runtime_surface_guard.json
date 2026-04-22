@@ -1,0 +1,21 @@
+{
+  "checks": [
+    {
+      "default_route": {
+        "menu_id": null,
+        "scene_key": "workspace.home",
+        "route": "/",
+        "reason": "platform_minimum_surface"
+      },
+      "app_open": {
+        "subject": "ui.contract",
+        "route": "/s/workspace.home"
+      },
+      "workspace_home_loaded": true,
+      "scene_ready_loaded": true,
+      "block_count": 4
+    }
+  ],
+  "status": "PASS",
+  "errors": []
+}

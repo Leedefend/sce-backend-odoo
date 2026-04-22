@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "advance": {
+    "project_id": 338,
+    "action_state": "ready",
+    "action_reason_code": "EXECUTION_READY_TO_START",
+    "result": "success",
+    "from_state": "ready",
+    "to_state": "in_progress",
+    "result_reason_code": "EXECUTION_TRANSITION_READY_TO_IN_PROGRESS",
+    "suggested_action_intent": "project.execution.block.fetch",
+    "task_source_model": "project.task",
+    "task_state_before": "draft",
+    "task_state_after": "in_progress"
+  }
+}

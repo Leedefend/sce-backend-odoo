@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "flow": {
+    "project_id": 337,
+    "dashboard_plan_action_state": "available",
+    "plan_execution_action_state": "available",
+    "execution_entry_keys": [
+      "blocks",
+      "project_id",
+      "runtime_fetch_hints",
+      "suggested_action",
+      "summary",
+      "title"
+    ],
+    "execution_block_key": "execution_tasks",
+    "execution_block_state": "ready"
+  }
+}

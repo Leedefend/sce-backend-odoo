@@ -19100,3 +19100,2406 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - completed_step: `ITER-2026-04-14-L3-MAPPED-WRITE-IMPACT-REVIEW PASS：reviewed=3, visible_to_user=3, follower_present=3, rollback_eligible=3, db_writes=0`
 - active_commit: `d243d59`
 - next_step: `decide whether to keep the 3-row write, rollback it, or open a separately bounded expansion task`
+
+### 2026-04-14T18:10:00+08:00
+- blocker_key: `iter_1914_migration_fast_ledger_pass`
+- layer_target: `Migration Governance Acceleration`
+- module: `migration lane ledger + partner L4 promotion plan`
+- reason: 用户同意回到数据迁移主线并要求制定提速步骤；先将 project_member 分叉和 contract/partner 样本状态封口成 ledger，再把下一步收敛回 frozen partner main line
+- completed_step: `ITER-2026-04-14-MIG-FAST-LEDGER PASS：ledger_ready=true, next_main_line=partner L4 no-DB refresh, db_writes=0, addon_changes=0`
+- active_commit: `25dc6bc`
+- next_step: `open ITER-2026-04-14-PARTNER-L4-NODB-REFRESH for partner full no-DB decision refresh; no partner write is authorized by this ledger batch`
+
+### 2026-04-14T18:25:00+08:00
+- blocker_key: `iter_1915_partner_l4_nodb_refresh_pass`
+- layer_target: `Partner Migration Importer Promotion`
+- module: `res.partner rebuild importer no-DB decision refresh`
+- reason: 按 MIG-FAST-LEDGER 回到 partner 主线；增强 no-DB dry-run 输出全量 audit、已写 validation identity 跳过标记和下一批 500 行候选切片
+- completed_step: `ITER-2026-04-14-PARTNER-L4-NODB-REFRESH PASS：deduplicated=7172, skip_existing_validation=124, create_candidates=1630, next_safe_slice=500, duplicate_keys=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open dedicated partner 500-row create-only write gate using artifacts/migration/partner_l4_next_safe_slice_500_v1.csv; no write is authorized by the no-DB refresh itself`
+
+### 2026-04-14T18:40:00+08:00
+- blocker_key: `iter_1916_partner_l4_500_write_blocked_odoo_not_running`
+- layer_target: `Partner Migration Bounded Write`
+- module: `res.partner 500-row create-only write`
+- reason: 用户同意执行迁移提速；500 行 partner write gate 通过 task/py_compile/slice uniqueness 预检后执行 Odoo shell 写入
+- completed_step: `ITER-2026-04-14-PARTNER-L4-500-WRITE FAIL_ENV_ODOO_NOT_RUNNING：pre_write_gate=PASS, write_command=FAIL, created=0, post_write_review=NOT_RUN, error=service "odoo" is not running`
+- active_commit: `25dc6bc`
+- next_step: `STOP: recover Odoo service, then rerun the same 500-row write gate before any larger partner slice`
+
+### 2026-04-14T18:50:00+08:00
+- blocker_key: `iter_1917_partner_l4_500_write_runtime_recovery_in_progress`
+- layer_target: `Partner Migration Bounded Write`
+- module: `res.partner 500-row create-only write`
+- reason: 用户要求立即执行；通过 make odoo.recreate 恢复 Odoo 服务后重跑写入，发现 host env 不传入 Odoo shell 导致 legacy default 100-row path 执行
+- completed_step: `ITER-2026-04-14-PARTNER-L4-500-WRITE IN_PROGRESS_AFTER_RUNTIME_RECOVERY：odoo_recreated=true, legacy_default_created=100, legacy_default_review=ROLLBACK_READY, corrected_500_default_path=prepared`
+- active_commit: `25dc6bc`
+- next_step: `rerun partner no-DB refresh to skip the newly reviewed 100 validation rows, then execute corrected explicit 500-row default path`
+
+### 2026-04-14T19:00:00+08:00
+- blocker_key: `iter_1918_partner_l4_500_write_precheck_existing_identity`
+- layer_target: `Partner Migration Bounded Write`
+- module: `res.partner 500-row create-only write`
+- reason: corrected 500-row default path 已生效；写入脚本在 create 前用 legacy identity snapshot 发现当前 500 slice 仍包含旧 0029 validation identities
+- completed_step: `ITER-2026-04-14-PARTNER-L4-500-WRITE IN_PROGRESS_PRECHECK_BLOCKED_NO_NEW_WRITE：existing_validation_identities=100, new_created=0, precheck_snapshot=artifacts/migration/partner_l4_500_pre_write_snapshot_v1.csv`
+- active_commit: `25dc6bc`
+- next_step: `include partner_l4_500_pre_write_snapshot_v1.csv in no-DB skip-existing refresh, regenerate 500-row slice, then rerun corrected 500-row write`
+
+### 2026-04-14T19:15:00+08:00
+- blocker_key: `iter_1919_partner_l4_500_write_pass_with_risk`
+- layer_target: `Partner Migration Bounded Write`
+- module: `res.partner 500-row create-only write`
+- reason: no-DB refresh 纳入 precheck snapshot 后 skip_existing_validation=224，重新生成 500 行无重复候选并执行 corrected 500-row write + post-write review
+- completed_step: `ITER-2026-04-14-PARTNER-L4-500-WRITE PASS_WITH_RISK：corrected_created=500, corrected_review=ROLLBACK_READY, rollback_eligible=500, extra_legacy_default_created=100, extra_legacy_default_review=ROLLBACK_READY`
+- active_commit: `25dc6bc`
+- next_step: `STOP before larger partner slice: open post-batch no-DB refresh so extra 100 + corrected 500 validation writes are included in skip-existing classification`
+
+### 2026-04-14T19:20:00+08:00
+- blocker_key: `iter_1920_partner_l4_postbatch_nodb_refresh_pass`
+- layer_target: `Partner Migration Importer Promotion`
+- module: `res.partner rebuild importer no-DB post-write classification refresh`
+- reason: 上一批 500-row write 为 PASS_WITH_RISK；先把 extra 100 与 corrected 500 rollback targets 纳入 skip-existing 分类，再考虑更大 partner slice
+- completed_step: `ITER-2026-04-14-PARTNER-L4-POSTBATCH-NODB-REFRESH PASS：deduplicated=7172, written_validation_identity_count=630, skip_existing_validation=629, create_candidates=1130, next_safe_slice=500, expanded_next_safe_slice=1000, duplicate_keys=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open dedicated partner expanded create-only write gate using refreshed candidate slice and immediate readonly post-write review; no write is authorized by this no-DB refresh batch`
+
+### 2026-04-14T19:25:00+08:00
+- blocker_key: `iter_1921_partner_l4_1000_write_fail_precheck_existing_identity`
+- layer_target: `Partner Migration Bounded Write`
+- module: `res.partner 1000-row create-only write`
+- reason: 用户授权执行 expanded partner write gate；1000 行候选通过本地 duplicate/action/blocker 预检后进入 Odoo shell 写入脚本
+- completed_step: `ITER-2026-04-14-PARTNER-L4-1000-WRITE FAIL_PRECHECK：target_identity_not_empty_before_write=100, created=0, post_write_review=NOT_RUN, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `STOP: open no-DB partner refresh recovery including artifacts/migration/partner_l4_1000_pre_write_snapshot_v1.csv in skip-existing inputs, then regenerate expanded slice before any further write attempt`
+
+### 2026-04-14T19:30:00+08:00
+- blocker_key: `iter_1922_partner_l4_1000_recovery_nodb_refresh_pass`
+- layer_target: `Partner Migration Importer Promotion`
+- module: `res.partner rebuild importer no-DB recovery refresh`
+- reason: 用户同意执行 1000 预检恢复；将 partner_l4_1000_pre_write_snapshot_v1.csv 纳入 skip-existing 分类并重新生成候选切片
+- completed_step: `ITER-2026-04-14-PARTNER-L4-1000-RECOVERY-NODB-REFRESH PASS：deduplicated=7172, written_validation_identity_count=730, skip_existing_validation=729, create_candidates=1030, next_safe_slice=500, expanded_next_safe_slice=1000, duplicate_keys=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open dedicated 1000-row partner create-only write retry gate using refreshed candidate slice and immediate readonly post-write review; no write is authorized by this no-DB refresh batch`
+
+### 2026-04-14T19:40:00+08:00
+- blocker_key: `iter_1923_partner_l4_1000_write_retry_pass`
+- layer_target: `Partner Migration Bounded Write`
+- module: `res.partner 1000-row create-only write retry`
+- reason: 用户授权执行 retry write gate；刷新后的 1000 行候选通过预检，pre-write snapshot 为空后执行 create-only 写入与只读复核
+- completed_step: `ITER-2026-04-14-PARTNER-L4-1000-WRITE-RETRY PASS：created=1000, updated=0, post_write_review=ROLLBACK_READY, rollback_eligible=1000, db_writes=1000`
+- active_commit: `25dc6bc`
+- next_step: `open no-DB post-write refresh so the 1000 newly created identities are included in skip-existing classification before any further partner write expansion`
+
+### 2026-04-14T19:50:00+08:00
+- blocker_key: `iter_1924_partner_l4_1000_postwrite_nodb_refresh_pass`
+- layer_target: `Partner Migration Importer Promotion`
+- module: `res.partner rebuild importer no-DB post-write refresh`
+- reason: 1000-row retry write PASS 且 rollback-ready；将 partner_l4_1000_retry_rollback_targets_v1.csv 纳入 skip-existing 分类后刷新剩余候选
+- completed_step: `ITER-2026-04-14-PARTNER-L4-1000-POSTWRITE-NODB-REFRESH PASS：deduplicated=7172, written_validation_identity_count=1730, skip_existing_validation=1736, create_candidates=30, next_safe_slice=30, expanded_next_safe_slice=30, duplicate_keys=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open dedicated final 30-row partner create-only write gate with immediate readonly post-write review; no write is authorized by this no-DB refresh batch`
+
+### 2026-04-14T20:00:00+08:00
+- blocker_key: `iter_1925_partner_l4_final30_write_pass`
+- layer_target: `Partner Migration Bounded Write`
+- module: `res.partner final 30-row create-only write`
+- reason: 用户授权执行 final 30-row write gate；刷新后的剩余 30 行候选通过预检，pre-write snapshot 为空后执行 create-only 写入与只读复核
+- completed_step: `ITER-2026-04-14-PARTNER-L4-FINAL30-WRITE PASS：created=30, updated=0, post_write_review=ROLLBACK_READY, rollback_eligible=30, db_writes=30`
+- active_commit: `25dc6bc`
+- next_step: `open final no-DB post-write refresh to prove no create-only partner L4 candidates remain under the current rule set`
+
+### 2026-04-14T20:05:00+08:00
+- blocker_key: `iter_1926_partner_l4_final_postwrite_nodb_refresh_pass`
+- layer_target: `Partner Migration Importer Promotion`
+- module: `res.partner rebuild importer no-DB final post-write refresh`
+- reason: final30 write PASS 且 rollback-ready；将 partner_l4_final30_rollback_targets_v1.csv 纳入 skip-existing 分类后验证 partner L4 create-only 候选是否归零
+- completed_step: `ITER-2026-04-14-PARTNER-L4-FINAL-POSTWRITE-NODB-REFRESH PASS：deduplicated=7172, skip_existing_validation=1767, create_candidates=0, blocked=5405, next_safe_slice=0, expanded_next_safe_slice=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `STOP partner create-only expansion under the current rule set; open separate screen/classification task for blocked partner rows before any merge/update or rule expansion`
+
+### 2026-04-14T20:10:00+08:00
+- blocker_key: `iter_1927_partner_l4_blocked_screen_pass`
+- layer_target: `Partner Migration Blocked Screening`
+- module: `res.partner L4 blocked-row classifier`
+- reason: 用户同意新开任务；在 partner create-only 归零后对剩余 blocked rows 做只读路线分类，不写库、不改规则
+- completed_step: `ITER-2026-04-14-PARTNER-L4-BLOCKED-SCREEN PASS：blocked=5405, create_candidates=0, merge_identity_screen=3048, missing_tax_screen=2180, manual_conflict_screen=135, unsafe_name_screen=27, supplier_or_non_primary_screen=15, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open dedicated no-DB merge_identity_screen task for the 3048 routed rows; no merge/update write is authorized by this screen batch`
+
+### 2026-04-14T20:15:00+08:00
+- blocker_key: `iter_1928_partner_l4_merge_identity_screen_pass`
+- layer_target: `Partner Migration Merge Identity Screening`
+- module: `res.partner L4 merge identity classifier`
+- reason: 对 3048 行 merge_identity_screen 做二级只读路线分类，识别 company/supplier 双行合并、缺税号合并、复杂多行和名称异常路线
+- completed_step: `ITER-2026-04-14-PARTNER-L4-MERGE-IDENTITY-SCREEN PASS：merge_identity_rows=3048, company_supplier_pair_merge_review=1713, missing_tax_merge_review=967, complex_multirow_merge_review=189, unsafe_name_merge_review=155, company_duplicate_pair_merge_review=24, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open dedicated no-DB company_supplier_pair_merge_review evidence screen for the 1713 routed rows; no merge/update write is authorized by this screen batch`
+
+### 2026-04-14T20:20:00+08:00
+- blocker_key: `iter_1929_partner_l4_company_supplier_pair_screen_pass`
+- layer_target: `Partner Migration Company Supplier Pair Screening`
+- module: `res.partner L4 company/supplier pair evidence classifier`
+- reason: 用户要求此类 no-DB screen 直接执行；对 1713 行 company/supplier pair 做确定性证据筛选，不写库、不改规则
+- completed_step: `ITER-2026-04-14-PARTNER-L4-COMPANY-SUPPLIER-PAIR-SCREEN PASS：route_rows=1713, deterministic_company_supplier_pair=1713, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open company_supplier_pair_merge_dry_run as a no-DB task; no merge/update write is authorized by this screen batch`
+
+### 2026-04-14T20:25:00+08:00
+- blocker_key: `iter_1930_partner_l4_company_supplier_pair_merge_dry_run_pass`
+- layer_target: `Partner Migration Company Supplier Pair Merge Dry-Run`
+- module: `res.partner L4 company/supplier pair merge dry-run`
+- reason: 对 1713 行确定性 company/supplier pair 回连 raw company/supplier 记录并生成 no-DB merge dry-run 证据；不写库、不改规则
+- completed_step: `ITER-2026-04-14-PARTNER-L4-COMPANY-SUPPLIER-PAIR-MERGE-DRY-RUN PASS：route_rows=1713, merge_dry_run_candidate_rows=1713, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open bounded write-design review before any merge/update write; no merge/update write is authorized by this dry-run batch`
+
+### 2026-04-14T20:30:00+08:00
+- blocker_key: `iter_1931_partner_l4_company_supplier_pair_write_design_pass`
+- layer_target: `Partner Migration Company Supplier Pair Write Design`
+- module: `res.partner L4 company/supplier pair write design`
+- reason: 对 1713 行 company/supplier pair dry-run 候选固化未来写入策略；只做 no-DB design，不执行 Odoo shell
+- completed_step: `ITER-2026-04-14-PARTNER-L4-COMPANY-SUPPLIER-PAIR-WRITE-DESIGN PASS：candidate_rows=1713, proposed_action=create_merged_partner, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `STOP before high-risk bounded write; explicit authorization required for create_merged_partner write with rollback targets and readonly post-write review`
+
+### 2026-04-14T20:40:00+08:00
+- blocker_key: `iter_1932_partner_l4_company_supplier_pair_1713_write_pass`
+- layer_target: `Partner Migration Company Supplier Pair Bounded Write`
+- module: `res.partner company/supplier pair create merged write`
+- reason: 用户授权执行 high-risk create_merged_partner write；1713 行通过 pre-write identity 空检查后执行 create-only 写入与只读复核
+- completed_step: `ITER-2026-04-14-PARTNER-L4-COMPANY-SUPPLIER-PAIR-1713-WRITE PASS：created=1713, updated=0, post_write_review=ROLLBACK_READY, rollback_eligible=1713, db_writes=1713`
+- active_commit: `25dc6bc`
+- next_step: `open no-DB post-write refresh so these 1713 identities are included in skip-existing classification before any further partner write expansion`
+
+### 2026-04-14T20:45:00+08:00
+- blocker_key: `iter_1933_partner_l4_company_supplier_pair_1713_postwrite_nodb_refresh_pass`
+- layer_target: `Partner Migration Importer Promotion`
+- module: `res.partner company/supplier pair post-write no-DB refresh`
+- reason: 1713 行 company/supplier pair write PASS 且 rollback-ready；将 rollback targets 纳入 skip-existing 分类后刷新剩余 blocked 路线
+- completed_step: `ITER-2026-04-14-PARTNER-L4-COMPANY-SUPPLIER-PAIR-1713-POSTWRITE-NODB-REFRESH PASS：deduplicated=7172, skip_existing_validation=3480, create_candidates=0, blocked=3692, next_safe_slice=0, expanded_next_safe_slice=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open no-DB missing_tax_screen task for the remaining blocked rows; no write is authorized by this refresh batch`
+
+### 2026-04-14T20:50:00+08:00
+- blocker_key: `iter_1934_partner_l4_missing_tax_screen_pass`
+- layer_target: `Partner Migration Blocked Screening`
+- module: `res.partner L4 missing-tax classifier`
+- reason: 1713 行 company/supplier pair post-write refresh PASS 后，对剩余 missing_tax_number 阻塞行做只读路线分类，不写库、不改规则
+- completed_step: `ITER-2026-04-14-PARTNER-L4-MISSING-TAX-SCREEN PASS：missing_tax_rows=3325, single_source_create_review=1554, merge_identity_review=827, unsafe_merge_identity_review=303, unsafe_name_review=626, non_primary_review=15, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open no-DB missing_tax_single_source_create_review dry-run for the 1554 largest low-risk rows; no write is authorized by this screen batch`
+
+### 2026-04-14T20:55:00+08:00
+- blocker_key: `iter_1935_partner_l4_missing_tax_single_source_dry_run_pass`
+- layer_target: `Partner Migration Missing-Tax Dry-Run`
+- module: `res.partner L4 missing-tax single-source dry-run`
+- reason: 对 1554 条 single-source company 且唯一 blocker 为 missing_tax_number 的行做写入前 no-DB 证据固化，不写库、不改规则
+- completed_step: `ITER-2026-04-14-PARTNER-L4-MISSING-TAX-SINGLE-SOURCE-DRY-RUN PASS：route_rows=1554, candidate_rows=1554, blocked_rows=0, proposed_action=create_company_partner_without_tax_number_review, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open no-DB write-design task for create_company_partner_without_tax_number_review; no write is authorized by this dry-run batch`
+
+### 2026-04-14T21:00:00+08:00
+- blocker_key: `iter_1936_partner_l4_missing_tax_single_source_write_design_pass`
+- layer_target: `Partner Migration Missing-Tax Write Design`
+- module: `res.partner L4 missing-tax single-source write design`
+- reason: 1554 行 missing-tax single-source dry-run PASS 后固化 no-DB 写入设计、允许字段、禁止动作与回滚键，不写库、不改规则
+- completed_step: `ITER-2026-04-14-PARTNER-L4-MISSING-TAX-SINGLE-SOURCE-WRITE-DESIGN PASS：input_rows=1554, write_design_rows=1554, blocked_rows=0, proposed_action=create_company_partner_without_tax_number, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `STOP before high-risk DB write; explicit authorization required for the 1554-row missing-tax bounded write`
+
+### 2026-04-14T21:10:00+08:00
+- blocker_key: `iter_1937_partner_l4_missing_tax_single_source_1554_write_pass`
+- layer_target: `Partner Migration Missing-Tax Bounded Write`
+- module: `res.partner L4 missing-tax single-source create write`
+- reason: 用户显式授权执行 1554 行 high-risk bounded create；pre-write snapshot 为空后执行 create-only 写入并完成只读 rollback-ready 复核
+- completed_step: `ITER-2026-04-14-PARTNER-L4-MISSING-TAX-SINGLE-SOURCE-1554-WRITE PASS：created=1554, updated=0, post_write_review=ROLLBACK_READY, rollback_eligible=1554, db_writes=1554`
+- active_commit: `25dc6bc`
+- next_step: `open no-DB post-write refresh so these 1554 identities are included in skip-existing classification before any further partner write expansion`
+
+### 2026-04-14T21:15:00+08:00
+- blocker_key: `iter_1938_partner_l4_missing_tax_single_source_1554_postwrite_nodb_refresh_pass`
+- layer_target: `Partner Migration Importer Promotion`
+- module: `res.partner missing-tax single-source post-write no-DB refresh`
+- reason: 1554 行 missing-tax single-source write PASS 且 rollback-ready；将 rollback targets 纳入 skip-existing 分类后刷新剩余 blocked 路线
+- completed_step: `ITER-2026-04-14-PARTNER-L4-MISSING-TAX-SINGLE-SOURCE-1554-POSTWRITE-NODB-REFRESH PASS：deduplicated=7172, skip_existing_validation=5045, create_candidates=0, blocked=2127, next_safe_slice=0, expanded_next_safe_slice=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open next no-DB screen for the largest remaining merge/missing-tax route; no write is authorized by this refresh batch`
+
+### 2026-04-14T21:20:00+08:00
+- blocker_key: `iter_1939_partner_l4_remaining_missing_tax_screen_pass`
+- layer_target: `Partner Migration Blocked Screening`
+- module: `res.partner L4 remaining missing-tax classifier`
+- reason: 1554 行 post-write no-DB refresh PASS 后，对剩余 missing_tax_number 阻塞行做只读路线分类，不写库、不改规则
+- completed_step: `ITER-2026-04-14-PARTNER-L4-REMAINING-MISSING-TAX-SCREEN PASS：remaining_missing_tax_rows=1760, merge_identity_review=827, unsafe_name_review=626, unsafe_merge_identity_review=303, non_primary_review=4, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open remaining_missing_tax_merge_identity_review as a no-DB dry-run; no write is authorized by this screen batch`
+
+### 2026-04-14T21:25:00+08:00
+- blocker_key: `iter_1940_partner_l4_remaining_missing_tax_merge_dry_run_pass`
+- layer_target: `Partner Migration Missing-Tax Merge Dry-Run`
+- module: `res.partner L4 remaining missing-tax merge dry-run`
+- reason: 对 827 行 remaining_missing_tax_merge_identity_review 做 no-DB 证据分级，不写库、不改规则
+- completed_step: `ITER-2026-04-14-PARTNER-L4-REMAINING-MISSING-TAX-MERGE-DRY-RUN PASS：route_rows=827, missing_tax_company_supplier_pair_review=652, missing_tax_company_duplicate_review=156, missing_tax_complex_merge_review=19, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open no-DB design task for missing_tax_company_supplier_pair_review; no write is authorized by this dry-run batch`
+
+### 2026-04-14T21:30:00+08:00
+- blocker_key: `iter_1941_partner_l4_remaining_missing_tax_company_supplier_write_design_pass`
+- layer_target: `Partner Migration Missing-Tax Company/Supplier Write Design`
+- module: `res.partner L4 remaining missing-tax company/supplier write design`
+- reason: 对 652 行 missing_tax_company_supplier_pair_review 固化 no-DB 写入设计、允许字段、禁止动作与回滚键，不写库、不改规则
+- completed_step: `ITER-2026-04-14-PARTNER-L4-REMAINING-MISSING-TAX-COMPANY-SUPPLIER-WRITE-DESIGN PASS：write_design_rows=652, blocked_rows=0, proposed_action=create_company_supplier_partner_without_tax_number, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `STOP before high-risk DB write; explicit authorization required for the 652-row remaining missing-tax company/supplier bounded write`
+
+### 2026-04-14T21:40:00+08:00
+- blocker_key: `iter_1942_partner_l4_remaining_missing_tax_company_supplier_652_write_pass`
+- layer_target: `Partner Migration Missing-Tax Company/Supplier Bounded Write`
+- module: `res.partner L4 remaining missing-tax company/supplier create write`
+- reason: 用户显式授权执行 652 行 high-risk bounded create；pre-write snapshot 为空后执行 create-only 写入并完成只读 rollback-ready 复核
+- completed_step: `ITER-2026-04-14-PARTNER-L4-REMAINING-MISSING-TAX-COMPANY-SUPPLIER-652-WRITE PASS：created=652, updated=0, post_write_review=ROLLBACK_READY, rollback_eligible=652, db_writes=652`
+- active_commit: `25dc6bc`
+- next_step: `open no-DB post-write refresh so these 652 identities are included in skip-existing classification before any further partner write expansion`
+
+### 2026-04-14T21:45:00+08:00
+- blocker_key: `iter_1943_partner_l4_remaining_missing_tax_company_supplier_652_postwrite_nodb_refresh_pass`
+- layer_target: `Partner Migration Importer Promotion`
+- module: `res.partner remaining missing-tax company/supplier post-write no-DB refresh`
+- reason: 652 行 remaining missing-tax company/supplier write PASS 且 rollback-ready；将 rollback targets 纳入 skip-existing 分类后刷新剩余 blocked 路线
+- completed_step: `ITER-2026-04-14-PARTNER-L4-REMAINING-MISSING-TAX-COMPANY-SUPPLIER-652-POSTWRITE-NODB-REFRESH PASS：deduplicated=7172, skip_existing_validation=5697, create_candidates=0, blocked=1475, next_safe_slice=0, expanded_next_safe_slice=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open next no-DB screen for remaining unsafe-name and missing-tax blocker routes; no write is authorized by this refresh batch`
+
+### 2026-04-14T21:50:00+08:00
+- blocker_key: `iter_1944_partner_l4_remaining_blocked_screen_pass`
+- layer_target: `Partner Migration Blocked Screening`
+- module: `res.partner L4 remaining blocked classifier`
+- reason: 652 行 post-write no-DB refresh PASS 后，对剩余 1475 条 blocked 行做只读路线分类，不写库、不改规则
+- completed_step: `ITER-2026-04-14-PARTNER-L4-REMAINING-BLOCKED-SCREEN PASS：blocked_rows=1475, remaining_unsafe_name_screen=1111, remaining_missing_tax_screen=179, remaining_manual_conflict_screen=135, remaining_merge_identity_screen=50, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open remaining_unsafe_name_screen as a no-DB route screen; no write is authorized by this screen batch`
+
+### 2026-04-14T21:55:00+08:00
+- blocker_key: `iter_1945_partner_l4_remaining_unsafe_name_screen_pass_with_risk`
+- layer_target: `Partner Migration Unsafe-Name Screening`
+- module: `res.partner L4 remaining unsafe-name classifier`
+- reason: 对 1111 条 remaining_unsafe_name_screen 做只读子路线分类；unsafe-name 后续需要名称标准化/人工策略，不写库、不改规则
+- completed_step: `ITER-2026-04-14-PARTNER-L4-REMAINING-UNSAFE-NAME-SCREEN PASS_WITH_RISK：route_rows=1111, unsafe_name_missing_tax_single_review=626, unsafe_name_missing_tax_merge_review=303, unsafe_name_merge_review=155, unsafe_name_single_review=27, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `STOP at policy boundary; open dedicated name-normalization policy screen before any unsafe-name write design`
+
+### 2026-04-14T22:00:00+08:00
+- blocker_key: `iter_1946_partner_l4_unsafe_name_policy_screen_pass`
+- layer_target: `Partner Migration Unsafe-Name Policy Screening`
+- module: `res.partner L4 unsafe-name policy classifier`
+- reason: 用户确认允许规范化修复、非企业垃圾丢弃、税号可空缺；对 1111 条 unsafe-name 行做只读 policy 分桶，不写库、不改规则
+- completed_step: `ITER-2026-04-14-PARTNER-L4-UNSAFE-NAME-POLICY-SCREEN PASS：route_rows=1111, discard_non_enterprise_garbage=1110, manual_review_uncertain_name=1, auto_write_design_candidates=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `materialize 1110 discard rows as no-DB discard evidence and refresh remaining partner L4 blocker distribution`
+
+### 2026-04-14T22:10:00+08:00
+- blocker_key: `iter_1947_partner_l4_unsafe_name_discard_evidence_refresh_pass`
+- layer_target: `Partner Migration Discard Evidence Refresh`
+- module: `res.partner L4 unsafe-name discard evidence classifier`
+- reason: 将用户确认丢弃的 1110 条 unsafe-name 非企业/垃圾行固化为 no-DB 丢弃证据，并刷新主 dry-run 分类，不写库、不改 Odoo 模块
+- completed_step: `ITER-2026-04-14-PARTNER-L4-UNSAFE-NAME-DISCARD-EVIDENCE-REFRESH PASS：discard_rows=1110, discarded_validation=1110, skip_existing_validation=5697, blocked=365, create_candidates=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open a no-DB screen for the 365 remaining blocked rows, prioritizing missing-tax duplicate groups and same-tax conflict groups`
+
+### 2026-04-14T22:20:00+08:00
+- blocker_key: `iter_1948_partner_l4_remaining365_blocked_screen_pass`
+- layer_target: `Partner Migration Remaining Blocked Screening`
+- module: `res.partner L4 remaining 365 blocked classifier`
+- reason: unsafe-name 丢弃证据刷新 PASS 后，对剩余 365 条 blocked 行做只读路线分桶，不写库、不改规则
+- completed_step: `ITER-2026-04-14-PARTNER-L4-REMAINING365-BLOCKED-SCREEN PASS：blocked_rows=365, missing_tax_duplicate_group_screen=175, same_tax_conflict_screen=132, non_primary_duplicate_group_screen=26, duplicate_group_screen=24, residual_unsafe_name_manual_screen=4, missing_tax_non_primary_screen=4, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open a no-DB screen for the 175-row missing-tax duplicate group route`
+
+### 2026-04-14T22:30:00+08:00
+- blocker_key: `iter_1949_partner_l4_missing_tax_duplicate_group_dry_run_pass`
+- layer_target: `Partner Migration Missing-Tax Duplicate Group Dry-Run`
+- module: `res.partner L4 missing-tax duplicate group classifier`
+- reason: 对 175 条 missing-tax duplicate group 路线做只读写入前分级；用户已确认税号可先空缺，本批次不写库
+- completed_step: `ITER-2026-04-14-PARTNER-L4-MISSING-TAX-DUPLICATE-GROUP-DRY-RUN PASS：route_rows=175, company_duplicate_group_review=156, company_supplier_duplicate_group_review=19, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open no-DB write design for the 175 deterministic missing-tax duplicate group rows`
+
+### 2026-04-14T22:40:00+08:00
+- blocker_key: `iter_1950_partner_l4_missing_tax_duplicate_group_write_design_pass`
+- layer_target: `Partner Migration Missing-Tax Duplicate Group Write Design`
+- module: `res.partner L4 missing-tax duplicate group write design`
+- reason: 对 175 条 deterministic missing-tax duplicate group 行固化 no-DB 写入设计和回滚键；实际写库前停止
+- completed_step: `ITER-2026-04-14-PARTNER-L4-MISSING-TAX-DUPLICATE-GROUP-WRITE-DESIGN PASS：write_design_rows=175, proposed_action=create_merged_partner_without_tax_number, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `STOP before high-risk DB write for 175 missing-tax duplicate group rows; explicit authorization is required`
+
+### 2026-04-14T22:50:00+08:00
+- blocker_key: `iter_1951_partner_l4_missing_tax_duplicate_group_175_write_fail`
+- layer_target: `Partner Migration Missing-Tax Duplicate Group Bounded Write`
+- module: `res.partner L4 missing-tax duplicate group create write`
+- reason: 用户授权后执行 175 行 high-risk bounded create；Odoo 拒绝 legacy_partner_source=`company;supplier`，写入命令失败，触发 stop condition
+- completed_step: `ITER-2026-04-14-PARTNER-L4-MISSING-TAX-DUPLICATE-GROUP-175-WRITE FAIL：create_write_failed_before_commit, error=Wrong value for res.partner.legacy_partner_source: company;supplier`
+- active_commit: `25dc6bc`
+- next_step: `STOP; open no-DB recovery design to split allowed legacy_partner_source carriers before any retry`
+
+### 2026-04-14T23:05:00+08:00
+- blocker_key: `iter_1952_partner_l4_combo_source_recovery_write_pass`
+- layer_target: `Partner Migration Legacy Source Carrier Recovery`
+- module: `smart_construction_core res.partner legacy source extension + partner L4 retry write`
+- reason: 用户确认直接调整允许组合来源；为 res.partner.legacy_partner_source 增加 additive carrier company_supplier，并重跑 175 行授权写入
+- completed_step: `ITER-2026-04-14-PARTNER-L4-COMBO-SOURCE-RECOVERY-WRITE PASS：selection_added=company_supplier, source_counts={cooperat_company:156, company_supplier:19}, created=175, updated=0, post_write_review=ROLLBACK_READY, rollback_target_rows=175`
+- active_commit: `25dc6bc`
+- next_step: `open a no-DB post-write refresh so the 175 identities are included in skip-existing classification`
+
+### 2026-04-14T23:15:00+08:00
+- blocker_key: `iter_1953_partner_l4_combo_source_175_postwrite_nodb_refresh_pass`
+- layer_target: `Partner Migration Importer Promotion`
+- module: `res.partner combo-source 175 post-write no-DB refresh`
+- reason: combo-source recovery write PASS 且 rollback-ready；将 175 行 rollback targets 纳入 skip-existing 分类并规范 company_supplier 审计来源
+- completed_step: `ITER-2026-04-14-PARTNER-L4-COMBO-SOURCE-175-POSTWRITE-NODB-REFRESH PASS：skip_existing_validation=5872, discarded_validation=1110, blocked=190, create_candidates=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open a no-DB screen for the 190 remaining blocked rows, prioritizing same-tax conflict route`
+
+### 2026-04-14T23:25:00+08:00
+- blocker_key: `iter_1954_partner_l4_remaining190_blocked_screen_pass`
+- layer_target: `Partner Migration Remaining Blocked Screening`
+- module: `res.partner L4 remaining 190 blocked classifier`
+- reason: 175 行 post-write no-DB refresh PASS 后，对剩余 190 条 blocked 行做只读路线分桶，不写库、不改规则
+- completed_step: `ITER-2026-04-14-PARTNER-L4-REMAINING190-BLOCKED-SCREEN PASS：blocked_rows=190, same_tax_company_supplier_conflict_screen=111, non_primary_duplicate_group_screen=26, company_duplicate_group_screen=24, same_tax_company_duplicate_conflict_screen=21, residual_unsafe_name_manual_screen=4, missing_tax_non_primary_screen=4, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open the 111-row same-tax company/supplier conflict no-DB screen`
+
+### 2026-04-14T23:35:00+08:00
+- blocker_key: `iter_1955_partner_l4_same_tax_company_supplier_conflict_screen_pass`
+- layer_target: `Partner Migration Same-Tax Conflict Screening`
+- module: `res.partner L4 same-tax company/supplier conflict classifier`
+- reason: 对 111 条 same-tax company/supplier conflict 做税号质量与合并路线分桶，不写库、不改规则
+- completed_step: `ITER-2026-04-14-PARTNER-L4-SAME-TAX-COMPANY-SUPPLIER-CONFLICT-SCREEN PASS：route_rows=111, canonical_merge_review=102, placeholder_tax_split_by_name=5, tax_normalization=3, manual_conflict=1, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open no-DB write design for the 102 canonical merge rows`
+
+### 2026-04-14T23:45:00+08:00
+- blocker_key: `iter_1956_partner_l4_same_tax_company_supplier_canonical_write_design_pass`
+- layer_target: `Partner Migration Same-Tax Canonical Write Design`
+- module: `res.partner L4 same-tax company/supplier canonical write design`
+- reason: 对 102 条 usable-tax company/supplier conflict 行固化 no-DB 写入设计，不写库
+- completed_step: `ITER-2026-04-14-PARTNER-L4-SAME-TAX-COMPANY-SUPPLIER-CANONICAL-WRITE-DESIGN PASS：write_design_rows=102, proposed_action=create_company_supplier_partner_with_canonical_tax_number, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `execute a bounded create-only DB write with rollback targets`
+
+### 2026-04-14T23:55:00+08:00
+- blocker_key: `iter_1957_partner_l4_same_tax_company_supplier_canonical_102_write_pass`
+- layer_target: `Partner Migration Same-Tax Canonical Bounded Write`
+- module: `res.partner L4 same-tax company/supplier canonical create write`
+- reason: 在开发数据库迁移加速策略下执行 102 行 bounded create-only 写入；写入后完成只读 rollback-ready 复核
+- completed_step: `ITER-2026-04-14-PARTNER-L4-SAME-TAX-COMPANY-SUPPLIER-CANONICAL-102-WRITE PASS：created=102, updated=0, post_write_review=ROLLBACK_READY, rollback_target_rows=102`
+- active_commit: `25dc6bc`
+- next_step: `run a no-DB post-write refresh and continue remaining partner L4 blockers`
+
+### 2026-04-15T00:05:00+08:00
+- blocker_key: `iter_1958_partner_l4_same_tax_canonical_102_postwrite_nodb_refresh_pass`
+- layer_target: `Partner Migration Importer Promotion`
+- module: `res.partner same-tax canonical 102 post-write no-DB refresh`
+- reason: 102 行 same-tax canonical write PASS 且 rollback-ready；将 rollback targets 纳入 skip-existing 分类
+- completed_step: `ITER-2026-04-14-PARTNER-L4-SAME-TAX-CANONICAL-102-POSTWRITE-NODB-REFRESH PASS：skip_existing_validation=5974, discarded_validation=1110, blocked=88, create_candidates=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open a no-DB screen for the 88 remaining blocked rows`
+
+### 2026-04-15T00:15:00+08:00
+- blocker_key: `iter_1959_partner_l4_remaining88_blocked_screen_pass`
+- layer_target: `Partner Migration Remaining Blocked Screening`
+- module: `res.partner L4 remaining 88 blocked classifier`
+- reason: 102 行 post-write no-DB refresh PASS 后，对剩余 88 条 blocked 行做只读路线分桶，不写库、不改规则
+- completed_step: `ITER-2026-04-14-PARTNER-L4-REMAINING88-BLOCKED-SCREEN PASS：blocked_rows=88, company_supplier_duplicate_group_screen=26, company_duplicate_group_screen=24, remaining_same_tax_company_duplicate_conflict_screen=21, remaining_same_tax_company_supplier_conflict_screen=9, residual_unsafe_name_manual_screen=4, supplier_missing_tax_single_screen=4, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open the 26-row company/supplier duplicate group route`
+
+### 2026-04-15T00:25:00+08:00
+- blocker_key: `iter_1960_partner_l4_company_supplier_duplicate_26_write_design_pass`
+- layer_target: `Partner Migration Company/Supplier Duplicate Write Design`
+- module: `res.partner L4 company/supplier duplicate-group write design`
+- reason: 88 条 blocked 分流 PASS 后，优先处理最大 26 条 company/supplier duplicate-group 路线；本批只生成 no-DB 写入设计
+- completed_step: `ITER-2026-04-14-PARTNER-L4-COMPANY-SUPPLIER-DUPLICATE-26-WRITE-DESIGN PASS：write_design_rows=26, action=create_company_supplier_partner_with_tax_number, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `execute a bounded create-only DB write with rollback targets for the 26 design rows`
+
+### 2026-04-15T00:45:00+08:00
+- blocker_key: `iter_1961_partner_l4_company_supplier_duplicate_26_write_pass`
+- layer_target: `Partner Migration Company/Supplier Duplicate Bounded Write`
+- module: `res.partner L4 company/supplier duplicate-group create write`
+- reason: 26 条 no-DB 设计 PASS，用户已授权开发库迁移加速；执行 create-only 写入并生成 rollback targets
+- completed_step: `ITER-2026-04-14-PARTNER-L4-COMPANY-SUPPLIER-DUPLICATE-26-WRITE PASS：created=26, updated=0, post_write_review=ROLLBACK_READY, rollback_target_rows=26`
+- active_commit: `25dc6bc`
+- next_step: `run a no-DB post-write refresh and continue remaining partner L4 blockers`
+
+### 2026-04-15T00:55:00+08:00
+- blocker_key: `iter_1962_partner_l4_company_supplier_duplicate_26_postwrite_nodb_refresh_pass`
+- layer_target: `Partner Migration Importer Promotion`
+- module: `res.partner company/supplier duplicate 26 post-write no-DB refresh`
+- reason: 26 条 write PASS 且 rollback-ready；将 rollback targets 纳入 skip-existing 分类
+- completed_step: `ITER-2026-04-14-PARTNER-L4-COMPANY-SUPPLIER-DUPLICATE-26-POSTWRITE-NODB-REFRESH PASS：skip_existing_validation=6000, discarded_validation=1110, blocked=62, create_candidates=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open the 24-row company duplicate group route`
+
+### 2026-04-15T01:05:00+08:00
+- blocker_key: `iter_1963_partner_l4_company_duplicate_24_write_design_pass`
+- layer_target: `Partner Migration Company Duplicate Write Design`
+- module: `res.partner L4 company duplicate-group write design`
+- reason: 剩余 62 条 blocked 中最大低风险路线为 24 条 company duplicate-group；本批只生成 no-DB 写入设计
+- completed_step: `ITER-2026-04-14-PARTNER-L4-COMPANY-DUPLICATE-24-WRITE-DESIGN PASS：write_design_rows=24, action=create_company_partner_with_tax_number, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `execute a bounded create-only DB write with rollback targets for the 24 design rows`
+
+### 2026-04-15T01:20:00+08:00
+- blocker_key: `iter_1964_partner_l4_company_duplicate_24_write_fail`
+- layer_target: `Partner Migration Company Duplicate Bounded Write`
+- module: `res.partner L4 company duplicate-group create write`
+- reason: 24 条 no-DB 设计 PASS，用户已授权开发库迁移加速；执行 create-only 写入并生成 rollback targets
+- completed_step: `ITER-2026-04-14-PARTNER-L4-COMPANY-DUPLICATE-24-WRITE FAIL：pre_write_snapshot_writer_missing_fieldnames before create loop`
+- active_commit: `25dc6bc`
+- next_step: `STOP; open a recovery task to fix snapshot writer fieldnames before retrying the 24-row write`
+
+### 2026-04-15T01:30:00+08:00
+- blocker_key: `iter_1965_partner_l4_company_duplicate_24_write_recovery_pass`
+- layer_target: `Partner Migration Company Duplicate Bounded Write Recovery`
+- module: `res.partner L4 company duplicate-group create write`
+- reason: 修复 pre-write snapshot CSV writer fieldnames 参数缺失，并重试同一 24 条 create-only 写入
+- completed_step: `ITER-2026-04-14-PARTNER-L4-COMPANY-DUPLICATE-24-WRITE-RECOVERY PASS：fixed_snapshot_writer, created=24, updated=0, post_write_review=ROLLBACK_READY, rollback_target_rows=24`
+- active_commit: `25dc6bc`
+- next_step: `run a no-DB post-write refresh and continue remaining partner L4 blockers`
+
+### 2026-04-15T01:40:00+08:00
+- blocker_key: `iter_1966_partner_l4_company_duplicate_24_postwrite_nodb_refresh_pass`
+- layer_target: `Partner Migration Importer Promotion`
+- module: `res.partner company duplicate 24 post-write no-DB refresh`
+- reason: 24 条 recovery write PASS 且 rollback-ready；将 rollback targets 纳入 skip-existing 分类
+- completed_step: `ITER-2026-04-14-PARTNER-L4-COMPANY-DUPLICATE-24-POSTWRITE-NODB-REFRESH PASS：skip_existing_validation=6024, discarded_validation=1110, blocked=38, create_candidates=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open the 21-row same-tax company conflict route`
+
+### 2026-04-15T01:50:00+08:00
+- blocker_key: `iter_1967_partner_l4_same_tax_company_conflict_21_screen_pass`
+- layer_target: `Partner Migration Same-Tax Company Conflict Screening`
+- module: `res.partner L4 same-tax company conflict classifier`
+- reason: 剩余 38 条 blocked 中优先处理 21 条 company same-tax conflict；本批只读筛分 usable-tax 与 manual-review
+- completed_step: `ITER-2026-04-14-PARTNER-L4-SAME-TAX-COMPANY-CONFLICT-21-SCREEN PASS：screen_rows=21, canonical_write_review=20, manual_review=1, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open no-DB write design for the 20 canonical same-tax company rows`
+
+### 2026-04-15T02:00:00+08:00
+- blocker_key: `iter_1968_partner_l4_same_tax_company_canonical_20_write_design_pass`
+- layer_target: `Partner Migration Same-Tax Company Canonical Write Design`
+- module: `res.partner L4 same-tax company canonical write design`
+- reason: 21 条 same-tax company conflict screen PASS，其中 20 条 usable-tax 可进入 no-DB 写入设计
+- completed_step: `ITER-2026-04-14-PARTNER-L4-SAME-TAX-COMPANY-CANONICAL-20-WRITE-DESIGN PASS：write_design_rows=20, action=create_company_partner_with_canonical_tax_number, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `execute a bounded create-only DB write with rollback targets for the 20 design rows`
+
+### 2026-04-15T02:20:00+08:00
+- blocker_key: `iter_1969_partner_l4_same_tax_company_canonical_20_write_pass`
+- layer_target: `Partner Migration Same-Tax Company Canonical Bounded Write`
+- module: `res.partner L4 same-tax company canonical create write`
+- reason: 20 条 no-DB 设计 PASS，用户已授权开发库迁移加速；执行 create-only 写入并生成 rollback targets
+- completed_step: `ITER-2026-04-14-PARTNER-L4-SAME-TAX-COMPANY-CANONICAL-20-WRITE PASS：created=20, updated=0, post_write_review=ROLLBACK_READY, rollback_target_rows=20`
+- active_commit: `25dc6bc`
+- next_step: `run a no-DB post-write refresh and continue remaining partner L4 blockers`
+
+### 2026-04-15T02:30:00+08:00
+- blocker_key: `iter_1970_partner_l4_same_tax_company_canonical_20_postwrite_nodb_refresh_pass`
+- layer_target: `Partner Migration Importer Promotion`
+- module: `res.partner same-tax company canonical 20 post-write no-DB refresh`
+- reason: 20 条 write PASS 且 rollback-ready；将 rollback targets 纳入 skip-existing 分类
+- completed_step: `ITER-2026-04-14-PARTNER-L4-SAME-TAX-COMPANY-CANONICAL-20-POSTWRITE-NODB-REFRESH PASS：skip_existing_validation=6044, discarded_validation=1110, blocked=18, create_candidates=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open the remaining 18 blocked rows screen`
+
+### 2026-04-15T02:45:00+08:00
+- blocker_key: `iter_1971_partner_l4_remaining18_discard_evidence_pass`
+- layer_target: `Partner Migration Remaining Discard Evidence`
+- module: `res.partner L4 remaining blocked discard evidence`
+- reason: 用户明确要求剩余数据直接丢弃；本批生成 no-DB discard evidence，并刷新分类器
+- completed_step: `ITER-2026-04-14-PARTNER-L4-REMAINING18-DISCARD-EVIDENCE-REFRESH PASS：discard_rows=18, discarded_validation=1128, skip_existing_validation=6044, blocked=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `partner L4 lane is rebuilt as skip-existing/discarded validation only; open the next migration lane or final bus summary`
+
+### 2026-04-15T02:55:00+08:00
+- blocker_key: `iter_1972_project_member_neutral_post500_expansion_dry_run_in_progress`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: Partner L4 已归零；按冻结顺序进入 project_member neutral evidence lane，重算 34+500 后的下一批只读扩展计划
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-POST500-EXPANSION-DRY-RUN in_progress`
+- active_commit: `25dc6bc`
+- next_step: `run project_member neutral post-500 expansion dry-run acceptance commands`
+
+### 2026-04-15T03:05:00+08:00
+- blocker_key: `iter_1972_project_member_neutral_post500_expansion_dry_run_pass`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: Partner L4 已归零；按冻结顺序进入 project_member neutral evidence lane，重算 34+500 后的下一批只读扩展计划
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-POST500-EXPANSION-DRY-RUN PASS：already_neutral_rows=534, remaining_relation_unique_rows=0, duplicate_relation_evidence_slice_rows=500, remaining_duplicate_relation_evidence_rows=6855, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `run remaining verification gates, then open the next 500-row duplicate-relation neutral evidence carrier write`
+
+### 2026-04-15T03:15:00+08:00
+- blocker_key: `iter_1973_project_member_neutral_duprel_next500_write_in_progress`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-500 dry-run PASS 且下一批 duplicate-relation evidence slice=500；执行 create-only neutral carrier 写入，责任事实仍保持 held
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500-WRITE in_progress`
+- active_commit: `25dc6bc`
+- next_step: `validate and execute bounded next 500-row neutral carrier write with rollback targets and aggregate review`
+
+### 2026-04-15T03:25:00+08:00
+- blocker_key: `iter_1973_project_member_neutral_duprel_next500_write_pass`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-500 dry-run PASS 且下一批 duplicate-relation evidence slice=500；执行 create-only neutral carrier 写入，责任事实仍保持 held
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500-WRITE PASS：created=500, rollback_target_rows=500, visibility_changed=false, aggregate_total_records=1034, role_fact_status_missing_count=1034`
+- active_commit: `25dc6bc`
+- next_step: `run remaining verification gates, then open a post-1034 neutral expansion dry-run`
+
+### 2026-04-15T03:35:00+08:00
+- blocker_key: `iter_1974_project_member_neutral_post1034_expansion_dry_run_in_progress`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 1034；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-POST1034-EXPANSION-DRY-RUN in_progress`
+- active_commit: `25dc6bc`
+- next_step: `run project_member neutral post-1034 expansion dry-run acceptance commands`
+
+### 2026-04-15T03:45:00+08:00
+- blocker_key: `iter_1974_project_member_neutral_post1034_expansion_dry_run_pass`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 1034；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-POST1034-EXPANSION-DRY-RUN PASS：already_neutral_rows=1034, remaining_relation_unique_rows=0, duplicate_relation_evidence_slice_rows=500, remaining_duplicate_relation_evidence_rows=6355, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `run remaining verification gates, then open the next 500-row duplicate-relation neutral evidence carrier write`
+
+### 2026-04-15T03:55:00+08:00
+- blocker_key: `iter_1975_project_member_neutral_duprel_next500b_write_in_progress`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-1034 dry-run PASS 且下一批 duplicate-relation evidence slice=500；继续 create-only neutral carrier 写入，责任事实仍保持 held
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500B-WRITE in_progress`
+- active_commit: `25dc6bc`
+- next_step: `validate and execute bounded next500b neutral carrier write with rollback targets and aggregate review`
+
+### 2026-04-15T04:05:00+08:00
+- blocker_key: `iter_1975_project_member_neutral_duprel_next500b_write_fail_env_not_propagated`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: host-side environment variables were not visible inside the Odoo shell process, so the parameterized script fell back to default 1973N configuration
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500B-WRITE FAIL：precheck target_import_batch_not_empty for fallback batch 1973N; created=0; 1975N_count=0`
+- active_commit: `25dc6bc`
+- next_step: `STOP; open recovery task with explicit Odoo-visible 1975N configuration before retrying`
+
+### 2026-04-15T04:15:00+08:00
+- blocker_key: `iter_1976_project_member_neutral_duprel_next500b_write_recovery_in_progress`
+- layer_target: `Project Member Neutral Carrier Write Recovery`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: 上一批失败未创建 1975N 记录；恢复批次使用 Odoo shell 内固定配置 launcher，避免 host-side env 透传问题
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500B-WRITE-RECOVERY in_progress`
+- active_commit: `25dc6bc`
+- next_step: `validate and execute fixed-run 1975N next500b recovery write`
+
+### 2026-04-15T04:20:00+08:00
+- blocker_key: `iter_1976_project_member_neutral_duprel_next500b_write_recovery_fail_relative_path`
+- layer_target: `Project Member Neutral Carrier Write Recovery`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: Odoo shell cwd is `/`; recovery launcher used relative script path and failed before entering the writer
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500B-WRITE-RECOVERY FAIL：relative script path not visible, created=0, 1975N_count=0`
+- active_commit: `25dc6bc`
+- next_step: `STOP; open a second recovery task using an inlined fixed-run writer or verified absolute Odoo-visible script path`
+
+### 2026-04-15T04:30:00+08:00
+- blocker_key: `iter_1977_project_member_neutral_duprel_next500b_write_recovery2_in_progress`
+- layer_target: `Project Member Neutral Carrier Write Recovery`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: recovery1 failed before create due relative script path; recovery2 uses fully inlined fixed-run writer for 1975N/next500b
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500B-WRITE-RECOVERY2 in_progress`
+- active_commit: `25dc6bc`
+- next_step: `validate and execute inlined fixed-run 1975N next500b recovery2 write`
+
+### 2026-04-15T04:40:00+08:00
+- blocker_key: `iter_1977_project_member_neutral_duprel_next500b_write_recovery2_pass`
+- layer_target: `Project Member Neutral Carrier Write Recovery`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: recovery1 failed before create due relative script path; recovery2 uses fully inlined fixed-run writer for 1975N/next500b
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500B-WRITE-RECOVERY2 PASS：created=500, rollback_target_rows=500, visibility_changed=false, aggregate_total_records=1534, role_fact_status_missing_count=1534`
+- active_commit: `25dc6bc`
+- next_step: `run remaining verification gates, then open post-1534 neutral expansion dry-run`
+
+### 2026-04-15T04:50:00+08:00
+- blocker_key: `iter_1978_project_member_neutral_post1534_expansion_dry_run_in_progress`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 1534；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-POST1534-EXPANSION-DRY-RUN in_progress`
+- active_commit: `25dc6bc`
+- next_step: `run project_member neutral post-1534 expansion dry-run acceptance commands`
+
+### 2026-04-15T05:00:00+08:00
+- blocker_key: `iter_1978_project_member_neutral_post1534_expansion_dry_run_fail_contract`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: task contract missing non-empty user_visible_outcome; validation failed before Odoo dry-run
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-POST1534-EXPANSION-DRY-RUN FAIL：validate_task missing user_visible_outcome, dry_run_not_executed`
+- active_commit: `25dc6bc`
+- next_step: `STOP; open a recovery task with valid non-empty user_visible_outcome before rerunning post-1534 dry-run`
+
+### 2026-04-15T05:10:00+08:00
+- blocker_key: `iter_1979_project_member_neutral_post1534_expansion_dry_run_recovery_in_progress`
+- layer_target: `Project Member Neutral Expansion Dry Run Recovery`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: 上一批仅 task contract 缺少非空 user_visible_outcome；恢复批次使用有效契约重新执行 read-only dry-run
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-POST1534-EXPANSION-DRY-RUN-RECOVERY in_progress`
+- active_commit: `25dc6bc`
+- next_step: `validate and execute post-1534 expansion dry-run recovery`
+
+### 2026-04-15T05:20:00+08:00
+- blocker_key: `iter_1979_project_member_neutral_post1534_expansion_dry_run_recovery_pass`
+- layer_target: `Project Member Neutral Expansion Dry Run Recovery`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: 上一批仅 task contract 缺少非空 user_visible_outcome；恢复批次使用有效契约重新执行 read-only dry-run
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-POST1534-EXPANSION-DRY-RUN-RECOVERY PASS：already_neutral_rows=1534, remaining_relation_unique_rows=0, duplicate_relation_evidence_slice_rows=500, remaining_duplicate_relation_evidence_rows=5855, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `run remaining verification gates, then open the next 500-row duplicate-relation neutral evidence carrier write`
+
+### 2026-04-15T05:30:00+08:00
+- blocker_key: `iter_1980_project_member_neutral_duprel_next500c_write_in_progress`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-1534 dry-run recovery PASS 且下一批 duplicate-relation evidence slice=500；继续 create-only neutral carrier 写入，责任事实仍保持 held
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500C-WRITE in_progress`
+- active_commit: `25dc6bc`
+- next_step: `validate and execute bounded next500c neutral carrier write with rollback targets and aggregate review`
+
+### 2026-04-15T05:40:00+08:00
+- blocker_key: `iter_1980_project_member_neutral_duprel_next500c_write_pass`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-1534 dry-run recovery PASS 且下一批 duplicate-relation evidence slice=500；继续 create-only neutral carrier 写入，责任事实仍保持 held
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500C-WRITE PASS：created=500, rollback_target_rows=500, visibility_changed=false, aggregate_total_records=2034, role_fact_status_missing_count=2034`
+- active_commit: `25dc6bc`
+- next_step: `run remaining verification gates, then open post-2034 neutral expansion dry-run`
+
+### 2026-04-15T05:50:00+08:00
+- blocker_key: `iter_1981_project_member_neutral_post2034_expansion_dry_run_in_progress`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 2034；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-POST2034-EXPANSION-DRY-RUN in_progress`
+- active_commit: `25dc6bc`
+- next_step: `run project_member neutral post-2034 expansion dry-run acceptance commands`
+
+### 2026-04-15T06:00:00+08:00
+- blocker_key: `iter_1981_project_member_neutral_post2034_expansion_dry_run_pass`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 2034；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-14-PROJECT-MEMBER-NEUTRAL-POST2034-EXPANSION-DRY-RUN PASS：already_neutral_rows=2034, remaining_relation_unique_rows=0, duplicate_relation_evidence_slice_rows=500, remaining_duplicate_relation_evidence_rows=5355, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `run remaining verification gates, then open the next 500-row duplicate-relation neutral evidence carrier write`
+
+### 2026-04-15T06:10:00+08:00
+- blocker_key: `iter_1982_project_member_neutral_duprel_next500d_write_in_progress`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-2034 dry-run PASS 且下一批 duplicate-relation evidence slice=500；继续 create-only neutral carrier 写入，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500D-WRITE in_progress`
+- active_commit: `25dc6bc`
+- next_step: `validate and execute bounded next500d neutral carrier write with rollback targets and aggregate review`
+
+### 2026-04-15T06:20:00+08:00
+- blocker_key: `iter_1982_project_member_neutral_duprel_next500d_write_pass`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-2034 dry-run PASS 且下一批 duplicate-relation evidence slice=500；继续 create-only neutral carrier 写入，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500D-WRITE PASS：created=500, rollback_target_rows=500, visibility_changed=false, aggregate_total_records=2534, role_fact_status_missing_count=2534`
+- active_commit: `25dc6bc`
+- next_step: `run remaining verification gates, then open post-2534 neutral expansion dry-run`
+
+### 2026-04-15T06:30:00+08:00
+- blocker_key: `iter_1983_project_member_neutral_post2534_expansion_dry_run_in_progress`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 2534；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST2534-EXPANSION-DRY-RUN in_progress`
+- active_commit: `25dc6bc`
+- next_step: `run project_member neutral post-2534 expansion dry-run acceptance commands`
+
+### 2026-04-15T06:40:00+08:00
+- blocker_key: `iter_1983_project_member_neutral_post2534_expansion_dry_run_pass`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 2534；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST2534-EXPANSION-DRY-RUN PASS：already_neutral_rows=2534, remaining_relation_unique_rows=0, duplicate_relation_evidence_slice_rows=500, remaining_duplicate_relation_evidence_rows=4855, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `run remaining verification gates, then open the next 500-row duplicate-relation neutral evidence carrier write`
+
+### 2026-04-15T06:50:00+08:00
+- blocker_key: `iter_1984_project_member_neutral_duprel_next500e_write_in_progress`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-2534 dry-run PASS 且下一批 duplicate-relation evidence slice=500；继续 create-only neutral carrier 写入，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500E-WRITE in_progress`
+- active_commit: `25dc6bc`
+- next_step: `validate and execute bounded next500e neutral carrier write with rollback targets and aggregate review`
+
+### 2026-04-15T07:00:00+08:00
+- blocker_key: `iter_1984_project_member_neutral_duprel_next500e_write_pass`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-2534 dry-run PASS 且下一批 duplicate-relation evidence slice=500；create-only neutral carrier 写入已完成，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500E-WRITE PASS：created=500, rollback_target_rows=500, visibility_changed=false, aggregate_total_records=3034, role_fact_status_missing_count=3034`
+- active_commit: `25dc6bc`
+- next_step: `open post-3034 neutral expansion dry-run`
+
+### 2026-04-15T07:10:00+08:00
+- blocker_key: `iter_1985_project_member_neutral_post3034_expansion_dry_run_in_progress`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 3034；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST3034-EXPANSION-DRY-RUN in_progress`
+- active_commit: `25dc6bc`
+- next_step: `run project_member neutral post-3034 expansion dry-run acceptance commands`
+
+### 2026-04-15T07:20:00+08:00
+- blocker_key: `iter_1985_project_member_neutral_post3034_expansion_dry_run_pass`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 3034；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST3034-EXPANSION-DRY-RUN PASS：already_neutral_rows=3034, remaining_relation_unique_rows=0, duplicate_relation_evidence_slice_rows=500, remaining_duplicate_relation_evidence_rows=4355, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open the next 500-row duplicate-relation neutral evidence carrier write`
+
+### 2026-04-15T07:30:00+08:00
+- blocker_key: `iter_1986_project_member_neutral_duprel_next500f_write_in_progress`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-3034 dry-run PASS 且下一批 duplicate-relation evidence slice=500；继续 create-only neutral carrier 写入，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500F-WRITE in_progress`
+- active_commit: `25dc6bc`
+- next_step: `validate and execute bounded next500f neutral carrier write with rollback targets and aggregate review`
+
+### 2026-04-15T07:40:00+08:00
+- blocker_key: `iter_1986_project_member_neutral_duprel_next500f_write_pass`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-3034 dry-run PASS 且下一批 duplicate-relation evidence slice=500；create-only neutral carrier 写入已完成，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500F-WRITE PASS：created=500, rollback_target_rows=500, visibility_changed=false, aggregate_total_records=3534, role_fact_status_missing_count=3534`
+- active_commit: `25dc6bc`
+- next_step: `open post-3534 neutral expansion dry-run`
+
+### 2026-04-15T07:50:00+08:00
+- blocker_key: `iter_1987_project_member_neutral_post3534_expansion_dry_run_in_progress`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 3534；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST3534-EXPANSION-DRY-RUN in_progress`
+- active_commit: `25dc6bc`
+- next_step: `run project_member neutral post-3534 expansion dry-run acceptance commands`
+
+### 2026-04-15T08:00:00+08:00
+- blocker_key: `iter_1987_project_member_neutral_post3534_expansion_dry_run_pass`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 3534；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST3534-EXPANSION-DRY-RUN PASS：already_neutral_rows=3534, remaining_relation_unique_rows=0, duplicate_relation_evidence_slice_rows=500, remaining_duplicate_relation_evidence_rows=3855, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open the next 500-row duplicate-relation neutral evidence carrier write`
+
+### 2026-04-15T08:10:00+08:00
+- blocker_key: `iter_1988_project_member_neutral_duprel_next500g_write_in_progress`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-3534 dry-run PASS 且下一批 duplicate-relation evidence slice=500；继续 create-only neutral carrier 写入，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500G-WRITE in_progress`
+- active_commit: `25dc6bc`
+- next_step: `validate and execute bounded next500g neutral carrier write with rollback targets and aggregate review`
+
+### 2026-04-15T08:20:00+08:00
+- blocker_key: `iter_1988_project_member_neutral_duprel_next500g_write_pass`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-3534 dry-run PASS 且下一批 duplicate-relation evidence slice=500；create-only neutral carrier 写入已完成，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500G-WRITE PASS：created=500, rollback_target_rows=500, visibility_changed=false, aggregate_total_records=4034, role_fact_status_missing_count=4034`
+- active_commit: `25dc6bc`
+- next_step: `open post-4034 neutral expansion dry-run`
+
+### 2026-04-15T08:30:00+08:00
+- blocker_key: `iter_1989_project_member_neutral_post4034_expansion_dry_run_in_progress`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 4034；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST4034-EXPANSION-DRY-RUN in_progress`
+- active_commit: `25dc6bc`
+- next_step: `run project_member neutral post-4034 expansion dry-run acceptance commands`
+
+### 2026-04-15T08:40:00+08:00
+- blocker_key: `iter_1989_project_member_neutral_post4034_expansion_dry_run_pass`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 4034；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST4034-EXPANSION-DRY-RUN PASS：already_neutral_rows=4034, remaining_relation_unique_rows=0, duplicate_relation_evidence_slice_rows=500, remaining_duplicate_relation_evidence_rows=3355, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open the next 500-row duplicate-relation neutral evidence carrier write`
+
+### 2026-04-15T08:50:00+08:00
+- blocker_key: `iter_1990_project_member_neutral_duprel_next500h_write_in_progress`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-4034 dry-run PASS 且下一批 duplicate-relation evidence slice=500；继续 create-only neutral carrier 写入，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500H-WRITE in_progress`
+- active_commit: `25dc6bc`
+- next_step: `validate and execute bounded next500h neutral carrier write with rollback targets and aggregate review`
+
+### 2026-04-15T09:00:00+08:00
+- blocker_key: `iter_1990_project_member_neutral_duprel_next500h_write_pass`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-4034 dry-run PASS 且下一批 duplicate-relation evidence slice=500；create-only neutral carrier 写入已完成，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500H-WRITE PASS：created=500, rollback_target_rows=500, visibility_changed=false, aggregate_total_records=4534, role_fact_status_missing_count=4534`
+- active_commit: `25dc6bc`
+- next_step: `open post-4534 neutral expansion dry-run`
+
+### 2026-04-15T09:10:00+08:00
+- blocker_key: `iter_1991_project_member_neutral_post4534_expansion_dry_run_in_progress`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 4534；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST4534-EXPANSION-DRY-RUN in_progress`
+- active_commit: `25dc6bc`
+- next_step: `run project_member neutral post-4534 expansion dry-run acceptance commands`
+
+### 2026-04-15T09:20:00+08:00
+- blocker_key: `iter_1991_project_member_neutral_post4534_expansion_dry_run_pass`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 4534；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST4534-EXPANSION-DRY-RUN PASS：already_neutral_rows=4534, remaining_relation_unique_rows=0, duplicate_relation_evidence_slice_rows=500, remaining_duplicate_relation_evidence_rows=2855, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open the next 500-row duplicate-relation neutral evidence carrier write`
+
+### 2026-04-15T09:30:00+08:00
+- blocker_key: `iter_1992_project_member_neutral_duprel_next500i_write_in_progress`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-4534 dry-run PASS 且下一批 duplicate-relation evidence slice=500；继续 create-only neutral carrier 写入，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500I-WRITE in_progress`
+- active_commit: `25dc6bc`
+- next_step: `validate and execute bounded next500i neutral carrier write with rollback targets and aggregate review`
+
+### 2026-04-15T09:40:00+08:00
+- blocker_key: `iter_1992_project_member_neutral_duprel_next500i_write_pass`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-4534 dry-run PASS 且下一批 duplicate-relation evidence slice=500；create-only neutral carrier 写入已完成，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500I-WRITE PASS：created=500, rollback_target_rows=500, visibility_changed=false, aggregate_total_records=5034, role_fact_status_missing_count=5034`
+- active_commit: `25dc6bc`
+- next_step: `open post-5034 neutral expansion dry-run`
+
+### 2026-04-15T09:50:00+08:00
+- blocker_key: `iter_1993_project_member_neutral_post5034_expansion_dry_run_in_progress`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 5034；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST5034-EXPANSION-DRY-RUN in_progress`
+- active_commit: `25dc6bc`
+- next_step: `run project_member neutral post-5034 expansion dry-run acceptance commands`
+
+### 2026-04-15T10:00:00+08:00
+- blocker_key: `iter_1993_project_member_neutral_post5034_expansion_dry_run_pass`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 5034；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST5034-EXPANSION-DRY-RUN PASS：already_neutral_rows=5034, remaining_relation_unique_rows=0, duplicate_relation_evidence_slice_rows=500, remaining_duplicate_relation_evidence_rows=2355, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open the next 500-row duplicate-relation neutral evidence carrier write`
+
+### 2026-04-15T10:10:00+08:00
+- blocker_key: `iter_1994_project_member_neutral_duprel_next500j_write_in_progress`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-5034 dry-run PASS 且下一批 duplicate-relation evidence slice=500；继续 create-only neutral carrier 写入，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500J-WRITE in_progress`
+- active_commit: `25dc6bc`
+- next_step: `validate and execute bounded next500j neutral carrier write with rollback targets and aggregate review`
+
+### 2026-04-15T10:20:00+08:00
+- blocker_key: `iter_1994_project_member_neutral_duprel_next500j_write_pass`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-5034 dry-run PASS 且下一批 duplicate-relation evidence slice=500；create-only neutral carrier 写入已完成，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500J-WRITE PASS：created=500, rollback_target_rows=500, visibility_changed=false, aggregate_total_records=5534, role_fact_status_missing_count=5534`
+- active_commit: `25dc6bc`
+- next_step: `open post-5534 neutral expansion dry-run`
+
+### 2026-04-15T10:30:00+08:00
+- blocker_key: `iter_1995_project_member_neutral_post5534_expansion_dry_run_in_progress`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 5534；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST5534-EXPANSION-DRY-RUN in_progress`
+- active_commit: `25dc6bc`
+- next_step: `run project_member neutral post-5534 expansion dry-run acceptance commands`
+
+### 2026-04-15T10:40:00+08:00
+- blocker_key: `iter_1995_project_member_neutral_post5534_expansion_dry_run_pass`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 5534；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST5534-EXPANSION-DRY-RUN PASS：already_neutral_rows=5534, remaining_relation_unique_rows=0, duplicate_relation_evidence_slice_rows=500, remaining_duplicate_relation_evidence_rows=1855, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open the next 500-row duplicate-relation neutral evidence carrier write`
+
+### 2026-04-15T10:50:00+08:00
+- blocker_key: `iter_1996_project_member_neutral_duprel_next500k_write_in_progress`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-5534 dry-run PASS 且下一批 duplicate-relation evidence slice=500；继续 create-only neutral carrier 写入，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500K-WRITE in_progress`
+- active_commit: `25dc6bc`
+- next_step: `validate and execute bounded next500k neutral carrier write with rollback targets and aggregate review`
+
+### 2026-04-15T11:00:00+08:00
+- blocker_key: `iter_1996_project_member_neutral_duprel_next500k_write_pass`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-5534 dry-run PASS 且下一批 duplicate-relation evidence slice=500；create-only neutral carrier 写入已完成，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500K-WRITE PASS：created=500, rollback_target_rows=500, visibility_changed=false, aggregate_total_records=6034, role_fact_status_missing_count=6034`
+- active_commit: `25dc6bc`
+- next_step: `open post-6034 neutral expansion dry-run`
+
+### 2026-04-15T11:10:00+08:00
+- blocker_key: `iter_1997_project_member_neutral_post6034_expansion_dry_run_in_progress`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 6034；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST6034-EXPANSION-DRY-RUN in_progress`
+- active_commit: `25dc6bc`
+- next_step: `run project_member neutral post-6034 expansion dry-run acceptance commands`
+
+### 2026-04-15T11:20:00+08:00
+- blocker_key: `iter_1997_project_member_neutral_post6034_expansion_dry_run_pass`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 6034；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST6034-EXPANSION-DRY-RUN PASS：already_neutral_rows=6034, remaining_relation_unique_rows=0, duplicate_relation_evidence_slice_rows=500, remaining_duplicate_relation_evidence_rows=1355, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open the next 500-row duplicate-relation neutral evidence carrier write`
+
+### 2026-04-15T11:30:00+08:00
+- blocker_key: `iter_1998_project_member_neutral_duprel_next500l_write_in_progress`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-6034 dry-run PASS 且下一批 duplicate-relation evidence slice=500；继续 create-only neutral carrier 写入，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500L-WRITE in_progress`
+- active_commit: `25dc6bc`
+- next_step: `validate and execute bounded next500l neutral carrier write with rollback targets and aggregate review`
+
+### 2026-04-15T11:40:00+08:00
+- blocker_key: `iter_1998_project_member_neutral_duprel_next500l_write_pass`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-6034 dry-run PASS 且下一批 duplicate-relation evidence slice=500；create-only neutral carrier 写入已完成，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500L-WRITE PASS：created=500, rollback_target_rows=500, visibility_changed=false, aggregate_total_records=6534, role_fact_status_missing_count=6534`
+- active_commit: `25dc6bc`
+- next_step: `open post-6534 neutral expansion dry-run`
+
+### 2026-04-15T11:50:00+08:00
+- blocker_key: `iter_1999_project_member_neutral_post6534_expansion_dry_run_in_progress`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 6534；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST6534-EXPANSION-DRY-RUN in_progress`
+- active_commit: `25dc6bc`
+- next_step: `run project_member neutral post-6534 expansion dry-run acceptance commands`
+
+### 2026-04-15T12:00:00+08:00
+- blocker_key: `iter_1999_project_member_neutral_post6534_expansion_dry_run_pass`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 6534；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST6534-EXPANSION-DRY-RUN PASS：already_neutral_rows=6534, remaining_relation_unique_rows=0, duplicate_relation_evidence_slice_rows=500, remaining_duplicate_relation_evidence_rows=855, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open the next 500-row duplicate-relation neutral evidence carrier write`
+
+### 2026-04-15T12:10:00+08:00
+- blocker_key: `iter_2000_project_member_neutral_duprel_next500m_write_in_progress`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-6534 dry-run PASS 且下一批 duplicate-relation evidence slice=500；继续 create-only neutral carrier 写入，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500M-WRITE in_progress`
+- active_commit: `25dc6bc`
+- next_step: `validate and execute bounded next500m neutral carrier write with rollback targets and aggregate review`
+
+### 2026-04-15T12:20:00+08:00
+- blocker_key: `iter_2000_project_member_neutral_duprel_next500m_write_pass`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-6534 dry-run PASS 且下一批 duplicate-relation evidence slice=500；create-only neutral carrier 写入已完成，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-NEXT500M-WRITE PASS：created=500, rollback_target_rows=500, visibility_changed=false, aggregate_total_records=7034, role_fact_status_missing_count=7034`
+- active_commit: `25dc6bc`
+- next_step: `open post-7034 neutral expansion dry-run`
+
+### 2026-04-15T12:30:00+08:00
+- blocker_key: `iter_2001_project_member_neutral_post7034_expansion_dry_run_in_progress`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 7034；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST7034-EXPANSION-DRY-RUN in_progress`
+- active_commit: `25dc6bc`
+- next_step: `run project_member neutral post-7034 expansion dry-run acceptance commands`
+
+### 2026-04-15T12:40:00+08:00
+- blocker_key: `iter_2001_project_member_neutral_post7034_expansion_dry_run_pass`
+- layer_target: `Project Member Neutral Expansion Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 7034；按同一 neutral lane 重新计算下一批 duplicate-relation evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST7034-EXPANSION-DRY-RUN PASS：already_neutral_rows=7034, remaining_relation_unique_rows=0, duplicate_relation_evidence_slice_rows=355, remaining_duplicate_relation_evidence_rows=355, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open final 355-row duplicate-relation neutral evidence carrier write`
+
+### 2026-04-15T12:50:00+08:00
+- blocker_key: `iter_2002_project_member_neutral_duprel_final355_write_in_progress`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-7034 dry-run PASS 且 final duplicate-relation evidence slice=355；继续 create-only neutral carrier 写入，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-FINAL355-WRITE in_progress`
+- active_commit: `25dc6bc`
+- next_step: `validate and execute final355 neutral carrier write with rollback targets and aggregate review`
+
+### 2026-04-15T13:00:00+08:00
+- blocker_key: `iter_2002_project_member_neutral_duprel_final355_write_pass`
+- layer_target: `Project Member Neutral Carrier Write`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: post-7034 dry-run PASS 且 final duplicate-relation evidence slice=355；create-only neutral carrier 写入已完成，责任事实仍保持 held
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-DUPREL-FINAL355-WRITE PASS：created=355, rollback_target_rows=355, visibility_changed=false, aggregate_total_records=7389, role_fact_status_missing_count=7389`
+- active_commit: `25dc6bc`
+- next_step: `open post-7389 neutral expansion closure dry-run`
+
+### 2026-04-15T13:10:00+08:00
+- blocker_key: `iter_2003_project_member_neutral_post7389_closure_dry_run_in_progress`
+- layer_target: `Project Member Neutral Expansion Closure Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: neutral carrier 总量已达 mapped project/user rows=7389；按同一 neutral lane 校验 remaining evidence 是否归零
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST7389-CLOSURE-DRY-RUN in_progress`
+- active_commit: `25dc6bc`
+- next_step: `run project_member neutral post-7389 closure dry-run acceptance commands`
+
+### 2026-04-15T13:20:00+08:00
+- blocker_key: `iter_2003_project_member_neutral_post7389_closure_dry_run_pass_with_risk`
+- layer_target: `Project Member Neutral Expansion Closure Dry Run`
+- module: `sc.project.member.staging neutral evidence expansion`
+- reason: dry-run confirmed already_neutral_rows=7389, remaining_relation_unique_rows=0, remaining_duplicate_relation_evidence_rows=0, but current script treats no_duplicate_evidence_slice as PASS_WITH_RISK and exits non-zero
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-POST7389-CLOSURE-DRY-RUN PASS_WITH_RISK：acceptance_failed_due_pass_with_risk_no_duplicate_evidence_slice`
+- active_commit: `25dc6bc`
+- next_step: `STOP: open closure-policy normalization task or manually accept zero remaining evidence as terminal PASS`
+
+### 2026-04-15T13:40:00+08:00
+- blocker_key: `iter_2004_project_member_neutral_closure_policy_normalization_pass`
+- layer_target: `Project Member Neutral Closure Policy`
+- module: `scripts/migration/project_member_neutral_expansion_dry_run.py`
+- reason: zero remaining evidence is a terminal completion condition, not a blocked duplicate-evidence slice
+- completed_step: `ITER-2026-04-15-PROJECT-MEMBER-NEUTRAL-CLOSURE-POLICY-NORMALIZATION PASS：closure_status=PASS, already_neutral_rows=7389, remaining_evidence_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `run final gates and close project_member neutral carrier lane`
+
+### 2026-04-15T13:50:00+08:00
+- blocker_key: `iter_2004_project_member_neutral_closure_policy_final_gates_pass`
+- layer_target: `Project Member Neutral Closure Policy`
+- module: `scripts/migration/project_member_neutral_expansion_dry_run.py`
+- reason: final gates passed after closure policy normalization
+- completed_step: `final gates PASS：verify.native.business_fact.static=PASS, git_diff_check=PASS, redline_scan=PASS_EXPECTED_READ_ONLY`
+- active_commit: `25dc6bc`
+- next_step: `project_member neutral carrier lane closed; select next migration lane`
+
+### 2026-04-15T14:10:00+08:00
+- blocker_key: `iter_2005_next_migration_iteration_plan_pass`
+- layer_target: `Migration Iteration Planning`
+- module: `docs/migration_alignment and agent_ops`
+- reason: project_member neutral carrier lane closed at 7389 rows and partner L4 create-only candidates are exhausted under the current rule set; next mainline must consolidate partner blocked remainder before contract readiness
+- completed_step: `ITER-2026-04-15-NEXT-MIGRATION-ITERATION-PLAN PASS：selected_next_lane=partner_l4_blocked_remainder_consolidated_screen, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `create and run ITER-2026-04-15-PARTNER-L4-BLOCKED-REMAINDER-CONSOLIDATED-SCREEN`
+
+### 2026-04-15T14:25:00+08:00
+- blocker_key: `iter_2006_partner_l4_blocked_remainder_consolidated_screen_pass`
+- layer_target: `Migration Evidence Screen`
+- module: `partner L4 migration reports`
+- reason: partner L4 active blocked remainder needed a current no-DB decision before contract readiness
+- completed_step: `ITER-2026-04-15-PARTNER-L4-BLOCKED-REMAINDER-CONSOLIDATED-SCREEN PASS：active_remainder_anchor=365, route_resolution_total=365, current_active_blocked_rows=0, create_candidates=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `create and run ITER-2026-04-15-CONTRACT-READINESS-NODB-SCREEN`
+
+### 2026-04-15T14:40:00+08:00
+- blocker_key: `iter_2007_contract_readiness_nodb_screen_in_progress`
+- layer_target: `Migration Readiness Screen`
+- module: `contract migration readiness`
+- reason: partner L4 active blocked remainder is closed; contract source rows can now be rechecked against current project and partner anchors without contract writes
+- completed_step: `ITER-2026-04-15-CONTRACT-READINESS-NODB-SCREEN in_progress：readonly script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract readiness no-DB screen acceptance commands`
+
+### 2026-04-15T14:55:00+08:00
+- blocker_key: `iter_2007_contract_readiness_nodb_screen_pass`
+- layer_target: `Migration Readiness Screen`
+- module: `contract migration readiness`
+- reason: current partner/project anchors were rechecked using host-side source CSV plus readonly PostgreSQL SELECT/COPY
+- completed_step: `ITER-2026-04-15-CONTRACT-READINESS-NODB-SCREEN PASS：contract_rows=1694, partner_baseline_count=6115, project_legacy_anchor_count=755, safe_candidate_rows=1332, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open ITER-2026-04-15-CONTRACT-HEADER-BOUNDED-DRY-RUN`
+
+### 2026-04-15T15:10:00+08:00
+- blocker_key: `iter_2008_contract_header_bounded_dry_run_in_progress`
+- layer_target: `Migration Header Dry Run`
+- module: `contract migration header payload`
+- reason: readiness screen found 1332 resolvable contract header candidates; prepare no-DB payload and first 200-row precheck slice
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-BOUNDED-DRY-RUN in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header bounded no-DB dry-run acceptance commands`
+
+### 2026-04-15T15:20:00+08:00
+- blocker_key: `iter_2008_contract_header_bounded_dry_run_pass`
+- layer_target: `Migration Header Dry Run`
+- module: `contract migration header payload`
+- reason: dry-run payload was generated from 1332 readiness candidates without DB writes
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-BOUNDED-DRY-RUN PASS：dry_run_rows=1332, ready_for_readonly_precheck_rows=1332, blocked_rows=0, slice_rows=200, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open ITER-2026-04-15-CONTRACT-HEADER-SLICE200-READONLY-PRECHECK`
+
+### 2026-04-15T15:35:00+08:00
+- blocker_key: `iter_2009_contract_header_slice200_readonly_precheck_in_progress`
+- layer_target: `Migration Readonly Precheck`
+- module: `contract migration header payload`
+- reason: first 200 dry-run rows need target existence and uniqueness checks before write design
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-SLICE200-READONLY-PRECHECK in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header slice200 readonly precheck acceptance commands`
+
+### 2026-04-15T15:45:00+08:00
+- blocker_key: `iter_2009_contract_header_slice200_readonly_precheck_pass`
+- layer_target: `Migration Readonly Precheck`
+- module: `contract migration header payload`
+- reason: 200-row slice passed legacy_contract_id absence and project/partner existence checks
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-SLICE200-READONLY-PRECHECK PASS：row_count=200, ready_for_write_design_rows=200, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open ITER-2026-04-15-CONTRACT-HEADER-SLICE200-WRITE-DESIGN`
+
+### 2026-04-15T16:00:00+08:00
+- blocker_key: `iter_2010_contract_header_slice200_write_design_in_progress`
+- layer_target: `Migration Write Design`
+- module: `contract migration header payload`
+- reason: 200-row slice passed readonly precheck and needs no-DB create-only design before any authorization packet
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-SLICE200-WRITE-DESIGN in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header slice200 write design acceptance commands`
+
+### 2026-04-15T16:10:00+08:00
+- blocker_key: `iter_2010_contract_header_slice200_write_design_pass`
+- layer_target: `Migration Write Design`
+- module: `contract migration header payload`
+- reason: no-DB create-only header design generated after 200-row readonly precheck PASS
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-SLICE200-WRITE-DESIGN PASS：input_rows=200, write_design_rows=200, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open ITER-2026-04-15-CONTRACT-HEADER-SLICE200-AUTH-PACKET`
+
+### 2026-04-15T16:20:00+08:00
+- blocker_key: `iter_2011_contract_header_slice200_auth_packet_in_progress`
+- layer_target: `Migration Authorization Packet`
+- module: `contract migration header payload`
+- reason: 200-row no-DB write design passed and needs packetized payload before dedicated DB write batch
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-SLICE200-AUTH-PACKET in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header slice200 authorization packet acceptance commands`
+
+### 2026-04-15T16:30:00+08:00
+- blocker_key: `iter_2011_contract_header_slice200_auth_packet_pass`
+- layer_target: `Migration Authorization Packet`
+- module: `contract migration header payload`
+- reason: 200-row create-only payload was packetized with rollback key and explicit no-write boundary
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-SLICE200-AUTH-PACKET PASS：payload_rows=200, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open ITER-2026-04-15-CONTRACT-HEADER-SLICE200-CREATE-WRITE`
+
+### 2026-04-15T16:45:00+08:00
+- blocker_key: `iter_2012_contract_header_slice200_create_write_in_progress`
+- layer_target: `Migration DB Write`
+- module: `construction.contract header migration`
+- reason: 200-row authorization packet passed and user authorized execution
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-SLICE200-CREATE-WRITE in_progress：write and review scripts prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header slice200 create-only write acceptance commands`
+
+### 2026-04-15T16:55:00+08:00
+- blocker_key: `iter_2012_contract_header_slice200_create_write_pass`
+- layer_target: `Migration DB Write`
+- module: `construction.contract header migration`
+- reason: dedicated 200-row create-only contract header write completed and readonly post-write review confirmed rollback eligibility
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-SLICE200-CREATE-WRITE PASS：created=200, updated=0, matched=200, rollback_targets=200, rollback_eligible=200`
+- active_commit: `25dc6bc`
+- next_step: `open next contract header migration no-DB/read-only iteration for remaining ready candidates`
+
+### 2026-04-15T17:05:00+08:00
+- blocker_key: `iter_2013_contract_header_postwrite_nodb_refresh_in_progress`
+- layer_target: `Migration Readonly Refresh`
+- module: `contract migration header payload`
+- reason: first 200-row header write passed and remaining candidates need refresh before the next precheck/design/write chain
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POSTWRITE-NODB-REFRESH in_progress：readonly refresh script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post-write no-DB refresh acceptance commands`
+
+### 2026-04-15T17:15:00+08:00
+- blocker_key: `iter_2013_contract_header_postwrite_nodb_refresh_pass`
+- layer_target: `Migration Readonly Refresh`
+- module: `contract migration header payload`
+- reason: post-write readonly refresh confirmed first 200 headers exist and exported the next 200-row slice
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POSTWRITE-NODB-REFRESH PASS：input_rows=1332, written_existing_rows=200, remaining_rows=1132, next_slice_rows=200, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open next 200-row contract header readonly precheck`
+
+### 2026-04-15T17:25:00+08:00
+- blocker_key: `iter_2014_contract_header_next200_readonly_precheck_in_progress`
+- layer_target: `Migration Readonly Precheck`
+- module: `contract migration header payload`
+- reason: next 200-row contract header slice was exported and needs readonly precheck before write design
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-NEXT200-READONLY-PRECHECK in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header next200 readonly precheck acceptance commands`
+
+### 2026-04-15T17:35:00+08:00
+- blocker_key: `iter_2014_contract_header_next200_readonly_precheck_pass`
+- layer_target: `Migration Readonly Precheck`
+- module: `contract migration header payload`
+- reason: next 200-row contract header slice passed target existence and project/partner anchor checks
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-NEXT200-READONLY-PRECHECK PASS：row_count=200, ready_for_write_design_rows=200, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open next200 no-DB write design`
+
+### 2026-04-15T17:45:00+08:00
+- blocker_key: `iter_2015_contract_header_next200_write_design_in_progress`
+- layer_target: `Migration Write Design`
+- module: `contract migration header payload`
+- reason: next 200-row contract header slice passed readonly precheck and needs no-DB create-only design before authorization packet
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-NEXT200-WRITE-DESIGN in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header next200 write design acceptance commands`
+
+### 2026-04-15T17:55:00+08:00
+- blocker_key: `iter_2015_contract_header_next200_write_design_pass`
+- layer_target: `Migration Write Design`
+- module: `contract migration header payload`
+- reason: next 200-row contract header slice produced a create-only no-DB write design without blockers
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-NEXT200-WRITE-DESIGN PASS：input_rows=200, write_design_rows=200, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open next200 no-DB authorization packet`
+
+### 2026-04-15T18:05:00+08:00
+- blocker_key: `iter_2016_contract_header_next200_auth_packet_in_progress`
+- layer_target: `Migration Authorization Packet`
+- module: `contract migration header payload`
+- reason: next 200-row no-DB write design passed and needs packetized payload before dedicated DB write batch
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-NEXT200-AUTH-PACKET in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header next200 authorization packet acceptance commands`
+
+### 2026-04-15T18:15:00+08:00
+- blocker_key: `iter_2016_contract_header_next200_auth_packet_pass`
+- layer_target: `Migration Authorization Packet`
+- module: `contract migration header payload`
+- reason: next 200-row create-only payload was packetized with rollback key and explicit no-write boundary
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-NEXT200-AUTH-PACKET PASS：payload_rows=200, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open next200 dedicated DB write batch`
+
+### 2026-04-15T18:25:00+08:00
+- blocker_key: `iter_2017_contract_header_next200_create_write_in_progress`
+- layer_target: `Migration DB Write`
+- module: `construction.contract header migration`
+- reason: next 200-row authorization packet passed and user authorized direct execution
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-NEXT200-CREATE-WRITE in_progress：write and review scripts prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header next200 create-only write acceptance commands`
+
+### 2026-04-15T18:35:00+08:00
+- blocker_key: `iter_2017_contract_header_next200_create_write_pass`
+- layer_target: `Migration DB Write`
+- module: `construction.contract header migration`
+- reason: dedicated next 200-row create-only contract header write completed and readonly post-write review confirmed rollback eligibility
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-NEXT200-CREATE-WRITE PASS：created=200, updated=0, matched=200, rollback_targets=200, rollback_eligible=200`
+- active_commit: `25dc6bc`
+- next_step: `run final gates then refresh remaining contract header candidates`
+
+### 2026-04-15T18:45:00+08:00
+- blocker_key: `iter_2018_contract_header_post400_nodb_refresh_in_progress`
+- layer_target: `Migration Readonly Refresh`
+- module: `contract migration header payload`
+- reason: two 200-row header writes passed and remaining candidates need refresh before the next precheck/design/write chain
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST400-NODB-REFRESH in_progress：readonly refresh script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post400 no-DB refresh acceptance commands`
+
+### 2026-04-15T18:55:00+08:00
+- blocker_key: `iter_2018_contract_header_post400_nodb_refresh_pass`
+- layer_target: `Migration Readonly Refresh`
+- module: `contract migration header payload`
+- reason: post400 readonly refresh confirmed 400 headers exist and exported the next 200-row slice
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST400-NODB-REFRESH PASS：input_rows=1332, written_existing_rows=400, remaining_rows=932, next_slice_rows=200, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open next 200-row contract header readonly precheck`
+
+### 2026-04-15T19:05:00+08:00
+- blocker_key: `iter_2019_contract_header_post400_next200_readonly_precheck_in_progress`
+- layer_target: `Migration Readonly Precheck`
+- module: `contract migration header payload`
+- reason: post400 next 200-row contract header slice was exported and needs readonly precheck before write design
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST400-NEXT200-READONLY-PRECHECK in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post400 next200 readonly precheck acceptance commands`
+
+### 2026-04-15T19:15:00+08:00
+- blocker_key: `iter_2019_contract_header_post400_next200_readonly_precheck_pass`
+- layer_target: `Migration Readonly Precheck`
+- module: `contract migration header payload`
+- reason: post400 next 200-row contract header slice passed target existence and project/partner anchor checks
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST400-NEXT200-READONLY-PRECHECK PASS：row_count=200, ready_for_write_design_rows=200, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open post400 next200 no-DB write design`
+
+### 2026-04-15T19:25:00+08:00
+- blocker_key: `iter_2020_contract_header_post400_next200_write_design_in_progress`
+- layer_target: `Migration Write Design`
+- module: `contract migration header payload`
+- reason: post400 next 200-row contract header slice passed readonly precheck and needs no-DB create-only design before authorization packet
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST400-NEXT200-WRITE-DESIGN in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post400 next200 write design acceptance commands`
+
+### 2026-04-15T19:35:00+08:00
+- blocker_key: `iter_2020_contract_header_post400_next200_write_design_pass`
+- layer_target: `Migration Write Design`
+- module: `contract migration header payload`
+- reason: post400 next 200-row contract header slice produced a create-only no-DB write design without blockers
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST400-NEXT200-WRITE-DESIGN PASS：input_rows=200, write_design_rows=200, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open post400 next200 no-DB authorization packet`
+
+### 2026-04-15T19:45:00+08:00
+- blocker_key: `iter_2021_contract_header_post400_next200_auth_packet_in_progress`
+- layer_target: `Migration Authorization Packet`
+- module: `contract migration header payload`
+- reason: post400 next 200-row no-DB write design passed and needs packetized payload before dedicated DB write batch
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST400-NEXT200-AUTH-PACKET in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post400 next200 authorization packet acceptance commands`
+
+### 2026-04-15T19:55:00+08:00
+- blocker_key: `iter_2021_contract_header_post400_next200_auth_packet_pass`
+- layer_target: `Migration Authorization Packet`
+- module: `contract migration header payload`
+- reason: post400 next 200-row create-only payload was packetized with rollback key and explicit no-write boundary
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST400-NEXT200-AUTH-PACKET PASS：payload_rows=200, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open post400 next200 dedicated DB write batch`
+
+### 2026-04-15T20:05:00+08:00
+- blocker_key: `iter_2022_contract_header_post400_next200_create_write_in_progress`
+- layer_target: `Migration DB Write`
+- module: `construction.contract header migration`
+- reason: post400 next 200-row authorization packet passed and user authorized direct execution
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST400-NEXT200-CREATE-WRITE in_progress：write and review scripts prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post400 next200 create-only write acceptance commands`
+
+### 2026-04-15T20:15:00+08:00
+- blocker_key: `iter_2022_contract_header_post400_next200_create_write_pass`
+- layer_target: `Migration DB Write`
+- module: `construction.contract header migration`
+- reason: dedicated post400 next 200-row create-only contract header write completed and readonly post-write review confirmed rollback eligibility
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST400-NEXT200-CREATE-WRITE PASS：created=200, updated=0, matched=200, rollback_targets=200, rollback_eligible=200`
+- active_commit: `25dc6bc`
+- next_step: `run final gates then refresh remaining contract header candidates`
+
+### 2026-04-15T20:25:00+08:00
+- blocker_key: `iter_2023_contract_header_post600_nodb_refresh_in_progress`
+- layer_target: `Migration Readonly Refresh`
+- module: `contract migration header payload`
+- reason: three 200-row header writes passed and remaining candidates need refresh before the next precheck/design/write chain
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST600-NODB-REFRESH in_progress：readonly refresh script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post600 no-DB refresh acceptance commands`
+
+### 2026-04-15T20:35:00+08:00
+- blocker_key: `iter_2023_contract_header_post600_nodb_refresh_pass`
+- layer_target: `Migration Readonly Refresh`
+- module: `contract migration header payload`
+- reason: post600 readonly refresh confirmed 600 headers exist and exported the next 200-row slice
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST600-NODB-REFRESH PASS：input_rows=1332, written_existing_rows=600, remaining_rows=732, next_slice_rows=200, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open next 200-row contract header readonly precheck`
+
+### 2026-04-15T20:45:00+08:00
+- blocker_key: `iter_2024_contract_header_post600_next200_readonly_precheck_in_progress`
+- layer_target: `Migration Readonly Precheck`
+- module: `contract migration header payload`
+- reason: post600 next 200-row contract header slice was exported and needs readonly precheck before write design
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST600-NEXT200-READONLY-PRECHECK in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post600 next200 readonly precheck acceptance commands`
+
+### 2026-04-15T20:55:00+08:00
+- blocker_key: `iter_2024_contract_header_post600_next200_readonly_precheck_pass`
+- layer_target: `Migration Readonly Precheck`
+- module: `contract migration header payload`
+- reason: post600 next 200-row contract header slice passed target existence and project/partner anchor checks
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST600-NEXT200-READONLY-PRECHECK PASS：row_count=200, ready_for_write_design_rows=200, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open post600 next200 no-DB write design`
+
+### 2026-04-15T21:05:00+08:00
+- blocker_key: `iter_2025_contract_header_post600_next200_write_design_in_progress`
+- layer_target: `Migration Write Design`
+- module: `contract migration header payload`
+- reason: post600 next 200-row contract header slice passed readonly precheck and needs no-DB create-only design before authorization packet
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST600-NEXT200-WRITE-DESIGN in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post600 next200 write design acceptance commands`
+
+### 2026-04-15T21:15:00+08:00
+- blocker_key: `iter_2025_contract_header_post600_next200_write_design_pass`
+- layer_target: `Migration Write Design`
+- module: `contract migration header payload`
+- reason: post600 next 200-row contract header slice produced a bounded create-only no-DB design with no blockers
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST600-NEXT200-WRITE-DESIGN PASS：input_rows=200, write_design_rows=200, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open post600 next200 no-DB authorization packet`
+
+### 2026-04-15T21:25:00+08:00
+- blocker_key: `iter_2026_contract_header_post600_next200_auth_packet_in_progress`
+- layer_target: `Migration Authorization Packet`
+- module: `contract migration header payload`
+- reason: post600 next 200-row no-DB write design passed and needs packetized payload before dedicated DB write batch
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST600-NEXT200-AUTH-PACKET in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post600 next200 authorization packet acceptance commands`
+
+### 2026-04-15T21:35:00+08:00
+- blocker_key: `iter_2026_contract_header_post600_next200_auth_packet_pass`
+- layer_target: `Migration Authorization Packet`
+- module: `contract migration header payload`
+- reason: post600 next 200-row create-only payload was packetized with rollback key and explicit no-write boundary
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST600-NEXT200-AUTH-PACKET PASS：payload_rows=200, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open post600 next200 dedicated DB write batch`
+
+### 2026-04-15T21:45:00+08:00
+- blocker_key: `iter_2027_contract_header_post600_next200_create_write_in_progress`
+- layer_target: `Migration DB Write`
+- module: `construction.contract header migration`
+- reason: post600 next 200-row authorization packet passed and user authorized direct execution
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST600-NEXT200-CREATE-WRITE in_progress：write and review scripts prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post600 next200 create-only write acceptance commands`
+
+### 2026-04-15T21:55:00+08:00
+- blocker_key: `iter_2027_contract_header_post600_next200_create_write_pass`
+- layer_target: `Migration DB Write`
+- module: `construction.contract header migration`
+- reason: dedicated post600 next 200-row create-only contract header write completed and readonly post-write review confirmed rollback eligibility
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST600-NEXT200-CREATE-WRITE PASS：created=200, updated=0, matched=200, rollback_targets=200, rollback_eligible=200`
+- active_commit: `25dc6bc`
+- next_step: `run final gates then refresh remaining contract header candidates`
+
+### 2026-04-15T22:05:00+08:00
+- blocker_key: `iter_2028_contract_header_post800_nodb_refresh_in_progress`
+- layer_target: `Migration Readonly Refresh`
+- module: `contract migration header payload`
+- reason: four 200-row header writes passed and remaining candidates need refresh before the next precheck/design/write chain
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST800-NODB-REFRESH in_progress：readonly refresh script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post800 no-DB refresh acceptance commands`
+
+### 2026-04-15T22:15:00+08:00
+- blocker_key: `iter_2028_contract_header_post800_nodb_refresh_pass`
+- layer_target: `Migration Readonly Refresh`
+- module: `contract migration header payload`
+- reason: post800 readonly refresh confirmed 800 headers exist and exported the next 200-row slice
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST800-NODB-REFRESH PASS：input_rows=1332, written_existing_rows=800, remaining_rows=532, next_slice_rows=200, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open next 200-row contract header readonly precheck`
+
+### 2026-04-15T22:25:00+08:00
+- blocker_key: `iter_2029_contract_header_post800_next200_readonly_precheck_in_progress`
+- layer_target: `Migration Readonly Precheck`
+- module: `contract migration header payload`
+- reason: post800 next 200-row contract header slice was exported and needs readonly precheck before write design
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST800-NEXT200-READONLY-PRECHECK in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post800 next200 readonly precheck acceptance commands`
+
+### 2026-04-15T22:35:00+08:00
+- blocker_key: `iter_2029_contract_header_post800_next200_readonly_precheck_pass`
+- layer_target: `Migration Readonly Precheck`
+- module: `contract migration header payload`
+- reason: post800 next 200-row contract header slice passed target existence and project/partner anchor checks
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST800-NEXT200-READONLY-PRECHECK PASS：row_count=200, ready_for_write_design_rows=200, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open post800 next200 no-DB write design`
+
+### 2026-04-15T22:45:00+08:00
+- blocker_key: `iter_2030_contract_header_post800_next200_write_design_in_progress`
+- layer_target: `Migration Write Design`
+- module: `contract migration header payload`
+- reason: post800 next 200-row contract header slice passed readonly precheck and needs no-DB create-only design before authorization packet
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST800-NEXT200-WRITE-DESIGN in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post800 next200 write design acceptance commands`
+
+### 2026-04-15T22:55:00+08:00
+- blocker_key: `iter_2030_contract_header_post800_next200_write_design_pass`
+- layer_target: `Migration Write Design`
+- module: `contract migration header payload`
+- reason: post800 next 200-row contract header slice produced a bounded create-only no-DB design with no blockers
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST800-NEXT200-WRITE-DESIGN PASS：input_rows=200, write_design_rows=200, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open post800 next200 no-DB authorization packet`
+
+### 2026-04-15T23:05:00+08:00
+- blocker_key: `iter_2031_contract_header_post800_next200_auth_packet_in_progress`
+- layer_target: `Migration Authorization Packet`
+- module: `contract migration header payload`
+- reason: post800 next 200-row no-DB write design passed and needs packetized payload before dedicated DB write batch
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST800-NEXT200-AUTH-PACKET in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post800 next200 authorization packet acceptance commands`
+
+### 2026-04-15T23:15:00+08:00
+- blocker_key: `iter_2031_contract_header_post800_next200_auth_packet_pass`
+- layer_target: `Migration Authorization Packet`
+- module: `contract migration header payload`
+- reason: post800 next 200-row create-only payload was packetized with rollback key and explicit no-write boundary
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST800-NEXT200-AUTH-PACKET PASS：payload_rows=200, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open post800 next200 dedicated DB write batch`
+
+### 2026-04-15T23:25:00+08:00
+- blocker_key: `iter_2032_contract_header_post800_next200_create_write_in_progress`
+- layer_target: `Migration DB Write`
+- module: `construction.contract header migration`
+- reason: post800 next 200-row authorization packet passed and user authorized direct execution
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST800-NEXT200-CREATE-WRITE in_progress：write and review scripts prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post800 next200 create-only write acceptance commands`
+
+### 2026-04-15T23:35:00+08:00
+- blocker_key: `iter_2032_contract_header_post800_next200_create_write_pass`
+- layer_target: `Migration DB Write`
+- module: `construction.contract header migration`
+- reason: dedicated post800 next 200-row create-only contract header write completed and readonly post-write review confirmed rollback eligibility
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST800-NEXT200-CREATE-WRITE PASS：created=200, updated=0, matched=200, rollback_targets=200, rollback_eligible=200`
+- active_commit: `25dc6bc`
+- next_step: `run final gates then refresh remaining contract header candidates`
+
+### 2026-04-15T23:45:00+08:00
+- blocker_key: `iter_2033_contract_header_post1000_nodb_refresh_in_progress`
+- layer_target: `Migration Readonly Refresh`
+- module: `contract migration header payload`
+- reason: five 200-row header writes passed and remaining candidates need refresh before the next precheck/design/write chain
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST1000-NODB-REFRESH in_progress：readonly refresh script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post1000 no-DB refresh acceptance commands`
+
+### 2026-04-15T23:55:00+08:00
+- blocker_key: `iter_2033_contract_header_post1000_nodb_refresh_pass`
+- layer_target: `Migration Readonly Refresh`
+- module: `contract migration header payload`
+- reason: post1000 readonly refresh confirmed 1000 headers exist and exported the next 200-row slice
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST1000-NODB-REFRESH PASS：input_rows=1332, written_existing_rows=1000, remaining_rows=332, next_slice_rows=200, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open next 200-row contract header readonly precheck`
+
+### 2026-04-16T00:05:00+08:00
+- blocker_key: `iter_2034_contract_header_post1000_next200_readonly_precheck_in_progress`
+- layer_target: `Migration Readonly Precheck`
+- module: `contract migration header payload`
+- reason: post1000 next 200-row contract header slice was exported and needs readonly precheck before write design
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST1000-NEXT200-READONLY-PRECHECK in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post1000 next200 readonly precheck acceptance commands`
+
+### 2026-04-16T00:15:00+08:00
+- blocker_key: `iter_2034_contract_header_post1000_next200_readonly_precheck_pass`
+- layer_target: `Migration Readonly Precheck`
+- module: `contract migration header payload`
+- reason: post1000 next 200-row contract header slice passed target existence and project/partner anchor checks
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST1000-NEXT200-READONLY-PRECHECK PASS：row_count=200, ready_for_write_design_rows=200, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open post1000 next200 no-DB write design`
+
+### 2026-04-16T00:25:00+08:00
+- blocker_key: `iter_2035_contract_header_post1000_next200_write_design_in_progress`
+- layer_target: `Migration Write Design`
+- module: `contract migration header payload`
+- reason: post1000 next 200-row contract header slice passed readonly precheck and needs no-DB create-only design before authorization packet
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST1000-NEXT200-WRITE-DESIGN in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post1000 next200 write design acceptance commands`
+
+### 2026-04-16T00:35:00+08:00
+- blocker_key: `iter_2035_contract_header_post1000_next200_write_design_pass`
+- layer_target: `Migration Write Design`
+- module: `contract migration header payload`
+- reason: post1000 next 200-row contract header slice produced a bounded create-only no-DB design with no blockers
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST1000-NEXT200-WRITE-DESIGN PASS：input_rows=200, write_design_rows=200, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open post1000 next200 no-DB authorization packet`
+
+### 2026-04-16T00:45:00+08:00
+- blocker_key: `iter_2036_contract_header_post1000_next200_auth_packet_in_progress`
+- layer_target: `Migration Authorization Packet`
+- module: `contract migration header payload`
+- reason: post1000 next 200-row no-DB write design passed and needs packetized payload before dedicated DB write batch
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST1000-NEXT200-AUTH-PACKET in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post1000 next200 authorization packet acceptance commands`
+
+### 2026-04-16T00:55:00+08:00
+- blocker_key: `iter_2036_contract_header_post1000_next200_auth_packet_pass`
+- layer_target: `Migration Authorization Packet`
+- module: `contract migration header payload`
+- reason: post1000 next 200-row create-only payload was packetized with rollback key and explicit no-write boundary
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST1000-NEXT200-AUTH-PACKET PASS：payload_rows=200, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open post1000 next200 dedicated DB write batch`
+
+### 2026-04-16T01:05:00+08:00
+- blocker_key: `iter_2037_contract_header_post1000_next200_create_write_in_progress`
+- layer_target: `Migration DB Write`
+- module: `construction.contract header migration`
+- reason: post1000 next 200-row authorization packet passed and user authorized direct execution
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST1000-NEXT200-CREATE-WRITE in_progress：write and review scripts prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post1000 next200 create-only write acceptance commands`
+
+### 2026-04-16T01:15:00+08:00
+- blocker_key: `iter_2037_contract_header_post1000_next200_create_write_pass`
+- layer_target: `Migration DB Write`
+- module: `construction.contract header migration`
+- reason: dedicated post1000 next 200-row create-only contract header write completed and readonly post-write review confirmed rollback eligibility
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST1000-NEXT200-CREATE-WRITE PASS：created=200, updated=0, matched=200, rollback_targets=200, rollback_eligible=200`
+- active_commit: `25dc6bc`
+- next_step: `run final gates then refresh remaining contract header candidates`
+
+### 2026-04-16T01:25:00+08:00
+- blocker_key: `iter_2038_contract_header_post1200_nodb_refresh_in_progress`
+- layer_target: `Migration Readonly Refresh`
+- module: `contract migration header payload`
+- reason: six 200-row header writes passed and remaining candidates need refresh before the final precheck/design/write chain
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST1200-NODB-REFRESH in_progress：readonly refresh script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header post1200 no-DB refresh acceptance commands`
+
+### 2026-04-16T01:35:00+08:00
+- blocker_key: `iter_2038_contract_header_post1200_nodb_refresh_pass`
+- layer_target: `Migration Readonly Refresh`
+- module: `contract migration header payload`
+- reason: post1200 readonly refresh confirmed 1200 headers exist and exported the final 132-row slice
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-POST1200-NODB-REFRESH PASS：input_rows=1332, written_existing_rows=1200, remaining_rows=132, next_slice_rows=132, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open final 132-row contract header readonly precheck`
+
+### 2026-04-16T01:45:00+08:00
+- blocker_key: `iter_2039_contract_header_final132_readonly_precheck_in_progress`
+- layer_target: `Migration Readonly Precheck`
+- module: `contract migration header payload`
+- reason: final 132-row contract header slice was exported and needs readonly precheck before final write design
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-FINAL132-READONLY-PRECHECK in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header final132 readonly precheck acceptance commands`
+
+### 2026-04-16T01:55:00+08:00
+- blocker_key: `iter_2039_contract_header_final132_readonly_precheck_pass`
+- layer_target: `Migration Readonly Precheck`
+- module: `contract migration header payload`
+- reason: final 132-row contract header slice passed target existence and project/partner anchor checks
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-FINAL132-READONLY-PRECHECK PASS：row_count=132, ready_for_write_design_rows=132, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open final132 no-DB write design`
+
+### 2026-04-16T02:05:00+08:00
+- blocker_key: `iter_2040_contract_header_final132_write_design_in_progress`
+- layer_target: `Migration Write Design`
+- module: `contract migration header payload`
+- reason: final 132-row contract header slice passed readonly precheck and needs no-DB create-only design before authorization packet
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-FINAL132-WRITE-DESIGN in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header final132 write design acceptance commands`
+
+### 2026-04-16T02:15:00+08:00
+- blocker_key: `iter_2040_contract_header_final132_write_design_pass`
+- layer_target: `Migration Write Design`
+- module: `contract migration header payload`
+- reason: final 132-row contract header slice produced a bounded create-only no-DB design with no blockers
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-FINAL132-WRITE-DESIGN PASS：input_rows=132, write_design_rows=132, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open final132 no-DB authorization packet`
+
+### 2026-04-16T02:25:00+08:00
+- blocker_key: `iter_2041_contract_header_final132_auth_packet_in_progress`
+- layer_target: `Migration Authorization Packet`
+- module: `contract migration header payload`
+- reason: final 132-row no-DB write design passed and needs packetized payload before dedicated DB write batch
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-FINAL132-AUTH-PACKET in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header final132 authorization packet acceptance commands`
+
+### 2026-04-16T02:35:00+08:00
+- blocker_key: `iter_2041_contract_header_final132_auth_packet_pass`
+- layer_target: `Migration Authorization Packet`
+- module: `contract migration header payload`
+- reason: final 132-row create-only payload was packetized with rollback key and explicit no-write boundary
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-FINAL132-AUTH-PACKET PASS：payload_rows=132, blocked_rows=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open final132 dedicated DB write batch`
+
+### 2026-04-16T02:45:00+08:00
+- blocker_key: `iter_2042_contract_header_final132_create_write_in_progress`
+- layer_target: `Migration DB Write`
+- module: `construction.contract header migration`
+- reason: final 132-row authorization packet passed and user authorized direct execution
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-FINAL132-CREATE-WRITE in_progress：write and review scripts prepared`
+- active_commit: `25dc6bc`
+- next_step: `run contract header final132 create-only write acceptance commands`
+
+### 2026-04-16T02:55:00+08:00
+- blocker_key: `iter_2042_contract_header_final132_create_write_pass`
+- layer_target: `Migration DB Write`
+- module: `construction.contract header migration`
+- reason: final 132-row create-only contract header write completed and readonly post-write review confirmed rollback eligibility
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-FINAL132-CREATE-WRITE PASS：created=132, updated=0, matched=132, rollback_targets=132, rollback_eligible=132`
+- active_commit: `25dc6bc`
+- next_step: `run final no-DB aggregate confirmation`
+
+### 2026-04-16T03:05:00+08:00
+- blocker_key: `iter_2043_contract_header_final_aggregate_confirm_in_progress`
+- layer_target: `Migration Readonly Confirmation`
+- module: `contract migration header payload`
+- reason: all contract header write batches passed and require aggregate closure evidence
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-FINAL-AGGREGATE-CONFIRM in_progress：script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run final aggregate confirmation acceptance commands`
+
+### 2026-04-16T03:15:00+08:00
+- blocker_key: `iter_2043_contract_header_final_aggregate_confirm_pass`
+- layer_target: `Migration Readonly Confirmation`
+- module: `contract migration header payload`
+- reason: final aggregate confirmation matched source, rollback, and target contract header counts at 1332
+- completed_step: `ITER-2026-04-15-CONTRACT-HEADER-FINAL-AGGREGATE-CONFIRM PASS：source_rows=1332, rollback_rows=1332, target_match_rows=1332, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `select next migration lane after contract header closure`
+
+### 2026-04-16T03:25:00+08:00
+- blocker_key: `iter_2044_contract_source_coverage_nodb_screen_in_progress`
+- layer_target: `Migration Coverage Screen`
+- module: `contract migration source coverage`
+- reason: contract header lane closed at 1332 rows and full legacy source coverage needs no-DB classification before downstream lanes
+- completed_step: `ITER-2026-04-15-CONTRACT-SOURCE-COVERAGE-NODB-SCREEN in_progress：readonly coverage script executed`
+- active_commit: `25dc6bc`
+- next_step: `run contract source coverage final acceptance commands`
+
+### 2026-04-16T03:35:00+08:00
+- blocker_key: `iter_2044_contract_source_coverage_nodb_screen_pass`
+- layer_target: `Migration Coverage Screen`
+- module: `contract migration source coverage`
+- reason: full-source contract coverage classified 1694 source rows after header closure with no database writes
+- completed_step: `ITER-2026-04-15-CONTRACT-SOURCE-COVERAGE-NODB-SCREEN PASS：source_rows=1694, header_lane_migrated=1332, pre_existing=12, remaining_blocked=350, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open no-DB contract remaining-blocker policy screen`
+
+### 2026-04-16T03:45:00+08:00
+- blocker_key: `iter_2045_contract_remaining_blocker_policy_screen_in_progress`
+- layer_target: `Migration Policy Screen`
+- module: `contract remaining blockers`
+- reason: contract source coverage found 350 remaining blocked rows requiring route classification before anchor recovery or discard handling
+- completed_step: `ITER-2026-04-15-CONTRACT-REMAINING-BLOCKER-POLICY-SCREEN in_progress：policy screen script executed`
+- active_commit: `25dc6bc`
+- next_step: `run contract remaining blocker policy screen final acceptance commands`
+
+### 2026-04-16T03:55:00+08:00
+- blocker_key: `iter_2045_contract_remaining_blocker_policy_screen_pass`
+- layer_target: `Migration Policy Screen`
+- module: `contract remaining blockers`
+- reason: remaining 350 contract blockers were classified into discard, project-anchor, and partner-anchor routes without database operations
+- completed_step: `ITER-2026-04-15-CONTRACT-REMAINING-BLOCKER-POLICY-SCREEN PASS：remaining_blocked=350, discard_deleted=65, project_anchor=88, partner_anchor=197, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open project-anchor recovery no-DB screen first`
+
+### 2026-04-16T04:05:00+08:00
+- blocker_key: `iter_2046_contract_project_anchor_recovery_screen_in_progress`
+- layer_target: `Migration Anchor Recovery Screen`
+- module: `contract project-anchor blockers`
+- reason: 88 contract rows were blocked by missing project anchors and needed legacy project source evidence before any recovery design
+- completed_step: `ITER-2026-04-15-CONTRACT-PROJECT-ANCHOR-RECOVERY-SCREEN in_progress：project source screen executed`
+- active_commit: `25dc6bc`
+- next_step: `run contract project-anchor recovery screen final acceptance commands`
+
+### 2026-04-16T04:15:00+08:00
+- blocker_key: `iter_2046_contract_project_anchor_recovery_screen_pass`
+- layer_target: `Migration Anchor Recovery Screen`
+- module: `contract project-anchor blockers`
+- reason: 88 contract project-anchor blockers map to 63 legacy project ids that are all missing from the legacy project source export
+- completed_step: `ITER-2026-04-15-CONTRACT-PROJECT-ANCHOR-RECOVERY-SCREEN PASS：project_anchor_blocked=88, distinct_project_ids=63, source_missing_project_ids=63, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open partner-anchor recovery no-DB screen`
+
+### 2026-04-16T04:25:00+08:00
+- blocker_key: `iter_2047_contract_partner_anchor_recovery_screen_in_progress`
+- layer_target: `Migration Anchor Recovery Screen`
+- module: `contract partner-anchor blockers`
+- reason: 197 contract rows were blocked by partner anchors and needed legacy partner source evidence before any recovery design
+- completed_step: `ITER-2026-04-15-CONTRACT-PARTNER-ANCHOR-RECOVERY-SCREEN in_progress：partner source screen executed`
+- active_commit: `25dc6bc`
+- next_step: `run contract partner-anchor recovery screen final acceptance commands`
+
+### 2026-04-16T04:35:00+08:00
+- blocker_key: `iter_2047_contract_partner_anchor_recovery_screen_pass`
+- layer_target: `Migration Anchor Recovery Screen`
+- module: `contract partner-anchor blockers`
+- reason: 197 contract partner-anchor blockers were classified by legacy partner source evidence
+- completed_step: `ITER-2026-04-15-CONTRACT-PARTNER-ANCHOR-RECOVERY-SCREEN PASS：partner_anchor_blocked=197, recoverable_single_source=57, combined_source=5, source_missing=74, direction_defer=61, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open no-DB partner-source recoverable design for 57 single-source candidates`
+
+### 2026-04-16T04:45:00+08:00
+- blocker_key: `iter_2048_contract_partner_source_57_design_in_progress`
+- layer_target: `Migration Write Design`
+- module: `contract partner-source recoverable candidates`
+- reason: 57 single-source partner-anchor candidates need a no-DB design before any later recovery write or contract retry lane
+- completed_step: `ITER-2026-04-15-CONTRACT-PARTNER-SOURCE-57-DESIGN in_progress：design script executed`
+- active_commit: `25dc6bc`
+- next_step: `run contract partner-source 57 design final acceptance commands`
+
+### 2026-04-16T04:55:00+08:00
+- blocker_key: `iter_2048_contract_partner_source_57_design_pass`
+- layer_target: `Migration Write Design`
+- module: `contract partner-source recoverable candidates`
+- reason: 57 single-source partner-anchor candidates were converted into a no-DB design and collapsed to 12 distinct company-source counterparties
+- completed_step: `ITER-2026-04-15-CONTRACT-PARTNER-SOURCE-57-DESIGN PASS：design_rows=57, distinct_counterparties=12, source_type=company, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open migration acceleration analysis and rebuild-bus plan`
+
+### 2026-04-16T05:05:00+08:00
+- blocker_key: `iter_2049_migration_acceleration_rebuild_bus_plan_in_progress`
+- layer_target: `Migration Governance Planning`
+- module: `migration rebuild bus`
+- reason: current migration process is correct but too slow and needs full-source/target-structure analysis before further batches
+- completed_step: `ITER-2026-04-15-MIGRATION-ACCELERATION-REBUILD-BUS-PLAN in_progress：profile and plan generated`
+- active_commit: `25dc6bc`
+- next_step: `run migration acceleration rebuild-bus plan final acceptance commands`
+
+### 2026-04-16T05:15:00+08:00
+- blocker_key: `iter_2049_migration_acceleration_rebuild_bus_plan_pass`
+- layer_target: `Migration Governance Planning`
+- module: `migration rebuild bus`
+- reason: legacy source shape, target structure, current migration evidence, and accelerated rebuild bus were profiled and documented
+- completed_step: `ITER-2026-04-15-MIGRATION-ACCELERATION-REBUILD-BUS-PLAN PASS：source_files=7, db_writes=0, next_gate=12-counterparty partner-anchor design`
+- active_commit: `25dc6bc`
+- next_step: `open 12-counterparty partner-anchor no-DB design`
+
+### 2026-04-16T05:25:00+08:00
+- blocker_key: `iter_2050_contract_partner_source_12_anchor_design_in_progress`
+- layer_target: `Migration Write Design`
+- module: `contract partner-source anchor candidates`
+- reason: accelerated bus requires collapsing 57 dependent contract rows into distinct partner anchors before any DB write
+- completed_step: `ITER-2026-04-15-CONTRACT-PARTNER-SOURCE-12-ANCHOR-DESIGN in_progress：anchor design script executed`
+- active_commit: `25dc6bc`
+- next_step: `run contract partner-source 12 anchor design final acceptance commands`
+
+### 2026-04-16T05:35:00+08:00
+- blocker_key: `iter_2050_contract_partner_source_12_anchor_design_pass`
+- layer_target: `Migration Write Design`
+- module: `contract partner-source anchor candidates`
+- reason: 57 dependent contract rows were collapsed into 12 distinct company-source partner anchors
+- completed_step: `ITER-2026-04-15-CONTRACT-PARTNER-SOURCE-12-ANCHOR-DESIGN PASS：anchor_rows=12, dependent_contract_rows=57, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open bounded DB write task for 12 partner anchors`
+
+### 2026-04-16T05:45:00+08:00
+- blocker_key: `iter_2051_migration_replay_manifest_data_layer_policy_in_progress`
+- layer_target: `Migration Governance Planning`
+- module: `replay manifest and data layer policy`
+- reason: user approved fresh database rebuild after this round, requiring replay manifest and L0-L4 data policy before any fresh database operation
+- completed_step: `ITER-2026-04-15-MIGRATION-REPLAY-MANIFEST-DATA-LAYER-POLICY in_progress：replay and data-layer policy artifacts prepared`
+- active_commit: `25dc6bc`
+- next_step: `run migration replay manifest and data-layer policy final acceptance commands`
+
+### 2026-04-16T05:55:00+08:00
+- blocker_key: `iter_2051_migration_replay_manifest_data_layer_policy_pass`
+- layer_target: `Migration Governance Planning`
+- module: `replay manifest and data layer policy`
+- reason: replay certification requirements and L0-L4 data-layer migration policy are frozen before fresh database rebuild
+- completed_step: `ITER-2026-04-15-MIGRATION-REPLAY-MANIFEST-DATA-LAYER-POLICY PASS：current_replay_certification=NOT_CERTIFIED_YET, data_layers=L0-L4, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open fresh database replay manifest implementation and runner dry-run design`
+
+### 2026-04-16T06:05:00+08:00
+- blocker_key: `iter_2052_fresh_db_replay_manifest_runner_dry_run_in_progress`
+- layer_target: `Migration Replay Governance`
+- module: `fresh database replay manifest and runner dry-run`
+- reason: fresh database rebuild requires a manifest and dry-run validator before any database operation
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-MANIFEST-RUNNER-DRY-RUN in_progress：manifest and dry-run runner executed`
+- active_commit: `25dc6bc`
+- next_step: `run fresh database replay manifest runner dry-run final acceptance commands`
+
+### 2026-04-16T06:15:00+08:00
+- blocker_key: `iter_2052_fresh_db_replay_manifest_runner_dry_run_pass`
+- layer_target: `Migration Replay Governance`
+- module: `fresh database replay manifest and runner dry-run`
+- reason: replay manifest dry-run validated 7 lanes with no missing references and no database operations
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-MANIFEST-RUNNER-DRY-RUN PASS：lanes=7, default_run=0, missing_refs=0, db_ops=0`
+- active_commit: `25dc6bc`
+- next_step: `implement replay adapters for needs_adapter and design_only lanes before fresh database operation`
+
+### 2026-04-16T06:25:00+08:00
+- blocker_key: `iter_2053_fresh_db_replay_adapter_plan_in_progress`
+- layer_target: `Migration Replay Adapter Design`
+- module: `fresh database replay adapters`
+- reason: manifest dry-run found needs_adapter/design_only lanes that must become replay adapters before fresh database operation
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-ADAPTER-PLAN in_progress：adapter plan script executed`
+- active_commit: `25dc6bc`
+- next_step: `run fresh DB replay adapter plan final acceptance commands`
+
+### 2026-04-16T06:35:00+08:00
+- blocker_key: `iter_2053_fresh_db_replay_adapter_plan_pass`
+- layer_target: `Migration Replay Adapter Design`
+- module: `fresh database replay adapters`
+- reason: replay adapter plan converted needs_adapter/design_only gaps into three concrete adapter implementation tasks
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-ADAPTER-PLAN PASS：adapter_lanes=3, high_risk_excluded=1, db_ops=0`
+- active_commit: `25dc6bc`
+- next_step: `implement partner L4 consolidated replay adapter first`
+
+### 2026-04-16T06:45:00+08:00
+- blocker_key: `iter_2054_fresh_db_partner_l4_replay_adapter_in_progress`
+- layer_target: `Migration Replay Adapter Implementation`
+- module: `partner L4 consolidated replay adapter`
+- reason: partner L4 completed writes need one no-DB replay payload before fresh database replay certification
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-PARTNER-L4-ADAPTER in_progress：adapter payload generated`
+- active_commit: `25dc6bc`
+- next_step: `run partner L4 replay adapter final acceptance commands`
+
+### 2026-04-16T06:55:00+08:00
+- blocker_key: `iter_2054_fresh_db_partner_l4_replay_adapter_pass`
+- layer_target: `Migration Replay Adapter Implementation`
+- module: `partner L4 consolidated replay adapter`
+- reason: completed partner L4 writes were consolidated into one no-DB fresh replay payload
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-PARTNER-L4-ADAPTER PASS：payload_rows=4797, duplicate_identity=0, raw_source_misses=0, db_ops=0`
+- active_commit: `25dc6bc`
+- next_step: `implement project anchor consolidated replay adapter`
+
+### 2026-04-16T07:05:00+08:00
+- blocker_key: `iter_2055_fresh_db_project_anchor_replay_adapter_in_progress`
+- layer_target: `Migration Replay Adapter Implementation`
+- module: `project anchor consolidated replay adapter`
+- reason: completed project anchor writes need one no-DB replay payload before fresh database replay certification
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-PROJECT-ANCHOR-ADAPTER in_progress：adapter payload generation started`
+- active_commit: `25dc6bc`
+- next_step: `run project anchor replay adapter and acceptance commands`
+
+### 2026-04-16T07:15:00+08:00
+- blocker_key: `iter_2055_fresh_db_project_anchor_replay_adapter_pass`
+- layer_target: `Migration Replay Adapter Implementation`
+- module: `project anchor consolidated replay adapter`
+- reason: completed project anchor writes were consolidated into one no-DB fresh replay payload
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-PROJECT-ANCHOR-ADAPTER PASS：payload_rows=755, duplicate_identity=0, raw_source_misses=0, db_ops=0`
+- active_commit: `25dc6bc`
+- next_step: `implement contract partner 12 anchor replay adapter`
+
+### 2026-04-16T07:25:00+08:00
+- blocker_key: `iter_2056_fresh_db_contract_partner_12_anchor_replay_adapter_in_progress`
+- layer_target: `Migration Replay Adapter Implementation`
+- module: `contract partner 12 anchor replay adapter`
+- reason: 57 recoverable contract rows depend on 12 company partner anchors before retry
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-CONTRACT-PARTNER-12-ANCHOR-ADAPTER in_progress：adapter payload generation started`
+- active_commit: `25dc6bc`
+- next_step: `run contract partner 12 anchor replay adapter and acceptance commands`
+
+### 2026-04-16T07:35:00+08:00
+- blocker_key: `iter_2056_fresh_db_contract_partner_12_anchor_replay_adapter_pass`
+- layer_target: `Migration Replay Adapter Implementation`
+- module: `contract partner 12 anchor replay adapter`
+- reason: 12 company anchors were converted into a no-DB replay payload for 57 dependent contracts
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-CONTRACT-PARTNER-12-ANCHOR-ADAPTER PASS：payload_rows=12, dependent_contract_rows=57, duplicate_identity=0, db_ops=0`
+- active_commit: `25dc6bc`
+- next_step: `update fresh database replay manifest to include ready adapter payloads in dependency order`
+
+### 2026-04-16T07:45:00+08:00
+- blocker_key: `iter_2057_fresh_db_replay_manifest_adapter_refresh_in_progress`
+- layer_target: `Migration Replay Governance`
+- module: `fresh database replay manifest adapter refresh`
+- reason: ready adapter payloads must be attached to the manifest before fresh database replay can be planned
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-MANIFEST-ADAPTER-REFRESH in_progress：manifest refresh script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run manifest adapter refresh and replay runner dry-run`
+
+### 2026-04-16T07:55:00+08:00
+- blocker_key: `iter_2057_fresh_db_replay_manifest_adapter_refresh_pass`
+- layer_target: `Migration Replay Governance`
+- module: `fresh database replay manifest adapter refresh`
+- reason: three ready adapter payloads are now attached to the manifest and validated by dry-run
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-MANIFEST-ADAPTER-REFRESH PASS：refreshed_lanes=3, replay_ready_candidate=5, default_run=0, missing_refs=0, db_ops=0`
+- active_commit: `25dc6bc`
+- next_step: `open dedicated fresh database operation contract before rebuild or replay execution`
+
+### 2026-04-16T08:05:00+08:00
+- blocker_key: `iter_2058_fresh_db_no_demo_reset_in_progress`
+- layer_target: `Migration Replay Operation`
+- module: `fresh database no-demo reset`
+- reason: user authorized fresh database execution and specified that demo modules must not be installed
+- completed_step: `ITER-2026-04-15-FRESH-DB-NO-DEMO-RESET in_progress：operation contract prepared for DB=sc_migration_fresh WITHOUT_DEMO=--without-demo=all`
+- active_commit: `25dc6bc`
+- next_step: `run DB=sc_migration_fresh WITHOUT_DEMO=--without-demo=all make db.reset`
+
+### 2026-04-16T08:15:00+08:00
+- blocker_key: `iter_2058_fresh_db_no_demo_reset_pass`
+- layer_target: `Migration Replay Operation`
+- module: `fresh database no-demo reset`
+- reason: fresh database was recreated through Makefile with demo disabled
+- completed_step: `ITER-2026-04-15-FRESH-DB-NO-DEMO-RESET PASS：database=sc_migration_fresh, smart_construction_demo=uninstalled, res_partner=2, replay_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `install required business modules without demo before replaying migration payloads`
+
+### 2026-04-16T08:25:00+08:00
+- blocker_key: `iter_2059_fresh_db_business_modules_no_demo_install_in_progress`
+- layer_target: `Migration Replay Operation`
+- module: `fresh database business module surface`
+- reason: migration replay requires target project, contract, and project-member staging models
+- completed_step: `ITER-2026-04-15-FRESH-DB-BUSINESS-MODULES-NO-DEMO-INSTALL in_progress：operation contract prepared for MODULE=smart_construction_custom DB=sc_migration_fresh`
+- active_commit: `25dc6bc`
+- next_step: `run DB=sc_migration_fresh MODULE=smart_construction_custom WITHOUT_DEMO=--without-demo=all make mod.install`
+
+### 2026-04-16T08:35:00+08:00
+- blocker_key: `iter_2059_fresh_db_business_modules_no_demo_install_pass`
+- layer_target: `Migration Replay Operation`
+- module: `fresh database business module surface`
+- reason: target models are loaded in the fresh database while demo remains uninstalled
+- completed_step: `ITER-2026-04-15-FRESH-DB-BUSINESS-MODULES-NO-DEMO-INSTALL PASS：core/custom=installed, demo=uninstalled, project/contract/member_models=loaded, replay_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `run replay payload prechecks against sc_migration_fresh`
+
+### 2026-04-16T08:45:00+08:00
+- blocker_key: `iter_2060_fresh_db_replay_payload_precheck_in_progress`
+- layer_target: `Migration Replay Precheck`
+- module: `fresh database replay payload precheck`
+- reason: payload writes must be checked against the fresh no-demo database before replay execution
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-PAYLOAD-PRECHECK in_progress：read-only precheck script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run DB=sc_migration_fresh make odoo.shell.exec < scripts/migration/fresh_db_replay_payload_precheck.py`
+
+### 2026-04-16T08:55:00+08:00
+- blocker_key: `iter_2060_fresh_db_replay_payload_precheck_pass`
+- layer_target: `Migration Replay Precheck`
+- module: `fresh database replay payload precheck`
+- reason: ready payloads have no identity collisions and required target fields are present
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-PAYLOAD-PRECHECK PASS：partner=4797, project=755, contract_partner_12=12, collisions=0, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `execute bounded replay writes in dependency order`
+
+### 2026-04-16T09:05:00+08:00
+- blocker_key: `iter_2061_fresh_db_partner_l4_replay_write_in_progress`
+- layer_target: `Migration Replay Write`
+- module: `partner L4 identity anchors`
+- reason: partner identity anchors must be replayed before project and contract-dependent anchors
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-PARTNER-L4-WRITE in_progress：write script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run DB=sc_migration_fresh make odoo.shell.exec < scripts/migration/fresh_db_partner_l4_replay_write.py`
+
+### 2026-04-16T09:15:00+08:00
+- blocker_key: `iter_2061_fresh_db_partner_l4_replay_write_pass`
+- layer_target: `Migration Replay Write`
+- module: `partner L4 identity anchors`
+- reason: partner identity anchors have been recreated in the fresh no-demo database
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-PARTNER-L4-WRITE PASS：input_rows=4797, created_rows=4797, post_write_identity_count=4797, demo_targets=0`
+- active_commit: `25dc6bc`
+- next_step: `open project anchor replay write batch for sc_migration_fresh`
+
+### 2026-04-16T09:25:00+08:00
+- blocker_key: `iter_2062_fresh_db_project_anchor_replay_write_in_progress`
+- layer_target: `Migration Replay Write`
+- module: `project identity anchors`
+- reason: project anchors are the next dependency after partner L4 anchors in the fresh no-demo replay chain
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-PROJECT-ANCHOR-WRITE in_progress：write script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run DB=sc_migration_fresh make odoo.shell.exec < scripts/migration/fresh_db_project_anchor_replay_write.py`
+
+### 2026-04-16T09:35:00+08:00
+- blocker_key: `iter_2062_fresh_db_project_anchor_replay_write_pass`
+- layer_target: `Migration Replay Write`
+- module: `project identity anchors`
+- reason: project anchors have been recreated in the fresh no-demo database
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-PROJECT-ANCHOR-WRITE PASS：input_rows=755, created_rows=755, post_write_identity_count=755, demo_targets=0`
+- active_commit: `25dc6bc`
+- next_step: `open contract partner anchor replay write batch for sc_migration_fresh`
+
+### 2026-04-16T09:45:00+08:00
+- blocker_key: `iter_2063_fresh_db_contract_partner_12_anchor_replay_write_in_progress`
+- layer_target: `Migration Replay Write`
+- module: `contract partner text anchors`
+- reason: 12 company anchors are required before the 57 recoverable contract rows can be retried
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-CONTRACT-PARTNER-12-ANCHOR-WRITE in_progress：write script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run DB=sc_migration_fresh make odoo.shell.exec < scripts/migration/fresh_db_contract_partner_12_anchor_replay_write.py`
+
+### 2026-04-16T09:55:00+08:00
+- blocker_key: `iter_2064_fresh_db_contract_partner_dupname_screen_in_progress`
+- layer_target: `Migration Replay Screen`
+- module: `contract partner text anchor duplicate names`
+- reason: contract partner anchor write was blocked by three duplicate target partner names
+- completed_step: `ITER-2026-04-15-FRESH-DB-CONTRACT-PARTNER-DUPNAME-SCREEN in_progress：read-only screen script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run DB=sc_migration_fresh make odoo.shell.exec < scripts/migration/fresh_db_contract_partner_dupname_screen.py`
+
+### 2026-04-16T10:05:00+08:00
+- blocker_key: `iter_2064_fresh_db_contract_partner_dupname_screen_pass`
+- layer_target: `Migration Replay Screen`
+- module: `contract partner text anchor duplicate names`
+- reason: three duplicate-name blockers have unique canonical recovery rules based on non-deleted partner evidence
+- completed_step: `ITER-2026-04-15-FRESH-DB-CONTRACT-PARTNER-DUPNAME-SCREEN PASS：blocked_names=3, screen_rows=6, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open recovery write batch for contract partner 12 anchors`
+
+### 2026-04-16T10:15:00+08:00
+- blocker_key: `iter_2065_fresh_db_contract_partner_12_anchor_recovery_write_in_progress`
+- layer_target: `Migration Replay Write`
+- module: `contract partner text anchors`
+- reason: recovery can reuse three canonical existing partners and create the remaining missing anchors
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-CONTRACT-PARTNER-12-ANCHOR-RECOVERY-WRITE in_progress：recovery write script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run DB=sc_migration_fresh make odoo.shell.exec < scripts/migration/fresh_db_contract_partner_12_anchor_replay_recovery_write.py`
+
+### 2026-04-16T10:25:00+08:00
+- blocker_key: `iter_2065_fresh_db_contract_partner_12_anchor_recovery_write_pass`
+- layer_target: `Migration Replay Write`
+- module: `contract partner text anchors`
+- reason: all 12 contract partner anchors are resolved for the 57 dependent contract rows
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-CONTRACT-PARTNER-12-ANCHOR-RECOVERY-WRITE PASS：resolved=12, cumulative_created=6, dependent_contract_rows=57, demo_targets=0`
+- active_commit: `25dc6bc`
+- next_step: `open 57-row dependent contract retry batch using the contract partner resolution artifact`
+
+### 2026-04-16T10:35:00+08:00
+- blocker_key: `iter_2066_fresh_db_contract_57_retry_write_in_progress`
+- layer_target: `Migration Replay Write`
+- module: `contract header retry rows`
+- reason: project anchors and contract partner anchors are ready for the 57 dependent contract rows
+- completed_step: `ITER-2026-04-15-FRESH-DB-CONTRACT-57-RETRY-WRITE in_progress：write script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run DB=sc_migration_fresh make odoo.shell.exec < scripts/migration/fresh_db_contract_57_retry_write.py`
+
+### 2026-04-16T10:45:00+08:00
+- blocker_key: `iter_2067_fresh_db_core_tax_prereq_materialize_in_progress`
+- layer_target: `Migration Replay Prerequisite`
+- module: `contract default tax prerequisite`
+- reason: 57 contract retry was blocked by missing core default tax in the fresh no-demo database
+- completed_step: `ITER-2026-04-15-FRESH-DB-CORE-TAX-PREREQ-MATERIALIZE in_progress：hook wrapper prepared`
+- active_commit: `25dc6bc`
+- next_step: `run DB=sc_migration_fresh make odoo.shell.exec < scripts/migration/fresh_db_core_tax_prereq_materialize.py`
+
+### 2026-04-16T10:55:00+08:00
+- blocker_key: `iter_2067_fresh_db_core_tax_prereq_materialize_pass`
+- layer_target: `Migration Replay Prerequisite`
+- module: `contract default tax prerequisite`
+- reason: core contract tax prerequisites are present without installing demo modules
+- completed_step: `ITER-2026-04-15-FRESH-DB-CORE-TAX-PREREQ-MATERIALIZE PASS：required_taxes=2, transaction_rows=0, demo_targets=0`
+- active_commit: `25dc6bc`
+- next_step: `retry the 57 contract header rows`
+
+### 2026-04-16T11:05:00+08:00
+- blocker_key: `iter_2066_fresh_db_contract_57_retry_write_pass`
+- layer_target: `Migration Replay Write`
+- module: `contract header retry rows`
+- reason: partner and project anchors plus core tax prerequisites are ready
+- completed_step: `ITER-2026-04-15-FRESH-DB-CONTRACT-57-RETRY-WRITE PASS：input_rows=57, created_rows=57, line/payment/settlement/accounting_rows=0`
+- active_commit: `25dc6bc`
+- next_step: `refresh fresh database replay manifest and continue remaining migration layers`
+
+### 2026-04-16T11:15:00+08:00
+- blocker_key: `iter_2068_fresh_db_replay_manifest_execution_refresh_in_progress`
+- layer_target: `Migration Replay Governance`
+- module: `fresh database replay manifest execution state`
+- reason: completed fresh no-demo replay writes must be reflected in the replay manifest
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-MANIFEST-EXECUTION-REFRESH in_progress：execution refresh script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run python3 scripts/migration/fresh_db_replay_manifest_execution_refresh.py`
+
+### 2026-04-16T11:25:00+08:00
+- blocker_key: `iter_2068_fresh_db_replay_manifest_execution_refresh_pass`
+- layer_target: `Migration Replay Governance`
+- module: `fresh database replay manifest execution state`
+- reason: fresh no-demo replay execution is now reflected without overstating full contract coverage
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-MANIFEST-EXECUTION-REFRESH PASS：partner=4797, project=755, contract_partner=12, contract_header_partial=57/1332`
+- active_commit: `25dc6bc`
+- next_step: `open next adapter/write batch for remaining contract headers or project-member replay`
+
+### 2026-04-16T11:35:00+08:00
+- blocker_key: `iter_2069_fresh_db_project_member_neutral_adapter_in_progress`
+- layer_target: `Migration Replay Adapter`
+- module: `project-member neutral staging`
+- reason: project-member neutral facts are replay-ready candidates but need fresh project anchor ids
+- completed_step: `ITER-2026-04-15-FRESH-DB-PROJECT-MEMBER-NEUTRAL-ADAPTER in_progress：adapter script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run python3 scripts/migration/fresh_db_project_member_neutral_replay_adapter.py`
+
+### 2026-04-16T11:45:00+08:00
+- blocker_key: `iter_2069_fresh_db_project_member_neutral_adapter_pass`
+- layer_target: `Migration Replay Adapter`
+- module: `project-member neutral staging`
+- reason: completed neutral project-member rows now have fresh project anchor ids
+- completed_step: `ITER-2026-04-15-FRESH-DB-PROJECT-MEMBER-NEUTRAL-ADAPTER PASS：payload_rows=7389, missing_project_anchors=0, duplicate_identities=0`
+- active_commit: `25dc6bc`
+- next_step: `precheck and write project-member neutral payload into sc_migration_fresh`
+
+### 2026-04-16T11:55:00+08:00
+- blocker_key: `iter_2070_fresh_db_project_member_neutral_write_in_progress`
+- layer_target: `Migration Replay Write`
+- module: `project-member neutral staging`
+- reason: 7389-row fresh replay payload has passed adapter checks
+- completed_step: `ITER-2026-04-15-FRESH-DB-PROJECT-MEMBER-NEUTRAL-WRITE in_progress：write script prepared`
+- active_commit: `25dc6bc`
+- next_step: `run DB=sc_migration_fresh make odoo.shell.exec < scripts/migration/fresh_db_project_member_neutral_replay_write.py`
+
+### 2026-04-16T12:05:00+08:00
+- blocker_key: `iter_2070_fresh_db_project_member_neutral_write_pass`
+- layer_target: `Migration Replay Write`
+- module: `project-member neutral staging`
+- reason: neutral project-member evidence has been recreated without responsibility or visibility changes
+- completed_step: `ITER-2026-04-15-FRESH-DB-PROJECT-MEMBER-NEUTRAL-WRITE PASS：created_rows=7389, project_responsibility_writes=0, visibility_changed=false`
+- active_commit: `25dc6bc`
+- next_step: `refresh fresh database replay manifest after project-member neutral replay`
+
+### 2026-04-16T12:15:00+08:00
+- blocker_key: `iter_2071_fresh_db_replay_manifest_project_member_refresh_pass`
+- layer_target: `Migration Replay Governance`
+- module: `fresh database replay manifest execution state`
+- reason: project-member neutral replay has passed and must be represented before selecting the next migration lane
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-MANIFEST-PROJECT-MEMBER-REFRESH PASS：execution_lanes_refreshed=5, project_member_neutral_rows=7389, contract_header_partial=57/1332`
+- active_commit: `25dc6bc`
+- next_step: `open next adapter/write batch for remaining contract headers`
+
+### 2026-04-16T12:25:00+08:00
+- blocker_key: `iter_2072_fresh_db_contract_remaining_adapter_blocked`
+- layer_target: `Migration Replay Adapter`
+- module: `remaining contract header facts`
+- reason: remaining contract adapter found required partner_id anchors missing
+- completed_step: `ITER-2026-04-15-FRESH-DB-CONTRACT-REMAINING-ADAPTER FAIL_NO_DB_WRITE：missing_partner_anchor_count=95, project_missing=0`
+- active_commit: `25dc6bc`
+- next_step: `materialize missing contract counterparty partner anchors`
+
+### 2026-04-16T12:35:00+08:00
+- blocker_key: `iter_2073_fresh_db_contract_missing_partner_anchor_write_pass`
+- layer_target: `Migration Replay Write`
+- module: `contract counterparty partner anchors`
+- reason: construction.contract.partner_id is required and cannot be left empty
+- completed_step: `ITER-2026-04-15-FRESH-DB-CONTRACT-MISSING-PARTNER-ANCHOR-WRITE PASS：created_partner_anchors=95, dependent_contract_rows=557`
+- active_commit: `25dc6bc`
+- next_step: `rerun remaining contract header adapter`
+
+### 2026-04-16T12:45:00+08:00
+- blocker_key: `iter_2074_fresh_db_contract_remaining_adapter_pass`
+- layer_target: `Migration Replay Adapter`
+- module: `remaining contract header facts`
+- reason: missing partner anchors have been materialized and all fresh ids can now be mapped
+- completed_step: `ITER-2026-04-15-FRESH-DB-CONTRACT-REMAINING-ADAPTER PASS：payload_rows=1332, missing_project=0, missing_partner=0, overlap_with_retry57=0`
+- active_commit: `25dc6bc`
+- next_step: `write 1332 contract headers into sc_migration_fresh`
+
+### 2026-04-16T12:55:00+08:00
+- blocker_key: `iter_2075_fresh_db_contract_remaining_write_pass`
+- layer_target: `Migration Replay Write`
+- module: `contract header facts`
+- reason: remaining contract header payload has complete fresh project and partner anchors
+- completed_step: `ITER-2026-04-15-FRESH-DB-CONTRACT-REMAINING-WRITE PASS：created_rows=1332, post_write_match_count=1332, line_payment_settlement_accounting_rows=0`
+- active_commit: `25dc6bc`
+- next_step: `refresh fresh database replay manifest with full contract header replay`
+
+### 2026-04-16T13:05:00+08:00
+- blocker_key: `iter_2076_fresh_db_replay_manifest_contract_full_refresh_pass`
+- layer_target: `Migration Replay Governance`
+- module: `fresh database replay manifest execution state`
+- reason: contract header replay coverage must separate 1332 historical headers from 57 retry headers
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-MANIFEST-CONTRACT-FULL-REFRESH PASS：contract_header_historical=1332, retry=57, total=1389, remaining=0`
+- active_commit: `25dc6bc`
+- next_step: `open next migration lane after contract headers`
+
+### 2026-04-16T13:15:00+08:00
+- blocker_key: `iter_2077_fresh_db_receipt_readiness_screen_pass`
+- layer_target: `Migration Readiness Screen`
+- module: `receipt source facts`
+- reason: contract headers are ready and receipt lane needs source-shape classification before any write task
+- completed_step: `ITER-2026-04-15-FRESH-DB-RECEIPT-READINESS-SCREEN PASS：source_rows=7412, core_ready=1683, zero_or_aux=1908, missing_contract=3630, contract_not_replayed=121, partner_not_replayed=21, deleted=49`
+- active_commit: `25dc6bc`
+- next_step: `open dedicated receipt policy screen for core candidates and blocker handling`
+
+### 2026-04-16T13:25:00+08:00
+- blocker_key: `iter_2078_fresh_db_receipt_policy_screen_pass`
+- layer_target: `Migration Policy Screen`
+- module: `receipt source facts`
+- reason: user approved migrating only core-ready receipts and excluding incomplete/non-core rows from core facts
+- completed_step: `ITER-2026-04-15-FRESH-DB-RECEIPT-POLICY-SCREEN PASS：core_payload_rows=1683, excluded_rows=5729, db_writes=0`
+- active_commit: `25dc6bc`
+- next_step: `open receipt write design for core payload`
+
+### 2026-04-16T13:35:00+08:00
+- blocker_key: `iter_2079_fresh_db_receipt_write_design_pass`
+- layer_target: `Migration Write Design`
+- module: `receipt receive request facts`
+- reason: core receipt payload has complete fresh project, contract, and partner ids
+- completed_step: `ITER-2026-04-15-FRESH-DB-RECEIPT-WRITE-DESIGN PASS：design_payload_rows=1683, missing_project=0, missing_contract=0, missing_partner=0`
+- active_commit: `25dc6bc`
+- next_step: `open controlled receipt write batch for 1683 receive requests`
+
+### 2026-04-16T13:45:00+08:00
+- blocker_key: `iter_2080_fresh_db_receipt_core_write_pass`
+- layer_target: `Migration Replay Write`
+- module: `receipt receive request facts`
+- reason: approved core receipt payload can be represented as draft receive requests without settlement/accounting side effects
+- completed_step: `ITER-2026-04-15-FRESH-DB-RECEIPT-CORE-WRITE PASS：created_rows=1683, ledger=0, settlement=0, account_move=0`
+- active_commit: `25dc6bc`
+- next_step: `refresh fresh database replay manifest with receipt core write`
+
+### 2026-04-16T13:55:00+08:00
+- blocker_key: `iter_2081_fresh_db_replay_manifest_receipt_refresh_pass`
+- layer_target: `Migration Replay Governance`
+- module: `fresh database replay manifest execution state`
+- reason: receipt core write must be represented while keeping settlement/accounting coverage at zero
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-MANIFEST-RECEIPT-REFRESH PASS：receipt_core_rows=1683, settlement=0, accounting=0`
+- active_commit: `25dc6bc`
+- next_step: `open next migration lane after receipt core replay`
+
+### 2026-04-16T14:05:00+08:00
+- blocker_key: `iter_2082_fresh_db_replay_manifest_receipt_lane_normalize_pass`
+- layer_target: `Migration Replay Governance`
+- module: `fresh database replay manifest execution state`
+- reason: receipt lane status must match completed receipt core replay before high-risk lane decision
+- completed_step: `ITER-2026-04-15-FRESH-DB-REPLAY-MANIFEST-RECEIPT-LANE-NORMALIZE PASS：receipt_lane=fresh_replay_executed, remaining=payment_settlement_accounting/excluded_high_risk`
+- active_commit: `25dc6bc`
+- next_step: `stop for high-risk payment/settlement/accounting decision`
+
+### 2026-04-16T13:25:00+08:00
+- blocker_key: `iter_2078_fresh_db_rebuild_status_temp_report_pass`
+- layer_target: `Migration Governance Report`
+- module: `fresh database rebuild review`
+- reason: Owner requested a root-level temporary report for overall scheduling decision
+- completed_step: `ITER-2026-04-15-FRESH-DB-REBUILD-STATUS-TEMP-REPORT PASS：root_temp_report=TEMP_FRESH_DB_REBUILD_STATUS_REVIEW_2026-04-15.md`
+- active_commit: `25dc6bc`
+- next_step: `owner scheduling review`
+
+### 2026-04-16T13:35:00+08:00
+- blocker_key: `iter_2079_contract_line_readiness_screen_pass`
+- layer_target: `Migration Readiness Screen`
+- module: `contract line facts`
+- reason: Owner froze phase 2 as contract fact closure before receipt core candidates
+- completed_step: `ITER-2026-04-15-CONTRACT-LINE-READINESS-SCREEN PASS：raw_contract_rows=1694, fresh_overlap=1389, independent_line_source=0, fallback_single_line_candidates=1342, zero_amount=47, not_replayed=240, deleted=65`
+- active_commit: `25dc6bc`
+- next_step: `open contract line policy screen for fallback single-line candidates`

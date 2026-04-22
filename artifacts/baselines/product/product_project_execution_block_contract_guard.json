@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "blocks": {
+    "execution_tasks": {
+      "state": "ready",
+      "block_type": "execution_task_list",
+      "degraded": false
+    },
+    "next_actions": {
+      "state": "ready",
+      "block_type": "action_list",
+      "degraded": false
+    }
+  }
+}

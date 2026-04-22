@@ -1,0 +1,3516 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "receipt_counterparty_partner_sc_v1",
+  "external_id_rule": {
+    "legacy_key_policy": "stable_receipt_counterparty_wldwid",
+    "pattern": "legacy_receipt_counterparty_sc_<WLDWID>",
+    "source": "sc"
+  },
+  "lane_id": "receipt_counterparty_partner",
+  "records": [
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_00d57ad17db74a5c95fa1be158f21376",
+      "legacy_identity_key": "receipt_counterparty:sc:00d57ad17db74a5c95fa1be158f21376",
+      "legacy_partner_id": "00d57ad17db74a5c95fa1be158f21376",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "黄建军",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_00d57ad17db74a5c95fa1be158f21376"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_00fa1405c3d1412882683a2f743b690c",
+      "legacy_identity_key": "receipt_counterparty:sc:00fa1405c3d1412882683a2f743b690c",
+      "legacy_partner_id": "00fa1405c3d1412882683a2f743b690c",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李佳琳",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_00fa1405c3d1412882683a2f743b690c"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_0181bee8f0354d699367839433dba8db",
+      "legacy_identity_key": "receipt_counterparty:sc:0181bee8f0354d699367839433dba8db",
+      "legacy_partner_id": "0181bee8f0354d699367839433dba8db",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "刘曜",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_0181bee8f0354d699367839433dba8db"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_01bb4c95df7c45f0b01ad49061a19d06",
+      "legacy_identity_key": "receipt_counterparty:sc:01bb4c95df7c45f0b01ad49061a19d06",
+      "legacy_partner_id": "01bb4c95df7c45f0b01ad49061a19d06",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "蔡顺芳",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_01bb4c95df7c45f0b01ad49061a19d06"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_020bfb6529404a99a6aa6000d6a0c4d7",
+      "legacy_identity_key": "receipt_counterparty:sc:020bfb6529404a99a6aa6000d6a0c4d7",
+      "legacy_partner_id": "020bfb6529404a99a6aa6000d6a0c4d7",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "陈建峰",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_020bfb6529404a99a6aa6000d6a0c4d7"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_0257e79286754dd69fb9b8cc1373877e",
+      "legacy_identity_key": "receipt_counterparty:sc:0257e79286754dd69fb9b8cc1373877e",
+      "legacy_partner_id": "0257e79286754dd69fb9b8cc1373877e",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "赖方莉",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_0257e79286754dd69fb9b8cc1373877e"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_037913d9970e4e7e83eec244a1de6812",
+      "legacy_identity_key": "receipt_counterparty:sc:037913d9970e4e7e83eec244a1de6812",
+      "legacy_partner_id": "037913d9970e4e7e83eec244a1de6812",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "向东",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_037913d9970e4e7e83eec244a1de6812"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_051866337dfe4fd2a37d18b902500802",
+      "legacy_identity_key": "receipt_counterparty:sc:051866337dfe4fd2a37d18b902500802",
+      "legacy_partner_id": "051866337dfe4fd2a37d18b902500802",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "袁天强",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_051866337dfe4fd2a37d18b902500802"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_05968805601547efbc75821c3088ab8c",
+      "legacy_identity_key": "receipt_counterparty:sc:05968805601547efbc75821c3088ab8c",
+      "legacy_partner_id": "05968805601547efbc75821c3088ab8c",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "孙阳明",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_05968805601547efbc75821c3088ab8c"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_05d5a91c476542f39f93a576cb5e7847",
+      "legacy_identity_key": "receipt_counterparty:sc:05d5a91c476542f39f93a576cb5e7847",
+      "legacy_partner_id": "05d5a91c476542f39f93a576cb5e7847",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "王松立",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_05d5a91c476542f39f93a576cb5e7847"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_0705c8584b2d49ce9ceef76892927559",
+      "legacy_identity_key": "receipt_counterparty:sc:0705c8584b2d49ce9ceef76892927559",
+      "legacy_partner_id": "0705c8584b2d49ce9ceef76892927559",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "石萧",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_0705c8584b2d49ce9ceef76892927559"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_0a8ce3a8_b32d_4f09_bfd8_6588421f46f5",
+      "legacy_identity_key": "receipt_counterparty:sc:0a8ce3a8-b32d-4f09-bfd8-6588421f46f5",
+      "legacy_partner_id": "0a8ce3a8-b32d-4f09-bfd8-6588421f46f5",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "肖华",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_0a8ce3a8_b32d_4f09_bfd8_6588421f46f5"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_0ad2af7cd776488bba8e96f001d2c262",
+      "legacy_identity_key": "receipt_counterparty:sc:0ad2af7cd776488bba8e96f001d2c262",
+      "legacy_partner_id": "0ad2af7cd776488bba8e96f001d2c262",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "邓卓文",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_0ad2af7cd776488bba8e96f001d2c262"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_0b138cd84809411181d37a2abca7101f",
+      "legacy_identity_key": "receipt_counterparty:sc:0b138cd84809411181d37a2abca7101f",
+      "legacy_partner_id": "0b138cd84809411181d37a2abca7101f",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "曹辉",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_0b138cd84809411181d37a2abca7101f"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_0b4c2f23f604455aae4ebeb3d648d8db",
+      "legacy_identity_key": "receipt_counterparty:sc:0b4c2f23f604455aae4ebeb3d648d8db",
+      "legacy_partner_id": "0b4c2f23f604455aae4ebeb3d648d8db",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "彭建",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_0b4c2f23f604455aae4ebeb3d648d8db"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_0bc09873ff23416f8a2a0b798adc9c61",
+      "legacy_identity_key": "receipt_counterparty:sc:0bc09873ff23416f8a2a0b798adc9c61",
+      "legacy_partner_id": "0bc09873ff23416f8a2a0b798adc9c61",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "次旦",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_0bc09873ff23416f8a2a0b798adc9c61"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_0d7d167e3ca14ec5adc4a7039e9985d3",
+      "legacy_identity_key": "receipt_counterparty:sc:0d7d167e3ca14ec5adc4a7039e9985d3",
+      "legacy_partner_id": "0d7d167e3ca14ec5adc4a7039e9985d3",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "黄陈军",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_0d7d167e3ca14ec5adc4a7039e9985d3"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_10000001",
+      "legacy_identity_key": "receipt_counterparty:sc:10000001",
+      "legacy_partner_id": "10000001",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "段奕俊",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_10000001"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_10000011",
+      "legacy_identity_key": "receipt_counterparty:sc:10000011",
+      "legacy_partner_id": "10000011",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "胡俊",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_10000011"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_10000015",
+      "legacy_identity_key": "receipt_counterparty:sc:10000015",
+      "legacy_partner_id": "10000015",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "文楠",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_10000015"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_10000021",
+      "legacy_identity_key": "receipt_counterparty:sc:10000021",
+      "legacy_partner_id": "10000021",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "杨永田",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_10000021"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_10000029",
+      "legacy_identity_key": "receipt_counterparty:sc:10000029",
+      "legacy_partner_id": "10000029",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "陈天友",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_10000029"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_10000040",
+      "legacy_identity_key": "receipt_counterparty:sc:10000040",
+      "legacy_partner_id": "10000040",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "范晓龙",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_10000040"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_10000044",
+      "legacy_identity_key": "receipt_counterparty:sc:10000044",
+      "legacy_partner_id": "10000044",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "蒋毅",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_10000044"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_10000053",
+      "legacy_identity_key": "receipt_counterparty:sc:10000053",
+      "legacy_partner_id": "10000053",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "叶凌越",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_10000053"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_10000054",
+      "legacy_identity_key": "receipt_counterparty:sc:10000054",
+      "legacy_partner_id": "10000054",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李俭峰",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_10000054"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_10000056",
+      "legacy_identity_key": "receipt_counterparty:sc:10000056",
+      "legacy_partner_id": "10000056",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "肖辉玖",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_10000056"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "company",
+      "external_id": "legacy_receipt_counterparty_sc_1094",
+      "legacy_identity_key": "receipt_counterparty:sc:1094",
+      "legacy_partner_id": "1094",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "中国移动四川分公司乐山片区2018-2020年渠道零星维修项目（标包5）",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_1094"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_10c135a2f6ad4ebc88ebf4cff1b3080a",
+      "legacy_identity_key": "receipt_counterparty:sc:10c135a2f6ad4ebc88ebf4cff1b3080a",
+      "legacy_partner_id": "10c135a2f6ad4ebc88ebf4cff1b3080a",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "向序忠",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_10c135a2f6ad4ebc88ebf4cff1b3080a"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_1145995645af49d79cd3f6956afaa1fd",
+      "legacy_identity_key": "receipt_counterparty:sc:1145995645af49d79cd3f6956afaa1fd",
+      "legacy_partner_id": "1145995645af49d79cd3f6956afaa1fd",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李际春",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_1145995645af49d79cd3f6956afaa1fd"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_115b059d2589412d8e27dd5460779c15",
+      "legacy_identity_key": "receipt_counterparty:sc:115b059d2589412d8e27dd5460779c15",
+      "legacy_partner_id": "115b059d2589412d8e27dd5460779c15",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "蔡招武",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_115b059d2589412d8e27dd5460779c15"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_119ca912743a4d5face179e7b7be8a2e",
+      "legacy_identity_key": "receipt_counterparty:sc:119ca912743a4d5face179e7b7be8a2e",
+      "legacy_partner_id": "119ca912743a4d5face179e7b7be8a2e",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "余枫",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_119ca912743a4d5face179e7b7be8a2e"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_11f4f949fdc74530b000ef5b28f6babf",
+      "legacy_identity_key": "receipt_counterparty:sc:11f4f949fdc74530b000ef5b28f6babf",
+      "legacy_partner_id": "11f4f949fdc74530b000ef5b28f6babf",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "汪桂君",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_11f4f949fdc74530b000ef5b28f6babf"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_1232112bc4a4489c8113bb0f99ea9ffe",
+      "legacy_identity_key": "receipt_counterparty:sc:1232112bc4a4489c8113bb0f99ea9ffe",
+      "legacy_partner_id": "1232112bc4a4489c8113bb0f99ea9ffe",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "林羽能",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_1232112bc4a4489c8113bb0f99ea9ffe"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_12a2cd506c38464f8b99335ac3f7a5c9",
+      "legacy_identity_key": "receipt_counterparty:sc:12a2cd506c38464f8b99335ac3f7a5c9",
+      "legacy_partner_id": "12a2cd506c38464f8b99335ac3f7a5c9",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "唐文",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_12a2cd506c38464f8b99335ac3f7a5c9"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_12afb515819b45d897050678bb2a163c",
+      "legacy_identity_key": "receipt_counterparty:sc:12afb515819b45d897050678bb2a163c",
+      "legacy_partner_id": "12afb515819b45d897050678bb2a163c",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "梁应龙",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_12afb515819b45d897050678bb2a163c"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_14fa0bb174084324b65fb82161b629fd",
+      "legacy_identity_key": "receipt_counterparty:sc:14fa0bb174084324b65fb82161b629fd",
+      "legacy_partner_id": "14fa0bb174084324b65fb82161b629fd",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "穆春宏",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_14fa0bb174084324b65fb82161b629fd"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_1616117be2094007b388c53168c8dfd5",
+      "legacy_identity_key": "receipt_counterparty:sc:1616117be2094007b388c53168c8dfd5",
+      "legacy_partner_id": "1616117be2094007b388c53168c8dfd5",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "简平凡",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_1616117be2094007b388c53168c8dfd5"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_16da25228a6748068437f02f95bfd460",
+      "legacy_identity_key": "receipt_counterparty:sc:16da25228a6748068437f02f95bfd460",
+      "legacy_partner_id": "16da25228a6748068437f02f95bfd460",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "税务局",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_16da25228a6748068437f02f95bfd460"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_17ccae4e12a149f2bc629c513d68cdca",
+      "legacy_identity_key": "receipt_counterparty:sc:17ccae4e12a149f2bc629c513d68cdca",
+      "legacy_partner_id": "17ccae4e12a149f2bc629c513d68cdca",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "蒋家敏",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_17ccae4e12a149f2bc629c513d68cdca"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_1826ad6c3d934f69959ead9f03a595da",
+      "legacy_identity_key": "receipt_counterparty:sc:1826ad6c3d934f69959ead9f03a595da",
+      "legacy_partner_id": "1826ad6c3d934f69959ead9f03a595da",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "唐利川",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_1826ad6c3d934f69959ead9f03a595da"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_18a366a20abc45e99e95daf293512f03",
+      "legacy_identity_key": "receipt_counterparty:sc:18a366a20abc45e99e95daf293512f03",
+      "legacy_partner_id": "18a366a20abc45e99e95daf293512f03",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "文泽香",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_18a366a20abc45e99e95daf293512f03"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_1a84ab87ec3d4279b349d055f6df7f74",
+      "legacy_identity_key": "receipt_counterparty:sc:1a84ab87ec3d4279b349d055f6df7f74",
+      "legacy_partner_id": "1a84ab87ec3d4279b349d055f6df7f74",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "陈辉",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_1a84ab87ec3d4279b349d055f6df7f74"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_1a89a63cce8444729e5870aa58b60a7b",
+      "legacy_identity_key": "receipt_counterparty:sc:1a89a63cce8444729e5870aa58b60a7b",
+      "legacy_partner_id": "1a89a63cce8444729e5870aa58b60a7b",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "刘亚妮",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_1a89a63cce8444729e5870aa58b60a7b"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_1c64c031885e42328542122077bb9cd5",
+      "legacy_identity_key": "receipt_counterparty:sc:1c64c031885e42328542122077bb9cd5",
+      "legacy_partner_id": "1c64c031885e42328542122077bb9cd5",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "邹谨文",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_1c64c031885e42328542122077bb9cd5"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_1d095be0b6db4147862f7ab1fc213e4a",
+      "legacy_identity_key": "receipt_counterparty:sc:1d095be0b6db4147862f7ab1fc213e4a",
+      "legacy_partner_id": "1d095be0b6db4147862f7ab1fc213e4a",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "唐祖贵",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_1d095be0b6db4147862f7ab1fc213e4a"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_1d76378c_fa53_4e39_8b5f_eedb009f6466",
+      "legacy_identity_key": "receipt_counterparty:sc:1d76378c-fa53-4e39-8b5f-eedb009f6466",
+      "legacy_partner_id": "1d76378c-fa53-4e39-8b5f-eedb009f6466",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "敬远",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_1d76378c_fa53_4e39_8b5f_eedb009f6466"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_1d9c955875a34c20abcde7793ac73b21",
+      "legacy_identity_key": "receipt_counterparty:sc:1d9c955875a34c20abcde7793ac73b21",
+      "legacy_partner_id": "1d9c955875a34c20abcde7793ac73b21",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "郑书友",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_1d9c955875a34c20abcde7793ac73b21"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_1e238da73c08429893d1a3c3596a3c36",
+      "legacy_identity_key": "receipt_counterparty:sc:1e238da73c08429893d1a3c3596a3c36",
+      "legacy_partner_id": "1e238da73c08429893d1a3c3596a3c36",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "陈小敏",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_1e238da73c08429893d1a3c3596a3c36"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_1f1c8eafbc844d83936ba7ffbd1369d3",
+      "legacy_identity_key": "receipt_counterparty:sc:1f1c8eafbc844d83936ba7ffbd1369d3",
+      "legacy_partner_id": "1f1c8eafbc844d83936ba7ffbd1369d3",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "曾萍",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_1f1c8eafbc844d83936ba7ffbd1369d3"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_1fd2c60e7e73463094734b54edb9aa9a",
+      "legacy_identity_key": "receipt_counterparty:sc:1fd2c60e7e73463094734b54edb9aa9a",
+      "legacy_partner_id": "1fd2c60e7e73463094734b54edb9aa9a",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李俭锋",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_1fd2c60e7e73463094734b54edb9aa9a"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_215490984f664e08b8b086e85210a570",
+      "legacy_identity_key": "receipt_counterparty:sc:215490984f664e08b8b086e85210a570",
+      "legacy_partner_id": "215490984f664e08b8b086e85210a570",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "左乾劲",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_215490984f664e08b8b086e85210a570"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_2522fe74d9554105b4f46020e04f6549",
+      "legacy_identity_key": "receipt_counterparty:sc:2522fe74d9554105b4f46020e04f6549",
+      "legacy_partner_id": "2522fe74d9554105b4f46020e04f6549",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "薛排成",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_2522fe74d9554105b4f46020e04f6549"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_26f75cc5c35d4ce39328e98f48d9d78b",
+      "legacy_identity_key": "receipt_counterparty:sc:26f75cc5c35d4ce39328e98f48d9d78b",
+      "legacy_partner_id": "26f75cc5c35d4ce39328e98f48d9d78b",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "黄林",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_26f75cc5c35d4ce39328e98f48d9d78b"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_27aeb4b32f60426486363164a25564ac",
+      "legacy_identity_key": "receipt_counterparty:sc:27aeb4b32f60426486363164a25564ac",
+      "legacy_partner_id": "27aeb4b32f60426486363164a25564ac",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "杜正川",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_27aeb4b32f60426486363164a25564ac"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_27b29404f535489e87924bef9931a96e",
+      "legacy_identity_key": "receipt_counterparty:sc:27b29404f535489e87924bef9931a96e",
+      "legacy_partner_id": "27b29404f535489e87924bef9931a96e",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "彭名杰",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_27b29404f535489e87924bef9931a96e"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_294ba1cf5ea048b5a9eb336123f28411",
+      "legacy_identity_key": "receipt_counterparty:sc:294ba1cf5ea048b5a9eb336123f28411",
+      "legacy_partner_id": "294ba1cf5ea048b5a9eb336123f28411",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "雒平平",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_294ba1cf5ea048b5a9eb336123f28411"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_29e28b9b03d544e5a43d155757f49f37",
+      "legacy_identity_key": "receipt_counterparty:sc:29e28b9b03d544e5a43d155757f49f37",
+      "legacy_partner_id": "29e28b9b03d544e5a43d155757f49f37",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "王顺强",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_29e28b9b03d544e5a43d155757f49f37"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_2a86f924bb1e4d638700b24245ffbe43",
+      "legacy_identity_key": "receipt_counterparty:sc:2a86f924bb1e4d638700b24245ffbe43",
+      "legacy_partner_id": "2a86f924bb1e4d638700b24245ffbe43",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "胡进宝",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_2a86f924bb1e4d638700b24245ffbe43"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_2bc53a6a10cd42a29465a95c36aeb1bb",
+      "legacy_identity_key": "receipt_counterparty:sc:2bc53a6a10cd42a29465a95c36aeb1bb",
+      "legacy_partner_id": "2bc53a6a10cd42a29465a95c36aeb1bb",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "张彩先",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_2bc53a6a10cd42a29465a95c36aeb1bb"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_2c2fb4275771496b912cdcff76302e52",
+      "legacy_identity_key": "receipt_counterparty:sc:2c2fb4275771496b912cdcff76302e52",
+      "legacy_partner_id": "2c2fb4275771496b912cdcff76302e52",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "谢占军",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_2c2fb4275771496b912cdcff76302e52"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_2cbbebf29fc14a1eb86e7ff591028c7f",
+      "legacy_identity_key": "receipt_counterparty:sc:2cbbebf29fc14a1eb86e7ff591028c7f",
+      "legacy_partner_id": "2cbbebf29fc14a1eb86e7ff591028c7f",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "史天泉",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_2cbbebf29fc14a1eb86e7ff591028c7f"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_2cd9f92e2b2e411a90f3787906533da8",
+      "legacy_identity_key": "receipt_counterparty:sc:2cd9f92e2b2e411a90f3787906533da8",
+      "legacy_partner_id": "2cd9f92e2b2e411a90f3787906533da8",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "罗霖",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_2cd9f92e2b2e411a90f3787906533da8"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_2cf8d98b1e5f4d988d521a11bbe68c14",
+      "legacy_identity_key": "receipt_counterparty:sc:2cf8d98b1e5f4d988d521a11bbe68c14",
+      "legacy_partner_id": "2cf8d98b1e5f4d988d521a11bbe68c14",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "王本月",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_2cf8d98b1e5f4d988d521a11bbe68c14"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_2d44ec08a90447399e766ddd6ea23596",
+      "legacy_identity_key": "receipt_counterparty:sc:2d44ec08a90447399e766ddd6ea23596",
+      "legacy_partner_id": "2d44ec08a90447399e766ddd6ea23596",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李书寒",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_2d44ec08a90447399e766ddd6ea23596"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_2eda0b836a904c2480f288c3e94511e6",
+      "legacy_identity_key": "receipt_counterparty:sc:2eda0b836a904c2480f288c3e94511e6",
+      "legacy_partner_id": "2eda0b836a904c2480f288c3e94511e6",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "乔雪梅",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_2eda0b836a904c2480f288c3e94511e6"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_2f01f91490324949a058c5b98e3971f5",
+      "legacy_identity_key": "receipt_counterparty:sc:2f01f91490324949a058c5b98e3971f5",
+      "legacy_partner_id": "2f01f91490324949a058c5b98e3971f5",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "田仲蓉",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_2f01f91490324949a058c5b98e3971f5"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_303f0bcadbc049e3bd2cd4cb0f1101cf",
+      "legacy_identity_key": "receipt_counterparty:sc:303f0bcadbc049e3bd2cd4cb0f1101cf",
+      "legacy_partner_id": "303f0bcadbc049e3bd2cd4cb0f1101cf",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "涂小琴",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_303f0bcadbc049e3bd2cd4cb0f1101cf"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_323f6cc3173d4b23b6c0d17fad2900e6",
+      "legacy_identity_key": "receipt_counterparty:sc:323f6cc3173d4b23b6c0d17fad2900e6",
+      "legacy_partner_id": "323f6cc3173d4b23b6c0d17fad2900e6",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "陈辉",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_323f6cc3173d4b23b6c0d17fad2900e6"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_3242d83b27414a9a96ae509f02c0c5af",
+      "legacy_identity_key": "receipt_counterparty:sc:3242d83b27414a9a96ae509f02c0c5af",
+      "legacy_partner_id": "3242d83b27414a9a96ae509f02c0c5af",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "吴代强",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_3242d83b27414a9a96ae509f02c0c5af"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_330cd7e7b2ba4858bf858a140d0a5280",
+      "legacy_identity_key": "receipt_counterparty:sc:330cd7e7b2ba4858bf858a140d0a5280",
+      "legacy_partner_id": "330cd7e7b2ba4858bf858a140d0a5280",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "何铭",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_330cd7e7b2ba4858bf858a140d0a5280"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_334e8540470a496a9e394540d337a53b",
+      "legacy_identity_key": "receipt_counterparty:sc:334e8540470a496a9e394540d337a53b",
+      "legacy_partner_id": "334e8540470a496a9e394540d337a53b",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "刘红波",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_334e8540470a496a9e394540d337a53b"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_3380a82de6174dcaa1833c41f38f1951",
+      "legacy_identity_key": "receipt_counterparty:sc:3380a82de6174dcaa1833c41f38f1951",
+      "legacy_partner_id": "3380a82de6174dcaa1833c41f38f1951",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "刘建华",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_3380a82de6174dcaa1833c41f38f1951"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_3448d584e66349dcb1c6ff888fd00804",
+      "legacy_identity_key": "receipt_counterparty:sc:3448d584e66349dcb1c6ff888fd00804",
+      "legacy_partner_id": "3448d584e66349dcb1c6ff888fd00804",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "赵大凯",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_3448d584e66349dcb1c6ff888fd00804"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_35d045307b174f85b6706f1a0d51e8c5",
+      "legacy_identity_key": "receipt_counterparty:sc:35d045307b174f85b6706f1a0d51e8c5",
+      "legacy_partner_id": "35d045307b174f85b6706f1a0d51e8c5",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "税务局",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_35d045307b174f85b6706f1a0d51e8c5"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_35eb10f3e498431b911cf91447d2ab40",
+      "legacy_identity_key": "receipt_counterparty:sc:35eb10f3e498431b911cf91447d2ab40",
+      "legacy_partner_id": "35eb10f3e498431b911cf91447d2ab40",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "巫应亮",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_35eb10f3e498431b911cf91447d2ab40"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_3666460f89764d839e24c3f0cec56cac",
+      "legacy_identity_key": "receipt_counterparty:sc:3666460f89764d839e24c3f0cec56cac",
+      "legacy_partner_id": "3666460f89764d839e24c3f0cec56cac",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "谭涛",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_3666460f89764d839e24c3f0cec56cac"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_37c1c27a6d234ec98d8517e61c2516c7",
+      "legacy_identity_key": "receipt_counterparty:sc:37c1c27a6d234ec98d8517e61c2516c7",
+      "legacy_partner_id": "37c1c27a6d234ec98d8517e61c2516c7",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "倪德珍",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_37c1c27a6d234ec98d8517e61c2516c7"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_396e91a9cdb74a2a9d754ed1e7037b20",
+      "legacy_identity_key": "receipt_counterparty:sc:396e91a9cdb74a2a9d754ed1e7037b20",
+      "legacy_partner_id": "396e91a9cdb74a2a9d754ed1e7037b20",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "蒲冬梅",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_396e91a9cdb74a2a9d754ed1e7037b20"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_3a79b5566a6a478ab2ee60aa5cbe04fc",
+      "legacy_identity_key": "receipt_counterparty:sc:3a79b5566a6a478ab2ee60aa5cbe04fc",
+      "legacy_partner_id": "3a79b5566a6a478ab2ee60aa5cbe04fc",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "曾泽琼",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_3a79b5566a6a478ab2ee60aa5cbe04fc"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_3c1ef768110d44cc8095c41b3f70469e",
+      "legacy_identity_key": "receipt_counterparty:sc:3c1ef768110d44cc8095c41b3f70469e",
+      "legacy_partner_id": "3c1ef768110d44cc8095c41b3f70469e",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "杨永田",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_3c1ef768110d44cc8095c41b3f70469e"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_3cb2b3472a5944618dd7915695eb15e9",
+      "legacy_identity_key": "receipt_counterparty:sc:3cb2b3472a5944618dd7915695eb15e9",
+      "legacy_partner_id": "3cb2b3472a5944618dd7915695eb15e9",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "向远贵",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_3cb2b3472a5944618dd7915695eb15e9"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_3dd8b3d0dbc148c3a651690c80608a9b",
+      "legacy_identity_key": "receipt_counterparty:sc:3dd8b3d0dbc148c3a651690c80608a9b",
+      "legacy_partner_id": "3dd8b3d0dbc148c3a651690c80608a9b",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "刘林",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_3dd8b3d0dbc148c3a651690c80608a9b"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_3ef80384_226c_451b_9565_3b292999c796",
+      "legacy_identity_key": "receipt_counterparty:sc:3ef80384-226c-451b-9565-3b292999c796",
+      "legacy_partner_id": "3ef80384-226c-451b-9565-3b292999c796",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李俭峰",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_3ef80384_226c_451b_9565_3b292999c796"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_40b5b2cd5a3d4f9faa433004e0fee4d8",
+      "legacy_identity_key": "receipt_counterparty:sc:40b5b2cd5a3d4f9faa433004e0fee4d8",
+      "legacy_partner_id": "40b5b2cd5a3d4f9faa433004e0fee4d8",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "常磊",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_40b5b2cd5a3d4f9faa433004e0fee4d8"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_41d8d48fd7734daaba59c17a62fd3975",
+      "legacy_identity_key": "receipt_counterparty:sc:41d8d48fd7734daaba59c17a62fd3975",
+      "legacy_partner_id": "41d8d48fd7734daaba59c17a62fd3975",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "张仁香",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_41d8d48fd7734daaba59c17a62fd3975"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_42870a12e80d4c259523ce3dc1e1eb57",
+      "legacy_identity_key": "receipt_counterparty:sc:42870a12e80d4c259523ce3dc1e1eb57",
+      "legacy_partner_id": "42870a12e80d4c259523ce3dc1e1eb57",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "朱占中",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_42870a12e80d4c259523ce3dc1e1eb57"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_42d9cd41cd4f477db7ee9df94aece331",
+      "legacy_identity_key": "receipt_counterparty:sc:42d9cd41cd4f477db7ee9df94aece331",
+      "legacy_partner_id": "42d9cd41cd4f477db7ee9df94aece331",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "刘焘",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_42d9cd41cd4f477db7ee9df94aece331"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_45548610a3a743a2b77e96b865cda6e6",
+      "legacy_identity_key": "receipt_counterparty:sc:45548610a3a743a2b77e96b865cda6e6",
+      "legacy_partner_id": "45548610a3a743a2b77e96b865cda6e6",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "王建刚",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_45548610a3a743a2b77e96b865cda6e6"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_4587bd6cef6c4d288de23a1d63e009db",
+      "legacy_identity_key": "receipt_counterparty:sc:4587bd6cef6c4d288de23a1d63e009db",
+      "legacy_partner_id": "4587bd6cef6c4d288de23a1d63e009db",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "黄超",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_4587bd6cef6c4d288de23a1d63e009db"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_47621ac5966f4db59e2ceb3f1e5eb5dd",
+      "legacy_identity_key": "receipt_counterparty:sc:47621ac5966f4db59e2ceb3f1e5eb5dd",
+      "legacy_partner_id": "47621ac5966f4db59e2ceb3f1e5eb5dd",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "王乃丁",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_47621ac5966f4db59e2ceb3f1e5eb5dd"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_4769ce6a00d64289a33a56c329be24b1",
+      "legacy_identity_key": "receipt_counterparty:sc:4769ce6a00d64289a33a56c329be24b1",
+      "legacy_partner_id": "4769ce6a00d64289a33a56c329be24b1",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "范小庆",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_4769ce6a00d64289a33a56c329be24b1"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_49d7382a65f34e54996326c4d33727a3",
+      "legacy_identity_key": "receipt_counterparty:sc:49d7382a65f34e54996326c4d33727a3",
+      "legacy_partner_id": "49d7382a65f34e54996326c4d33727a3",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "赖德金",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_49d7382a65f34e54996326c4d33727a3"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_4a8210d7de364247ab9ad90a5a2fa7ee",
+      "legacy_identity_key": "receipt_counterparty:sc:4a8210d7de364247ab9ad90a5a2fa7ee",
+      "legacy_partner_id": "4a8210d7de364247ab9ad90a5a2fa7ee",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "何华勇",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_4a8210d7de364247ab9ad90a5a2fa7ee"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_4af2f21b3a78425aadd1f44fa68cb190",
+      "legacy_identity_key": "receipt_counterparty:sc:4af2f21b3a78425aadd1f44fa68cb190",
+      "legacy_partner_id": "4af2f21b3a78425aadd1f44fa68cb190",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "黄成",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_4af2f21b3a78425aadd1f44fa68cb190"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_4d7540aa27e345b68d0fec88322dfbc1",
+      "legacy_identity_key": "receipt_counterparty:sc:4d7540aa27e345b68d0fec88322dfbc1",
+      "legacy_partner_id": "4d7540aa27e345b68d0fec88322dfbc1",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "刘善志",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_4d7540aa27e345b68d0fec88322dfbc1"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_4f3e10b416df4ae5b3804e6e5626f0b7",
+      "legacy_identity_key": "receipt_counterparty:sc:4f3e10b416df4ae5b3804e6e5626f0b7",
+      "legacy_partner_id": "4f3e10b416df4ae5b3804e6e5626f0b7",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "张顺雄",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_4f3e10b416df4ae5b3804e6e5626f0b7"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_517502667aae49b78088c7cab5452d2b",
+      "legacy_identity_key": "receipt_counterparty:sc:517502667aae49b78088c7cab5452d2b",
+      "legacy_partner_id": "517502667aae49b78088c7cab5452d2b",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李航",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_517502667aae49b78088c7cab5452d2b"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_52651ab80c6e488cb3de96fa70d7ff17",
+      "legacy_identity_key": "receipt_counterparty:sc:52651ab80c6e488cb3de96fa70d7ff17",
+      "legacy_partner_id": "52651ab80c6e488cb3de96fa70d7ff17",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李小林",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_52651ab80c6e488cb3de96fa70d7ff17"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_559fe95d94274f698d9341f16d68b432",
+      "legacy_identity_key": "receipt_counterparty:sc:559fe95d94274f698d9341f16d68b432",
+      "legacy_partner_id": "559fe95d94274f698d9341f16d68b432",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "刘凤琴",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_559fe95d94274f698d9341f16d68b432"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_57166c9e29434dbeacc1e6eba4d07f9e",
+      "legacy_identity_key": "receipt_counterparty:sc:57166c9e29434dbeacc1e6eba4d07f9e",
+      "legacy_partner_id": "57166c9e29434dbeacc1e6eba4d07f9e",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李连",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_57166c9e29434dbeacc1e6eba4d07f9e"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_58dfb49c7f2a4f93bae74b5135182bfb",
+      "legacy_identity_key": "receipt_counterparty:sc:58dfb49c7f2a4f93bae74b5135182bfb",
+      "legacy_partner_id": "58dfb49c7f2a4f93bae74b5135182bfb",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "瞿刚",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_58dfb49c7f2a4f93bae74b5135182bfb"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_59a779f193a746319af56f780edf700c",
+      "legacy_identity_key": "receipt_counterparty:sc:59a779f193a746319af56f780edf700c",
+      "legacy_partner_id": "59a779f193a746319af56f780edf700c",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "文勇",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_59a779f193a746319af56f780edf700c"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_59b33d2dcc744c53b3833b896573f1c2",
+      "legacy_identity_key": "receipt_counterparty:sc:59b33d2dcc744c53b3833b896573f1c2",
+      "legacy_partner_id": "59b33d2dcc744c53b3833b896573f1c2",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "崔修敏",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_59b33d2dcc744c53b3833b896573f1c2"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_59f51827a8b6430591b60e87c53e3139",
+      "legacy_identity_key": "receipt_counterparty:sc:59f51827a8b6430591b60e87c53e3139",
+      "legacy_partner_id": "59f51827a8b6430591b60e87c53e3139",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "练世银",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_59f51827a8b6430591b60e87c53e3139"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_5a4fe3c3fc464dcb902729beb17880c4",
+      "legacy_identity_key": "receipt_counterparty:sc:5a4fe3c3fc464dcb902729beb17880c4",
+      "legacy_partner_id": "5a4fe3c3fc464dcb902729beb17880c4",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "何高春",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_5a4fe3c3fc464dcb902729beb17880c4"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_5bcb6c84efaf4b588f203ecf6ea5116d",
+      "legacy_identity_key": "receipt_counterparty:sc:5bcb6c84efaf4b588f203ecf6ea5116d",
+      "legacy_partner_id": "5bcb6c84efaf4b588f203ecf6ea5116d",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "王国成",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_5bcb6c84efaf4b588f203ecf6ea5116d"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_5bf5ece6d829499695c1ea6ac036882d",
+      "legacy_identity_key": "receipt_counterparty:sc:5bf5ece6d829499695c1ea6ac036882d",
+      "legacy_partner_id": "5bf5ece6d829499695c1ea6ac036882d",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "肖凯",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_5bf5ece6d829499695c1ea6ac036882d"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_5c8675bc19a441488430a7ab68e4e8de",
+      "legacy_identity_key": "receipt_counterparty:sc:5c8675bc19a441488430a7ab68e4e8de",
+      "legacy_partner_id": "5c8675bc19a441488430a7ab68e4e8de",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "张华光",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_5c8675bc19a441488430a7ab68e4e8de"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_5d77ff0b2c1b4e3aad1b0cac797ebc00",
+      "legacy_identity_key": "receipt_counterparty:sc:5d77ff0b2c1b4e3aad1b0cac797ebc00",
+      "legacy_partner_id": "5d77ff0b2c1b4e3aad1b0cac797ebc00",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "郭伦军",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_5d77ff0b2c1b4e3aad1b0cac797ebc00"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_5d972361_dee8_4177_b087_2e601595693e",
+      "legacy_identity_key": "receipt_counterparty:sc:5d972361-dee8-4177-b087-2e601595693e",
+      "legacy_partner_id": "5d972361-dee8-4177-b087-2e601595693e",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "廖小莉",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_5d972361_dee8_4177_b087_2e601595693e"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_62a44bb5dbcc47c5b969e38a15e74f2a",
+      "legacy_identity_key": "receipt_counterparty:sc:62a44bb5dbcc47c5b969e38a15e74f2a",
+      "legacy_partner_id": "62a44bb5dbcc47c5b969e38a15e74f2a",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "刘娟",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_62a44bb5dbcc47c5b969e38a15e74f2a"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_6538fce628b04bfe98c263af0d16cfa6",
+      "legacy_identity_key": "receipt_counterparty:sc:6538fce628b04bfe98c263af0d16cfa6",
+      "legacy_partner_id": "6538fce628b04bfe98c263af0d16cfa6",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "王凤梅",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_6538fce628b04bfe98c263af0d16cfa6"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_67532492e1114795b30f4300d90212d9",
+      "legacy_identity_key": "receipt_counterparty:sc:67532492e1114795b30f4300d90212d9",
+      "legacy_partner_id": "67532492e1114795b30f4300d90212d9",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "欧陶剑",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_67532492e1114795b30f4300d90212d9"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_67766c28967749ee95239489de774b47",
+      "legacy_identity_key": "receipt_counterparty:sc:67766c28967749ee95239489de774b47",
+      "legacy_partner_id": "67766c28967749ee95239489de774b47",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "徐迁",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_67766c28967749ee95239489de774b47"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_6793b856dc894298a2189a4630bc23af",
+      "legacy_identity_key": "receipt_counterparty:sc:6793b856dc894298a2189a4630bc23af",
+      "legacy_partner_id": "6793b856dc894298a2189a4630bc23af",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "马宇",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_6793b856dc894298a2189a4630bc23af"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_69bde58e225f4daa9ba08bba27a47e53",
+      "legacy_identity_key": "receipt_counterparty:sc:69bde58e225f4daa9ba08bba27a47e53",
+      "legacy_partner_id": "69bde58e225f4daa9ba08bba27a47e53",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "张文翠",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_69bde58e225f4daa9ba08bba27a47e53"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_6a0b061d7f6b4e89944bc64d44a58301",
+      "legacy_identity_key": "receipt_counterparty:sc:6a0b061d7f6b4e89944bc64d44a58301",
+      "legacy_partner_id": "6a0b061d7f6b4e89944bc64d44a58301",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "彭洪飞",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_6a0b061d7f6b4e89944bc64d44a58301"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_6a6158179e8946f785a90403a93603fc",
+      "legacy_identity_key": "receipt_counterparty:sc:6a6158179e8946f785a90403a93603fc",
+      "legacy_partner_id": "6a6158179e8946f785a90403a93603fc",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "曾翔",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_6a6158179e8946f785a90403a93603fc"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_6aae3599d9d84410be661a02bc0695e1",
+      "legacy_identity_key": "receipt_counterparty:sc:6aae3599d9d84410be661a02bc0695e1",
+      "legacy_partner_id": "6aae3599d9d84410be661a02bc0695e1",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "周光平",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_6aae3599d9d84410be661a02bc0695e1"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_6ab3de8d040245c58b5d28f81904147a",
+      "legacy_identity_key": "receipt_counterparty:sc:6ab3de8d040245c58b5d28f81904147a",
+      "legacy_partner_id": "6ab3de8d040245c58b5d28f81904147a",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "江秋红",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_6ab3de8d040245c58b5d28f81904147a"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_6bad1ea905a44b788ff7f67b4d02b2ce",
+      "legacy_identity_key": "receipt_counterparty:sc:6bad1ea905a44b788ff7f67b4d02b2ce",
+      "legacy_partner_id": "6bad1ea905a44b788ff7f67b4d02b2ce",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "叶波",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_6bad1ea905a44b788ff7f67b4d02b2ce"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_6c8621a9632d493ea15b87ebadc8623f",
+      "legacy_identity_key": "receipt_counterparty:sc:6c8621a9632d493ea15b87ebadc8623f",
+      "legacy_partner_id": "6c8621a9632d493ea15b87ebadc8623f",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "曾轶",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_6c8621a9632d493ea15b87ebadc8623f"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_6d7da73aaed44ea58aa659b49dfb74dd",
+      "legacy_identity_key": "receipt_counterparty:sc:6d7da73aaed44ea58aa659b49dfb74dd",
+      "legacy_partner_id": "6d7da73aaed44ea58aa659b49dfb74dd",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "廖伯明",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_6d7da73aaed44ea58aa659b49dfb74dd"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_6d93b59f_9696_4e91_a8ec_13fd2ff471ac",
+      "legacy_identity_key": "receipt_counterparty:sc:6d93b59f-9696-4e91-a8ec-13fd2ff471ac",
+      "legacy_partner_id": "6d93b59f-9696-4e91-a8ec-13fd2ff471ac",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李俭峰",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_6d93b59f_9696_4e91_a8ec_13fd2ff471ac"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_6f63ad91992b447390639ef6cecbbcc3",
+      "legacy_identity_key": "receipt_counterparty:sc:6f63ad91992b447390639ef6cecbbcc3",
+      "legacy_partner_id": "6f63ad91992b447390639ef6cecbbcc3",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "范晓庆",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_6f63ad91992b447390639ef6cecbbcc3"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_6fa72f60406a4eb2a6fa16f00e925970",
+      "legacy_identity_key": "receipt_counterparty:sc:6fa72f60406a4eb2a6fa16f00e925970",
+      "legacy_partner_id": "6fa72f60406a4eb2a6fa16f00e925970",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "周彩霞",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_6fa72f60406a4eb2a6fa16f00e925970"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_6fd11d7061084a02aaf3e8bbee91993a",
+      "legacy_identity_key": "receipt_counterparty:sc:6fd11d7061084a02aaf3e8bbee91993a",
+      "legacy_partner_id": "6fd11d7061084a02aaf3e8bbee91993a",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "马代芳",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_6fd11d7061084a02aaf3e8bbee91993a"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_707650c783da42f587aebcbb68db089c",
+      "legacy_identity_key": "receipt_counterparty:sc:707650c783da42f587aebcbb68db089c",
+      "legacy_partner_id": "707650c783da42f587aebcbb68db089c",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "何东",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_707650c783da42f587aebcbb68db089c"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_719c711f2c714c7f88f09cf2f89654f8",
+      "legacy_identity_key": "receipt_counterparty:sc:719c711f2c714c7f88f09cf2f89654f8",
+      "legacy_partner_id": "719c711f2c714c7f88f09cf2f89654f8",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "彭波",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_719c711f2c714c7f88f09cf2f89654f8"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_71a87d1ea7784214bcbd987e8d9f64e3",
+      "legacy_identity_key": "receipt_counterparty:sc:71a87d1ea7784214bcbd987e8d9f64e3",
+      "legacy_partner_id": "71a87d1ea7784214bcbd987e8d9f64e3",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "谢勤林",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_71a87d1ea7784214bcbd987e8d9f64e3"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_71d042ce975e459fb1340563b3bd3186",
+      "legacy_identity_key": "receipt_counterparty:sc:71d042ce975e459fb1340563b3bd3186",
+      "legacy_partner_id": "71d042ce975e459fb1340563b3bd3186",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李竹",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_71d042ce975e459fb1340563b3bd3186"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_748409738ecb4a48aab32475bc9c52e0",
+      "legacy_identity_key": "receipt_counterparty:sc:748409738ecb4a48aab32475bc9c52e0",
+      "legacy_partner_id": "748409738ecb4a48aab32475bc9c52e0",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "王权立",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_748409738ecb4a48aab32475bc9c52e0"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_78a68cae67f84c408106c63537c682c5",
+      "legacy_identity_key": "receipt_counterparty:sc:78a68cae67f84c408106c63537c682c5",
+      "legacy_partner_id": "78a68cae67f84c408106c63537c682c5",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "张宇",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_78a68cae67f84c408106c63537c682c5"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_78daf22fcc224d8697af81d702def815",
+      "legacy_identity_key": "receipt_counterparty:sc:78daf22fcc224d8697af81d702def815",
+      "legacy_partner_id": "78daf22fcc224d8697af81d702def815",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "叶凌越",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_78daf22fcc224d8697af81d702def815"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_7de4605a6d954c32930317796e6674c3",
+      "legacy_identity_key": "receipt_counterparty:sc:7de4605a6d954c32930317796e6674c3",
+      "legacy_partner_id": "7de4605a6d954c32930317796e6674c3",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "黄家富",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_7de4605a6d954c32930317796e6674c3"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_7e865c1479cc4f9a8aeb279f41fad500",
+      "legacy_identity_key": "receipt_counterparty:sc:7e865c1479cc4f9a8aeb279f41fad500",
+      "legacy_partner_id": "7e865c1479cc4f9a8aeb279f41fad500",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "舒增德",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_7e865c1479cc4f9a8aeb279f41fad500"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_841954bd3675430797f02a3a98494ec4",
+      "legacy_identity_key": "receipt_counterparty:sc:841954bd3675430797f02a3a98494ec4",
+      "legacy_partner_id": "841954bd3675430797f02a3a98494ec4",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "谭越波",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_841954bd3675430797f02a3a98494ec4"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_85e246bb95de4a2e902841ade8c175eb",
+      "legacy_identity_key": "receipt_counterparty:sc:85e246bb95de4a2e902841ade8c175eb",
+      "legacy_partner_id": "85e246bb95de4a2e902841ade8c175eb",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "王马兰",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_85e246bb95de4a2e902841ade8c175eb"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_86bb4a88b56f439abe26365be25ea3d2",
+      "legacy_identity_key": "receipt_counterparty:sc:86bb4a88b56f439abe26365be25ea3d2",
+      "legacy_partner_id": "86bb4a88b56f439abe26365be25ea3d2",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "张洪",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_86bb4a88b56f439abe26365be25ea3d2"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_88df4b5c_705d_4800_b30c_1a22dcbccd7b",
+      "legacy_identity_key": "receipt_counterparty:sc:88df4b5c-705d-4800-b30c-1a22dcbccd7b",
+      "legacy_partner_id": "88df4b5c-705d-4800-b30c-1a22dcbccd7b",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "洪莲.",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_88df4b5c_705d_4800_b30c_1a22dcbccd7b"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_8a223e322387488dba515bc64fa6a4ac",
+      "legacy_identity_key": "receipt_counterparty:sc:8a223e322387488dba515bc64fa6a4ac",
+      "legacy_partner_id": "8a223e322387488dba515bc64fa6a4ac",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "何艾璇",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_8a223e322387488dba515bc64fa6a4ac"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_8aed6edd5694485b83ace3cd0ff4b03f",
+      "legacy_identity_key": "receipt_counterparty:sc:8aed6edd5694485b83ace3cd0ff4b03f",
+      "legacy_partner_id": "8aed6edd5694485b83ace3cd0ff4b03f",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "肖辉玖",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_8aed6edd5694485b83ace3cd0ff4b03f"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_8c1d70d64df74818b33088d11b809ff9",
+      "legacy_identity_key": "receipt_counterparty:sc:8c1d70d64df74818b33088d11b809ff9",
+      "legacy_partner_id": "8c1d70d64df74818b33088d11b809ff9",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "胡春",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_8c1d70d64df74818b33088d11b809ff9"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_8cc90a0da25d413ab7e23f6bb8cc22ff",
+      "legacy_identity_key": "receipt_counterparty:sc:8cc90a0da25d413ab7e23f6bb8cc22ff",
+      "legacy_partner_id": "8cc90a0da25d413ab7e23f6bb8cc22ff",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "赵芋翰",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_8cc90a0da25d413ab7e23f6bb8cc22ff"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_8ec9f3e7246c43caab22033db0a6bdb2",
+      "legacy_identity_key": "receipt_counterparty:sc:8ec9f3e7246c43caab22033db0a6bdb2",
+      "legacy_partner_id": "8ec9f3e7246c43caab22033db0a6bdb2",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "奉先云",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_8ec9f3e7246c43caab22033db0a6bdb2"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_8fc423aafef3411b9d2bab9bade81962",
+      "legacy_identity_key": "receipt_counterparty:sc:8fc423aafef3411b9d2bab9bade81962",
+      "legacy_partner_id": "8fc423aafef3411b9d2bab9bade81962",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "尚思林",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_8fc423aafef3411b9d2bab9bade81962"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_901923ac57ea476a8e5ea750446b1bbd",
+      "legacy_identity_key": "receipt_counterparty:sc:901923ac57ea476a8e5ea750446b1bbd",
+      "legacy_partner_id": "901923ac57ea476a8e5ea750446b1bbd",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "王椒",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_901923ac57ea476a8e5ea750446b1bbd"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_90cc6e28d913443d800b8db16f583f0b",
+      "legacy_identity_key": "receipt_counterparty:sc:90cc6e28d913443d800b8db16f583f0b",
+      "legacy_partner_id": "90cc6e28d913443d800b8db16f583f0b",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "社保局",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_90cc6e28d913443d800b8db16f583f0b"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_915b1aba74124486916ae0bec1de8c46",
+      "legacy_identity_key": "receipt_counterparty:sc:915b1aba74124486916ae0bec1de8c46",
+      "legacy_partner_id": "915b1aba74124486916ae0bec1de8c46",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "杨玉陆",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_915b1aba74124486916ae0bec1de8c46"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_9207521c704f4deb8920dc92f7d44486",
+      "legacy_identity_key": "receipt_counterparty:sc:9207521c704f4deb8920dc92f7d44486",
+      "legacy_partner_id": "9207521c704f4deb8920dc92f7d44486",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "冯冷雪",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_9207521c704f4deb8920dc92f7d44486"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_948fafd911d84a35bdc23ea651de07ff",
+      "legacy_identity_key": "receipt_counterparty:sc:948fafd911d84a35bdc23ea651de07ff",
+      "legacy_partner_id": "948fafd911d84a35bdc23ea651de07ff",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李超",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_948fafd911d84a35bdc23ea651de07ff"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_94f89096d042441da29f043b7d737106",
+      "legacy_identity_key": "receipt_counterparty:sc:94f89096d042441da29f043b7d737106",
+      "legacy_partner_id": "94f89096d042441da29f043b7d737106",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "隆川",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_94f89096d042441da29f043b7d737106"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_9668468456654b049ae47cf0ccd96e63",
+      "legacy_identity_key": "receipt_counterparty:sc:9668468456654b049ae47cf0ccd96e63",
+      "legacy_partner_id": "9668468456654b049ae47cf0ccd96e63",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "顾雨",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_9668468456654b049ae47cf0ccd96e63"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_9adad1a43f0c4316a71a39a6e8d4106c",
+      "legacy_identity_key": "receipt_counterparty:sc:9adad1a43f0c4316a71a39a6e8d4106c",
+      "legacy_partner_id": "9adad1a43f0c4316a71a39a6e8d4106c",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "胡小蓉",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_9adad1a43f0c4316a71a39a6e8d4106c"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_9cc5510551a540628b0a662073d10265",
+      "legacy_identity_key": "receipt_counterparty:sc:9cc5510551a540628b0a662073d10265",
+      "legacy_partner_id": "9cc5510551a540628b0a662073d10265",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "曾顺茂",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_9cc5510551a540628b0a662073d10265"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_9ef21a6d_0cff_4753_883b_21e50ce56500",
+      "legacy_identity_key": "receipt_counterparty:sc:9ef21a6d-0cff-4753-883b-21e50ce56500",
+      "legacy_partner_id": "9ef21a6d-0cff-4753-883b-21e50ce56500",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李琼",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_9ef21a6d_0cff_4753_883b_21e50ce56500"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_9f6681c4d0804994a5e8a12b1f401fea",
+      "legacy_identity_key": "receipt_counterparty:sc:9f6681c4d0804994a5e8a12b1f401fea",
+      "legacy_partner_id": "9f6681c4d0804994a5e8a12b1f401fea",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "许成",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_9f6681c4d0804994a5e8a12b1f401fea"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_9f6b28bf2d914d119ec9cc483ce8c7ab",
+      "legacy_identity_key": "receipt_counterparty:sc:9f6b28bf2d914d119ec9cc483ce8c7ab",
+      "legacy_partner_id": "9f6b28bf2d914d119ec9cc483ce8c7ab",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "刘阳",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_9f6b28bf2d914d119ec9cc483ce8c7ab"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_a06d76ad3ab84841927d69bf41ceddd1",
+      "legacy_identity_key": "receipt_counterparty:sc:a06d76ad3ab84841927d69bf41ceddd1",
+      "legacy_partner_id": "a06d76ad3ab84841927d69bf41ceddd1",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "刘洋宏",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_a06d76ad3ab84841927d69bf41ceddd1"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_a07c16ec475a40178b0e5eaf4ba5ad4d",
+      "legacy_identity_key": "receipt_counterparty:sc:a07c16ec475a40178b0e5eaf4ba5ad4d",
+      "legacy_partner_id": "a07c16ec475a40178b0e5eaf4ba5ad4d",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "葛雪琳",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_a07c16ec475a40178b0e5eaf4ba5ad4d"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_a0de0e5d327b4e6b95e823dfddd82497",
+      "legacy_identity_key": "receipt_counterparty:sc:a0de0e5d327b4e6b95e823dfddd82497",
+      "legacy_partner_id": "a0de0e5d327b4e6b95e823dfddd82497",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "唐代明",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_a0de0e5d327b4e6b95e823dfddd82497"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_a0f8abe7ccd043758aa82d29b0929860",
+      "legacy_identity_key": "receipt_counterparty:sc:a0f8abe7ccd043758aa82d29b0929860",
+      "legacy_partner_id": "a0f8abe7ccd043758aa82d29b0929860",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "徐荣爱",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_a0f8abe7ccd043758aa82d29b0929860"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_a128e737ee8d43808d661b339d678aa7",
+      "legacy_identity_key": "receipt_counterparty:sc:a128e737ee8d43808d661b339d678aa7",
+      "legacy_partner_id": "a128e737ee8d43808d661b339d678aa7",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "徐怀君",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_a128e737ee8d43808d661b339d678aa7"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_a14e371da1bd4064a23f17b6fa57dbec",
+      "legacy_identity_key": "receipt_counterparty:sc:a14e371da1bd4064a23f17b6fa57dbec",
+      "legacy_partner_id": "a14e371da1bd4064a23f17b6fa57dbec",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "刘文",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_a14e371da1bd4064a23f17b6fa57dbec"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_a442920a858842c9bed7ece2d61dd073",
+      "legacy_identity_key": "receipt_counterparty:sc:a442920a858842c9bed7ece2d61dd073",
+      "legacy_partner_id": "a442920a858842c9bed7ece2d61dd073",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "严德木",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_a442920a858842c9bed7ece2d61dd073"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_a4a2481ed2834ff0a96e8817f3beaae1",
+      "legacy_identity_key": "receipt_counterparty:sc:a4a2481ed2834ff0a96e8817f3beaae1",
+      "legacy_partner_id": "a4a2481ed2834ff0a96e8817f3beaae1",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "徐凡",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_a4a2481ed2834ff0a96e8817f3beaae1"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_a5fa6ad2cc8441aba4e530e84c4e4db6",
+      "legacy_identity_key": "receipt_counterparty:sc:a5fa6ad2cc8441aba4e530e84c4e4db6",
+      "legacy_partner_id": "a5fa6ad2cc8441aba4e530e84c4e4db6",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "刘罗华",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_a5fa6ad2cc8441aba4e530e84c4e4db6"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_a81886f7e59a474fa0293163fa9f1188",
+      "legacy_identity_key": "receipt_counterparty:sc:a81886f7e59a474fa0293163fa9f1188",
+      "legacy_partner_id": "a81886f7e59a474fa0293163fa9f1188",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "王伟明",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_a81886f7e59a474fa0293163fa9f1188"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_a8a8606f3a214b3288e8163b047fecd0",
+      "legacy_identity_key": "receipt_counterparty:sc:a8a8606f3a214b3288e8163b047fecd0",
+      "legacy_partner_id": "a8a8606f3a214b3288e8163b047fecd0",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "金明秀",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_a8a8606f3a214b3288e8163b047fecd0"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_ac5d77863a5f4f74bb989bb9dbfc0d4e",
+      "legacy_identity_key": "receipt_counterparty:sc:ac5d77863a5f4f74bb989bb9dbfc0d4e",
+      "legacy_partner_id": "ac5d77863a5f4f74bb989bb9dbfc0d4e",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "肖华",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_ac5d77863a5f4f74bb989bb9dbfc0d4e"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_acfe9978e5774d19b5c682bd8af87924",
+      "legacy_identity_key": "receipt_counterparty:sc:acfe9978e5774d19b5c682bd8af87924",
+      "legacy_partner_id": "acfe9978e5774d19b5c682bd8af87924",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "刘汉光",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_acfe9978e5774d19b5c682bd8af87924"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_ae3c01e41bb940a488f3c7220b44aba8",
+      "legacy_identity_key": "receipt_counterparty:sc:ae3c01e41bb940a488f3c7220b44aba8",
+      "legacy_partner_id": "ae3c01e41bb940a488f3c7220b44aba8",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "张前洪",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_ae3c01e41bb940a488f3c7220b44aba8"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_aed06b306ad14f6b917c12fd4e5c013b",
+      "legacy_identity_key": "receipt_counterparty:sc:aed06b306ad14f6b917c12fd4e5c013b",
+      "legacy_partner_id": "aed06b306ad14f6b917c12fd4e5c013b",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "陈茂",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_aed06b306ad14f6b917c12fd4e5c013b"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_af4f1162c1704632a24b71e29e67c41c",
+      "legacy_identity_key": "receipt_counterparty:sc:af4f1162c1704632a24b71e29e67c41c",
+      "legacy_partner_id": "af4f1162c1704632a24b71e29e67c41c",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "胡婷",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_af4f1162c1704632a24b71e29e67c41c"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_afa6eda7c8f9466e963d153e600a1a84",
+      "legacy_identity_key": "receipt_counterparty:sc:afa6eda7c8f9466e963d153e600a1a84",
+      "legacy_partner_id": "afa6eda7c8f9466e963d153e600a1a84",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "廖小明",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_afa6eda7c8f9466e963d153e600a1a84"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_b183688eef0d4ccb871a1978459628fc",
+      "legacy_identity_key": "receipt_counterparty:sc:b183688eef0d4ccb871a1978459628fc",
+      "legacy_partner_id": "b183688eef0d4ccb871a1978459628fc",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李静",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_b183688eef0d4ccb871a1978459628fc"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_b27be97d14574fe885bc31a09b448d44",
+      "legacy_identity_key": "receipt_counterparty:sc:b27be97d14574fe885bc31a09b448d44",
+      "legacy_partner_id": "b27be97d14574fe885bc31a09b448d44",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "赵莉蓉",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_b27be97d14574fe885bc31a09b448d44"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_b5ed5f24e7d141109167ac2a059e46b2",
+      "legacy_identity_key": "receipt_counterparty:sc:b5ed5f24e7d141109167ac2a059e46b2",
+      "legacy_partner_id": "b5ed5f24e7d141109167ac2a059e46b2",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "严俊",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_b5ed5f24e7d141109167ac2a059e46b2"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_b76193e1ce2d478da1db5bc36cc928cf",
+      "legacy_identity_key": "receipt_counterparty:sc:b76193e1ce2d478da1db5bc36cc928cf",
+      "legacy_partner_id": "b76193e1ce2d478da1db5bc36cc928cf",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李娟",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_b76193e1ce2d478da1db5bc36cc928cf"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_b7b5cd32731c4204b5355a2c15eaeecb",
+      "legacy_identity_key": "receipt_counterparty:sc:b7b5cd32731c4204b5355a2c15eaeecb",
+      "legacy_partner_id": "b7b5cd32731c4204b5355a2c15eaeecb",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "陈小刚",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_b7b5cd32731c4204b5355a2c15eaeecb"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_b8f2e30680124e9d9ef982431a58c253",
+      "legacy_identity_key": "receipt_counterparty:sc:b8f2e30680124e9d9ef982431a58c253",
+      "legacy_partner_id": "b8f2e30680124e9d9ef982431a58c253",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "王映莲",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_b8f2e30680124e9d9ef982431a58c253"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_ba12d3f09a3047d8ae0f7e0e08e9d13b",
+      "legacy_identity_key": "receipt_counterparty:sc:ba12d3f09a3047d8ae0f7e0e08e9d13b",
+      "legacy_partner_id": "ba12d3f09a3047d8ae0f7e0e08e9d13b",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "火旭洋",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_ba12d3f09a3047d8ae0f7e0e08e9d13b"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_ba20c9f1bf184e0ca657f09032ed9e80",
+      "legacy_identity_key": "receipt_counterparty:sc:ba20c9f1bf184e0ca657f09032ed9e80",
+      "legacy_partner_id": "ba20c9f1bf184e0ca657f09032ed9e80",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "简平凡",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_ba20c9f1bf184e0ca657f09032ed9e80"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_bbe92e13809e40a3968ff2641d5461dd",
+      "legacy_identity_key": "receipt_counterparty:sc:bbe92e13809e40a3968ff2641d5461dd",
+      "legacy_partner_id": "bbe92e13809e40a3968ff2641d5461dd",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "洪莲",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_bbe92e13809e40a3968ff2641d5461dd"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_bbf188e86c9a407195e2465a3c22ac77",
+      "legacy_identity_key": "receipt_counterparty:sc:bbf188e86c9a407195e2465a3c22ac77",
+      "legacy_partner_id": "bbf188e86c9a407195e2465a3c22ac77",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "廖睿",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_bbf188e86c9a407195e2465a3c22ac77"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_bd0a1f552a9e433bb76e332eab6dc899",
+      "legacy_identity_key": "receipt_counterparty:sc:bd0a1f552a9e433bb76e332eab6dc899",
+      "legacy_partner_id": "bd0a1f552a9e433bb76e332eab6dc899",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李俭锋",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_bd0a1f552a9e433bb76e332eab6dc899"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_beb43df763fe4715aba42ca93ce5f8b1",
+      "legacy_identity_key": "receipt_counterparty:sc:beb43df763fe4715aba42ca93ce5f8b1",
+      "legacy_partner_id": "beb43df763fe4715aba42ca93ce5f8b1",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "陈晓亮",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_beb43df763fe4715aba42ca93ce5f8b1"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_bf12d630900d464eb03dfb6d3b2e9abd",
+      "legacy_identity_key": "receipt_counterparty:sc:bf12d630900d464eb03dfb6d3b2e9abd",
+      "legacy_partner_id": "bf12d630900d464eb03dfb6d3b2e9abd",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "简乃华",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_bf12d630900d464eb03dfb6d3b2e9abd"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_c0e77154db354971a34ed28e0328a1be",
+      "legacy_identity_key": "receipt_counterparty:sc:c0e77154db354971a34ed28e0328a1be",
+      "legacy_partner_id": "c0e77154db354971a34ed28e0328a1be",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "罗金山",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_c0e77154db354971a34ed28e0328a1be"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_c1079b48b7e0447887261ac9610b6098",
+      "legacy_identity_key": "receipt_counterparty:sc:c1079b48b7e0447887261ac9610b6098",
+      "legacy_partner_id": "c1079b48b7e0447887261ac9610b6098",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "田勇",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_c1079b48b7e0447887261ac9610b6098"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_c1699f3b3a5443edba8e18943f361067",
+      "legacy_identity_key": "receipt_counterparty:sc:c1699f3b3a5443edba8e18943f361067",
+      "legacy_partner_id": "c1699f3b3a5443edba8e18943f361067",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "徐彦林",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_c1699f3b3a5443edba8e18943f361067"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_c2272d954d304e9dbbcbcf2627d12db0",
+      "legacy_identity_key": "receipt_counterparty:sc:c2272d954d304e9dbbcbcf2627d12db0",
+      "legacy_partner_id": "c2272d954d304e9dbbcbcf2627d12db0",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "谢书燕",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_c2272d954d304e9dbbcbcf2627d12db0"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_c26c1d4a61bc4e3aa8107bf8870cbb03",
+      "legacy_identity_key": "receipt_counterparty:sc:c26c1d4a61bc4e3aa8107bf8870cbb03",
+      "legacy_partner_id": "c26c1d4a61bc4e3aa8107bf8870cbb03",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "彭静",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_c26c1d4a61bc4e3aa8107bf8870cbb03"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_c3b891d149e148ed867c3a405e3e1402",
+      "legacy_identity_key": "receipt_counterparty:sc:c3b891d149e148ed867c3a405e3e1402",
+      "legacy_partner_id": "c3b891d149e148ed867c3a405e3e1402",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李志强",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_c3b891d149e148ed867c3a405e3e1402"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_c5e41757310a476eb4c77e99cb150375",
+      "legacy_identity_key": "receipt_counterparty:sc:c5e41757310a476eb4c77e99cb150375",
+      "legacy_partner_id": "c5e41757310a476eb4c77e99cb150375",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "曾维强",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_c5e41757310a476eb4c77e99cb150375"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_c6830583a27f4f87b6bc87f2eeeecf66",
+      "legacy_identity_key": "receipt_counterparty:sc:c6830583a27f4f87b6bc87f2eeeecf66",
+      "legacy_partner_id": "c6830583a27f4f87b6bc87f2eeeecf66",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "龚昌明",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_c6830583a27f4f87b6bc87f2eeeecf66"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_c68cc5fa063f4173ad1b85025b6eb90e",
+      "legacy_identity_key": "receipt_counterparty:sc:c68cc5fa063f4173ad1b85025b6eb90e",
+      "legacy_partner_id": "c68cc5fa063f4173ad1b85025b6eb90e",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "谢莎莎",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_c68cc5fa063f4173ad1b85025b6eb90e"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_c7835e14da36401089e5ea43a79697aa",
+      "legacy_identity_key": "receipt_counterparty:sc:c7835e14da36401089e5ea43a79697aa",
+      "legacy_partner_id": "c7835e14da36401089e5ea43a79697aa",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "王强",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_c7835e14da36401089e5ea43a79697aa"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_c82982a8fec9455e869dccbe59acd647",
+      "legacy_identity_key": "receipt_counterparty:sc:c82982a8fec9455e869dccbe59acd647",
+      "legacy_partner_id": "c82982a8fec9455e869dccbe59acd647",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "刘伟",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_c82982a8fec9455e869dccbe59acd647"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_c976eb9de6f549f09309f68b41eb3e2d",
+      "legacy_identity_key": "receipt_counterparty:sc:c976eb9de6f549f09309f68b41eb3e2d",
+      "legacy_partner_id": "c976eb9de6f549f09309f68b41eb3e2d",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "文珍",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_c976eb9de6f549f09309f68b41eb3e2d"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_ca6a653462ba4bd5b3f1d6dcba211aa4",
+      "legacy_identity_key": "receipt_counterparty:sc:ca6a653462ba4bd5b3f1d6dcba211aa4",
+      "legacy_partner_id": "ca6a653462ba4bd5b3f1d6dcba211aa4",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "赵岚",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_ca6a653462ba4bd5b3f1d6dcba211aa4"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_cb30db02fde8448987864e3a54ee346f",
+      "legacy_identity_key": "receipt_counterparty:sc:cb30db02fde8448987864e3a54ee346f",
+      "legacy_partner_id": "cb30db02fde8448987864e3a54ee346f",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "付理顺",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_cb30db02fde8448987864e3a54ee346f"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_cbe83b2ee39f4946b42a6a904c5673d1",
+      "legacy_identity_key": "receipt_counterparty:sc:cbe83b2ee39f4946b42a6a904c5673d1",
+      "legacy_partner_id": "cbe83b2ee39f4946b42a6a904c5673d1",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "杜秀佳",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_cbe83b2ee39f4946b42a6a904c5673d1"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_cdc4fb50_d626_4393_8700_c6ea372d2d1d",
+      "legacy_identity_key": "receipt_counterparty:sc:cdc4fb50-d626-4393-8700-c6ea372d2d1d",
+      "legacy_partner_id": "cdc4fb50-d626-4393-8700-c6ea372d2d1d",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "毛代坤",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_cdc4fb50_d626_4393_8700_c6ea372d2d1d"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_cf10088012aa4b01bfadc9d927d339fb",
+      "legacy_identity_key": "receipt_counterparty:sc:cf10088012aa4b01bfadc9d927d339fb",
+      "legacy_partner_id": "cf10088012aa4b01bfadc9d927d339fb",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "方洁",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_cf10088012aa4b01bfadc9d927d339fb"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_cf46443e1edf43e69597afc81add193f",
+      "legacy_identity_key": "receipt_counterparty:sc:cf46443e1edf43e69597afc81add193f",
+      "legacy_partner_id": "cf46443e1edf43e69597afc81add193f",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "周超",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_cf46443e1edf43e69597afc81add193f"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_d15860e3bf9b4a6f9074d9714e6125ac",
+      "legacy_identity_key": "receipt_counterparty:sc:d15860e3bf9b4a6f9074d9714e6125ac",
+      "legacy_partner_id": "d15860e3bf9b4a6f9074d9714e6125ac",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "唐颖刚",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_d15860e3bf9b4a6f9074d9714e6125ac"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_d1601cc730cb4496a89d6c7f46709b20",
+      "legacy_identity_key": "receipt_counterparty:sc:d1601cc730cb4496a89d6c7f46709b20",
+      "legacy_partner_id": "d1601cc730cb4496a89d6c7f46709b20",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李发",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_d1601cc730cb4496a89d6c7f46709b20"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_d33adb06c73c48ce8d4c4e074a47a442",
+      "legacy_identity_key": "receipt_counterparty:sc:d33adb06c73c48ce8d4c4e074a47a442",
+      "legacy_partner_id": "d33adb06c73c48ce8d4c4e074a47a442",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "翁灵辉",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_d33adb06c73c48ce8d4c4e074a47a442"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_d449f268b7ba4a79b9da020735a6227c",
+      "legacy_identity_key": "receipt_counterparty:sc:d449f268b7ba4a79b9da020735a6227c",
+      "legacy_partner_id": "d449f268b7ba4a79b9da020735a6227c",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李德学",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_d449f268b7ba4a79b9da020735a6227c"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_d4731ed6c6274881bce69bfec8b3a8f9",
+      "legacy_identity_key": "receipt_counterparty:sc:d4731ed6c6274881bce69bfec8b3a8f9",
+      "legacy_partner_id": "d4731ed6c6274881bce69bfec8b3a8f9",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "何小凤",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_d4731ed6c6274881bce69bfec8b3a8f9"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_d5661bd21f7f4713b3e89ff81ba33edb",
+      "legacy_identity_key": "receipt_counterparty:sc:d5661bd21f7f4713b3e89ff81ba33edb",
+      "legacy_partner_id": "d5661bd21f7f4713b3e89ff81ba33edb",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "蒋军",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_d5661bd21f7f4713b3e89ff81ba33edb"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_d5bf1a4652d54429b30fd0a29587dacc",
+      "legacy_identity_key": "receipt_counterparty:sc:d5bf1a4652d54429b30fd0a29587dacc",
+      "legacy_partner_id": "d5bf1a4652d54429b30fd0a29587dacc",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "邱文武",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_d5bf1a4652d54429b30fd0a29587dacc"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_d621ae3e9f6b48acbc81a5a11c3e9549",
+      "legacy_identity_key": "receipt_counterparty:sc:d621ae3e9f6b48acbc81a5a11c3e9549",
+      "legacy_partner_id": "d621ae3e9f6b48acbc81a5a11c3e9549",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "牟家银",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_d621ae3e9f6b48acbc81a5a11c3e9549"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_d90e9f5ec4c643718246073fa32f7ea6",
+      "legacy_identity_key": "receipt_counterparty:sc:d90e9f5ec4c643718246073fa32f7ea6",
+      "legacy_partner_id": "d90e9f5ec4c643718246073fa32f7ea6",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "周锐",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_d90e9f5ec4c643718246073fa32f7ea6"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_db8bb1df0959426fb36abc3c22a6129d",
+      "legacy_identity_key": "receipt_counterparty:sc:db8bb1df0959426fb36abc3c22a6129d",
+      "legacy_partner_id": "db8bb1df0959426fb36abc3c22a6129d",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "车俊达",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_db8bb1df0959426fb36abc3c22a6129d"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_de6c8adc68314601b5b75d1fd28593ba",
+      "legacy_identity_key": "receipt_counterparty:sc:de6c8adc68314601b5b75d1fd28593ba",
+      "legacy_partner_id": "de6c8adc68314601b5b75d1fd28593ba",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "刘娟",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_de6c8adc68314601b5b75d1fd28593ba"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_dec6b68843754e5da6849e77c78ca2c0",
+      "legacy_identity_key": "receipt_counterparty:sc:dec6b68843754e5da6849e77c78ca2c0",
+      "legacy_partner_id": "dec6b68843754e5da6849e77c78ca2c0",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "钟标珍",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_dec6b68843754e5da6849e77c78ca2c0"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_df4c980ad74549009332c4b93655fe2a",
+      "legacy_identity_key": "receipt_counterparty:sc:df4c980ad74549009332c4b93655fe2a",
+      "legacy_partner_id": "df4c980ad74549009332c4b93655fe2a",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "倪德珍",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_df4c980ad74549009332c4b93655fe2a"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_e2ca157ca65647e78f325dfc8e6e0222",
+      "legacy_identity_key": "receipt_counterparty:sc:e2ca157ca65647e78f325dfc8e6e0222",
+      "legacy_partner_id": "e2ca157ca65647e78f325dfc8e6e0222",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "王东",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_e2ca157ca65647e78f325dfc8e6e0222"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_e320f19b183447aa93e0fecc41f3a4d8",
+      "legacy_identity_key": "receipt_counterparty:sc:e320f19b183447aa93e0fecc41f3a4d8",
+      "legacy_partner_id": "e320f19b183447aa93e0fecc41f3a4d8",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "谭明旭",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_e320f19b183447aa93e0fecc41f3a4d8"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_e3f64ffc40794e3988ad980d4724c178",
+      "legacy_identity_key": "receipt_counterparty:sc:e3f64ffc40794e3988ad980d4724c178",
+      "legacy_partner_id": "e3f64ffc40794e3988ad980d4724c178",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "王斌",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_e3f64ffc40794e3988ad980d4724c178"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_e5985d5f2a95430f9d0412d385872d44",
+      "legacy_identity_key": "receipt_counterparty:sc:e5985d5f2a95430f9d0412d385872d44",
+      "legacy_partner_id": "e5985d5f2a95430f9d0412d385872d44",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "孟铃涵",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_e5985d5f2a95430f9d0412d385872d44"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_e5ab34753cb9488aa252d112f925a28d",
+      "legacy_identity_key": "receipt_counterparty:sc:e5ab34753cb9488aa252d112f925a28d",
+      "legacy_partner_id": "e5ab34753cb9488aa252d112f925a28d",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "高攀",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_e5ab34753cb9488aa252d112f925a28d"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_e7d55aac272b43d3a9bf74facdc2ebc0",
+      "legacy_identity_key": "receipt_counterparty:sc:e7d55aac272b43d3a9bf74facdc2ebc0",
+      "legacy_partner_id": "e7d55aac272b43d3a9bf74facdc2ebc0",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "陈文波",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_e7d55aac272b43d3a9bf74facdc2ebc0"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_e9322c07d21a46128320806edf117b6e",
+      "legacy_identity_key": "receipt_counterparty:sc:e9322c07d21a46128320806edf117b6e",
+      "legacy_partner_id": "e9322c07d21a46128320806edf117b6e",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李国富",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_e9322c07d21a46128320806edf117b6e"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_e9ce6807ac5346b4bd1c9c6249c8aad7",
+      "legacy_identity_key": "receipt_counterparty:sc:e9ce6807ac5346b4bd1c9c6249c8aad7",
+      "legacy_partner_id": "e9ce6807ac5346b4bd1c9c6249c8aad7",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "程凡忠",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_e9ce6807ac5346b4bd1c9c6249c8aad7"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_ebd579cb513849f280ac7a1ceba3ced7",
+      "legacy_identity_key": "receipt_counterparty:sc:ebd579cb513849f280ac7a1ceba3ced7",
+      "legacy_partner_id": "ebd579cb513849f280ac7a1ceba3ced7",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李嘉",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_ebd579cb513849f280ac7a1ceba3ced7"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_ec32ee44275c4260bc2aec516e91d045",
+      "legacy_identity_key": "receipt_counterparty:sc:ec32ee44275c4260bc2aec516e91d045",
+      "legacy_partner_id": "ec32ee44275c4260bc2aec516e91d045",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "华立飞",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_ec32ee44275c4260bc2aec516e91d045"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_ee1b6ebcec714332a3be3371720b00ca",
+      "legacy_identity_key": "receipt_counterparty:sc:ee1b6ebcec714332a3be3371720b00ca",
+      "legacy_partner_id": "ee1b6ebcec714332a3be3371720b00ca",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李福碧",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_ee1b6ebcec714332a3be3371720b00ca"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_eebcbed20ef94a60bd7a9b63563a0b6e",
+      "legacy_identity_key": "receipt_counterparty:sc:eebcbed20ef94a60bd7a9b63563a0b6e",
+      "legacy_partner_id": "eebcbed20ef94a60bd7a9b63563a0b6e",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "谢燕红",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_eebcbed20ef94a60bd7a9b63563a0b6e"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_ef0f6999ee5245759ef88a9a84221715",
+      "legacy_identity_key": "receipt_counterparty:sc:ef0f6999ee5245759ef88a9a84221715",
+      "legacy_partner_id": "ef0f6999ee5245759ef88a9a84221715",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "梁钢",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_ef0f6999ee5245759ef88a9a84221715"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_ef841768f98340ec9d51e4fb0536fb6b",
+      "legacy_identity_key": "receipt_counterparty:sc:ef841768f98340ec9d51e4fb0536fb6b",
+      "legacy_partner_id": "ef841768f98340ec9d51e4fb0536fb6b",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "孙杰",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_ef841768f98340ec9d51e4fb0536fb6b"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_f08f504dcb8b4fbbb2fede84c125a518",
+      "legacy_identity_key": "receipt_counterparty:sc:f08f504dcb8b4fbbb2fede84c125a518",
+      "legacy_partner_id": "f08f504dcb8b4fbbb2fede84c125a518",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "钟斌",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_f08f504dcb8b4fbbb2fede84c125a518"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_f1b58af0e3634d12bf518293f96e66eb",
+      "legacy_identity_key": "receipt_counterparty:sc:f1b58af0e3634d12bf518293f96e66eb",
+      "legacy_partner_id": "f1b58af0e3634d12bf518293f96e66eb",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "苏叶红",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_f1b58af0e3634d12bf518293f96e66eb"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_f2840220008d4673932738ae75e5caa6",
+      "legacy_identity_key": "receipt_counterparty:sc:f2840220008d4673932738ae75e5caa6",
+      "legacy_partner_id": "f2840220008d4673932738ae75e5caa6",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "张双喜",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_f2840220008d4673932738ae75e5caa6"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_f2f04bd3831747f3931dbf0677050423",
+      "legacy_identity_key": "receipt_counterparty:sc:f2f04bd3831747f3931dbf0677050423",
+      "legacy_partner_id": "f2f04bd3831747f3931dbf0677050423",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "杨峻一",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_f2f04bd3831747f3931dbf0677050423"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_f2f59a8b579148fd952f66bb17f786fa",
+      "legacy_identity_key": "receipt_counterparty:sc:f2f59a8b579148fd952f66bb17f786fa",
+      "legacy_partner_id": "f2f59a8b579148fd952f66bb17f786fa",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "段奕俊",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_f2f59a8b579148fd952f66bb17f786fa"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_f30a2ee2d64e4d07b6503493d5aa0a1c",
+      "legacy_identity_key": "receipt_counterparty:sc:f30a2ee2d64e4d07b6503493d5aa0a1c",
+      "legacy_partner_id": "f30a2ee2d64e4d07b6503493d5aa0a1c",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李雪琴",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_f30a2ee2d64e4d07b6503493d5aa0a1c"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_f311350e_f229_4a92_bae8_ace8e2a66873",
+      "legacy_identity_key": "receipt_counterparty:sc:f311350e-f229-4a92-bae8-ace8e2a66873",
+      "legacy_partner_id": "f311350e-f229-4a92-bae8-ace8e2a66873",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "朱小军",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_f311350e_f229_4a92_bae8_ace8e2a66873"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_f54044bf97944b3bac575a7cd41636a5",
+      "legacy_identity_key": "receipt_counterparty:sc:f54044bf97944b3bac575a7cd41636a5",
+      "legacy_partner_id": "f54044bf97944b3bac575a7cd41636a5",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "陈大龙",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_f54044bf97944b3bac575a7cd41636a5"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_f717b029e66f431e914e83785e123447",
+      "legacy_identity_key": "receipt_counterparty:sc:f717b029e66f431e914e83785e123447",
+      "legacy_partner_id": "f717b029e66f431e914e83785e123447",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "张兵权",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_f717b029e66f431e914e83785e123447"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_f74e10da828c4835813578e5576454ae",
+      "legacy_identity_key": "receipt_counterparty:sc:f74e10da828c4835813578e5576454ae",
+      "legacy_partner_id": "f74e10da828c4835813578e5576454ae",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "向诗春",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_f74e10da828c4835813578e5576454ae"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_f854df54_8de4_450c_b28d_1c3cf25be1d8",
+      "legacy_identity_key": "receipt_counterparty:sc:f854df54-8de4-450c-b28d-1c3cf25be1d8",
+      "legacy_partner_id": "f854df54-8de4-450c-b28d-1c3cf25be1d8",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "张百成",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_f854df54_8de4_450c_b28d_1c3cf25be1d8"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_f8c7023f26a043eb97dc3ee399e9b8fb",
+      "legacy_identity_key": "receipt_counterparty:sc:f8c7023f26a043eb97dc3ee399e9b8fb",
+      "legacy_partner_id": "f8c7023f26a043eb97dc3ee399e9b8fb",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "苟新蓉",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_f8c7023f26a043eb97dc3ee399e9b8fb"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_f93ecad5a8854ffcba5f9a344d3e9965",
+      "legacy_identity_key": "receipt_counterparty:sc:f93ecad5a8854ffcba5f9a344d3e9965",
+      "legacy_partner_id": "f93ecad5a8854ffcba5f9a344d3e9965",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "邓丁超",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_f93ecad5a8854ffcba5f9a344d3e9965"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_fa3c231e5b35446f95b46ddfcc9a1f51",
+      "legacy_identity_key": "receipt_counterparty:sc:fa3c231e5b35446f95b46ddfcc9a1f51",
+      "legacy_partner_id": "fa3c231e5b35446f95b46ddfcc9a1f51",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "王华勇",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_fa3c231e5b35446f95b46ddfcc9a1f51"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_fbd02cb109e140bb98327cb4a8f1b388",
+      "legacy_identity_key": "receipt_counterparty:sc:fbd02cb109e140bb98327cb4a8f1b388",
+      "legacy_partner_id": "fbd02cb109e140bb98327cb4a8f1b388",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "李永武",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_fbd02cb109e140bb98327cb4a8f1b388"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "company_type": "person",
+      "external_id": "legacy_receipt_counterparty_sc_fec385a263c54c6e8531cab0d92d6de1",
+      "legacy_identity_key": "receipt_counterparty:sc:fec385a263c54c6e8531cab0d92d6de1",
+      "legacy_partner_id": "fec385a263c54c6e8531cab0d92d6de1",
+      "legacy_partner_source": "receipt_counterparty",
+      "name": "张龙根",
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_receipt_counterparty_sc_fec385a263c54c6e8531cab0d92d6de1"
+      },
+      "target_model": "res.partner"
+    }
+  ],
+  "summary": {
+    "candidate_receipt_rows": 1944,
+    "loadable": 250
+  }
+}

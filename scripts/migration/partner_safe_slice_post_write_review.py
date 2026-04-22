@@ -4,15 +4,16 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 from collections import Counter
 from pathlib import Path
 
 
-SAFE_SLICE_CSV = Path("/mnt/artifacts/migration/partner_safe_slice_v1.csv")
-ROLLBACK_TARGET_CSV = Path("/mnt/artifacts/migration/partner_rollback_targets_v1.csv")
-WRITE_RESULT_JSON = Path("/mnt/artifacts/migration/partner_write_result_v1.json")
-OUTPUT_JSON = Path("/mnt/artifacts/migration/partner_safe_slice_post_write_review_result_v1.json")
-EXPECTED_COUNT = 100
+SAFE_SLICE_CSV = Path(os.environ.get("PARTNER_SAFE_SLICE_INPUT", "/mnt/artifacts/migration/partner_l4_next_safe_slice_1000_v1.csv"))
+ROLLBACK_TARGET_CSV = Path(os.environ.get("PARTNER_ROLLBACK_TARGET_CSV", "/mnt/artifacts/migration/partner_l4_final30_rollback_targets_v1.csv"))
+WRITE_RESULT_JSON = Path(os.environ.get("PARTNER_WRITE_RESULT_JSON", "/mnt/artifacts/migration/partner_l4_final30_write_result_v1.json"))
+OUTPUT_JSON = Path(os.environ.get("PARTNER_POST_WRITE_REVIEW_JSON", "/mnt/artifacts/migration/partner_l4_final30_post_write_review_result_v1.json"))
+EXPECTED_COUNT = int(os.environ.get("PARTNER_EXPECTED_COUNT", "30"))
 LEGACY_SOURCE = "cooperat_company"
 
 
@@ -89,13 +90,13 @@ def main():
     if write_result.get("status") != "PASS":
         blocking_reasons.append("write_result_not_pass")
     if write_result.get("created") != EXPECTED_COUNT:
-        blocking_reasons.append("write_result_created_not_100")
+        blocking_reasons.append("write_result_created_not_expected")
     if len(safe_slice_rows) != EXPECTED_COUNT:
-        blocking_reasons.append("safe_slice_not_100_rows")
+        blocking_reasons.append("safe_slice_not_expected_rows")
     if len(target_rows) != EXPECTED_COUNT:
-        blocking_reasons.append("rollback_target_not_100_rows")
+        blocking_reasons.append("rollback_target_not_expected_rows")
     if len(records) != EXPECTED_COUNT:
-        blocking_reasons.append("matched_partner_rows_not_100")
+        blocking_reasons.append("matched_partner_rows_not_expected")
     if sample_duplicates:
         blocking_reasons.append("safe_slice_duplicate_legacy_partner_id")
     if target_duplicates:

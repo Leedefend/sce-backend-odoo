@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "flow": {
+    "project_id": 335,
+    "dashboard_action_intent": "project.plan_bootstrap.enter",
+    "dashboard_action_state": "available",
+    "plan_entry_keys": [
+      "blocks",
+      "project_id",
+      "runtime_fetch_hints",
+      "suggested_action",
+      "summary",
+      "title"
+    ],
+    "plan_block_key": "plan_summary_detail",
+    "plan_block_state": "ready"
+  }
+}

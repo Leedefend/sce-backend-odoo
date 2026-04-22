@@ -1,0 +1,29 @@
+{
+  "asset_package_id": "receipt_invoice_attachment_sc_v1",
+  "business_boundary": {
+    "binary_file_custody": "excluded",
+    "ir_attachment_record": "included",
+    "receipt_invoice_line_relation": "included",
+    "url_strategy": "legacy-file-url"
+  },
+  "db_writes": 0,
+  "generated_at": "2026-04-15T15:50:00+00:00",
+  "manifest_version": "1.0",
+  "match_counts": {
+    "PID->pid": 1079
+  },
+  "matched_receipt_invoice_lines": 1079,
+  "odoo_shell": false,
+  "skipped_counts": {
+    "pid_not_receipt_invoice_line": 125888
+  },
+  "validation_gates": {
+    "generate_time": [
+      "legacy_file_id_unique",
+      "pid_to_receipt_invoice_line_resolves",
+      "attachment_type_url_only",
+      "binary_datas_field_not_emitted",
+      "deleted_files_excluded"
+    ]
+  }
+}
