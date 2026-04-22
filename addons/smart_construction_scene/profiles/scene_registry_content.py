@@ -37,6 +37,15 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             },
         },
         {
+            "code": "project.dashboard",
+            "name": "项目驾驶舱（产品场景）",
+            "target": {
+                "route": "/s/project.dashboard",
+                "menu_xmlid": "smart_construction_core.menu_sc_project_dashboard",
+                "action_xmlid": "smart_construction_core.action_project_dashboard",
+            },
+        },
+        {
             "code": "projects.dashboard_showcase",
             "name": "项目驾驶舱（演示）",
             "is_test": True,
@@ -51,6 +60,7 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "name": "项目驾驶舱",
             "target": {
                 "menu_xmlid": "smart_construction_core.menu_sc_project_management_scene",
+                "action_xmlid": "smart_construction_core.action_project_dashboard",
                 "route": "/s/project.management",
             },
         },
@@ -58,22 +68,76 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "code": "projects.intake",
             "name": "项目立项",
             "target": {
+                "route": "/s/projects.intake",
                 "menu_xmlid": "smart_construction_core.menu_sc_project_initiation",
                 "action_xmlid": "smart_construction_core.action_project_initiation",
+            },
+        },
+        {
+            "code": "project.initiation",
+            "name": "项目立项（产品场景）",
+            "target": {
+                "route": "/s/project.initiation",
+            },
+        },
+        {
+            "code": "enterprise.company",
+            "name": "企业信息",
+            "target": {
+                "route": "/s/enterprise.company",
+                "menu_xmlid": "smart_enterprise_base.menu_enterprise_company",
+                "action_xmlid": "smart_enterprise_base.action_enterprise_company",
+                "model": "res.company",
+                "view_type": "form",
+            },
+        },
+        {
+            "code": "enterprise.department",
+            "name": "组织架构",
+            "target": {
+                "route": "/s/enterprise.department",
+                "menu_xmlid": "smart_enterprise_base.menu_enterprise_department",
+                "action_xmlid": "smart_enterprise_base.action_enterprise_department",
+                "model": "hr.department",
+                "view_type": "tree",
+            },
+        },
+        {
+            "code": "enterprise.user",
+            "name": "用户设置",
+            "target": {
+                "route": "/s/enterprise.user",
+                "menu_xmlid": "smart_enterprise_base.menu_enterprise_user",
+                "action_xmlid": "smart_enterprise_base.action_enterprise_user",
+                "model": "res.users",
+                "view_type": "tree",
+            },
+        },
+        {
+            "code": "enterprise.post",
+            "name": "岗位管理",
+            "target": {
+                "route": "/s/enterprise.post",
+                "menu_xmlid": "smart_enterprise_base.menu_enterprise_post",
+                "action_xmlid": "smart_enterprise_base.action_enterprise_post",
+                "model": "sc.enterprise.post",
+                "view_type": "tree",
             },
         },
         {
             "code": "projects.list",
             "name": "项目列表",
             "target": {
+                "route": "/s/projects.list",
                 "menu_xmlid": "smart_construction_core.menu_sc_root",
                 "action_xmlid": "smart_construction_core.action_sc_project_list",
             },
         },
         {
             "code": "projects.ledger",
-            "name": "项目台账（试点）",
+            "name": "项目台账",
             "target": {
+                "route": "/s/projects.ledger",
                 "menu_xmlid": "smart_construction_core.menu_sc_project_project",
                 "action_xmlid": "smart_construction_core.action_sc_project_kanban_lifecycle",
             },
@@ -82,15 +146,23 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "code": "task.center",
             "name": "任务中心",
             "target": {
+                "route": "/s/task.center",
                 "action_xmlid": "project.action_view_all_task",
+            },
+        },
+        {
+            "code": "task.board",
+            "name": "任务看板",
+            "target": {
+                "route": "/s/task.board",
             },
         },
         {
             "code": "contract.center",
             "name": "合同中心",
             "target": {
+                "route": "/s/contract.center",
                 "menu_xmlid": "smart_construction_core.menu_sc_contract_center",
-                "action_xmlid": "smart_construction_core.action_construction_contract_my",
             },
         },
         {
@@ -129,8 +201,9 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "code": "finance.center",
             "name": "财务中心",
             "target": {
+                "route": "/s/finance.center",
                 "menu_xmlid": "smart_construction_core.menu_sc_finance_center",
-                "action_xmlid": "smart_construction_core.action_sc_tier_review_my_payment_request",
+                "action_xmlid": "smart_construction_core.action_sc_finance_dashboard",
             },
         },
         {
@@ -139,7 +212,6 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "target": {
                 "route": "/s/finance.workspace",
                 "menu_xmlid": "smart_construction_core.menu_sc_finance_center",
-                "action_xmlid": "smart_construction_core.action_sc_tier_review_my_payment_request",
             },
         },
         {
@@ -154,14 +226,16 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "code": "finance.payment_requests",
             "name": "付款收款申请",
             "target": {
+                "route": "/s/finance.payment_requests",
                 "menu_xmlid": "smart_construction_core.menu_payment_request",
-                "action_xmlid": "smart_construction_core.action_payment_request",
+                "action_xmlid": "smart_construction_core.action_payment_request_my",
             },
         },
         {
             "code": "finance.settlement_orders",
             "name": "结算单",
             "target": {
+                "route": "/s/finance.settlement_orders",
                 "menu_xmlid": "smart_construction_core.menu_sc_settlement_order",
                 "action_xmlid": "smart_construction_core.action_sc_settlement_order",
             },
@@ -170,6 +244,7 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "code": "finance.treasury_ledger",
             "name": "资金台账",
             "target": {
+                "route": "/s/finance.treasury_ledger",
                 "menu_xmlid": "smart_construction_core.menu_sc_treasury_ledger",
                 "action_xmlid": "smart_construction_core.action_sc_treasury_ledger",
             },
@@ -178,6 +253,7 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "code": "finance.payment_ledger",
             "name": "收付款台账",
             "target": {
+                "route": "/s/finance.payment_ledger",
                 "menu_xmlid": "smart_construction_core.menu_payment_ledger",
                 "action_xmlid": "smart_construction_core.action_payment_ledger",
             },
@@ -186,6 +262,7 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "code": "cost.cost_compare",
             "name": "成本中心",
             "target": {
+                "route": "/s/cost.cost_compare",
                 "menu_xmlid": "smart_construction_core.menu_sc_cost_center",
                 "action_xmlid": "smart_construction_core.action_project_cost_compare",
             },
@@ -194,8 +271,7 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "code": "cost.project_budget",
             "name": "预算管理",
             "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_project_budget",
-                "action_xmlid": "smart_construction_core.action_project_budget",
+                "route": "/s/cost.project_budget",
             },
         },
         {
@@ -236,6 +312,7 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "code": "cost.project_progress",
             "name": "进度填报",
             "target": {
+                "route": "/s/cost.project_progress",
                 "menu_xmlid": "smart_construction_core.menu_sc_project_progress",
                 "action_xmlid": "smart_construction_core.action_project_progress_entry",
             },
@@ -252,6 +329,7 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "code": "cost.profit_compare",
             "name": "盈亏对比",
             "target": {
+                "route": "/s/cost.profit_compare",
                 "menu_xmlid": "smart_construction_core.menu_sc_profit_reports",
                 "action_xmlid": "smart_construction_core.action_project_profit_compare",
             },
@@ -264,7 +342,7 @@ def list_scene_entries() -> List[Dict[str, Any]]:
         {
             "code": "portal.capability_matrix",
             "name": "能力矩阵",
-            "target": {"route": "/s/project.management"},
+            "target": {"route": "/s/portal.capability_matrix"},
         },
         {
             "code": "portal.dashboard",
@@ -276,7 +354,8 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "name": "收付款审批中心",
             "target": {
                 "route": "/s/payments.approval",
-                "menu_xmlid": "smart_construction_core.menu_payment_request",
+                "menu_xmlid": "smart_construction_core.menu_sc_tier_review_my_payment_request",
+                "action_xmlid": "smart_construction_core.action_sc_tier_review_my_payment_request",
             },
         },
         {
@@ -290,7 +369,6 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "target": {
                 "route": "/s/projects.detail",
                 "menu_xmlid": "smart_construction_core.menu_sc_project_project",
-                "action_xmlid": "smart_construction_core.action_sc_project_kanban_lifecycle",
             },
         },
         {

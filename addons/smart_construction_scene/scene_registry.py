@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 import json
 import os
+import time
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
+
+import yaml
 
 SCENE_VERSION = "v2"
 SCHEMA_VERSION = "v2"
@@ -46,31 +49,68 @@ def _load_scene_registry_content_module():
 
 
 def _load_scene_registry_content_entries():
+    rows, _timings = _load_scene_registry_content_entries_with_timings()
+    return rows
+
+
+def _load_scene_registry_content_entries_with_timings():
+    timings_ms = {}
+
+    def _mark(stage, started_at):
+        timings_ms[stage] = int((time.perf_counter() - started_at) * 1000)
+        return time.perf_counter()
+
     def _load_entries_directly():
         content_path = Path(__file__).resolve().parent / "profiles" / "scene_registry_content.py"
         if not content_path.exists():
-            return []
+            return [], {"direct_missing_content_path": 0}
+        direct_timings = {}
         try:
+            stage_ts = time.perf_counter()
             spec = spec_from_file_location("smart_construction_scene_registry_content", content_path)
             if spec is None or spec.loader is None:
-                return []
+                direct_timings["direct_module_spec"] = int((time.perf_counter() - stage_ts) * 1000)
+                return [], direct_timings
+            stage_ts = _mark_direct(direct_timings, "direct_module_spec", stage_ts)
             module = module_from_spec(spec)
             spec.loader.exec_module(module)
+            stage_ts = _mark_direct(direct_timings, "direct_module_exec", stage_ts)
             rows = module.list_scene_entries() if hasattr(module, "list_scene_entries") else []
-            return rows if isinstance(rows, list) else []
+            _mark_direct(direct_timings, "direct_list_scene_entries", stage_ts)
+            return (rows if isinstance(rows, list) else []), direct_timings
         except Exception:
-            return []
+            return [], direct_timings
 
+    def _mark_direct(bucket, stage, started_at):
+        bucket[stage] = int((time.perf_counter() - started_at) * 1000)
+        return time.perf_counter()
+
+    stage_ts = time.perf_counter()
     engine = _load_scene_registry_engine_module()
+    stage_ts = _mark("load_scene_registry_engine_module", stage_ts)
     loader = getattr(engine, "load_scene_registry_content_entries", None) if engine else None
+    timed_loader = getattr(engine, "load_scene_registry_content_entries_with_timings", None) if engine else None
     if callable(loader):
         try:
-            rows = loader(Path(__file__))
+            engine_ts = time.perf_counter()
+            if callable(timed_loader):
+                rows, engine_timings = timed_loader(Path(__file__))
+            else:
+                rows = loader(Path(__file__))
+                engine_timings = {}
+            _mark("engine_loader_call", engine_ts)
+            if isinstance(engine_timings, dict):
+                for key, value in engine_timings.items():
+                    timings_ms[f"engine.{key}"] = int(value)
             if isinstance(rows, list) and rows:
-                return rows
+                return rows, timings_ms
         except Exception:
             pass
-    return _load_entries_directly()
+    rows, direct_timings = _load_entries_directly()
+    if isinstance(direct_timings, dict):
+        for key, value in direct_timings.items():
+            timings_ms[key] = int(value)
+    return rows, timings_ms
 
 
 def _append_drift(drift, *, scene_key, kind, fields, severity="info", source="db->registry"):
@@ -163,6 +203,74 @@ def _normalize_scene(scene, drift=None, source="registry"):
             scene["tags"].append("smoke")
     scene = _apply_scene_defaults(scene, drift=drift, source=source)
     return scene
+
+
+def _scene_asset_root() -> Path:
+    return Path(__file__).resolve().parent / "scenes"
+
+
+def _normalize_scene_asset_payload(payload):
+    if not isinstance(payload, dict):
+        return {}
+    scene_key = str(payload.get("scene_key") or payload.get("code") or payload.get("key") or "").strip()
+    if not scene_key:
+        return {}
+    out = {
+        "code": scene_key,
+    }
+    scene_type = str(payload.get("scene_type") or "").strip()
+    if scene_type:
+        out["scene_type"] = scene_type
+
+    page = dict(payload.get("page") or {}) if isinstance(payload.get("page"), dict) else {}
+    if page:
+        out["page"] = page
+    zones = payload.get("zones")
+    if not isinstance(zones, list):
+        zones = page.get("zones") if isinstance(page.get("zones"), list) else []
+    if isinstance(zones, list) and zones:
+        out["zones"] = list(zones)
+
+    target = dict(payload.get("target") or {}) if isinstance(payload.get("target"), dict) else {}
+    route = str(page.get("route") or target.get("route") or "").strip()
+    if route:
+        target["route"] = route
+    if target:
+        out["target"] = target
+
+    for key in ("blocks", "search_surface", "permission_surface", "actions"):
+        value = payload.get(key)
+        if isinstance(value, list) and value:
+            out[key] = list(value)
+        elif isinstance(value, dict) and value:
+            out[key] = dict(value)
+    return out
+
+
+def _load_scene_asset_entries_with_timings():
+    timings_ms = {}
+    root = _scene_asset_root()
+    started = time.perf_counter()
+    if not root.exists():
+        timings_ms["asset_root_missing"] = int((time.perf_counter() - started) * 1000)
+        return [], timings_ms
+
+    stage = time.perf_counter()
+    paths = sorted(root.rglob("*.scene.yaml"))
+    timings_ms["discover_scene_asset_files"] = int((time.perf_counter() - stage) * 1000)
+
+    rows = []
+    stage = time.perf_counter()
+    for path in paths:
+        try:
+            payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        normalized = _normalize_scene_asset_payload(payload)
+        if normalized:
+            rows.append(normalized)
+    timings_ms["load_scene_asset_files"] = int((time.perf_counter() - stage) * 1000)
+    return rows, timings_ms
 
 
 def _apply_scene_defaults(scene, drift=None, source="registry"):
@@ -282,10 +390,25 @@ def _load_imported_scenes(env, drift=None):
 
 
 def load_scene_configs(env, drift=None):
+    scenes, _timings = load_scene_configs_with_timings(env, drift=drift)
+    return scenes
+
+
+def load_scene_configs_with_timings(env, drift=None):
+    timings_ms = {}
+
+    def _mark(stage, started_at):
+        timings_ms[stage] = int((time.perf_counter() - started_at) * 1000)
+        return time.perf_counter()
+
     # Prefer DB scenes if present; fallback to code-defined scenes.
+    stage_ts = time.perf_counter()
     db_scenes = _load_from_db(env, drift=drift)
+    stage_ts = _mark("load_from_db", stage_ts)
     imported_scenes = _load_imported_scenes(env, drift=drift)
+    stage_ts = _mark("load_imported_scenes", stage_ts)
     include_tests = _include_test_scenes(env)
+    stage_ts = _mark("include_test_scenes", stage_ts)
     # Note: keep configs data-only; target IDs are resolved by system_init.
     # Complete migration: platform fallback keeps only minimal internal defaults.
     fallback = [
@@ -304,25 +427,6 @@ def load_scene_configs(env, drift=None):
             "target": {"route": "/workbench?scene=scene_smoke_default"},
         },
     ]
-    for scene in _load_scene_registry_content_entries():
-        code = str(scene.get("code") or "").strip()
-        if not code:
-            continue
-        fallback = [item for item in fallback if str(item.get("code") or "").strip() != code]
-        fallback.append(scene)
-    if not db_scenes:
-        if not imported_scenes:
-            return _filter_test_scenes(fallback, include_tests)
-        imported_codes = {scene.get("code") for scene in imported_scenes if scene.get("code")}
-        merged = list(imported_scenes)
-        for scene in fallback:
-            if scene.get("code") not in imported_codes:
-                merged.append(scene)
-        return _filter_test_scenes(merged, include_tests)
-
-    fallback_map = {scene.get("code"): scene for scene in fallback}
-    imported_map = {scene.get("code"): scene for scene in imported_scenes if scene.get("code")}
-    seen = {scene.get("code") for scene in db_scenes if scene.get("code")}
 
     def _merge_missing(scene, defaults):
         for key, value in defaults.items():
@@ -340,6 +444,61 @@ def load_scene_configs(env, drift=None):
                 continue
             if isinstance(value, list) and not isinstance(current, list):
                 scene[key] = value
+
+    stage_ts = time.perf_counter()
+    content_entries, content_timings_ms = _load_scene_registry_content_entries_with_timings()
+    if isinstance(content_timings_ms, dict):
+        for key, value in content_timings_ms.items():
+            timings_ms[f"content_entries.{key}"] = int(value)
+    for scene in content_entries:
+        code = str(scene.get("code") or "").strip()
+        if not code:
+            continue
+        fallback = [item for item in fallback if str(item.get("code") or "").strip() != code]
+        fallback.append(scene)
+    stage_ts = _mark("load_scene_registry_content_entries", stage_ts)
+    stage_ts = time.perf_counter()
+    asset_entries, asset_timings_ms = _load_scene_asset_entries_with_timings()
+    if isinstance(asset_timings_ms, dict):
+        for key, value in asset_timings_ms.items():
+            timings_ms[f"scene_asset_entries.{key}"] = int(value)
+    fallback_map_for_assets = {
+        str(scene.get("code") or "").strip(): scene
+        for scene in fallback
+        if str(scene.get("code") or "").strip()
+    }
+    for asset in asset_entries:
+        code = str(asset.get("code") or "").strip()
+        if not code:
+            continue
+        existing = fallback_map_for_assets.get(code)
+        if existing:
+            _merge_missing(existing, asset)
+        else:
+            fallback.append(asset)
+            fallback_map_for_assets[code] = asset
+    stage_ts = _mark("load_scene_asset_entries", stage_ts)
+    if not db_scenes:
+        if not imported_scenes:
+            stage_ts = time.perf_counter()
+            filtered = _filter_test_scenes(fallback, include_tests)
+            _mark("filter_test_scenes", stage_ts)
+            return filtered, timings_ms
+        imported_codes = {scene.get("code") for scene in imported_scenes if scene.get("code")}
+        merged = list(imported_scenes)
+        for scene in fallback:
+            if scene.get("code") not in imported_codes:
+                merged.append(scene)
+        stage_ts = time.perf_counter()
+        filtered = _filter_test_scenes(merged, include_tests)
+        _mark("filter_test_scenes", stage_ts)
+        return filtered, timings_ms
+
+    stage_ts = time.perf_counter()
+    fallback_map = {scene.get("code"): scene for scene in fallback}
+    imported_map = {scene.get("code"): scene for scene in imported_scenes if scene.get("code")}
+    seen = {scene.get("code") for scene in db_scenes if scene.get("code")}
+    stage_ts = _mark("build_maps", stage_ts)
 
     def _upgrade_fallback_target(scene, defaults):
         current = scene.get("target")
@@ -364,6 +523,7 @@ def load_scene_configs(env, drift=None):
         if has_resolvable_default:
             scene["target"] = dict(default_target)
 
+    merge_ts = time.perf_counter()
     for scene in db_scenes:
         code = scene.get("code")
         if not code:
@@ -375,7 +535,9 @@ def load_scene_configs(env, drift=None):
         imported = imported_map.get(code)
         if imported:
             _merge_missing(scene, imported)
+    merge_ts = _mark("merge_db_with_fallback_and_imported", merge_ts)
 
+    append_ts = time.perf_counter()
     for code, scene in imported_map.items():
         if code not in seen:
             db_scenes.append(scene)
@@ -384,4 +546,8 @@ def load_scene_configs(env, drift=None):
     for code, scene in fallback_map.items():
         if code not in seen:
             db_scenes.append(scene)
-    return _filter_test_scenes(db_scenes, include_tests)
+    _mark("append_missing_imported_and_fallback", append_ts)
+    stage_ts = time.perf_counter()
+    filtered = _filter_test_scenes(db_scenes, include_tests)
+    _mark("filter_test_scenes", stage_ts)
+    return filtered, timings_ms
