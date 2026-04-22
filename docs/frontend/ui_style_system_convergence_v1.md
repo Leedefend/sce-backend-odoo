@@ -35,6 +35,16 @@
 - 主题切换与品牌化包装
 - 浏览器内截图采集与人工可视验收
 
+后续延伸收口：
+
+- `ITER-2026-04-19-FE-UI-SYSTEM-CONVERGENCE-V2-A` 已把详情辅助壳层与记录表格块并入 token 基线
+- 覆盖 `DetailCommandBar`、`DetailShellLayout`、`FormSection`、`BlockRecordTable`
+- 目标是消除高频详情页辅助面仍残留的 page-local hard-coded 颜色/圆角/阴影
+- `ITER-2026-04-19-FE-UI-SYSTEM-CONVERGENCE-V2-B` 已把 `ContractFormPage` 的 support-zone 与 `BlockActivityFeed` 并入同一 token 语言
+- 覆盖 relation / chatter / attachment 辅助卡片与 activity feed block
+- `ITER-2026-04-19-FE-UI-SYSTEM-CONVERGENCE-V2-C` 已把 `ContractFormPage` 的 structure diagnostics、inline validation、submission feedback、advanced toggle 与 footer action 补齐到 token 语言
+- `ITER-2026-04-19-FE-UI-SYSTEM-CONVERGENCE-V2-D` 已把剩余高频 legacy list/form wrappers（`RecordView`、`MyWorkView`）并入同一 token 基线
+
 ## 3. Style Layering
 
 新增统一样式目录：
@@ -115,6 +125,13 @@ Batch B 收口了共享组件与高频容器：
 - `ContractFormPage` 的 compact topbar、header meta、action buttons
 - form card / block / overview strip / chips
 - `StatusPanel` 在表单 fallback、error、info 场景下的统一反馈
+- `DetailCommandBar` 的流程阶段 / 下一步动作双区容器
+- `DetailShellLayout` / `FormSection` 的 section、tab、nested shell 辅助层级
+- `BlockRecordTable` 的区块头部、记录数、副标题、悬浮节奏
+- support-zone 的 count badge、state badge、协作/关系卡片层级
+- `BlockActivityFeed` 的 eyebrow、count badge、feed card 节奏
+- structure-projection、validation/warn/success feedback、layout divider、footer ghost/primary actions
+- `RecordView` 的 header/card/summary/chatter/timeline 与 `MyWorkView` 的 hero/filters/retry/table/pager
 
 适用解释：
 
@@ -162,9 +179,14 @@ Lint gate note：
 
 - `views/*` 中历史局部样式仍然较多
 - 表格细粒度单元格、排序、分组交互尚未全部统一
-- 详情页 notebook / section / chatter 辅助区仍需下一轮专门收口
+- 高风险高频 list/form wrappers 已进入统一 token 语言，后续剩余工作更偏浏览器证据、个别特化页和细节 polish
 - 缺少浏览器内 before/after 截图资产
 - 原生 ESLint CLI 超时的根因尚未单独修复
+
+已缩小的例外：
+
+- 高频详情页共享模板已不再依赖大面积硬编码视觉常量
+- 辅助区卡片、tab rail、command bar、mini table 已与既有 token / primitive 语言对齐
 
 ## 11. Next Suggestions
 

@@ -15,6 +15,10 @@
   - `DetailCommandBar` 改为“流程阶段 / 下一步动作”双区结构
   - `DetailShellLayout` 与 `FormSection` 统一分区容器、页签、嵌套 section 的秩序
   - relation / chatter / activity 语义统一沉到辅助区卡片
+  - `ITER-2026-04-19-FE-UI-SYSTEM-CONVERGENCE-V2-A` 已把上述辅助壳层继续收口到 token 基线，补齐 command bar / tab rail / nested shell / mini table 的统一视觉层级
+  - `ITER-2026-04-19-FE-UI-SYSTEM-CONVERGENCE-V2-B` 已继续收口 `ContractFormPage` support-zone 与 `BlockActivityFeed`，补齐关系/协作卡片、count badge、activity card 的统一视觉节奏
+  - `ITER-2026-04-19-FE-UI-SYSTEM-CONVERGENCE-V2-C` 已继续收口 structure diagnostics、inline feedback、advanced toggle 与 footer action，使详情页 section 邻接反馈面与 token 体系一致
+  - `ITER-2026-04-19-FE-UI-SYSTEM-CONVERGENCE-V2-D` 已把 `RecordView` 与 `MyWorkView` 这两个 legacy list/form wrapper 的 header、summary、filters、retry panel、table shell、chatter timeline 统一到同一 token 基线
 - 验证：
   - `pnpm -C frontend/apps/web lint` PASS
   - `pnpm -C frontend/apps/web build` PASS

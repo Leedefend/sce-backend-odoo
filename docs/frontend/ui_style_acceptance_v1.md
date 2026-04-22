@@ -58,12 +58,23 @@
 
 - `ContractFormPage.vue`
 - `StatusPanel.vue`
+- `DetailCommandBar.vue`
+- `DetailShellLayout.vue`
+- `FormSection.vue`
+- `BlockRecordTable.vue`
+- `BlockActivityFeed.vue`
+- `RecordView.vue`
+- `MyWorkView.vue`
 
 结构结果：
 
 - 表单 compact topbar、header actions、meta line 统一
 - card / block / overview strip / chips 已统一到共享视觉语言
 - fallback / error / info 的反馈容器与按钮状态一致
+- 详情辅助壳层、页签轨道、section 容器与 mini table 已切到 token 驱动
+- support-zone 的关系/协作卡片、状态 badge 与 activity feed 已切到同一视觉节奏
+- detail diagnostics、inline validation、submission feedback、footer actions 已切到同一 token 语言
+- legacy `RecordView` / `MyWorkView` 的 list/form 包装层已切到同一 token 语言
 
 ## 3. Verification Commands
 
@@ -101,8 +112,16 @@
 - 原始 ESLint CLI 超时的根因修复
 - 浏览器内项目/任务页面的人工截图对比
 - `views/*` 历史页面的全量样式收口
-- 详情页 notebook / chatter / activity 等辅助区的统一规范
+- 仍有少量非 list/form 特化页保留独立视觉语言，但高频 list/form 包装层已统一
 - 表格更细粒度的行态、排序态、操作列规范
+
+本次新增解决：
+
+- 详情页辅助模板仍残留的局部硬编码视觉常量
+- 记录表格块与详情辅助容器之间的阴影、边框、背景层级不一致
+- support-zone / activity block 与共享卡片语言不一致
+- detail diagnostics / inline feedback / footer actions 的旧视觉常量
+- legacy `RecordView` / `MyWorkView` 的 page-local list/form 样式
 
 ## 6. Exception Notes
 
