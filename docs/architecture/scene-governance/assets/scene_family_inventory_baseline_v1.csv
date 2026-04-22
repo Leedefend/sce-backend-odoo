@@ -1,0 +1,8 @@
+family,scene_count,canonical_scene,native_fallback_count,provider_count,verify_status,governance_status
+contracts,3,contract.center,3,2,guarded,stage_closed
+enterprise_bootstrap,4,enterprise.company,4,4,guarded,stage_closed
+finance_center,2,finance.center,2,2,guarded,stage_closed
+payment_approval,1,payments.approval,1,1,guarded,stage_closed
+payment_entry,1,finance.payment_requests,1,1,guarded,stage_closed
+projects,4,projects.list,4,4,guarded,stage_closed
+tasks,2,task.center,1,2,guarded,stage_closed
