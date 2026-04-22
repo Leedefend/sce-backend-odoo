@@ -1,0 +1,50 @@
+[
+  {
+    "path": "frontend/apps/web/src/pages/ContractFormPage.vue",
+    "module": "contract form runtime",
+    "feature": "scene runtime panel and page overview fallback wording",
+    "reason": "当前仍使用“当前状态”“当前表单为只读状态”“项目详情页 · 当前阶段”等业务解释型前端兜底，需要后端提供明确 scene/runtime semantic copy 或统一 contract text。"
+  },
+  {
+    "path": "frontend/apps/web/src/app/action_semantics.ts",
+    "module": "action feedback fallback mapping",
+    "feature": "reasonCode to user-facing business message",
+    "reason": "当前把 BUSINESS_RULE_FAILED 映射成“当前状态不允许此操作”，属于前端自行补业务语义，应改为后端返回可显示 message 或 reason copy。"
+  },
+  {
+    "path": "frontend/apps/web/src/views/ReleaseProductEntryView.vue",
+    "module": "released scene entry descriptions",
+    "feature": "hard-coded lifecycle business descriptions",
+    "reason": "FR 场景说明仍由前端固定描述业务链路和项目语义，应改为后端 delivery/product contract 提供 description/scope。"
+  },
+  {
+    "path": "frontend/apps/web/src/views/HomeView.vue",
+    "module": "home workflow labels",
+    "feature": "enterprise step fallback labels",
+    "reason": "enterpriseStepStatusLabel 仍把状态翻译成“当前步骤/已完成/下一步”，属于前端自行接受业务工作流语义。"
+  },
+  {
+    "path": "frontend/apps/web/src/views/ActionView.vue",
+    "module": "generic action page",
+    "feature": "page intent business comment",
+    "reason": "文件顶部仍保留“先判断状态，再给出下一步可执行动作”这类前端业务意图注释，说明消费边界仍未完全去业务化。"
+  },
+  {
+    "path": "frontend/apps/web/src/views/ProjectManagementDashboardView.vue",
+    "module": "project dashboard consumer",
+    "feature": "action labels and block empty text fallback wording",
+    "reason": "虽然主干已清理，但 actionButtonLabel/actionHint、pilotPrecheckRows、cost/payment entry hint 等局部仍存在“推进/进入/受阻/录入后会刷新”等业务 fallback。"
+  },
+  {
+    "path": "frontend/apps/web/src/views/RecordView.vue",
+    "module": "generic record detail",
+    "feature": "project-side summary fallback remnants",
+    "reason": "该页主干已改为 contract-missing 提示，但仍保留“项目详情”“下一步动作”等业务型 section 文案，需要确认这些是否应全部改由后端 page text 提供。"
+  },
+  {
+    "path": "frontend/apps/web/src/app/projectEntryContext.ts",
+    "module": "project context normalization",
+    "feature": "legacy alias acceptance surface",
+    "reason": "normalizeProjectEntryContext 仍继续吸收 legacy stage/status alias；虽然是兼容层，但它是前端接受业务语义漂移的关键入口，需要在后续 screen 阶段判断退出条件。"
+  }
+]
