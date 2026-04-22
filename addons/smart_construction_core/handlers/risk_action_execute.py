@@ -91,13 +91,25 @@ class RiskActionExecuteHandler(BaseIntentHandler):
             )
 
         risk_action_id = int((params or {}).get("risk_action_id") or 0)
+        exception_id = int((params or {}).get("exception_id") or 0)
         project_id = int((params or {}).get("project_id") or 0)
         name = str((params or {}).get("name") or "").strip()
         note = str((params or {}).get("note") or "").strip()
         owner_id = int((params or {}).get("owner_id") or 0)
 
         RiskAction = self.env["project.risk.action"]
+        ExceptionModel = self.env["sc.evidence.exception"]
+        exception = ExceptionModel.browse(exception_id) if exception_id > 0 else ExceptionModel.browse()
+        if exception_id > 0 and not exception.exists():
+            return self._error(
+                message="exception not found",
+                trace_id=trace_id,
+                code=404,
+                reason_code=REASON_NOT_FOUND,
+            )
         record = RiskAction.browse(risk_action_id) if risk_action_id > 0 else RiskAction.browse()
+        if not record and exception and exception.risk_action_id:
+            record = exception.risk_action_id
         if risk_action_id > 0 and not record.exists():
             return self._error(
                 message="risk action not found",
@@ -123,13 +135,21 @@ class RiskActionExecuteHandler(BaseIntentHandler):
                     "note": note,
                 }
             )
+            if exception:
+                exception.sudo().write({"risk_action_id": int(record.id)})
 
         if action == "claim":
             record.action_claim(owner_id=owner_id or self.env.user.id)
+            if exception:
+                exception.sudo().action_assign(user_id=owner_id or self.env.user.id)
         elif action == "escalate":
             record.action_escalate(note=note)
+            if exception:
+                exception.sudo().action_processing(user_id=owner_id or self.env.user.id, note=note)
         elif action == "close":
             record.action_close(note=note)
+            if exception:
+                exception.sudo().action_resolve(note=note)
 
         return {
             "ok": True,
@@ -145,6 +165,11 @@ class RiskActionExecuteHandler(BaseIntentHandler):
                     "state": str(record.state or ""),
                     "risk_level": str(record.risk_level or ""),
                     "owner_id": int(record.owner_id.id or 0),
+                },
+                "exception": {
+                    "id": int(exception.id or 0) if exception else 0,
+                    "status": str(exception.status or "") if exception else "",
+                    "assigned_to": int(exception.assigned_to.id or 0) if exception and exception.assigned_to else 0,
                 },
                 "mutation": {
                     "type": "transition",

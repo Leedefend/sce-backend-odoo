@@ -21,10 +21,24 @@ APP_DEFS: List[Dict[str, Any]] = [
         "flags": [],  # 例如 ["ai_enabled"]
         "features": [
             {
+                "key": "project_initiation",
+                "label": "项目立项",
+                "kind": "work",
+                "open": {"odoo_menu_xmlid": "smart_construction_core.menu_sc_project_initiation"},
+                "required_permissions": ["project.create"],
+            },
+            {
                 "key": "project_overview",
                 "label": "项目总览",
                 "kind": "work",
                 "open": {"odoo_action_xmlid": "project.action_project_project"},
+                "required_permissions": ["project.view_all"],
+            },
+            {
+                "key": "project_dashboard",
+                "label": "项目驾驶舱",
+                "kind": "work",
+                "open": {"odoo_menu_xmlid": "smart_construction_core.menu_sc_project_dashboard"},
                 "required_permissions": ["project.view_all"],
             },
             {
