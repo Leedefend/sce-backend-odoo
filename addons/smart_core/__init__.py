@@ -13,16 +13,24 @@ Smart Core Engine Module
 import logging
 
 # 导入子模块
-from . import controllers
-from . import app_config_engine
-from . import core
-from . import handlers
-from . import view
-from . import utils
-from . import models
+try:
+    from . import controllers
+    from . import app_config_engine
+    from . import core
+    from . import handlers
+    from . import view
+    from . import utils
+    from . import models
+    from . import delivery
 
-# Ensure intent controllers are registered on module load
-from .controllers import intent_dispatcher
+    # Ensure intent controllers are registered on module load
+    from .controllers import intent_dispatcher
+except ModuleNotFoundError as exc:
+    # Pure-Python bridge tests import smart_core without a live Odoo runtime.
+    # In that mode the package must still be importable so isolated bridge
+    # modules can be executed directly from their test loaders.
+    if exc.name != "odoo":
+        raise
 
 # 设置日志
 _logger = logging.getLogger(__name__)
