@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-23T06:05:00+08:00
+- blocker_key: `gov_contract_guard_baseline_fix_001_in_progress`
+- layer_target: `Governance Layer`
+- module: `smart_core contract guard baseline`
+- reason: recent retained slices are already merged, and the active blocker has shifted to repository-baseline guard debt in `load_contract.py` hard-coded reason codes plus stale `docs/contract/cases.yml` view_type aliases
+- completed_step: `已创建 ITER-2026-04-23-GOV-CONTRACT-GUARD-BASELINE-FIX-001，并冻结本批次只允许修复 verify.contract.preflight 与 verify.contract.catalog 的现存基线失败，不扩展到其它产品行为。`
+- active_commit: `7230915`
+- next_step: `replace hard-coded reason_code literals in addons/smart_core/handlers/load_contract.py with shared constants, then normalize outdated contract case view_type aliases and rerun both guards`
+
+### 2026-04-23T06:26:00+08:00
+- blocker_key: `gov_contract_catalog_inferred_examples_fix_002_in_progress`
+- layer_target: `Governance Layer`
+- module: `contract catalog explicit example coverage`
+- reason: after clearing load_contract drift and stale view_type aliases, verify.contract.catalog now fails only on inferred intent examples, so the next bounded batch is to materialize explicit case and snapshot artifacts for the flagged intents
+- completed_step: `已创建 ITER-2026-04-23-GOV-CONTRACT-CATALOG-INFERRED-EXAMPLES-FIX-002，并冻结本批次只允许修改 docs/contract/cases.yml 与 docs/contract/snapshots 下的新增覆盖产物，不改运行时代码。`
+- active_commit: `7230915`
+- next_step: `append explicit intent.invoke cases plus matching snapshot files for the currently inferred intents, then rerun make verify.contract.catalog`
+
 ### 2026-04-22T18:18:00+08:00
 - blocker_key: `fe_daily_verify_env_align_pa65_pass_v1`
 - layer_target: `Frontend verification infrastructure`
@@ -28475,3 +28493,4 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - 2026-04-23T11:45:00+08:00 executor: branch `feature/runtime-wiring-cleanup-pa94-b1` at `03c17c6`; Layer Target `Backend Runtime Wiring`; Module `smart_construction_core extension export convergence`; Reason `smart_core` still consumes legacy module-level hooks (`smart_core_register`, scene package/governance service-class hooks, file/api allowlist hooks) while `smart_construction_core` had already converged only the newer contribution/builder surface. started PA94-compatible compatibility closure in `addons/smart_construction_core/__init__.py` and `addons/smart_construction_core/core_extension.py`.
 - 2026-04-23T07:00:36+08:00 executor: branch `feature/demo-scenario-enrich-pa104-b1` at `9c63014`; Layer Target `Domain Layer`; Module `smart_construction_core project dashboard semantic carrier compatibility`; Reason `ProjectDashboardHandler` still calls `ProjectDashboardService.build(...)` while the service had already converged to `build_block(...)` only. started PA89-compatible compatibility closure in `addons/smart_construction_core/services/project_dashboard_service.py` and added a service-level regression assertion in `addons/smart_construction_core/tests/test_project_dashboard_entry_backend.py`.
 - 2026-04-23T07:20:00+08:00 executor: branch `feature/load-contract-viewtype-pa032-b1` at `c20712b`; Layer Target `Governance Layer`; Module `contract catalog sample normalization`; Reason `verify.contract.catalog` still failed because `docs/contract/cases.yml` kept raw Odoo sample view labels (`tree`/`pivot`) while the catalog validator now enforces canonical `form/list/kanban`. started PB01 to normalize the remaining docs-only cases without touching addon runtime code.
+- 2026-04-23T12:40:00+08:00 executor: branch `feature/load-contract-viewtype-pa032-b1` at `0e5dc83`; Layer Target `Governance Layer`; Module `PR 610 merge unblock`; Reason GitHub marked PR 610 `DIRTY` against `main`; read-only merge analysis isolated overlap to `addons/smart_core/handlers/load_contract.py`, `docs/contract/cases.yml`, and this iteration log. started PB02 to absorb `main`'s reason-code constant cleanup and explicit contract-case additions while preserving this branch's view_type normalization and prior checkpoint entries.

@@ -1,0 +1,12 @@
+{
+  "case": "api_onchange_intent_admin",
+  "op": "intent.invoke",
+  "user": "admin",
+  "contract_version": "v1",
+  "ui_contract_raw": {
+    "changes": {
+      "name": "Snapshot Project"
+    }
+  },
+  "error": null
+}

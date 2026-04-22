@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
 # 📁 smart_core/handlers/load_contract.py
+import hashlib
+import json
+import re
+
+from odoo import SUPERUSER_ID, api
+
 from ..core.base_handler import BaseIntentHandler
 from ..utils.extension_hooks import call_extension_hook_first
-from ..utils.reason_codes import (
-    REASON_OK,
-    REASON_PERMISSION_DENIED,
-)
-from odoo import api, SUPERUSER_ID
-import json, re, hashlib
+from ..utils.reason_codes import REASON_OK, REASON_PERMISSION_DENIED
 
 VALID_VIEWS   = {'form','tree','kanban','search','pivot','graph','calendar','gantt','activity','dashboard'}
 VALID_INCLUDE = {'model','view','action','permission'}
+REASON_DISABLED = "DISABLED"
 REASON_STATE_BLOCKED = "STATE_BLOCKED"
 
 def _json(obj):
@@ -245,7 +247,7 @@ class LoadContractHandler(BaseIntentHandler):
             label = str(raw.get("label") or raw.get("string") or fallback_label or key)
             action_type = str(raw.get("action_type") or raw.get("type") or "action")
             enabled = bool(raw.get("enabled", True))
-            reason_code = str(raw.get("reason_code") or (REASON_OK if enabled else "DISABLED"))
+            reason_code = str(raw.get("reason_code") or (REASON_OK if enabled else REASON_DISABLED))
             reason = str(raw.get("reason") or "")
             return {
                 "key": key,
@@ -399,7 +401,7 @@ class LoadContractHandler(BaseIntentHandler):
             reason = ""
             if not allowed:
                 if not current_enabled:
-                    reason_code = str(action.get("reason_code") or "DISABLED")
+                    reason_code = str(action.get("reason_code") or REASON_DISABLED)
                     reason = str(action.get("reason") or "")
                 elif not permission_allowed:
                     reason_code = REASON_PERMISSION_DENIED

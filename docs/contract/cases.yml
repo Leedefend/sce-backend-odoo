@@ -258,6 +258,140 @@
     }
   },
   {
+    "case": "api_onchange_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "api.onchange",
+    "intent_params": {
+      "model": "project.project",
+      "values": {
+        "name": "Snapshot Project"
+      },
+      "changed_fields": [
+        "name"
+      ],
+      "changed": [
+        "name"
+      ],
+      "context": {}
+    }
+  },
+  {
+    "case": "meta_intent_catalog_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "meta.intent_catalog",
+    "intent_params": {}
+  },
+  {
+    "case": "telemetry_track_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "telemetry.track",
+    "intent_params": {
+      "event_type": "scene_open"
+    }
+  },
+  {
+    "case": "cost_tracking_enter_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "cost.tracking.enter",
+    "intent_params": {
+      "project_id": 1
+    }
+  },
+  {
+    "case": "project_dashboard_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "project.dashboard",
+    "intent_params": {
+      "project_id": 1
+    }
+  },
+  {
+    "case": "project_dashboard_enter_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "project.dashboard.enter",
+    "intent_params": {
+      "project_id": 1
+    }
+  },
+  {
+    "case": "risk_action_execute_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "risk.action.execute",
+    "intent_params": {
+      "action": "claim",
+      "project_id": 1,
+      "name": "Snapshot Risk Action"
+    }
+  },
+  {
+    "case": "payment_request_available_actions_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "payment.request.available_actions",
+    "intent_params": {
+      "id": 1
+    }
+  },
+  {
+    "case": "payment_request_execute_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "payment.request.execute",
+    "intent_params": {
+      "id": 1,
+      "action": "submit",
+      "request_id": "snapshot_payment_request_execute_1"
+    }
+  },
+  {
+    "case": "payment_request_submit_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "payment.request.submit",
+    "intent_params": {
+      "id": 1,
+      "request_id": "snapshot_payment_request_submit_1"
+    }
+  },
+  {
+    "case": "payment_request_approve_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "payment.request.approve",
+    "intent_params": {
+      "id": 1,
+      "request_id": "snapshot_payment_request_approve_1"
+    }
+  },
+  {
+    "case": "payment_request_reject_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "payment.request.reject",
+    "intent_params": {
+      "id": 1,
+      "reason": "snapshot reject reason",
+      "request_id": "snapshot_payment_request_reject_1"
+    }
+  },
+  {
+    "case": "payment_request_done_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "payment.request.done",
+    "intent_params": {
+      "id": 1,
+      "request_id": "snapshot_payment_request_done_1"
+    }
+  },
+  {
     "case": "capability_visibility_report_intent_admin",
     "user": "admin",
     "op": "intent.invoke",

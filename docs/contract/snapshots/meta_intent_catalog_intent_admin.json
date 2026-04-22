@@ -1,0 +1,12 @@
+{
+  "case": "meta_intent_catalog_intent_admin",
+  "op": "intent.invoke",
+  "user": "admin",
+  "contract_version": "v1",
+  "ui_contract_raw": {
+    "intents": [
+      "system.init"
+    ]
+  },
+  "error": null
+}

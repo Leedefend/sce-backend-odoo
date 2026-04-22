@@ -544,46 +544,42 @@
       "test_refs": 0,
       "request_schema_hint": [
         "changed",
+        "changed[]",
         "changed_fields",
+        "changed_fields[]",
         "context",
         "model",
-        "values"
+        "values",
+        "values.name"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "changes",
+        "changes.name"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "api_onchange_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/api_onchange_intent_admin.json",
           "request_keys": [
             "changed",
+            "changed[]",
             "changed_fields",
+            "changed_fields[]",
             "context",
             "model",
-            "values"
+            "values",
+            "values.name"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "changes",
+            "changes.name"
+          ],
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "changed",
-          "changed_fields",
-          "context",
-          "model",
-          "values"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "app.catalog",
@@ -1007,35 +1003,30 @@
       "has_idempotency_window": false,
       "test_refs": 0,
       "request_schema_hint": [
-        "params"
+        "params",
+        "project_id"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "project_id",
+        "scene_key"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "cost_tracking_enter_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/cost_tracking_enter_intent_admin.json",
           "request_keys": [
-            "params"
+            "project_id"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "project_id",
+            "scene_key"
+          ],
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "execute_button",
@@ -2000,7 +1991,11 @@
         "view_id",
         "view_type"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "head",
+        "head.model",
+        "head.view_type"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
@@ -2011,7 +2006,11 @@
             "model",
             "view_type"
           ],
-          "response_data_keys": [],
+          "response_data_keys": [
+            "head",
+            "head.model",
+            "head.view_type"
+          ],
           "response_error_keys": []
         }
       ],
@@ -9487,29 +9486,25 @@
       "has_idempotency_window": false,
       "test_refs": 4,
       "request_schema_hint": [],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "intents",
+        "intents[]"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "meta_intent_catalog_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/meta_intent_catalog_intent_admin.json",
           "request_keys": [],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "intents",
+            "intents[]"
+          ],
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "my.work.complete",
@@ -9849,30 +9844,32 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 1,
-      "request_schema_hint": [],
-      "response_data_schema_hint": [],
+      "request_schema_hint": [
+        "id",
+        "request_id"
+      ],
+      "response_data_schema_hint": [
+        "intent_action",
+        "success"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "case": "payment_request_approve_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/payment_request_approve_intent_admin.json",
+          "request_keys": [
+            "id",
+            "request_id"
+          ],
+          "response_data_keys": [
+            "intent_action",
+            "success"
+          ],
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "payment.request.available_actions",
@@ -9890,39 +9887,29 @@
         "payment_request_id",
         "res_id"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "actions",
+        "actions[]",
+        "success"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "payment_request_available_actions_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/payment_request_available_actions_intent_admin.json",
           "request_keys": [
-            "id",
-            "params",
-            "payment_request_id",
-            "res_id"
+            "id"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "actions",
+            "actions[]",
+            "success"
+          ],
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "id",
-          "params",
-          "payment_request_id",
-          "res_id"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "payment.request.done",
@@ -9934,30 +9921,32 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 1,
-      "request_schema_hint": [],
-      "response_data_schema_hint": [],
+      "request_schema_hint": [
+        "id",
+        "request_id"
+      ],
+      "response_data_schema_hint": [
+        "intent_action",
+        "success"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "case": "payment_request_done_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/payment_request_done_intent_admin.json",
+          "request_keys": [
+            "id",
+            "request_id"
+          ],
+          "response_data_keys": [
+            "intent_action",
+            "success"
+          ],
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "payment.request.execute",
@@ -9970,41 +9959,35 @@
       "has_idempotency_window": false,
       "test_refs": 2,
       "request_schema_hint": [
+        "action",
+        "id",
         "intent_action",
         "params",
         "request_id"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "intent_action",
+        "success"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "payment_request_execute_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/payment_request_execute_intent_admin.json",
           "request_keys": [
-            "intent_action",
-            "params",
+            "action",
+            "id",
             "request_id"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "intent_action",
+            "success"
+          ],
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "intent_action",
-          "params",
-          "request_id"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "payment.request.reject",
@@ -10016,30 +9999,34 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 1,
-      "request_schema_hint": [],
-      "response_data_schema_hint": [],
+      "request_schema_hint": [
+        "id",
+        "reason",
+        "request_id"
+      ],
+      "response_data_schema_hint": [
+        "intent_action",
+        "success"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "case": "payment_request_reject_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/payment_request_reject_intent_admin.json",
+          "request_keys": [
+            "id",
+            "reason",
+            "request_id"
+          ],
+          "response_data_keys": [
+            "intent_action",
+            "success"
+          ],
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "payment.request.submit",
@@ -10051,30 +10038,32 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 1,
-      "request_schema_hint": [],
-      "response_data_schema_hint": [],
+      "request_schema_hint": [
+        "id",
+        "request_id"
+      ],
+      "response_data_schema_hint": [
+        "intent_action",
+        "success"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "case": "payment_request_submit_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/payment_request_submit_intent_admin.json",
+          "request_keys": [
+            "id",
+            "request_id"
+          ],
+          "response_data_keys": [
+            "intent_action",
+            "success"
+          ],
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "permission.check",
@@ -10142,30 +10131,30 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 10,
-      "request_schema_hint": [],
-      "response_data_schema_hint": [],
+      "request_schema_hint": [
+        "project_id"
+      ],
+      "response_data_schema_hint": [
+        "project_id",
+        "scene_key"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "case": "project_dashboard_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/project_dashboard_intent_admin.json",
+          "request_keys": [
+            "project_id"
+          ],
+          "response_data_keys": [
+            "project_id",
+            "scene_key"
+          ],
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "project.dashboard.enter",
@@ -10178,35 +10167,30 @@
       "has_idempotency_window": false,
       "test_refs": 3,
       "request_schema_hint": [
-        "params"
+        "params",
+        "project_id"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "project_id",
+        "scene_key"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "project_dashboard_enter_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/project_dashboard_enter_intent_admin.json",
           "request_keys": [
-            "params"
+            "project_id"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "project_id",
+            "scene_key"
+          ],
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "risk.action.execute",
@@ -10219,35 +10203,34 @@
       "has_idempotency_window": false,
       "test_refs": 0,
       "request_schema_hint": [
-        "params"
+        "action",
+        "name",
+        "params",
+        "project_id"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "intent_action",
+        "success"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "risk_action_execute_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/risk_action_execute_intent_admin.json",
           "request_keys": [
-            "params"
+            "action",
+            "name",
+            "project_id"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "intent_action",
+            "success"
+          ],
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "sample.enhanced",
@@ -26126,39 +26109,25 @@
         "event_type",
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "event_type"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "telemetry_track_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/telemetry_track_intent_admin.json",
           "request_keys": [
-            "event",
-            "event_name",
-            "event_type",
-            "params"
+            "event_type"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "event_type"
+          ],
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "event",
-          "event_name",
-          "event_type",
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "ui.contract",

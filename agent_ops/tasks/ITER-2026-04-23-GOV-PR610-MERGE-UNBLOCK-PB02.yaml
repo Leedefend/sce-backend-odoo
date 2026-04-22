@@ -1,0 +1,113 @@
+task_id: ITER-2026-04-23-GOV-PR610-MERGE-UNBLOCK-PB02
+title: Unblock PR 610 merge by reconciling overlap with origin/main
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Restore mergeability for PR 610 by manually reconciling the three overlapping
+  files against origin/main and by syncing the exact main-only contract snapshot
+  artifacts required by the updated catalog coverage guard, without using rebase
+  or destructive git history operations.
+
+user_visible_outcome:
+  - "PR 610 is no longer blocked by merge conflicts."
+  - "Main-branch governance additions and this branch's compatibility fixes are both preserved."
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-23-GOV-PR610-MERGE-UNBLOCK-PB02.yaml
+    - addons/smart_core/handlers/load_contract.py
+    - docs/contract/cases.yml
+    - docs/contract/snapshots/api_onchange_intent_admin.json
+    - docs/contract/snapshots/cost_tracking_enter_intent_admin.json
+    - docs/contract/snapshots/load_view_intent_pm.json
+    - docs/contract/snapshots/meta_intent_catalog_intent_admin.json
+    - docs/contract/snapshots/payment_request_approve_intent_admin.json
+    - docs/contract/snapshots/payment_request_available_actions_intent_admin.json
+    - docs/contract/snapshots/payment_request_done_intent_admin.json
+    - docs/contract/snapshots/payment_request_execute_intent_admin.json
+    - docs/contract/snapshots/payment_request_reject_intent_admin.json
+    - docs/contract/snapshots/payment_request_submit_intent_admin.json
+    - docs/contract/snapshots/project_dashboard_enter_intent_admin.json
+    - docs/contract/snapshots/project_dashboard_intent_admin.json
+    - docs/contract/snapshots/risk_action_execute_intent_admin.json
+    - docs/contract/snapshots/telemetry_track_intent_admin.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**/security/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - frontend/**
+    - migrations/**
+
+limits:
+  max_files: 18
+  max_candidates: 3
+  max_output_lines: 160
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+role_parallel:
+  enabled: false
+  allowed_roles:
+    - executor
+  require_disjoint_writes: true
+  require_new_session_per_role: true
+  stop_on_conflict: true
+
+change_rules:
+  - preserve both branch-local fixes and origin/main governance additions
+  - only sync the explicitly listed main-only contract snapshot artifacts
+  - do not use rebase, reset, or destructive git operations
+  - merge-unblock work is limited to the declared overlapping files
+  - verification must rerun the affected contract guards
+
+context:
+  branch: feature/load-contract-viewtype-pa032-b1
+  pr_number: 610
+  baseline_sha: 0e5dc83
+  explicit_user_authorization: true
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Governance Layer
+  module: PR 610 merge unblock
+  module_owner: release governance surface
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This batch does not change business facts. It reconciles governance and
+    compatibility artifacts so the branch can merge cleanly into main.
+  reason: >
+    GitHub reports PR 610 as DIRTY because origin/main and the branch both
+    changed load-contract guard constants, contract catalog cases, and the
+    iteration log. A bounded manual reconciliation is the minimal safe path.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-23-GOV-PR610-MERGE-UNBLOCK-PB02.yaml
+    - PYTHONPYCACHEPREFIX=/tmp/codex_pycache python3 -m py_compile addons/smart_core/handlers/load_contract.py
+    - make verify.contract_drift.guard
+    - make verify.contract.catalog
+
+risk:
+  level: medium
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - overlap_reconciliation_uncertain
+  - verification_fails
+  - mergeability_still_uncertain
+
+deliverables:
+  - merge unblock task contract
+  - reconciled overlap files preserving main and branch intent
+  - synced main-only contract snapshot artifacts required by catalog coverage
+  - delivery context log entry
+
+rollback:
+  - git restore addons/smart_core/handlers/load_contract.py docs/contract/cases.yml docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-23-GOV-PR610-MERGE-UNBLOCK-PB02.yaml
