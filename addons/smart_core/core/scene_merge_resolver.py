@@ -17,6 +17,25 @@ def _as_list(value: Any) -> List[Any]:
     return list(value) if isinstance(value, list) else []
 
 
+def _merge_search_default_state(
+    search_surface: Dict[str, Any],
+    *,
+    default_filters: List[Any] | None = None,
+    default_group_by: List[Any] | None = None,
+    default_searchpanel: List[Any] | None = None,
+) -> None:
+    state = _as_dict(search_surface.get("default_state"))
+    out = dict(state)
+    if isinstance(default_filters, list) and default_filters:
+        out["filters"] = list(default_filters)
+    if isinstance(default_group_by, list) and default_group_by:
+        out["group_by"] = list(default_group_by)
+    if isinstance(default_searchpanel, list) and default_searchpanel:
+        out["searchpanel"] = list(default_searchpanel)
+    if out:
+        search_surface["default_state"] = out
+
+
 @dataclass
 class MergeContext:
     scene_key: str
@@ -109,11 +128,32 @@ def apply_policy(compiled_ast: Dict[str, Any], policies: Dict[str, Any], runtime
         if _as_list(search_surface.get("filters")):
             _record_conflict(_as_dict(out.get("meta")), layer="policy", field="search_surface.filters", from_layer="base")
         search_surface["filters"] = default_filters
+    default_sort = _text(search_policy.get("default_sort"))
+    if default_sort:
+        if _text(search_surface.get("default_sort")):
+            _record_conflict(_as_dict(out.get("meta")), layer="policy", field="search_surface.default_sort", from_layer="base")
+        search_surface["default_sort"] = default_sort
     default_group_by = _as_list(search_policy.get("default_group_by"))
     if default_group_by:
         if _as_list(search_surface.get("group_by")):
             _record_conflict(_as_dict(out.get("meta")), layer="policy", field="search_surface.group_by", from_layer="base")
         search_surface["group_by"] = default_group_by
+    default_searchpanel = _as_list(search_policy.get("default_searchpanel"))
+    if default_searchpanel:
+        if _as_list(search_surface.get("searchpanel")):
+            _record_conflict(_as_dict(out.get("meta")), layer="policy", field="search_surface.searchpanel", from_layer="base")
+        search_surface["searchpanel"] = default_searchpanel
+    _merge_search_default_state(
+        search_surface,
+        default_filters=default_filters,
+        default_group_by=default_group_by,
+        default_searchpanel=default_searchpanel,
+    )
+    default_mode = _text(search_policy.get("default_mode"))
+    if default_mode:
+        if _text(search_surface.get("mode")):
+            _record_conflict(_as_dict(out.get("meta")), layer="policy", field="search_surface.mode", from_layer="base")
+        search_surface["mode"] = default_mode
     out["search_surface"] = search_surface
 
     workflow_surface = _as_dict(out.get("workflow_surface"))
@@ -162,6 +202,33 @@ def apply_provider_merge(compiled_ast: Dict[str, Any], providers: List[Dict[str,
         resolved = _resolve_provider_payload(payload, ctx, out)
         if not resolved:
             continue
+        scene_payload = _as_dict(out.get("scene"))
+        resolved_scene = _as_dict(resolved.get("scene"))
+        if resolved_scene:
+            if _text(resolved_scene.get("page")) and _text(scene_payload.get("page")) != _text(resolved_scene.get("page")):
+                _record_conflict(_as_dict(out.get("meta")), layer="provider", field="scene.page", from_layer="base")
+            scene_layout = _as_dict(scene_payload.get("layout"))
+            resolved_layout = _as_dict(resolved_scene.get("layout"))
+            if resolved_layout:
+                scene_layout.update(resolved_layout)
+                scene_payload["layout"] = scene_layout
+            for field in ("page", "title", "page_type", "layout_mode", "render_mode"):
+                value = resolved_scene.get(field)
+                if value not in (None, "", {}, []):
+                    scene_payload[field] = value
+            out["scene"] = scene_payload
+
+        page_payload = _as_dict(out.get("page"))
+        resolved_page = _as_dict(resolved.get("page"))
+        if resolved_page:
+            for field in ("key", "title", "route", "page_type", "layout_mode", "render_mode", "scene_key"):
+                value = resolved_page.get(field)
+                if value not in (None, "", {}, []):
+                    page_payload[field] = value
+            resolved_zones = _as_list(resolved_page.get("zones"))
+            if resolved_zones:
+                page_payload["zones"] = resolved_zones
+            out["page"] = page_payload
         if _as_list(resolved.get("blocks")):
             out["blocks"] = _as_list(out.get("blocks")) + _as_list(resolved.get("blocks"))
         if _as_list(resolved.get("actions")):
@@ -169,7 +236,7 @@ def apply_provider_merge(compiled_ast: Dict[str, Any], providers: List[Dict[str,
 
         search_surface = _as_dict(out.get("search_surface"))
         resolved_search = _as_dict(resolved.get("search_surface"))
-        for field in ("filters", "group_by", "fields"):
+        for field in ("filters", "default_sort", "group_by", "fields", "searchpanel", "mode"):
             if field in resolved_search and field in search_surface and search_surface.get(field) != resolved_search.get(field):
                 _record_conflict(_as_dict(out.get("meta")), layer="provider", field=f"search_surface.{field}", from_layer="policy")
         search_surface.update(resolved_search)
