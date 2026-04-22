@@ -16,6 +16,3687 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-22T18:18:00+08:00
+- blocker_key: `fe_daily_verify_env_align_pa65_pass_v1`
+- layer_target: `Frontend verification infrastructure`
+- module: `daily browser verify environment alignment`
+- reason: the reusable browser bootstrap was already stable, but defaults still pointed at non-daily credentials and users were informally referring to the db as sc-demo while the real runtime db is sc_demo
+- completed_step: `已完成 ITER-2026-04-22-FE-DAILY-VERIFY-ENV-ALIGN-IMPLEMENT-PA65：共享 helper 与 host browser smoke 默认值已统一切到 sc_demo / wutao / demo，并对 sc-demo 做规范化；make verify.portal.login_browser_smoke.host 在不覆写凭证的情况下已 PASS。`
+- active_commit: `89d096f`
+- next_step: `run subsequent browser verification from the daily dev environment by default, and only override db/login when a batch explicitly targets a non-daily runtime`
+
+### 2026-04-22T18:15:00+08:00
+- blocker_key: `fe_browser_verify_bootstrap_reuse_pa64_pass_v1`
+- layer_target: `Frontend verification infrastructure`
+- module: `host Playwright browser bootstrap`
+- reason: repeated browser validation failures were caused by duplicated UI-login bootstrap, unstable first-page waits, and stale smoke credentials that retried silently instead of failing fast
+- completed_step: `已完成 ITER-2026-04-22-FE-BROWSER-VERIFY-BOOTSTRAP-REUSE-IMPLEMENT-PA64：新增共享 helper scripts/verify/playwright_portal_bootstrap.mjs，把 host browser smoke 统一切到 API token + db-scoped browser bootstrap；verify.portal.login_browser_smoke.host 在 sc_prod_sim / admin/admin / 127.0.0.1:5174 + 8069 上已 PASS。`
+- active_commit: `89d096f`
+- next_step: `reuse the shared browser bootstrap for subsequent contract.center / release / slice browser verification, and when a smoke account changes, update credentials explicitly instead of debugging Playwright first`
+
+### 2026-04-22T17:53:00+08:00
+- blocker_key: `fe_contract_center_nav_entry_normalize_pa63_pass_with_risk_v1`
+- layer_target: `Frontend semantic consumer implementation`
+- module: `navigation scene entry normalization`
+- reason: the active contract.center failure remained on menu-driven scene entry, and the frontend was still re-carrying native action identity into canonical scene routes through shared menu resolvers
+- completed_step: `已完成 ITER-2026-04-22-FE-CONTRACT-CENTER-NAV-ENTRY-NORMALIZE-IMPLEMENT-PA63：侧边栏/useNavigationMenu、公共 menuResolver、MenuView 兜底入口已统一改为 canonical scene 路由，不再把 menu_id/menu_xmlid/action_id 重新塞回 /s/<scene>；frontend.restart 已完成。`
+- active_commit: `89d096f`
+- next_step: `restore a working login probe in the current runtime, then replay the contract.center menu click and confirm the final URL no longer carries foreign action_id/menu_id pollution`
+
+### 2026-04-22T15:39:20+08:00
+- blocker_key: `fe_scene_route_query_merge_implement_pa54_in_progress_v1`
+- layer_target: `Frontend semantic consumer implementation`
+- module: `sidebar scene route merge`
+- reason: the fresh menu-317 artifact exposed malformed route assembly with a second `?`, so the next bounded batch is to repair generic scene-query merging in the frontend consumer and the matching verify harness
+- completed_step: `已创建 ITER-2026-04-22-FE-SCENE-ROUTE-QUERY-MERGE-IMPLEMENT-PA54，并冻结本批次只允许修正 scene route 在已有 query 下的参数合并，不改后端语义供给。`
+- active_commit: `89d096f`
+- next_step: `validate the task, patch the frontend and unified verify route builders to merge query params correctly, then rerun TARGET_MENU_CHAIN=314,317`
+
+### 2026-04-22T15:51:00+08:00
+- blocker_key: `fe_scene_route_query_merge_implement_pa54_fail_v1`
+- layer_target: `Frontend semantic consumer implementation`
+- module: `sidebar scene route merge`
+- reason: the route merge fix removed the malformed double-`?` URL, but the narrowed verify still fails because the active runtime does not expose `cost.project_budget` in `scene_ready_contract_v1`
+- completed_step: `已完成 ITER-2026-04-22-FE-SCENE-ROUTE-QUERY-MERGE-IMPLEMENT-PA54：前端与 verify harness 的 scene query 合并已修正，fresh artifact 20260422T074159Z 证明 menu 317 目标 URL 已变为 /s/cost.project_budget?menu_id=317&scene_key=cost.project_budget&action_id=485；随后 direct system.init probe 冻结了剩余阻断：sceneCount=7，hasCostProjectBudget=false。`
+- active_commit: `89d096f`
+- next_step: `stop and open one bounded backend runtime screen or implement batch for cost.project_budget scene_ready_contract_v1 publication / runtime refresh`
+
+### 2026-04-22T16:01:00+08:00
+- blocker_key: `be_scene_ready_preload_candidate_implement_pa55_in_progress_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `scene_ready preload candidate derivation`
+- reason: the active runtime excludes cost.project_budget because startup preload scenes are derived from static role-surface landing candidates instead of the visible nav scene set
+- completed_step: `已创建 ITER-2026-04-22-BE-SCENE-READY-PRELOAD-CANDIDATE-IMPLEMENT-PA55，并冻结本批次只允许修正 role_surface.scene_candidates 的后端派生逻辑，不改前端与业务语义。`
+- active_commit: `89d096f`
+- next_step: `validate the task, patch IdentityResolver to merge visible nav scene keys into scene_candidates, then rerun system.init probe and TARGET_MENU_CHAIN=314,317`
+
+### 2026-04-22T16:09:00+08:00
+- blocker_key: `be_scene_ready_preload_candidate_implement_pa55_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `scene_ready preload candidate derivation`
+- reason: backend startup preload candidates now include runtime-available scenes, so the active runtime finally publishes cost.project_budget and the narrow sidebar chain passes
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-READY-PRELOAD-CANDIDATE-IMPLEMENT-PA55：重建后 direct system.init probe 返回 scene_subset_count=58、hasCostProjectBudget=true；fresh artifact 20260422T075843Z 证明 TARGET_MENU_CHAIN=314,317 已 PASS。`
+- active_commit: `89d096f`
+- next_step: `open one bounded unified verify batch and rerun the full sidebar menu click smoke to measure remaining CONTRACT_CONTEXT_MISSING failures`
+
+### 2026-04-22T16:11:00+08:00
+- blocker_key: `fe_sidebar_contract_context_unify_verify_post_pa55_pa56_in_progress_v1`
+- layer_target: `Frontend verification over backend recovery`
+- module: `unified sidebar contract-context verify`
+- reason: the narrow blocker is closed, so the next low-risk step is one fresh full replay to measure what remains in the sidebar failure family
+- completed_step: `已创建 ITER-2026-04-22-FE-SIDEBAR-CONTRACT-CONTEXT-UNIFY-VERIFY-POST-PA55-PA56，并冻结本批次只允许重跑统一侧边栏验证与分类 fresh artifact。`
+- active_commit: `89d096f`
+- next_step: `validate the verify task, run the full unified sidebar smoke on the post-recovery runtime, then classify the fresh artifact`
+
+### 2026-04-22T16:16:00+08:00
+- blocker_key: `fe_sidebar_contract_context_unify_verify_post_pa55_pa56_fail_v1`
+- layer_target: `Frontend verification over backend recovery`
+- module: `unified sidebar contract-context verify`
+- reason: the post-recovery unified replay reduced the original failure family to a single residual native-action closure, but the verify still ends in lifecycle timeout so this batch remains FAIL
+- completed_step: `已完成 ITER-2026-04-22-FE-SIDEBAR-CONTRACT-CONTEXT-UNIFY-VERIFY-POST-PA55-PA56：artifact 20260422T080116Z 跑完 60 个叶子，仅剩 menu 405（借款/贷款登记）失败；原 CONTRACT_CONTEXT_MISSING 家族已不再是活跃阻断，新的残余前沿为 404 -> 405 的 browser/context closed。`
+- active_commit: `89d096f`
+- next_step: `stop and open one bounded residual screen/verify batch for menu window 404 -> 405 to classify the browser-context-closed failure`
+
+### 2026-04-22T16:20:00+08:00
+- blocker_key: `fe_residual_window_404_405_verify_pa57_in_progress_v1`
+- layer_target: `Frontend verification over residual native-action failure`
+- module: `residual menu window 404 to 405`
+- reason: the unified replay has only one residual leaf left, so the next bounded step is a direct replay of 404 -> 405 to classify whether the browser/context closure is deterministic on that narrow window
+- completed_step: `已创建 ITER-2026-04-22-FE-RESIDUAL-WINDOW-404-405-VERIFY-PA57，并冻结本批次只允许重放 TARGET_MENU_CHAIN=404,405。`
+- active_commit: `89d096f`
+- next_step: `validate the residual verify task, run the narrow replay on 404 -> 405, then classify the fresh artifact`
+
+### 2026-04-22T16:23:00+08:00
+- blocker_key: `fe_residual_window_404_405_verify_pa57_pass_v1`
+- layer_target: `Frontend verification over residual native-action failure`
+- module: `residual menu window 404 to 405`
+- reason: the narrowed replay passes cleanly, proving the remaining menu 405 failure from the full unified run is not deterministic on the business window itself
+- completed_step: `已完成 ITER-2026-04-22-FE-RESIDUAL-WINDOW-404-405-VERIFY-PA57：artifact 20260422T080812Z 对 404 -> 405 重放 PASS，fail_count=0。`
+- active_commit: `89d096f`
+- next_step: `open one bounded verify-lifecycle screen or implement batch for the full unified runner tail-closure path`
+
+### 2026-04-22T16:28:00+08:00
+- blocker_key: `be_contract_center_origin_screen_pa58_in_progress_v1`
+- layer_target: `Backend scene-orchestration screen`
+- module: `contract.center origin chain`
+- reason: the user explicitly questioned whether contract.center has any business-fact support, so the next bounded step is to freeze the exact publication/runtime chain for that scene
+- completed_step: `已创建 ITER-2026-04-22-BE-CONTRACT-CENTER-ORIGIN-SCREEN-PA58，并冻结本批次只允许追踪 contract.center 的来源链，不做修复。`
+- active_commit: `89d096f`
+- next_step: `validate the screen task, trace contract.center across scene registry, navigation mapping, system.init/runtime probes, then write the source-chain conclusion`
+
+### 2026-04-22T16:14:00+08:00
+- blocker_key: `be_cost_project_budget_supply_verify_pa53_in_progress_v1`
+- layer_target: `Backend recovery verify`
+- module: `cost.project_budget direct-scene supply verify`
+- reason: the backend patch is complete, so the next bounded step is one fresh narrow replay on 314 -> 317 to see whether menu 317 still degrades
+- completed_step: `已创建 ITER-2026-04-22-BE-COST-PROJECT-BUDGET-SUPPLY-VERIFY-PA53，并冻结本批次只允许重放 TARGET_MENU_CHAIN=314,317。`
+- active_commit: `89d096f`
+- next_step: `validate the verify task, run the narrow replay, and classify the fresh artifact`
+
+### 2026-04-22T16:17:00+08:00
+- blocker_key: `be_cost_project_budget_supply_verify_pa53_fail_v1`
+- layer_target: `Backend recovery verify`
+- module: `cost.project_budget direct-scene supply verify`
+- reason: the fresh post-patch replay still reproduces the same deterministic workbench degradation, so minimal scene asset/provider supply is proven insufficient
+- completed_step: `已完成 ITER-2026-04-22-BE-COST-PROJECT-BUDGET-SUPPLY-VERIFY-PA53：补充 cost.project_budget scene yaml/provider 后，TARGET_MENU_CHAIN=314,317 fresh replay 仍然稳定失败，menu 317 继续落到 /workbench?reason=CONTRACT_CONTEXT_MISSING&scene=cost.project_budget；最近意图仍为 page.contract。`
+- active_commit: `89d096f`
+- next_step: `stop and open one bounded ownership screen or implement batch for the cost.project_budget contract-load chain itself`
+
+### 2026-04-22T16:07:00+08:00
+- blocker_key: `be_cost_project_budget_supply_implement_pa52_in_progress_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `cost.project_budget scene semantic supply`
+- reason: ownership is frozen to backend scene supply, so the next bounded step is to add the minimal direct-scene semantic supply for menu 317 without touching frontend consumption
+- completed_step: `已创建 ITER-2026-04-22-BE-COST-PROJECT-BUDGET-SUPPLY-IMPLEMENT-PA52，并冻结本批次只允许在 smart_construction_scene 内补 cost.project_budget 的 scene asset/provider/registration/test。`
+- active_commit: `89d096f`
+- next_step: `validate the implement task, patch smart_construction_scene cost.project_budget semantic supply, and run bounded unittests`
+
+### 2026-04-22T16:12:00+08:00
+- blocker_key: `be_cost_project_budget_supply_implement_pa52_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `cost.project_budget scene semantic supply`
+- reason: the minimal direct-scene supply patch is in place and bounded tests confirm the new route/provider/yaml shape
+- completed_step: `已完成 ITER-2026-04-22-BE-COST-PROJECT-BUDGET-SUPPLY-IMPLEMENT-PA52：已为 cost.project_budget 增加 scene yaml、provider、provider registration，并把 registry target 收敛到 direct scene route；受限单测通过。`
+- active_commit: `89d096f`
+- next_step: `open one fresh narrow verify batch for TARGET_MENU_CHAIN=314,317 and confirm whether menu 317 still degrades to CONTRACT_CONTEXT_MISSING`
+
+### 2026-04-22T16:02:00+08:00
+- blocker_key: `be_cost_project_budget_ownership_screen_pa51_in_progress_v1`
+- layer_target: `Backend ownership screen`
+- module: `cost.project_budget scene-known contract-context gap`
+- reason: the narrow 314 -> 317 replay is now deterministic, so the next low-cost step is to freeze whether ownership belongs to frontend consumption or backend semantic supply
+- completed_step: `已创建 ITER-2026-04-22-BE-COST-PROJECT-BUDGET-OWNERSHIP-SCREEN-PA51，并冻结本批次只允许基于现有证据判断 cost.project_budget 缺口的归属。`
+- active_commit: `89d096f`
+- next_step: `validate the ownership screen, record the backend scene-orchestration conclusion, then open one minimal backend semantic-supply implement batch`
+
+### 2026-04-22T15:52:00+08:00
+- blocker_key: `fe_residual_window_314_317_verify_pa50_in_progress_v1`
+- layer_target: `Frontend verification`
+- module: `residual window 314 to 317`
+- reason: the screen step froze the active frontier at 314 -> 317, so the next bounded verify should replay only that chain
+- completed_step: `已创建 ITER-2026-04-22-FE-RESIDUAL-WINDOW-314-317-VERIFY-PA50，并冻结本批次只允许以 TARGET_MENU_CHAIN=314,317 重放 verify 入口。`
+- active_commit: `89d096f`
+- next_step: `validate the narrow verify task, run TARGET_MENU_CHAIN=314,317, and classify the fresh artifact`
+
+### 2026-04-22T15:56:00+08:00
+- blocker_key: `fe_residual_window_314_317_verify_pa50_fail_v1`
+- layer_target: `Frontend verification`
+- module: `residual window 314 to 317`
+- reason: the narrowest predecessor/failure replay now reproduces the issue cleanly, so the active blocker is a deterministic scene-known contract-context gap rather than replay shape or runtime instability
+- completed_step: `已完成 ITER-2026-04-22-FE-RESIDUAL-WINDOW-314-317-VERIFY-PA50：TARGET_MENU_CHAIN=314,317 fresh replay cleanly 收口为 1 个失败，menu 314（projects.ledger）PASS、menu 317（cost.project_budget）FAIL，并稳定落到 /workbench?reason=CONTRACT_CONTEXT_MISSING&scene=cost.project_budget。`
+- active_commit: `89d096f`
+- next_step: `stop and open one bounded ownership screen or implement batch for the menu-317 cost.project_budget contract-context gap`
+
+### 2026-04-22T15:47:00+08:00
+- blocker_key: `fe_residual_window_314_317_screen_pa49_in_progress_v1`
+- layer_target: `Frontend verification screen`
+- module: `residual window 314 to 317`
+- reason: the clean tail-window verify collapsed the active frontier to predecessor menu 314 and failing menu 317, so the next bounded step is to freeze that exact window before another replay
+- completed_step: `已创建 ITER-2026-04-22-FE-RESIDUAL-WINDOW-314-317-SCREEN-PA49，并冻结本批次只允许消费最新 bounded verify 证据，把前沿收敛到 projects.ledger(menu 314) -> cost.project_budget(menu 317)。`
+- active_commit: `89d096f`
+- next_step: `validate the screen task, record the bounded 314 -> 317 ownership conclusion, then open one narrow verify replay for TARGET_MENU_CHAIN=314,317`
+
+### 2026-04-22T15:49:00+08:00
+- blocker_key: `fe_residual_window_314_317_screen_pa49_pass_v1`
+- layer_target: `Frontend verification screen`
+- module: `residual window 314 to 317`
+- reason: the screen confirms the active blocker is no longer lifecycle/runtime instability but a scene-known contract-context gap on the narrower predecessor/failure pair
+- completed_step: `已完成 ITER-2026-04-22-FE-RESIDUAL-WINDOW-314-317-SCREEN-PA49：当前前沿正式冻结为 menu 314（projects.ledger）之后的 menu 317（cost.project_budget）确定性 CONTRACT_CONTEXT_MISSING，下一步只能重放 TARGET_MENU_CHAIN=314,317。`
+- active_commit: `89d096f`
+- next_step: `open one bounded verify batch with TARGET_MENU_CHAIN=314,317`
+
+### 2026-04-22T15:30:00+08:00
+- blocker_key: `fe_residual_tail_window_336_verify_pa48_in_progress_v1`
+- layer_target: `Frontend verification`
+- module: `residual tail window ending at 336`
+- reason: the tiny chain 319 -> 336 passed, so the next bounded verify must widen only to a short tail window ending at 336 rather than jumping back to the full loop
+- completed_step: `已创建 ITER-2026-04-22-FE-RESIDUAL-TAIL-WINDOW-336-VERIFY-PA48，并冻结本批次只允许以 TARGET_END_MENU_ID=336 TARGET_TAIL_COUNT=8 重放 verify 入口。`
+- active_commit: `89d096f`
+- next_step: `validate the tail-window task, run the bounded replay ending at menu 336, and classify whether the closure reappears`
+
+### 2026-04-22T15:33:00+08:00
+- blocker_key: `fe_residual_window_319_336_verify_pa47_pass_v1`
+- layer_target: `Frontend verification`
+- module: `residual browser-closure window 319 to 336`
+- reason: the tiny residual chain replay completed cleanly, so menu 336 is no longer treated as a deterministic route-local failure
+- completed_step: `已完成 ITER-2026-04-22-FE-RESIDUAL-WINDOW-319-336-VERIFY-PA47：TARGET_MENU_CHAIN=319,336 fresh replay 通过，menu 319 与 menu 336 均 PASS，说明先前 closure 需要比这条短链更长的跨叶子累积。`
+- active_commit: `89d096f`
+- next_step: `replay a slightly longer tail window ending at 336 to find the minimal accumulation frontier`
+
+### 2026-04-22T15:42:00+08:00
+- blocker_key: `fe_residual_tail_window_336_verify_pa48_fail_v1`
+- layer_target: `Frontend verification`
+- module: `residual tail window ending at 336`
+- reason: the bounded tail-window replay no longer times out and no longer shows browser closure, but it isolates one deterministic contract-context failure that now becomes the active frontier
+- completed_step: `已完成 ITER-2026-04-22-FE-RESIDUAL-TAIL-WINDOW-336-VERIFY-PA48：8 步尾窗 fresh replay cleanly 收口为 1 个失败，且不是 lifecycle timeout，也不是 browser/context closure；唯一失败点收敛到 menu 317（预算/成本）-> /workbench?reason=CONTRACT_CONTEXT_MISSING&scene=cost.project_budget，前驱为 menu 314。`
+- active_commit: `89d096f`
+- next_step: `stop and open one bounded verify/screen batch around the narrower 314 -> 317 predecessor/failure window`
+
+### 2026-04-22T15:21:00+08:00
+- blocker_key: `fe_residual_window_319_336_verify_pa47_in_progress_v1`
+- layer_target: `Frontend verification`
+- module: `residual browser-closure window 319 to 336`
+- reason: the screen batch froze the current frontier at menu 319 -> 336, so the next bounded verify should replay only that chain instead of the full menu loop
+- completed_step: `已创建 ITER-2026-04-22-FE-RESIDUAL-WINDOW-319-336-VERIFY-PA47，并冻结本批次只允许以 TARGET_MENU_CHAIN=319,336 重放 unified_system_menu_click_usability_smoke.host。`
+- active_commit: `89d096f`
+- next_step: `validate the residual-window verify task, run the narrow 319 -> 336 replay, and classify the fresh artifact outcome`
+
+### 2026-04-22T15:16:00+08:00
+- blocker_key: `fe_verify_post_summary_hang_screen_pa46_in_progress_v1`
+- layer_target: `Frontend verification recovery screen`
+- module: `verify post-summary hang ownership`
+- reason: fresh retries still time out after completed_fail is written, so the next low-cost step is to freeze exactly which post-summary tail still owns the hang
+- completed_step: `已创建 ITER-2026-04-22-FE-VERIFY-POST-SUMMARY-HANG-SCREEN-PA46，并冻结本批次只允许消费 fresh artifact 与脚本现状，分类 hang 属于 browser/context teardown、未决 async，还是最终进程完成语义。`
+- active_commit: `89d096f`
+- next_step: `validate the screen task, classify the post-summary hang owner from fresh artifacts and script structure, then record the bounded next implement target`
+
+### 2026-04-22T15:18:00+08:00
+- blocker_key: `fe_verify_post_summary_hang_screen_pa46_pass_v1`
+- layer_target: `Frontend verification recovery screen`
+- module: `verify post-summary hang ownership`
+- reason: the bounded screen disproved a pure post-summary tail owner and re-froze the frontier at the first residual in-loop browser/context closure
+- completed_step: `已完成 ITER-2026-04-22-FE-VERIFY-POST-SUMMARY-HANG-SCREEN-PA46：两次 fresh artifact 都在 180000ms 边界附近才写出 completed_fail，说明问题不属于 summary 之后的独立 tail hang；当前所有权重新冻结到多叶子循环中的 residual route，最新前沿是 predecessor menu 319 之后的 menu 336（工程资料，/a/516?menu_id=336）。`
+- active_commit: `89d096f`
+- next_step: `open one bounded verify batch around the narrow residual window 319 -> 336 instead of replaying the full 60-leaf loop`
+
+### 2026-04-22T15:01:00+08:00
+- blocker_key: `fe_sidebar_contract_context_unify_verify_retry_pa45_in_progress_v1`
+- layer_target: `Frontend verification`
+- module: `sidebar menu contract-context unify verify retry`
+- reason: tail-closure recovery is now in place, so the next bounded step is one fresh replay to see whether the real sidebar verify verdict survives without lifecycle-timeout override
+- completed_step: `已创建 ITER-2026-04-22-FE-SIDEBAR-CONTRACT-CONTEXT-UNIFY-VERIFY-RETRY-PA45，并冻结本批次只允许重放 unified_system_menu_click_usability_smoke.host、读取 fresh artifact、判断 timeout override 是否已消失。`
+- active_commit: `89d096f`
+- next_step: `validate the retry task contract, rerun the unified sidebar menu click verify, and classify the fresh artifact outcome`
+
+### 2026-04-22T15:08:00+08:00
+- blocker_key: `fe_sidebar_contract_context_unify_verify_retry_pa45_fail_v1`
+- layer_target: `Frontend verification`
+- module: `sidebar menu contract-context unify verify retry`
+- reason: the fresh retry kept the same bounded failure family but still ended in lifecycle timeout, so the active stop condition remains verify/runtime instability rather than product-semantic drift
+- completed_step: `已完成 ITER-2026-04-22-FE-SIDEBAR-CONTRACT-CONTEXT-UNIFY-VERIFY-RETRY-PA45：fresh artifact 再次执行完 60 个叶子、写出 completed_fail 与 8 个失败 case，其中 7 个仍统一收敛到 CONTRACT_CONTEXT_MISSING；但最终仍被 verify lifecycle timeout(180000ms) 打断，且 residual 已从 menu 319 漂移到 menu 336（/a/516?menu_id=336）。`
+- active_commit: `89d096f`
+- next_step: `stop and open one bounded post-summary hang ownership screen or implement batch for unified_system_menu_click_usability_smoke.mjs before any further replay`
+
+### 2026-04-22T14:52:00+08:00
+- blocker_key: `fe_verify_lifecycle_tail_closure_implement_pa44_in_progress_v1`
+- layer_target: `Frontend verification recovery implementation`
+- module: `verify lifecycle tail closure`
+- reason: fresh unified sidebar replay already writes completed_fail artifacts before stop, so the next bounded implement step is to recover tail-closure semantics inside the verify script and prevent true timeout from overwriting a completed failure verdict
+- completed_step: `已创建 ITER-2026-04-22-FE-VERIFY-LIFECYCLE-TAIL-CLOSURE-IMPLEMENT-PA44，并冻结本批次只允许修改 unified_system_menu_click_usability_smoke.mjs 的 completion/timeout 收口逻辑，不改 verify 目标、不改产品语义。`
+- active_commit: `89d096f`
+- next_step: `validate the new task contract, patch unified_system_menu_click_usability_smoke.mjs tail-closure handling, then run node --check and scoped diff checks`
+
+### 2026-04-22T14:58:00+08:00
+- blocker_key: `fe_verify_lifecycle_tail_closure_implement_pa44_pass_v1`
+- layer_target: `Frontend verification recovery implementation`
+- module: `verify lifecycle tail closure`
+- reason: the bounded implementation was limited to the verify script tail-closure path, and the static gates now confirm the entrypoint remains valid
+- completed_step: `已完成 ITER-2026-04-22-FE-VERIFY-LIFECYCLE-TAIL-CLOSURE-IMPLEMENT-PA44：脚本在写出 completed_fail/summary 后不再通过 race 内业务异常继续占用 lifecycle timeout，而是返回有界 completion 结果；verify 目标和业务断言保持不变。`
+- active_commit: `89d096f`
+- next_step: `open one fresh unified sidebar contract-context verify retry batch and confirm whether the new tail-closure logic preserves the real verdict without lifecycle timeout override`
+
+### 2026-04-22T14:44:00+08:00
+- blocker_key: `fe_sidebar_contract_context_unify_verify_pa43_fail_v1`
+- layer_target: `Frontend verification`
+- module: `sidebar menu contract-context unify verify`
+- reason: fresh unified sidebar replay produced valid failure artifacts, but the declared verify entrypoint still timed out at 180000ms, so the batch must stop with a conditional FAIL instead of expanding into implementation
+- completed_step: `已完成 ITER-2026-04-22-FE-SIDEBAR-CONTRACT-CONTEXT-UNIFY-VERIFY-PA43：fresh artifact 证明 60 个叶子菜单已执行、8 个失败已产出，其中 7 个 scene-known 失败统一收敛到 /workbench?reason=CONTRACT_CONTEXT_MISSING，但 make verify 仍因 lifecycle timeout 触发 stop。`
+- active_commit: `89d096f`
+- next_step: `open one bounded verify-lifecycle timeout recovery or classification batch for the unified sidebar menu verifier before any new implementation or semantic conclusion`
+
+### 2026-04-22T14:39:00+08:00
+- blocker_key: `fe_sidebar_contract_context_unify_verify_pa43_in_progress_v1`
+- layer_target: `Frontend verification`
+- module: `sidebar menu contract-context unify verify`
+- reason: `侧边栏导航菜单点击后落到 /workbench?reason=CONTRACT_CONTEXT_MISSING` 需要开启新一轮统一验证，用 fresh artifact 收敛当前失败家族，而不是继续沿旧的单菜单窗口做局部判断
+- completed_step: `已创建 ITER-2026-04-22-FE-SIDEBAR-CONTRACT-CONTEXT-UNIFY-VERIFY-PA43，并冻结本批次只允许重放统一侧边栏菜单点击验证、记录 fresh artifact、输出 CONTRACT_CONTEXT_MISSING 家族收敛结论，不改运行时代码。`
+- active_commit: `89d096f`
+- next_step: `validate the new task contract, run unified sidebar menu click usability smoke against the active runtime, then classify fresh CONTRACT_CONTEXT_MISSING cases from the generated artifacts`
+
+### 2026-04-22T23:34:00+08:00
+- blocker_key: `fe_action_view_scene_filter_domain_boundary_implement_oa_in_progress_v1`
+- layer_target: `Frontend semantic consumer implementation`
+- module: `ActionView list request assembly`
+- reason: `项目总览` live click now fails with `api.data` 500 because ActionView merges scene-ready filter-definition arrays into ORM `domain` assembly, so the next bounded batch is to restore the filter-metadata/domain boundary without changing backend contract shape
+- completed_step: `已创建 ITER-2026-04-22-FE-ACTION-VIEW-SCENE-FILTER-DOMAIN-BOUNDARY-IMPLEMENT-OA，并冻结本批次只允许修正 ActionView 的 scene filter/domain 组装边界，不改后端 handler、不改业务语义。`
+- active_commit: `89d096f`
+- next_step: `validate the task contract, run strict frontend typecheck, and verify project overview no longer emits dict-shaped domain payloads into api.data`
+
+### 2026-04-22T13:48:00+08:00
+- blocker_key: `fe_product_delivery_ui_verification_screen_mr_pass_v1`
+- layer_target: `Frontend verification screen`
+- module: `product delivery ui verification`
+- reason: frontend generic consumption is complete, so the next low-risk batch is to freeze the browser-level verification scope for the new delivery block
+- completed_step: `已完成 ITER-2026-04-22-FE-PRODUCT-DELIVERY-UI-VERIFICATION-SCREEN-MR：已冻结 UI 验证只检查 generic SceneView delivery block，direct 样本=projects.list，advisory 样本=payments.approval。`
+- active_commit: `89d096f`
+- next_step: `open one bounded UI verification batch if the generic delivery block should now be checked in browser flow`
+
+### 2026-04-22T18:42:00+08:00
+- blocker_key: `be_menu_314_scene_ready_entry_resolution_screen_pa22_in_progress_v1`
+- layer_target: `Backend scene-ready entry diagnosis screen`
+- module: `menu 314 scene-ready entry resolution`
+- reason: real live runtime verification has already ruled out native `ui.contract` `action_open` and `menu` as the expected `projects.ledger` contract family, so the next bounded diagnosis must move to the entry-context -> scene-ready contract chain
+- completed_step: `已完成 ITER-2026-04-22-BE-MENU-314-SCENE-READY-ENTRY-RESOLUTION-SCREEN-PA22：已冻结 menu 314 的下一步诊断边界，只允许沿 scene-ready entry resolution / contract builder 链继续，不再重复 native ui.contract menu/action_open 分支。`
+- active_commit: `89d096f`
+- next_step: `open one bounded scene-ready entry chain scan that inspects only the resolver/builder path producing scene key projects.ledger from menu 314 and action 533`
+
+### 2026-04-22T18:49:00+08:00
+- blocker_key: `be_menu_314_scene_ready_entry_chain_scan_pa23_pass_v1`
+- layer_target: `Backend scene-ready entry chain scan`
+- module: `menu 314 scene-ready entry candidate chain`
+- reason: after freezing the diagnosis boundary, the next low-risk batch needed to enumerate only the surviving resolver/builder candidates that can still produce the expected `projects.ledger` scene-ready contract
+- completed_step: `已完成 ITER-2026-04-22-BE-MENU-314-SCENE-READY-ENTRY-CHAIN-SCAN-PA23：已将候选链收敛为 native entry fact resolver -> scene mapping source -> scene target materializer -> scene-ready entry compiler -> runtime surface injection point。`
+- active_commit: `89d096f`
+- next_step: `open one bounded scene-ready entry chain screen that classifies which candidate first resolves menu 314/action 533 into projects.ledger and where ledger search semantics should be bound`
+
+### 2026-04-22T18:55:00+08:00
+- blocker_key: `be_menu_314_scene_ready_entry_chain_screen_pa24_pass_v1`
+- layer_target: `Backend scene-ready entry diagnosis screen`
+- module: `menu 314 scene-ready entry chain classification`
+- reason: the surviving candidate chain had to be classified before another verify batch, so the diagnosis could target the earliest scene-key resolver and the earliest plausible missing-search binding layer instead of rechecking already-rejected native branches
+- completed_step: `已完成 ITER-2026-04-22-BE-MENU-314-SCENE-READY-ENTRY-CHAIN-SCREEN-PA24：已将最早 projects.ledger 解析点冻结为 scene mapping/registry 源，将最早 search-binding 前沿冻结为 scene-row/ui_base_contract 绑定到 _scene_ready_entry 编译边界。`
+- active_commit: `89d096f`
+- next_step: `open one bounded verify batch that inspects the projects.ledger scene row and its ui_base_contract/search facts immediately before scene_ready_contract_builder._scene_ready_entry compiles it`
+
+### 2026-04-22T19:03:00+08:00
+- blocker_key: `be_menu_314_projects_ledger_scene_row_verify_pa25_pass_v1`
+- layer_target: `Backend scene-ready entry verify`
+- module: `projects.ledger scene-row binding`
+- reason: after classifying the earliest resolver and binding layer, the next verify had to confirm the real precompile injection chain and whether search semantics are expected to flow from `ui_base_contract.search`
+- completed_step: `已完成 ITER-2026-04-22-BE-MENU-314-PROJECTS-LEDGER-SCENE-ROW-VERIFY-PA25：已验证 system_init 通过 ui_base_contract_asset_repository.bind_scene_assets 先给 scene row 注入 ui_base_contract，而 scene_dsl_compiler 会把 ui_base_contract.search.default_sort 拷入 scene-ready search_surface。`
+- active_commit: `89d096f`
+- next_step: `open one bounded verify batch that inspects the bound projects.ledger asset payload itself and records whether search.default_sort is already missing before _scene_ready_entry compilation`
+
+### 2026-04-22T19:12:00+08:00
+- blocker_key: `be_menu_314_projects_ledger_asset_payload_verify_pa26_pass_v1`
+- layer_target: `Backend scene-ready asset verify`
+- module: `projects.ledger asset payload`
+- reason: after proving that precompile rows receive ui_base_contract payloads before compile, the next verify needed to determine whether the bound asset payload already lacks the expected ledger search default sort
+- completed_step: `已完成 ITER-2026-04-22-BE-MENU-314-PROJECTS-LEDGER-ASSET-PAYLOAD-VERIFY-PA26：已验证 projects.ledger 存在 3 条 role/company scoped active asset，且最新 payload 的 source_ref=action:533、head.model=project.project、search.default_sort 为空、并不包含 scene_ready_contract_v1。`
+- active_commit: `89d096f`
+- next_step: `open one bounded screen on the projects.ledger asset production path and classify why the persisted ui_base payload for scene_key projects.ledger still mirrors native action:533 instead of ledger-specific search semantics`
+
+### 2026-04-22T19:20:00+08:00
+- blocker_key: `be_menu_314_projects_ledger_asset_production_screen_pa27_pass_v1`
+- layer_target: `Backend asset production diagnosis screen`
+- module: `projects.ledger asset production path`
+- reason: once the active asset payload was confirmed to be a native action:533 contract, the next low-risk batch had to classify whether that shape came from producer intent or repository fallback
+- completed_step: `已完成 ITER-2026-04-22-BE-MENU-314-PROJECTS-LEDGER-ASSET-PRODUCTION-SCREEN-PA27：已冻结当前 producer 责任链 refresh_ui_base_contract_assets -> _scene_action_id -> _build_runtime_ui_base_contract -> upsert_asset，并确认 action:533 native payload 是当前 producer 的直接产物而非绑定期误兜底。`
+- active_commit: `89d096f`
+- next_step: `open one bounded screen that classifies whether projects.ledger-specific search semantics should be added in the producer path or supplied upstream from scene config / scene DSL / scene provider before asset generation`
+
+### 2026-04-22T19:26:00+08:00
+- blocker_key: `be_menu_314_ledger_search_supply_ownership_screen_pa28_pass_v1`
+- layer_target: `Backend semantic-supply ownership screen`
+- module: `projects.ledger search semantic supply ownership`
+- reason: after proving that producer persists native action:533 payload by design, the next bounded question was whether ledger-specific search semantics already had an upstream scene/provider owner
+- completed_step: `已完成 ITER-2026-04-22-BE-MENU-314-LEDGER-SEARCH-SUPPLY-OWNERSHIP-SCREEN-PA28：已验证当前 bounded upstream 集中不存在 projects.ledger 独立 scene DSL 或 provider search 供应，因此前沿收敛为“缺失 upstream semantic-supply 资产”或“缺失 producer scene-key enrichment 策略”二选一。`
+- active_commit: `89d096f`
+- next_step: `open one bounded screen on producer extension seams and classify whether the next objective should be upstream semantic-supply creation or producer-side scene-key enrichment`
+
+### 2026-04-22T19:31:00+08:00
+- blocker_key: `be_menu_314_producer_extension_seam_screen_pa29_pass_v1`
+- layer_target: `Backend producer-extension screen`
+- module: `projects.ledger producer extension seam`
+- reason: after narrowing the frontier to upstream semantic supply versus producer enrichment, the next bounded question was whether producer already exposed a scene-key-specific extension seam
+- completed_step: `已完成 ITER-2026-04-22-BE-MENU-314-PRODUCER-EXTENSION-SEAM-SCREEN-PA29：已确认当前 producer/repository 路径不存在可直接复用的 projects.ledger scene-key enrichment seam，因此这条诊断线已自然收敛到“新建 upstream semantic-supply objective”或“新建 producer seam objective”的真正目标切换点。`
+- active_commit: `89d096f`
+- next_step: `start a new explicitly scoped objective for either upstream semantic-supply creation or producer seam creation; do not continue this diagnostic chain as ordinary low-risk drift`
+
+### 2026-04-22T19:39:00+08:00
+- blocker_key: `be_projects_list_vs_ledger_business_fact_boundary_screen_pa30_pass_v1`
+- layer_target: `Backend business-fact boundary screen`
+- module: `projects.list vs projects.ledger boundary`
+- reason: before opening a new objective, the repository needed one bounded judgment on whether list and ledger are already separate business-fact layers or only separate scene semantics
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-LIST-VS-LEDGER-BUSINESS-FACT-BOUNDARY-SCREEN-PA30：已冻结当前边界判断为“共享 business fact base + 不同 scene/orchestration 语义”，而不是已成立的事实层分化。`
+- active_commit: `89d096f`
+- next_step: `if work continues, open a new upstream semantic-supply asset objective for projects.ledger rather than a new business-fact split objective`
+
+### 2026-04-22T19:45:00+08:00
+- blocker_key: `be_projects_ledger_upstream_semantic_supply_screen_pa31_pass_v1`
+- layer_target: `Backend semantic-supply objective screen`
+- module: `projects.ledger upstream semantic supply`
+- reason: after freezing list-vs-ledger as a scene-layer distinction, the next low-risk batch was to freeze the upstream semantic-supply objective boundary before any implementation
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-LEDGER-UPSTREAM-SEMANTIC-SUPPLY-SCREEN-PA31：已将新 objective 收敛到上游 scene semantic supply，并冻结优先方向为“补 projects.ledger 显式 scene asset，再判断 provider 仅保留剩余 hints”。`
+- active_commit: `89d096f`
+- next_step: `open one bounded screen that classifies whether projects.ledger should gain a dedicated scene DSL file and enumerates the exact semantic fields it must own`
+
+### 2026-04-22T19:51:00+08:00
+- blocker_key: `be_projects_ledger_dedicated_scene_dsl_ownership_screen_pa32_pass_v1`
+- layer_target: `Backend scene semantic asset screen`
+- module: `projects.ledger dedicated scene DSL ownership`
+- reason: after freezing upstream semantic supply, the next bounded question was whether projects.ledger needed a dedicated scene DSL and which semantic fields should be owned there
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-LEDGER-DEDICATED-SCENE-DSL-OWNERSHIP-SCREEN-PA32：已冻结 verdict 为“应补 dedicated scene DSL”，并明确 DSL 先拥有 route/zones/blocks/search_surface/permission_surface/actions，provider 只保留 guidance/runtime 等 residual hints。`
+- active_commit: `89d096f`
+- next_step: `open one bounded implementation screen that freezes the exact file path and minimal field set for adding a projects.ledger scene DSL asset`
+
+### 2026-04-22T19:57:00+08:00
+- blocker_key: `be_projects_ledger_scene_dsl_minimal_implementation_screen_pa33_pass_v1`
+- layer_target: `Backend scene semantic implementation screen`
+- module: `projects.ledger scene DSL minimal implementation`
+- reason: after freezing DSL ownership, the next bounded step was to lock the exact file path and smallest viable field set before any implementation task is allowed
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-LEDGER-SCENE-DSL-MINIMAL-IMPLEMENTATION-SCREEN-PA33：已冻结实现路径为 addons/smart_construction_scene/scenes/projects/projects.ledger.scene.yaml，并将首轮字段集收敛到 scene_key/scene_type/page.route/page.zones/blocks/search_surface/permission_surface。`
+- active_commit: `89d096f`
+- next_step: `open one bounded implement batch that creates projects.ledger.scene.yaml with the frozen minimal field set and no provider/producer expansion`
+
+### 2026-04-22T20:06:00+08:00
+- blocker_key: `be_projects_ledger_scene_dsl_minimal_implement_pa34_pass_v1`
+- layer_target: `Backend scene semantic implementation`
+- module: `projects.ledger scene DSL`
+- reason: the frozen minimal implementation scope was ready to land as a dedicated scene asset without expanding into provider or producer changes
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-LEDGER-SCENE-DSL-MINIMAL-IMPLEMENT-PA34：已新增 addons/smart_construction_scene/scenes/projects/projects.ledger.scene.yaml，并通过 task 校验、YAML 关键字段校验、scoped git diff --check。`
+- active_commit: `89d096f`
+- next_step: `open one bounded post-implement verify that checks whether the new projects.ledger scene asset is actually consumed by the existing scene/contract chain`
+
+### 2026-04-22T20:13:00+08:00
+- blocker_key: `be_projects_ledger_scene_asset_post_implement_verify_pa35_pass_v1`
+- layer_target: `Backend scene semantic post-implement verify`
+- module: `projects.ledger scene asset consumption`
+- reason: after creating the new scene asset file, the next bounded question was whether the current chain actually loads and consumes scene YAML assets
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-LEDGER-SCENE-ASSET-POST-IMPLEMENT-VERIFY-PA35：已验证 scene_ready_contract_builder 能消费 seeded search_surface/permission_surface，但当前 bounded scene loading 链仍未显式证明会装载 addons/smart_construction_scene/scenes/**/*.scene.yaml。`
+- active_commit: `89d096f`
+- next_step: `open a new bounded scene asset loading integration objective; do not assume the new projects.ledger scene file is already live-effective`
+
+### 2026-04-22T20:18:00+08:00
+- blocker_key: `be_scene_asset_loading_integration_screen_pa36_pass_v1`
+- layer_target: `Backend scene asset loading screen`
+- module: `scene asset loading integration`
+- reason: once post-implement verify showed downstream compatibility but no proven upstream loading path, the next low-risk step was to freeze a dedicated loading integration objective
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-ASSET-LOADING-INTEGRATION-SCREEN-PA36：已将新目标边界冻结为“scene YAML 文件发现/装载/注入 scene payload”，并排除 provider、producer、compiler redesign。`
+- active_commit: `89d096f`
+- next_step: `open one bounded scan that identifies the existing scene asset discovery/loading path and whether a YAML scene file loader already exists`
+
+### 2026-04-22T20:23:00+08:00
+- blocker_key: `be_scene_asset_discovery_loading_scan_pa37_pass_v1`
+- layer_target: `Backend scene asset loading scan`
+- module: `scene YAML discovery/loading path`
+- reason: after freezing the loading integration objective, the next low-risk batch was to enumerate existing discovery/load/merge candidates before classification
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-ASSET-DISCOVERY-LOADING-SCAN-PA37：已确认 bounded 已知链路只明确装载 scene_registry_content.py / registry rows，而未显式看到 scenes/**/*.scene.yaml 的发现/装载入口；下游 compile 层仅证明可消费 seeded 字段。`
+- active_commit: `89d096f`
+- next_step: `open one bounded screen that classifies whether smart_scene.core.scene_registry_engine should already own YAML scene discovery or whether local scene-row merge integration is missing`
+
+### 2026-04-22T20:28:00+08:00
+- blocker_key: `be_scene_asset_loading_ownership_screen_pa38_pass_v1`
+- layer_target: `Backend scene asset loading ownership screen`
+- module: `scene YAML loading ownership`
+- reason: the discovery scan reduced the frontier to engine-owned discovery versus local merge integration, so the next low-risk step was to freeze ownership
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-ASSET-LOADING-OWNERSHIP-SCREEN-PA38：已冻结当前 bounded 判定为“本地 scene-row merge integration 缺失”优先，而不能把 engine 已有 YAML discovery 能力当作既成事实。`
+- active_commit: `89d096f`
+- next_step: `open one bounded screen that freezes the minimal local scene-row merge integration scope for scene YAML assets before any implementation`
+
+### 2026-04-22T20:34:00+08:00
+- blocker_key: `be_scene_row_merge_integration_minimal_screen_pa39_pass_v1`
+- layer_target: `Backend scene-row integration screen`
+- module: `scene YAML local merge integration`
+- reason: after freezing ownership to local merge integration, the next low-risk step was to lock the exact local merge entrypoint and minimal writable file set before implementation
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-ROW-MERGE-INTEGRATION-MINIMAL-SCREEN-PA39：已冻结首选入口为 addons/smart_construction_scene/scene_registry.py，并将首轮 merge 字段集收敛到 page/blocks/search_surface/permission_surface/(optional actions)。`
+- active_commit: `89d096f`
+- next_step: `open one bounded implement batch that adds minimal scene asset discovery and field merge in scene_registry.py`
+
+### 2026-04-22T20:52:00+08:00
+- blocker_key: `be_scene_row_merge_integration_minimal_implement_pa40_pass_v1`
+- layer_target: `Backend scene-row integration implementation`
+- module: `scene YAML local merge integration`
+- reason: the bounded local merge implementation is now in place, so the next low-risk step is to verify that the merged projects.ledger payload sits on a live-compatible downstream contract boundary without expanding implementation scope
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-ROW-MERGE-INTEGRATION-MINIMAL-IMPLEMENT-PA40：已在 addons/smart_construction_scene/scene_registry.py 增加 scene YAML asset discovery 与 bounded field merge，并用纯 Python unittest 证明 projects.ledger 的 route/zones/blocks/search_surface/permission_surface 会进入 scene rows。`
+- active_commit: `89d096f`
+- next_step: `open one bounded verify batch that checks projects.ledger merged scene rows against the existing downstream contract consumption boundary`
+
+### 2026-04-22T20:58:00+08:00
+- blocker_key: `be_projects_ledger_scene_asset_consumption_verify_pa41_pass_v1`
+- layer_target: `Backend scene semantic consumption verify`
+- module: `projects.ledger scene asset consumption`
+- reason: after local merge was implemented and verified by pure Python tests, the next low-risk step is to re-certify whether the surviving list-versus-ledger distinction belongs to business facts or only to scene semantics
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-LEDGER-SCENE-ASSET-CONSUMPTION-VERIFY-PA41：已确认 projects.ledger scene asset 的本地 merge 已进入现有 scene rows，且现有 downstream contract boundary 对 seeded semantic surfaces 保持兼容。`
+- active_commit: `89d096f`
+- next_step: `open one bounded screen that re-certifies whether projects.list and projects.ledger require a business-fact split or should remain a shared fact base with differentiated scene semantics`
+
+### 2026-04-22T21:04:00+08:00
+- blocker_key: `be_projects_list_vs_ledger_business_fact_recertify_screen_pa42_pass_v1`
+- layer_target: `Backend semantic boundary screen`
+- module: `projects.list vs projects.ledger semantic distinction`
+- reason: after recertifying that no business-fact split is required, the next low-risk step is to freeze the allowable scene/orchestration distinctions so later implementation does not drift back into fact-layer changes
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-LIST-VS-LEDGER-BUSINESS-FACT-RECERTIFY-SCREEN-PA42：已重申 projects.list 与 projects.ledger 不需要在 business-fact 层硬拆，当前正确边界仍是 shared fact base + differentiated scene semantics。`
+- active_commit: `89d096f`
+- next_step: `open one bounded screen that freezes the allowable scene-semantic distinctions between projects.list and projects.ledger`
+
+### 2026-04-22T21:08:00+08:00
+- blocker_key: `be_projects_list_vs_ledger_scene_semantic_distinction_screen_pa43_pass_v1`
+- layer_target: `Backend scene semantic boundary screen`
+- module: `projects.list vs projects.ledger scene distinction`
+- reason: once the no-split business-fact verdict was re-certified, the next low-risk step was to freeze the allowed scene/orchestration differences so future work can stay additive and out of the fact layer
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-LIST-VS-LEDGER-SCENE-SEMANTIC-DISTINCTION-SCREEN-PA43：已冻结允许差异只落在 route/layout/search/guidance 等 scene semantics，不得伪装成新的 business truth。`
+- active_commit: `89d096f`
+- next_step: `if a new objective is needed, open a bounded screen for projects.list scene-asset parity or another explicit scene-semantic follow-up; otherwise keep the shared-fact/no-split rule as the current baseline`
+
+### 2026-04-22T21:12:00+08:00
+- blocker_key: `be_projects_list_scene_asset_parity_screen_pa44_in_progress_v1`
+- layer_target: `Backend scene semantic parity screen`
+- module: `projects.list scene asset parity`
+- reason: after freezing the shared-fact/no-split rule and the allowed list-vs-ledger scene distinctions, the next low-risk step is to decide whether projects.list needs any bounded scene-asset parity follow-up
+- completed_step: `已启动 ITER-2026-04-22-BE-PROJECTS-LIST-SCENE-ASSET-PARITY-SCREEN-PA44：将只判断 projects.list 是否需要 scene-only parity objective，不会直接开实现。`
+- active_commit: `89d096f`
+- next_step: `validate the PA44 screen contract and freeze whether projects.list parity stays optional or should become a new bounded objective`
+
+### 2026-04-22T21:15:00+08:00
+- blocker_key: `be_projects_list_scene_asset_parity_screen_pa44_pass_v1`
+- layer_target: `Backend scene semantic parity screen`
+- module: `projects.list scene asset parity`
+- reason: after validating the parity screen, the low-risk result is to keep projects.list parity optional unless a future bounded verify exposes an actual semantic gap
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-LIST-SCENE-ASSET-PARITY-SCREEN-PA44：已冻结 projects.list parity 当前仅为 screened candidate，不应因与 projects.ledger 相关就自动升级为实现批次。`
+- active_commit: `89d096f`
+- next_step: `hold the current baseline as shared-fact + scene-only distinction + parity-optional, and open a new bounded objective only if future evidence shows a real projects.list semantic gap`
+
+### 2026-04-22T21:20:00+08:00
+- blocker_key: `be_projects_family_scene_frontier_reselection_screen_pa45_in_progress_v1`
+- layer_target: `Backend projects-family frontier screen`
+- module: `projects family scene-semantic frontier`
+- reason: after PA44 held parity as optional, the next low-risk mainline step is to reselect the next explicit projects-family objective instead of drifting back into closed sublines
+- completed_step: `已启动 ITER-2026-04-22-BE-PROJECTS-FAMILY-SCENE-FRONTIER-RESELECTION-SCREEN-PA45：将从既有 bounded 结论中重选 projects family 主线的下一个 scene-only objective。`
+- active_commit: `89d096f`
+- next_step: `validate the PA45 screen contract and freeze the next projects-family mainline objective`
+
+### 2026-04-22T21:24:00+08:00
+- blocker_key: `be_projects_family_scene_frontier_reselection_screen_pa45_pass_v1`
+- layer_target: `Backend projects-family frontier screen`
+- module: `projects family scene-semantic frontier`
+- reason: after reselecting the mainline frontier, the next low-risk step is to freeze the projects-family semantic baseline that later scene-only work should reuse
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-FAMILY-SCENE-FRONTIER-RESELECTION-SCREEN-PA45：已将下一主线目标收敛为 projects family scene-semantic baseline，而不是重新打开 parity implement 或 business-fact debate。`
+- active_commit: `89d096f`
+- next_step: `open one bounded screen that freezes the projects-family scene-semantic baseline`
+
+### 2026-04-22T21:28:00+08:00
+- blocker_key: `be_projects_family_scene_semantic_baseline_screen_pa46_pass_v1`
+- layer_target: `Backend projects-family baseline screen`
+- module: `projects family scene-semantic baseline`
+- reason: after freezing the baseline rule set, the next low-risk step is to confirm the baseline membership boundary so the current mainline does not widen by assumption
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-FAMILY-SCENE-SEMANTIC-BASELINE-SCREEN-PA46：已冻结 projects family 当前稳定语义基线为 shared fact base + scene-only distinction + parity optional 的可复用规则集。`
+- active_commit: `89d096f`
+- next_step: `open one bounded screen that decides whether the projects-family semantic baseline should remain list+ledger only or admit another scene`
+
+### 2026-04-22T21:31:00+08:00
+- blocker_key: `be_projects_family_scene_baseline_membership_screen_pa47_pass_v1`
+- layer_target: `Backend projects-family baseline membership screen`
+- module: `projects family scene baseline membership`
+- reason: after checking the membership boundary, the current projects-family mainline has reached a stable stop point because no additional scene has bounded evidence to join the baseline now
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-FAMILY-SCENE-BASELINE-MEMBERSHIP-SCREEN-PA47：已冻结当前 baseline 成员只包含 projects.list 与 projects.ledger，其他 projects-family scenes 不得自动卷入当前主线。`
+- active_commit: `89d096f`
+- next_step: `hold the projects-family baseline at list+ledger only, and open a new bounded objective only when another projects-family scene gains explicit bounded evidence`
+
+### 2026-04-22T21:38:00+08:00
+- blocker_key: `be_tasks_family_semantic_frontier_screen_pa48_in_progress_v1`
+- layer_target: `Backend family semantic frontier screen`
+- module: `tasks family semantic frontier`
+- reason: after projects-family reached a stable stop point, the next low-risk reusable-method check is to validate whether tasks can serve as the second family-level semantic sample
+- completed_step: `已启动 ITER-2026-04-22-BE-TASKS-FAMILY-SEMANTIC-FRONTIER-SCREEN-PA48：将基于既有 bounded 证据冻结 tasks family 的 shared fact / scene-only distinction / baseline membership 候选，不会直接开实现。`
+- active_commit: `89d096f`
+- next_step: `validate the PA48 screen contract and freeze whether tasks should become the second family-level semantic sample`
+
+### 2026-04-22T21:42:00+08:00
+- blocker_key: `be_tasks_family_semantic_frontier_screen_pa48_pass_v1`
+- layer_target: `Backend family semantic frontier screen`
+- module: `tasks family semantic frontier`
+- reason: after tasks was confirmed as the second family-level semantic sample, the next low-risk step is to freeze its first reusable scene-semantic baseline
+- completed_step: `已完成 ITER-2026-04-22-BE-TASKS-FAMILY-SEMANTIC-FRONTIER-SCREEN-PA48：已确认 tasks 适合作为 projects 之后的第二个 family-level semantic sample，下一步应先冻结 baseline，而不是直接开实现。`
+- active_commit: `89d096f`
+- next_step: `open one bounded screen that freezes the tasks-family scene-semantic baseline`
+
+### 2026-04-22T21:46:00+08:00
+- blocker_key: `be_tasks_family_scene_semantic_baseline_screen_pa49_pass_v1`
+- layer_target: `Backend tasks-family baseline screen`
+- module: `tasks family scene-semantic baseline`
+- reason: after freezing the baseline rule set, the next low-risk step is to confirm the baseline membership boundary so the new mainline does not widen by assumption
+- completed_step: `已完成 ITER-2026-04-22-BE-TASKS-FAMILY-SCENE-SEMANTIC-BASELINE-SCREEN-PA49：已冻结 tasks family 的首版语义基线为 shared fact base candidate + scene-only distinction + implementation deferred。`
+- active_commit: `89d096f`
+- next_step: `open one bounded screen that decides whether the tasks-family semantic baseline should remain task.center+task.board only or admit another scene`
+
+### 2026-04-22T21:50:00+08:00
+- blocker_key: `be_tasks_family_scene_baseline_membership_screen_pa50_pass_v1`
+- layer_target: `Backend tasks-family baseline membership screen`
+- module: `tasks family scene baseline membership`
+- reason: after checking the membership boundary, the new tasks-family mainline has reached a stable stop point because no additional scene has bounded evidence to join the baseline now
+- completed_step: `已完成 ITER-2026-04-22-BE-TASKS-FAMILY-SCENE-BASELINE-MEMBERSHIP-SCREEN-PA50：已冻结当前 tasks baseline 成员只包含 task.center 与 task.board，其他 tasks-family scenes 不得自动卷入当前主线。`
+- active_commit: `89d096f`
+- next_step: `hold the tasks-family baseline at task.center+task.board only, and open a new bounded objective only when another tasks-family scene gains explicit bounded evidence`
+
+### 2026-04-22T21:58:00+08:00
+- blocker_key: `be_third_family_candidate_selection_screen_pa51_in_progress_v1`
+- layer_target: `Backend reusable-family selection screen`
+- module: `third family candidate selection`
+- reason: after projects and tasks both reached stable family baselines, the next low-risk step is to choose the best third family candidate for reusable-method continuation
+- completed_step: `已启动 ITER-2026-04-22-BE-THIRD-FAMILY-CANDIDATE-SELECTION-SCREEN-PA51：将只从既有 bounded 家族资产中筛选第三个 family 候选，不会直接开实现。`
+- active_commit: `89d096f`
+- next_step: `validate the PA51 screen contract and freeze the third family candidate`
+
+### 2026-04-22T22:02:00+08:00
+- blocker_key: `be_third_family_candidate_selection_screen_pa51_pass_v1`
+- layer_target: `Backend reusable-family selection screen`
+- module: `third family candidate selection`
+- reason: after contracts was selected as the best third family candidate, the next low-risk step is to open its family semantic frontier screen instead of jumping to implementation
+- completed_step: `已完成 ITER-2026-04-22-BE-THIRD-FAMILY-CANDIDATE-SELECTION-SCREEN-PA51：已冻结第三个 family 候选为 contracts；finance/payment/enterprise_bootstrap 继续延后。`
+- active_commit: `89d096f`
+- next_step: `open one bounded contracts family semantic frontier screen`
+
+### 2026-04-22T22:06:00+08:00
+- blocker_key: `be_contracts_family_semantic_frontier_screen_pa52_pass_v1`
+- layer_target: `Backend family semantic frontier screen`
+- module: `contracts family semantic frontier`
+- reason: after contracts was confirmed as the third family-level semantic sample, the next low-risk step is to freeze its first reusable scene-semantic baseline
+- completed_step: `已完成 ITER-2026-04-22-BE-CONTRACTS-FAMILY-SEMANTIC-FRONTIER-SCREEN-PA52：已确认 contracts 适合作为第三个 family-level semantic sample，下一步应先冻结 baseline，而不是直接开实现。`
+- active_commit: `89d096f`
+- next_step: `open one bounded screen that freezes the contracts-family scene-semantic baseline`
+
+### 2026-04-22T22:10:00+08:00
+- blocker_key: `be_contracts_family_scene_semantic_baseline_screen_pa53_pass_v1`
+- layer_target: `Backend contracts-family baseline screen`
+- module: `contracts family scene-semantic baseline`
+- reason: after freezing the baseline rule set, the next low-risk step is to confirm the baseline membership boundary so the new mainline does not widen by assumption
+- completed_step: `已完成 ITER-2026-04-22-BE-CONTRACTS-FAMILY-SCENE-SEMANTIC-BASELINE-SCREEN-PA53：已冻结 contracts family 的首版语义基线为 shared fact base candidate + scene-only distinction + implementation deferred。`
+- active_commit: `89d096f`
+- next_step: `open one bounded screen that decides whether the contracts-family semantic baseline should remain narrowly scoped or admit another scene`
+
+### 2026-04-22T22:14:00+08:00
+- blocker_key: `be_contracts_family_scene_baseline_membership_screen_pa54_pass_v1`
+- layer_target: `Backend contracts-family baseline membership screen`
+- module: `contracts family scene baseline membership`
+- reason: after checking the membership boundary, the third-family reusable-sample line reached a stable stop point because no additional contracts-family scene has bounded evidence to join the baseline now
+- completed_step: `已完成 ITER-2026-04-22-BE-CONTRACTS-FAMILY-SCENE-BASELINE-MEMBERSHIP-SCREEN-PA54：已冻结当前 contracts baseline 成员保持窄范围，其他 contracts-family scenes 不得自动卷入当前主线。`
+- active_commit: `89d096f`
+- next_step: `open a bounded fourth-family candidate selection screen if reusable-family expansion should continue`
+
+### 2026-04-22T22:18:00+08:00
+- blocker_key: `be_fourth_family_candidate_selection_screen_pa55_pass_v1`
+- layer_target: `Backend reusable-family selection screen`
+- module: `fourth family candidate selection`
+- reason: after finance_center was selected as the best fourth family candidate, the next low-risk step is to open its family semantic frontier screen instead of jumping to implementation
+- completed_step: `已完成 ITER-2026-04-22-BE-FOURTH-FAMILY-CANDIDATE-SELECTION-SCREEN-PA55：已冻结第四个 family 候选为 finance_center；enterprise_bootstrap 与 payment families 继续延后。`
+- active_commit: `89d096f`
+- next_step: `open one bounded finance_center family semantic frontier screen`
+
+### 2026-04-22T22:22:00+08:00
+- blocker_key: `be_finance_center_family_semantic_frontier_screen_pa56_pass_v1`
+- layer_target: `Backend family semantic frontier screen`
+- module: `finance_center family semantic frontier`
+- reason: after finance_center was confirmed as the fourth family-level semantic sample, the next low-risk step is to freeze its first reusable scene-semantic baseline
+- completed_step: `已完成 ITER-2026-04-22-BE-FINANCE-CENTER-FAMILY-SEMANTIC-FRONTIER-SCREEN-PA56：已确认 finance_center 适合作为第四个 family-level semantic sample，下一步应先冻结 baseline，而不是直接开实现。`
+- active_commit: `89d096f`
+- next_step: `open one bounded screen that freezes the finance_center family scene-semantic baseline`
+
+### 2026-04-22T22:26:00+08:00
+- blocker_key: `be_finance_center_family_scene_semantic_baseline_screen_pa57_pass_v1`
+- layer_target: `Backend finance_center-family baseline screen`
+- module: `finance_center family scene-semantic baseline`
+- reason: after freezing the baseline rule set, the next low-risk step is to confirm the baseline membership boundary so the fourth-family line does not widen by assumption
+- completed_step: `已完成 ITER-2026-04-22-BE-FINANCE-CENTER-FAMILY-SCENE-SEMANTIC-BASELINE-SCREEN-PA57：已冻结 finance_center family 的首版语义基线为 shared fact base candidate + scene-only distinction + implementation deferred。`
+- active_commit: `89d096f`
+- next_step: `open one bounded screen that decides whether the finance_center-family semantic baseline should remain narrowly scoped or admit another scene`
+
+### 2026-04-22T22:30:00+08:00
+- blocker_key: `be_finance_center_family_scene_baseline_membership_screen_pa58_pass_v1`
+- layer_target: `Backend finance_center-family baseline membership screen`
+- module: `finance_center family scene baseline membership`
+- reason: after checking the membership boundary, the fourth-family reusable-sample line reached a stable stop point because no additional finance-family scene has bounded evidence to join the baseline now
+- completed_step: `已完成 ITER-2026-04-22-BE-FINANCE-CENTER-FAMILY-SCENE-BASELINE-MEMBERSHIP-SCREEN-PA58：已冻结当前 finance_center baseline 成员保持窄范围，其他 finance-family scenes 不得自动卷入当前主线。`
+- active_commit: `89d096f`
+- next_step: `open a bounded fifth-family candidate selection screen if reusable-family expansion should continue`
+
+### 2026-04-22T22:34:00+08:00
+- blocker_key: `be_fifth_family_candidate_selection_screen_pa59_pass_v1`
+- layer_target: `Backend reusable-family selection screen`
+- module: `fifth family candidate selection`
+- reason: after four stabilized family samples, the low-risk check was whether the reusable-family method still needed a fifth sample for confidence; bounded evidence now shows that further expansion is optional rather than required
+- completed_step: `已完成 ITER-2026-04-22-BE-FIFTH-FAMILY-CANDIDATE-SELECTION-SCREEN-PA59：已冻结 reusable-family 主线在四个样板（projects/tasks/contracts/finance_center）后即可成立；如未来仍需第五候选，enterprise_bootstrap 是最佳 bounded candidate，但当前不必继续自然扩样板。`
+- active_commit: `89d096f`
+- next_step: `hold the reusable-family chain at four stabilized samples, and open a new explicit objective only if enterprise_bootstrap special-case validation or another non-reusable-family topic becomes the next priority`
+
+### 2026-04-22T22:40:00+08:00
+- blocker_key: `be_enterprise_bootstrap_special_case_validation_screen_pa60_in_progress_v1`
+- layer_target: `Backend special-case validation screen`
+- module: `enterprise_bootstrap special-case validation`
+- reason: after the reusable-family chain was frozen at four mainstream samples, the next low-risk explicit objective is to classify enterprise_bootstrap as a special-case validation target rather than an automatic fifth-family extension
+- completed_step: `已启动 ITER-2026-04-22-BE-ENTERPRISE-BOOTSTRAP-SPECIAL-CASE-VALIDATION-SCREEN-PA60：将基于既有 bounded 证据判断 enterprise_bootstrap 是否应维持为 special-case validation，而不会直接开实现。`
+- active_commit: `89d096f`
+- next_step: `validate the PA60 screen contract and freeze whether enterprise_bootstrap remains a special-case validation target`
+
+### 2026-04-22T22:46:00+08:00
+- blocker_key: `be_enterprise_bootstrap_special_case_baseline_validation_screen_pa61_in_progress_v1`
+- layer_target: `Backend special-case baseline validation screen`
+- module: `enterprise_bootstrap special-case baseline`
+- reason: after classifying enterprise_bootstrap as a special-case validation target, the next low-risk step is to define exactly what bounded baseline validation would still be meaningful without reopening the reusable-family chain
+- completed_step: `已启动 ITER-2026-04-22-BE-ENTERPRISE-BOOTSTRAP-SPECIAL-CASE-BASELINE-VALIDATION-SCREEN-PA61：将只冻结 enterprise_bootstrap 的 special-case baseline validation 边界，不会触发实现或样板链扩写。`
+- active_commit: `89d096f`
+- next_step: `validate the PA61 screen contract and freeze the bounded baseline-validation scope for enterprise_bootstrap`
+
+### 2026-04-22T22:52:00+08:00
+- blocker_key: `be_enterprise_bootstrap_special_case_coherence_verify_screen_pa62_in_progress_v1`
+- layer_target: `Backend special-case coherence verify screen`
+- module: `enterprise_bootstrap coherence verification`
+- reason: after freezing the special-case baseline-validation scope, the next low-risk step is to verify whether enterprise_bootstrap is internally coherent enough to remain on that isolated path
+- completed_step: `已启动 ITER-2026-04-22-BE-ENTERPRISE-BOOTSTRAP-SPECIAL-CASE-COHERENCE-VERIFY-SCREEN-PA62：将只核对 enterprise_bootstrap 的 family closure/summary/authority/baseline/special-case 定位是否内部一致，不会触发实现。`
+- active_commit: `89d096f`
+- next_step: `validate the PA62 screen contract and freeze whether enterprise_bootstrap remains internally coherent as a special-case family`
+
+### 2026-04-22T22:58:00+08:00
+- blocker_key: `be_enterprise_bootstrap_special_case_guard_need_screen_pa63_in_progress_v1`
+- layer_target: `Backend special-case guard screen`
+- module: `enterprise_bootstrap special-case guard need`
+- reason: after special-case coherence was verified, the next low-risk question is whether that state now needs a dedicated guard or can remain verify-only
+- completed_step: `已启动 ITER-2026-04-22-BE-ENTERPRISE-BOOTSTRAP-SPECIAL-CASE-GUARD-NEED-SCREEN-PA63：将只判断 enterprise_bootstrap 是否需要单独 special-case guard，不会进入实现。`
+- active_commit: `89d096f`
+- next_step: `validate the PA63 screen contract and freeze whether enterprise_bootstrap needs a dedicated special-case guard`
+
+### 2026-04-22T14:03:00+08:00
+- blocker_key: `fe_product_delivery_ui_verification_recovery_implement_mu_pass_v1`
+- layer_target: `Frontend verification recovery implementation`
+- module: `product delivery ui verification recovery`
+- reason: the blocked direct-sample browser verify needed bounded timeout/progress behavior around login-token acquisition before any retry could be trusted
+- completed_step: `已完成 ITER-2026-04-22-FE-PRODUCT-DELIVERY-UI-VERIFICATION-RECOVERY-IMPLEMENT-MU：已为 unified_system_menu_click_usability_smoke.mjs 增加 login-token fetch 请求超时与 progress 发射，未改变验证入口和业务语义。`
+- active_commit: `89d096f`
+- next_step: `re-run the bounded direct-sample browser verify and observe whether the script now returns a PASS/FAIL verdict`
+
+### 2026-04-22T14:12:00+08:00
+- blocker_key: `fe_ui_browser_flow_diagnosis_screen_mv_pass_v1`
+- layer_target: `Frontend verification diagnosis screen`
+- module: `browser flow diagnosis`
+- reason: recovery hardening still did not restore bounded verdict behavior, so the next low-risk step is to freeze a deeper browser-flow diagnosis scope for the same verify script
+- completed_step: `已完成 ITER-2026-04-22-FE-UI-BROWSER-FLOW-DIAGNOSIS-SCREEN-MV：已冻结下一步只能为 unified_system_menu_click_usability_smoke.mjs 补阶段性浏览器流诊断，不得扩到其他验证目标。`
+- active_commit: `89d096f`
+- next_step: `open one bounded browser-flow diagnosis implement batch that instruments page-goto, storage-read, nav-api-read, and leaf-loop-entry stages`
+
+### 2026-04-22T14:28:00+08:00
+- blocker_key: `fe_ui_browser_flow_diagnosis_implement_mw_pass_v1`
+- layer_target: `Frontend verification diagnosis implementation`
+- module: `browser flow diagnosis`
+- reason: stage-level instrumentation was added successfully, and the retry proved the verify run can enter leaf verification; the live blocker is now process lifecycle control rather than token-stage entry
+- completed_step: `已完成 ITER-2026-04-22-FE-UI-BROWSER-FLOW-DIAGNOSIS-IMPLEMENT-MW：脚本已补 page.goto / runtime storage / nav API / leaf loop 的阶段进度标记；重试后确认 direct 样本会进入 leaf 验证，但旧的 make/node/Chromium run 未有界退出并与新重试叠加，已清理残留进程并把前沿收敛到 verify lifecycle 问题。`
+- active_commit: `89d096f`
+- next_step: `open one bounded verify lifecycle recovery screen for unified_system_menu_click_usability_smoke.mjs and freeze only self-termination, stale-run cleanup, and single-run ownership rules`
+
+### 2026-04-22T14:34:00+08:00
+- blocker_key: `fe_verify_lifecycle_recovery_screen_mx_pass_v1`
+- layer_target: `Frontend verification recovery screen`
+- module: `verify lifecycle recovery`
+- reason: browser-flow diagnosis has already proved leaf-level progress, so the next low-risk batch must be scoped only around run lifecycle ownership and bounded exit behavior
+- completed_step: `已完成 ITER-2026-04-22-FE-VERIFY-LIFECYCLE-RECOVERY-SCREEN-MX：已冻结下一步只能修 unified_system_menu_click_usability_smoke.mjs 的单 run 所有权、残留清理和有界自终止，不得重开前后端产品语义或 verify 目标。`
+- active_commit: `89d096f`
+- next_step: `open one bounded verify lifecycle recovery implement batch for unified_system_menu_click_usability_smoke.mjs and keep the write scope limited to lifecycle control only`
+
+### 2026-04-22T14:42:00+08:00
+- blocker_key: `fe_verify_lifecycle_recovery_implement_my_pass_v1`
+- layer_target: `Frontend verification recovery implementation`
+- module: `verify lifecycle recovery`
+- reason: the verify script needed bounded ownership and termination behavior before any further browser retry could produce trustworthy artifacts
+- completed_step: `已完成 ITER-2026-04-22-FE-VERIFY-LIFECYCLE-RECOVERY-IMPLEMENT-MY：已为 unified_system_menu_click_usability_smoke.mjs 增加 active-run 锁、竞争 run 检测/清理、陈旧锁清理和全局 lifecycle timeout，未改变 verify 目标和业务断言。`
+- active_commit: `89d096f`
+- next_step: `open one bounded browser-verify reclose batch that re-runs the direct sample on a clean lifecycle-controlled script and classifies PASS/FAIL/ENV_UNSTABLE with fresh artifacts`
+
+### 2026-04-22T14:56:00+08:00
+- blocker_key: `fe_ui_verify_reclose_verify_mz_env_unstable_v1`
+- layer_target: `Frontend verification reclose`
+- module: `direct browser verify reclose`
+- reason: the lifecycle-controlled retry needed a fresh verdict to determine whether the active blocker remained stale-run overlap or had moved deeper into runtime/browser stability
+- completed_step: `已完成 ITER-2026-04-22-FE-UI-VERIFY-RECLOSE-VERIFY-MZ：direct 样本在新 lifecycle 控制下已能进入 leaf loop 并写出 fresh artifact，但后段出现 browser/context 提前关闭，随后以 verify lifecycle timeout(180000ms) 有界失败；进程清理正常，无残留 run。当前结论归类为 ENV_UNSTABLE，而非产品语义失败。`
+- active_commit: `89d096f`
+- next_step: `stop the active chain and open a new bounded runtime/browser stability screen if further diagnosis is authorized`
+
+### 2026-04-22T15:02:00+08:00
+- blocker_key: `fe_browser_stability_frontier_screen_na_pass_v1`
+- layer_target: `Frontend verification stability screen`
+- module: `browser/runtime stability frontier`
+- reason: lifecycle-controlled retry has already eliminated stale-run overlap, so the only valid next low-risk step is to freeze the remaining stability frontier before any further retries
+- completed_step: `已完成 ITER-2026-04-22-FE-BROWSER-STABILITY-FRONTIER-SCREEN-NA：已把当前阻塞正式收敛为 browser/runtime stability frontier；下一步只能围绕 browser/context 中途关闭与 mid-loop fail-fast 行为做有界诊断，不得重开产品语义或盲目重试。`
+- active_commit: `89d096f`
+- next_step: `open one bounded browser stability diagnosis implement batch for unified_system_menu_click_usability_smoke.mjs and keep the write scope inside that script plus doc/log only`
+
+### 2026-04-22T15:09:00+08:00
+- blocker_key: `fe_browser_stability_diagnosis_implement_nb_pass_v1`
+- layer_target: `Frontend verification stability implementation`
+- module: `browser stability diagnosis`
+- reason: the last fresh verify showed one poisoned browser/context state could cascade into dozens of derivative leaf failures, so the next low-risk fix was to fail fast at the first confirmed closure point
+- completed_step: `已完成 ITER-2026-04-22-FE-BROWSER-STABILITY-DIAGNOSIS-IMPLEMENT-NB：已为 unified_system_menu_click_usability_smoke.mjs 增加 browser/page/context 关闭错误识别、stability_closure_detected 标记和 mid-loop fail-fast；verify 现在会在首个 poisoned state 后停止，而不是继续累积派生失败。`
+- active_commit: `89d096f`
+- next_step: `open one fresh direct verify retry batch to observe whether the fail-fast stability frontier now yields a cleaner bounded artifact set`
+
+### 2026-04-22T15:18:00+08:00
+- blocker_key: `fe_browser_stability_reclose_verify_nc_env_unstable_v1`
+- layer_target: `Frontend verification reclose`
+- module: `browser stability reclose`
+- reason: the active question was whether fail-fast isolation would collapse derivative failures into one clean first-failure artifact
+- completed_step: `已完成 ITER-2026-04-22-FE-BROWSER-STABILITY-RECLOSE-VERIFY-NC：fresh retry 已把失败面从 49 个收敛到 1 个，首个稳定性故障点被隔离为 menu 393（进项上报，/a/592?menu_id=393）；进程清理正常，但整轮仍以 verify lifecycle timeout(180000ms) 有界失败，结论仍为 ENV_UNSTABLE。`
+- active_commit: `89d096f`
+- next_step: `stop the active chain and open a new bounded first-failure screen for menu 393 / route /a/592 if further browser stability diagnosis is authorized`
+
+### 2026-04-22T15:24:00+08:00
+- blocker_key: `fe_first_failure_frontier_screen_nd_pass_v1`
+- layer_target: `Frontend verification stability screen`
+- module: `first-failure frontier`
+- reason: the failure surface is now isolated to one menu/route, so the next valid low-risk step is to freeze diagnosis around that first failure only
+- completed_step: `已完成 ITER-2026-04-22-FE-FIRST-FAILURE-FRONTIER-SCREEN-ND：已把当前前沿冻结为 menu 393（进项上报，/a/592?menu_id=393）的 isolated first-failure browser/runtime stability；下一步不得重开全量 leaf loop，而应只做单目标首发失败复现。`
+- active_commit: `89d096f`
+- next_step: `open one bounded single-target first-failure reproduction batch for menu 393 only`
+
+### 2026-04-22T15:31:00+08:00
+- blocker_key: `fe_single_target_first_failure_implement_ne_pass_v1`
+- layer_target: `Frontend verification implementation`
+- module: `single-target first-failure reproduction`
+- reason: the isolated menu-393 frontier needed a narrower control surface so verification can reproduce the first failure without reopening the whole loop
+- completed_step: `已完成 ITER-2026-04-22-FE-SINGLE-TARGET-FIRST-FAILURE-IMPLEMENT-NE：脚本已支持 TARGET_MENU_ID 单目标模式，默认全量行为保持不变；后续可仅复现 menu 393，而无需再跑 60 个 leaf。`
+- active_commit: `89d096f`
+- next_step: `open one bounded verify batch that re-runs unified_system_menu_click_usability_smoke with TARGET_MENU_ID=393 only`
+
+### 2026-04-22T15:39:00+08:00
+- blocker_key: `fe_single_target_first_failure_verify_nf_pass_v1`
+- layer_target: `Frontend verification`
+- module: `single-target first-failure verify`
+- reason: the isolated first-failure route needed direct verification to determine whether the browser/context closure was route-specific or loop-induced
+- completed_step: `已完成 ITER-2026-04-22-FE-SINGLE-TARGET-FIRST-FAILURE-VERIFY-NF：menu 393（/a/592?menu_id=393）在 TARGET_MENU_ID=393 单目标模式下 PASS，说明首发失败点本身在隔离复现时可稳定通过；当前前沿已转移为多叶子循环/跨路由累积稳定性，而非该 route 的确定性失败。`
+- active_commit: `89d096f`
+- next_step: `open one bounded cross-leaf accumulation screen to freeze the next diagnosis scope around multi-leaf runtime/browser stability`
+
+### 2026-04-22T15:47:00+08:00
+- blocker_key: `fe_cross_leaf_accumulation_implement_nh_pass_v1`
+- layer_target: `Frontend verification implementation`
+- module: `cross-leaf accumulation diagnostics`
+- reason: once menu 393 passed in isolation, the next low-risk need was evidence about sequence, predecessor, and cumulative success before degradation in the multi-leaf loop
+- completed_step: `已完成 ITER-2026-04-22-FE-CROSS-LEAF-ACCUMULATION-IMPLEMENT-NH：脚本已补每个 leaf 的 sequence_index、predecessor_menu_id/predecessor_route、success_count_before_leaf/failure_count_before_leaf，并在 fail-fast 汇总里补首个失败前驱信息。`
+- active_commit: `89d096f`
+- next_step: `open one bounded multi-leaf accumulation verify batch to collect fresh predecessor/counter evidence under the full loop`
+
+### 2026-04-22T15:58:00+08:00
+- blocker_key: `fe_cross_leaf_accumulation_verify_ni_env_unstable_v1`
+- layer_target: `Frontend verification`
+- module: `cross-leaf accumulation verify`
+- reason: the fresh full-loop retry needed predecessor/counter evidence to determine whether degradation starts as a pure browser closure or as an earlier mixed failure
+- completed_step: `已完成 ITER-2026-04-22-FE-CROSS-LEAF-ACCUMULATION-VERIFY-NI：fresh artifact 显示多叶子累积前沿已经收敛为两段：先是 menu 314（项目台账）落入 CONTRACT_CONTEXT_MISSING，再在 menu 318（合同汇总）出现 browser/context closure；其中 browser closure 的直接前驱为 menu 317（/a/485?menu_id=317），首个 browser closure 前已有 23 个成功 leaf。`
+- active_commit: `89d096f`
+- next_step: `stop the active chain and open a new mixed-frontier screen if further diagnosis is authorized`
+
+### 2026-04-22T16:04:00+08:00
+- blocker_key: `fe_mixed_frontier_screen_nj_pass_v1`
+- layer_target: `Frontend verification stability screen`
+- module: `mixed frontier`
+- reason: fresh accumulation evidence showed the active non-PASS verdict is split between an upstream contract-context failure and a downstream browser closure, so the next low-risk step is to freeze that mixed chain explicitly
+- completed_step: `已完成 ITER-2026-04-22-FE-MIXED-FRONTIER-SCREEN-NJ：已把当前前沿冻结为 314(contract-context) -> 317(predecessor) -> 318(browser closure) 的 mixed frontier；下一步不得回到泛化 full-loop，而应只做链路限缩复现。`
+- active_commit: `89d096f`
+- next_step: `open one bounded chain-limited reproduction batch for 314 -> 317 -> 318 only`
+
+### 2026-04-22T16:11:00+08:00
+- blocker_key: `fe_chain_limited_repro_implement_nk_pass_v1`
+- layer_target: `Frontend verification implementation`
+- module: `chain-limited reproduction`
+- reason: the mixed frontier needed a narrower replay surface so the 314/317/318 chain could be reproduced without reopening the whole loop
+- completed_step: `已完成 ITER-2026-04-22-FE-CHAIN-LIMITED-REPRO-IMPLEMENT-NK：脚本已支持 TARGET_MENU_CHAIN 有序链路模式，默认 full-loop 与 TARGET_MENU_ID 单目标模式保持不变；后续可直接复现 314 -> 317 -> 318。`
+- active_commit: `89d096f`
+- next_step: `open one bounded verify batch that re-runs unified_system_menu_click_usability_smoke with TARGET_MENU_CHAIN=314,317,318`
+
+### 2026-04-22T16:20:00+08:00
+- blocker_key: `fe_chain_limited_verify_nl_pass_v1`
+- layer_target: `Frontend verification`
+- module: `chain-limited verify`
+- reason: the mixed frontier chain needed direct replay to determine whether those three nodes alone reproduce the earlier full-loop non-PASS verdict
+- completed_step: `已完成 ITER-2026-04-22-FE-CHAIN-LIMITED-VERIFY-NL：链路限缩复现 `314 -> 317 -> 318` 全部 PASS，说明 mixed frontier 仍需更宽的 predecessor window 才能重现。`
+- active_commit: `89d096f`
+- next_step: `open one bounded predecessor-window screen for 316 -> 314 -> 317 -> 318`
+
+### 2026-04-22T16:28:00+08:00
+- blocker_key: `fe_predecessor_window_verify_nn_pass_v1`
+- layer_target: `Frontend verification`
+- module: `predecessor-window verify`
+- reason: the next question was whether adding menu 316 to the isolated replay would be enough to reproduce the earlier mixed frontier
+- completed_step: `已完成 ITER-2026-04-22-FE-PREDECESSOR-WINDOW-VERIFY-NN：前驱窗口 `316 -> 314 -> 317 -> 318` 全部 PASS，说明当前前沿已经继续上移，不再是短 predecessor window 可复现的问题，而更像长窗口累积到 20+ 成功 leaf 后才显现的稳定性退化。`
+- active_commit: `89d096f`
+- next_step: `open one bounded long-window accumulation screen focused on the 20+ success threshold frontier`
+
+### 2026-04-22T14:07:00+08:00
+- blocker_key: `fe_product_delivery_ui_verification_recovery_retry_mu_blocked_v1`
+- layer_target: `Frontend verification recovery implementation`
+- module: `product delivery ui verification recovery`
+- reason: after the timeout/progress hardening, the direct-sample browser verify still failed to produce a bounded verdict; the live frontier is now a deeper Playwright/browser-flow hang rather than a simple token-fetch timeout
+- completed_step: `MU 重试 direct 样本后仍阻塞：Playwright runtime 与 chromium renderer 均保持存活，但脚本在 fetch login token 之后仍未输出 verdict，已终止相关进程以避免继续堆积不确定状态。`
+- active_commit: `89d096f`
+- next_step: `open a dedicated browser-flow diagnosis objective for unified_system_menu_click_usability_smoke.mjs before any further product-delivery UI verification retries`
+
+### 2026-04-22T13:58:00+08:00
+- blocker_key: `fe_product_delivery_ui_verification_recovery_screen_mt_pass_v1`
+- layer_target: `Frontend verification recovery screen`
+- module: `product delivery ui verification recovery`
+- reason: the selected direct-sample browser verify entered runtime bootstrap and login-token fetch but never produced a bounded verdict, so the next low-risk step is to freeze a dedicated recovery / diagnosis objective instead of retrying blindly
+- completed_step: `已完成 ITER-2026-04-22-FE-PRODUCT-DELIVERY-UI-VERIFICATION-RECOVERY-SCREEN-MT：已将阻塞层分类为 verify runtime / script frontier，并冻结下一步只能做脚本级恢复或运行时诊断。`
+- active_commit: `89d096f`
+- next_step: `open one bounded UI verification recovery implement batch that diagnoses unified_system_menu_click_usability_smoke.mjs around token acquisition and verdict timeout behavior`
+
+### 2026-04-22T13:52:00+08:00
+- blocker_key: `fe_product_delivery_ui_verification_implement_ms_blocked_v1`
+- layer_target: `Frontend verification implementation`
+- module: `product delivery ui verification`
+- reason: the direct browser-level verify entrypoint was selected correctly, but the host browser smoke did not return a bounded PASS/FAIL verdict after runtime bootstrap and login-token fetch
+- completed_step: `ITER-2026-04-22-FE-PRODUCT-DELIVERY-UI-VERIFICATION-IMPLEMENT-MS 在 direct 样本验证阶段阻塞：Playwright runtime 已就绪、脚本已进入 fetch login token，但未在有界窗口内返回 verdict；为避免继续叠加不确定性，advisory 样本未继续执行。`
+- active_commit: `89d096f`
+- next_step: `open a dedicated UI verification recovery / runtime diagnosis objective before resuming product_delivery generic browser checks`
+
+### 2026-04-22T13:44:00+08:00
+- blocker_key: `fe_product_delivery_surface_consumption_post_implement_review_mq_pass_v1`
+- layer_target: `Frontend contract-consumption review`
+- module: `product delivery surface consumption post-implement review`
+- reason: the generic frontend consumption batch is complete, so the next low-risk batch is to decide whether the active wave stops here or continues into browser-level UI verification
+- completed_step: `已完成 ITER-2026-04-22-FE-PRODUCT-DELIVERY-SURFACE-CONSUMPTION-POST-IMPLEMENT-REVIEW-MQ：已确认当前波次到 generic frontend consumption 为止已完成，若继续则应切到 UI verification objective。`
+- active_commit: `89d096f`
+- next_step: `open one explicitly scoped UI verification screen if the new product delivery block should be validated in browser flow`
+
+### 2026-04-22T13:40:00+08:00
+- blocker_key: `fe_product_delivery_surface_consumption_implement_mp_pass_v1`
+- layer_target: `Frontend contract consumption implementation`
+- module: `product delivery surface consumption`
+- reason: the frontend consumption screen is frozen, so the next bounded low-risk batch is to map and render product_delivery_surface through the generic contract-consumer path without any family-specific branching
+- completed_step: `已完成 ITER-2026-04-22-FE-PRODUCT-DELIVERY-SURFACE-CONSUMPTION-IMPLEMENT-MP：已在 sceneRegistry.ts 接入 product_delivery_surface，并在 SceneView.vue 增加 direct/advisory 通用消费块。`
+- active_commit: `89d096f`
+- next_step: `open a bounded frontend post-implement review to decide whether the current wave should stop at generic consumption or continue into browser-level UI verification`
+
+### 2026-04-22T13:32:00+08:00
+- blocker_key: `fe_product_delivery_surface_consumption_screen_mo_pass_v1`
+- layer_target: `Frontend contract-consumption screen`
+- module: `product delivery surface consumption`
+- reason: backend semantic supply is complete, so the next low-risk batch is to freeze how frontend may consume product_delivery_surface without re-deriving business semantics
+- completed_step: `已完成 ITER-2026-04-22-FE-PRODUCT-DELIVERY-SURFACE-CONSUMPTION-SCREEN-MO：已冻结前端只可通用消费 product_delivery_surface，不得按 family/model 做业务特判。`
+- active_commit: `89d096f`
+- next_step: `open one bounded frontend implementation objective if product_delivery_surface should now be rendered by the generic contract-consumption layer`
+
+### 2026-04-22T13:28:00+08:00
+- blocker_key: `be_product_delivery_orchestration_wave1_post_implement_review_mn_pass_v1`
+- layer_target: `Backend governance review`
+- module: `product delivery orchestration wave 1 post-implement review`
+- reason: backend semantic supply for the first delivery wave is complete, so the next low-risk batch is to decide whether the active objective should stop here or move into frontend contract consumption and user-visible verification
+- completed_step: `已完成 ITER-2026-04-22-BE-PRODUCT-DELIVERY-ORCHESTRATION-WAVE1-POST-IMPLEMENT-REVIEW-MN：已确认当前 wave 1 到后端语义供给为止已完成，后续若继续必须新开 frontend contract-consumption / ui verification objective。`
+- active_commit: `89d096f`
+- next_step: `open one explicitly scoped frontend contract-consumption or UI verification screen if the first delivery wave should proceed into user-visible validation`
+
+### 2026-04-22T13:24:00+08:00
+- blocker_key: `be_product_delivery_orchestration_wave1_implement_ml_pass_v1`
+- layer_target: `Scene-orchestration implementation`
+- module: `product delivery orchestration wave 1`
+- reason: the wave-1 product-delivery screen is frozen, so the next bounded low-risk batch is to add one backend-owned product_delivery_surface from the existing runtime_handoff_surface without changing provider supply or frontend behavior
+- completed_step: `已完成 ITER-2026-04-22-BE-PRODUCT-DELIVERY-ORCHESTRATION-WAVE1-IMPLEMENT-ML：已在 scene_ready_semantic_orchestration_bridge.py 增加 product_delivery_surface，并用纯 Python 测试覆盖 direct/advisory 两类第一波交付行为。`
+- active_commit: `89d096f`
+- next_step: `open a bounded post-implement review to decide whether the current product-delivery wave should stop at backend semantic supply or continue into frontend contract-consumption and user-visible rollout verification`
+
+### 2026-04-22T13:18:00+08:00
+- blocker_key: `be_product_delivery_orchestration_wave1_screen_mk_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `product delivery orchestration wave 1`
+- reason: the rollout-consumer baseline is complete, so the next low-risk batch is to freeze the first user-visible delivery wave before any orchestration implementation begins
+- completed_step: `已完成 ITER-2026-04-22-BE-PRODUCT-DELIVERY-ORCHESTRATION-WAVE1-SCREEN-MK：已冻结 wave 1 用户可见 direct delivery=projects|finance_center|tasks|contracts，payment_approval|payment_entry 仅 advisory-only，enterprise_bootstrap 排除在本波之外。`
+- active_commit: `89d096f`
+- next_step: `open one bounded product-delivery orchestration wave-1 implementation objective that only adds user-visible delivery behavior for the four direct families while preserving advisory-only payment behavior`
+
+### 2026-04-22T13:14:00+08:00
+- blocker_key: `be_workflow_rollout_wave1_post_implement_review_mj_pass_v1`
+- layer_target: `Backend governance review`
+- module: `workflow rollout wave 1 post-implement review`
+- reason: the bounded wave-1 rollout consumer is complete, so the next low-risk batch is to decide whether the active objective stops at the consumer baseline or must open a new product-delivery orchestration objective
+- completed_step: `已完成 ITER-2026-04-22-BE-WORKFLOW-ROLLOUT-WAVE1-POST-IMPLEMENT-REVIEW-MJ：已确认当前 objective 到 consumer baseline 为止已完成，后续若继续必须新开 product-delivery orchestration screen，而不是在同一 objective 内继续滑行。`
+- active_commit: `89d096f`
+- next_step: `open one explicitly scoped product-delivery orchestration wave-1 screen that freezes user-visible delivery behavior, in-scope families, and acceptance boundaries before any new implementation begins`
+
+### 2026-04-22T13:06:00+08:00
+- blocker_key: `be_workflow_rollout_wave1_implement_mi_pass_v1`
+- layer_target: `Scene-orchestration implementation`
+- module: `workflow rollout wave 1 consumption`
+- reason: the wave-1 rollout screen is frozen, so the next bounded low-risk batch is to add one rollout consumer that consumes the existing runtime_handoff_surface without reopening provider supply or runtime-consumption design
+- completed_step: `已完成 ITER-2026-04-22-BE-WORKFLOW-ROLLOUT-WAVE1-IMPLEMENT-MI：已在 workflow_rollout_handoff.py 增加 build_wave1_rollout_handoff()，把 direct/advisory runtime_handoff_surface 收口为 wave-1 rollout envelope，并补齐 direct/advisory 消费断言。`
+- active_commit: `89d096f`
+- next_step: `open a bounded post-implement review screen to decide whether wave-1 rollout should now stop at the consumer baseline or continue into user-visible product-delivery orchestration behavior`
+
+### 2026-04-22T12:52:00+08:00
+- blocker_key: `be_workflow_rollout_wave1_screen_mh_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `workflow rollout wave 1 planning`
+- reason: the runtime-handoff consumption baseline is now complete and recertified, so the next low-risk batch is to freeze the first user-visible rollout wave from that baseline before any new bounded implementation begins
+- completed_step: `已完成 ITER-2026-04-22-BE-WORKFLOW-ROLLOUT-WAVE1-SCREEN-MH：已冻结 wave 1 direct_runtime_handoff=projects|finance_center|tasks|contracts，advisory_only=payment_approval|payment_entry，并明确 enterprise_bootstrap 不进入本波。`
+- active_commit: `89d096f`
+- next_step: `open one explicitly bounded workflow-rollout wave-1 implementation objective that only consumes the existing runtime handoff surface and does not reopen provider supply or runtime-consumption design`
+
+### 2026-04-22T12:38:00+08:00
+- blocker_key: `be_runtime_handoff_consumption_me_reclose_pass_v1`
+- layer_target: `Scene-orchestration review`
+- module: `runtime handoff consumption recertification`
+- reason: the smart_core package and tests-package compatibility fixes restored the original unittest entry, so the blocked ME/MF chain is now fully recertified
+- completed_step: `已完成 ITER-2026-04-22-BE-RUNTIME-HANDOFF-CONSUMPTION-ME-RECLOSE：MF、ME 原始验收命令均恢复通过，runtime_handoff_surface 消费批次正式收口。`
+- active_commit: `89d096f`
+- next_step: `the runtime-consumption baseline is now complete; open the next explicitly scoped workflow-rollout screen or product-delivery objective rather than extending this recertification chain`
+
+### 2026-04-22T12:34:00+08:00
+- blocker_key: `be_runtime_handoff_consumption_me_reclose_in_progress_v1`
+- layer_target: `Scene-orchestration review`
+- module: `runtime handoff consumption recertification`
+- reason: the smart_core package and tests-package compatibility fixes are now in place, so the next bounded step is to re-run the blocked ME/MF acceptance chain and synchronize completion state
+- completed_step: `已启动 ITER-2026-04-22-BE-RUNTIME-HANDOFF-CONSUMPTION-ME-RECLOSE：当前批次只复核 ME/MF 验收并回写完成态，不扩新功能。`
+- active_commit: `89d096f`
+- next_step: `re-run the original smart_core unittest command plus task validation for MF/ME, then mark the blocked batches complete if everything is green`
+
+### 2026-04-22T12:29:00+08:00
+- blocker_key: `be_smart_core_tests_package_entry_compat_implement_in_progress_v1`
+- layer_target: `Scene-orchestration test entry compatibility`
+- module: `smart_core tests package entry`
+- reason: the tests-package compat screen is frozen, so the next low-risk batch is to minimize smart_core/tests/__init__.py and stop eager import of Odoo transaction-style tests during pure-Python unittest entry
+- completed_step: `已启动 ITER-2026-04-22-BE-SMART-CORE-TESTS-PACKAGE-ENTRY-COMPAT-IMPLEMENT：当前批次只修 smart_core/tests/__init__.py 包导入策略，不改 bridge 语义。`
+- active_commit: `89d096f`
+- next_step: `validate the tests-package implement batch and rerun the original smart_core unittest command`
+
+### 2026-04-22T12:24:00+08:00
+- blocker_key: `be_smart_core_tests_package_entry_compat_screen_in_progress_v1`
+- layer_target: `Scene-orchestration test entry compatibility`
+- module: `smart_core tests package entry`
+- reason: the remaining ME blocker is tests-package import behavior, so the next low-risk batch is to freeze the bounded fix scope for addons/smart_core/tests/__init__.py before any implementation
+- completed_step: `已启动 ITER-2026-04-22-BE-SMART-CORE-TESTS-PACKAGE-ENTRY-COMPAT-SCREEN：当前批次只冻结 smart_core tests 包入口兼容修复边界，不改业务代码。`
+- active_commit: `89d096f`
+- next_step: `validate the tests-package compat screen and then open the bounded implement batch for addons/smart_core/tests/__init__.py if the scope remains sufficient`
+
+### 2026-04-22T12:16:00+08:00
+- blocker_key: `be_smart_core_unittest_entry_fix_mf_in_progress_v1`
+- layer_target: `Scene-orchestration test entry compatibility`
+- module: `smart_core unittest entry`
+- reason: ME is blocked by pure-Python package import incompatibility rather than by runtime-consumption semantics, so the next low-risk batch is to make the smart_core package importable when Odoo runtime is absent
+- completed_step: `已启动 ITER-2026-04-22-BE-SMART-CORE-UNITTEST-ENTRY-FIX-MF：当前批次只修 smart_core/__init__.py 导入边界，不改消费逻辑。`
+- active_commit: `89d096f`
+- next_step: `validate MF and rerun the original ME unittest entry command after the smart_core package import boundary fix`
+
+### 2026-04-22T12:10:00+08:00
+- blocker_key: `be_delivery_handoff_runtime_consumption_implement_me_in_progress_v1`
+- layer_target: `Scene-orchestration runtime consumption`
+- module: `delivery handoff runtime consumption`
+- reason: the runtime-consumption screen is frozen, so the next low-risk batch is to normalize provider handoff payloads into one runtime-side handoff surface without changing provider semantics
+- completed_step: `已启动 ITER-2026-04-22-BE-DELIVERY-HANDOFF-RUNTIME-CONSUMPTION-IMPLEMENT-ME：当前批次只给 smart_core bridge 增加 runtime_handoff_surface 归一化，并补纯 Python 单测。`
+- active_commit: `89d096f`
+- next_step: `run the smart_core bridge unittest and scoped diff checks for the runtime-consumption batch`
+
+### 2026-04-22T12:04:00+08:00
+- blocker_key: `be_delivery_handoff_runtime_consumption_screen_md_in_progress_v1`
+- layer_target: `Backend governance screen`
+- module: `delivery handoff runtime consumption`
+- reason: the handoff-supply chain is now complete, so the next low-risk batch is to freeze who consumes delivery_handoff_v1, how the first-wave families are layered, and where runtime consumption must stop
+- completed_step: `已启动 ITER-2026-04-22-BE-DELIVERY-HANDOFF-RUNTIME-CONSUMPTION-SCREEN-MD：当前批次只冻结 handoff 消费端方案与 family 分层，不进入实现。`
+- active_commit: `89d096f`
+- next_step: `validate the runtime-consumption screen and then open the minimal runtime-consumption implement batch if the consumption owner and family layering remain clear`
+
+### 2026-04-22T11:56:00+08:00
+- blocker_key: `be_payment_entry_held_subwave_implement_pass_v1`
+- layer_target: `Scene-orchestration implementation`
+- module: `payment entry held subwave handoff`
+- reason: the narrow exception and explicit authorization chain are both complete, and the bounded payment-entry handoff batch is now green
+- completed_step: `已完成 ITER-2026-04-22-BE-PAYMENT-ENTRY-HELD-SUBWAVE-IMPLEMENT：payment_entry_workbench_provider 已补 delivery_handoff_v1，semantic-supply unittest 32 项全绿。`
+- active_commit: `89d096f`
+- next_step: `wave 1、wave 2 contracts、payment_approval、payment_entry are now all inside the unified handoff surface; any further continuation must start from a new objective rather than extending this chain implicitly`
+
+### 2026-04-22T11:52:00+08:00
+- blocker_key: `be_payment_entry_held_subwave_implement_in_progress_v1`
+- layer_target: `Scene-orchestration implementation`
+- module: `payment entry held subwave handoff`
+- reason: the dedicated payment-entry narrow exception is now in place, so the next bounded step is to add one provider-level handoff envelope and one unittest assertion without reopening deeper payment paths
+- completed_step: `已启动 ITER-2026-04-22-BE-PAYMENT-ENTRY-HELD-SUBWAVE-IMPLEMENT：当前批次只给 payment_entry_workbench_provider 注入 delivery_handoff_v1，并补 semantic-supply 单测。`
+- active_commit: `89d096f`
+- next_step: `run the semantic-supply unittest and scoped diff checks for the payment-entry held-subwave batch`
+
+### 2026-04-22T11:46:00+08:00
+- blocker_key: `be_payment_entry_narrow_exception_implement_in_progress_v1`
+- layer_target: `Backend governance exception implement`
+- module: `payment entry narrow exception`
+- reason: the narrow exception shape is already frozen, so the next governance batch is to formalize that exact bounded exception inside AGENTS before any payment_entry handoff implementation proceeds
+- completed_step: `已启动 ITER-2026-04-22-BE-PAYMENT-ENTRY-NARROW-EXCEPTION-IMPLEMENT：当前批次只更新 AGENTS.md 例外条款，不改任何业务代码。`
+- active_commit: `89d096f`
+- next_step: `validate the AGENTS rule patch and then open the bounded payment_entry held-subwave implement batch within the new exception scope`
+
+### 2026-04-22T11:40:00+08:00
+- blocker_key: `be_payment_entry_narrow_exception_screen_in_progress_v1`
+- layer_target: `Backend governance exception screen`
+- module: `payment entry narrow exception`
+- reason: payment_entry remains blocked by the repository-wide payment stop rule, so the next low-risk batch is to freeze the dedicated narrow exception shape before patching repository rules
+- completed_step: `已启动 ITER-2026-04-22-BE-PAYMENT-ENTRY-NARROW-EXCEPTION-SCREEN：当前批次只冻结 payment_entry provider handoff 专用窄例外条款，不改任何业务代码。`
+- active_commit: `89d096f`
+- next_step: `validate the narrow-exception screen and then open the repository-rule implement batch if the frozen exception shape is accepted`
+
+### 2026-04-22T11:34:00+08:00
+- blocker_key: `be_payment_entry_explicit_authorization_screen_mc_in_progress_v1`
+- layer_target: `Backend governance authorization`
+- module: `payment entry explicit authorization`
+- reason: after approval-only held-subwave completion, payment_entry remains the only unresolved held subwave, so the next low-risk batch is to freeze its explicit authorization boundary before any implementation is considered
+- completed_step: `已启动 ITER-2026-04-22-BE-PAYMENT-ENTRY-EXPLICIT-AUTHORIZATION-SCREEN-MC：当前批次只冻结 payment_entry 的显式授权边界，不进入实现。`
+- active_commit: `89d096f`
+- next_step: `validate MC and, if green, open a minimal payment_entry held-subwave implement batch limited to provider handoff plus semantic-supply unittest`
+
+### 2026-04-22T11:28:00+08:00
+- blocker_key: `be_approval_held_subwave_implement_mb_pass_v1`
+- layer_target: `Scene-orchestration implementation`
+- module: `approval held subwave handoff`
+- reason: the explicitly authorized payments.approval scope stayed bounded to one provider/test surface and is now verified green
+- completed_step: `已完成 ITER-2026-04-22-BE-APPROVAL-HELD-SUBWAVE-IMPLEMENT-MB：approval_workbench_provider 已补 delivery_handoff_v1，semantic-supply unittest 31 项全绿。`
+- active_commit: `89d096f`
+- next_step: `payment_entry remains the only unresolved held subwave; stop ordinary continuation because its direct provider path is payment-named and would require a separate explicit high-risk path decision`
+
+### 2026-04-22T11:24:00+08:00
+- blocker_key: `be_approval_held_subwave_implement_mb_in_progress_v1`
+- layer_target: `Scene-orchestration implementation`
+- module: `approval held subwave handoff`
+- reason: MA froze the explicit authorization boundary for payments.approval, and the next bounded step is to add one provider-level handoff envelope without expanding into payment_entry or deeper payment paths
+- completed_step: `已启动 ITER-2026-04-22-BE-APPROVAL-HELD-SUBWAVE-IMPLEMENT-MB：当前批次只给 approval_workbench_provider 注入 delivery_handoff_v1，并补 semantic-supply 单测。`
+- active_commit: `89d096f`
+- next_step: `run the semantic-supply unittest and scoped diff checks for the approval-only held subwave batch`
+
+### 2026-04-22T11:18:00+08:00
+- blocker_key: `be_payment_approval_held_subwave_authorization_screen_ma_in_progress_v1`
+- layer_target: `Backend governance authorization`
+- module: `payment approval held subwave authorization`
+- reason: after LZ froze the generic held-subwave authorization rule, the next low-risk batch is to freeze the payment_approval-specific authorization boundary before any high-risk payment implementation is considered
+- completed_step: `已启动 ITER-2026-04-22-BE-PAYMENT-APPROVAL-HELD-SUBWAVE-AUTHORIZATION-SCREEN-MA：当前批次只冻结 payment_approval 的显式授权边界，不进入实现。`
+- active_commit: `89d096f`
+- next_step: `validate MA and keep payment_approval frozen until an explicitly authorized objective with exact allowlisted paths is opened`
+
+### 2026-04-22T11:12:00+08:00
+- blocker_key: `be_wave2_held_subwave_authorization_screen_lz_in_progress_v1`
+- layer_target: `Backend governance screen`
+- module: `wave 2 held subwave authorization`
+- reason: after contracts-only completion, the remaining held subwave is blocked by repository stop rules rather than by rollout readiness, so the next low-risk batch is to freeze the authorization prerequisites
+- completed_step: `已启动 ITER-2026-04-22-BE-WAVE2-HELD-SUBWAVE-AUTHORIZATION-SCREEN-LZ：当前批次只冻结 held subwave 的授权前提，不进入任何高风险实现。`
+- active_commit: `89d096f`
+- next_step: `validate LZ and keep the remaining held subwave frozen until an explicitly authorized objective is opened`
+
+### 2026-04-22T11:09:00+08:00
+- blocker_key: `be_contracts_wave2_subwave_implement_ly_pass_v1`
+- layer_target: `Scene-orchestration implementation`
+- module: `contracts rollout wave 2 subwave handoff`
+- reason: contracts was the only wave 2 family eligible for ordinary implementation under current repository rules, and the bounded handoff batch is now green
+- completed_step: `已完成 ITER-2026-04-22-BE-CONTRACTS-WAVE2-SUBWAVE-IMPLEMENT-LY：contract.center / contracts.workspace 已补 delivery_handoff_v1，semantic-supply unittest 30 项全绿。`
+- active_commit: `89d096f`
+- next_step: `keep payment_approval and payment_entry frozen under wave 2 hold; open a new explicitly authorized payment-scoped objective only if that delivery line should continue`
+
+### 2026-04-22T11:05:00+08:00
+- blocker_key: `be_contracts_wave2_subwave_implement_ly_in_progress_v1`
+- layer_target: `Scene-orchestration implementation`
+- module: `contracts rollout wave 2 subwave handoff`
+- reason: LX froze contracts as the only directly implementable wave 2 subwave, so the next low-risk batch is to expose contracts delivery_handoff_v1 semantics without reopening payment families
+- completed_step: `已启动 ITER-2026-04-22-BE-CONTRACTS-WAVE2-SUBWAVE-IMPLEMENT-LY：当前批次只给 contract.center / contracts.workspace provider 注入 delivery_handoff_v1，并补同一份 semantic-supply 单测。`
+- active_commit: `89d096f`
+- next_step: `run the semantic-supply unittest and scoped diff checks for the contracts-only subwave handoff batch`
+
+### 2026-04-22T10:59:00+08:00
+- blocker_key: `be_workflow_rollout_wave2_implementability_screen_lx_in_progress_v1`
+- layer_target: `Backend governance screen`
+- module: `workflow rollout wave 2 implementability`
+- reason: wave 2 is frozen at the planning level, but payment-path stop rules block ordinary implementation for the payment families, so the next low-risk batch is to split implementable and still-held subwaves
+- completed_step: `已启动 ITER-2026-04-22-BE-WORKFLOW-ROLLOUT-WAVE2-IMPLEMENTABILITY-SCREEN-LX：当前批次只判断 contracts/payment_approval/payment_entry 在现有 stop rule 下的可实施性，不进入实现。`
+- active_commit: `89d096f`
+- next_step: `validate LX and, if green, open a bounded contracts-only rollout implement batch while keeping payment families frozen`
+
+### 2026-04-22T10:56:00+08:00
+- blocker_key: `be_workflow_rollout_wave2_screen_lw_in_progress_v1`
+- layer_target: `Backend governance screen`
+- module: `workflow rollout wave 2 planning`
+- reason: wave 1 is now closed, so the next low-risk batch is to freeze wave 2 family selection, boundaries, and acceptance from the existing rollout candidate assets
+- completed_step: `已启动 ITER-2026-04-22-BE-WORKFLOW-ROLLOUT-WAVE2-SCREEN-LW：当前批次只冻结 wave 2 family_scope、delivery boundary 和 acceptance，不进入实现。`
+- active_commit: `89d096f`
+- next_step: `validate LW and decide whether to open the bounded wave 2 rollout implement for contracts, payment_approval, and payment_entry`
+
+### 2026-04-22T10:49:00+08:00
+- blocker_key: `be_workflow_rollout_acceptance_resume_lv_pass_v1`
+- layer_target: `Backend governance acceptance resume`
+- module: `workflow rollout acceptance synchronization`
+- reason: the LT and LU compatibility fixes restored the original LS unittest entry, so the blocked rollout batches can now be formally closed
+- completed_step: `已完成 ITER-2026-04-22-BE-WORKFLOW-ROLLOUT-ACCEPTANCE-RESUME-LV：LT、LR、LS 均已回写为 done，原始 LS unittest 命令与相关 task validation/diff check 已恢复通过。`
+- active_commit: `89d096f`
+- next_step: `the wave 1 rollout screen and implement batches are closed; open the next explicitly scoped rollout or runtime objective only if a new delivery target is chosen`
+
+### 2026-04-22T10:44:00+08:00
+- blocker_key: `be_scene_semantic_supply_services_entry_fix_lu_pass_v1`
+- layer_target: `Scene-orchestration test entry compatibility`
+- module: `scene semantic supply services package entry`
+- reason: LU narrowed the remaining Odoo-bound services import chain so the original LS unittest entry can execute in pure-Python mode
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-SEMANTIC-SUPPLY-SERVICES-ENTRY-FIX-LU：services/__init__.py 现在只在真实 Odoo runtime 存在时才 eager import Odoo-bound services；原始 LS unittest 命令已恢复通过。`
+- active_commit: `89d096f`
+- next_step: `open a bounded acceptance-resume batch that marks the unittest-entry fixes complete and re-runs LR/LS verification plus status synchronization`
+
+### 2026-04-22T10:40:00+08:00
+- blocker_key: `be_scene_semantic_supply_services_entry_fix_lu_in_progress_v1`
+- layer_target: `Scene-orchestration test entry compatibility`
+- module: `scene semantic supply services package entry`
+- reason: LT narrowed the root package import boundary, and the next remaining blocker is the services package eager import of Odoo-bound modules during workflow_rollout_handoff loading
+- completed_step: `已启动 ITER-2026-04-22-BE-SCENE-SEMANTIC-SUPPLY-SERVICES-ENTRY-FIX-LU：当前批次只修 services/__init__.py 导入边界，不改 handoff/helper/provider 逻辑。`
+- active_commit: `89d096f`
+- next_step: `validate LU and rerun the original LS unittest entry command after the services package import boundary fix`
+
+### 2026-04-22T10:32:00+08:00
+- blocker_key: `be_scene_semantic_supply_unittest_entry_fix_lt_in_progress_v1`
+- layer_target: `Scene-orchestration test entry compatibility`
+- module: `scene semantic supply unittest entry`
+- reason: LS is blocked by pure-Python package import incompatibility rather than by rollout semantics, so the next low-risk batch is to make the package importable when Odoo runtime is absent
+- completed_step: `已启动 ITER-2026-04-22-BE-SCENE-SEMANTIC-SUPPLY-UNITTEST-ENTRY-FIX-LT：当前批次只修 unittest 入口兼容，不改 wave 1 handoff 或 provider 语义。`
+- active_commit: `89d096f`
+- next_step: `validate LT and rerun the original LS unittest entry command after the package import boundary fix`
+
+### 2026-04-22T10:18:00+08:00
+- blocker_key: `be_workflow_rollout_wave1_implement_ls_in_progress_v1`
+- layer_target: `Scene-orchestration implementation`
+- module: `workflow rollout wave 1 handoff`
+- reason: the rollout screen already froze wave 1 boundaries, so the next low-risk batch is to expose a generic delivery handoff envelope for projects, finance_center, and tasks
+- completed_step: `已启动 ITER-2026-04-22-BE-WORKFLOW-ROLLOUT-WAVE1-IMPLEMENT-LS：当前批次只做通用 handoff helper + 三个 wave 1 provider 注入，不改 runtime executor。`
+- active_commit: `89d096f`
+- next_step: `run the scene semantic supply unit tests and confirm the three wave 1 providers expose delivery_handoff_v1`
+
+### 2026-04-22T10:10:00+08:00
+- blocker_key: `be_workflow_rollout_screen_lr_in_progress_v1`
+- layer_target: `Backend governance screen`
+- module: `workflow rollout planning`
+- reason: the governed-to-runtime mapping and rollout-candidate baseline is complete, so the next low-risk batch is to freeze wave 1 selection, boundaries, and acceptance before orchestration implementation
+- completed_step: `已启动 ITER-2026-04-22-BE-WORKFLOW-ROLLOUT-SCREEN-LR：当前批次只冻结 rollout wave、边界和验收口径，不进入产品交付编排实现。`
+- active_commit: `89d096f`
+- next_step: `validate LR and then decide whether to open the bounded wave 1 product delivery orchestration implement for projects, finance_center, and tasks`
+
+### 2026-04-22T10:02:00+08:00
+- blocker_key: `be_product_workflow_rollout_candidates_export_implement_lq_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `product workflow rollout candidates export`
+- reason: governed runtime mapping is already materialized, so the next low-risk batch is to expose one explicit rollout candidate table for later product delivery orchestration
+- completed_step: `已完成 ITER-2026-04-22-BE-PRODUCT-WORKFLOW-ROLLOUT-CANDIDATES-EXPORT-IMPLEMENT-LQ：新增 product_workflow_rollout_candidates_current_v1.csv，并导出 7 个 governed family 全部为 rollout candidate、direct delivery。`
+- active_commit: `89d096f`
+- next_step: `the governed-to-runtime mapping and rollout-candidate export baseline is complete; open a new explicitly scoped workflow rollout objective if delivery orchestration should continue`
+
+### 2026-04-22T09:56:00+08:00
+- blocker_key: `be_governed_runtime_mapping_export_implement_lp_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `governed runtime mapping export`
+- reason: LO has already frozen the direct runtime classification, so the next low-risk batch is to materialize the governed runtime mapping baseline from the existing readiness assets
+- completed_step: `已完成 ITER-2026-04-22-BE-GOVERNED-RUNTIME-MAPPING-EXPORT-IMPLEMENT-LP：新增 governed_runtime_mapping_current_v1.csv，并导出 7 个 governed family 全部为 direct runtime、rollout candidate。`
+- active_commit: `89d096f`
+- next_step: `export rollout candidates from governed runtime mapping and product workflow readiness`
+
+### 2026-04-22T09:49:00+08:00
+- blocker_key: `be_governed_to_runtime_mapping_screen_lo_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `governed-to-runtime mapping`
+- reason: runtime eligibility and workflow readiness are both exported, so the next low-risk batch is to classify how the seven governed families should map into runtime-facing consumers
+- completed_step: `已完成 ITER-2026-04-22-BE-GOVERNED-TO-RUNTIME-MAPPING-SCREEN-LO：已把 seven governed families 全部冻结为 direct runtime，并统一 runtime_entry_type/runtime_consumer/runtime_mode 口径。`
+- active_commit: `89d096f`
+- next_step: `implement the governed runtime mapping export from the screened classification`
+
+### 2026-04-22T09:42:00+08:00
+- blocker_key: `be_product_workflow_readiness_export_implement_ln_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `user-flow product workflow readiness export`
+- reason: runtime eligibility export is already materialized, so the next low-risk batch is to materialize the product-facing workflow readiness view from the same governed user-flow asset
+- completed_step: `已完成 ITER-2026-04-22-BE-PRODUCT-WORKFLOW-READINESS-EXPORT-IMPLEMENT-LN：新增 product_workflow_readiness_current_v1.csv，并导出 7 个 governed family 全部 product workflow ready。`
+- active_commit: `89d096f`
+- next_step: `the first user-flow asset consumption wave is complete; open a new explicitly scoped objective if governed-to-runtime mapping or product delivery orchestration should continue`
+
+### 2026-04-22T09:38:00+08:00
+- blocker_key: `be_runtime_eligibility_export_implement_lm_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `user-flow runtime eligibility export`
+- reason: LL has already frozen the runtime-consumable user-flow fields, so the next low-risk batch is to materialize one explicit runtime eligibility export from the governed user-flow asset
+- completed_step: `已完成 ITER-2026-04-22-BE-RUNTIME-ELIGIBILITY-EXPORT-IMPLEMENT-LM：新增 runtime_eligibility_current_v1.csv，并导出 7 个 governed family 全部 runtime eligible。`
+- active_commit: `89d096f`
+- next_step: `open the next bounded implement batch for product workflow readiness export from the same governed user-flow asset`
+
+### 2026-04-22T09:31:00+08:00
+- blocker_key: `be_user_flow_asset_consumption_screen_ll_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `governed user-flow asset consumption`
+- reason: release-gate integration is complete, so the next low-risk batch is to freeze which existing user-flow asset fields can be consumed by runtime and product workflow decisions
+- completed_step: `已完成 ITER-2026-04-22-BE-USER-FLOW-ASSET-CONSUMPTION-SCREEN-LL：已把 runtime-consumable 字段与 product-workflow-consumable 字段从 governance-only 字段中分离冻结。`
+- active_commit: `89d096f`
+- next_step: `implement runtime eligibility export and product workflow readiness export from the governed user-flow asset`
+
+### 2026-04-22T09:24:00+08:00
+- blocker_key: `be_scene_governance_release_gate_implement_lk_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `scene governance release gate`
+- reason: LJ has already frozen the minimum release-gate scope, so the next low-risk batch is to wire scene_governance_suite into one explicit release verify entrypoint and attach it to gate.full
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-GOVERNANCE-RELEASE-GATE-IMPLEMENT-LK：已新增 make verify.scene.governance.release_gate，并把 scene_governance_suite.py 接入 gate.full；dedicated make verify 已通过。`
+- active_commit: `89d096f`
+- next_step: `the release-gate integration objective is complete; open a new screen for governed family user-flow asset consumption by runtime and product workflow`
+
+### 2026-04-22T09:18:00+08:00
+- blocker_key: `be_scene_governance_release_gate_screen_lj_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `scene governance release gate`
+- reason: the governance baseline hardening line is complete, so the next low-risk batch is to classify the minimum release-gate integration scope for the existing scene governance suite
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-GOVERNANCE-RELEASE-GATE-SCREEN-LJ：已把 suite 接发布前门禁的最小范围冻结为 one explicit verify entrypoint plus gate.full wiring，不再继续治理线内扩张。`
+- active_commit: `89d096f`
+- next_step: `implement the bounded release-gate wiring for scene_governance_suite`
+
+### 2026-04-22T09:08:00+08:00
+- blocker_key: `be_governance_guard_export_parity_implement_li_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `scene governance guard-export parity`
+- reason: parity scope is frozen by LH, so the next low-risk batch is to materialize the minimum parity guard over existing guard outputs and governed exports
+- completed_step: `已完成 ITER-2026-04-22-BE-GOVERNANCE-GUARD-EXPORT-PARITY-IMPLEMENT-LI：新增 scene_governance_guard_export_parity_guard.py，已把 authority/provider/export-consistency/suite 的最小 parity 守卫接入 scene_governance_suite，并通过 dedicated parity verify 与 suite 全量校验。`
+- active_commit: `89d096f`
+- next_step: `the current governance baseline hardening line is complete; open a new explicitly scoped objective before expanding beyond baseline/consistency/drift/parity`
+
+### 2026-04-22T09:02:00+08:00
+- blocker_key: `be_governance_guard_export_parity_screen_lh_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `scene governance guard-export parity`
+- reason: export consistency and baseline drift are both green, so the next low-risk batch is to classify the smallest parity surface before implementing another governance guard
+- completed_step: `已完成 ITER-2026-04-22-BE-GOVERNANCE-GUARD-EXPORT-PARITY-SCREEN-LH：已把 parity 范围收敛为 authority/provider/export-consistency/suite 与现有 governed export 之间的最小对齐关系。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implement batch for the minimum governance guard-export parity guard`
+
+### 2026-04-22T08:52:00+08:00
+- blocker_key: `be_governance_baseline_drift_guard_implement_lg_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `scene governance baseline drift`
+- reason: LF has already frozen the minimum drift surface, so the next low-risk batch is to materialize the bounded baseline drift guard before parity expansion
+- completed_step: `已完成 ITER-2026-04-22-BE-GOVERNANCE-BASELINE-DRIFT-GUARD-IMPLEMENT-LG：新增 scene_governance_baseline_drift_guard.py，已把五组治理资产的 row-count/key-set/schema/governed-ready drift 守卫接入 suite，并通过 dedicated drift verify 与 suite 全量校验。`
+- active_commit: `89d096f`
+- next_step: `open the next bounded guard-export parity screen so parity scope can be implemented without widening beyond existing guard/export outputs`
+
+### 2026-04-22T08:48:00+08:00
+- blocker_key: `be_governance_baseline_drift_parity_screen_lf_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `scene governance baseline drift and parity`
+- reason: export consistency is green, so the next low-risk batch is to classify the smallest baseline-drift and guard-export parity surface before implementing more guards
+- completed_step: `已完成 ITER-2026-04-22-BE-GOVERNANCE-BASELINE-DRIFT-PARITY-SCREEN-LF：已把下一批范围收敛为五组治理资产的 row-count/key-set/schema/governed-ready drift，以及 authority/provider/export-consistency/suite 的最小 parity 关系。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implement batch for the minimum governance baseline drift guard over the five governed asset pairs`
+
+### 2026-04-22T08:36:00+08:00
+- blocker_key: `be_governance_export_consistency_guard_implement_le_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `scene governance export consistency`
+- reason: after LD froze the minimum consistency relations, the next low-risk batch is to materialize the export-consistency guard and wire it into the governance suite
+- completed_step: `已完成 ITER-2026-04-22-BE-GOVERNANCE-EXPORT-CONSISTENCY-GUARD-IMPLEMENT-LE：新增 scene_governance_export_consistency_guard.py，已把五组 baseline/current 资产的一致性守卫接入 scene_governance_suite，并通过独立 guard 与 suite 全量校验。`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen batch for governance baseline drift and guard-export parity after export consistency is now green`
+
+### 2026-04-22T08:24:00+08:00
+- blocker_key: `be_governance_export_consistency_screen_ld_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `scene governance export consistency`
+- reason: baseline freeze is complete, so the next low-risk batch is to classify the minimum consistency relations between the five frozen baseline assets and the corresponding current exports before implementing drift/parity guards
+- completed_step: `已完成 ITER-2026-04-22-BE-GOVERNANCE-EXPORT-CONSISTENCY-SCREEN-LD：已冻结五组 baseline/current 资产的一致性范围，并把首批守卫关系收敛为 authority-provider、family-provider_count、family-closure、menu-authority 与 drift-candidate 五类。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implement batch for the export-consistency guard over the five baseline/current governance asset pairs`
+
+### 2026-04-21T23:07:00+08:00
+- blocker_key: `be_contracts_family_summary_sync_implement_ke_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `contracts family summary sync`
+- reason: after the contracts branch closure asset reached CLOSED/all_green for contract.center and contracts.workspace, the next low-risk step was to sync that closed branch state into the family summary asset and extend the governed summary perimeter
+- completed_step: `已完成 KE：scene_governance_user_flow_asset_export.py 现已消费 contracts_closure_current_v1.csv，并把 contracts 纳入当前 family summary perimeter。最新 high_priority_family_user_flow_closure_current_v1.csv 显示 projects / finance_center / tasks / contracts 均为 guarded_ready。`
+- active_commit: `89d096f`
+- next_step: `open a bounded next-wave reselection screen for the remaining still-open families after contracts joined the governed summary perimeter`
+
+### 2026-04-21T22:55:00+08:00
+- blocker_key: `be_contracts_provider_semantic_supply_implement_kd_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `contracts provider semantic supply`
+- reason: after the contracts branch closure asset showed provider_fallback_residual as the first remaining gap for contract.center and contracts.workspace, the next low-risk step was to materialize provider ownership for that pair
+- completed_step: `已完成 KC / KD：新增 contract_center_provider.py 与 contracts_workspace_provider.py，并完成注册与 authority ledger 同步。最新 contracts_closure_current_v1.csv 显示 contract.center 与 contracts.workspace 均为 CLOSED、all_green、runtime_change_required=no。`
+- active_commit: `89d096f`
+- next_step: `open a bounded contracts family summary sync batch that reconciles the still-open contracts family summary row with the closed contracts branch asset`
+
+### 2026-04-21T22:44:00+08:00
+- blocker_key: `be_contracts_branch_closure_export_implement_kb_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `contracts branch closure export`
+- reason: after contracts was chosen as the next governed family and the first wave was frozen as contract.center plus contracts.workspace, the next low-risk step was to materialize scene-level closure facts for that pair
+- completed_step: `已完成 KA / KB：新增 scene_governance_contracts_branch_closure_export.py，并产出 contracts_closure_current_v1.csv。当前 contract.center 与 contracts.workspace 均为 PARTIAL_CLOSED，primary_gap_type 均为 provider_fallback_residual，说明 contracts 下一刀应进入 provider-first 语义供给。`
+- active_commit: `89d096f`
+- next_step: `open a bounded contracts provider semantic supply screen for contract.center and contracts.workspace based on the new contracts closure asset`
+
+### 2026-04-21T22:32:00+08:00
+- blocker_key: `be_projects_family_summary_sync_implement_jy_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `projects family summary sync`
+- reason: after the projects residual rescreen confirmed the remaining issue was only a family-summary mismatch, the next low-risk step was to sync the projects family summary row to the already-closed projects branch closure asset
+- completed_step: `已完成 JX / JY：scene_governance_user_flow_asset_export.py 现已消费 projects_ledger_detail_closure_current_v1.csv。最新 high_priority_family_user_flow_closure_current_v1.csv 显示 projects / finance_center / tasks 三个高频 family 均已进入 guarded_ready。`
+- active_commit: `89d096f`
+- next_step: `open a bounded next-wave selection screen for the remaining still-open families outside the now-closed high-frequency family set`
+
+### 2026-04-21T22:18:00+08:00
+- blocker_key: `be_tasks_family_summary_sync_implement_jv_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `tasks family summary sync`
+- reason: after the tasks branch closure asset reached CLOSED/all_green for both task.center and task.board, the next low-risk step was to sync that closed branch state into the high-priority family summary asset
+- completed_step: `已完成 JV：scene_governance_user_flow_asset_export.py 现已消费 tasks_closure_current_v1.csv。最新 high_priority_family_user_flow_closure_current_v1.csv 显示 tasks 已变为 guarded_ready、provider_registered=2、fallback_only=0:none。当前 family summary 中，finance_center 与 tasks 都已同步到闭合事实。`
+- active_commit: `89d096f`
+- next_step: `open a bounded residual-family rescreen batch that decides whether the next governed wave should return to the remaining projects residual or move to another still-open family from the current summary and score facts`
+
+### 2026-04-21T22:06:00+08:00
+- blocker_key: `be_task_center_menu_mapping_residual_implement_ju_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `task.center menu mapping residual`
+- reason: after task provider semantic supply completed, the next low-risk step was to remove the last stale task.center closure residual caused by reading the wrong action-mapping field in the tasks closure export
+- completed_step: `已完成 JT / JU：scene_governance_tasks_branch_closure_export.py 现已正确识别 task.center 的 action-only scene mapping。最新 tasks_closure_current_v1.csv 显示 task.center 与 task.board 均为 CLOSED、all_green、runtime_change_required=no。`
+- active_commit: `89d096f`
+- next_step: `open a bounded tasks family summary sync batch that reconciles high_priority_family_user_flow_closure_current_v1.csv with the closed tasks branch asset`
+
+### 2026-04-21T21:52:00+08:00
+- blocker_key: `be_tasks_provider_semantic_supply_implement_js_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `tasks provider semantic supply`
+- reason: after the tasks closure asset showed provider_fallback_residual as the first remaining gap for both task.center and task.board, the next low-risk step was to materialize provider ownership for the pair
+- completed_step: `已完成 JR / JS：新增 task_center_provider.py 与 task_board_provider.py，并完成注册与 authority ledger 同步。最新 tasks_closure_current_v1.csv 显示 task.board 已闭合为 CLOSED/all_green；task.center 已从 provider 残差推进为单一 menu_mapping_residual，下一刀不再是 provider，而是 task.center 的 menu-interpreter 收口。`
+- active_commit: `89d096f`
+- next_step: `open a bounded task.center menu mapping residual screen based on the updated tasks closure asset`
+
+### 2026-04-21T21:39:00+08:00
+- blocker_key: `be_tasks_branch_closure_export_implement_jq_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `tasks branch closure export`
+- reason: after finance_center family summary was fully synchronized, the next low-risk step was to materialize scene-level closure facts for the highest remaining active family, tasks
+- completed_step: `已完成 JP / JQ：新增 scene_governance_tasks_branch_closure_export.py，并产出 tasks_closure_current_v1.csv。当前 task.center 与 task.board 均为 PARTIAL_CLOSED，primary_gap_type 均为 provider_fallback_residual，说明 tasks 下一刀应进入 provider-first 语义供给，而不是重开 authority 讨论。`
+- active_commit: `89d096f`
+- next_step: `open a bounded tasks provider semantic supply screen for task.center and task.board based on the new tasks closure asset`
+
+### 2026-04-21T21:27:00+08:00
+- blocker_key: `be_finance_center_family_summary_sync_implement_jo_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `finance_center family summary sync`
+- reason: after finance_center branch closure was exported and closed, the next low-risk step was to reconcile the stale high-priority family summary row with the dedicated finance branch closure asset
+- completed_step: `已完成 JO：scene_governance_user_flow_asset_export.py 现会优先消费 finance_center_closure_current_v1.csv，同步后的 high_priority_family_user_flow_closure_current_v1.csv 已把 finance_center 更新为 provider_registered=2、guarded_ready，并明确 family summary 已跟随 branch closure 资产。`
+- active_commit: `89d096f`
+- next_step: `open a bounded tasks family closure screen that selects the first concrete task branch closure wave from the current family summary and priority facts`
+
+### 2026-04-21T21:16:00+08:00
+- blocker_key: `be_finance_center_closure_export_implement_jn_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `finance_center closure export`
+- reason: after finance_center provider semantic supply completed, the next low-risk step was to replace stale family-level finance user-flow assumptions with a dedicated scene-level closure asset for finance.center and finance.workspace
+- completed_step: `已完成 JM / JN：冻结 finance_center closure export 边界后，新增 scene_governance_finance_branch_closure_export.py，并产出 finance_center_closure_current_v1.csv。当前 finance.center 与 finance.workspace 均为 closure_status=CLOSED、acceptance_status=all_green、asset_only_closure_possible=yes、runtime_change_required=no。`
+- active_commit: `89d096f`
+- next_step: `open a bounded family-summary asset sync batch that reconciles high_priority_family_user_flow_closure_current_v1.csv with the new closed finance_center branch asset`
+
+### 2026-04-21T21:03:00+08:00
+- blocker_key: `be_finance_center_provider_semantic_supply_implement_jl_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `finance_center provider semantic supply`
+- reason: after the finance provider semantic correctness screen froze the target pair, the next low-risk step was to materialize dedicated provider ownership for finance.center and finance.workspace without changing financial business semantics
+- completed_step: `已完成 JL：新增 finance_center_provider.py 与 finance_workspace_provider.py，并在 register_scene_providers.py 中完成注册。scene_governance_asset_export 与 suite 现已把 finance.center / finance.workspace 识别为 provider_registered，manual authority ledger 也已同步到 provider owner。`
+- active_commit: `89d096f`
+- next_step: `open a bounded finance_center closure export screen that reconciles the stale high_priority_family_user_flow_closure_current_v1.csv snapshot with the new provider-owned finance family facts`
+
+### 2026-04-21T20:34:02+08:00
+- blocker_key: `be_finance_workspace_canonical_baseline_recovery_implement_jj_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `finance workspace canonical baseline recovery`
+- reason: after the finance authority guard baseline was recovered, the next low-risk step was to align the canonical entry guard with the new route-plus-menu semantics for finance.workspace
+- completed_step: `已完成 JJ：backend_scene_canonical_entry_guard.py 已对齐 finance.workspace 的 route-plus-menu/no-action-owner 语义，canonical entry guard 已恢复 PASS。finance_center 现已具备唯一 authority 前提，可以继续进入 provider semantic correctness 治理。`
+- active_commit: `89d096f`
+- next_step: `open a bounded provider semantic correctness screen for finance_center based on finance.center and finance.workspace current fallback-only status`
+
+### 2026-04-21T20:32:06+08:00
+- blocker_key: `be_finance_workspace_authority_guard_baseline_recovery_implement_ji_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `finance workspace authority guard baseline recovery`
+- reason: after finance workspace authority recovery removed the shared root action owner, the next low-risk step was to align the authority guard baseline so finance work could continue under the new route-plus-menu semantics
+- completed_step: `已完成 JI：backend_scene_authority_guard.py 已对齐 finance.workspace 的 route-plus-menu/no-action-owner 语义，authority guard 已恢复 PASS。`
+- active_commit: `89d096f`
+- next_step: `open a bounded canonical baseline recovery batch for finance.workspace to align backend_scene_canonical_entry_guard.py with the new authority`
+
+### 2026-04-21T20:16:30+08:00
+- blocker_key: `be_finance_center_family_standard_screen_jf_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `finance_center family standard sample`
+- reason: after projects reached stage-closed status, the next low-risk step was to freeze finance_center as the second family-level closure sample with explicit authority/provider/shared-root fields
+- completed_step: `已完成 JF：finance_center family 样板已冻结。当前结论是 authority uniqueness 未完全成立，finance.center / finance.workspace 仍共享 root menu + action；provider 仍是 fallback_only；shared_root_compatibility_used=true。`
+- active_commit: `89d096f`
+- next_step: `open a bounded authority uniqueness screen for finance_center to decide whether finance.workspace should stop co-owning the shared root action`
+
+### 2026-04-21T20:14:03+08:00
+- blocker_key: `be_projects_branch_acceptance_heuristic_sync_implement_jd_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `projects branch acceptance heuristic sync`
+- reason: after authority, canonical, provider, and export recovery converged, the final low-risk step was to stop reporting accepted native-parity and route-primary menu contexts as residual runtime gaps
+- completed_step: `已完成 JC / JD 连续收口：projects.ledger 已按 native-parity 收敛为 CLOSED；projects.detail 已按 route-primary/no-action-owner 收敛为 CLOSED。最新 projects_ledger_detail_closure_current_v1.csv 显示两者 closure_status=CLOSED、acceptance_status=all_green、runtime_change_required=no、required_runtime_scope=none。projects 分支本轮应视为阶段性收口完成。`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen that selects the next family after the stage-closed projects branch from the current family priority scores`
+
+### 2026-04-21T20:08:16+08:00
+- blocker_key: `be_projects_detail_closure_heuristic_sync_implement_ja_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `projects detail closure heuristic sync`
+- reason: after authority, canonical, provider, and export sync converged, the next low-risk step was to stop treating projects.detail as if route-primary detail semantics still implied a shared native action residual
+- completed_step: `已完成 JA：projects.detail 的 branch closure heuristic 已对齐到 route-primary/no-action-owner 语义。当前 closure 表显示 projects.detail: primary_action=route:/s/projects.detail、native_action_shared=false、primary_gap_type=none；下一轮不应再把 detail 当成 shared-action runtime 收口对象。`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen that reassesses whether projects.ledger is now the only remaining concrete menu-layer closure target`
+
+### 2026-04-21T20:03:43+08:00
+- blocker_key: `be_projects_detail_branch_closure_export_sync_implement_iy_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `projects detail branch closure export sync`
+- reason: after authority guard, canonical guard, and manual authority assets were all recovered, the next low-risk step was to make the branch closure export consume the new projects.detail authority shape instead of inferring a stale shared action owner
+- completed_step: `已完成 IW / IX / IY 连续恢复链：canonical baseline 已对齐、manual authority ledger 已同步、branch closure export 已改为把 projects.detail 识别为 route-primary/no-action-owner。当前 projects.detail closure 结果为 provider_mode=normal、primary_action=route:/s/projects.detail、native_action_shared=false、required_runtime_scope=menu_interpreter；projects.ledger 仍保持 menu_interpreter residual。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch for the projects ledger-detail menu_interpreter closure layer inside construction scene-map supply`
+
+### 2026-04-21T19:58:40+08:00
+- blocker_key: `be_projects_shared_action_authority_screen_is_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `projects shared action authority`
+- reason: additional source inspection showed the shared project ledger native action was present in both registry authority and construction nav-scene maps, so the next low-risk step was to decide the true first-change authority layer
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-SHARED-ACTION-AUTHORITY-SCREEN-IS：确认 shared native action residual 的首改层是 scene registry authority，而不是 menu-layer 映射本体；否则会出现 registry authority 与 compatibility supply 语义打架。`
+- active_commit: `89d096f`
+- next_step: `open a bounded authority-recovery screen that decides whether projects.detail should drop the shared action_xmlid while keeping route and menu semantics`
+
+### 2026-04-21T19:52:18+08:00
+- blocker_key: `be_projects_ledger_detail_provider_first_runtime_implement_ip_pass_v1`
+- layer_target: `Backend runtime implementation`
+- module: `projects ledger-detail provider-first closure`
+- reason: after the runtime-layer screen selected provider as the narrowest first runtime surface, the next low-risk step was to materialize dedicated provider ownership and re-evaluate branch closure
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-LEDGER-DETAIL-PROVIDER-FIRST-RUNTIME-IMPLEMENT-IP：为 projects.ledger / projects.detail 新增独立 provider 文件并完成注册。重新导出后，两者 provider_mode 均已从 fallback_only 提升为 normal；当前残留缺口收缩为 shared native action 与 menu mapping residual。`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen that fixes menu_interpreter as the next runtime closure layer after provider-first closure`
+
+### 2026-04-21T19:48:18+08:00
+- blocker_key: `be_projects_ledger_detail_user_flow_closure_implement_in_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `projects ledger-detail branch closure asset`
+- reason: after the projects first-wave screen fixed ledger/detail as the smallest safe closure slice, the next low-risk step was to materialize scene-level closure decisions and decide whether asset-only closure was still possible
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-LEDGER-DETAIL-USER-FLOW-CLOSURE-IMPLEMENT-IN：新增 scene_governance_project_branch_closure_export.py，并产出 projects_ledger_detail_closure_current_v1.csv。结果显示 projects.ledger=PARTIAL_CLOSED（primary_gap_type=provider_fallback_residual，asset_only_closure_possible=no，required_runtime_scope=provider|menu_interpreter）；projects.detail=PARTIAL_CLOSED（primary_gap_type=shared_native_action_residual，asset_only_closure_possible=no，required_runtime_scope=provider|menu_interpreter|orchestrator）。`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen that decides the first controlled runtime closure layer for the projects ledger-detail branch`
+
+### 2026-04-21T19:41:39+08:00
+- blocker_key: `be_projects_first_user_flow_closure_wave_screen_im_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `projects first user-flow closure wave`
+- reason: after the family user-flow asset export identified projects as the highest-priority family with one concentrated residual compat chain, the next low-risk step was to choose the first concrete closure slice inside that family
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-FIRST-USER-FLOW-CLOSURE-WAVE-SCREEN-IM：确认 projects 家族的第一条最小收口波次应聚焦 projects.ledger + projects.detail，而不是重新展开 projects.list / projects.intake。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch that exports explicit user-flow closure facts for the projects.ledger and projects.detail branch`
+
+### 2026-04-21T19:39:56+08:00
+- blocker_key: `be_high_priority_family_user_flow_asset_export_implement_il_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `high-priority family user-flow closure asset export`
+- reason: after the score-selected three-family batch was frozen, the next low-risk step was to turn those families into an explicit user-flow closure export instead of leaving them as screen-only conclusions
+- completed_step: `已完成 ITER-2026-04-22-BE-HIGH-PRIORITY-FAMILY-USER-FLOW-ASSET-EXPORT-IMPLEMENT-IL：新增 scene_governance_user_flow_asset_export.py，并为 projects / finance_center / tasks 产出 high_priority_family_user_flow_closure_current_v1.csv，显式导出 user entry、final scene、primary action、required provider、fallback strategy、acceptance status 及六项治理收口字段。`
+- active_commit: `89d096f`
+- next_step: `open a bounded follow-up batch that uses the new user-flow closure asset to screen the first concrete closure wave inside the highest-priority family`
+
+### 2026-04-22T08:06:00+08:00
+- blocker_key: `be_next_three_family_batch_screen_ik_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `next three family batch selection`
+- reason: after the suite and family priority scores were in place, the next low-risk step was to turn the score into one explicit 2-3 family batch with fixed closure fields
+- completed_step: `已完成 ITER-2026-04-22-BE-NEXT-THREE-FAMILY-BATCH-SCREEN-IK：从 family_priority_score_current_v1.csv 中显式选出 projects / finance_center / tasks 作为下一组 family 批次，并按 authority、canonical entry、menu mapping、provider gap、计划动作、验收 guard 六项固定输出当前批次收口描述。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch that starts the first user-flow asset export for the selected high-score families`
+
+### 2026-04-22T07:58:00+08:00
+- blocker_key: `be_scene_governance_suite_implement_ij_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `scene governance suite`
+- reason: after generated assets, core guards, provider completeness, and family scoring were all materialized, the next low-risk step was to unify them behind one governance suite entrypoint
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-GOVERNANCE-SUITE-IMPLEMENT-IJ：新增 scene_governance_suite.py，把 asset export、authority/canonical/menu/task-family/provider guard、family scoring 收口成一条统一治理链，并同步更新 verify spec。`
+- active_commit: `89d096f`
+- next_step: `use the generated family priority score to open the next explicit 2-3 family closure batch from the highest-ranked governed families`
+
+### 2026-04-22T07:47:00+08:00
+- blocker_key: `be_scene_governance_family_scoring_implement_ii_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `scene governance family scoring`
+- reason: after generated assets covered the current named-family perimeter, the next low-risk step was to rank later family governance waves from exported facts instead of subjective choice
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-GOVERNANCE-FAMILY-SCORING-IMPLEMENT-II：新增 scene_governance_family_priority_score.py，基于 authority/family/menu/provider 四张导出表和高频/闭合权重自动计算 family 优先级分数，并产出 family_priority_score_current_v1.csv。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch for a unified scene governance suite that runs export plus the core guards together`
+
+### 2026-04-22T07:36:00+08:00
+- blocker_key: `be_scene_governance_generated_asset_expand_implement_ih_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `generated asset perimeter expansion`
+- reason: after choosing generated-asset expansion over additional audit work, the next low-risk step was to align generated exports with the broader named-family perimeter already frozen in the manual ledgers
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-GOVERNANCE-GENERATED-ASSET-EXPAND-IMPLEMENT-IH：scene_governance_asset_export.py 现已基于手工治理账本扩展 generated authority/family exports，使 contracts 与 enterprise_bootstrap 也进入自动导出边界。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch for the governance scoring script based on the generated tables and current guard/family status`
+
+### 2026-04-22T07:27:00+08:00
+- blocker_key: `be_scene_governance_next_asset_wave_screen_ig_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `scene governance next asset wave`
+- reason: once the manual ledgers expanded to contract and enterprise bootstrap, the next low-risk decision was whether to broaden generated assets to the same perimeter or add another audit surface first
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-GOVERNANCE-NEXT-ASSET-WAVE-SCREEN-IG：确认下一批应优先扩 generated governance assets 的 named-family 覆盖范围，而不是先追加新的 advisory audit surface。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch that broadens generated authority/family exports to include contract and enterprise bootstrap families`
+
+### 2026-04-22T07:18:00+08:00
+- blocker_key: `be_scene_governance_asset_expand_contract_enterprise_implement_if_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `scene governance asset expansion`
+- reason: after the high-frequency ledgers and provider guard landed, the next low-risk step was to expand the manual governance ledgers to the other named families that had already reached stage-closed status
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-GOVERNANCE-ASSET-EXPAND-CONTRACT-ENTERPRISE-IMPLEMENT-IF：将 contracts 与 enterprise_bootstrap 两族补入 scene_authority_matrix_v1.csv 和 scene_family_inventory_v1.csv，使治理总账覆盖当前已闭合的主要 named family。`
+- active_commit: `89d096f`
+- next_step: `choose whether the next bounded governance batch should broaden generated asset exports to contract/enterprise families or add one more advisory audit surface`
+
+### 2026-04-22T07:06:00+08:00
+- blocker_key: `be_scene_provider_completeness_guard_implement_ie_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `scene provider completeness guard`
+- reason: after provider completeness became auto-exportable, the next low-risk step was to turn that generated fact surface into a dedicated guard
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-PROVIDER-COMPLETENESS-GUARD-IMPLEMENT-IE：新增 backend_scene_provider_completeness_guard，基于 generated provider completeness 总表校验治理态 scene 是否至少具备 provider 或 explicit fallback，并同步更新 scene_verify_guard_spec_v1.md。`
+- active_commit: `89d096f`
+- next_step: `rerun the governance export/guard stack and then choose whether to continue broadening family facts or tighten additional advisory audits`
+
+### 2026-04-22T06:54:00+08:00
+- blocker_key: `be_scene_governance_asset_export_implement_id_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `scene governance asset export`
+- reason: after the governance package had documents, manual ledgers, and guard mappings, the next low-risk step was to make the key governance tables auto-exportable from current verify/runtime facts
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-GOVERNANCE-ASSET-EXPORT-IMPLEMENT-ID：新增 scene_governance_asset_export.py，可自动导出 authority、family inventory、menu-scene mapping、provider completeness 四张 current-state 总表到 scene-governance/assets/generated/。`
+- active_commit: `89d096f`
+- next_step: `run the new asset export script and, if it passes, open the next bounded batch for the missing provider-completeness guard`
+
+### 2026-04-22T06:41:00+08:00
+- blocker_key: `be_scene_governance_verify_spec_tighten_implement_ic_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `scene governance verify spec tightening`
+- reason: after the governance package had both document skeletons and high-frequency family facts, the next low-risk step was to make the verify spec explicit about current guard mappings, gate levels, and minimum failure-code inventory
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-GOVERNANCE-VERIFY-SPEC-TIGHTEN-IMPLEMENT-IC：将 scene_verify_guard_spec_v1.md 收口为“规范 + 当前 guard 映射”，并在 scene_failure_model_v1.md 与 scene_failure_codes_v1.csv 中补齐最小失败码总账。`
+- active_commit: `89d096f`
+- next_step: `open the next bounded batch that decides whether to add the missing provider-completeness guard or continue filling broader family assets`
+
+### 2026-04-22T06:33:00+08:00
+- blocker_key: `be_scene_governance_high_frequency_asset_implement_ib_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `scene governance high-frequency assets`
+- reason: after the governance doc foundation landed, the next low-risk step was to materialize current-state facts for the most important governed families before adding more guard tightening
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-GOVERNANCE-HIGH-FREQUENCY-ASSET-IMPLEMENT-IB：在 scene_authority_matrix_v1.csv 和 scene_family_inventory_v1.csv 中补齐 projects、tasks、finance/payment 高频 family 的当前 authority/canonical/family 状态，为后续 verify 规范和 family 扩展提供总账基础。`
+- active_commit: `89d096f`
+- next_step: `open the next bounded batch that upgrades the new scene-governance verify spec from document form toward explicit required/advisory guard mapping`
+
+### 2026-04-22T06:24:00+08:00
+- blocker_key: `be_scene_governance_doc_foundation_implement_ia_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `scene governance documentation foundation`
+- reason: after summarizing business-fact inputs versus scene orchestration, the next low-risk step was to promote the governance language into a formal documentation package before any further family-fact or verify tightening
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-GOVERNANCE-DOC-FOUNDATION-IMPLEMENT-IA：正式创建 docs/architecture/scene-governance/ 规范目录，落地 README、overview、authority、entry、runtime chain、family governance、failure model、verify spec 七份文档，以及三份 csv 模板资产。`
+- active_commit: `89d096f`
+- next_step: `open the next bounded batch that fills current-state facts into the new scene-governance assets for high-frequency families`
+
+### 2026-04-22T06:12:00+08:00
+- blocker_key: `be_scene_orchestration_business_fact_summary_screen_hz_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `scene orchestration and business-fact summary`
+- reason: the user needed a decisive summary of how Odoo-based business facts are turned into scene orchestration and normalized output so later需求能够准确落到业务事实层、编排层或渲染层
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-ORCHESTRATION-BUSINESS-FACT-SUMMARY-SCREEN-HZ：形成临时文档，明确业务事实层必须提供的输入、scene orchestration 当前如何消费这些事实并规范化输出 scene-ready/app-shell contract，以及后续需求应如何按“业务事实 / 场景编排 / 前端渲染”三层判定。`
+- active_commit: `89d096f`
+- next_step: `use the new business-fact versus scene-orchestration summary as the decision baseline for the next concrete user requirement`
+
+### 2026-04-22T05:58:00+08:00
+- blocker_key: `be_next_residual_family_screen_hy_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `next residual family selection`
+- reason: after the task-board wave closed, the next low-risk step was to pick a fresh residual family without reopening any of the named families that already had closure verify
+- completed_step: `已完成 ITER-2026-04-22-BE-NEXT-RESIDUAL-FAMILY-SCREEN-HY：确认下一 residual family 应切向 generic /a/... / compatibility-ingress 家族，而不是回头继续加深已经收口的 project/task/finance/contract/enterprise 波次。`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen that classifies the current generic /a/... residual between necessary compatibility ingress and eligible backend route-supply seams`
+
+### 2026-04-22T05:50:00+08:00
+- blocker_key: `be_task_board_wave_closure_verify_hx_pass_v1`
+- layer_target: `Backend governance verify`
+- module: `task.board wave closure`
+- reason: after task.board gained both a dedicated compat carrier and main baseline coverage, the next low-risk step was to judge whether this new wave still had material unresolved governance work
+- completed_step: `已完成 ITER-2026-04-22-BE-TASK-BOARD-WAVE-CLOSURE-VERIFY-HX：确认当前 task-board 治理波次已经阶段性收口；task.board 已拥有独立 carrier、compat guard 和 authority/canonical baseline，不应在本轮继续隐式扩写为更重的 board work surface。`
+- active_commit: `89d096f`
+- next_step: `open a fresh bounded screen that chooses the next residual family after the task-board wave closure`
+
+### 2026-04-22T05:42:00+08:00
+- blocker_key: `be_task_board_baseline_implement_hw_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `task.board baseline`
+- reason: once task.board existed as a dedicated carrier, the next low-risk follow-through was to move it into the main authority/canonical baseline set instead of leaving it in a governance blind spot
+- completed_step: `已完成 ITER-2026-04-22-BE-TASK-BOARD-BASELINE-IMPLEMENT-HW：将 task.board 纳入 authority/canonical baseline，正式冻结为 route-only、authority-light、无 native menu/action 的 compat scene；相关 verify 文档已同步。`
+- active_commit: `89d096f`
+- next_step: `rerun the governance verification stack and then reassess whether any material residual remains inside the current task-board wave`
+
+### 2026-04-22T05:33:00+08:00
+- blocker_key: `be_task_board_baseline_screen_hv_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `task.board baseline decision`
+- reason: after introducing task.board as a dedicated compat carrier, the next low-risk question was whether it should remain outside the main baseline set or be explicitly governed there too
+- completed_step: `已完成 ITER-2026-04-22-BE-TASK-BOARD-BASELINE-SCREEN-HV：确认 task.board 不应停留在 compat-guard-only 状态，下一步应进入一个小型 authority/canonical baseline 波次，以明确其 authority-light、无 native menu/action 的正式治理口径。`
+- active_commit: `89d096f`
+- next_step: `open a bounded governance implementation batch that adds task.board to the authority/canonical baseline surfaces as an authority-light compat scene`
+
+### 2026-04-22T05:26:00+08:00
+- blocker_key: `be_task_board_compat_carrier_implement_hu_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `project.task.board compat carrier`
+- reason: the design screen selected a dedicated compat-only alias carrier as the smallest correct next step, so the next low-risk implementation was to stop borrowing projects.ledger and introduce a minimal separate carrier
+- completed_step: `已完成 ITER-2026-04-22-BE-TASK-BOARD-COMPAT-CARRIER-IMPLEMENT-HU：为 project.task.board 引入 authority-light 的独立 compat carrier task.board，并将 capability 映射从 projects.ledger 收到 task.board；单测与 task-family compat guard 已同步改为验证 board-style entry 的独立承载。`
+- active_commit: `89d096f`
+- next_step: `rerun the restricted governance verification stack and then reassess whether task.board needs its own authority/canonical baseline wave`
+
+### 2026-04-22T05:16:00+08:00
+- blocker_key: `be_task_board_compat_design_screen_ht_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `project.task.board compat target design`
+- reason: after choosing project.task.board as the next governance wave, the next low-risk step was to decide whether its dedicated backend target should be a full scene, a compat-only alias, or continued borrowed ownership
+- completed_step: `已完成 ITER-2026-04-22-BE-TASK-BOARD-COMPAT-DESIGN-SCREEN-HT：确认最小正确设计路径应是为 project.task.board 引入 dedicated compat-only alias scene/carrier，而不是继续借 projects.ledger，也不是立即升级为 full native-authority scene。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch that introduces the minimal dedicated compat carrier for project.task.board and rewires the borrowed mapping away from projects.ledger`
+
+### 2026-04-22T05:08:00+08:00
+- blocker_key: `be_next_governance_wave_screen_hs_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `next governance wave selection`
+- reason: once the current backend scene-governance wave was verified as stage-closed, the next low-risk step was to choose a new bounded residual family instead of reopening the closed wave
+- completed_step: `已完成 ITER-2026-04-22-BE-NEXT-GOVERNANCE-WAVE-SCREEN-HS：确认下一治理波次应优先切 project.task.board 的 dedicated backend compat target 设计，而不是立即跳到与当前 storyline 无关的别的 family。`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen that classifies the smallest dedicated backend compat target design path for project.task.board`
+
+### 2026-04-22T04:58:00+08:00
+- blocker_key: `be_scene_governance_wave_consolidation_verify_hr_pass_v1`
+- layer_target: `Backend governance verify`
+- module: `scene governance wave consolidation`
+- reason: after the task-board compat guard became pure Python verifiable, the wave had enough bounded guard surfaces to judge whether the current backend scene-governance round was sufficiently locked
+- completed_step: `已完成 ITER-2026-04-22-BE-SCENE-GOVERNANCE-WAVE-CONSOLIDATION-VERIFY-HR：确认当前后端场景化治理波次已具备 authority、canonical-entry、menu-mapping、task-family compat-gap 四道门禁；本轮应视为阶段性收口，而不是继续在同一波次里扩张实现。`
+- active_commit: `89d096f`
+- next_step: `open a fresh bounded screen that chooses the next governance wave after this stage-closed backend scene-governance round`
+
+### 2026-04-22T04:49:00+08:00
+- blocker_key: `be_task_board_compat_guard_env_fix_hq_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `task board compat guard environment fix`
+- reason: the newly added guard failed under standalone Python because it executed an Odoo-dependent module instead of reading only the frozen capability map literal
+- completed_step: `已完成 ITER-2026-04-22-BE-TASK-BOARD-COMPAT-GUARD-ENV-FIX-HQ：将 backend_task_family_compat_gap_guard 的加载方式改为基于 AST 只解析 CAPABILITY_ENTRY_SCENE_MAP 字面量，去除对 Odoo runtime 的依赖；task-board compat guard 恢复为纯 Python 可验证状态。`
+- active_commit: `89d096f`
+- next_step: `rerun the task-board compat guard batch acceptance and then open a bounded consolidation verify for the current backend scene-governance wave`
+
+### 2026-04-22T04:41:00+08:00
+- blocker_key: `be_task_board_compat_guard_implement_hp_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `task board compat guard`
+- reason: the residual screen concluded that project.task.board should remain a declared compat gap, so the next low-risk step was to move that fact from delivery-log memory into a dedicated verify surface
+- completed_step: `已完成 ITER-2026-04-22-BE-TASK-BOARD-COMPAT-GUARD-IMPLEMENT-HP：新增 backend_task_family_compat_gap_guard，将 task family 的 board-style residual 机器化冻结为“project.task.list -> task.center；project.task.board 暂时落在 projects.ledger，但仍是 declared unresolved compat gap”。`
+- active_commit: `89d096f`
+- next_step: `open a bounded consolidation verify that reassesses whether the current backend scene-governance wave is now sufficiently locked for this round`
+
+### 2026-04-22T04:29:00+08:00
+- blocker_key: `be_task_board_residual_screen_ho_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `project.task.board residual`
+- reason: after task.center and projects.detail were both normalized in governance, the remaining compat ambiguity narrowed to board-style task entry still hanging off projects.ledger
+- completed_step: `已完成 ITER-2026-04-22-BE-TASK-BOARD-RESIDUAL-SCREEN-HO：确认 project.task.board 当前不应进入新的 runtime 改造；正确下一步是把它以 task-family declared unresolved compat gap 的形式显式挂账，而不是继续猜测一个伪 scene target。`
+- active_commit: `89d096f`
+- next_step: `open a bounded verify/gate batch that records project.task.board as an explicit known compat gap in task-family governance`
+
+### 2026-04-22T04:18:00+08:00
+- blocker_key: `be_projects_detail_compat_baseline_implement_hn_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `projects.detail compatibility baseline`
+- reason: the shared-native screen proved that projects.detail should remain detail authority rather than native-parity scene work, so the next low-risk step was to freeze that interpretation in verify baselines
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-DETAIL-COMPAT-BASELINE-IMPLEMENT-HN：将 projects.detail 从 native-parity 口径收口为 detail-route authority + shared-native compatibility；authority/canonical-entry guard 与文档已同步明确 shared project ledger action 对 detail 只具 compat 语义。`
+- active_commit: `89d096f`
+- next_step: `open a bounded verify or screen batch that reassesses the remaining unresolved compat residual around project.task.board`
+
+### 2026-04-22T04:05:00+08:00
+- blocker_key: `be_projects_detail_shared_native_screen_hm_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `projects.detail shared-native normalization`
+- reason: after task.center was frozen as a stable action-only slice, the next low-risk residual was whether projects.detail should still be treated as native-parity scene work or as detail authority with compat-only shared native action
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-DETAIL-SHARED-NATIVE-SCREEN-HM：确认 projects.detail 不应继续被视为 native-parity scene；其稳定角色应是 detail route + record-entry authority，而与 projects.ledger 共用的 native menu/action 仅保留 compat 语义。`
+- active_commit: `89d096f`
+- next_step: `open a bounded governance update batch that reclassifies projects.detail verify baselines from native parity toward detail-authority with shared-native compatibility`
+
+### 2026-04-22T03:52:00+08:00
+- blocker_key: `be_task_center_action_only_baseline_implement_hl_pass_v1`
+- layer_target: `Backend governance implementation`
+- module: `task.center action-only baseline`
+- reason: the menu-authority screen proved that task.center lacks a dedicated menu by design rather than by drift, so the next low-risk step was to freeze that classification in verify baselines
+- completed_step: `已完成 ITER-2026-04-22-BE-TASK-CENTER-ACTION-ONLY-BASELINE-IMPLEMENT-HL：将 task.center 从“待补 dedicated menu authority”的治理口径收口为 declared action-only stable slice；authority/canonical-entry guard 与对应文档已同步明确其无 native menu 属于刻意冻结状态，而非未完成缺口。`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen for projects.detail shared-native normalization and decide the smallest stable authority/compat closure path`
+
+### 2026-04-22T03:40:00+08:00
+- blocker_key: `be_task_center_menu_authority_screen_hk_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `task.center menu authority`
+- reason: compat-normalization inventory ranked task.center first, and the next low-risk question was whether the repository already contained a smallest reusable native task menu authority
+- completed_step: `已完成 ITER-2026-04-22-BE-TASK-CENTER-MENU-AUTHORITY-SCREEN-HK：确认当前仓库并不存在稳定的 task-family root menu，因此 task.center 应继续保持 action-only，而不是强行占用项目菜单；compat normalization 下一刀应转向 projects.detail。`
+- active_commit: `89d096f`
+- next_step: `open a bounded governance update batch that reclassifies task.center as a declared action-only stable slice in the verify baselines, then move to projects.detail shared-native normalization`
+
+### 2026-04-22T03:28:00+08:00
+- blocker_key: `be_compat_normalization_inventory_screen_hj_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `compat normalization inventory`
+- reason: once the canonical-route wave closed, the next low-risk governance step was to order the remaining compat/shared-native residuals instead of mixing them together
+- completed_step: `已完成 ITER-2026-04-22-BE-COMPAT-NORMALIZATION-INVENTORY-SCREEN-HJ：确认 compat/shared-native normalization 的建议顺序应为 task.center -> projects.detail -> project.task.board，其中 task.center 因为仅缺 native menu authority 而成为最低耦合的首刀对象。`
+- active_commit: `89d096f`
+- next_step: `open a bounded task.center menu-authority screen that decides the smallest native-menu normalization path for the task family`
+
+### 2026-04-22T03:16:00+08:00
+- blocker_key: `be_canonical_route_closure_verify_hi_pass_v1`
+- layer_target: `Backend governance verify`
+- module: `canonical route closure`
+- reason: after route-freeze landed for projects.list, finance.center, and projects.ledger, the next low-risk step was to verify whether the canonical-route completion class was now closed for this wave
+- completed_step: `已完成 ITER-2026-04-22-BE-CANONICAL-ROUTE-CLOSURE-VERIFY-HI：确认 canonical route completion 这一治理类已在本轮阶段性关闭，当前残差已主要收敛为 compat/shared-native normalization。`
+- active_commit: `89d096f`
+- next_step: `open a bounded compat/shared-native normalization inventory screen for projects.detail, task.center, and project.task.board`
+
+### 2026-04-22T03:05:00+08:00
+- blocker_key: `be_projects_ledger_canonical_route_implement_hh_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `projects.ledger canonical route`
+- reason: the route-freeze screen concluded that projects.ledger could gain explicit canonical route without waiting for the later compat-normalization wave
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-LEDGER-CANONICAL-ROUTE-IMPLEMENT-HH：在 registry 中为 projects.ledger 补齐 /s/projects.ledger，并把 authority/canonical-entry guard 基线从 transitional route gap 更新为显式 canonical route + native parity，同时保留 ledger/detail shared-native known gap。`
+- active_commit: `89d096f`
+- next_step: `open a bounded consolidation verify that judges whether the canonical-route completion class is now closed and whether the next governance wave should move to compat-target normalization`
+
+### 2026-04-22T02:54:00+08:00
+- blocker_key: `be_projects_ledger_route_screen_hg_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `projects.ledger route freeze`
+- reason: after projects.list and finance.center route freezes landed, the next low-risk question was whether projects.ledger route-freeze was blocked by its remaining shared-native coupling with projects.detail
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-LEDGER-ROUTE-SCREEN-HG：确认 projects.ledger 可以独立补 canonical route，而不必等待 detail compat normalization；本批只需保持 shared native action 的已知 gap 说明不变。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch that freezes the canonical route for projects.ledger and updates the relevant verify baselines without touching detail compatibility logic`
+
+### 2026-04-22T02:43:00+08:00
+- blocker_key: `be_finance_center_canonical_route_implement_hf_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `finance.center canonical route`
+- reason: projects.list route freeze passed, and the next screened canonical-route candidate was finance.center with the explicit constraint that finance.workspace must continue sharing the native root menu/action
+- completed_step: `已完成 ITER-2026-04-22-BE-FINANCE-CENTER-CANONICAL-ROUTE-IMPLEMENT-HF：在 registry 中为 finance.center 补齐 /s/finance.center，并把 authority/canonical-entry guard 基线从 route-missing hybrid root 更新为显式 canonical route + shared native root。`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen or implementation batch for projects.ledger canonical route freeze, explicitly factoring in the remaining ledger/detail shared-native identity gap`
+
+### 2026-04-22T02:31:00+08:00
+- blocker_key: `be_projects_list_canonical_route_implement_he_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `projects.list canonical route`
+- reason: canonical-route completion was selected as the next governance class, and projects.list was the lowest-coupling stabilized root candidate
+- completed_step: `已完成 ITER-2026-04-22-BE-PROJECTS-LIST-CANONICAL-ROUTE-IMPLEMENT-HE：在 registry 中为 projects.list 补齐 /s/projects.list，并把 authority/canonical-entry guard 基线从 route-missing transitional 更新为显式 canonical route + native parity。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch that freezes the canonical route for finance.center while preserving the existing hybrid-root distinction with finance.workspace`
+
+### 2026-04-22T02:20:00+08:00
+- blocker_key: `be_canonical_route_inventory_screen_hd_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `canonical route inventory`
+- reason: after cross-family consolidation priority selected canonical-route completion as the next governance class, the next low-risk step was to choose route-freeze order among the stabilized candidates
+- completed_step: `已完成 ITER-2026-04-22-BE-CANONICAL-ROUTE-INVENTORY-SCREEN-HD：确认 canonical route completion 的建议顺序应为 projects.list -> finance.center -> projects.ledger，其中 projects.list 是最低耦合、最适合先落地的 route-freeze 对象。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch that freezes the canonical route for projects.list and updates the relevant verify baselines`
+
+### 2026-04-22T02:10:00+08:00
+- blocker_key: `be_cross_family_consolidation_priority_screen_hc_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `cross-family consolidation priority`
+- reason: after consolidating the remaining declared authority gaps, the next low-risk governance step was to choose one residual class for focused execution instead of mixing canonical-route work with compat normalization
+- completed_step: `已完成 ITER-2026-04-22-BE-CROSS-FAMILY-CONSOLIDATION-PRIORITY-SCREEN-HC：确认下一类优先治理目标应是 canonical route completion，而不是 shared-native / compat normalization；首批对象为 projects.list、projects.ledger、finance.center。`
+- active_commit: `89d096f`
+- next_step: `open a bounded canonical-route inventory screen for projects.list, projects.ledger, and finance.center to judge route-freeze order and constraints`
+
+### 2026-04-22T02:00:00+08:00
+- blocker_key: `be_cross_family_authority_gap_inventory_screen_hb_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `cross-family authority gap inventory`
+- reason: after the family-closure wave completed for projects, tasks, finance, contracts, and enterprise bootstrap, the next low-risk governance step was to consolidate the remaining declared residuals without reopening repository-wide scans
+- completed_step: `已完成 ITER-2026-04-22-BE-CROSS-FAMILY-AUTHORITY-GAP-INVENTORY-SCREEN-HB：确认当前残差已从 family-level 漂移收敛成少数显式已知 gap，主要集中在 canonical route 缺口和 shared native action / compat target 缺口。`
+- active_commit: `89d096f`
+- next_step: `open a bounded cross-family consolidation screen that chooses whether canonical-route completion or compat-target normalization should be the next governance class`
+
+### 2026-04-22T01:48:00+08:00
+- blocker_key: `be_enterprise_bootstrap_authority_closure_verify_ha_pass_v1`
+- layer_target: `Backend governance verify`
+- module: `enterprise bootstrap authority closure`
+- reason: after project, task, finance, and contract slices reached bounded closure, the next visible governance surface was enterprise bootstrap identity and canonical-entry consistency
+- completed_step: `已完成 ITER-2026-04-22-BE-ENTERPRISE-BOOTSTRAP-AUTHORITY-CLOSURE-VERIFY-HA：确认当前 enterprise.company / department / post / user 的 bootstrap authority 已足够显式，可视为该 slice 的阶段性收口。`
+- active_commit: `89d096f`
+- next_step: `open a bounded cross-family governance screen that inventories remaining known authority gaps after the current family-closure wave`
+
+### 2026-04-22T01:37:00+08:00
+- blocker_key: `be_contract_family_authority_closure_verify_gz_pass_v1`
+- layer_target: `Backend governance verify`
+- module: `contract family authority closure`
+- reason: after contract capability routing and payload menu authority were aligned to the contract-family root, the next low-risk step was to judge whether the bounded contract entry slice was sufficiently explicit to count as closed
+- completed_step: `已完成 ITER-2026-04-22-BE-CONTRACT-FAMILY-AUTHORITY-CLOSURE-VERIFY-GZ：确认当前 contract family 的 root/workspace/monitor/capability 入口权威已经足够显式，可视为该 slice 的阶段性收口。`
+- active_commit: `89d096f`
+- next_step: `open a bounded enterprise-bootstrap family verify screen that judges whether enterprise.company/department/post/user entry authority is sufficiently explicit for the bootstrap slice`
+
+### 2026-04-22T01:26:00+08:00
+- blocker_key: `be_contract_capability_authority_implement_gy_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `contract capability authority`
+- reason: contract-family screen showed that capability routing and payload menu were both drifting away from the frozen contract-center root authority
+- completed_step: `已完成 ITER-2026-04-22-BE-CONTRACT-CAPABILITY-AUTHORITY-IMPLEMENT-GY：将 contract.center.open 的 capability scene 从 projects.ledger 收到 contract.center，并把 capability default payload 与 scene tiles 的 menu_xmlid 从 menu_sc_contract_income 改为 menu_sc_contract_center，同时补单测覆盖 contract family root authority。`
+- active_commit: `89d096f`
+- next_step: `open a bounded contract-family closure verify batch that judges whether contract.center, contracts.workspace, and contracts.monitor ownership is sufficiently explicit for this slice`
+
+### 2026-04-22T01:15:00+08:00
+- blocker_key: `be_contract_capability_menu_authority_screen_gx_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `contract capability menu authority`
+- reason: contract-family inventory showed that contract scene authority had already converged on the contract-center root menu while the capability payload still pointed to the narrower income-contract submenu
+- completed_step: `已完成 ITER-2026-04-22-BE-CONTRACT-CAPABILITY-MENU-AUTHORITY-SCREEN-GX：确认 contract.center.open 的 capability payload 应收回到 menu_sc_contract_center，而不是继续指向 menu_sc_contract_income；action_construction_contract_my 可保持不变。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch that aligns contract.center.open default payload to menu_sc_contract_center and verifies contract-family authority consistency`
+
+### 2026-04-22T01:03:00+08:00
+- blocker_key: `be_finance_family_authority_closure_verify_gw_pass_v1`
+- layer_target: `Backend governance verify`
+- module: `finance family authority closure`
+- reason: after finance root, payment-request list, and approval menu authority were aligned, the next low-risk step was to judge whether the finance entry slice was sufficiently explicit to count as closed
+- completed_step: `已完成 ITER-2026-04-22-BE-FINANCE-FAMILY-AUTHORITY-CLOSURE-VERIFY-GW：确认当前 finance family 的 root/list/approval 入口权威已经足够显式，可视为该 slice 的阶段性收口；下一族应切到 contract family。`
+- active_commit: `89d096f`
+- next_step: `open a bounded contract-family entry inventory screen focused on contract.center, contracts.workspace, and contracts.monitor authority drift`
+
+### 2026-04-22T00:52:00+08:00
+- blocker_key: `be_finance_payment_request_action_semantics_screen_gv_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `finance payment request action semantics`
+- reason: after approval authority was split onto the real native approval menu, the remaining finance entry question was whether generic and personal payment-request actions still belonged to one scene or should split into separate identities
+- completed_step: `已完成 ITER-2026-04-22-BE-FINANCE-PAYMENT-REQUEST-ACTION-SEMANTICS-SCREEN-GV：确认 action_payment_request 与 action_payment_request_my 继续共属于 finance.payment_requests 更合理，其中 action_payment_request_my 维持 canonical/personal 入口，action_payment_request 保持 native compatibility 入口。`
+- active_commit: `89d096f`
+- next_step: `open a bounded finance-family closure verify batch that judges whether the current finance entry ownership is sufficiently explicit for this slice`
+
+### 2026-04-22T00:40:00+08:00
+- blocker_key: `be_finance_authority_guard_baseline_implement_gu_pass_v1`
+- layer_target: `Backend governance verify`
+- module: `finance authority guard baseline`
+- reason: payments.approval had already been rebound to the native approval menu, but the authority guard was still enforcing an obsolete shared-menu finance rule and caused a false stop condition
+- completed_step: `已完成 ITER-2026-04-22-BE-FINANCE-AUTHORITY-GUARD-BASELINE-IMPLEMENT-GU：将 backend_scene_authority_guard 的 finance 基线更新为 payment_requests 与 payments.approval 分离 native menu、分离 canonical action，并同步 verify 文档口径。`
+- active_commit: `89d096f`
+- next_step: `resume the finance-family screen for action_payment_request versus action_payment_request_my generic-vs-personal semantics after re-running the finance authority verification stack`
+
+### 2026-04-22T00:28:00+08:00
+- blocker_key: `be_payments_approval_menu_authority_implement_gt_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `payments approval menu authority`
+- reason: the preceding screen proved that payments.approval already had a dedicated native approval menu, so the next low-risk step was to rebind scene authority to that menu and preserve payment-request list ownership separately
+- completed_step: `已完成 ITER-2026-04-22-BE-PAYMENTS-APPROVAL-MENU-AUTHORITY-IMPLEMENT-GT：将 payments.approval 的 registry menu_xmlid 改为 menu_sc_tier_review_my_payment_request，并在 NAV_MENU_SCENE_MAP 中显式新增该菜单 -> payments.approval；同时补单测确认 menu_payment_request 仍归 finance.payment_requests。`
+- active_commit: `89d096f`
+- next_step: `open a bounded finance-family screen that decides whether action_payment_request and action_payment_request_my should remain collapsed under finance.payment_requests or split into generic-vs-personal request semantics`
+
+### 2026-04-22T00:18:00+08:00
+- blocker_key: `be_payments_approval_menu_authority_screen_gs_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `payments approval menu authority`
+- reason: finance entry inventory revealed that payments.approval was sharing the payment-request list menu even though a dedicated native approval menu already existed
+- completed_step: `已完成 ITER-2026-04-22-BE-PAYMENTS-APPROVAL-MENU-AUTHORITY-SCREEN-GS：确认 payments.approval 不应退化为 action-only authority；正确做法是把 scene authority 修正到真实原生审批菜单 menu_sc_tier_review_my_payment_request，并保留 menu_payment_request 归 finance.payment_requests。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch that rebinds payments.approval to menu_sc_tier_review_my_payment_request and adds the explicit menu-scene map`
+
+### 2026-04-22T00:07:00+08:00
+- blocker_key: `be_finance_family_entry_inventory_screen_gr_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `finance family entry inventory`
+- reason: after task-family closure, the next low-risk governance family was finance entry ownership, and the first need was to distinguish finance root, payment-request list, and approval worklist semantics
+- completed_step: `已完成 ITER-2026-04-21-BE-FINANCE-FAMILY-ENTRY-INVENTORY-SCREEN-GR：确认 finance.center 已是 root/dashboard，finance.payment_requests 是 payment list 主入口，而 payments.approval 是 approval action 场景；当前主要漂移集中在 menu_payment_request 被 payment list 与 approval scene 共同引用。`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen that decides whether payments.approval should drop shared menu authority and become action-only authority under the finance family`
+
+### 2026-04-21T23:57:00+08:00
+- blocker_key: `be_task_family_authority_closure_verify_gq_pass_v1`
+- layer_target: `Backend governance verify`
+- module: `task family authority closure`
+- reason: after task list and my-work task reopen were aligned to task.center and task board was isolated as an explicit compat gap, the next low-risk step was to judge whether the task-family slice was otherwise explicit enough to count as closed
+- completed_step: `已完成 ITER-2026-04-21-BE-TASK-FAMILY-AUTHORITY-CLOSURE-VERIFY-GQ：确认当前 task family 的主入口权威已经足够显式，board-style task entry 作为已声明 compat gap 单独挂账，不再构成无控制漂移；该 slice 可视为阶段性收口。`
+- active_commit: `89d096f`
+- next_step: `open a bounded finance-family entry inventory screen focused on finance.center, finance.payment_requests, and payments.approval ownership drift`
+
+### 2026-04-21T23:48:00+08:00
+- blocker_key: `be_task_board_compat_target_screen_gp_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `task board compat target`
+- reason: after classifying project.task.board as task-family owned but distinct from task.center, the next low-risk question was whether the repository already contained a smallest explicit compat target for it
+- completed_step: `已完成 ITER-2026-04-21-BE-TASK-BOARD-COMPAT-TARGET-SCREEN-GP：确认仓库内并不存在现成的 task-board backend compat target，因此当前正确策略是把 project.task.board 冻结为 task family 的显式 unresolved compat gap，而不是继续挂在 projects.ledger 或硬塞进 task.center。`
+- active_commit: `89d096f`
+- next_step: `open a bounded verify/gate batch that records project.task.board as an explicit known compat gap in task-family governance and judges whether the current task-family slice is otherwise sufficiently explicit`
+
+### 2026-04-21T23:39:00+08:00
+- blocker_key: `be_task_board_classification_screen_go_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `task board classification`
+- reason: after task list and my-work task reopen converged to task.center, the remaining ambiguity was whether board-style task entry should collapse into that same scene or remain a distinct compat-style task-family entry
+- completed_step: `已完成 ITER-2026-04-21-BE-TASK-BOARD-CLASSIFICATION-SCREEN-GO：确认 project.task.board 不应再挂在 projects.ledger，但也不宜直接等同于 task.center；它更适合作为 task family 内的 board-style compat 入口单独处理。`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen that decides the smallest explicit compat target for board-style task entry without introducing a broad new task scene family`
+
+### 2026-04-21T23:29:00+08:00
+- blocker_key: `be_task_list_ownership_implement_gn_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `task list ownership`
+- reason: the task-family inventory screen identified capability and my-work task reopen semantics as the smallest orchestration-owned slice to align before touching native object methods
+- completed_step: `已完成 ITER-2026-04-21-BE-TASK-LIST-OWNERSHIP-IMPLEMENT-GN：将 capability 的 project.task.list 从 projects.ledger 收到 task.center，并把 my_work 中 project.task 的 model/source 路由从 projects.list 收到 task.center；同时保留 project.task.board 先不动，等待单独裁决。`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen that classifies whether project.task.board should converge to task.center or remain a separate board-style task entry`
+
+### 2026-04-21T23:18:00+08:00
+- blocker_key: `be_task_family_entry_inventory_screen_gm_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `task family entry inventory`
+- reason: after project-family authority closure, the next low-risk family was task entry ownership, and the first need was to separate already-converged task.center facts from the remaining capability/action drift
+- completed_step: `已完成 ITER-2026-04-21-BE-TASK-FAMILY-ENTRY-INVENTORY-SCREEN-GM：确认 task.center 已有 canonical route + action，但 capability 的 project.task.list / board 仍漂到 projects.ledger，my-work 的 project.task.open 也仍是 residual candidate；下一刀应先收 capability 与 action-key，而不是先改 object method。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch that aligns project.task.list and the smallest task-family orchestration-owned targets away from projects.ledger toward task.center`
+
+### 2026-04-21T23:08:00+08:00
+- blocker_key: `be_project_family_authority_closure_verify_gl_pass_v1`
+- layer_target: `Backend governance verify`
+- module: `project family authority closure`
+- reason: after closing the residual quick-create and manage wrappers, the next low-risk step was to judge whether the project.project entry slice was explicit enough to treat as closed for this bounded governance round
+- completed_step: `已完成 ITER-2026-04-21-BE-PROJECT-FAMILY-AUTHORITY-CLOSURE-VERIFY-GL：确认当前 project.project 入口权威对 intake/list/ledger/management/detail 的分工已经足够显式，可视为该 slice 的后端场景权威阶段性收口，下一刀应转入 task family。`
+- active_commit: `89d096f`
+- next_step: `open a bounded task-family screen that inventories task entry ownership and remaining implicit consumers after task.center canonical route closure`
+
+### 2026-04-21T22:58:00+08:00
+- blocker_key: `be_project_residual_consumer_ownership_implement_gk_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `residual project consumer ownership`
+- reason: after the residual inventory isolated the remaining implicit quick-create and manage menu consumers, the next low-risk step was to encode those ownerships explicitly
+- completed_step: `已完成 ITER-2026-04-21-BE-PROJECT-RESIDUAL-CONSUMER-OWNERSHIP-IMPLEMENT-GK：在 core_extension 中显式新增 action_project_initiation_quick 与 menu_sc_project_quick_create -> projects.intake，以及 menu_sc_project_manage -> project.management，并补充单测覆盖 residual project 入口收口。`
+- active_commit: `89d096f`
+- next_step: `open a bounded verification screen that judges whether the current project family entry ownership is sufficiently explicit to count as backend scene authority closure for this slice`
+
+### 2026-04-21T22:49:00+08:00
+- blocker_key: `be_project_consumer_remaining_inventory_screen_gj_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `remaining project consumer inventory`
+- reason: after explicit action ownership landed for list, ledger, and management flows, the next low-risk step was to isolate the small set of project menus/actions still depending on implicit fallback
+- completed_step: `已完成 ITER-2026-04-21-BE-PROJECT-CONSUMER-REMAINING-INVENTORY-SCREEN-GJ：确认剩余 residual candidates 主要收敛为 action_project_initiation_quick / menu_sc_project_quick_create / menu_sc_project_manage，分别应并入 projects.intake 与 project.management，而不需要新增 scene。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch that explicitly maps action_project_initiation_quick and menu_sc_project_quick_create to projects.intake, and menu_sc_project_manage to project.management`
+
+### 2026-04-21T22:37:00+08:00
+- blocker_key: `be_project_manage_action_ownership_implement_gi_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `project.manage action ownership`
+- reason: after screening action_sc_project_manage as a management-maintenance re-entry, the next low-risk step was to encode it explicitly in the scene-first action map
+- completed_step: `已完成 ITER-2026-04-21-BE-PROJECT-MANAGE-ACTION-OWNERSHIP-IMPLEMENT-GI：在 core_extension 的 NAV_ACTION_SCENE_MAP 中显式新增 action_sc_project_manage -> project.management，并补充单测覆盖项目管理回流入口不再与 list/ledger/detail 混淆。`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen that inventories remaining project.project action or menu consumers still missing explicit scene-first ownership after the list/detail/management split`
+
+### 2026-04-21T22:28:00+08:00
+- blocker_key: `be_project_manage_action_classification_screen_gh_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `project manage action classification`
+- reason: once shared collection actions were frozen to projects.list and projects.ledger, the remaining unresolved action was action_sc_project_manage and it needed a separate semantic owner decision before any new mapping was added
+- completed_step: `已完成 ITER-2026-04-21-BE-PROJECT-MANAGE-ACTION-CLASSIFICATION-SCREEN-GH：确认 action_sc_project_manage 的真实语义是项目管理维护/补齐资料回流入口，应归 project.management，而不是 projects.list / projects.ledger / projects.detail。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch that adds explicit scene-first ownership for action_sc_project_manage under project.management and verifies the mapping`
+
+### 2026-04-21T22:18:00+08:00
+- blocker_key: `be_project_list_shared_action_ownership_implement_gf_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `projects.list shared action ownership`
+- reason: the preceding screen froze overview and my-list as collection-first project browsing actions, so the next low-risk step was to encode that ownership explicitly in the scene-first action map
+- completed_step: `已完成 ITER-2026-04-21-BE-PROJECT-LIST-SHARED-ACTION-OWNERSHIP-IMPLEMENT-GF：在 core_extension 的 NAV_ACTION_SCENE_MAP 中显式新增 action_sc_project_overview 与 action_sc_project_my_list -> projects.list，并补充单测确认 projects.detail 仍只作为 route+record context 的 detail authority。`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen that classifies action_sc_project_manage under project.management semantics and decides whether a separate explicit scene-first ownership mapping is warranted`
+
+### 2026-04-21T22:08:00+08:00
+- blocker_key: `be_shared_project_action_classification_screen_ge_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `shared project native action classification`
+- reason: after projects.detail gained one real runtime record supply path, the next low-risk step was to freeze which shared project native actions still belonged to list, ledger, or detail semantics before changing any more mappings
+- completed_step: `已完成 ITER-2026-04-21-BE-SHARED-PROJECT-ACTION-CLASSIFICATION-SCREEN-GE：确认 action_sc_project_overview 与 action_sc_project_my_list 应归 projects.list，action_sc_project_kanban_lifecycle 继续归 projects.ledger，projects.detail 不应吞并共享 collection action；action_sc_project_manage 需单独转入 project.management 方向筛查。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch that adds explicit scene-first ownership for action_sc_project_overview and action_sc_project_my_list under projects.list, while leaving projects.detail as route-plus-record-context authority`
+
+### 2026-04-21T21:49:00+08:00
+- blocker_key: `be_project_detail_post_mywork_screen_gd_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `projects detail post-my-work closure`
+- reason: after my-work began supplying projects.detail runtime record context, the next low-risk question was whether detail still needed another direct supply slice or whether the real remaining problem had shifted to shared project action consumers
+- completed_step: `已完成 ITER-2026-04-21-BE-PROJECT-DETAIL-POST-MYWORK-SCREEN-GD：确认 projects.detail 已经拥有一条真实 runtime supply，不宜继续零散补 detail；剩余问题已升级为 shared project native action consumers 在 list/ledger/detail 之间的职责分类。`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen that classifies shared project native action consumers between projects.list, projects.ledger, and projects.detail before any further implementation`
+
+### 2026-04-21T21:36:00+08:00
+- blocker_key: `be_project_detail_mywork_supply_implement_gc_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `projects detail my-work record supply`
+- reason: after the screen isolated runtime record supply as the real gap, the smallest legal slice was to reroute my-work project records into projects.detail under the existing record_entry envelope
+- completed_step: `已完成 ITER-2026-04-21-BE-PROJECT-DETAIL-MYWORK-SUPPLY-IMPLEMENT-GC：my_work_scene_targets 已把 project.project/source=project.project 的 scene_key 从 projects.list 收到 projects.detail，并新增纯 Python 单测覆盖 record context 保留；这让 projects.detail 首次在真实 runtime 路径上拿到 model + record_id 供给。`
+- active_commit: `89d096f`
+- next_step: `re-screen whether projects.detail still needs an additional non-my-work runtime supply slice or whether the next bounded closure should move to shared ledger action consumers`
+
+### 2026-04-21T21:24:00+08:00
+- blocker_key: `be_project_detail_record_supply_screen_gb_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `projects detail record supply authority`
+- reason: after correcting that generic record_entry support already exists, the next low-risk step was to isolate where projects.detail should emit concrete model and record identity
+- completed_step: `已完成 ITER-2026-04-21-BE-PROJECT-DETAIL-RECORD-SUPPLY-SCREEN-GB：确认 projects.detail 的下一刀不应改 registry 或 static nav map，而应在 detail scene 的 runtime target resolution / enter path 上补 model + record_id 供给，复用现有 entry_target.record_entry envelope。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch that emits model and record_id for projects.detail under the existing scene entry_target.record_entry envelope`
+
+### 2026-04-21T21:15:00+08:00
+- blocker_key: `be_record_entry_readiness_screen_ga_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `generic record_entry readiness`
+- reason: a fresh code read showed generic record_entry support might already exist, so the dependency judgment before projects.detail had to be corrected before opening a new implementation batch
+- completed_step: `已完成 ITER-2026-04-21-BE-RECORD-ENTRY-READINESS-SCREEN-GA：确认 generic scene-carried record_entry envelope 已经存在于 system_init_payload_builder / scene_normalizer / identity_resolver，并已有测试覆盖；projects.detail 下一刀应改为补自身 record supply，而不是重复实现 generic capability。`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen for projects.detail record supply authority, focusing on where model and record_id should be emitted under the existing record_entry envelope`
+
+### 2026-04-21T21:06:00+08:00
+- blocker_key: `be_project_detail_record_entry_screen_fz_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `projects detail record-entry dependency`
+- reason: after task.center was closed as the next lower-risk identity slice, the next bounded decision was whether projects.detail could proceed directly or depended on generic record-entry supply
+- completed_step: `已完成 ITER-2026-04-21-BE-PROJECT-DETAIL-RECORD-ENTRY-SCREEN-FZ：确认 projects.detail 已经不是简单 identity 缺口，而是 shared-action 之上的 record-entry reopen 语义缺口；因此在继续 detail 收口前，应先补 generic scene-carried record_entry envelope。`
+- active_commit: `89d096f`
+- next_step: `open a bounded backend implementation batch for generic scene-carried record_entry envelope under scene target semantics before any projects.detail closure work`
+
+### 2026-04-21T20:58:00+08:00
+- blocker_key: `be_task_center_canonical_implement_fy_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `task center canonical scene authority`
+- reason: after the screen chose task.center over projects.detail, the next bounded step was to freeze task.center as an action-first canonical scene without widening into menu reorganization
+- completed_step: `已完成 ITER-2026-04-21-BE-TASK-CENTER-CANONICAL-IMPLEMENT-FY：task.center 现已获得 canonical route /s/task.center，并保持 action-first、无 dedicated menu authority 的当前治理形态；相关语义回归与 authority/canonical-entry/menu-mapping guard 全部同步通过。`
+- active_commit: `89d096f`
+- next_step: `open the next bounded screen for projects.detail record-entry versus shared-action closure and decide whether a generic record_entry envelope batch should precede any detail identity work`
+
+### 2026-04-21T20:47:00+08:00
+- blocker_key: `be_task_detail_closure_screen_fx_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `task/detail authority closure selection`
+- reason: after projects.intake canonicalization, the next low-risk decision was whether to close the remaining task entry gap or the projects detail record-entry gap first
+- completed_step: `已完成 ITER-2026-04-21-BE-TASK-DETAIL-CLOSURE-SCREEN-FX：确认 task.center 仍是入口 authority 补供给问题，而 projects.detail 已进入 record-entry/shared-action 语义层；因此下一刀应优先切 task.center。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch to supply task.center canonical route and freeze whether it remains action-only or gains dedicated menu authority`
+
+### 2026-04-21T20:33:00+08:00
+- blocker_key: `be_project_intake_canonical_implement_fw_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `project intake canonical scene authority`
+- reason: after the alias screen isolated the real authority surfaces, the next bounded step was to realign registry identity, nav override, and capability scene entry onto `projects.intake`
+- completed_step: `已完成 ITER-2026-04-21-BE-PROJECT-INTAKE-CANONICAL-IMPLEMENT-FW：projects.intake 现已成为 project initiation menu/action/capability 的 canonical scene code；project.initiation 被降为 compat route-only alias，并同步更新 scene semantic 回归与三道 governance guard 基线。`
+- active_commit: `89d096f`
+- next_step: `open the next bounded screen for task.center versus projects.detail authority closure and decide which family should receive the next canonical identity supply slice`
+
+### 2026-04-21T20:18:00+08:00
+- blocker_key: `be_project_intake_alias_screen_fv_pass_v1`
+- layer_target: `Backend governance screen`
+- module: `projects intake alias chain`
+- reason: after the three governance guards were frozen, the next low-risk step was to identify the real authority surfaces still keeping `projects.intake` and `project.initiation` alive at the same time
+- completed_step: `已完成 ITER-2026-04-21-BE-PROJECT-INTAKE-ALIAS-SCREEN-FV：确认 intake alias 漂移并非单点问题，而是 registry 双码、nav 静态 override、scene layout/profile 双 code、capability enter 旧别名四层叠加；并把下一刀最小实现边界收敛到 registry/core_extension/capability_scene_targets 三处。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch that makes projects.intake the canonical scene code and demotes project.initiation to compatibility alias across registry, nav override, and capability scene targets`
+
+### 2026-04-21T20:02:00+08:00
+- blocker_key: `be_scene_menu_mapping_guard_verify_fu_pass_v1`
+- layer_target: `Backend governance verification`
+- module: `scene menu mapping guard`
+- reason: after authority and canonical-entry guards were established, the next bounded step was to lock the current menu-target interpretation state of the same high-frequency families
+- completed_step: `已完成 ITER-2026-04-21-BE-SCENE-MENU-MAPPING-GUARD-VERIFY-FU：新增 scripts/verify/backend_scene_menu_mapping_guard.py 与 verify 文档，开始用真实 nav scene maps + registry + menu_target_interpreter_service 复用解释链，对高频 family 的 menu->scene 解释稳定性做机器校验，并把 intake alias/detail-task-workspace 的已知 gap 一并冻结。`
+- active_commit: `89d096f`
+- next_step: `open the next low-risk screen or implement batch to converge projects.intake alias semantics and reassess projects.detail/task.center authority closure`
+
+### 2026-04-21T19:32:00+08:00
+- blocker_key: `be_scene_canonical_entry_guard_verify_ft_pass_v1`
+- layer_target: `Backend governance verification`
+- module: `scene canonical-entry guard`
+- reason: after the authority guard froze the first machine-checkable authority baseline, the next bounded step was to verify canonical scene-entry semantics against native menu/action facts
+- completed_step: `已完成 ITER-2026-04-21-BE-SCENE-CANONICAL-ENTRY-GUARD-VERIFY-FT：新增 scripts/verify/backend_scene_canonical_entry_guard.py 与 verify 文档，开始同时读取 registry canonical entry 与关键 menu XML native action，对高频 family 的 native entry / scene work entry / compatibility fallback 关系做机器校验。`
+- active_commit: `89d096f`
+- next_step: `open the next low-risk verify batch for menu target mapping stability on the same high-frequency scene families`
+
+### 2026-04-21T19:18:00+08:00
+- blocker_key: `be_scene_authority_guard_verify_fs_pass_v1`
+- layer_target: `Backend governance verification`
+- module: `scene authority guard`
+- reason: after the first high-frequency family inventory was frozen, the next bounded step was to convert that inventory into a machine-checkable guard
+- completed_step: `已完成 ITER-2026-04-21-BE-SCENE-AUTHORITY-GUARD-VERIFY-FS：新增 scripts/verify/backend_scene_authority_guard.py 与 verify 文档，正式把 projects/task/finance/payment 第一批 family inventory 收成可执行 authority guard；已冻结 family 与已知缺口 family 现在都会被机器校验。`
+- active_commit: `89d096f`
+- next_step: `open the next low-risk verify batch for canonical-entry uniqueness and compatibility fallback on the same high-frequency scene families`
+
+### 2026-04-21T18:28:00+08:00
+- blocker_key: `be_scene_runtime_chain_audit_fp_pass_v1`
+- layer_target: `Backend governance audit`
+- module: `scene runtime chain`
+- reason: the user asked to clarify the backend scenification runtime chain and output a temporary summary document
+- completed_step: `已完成 ITER-2026-04-21-BE-SCENE-RUNTIME-CHAIN-AUDIT-FP：已对 system.init 主链、menu/navigation 解释链、scene registry/provider 链、ui.contract/v2 service 辅链做只读排查，并把现状、混乱点、authority 分散原因、后续治理重点输出到 docs/tmp/backend_scene_runtime_chain_audit_2026-04-21.md。`
+- active_commit: `89d096f`
+- next_step: `open the scenification governance topic and freeze authority hierarchy, entry semantics, and system.init runtime-chain documents before any further feature expansion`
+
+### 2026-04-21T18:41:00+08:00
+- blocker_key: `be_scene_governance_doc_freeze_fq_pass_v1`
+- layer_target: `Backend governance documentation`
+- module: `scene authority and runtime semantics`
+- reason: after the runtime-chain audit, the next bounded step was to freeze the governance rules that clarify authority ownership, entry semantics, and system.init runtime segmentation
+- completed_step: `已完成场景化规范治理第一批文档冻结：新增 scene_authority_hierarchy_v1.md、scene_entry_semantics_v1.md、system_init_runtime_chain_v1.md，正式冻结“registry 定 identity、provider 定内容、merge/runtime 定编排、native menu/action 只保留为来源/兼容事实”的治理口径，并把 system.init 切成六段逻辑语义块。`
+- active_commit: `89d096f`
+- next_step: `build the first scene family inventory table for projects/tasks/finance high-frequency families, then use that inventory to drive authority guards`
+
+### 2026-04-21T18:57:00+08:00
+- blocker_key: `be_scene_family_inventory_governance_fr_pass_v1`
+- layer_target: `Backend governance documentation`
+- module: `scene family inventory`
+- reason: after authority hierarchy and entry semantics were frozen, the next bounded step was to express the first high-frequency families as one explicit governance inventory
+- completed_step: `已完成 ITER-2026-04-21-BE-SCENE-FAMILY-INVENTORY-GOVERNANCE-FR：新增 scene_family_inventory_v1.md，统一列出 projects/tasks/finance.center/finance.payment_requests/payments.approval 的 native menu、native action、canonical route、canonical action、compatibility fallback 与 authority gap。`
+- active_commit: `89d096f`
+- next_step: `open a dedicated guard batch to implement scene authority and canonical-entry verification against the new family inventory baseline`
+
+### 2026-04-21T18:16:00+08:00
+- blocker_key: `be_payment_domain_post_align_screen_fo_pass_with_risk_v1`
+- layer_target: `Backend usability governance screen`
+- module: `post alignment payment-domain residual classification`
+- reason: after FN aligned finance.payment_requests to its canonical scene entry, the next bounded step was to determine whether any equally narrow payment-domain slice remained
+- completed_step: `已完成 ITER-2026-04-21-BE-PAYMENT-DOMAIN-POST-ALIGN-SCREEN-FO：payment-domain 这条 registry-only 收口链已经完成。剩余候选已落到 settlement drill、payment detail line、receipt/invoice detail 等更深 action family，不再属于当前这类低风险 scene-orchestration 对齐。`
+- active_commit: `89d096f`
+- next_step: `stop on uncertainty and open a dedicated drill/detail action-family program before any further payment-domain implementation`
+
+### 2026-04-21T18:09:00+08:00
+- blocker_key: `be_finance_payment_requests_semantic_implement_fn_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `finance.payment_requests canonical scene entry`
+- reason: after FM froze action_payment_request_my as the canonical scene entry, the next bounded step was to realign registry identity with that canonical entry
+- completed_step: `已完成 ITER-2026-04-21-BE-FINANCE-PAYMENT-REQUESTS-SEMANTIC-IMPLEMENT-FN：finance.payment_requests 已改为 action_payment_request_my，并新增 semantic supply 回归覆盖 payment_requests route/menu/action 三元组；任务校验、scene semantic supply 测试、diff --check 全 PASS。`
+- active_commit: `89d096f`
+- next_step: `re-screen payment-domain residuals and determine whether any further bounded scene-orchestration-only slice remains`
+
+### 2026-04-21T18:02:00+08:00
+- blocker_key: `be_finance_payment_requests_semantic_screen_fm_pass_v1`
+- layer_target: `Backend usability governance screen`
+- module: `finance.payment_requests entry semantics`
+- reason: after FL froze the next payment issue as a semantic choice, the next bounded step was to decide the canonical scene-entry action between generic list and personal list
+- completed_step: `已完成 ITER-2026-04-21-BE-FINANCE-PAYMENT-REQUESTS-SEMANTIC-SCREEN-FM：finance.payment_requests 的 canonical scene entry 已冻结为 action_payment_request_my；action_payment_request 保留为原生菜单/兼容入口，但不再作为场景编排层的主 identity。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch to realign finance.payment_requests registry action identity to action_payment_request_my with regression coverage`
+
+### 2026-04-21T17:54:00+08:00
+- blocker_key: `be_payment_approval_post_screen_fl_pass_with_risk_v1`
+- layer_target: `Backend usability governance screen`
+- module: `post payment-approval residual classification`
+- reason: after FK closed the payment-approval registry-only slice, the next bounded step was to determine whether payment-domain continuation was still a missing-identity problem
+- completed_step: `已完成 ITER-2026-04-21-BE-PAYMENT-APPROVAL-POST-SCREEN-FL：payment approval 家族已经收口；下一候选已变成 finance.payment_requests 应该绑定 action_payment_request 还是 action_payment_request_my 的入口语义选择，不再属于可直接自动实现的 registry-only 补供给。`
+- active_commit: `89d096f`
+- next_step: `stop on uncertainty and open a dedicated semantic-choice screen for finance.payment_requests entry semantics before any further payment-domain implementation`
+
+### 2026-04-21T17:46:00+08:00
+- blocker_key: `be_payment_approval_scene_supply_implement_fk_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `payment approval scene target identity`
+- reason: after FJ froze payments.approval as a registry-only supply slice, the next bounded step was to add the missing formal action target identity
+- completed_step: `已完成 ITER-2026-04-21-BE-PAYMENT-APPROVAL-SCENE-SUPPLY-IMPLEMENT-FK：payments.approval 已补 action_sc_tier_review_my_payment_request，相关 semantic supply 测试已覆盖审批中心 route/menu/action 三元组；任务校验、scene semantic supply 测试、diff --check 全 PASS。`
+- active_commit: `89d096f`
+- next_step: `re-screen payment-domain residual families after payments.approval supply and decide whether any further registry-only slice remains`
+
+### 2026-04-21T17:39:00+08:00
+- blocker_key: `be_payment_approval_scene_supply_screen_fj_pass_v1`
+- layer_target: `Backend usability governance screen`
+- module: `payment approval scene supply`
+- reason: after FI froze the finance-domain stop point, the user explicitly selected the payment-approval family as the next candidate, so the next bounded step was to verify whether that family could still be reduced through registry-only scene supply
+- completed_step: `已完成 ITER-2026-04-21-BE-PAYMENT-APPROVAL-SCENE-SUPPLY-SCREEN-FJ：payments.approval 当前只缺 formal action target identity；scene layout/profile 已稳定使用 action_sc_tier_review_my_payment_request，因此这条线可在不触碰 payment 业务文件的前提下继续实现。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch to add action target identity for payments.approval in scene_registry_content with regression coverage`
+
+### 2026-04-21T17:31:00+08:00
+- blocker_key: `be_finance_post_align_residual_screen_fi_pass_with_risk_v1`
+- layer_target: `Backend usability governance screen`
+- module: `finance residual action classification`
+- reason: after FH closed the finance center root-action misalignment, the next bounded step was to determine whether another finance slice still matched the same low-risk continuation profile
+- completed_step: `已完成 ITER-2026-04-21-BE-FINANCE-POST-ALIGN-RESIDUAL-SCREEN-FI：当前财务域已无下一条同级低风险切片。残余候选已经落到 payment_request_views、settlement drill、receipt/invoice、legacy finance evidence 等更深语义面，不能继续自动实现。`
+- active_commit: `89d096f`
+- next_step: `stop on uncertainty and open a dedicated finance residual screening line before any further finance implementation`
+
+### 2026-04-21T17:24:00+08:00
+- blocker_key: `be_finance_center_action_align_implement_fh_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `finance center scene target alignment`
+- reason: after FG froze finance center root-action misalignment as a bounded orchestration issue, the next step was to align scene registry with the actual finance center menu action
+- completed_step: `已完成 ITER-2026-04-21-BE-FINANCE-CENTER-ACTION-ALIGN-IMPLEMENT-FH：finance.center / finance.workspace 的 action_xmlid 已改为 action_sc_finance_dashboard，并新增回归测试覆盖 finance center root action 对齐；任务校验、scene semantic supply 测试、diff --check 全 PASS。`
+- active_commit: `89d096f`
+- next_step: `re-screen finance-domain residual actions after finance center alignment and decide whether another bounded finance slice remains eligible without touching payment/settlement model files`
+
+### 2026-04-21T17:17:00+08:00
+- blocker_key: `be_finance_center_action_align_screen_fg_pass_v1`
+- layer_target: `Backend usability governance screen`
+- module: `finance center scene target alignment`
+- reason: after FF showed residual families now span multiple domains, the next bounded step under the user's new authorization was to find the smallest finance-domain slice that still avoids payment/settlement file changes
+- completed_step: `已完成 ITER-2026-04-21-BE-FINANCE-CENTER-ACTION-ALIGN-SCREEN-FG：finance center 根菜单实际绑定 action_sc_finance_dashboard，但 scene registry 仍把 finance.center / finance.workspace 绑到 action_sc_tier_review_my_payment_request；该问题已冻结为 bounded scene-orchestration 错绑，可继续实现。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch to realign finance.center and finance.workspace action_xmlid to action_sc_finance_dashboard with regression coverage`
+
+### 2026-04-21T17:09:00+08:00
+- blocker_key: `be_post_enterprise_residual_screen_ff_pass_with_risk_v1`
+- layer_target: `Backend usability governance screen`
+- module: `post-enterprise residual action family classification`
+- reason: after FE closed enterprise.post, the next bounded step was to determine whether another non-financial family remained eligible for immediate low-risk scene supply
+- completed_step: `已完成 ITER-2026-04-21-BE-POST-ENTERPRISE-RESIDUAL-SCREEN-FF：enterprise 家族残余已收口，但受控扫描显示仍有 72 个未入 scene registry 的 act_window，且已跨 finance、legacy facts、workflow/governance、project/cost 混合域。当前不能再自动继续实现，必须重开新的 screened residual-family program。`
+- active_commit: `89d096f`
+- next_step: `stop on uncertainty and open a fresh residual-family screening line that excludes finance first and ranks project/cost/governance candidates`
+
+### 2026-04-21T17:01:00+08:00
+- blocker_key: `be_enterprise_post_scene_supply_implement_fe_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `enterprise post scene supply`
+- reason: after FD froze enterprise.post as the smallest non-financial residual family, the next bounded step was to add scene identity and provider wiring inside the existing enterprise family
+- completed_step: `已完成 ITER-2026-04-21-BE-ENTERPRISE-POST-SCENE-SUPPLY-IMPLEMENT-FE：scene_registry_content 已新增 enterprise.post，enterprise_bootstrap_provider 已补岗位管理 guidance/next_scene，register_scene_providers 已注册 enterprise.post，同步回归测试已覆盖 registry/provider/nav-scene-map 三条链。`
+- active_commit: `89d096f`
+- next_step: `re-screen the residual generic /a/... family after enterprise.post closure and decide whether any additional non-financial family remains eligible for low-risk scene supply`
+
+### 2026-04-21T16:52:00+08:00
+- blocker_key: `be_enterprise_post_scene_supply_screen_fd_pass_v1`
+- layer_target: `Backend usability governance screen`
+- module: `enterprise residual scene identity supply`
+- reason: after FC froze the residual family as still-unprovable generic actions, the next bounded step was to choose one non-financial family for further scene supply
+- completed_step: `已完成 ITER-2026-04-21-BE-ENTERPRISE-POST-SCENE-SUPPLY-SCREEN-FD：下一刀已冻结为 enterprise.post。该动作家族已存在于 smart_enterprise_base，但尚未进入正式 scene registry；同时它与既有 enterprise bootstrap provider 面完全同层，适合继续低风险纯化。`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch to add enterprise.post scene identity, provider registration, and enterprise semantic supply regressions`
+
+### 2026-04-21T16:42:00+08:00
+- blocker_key: `be_residual_generic_action_family_screen_fc_pass_with_risk_v1`
+- layer_target: `Backend usability governance screen`
+- module: `residual generic action route family`
+- reason: after FB supplied default nav scene maps to menu controllers, the next bounded step was to freeze whether any backend public-route family besides still-unprovable generic actions remained open
+- completed_step: `已完成 ITER-2026-04-21-BE-RESIDUAL-GENERIC-ACTION-FAMILY-SCREEN-FC：当前后端不再存在新的 `/f`、`/r` 主公开缝；残余已集中到仍不可证明 scene 的 generic `/a/...` action target，以及 enterprise fallback 在缺稳定 scene mapping 时的同类降级。继续实现已不再是主线路由机制修补，而是逐个动作家族补 scene identity 供给。`
+- active_commit: `89d096f`
+- next_step: `stop on uncertainty and open a new screened backend scene-identity supply line for one non-financial residual action family before any further purity implementation`
+
+### 2026-04-21T16:34:00+08:00
+- blocker_key: `be_menu_tree_scene_map_supply_implement_fb_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `platform menu default scene-map supply`
+- reason: after FA proved the remaining public route seam was still generic action compatibility, the next bounded step was to close the controller path that still interpreted menu facts with `scene_map={}` despite existing extension supply
+- completed_step: `已完成 ITER-2026-04-21-BE-MENU-TREE-SCENE-MAP-SUPPLY-IMPLEMENT-FB：platform_menu_api 已在 /api/menu/tree 与 /api/menu/navigation 解释前自动合并 smart_core_nav_scene_maps 扩展供给，并新增独立单测覆盖 menu/action/model-view 三类补充合并；任务校验、controller scene-map 测试、diff --check 全 PASS`
+- active_commit: `89d096f`
+- next_step: `open a bounded backend screen to classify the residual generic /a/... family between still-unprovable action targets and any remaining controller/service path that bypasses scene-map supply`
+
+### 2026-04-21T16:11:00+08:00
+- blocker_key: `be_generic_action_route_supply_implement_fa_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `generic action route supply`
+- reason: after EZ froze scene-known generic action targets as the smallest next slice, the next bounded step was to republish only those targets through scene semantics
+- completed_step: `已完成 ITER-2026-04-21-BE-GENERIC-ACTION-ROUTE-SUPPLY-IMPLEMENT-FA：menu_target_interpreter_service 已开始消费 model/view -> scene map，并把 scene 可证明的 act_window target 收回正式 scene entry 语义；未可证明分支继续保留 compatibility 形态，任务校验、entry_target 测试、diff --check 全 PASS`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen to classify the next unresolved generic route family between remaining generic action compatibility targets and generic form/record publication seams`
+
+### 2026-04-21T16:02:00+08:00
+- blocker_key: `be_generic_action_route_supply_screen_ez_pass_v1`
+- layer_target: `Backend usability governance screen`
+- module: `generic action route supply classification`
+- reason: after enterprise bootstrap route supply closed, the next bounded step was to freeze the smallest remaining generic `/a/...` closure family
+- completed_step: `已完成 ITER-2026-04-21-BE-GENERIC-ACTION-ROUTE-SUPPLY-SCREEN-EZ：下一刀已冻结为 smart_core/delivery/menu_target_interpreter_service.py 中“scene 已可证明”的 action-target 分支，而不是一次性清空所有 generic /a/...`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch on menu_target_interpreter_service.py that republishes only scene-known action targets through scene entry_target semantics while preserving unresolved compatibility paths`
+
+### 2026-04-21T15:55:00+08:00
+- blocker_key: `be_enterprise_route_supply_implement_ey_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `enterprise bootstrap route supply`
+- reason: after EX completed enterprise provider supply, the next bounded step was to republish enterprise bootstrap targets from ordinary `/a/...` routes to `/s/enterprise.*`
+- completed_step: `已完成 ITER-2026-04-21-BE-ENTERPRISE-ROUTE-SUPPLY-IMPLEMENT-EY：smart_enterprise_base/core_extension.py 已把 enterprise bootstrap 三步 target.route 收回 /s/enterprise.company /s/enterprise.department /s/enterprise.user，并保留 action/menu 兼容标识；任务校验、scene semantic supply 测试、diff --check 全 PASS`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen on smart_core/delivery/menu_target_interpreter_service.py to decide the next generic /a/... route-supply closure slice after enterprise bootstrap`
+
+### 2026-04-21T15:41:00+08:00
+- blocker_key: `be_enterprise_route_supply_recheck_screen_ew_pass_with_risk_v1`
+- layer_target: `Backend usability governance screen`
+- module: `enterprise bootstrap route supply readiness recheck`
+- reason: after EV added enterprise scene identity supply, the next bounded step was to verify whether enterprise bootstrap could now safely republish to `/s/enterprise.*`
+- completed_step: `已完成 ITER-2026-04-21-BE-ENTERPRISE-ROUTE-SUPPLY-RECHECK-SCREEN-EW：当前仍不能直接把 enterprise bootstrap 改发到 /s/enterprise.*；阻断点已从“缺 scene identity”收敛到“缺 enterprise scene provider/content registration”`
+- active_commit: `89d096f`
+- next_step: `stop on uncertainty and open a dedicated backend screen for enterprise scene provider supply before any route republishing in smart_enterprise_base/core_extension.py`
+
+### 2026-04-21T15:33:00+08:00
+- blocker_key: `be_enterprise_scene_identity_supply_implement_ev_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `enterprise scene identity supply`
+- reason: after EU froze scene registry content as the first supply face, the next bounded step was to add enterprise bootstrap scene identities without widening into system.init or generic interpreter changes
+- completed_step: `已完成 ITER-2026-04-21-BE-ENTERPRISE-SCENE-IDENTITY-SUPPLY-IMPLEMENT-EV：scene_registry_content 已新增 enterprise.company / enterprise.department / enterprise.user，现有 smart_core_nav_scene_maps 派生链已可把企业启用的 menu/action xmlid 解析到稳定 scene key；任务校验、scene semantic supply 测试、diff --check 全 PASS`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen or verify batch to decide whether smart_enterprise_base/core_extension.py can now safely republish enterprise bootstrap targets from /a/... to /s/enterprise.* using the newly supplied scene identities`
+
+### 2026-04-21T15:24:00+08:00
+- blocker_key: `be_enterprise_scene_identity_supply_screen_eu_pass_v1`
+- layer_target: `Backend usability governance screen`
+- module: `enterprise scene identity supply`
+- reason: after ET proved the block was missing backend scene identity supply, the next bounded step was to choose the exact backend supply face
+- completed_step: `已完成 ITER-2026-04-21-BE-ENTERPRISE-SCENE-IDENTITY-SUPPLY-SCREEN-EU：首个供给切片已冻结为 smart_construction_scene/profiles/scene_registry_content.py；不先改 system_init payload builder，因为 smart_construction_scene 已有 nav scene map 派生链可直接复用`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch to add enterprise company/department/user scene registry entries plus one nav-scene-map regression test`
+
+### 2026-04-21T15:13:00+08:00
+- blocker_key: `be_enterprise_bootstrap_scene_identity_screen_et_pass_with_risk_v1`
+- layer_target: `Backend usability governance screen`
+- module: `enterprise bootstrap scene identity readiness`
+- reason: after ES froze `smart_enterprise_base/core_extension.py` as the second candidate slice, the next bounded step was to prove whether enterprise bootstrap already carried enough stable scene identity for safe scene-ready publication
+- completed_step: `已完成 ITER-2026-04-21-BE-ENTERPRISE-BOOTSTRAP-SCENE-IDENTITY-SCREEN-ET：当前不能直接实现 enterprise bootstrap route-supply。阻断点是两层同时存在：后端未提供可证实的 enterprise scene key/scene route，前端 enterpriseEnablement target 仍只消费 action_id/menu_id/route 这组旧形态`
+- active_commit: `89d096f`
+- next_step: `stop on uncertainty and open a dedicated screen to choose between backend enterprise scene-identity supply and frontend enterprise target-consumer contract extension before any further route-supply implementation`
+
+### 2026-04-21T15:01:00+08:00
+- blocker_key: `be_scene_route_second_slice_screen_es_pass_v1`
+- layer_target: `Backend usability governance screen`
+- module: `scene route second implementation slice`
+- reason: after ER closed the first route-supply slice in `scene_contract_builder.py`, the next bounded step was to choose the narrowest second slice between enterprise bootstrap publication and generic menu interpretation
+- completed_step: `已完成 ITER-2026-04-21-BE-SCENE-ROUTE-SECOND-SLICE-SCREEN-ES：第二刀已冻结为 smart_enterprise_base/core_extension.py；generic menu_target_interpreter_service 继续后置，因为它属于更宽的通用交付缝`
+- active_commit: `89d096f`
+- next_step: `open a bounded implementation batch on smart_enterprise_base/core_extension.py to replace enterprise bootstrap /a/... publication with scene-ready semantics if the existing payload already carries enough stable scene identity`
+
+### 2026-04-21T14:49:00+08:00
+- blocker_key: `be_scene_contract_builder_route_supply_er_pass_v1`
+- layer_target: `Backend scene-orchestration implementation`
+- module: `scene contract builder route supply`
+- reason: after EQ froze `scene_contract_builder.py` as the safest first slice, the next bounded step was to replace the `projects.intake` ordinary `/f/...` publication with scene-first route targets
+- completed_step: `已完成 ITER-2026-04-21-BE-SCENE-CONTRACT-BUILDER-ROUTE-SUPPLY-ER：projects.intake 的 quick_project_create 与 standard_project_intake 已从 /f/project.project/new... 收回到 /s/projects.intake...；其中 quick 仍保留 intake_mode=quick 语义，任务校验、builder 语义测试、diff --check 全 PASS`
+- active_commit: `89d096f`
+- next_step: `open a bounded backend screen to choose the second route-supply slice between smart_enterprise_base/core_extension.py and smart_core/delivery/menu_target_interpreter_service.py`
+
+### 2026-04-21T14:36:00+08:00
+- blocker_key: `be_scene_route_first_slice_screen_eq_pass_v1`
+- layer_target: `Backend usability governance screen`
+- module: `scene route first implementation slice`
+- reason: after EP froze the producer candidates, the next bounded step was to choose the safest first implementation slice without reopening scan scope
+- completed_step: `已完成 ITER-2026-04-21-BE-SCENE-ROUTE-FIRST-SLICE-SCREEN-EQ：首批后端实现已冻结为 smart_core/core/scene_contract_builder.py 的 route-only action publication，不先动 generic menu interpreter，也不先动 enterprise extension`
+- active_commit: `89d096f`
+- next_step: `open a bounded backend implementation batch on smart_core/core/scene_contract_builder.py to replace ordinary /f/... route publication with scene-ready semantics for projects.intake actions`
+
+### 2026-04-21T14:31:00+08:00
+- blocker_key: `be_scene_route_producer_scan_ep_pass_v1`
+- layer_target: `Backend governance scan`
+- module: `scene route producer inventory`
+- reason: after EO froze backend scene-orchestration route supply as the first active line, the next low-cost step was to inventory the exact producer surfaces still emitting `/a/...` and `/f/...`
+- completed_step: `已完成 ITER-2026-04-21-BE-SCENE-ROUTE-PRODUCER-SCAN-EP：候选已冻结为 smart_core/core/scene_contract_builder.py、smart_enterprise_base/core_extension.py、smart_core/delivery/menu_target_interpreter_service.py，以及绑定当前语义的 scene-ready contract test fixture；本批只列候选，不做优先级判定`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen to classify the safest first backend implementation slice among scene_contract_builder, enterprise system.init extension, and menu_target_interpreter_service`
+
+### 2026-04-21T14:24:00+08:00
+- blocker_key: `be_scene_route_supply_screen_eo_pass_v1`
+- layer_target: `Backend usability governance screen`
+- module: `scene route supply classification`
+- reason: after EN froze that all-route scenification is blocked by backend-delivered `/a/...` and `/f/...` routes, the next bounded step was to decide the backend change layer and first active family
+- completed_step: `已完成 ITER-2026-04-21-BE-SCENE-ROUTE-SUPPLY-SCREEN-EO：下一张首要批次已冻结为 backend scene-orchestration route supply，而不是 business-fact 变更；目标是先停止普通契约面继续发布 /a/... 与 /f/... 作为产品入口语义`
+- active_commit: `89d096f`
+- next_step: `open a bounded backend scan on the exact contract-producing surfaces that still emit /a/... and /f/... so the first implementation slice can be scoped without reopening frontend-wide work`
+
+### 2026-04-21T14:18:00+08:00
+- blocker_key: `fe_nonrecord_compat_retirement_screen_en_pass_v1`
+- layer_target: `Frontend usability governance screen`
+- module: `non-record compat bridge retirement readiness`
+- reason: after EM proved compat-record still has real legacy ingress value, the next bounded step was to judge whether the remaining action/form compat family could still be purified independently
+- completed_step: `已完成 ITER-2026-04-21-FE-NONRECORD-COMPAT-RETIREMENT-SCREEN-EN：当前系统已满足“路由主链场景化”但尚不满足“全部路由全量纯化”；阻断点不是单纯前端桥残留，而是 backend-delivered contract 仍发布 /a/... 与 /f/...，同时前端仍保留 compat action/form producer、consumer 与 registry 识别`
+- active_commit: `89d096f`
+- next_step: `hold frontend-only broad route purification; if the team wants to continue toward all-route scenification, open a dedicated backend scene-orchestration route-supply and legacy action/form ingress migration screen first`
+
+### 2026-04-21T14:02:00+08:00
+- blocker_key: `fe_compat_record_live_ingress_reverify_em_pass_v1`
+- layer_target: `Frontend usability governance verify`
+- module: `compat-record live ingress reverification`
+- reason: after EL froze live ingress evidence as the strongest next family, the next bounded step was to re-verify whether a real legacy compat-record URL still behaves as a valid ingress path in the current runtime
+- completed_step: `已完成 ITER-2026-04-21-FE-COMPAT-RECORD-LIVE-INGRESS-REVERIFY-EM：当前标准 /r/sc.legacy.financing.loan.fact/53?... 已收敛到 /s/project.management，而 legacy /compat/record/sc.legacy.financing.loan.fact/53?... 仍可直接进入 compat-record 路径且无错误面板；因此 compat-record bridge 仍承担真实旧链接入口职责`
+- active_commit: `89d096f`
+- next_step: `hold compat-record bridge retirement and only reopen with a dedicated saved-link or legacy-ingress retirement program; if the team still wants to progress, screen whether any non-record compat bridge family remains eligible for separate retirement work`
+
+### 2026-04-21T13:52:00+08:00
+- blocker_key: `fe_compat_bridge_retirement_screen_el_pass_v1`
+- layer_target: `Frontend usability governance screen`
+- module: `compat bridge retirement classification`
+- reason: after EK froze the remaining bridge surfaces, the next low-cost step was to decide whether structural retirement screening or live ingress evidence should drive the next optional line
+- completed_step: `已完成 ITER-2026-04-21-FE-COMPAT-BRIDGE-RETIREMENT-SCREEN-EL：当前最强下一家族已冻结为 compat_bridge_live_ingress_evidence，而不是直接 bridge-retirement implementation；主因是既有 live verify 已证实 legacy compat-record URL 仍可进入运行中前端`
+- active_commit: `89d096f`
+- next_step: `open a bounded verify line next to refresh or reconfirm live saved-link ingress value before considering any compat bridge retirement implementation`
+
+### 2026-04-21T13:46:00+08:00
+- blocker_key: `fe_compat_bridge_retirement_scan_ek_pass_v1`
+- layer_target: `Frontend governance scan`
+- module: `compat bridge retirement inventory`
+- reason: after the route mainline was verified as scene-first complete, the next optional governance step was to inventory remaining compat/native bridge surfaces before any retirement decision
+- completed_step: `已完成 ITER-2026-04-21-FE-COMPAT-BRIDGE-RETIREMENT-SCAN-EK：当前残留已冻结为 router 兼容注册、sceneRegistry compat 识别、少量 scene-unprovable fallback producer、compat consumer recognition，以及已有 live ingress 证据；本批只列候选，不下退役结论`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen next to classify whether the strongest next family is bridge-retirement readiness screening or saved-link/live-ingress evidence verification`
+
+### 2026-04-21T13:31:00+08:00
+- blocker_key: `verify_semantic_route_realign_ej_pass_v1`
+- layer_target: `Verification surface repair`
+- module: `semantic route verifier`
+- reason: route purification condition verify proved the semantic-route smoke still targeted removed implementation details, so the next bounded step was to realign that verifier with the current sceneRegistry runtime
+- completed_step: `已完成 ITER-2026-04-21-VERIFY-SEMANTIC-ROUTE-REALIGN-EJ：fe_semantic_route_smoke 已从旧的 native-prefix 实现断言切换到当前 sceneRegistry 的 resolveSceneRoute / legacy compat degrade / publicEntryRoute 优先语义；validate_task、node smoke、diff --check 全 PASS`
+- active_commit: `89d096f`
+- next_step: `rerun the route purification completion verify immediately so completion conditions can be judged against the repaired verification surface`
+
+### 2026-04-21T13:34:00+08:00
+- blocker_key: `fe_route_purification_condition_verify_ei_pass_v2`
+- layer_target: `Cross-layer verification`
+- module: `route purification completion condition`
+- reason: after EJ realigned the semantic-route verifier with current runtime reality, the next bounded step was to rerun the completion-condition stack
+- completed_step: `已重跑 ITER-2026-04-21-FE-ROUTE-PURIFICATION-CONDITION-VERIFY-EI：verify.menu.scene_resolve PASS，verify.portal.semantic_route PASS，verify.portal.bridge.e2e PASS；当前仓库已具备宣称“路由主链完成场景化”的验证条件，compat bridge 残留被验证为受控兼容层而非主 authority`
+- active_commit: `89d096f`
+- next_step: `if the team wants to continue, open a separate optional bridge-retirement or saved-link migration evidence line; otherwise treat the scene-first route mainline as condition-ready and hold broad runtime purification work`
+
+### 2026-04-21T13:24:00+08:00
+- blocker_key: `verify_semantic_route_realign_ej_in_progress_v1`
+- layer_target: `Verification surface repair`
+- module: `semantic route verifier`
+- reason: route purification condition verify proved the semantic-route smoke still targeted removed implementation details, so the next bounded step was to realign that verifier with the current sceneRegistry runtime
+- completed_step: `已启动 ITER-2026-04-21-VERIFY-SEMANTIC-ROUTE-REALIGN-EJ：fe_semantic_route_smoke 正在从旧的 native-prefix 断言切换到当前 sceneRegistry 的 resolveSceneRoute / legacy compat degrade / publicEntryRoute 优先语义`
+- active_commit: `89d096f`
+- next_step: `run node scripts/verify/fe_semantic_route_smoke.js and, if it passes, reopen the route purification completion verify immediately`
+
+### 2026-04-21T13:12:00+08:00
+- blocker_key: `fe_route_purification_condition_verify_ei_fail_v1`
+- layer_target: `Cross-layer verification`
+- module: `route purification completion condition`
+- reason: after the latest purification chain closed known producer drift and realigned stale consumer evidence, the next bounded step was to verify whether completion conditions were now fully satisfied
+- completed_step: `已完成 ITER-2026-04-21-FE-ROUTE-PURIFICATION-CONDITION-VERIFY-EI：validate_task PASS，verify.menu.scene_resolve PASS，verify.portal.bridge.e2e PASS，但 verify.portal.semantic_route FAIL；失败点不是主运行时回归，而是 fe_semantic_route_smoke.js 仍在断言已被 sceneRegistry.ts 当前实现替换掉的旧实现细节`
+- active_commit: `89d096f`
+- next_step: `open a bounded verification-surface repair batch next to realign verify.portal.semantic_route with the current sceneRegistry.ts runtime, then rerun the route-purification condition verify before declaring full completion`
+
+### 2026-04-21T12:32:00+08:00
+- blocker_key: `fe_contract_form_scene_runtime_guard_eh_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `contract form scene runtime guard`
+- reason: console evidence showed ContractFormPage crashing on `pageContract.sceneDisabledActions.value`, so the next bounded batch was to repair the missing accessor contract and add safe default reads at the consumer
+- completed_step: `已完成 ITER-2026-04-21-FE-CONTRACT-FORM-SCENE-RUNTIME-GUARD-EH：pageContract 已补回 sceneDisabledActions 导出，ContractFormPage 的 consumerRuntime / sceneDisabledActions / sceneRuntimePermissions / consumerRuntimeStatus 读取均已改为防空默认；validate_task、typecheck:strict、build、diff --check 全 PASS`
+- active_commit: `89d096f`
+- next_step: `if the runtime console still shows a ContractFormPage crash, capture the new top stack and line so the next bounded batch can target the remaining render path rather than the now-fixed scene runtime accessor gap`
+
+### 2026-04-21T12:18:00+08:00
+- blocker_key: `fe_contract_form_scene_runtime_guard_eh_in_progress_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `contract form scene runtime guard`
+- reason: console evidence showed ContractFormPage crashing on `pageContract.sceneDisabledActions.value`, so the next bounded batch was to repair the missing accessor contract and add safe default reads at the consumer
+- completed_step: `已启动 ITER-2026-04-21-FE-CONTRACT-FORM-SCENE-RUNTIME-GUARD-EH：pageContract 正在补回 sceneDisabledActions 导出，ContractFormPage 正在把 scene runtime 访问改为防空读取，目标是消除 render 阶段的 undefined.value 崩溃`
+- active_commit: `89d096f`
+- next_step: `run task validation plus frontend typecheck/build, then confirm the scene runtime guard crash is closed within the declared frontend scope`
+
+### 2026-04-21T12:06:00+08:00
+- blocker_key: `fe_consumer_authority_evidence_realign_eg_pass_v1`
+- layer_target: `Frontend governance evidence`
+- module: `consumer authority audit realignment`
+- reason: after EF froze the dominant residual as evidence drift, the next bounded batch was to realign the older consumer-authority audit wording with the current MenuView and RecordView runtime state
+- completed_step: `已完成 ITER-2026-04-21-FE-CONSUMER-AUTHORITY-EVIDENCE-REALIGN-EG：native_route_authority_audit_screen 已去除把 MenuView/RecordView 冻结为当前 direct native-action consumer 的过期表述，并把主残留收口为 router-level 临时 seam 与后续 verify 触发条件；validate_task 与 diff --check 均 PASS`
+- active_commit: `89d096f`
+- next_step: `hold further consumer runtime implementation unless a later bounded verify proves a still-active product-authority branch; if that evidence appears, reopen with a verify-first task rather than another assumption-driven implementation batch`
+
+### 2026-04-21T12:00:00+08:00
+- blocker_key: `fe_consumer_authority_evidence_realign_eg_in_progress_v1`
+- layer_target: `Frontend governance evidence`
+- module: `consumer authority audit realignment`
+- reason: after EF froze the dominant residual as evidence drift, the next bounded batch was to realign the older consumer-authority audit wording with the current MenuView and RecordView runtime state
+- completed_step: `已启动 ITER-2026-04-21-FE-CONSUMER-AUTHORITY-EVIDENCE-REALIGN-EG：native_route_authority_audit_screen 正在去除对 MenuView/RecordView 仍直接消费 native action authority 的过期表述，并保留 router-level 临时 seam 作为当前相邻残留`
+- active_commit: `89d096f`
+- next_step: `run task validation and diff-check, then freeze whether consumer authority mainline is now documentation-aligned and can pause runtime changes until a later verify proves a new active branch`
+
+### 2026-04-21T11:50:00+08:00
+- blocker_key: `fe_consumer_authority_recheck_screen_ef_pass_v1`
+- layer_target: `Frontend usability governance screen`
+- module: `consumer authority residual classification`
+- reason: after EE refreshed the bounded candidate list, the next low-cost step was to decide whether another consumer runtime batch was still justified
+- completed_step: `已完成 ITER-2026-04-21-FE-CONSUMER-AUTHORITY-RECHECK-SCREEN-EF：当前主残留已冻结为 governance evidence drift，而不是明确的 MenuView/RecordView 运行时 authority drift；下一张应先做审计/文档结论对齐，而不是继续改 consumer runtime`
+- active_commit: `89d096f`
+- next_step: `open a bounded governance/doc batch next to realign native-route consumer audit conclusions with the current MenuView/RecordView code state, and only reopen frontend runtime implementation if a later verify proves a still-active product-authority branch`
+
+### 2026-04-21T11:42:00+08:00
+- blocker_key: `fe_consumer_authority_recheck_scan_ee_pass_v1`
+- layer_target: `Frontend governance scan`
+- module: `consumer authority residual recheck`
+- reason: after ED, the earlier MenuView/RecordView misalignment screen looked potentially stale against current code, so the next valid low-cost step was to re-scan those bounded consumer files before opening another implementation batch
+- completed_step: `已完成 ITER-2026-04-21-FE-CONSUMER-AUTHORITY-RECHECK-SCAN-EE：当前有界读取得到的候选已冻结为 MenuView/RecordView 主要走 scene-first 或 workbench 诊断降级，旧的 native-route authority screen 可能已高估当前 consumer misalignment；下一张需先 screen，而不是直接继续实现`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen next that classifies whether MenuView and RecordView still contain any true product-authority drift or whether the remaining residual is now mainly governance evidence drift requiring doc realignment instead of frontend runtime changes`
+
+### 2026-04-21T11:29:00+08:00
+- blocker_key: `fe_action_service_authority_closure_ed_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `action service authority closure`
+- reason: after suggested-action closure, action_service.ts remained the cleanest single-file producer authority drift and could be closed without reopening backend scan scope
+- completed_step: `已完成 ITER-2026-04-21-FE-ACTION-SERVICE-AUTHORITY-CLOSURE-ED：action_service 的 scene-unprovable action/form fallback 已不再落 `/compat/action` 或 `/r`，而是降级到 workbench 诊断面并显式携带 CONTRACT_CONTEXT_MISSING 上下文；validate_task、typecheck:strict、build、diff --check 全 PASS`
+- active_commit: `89d096f`
+- next_step: `open the next bounded screen or implementation batch on remaining consumer-side authority drift in MenuView and RecordView, and escalate to backend scene-orchestration supply only if those paths still cannot derive a legal scene target from existing runtime context`
+
+### 2026-04-21T11:18:00+08:00
+- blocker_key: `fe_action_service_authority_closure_ed_in_progress_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `action service authority closure`
+- reason: after suggested-action closure, action_service.ts remained the cleanest single-file producer authority drift and could be closed without reopening backend scan scope
+- completed_step: `已启动 ITER-2026-04-21-FE-ACTION-SERVICE-AUTHORITY-CLOSURE-ED：action_service 的 scene-unprovable fallback 正在从 compat/native route 降级到 workbench 诊断面，并显式携带 action/menu/model/record 上下文`
+- active_commit: `89d096f`
+- next_step: `run task validation plus frontend typecheck/build, then decide whether action_service authority drift is fully closed before reopening consumer-side gaps`
+
+### 2026-04-21T11:02:00+08:00
+- blocker_key: `fe_suggested_action_scene_closure_ec_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `suggested action scene-known authority closure`
+- reason: after EB, the safest remaining producer slice was suggested_action runtime, but only for branches where query context already proves the scene key
+- completed_step: `已完成 ITER-2026-04-21-FE-SUGGESTED-ACTION-SCENE-CLOSURE-EC：suggested_action/runtime.ts 的 open_project/open_action/open_record 在 query 已带 scene_key/scene 时，已优先回到 `/s/:sceneKey`；仅 scene 不可证分支继续保留 compat/native fallback；validate_task、typecheck:strict、build、diff --check 全 PASS`
+- active_commit: `89d096f`
+- next_step: `open the next bounded implementation batch on action_service authority closure and the remaining consumer-side gaps in MenuView or RecordView only where scene target can be proven from existing context; escalate to backend scene-orchestration supply only for paths that still cannot derive a legal scene target`
+
+### 2026-04-21T10:48:00+08:00
+- blocker_key: `fe_suggested_action_scene_closure_ec_in_progress_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `suggested action scene-known authority closure`
+- reason: after EB, the safest remaining producer slice was suggested_action runtime, but only for branches where query context already proves the scene key
+- completed_step: `已启动 ITER-2026-04-21-FE-SUGGESTED-ACTION-SCENE-CLOSURE-EC：open_project/open_action/open_record 在 query 已带 scene_key/scene 时，fallback 正在从 compat/native route 收回 `/s/:sceneKey`；scene 不可证分支继续保留旧行为`
+- active_commit: `89d096f`
+- next_step: `run task validation plus frontend typecheck/build, then decide whether suggested_action residual fallback can be marked PASS without reopening backend scene-orchestration supply`
+
+### 2026-04-21T10:32:00+08:00
+- blocker_key: `fe_scene_first_producer_closure_eb_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `scene-known producer authority closure`
+- reason: after EA froze producer-side authority closure as the first purification family, the safest first implementation slice was to close only fallbacks where the caller already carries a provable scene key
+- completed_step: `已完成 ITER-2026-04-21-FE-SCENE-FIRST-PRODUCER-CLOSURE-EB：HomeView、MyWorkView、WorkbenchView 的 scene-known action/record fallback 已优先收回 `/s/:sceneKey`；仅对 Workbench 中 scene 不可证的分支保留 compat/native fallback；validate_task、typecheck:strict、build、diff --check 全 PASS`
+- active_commit: `89d096f`
+- next_step: `open the next bounded implementation batch on remaining producer/consumer authority drift in action_service.ts, suggested_action/runtime.ts, MenuView.vue, and RecordView.vue, keeping backend semantic-supply escalation only for paths where scene target still cannot be proven`
+
+### 2026-04-21T10:20:00+08:00
+- blocker_key: `fe_scene_first_producer_closure_eb_in_progress_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `scene-known producer authority closure`
+- reason: after EA froze producer-side authority closure as the first purification family, the safest first implementation slice was to close only fallbacks where the caller already carries a provable scene key
+- completed_step: `已启动 ITER-2026-04-21-FE-SCENE-FIRST-PRODUCER-CLOSURE-EB：HomeView、MyWorkView、WorkbenchView 的 scene-known action/record fallback 正在从 compat/native 路由收回 `/s/:sceneKey`，并保留 query 内 action/record 上下文`
+- active_commit: `89d096f`
+- next_step: `run task validation plus frontend typecheck/build, then freeze whether this producer-side closure passes without reopening backend scene-orchestration supply`
+
+### 2026-04-21T10:05:00+08:00
+- blocker_key: `fe_route_purification_residual_screen_ea_pass_v1`
+- layer_target: `Frontend usability governance screen`
+- module: `route purification residual authority classification`
+- reason: after the route-purification objective was accepted, the next low-cost step was to freeze which residual family should be the first bounded batch without reopening repository scan scope
+- completed_step: `已完成 ITER-2026-04-21-FE-ROUTE-PURIFICATION-RESIDUAL-SCREEN-EA：基于既有 native-route authority、compat bridge inventory、action producer、record producer 产物冻结出 first purification family=scene_first_route_authority_closure；router/sceneRegistry compat 残留暂定为 bridge-only baseline，不是第一张纯化批次`
+- active_commit: `89d096f`
+- next_step: `open the first bounded implementation batch on scene-first route authority closure across HomeView/MyWorkView/WorkbenchView/action_service/suggested_action/MenuView/RecordView, and only reopen backend scene-orchestration supply for an individual path if scene-first target generation still cannot be proven`
+
+### 2026-04-21T02:22:00+08:00
+- blocker_key: `fe_compat_record_live_ingress_verify_dz_pass_v1`
+- layer_target: `Frontend usability governance verify`
+- module: `compat-record live ingress verification`
+- reason: after DY left only external-ingress uncertainty, the next bounded live step was to verify whether a real legacy compat-record URL still works in the running frontend
+- completed_step: `已完成 ITER-2026-04-21-FE-COMPAT-RECORD-LIVE-INGRESS-VERIFY-DZ：在 sc_demo / wutao / demo 实时浏览器验证中，标准 /r/sc.legacy.financing.loan.fact/53?menu_id=405&action_id=599 与 legacy /compat/record/sc.legacy.financing.loan.fact/53?menu_id=405&action_id=599 都可正常进入；compat-record bridge 仍承担真实旧链接入口职责`
+- active_commit: `89d096f`
+- next_step: `stop bridge-retirement line as not eligible; only reopen if the team later wants a dedicated legacy-link retirement program with explicit saved-url migration or ingress decommission evidence`
+
+### 2026-04-21T02:16:00+08:00
+- blocker_key: `fe_compat_record_ingress_verify_dy_pass_with_risk_v1`
+- layer_target: `Frontend usability governance verify`
+- module: `compat-record ingress evidence`
+- reason: after DX froze retirement-readiness uncertainty, the next bounded step was to verify whether repo-local evidence still contained live compat-record ingress before any bridge-retirement implementation
+- completed_step: `已完成 ITER-2026-04-21-FE-COMPAT-RECORD-INGRESS-VERIFY-DY：artifacts 内未扫到 /compat/record 真实命中；frontend/apps/web/src 内已无 compat-record producer，只剩 consumer recognizer 与 bridge registration；结论为 PASS_WITH_RISK，因为仓库外 legacy contract/meta/runtime 输入仍未证伪`
+- active_commit: `89d096f`
+- next_step: `stop on uncertainty; only open a dedicated live/runtime ingress verification line if the team wants to inspect external legacy inputs before any compat-record bridge retirement`
+
+### 2026-04-21T02:10:00+08:00
+- blocker_key: `fe_compat_record_retirement_screen_dx_pass_v1`
+- layer_target: `Frontend usability governance screen`
+- module: `compat-record bridge retirement readiness`
+- reason: after DW proved no producer remained, the next low-cost step was to decide whether the remaining recognizers and bridge still protect any real ingress before opening a retirement batch
+- completed_step: `已完成 ITER-2026-04-21-FE-COMPAT-RECORD-RETIREMENT-SCREEN-DX：bounded frontend scope 内已无 /compat/record producer，但 CapabilityMatrixView、sceneRegistry、action meta runtime 仍把 /compat/record 视为有效 ingress/shell route，router 仍注册 compat-record bridge；当前只能冻结为“未证明可安全退役”`
+- active_commit: `89d096f`
+- next_step: `stop on retirement-readiness uncertainty; open a bounded ingress verify line next only if the team wants to inspect real contract/meta/runtime inputs for surviving /compat/record URLs before any bridge removal`
+
+### 2026-04-21T02:06:00+08:00
+- blocker_key: `fe_compat_record_residual_screen_dw_pass_v1`
+- layer_target: `Frontend usability governance screen`
+- module: `compat-record residual classification`
+- reason: after DU and DV shrank the known record producers, the next low-cost step was to freeze whether any true `/compat/record` producer still remained in the frontend
+- completed_step: `已完成 ITER-2026-04-21-FE-COMPAT-RECORD-RESIDUAL-SCREEN-DW：bounded web scope 内已无显式 /compat/record producer；残留只剩 CapabilityMatrixView、sceneRegistry、action meta runtime 的兼容识别面，以及 router/index.ts 的 compat-record bridge 注册`
+- active_commit: `89d096f`
+- next_step: `open a bounded verify or screen next to decide whether compat-record bridge retirement is safe, with focus on consumer-side recognizers and any real URL ingress still needing the bridge`
+
+### 2026-04-21T02:00:00+08:00
+- blocker_key: `fe_remaining_record_fallback_shrink_dv_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `remaining record fallback producer shrink`
+- reason: after DU shrank the weakest residual producer, the next bounded step was to shrink the remaining high-visibility record fallback producers without reopening backend semantics
+- completed_step: `已完成 ITER-2026-04-21-FE-REMAINING-RECORD-FALLBACK-SHRINK-DV：HomeView、MyWorkView、WorkbenchView 与 action_service 保持 scene-first 优先，但 record fallback 已从 /compat/record/... 统一收缩为标准 /r/:model/:id；validate_task、pnpm -C frontend/apps/web typecheck:strict、pnpm -C frontend/apps/web build、make frontend.restart 全 PASS`
+- active_commit: `89d096f`
+- next_step: `open a bounded verify or residual screen next only if the team wants to measure whether any /compat/record producers still remain outside the known scope before considering compat-record bridge retirement`
+
+### 2026-04-21T01:57:00+08:00
+- blocker_key: `fe_record_producer_fallback_shrink_du_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `suggested action record fallback shrink`
+- reason: DT froze suggested_action/runtime.ts as the weakest remaining record URL producer, so the next bounded step was to shrink its private compat fallback without touching backend semantics
+- completed_step: `已完成 ITER-2026-04-21-FE-RECORD-PRODUCER-FALLBACK-SHRINK-DU：suggested_action/runtime.ts 保持 scene-first 优先，但 open_project/open_record 的回退从 /compat/record/... 收缩为标准 /r/:model/:id；validate_task、pnpm -C frontend/apps/web typecheck:strict、pnpm -C frontend/apps/web build、make frontend.restart 全 PASS`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen next only if the team wants to continue shrinking remaining record fallback producers in Home/MyWork/Workbench/action_service from /compat/record toward /r or scene-first-only output`
+
+### 2026-04-21T01:58:00+08:00
+- blocker_key: `fe_record_url_producer_screen_dt_pass_v1`
+- layer_target: `Frontend usability governance screen`
+- module: `record URL producer classification`
+- reason: after DS restored a legal record-route bridge, the next low-cost step was to freeze which bounded producers still emit `/compat/record` and whether they already have enough scene identity for shrink-only follow-up
+- completed_step: `已完成 ITER-2026-04-21-FE-RECORD-URL-PRODUCER-SCREEN-DT：HomeView、MyWorkView、WorkbenchView 与 action_service 已是 scene-first 再 fallback；suggested_action/runtime.ts 仍是最弱残留 producer，因为它主要依赖 parsed query 上下文，scene identity 可能不足`
+- active_commit: `89d096f`
+- next_step: `open a bounded producer-shrink implementation batch focused first on frontend/apps/web/src/app/suggested_action/runtime.ts, and only remove /compat/record fallback where scene-first resolution can be proven from existing query identity`
+
+### 2026-04-21T01:52:00+08:00
+- blocker_key: `fe_record_route_bridge_restore_ds_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `record route compatibility bridge`
+- reason: DR froze that the unreachable record detail page is caused by missing route registration rather than backend semantic loss, so the next bounded legal step was to restore a thin consumer-side bridge
+- completed_step: `已完成 ITER-2026-04-21-FE-RECORD-ROUTE-BRIDGE-RESTORE-DS：router 恢复 /r/:model/:id、/f/:model/:id 与 /compat/record/:model/:id 到现有 ModelFormPage；validate_task、pnpm -C frontend/apps/web typecheck:strict、pnpm -C frontend/apps/web build、make frontend.restart 全 PASS`
+- active_commit: `89d096f`
+- next_step: `open a bounded producer-migration screen next to classify which remaining Home/MyWork/Workbench/action_service/suggested_action flows still emit /compat/record or /r URLs without enough scene identity, then shrink those producers before considering bridge retirement`
+
+### 2026-04-20T18:22:00+08:00
+- blocker_key: `fe_nav_verifier_source_selection_dd_fail_v1`
+- layer_target: `Verification runtime surface`
+- module: `unified menu usability verifier source selection`
+- reason: after release_tree drift was frozen as the dominant family, the next bounded batch was to force the verifier onto the active explained navigation tree and measure whether failure membership stabilized
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-VERIFIER-SOURCE-SELECTION-DD：validate_task 与 node --check PASS；真实 smoke 已把 nav_source 从 release_tree 切到 nav_explained.tree，但最新工件 artifacts/codex/unified-system-menu-click-usability-smoke/20260420T083057Z/summary.json 将 leaf_count 从 31 扩到 60、fail_count 从 26 扩到 54；大量“常用入口”叶子在 /m/:menuId 上直接报 Menu resolve failed / menu not found`
+- active_commit: `89d096f`
+- next_step: `stop on verify_failed; open a bounded screen next to classify why nav_explained.tree exposes menu ids that the /m/:menuId route cannot resolve, with priority on common-entry branch ownership and menu_id parity between explained nav and runtime menu trees`
+
+### 2026-04-20T18:03:00+08:00
+- blocker_key: `fe_nav_release_tree_screen_dc_pass_v1`
+- layer_target: `Frontend governance screen`
+- module: `release navigation tree ownership classification`
+- reason: after artifact recheck moved the dominant family to release_tree runtime drift, the next low-cost step was to freeze whether releaseNavigationTree should still be trusted as the primary verifier source
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-RELEASE-TREE-SCREEN-DC：screen 已冻结 next_candidate_family=verifier_release_tree_source_selection；AppShell 真实侧边导航消费 useNavigationMenu().tree，而 verifier、router、MenuView、session activeTree 默认都优先 releaseNavigationTree；当前失败工件持续固定为 nav_source=release_tree，说明更强下一家族是 releaseNavigationTree 信任与 source selection 本身，而非继续追加 scene-contract 修补`
+- active_commit: `89d096f`
+- next_step: `open a bounded verifier/runtime implementation batch next; make unified menu usability smoke prefer the active explained navigation tree before trusting releaseNavigationTree, then rerun the smoke to see whether failure membership stabilizes`
+
+### 2026-04-20T17:54:00+08:00
+- blocker_key: `fe_nav_artifact_recheck_screen_db_pass_v1`
+- layer_target: `Frontend governance screen`
+- module: `menu usability artifact recheck`
+- reason: after the context-projection fix failed to improve the smoke frontier, the next low-cost step was to compare the latest two artifacts and restate the dominant family
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-ARTIFACT-RECHECK-SCREEN-DB：两份工件都冻结为 leaf_count=31 / fail_count=26 / nav_source=release_tree；失败家族仅从 contract_context_missing 17->16、scene_identity_missing 9->10 轻微摆动，同时新增 failing ids 941991035 与 325、移除 329 与 313，未形成向单一 scene-context 家族的收敛；当前更强下一家族已改判为 release_tree runtime drift / ownership drift`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen next against release_tree ownership/runtime drift; classify whether unified menu smoke should trust release_tree at all for the failing leaves or whether releaseNavigationTree itself is the unstable source`
+
+### 2026-04-20T17:46:00+08:00
+- blocker_key: `fe_nav_context_projection_fix_da_fail_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `menu route context projection`
+- reason: after ownership was frozen to frontend menu-route projection, the next bounded batch was to preserve action_id while projecting scene-known menu entries into scene paths
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-CONTEXT-PROJECTION-FIX-DA：validate_task/typecheck/build PASS，但 unified_system_menu_click_usability_smoke 仍 FAIL；最新工件 artifacts/codex/unified-system-menu-click-usability-smoke/20260420T082009Z/summary.json 仍为 leaf_count=31、fail_count=26，且相对上一工件新增 failing ids 941991035 与 325，说明这次 action_id 透传修补未带来可验证收敛`
+- active_commit: `89d096f`
+- next_step: `stop on verify_failed; open a bounded re-screen next to compare the latest two artifacts and classify whether the residual 26 failures are dominated by scene contract insufficiency, release_tree ownership drift, or an incorrect ownership assumption in the menu-route projection fix`
+
+### 2026-04-20T17:31:00+08:00
+- blocker_key: `fe_nav_context_missing_screen_cz_pass_v1`
+- layer_target: `Frontend governance screen`
+- module: `scene-known menu contract-context ownership classification`
+- reason: after scene_contract_context_missing was frozen as the dominant family, the next low-cost step was to decide whether ownership sat in frontend menu-route projection or backend contract supply
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-CONTEXT-MISSING-SCREEN-CZ：screen 已冻结 next_candidate_family=frontend_menu_route_context_projection；17 个主失败样本在工件里已同时具备 scene_key 与 action_id，但最终 URL 仅剩 scene=...；route 解析链显示 resolveScenePathFromMenuResolve 在 target.scene_key 分支未携带 action_id，前端在 /m/:menuId -> /s/:sceneKey 投影时丢失了关键上下文`
+- active_commit: `89d096f`
+- next_step: `open a bounded frontend implementation batch next; preserve action_id while projecting scene-known menu routes so scene views receive the contract context already present in menu resolution`
+
+### 2026-04-20T17:22:00+08:00
+- blocker_key: `fe_nav_failure_family_screen_cy_pass_v1`
+- layer_target: `Frontend governance screen`
+- module: `nav failing leaf family classification`
+- reason: after verifier source alignment moved the frontier to 26 real leaf failures, the next low-cost step was to classify which family dominates before any new implementation
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-FAILURE-FAMILY-SCREEN-CY：screen 已冻结 next_candidate_family=scene_contract_context_missing；26 个失败叶子中 17 个已具备 scene_key 但落到 CONTRACT_CONTEXT_MISSING，仅 9 个属于 menu_route_missing_scene_identity，因此下一张应先打 scene-known 入口的契约上下文缺口`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen or implementation batch next against scene-known menu leaves that still miss contract context, before reopening the smaller scene-identity-missing family`
+
+### 2026-04-20T17:14:00+08:00
+- blocker_key: `fe_nav_verifier_source_align_cx_fail_v1`
+- layer_target: `Verification runtime surface`
+- module: `unified menu usability verifier source alignment`
+- reason: after the runtime-storage screen froze verifier-source mismatch, the next bounded batch was to align the smoke with the active navigation source before judging real menu usability
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-VERIFIER-SOURCE-ALIGN-CX：validate_task PASS、node --check PASS；unified_system_menu_click_usability_smoke 不再因 leaf_count=0 提前失败，最新工件 artifacts/codex/unified-system-menu-click-usability-smoke/20260420T080748Z/summary.json 已恢复 leaf_count=31，但仍有 fail_count=26，主失败已前移到真实菜单点击阶段`
+- active_commit: `89d096f`
+- next_step: `stop on verify_failed; open a bounded screen next to classify the 26 remaining failing leaves into scene-identity-missing versus scene-contract-context-missing families before any new implementation`
+
+### 2026-04-20T16:56:00+08:00
+- blocker_key: `fe_nav_runtime_storage_screen_cw_pass_v1`
+- layer_target: `Frontend governance screen`
+- module: `nav runtime storage exposure classification`
+- reason: after the unified menu usability smoke failed with leaf_count=0, the next low-cost step was to classify whether the blocker sat in verifier read baseline or frontend runtime storage exposure
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-RUNTIME-STORAGE-SCREEN-CW：screen 已冻结 next_candidate_family=verifier_runtime_storage_baseline_mismatch；unified_system_menu_click_usability_smoke 只从 localStorage session cache 的 releaseNavigationTree/menuTree 取叶子，而 AppShell 当前主导航实际消费 useNavigationMenu().tree，并在 mount 时优先调用 /api/menu/navigation`
+- active_commit: `89d096f`
+- next_step: `open a bounded verifier/runtime implementation batch next; align unified menu click smoke with the active navigation source or bridge the active explained menu tree into the verifier-visible runtime storage baseline`
+
+### 2026-04-20T16:46:00+08:00
+- blocker_key: `fe_nav_compat_tail_verify_cv_fail_v1`
+- layer_target: `Frontend governance verify`
+- module: `scenarized nav menu compatibility-tail verify`
+- reason: after the frontend nav cleanup batch passed local gates, the next verify-only step was to replay the real menu click usability smoke on the requested custom frontend runtime
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-COMPAT-TAIL-VERIFY-CV：validate_task PASS，但 unified_system_menu_click_usability_smoke FAIL；工件 artifacts/codex/unified-system-menu-click-usability-smoke/20260420T075837Z/summary.json 冻结为 used_api_base=http://127.0.0.1:8069、leaf_count=0、error=no menu leaves discovered from runtime storage`
+- active_commit: `89d096f`
+- next_step: `stop on verify_failed; open a bounded verifier/runtime screen next to classify why the custom frontend runtime storage no longer exposes menu leaves to the unified menu click smoke`
+
+### 2026-04-20T16:34:00+08:00
+- blocker_key: `fe_nav_compat_tail_cleanup_cu_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `scenarized nav menu compatibility-tail cleanup`
+- reason: after the nav usability screen froze frontend compatibility-tail cleanup as the strongest next family, the next bounded batch was to improve menu usability without reopening backend menu boundary work
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-COMPAT-TAIL-CLEANUP-CU：useNavigationMenu 不再把 unresolved native-action 菜单弹回 /workbench，目录节点不再继承首个子路由伪装成直接入口，target_type 保留 directory/native/unavailable 语义；MenuTree 去除了本地业务角色标签改写，并把 disabled copy 收口为稳定用户态提示`
+- active_commit: `89d096f`
+- next_step: `open a bounded verify batch next if continued; confirm the cleaned nav menu still passes frontend build/runtime expectations and does not reintroduce empty-nav or click regression`
+
+### 2026-04-20T16:23:00+08:00
+- blocker_key: `fe_nav_scene_usability_screen_ct_pass_v1`
+- layer_target: `Frontend governance screen`
+- module: `frontend nav scene usability candidate classification`
+- reason: after the nav usability scan froze residual candidates, the next low-cost step was to classify the strongest next family without reopening repository scanning
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-SCENE-USABILITY-SCREEN-CT：screen 结果已冻结 next_candidate_family=frontend_compatibility_tail_cleanup，family_scope 收口到 useNavigationMenu.ts 与 MenuTree.vue；dashboard body mismatch 被保留为相邻但非当前菜单专项最强家族`
+- active_commit: `89d096f`
+- next_step: `open a bounded frontend compatibility-tail cleanup batch next if continued; target menu consumer fallback/state compression and renderer-side semantic rewriting without reopening backend menu boundary`
+
+### 2026-04-20T16:18:00+08:00
+- blocker_key: `fe_nav_scene_usability_scan_cs_pass_v1`
+- layer_target: `Frontend governance scan`
+- module: `frontend nav scene usability residuals`
+- reason: after the menu scene boundary was frozen as aligned-with-compatibility-tail, the next valid low-cost step was to inventory real remaining frontend usability candidates without reopening boundary conclusions
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-SCENE-USABILITY-SCAN-CS：bounded scan 在 useNavigationMenu、MenuTree 与最新 live snapshot 上冻结 6 个候选点，覆盖 unresolved native-action fallback、target_type 语义压扁、directory 首子路由继承、前端标签语义改写、raw reason_code 暴露，以及“菜单已可见但主体仍失配”的运行时前线`
+- active_commit: `89d096f`
+- next_step: `open a bounded screen task next; classify which of the scanned nav usability candidates are pure frontend compatibility-tail cleanup versus backend scene-orchestration semantic-supply dependency`
+
+### 2026-04-20T15:42:59+08:00
+- blocker_key: `be_project_dashboard_switcher_options_supply_co_pass_v1`
+- layer_target: `Backend scene orchestration`
+- module: `project dashboard switcher options supply`
+- reason: after CN froze the single-option switcher as backend option starvation, the next bounded repair was to recover `project.entry.context.options` without reopening frontend fallback logic
+- completed_step: `已完成 ITER-2026-04-20-BE-PROJECT-DASHBOARD-SWITCHER-OPTIONS-SUPPLY-CO：ProjectEntryContextService.list_options 已修复候选 recordset 累积丢失问题，并新增显式 showroom 候选支路；容器内 Odoo shell 证明当前用户下 options 已恢复为 2 项（925/FR4-EXEC-PAY-4237cc9d 与 1/展厅-主线体验项目）；live smoke artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260420T074210Z/ PASS，switcher 数量与 showroom 断言均已通过`
+- active_commit: `89d096f`
+- next_step: `re-anchor on the latest project dashboard/browser frontier and open the next bounded batch only if a new concrete verifier blocker remains after the switcher supply recovery`
+
+### 2026-04-20T15:28:05+08:00
+- blocker_key: `project_dashboard_switcher_count_screen_cn_pass_v1`
+- layer_target: `Dashboard switcher screen`
+- module: `project.management dashboard switcher count classification`
+- reason: after the status-explain alignment moved the browser frontier again, the next low-cost step was to classify whether the single switcher item came from backend option supply or frontend fallback consumption
+- completed_step: `已完成 ITER-2026-04-20-PROJECT-DASHBOARD-SWITCHER-COUNT-SCREEN-CN：live smoke 终点已收口为 project switcher should expose at least 2 projects, got 1；direct intent 证明 project.entry.context.options 在 project_id=925 下返回 options=[] / PROJECT_OPTIONS_EMPTY / option_count=0；前端 loadProjectSwitcherOptions 仅在后端空列表时回退当前项目，因此单项目并非前端筛掉多项目；当前主根因正式冻结为 backend options supply starvation`
+- active_commit: `89d096f`
+- next_step: `open the next bounded backend implementation batch on project.entry.context.options candidate supply so the dashboard switcher can receive multiple valid project options`
+
+### 2026-04-20T15:28:05+08:00
+- blocker_key: `fe_project_dashboard_status_explain_alignment_cm_fail_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `project.management dashboard explain surface`
+- reason: the frontend consumer had already recovered the dashboard surface, so the next bounded fix was to align the explain card label/content with backend status-explain semantics before reopening any broader dashboard path
+- completed_step: `已完成 ITER-2026-04-20-FE-PROJECT-DASHBOARD-STATUS-EXPLAIN-ALIGNMENT-CM：ProjectManagementDashboardView 已将第三张说明卡从“项目情况说明”改为“当前状态说明”，并优先消费 state_explain.status_explain；validate_task、typecheck、build 均 PASS，live smoke 不再报 dashboard missing status explain，但失败前沿前移到 project switcher should expose at least 2 projects, got 1`
+- active_commit: `89d096f`
+- next_step: `classify the switcher single-option frontier before opening the next implementation batch, and keep the next fix on backend option supply if the frontend is only falling back current project`
+
+### 2026-04-20T14:35:30+08:00
+- blocker_key: `verify_project_dashboard_profile_timeout_inspect_ch_fail_v1`
+- layer_target: `Verification runtime surface`
+- module: `project dashboard profile timeout inspection`
+- reason: auth bridge recovery had already moved the verifier into the real dashboard runtime, so the next low-risk step was to replace the generic timeout with a concrete page semantic snapshot
+- completed_step: `已完成 ITER-2026-04-20-VERIFY-PROJECT-DASHBOARD-PROFILE-TIMEOUT-INSPECT-CH：最新工件 artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260420T063353Z/ 新增 dashboard_timeout_snapshot.json，冻结当前真实页面状态为 /s/project.management scene shell 已建立、侧边导航 8 项可见，但主体停在“项目驾驶舱 0 条记录 / 正在加载看板...”并最终触发 detectDashboardProfile timeout`
+- active_commit: `89d096f`
+- next_step: `open the next bounded backend/frontend-consumer diagnosis batch against the real project.management dashboard data/semantic loading path now that timeout state is concrete`
+
+### 2026-04-20T14:31:00+08:00
+- blocker_key: `verify_project_dashboard_auth_bridge_recovery_cg_fail_v1`
+- layer_target: `Verification runtime surface`
+- module: `project dashboard primary entry verifier auth bridge recovery`
+- reason: live evidence showed the browser could reach `/s/project.management` while `sc_auth_token` remained empty, so the next low-risk verifier batch had to restore the frontend bearer-token runtime before any deeper dashboard diagnosis
+- completed_step: `已完成 ITER-2026-04-20-VERIFY-PROJECT-DASHBOARD-AUTH-BRIDGE-RECOVERY-CG：最新工件 artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260420T062904Z/ 已证明 login_intent 首次成功、backend_entry_route 收口到 /s/project.management、login_form_fallback_used=false；失败前沿已从 tokenless post-login API 阻断前移到 dashboard_wait 阶段的 detectDashboardProfile 超时`
+- active_commit: `89d096f`
+- next_step: `open the next bounded dashboard-semantic verify/screen batch against the real /s/project.management runtime surface now that verifier auth bridge no longer blocks scene entry`
+
+### 2026-04-20T14:14:17+08:00
+- blocker_key: `be_postlogin_startup_nav_prune_scan_cf_pass_v1`
+- layer_target: `Backend semantic scan`
+- module: `post-login startup role-surface and scene-nav prune inventory`
+- reason: after freezing the failure as backend-first, the next low-cost step was to inventory whether the strongest upstream emitter was role-surface landing or scene-nav collapse before opening a repair batch
+- completed_step: `已完成 ITER-2026-04-20-BE-POSTLOGIN-STARTUP-NAV-PRUNE-SCAN-CF：live inspect 冻结 role_surface.role_code=executive、landing_scene_key=portal.dashboard、default_route.scene_key=portal.dashboard；同时 nav_menu_count=0 / nav_release_count=0，且 scene_ready 的 project.management 行只有 nested scene.key 无 top-level target/entry；已冻结 scene-nav collapse 为 strongest direct startup blocker，role-surface landing 为次级相邻候选`
+- active_commit: `89d096f`
+- next_step: `open the next bounded backend implementation batch to repair startup scene-nav candidate delivery for the affected session before adjusting role-surface landing`
+
+### 2026-04-20T14:14:17+08:00
+- blocker_key: `be_project_management_postlogin_runtime_screen_ce_pass_v1`
+- layer_target: `Backend semantic screening`
+- module: `project.management post-login runtime boundary classification`
+- reason: latest verifier no longer hung and had already proven login success, so the next low-cost step was to classify whether `/s/project.management` failed due to backend semantic supply or frontend generic-consumer misuse
+- completed_step: `已完成 ITER-2026-04-20-BE-PROJECT-MANAGEMENT-POSTLOGIN-RUNTIME-SCREEN-CE：bounded live inspect 在 wutao/demo 下返回 active_scene_key=portal.dashboard、nav_menu_count=0、nav_release_count=0；scene_ready_contract_v1 虽含 nested scene.key=project.management，但无 top-level scene_key/entry/target；结合前端 empty-nav 状态面，已冻结为 backend scene_orchestration semantic-supply gap，而非前端 primary issue`
+- active_commit: `89d096f`
+- next_step: `open the next bounded backend implementation batch to repair post-login startup/runtime semantic supply for project.management and the associated non-empty navigation contract`
+
+### 2026-04-20T14:14:17+08:00
+- blocker_key: `verify_project_dashboard_wait_condition_isolation_cd_fail_v1`
+- layer_target: `Verification runtime surface`
+- module: `project dashboard primary entry verifier wait-state isolation`
+- reason: after restoring the missing backend `odoo` service, the host smoke needed one clean rerun to determine whether the residual failure still came from login wait-state isolation or from a later scene/runtime boundary
+- completed_step: `已完成 ITER-2026-04-20-VERIFY-PROJECT-DASHBOARD-WAIT-CONDITION-ISOLATION-CD：验证脚本现在可稳定落盘登录提交前后状态；make restart 已恢复缺失的 backend odoo 服务；最新 smoke 工件 artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260420T061244Z/ 证明登录成功跳转到 /s/project.management，随后在 dashboard_wait 阶段以 native_odoo_surface_detected 明确失败，不再是无限等待`
+- active_commit: `89d096f`
+- next_step: `stop on verify_failed and open the next bounded screen/recovery batch against the post-login /s/project.management runtime surface, focusing on why the custom scene lands in native_odoo_surface_detected with 空菜单树 evidence`
+
+### 2026-04-20T07:12:00+08:00
+- blocker_key: `fe_sceneRegistry_compat_prefix_screening_verify_ar_pass_v1`
+- layer_target: `Frontend governance verify`
+- module: `sceneRegistry compat prefix screening`
+- reason: scan 与 screen 已冻结 sceneRegistry compat prefix recognition 为 sole strong residual baseline，当前需要用 verify 结构化结论正式重述
+- completed_step: `已完成 ITER-2026-04-20-FE-SCENEREGISTRY-COMPAT-PREFIX-SCREENING-VERIFY-AR：verify 结论为 PASS；sceneRegistry compat prefix recognition 已正式冻结为当前唯一强残留私有 compat 基线；guarded router registration shell 与 native-action unresolved fallback 仅为次级残留；未指向新的 backend semantic blocker`
+- active_commit: `89d096f`
+- next_step: `Open the next bounded frontend implementation batch only if the team now wants to shrink sceneRegistry compat prefix recognition itself`
+
+### 2026-04-20T07:09:00+08:00
+- blocker_key: `fe_sceneRegistry_compat_prefix_screening_screen_aq_pass_v1`
+- layer_target: `Frontend governance screen`
+- module: `sceneRegistry compat prefix screening`
+- reason: bounded scan 已冻结 direct dependency surface，当前需要正式冻结最强分类结论
+- completed_step: `已完成 ITER-2026-04-20-FE-SCENEREGISTRY-COMPAT-PREFIX-SCREENING-SCREEN-AQ：sceneRegistry compat prefix recognition 已正式冻结为 sole strong residual baseline；guarded router registration shell 与 native-action unresolved fallback 为相邻但更弱残留`
+- active_commit: `89d096f`
+- next_step: `Open a bounded verify task to restate the new convergence status in structured PASS/violations/decision form without adding new reasoning`
+
+### 2026-04-20T07:06:00+08:00
+- blocker_key: `fe_sceneRegistry_compat_prefix_screening_scan_ap_pass_v1`
+- layer_target: `Frontend governance scan`
+- module: `sceneRegistry compat prefix screening`
+- reason: latest verify 已冻结 sceneRegistry compat prefix recognition 为 strongest residual baseline，当前需要一个 bounded scan 冻结它的直接依赖面，再决定是否可直接实现
+- completed_step: `已完成 ITER-2026-04-20-FE-SCENEREGISTRY-COMPAT-PREFIX-SCREENING-SCAN-AP：compat prefix recognition 仍集中在 sceneRegistry normalization；其直接相邻面主要是 guarded router compat registration 与 native-action unresolved fallback；SceneView consumer 层已明显降依赖`
+- active_commit: `89d096f`
+- next_step: `Open a bounded screen task to classify whether sceneRegistry compat prefix recognition can now be isolated as the sole strong residual baseline before implementation`
+
+### 2026-04-20T07:00:00+08:00
+- blocker_key: `fe_model_form_compat_guard_shrink_recheck_verify_ao_pass_v1`
+- layer_target: `Frontend governance verify`
+- module: `model-form compat guard shrink recheck`
+- reason: scan 与 screen 已冻结“sceneRegistry compat prefix recognition 成为主残留、router compat families 已 guard 化”的新边界，当前需要用 verify 结构化结论正式重述
+- completed_step: `已完成 ITER-2026-04-20-FE-MODEL-FORM-COMPAT-GUARD-SHRINK-RECHECK-VERIFY-AO：verify 结论为 PASS；router 私有 compat families 已全部进入 scene-first guard 形态，当前 strongest residual baseline 已正式转为 sceneRegistry compat prefix recognition；未指向新的 backend semantic blocker`
+- active_commit: `89d096f`
+- next_step: `Open the next bounded frontend implementation batch only if the team now wants to keep shrinking sceneRegistry compat prefix recognition itself`
+
+### 2026-04-20T06:57:00+08:00
+- blocker_key: `fe_model_form_compat_guard_shrink_recheck_screen_an_pass_v1`
+- layer_target: `Frontend governance screen`
+- module: `model-form compat guard shrink recheck`
+- reason: bounded scan 已冻结 shrink 后残留候选，当前需要正式冻结最强分类结论
+- completed_step: `已完成 ITER-2026-04-20-FE-MODEL-FORM-COMPAT-GUARD-SHRINK-RECHECK-SCREEN-AN：sceneRegistry compat prefix recognition 已正式冻结为 strongest residual private compat baseline；guarded router registration shell 仍在，但不再是更强残留`
+- active_commit: `89d096f`
+- next_step: `Open a bounded verify task to restate the new convergence status in structured PASS/violations/decision form without adding new reasoning`
+
+### 2026-04-20T06:54:00+08:00
+- blocker_key: `fe_model_form_compat_guard_shrink_recheck_scan_am_pass_v1`
+- layer_target: `Frontend governance scan`
+- module: `model-form compat guard shrink recheck`
+- reason: AL 批次已为 `model-form` 增加 scene-first guard，当前需要用 bounded scan 冻结 shrink 后 router 与 sceneRegistry 的新残留分布
+- completed_step: `已完成 ITER-2026-04-20-FE-MODEL-FORM-COMPAT-GUARD-SHRINK-RECHECK-SCAN-AM：router 的 action/record/model-form 三个 compat family 均已具备 dedicated scene-first guard；当前显式残留更集中在 sceneRegistry compat prefix recognition 与 guarded router registration shell`
+- active_commit: `89d096f`
+- next_step: `Open a bounded screen task to classify whether sceneRegistry compat prefix recognition is now the strongest residual private compat baseline`
+
+### 2026-04-20T06:48:00+08:00
+- blocker_key: `fe_model_form_compat_guard_shrink_al_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `model-form compat guard shrink`
+- reason: latest verify 已冻结 router 与 registry 为主残留基线，当前批次要把唯一还缺 dedicated guard 的 `model-form` compat family 压成 scene-first
+- completed_step: `已完成 ITER-2026-04-20-FE-MODEL-FORM-COMPAT-GUARD-SHRINK-AL：router 新增 `model-form` scene-first guard；可解析 scene 身份时转回 scene path 并携带 `view_mode=form`，不可解析时保留原有 fallback route；validate_task、pnpm -C frontend/apps/web typecheck:strict、pnpm -C frontend/apps/web build、scoped git diff --check 全 PASS（build 仅保留既有 chunk-size warning）`
+- active_commit: `89d096f`
+- next_step: `Open a bounded recheck only if the team now wants to formally restate how much router private compat baseline versus sceneRegistry compat prefix recognition still remains`
+
+### 2026-04-20T06:40:00+08:00
+- blocker_key: `fe_model_form_compat_guard_shrink_al_started_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `model-form compat guard shrink`
+- reason: latest verify 已冻结 router 与 registry 为主残留基线，其中 `model-form` 仍缺少像 `action` / `record` 那样的 scene-first guard，当前应先压这个点
+- completed_step: `已启动 ITER-2026-04-20-FE-MODEL-FORM-COMPAT-GUARD-SHRINK-AL：计划只改 router/index.ts，为 `model-form` 增加 scene-first guard，并在无法解析 scene 身份时保留原有 fallback`
+- active_commit: `89d096f`
+- next_step: `Implement the bounded model-form scene-first router guard, then verify with typecheck/build`
+
+### 2026-04-20T06:34:00+08:00
+- blocker_key: `fe_private_compat_emitter_shrink_recheck_verify_ak_pass_v1`
+- layer_target: `Frontend governance verify`
+- module: `private compat emitter shrink recheck`
+- reason: scan 与 screen 已冻结“入口面 emitter 退到 fallback-only，router 与 registry 成为主残留”的新边界，当前需要用 verify 结构化结论正式重述
+- completed_step: `已完成 ITER-2026-04-20-FE-PRIVATE-COMPAT-EMITTER-SHRINK-RECHECK-VERIFY-AK：verify 结论为 PASS；入口面 private compat emitter 已不再是 preferred navigation，当前主残留已稳定收缩为 router 私有 compat 注册加 sceneRegistry compat prefix recognition；未指向新的 backend semantic blocker`
+- active_commit: `89d096f`
+- next_step: `Open the next bounded frontend implementation batch only if the team now wants to keep shrinking router private compat registration or sceneRegistry compat prefix recognition themselves`
+
+### 2026-04-20T06:31:00+08:00
+- blocker_key: `fe_private_compat_emitter_shrink_recheck_screen_aj_pass_v1`
+- layer_target: `Frontend governance screen`
+- module: `private compat emitter shrink recheck`
+- reason: bounded scan 已冻结 shrink 后残留候选，当前需要正式冻结最强分类结论
+- completed_step: `已完成 ITER-2026-04-20-FE-PRIVATE-COMPAT-EMITTER-SHRINK-RECHECK-SCREEN-AJ：入口面 compat emitter 已不再是主要残留问题；router 私有 compat 注册与 sceneRegistry compat prefix recognition 已正式冻结为 dominant remaining private compat baseline`
+- active_commit: `89d096f`
+- next_step: `Open a bounded verify task to restate the new convergence status in structured PASS/violations/decision form without adding new reasoning`
+
+### 2026-04-20T06:28:00+08:00
+- blocker_key: `fe_private_compat_emitter_shrink_recheck_scan_ai_pass_v1`
+- layer_target: `Frontend governance scan`
+- module: `private compat emitter shrink recheck`
+- reason: AH 批次已压低入口面 compat 发起源，当前需要用 bounded scan 冻结 shrink 后的新残留分布
+- completed_step: `已完成 ITER-2026-04-20-FE-PRIVATE-COMPAT-EMITTER-SHRINK-RECHECK-SCAN-AI：Workbench/Home/MyWork/ProjectsIntake 已进入 scene-first preferred navigation，仅保留 fallback compat；显式残留已更集中在 router 私有 compat 注册与 sceneRegistry compat prefix recognition`
+- active_commit: `89d096f`
+- next_step: `Open a bounded screen task to classify whether router registration and sceneRegistry compat prefix recognition are now the dominant residual private compat baseline`
+
+### 2026-04-20T06:22:00+08:00
+- blocker_key: `fe_private_compat_emitter_shrink_ah_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `private compat emitter shrink`
+- reason: latest recheck 已冻结 router 与 registry 为主残留基线，当前批次要继续压 Workbench/Home/MyWork/ProjectsIntake 这些入口面上的直接 compat emitter
+- completed_step: `已完成 ITER-2026-04-20-FE-PRIVATE-COMPAT-EMITTER-SHRINK-AH：新增 `resolveSceneFirstActionLocation(...)`；WorkbenchView、HomeView、MyWorkView 的 action/record 入口与 ProjectsIntakeView 的项目立项入口均改为 scene-first，只有 unresolved 情况才回落 `/compat/action` 或 `/compat/record`；validate_task、pnpm -C frontend/apps/web typecheck:strict、pnpm -C frontend/apps/web build、scoped git diff --check 全 PASS（build 仅保留既有 chunk-size warning）`
+- active_commit: `89d096f`
+- next_step: `Open a bounded recheck only if the team now wants to formally restate how much private compat baseline still remains after entry-surface emitters were shrunk`
+
+### 2026-04-20T06:10:00+08:00
+- blocker_key: `fe_private_compat_emitter_shrink_ah_started_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `private compat emitter shrink`
+- reason: latest recheck 已冻结 router 与 sceneRegistry 为主残留基线，但 Workbench/Home/MyWork/ProjectsIntake 仍有直接 `/compat/...` 发起源，当前应先压这些入口面
+- completed_step: `已启动 ITER-2026-04-20-FE-PRIVATE-COMPAT-EMITTER-SHRINK-AH：计划在 WorkbenchView、HomeView、MyWorkView、ProjectsIntakeView 上继续收缩主动 compat emitter，并复用共享 scene-first 导航 helper`
+- active_commit: `89d096f`
+- next_step: `Implement the bounded scene-first emitter shrink in the declared entry surfaces, then verify with typecheck/build`
+
+### 2026-04-20T06:02:00+08:00
+- blocker_key: `fe_private_compat_infra_shrink_recheck_verify_ag_pass_v1`
+- layer_target: `Frontend governance verify`
+- module: `private compat infrastructure shrink recheck`
+- reason: scan 与 screen 已冻结“主动 compat 发起源下降、router 与 registry 基线成为主残留”的新边界，当前需要用 verify 结构化结论正式重述
+- completed_step: `已完成 ITER-2026-04-20-FE-PRIVATE-COMPAT-INFRA-SHRINK-RECHECK-VERIFY-AG：verify 结论为 PASS；主动 private compat dispatch 已不再是 dominant residual issue，当前主残留已正式转为 router 的私有 compat 注册加 sceneRegistry 的 compat prefix recognition；未指向新的 backend semantic blocker`
+- active_commit: `89d096f`
+- next_step: `Open the next bounded frontend implementation batch only if the team now wants to keep shrinking router private compat registration or sceneRegistry compat prefix recognition themselves`
+
+### 2026-04-20T05:59:00+08:00
+- blocker_key: `fe_private_compat_infra_shrink_recheck_screen_af_pass_v1`
+- layer_target: `Frontend governance screen`
+- module: `private compat infrastructure shrink recheck`
+- reason: bounded scan 已冻结 shrink 后残留候选，当前需要正式冻结最强分类结论
+- completed_step: `已完成 ITER-2026-04-20-FE-PRIVATE-COMPAT-INFRA-SHRINK-RECHECK-SCREEN-AF：主动 compat dispatch 已不再是主要残留问题；router 私有 compat 注册与 sceneRegistry compat prefix recognition 已正式冻结为 dominant remaining private compat baseline`
+- active_commit: `89d096f`
+- next_step: `Open a bounded verify task to restate the new convergence status in structured PASS/violations/decision form without adding new reasoning`
+
+### 2026-04-20T05:56:00+08:00
+- blocker_key: `fe_private_compat_infra_shrink_recheck_scan_ae_pass_v1`
+- layer_target: `Frontend governance scan`
+- module: `private compat infrastructure shrink recheck`
+- reason: AD 批次已压低主动 compat 发起源，当前需要用 bounded scan 冻结 shrink 后的新残留分布，而不是立即重开 removal
+- completed_step: `已完成 ITER-2026-04-20-FE-PRIVATE-COMPAT-INFRA-SHRINK-RECHECK-SCAN-AE：action_service、SceneView、useNavigationMenu、suggested_action/runtime 已转为 scene-first before compat fallback；当前显式残留更集中在 router 的私有 compat 注册与 sceneRegistry 的 compat prefix recognition`
+- active_commit: `89d096f`
+- next_step: `Open a bounded screen task to classify whether router registration and sceneRegistry compat prefix recognition are now the dominant residual private compat boundary`
+
+### 2026-04-20T05:48:00+08:00
+- blocker_key: `fe_private_compat_infra_shrink_ad_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `private compat infrastructure shrink`
+- reason: latest verify 已冻结 private compat infrastructure 为 dominant residual issue，当前批次要直接压低主动 compat 发起源，而不是先碰 fallback-only 壳或后端语义
+- completed_step: `已完成 ITER-2026-04-20-FE-PRIVATE-COMPAT-INFRA-SHRINK-AD：action_service 的 openAction/openForm、useNavigationMenu 的 native-action normalize、suggested_action/runtime 的 open_project/open_action/open_record、SceneView 的 workspace action target 与 bounded action-only record case 均改为 scene-first；只有解析不出唯一 scene 时才回落 `/compat/action` 或 `/compat/record`；validate_task、pnpm -C frontend/apps/web typecheck:strict、pnpm -C frontend/apps/web build、scoped git diff --check 全 PASS（build 仅保留既有 chunk-size warning）`
+- active_commit: `89d096f`
+- next_step: `Open a bounded recheck only if the team now wants to formally restate how much private compat infrastructure still remains after active dispatch sources were shrunk`
+
+### 2026-04-20T05:36:00+08:00
+- blocker_key: `fe_private_compat_infra_shrink_ad_started_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `private compat infrastructure shrink`
+- reason: 最新 verify 已正式冻结 private compat infrastructure 为 dominant residual issue，当前继续链路应直接转入这条 bounded 实现线
+- completed_step: `已启动 ITER-2026-04-20-FE-PRIVATE-COMPAT-INFRA-SHRINK-AD：下一批实现范围锁定 router、sceneRegistry、action_service，以及少量直接构造 `/compat/...` 的 declared frontend consumer surface`
+- active_commit: `89d096f`
+- next_step: `Implement the bounded private compat infrastructure shrink and verify it with typecheck/build`
+
+### 2026-04-20T05:32:00+08:00
+- blocker_key: `fe_internal_route_name_shell_shrink_recheck_verify_ac_pass_v1`
+- layer_target: `Frontend governance verify`
+- module: `internal route-name shell shrink recheck`
+- reason: scan 与 screen 已冻结“private compat infrastructure 为主、route-name 壳降为 fallback-only”的新残留边界，当前需要用 verify 结构化结论正式重述
+- completed_step: `已完成 ITER-2026-04-20-FE-INTERNAL-ROUTE-NAME-SHELL-SHRINK-RECHECK-VERIFY-AC：verify 结论为 PASS；公开 compat 前缀仍保持退场，内部 route-name 壳不再是 preferred navigation，当前 dominant residual boundary 已正式转为私有 `/compat/action /compat/form /compat/record` 基础设施；未指向新的 backend semantic blocker`
+- active_commit: `89d096f`
+- next_step: `Open the next bounded frontend implementation batch only if the team now wants to keep shrinking private compat infrastructure itself`
+
+### 2026-04-20T05:28:00+08:00
+- blocker_key: `fe_internal_route_name_shell_shrink_recheck_screen_ab_pass_v1`
+- layer_target: `Frontend governance screen`
+- module: `internal route-name shell shrink recheck`
+- reason: bounded scan 已冻结“route-name 壳退到 fallback-only，私有 compat 基础设施仍在”的候选集，当前需要正式冻结最强分类结论
+- completed_step: `已完成 ITER-2026-04-20-FE-INTERNAL-ROUTE-NAME-SHELL-SHRINK-RECHECK-SCREEN-AB：正式冻结 route-name 壳已不再是主要残留问题；当前 dominant residual issue 已转为 router、sceneRegistry、action_service 上的私有 `/compat/action /compat/form /compat/record` 基础设施；未发现新的 backend semantic blocker`
+- active_commit: `89d096f`
+- next_step: `Open a bounded verify task to restate the new convergence status in structured PASS/violations/decision form without adding new reasoning`
+
+### 2026-04-20T05:24:00+08:00
+- blocker_key: `fe_internal_route_name_shell_shrink_recheck_scan_aa_pass_v1`
+- layer_target: `Frontend governance scan`
+- module: `internal route-name shell shrink recheck`
+- reason: 最新实现批次已压低内部 route-name 壳，当前需要用 bounded scan 冻结“fallback-only 壳”与“私有 compat 基础设施”之间的新残留分布
+- completed_step: `已完成 ITER-2026-04-20-FE-INTERNAL-ROUTE-NAME-SHELL-SHRINK-RECHECK-SCAN-AA：新 helper `resolveSceneFirstFormOrRecordLocation(...)` 已进入 ActionView、ContractFormPage、RecordView、ViewRelationalRenderer；这几处仍保留的 `model-form` / `record` 只出现在 `sceneLocation || ...` fallback 分支；router、sceneRegistry、action_service 仍显式保留私有 `/compat/action /compat/form /compat/record` 基础设施`
+- active_commit: `89d096f`
+- next_step: `Open a bounded screen task to classify whether private compat infrastructure is now the dominant residual issue and route-name shells have become fallback-only`
+
+### 2026-04-20T05:16:00+08:00
+- blocker_key: `fe_internal_route_name_shell_shrink_z_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `internal route-name shell shrink`
+- reason: post-public-prefix verify 已冻结残留兼容层为私有 compat 基础设施加内部 route-name 壳，当前需要直接把“已有 scene 身份却仍先绕 compat 壳”的内跳路径压低
+- completed_step: `已完成 ITER-2026-04-20-FE-INTERNAL-ROUTE-NAME-SHELL-SHRINK-Z：新增 `resolveSceneFirstFormOrRecordLocation(...)` 共享 helper；ActionView 的 form-mode switch 与 list create、ContractFormPage 的 relation create 与 post-create replace、RecordView 的 open-record/record-target navigation、ViewRelationalRenderer 的 openRecord 均改为 scene-first，只有 scene 身份无法解析时才回落 `model-form` / `record` route-name 壳；validate_task、pnpm -C frontend/apps/web typecheck:strict、pnpm -C frontend/apps/web build、scoped git diff --check 全 PASS（build 仅保留既有 chunk-size warning）`
+- active_commit: `89d096f`
+- next_step: `Open a bounded recheck only if the team now wants to formally restate how much private compat infrastructure versus fallback-only route-name shells still remains`
+
+### 2026-04-20T05:02:00+08:00
+- blocker_key: `fe_internal_route_name_shell_shrink_z_started_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `internal route-name shell shrink`
+- reason: 最新 verify 已冻结残留边界为私有 compat 基础设施加内部 route-name 壳，当前直接开 bounded 实现批次压缩这条内部壳链路
+- completed_step: `已启动 ITER-2026-04-20-FE-INTERNAL-ROUTE-NAME-SHELL-SHRINK-Z：计划新增共享 scene-first 导航 helper，并把 ActionView、ContractFormPage、RecordView、ViewRelationalRenderer 中已有 scene 身份的 form/record 跳转从 route-name compat 壳收回到 scene 路径`
+- active_commit: `89d096f`
+- next_step: `Implement the bounded scene-first navigation helper and update the declared internal shell navigation points, then verify with typecheck/build`
+
+### 2026-04-20T04:48:00+08:00
+- blocker_key: `fe_post_public_compat_retirement_recheck_verify_y_pass_v1`
+- layer_target: `Frontend governance verify`
+- module: `post-public compatibility retirement recheck`
+- reason: scan 与 screen 已冻结残留边界，当前需要用 verify 结构化结论正式重述“公开兼容路由已收敛、私有兼容层仍在”的最新状态
+- completed_step: `已完成 ITER-2026-04-20-FE-POST-PUBLIC-COMPAT-RETIREMENT-RECHECK-VERIFY-Y：verify 结论为 PASS；前端可见公开兼容路由前缀已完成收敛，剩余边界收缩为私有 `/compat/action /compat/form /compat/record` 基础设施与内部 `action` / `model-form` / `record` route-name 承接；本轮 bounded verify 未指向新的 backend semantic blocker`
+- active_commit: `89d096f`
+- next_step: `Open the next bounded frontend batch only if the team now wants to keep shrinking private compat infrastructure or the remaining internal route-name shells`
+
+### 2026-04-20T04:42:00+08:00
+- blocker_key: `fe_post_public_compat_retirement_recheck_screen_x_pass_v1`
+- layer_target: `Frontend governance screen`
+- module: `post-public compatibility retirement recheck`
+- reason: bounded scan 已冻结剩余兼容候选，当前需要正式冻结公开前缀退场后的最强分类结论，且不能重开扫描
+- completed_step: `已完成 ITER-2026-04-20-FE-POST-PUBLIC-COMPAT-RETIREMENT-RECHECK-SCREEN-X：正式冻结当前剩余兼容边界已收缩为私有 `/compat/action /compat/form /compat/record` 基础设施，加上内部 `action` / `model-form` / `record` route-name 承接；公开 `/a /f /r` 前缀不再是残留问题，也未发现新的 backend semantic-supply blocker`
+- active_commit: `89d096f`
+- next_step: `Open a bounded verify task to restate the convergence status in structured PASS/violation/decision form without adding new reasoning`
+
+### 2026-04-20T04:36:00+08:00
+- blocker_key: `fe_post_public_compat_retirement_recheck_scan_w_pass_v1`
+- layer_target: `Frontend governance scan`
+- module: `post-public compatibility retirement recheck`
+- reason: 公开 `/a /f /r` 已退场，当前需要用一个 bounded 低成本 scan 冻结剩余私有兼容形态，而不是重开实现或全仓扫描
+- completed_step: `已完成 ITER-2026-04-20-FE-POST-PUBLIC-COMPAT-RETIREMENT-RECHECK-SCAN-W：在 12 个声明文件内完成 bounded recheck；router 仍保留 `/compat/action /compat/form /compat/record` 私有兼容注册，sceneRegistry、action_service、SceneView、useNavigationMenu、suggested_action/runtime 仍消费私有 compat 前缀，ActionView、ContractFormPage、RecordView、ViewRelationalRenderer 仍经 `model-form` / `record` route name 做内部兼容承接；未发现公开 `/a /f /r` 回流`
+- active_commit: `89d096f`
+- next_step: `Open a bounded screen task to classify whether the remaining convergence status should now be stated as private compat infrastructure plus internal route-name shells only`
+
+### 2026-04-20T04:24:00+08:00
+- blocker_key: `fe_explicit_compat_route_retirement_v_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `explicit compatibility route retirement`
+- reason: 先前 screen 已正式冻结“剩余 compatibility route form 主要集中在显式 /a /f /r 路由注册层”，当前要直接把这些公共兼容前缀退场
+- completed_step: `已完成 ITER-2026-04-20-FE-EXPLICIT-COMPAT-ROUTE-RETIREMENT-V：router 显式兼容注册已从公共 /a /f /r 迁到私有 /compat/action /compat/form /compat/record；sceneRegistry、AppShell、WorkbenchView、action_service、SceneView、useNavigationMenu、suggested_action/runtime、HomeView、CapabilityMatrixView、MyWorkView、useActionViewActionMetaRuntime、ProjectsIntakeView 等直接路径消费点已同步迁移；内部 route name 仍保留；validate_task、pnpm -C frontend/apps/web typecheck:strict、pnpm -C frontend/apps/web build、path-scoped git diff --check 全 PASS（build 仅保留既有 chunk-size warning）`
+- active_commit: `89d096f`
+- next_step: `Re-open a bounded verification or audit only if the team now wants to formally restate the scene-boundary convergence status after public /a /f /r retirement`
+
+### 2026-04-20T04:04:00+08:00
+- blocker_key: `fe_internal_compat_shell_shrink_recheck_screen_u_pass_v1`
+- layer_target: `Frontend governance screen`
+- module: `internal compatibility shell shrink recheck`
+- reason: 最新 recheck scan 已冻结 reduced set，当前需要把最强分类结论正式冻结，判断剩余 compatibility route form 是否已主要收敛到显式路由注册层
+- completed_step: `已完成 ITER-2026-04-20-FE-INTERNAL-COMPAT-SHELL-SHRINK-RECHECK-SCREEN-U：主 scene-first boundary 仍 trusted；公开 fallback authority 与 bounded internal-shell action fallback 已不再是主要残留问题；当前剩余 compatibility route form 已正式冻结为“主要集中在显式 /a /f /r 路由注册层”`
+- active_commit: `89d096f`
+- next_step: `Open a new bounded implementation batch only if the team now wants to retire the explicit /a /f /r compatibility route registrations themselves`
+
+### 2026-04-20T03:58:00+08:00
+- blocker_key: `fe_internal_compat_shell_shrink_recheck_scan_t_pass_v1`
+- layer_target: `Frontend governance scan`
+- module: `internal compatibility shell shrink recheck`
+- reason: 内部兼容壳缩减批次已完成，当前需要重扫 bounded frontend surface，确认剩余 compatibility route form 是否已主要收敛到显式 /a /f /r 路由注册层
+- completed_step: `已完成 ITER-2026-04-20-FE-INTERNAL-COMPAT-SHELL-SHRINK-RECHECK-SCAN-T：显式 /a /f /r 路由注册仍保留在 router 层；RecordView 与 ContractFormPage 在本轮 bounded helper 覆盖下已不再把 unresolved 情况直接 reopen 到 action；当前剩余兼容形态已明显收缩到显式路由注册层为主`
+- active_commit: `89d096f`
+- next_step: `Open a bounded screen task only if the team wants to freeze the strongest post-shrink classification statement formally`
+
+### 2026-04-20T03:52:00+08:00
+- blocker_key: `fe_internal_compat_shell_shrink_s_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `internal compatibility shell shrink`
+- reason: public authority fallback 已基本压完，当前要继续缩掉 RecordView 与 ContractFormPage 内部兼容壳里剩余的 action reopen/fallback
+- completed_step: `已完成 ITER-2026-04-20-FE-INTERNAL-COMPAT-SHELL-SHRINK-S：RecordView 的 pushSceneOrAction 现改为 scene-first，否则回 workbench CONTRACT_CONTEXT_MISSING；ContractFormPage 的 open action、execute-button nextAction、enterprise next action、filter navigation 统一改走 scene-first helper，否则回 workbench 诊断；显式路由注册层保持不动；validate_task、pnpm -C frontend/apps/web typecheck:strict、pnpm -C frontend/apps/web build、path-scoped git diff --check 全 PASS（build 仅保留既有 chunk-size warning）`
+- active_commit: `89d096f`
+- next_step: `Open a bounded recheck only if the team now wants to confirm whether explicit /a /f /r registrations are the only major compatibility route forms still remaining`
+
+### 2026-04-20T03:41:00+08:00
+- blocker_key: `fe_compat_authority_retirement_recheck_screen_r_pass_v1`
+- layer_target: `Frontend governance screen`
+- module: `compatibility authority retirement recheck`
+- reason: recheck scan 已冻结批次 P 之后的 reduced set，当前需要判断剩余 compatibility route form 是否已主要收缩到内部兼容壳
+- completed_step: `已完成 ITER-2026-04-20-FE-COMPAT-AUTHORITY-RETIREMENT-RECHECK-SCREEN-R：公开 compatibility route form 仍显式保留在 router 注册层（/a /f /r），但原本的公开 /a fallback authority 目标已基本完成；ModelListPage、MenuView、WorkbenchView 已从该目标线上清掉；剩余 name: action fallback 现在主要集中在 RecordView 与 ContractFormPage 等内部兼容壳；未发现新的 backend semantic-supply blocker`
+- active_commit: `89d096f`
+- next_step: `Open another bounded implementation batch only if the team now wants to retire explicit route registrations or start shrinking the internal compatibility shells`
+
+### 2026-04-20T03:35:00+08:00
+- blocker_key: `fe_compat_authority_retirement_recheck_scan_q_pass_v1`
+- layer_target: `Frontend governance scan`
+- module: `compatibility authority retirement recheck`
+- reason: 批次 P 已压掉一批公开 `/a` fallback authority，当前需要重扫 bounded frontend surface，冻结这轮之后还剩哪些 compatibility route forms
+- completed_step: `已完成 ITER-2026-04-20-FE-COMPAT-AUTHORITY-RETIREMENT-RECHECK-SCAN-Q：公开 authority 层面仍显式保留 /a /f /r 路由注册，但 router 的 unresolved action traffic、ModelListPage、MenuView、WorkbenchView 已不再公开回落到 /a；剩余 name: action 引用主要收缩到 RecordView 与 ContractFormPage 等内部兼容壳`
+- active_commit: `89d096f`
+- next_step: `Open a bounded screen task only if the team wants a post-retirement reclassification of the remaining compatibility route forms`
+
+### 2026-04-20T03:27:00+08:00
+- blocker_key: `fe_compat_authority_retirement_p_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `compatibility authority retirement`
+- reason: compatibility bridge screen 已把 router 公开 fallback、ModelListPage/MenuView、以及 WorkbenchView 归类为仍可继续收敛的前端 authority，当前要先把这些公开 `/a` 回落入口压掉
+- completed_step: `已完成 ITER-2026-04-20-FE-COMPAT-AUTHORITY-RETIREMENT-P：router 的 menu/action unresolved fallback、ModelListPage 的 legacy list fallback、MenuView 的 leaf/redirect unresolved action fallback、以及 WorkbenchView 的 unresolved menu target action push，现统一改为回到 workbench 的 CONTRACT_CONTEXT_MISSING 诊断面，不再公开回落到 /a；ActionView/ContractFormPage/RecordView 内部兼容壳保持不动；validate_task、pnpm -C frontend/apps/web typecheck:strict、pnpm -C frontend/apps/web build、path-scoped git diff --check 全 PASS（build 仅保留既有 chunk-size warning）`
+- active_commit: `89d096f`
+- next_step: `Re-open a bounded audit pass only if the team now wants to re-measure which compatibility route forms still remain after this public authority retirement batch`
+
+### 2026-04-20T03:18:00+08:00
+- blocker_key: `scene_boundary_compat_bridge_inventory_screen_o_pass_v1`
+- layer_target: `Cross-layer governance screen`
+- module: `scene boundary compatibility bridge inventory`
+- reason: Scan N 已冻结候选集合，当前需要在不重扫仓库的前提下区分哪些残留 bridge 仍是前端收敛目标，哪些只是兼容壳内部机制
+- completed_step: `已完成 ITER-2026-04-20-SCENE-BOUNDARY-COMPAT-BRIDGE-INVENTORY-SCREEN-O：router 显式注册面（/m /a /f /r）、ModelListPage/MenuView 的 entry-adjacent action fallback，以及 WorkbenchView 的 unresolved action push 被归类为仍可继续收敛的真实前端目标；ActionView、ContractFormPage、RecordView、AppShell、menuResolver、sceneRegistry 当前归类为兼容壳内部承接或归一化机制；本轮未发现新的 backend semantic-supply blocker`
+- active_commit: `89d096f`
+- next_step: `Open a bounded frontend implementation batch only if the team wants to continue retiring the remaining router and entry-adjacent compatibility authorities`
+
+### 2026-04-20T03:12:00+08:00
+- blocker_key: `scene_boundary_compat_bridge_inventory_scan_n_pass_v1`
+- layer_target: `Cross-layer governance scan`
+- module: `scene boundary compatibility bridge inventory`
+- reason: 主 scene boundary alignment 已 trusted，当前需要把剩余 compatibility bridge 候选重新盘点清楚，为下一张 screen 提供限定输入，但不能把 scan 和分类混在一起
+- completed_step: `已完成 ITER-2026-04-20-SCENE-BOUNDARY-COMPAT-BRIDGE-INVENTORY-SCAN-N：bounded scan 重新冻结四类候选面。router 注册面仍保留 /m /a /f /r；入口邻近面仍包括 ModelListPage 与 MenuView 的 action fallback；兼容壳内部跳转面仍包括 WorkbenchView、RecordView、ActionView、ContractFormPage；session/router 归一化面仍包括 menuResolver、sceneRegistry、AppShell 对 compatibility path/context 的承接。本张只记录候选，不做分类结论`
+- active_commit: `89d096f`
+- next_step: `Open a bounded screen task to classify which scanned compatibility bridges are acceptable internal runtime consumers and which remain true convergence targets`
+
+### 2026-04-20T03:03:00+08:00
+- blocker_key: `scene_boundary_live_verify_i_pass_v3`
+- layer_target: `Cross-layer live verification`
+- module: `scene boundary live verify`
+- reason: menu scene resolve 的 verifier baseline 已修复，当前需要把 overall live trust 从 conditional 正式升级为 trusted，避免 checkpoint 仍停留在旧环境结论
+- completed_step: `已更新 ITER-2026-04-20-SCENE-BOUNDARY-LIVE-VERIFY-I：verify.portal.semantic_route PASS、verify.portal.bridge.e2e PASS（artifacts: /mnt/artifacts/codex/portal-bridge-e2e/20260419T185429）、DB_NAME=sc_demo make verify.menu.scene_resolve PASS（artifacts: artifacts/codex/portal-menu-scene-resolve/20260419T185757）；当前 runtime evidence 已足以支撑“主 scene boundary alignment 为 trusted”这一表述`
+- active_commit: `89d096f`
+- next_step: `Return to broader scene-boundary audit only if the team now wants to inventory and retire remaining compatibility bridges beyond the already trusted main alignment claim`
+
+### 2026-04-20T08:42:00+08:00
+- blocker_key: `fe_nav_menuid_parity_screen_de_pass_v1`
+- layer_target: `Frontend governance screen`
+- module: `explained navigation menu_id parity classification`
+- reason: verifier source selection 已切到 nav_explained.tree，但大量叶子在 `/m/:menuId` 直接失败；当前必须先冻结 explained-nav 与 runtime menu resolver 的 menu_id 对齐断点，再决定下一张修 verifier 还是修运行态 ownership
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-MENUID-PARITY-SCREEN-DE：validate_task PASS；工件 artifacts/codex/unified-system-menu-click-usability-smoke/20260420T083057Z/summary.json 冻结为 nav_source=nav_explained.tree、leaf_count=60、fail_count=54；其中 29 个失败直接停在 /m/:menuId 并报 Menu resolve failed / menu not found，失败 id 以“常用入口”分支的 396-405 等为主，且 explained-nav 叶子本身不携带 scene_key/action_id；同时 AppShell 已消费 useNavigationMenu().tree，但 router/MenuView/session 的 menu resolve 仍只基于 releaseNavigationTree/menuTree，因此当前更强下一家族已冻结为 explained_nav_runtime_menuid_ownership_mismatch，而不是继续追加 scene-context patch`
+- active_commit: `89d096f`
+- next_step: `Open one bounded ownership screen to classify the legal source of truth for /m/:menuId under explained navigation, with priority on whether common-entry ids must be projected into runtime menu trees or whether verifier/common-entry links must stop routing through /m/:menuId`
+
+### 2026-04-20T08:56:00+08:00
+- blocker_key: `fe_nav_m_route_ownership_screen_df_pass_v1`
+- layer_target: `Frontend governance screen`
+- module: `explained navigation /m route ownership classification`
+- reason: DE screen 已把问题压缩到 explained-nav 与 `/m` 的真源边界；当前必须判定真实产品是否真的让 explained leaf 走 `/m/:menuId`，还是 verifier 把 explained contract 读错后人工制造了 ownership 冲突
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-M-ROUTE-OWNERSHIP-SCREEN-DF：validate_task PASS；AppShell/ MenuTree 真实点击链已冻结为“消费 explained node 本体并仅在 node.route 存在时 router.push(node.route)”；而工件 artifacts/codex/unified-system-menu-click-usability-smoke/20260420T083057Z/cases.json 中 60 个叶子全部被 verifier 展开为 route=''，29 个 menu_not_found 失败也全部是空 route、空 scene_key、action_id=0 后再被强行送入 /m/:menuId。进一步对照 scripts/verify/unified_system_menu_click_usability_smoke.mjs 与 useNavigationMenu.ts 可知，verifier 的 flattenLeafMenus 只读取 node.meta.route/scene_key/action_id，而前端真实消费者消费的是顶层 row.route、row.entry_target、row.target_type、row.is_clickable 并先做 normalize。当前更强下一家族已改判为 verifier_explained_nav_contract_consumer_mismatch，而不是 runtime `/m` resolver ownership 缺陷`
+- active_commit: `89d096f`
+- next_step: `Open one bounded verifier implementation batch to align explained-nav consumption in unified_system_menu_click_usability_smoke.mjs with useNavigationMenu normalization semantics, especially top-level route/entry_target/is_clickable handling before any further /m ownership change`
+
+### 2026-04-20T13:03:00+08:00
+- blocker_key: `fe_nav_verifier_explained_consumer_align_dg_pass_v1`
+- layer_target: `Verification runtime surface`
+- module: `unified menu usability smoke explained-nav consumer alignment`
+- reason: DF screen 已证明 54 个失败来自 verifier 把 explained-nav 当 runtime menuTree 消费；当前需要用一张 verifier-only 实施批次验证这是不是唯一主因
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-VERIFIER-EXPLAINED-CONSUMER-ALIGN-DG：validate_task PASS，node --check PASS，真实 smoke 通过 artifacts/codex/unified-system-menu-click-usability-smoke/20260420T125254Z/summary.json 收敛为 nav_source=nav_explained.tree、leaf_count=60、fail_count=0；此前“常用入口” menu_not_found 样本已按 explained route 正常落到 /a/594?menu_id=396、/a/526?menu_id=397、/a/527?menu_id=398 等真实入口，证明上一轮 54 个失败是 verifier consumer drift，而不是当前前端导航运行态缺陷`
+- active_commit: `89d096f`
+- next_step: `the current frontend navigation scene-usability investigation line is substantively closed at verifier level; only open a new batch if the team wants optional cleanup/hardening inside unified_system_menu_click_usability_smoke.mjs or a fresh real-usability round on a different failure family`
+
+### 2026-04-20T13:12:00+08:00
+- blocker_key: `fe_nav_verifier_hardening_screen_dh_pass_v1`
+- layer_target: `Verification runtime surface screen`
+- module: `unified menu smoke verifier hardening classification`
+- reason: DG batch 已把主失败族收敛到 PASS，当前唯一仍然低风险且有价值的下一步是判断 verifier 工件是否还缺少基本审计透明度
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-VERIFIER-HARDENING-SCREEN-DH：validate_task PASS；当前 PASS 工件 artifacts/codex/unified-system-menu-click-usability-smoke/20260420T125254Z/summary.json 仅暴露 nav_source=nav_explained.tree 与 leaf_count=60，但脚本已经会先按 is_visible/is_clickable/route 过滤 explained 叶子后才执行；也就是说一旦未来过滤范围变化，工件层面看不见“原始发现数、实际执行数、跳过数、跳过原因”。当前更强下一家族已冻结为 verifier_skip_audit_observability_hardening，且仍属于 verifier-only 低风险改动`
+- active_commit: `89d096f`
+- next_step: `Open one bounded verifier hardening batch to expose discovered-versus-executed counts and a small skip-reason breakdown in unified_system_menu_click_usability_smoke artifacts`
+
+### 2026-04-20T21:16:00+08:00
+- blocker_key: `fe_nav_verifier_skip_audit_hardening_di_pass_with_risk_v1`
+- layer_target: `Verification runtime surface`
+- module: `unified menu smoke skip-audit hardening`
+- reason: DH screen 已冻结 auditability gap，当前尝试以 verifier-only 低风险方式补齐 discovered/executed/skipped 指标
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-VERIFIER-SKIP-AUDIT-HARDENING-DI（PASS_WITH_RISK）：validate_task PASS，node --check PASS；脚本已补入 discovered_leaf_count / executed_leaf_count / skipped_leaf_count / skipped_leaf_reason_counts，并会在 explained-nav 过滤发生时输出 skipped_cases.json；但新的 live smoke 仅创建了部分目录 artifacts/codex/unified-system-menu-click-usability-smoke/20260420T131037Z/，在 bounded wait 内未写出 summary.json，最终为避免悬挂验证进程而手动终止。本张不再追加推断性结论`
+- active_commit: `89d096f`
+- next_step: `stop on non-converged live verification; if the team wants this hardening fully frozen, rerun the unified menu smoke in a fresh bounded session and confirm the new summary fields are emitted`
+
+### 2026-04-20T21:20:00+08:00
+- blocker_key: `fe_nav_verifier_skip_audit_verify_dj_fail_v1`
+- layer_target: `Verification runtime surface`
+- module: `unified menu smoke skip-audit verify`
+- reason: DI 已经落地但仍带风险，当前以 fresh bounded verify 复核它是否只是偶发非收敛
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-VERIFIER-SKIP-AUDIT-VERIFY-DJ（FAIL）：validate_task PASS；fresh verify 再次只创建部分目录 artifacts/codex/unified-system-menu-click-usability-smoke/20260420T131804Z/，未在 bounded session 内写出 summary.json/cases.json，Playwright/Chromium 进程保持存活；这证明当前问题不是一次性偶发，而是统一菜单 smoke 在新 hardening 状态下存在稳定的 non-converged live verification 路径`
+- active_commit: `89d096f`
+- next_step: `stop on non_converged_live_verify; before any further verifier hardening or navigation conclusions, open a separate bounded batch to isolate why unified_system_menu_click_usability_smoke hangs before writing artifacts`
+
+### 2026-04-20T21:28:00+08:00
+- blocker_key: `fe_nav_verifier_hang_screen_dk_pass_v1`
+- layer_target: `Verification runtime surface screen`
+- module: `unified menu smoke hang-path classification`
+- reason: DJ 已将 stop condition 冻结为 non-converged live verify，当前需要判断这究竟是脚本内挂死还是 bounded observer 过早终止
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-VERIFIER-HANG-SCREEN-DK：validate_task PASS；两次先前“空目录” artifacts/codex/unified-system-menu-click-usability-smoke/20260420T131037Z/ 与 20260420T131804Z/ 现在都已补齐 summary.json/cases.json/failed_cases.json，说明脚本并非卡在写盘前；同时两份 failed_cases 都集中为 'Target page, context or browser has been closed' / 'page.goto: Target page, context or browser has been closed'，且后一条 run 只是比前一条 run 更晚被终止，因此 fail_count 从 21 扩到 54。当前更强下一家族已改判为 verifier_progressive_artifact_emission_hardening，而不是导航语义失败或真实写盘挂死`
+- active_commit: `89d096f`
+- next_step: `Open one bounded verifier-only implementation batch to emit progressive heartbeat/progress artifacts during the leaf loop so bounded observers can distinguish healthy long-running progress from a real hang without terminating the smoke early`
+
+### 2026-04-20T21:35:00+08:00
+- blocker_key: `fe_nav_verifier_progress_emit_implement_dl_pass_v1`
+- layer_target: `Verification runtime surface`
+- module: `unified menu smoke progressive artifact emission`
+- reason: DK screen 已证明主问题是 observer visibility 而非真实挂死，当前以 verifier-only 实施批次补齐 progress/partial artifacts
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-VERIFIER-PROGRESS-EMIT-IMPLEMENT-DL：validate_task PASS，node --check PASS，真实 smoke 在 artifacts/codex/unified-system-menu-click-usability-smoke/20260420T132738Z/ 下完整 PASS；并且在最终 summary 出现前，progress.json 已经中途可见并持续从 executed_leaf_count=2、31、44、56 推进到 completed_pass，cases.partial.json 也已在运行中累计到 60 条。这证明 bounded observer 现在可以区分“健康长跑”与“真实挂死”，无需再通过过早终止进程来判断状态`
+- active_commit: `89d096f`
+- next_step: `the verifier observability issue is now substantively closed; continue only if the team wants optional cleanup of legacy artifact naming or a fresh investigation on a different failure family`
+
+### 2026-04-20T21:38:00+08:00
+- blocker_key: `fe_nav_verifier_artifact_cleanup_screen_dm_pass_v1`
+- layer_target: `Verification runtime surface screen`
+- module: `unified menu smoke artifact cleanup classification`
+- reason: DL 已修复 observer visibility，当前只剩 artifact 完成态是否还需额外清理这一处可选尾项
+- completed_step: `已完成 ITER-2026-04-20-FE-NAV-VERIFIER-ARTIFACT-CLEANUP-SCREEN-DM：validate_task PASS；完成态目录 artifacts/codex/unified-system-menu-click-usability-smoke/20260420T132738Z/ 虽然同时保留 progress.json 与 cases.partial.json，但 progress.json 已明确为 stage=completed_pass，summary.json/cases.json 也同时存在，当前 artifact 语义已足够自解释；继续做 cleanup 只会带来 cosmetic churn，而不会降低实际风险`
+- active_commit: `89d096f`
+- next_step: `current verifier observability line is fully closed; only open a new batch if the team wants a different failure family or separate verifier refactor topic`
+
+### 2026-04-21T01:27:00+08:00
+- blocker_key: `fe_project_overview_blank_screen_dn_pass_v1`
+- layer_target: `Frontend usability governance screen`
+- module: `project overview blank page classification`
+- reason: 用户报告真实入口 `/a/584?menu_id=385` 空白，当前必须先冻结它是在 action route 注册层面断裂，还是在 ActionView 内部渲染失败
+- completed_step: `已完成 ITER-2026-04-21-FE-PROJECT-OVERVIEW-BLANK-SCREEN-DN：validate_task PASS；frontend router 当前没有 `/a/:actionId` 或 `/compat/action/:actionId` 路由注册，但 `ActionView` 已明确从 route.params.actionId 读取动作 id，且前端多个现存调用仍会跳到 `/compat/action/...`。由于 App.vue 也没有 unmatched-route fallback，这会把真实 action URL 直接落成空白页。当前更强下一家族已冻结为 action_route_registration_missing，而不是 backend semantic supply`
+- active_commit: `89d096f`
+- next_step: `Open one bounded frontend implementation batch to restore action-route registration for /a/:actionId and existing compat action URLs onto ActionViewShell, then rerun a focused browser verification on /a/584?menu_id=385`
+
+### 2026-04-21T01:35:00+08:00
+- blocker_key: `fe_action_route_bridge_restore_do_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `action route compatibility bridge`
+- reason: DN screen 已冻结空白页主因是缺失 action route 注册，当前第一步先恢复一个极薄 bridge，把真实 action URL 接回现有消费者
+- completed_step: `已完成 ITER-2026-04-21-FE-ACTION-ROUTE-BRIDGE-RESTORE-DO：validate_task PASS，pnpm typecheck/build PASS（仅既有 chunk-size warning），frontend.restart PASS；frontend/apps/web/src/router/index.ts 已补回 `/a/:actionId` 与 `/compat/action/:actionId` 到 ActionViewShell。该修复不回退场景化主链，只为仍在真实产出的 action URL 提供合法落点，避免 `/a/584?menu_id=385` 继续空白`
+- active_commit: `89d096f`
+- next_step: `Open the second bounded batch to inventory and classify remaining frontend producers that still emit /a/... or /compat/action/... so the bridge can be retired after producer-side migration`
+
+### 2026-04-21T01:41:00+08:00
+- blocker_key: `fe_action_url_producer_screen_dp_pass_v1`
+- layer_target: `Frontend usability governance screen`
+- module: `action URL producer classification`
+- reason: 第一阶段 bridge 已恢复，当前第二阶段要先冻结 remaining producers，避免直接跳进分散迁移
+- completed_step: `已完成 ITER-2026-04-21-FE-ACTION-URL-PRODUCER-SCREEN-DP：validate_task PASS；当前仍在产出 `/compat/action/...` 的主前端生产者集中在 HomeView、MyWorkView、WorkbenchView、action_service.ts、suggested_action/runtime.ts。它们的共同模式是“先尝试 resolveSceneFirstActionLocation/resolveSceneFirstPath，再在未解析出 scene path 时 fallback 到 `/compat/action/...`”。这说明下一张真正的迁移批次应以这些 producer 的 fallback removal 为主，而不是继续动 consumer bridge`
+- active_commit: `89d096f`
+- next_step: `Open one bounded frontend implementation batch to migrate the highest-user-visible producers (HomeView + WorkbenchView + action_service.ts first) away from /compat/action/... fallback when a stable scene-first location can already be derived`
+
+### 2026-04-21T01:44:00+08:00
+- blocker_key: `fe_action_producer_migration_implement_dq_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `scene-first action producer migration`
+- reason: DP screen 已冻结 producer ownership，当前优先收缩最常见入口对 `/compat/action/...` 的依赖，但保留 bridge 作为兜底
+- completed_step: `已完成 ITER-2026-04-21-FE-ACTION-PRODUCER-MIGRATION-IMPLEMENT-DQ：validate_task PASS，pnpm typecheck/build PASS（仅既有 chunk-size warning），frontend.restart PASS；共享 sceneNavigation.ts 已携带 view_mode，action_service.ts 已改为复用共享 scene-first resolver，HomeView 与 WorkbenchView 在已知 action/model/menu 上优先把 legacy action route 升级到 scene-first，再在解析失败时保留 `/compat/action/...` fallback。当前 bridge 命中面已开始缩小，但并未被提前移除`
+- active_commit: `89d096f`
+- next_step: `if the team wants to continue the bridge retirement line, open the next bounded producer-migration batch for MyWorkView plus suggested_action/runtime and then re-screen whether /compat/action fallback volume is low enough to consider bridge deprecation`
+
+### 2026-04-21T01:50:00+08:00
+- blocker_key: `fe_record_route_blank_screen_dr_pass_v1`
+- layer_target: `Frontend usability governance screen`
+- module: `record route blank page classification`
+- reason: 用户报告真实 record URL `/r/sc.legacy.financing.loan.fact/53?...` 不可达，当前必须先冻结它是不是和 action URL 一样属于缺失路由桥
+- completed_step: `已完成 ITER-2026-04-21-FE-RECORD-ROUTE-BLANK-SCREEN-DR：validate_task PASS；frontend router 当前没有 `/r/:model/:id`、`/f/:model/:id`、`/compat/record/:model/:id` 路由注册，但 ModelFormPage.vue 与 ContractFormPage.vue 仍然存在，且多个现存 producer 仍会发 `/compat/record/...`。当前更强下一家族已冻结为 record_route_registration_missing，而不是 record/form consumer 内部失败`
+- active_commit: `89d096f`
+- next_step: `Open one bounded frontend implementation batch to restore a thin record/form route bridge onto ModelFormPage while keeping future producer migration as a separate line`
+
+### 2026-04-20T02:59:22+08:00
+- blocker_key: `verify_menu_scene_resolve_host_baseline_align_m_pass_v1`
+- layer_target: `Verification runtime surface`
+- module: `menu scene resolve verifier baseline`
+- reason: live verify 剩余阻塞已确认不在 scene 业务语义，而在 verifier 仍沿用旧 host 端口、旧默认密码和过紧超时预算
+- completed_step: `已完成 ITER-2026-04-20-VERIFY-MENU-SCENE-RESOLVE-HOST-BASELINE-ALIGN-M：fe_menu_scene_resolve_smoke.js 默认 API 基线已对齐到当前 dev runtime（127.0.0.1:8069 / localhost:8069），默认管理员密码回到仓库基线 admin，默认请求超时提升到 15000ms；DB_NAME=sc_demo make verify.menu.scene_resolve 与 DB_NAME=sc_demo make verify.menu.scene_resolve.container 顺序验收均 PASS，证明 menu scene resolve 的 host/container 验证入口已回到可直接消费的当前运行时基线`
+- active_commit: `89d096f`
+- next_step: `Update the live scene-boundary verification checkpoint so the overall runtime trust statement can be upgraded using the repaired menu scene resolve evidence`
+
+### 2026-04-20T00:18:00+08:00
+- blocker_key: `verify_semantic_route_repair_j_pass_v1`
+- layer_target: `Verification surface repair`
+- module: `semantic route verifier`
+- reason: live verify 被过期的 semantic route 脚本阻断，当前必须先修 verifier 才能恢复可信的 runtime 结论
+- completed_step: `已完成 ITER-2026-04-20-VERIFY-SEMANTIC-ROUTE-REPAIR-J：scripts/verify/fe_semantic_route_smoke.js 不再依赖已删除的 config/scenesCore.js，现改为校验当前 sceneRegistry.ts 的 semantic-route runtime 语义；validate_task、node scripts/verify/fe_semantic_route_smoke.js、path-scoped git diff --check 全 PASS`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Rerun the bounded live scene-boundary verification batch now that verify.portal.semantic_route has been repaired`
+
+### 2026-04-20T00:08:00+08:00
+- blocker_key: `scene_boundary_live_verify_i_conditional_v2`
+- layer_target: `Cross-layer live verification`
+- module: `scene boundary live verify`
+- reason: end-to-end recheck 已把结论升级到“主边界已对齐”，当前需要 live/runtime evidence 判断这是不是 trusted 还是 conditional
+- completed_step: `已完成 ITER-2026-04-20-SCENE-BOUNDARY-LIVE-VERIFY-I（conditional）：validate_task PASS；verify.portal.semantic_route 在 repair 后已 PASS；verify.portal.bridge.e2e PASS（artifacts: /mnt/artifacts/codex/portal-bridge-e2e/20260419T145657）；verify.menu.scene_resolve 仍只输出 api_base，未在 bounded polling 窗口内收敛到可冻结的 PASS/FAIL`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Re-open only the menu scene resolve verification line if the team needs to upgrade live trust from conditional to trusted`
+
+### 2026-04-19T23:58:00+08:00
+- blocker_key: `end_to_end_scene_boundary_recheck_screen_pass_v1`
+- layer_target: `Cross-layer governance screen`
+- module: `end-to-end scene boundary recheck`
+- reason: 后端 semantic supply H 已把 action-only entry 的 scene identity 供给接回主链，当前必须重判这是否已足够支撑更强的前后端边界对齐表述
+- completed_step: `已完成 ITER-2026-04-19-END-TO-END-SCENE-BOUNDARY-RECHECK-SCREEN：冻结结论为“此前冻结的 action-only backend supply gap 已明显收缩并接回 scene-orchestration 主链”；当前最强准确话术升级为‘主前后端场景边界已对齐’，但仍不能直接说‘所有 compatibility route forms 已完全退场’，因为这轮并未重开 live/runtime bridge inventory`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open a bounded live/runtime verification batch only if the team wants proof about compatibility bridge retirement rather than boundary alignment`
+
+### 2026-04-19T23:44:00+08:00
+- blocker_key: `be_action_only_scene_semantic_supply_h_pass_v1`
+- layer_target: `Backend scene-orchestration runtime`
+- module: `action-only scene identity supply`
+- reason: 后端 screen 已把剩余 route-convergence gap 定位成 action-only entry 的 scene identity 缺口，当前要把 scene registry 的编排 target 正式接入 nav/capability 输出链
+- completed_step: `已完成 ITER-2026-04-19-BE-ACTION-ONLY-SCENE-SEMANTIC-SUPPLY-H：smart_construction_scene 现已从 scene registry target 派生 menu/action/model-view 到 scene 的映射；capability_scene_targets 可在无显式 scene_key 时按 action/menu/model+view 反推 scene；capability_registry 产出的 entry_target 也统一带上 scene identity；新增后端单测覆盖 derived nav maps 与 capability payload scene supply`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Re-open a bounded backend/frontend contract recheck after verification if the team wants to measure how many action-only entry bridges are now cleared end-to-end`
+
+### 2026-04-19T23:28:00+08:00
+- blocker_key: `be_action_only_scene_semantic_supply_screen_pass_v1`
+- layer_target: `Backend semantic-supply screen`
+- module: `action-only scene identity supply`
+- reason: route-convergence entry recheck 已冻结剩余 gap 为 action-only entry 的 scene identity 缺口，当前必须先做后端子层决策，避免继续用前端兼容逻辑硬补
+- completed_step: `已完成 ITER-2026-04-19-BE-ACTION-ONLY-SCENE-SEMANTIC-SUPPLY-SCREEN：明确缺口归属 scene-orchestration layer，而非 business-fact layer；冻结下一步方向为“后端为 action-only entries 直接输出 scene identity / scene target 语义”，前端继续保持 generic scene consumer`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open the next bounded backend implementation batch only if the team wants to add scene identity supply for action-only entries in the orchestration contract`
+
+### 2026-04-19T23:20:00+08:00
+- blocker_key: `route_convergence_entry_recheck_screen_pass_v1`
+- layer_target: `Cross-layer governance screen`
+- module: `route convergence entry recheck`
+- reason: frontend cleanup G 已完成，当前要判断剩余入口桥是不是还能继续靠前端压低，还是已经转成后端 scene 语义供给问题
+- completed_step: `已完成 ITER-2026-04-19-ROUTE-CONVERGENCE-ENTRY-RECHECK-SCREEN：冻结结论为 scene-key-aware entry bridges 已进一步压低；剩余 residual gap 主要集中在 action-only entries，即前端拿到 action/menu 但仍无法唯一推得 scene 的情况；因此下一步不再建议继续开 frontend-only cleanup，而应先开 backend semantic-supply screen`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open a backend semantic-supply screen for action-only entries if stronger route convergence is still required`
+
+### 2026-04-19T23:06:00+08:00
+- blocker_key: `fe_route_convergence_entry_bridge_cleanup_g_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `route convergence entry bridge cleanup`
+- reason: route-convergence screen 已把下一批收敛到 ModelListPage 与 MenuView，两处都属于 entry-adjacent compatibility bridge，当前要先压低这两点再看是否还有新的入口级残留
+- completed_step: `已完成 ITER-2026-04-19-FE-ROUTE-CONVERGENCE-ENTRY-BRIDGE-CLEANUP-G：ModelListPage 现在会先按 carried scene/action/menu context 做 scene-first redirect，再退 legacy action；MenuView 新增按 carried/menu scene_key 直达 scene path 或 scene registry fallback 的分支，避免带 scene 语义时仍优先落到 action route；下一步应重开 route-convergence recheck，确认 entry-adjacent fallback 是否还剩新的 strict candidate`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Re-open a bounded route-convergence recheck only after frontend verification passes, to determine whether any entry-adjacent compatibility route bridge still remains`
+
+### 2026-04-19T22:54:00+08:00
+- blocker_key: `route_convergence_compat_bridge_screen_pass_v1`
+- layer_target: `Cross-layer governance screen`
+- module: `route convergence compatibility bridge`
+- reason: candidate scan 已完成，当前需要判定下一批到底是前端桥收敛还是后端补语义，避免把不同层问题混做一张票
+- completed_step: `已完成 ITER-2026-04-19-ROUTE-CONVERGENCE-COMPAT-BRIDGE-SCREEN：冻结结论为 ModelListPage 与 MenuView 仍是 entry-adjacent convergence candidates，适合作为下一张前端 bounded implementation；ActionView、ContractFormPage、RecordView、ViewRelationalRenderer 目前只归类为 compatibility-shell internal bridges，暂不进入下一批；当前也未发现必须先开 backend semantic-supply 的阻塞`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open the next bounded frontend implementation batch for ModelListPage plus MenuView entry-adjacent action fallbacks only`
+
+### 2026-04-19T22:46:00+08:00
+- blocker_key: `route_convergence_compat_bridge_scan_pass_v1`
+- layer_target: `Cross-layer governance scan`
+- module: `route convergence compatibility bridge`
+- reason: final recheck 已冻结“strict blocker 清零但 compatibility route forms 仍在”，当前需要先做 bounded candidate scan，避免直接跳到 removal 或实现方案
+- completed_step: `已完成 ITER-2026-04-19-ROUTE-CONVERGENCE-COMPAT-BRIDGE-SCAN：冻结了四类候选集合，包括路由注册面 (/m /a /r /f)、入口邻近 fallback（ModelListPage / MenuView）、兼容壳内部跳转（ActionView / ContractFormPage / RecordView / ViewRelationalRenderer）、以及 session/router 的 scene-first normalization baseline；本张 scan 只收集候选，不下 removal 结论`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open the next bounded screen to classify which compatibility route candidates are true product-entry dependencies, which are acceptable internal bridges, and which would require backend semantic supply before further convergence`
+
+### 2026-04-19T22:36:00+08:00
+- blocker_key: `scene_completion_final_recheck_screen_pass_v1`
+- layer_target: `Cross-layer governance screen`
+- module: `scene completion final recheck`
+- reason: landing/menu proof-fix 已完成，当前需要把“strict blocker 是否已清零”和“是否可以宣称全部完成”这两个命题拆开冻结，避免误把 bounded proof closure 说成 route convergence 已全收敛
+- completed_step: `已完成 ITER-2026-04-19-SCENE-COMPLETION-FINAL-RECHECK-SCREEN：冻结结论为“此前 proof 链中明确冻结的 strict blockers 已清零；session landing、router menu guard、Workbench menu-open flow 均已先走共享 scene-first resolution”；同时也冻结更强表述边界：仓库仍保留 /m、/a、/r、/f 等 compatibility route forms，因此当前最强准确话术仍是‘主场景化消费边界闭环，compatibility bridges 仍在’，而不是‘所有路由形态已完全收敛’`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Only open a new bounded route-convergence batch if the team wants to remove or deprecate compatibility route forms beyond the current scene-first proof closure`
+
+### 2026-04-19T22:08:50+08:00
+- blocker_key: `fe_scene_proof_fix_landing_menu_f_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `scene proof fix landing/menu`
+- reason: recheck 已冻结剩余 strict blocker 为 landing /a fallback 与 resolveMenuAction(...) reconstruction，当前下一步就是把这两类 proof gap 一起压低
+- completed_step: `已完成 ITER-2026-04-19-FE-SCENE-PROOF-FIX-LANDING-MENU-F：menuResolver 新增共享的 scene-first menu resolution；session landing fallback、router menu guard、Workbench menu-open flow 都改为优先 scene path，再退兼容 action；validate_task、pnpm -C frontend/apps/web typecheck:strict、pnpm -C frontend/apps/web build、path-scoped git diff --check 全 PASS（build 仅保留既有 chunk-size warning）`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Re-open the proof recheck screen to determine whether any strict blocker still remains before claiming full scene-oriented completion`
+
+### 2026-04-19T22:24:00+08:00
+- blocker_key: `scene_completion_proof_recheck_screen_pass_v1`
+- layer_target: `Cross-layer governance screen`
+- module: `scene completion proof recheck`
+- reason: ActionView/ContractFormPage proof-fix 已完成，当前需要重判该类别是否仍阻止严格完成声明，避免继续按旧 blocker 列表推进
+- completed_step: `已完成 ITER-2026-04-19-SCENE-COMPLETION-PROOF-RECHECK-SCREEN：冻结结论为“action/form loader 依赖已从主要 proof blocker 降级为可接受的 scene-oriented internal mechanic with bounded legacy transport semantics”；严格意义上的剩余 blocker 现已收缩到 landing /a fallback 与 resolveMenuAction(...) 起步的 menu-entry reconstruction 两类`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open the next bounded proof-fix implementation batch for landing fallback and menu-entry reconstruction only if the team wants to continue toward a strict 'all complete' statement`
+
+### 2026-04-19T22:02:19+08:00
+- blocker_key: `fe_scene_proof_fix_action_form_e_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `scene proof fix action/form`
+- reason: completion-proof audit 已冻结 ActionView/ContractFormPage direct action/model loader 依赖为第一类 proof gap，当前下一步就是用现有 scene context 压低这条依赖
+- completed_step: `已完成 ITER-2026-04-19-FE-SCENE-PROOF-FIX-ACTION-FORM-E：api/contract action loader 现在支持并透传 sceneKey；ContractFormPage 的 action/model contract 读取都统一带 sceneKey；ActionView 先按 sceneKey 命中 scene-ready entry，再回退到 action/menu target 匹配；validate_task、pnpm -C frontend/apps/web typecheck:strict、pnpm -C frontend/apps/web build、path-scoped git diff --check 全 PASS（build 仅保留既有 chunk-size warning）`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Re-open the completion-proof screen only if the team wants to reassess whether the remaining proof gaps have narrowed enough for a stricter completion statement`
+
+### 2026-04-19T22:16:00+08:00
+- blocker_key: `scene_completion_proof_audit_screen_pass_v1`
+- layer_target: `Cross-layer governance screen`
+- module: `scene completion-proof audit`
+- reason: bounded scan 已给出 proof candidates，当前需要把哪些只是 scene consumer 内部 mechanics、哪些仍阻止“全部完成”表述区分清楚
+- completed_step: `已完成 ITER-2026-04-19-SCENE-COMPLETION-PROOF-AUDIT-SCREEN：冻结结论为“严格意义上的全部场景化完成仍未被证明”；当前阻塞 proof 的重点不再是已清理的主入口 authority，而是 ActionView/ContractFormPage 的 direct action/model contract loader 依赖、session landing 的 /a fallback、以及 router/workbench/menu 里仍从 resolveMenuAction 起步的 entry reconstruction 路径`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open the next bounded proof-fix line only if the team needs a strict 'all complete' claim; otherwise keep the current statement at 'main scene-first line closed, full completion not yet proven'`
+
+### 2026-04-19T22:09:00+08:00
+- blocker_key: `scene_completion_proof_audit_scan_pass_v1`
+- layer_target: `Cross-layer governance scan`
+- module: `scene completion-proof audit`
+- reason: 用户要求继续开验证，当前先以 bounded scan 收集“还缺哪些证据才能严谨宣称全部场景化完成”的 candidate 输入
+- completed_step: `已完成 ITER-2026-04-19-SCENE-COMPLETION-PROOF-AUDIT-SCAN：捕获了 ContractFormPage 的 action/model contract loader、ActionView 的 action-native anchor、session landing 与 compatibility menu fallback、router/workbench/menu 的 menu entry reconstruction，以及 sceneRegistry canonical consumer state 这几类 proof candidates；本张 scan 只记录候选，不做分类结论`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open the next bounded screen to classify which scanned proof candidates are acceptable scene-oriented internals and which still block a strict 'all complete' statement`
+
+### 2026-04-19T22:02:00+08:00
+- blocker_key: `scene_completeness_verification_screen_pass_v1`
+- layer_target: `Cross-layer governance screen`
+- module: `scene completeness verification`
+- reason: 用户明确追问“场景化是否全部完成”，当前必须把已有证据收敛成严格表述，避免把主线收口误说成全仓完成
+- completed_step: `已完成 ITER-2026-04-19-SCENE-COMPLETENESS-VERIFICATION-SCREEN：冻结结论为“scene-first 主入口 authority 已基本闭环，但还不能严谨宣称场景化全部完成”；主要差距不在已修主链，而在 compatibility bridges 仍然存在，以及尚未做足够广的 completion-proof audit 去证明所有 list/form/page/load consumers 都已只消费编排后的 scene output`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open a bounded repository-wide completion-proof audit only if the team wants a strict 'all complete' statement instead of the current 'main line closed' statement`
+
+### 2026-04-19T21:46:55+08:00
+- blocker_key: `fe_native_route_authority_cleanup_d_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `native route authority cleanup D`
+- reason: audit screen 已把真实残留收缩到 MenuView 与 RecordView 两处 ordinary action-route navigation，当前下一步就是用现有 scene-first consumer state 把它们收掉
+- completed_step: `已完成 ITER-2026-04-19-FE-NATIVE-ROUTE-AUTHORITY-CLEANUP-D：MenuView 现在会先按 action_id/menu_id 解析 scene，再决定是否退回 action compatibility bridge；RecordView 的 button/response/effect action opens 也改为优先 scene-first；validate_task、pnpm -C frontend/apps/web typecheck:strict、pnpm -C frontend/apps/web build、path-scoped git diff --check 全 PASS（build 仅保留既有 chunk-size warning）`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open the next bounded audit pass only if more native-route ordinary navigation is observed in user flows; otherwise treat current scene-first boundary cleanup line as complete`
+
+### 2026-04-19T21:54:00+08:00
+- blocker_key: `fe_native_route_authority_audit_screen_pass_v1`
+- layer_target: `Frontend governance screen`
+- module: `native route authority audit`
+- reason: bounded scan 已捕获 candidate，当前需要在不重扫仓库的前提下把兼容桥与真实边界残留区分开，决定下一张最小修复票
+- completed_step: `已完成 ITER-2026-04-19-FE-NATIVE-ROUTE-AUTHORITY-AUDIT-SCREEN：冻结结论为 router 三类 native route 注册、ModelListPage legacy redirect、以及 AppShell 的 shell/title/source/breadcrumb 识别属于允许存在的 compatibility bridges；剩余真正的 scene-first 边界残留集中在 MenuView 的 action fallback 分支与 RecordView 的 direct action reopen 分支`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open the next bounded frontend implementation batch to remove MenuView and RecordView ordinary action-route navigation where scene-first targets are already available`
+
+### 2026-04-19T21:48:00+08:00
+- blocker_key: `fe_native_route_authority_audit_scan_pass_v1`
+- layer_target: `Frontend governance scan`
+- module: `native route authority audit`
+- reason: `/m` `/a` `/r` 普通公开入口已收敛，下一步需要先把前端残留 native-route consumer 候选点收集出来，为后续 screen 分类提供输入
+- completed_step: `已完成 ITER-2026-04-19-FE-NATIVE-ROUTE-AUTHORITY-AUDIT-SCAN：在 frontend/apps/web/src 的 router/views/pages/layouts/app 范围内捕获剩余 candidate，包括 router 兼容注册、ModelListPage legacy redirect、MenuView 的 action fallback、RecordView 的 action reopen，以及 AppShell 对 action/record 的 worksurface 识别与 breadcrumb/title/source 逻辑；本张 scan 只记录候选点，不做分类结论`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open the next screen task to classify which scanned native-route consumers are allowed compatibility bridges and which still violate scene-first public authority`
+
+### 2026-04-19T21:39:20+08:00
+- blocker_key: `fe_record_entry_authority_closure_c_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `record entry authority closure C`
+- reason: backend 已补齐 generic scene-carried `record_entry` envelope，当前最低风险下一步就是让前端唯一消费该合同，把 `/r` 从普通公开入口降级为兼容桥
+- completed_step: `已完成 ITER-2026-04-19-FE-RECORD-ENTRY-AUTHORITY-CLOSURE-C：sceneRegistry 解析并按 record_entry 匹配 scene；router.beforeEach 会将可确定的 /r/:model/:id 重定向回 /s/:sceneKey；SceneView/ContractFormPage/RecordView 改为优先消费 scene query 中的 model/record_id/action_id/menu_id；validate_task、pnpm -C frontend/apps/web typecheck:strict、pnpm -C frontend/apps/web build、path-scoped git diff --check 全 PASS（build 仅保留既有 chunk-size warning）`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Start the next repo-wide boundary audit pass to enumerate any remaining frontend consumers that still treat menu/action/record native routes as ordinary public authority instead of scene-first contract output`
+
+### 2026-04-19T21:31:17+08:00
+- blocker_key: `be_scene_record_entry_contract_implement_pass_v1`
+- layer_target: `Scene-orchestration layer`
+- module: `generic scene-carried record entry contract`
+- reason: backend screen 已冻结缺口在 scene-oriented record-entry envelope，当前下一步就是补最小 additive contract，让前端后续能够继续收敛 `/r`
+- completed_step: `已完成 ITER-2026-04-19-BE-SCENE-RECORD-ENTRY-CONTRACT-IMPLEMENT：smart_core 三处 entry_target builder 现在会在已知 model+record_id 时输出 additive record_entry envelope；identity_resolver 默认路由推断也会携带该语义；相关后端轻量测试与 path-scoped git diff --check 全 PASS`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open the next bounded frontend implementation batch to consume entry_target.record_entry and reduce /r public authority without introducing model-specific route logic`
+
+### 2026-04-19T21:42:00+08:00
+- blocker_key: `be_scene_record_entry_contract_screen_pass_v1`
+- layer_target: `Scene-orchestration screen`
+- module: `generic scene-carried record entry contract`
+- reason: 前端 screen 已冻结 `/r` 仍承担 record authority，必须先确认 backend 是否已经提供通用 scene-carried record-entry 合同，避免继续做前端补丁
+- completed_step: `已完成 ITER-2026-04-19-BE-SCENE-RECORD-ENTRY-CONTRACT-SCREEN：冻结结论为“backend 已能在 entry_target.compatibility_refs 中携带 model/record_id，但 scene_ready/startup 输出尚未定义 canonical record-entry envelope；ui.contract 虽能消费 record_id，但那是请求时输入，不是启动面 authority 输出”；下一张票应为 smart_core scene-orchestration additive implementation，用统一 record_entry envelope 补齐 scene-first 记录态入口`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open the bounded backend implementation batch to materialize generic scene-carried record_entry envelope in smart_core scene target output before any frontend /r reduction`
+
+### 2026-04-19T21:21:49+08:00
+- blocker_key: `fe_record_entry_carry_screen_pass_v1`
+- layer_target: `Scene-orchestration screen`
+- module: `record entry carry authority screen`
+- reason: `/m` 与 `/a` 已经收敛后，下一张最低风险票必须先判断 `/r` 是否被后端语义供给卡住，避免把 record carry 问题误做成前端特判
+- completed_step: `已完成 ITER-2026-04-19-FE-RECORD-ENTRY-CARRY-SCREEN：冻结结论为“/r 尚不能按 /m、/a 的方式直接收敛”，因为 ContractFormPage 仍以 route.params.id 作为 record authority，SceneView 仍在 record/list 场景下把具体记录降级到 /r，RecordView 也仍把 /r 视为 canonical reopen path；下一张票必须先开 backend scene-orchestration semantic-supply，为 scene-carried record entry 定义统一契约`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open the next bounded backend semantic-supply screen for generic scene-carried record entry contract and decide the minimal additive envelope before any frontend /r reduction`
+
+### 2026-04-19T21:21:49+08:00
+- blocker_key: `fe_scene_entry_authority_closure_b_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `scene entry authority closure B`
+- reason: 后端已补齐 additive `entry_target`，当前最低风险下一步是把 `/a/:actionId` 从普通公开入口降级为 scene-first 兼容桥，而不提前碰 `/r` 记录态 carry
+- completed_step: `已完成 ITER-2026-04-19-FE-SCENE-ENTRY-AUTHORITY-CLOSURE-B：sceneRegistry 新增 backend entry_target 解析与按 authority 查 scene 的能力；router.beforeEach 现在会在普通 /a 入口上优先解析 scene 并重定向到 /s/:sceneKey，同时保留 action query 兼容上下文；validate_task、pnpm -C frontend/apps/web typecheck:strict、pnpm -C frontend/apps/web build、path-scoped git diff --check 全 PASS（build 仅保留既有 chunk-size warning）`
+- active_commit: `unavailable-local-unstaged`
+- next_step: `Open the next bounded frontend screen for /r record-route convergence and decide the generic scene-carried record-id contract before any record-route public authority reduction`
+
+### 2026-04-19T11:41:00+08:00
+- blocker_key: `project_state_stage_semantic_screen_pass_v1`
+- layer_target: `Business-fact semantic screen`
+- module: `project status vs project stage`
+- reason: 用户明确要求先回到业务事实层，把“项目状态”与“项目阶段”这两个容易混淆的语义先区分清楚，再决定后续实现批次
+- completed_step: `已完成 ITER-2026-04-19-PROJECT-STATE-STAGE-SEMANTIC-SCREEN：新增 task 合同与 project_state_stage_semantic_screen_v1，冻结语义结论为“项目阶段承载生命周期主线位置，项目状态承载当前条件判断，二者不得在消费层通过 stage/state fallback 合并显示”；validate_task 与 path-scoped git diff --check 全 PASS`
+- active_commit: `89d096f`
+- next_step: `Open the next dedicated business-fact implementation batch to separate canonical carriers for project stage and project status before any frontend consumer alignment`
+
+### 2026-04-19T11:52:00+08:00
+- blocker_key: `project_state_stage_semantic_screen_refine_pass_v1`
+- layer_target: `Business-fact semantic screen`
+- module: `project execution stage vs business document status`
+- reason: 用户进一步明确“项目阶段”应直接命名为“项目执行阶段”，而“项目状态”其实不属于项目语义，真正需要表达的是业务单据状态，因此必须进一步收紧语义边界
+- completed_step: `已基于用户澄清更新 project_state_stage_semantic_screen_v1：冻结规则改为“项目只保留项目执行阶段语义；状态语义留给合同/结算/付款申请等业务单据；项目层如需表达条件判断，应改用风险/健康度/生命周期判断等非状态词汇”`
+- active_commit: `89d096f`
+- next_step: `Open the next dedicated business-fact implementation batch to retire the ambiguous phrase 项目状态, keep project execution stage on the project aggregate, and bind 状态 only to business document carriers`
+
+### 2026-04-19T12:08:00+08:00
+- blocker_key: `project_execution_stage_carrier_implement_pass_v1`
+- layer_target: `Business-fact layer`
+- module: `project execution stage semantic carriers`
+- reason: 在 semantic screen 已冻结“项目只保留项目执行阶段、状态留给业务单据”之后，需要先落第一批 additive backend semantic supply，给后续消费者切换提供明确 carrier
+- completed_step: `已完成 ITER-2026-04-19-PROJECT-EXECUTION-STAGE-CARRIER-IMPLEMENT：project_context 新增 execution_stage/execution_stage_label 与 project_condition 显式 carrier；project_state_explain/project_dashboard_service 新增 execution_stage_explain 与 project_condition_explain，同时保留 stage/status 兼容别名；smart_core contract_governance 与 page_contracts_builder 中将错误的“项目状态”项目文案修正为“项目执行阶段”；validate_task、轻量语义单测、AST 语法校验、compileall、path-scoped git diff --check 全 PASS`
+- active_commit: `89d096f`
+- next_step: `Open the next bounded consumer-alignment batch to switch scene/frontend consumers from legacy stage/status aliases to explicit execution_stage and project_condition carriers without removing compatibility keys yet`
+
+### 2026-04-19T12:20:00+08:00
+- blocker_key: `fe_consumer_semantic_alignment_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `record detail and project dashboard semantic alignment`
+- reason: 用户明确批准继续执行，并给出新的消费者规则：列表/项目概览页只保留项目执行阶段，详情页需要单据状态，因此必须把前端消费从混合 stage/status 改成分离语义
+- completed_step: `已完成 ITER-2026-04-19-FE-CONSUMER-SEMANTIC-ALIGNMENT：RecordView 将项目执行阶段与单据状态拆成独立摘要卡片，ProjectManagementDashboardView 去掉“当前状态”摘要并把说明文案收敛为项目情况说明，page_contracts_builder 补充单据状态文本键；validate_task、pnpm -C frontend/apps/web lint、pnpm -C frontend/apps/web build、path-scoped git diff --check 全 PASS`
+- active_commit: `89d096f`
+- next_step: `Open the next bounded cleanup batch to replace remaining stage/status legacy fallbacks in frontend project contexts and retire the final ambiguous 项目状态 wording without removing compatibility keys yet`
+
+### 2026-04-19T12:29:00+08:00
+- blocker_key: `fe_semantic_fallback_cleanup_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `project semantic fallback cleanup`
+- reason: 在消费者主对齐已完成后，前端仍残留项目上下文对 legacy status alias 的依赖，以及驾驶舱 hero 中“当前状态”类文案，需要继续做一轮低风险 cleanup
+- completed_step: `已完成 ITER-2026-04-19-FE-SEMANTIC-FALLBACK-CLEANUP：projectEntryContext 明确扩展到 execution_stage/execution_stage_label 与 project_condition；ProjectManagementDashboardView 收紧项目上下文 fallback 并把 hero 中“当前状态”文案改为“当前项目情况”；RecordView 的项目摘要判定不再因为单据状态字段而误触发；validate_task、pnpm -C frontend/apps/web lint、pnpm -C frontend/apps/web build、path-scoped git diff --check 全 PASS`
+- active_commit: `89d096f`
+- next_step: `Open the next bounded cleanup batch only if you want to continue retiring remaining project-side status aliases outside the current dashboard/detail scope, otherwise keep compatibility fields as-is`
+
+### 2026-04-19T12:41:00+08:00
+- blocker_key: `fe_contract_boundary_cleanup_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `project dashboard and record view semantic fallback cleanup`
+- reason: 用户进一步明确前端不懂业务，凡是业务用语兜底都是错的；信息不足时应暴露后端契约缺口，而不是由前端自己补语义
+- completed_step: `已完成 ITER-2026-04-19-FE-CONTRACT-BOUNDARY-CLEANUP：RecordView 去掉项目侧业务注释与“未配置阶段/正常/严重/关注/产值未配置”等业务 fallback，改为纯数据或“后端未提供”；ProjectManagementDashboardView 将项目头部摘要、项目说明、区块空态、当前项目情况、下一步等 fallback 收紧为后端提供值或明确的 contract-missing 提示，不再由前端补业务解释；validate_task、pnpm -C frontend/apps/web lint、pnpm -C frontend/apps/web build、path-scoped git diff --check 全 PASS`
+- active_commit: `89d096f`
+- next_step: `Keep the frontend boundary frozen here and open a backend semantic-supply batch if any remaining page still needs business explanations that the frontend no longer invents`
+
+### 2026-04-19T12:52:00+08:00
+- blocker_key: `fe_business_semantic_fallback_scan_pass_v1`
+- layer_target: `Frontend contract-consumer audit scan`
+- module: `business-semantic fallback acceptance`
+- reason: 用户要求补充一轮前端自己接受业务用语的全面审计，补齐当前缺口清单，为后端 semantic-supply 批次提供输入
+- completed_step: `已完成 ITER-2026-04-19-FE-BUSINESS-SEMANTIC-FALLBACK-SCAN：在 max_files=8 的低成本 scan 边界内输出 frontend_business_semantic_fallback_scan_v1.json，候选覆盖 ContractFormPage、action_semantics、ReleaseProductEntryView、HomeView、ActionView、ProjectManagementDashboardView、RecordView、projectEntryContext 八个当前仍接受或补业务语义的前端入口`
+- active_commit: `89d096f`
+- next_step: `Open the dedicated screen stage for frontend_business_semantic_fallback_scan_v1.json, classify candidate families into backend semantic-supply needs vs frontend cleanup-only leftovers, and do not reopen repository scanning`
+
+### 2026-04-19T12:58:00+08:00
+- blocker_key: `fe_business_semantic_fallback_screen_pass_v1`
+- layer_target: `Frontend contract-consumer audit screen`
+- module: `business-semantic fallback acceptance`
+- reason: scan 已经产出 bounded candidate list，当前需要在不重开仓库扫描的前提下，判断下一候选家族应先走后端 semantic-supply 还是前端 cleanup
+- completed_step: `已完成 ITER-2026-04-19-FE-BUSINESS-SEMANTIC-FALLBACK-SCREEN：输出 frontend_business_semantic_fallback_screen_v1，将候选分成 Family A（必须先走 backend semantic-supply 的用户可见业务 copy：ContractFormPage、action_semantics、ReleaseProductEntryView、HomeView）与 Family B（可后续继续前端 cleanup 的 dashboard/detail/context 残留）；当前推荐的 next candidate family 已冻结为 backend semantic-supply for user-facing business copy`
+- active_commit: `89d096f`
+- next_step: `Open the dedicated backend semantic-supply implementation batch for user-facing business copy, limited to the semantic sources that feed ContractFormPage, action_semantics, ReleaseProductEntryView, and HomeView`
+
+### 2026-04-19T13:12:00+08:00
+- blocker_key: `be_semantic_copy_supply_pass_v1`
+- layer_target: `Business-fact / scene-orchestration semantic supply`
+- module: `user-facing business copy sources`
+- reason: screen 阶段已冻结下一候选家族必须先走 backend semantic-supply，因此当前批次要把用户可见 business copy 的真源从前端 fallback 迁回后端
+- completed_step: `已完成 ITER-2026-04-19-BE-SEMANTIC-COPY-SUPPLY：product_policy_service 为 release scenes 补充 description/scope，scene_service 与 scene_contract_builder 将其带入 delivery_engine_v1/scenes 及 scene_contract_standard_v1.identity；execute_button 改为后端 owned 用户消息；project_dashboard/project_plan_bootstrap/cost/payment/settlement scene orchestrator 的 state_fallback_text 改为 contract-missing 风格；smart_construction_core.core_extension 为 enterprise_enablement.mainline.steps 补充 status_label；validate_task、test_backend_semantic_copy_supply.py、compileall、path-scoped git diff --check 全 PASS`
+- active_commit: `89d096f`
+- next_step: `Open the next bounded frontend consumer batch to replace the remaining local copy fallback in ContractFormPage, ReleaseProductEntryView, HomeView, and action_semantics with the new backend-owned fields/messages`
+
+### 2026-04-19T11:23:29+08:00
+- blocker_key: `fe_ui_system_convergence_v2_batch_d_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `legacy list/form wrappers`
+- reason: 用户明确要求先把前端 list/form 全部统一；在共享 pages、detail helpers 与 support surfaces 已收口后，剩余主要差异面集中在 `RecordView` 与 `MyWorkView` 两个高频 legacy wrapper
+- completed_step: `已完成 ITER-2026-04-19-FE-UI-SYSTEM-CONVERGENCE-V2-D：收口 RecordView 的 header、status pill、card、summary cards、next-action strip、stat buttons、fallback fields、chatter timeline 与按钮语言；收口 MyWorkView 的 hero、context chips、summary cards、filters、retry panel、table shell、pager 与反馈语言；同步更新 ui_style_system_convergence_v1、ui_style_acceptance_v1、ui_high_frequency_pages_v2；validate_task、path-scoped git diff --check、pnpm -C frontend/apps/web lint、pnpm -C frontend/apps/web build 全 PASS`
+- active_commit: `89d096f`
+- next_step: `Treat frontend list/form visual convergence as complete enough for this lane and shift the next batch to dedicated UI-check/browser evidence, because remaining differences are now screenshot/manual-proof or non-list/form specialty pages`
+
+### 2026-04-19T11:14:40+08:00
+- blocker_key: `fe_ui_system_convergence_v2_batch_c_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `detail section feedback and diagnostics`
+- reason: 在 support-zone 与 activity block 已收口后，ContractFormPage 仍保留 structure diagnostics、inline validation、submission feedback、footer actions 等旧视觉常量，需要在样式 lane 内完成最后一批低风险收口
+- completed_step: `已完成 ITER-2026-04-19-FE-UI-SYSTEM-CONVERGENCE-V2-C：收口 ContractFormPage 的 structure-projection block、validation/warn 文案、submission feedback、layout divider、zone chip 与 footer ghost/primary actions 到既有 token 语言；同步更新 ui_style_system_convergence_v1、ui_style_acceptance_v1、ui_high_frequency_pages_v2；validate_task、path-scoped git diff --check、pnpm -C frontend/apps/web lint、pnpm -C frontend/apps/web build 全 PASS`
+- active_commit: `89d096f`
+- next_step: `Shift the frontend style iteration from code convergence to a dedicated UI-check evidence batch, because the remaining work is now browser walkthrough, screenshot capture, and manual proof rather than low-risk style implementation`
+
+### 2026-04-19T11:10:26+08:00
+- blocker_key: `fe_ui_system_convergence_v2_batch_b_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `detail support zone and activity surfaces`
+- reason: 详情页共享模板已基本并入 token 基线，但 ContractFormPage 的 support-zone 与 activity block 仍有 page-local 视觉漂移，需要继续在样式 lane 内收口
+- completed_step: `已完成 ITER-2026-04-19-FE-UI-SYSTEM-CONVERGENCE-V2-B：收口 ContractFormPage 的 relation/chatter/attachment support-zone 头部、count badge、state badge、support cards，以及 BlockActivityFeed 的 eyebrow、count badge、feed card 节奏；同步更新 ui_style_system_convergence_v1、ui_style_acceptance_v1、ui_high_frequency_pages_v2；validate_task、path-scoped git diff --check、pnpm -C frontend/apps/web lint、pnpm -C frontend/apps/web build 全 PASS`
+- active_commit: `89d096f`
+- next_step: `Open the next low-risk frontend style batch for finer notebook/section surfaces or shift to a dedicated UI-check evidence batch, while keeping startup/bootstrap work outside the style chain`
+
+### 2026-04-19T11:03:10+08:00
+- blocker_key: `fe_ui_system_convergence_v2_batch_a_pass_v1`
+- layer_target: `Frontend contract-consumer runtime`
+- module: `detail/list auxiliary style surfaces`
+- reason: 前端样式系统主线已完成 shell / shared primitives / docs 基线，但高频详情辅助壳层与记录表格块仍残留局部硬编码视觉常量，需要继续并入 token 体系
+- completed_step: `已完成 ITER-2026-04-19-FE-UI-SYSTEM-CONVERGENCE-V2-A：收口 DetailCommandBar、DetailShellLayout、FormSection、BlockRecordTable 的边框/圆角/背景/阴影/active 态到既有 design token；同步更新 ui_style_system_convergence_v1、ui_style_acceptance_v1、ui_high_frequency_pages_v2；validate_task、git diff --check、pnpm -C frontend/apps/web lint、pnpm -C frontend/apps/web build 全 PASS`
+- active_commit: `89d096f`
+- next_step: `Open the next low-risk frontend style batch for notebook/chatter/activity support surfaces or a dedicated UI-check evidence batch, but keep runtime/bootstrap diagnosis out of the style lane`
+
 ### 2026-04-20T04:02:00+08:00
 - blocker_key: `check_credentials_special_screen_pass_v1`
 - layer_target: `Platform-kernel verification design`
@@ -23332,3 +27013,1462 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - verification: `validate_task PASS; after docker restart and stable login, unsalted runtime requests showed materialized-read success (artifact_fallback_used=0, materialized_read_hit present); however, the chosen seam uses process environment and cannot be toggled on an already running Odoo worker without an additional startup-control mechanism, so forced stale mismatch was not completed in this batch`
 - next_step: `open a bounded design/implementation batch for a live-toggleable verification-only invalidation salt source, preferably via narrow debug config or equivalent service-owned diagnostic input`
 - date: 2026-04-19
+- task: ITER-2026-04-19-FE-BE-COPY-CONSUMER-SWITCH
+- branch: codex/next-round
+- layer_target: Frontend contract consumer
+- module: semantic copy consumer switch
+- reason: switch bounded frontend consumers to backend-provided description/scope/status_label/message and replace business fallback copy with contract-gap prompts
+- date: 2026-04-19
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `open the next bounded frontend audit/supply batch only for the remaining Home/Action page text fallbacks that still lack backend-owned copy, or stop here if this semantic-copy consumer family is considered complete`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-HOME-ACTION-FALLBACK-CLEANUP
+- branch: codex/next-round
+- layer_target: Frontend contract consumer
+- module: HomeView and ActionView fallback cleanup
+- reason: remove the last frontend-authored business explanation fallbacks in home/action consumer paths and collapse them to generic contract-gap guidance
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `continue only if you want another bounded frontend audit batch for pageText/homeLayoutText default copy; otherwise this Home/Action fallback cleanup line can stop here and defer the remaining wording to backend/page-contract supply`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-HOME-DEFAULT-COPY-CLEANUP
+- branch: codex/next-round
+- layer_target: Frontend contract consumer
+- module: HomeView default copy cleanup
+- reason: retire the remaining HomeView default business explanation text in pageText/homeLayoutText fallbacks while preserving generic UI labels
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `continue only if you want another bounded pass over state-code label mapping or page contract default text ownership; otherwise the HomeView default-copy cleanup line can stop here`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-HOME-STATE-LABEL-CLEANUP
+- branch: codex/next-round
+- layer_target: Frontend contract consumer
+- module: HomeView state and reason label cleanup
+- reason: remove frontend-authored role/state/reason code translations and fall back to backend labels, raw codes, or generic contract-gap prompts
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `continue only if you want a final bounded sweep over HomeView numeric/metric trend wording and residual non-contract UI defaults; otherwise the HomeView state-label cleanup line can stop here`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-HOME-METRIC-LABEL-CLEANUP
+- branch: codex/next-round
+- layer_target: Frontend contract consumer
+- module: HomeView metric and trend label cleanup
+- reason: remove frontend-authored metric level and trend wording so HomeView falls back to neutral code/numeric display when backend labels are absent
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `the HomeView semantic fallback cleanup line can stop here unless you want to start a new dedicated audit for other pages or move residual UI default ownership into backend page contracts`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-MYWORK-FALLBACK-CLEANUP
+- branch: codex/next-round
+- layer_target: Frontend contract consumer
+- module: MyWorkView fallback cleanup
+- reason: remove the remaining frontend-authored business fallback wording in MyWorkView and collapse it to contract-gap or raw-value prompts
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `continue only if you want the next bounded page cleanup batch such as ListPage or WorkbenchView; otherwise this MyWorkView fallback cleanup line can stop here`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-LISTPAGE-FALLBACK-CLEANUP
+- branch: codex/next-round
+- layer_target: Frontend contract consumer
+- module: ListPage fallback cleanup
+- reason: remove the remaining frontend-authored business empty/list guidance wording in ListPage and collapse it to contract-gap prompts
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `continue only if you want the next bounded page cleanup batch such as WorkbenchView or SceneView; otherwise the ListPage fallback cleanup line can stop here`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-REMAINING-FALLBACK-CLEANUP
+- branch: codex/next-round
+- layer_target: Frontend contract consumer
+- module: remaining frontend fallback cleanup
+- reason: finish the current cleanup line by removing the last bounded frontend-authored business wording from WorkbenchView, SceneView, CapabilityMatrixView, ReleaseOperatorView, and action runtime helpers
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `the current frontend semantic fallback cleanup line can stop here; any further wording work should move to dedicated backend page-contract or scene-copy supply batches`
+- date: 2026-04-19
+- task: ITER-2026-04-19-BE-PAGE-COPY-SUPPLY-FOR-REMAINING-PAGES
+- branch: codex/next-round
+- layer_target: Scene-orchestration semantic supply
+- module: page contract backend-owned copy
+- reason: supplement the remaining bounded page copy gaps through backend page contracts for scene diagnostics, capability matrix, and release operator
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m compileall addons/smart_core/core/page_contracts_builder.py PASS; scoped git diff --check PASS`
+- next_step: `switch CapabilityMatrixView and ReleaseOperatorView to consume the new backend page texts`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-PAGE-COPY-CONSUMER-SWITCH
+- branch: codex/next-round
+- layer_target: Frontend contract consumer
+- module: page copy consumer switch
+- reason: switch CapabilityMatrixView and ReleaseOperatorView to the new backend page contract texts
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `the current frontend cleanup line and immediate backend page-copy supplement line can stop here; any remaining copy gaps should be addressed through dedicated backend scene/page contract supply batches`
+- date: 2026-04-19
+- task: ITER-2026-04-19-BE-COPY-SUPPLY-TOPIC-SCREEN
+- branch: codex/next-round
+- layer_target: Backend semantic-supply screen
+- module: copy supply topic planning
+- reason: freeze the next backend copy-supply topics after frontend cleanup and immediate page-copy supplement so later batches stay topic-bounded
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open Topic A first: a dedicated backend page-contract text completion implementation batch for workbench / my_work / action`
+- date: 2026-04-19
+- task: ITER-2026-04-19-BE-PAGE-CONTRACT-TEXT-COMPLETION-IMPLEMENT
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Scene-orchestration semantic supply
+- module: page contract text completion
+- reason: complete the backend-owned Topic A page texts for workbench, my_work, and action so frontend no longer falls back to local default copy for those page shells
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m compileall addons/smart_core/core/page_contracts_builder.py PASS; scoped git diff --check PASS`
+- next_step: `continue with Topic B: a dedicated backend scene-diagnostics copy completion batch, unless another bounded Topic A refinement is opened first`
+- date: 2026-04-19
+- task: ITER-2026-04-19-BE-SCENE-DIAGNOSTICS-COPY-COMPLETION-IMPLEMENT
+- branch: codex/next-round
+- layer_target: Scene-orchestration semantic supply
+- module: scene diagnostics copy completion
+- reason: complete the backend-owned scene idle/runtime diagnostics wording so SceneView no longer falls back to local placeholder copy for scene diagnostics and render-target errors
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m compileall addons/smart_core/core/page_contracts_builder.py PASS; scoped git diff --check PASS`
+- next_step: `continue with Topic C: a dedicated backend runtime-surface copy completion batch for bounded surfaces such as release.operator.surface`
+- date: 2026-04-19
+- task: ITER-2026-04-19-BE-RUNTIME-SURFACE-COPY-COMPLETION-IMPLEMENT
+- branch: codex/next-round
+- layer_target: Scene-orchestration semantic supply
+- module: runtime surface copy completion
+- reason: add backend-owned copy payload for release.operator.surface so bounded runtime-surface wording is supplied by backend instead of remaining implicit in the frontend
+- status: `PASS`
+- verification: `validate_task PASS; python3 -m compileall addons/smart_core/delivery/release_operator_read_model_service.py addons/smart_core/delivery/release_operator_surface_service.py addons/smart_core/tests/test_release_operator_surface_copy_backend.py PASS; python3 addons/smart_core/tests/test_release_operator_surface_copy_backend.py PASS; scoped git diff --check PASS`
+- next_step: `open a dedicated frontend consumer-switch batch for ReleaseOperatorView to consume surface copy payload before doing any new backend wording topic`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-RELEASE-OPERATOR-SURFACE-COPY-CONSUMER-SWITCH
+- branch: codex/next-round
+- layer_target: Frontend contract consumer
+- module: release operator surface copy consumer switch
+- reason: switch ReleaseOperatorView to consume the backend-owned release.operator.surface copy payload instead of retaining local literal wording
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `the release operator surface copy line is now aligned end-to-end; continue only if you want another bounded frontend consumer switch for a different backend-owned surface payload`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-NATIVE-CUSTOM-LIST-FORM-COMPARE-SCAN
+- branch: codex/next-round
+- layer_target: Frontend audit evidence scan
+- module: native versus custom list/form comparison
+- reason: compare native list/form evidence against current custom corresponding views to determine whether native-convergence intent is actually visible to users
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; compare_final_truth.json present; high_frequency_pages_v2 summary present`
+- next_step: `open a dedicated bounded screen to classify which ListPage/ContractFormPage shell layers must move closer to native structure, instead of continuing generic style polish`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-NATIVE-SKELETON-CONVERGENCE-SCREEN
+- branch: codex/next-round
+- layer_target: Frontend page-shell screen
+- module: native skeleton convergence
+- reason: freeze the exact ListPage / ContractFormPage shell layers that must move closer to native structure before the next implementation batch
+- status: `PASS`
+- verification: `validate_task PASS; native skeleton convergence screen doc present; scoped git diff --check PASS`
+- next_step: `open FE-LIST-FORM-NATIVE-SKELETON-CONVERGENCE-IMPLEMENT and start with ListPage top-shell density plus ContractFormPage header/action density`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-LIST-FORM-NATIVE-SKELETON-CONVERGENCE-IMPLEMENT
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Frontend page-shell implementation
+- module: list/form native skeleton convergence
+- reason: reduce the top-shell density and container depth in ListPage and ContractFormPage so the first-screen reading order moves closer to native Odoo list/form instead of staying card-shell dominant
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `run a fresh automated visual comparison on the target list/form routes and verify whether the native-skeleton convergence is now user-visible`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-LIST-FORM-NATIVE-SKELETON-CONVERGENCE-VERIFY
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Frontend verification evidence
+- module: list/form native skeleton convergence
+- reason: re-run the bounded playwright walkthrough after the latest shell-density reduction and compare the fresh screenshots against the earlier native/custom truth set to judge whether convergence is now visibly user-perceptible
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; historical compare truth present; fresh walkthrough summary at artifacts/playwright/high_frequency_pages_v2/20260419T062352Z/summary.json PASS; scoped git diff --check PASS`
+- next_step: `open a new bounded screen only if you want to continue reducing product-shell interference around list/form work areas; keep task-detail residual loading risk on its own line instead of folding it into generic style polish`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-PRODUCT-SHELL-INTERFERENCE-SCREEN
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Frontend page-shell screen
+- module: shared product shell interference
+- reason: freeze the next bounded convergence scope after verify proved that the main remaining native-parity gap now comes from shared sidebar/topbar/outer-shell interference rather than from the inner list/form carriers themselves
+- status: `PASS`
+- verification: `validate_task PASS; frontend_product_shell_interference_screen_v1.md present`
+- next_step: `open the dedicated shared-shell implementation batch and reduce product-shell weight only on action/model-form/record work surfaces`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-PRODUCT-SHELL-INTERFERENCE-IMPLEMENT
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Frontend page-shell implementation
+- module: shared product shell interference
+- reason: reduce shared sidebar/topbar/outer-shell interference around action/model-form/record work surfaces so list/form pages enter their main work area earlier within the first screen
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `re-run the bounded playwright walkthrough and compare the new project list/detail screenshots against 20260419T062352Z to confirm whether shared-shell interference has become visibly lighter`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-PRODUCT-SHELL-INTERFERENCE-VERIFY
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Frontend verification evidence
+- module: shared product shell interference
+- reason: re-run the bounded high-frequency walkthrough after the shared-shell reduction and compare the fresh project list/detail screenshots against 20260419T062352Z to judge whether product-shell interference is now visibly lighter
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; frontend runtime reachable; fresh walkthrough summary at artifacts/playwright/high_frequency_pages_v2/20260419T063607Z/summary.json PASS; scoped git diff --check PASS`
+- next_step: `open a new bounded screen only if you want to continue reducing top background atmosphere and the last outer card-language layer around list/form work areas; keep task-detail residual loading risk on its own line`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-TOPBAR-CARD-LANGUAGE-SCREEN
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Frontend page-shell screen
+- module: top atmosphere and outer card language
+- reason: freeze the next bounded convergence scope after the latest verify proved that the main remaining gaps are now the top background empty field and the final soft card-language layer around list/form work areas
+- status: `PASS`
+- verification: `validate_task PASS; frontend_topbar_card_language_screen_v1.md present`
+- next_step: `open the dedicated shared-shell implementation batch and reduce only the top atmosphere plus the final soft outer card-language on action/model-form/record work surfaces`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-TOPBAR-CARD-LANGUAGE-IMPLEMENT
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Frontend page-shell implementation
+- module: top atmosphere and outer card language
+- reason: reduce the remaining top empty atmosphere and final soft outer card-language around action/model-form/record work surfaces without reopening inner list/form body scope
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `re-run the bounded playwright walkthrough and compare the new project list/detail screenshots against 20260419T063607Z to confirm whether the top atmosphere and final outer card-language are visibly lighter`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-TOPBAR-CARD-LANGUAGE-VERIFY
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Frontend verification evidence
+- module: top atmosphere and outer card language
+- reason: re-run the bounded high-frequency walkthrough after the latest top-atmosphere and outer-card-language reduction and compare the fresh project list/detail screenshots against 20260419T063607Z
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; frontend runtime reachable; fresh walkthrough summary at artifacts/playwright/high_frequency_pages_v2/20260419T064934Z/summary.json PASS; scoped git diff --check PASS`
+- next_step: `do not continue the same micro-tuning line blindly; open a new bounded structure screen first if you want another visible step, and keep task-detail residual loading risk on its own line`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-LIST-COLUMN-ALIGNMENT-FIX
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Frontend page-shell implementation
+- module: ListPage table alignment
+- reason: fix the basic list-table implementation issue where auto table layout plus body-content-driven cells caused header/body column rhythm to drift on key business fields
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `re-run the target list screenshot if you want visual confirmation, but the core implementation issue is now fixed at the table layout layer rather than being left to browser auto-width heuristics`
+- date: 2026-04-19
+- task: ITER-2026-04-19-BE-PROJECT-LIST-COLUMN-FACT-ALIGNMENT
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Scene-orchestration semantic supply
+- module: projects.list list_profile facts
+- reason: restore the canonical projects.list column order and labels in the backend scene profile and add a dedicated gate so frontend consumers can no longer silently inherit a scene-level fact drift
+- status: `PASS`
+- verification: `validate_task PASS; python3 addons/smart_construction_scene/tests/test_project_list_scene_profile_columns.py PASS; scoped git diff --check PASS`
+- next_step: `restart or refresh the frontend and verify the project list now consumes the corrected backend column order and labels instead of the previously drifted scene-profile facts`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-HMR-RECOVERY
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Frontend runtime infrastructure
+- module: vite hot update runtime
+- reason: restore reliable frontend hot-update behavior by making polling-based watch the default dev mode and restarting the frontend runtime with aligned host/HMR parameters
+- status: `PASS`
+- verification: `validate_task PASS; make frontend.restart PASS (ready pid=80527); pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `continue only if you still observe hot-update misses in the browser after this runtime reset; if so, the next batch should capture a direct watch-trigger repro instead of doing more blind config edits`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-LIST-TOPBAR-COMPRESSION
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Frontend page-shell implementation
+- module: list-page topbar compression
+- reason: remove the redundant view-switch hint on projects.list, keep the four top buttons on one horizontal row, and compress the top blank area so the list body remains the primary visual focus
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `refresh the frontend and visually verify that projects.list now has a flatter top area, no extra view-switch hint, and the four top buttons remain on one line`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-LIST-TOPBAR-REALIGN-IMPLEMENT
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Frontend page-shell implementation
+- module: projects.list top structure
+- reason: the first compression batch did not materially change the actual rendered list top area, so this batch moved to the real rendering layer by removing the redundant AppShell headline row and collapsing scene controls into the compact structure consumed by projects.list
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); BASE_URL=http://127.0.0.1:5174 E2E_LOGIN=admin E2E_PASSWORD=admin node scripts/verify/high_frequency_pages_v2_walkthrough.mjs PASS; scoped git diff --check PASS`
+- next_step: `use the fresh projects.list screenshot at artifacts/playwright/high_frequency_pages_v2/20260419T073842Z/project-list.png as the new baseline and only continue if you still want another tighter pass on control density or table-toolbar spacing`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-LIST-TOPBAR-DENSITY-TUNE
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Frontend page-shell implementation
+- module: projects.list vertical density
+- reason: keep shrinking the remaining unprofessional top blank space by tightening the AppShell list-focus padding, the compact scene control strip spacing, and the native list toolbar density for projects.list
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web lint PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); BASE_URL=http://127.0.0.1:5174 E2E_LOGIN=admin E2E_PASSWORD=admin node scripts/verify/high_frequency_pages_v2_walkthrough.mjs PASS; scoped git diff --check PASS`
+- next_step: `use artifacts/playwright/high_frequency_pages_v2/20260419T074303Z/project-list.png as the new baseline; if another pass is needed, target structural merge between scene controls and list toolbar rather than more micro-spacing only`
+- date: 2026-04-19
+- task: ITER-2026-04-19-BE-COPY-SUPPLY-TOPIC-SCREEN
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Backend semantic-supply screen
+- module: copy supply topic planning
+- reason: freeze the next backend-owned copy-supply topics after frontend fallback cleanup so later wording work stays staged by page contract text, scene diagnostics, and dedicated runtime surfaces instead of ad hoc page fixes
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `if the next move stays in investigation mode, keep follow-up screens bounded to Topic A page-contract text completion candidates first; do not jump into mixed implementation across diagnostics and runtime surfaces in one batch`
+- date: 2026-04-19
+- task: ITER-2026-04-19-SCENE-ROUTE-BOUNDARY-ALIGNMENT-SCREEN
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Backend semantic-supply screening
+- module: scene-ready-only route and contract boundary
+- reason: freeze the remaining misalignment families against the product rule that frontend may consume only backend-orchestrated scene-ready delivery, including list/form pages that still must not remain native route exceptions
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS; screen evidence frozen in scene_route_boundary_alignment_screen_v1.md`
+- next_step: `open a dedicated scene-entry authority closure batch first, focused on collapsing parallel /m /a /r public route authority into one scene-oriented frontend-visible entry family before further page-local cleanup`
+- date: 2026-04-19
+- task: ITER-2026-04-19-FE-SCENE-ENTRY-AUTHORITY-CLOSURE-A
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Frontend contract-consumer runtime
+- module: scene entry authority closure A
+- reason: lower `/m/:menuId` from an ordinary product entry route to a compatibility-only bridge by making router/session/workbench prefer scene-first targets whenever current navigation metadata already contains them
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web typecheck:strict PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `continue with authority closure B only if you want to keep shrinking public route families; the next bounded batch should target when /a and /r still remain frontend-visible primary entry authority instead of scene-oriented entry semantics`
+- date: 2026-04-19
+- task: ITER-2026-04-19-BE-SCENE-ENTRY-AUTHORITY-CONTRACT-SCREEN
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Backend semantic supply screening
+- module: scene entry authority contract
+- reason: freeze backend-side unique scene-entry contract before further frontend route cleanup, with explicit rule that even list/form work surfaces are scene-orchestration outputs rather than native route exceptions
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS; screen evidence frozen in backend_scene_entry_authority_contract_screen_v1.md`
+- next_step: `open a backend implementation batch that materializes one scene-oriented public entry_target surface for default_route, navigation targets, and workspace/recommended entry outputs while downgrading menu/action anchors to compatibility-only refs`
+- date: 2026-04-19
+- task: ITER-2026-04-19-BE-SCENE-ENTRY-AUTHORITY-CONTRACT-IMPLEMENT
+- branch: codex/next-round
+- commit: 89d096f
+- layer_target: Scene-orchestration layer
+- module: public scene entry target surface
+- reason: materialize one additive public `entry_target` shape across startup default_route, role_surface landing target, nav node metadata, and scene target outputs so frontend can converge on scene_key as authority while legacy anchors remain compatibility refs only
+- status: `PASS`
+- verification: `validate_task PASS; python3 addons/smart_core/tests/test_system_init_payload_builder_semantics.py PASS; python3 addons/smart_core/tests/test_scene_normalizer_entry_target.py PASS; python3 addons/smart_core/tests/test_identity_resolver_entry_target.py PASS; scoped git diff --check PASS`
+- next_step: `the next bounded batch can now move back to frontend route cleanup B, targeting /a and /r public authority removal only where frontend can consume the new backend entry_target surface directly`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-SCENEREGISTRY-COMPAT-PREFIX-SHRINK-AS
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: sceneRegistry compat prefix shrink
+- reason: shrink the last strong private compat baseline by preferring backend public `entry_target.route` when materializing `scene.route`, leaving `/compat/*` recognition as legacy fallback only
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web typecheck:strict PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `open a bounded recheck chain only if the team wants to freeze the new residual boundary after sceneRegistry shrink; strongest expected remainder is guarded router compat registration shell plus unresolved native-action fallback`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-SCENEREGISTRY-COMPAT-PREFIX-SHRINK-RECHECK-SCAN-AT
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer governance scan
+- module: sceneRegistry compat prefix shrink residual recheck
+- reason: freeze the residual private compat candidates after `sceneRegistry` moved `scene.route` sourcing to backend public `entry_target.route`
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `run a bounded screen next; likely candidates are the guarded router compat shell, unresolved native-action fallback, and legacy-only prefix constant still retained inside sceneRegistry`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-SCENEREGISTRY-COMPAT-PREFIX-SHRINK-RECHECK-SCREEN-AU
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer governance screen
+- module: sceneRegistry compat prefix shrink residual recheck
+- reason: classify the bounded post-shrink residual candidates without reopening repository scan scope
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `run a bounded verify next to freeze the new residual order: dominant should be guarded router compat shell plus unresolved native-action fallback, while sceneRegistry prefix recognition should remain secondary legacy fallback only`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-NATIVE-ACTION-FALLBACK-SHRINK-AW
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: navigation native-action fallback shrink
+- reason: remove the unresolved native-action direct `/compat/action/:id` emission from navigation normalization while keeping scene-first resolution and diagnostics
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web typecheck:strict PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `open a bounded recheck chain only if the team wants to freeze the new residual boundary after native-action fallback shrink; strongest expected remainder is guarded router private compat registration shell`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-NATIVE-ACTION-FALLBACK-SHRINK-RECHECK-SCAN-AX
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer governance scan
+- module: native-action fallback shrink residual recheck
+- reason: freeze the residual compat candidates after unresolved native-action no longer emits `/compat/action/:id`
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `run a bounded screen next; strongest expected residual is guarded router private compat registration shell, with sceneRegistry prefix recognition remaining secondary legacy fallback`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-NATIVE-ACTION-FALLBACK-SHRINK-RECHECK-SCREEN-AY
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer governance screen
+- module: native-action fallback shrink residual recheck
+- reason: classify the bounded post-shrink residual candidates without reopening repository scan scope
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `run a bounded verify next to freeze the new residual order: guarded router private compat registration shell should be dominant, while sceneRegistry prefix recognition remains secondary legacy fallback`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-ROUTER-COMPAT-SHELL-SHRINK-BA
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: router compat shell shrink
+- reason: keep compatibility route names but remove direct shell-page ownership from router compat registration, redirecting immediately to scene-first or diagnostic-only workbench
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web typecheck:strict PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `open a bounded recheck chain only if the team wants to freeze the new residual boundary after router compat shell shrink; strongest expected remainder is legacy-only sceneRegistry compat prefix fallback`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-ROUTER-COMPAT-SHELL-SHRINK-RECHECK-SCAN-BB
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer governance scan
+- module: router compat shell shrink residual recheck
+- reason: freeze the residual compat candidates after router compat routes became redirect-only named entry points
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `run a bounded screen next; strongest expected residual is now legacy-only sceneRegistry compat prefix fallback, while router compat registration remains only a compatibility entry shell`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-ROUTER-COMPAT-SHELL-SHRINK-RECHECK-SCREEN-BC
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer governance screen
+- module: router compat shell shrink residual recheck
+- reason: classify the bounded post-shrink residual candidates without reopening repository scan scope
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `run a bounded verify next to freeze the new residual order: legacy-only sceneRegistry compat prefix fallback should now be dominant, while router compat registration remains secondary compatibility entry shell`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-ROUTER-COMPAT-SHELL-SHRINK-RECHECK-VERIFY-BD
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer governance verify
+- module: router compat shell shrink residual recheck
+- reason: freeze the bounded post-shrink residual ordering so later implementation follows one stable priority line
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open a bounded frontend implementation batch only if the team now wants to narrow or retire the remaining legacy-only sceneRegistry compat prefix fallback`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-SCENEREGISTRY-LEGACY-COMPAT-FALLBACK-SHRINK-BE
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: sceneRegistry legacy compat fallback shrink
+- reason: retire the global compat prefix normalization baseline and keep any remaining legacy compat handling only inside bounded scene-ready conversion
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web typecheck:strict PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `open a bounded recheck chain only if the team wants to freeze the new residual boundary after sceneRegistry fallback shrink; strongest expected remainder is compatibility-only router entry registration, if it is still counted at all`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-SCENEREGISTRY-LEGACY-COMPAT-FALLBACK-SHRINK-RECHECK-SCAN-BF
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer governance scan
+- module: sceneRegistry legacy compat fallback shrink residual recheck
+- reason: freeze the residual compat candidates after the global sceneRegistry compat baseline was retired
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `run a bounded screen next; likely residual order is a tiny bounded sceneRegistry legacy branch plus redirect-only router compatibility entry registration`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-SCENEREGISTRY-LEGACY-COMPAT-FALLBACK-SHRINK-RECHECK-SCREEN-BG
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer governance screen
+- module: sceneRegistry legacy compat fallback shrink residual recheck
+- reason: classify the bounded post-shrink residual candidates without reopening repository scan scope
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `run a bounded verify next to freeze the new residual order: redirect-only router compatibility entry registration should now be dominant, while the sceneRegistry legacy branch remains secondary`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-SCENEREGISTRY-LEGACY-COMPAT-FALLBACK-SHRINK-RECHECK-VERIFY-BH
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer governance verify
+- module: sceneRegistry legacy compat fallback shrink residual recheck
+- reason: freeze the bounded post-shrink residual ordering so later implementation follows one stable priority line
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open a bounded governance or implementation batch only if the team now wants to decide whether redirect-only router compatibility entry registration should still exist at all`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-ROUTER-COMPAT-ENTRY-RETENTION-SCREEN-BI
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer governance screen
+- module: router compat entry retention
+- reason: classify whether redirect-only router compatibility entries are still justified or already eligible for retirement
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open a bounded caller-migration screen next; retirement is not yet eligible until remaining in-repo action/record/model-form route-name callers are classified`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-ROUTER-COMPAT-CALLER-MIGRATION-SCREEN-BJ
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer governance screen
+- module: router compat caller migration
+- reason: classify remaining in-repo callers of compat route names before any retirement batch
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open a bounded implementation batch next if continued; migrate the four real navigation callers in RecordView, ActionView, ContractFormPage, and ViewRelationalRenderer to direct scene-first navigation before reconsidering compat entry retirement`
+- date: 2026-04-20
+- task: ITER-2026-04-20-BE-MENU-SCENE-OUTPUT-SCREEN-BK
+- branch: codex/next-round
+- layer_target: Scene-orchestration boundary governance screen
+- module: menu scene output boundary
+- reason: determine whether backend menu delivery also belongs to the same scene-oriented output boundary as other frontend-consumed contracts
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `shift the active battlefield back to backend and open a bounded backend screen or implement batch for menu scene-oriented output, because frontend still reinterprets menu routes and the menu contract is not fully closed`
+- date: 2026-04-20
+- task: ITER-2026-04-20-BE-MENU-SCENE-ENTRY-SCREEN-BL
+- branch: codex/next-round
+- layer_target: Scene-orchestration boundary governance screen
+- module: menu scene-oriented entry shape
+- reason: freeze the exact backend-owned entry shape that `/api/menu/navigation` should emit so frontend menu consumption can stop reconstructing scene identity locally
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open a bounded backend implementation batch next; add additive entry_target to nav_explained while preserving existing route and target compatibility fields`
+- date: 2026-04-20
+- task: ITER-2026-04-20-BE-MENU-SCENE-ENTRY-IMPLEMENT-BM
+- branch: codex/next-round
+- layer_target: Scene-orchestration layer
+- module: menu scene entry target
+- reason: materialize additive `entry_target` on backend menu navigation delivery while preserving route/target compatibility fields
+- status: `PASS`
+- verification: `validate_task PASS; menu interpreter unittest PASS; scoped git diff --check PASS`
+- next_step: `open a bounded backend/frontend contract-consumer recheck next; verify whether the new menu entry_target is sufficient to remove frontend-side native-action route reinterpretation`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-MENU-ENTRY-TARGET-CONSUMER-IMPLEMENT-BO
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: menu entry_target consumer
+- reason: migrate menu consumption to prefer backend entry_target before any local route reinterpretation
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web typecheck:strict PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `open a bounded recheck next; verify whether menu delivery and consumption are now aligned enough to treat the menu boundary as scene-oriented and closed`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-SCENE-READY-DASHBOARD-CONSUMER-IMPLEMENT-CL
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: scene_ready dashboard consumer
+- reason: consume the restored backend startup dashboard semantics for project.management so the generic frontend no longer collapses that scene into ActionView/Kanban
+- status: `FAIL`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web typecheck:strict PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); live browser smoke FAIL with artifact artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260420T071638Z/ but now reaches dashboard_wait:done and dashboard_profile=old, leaving only the later dashboard assertion dashboard missing status explain`
+- next_step: `stop on verify_failed; open the next bounded dashboard-surface batch to align the missing status-explain field/copy on the now-restored project.management dashboard`
+- date: 2026-04-20
+- task: ITER-2026-04-20-BE-SCENE-READY-PROJECT-MANAGEMENT-DASHBOARD-SUPPLY-CK
+- branch: codex/next-round
+- layer_target: Backend scene-orchestration startup contract
+- module: project.management scene_ready dashboard semantic supply
+- reason: restore startup dashboard semantics for project.management after CI/CJ proved the startup contract was route-only minimal and blocked generic frontend dashboard selection
+- status: `FAIL`
+- verification: `validate_task PASS; py_compile PASS; direct lightweight scene semantic tests PASS (6 assertions); direct system.init diagnosis PASS and now shows scene.page=project.management.dashboard plus page.page_type/layout_mode=dashboard; live browser smoke FAIL with artifact artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260420T070759Z/ still resolving /s/project.management into ActionView/KanbanPage copy`
+- next_step: `stop on verify_failed; reopen the frontend generic consumer batch next, because backend startup semantic supply is now present and the remaining gap is the frontend consumption path that still ignores those startup dashboard semantics`
+- date: 2026-04-20
+- task: ITER-2026-04-20-PROJECT-MANAGEMENT-DASHBOARD-LOADING-SCREEN-CI
+- branch: codex/next-round
+- layer_target: Dashboard loading screen
+- module: project.management dashboard loading stall classification
+- reason: classify whether the bounded `/s/project.management` stall belongs to backend block hydration or frontend consumer completion after auth/startup convergence
+- status: `PASS`
+- verification: `validate_task PASS; direct runtime intent diagnosis PASS with project.dashboard.enter and blocks progress/risks/next_actions all ready in ~212ms; direct system.init scene_ready diagnosis PASS and proves startup contract lacks dashboard page_type/layout_mode semantic supply for project.management`
+- next_step: `stop frontend-only continuation; open the next backend scene-orchestration semantic-supply batch for system.init.scene_ready_contract_v1 so project.management exposes dashboard startup semantics instead of only minimal route/action metadata`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-SCENE-READY-DASHBOARD-CONSUMER-REPAIR-CJ
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: scene-ready dashboard consumer
+- reason: verify whether a bounded frontend consumer repair can restore dashboard rendering once the startup path is classified
+- status: `FAIL`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web typecheck:strict PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); project_dashboard_primary_entry_browser_smoke FAIL with artifact artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260420T065042Z/ still resolving /s/project.management to ActionView/kanban content; direct system.init diagnosis proves scene_ready_contract_v1 lacks dashboard page_type/layout_mode semantics and triggers frontend_consumer_requires_backend_contract_change stop condition`
+- next_step: `stop on backend semantic-supply dependency; the next valid batch must patch backend startup contract supply for project.management instead of adding scene-specific frontend branching`
+- date: 2026-04-20
+- task: ITER-2026-04-20-MENU-SCENE-BOUNDARY-RECHECK-SCREEN-BP
+- branch: codex/next-round
+- layer_target: Scene-orchestration boundary governance screen
+- module: menu scene boundary recheck
+- reason: verify whether backend entry_target output plus frontend entry_target-first consumption is enough to treat menu delivery as aligned
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `menu boundary is now aligned with only compatibility tail remaining; if continued, switch back to the remaining router compat caller migration line or stop this topic as substantially closed`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-ROUTER-COMPAT-CALLER-MIGRATION-IMPLEMENT-BQ
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: router compat caller migration
+- reason: remove the remaining real navigation dependencies on compat route names after caller-migration screen BJ froze the target set
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web typecheck:strict PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `open a bounded recheck next to determine whether router compat entry retirement is now eligible, since the real navigation callers have been migrated off compat route-name fallback`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-ROUTER-COMPAT-ENTRY-RETIREMENT-RECHECK-SCREEN-BR
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer governance screen
+- module: router compat entry retirement eligibility
+- reason: verify whether router compat entries are now eligible for retirement after real navigation callers were migrated away
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open a bounded presentation-condition migration batch next; AppShell route-name conditions are now the remaining blocker before compat entry retirement can become cleanly eligible`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-APPSHELL-COMPAT-PRESENTATION-MIGRATION-BS
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: AppShell compat presentation migration
+- reason: remove the remaining presentation-only dependency on compat route names so router compat entry retirement can become cleanly eligible
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web typecheck:strict PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `open a final bounded retirement recheck next; if no blocker remains, router compat entry retirement should become cleanly eligible`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-ROUTER-COMPAT-ENTRY-RETIREMENT-IMPLEMENT-BT
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: router compat entry retirement
+- reason: retire the remaining redirect-only compat entry registration after both real navigation and presentation blockers were removed
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web typecheck:strict PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `the custom-frontend route boundary topic is now substantially closed; only optional dead-code or compatibility-tail cleanup remains if the team wants another pass`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-COMPAT-TAIL-CLEANUP-BU
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: compat tail cleanup
+- reason: remove dead compat helper code and stale router remnants after compat entry retirement
+- status: `PASS`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web typecheck:strict PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); scoped git diff --check PASS`
+- next_step: `the custom-frontend route boundary topic is now fully closed for the current scope; continue only if the team wants ordinary maintenance or unrelated follow-up work`
+- date: 2026-04-20
+- task: ITER-2026-04-20-REAL-USABILITY-WUTAO-VERIFY-BV
+- branch: codex/next-round
+- layer_target: Cross-layer live usability verification
+- module: wutao demo real usability verify
+- reason: freeze the real custom-frontend usability status with the requested `wutao / demo` account before opening any further fix batch
+- status: `FAIL`
+- verification: `validate_task PASS; project_dashboard_primary_entry_browser_smoke against BASE_URL=http://127.0.0.1:5174 FAIL (dashboard missing status explain); unified_system_menu_click_usability_smoke against BASE_URL=http://127.0.0.1:5174/API_BASE_URL=http://127.0.0.1:8069 FAIL (28/31 menu leaves degraded to CONTRACT_CONTEXT_MISSING or menu_route_missing_scene_identity)`
+- next_step: `open a backend-first screen/implement line for scene-oriented dashboard + menu semantic supply; the custom frontend is still not a unique consumer under real wutao/demo validation`
+- date: 2026-04-20
+- task: ITER-2026-04-20-BE-SCENE-SUPPLY-REAL-USABILITY-SCREEN-BW
+- branch: codex/next-round
+- layer_target: Backend scene-supply governance screen
+- module: scene-oriented menu and dashboard semantic supply
+- reason: classify the backend semantic-supply gaps behind the real `wutao / demo` failures before opening any implementation batch
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open a bounded backend implement batch to converge project.management/project.dashboard semantics, add missing scene identity for action-backed menu leaves, and upgrade scene_key-only menu leaves to full scene-oriented entry_target delivery`
+- date: 2026-04-20
+- task: ITER-2026-04-20-BE-SCENE-SUPPLY-REAL-USABILITY-IMPLEMENT-BX
+- branch: codex/next-round
+- layer_target: Backend scene-orchestration runtime
+- module: scene-oriented menu and dashboard semantic supply
+- reason: repair the highest-certainty backend semantic supply blockers proven by the real `wutao / demo` verify
+- status: `FAIL`
+- verification: `validate_task PASS; targeted py_compile PASS; direct python tests PASS; make verify.smart_core PASS; make restart PASS; post-restart project_dashboard_primary_entry_browser_smoke FAIL but backend_scene_key converged to project.management; unified_system_menu_click_usability_smoke FAIL but improved from 28/31 to 22/31`
+- next_step: `open the next bounded repair line for the remaining old dashboard profile selection on /s/project.management and the 22 residual menu leaves still lacking complete scene-ready supply`
+- date: 2026-04-20
+- task: ITER-2026-04-20-BE-PROJECT-MANAGEMENT-TARGET-ACTION-SUPPLY-IMPLEMENT-CA
+- branch: codex/next-round
+- layer_target: Backend scene-orchestration runtime
+- module: project.management scene target semantic supply
+- reason: real browser verification proved the route converged to project.management, but the scene target still lacks explicit action semantics and leaves the generic SceneView in idle render-target-missing state
+- status: `IN_PROGRESS`
+- verification: `validate_task PASS; python3 addons/smart_construction_scene/tests/test_action_only_scene_semantic_supply.py PASS`
+- next_step: `run targeted py_compile, restart runtime, and rerun the live browser smoke against wutao/demo to verify the generic scene consumer now receives an executable action target`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-ACTIONVIEW-SCENEKEY-STARTUP-REPAIR-CB
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: scene-first startup identity alignment
+- reason: keep `/s/project.management` on the scene-first startup path after generic SceneView takeover by making ActionView recognize dedicated scene routes as real scene context instead of only the generic `scene` route name
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web typecheck:strict PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); make frontend.restart PASS; scoped git diff --check PASS; live browser smoke did not finish in bounded time, while the latest prior failure artifact still shows repeated ERR_NETWORK_CHANGED`
+- next_step: `continue with the next bounded frontend runtime repair only if the team wants to isolate the residual in-page request churn inside /s/project.management; keep the scope on SceneView/ActionView consumer interactions and do not reopen backend semantics unless a concrete missing semantic fact is proven`
+- date: 2026-04-20
+- task: ITER-2026-04-20-FE-SCENEVIEW-PROJECT-MANAGEMENT-RENDER-REPAIR-BZ
+- branch: codex/next-round
+- layer_target: Frontend contract-consumer runtime
+- module: generic SceneView render repair
+- reason: stop the generic scene consumer from self-induced `/s/project.management` route churn by treating same-path scene routes as self-routed entries and by narrowing SceneView re-resolve triggers to actual scene identity fields
+- status: `FAIL`
+- verification: `validate_task PASS; pnpm -C frontend/apps/web typecheck:strict PASS; pnpm -C frontend/apps/web build PASS (existing chunk-size warning only); make frontend.restart PASS; scoped git diff --check PASS; project_dashboard_primary_entry_browser_smoke FAIL with artifact artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260420T053757Z/summary.json reporting semantic entry navigation failed after recovery attempts and repeated page.goto ERR_CONNECTION_REFUSED on the custom frontend root URL`
+- next_step: `stop on verify_failed; before any further frontend runtime patch, stabilize the live verify entry/runtime path or reproduce the new connection-refused launch failure in isolation so the next batch does not mix consumer logic with environment/entry instability`
+- date: 2026-04-20
+- task: ITER-2026-04-20-VERIFY-PROJECT-DASHBOARD-ENTRY-BOOTSTRAP-RECOVERY-CC
+- branch: codex/next-round
+- layer_target: Verification runtime surface
+- module: project dashboard primary entry verifier bootstrap fallback
+- reason: keep the live smoke on a reachable verifier bootstrap path when backend semantic entry is absent, instead of immediately failing on blind bare-root retries
+- status: `PASS_WITH_RISK`
+- verification: `validate_task PASS; scoped git diff --check PASS; host smoke advanced past the earlier root-connection-refused gate, produced intermediate artifact artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260420T054133Z/summary.json, and then held a stable localhost:5174 browser connection during the fresh run, but the bounded run still did not converge to a final PASS/FAIL summary under artifacts/codex/project-dashboard-primary-entry-browser-smoke/20260420T055002Z/ before termination`
+- next_step: `stop on non-converged live verification; isolate the remaining in-browser wait condition inside the verifier before reopening frontend runtime or backend semantic batches`
+- task: ITER-2026-04-22-BE-NEXT-WAVE-RESELECTION-SCREEN-KF
+- branch: codex/next-round
+- layer_target: Backend governance screen
+- module: next wave reselection
+- reason: freeze the next family governance wave from the remaining still-open families now that projects, finance_center, tasks, and contracts are all synchronized to guarded_ready at the family-summary layer
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `start payment_approval first branch closure screen and freeze whether payments.approval is closed, partial_closed, or blocked before any provider line is opened`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-RUNTIME-METADATA-SCAN-OX
+- branch: codex/next-round
+- layer_target: Backend diagnosis scan
+- module: menu 314 runtime metadata injection chain
+- reason: after freezing runtime-metadata direction, the next low-risk step is to inventory candidate injection points without concluding root cause
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS; scan inventory confirms action 533 is rebound to projects.ledger, projects.ledger contributes default_sort=write_date desc, scene_dsl_compiler materializes search_surface.default_sort, scene_merge_resolver can override it via policy/provider payload, and contract_governance bridges the released search surface`
+- next_step: `run a bounded backend screen that classifies the active last-writer candidate among scene payload, policy layer, provider layer, and contract-governance bridge for menu 314 action 533`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-RUNTIME-LAST-WRITER-SCREEN-OY
+- branch: codex/next-round
+- layer_target: Backend diagnosis screen
+- module: menu 314 runtime last-writer classification
+- reason: after OX identified candidate injection layers, the next low-risk step is to classify the strongest active writer candidate without reopening repository scan
+- status: `PASS`
+- verification: `task contract created; classification note records scene payload as strongest current writer candidate, with policy/provider as unresolved override candidates and contract-governance as downstream bridge`
+- next_step: `run a bounded backend screen that decides whether policy attachment or provider attachment should be inspected first for projects.ledger under action 533`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-POLICY-VS-PROVIDER-PRIORITY-SCREEN-OZ
+- branch: codex/next-round
+- layer_target: Backend diagnosis screen
+- module: menu 314 policy-vs-provider priority
+- reason: after classifying the strongest current writer as scene payload, the next low-risk step is to order the unresolved override audits between policy and provider paths
+- status: `PASS`
+- verification: `task contract created; priority screen freezes provider attachment as the first audit target and policy attachment as the deferred fallback target`
+- next_step: `open one bounded backend scan that inventories provider attachment points for projects.ledger behind action 533`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-PROVIDER-ATTACHMENT-SCAN-PA1
+- branch: codex/next-round
+- layer_target: Backend diagnosis scan
+- module: menu 314 provider attachment chain
+- reason: provider attachment was prioritized as the first unresolved override path for projects.ledger behind action 533
+- status: `PASS`
+- verification: `bounded scan confirms projects.ledger is explicitly bound to construction.projects_ledger_provider.v1, and the current provider implementation emits guidance/runtime envelope only without writing search_surface/default_sort fields`
+- next_step: `run a bounded backend policy-attachment audit for projects.ledger behind action 533`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-POLICY-ATTACHMENT-SCAN-PA2
+- branch: codex/next-round
+- layer_target: Backend diagnosis scan
+- module: menu 314 policy attachment chain
+- reason: provider attachment exists but does not directly write ordering/search fields in the currently scanned implementation, so the next low-risk step is the policy/default-sort path
+- status: `PASS`
+- verification: `bounded scan confirms projects.ledger is schema-required to carry default_sort, scene payload directly supplies write_date desc, and policy override remains a valid mechanism but without direct projects.ledger-specific override evidence in the scanned inputs`
+- next_step: `run a bounded backend synthesis screen to decide whether diagnosis should now move from orchestration metadata to runtime contract observation for menu 314`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-DIAGNOSIS-SYNTHESIS-SCREEN-PA3
+- branch: codex/next-round
+- layer_target: Backend diagnosis screen
+- module: menu 314 diagnosis synthesis
+- reason: the orchestration-layer scan wave has materially classified writer and override candidates, so the next low-risk step is to decide whether to move into runtime contract observation
+- status: `PASS`
+- verification: `synthesis screen freezes orchestration metadata wave as materially closed and selects runtime contract observation as the next bounded diagnosis layer`
+- next_step: `open one bounded backend runtime-contract observation batch for menu 314 action 533`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-RUNTIME-CONTRACT-OBSERVATION-SCAN-PA4
+- branch: codex/next-round
+- layer_target: Backend runtime contract observation scan
+- module: menu 314 runtime contract observation
+- reason: after closing the orchestration-metadata wave, the next bounded step is to identify the released contract/search-surface observation entrypoints for action 533
+- status: `PASS`
+- verification: `bounded scan identifies addons/smart_core/core/scene_ready_contract_builder.py as the primary released-contract observation entrypoint and confirms it normalizes and re-emits search_surface/list_surface default_sort semantics for downstream runtime consumers`
+- next_step: `open one bounded backend observation batch that captures released scene-ready/search-surface output for action 533 and compares it with the expected projects.ledger baseline`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-RUNTIME-OBSERVATION-ENTRY-SCREEN-PA5
+- branch: codex/next-round
+- layer_target: Backend runtime contract observation screen
+- module: menu 314 runtime observation entry
+- reason: after identifying the release builder, the next low-risk step is to choose the safest observation harness for comparing released output against the projects.ledger baseline
+- status: `PASS`
+- verification: `screen freezes existing pure-Python builder/bridge tests as the first observation path and defers live runtime observation`
+- next_step: `open one bounded backend pure-Python observation batch that compares released default_sort/search-surface output against the expected projects.ledger baseline`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-PURE-PYTHON-OBSERVATION-SCAN-PA6
+- branch: codex/next-round
+- layer_target: Backend runtime contract observation scan
+- module: menu 314 pure-python observation harness
+- reason: the pure-Python observation path has been selected, so the next low-risk step is to freeze the exact harness and command order
+- status: `PASS`
+- verification: `scan freezes builder-level, released-surface, and normalization harness order with corresponding unittest commands`
+- next_step: `open one bounded backend observation verify batch that runs the preferred pure-Python harnesses for the projects.ledger baseline`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-PURE-PYTHON-OBSERVATION-VERIFY-PA7
+- branch: codex/next-round
+- layer_target: Backend runtime contract observation verify
+- module: menu 314 pure-python released contract baseline
+- reason: after freezing the harness order, the next bounded step is to run the preferred pure-Python verifies and record whether released output preserves write_date desc
+- status: `PASS`
+- verification: `validate_task PASS; test_scene_ready_contract_builder_semantic_consumption PASS; test_scene_ready_search_surface_semantic_consumption PASS; test_scene_ready_search_surface_normalization PASS; current pure-Python released-contract path preserves the expected write_date desc baseline`
+- next_step: `if diagnosis continues, open one bounded backend screen that decides whether to move into live runtime payload observation for menu 314`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-LIVE-RUNTIME-DECISION-SCREEN-PA8
+- branch: codex/next-round
+- layer_target: Backend runtime diagnosis screen
+- module: menu 314 live runtime decision
+- reason: the pure-Python released-contract path is green, so the next low-risk step is to decide whether remaining uncertainty now belongs to live runtime payload observation
+- status: `PASS`
+- verification: `screen freezes the next frontier as live runtime payload observation and records that metadata/pure-Python observation is no longer the limiting layer`
+- next_step: `open one bounded backend live-runtime observation screen for menu 314 action 533`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-LIVE-RUNTIME-OBSERVATION-SCREEN-PA9
+- branch: codex/next-round
+- layer_target: Backend live runtime observation screen
+- module: menu 314 live runtime observation command
+- reason: after selecting live runtime as the next frontier, the next low-risk step is to choose the smallest observation command family before any noisy container verify
+- status: `PASS`
+- verification: `screen freezes direct contract snapshot/export style observation as the preferred live path, with scene_default_sort smoke and scene observability suites deferred`
+- next_step: `open one bounded backend live-runtime observation batch that freezes the exact snapshot/export invocation for action 533 / menu 314`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-SNAPSHOT-INVOCATION-SCREEN-PA10
+- branch: codex/next-round
+- layer_target: Backend live runtime observation screen
+- module: menu 314 snapshot export invocation
+- reason: after selecting snapshot_export as the live observation family, the next low-risk step is to freeze exact route/op/user/db parameters before execution
+- status: `PASS`
+- verification: `screen freezes snapshot_export with op=ui.contract and route=/a/533?menu_id=314 as the preferred live observation invocation`
+- next_step: `open one bounded backend live-runtime observation verify batch that executes the frozen snapshot_export invocation and records returned search/default-sort payload`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-SNAPSHOT-OBSERVATION-VERIFY-PA11
+- branch: codex/next-round
+- layer_target: Backend live runtime observation verify
+- module: menu 314 snapshot export observation
+- reason: after freezing the exact snapshot_export invocation, the next bounded step is to execute it and record the returned search/default_sort payload
+- status: `FAIL`
+- verification: `validate_task PASS; snapshot_export live invocation failed before payload capture with ModuleNotFoundError: No module named 'odoo'`
+- next_step: `stop on runtime entry incompatibility and open a bounded shell/runtime compatibility batch for snapshot_export before retrying live payload observation`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-SNAPSHOT-ENTRY-COMPAT-SCREEN-PA12
+- branch: codex/next-round
+- layer_target: Backend live runtime compatibility screen
+- module: menu 314 snapshot entry compatibility
+- reason: PA11 failed at shell/runtime entry rather than business payload capture, so the next low-risk step is to freeze the correct compatibility entry path
+- status: `PASS`
+- verification: `screen freezes scripts/contract/snapshot_export.sh as the preferred compatibility entry because it auto-falls back to docker compose when local python cannot import odoo`
+- next_step: `open one bounded retry verify that reruns menu 314 snapshot observation via snapshot_export.sh`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-EXISTING-RUNTIME-REUSE-SCREEN-PA14
+- branch: codex/next-round
+- layer_target: Backend live runtime recovery screen
+- module: menu 314 existing runtime reuse
+- reason: the wrapper retry is still blocked by local compose startup failure, so the next bounded step is to decide whether the already-running dev Odoo container should be reused
+- status: `PASS`
+- verification: `screen freezes reuse of sc-backend-odoo-dev-odoo-1 as the preferred immediate runtime entry for live payload observation`
+- next_step: `open one bounded verify batch that runs snapshot_export inside sc-backend-odoo-dev-odoo-1`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-EXISTING-RUNTIME-VERIFY-PA15
+- branch: codex/next-round
+- layer_target: Backend live runtime observation verify
+- module: menu 314 existing runtime snapshot verify
+- reason: after freezing existing runtime reuse, the next bounded step is to execute snapshot_export inside sc-backend-odoo-dev-odoo-1 and extract search/default_sort
+- status: `PASS`
+- verification: `validate_task PASS; existing-runtime snapshot export PASS; exported payload for /a/533?menu_id=314 contains ui_contract_raw lifecycle/matrix-style keys but no observable search_surface or list_surface.default_sort`
+- next_step: `open one bounded backend screen that classifies whether action 533 live runtime is resolving into the wrong contract family/route shape`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-CONTRACT-FAMILY-CLASSIFICATION-SCREEN-PA16
+- branch: codex/next-round
+- layer_target: Backend live runtime diagnosis screen
+- module: menu 314 contract family classification
+- reason: live payload observation succeeded and now shows a family-shape mismatch, so the next bounded step is to classify that mismatch before deeper route-consumer tracing
+- status: `PASS`
+- verification: `screen freezes the current live payload as a lifecycle/matrix-style contract family mismatch relative to the expected projects.ledger list/ledger scene-ready contract`
+- next_step: `open one bounded backend scan that traces the live route consumer / contract service for /a/533?menu_id=314`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-SNAPSHOT-CONSUMER-MISBIND-SCREEN-PA17
+- branch: codex/next-round
+- layer_target: Backend live runtime diagnosis screen
+- module: menu 314 snapshot consumer misbinding
+- reason: after reading the live observation consumer code, the next low-risk step is to classify whether the mismatch originates in snapshot_export's ui.contract branch itself
+- status: `PASS`
+- verification: `screen classifies the current mismatch as strongly explained by snapshot_export.py binding op=ui.contract to PortalContractService.build_lifecycle_dashboard instead of the expected scene-ready ui.contract consumer`
+- next_step: `open one bounded backend scan that traces the actual smart_core ui.contract handler path for /a/533?menu_id=314`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-REAL-CONSUMER-PATH-SCREEN-PA18
+- branch: codex/next-round
+- layer_target: Backend live runtime diagnosis screen
+- module: menu 314 real consumer path
+- reason: after excluding the snapshot portal shortcut, the next low-risk step is to freeze the actual smart_core handler path that should own action 533 / menu 314
+- status: `PASS`
+- verification: `screen freezes smart_core UiContractHandler native op branches (especially action_open/menu) as the real consumer family for the question`
+- next_step: `open one bounded backend screen or verify that targets the real smart_core ui.contract action_open/menu path for action_id=533 menu_id=314`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-REAL-UICONTRACT-VERIFY-PA19
+- branch: codex/next-round
+- layer_target: Backend live runtime observation verify
+- module: menu 314 real ui.contract verify
+- reason: after freezing the real smart_core handler family, the next bounded step is to call the real ui.contract handler for action_id=533/menu_id=314 and record the returned contract shape
+- status: `PASS`
+- verification: `validate_task PASS; real /api/v1/intent ui.contract PASS; response reaches smart_core handler family and returns project.project native/action-driven contract with tree_order=is_favorite desc, sequence, name, id, but still no observable search_surface.default_sort or list_surface.default_sort`
+- next_step: `open one bounded backend screen that classifies whether the expected projects.ledger contract requires scene/menu resolution rather than direct action_open`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-ENTRY-PATH-CLASSIFICATION-SCREEN-PA20
+- branch: codex/next-round
+- layer_target: Backend live runtime diagnosis screen
+- module: menu 314 entry path classification
+- reason: after proving real action_open returns a native/action contract family, the next low-risk step is to classify whether the expected projects.ledger contract belongs to scene/menu resolution instead
+- status: `PASS`
+- verification: `screen freezes scene/menu resolution as the strongest expected entry family for the projects.ledger contract and rejects direct action_open as the expected ledger-contract path`
+- next_step: `open one bounded backend verify that targets real menu resolution for menu_id=314`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-REAL-MENU-VERIFY-PA21
+- branch: codex/next-round
+- layer_target: Backend live runtime observation verify
+- module: menu 314 real menu verify
+- reason: after classifying scene/menu resolution as the expected entry family, the next bounded step is to call the real ui.contract menu path for menu_id=314
+- status: `PASS`
+- verification: `validate_task PASS; real /api/v1/intent ui.contract menu PASS; response for menu_id=314 collapses to a minimal governed-native contract with empty model metadata and no entry/action/search surface, still not the expected projects.ledger ledger contract`
+- next_step: `open one bounded backend screen that classifies the expected projects.ledger contract as a scene-ready entry path outside native ui.contract menu/action branches`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-SCENE-READY-ENTRY-SCREEN-PA22
+- branch: codex/next-round
+- layer_target: Backend scene-ready diagnosis screen
+- module: menu 314 scene-ready entry resolution
+- reason: both real native ui.contract action_open and menu branches have been excluded as owners of the expected projects.ledger ledger contract, so the next low-risk step is to shift to scene-ready entry diagnosis
+- status: `PASS`
+- verification: `screen freezes scene-ready entry resolution as the strongest remaining owner of the expected projects.ledger contract`
+- next_step: `open one bounded backend scan that traces the concrete scene-ready resolver path for menu_id=314 action_id=533`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-SNAPSHOT-ENTRY-COMPAT-VERIFY-PA13
+- branch: codex/next-round
+- layer_target: Backend live runtime observation verify
+- module: menu 314 snapshot wrapper retry
+- reason: after freezing the wrapper-based compatibility entry, the next bounded step is to rerun the live observation through snapshot_export.sh and inspect returned search/default-sort payload
+- status: `IN_PROGRESS`
+- verification: `pending`
+- next_step: `run validate_task, execute snapshot_export.sh with docs/tmp output, and extract default_sort from the exported payload`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-RUNTIME-METADATA-DIRECTION-SCREEN-OW
+- branch: codex/next-round
+- layer_target: Backend diagnosis screen
+- module: menu 314 runtime metadata direction
+- reason: the static action/view scan did not reveal a direct ordering source for action 533, so the next low-risk step is to shift the audit toward runtime metadata/contract injection
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open one bounded backend scan for runtime contract/default_sort/search-surface injection around action 533`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-EFFECTIVE-ORDER-SOURCE-SCREEN-OV
+- branch: codex/next-round
+- layer_target: Backend diagnosis screen
+- module: menu 314 effective ordering source
+- reason: the scan inventory shows parent_path is not directly present on the current project.project action chain, so the next low-risk step is to freeze the effective-ordering-source audit line
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open one bounded backend audit batch that traces action 533 runtime ordering inputs before any code changes`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-PARENT-PATH-CLASSIFICATION-SCREEN-OU
+- branch: codex/next-round
+- layer_target: Backend diagnosis screen
+- module: menu 314 parent_path clue classification
+- reason: after the scan inventory, the next low-risk step is to decide whether the historical parent_path clue still belongs to the active action-533 route chain
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open one bounded backend screen that traces the effective ordering source for action 533 before any implementation`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-SORT-PATH-AUDIT-SCAN-OT
+- branch: codex/next-round
+- layer_target: Backend diagnosis scan
+- module: menu 314 sort path candidate chain
+- reason: the bounded scan was needed to inventory which action/view/search/order definitions can still influence /a/533?menu_id=314 before screening the likely root-cause branch
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open one bounded backend screen that classifies whether the parent_path clue still belongs to the active menu-314 route chain or whether the action 533 path points elsewhere`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-SORT-PATH-AUDIT-SCAN-OT
+- branch: codex/next-round
+- layer_target: Backend diagnosis scan
+- module: menu 314 sort path candidate chain
+- reason: after freezing the audit scope, the next low-risk step is to collect candidate action/view/search/order references without concluding root cause
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `run a bounded screen that classifies the candidate chain after the scan inventory is complete`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-SORT-PATH-AUDIT-SCREEN-OS
+- branch: codex/next-round
+- layer_target: Backend audit scope screen
+- module: menu 314 sort path audit
+- reason: existing evidence already points to a likely invalid sort-field path around parent_path, so the next low-risk step is to freeze a dedicated audit scope for that chain
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open one bounded backend audit batch that reads action 533, linked project views/search views, and the effective sort path for project.project`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-MENU-314-ROUTE-SERVICE-DIAGNOSIS-SCREEN-OR
+- branch: codex/next-round
+- layer_target: Backend diagnosis scope screen
+- module: menu 314 route/service diagnosis
+- reason: the stable 316 -> 314 frontier is now classified as a backend route/service problem, so the next low-risk step is to freeze the exact backend diagnosis scope
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open one bounded backend screen that inspects action 533, route /a/533?menu_id=314, and the linked project.project sort/service path`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-MENU-314-DIAGNOSIS-DIRECTION-SCREEN-OQ
+- branch: codex/next-round
+- layer_target: Frontend verification / backend diagnosis direction screen
+- module: menu 314 diagnosis direction
+- reason: the stable 500/INTERNAL_ERROR on menu 314 indicates the next line should move to backend route/service diagnosis instead of frontend taxonomy audit
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open one bounded backend diagnosis scope screen for the menu 314 route/service path behind /a/533?menu_id=314`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-MENU-314-INPAGE-INTERNAL-ERROR-SCREEN-OP
+- branch: codex/next-round
+- layer_target: Frontend verification frontier screen
+- module: menu 314 in-page internal error
+- reason: the stable 316 -> 314 bounded replay now reproduces an in-page 500 / INTERNAL_ERROR on menu 314 itself, so the active branch must be classified accordingly
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open one bounded classification screen that chooses between frontend error-taxonomy audit and backend route/service diagnosis for menu 314`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-MENU-314-316-DIRECT-CHAIN-VERIFY-OO
+- branch: codex/next-round
+- layer_target: Frontend verification
+- module: menu 314 <- 316 direct chain verify
+- reason: the narrowest bounded replay shape for the re-anchored branch is now frozen, so the next low-risk step is one fresh direct-chain verify
+- status: `FAIL`
+- verification: `validate_task PASS; bounded host verify FAIL with artifact 20260421T235344Z; scoped git diff --check PASS`
+- next_step: `stop the active chain and open a new bounded screen only if the team wants to classify the stable 316 -> 314 frontier as in-page internal-error diagnosis instead of contract-context drift`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-MENU-314-316-PROBE-SHAPE-SCREEN-ON
+- branch: codex/next-round
+- layer_target: Frontend verification screen
+- module: menu 314 <- 316 probe shape
+- reason: the re-anchored branch needs the narrowest replay shape preserving 316 -> 314, and the direct predecessor chain is the smallest valid next probe
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open one bounded verify batch for TARGET_MENU_CHAIN=316,314`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-MENU-314-316-REANCHOR-SCREEN-OM
+- branch: codex/next-round
+- layer_target: Frontend verification frontier screen
+- module: menu 314 <- 316 re-anchor
+- reason: the menu-317 partial-window hypothesis failed and the bounded replay brought menu 314 back with menu 316 as predecessor, so the active branch must be re-anchored
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open one bounded screen that chooses the narrowest replay shape preserving 316 -> 314`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-MENU-317-PARTIAL-WINDOW-VERIFY-OL
+- branch: codex/next-round
+- layer_target: Frontend verification
+- module: menu 317 partial window verify
+- reason: the partial tail-window replay shape is now available, so the next low-risk step is one fresh bounded verify ending at menu 317
+- status: `FAIL`
+- verification: `validate_task PASS; bounded host verify FAIL with artifact 20260421T225521Z; scoped git diff --check PASS`
+- next_step: `stop the active chain and open a new bounded screen only if the team wants to re-anchor on the re-emergent 314 <- 316 branch instead of continuing the disproven menu-317 path-dependent line`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-MENU-317-PARTIAL-WINDOW-IMPLEMENT-OK
+- branch: codex/next-round
+- layer_target: Frontend verification implementation
+- module: partial tail-window replay control
+- reason: the chosen menu-317 probe shape is a partial accumulation window ending at the target menu, so the next low-risk step is one additive replay control that can express that shape directly
+- status: `PASS`
+- verification: `validate_task PASS; node --check PASS; scoped git diff --check PASS`
+- next_step: `open one bounded verify batch that probes menu 317 with TARGET_END_MENU_ID=317 plus a small TARGET_TAIL_COUNT`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-MENU-317-PROBE-SHAPE-SCREEN-OJ
+- branch: codex/next-round
+- layer_target: Frontend verification screen
+- module: menu 317 probe shape
+- reason: the menu 317 frontier is path-dependent, so the next low-risk step is to choose one bounded probe shape rather than reopen multiple replay directions
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open one bounded implement batch that adds a replay shape for a partial accumulation window ending at menu 317`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-MENU-317-PATH-DEPENDENT-FRONTIER-SCREEN-OI
+- branch: codex/next-round
+- layer_target: Frontend verification frontier screen
+- module: menu 317 path-dependent frontier
+- reason: menu 317 passed in direct isolated replay, so the active issue must be treated as path-dependent accumulation/context rather than a stable route-local failure
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open one bounded screen that chooses the smallest predecessor-path or partial-window probe needed to make menu 317 fail again`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-MENU-317-DIRECT-VERIFY-OH
+- branch: codex/next-round
+- layer_target: Frontend verification
+- module: menu 317 direct verify
+- reason: the narrowest direct reproduction shape for menu 317 is now frozen, so the next low-risk step is one isolated single-target verify
+- status: `PASS`
+- verification: `validate_task PASS; bounded host verify PASS with artifact 20260421T224833Z; scoped git diff --check PASS`
+- next_step: `open one bounded screen for menu-317 path-dependent accumulation/context frontier, because direct isolated replay no longer reproduces the skip-menu failure`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-MENU-317-DIRECT-REPRO-SCREEN-OG
+- branch: codex/next-round
+- layer_target: Frontend verification screen
+- module: menu 317 direct reproduction
+- reason: menu 317 has already surfaced as the new contract-context frontier, so the next low-risk step is to freeze the narrowest direct reproduction shape rather than continue broader window tuning
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open one bounded verify batch that runs TARGET_MENU_ID=317 only and classifies whether menu 317 is a stable direct frontier`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-MENU-317-SKIP-REPLAY-FRONTIER-SCREEN-OF
+- branch: codex/next-round
+- layer_target: Frontend verification frontier screen
+- module: menu 317 skip-replay frontier
+- reason: the bounded skip-menu replay failed at menu 317 with CONTRACT_CONTEXT_MISSING before the expected downstream 318 closure could reappear, so the active frontier must be realigned again
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open one bounded menu-317-only screen that decides the narrowest direct reproduction shape for the new contract-context frontier`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-CLOSURE-WINDOW-VERIFY-OE
+- branch: codex/next-round
+- layer_target: Frontend verification
+- module: closure window verify
+- reason: the bounded skip-menu replay control is now available, so the next low-risk step is one single-run long-window verify that excludes menu 314 while probing the downstream closure branch
+- status: `FAIL`
+- verification: `validate_task PASS; bounded host verify FAIL with artifact 20260421T224101Z; scoped git diff --check PASS`
+- next_step: `stop the active chain and open a new bounded screen for menu 317 under the skip-menu replay context, because the expected downstream 318 closure did not reappear`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-CLOSURE-WINDOW-REPLAY-CONTROL-IMPLEMENT-OD
+- branch: codex/next-round
+- layer_target: Frontend verification implementation
+- module: closure window replay control
+- reason: the downstream closure branch needs a bounded replay shape that can preserve longer accumulation without making menu 314 the active replay target
+- status: `PASS`
+- verification: `validate_task PASS; node --check PASS; scoped git diff --check PASS`
+- next_step: `open one bounded verify batch that uses a longer replay window plus TARGET_SKIP_MENU_IDS=314 to probe whether the downstream 317 -> 318 closure branch can reappear under single-run execution`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-CLOSURE-WINDOW-SCREEN-OC
+- branch: codex/next-round
+- layer_target: Frontend verification stability screen
+- module: closure window hypothesis
+- reason: downstream closure still needs long accumulation pressure, but menu 314 has been realigned out of the primary replay line, so the next low-risk step is to freeze the replay-shape hypothesis before any new verify is scheduled
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open one bounded implement batch that adds a replay control for long-window closure probing without making menu 314 the active replay target`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-DOWNSTREAM-BROWSER-CLOSURE-SCREEN-OB
+- branch: codex/next-round
+- layer_target: Frontend verification stability screen
+- module: downstream browser closure
+- reason: menu 314 has been realigned out of the primary replay branch, so the next low-risk step is to freeze the downstream closure branch around 317 -> 318 before any new replay is scheduled
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open one bounded closure-window screen that selects the next single-run replay window beyond the already-passing 316 -> 314 -> 317 -> 318 predecessor slice`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-MENU-314-FRONTIER-REALIGN-SCREEN-OA
+- branch: codex/next-round
+- layer_target: Frontend verification frontier screen
+- module: menu 314 frontier realignment
+- reason: menu 314 no longer has a stable, trustworthy replay signature after the volatility and execution-method findings, so the next low-risk step is to freeze branch realignment instead of continuing blind replays
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open one bounded downstream browser-closure screen that resumes from the 317 -> 318 mixed frontier under single-run execution discipline`
+- date: 2026-04-22
+- blocker_key: `fe_window_replay_implement_np_pass_v1`
+- layer_target: `Frontend verification implementation`
+- module: `window replay`
+- reason: long-window accumulation required a narrower replay surface around the 20+ success threshold instead of repeated full-loop runs
+- completed_step: `已完成 ITER-2026-04-22-FE-WINDOW-REPLAY-IMPLEMENT-NP：脚本已支持 TARGET_SEQ_START/TARGET_SEQ_END 序列窗口模式，默认 full-loop、TARGET_MENU_ID 和 TARGET_MENU_CHAIN 行为保持不变。`
+- active_commit: `89d096f`
+- next_step: `open one bounded sequence-window verify batch near the first observed 20+ success threshold`
+- blocker_key: `fe_window_replay_verify_nq_fail_v1`
+- layer_target: `Frontend verification`
+- module: `window replay verify`
+- reason: the bounded 20..28 sequence window was needed to test whether the long-window threshold reproduces both the earlier contract failure and browser closure
+- completed_step: `已完成 ITER-2026-04-22-FE-WINDOW-REPLAY-VERIFY-NQ：窗口 20..28 只复现了 menu 314（项目台账）的 CONTRACT_CONTEXT_MISSING，未复现后续 browser/context closure；当前前沿因此再次收窄为“314 contract-context 可在阈值窗口内稳定复现”。`
+- active_commit: `89d096f`
+- next_step: `stop the active chain and open a new branch screen if further diagnosis should split 314 contract-context from downstream browser-closure work`
+- blocker_key: `fe_mixed_frontier_branch_screen_nr_pass_v1`
+- layer_target: `Frontend verification stability screen`
+- module: `mixed frontier branch split`
+- reason: bounded window replay proved the upstream contract-context line is reproducible independently, so the next low-risk step is to split it from the downstream browser-closure line
+- completed_step: `已完成 ITER-2026-04-22-FE-MIXED-FRONTIER-BRANCH-SCREEN-NR：已把当前前沿拆成两条独立诊断线，其中 Branch A 为 menu 314 的 contract-context 线，Branch B 为尚需更宽窗口复现的 downstream browser-closure 线；推荐先处理 Branch A。`
+- active_commit: `89d096f`
+- next_step: `open one bounded Branch-A screen or implement batch for menu 314 contract-context only`
+- blocker_key: `fe_menu_314_repeatability_verify_ny_env_unstable_v1`
+- layer_target: `Frontend verification`
+- module: `menu 314 repeatability verify`
+- reason: bounded repeatability replay was intended to classify menu 314 as stable, volatile, or environment-noisy under the same window context
+- completed_step: `已完成 ITER-2026-04-22-FE-MENU-314-REPEATABILITY-VERIFY-NY：repeatability 批次未产出可信业务结论；fresh artifact 在两次重放中都停在 competing_run_detected，说明当前 host exec 方式会触发脚本自己的竞争保护，当前结论应归类为 ENV_UNSTABLE。`
+- active_commit: `89d096f`
+- next_step: `stop the active chain and open one bounded repeatability-execution screen if further diagnosis is authorized`
+- blocker_key: `fe_menu_314_classification_gap_screen_nv_pass_v1`
+- layer_target: `Frontend verification stability screen`
+- module: `menu 314 classification gap`
+- reason: the isolated Branch-A replay no longer produced a structural FAIL, but still rendered explicit internal-error text, so the active issue shifted to pass/fail classification
+- completed_step: `已完成 ITER-2026-04-22-FE-MENU-314-CLASSIFICATION-GAP-SCREEN-NV：已把 menu 314 当前问题冻结为 verify classification gap；它在窗口交集回放里返回 PASS，但正文仍包含 System exception / INTERNAL_ERROR / 错误码：500。`
+- active_commit: `89d096f`
+- next_step: `open one bounded classification-gap implement batch for menu 314 only`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-PAYMENT-APPROVAL-FIRST-BRANCH-CLOSURE-SCREEN-KG
+- branch: codex/next-round
+- layer_target: Backend governance screen
+- module: payment approval first branch closure
+- reason: freeze the first scene-level closure classification for payments.approval from current exported governance assets before any provider or runtime batch is considered
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open payment approval provider semantic supply screen to define the narrowest provider contract needed to retire fallback_only without opening payment runtime changes yet`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-PAYMENT-APPROVAL-PROVIDER-SEMANTIC-SUPPLY-SCREEN-KH
+- branch: codex/next-round
+- layer_target: Backend governance screen
+- module: payment approval provider semantic supply
+- reason: define the narrowest provider semantic-supply contract for payments.approval using current closure assets without opening payment runtime implementation
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `stop before implementation; any payment_approval provider implement batch must first pass a fresh contract/boundary review because the next move would leave docs-only governance scope and enter payment-themed addon changes`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-PAYMENT-APPROVAL-IMPLEMENT-BOUNDARY-REVIEW-SCREEN-KI
+- branch: codex/next-round
+- layer_target: Backend governance screen
+- module: payment approval implement boundary review
+- reason: decide whether the next payments.approval provider implementation can proceed under payment-domain exception rules and freeze exact write/verify scope
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open the bounded provider semantic supply implement batch with exact write scope limited to register_scene_providers, one neutral provider file, and the existing scene semantic supply test`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-PAYMENT-APPROVAL-PROVIDER-SEMANTIC-SUPPLY-IMPLEMENT-KJ
+- branch: codex/next-round
+- layer_target: Backend scene-orchestration runtime
+- module: payment approval provider semantic supply
+- reason: add the narrowest additive provider wiring for payments.approval so the scene no longer depends only on fallback semantics
+- status: `PASS`
+- verification: `validate_task PASS; python3 addons/smart_construction_scene/tests/test_action_only_scene_semantic_supply.py PASS; scoped git diff --check PASS`
+- next_step: `open a low-cost export/verify batch to refresh governance assets and confirm payments.approval moved from fallback_only to provider_registered and whether payment_approval can now be marked guarded_ready`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-PAYMENT-APPROVAL-POST-PROVIDER-VERIFY-KK
+- branch: codex/next-round
+- layer_target: Backend governance verify
+- module: payment approval post-provider verify
+- reason: refresh current governance assets after the bounded approval-scene provider implementation and verify the resulting provider completeness state
+- status: `PASS`
+- verification: `validate_task PASS; scene_governance_asset_export PASS; scene_governance_family_priority_score PASS; scoped git diff --check pending after doc/log sync`
+- next_step: `open payment approval branch closure export batch; provider residual is closed, but family-level closure still needs a dedicated export/classification step`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-PAYMENT-APPROVAL-BRANCH-CLOSURE-EXPORT-IMPLEMENT-KL
+- branch: codex/next-round
+- layer_target: Backend governance asset export
+- module: payment approval branch closure export
+- reason: convert refreshed approval-scene governance facts into a machine-readable branch closure ledger
+- status: `PASS`
+- verification: `validate_task PASS; scene_governance_payment_approval_branch_closure_export PASS; scoped git diff --check PASS`
+- next_step: `sync payment_approval into the governed family summary perimeter so the high-priority closure ledger reflects this newly closed branch`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-PAYMENT-APPROVAL-FAMILY-SUMMARY-SYNC-IMPLEMENT-KM
+- branch: codex/next-round
+- layer_target: Backend governance asset export
+- module: payment approval family summary sync
+- reason: sync the now-closed payment_approval branch ledger into the high-priority governed family summary perimeter
+- status: `PASS`
+- verification: `validate_task PASS; scene_governance_user_flow_asset_export PASS; scoped git diff --check PASS`
+- next_step: `re-run next-wave reselection from the remaining unsynced families; payment_approval has joined the governed summary perimeter`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-GOVERNED-SUMMARY-RETENTION-FIX-IMPLEMENT-KN
+- branch: codex/next-round
+- layer_target: Backend governance asset export
+- module: governed family summary retention
+- reason: fix the summary selection logic so already-governed families are not dropped when a newly closed family is synced into the perimeter
+- status: `PASS`
+- verification: `validate_task PASS; scene_governance_user_flow_asset_export PASS; scoped git diff --check PASS`
+- next_step: `continue with next-wave reselection from the still-unsynced families; the governed summary perimeter is now stable at five families`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-NEXT-WAVE-RESELECTION-AFTER-FIVE-SUMMARY-SCREEN-KO
+- branch: codex/next-round
+- layer_target: Backend governance screen
+- module: next wave reselection after five-family summary
+- reason: reselect the highest-value still-unsynced family after the governed summary perimeter stabilized at five families
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open payment_entry first branch closure screen and freeze the scene-level closure shape before any provider or runtime work is considered`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-PAYMENT-ENTRY-FIRST-BRANCH-CLOSURE-SCREEN-KP
+- branch: codex/next-round
+- layer_target: Backend governance screen
+- module: payment entry first branch closure
+- reason: freeze the first scene-level closure classification for finance.payment_requests from current exported governance assets before any provider or runtime batch is considered
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open payment entry provider semantic supply screen to define the narrowest provider contract needed to retire fallback_only without opening payment runtime changes yet`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-PAYMENT-ENTRY-IMPLEMENT-BOUNDARY-REVIEW-SCREEN-KR
+- branch: codex/next-round
+- layer_target: Backend governance screen
+- module: payment entry implement boundary review
+- reason: decide whether the next finance.payment_requests provider implementation can proceed under payment-domain exception rules and freeze exact write/verify scope
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open the bounded provider semantic supply implement batch with exact write scope limited to register_scene_providers, one payment-entry provider file, and the existing scene semantic supply test`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-PAYMENT-ENTRY-PROVIDER-SEMANTIC-SUPPLY-IMPLEMENT-KS
+- branch: codex/next-round
+- layer_target: Backend scene-orchestration runtime
+- module: payment entry provider semantic supply
+- reason: add the narrowest additive provider wiring for finance.payment_requests so the scene no longer depends only on fallback semantics
+- status: `PASS`
+- verification: `validate_task PASS; python3 addons/smart_construction_scene/tests/test_action_only_scene_semantic_supply.py PASS; scoped git diff --check PASS`
+- next_step: `open a low-cost export/verify batch to refresh governance assets and confirm finance.payment_requests moved from fallback_only to provider_registered`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-PAYMENT-ENTRY-POST-PROVIDER-VERIFY-KT
+- branch: codex/next-round
+- layer_target: Backend governance verify
+- module: payment entry post-provider verify
+- reason: refresh current governance assets after the bounded payment-entry provider implementation and verify the resulting provider completeness state
+- status: `PASS`
+- verification: `validate_task PASS; scene_governance_asset_export PASS; scene_governance_family_priority_score PASS; scoped git diff --check pending after doc/log sync`
+- next_step: `open payment entry branch closure export batch; provider residual is closed, but family-level closure still needs a dedicated export/classification step`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-PAYMENT-ENTRY-BRANCH-CLOSURE-EXPORT-IMPLEMENT-KU
+- branch: codex/next-round
+- layer_target: Backend governance asset export
+- module: payment entry branch closure export
+- reason: convert refreshed payment-entry governance facts into a machine-readable branch closure ledger
+- status: `PASS`
+- verification: `validate_task PASS; scene_governance_payment_entry_branch_closure_export PASS; scoped git diff --check PASS`
+- next_step: `sync payment_entry into the governed family summary perimeter so the high-priority closure ledger reflects this newly closed branch`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-PAYMENT-ENTRY-FAMILY-SUMMARY-SYNC-IMPLEMENT-KV
+- branch: codex/next-round
+- layer_target: Backend governance asset export
+- module: payment entry family summary sync
+- reason: sync the now-closed payment_entry branch ledger into the high-priority governed family summary perimeter
+- status: `PASS`
+- verification: `validate_task PASS; scene_governance_user_flow_asset_export PASS; scoped git diff --check PASS`
+- next_step: `re-run next-wave reselection from the remaining unsynced families; payment_entry has joined the governed summary perimeter`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-NEXT-WAVE-RESELECTION-AFTER-SIX-SUMMARY-SCREEN-KW
+- branch: codex/next-round
+- layer_target: Backend governance screen
+- module: next wave reselection after six-family summary
+- reason: confirm the final still-unsynced family after the governed summary perimeter stabilized at six families
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open enterprise_bootstrap family standard screen and freeze whether the bootstrap family should be governed as one family-standard sample or split into branch-first slices`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-ENTERPRISE-BOOTSTRAP-FAMILY-STANDARD-SCREEN-KX
+- branch: codex/next-round
+- layer_target: Backend governance screen
+- module: enterprise bootstrap family standard
+- reason: decide whether enterprise_bootstrap should be governed as one family-standard sample instead of reopening branch-first slices
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open enterprise_bootstrap family closure export and formalize the family-level closure ledger before syncing it into the governed summary perimeter`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-ENTERPRISE-BOOTSTRAP-FAMILY-CLOSURE-EXPORT-IMPLEMENT-KY
+- branch: codex/next-round
+- layer_target: Backend governance asset export
+- module: enterprise bootstrap family closure export
+- reason: convert refreshed enterprise-bootstrap governance facts into a machine-readable family-level closure ledger
+- status: `PASS`
+- verification: `validate_task PASS; scene_governance_enterprise_bootstrap_family_closure_export PASS; scoped git diff --check PASS`
+- next_step: `sync enterprise_bootstrap into the governed family summary perimeter so the high-priority closure ledger covers the final governed family`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-ENTERPRISE-BOOTSTRAP-FAMILY-SUMMARY-SYNC-IMPLEMENT-KZ
+- branch: codex/next-round
+- layer_target: Backend governance asset export
+- module: enterprise bootstrap family summary sync
+- reason: sync the now-closed enterprise_bootstrap family ledger into the high-priority governed family summary perimeter
+- status: `PASS`
+- verification: `validate_task PASS; scene_governance_user_flow_asset_export PASS; scoped git diff --check PASS`
+- next_step: `the governed summary perimeter is now stable at seven families; the next step should be a new residual-family reselection only if any still-unsynced family appears in future asset waves`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-RESIDUAL-FAMILY-RESELECTION-AFTER-SEVEN-SUMMARY-SCREEN-LA
+- branch: codex/next-round
+- layer_target: Backend governance screen
+- module: residual family reselection after seven-family summary
+- reason: confirm whether any still-unsynced family remains after the governed summary perimeter stabilized at seven families
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `current family-governance wave is fully synchronized at the asset level; open a new explicitly scoped governance objective if another topic should begin`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-GOVERNANCE-BASELINE-FREEZE-SCREEN-LB
+- branch: codex/next-round
+- layer_target: Backend governance baseline freeze
+- module: scene governance baseline snapshot
+- reason: freeze the current governed export set into an explicit baseline snapshot scope for later drift and parity guards
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `materialize the baseline snapshot csv set and add a short baseline spec document for later drift/parity guard work`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-GOVERNANCE-BASELINE-SNAPSHOT-IMPLEMENT-LC
+- branch: codex/next-round
+- layer_target: Backend governance baseline freeze
+- module: scene governance baseline snapshot
+- reason: materialize the current governed export set as baseline_v1 assets for later drift and parity guard work
+- status: `PASS`
+- verification: `validate_task PASS; scoped git diff --check PASS`
+- next_step: `open export consistency / guard-export parity / baseline drift guard screens on top of the new baseline snapshot set`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-CONTRACT-CENTER-ORIGIN-SCREEN-PA58
+- branch: codex/next-round
+- layer_target: Backend scene-orchestration screen
+- module: contract.center origin chain
+- reason: freeze whether contract.center is backed by business facts or by scene publication/navigation semantics before changing runtime behavior
+- status: `PASS`
+- verification: `validate_task PASS; runtime probes and SQL screen completed; scoped git diff --check PASS`
+- next_step: `open a backend implementation batch to remove scene navigation query leakage because contract.center publication is correct but navigation delivery leaks source menu/action identity into scene routes`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-CONTRACT-CENTER-NAV-QUERY-LEAK-FIX-PA59
+- branch: codex/next-round
+- layer_target: Backend scene-orchestration implementation
+- module: smart_core navigation target interpretation
+- reason: remove source menu/action identity leakage from scene navigation delivery so contract.center and peer scenes land on canonical scene routes
+- status: `PASS`
+- verification: `validate_task PASS; menu_target_interpreter_entry_target unittest PASS; scoped git diff --check PASS`
+- next_step: `re-run live sidebar navigation against contract.center and confirm no scene route now carries foreign menu/action query context`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-SESSION-STORAGE-QUOTA-RECOVERY-IMPLEMENT-PA60
+- branch: codex/next-round
+- layer_target: Frontend semantic consumer implementation
+- module: session persistence cache
+- reason: remove oversized runtime snapshot persistence so localStorage quota overflow no longer interrupts scene loading
+- status: `PASS`
+- verification: `validate_task PASS; vue-tsc PASS; scoped git diff --check PASS`
+- next_step: `reload the frontend once to clear legacy browser state and verify the quota exception is gone during fresh scene entry`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-CONTRACT-CENTER-CANONICAL-SCENE-ENTRY-FIX-PA61
+- branch: codex/next-round
+- layer_target: Frontend semantic consumer implementation
+- module: SceneView canonical scene entry consumption
+- reason: sanitize foreign menu/action query state on canonical `/s/<scene>` routes and stop canonical scenes from reconstructing native action embeddings
+- status: `PASS`
+- verification: `validate_task PASS; vue-tsc PASS; scoped git diff --check PASS`
+- next_step: `restart frontend and re-open the dirty contract.center URL to confirm it self-normalizes to the canonical scene route`
+- date: 2026-04-22
+- task: ITER-2026-04-22-BE-CONTRACT-CENTER-SCENE-FIRST-SEMANTIC-FIX-PA66
+- branch: codex/next-round
+- layer_target: Backend scene-orchestration implementation
+- module: smart_construction_scene contract.center semantic supply
+- reason: daily runtime evidence proved sidebar delivery is already canonical, but contract.center still publishes action-first scene target semantics that cause SceneView to embed the wrong native action list
+- status: `IN_PROGRESS`
+- verification: `pending`
+- next_step: `run the bounded semantic-supply unit suite, restart backend runtime, and replay the contract.center sidebar click in sc_demo/wutao/demo to confirm the URL stays /s/contract.center and the list no longer drops into the wrong native action`
+- date: 2026-04-22
+- task: ITER-2026-04-22-FE-CANONICAL-SCENE-OWNER-QUERY-CLEANUP-PA67
+- branch: codex/next-round
+- layer_target: Frontend semantic consumer implementation
+- module: SceneView canonical scene owner consumption
+- reason: after backend scene-first recovery, canonical scene content became correct but foreign menu/action query state was still being persisted onto the scene-owner route by the generic consumer
+- status: `IN_PROGRESS`
+- verification: `pending`
+- next_step: `run vue-tsc, then replay the contract.center sidebar click and confirm the final URL stays canonical without menu_id/action_id/scene_label`
+- date: 2026-04-22
+- date: 2026-04-22
+  branch: codex/next-round
+  head_sha: 89d096f
+  task: ITER-2026-04-22-BE-SCENE-CONTRACT-EXPORT-RECOVERY-PA68
+  phase: in_progress
+  layer_target: Verification/export pipeline implementation
+  module: scene contract export recovery
+  reason: stable/LATEST.json still self-replayed legacy contract.center target into runtime scene_ready_contract_v1
+  completed_step: 已确认 daily runtime 优先读取 `docs/contract/exports/scenes/stable/LATEST.json`，且其中 `contract.center` 仍为 `action_id=486/menu_id=289`；已启动 PA68，修复 scene contract 导出脚本的自回放链路。
+  next_step: 让导出脚本临时移走旧 LATEST 并从 live registry/source 刷新 stable scene contract，然后重启并做浏览器复验。
+- date: 2026-04-22
+  branch: codex/next-round
+  head_sha: 89d096f
+  task: ITER-2026-04-22-BE-SYSTEM-INIT-FALLBACK-RECOVERY-PA69
+  phase: in_progress
+  layer_target: Backend scene-runtime fallback implementation
+  module: smart_core system.init scene source fallback wrapper
+  reason: removing stable/LATEST exposed a hard 500 in system.init fallback instead of the intended registry/source recovery
+  completed_step: 已通过 daily 容器日志确认真实断点为 `_load_scenes_from_db_or_fallback() got an unexpected keyword argument 'logger'`，已启动 PA69 收口 system.init fallback wrapper。
+  next_step: 修复 wrapper 签名并重跑“移走 stable/LATEST -> app.init -> scene contract export”整条恢复链。
+- date: 2026-04-22
+  branch: codex/next-round
+  head_sha: 89d096f
+  task: ITER-2026-04-22-BE-CONTRACT-CENTER-RUNTIME-TARGET-RECONCILE-PA70
+  phase: in_progress
+  layer_target: Backend scene-runtime reconciliation
+  module: smart_construction_scene critical scene target overrides
+  reason: stale stable/LATEST still overrides contract.center with legacy action-first target unless runtime explicitly reconciles it from registry defaults
+  completed_step: 已确认 fallback/export 链仍有后续治理项，但运行时已有通用 critical target reconciliation 机制；已启动 PA70，把 `contract.center` 纳入关键 scene target 校正集，先稳定 daily 点击链。
+  next_step: 通过 runtime reconcile 让 system.init 即使在旧 LATEST 下也对 contract.center 输出 scene-first target，并做浏览器复验。
+- date: 2026-04-22
+  branch: codex/next-round
+  head_sha: 89d096f
+  task: ITER-2026-04-22-BE-SCENE-CONTRACT-EXPORT-SOURCE-CORRECTION-PA71
+  phase: in_progress
+  layer_target: Verification/export pipeline implementation
+  module: scene contract export source selection
+  reason: fallback-mode app.init exposes non-empty scenes through scene_ready_contract_v1, while export still serializes empty top-level data.scenes
+  completed_step: 已确认 fallback-mode `scene_ready_contract_v1.scenes=57` 而 `data.scenes=0`；已启动 PA71，把导出源从“只读 data.scenes”收口为“优先非空 runtime source”。
+  next_step: 用修正后的 export 脚本重刷 stable/LATEST，并核对 contract.center route-first target 已回写到导出合同。
+- 2026-04-22T19:48:00+08:00 executor: trace locked current contract.center drift to stale ui-base asset contamination instead of nav/route drift. live proofs: nav_explained menu 324 routes to `/s/contract.center`; `scene_ready_contract_v1` still binds `meta.ui_base_contract_source.source_ref=action:522`; db asset row `sc_ui_base_contract_asset.id=31 scene_key=contract.center source_ref=action:522`. opened PA72 to reject stale action-sourced assets for canonical scene roots in `addons/smart_core/core/ui_base_contract_asset_repository.py`, refresh runtime asset, and verify contract.center no longer receives foreign parser/form semantics.
+- 2026-04-22T19:52:00+08:00 executor: refresh rehearsal showed PA72 logic path is correct; failure was operational only. `refresh_ui_base_contract_assets(scene_keys=['contract.center'])` returned failed_count=1 because shell command passed invalid selection `source_type='codex_pa72'`. traced manual `upsert_asset(...)` error: `Wrong value for sc.ui.base.contract.asset.source_type: 'codex_pa72'`. acceptance command normalized to legal `source_type='precompile'`; continuing live asset refresh with unchanged binding-guard logic.
+- 2026-04-22T19:54:00+08:00 executor: PA72 live recovery confirmed after backend restart. manual refresh plus runtime auto-refresh produced clean assets for `contract.center`: global `id=76 source_ref=scene:contract.center:minimal`, scoped `executive/company=1` `id=78 source_ref=scene:contract.center:minimal`; stale scoped asset `id=31 source_ref=action:522` archived. live `app.init` for `wutao/sc_demo` now returns `meta.ui_base_contract_source.asset_id=78 source_ref=scene:contract.center:minimal`, `meta.target.route=/s/contract.center`, and no `parser_semantic_surface.semantic_page.form_semantics`. contract.center no longer inherits foreign native action semantics.
+- 2026-04-22T20:24:00+08:00 reporter: user requested a complete written summary of current scene orchestration runtime logic, implementation layering, Odoo native-view orchestration role, and assetization maturity. opened PA76 and persisted the full summary to `docs/tmp/scene_orchestration_system_summary_2026-04-22.md` for follow-up review and architecture discussion.
