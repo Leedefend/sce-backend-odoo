@@ -37,7 +37,20 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
         payload = target.SystemInitPayloadBuilder.build_startup_surface(
             {
                 "user": {"id": 1},
-                "nav": [],
+                "nav": [
+                    {
+                        "key": "menu:202",
+                        "menu_id": 202,
+                        "label": "项目列表",
+                        "children": [],
+                        "meta": {
+                            "scene_key": "projects.list",
+                            "action_id": 502,
+                            "model": "project.project",
+                            "record_id": 42,
+                        },
+                    }
+                ],
                 "nav_meta": {
                     "nav_source": "scene_contract_v1",
                     "semantic_scene_key": "workspace.home",
@@ -47,7 +60,7 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
                 "default_route": {"scene_key": "workspace.home"},
                 "intents": [],
                 "feature_flags": {},
-                "role_surface": {"landing_scene_key": "workspace.home"},
+                "role_surface": {"landing_scene_key": "workspace.home", "landing_path": "/s/workspace.home"},
                 "contract_version": "1.0.0",
                 "schema_version": "1.0.0",
                 "scene_version": "v1",
@@ -184,6 +197,13 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
         )
 
         self.assertEqual((payload.get("semantic_runtime") or {}).get("view_type"), "kanban")
+        self.assertEqual(((payload.get("default_route") or {}).get("entry_target") or {}).get("scene_key"), "workspace.home")
+        self.assertEqual(((payload.get("role_surface") or {}).get("landing_entry_target") or {}).get("scene_key"), "workspace.home")
+        nav_leaf = ((payload.get("nav") or [])[0] or {})
+        self.assertEqual((((nav_leaf.get("meta") or {}).get("entry_target") or {}).get("scene_key")), "projects.list")
+        self.assertEqual(((((nav_leaf.get("meta") or {}).get("entry_target") or {}).get("compatibility_refs") or {}).get("action_id")), 502)
+        self.assertEqual(((((nav_leaf.get("meta") or {}).get("entry_target") or {}).get("record_entry") or {}).get("model")), "project.project")
+        self.assertEqual(((((nav_leaf.get("meta") or {}).get("entry_target") or {}).get("record_entry") or {}).get("record_id")), 42)
         self.assertEqual(((payload.get("semantic_runtime") or {}).get("search_surface") or {}).get("mode"), "faceted")
         self.assertEqual(((((payload.get("semantic_runtime") or {}).get("search_surface") or {}).get("default_state") or {}).get("filters") or [])[0].get("key"), "mine")
         self.assertEqual(((payload.get("semantic_runtime") or {}).get("permission_surface") or {}).get("reason_code"), "missing_capability")
@@ -216,6 +236,44 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
         self.assertEqual((((scene.get("workflow_surface") or {}).get("states") or [])[0].get("key")), "draft")
         self.assertEqual((((scene.get("validation_surface") or {}).get("required_fields") or [])[0]), "name")
         self.assertEqual((((scene.get("validation_surface") or {}).get("field_rules") or [])[0].get("field")), "name")
+
+    def test_minimal_scene_ready_contract_preserves_delivery_handoff_surface(self):
+        payload = target.SystemInitPayloadBuilder._build_minimal_scene_ready_contract(
+            {
+                "scenes": [
+                    {
+                        "scene": {"key": "contract.center", "title": "合同中心"},
+                        "page": {"route": "/s/contract.center"},
+                        "guidance": {"title": "合同中心", "message": "先进入合同中心场景总览。"},
+                        "primary_action": {"route": "/s/contract.center", "label": "进入合同中心"},
+                        "fallback_strategy": {"type": "native_menu_compat"},
+                        "next_scene": "contracts.workspace",
+                        "next_scene_route": "/s/contracts.workspace",
+                        "delivery_handoff_v1": {
+                            "family": "contracts",
+                            "final_scene": "contract.center",
+                        },
+                        "runtime_handoff_surface": {
+                            "family": "contracts",
+                            "final_scene": "contract.center",
+                        },
+                        "product_delivery_surface": {
+                            "family": "contracts",
+                            "delivery_mode": "direct_delivery",
+                        },
+                    }
+                ]
+            }
+        )
+
+        scene = ((payload.get("scenes") or [])[0] or {})
+        self.assertEqual(((scene.get("guidance") or {}).get("title")), "合同中心")
+        self.assertEqual(((scene.get("primary_action") or {}).get("route")), "/s/contract.center")
+        self.assertEqual(((scene.get("fallback_strategy") or {}).get("type")), "native_menu_compat")
+        self.assertEqual(scene.get("next_scene"), "contracts.workspace")
+        self.assertEqual(((scene.get("delivery_handoff_v1") or {}).get("family")), "contracts")
+        self.assertEqual(((scene.get("runtime_handoff_surface") or {}).get("family")), "contracts")
+        self.assertEqual(((scene.get("product_delivery_surface") or {}).get("delivery_mode")), "direct_delivery")
 
 
 if __name__ == "__main__":
