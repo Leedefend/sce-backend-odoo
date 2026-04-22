@@ -1,0 +1,22 @@
+scene_key: cost.project_budget
+scene_type: list
+page:
+  route: /s/cost.project_budget
+  zones:
+    - name: header
+      blocks: [scene.header]
+    - name: search
+      blocks: [scene.search]
+    - name: main
+      blocks: [scene.list]
+blocks:
+  - type: list_block
+    zone: main
+    source: ui_base_contract.views.tree
+  - type: insight_block
+    zone: header
+    provider: construction.cost_project_budget_provider
+search_surface:
+  source: ui_base_contract.search
+permission_surface:
+  source: ui_base_contract.permissions
