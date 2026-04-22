@@ -10,7 +10,7 @@ from odoo.addons.smart_core.orchestration.base_scene_entry_orchestrator import B
 class SettlementSliceContractOrchestrator(BaseSceneEntryOrchestrator):
     scene_key = "settlement"
     scene_label = "结算结果"
-    state_fallback_text = "当前状态：正在查看项目结算汇总。"
+    state_fallback_text = "后端未提供结算结果状态摘要"
     title_empty = "结算结果"
     suggested_action_key = "load_settlement_summary"
     suggested_action_reason_code = "SETTLEMENT_SLICE_PREPARED_READY"

@@ -10,7 +10,7 @@ from odoo.addons.smart_core.orchestration.base_scene_entry_orchestrator import B
 class PaymentSliceContractOrchestrator(BaseSceneEntryOrchestrator):
     scene_key = "payment"
     scene_label = "付款记录"
-    state_fallback_text = "当前状态：正在查看项目付款记录。"
+    state_fallback_text = "后端未提供付款记录状态摘要"
     title_empty = "付款记录"
     suggested_action_key = "load_payment_entry"
     suggested_action_reason_code = "PAYMENT_SLICE_PREPARED_READY"
