@@ -31,6 +31,10 @@ class TestSceneNormalizerTargetResolution(TransactionCase):
         expected_menu_id = self.env.ref("smart_construction_core.menu_sc_root").id
         self.assertEqual(target.get("action_id"), expected_action_id)
         self.assertEqual(target.get("menu_id"), expected_menu_id)
+        self.assertEqual(((target.get("entry_target") or {}).get("type")), "scene")
+        self.assertEqual(((target.get("entry_target") or {}).get("scene_key")), "projects.list")
+        self.assertEqual((((target.get("entry_target") or {}).get("compatibility_refs") or {}).get("action_id")), expected_action_id)
+        self.assertEqual((((target.get("entry_target") or {}).get("compatibility_refs") or {}).get("menu_id")), expected_menu_id)
         self.assertNotIn("action_xmlid", target)
         self.assertNotIn("menu_xmlid", target)
         mismatch_codes = {
@@ -39,4 +43,3 @@ class TestSceneNormalizerTargetResolution(TransactionCase):
             if isinstance(item, dict)
         }
         self.assertIn("TARGET_ID_XMLID_MISMATCH", mismatch_codes)
-

@@ -82,6 +82,44 @@ def _normalize_view_mode(raw: str | None) -> str | None:
     return val
 
 
+def _build_entry_target(*, scene_key: str = "", route: str = "", menu_id=None, action_id=None, model: str = "", record_id=None) -> dict:
+    normalized_scene_key = str(scene_key or "").strip()
+    normalized_route = str(route or "").strip()
+    if not normalized_scene_key and normalized_route.startswith("/s/"):
+        normalized_scene_key = normalized_route.replace("/s/", "", 1).strip("/")
+    if not normalized_scene_key:
+        return {}
+    target = {
+        "type": "scene",
+        "scene_key": normalized_scene_key,
+    }
+    if normalized_route:
+        target["route"] = normalized_route
+    compatibility = {}
+    if isinstance(menu_id, int) and menu_id > 0:
+        compatibility["menu_id"] = menu_id
+    if isinstance(action_id, int) and action_id > 0:
+        compatibility["action_id"] = action_id
+    normalized_model = str(model or "").strip()
+    if normalized_model:
+        compatibility["model"] = normalized_model
+    if isinstance(record_id, int) and record_id > 0:
+        compatibility["record_id"] = record_id
+    if normalized_model and isinstance(record_id, int) and record_id > 0:
+        record_entry = {
+            "model": normalized_model,
+            "record_id": record_id,
+        }
+        if isinstance(action_id, int) and action_id > 0:
+            record_entry["action_id"] = action_id
+        if isinstance(menu_id, int) and menu_id > 0:
+            record_entry["menu_id"] = menu_id
+        target["record_entry"] = record_entry
+    if compatibility:
+        target["compatibility_refs"] = compatibility
+    return target
+
+
 def _append_inferred_scene_warnings(nodes, scene_keys: set, warnings: list):
     if warnings is None:
         return
@@ -252,33 +290,21 @@ def _normalize_scene_targets(env, scenes, nav_targets, resolve_errors):
             target.pop("menuXmlid", None)
         if target.get("action_id") or target.get("model") or (target.get("route") and not route_is_missing_fallback):
             scene["target"] = target
-            continue
-        nav = nav_targets.get(scene_key) or {}
-        resolved = {}
-        if nav.get("action_id"):
-            resolved["action_id"] = nav.get("action_id")
-        elif nav.get("model"):
-            resolved["model"] = nav.get("model")
-            if nav.get("view_mode"):
-                resolved["view_mode"] = nav.get("view_mode")
-        if nav.get("menu_id"):
-            resolved["menu_id"] = nav.get("menu_id")
-        if resolved:
-            scene["target"] = resolved
         else:
-            semantic_fallback = f"/s/{scene_key}"
-            if route_is_missing_fallback:
-                scene["target"] = {"route": semantic_fallback}
-                _append_resolve_error(
-                    resolve_errors,
-                    scene_key=scene_key,
-                    kind="target",
-                    code="MISSING_TARGET",
-                    ref=semantic_fallback,
-                    field="target",
-                    message="target missing; semantic fallback route applied",
-                )
+            nav = nav_targets.get(scene_key) or {}
+            resolved = {}
+            if nav.get("action_id"):
+                resolved["action_id"] = nav.get("action_id")
+            elif nav.get("model"):
+                resolved["model"] = nav.get("model")
+                if nav.get("view_mode"):
+                    resolved["view_mode"] = nav.get("view_mode")
+            if nav.get("menu_id"):
+                resolved["menu_id"] = nav.get("menu_id")
+            if resolved:
+                scene["target"] = resolved
             else:
+                semantic_fallback = f"/s/{scene_key}"
                 scene["target"] = {"route": semantic_fallback}
                 _append_resolve_error(
                     resolve_errors,
@@ -289,6 +315,18 @@ def _normalize_scene_targets(env, scenes, nav_targets, resolve_errors):
                     field="target",
                     message="target missing; semantic fallback route applied",
                 )
+        final_target = scene.get("target") if isinstance(scene.get("target"), dict) else {}
+        entry_target = _build_entry_target(
+            scene_key=scene_key,
+            route=str(final_target.get("route") or "").strip(),
+            menu_id=final_target.get("menu_id") if isinstance(final_target.get("menu_id"), int) else None,
+            action_id=final_target.get("action_id") if isinstance(final_target.get("action_id"), int) else None,
+            model=str(final_target.get("model") or "").strip(),
+            record_id=final_target.get("record_id") if isinstance(final_target.get("record_id"), int) else None,
+        )
+        if entry_target:
+            final_target["entry_target"] = entry_target
+            scene["target"] = final_target
     return scenes
 
 
