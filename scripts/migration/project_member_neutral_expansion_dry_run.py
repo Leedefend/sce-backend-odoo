@@ -180,8 +180,16 @@ def main():
     blocking_reasons = []
     if len(rows) != EXPECTED_TOTAL:
         blocking_reasons.append("unexpected_source_row_count")
-    if not duplicate_evidence_slice:
+    if not duplicate_evidence_slice and (relation_unique_rows or duplicate_evidence_rows):
         blocking_reasons.append("no_duplicate_evidence_slice")
+    remaining_evidence_rows = len(relation_unique_rows) + len(duplicate_evidence_rows)
+    if remaining_evidence_rows == 0:
+        recommended_next_gate = "Neutral carrier coverage is complete for all mapped project/user rows; no expansion write remains."
+    else:
+        recommended_next_gate = (
+            "If relation_unique rows exist, write them first. Otherwise open a duplicate-relation evidence carrier write task "
+            "that explicitly allows multiple legacy rows per same project/user relation while still avoiding project.responsibility."
+        )
 
     payload = {
         "status": "PASS" if not blocking_reasons else "PASS_WITH_RISK",
@@ -201,10 +209,8 @@ def main():
         "duplicate_relation_keys": sum(1 for count in relation_counts.values() if count > 1),
         "blocked_or_unmapped": dict(sorted(counters.items())),
         "role_fact_status": "missing",
-        "recommended_next_gate": (
-            "If relation_unique rows exist, write them first. Otherwise open a duplicate-relation evidence carrier write task "
-            "that explicitly allows multiple legacy rows per same project/user relation while still avoiding project.responsibility."
-        ),
+        "remaining_evidence_rows": remaining_evidence_rows,
+        "recommended_next_gate": recommended_next_gate,
         "artifacts": {
             "relation_unique_slice": str(RELATION_UNIQUE_SLICE_CSV),
             "duplicate_relation_evidence_slice": str(DUPLICATE_EVIDENCE_SLICE_CSV),
