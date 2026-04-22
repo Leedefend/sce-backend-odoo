@@ -1,0 +1,48 @@
+task_id: ITER-2026-04-22-HOTFIX-MISSING-SCENE-BRIDGE-TAIL-PA92
+title: Recover omitted scene bridge tail files after residual split merge
+objective: >
+  Restore three omitted low-risk bridge/helper files from commit 56b7eba so the
+  merged mainline runtime and direct-python test entrypoints become internally
+  consistent again.
+context:
+  layer_target: Platform Layer and Scene Layer
+  module: smart_core and smart_construction_scene
+  module_ownership: Platform kernel plus industry scene helper surface
+  kernel_or_scenario: kernel
+  architecture_reason: >
+    The current mainline merged residual slices but omitted three helper files
+    that are already referenced by merged imports and tests. This batch only
+    restores those missing files; it does not alter business facts, manifests,
+    ACLs, or financial semantics.
+scope:
+  allowed_paths:
+    - addons/smart_construction_scene/services/project_management_entry_target.py
+    - addons/smart_core/core/scene_contract_parser_semantic_bridge.py
+    - addons/smart_core/core/scene_contract_semantic_orchestration_bridge.py
+    - addons/smart_core/core/released_scene_semantic_surface_bridge.py
+    - addons/smart_enterprise_base/core_extension.py
+    - agent_ops/tasks/ITER-2026-04-22-HOTFIX-MISSING-SCENE-BRIDGE-TAIL-PA92.yaml
+  forbidden_paths:
+    - addons/**/payment*
+    - addons/**/settlement*
+    - addons/**/account*
+    - addons/**/security/**
+    - addons/**/__manifest__.py
+change_rules:
+  additive_only: true
+  no_contract_breaking_changes: true
+  no_acl_or_manifest_changes: true
+  no_financial_semantic_changes: true
+acceptance:
+  verification_commands:
+    - python3 -m py_compile addons/smart_construction_scene/services/project_management_entry_target.py addons/smart_core/core/scene_contract_parser_semantic_bridge.py addons/smart_core/core/scene_contract_semantic_orchestration_bridge.py addons/smart_core/core/released_scene_semantic_surface_bridge.py addons/smart_enterprise_base/core_extension.py
+    - python3 addons/smart_construction_scene/tests/test_action_only_scene_semantic_supply.py
+    - python3 addons/smart_core/tests/test_scene_contract_builder_semantics.py
+reporting:
+  iteration_report_required: true
+  include:
+    - changed_files
+    - verification_result
+    - risk_summary
+    - rollback_suggestion
+    - next_iteration_suggestion

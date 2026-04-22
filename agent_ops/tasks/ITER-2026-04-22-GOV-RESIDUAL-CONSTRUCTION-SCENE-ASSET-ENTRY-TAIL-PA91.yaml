@@ -1,0 +1,51 @@
+task_id: ITER-2026-04-22-GOV-RESIDUAL-CONSTRUCTION-SCENE-ASSET-ENTRY-TAIL-PA91
+title: Split residual construction scene asset and entry tail from 56b7eba
+objective: >
+  Isolate the remaining construction scene asset registration and entry-handler
+  tail from commit 56b7eba into a bounded child batch for mainline review.
+context:
+  layer_target: Scene Layer
+  module: smart_construction_scene and smart_construction_core
+  module_ownership: Industry scene/domain boundary handoff
+  kernel_or_scenario: scenario
+  architecture_reason: >
+    This batch carries the remaining scene asset payload updates and the domain
+    entry handlers that consume those scene targets. It must remain separate
+    from platform smart_core orchestration and previously split provider/runtime
+    supply slices.
+scope:
+  allowed_paths:
+    - addons/smart_construction_core/handlers/cost_tracking_enter.py
+    - addons/smart_construction_core/handlers/project_dashboard_enter.py
+    - addons/smart_construction_scene/__init__.py
+    - addons/smart_construction_scene/data/project_management_scene.xml
+    - addons/smart_construction_scene/data/sc_scene_layout.xml
+    - addons/smart_construction_scene/data/sc_scene_list_profile.xml
+    - addons/smart_construction_scene/data/sc_scene_orchestration.xml
+    - addons/smart_construction_scene/data/sc_scene_tiles.xml
+    - agent_ops/tasks/ITER-2026-04-22-GOV-RESIDUAL-CONSTRUCTION-SCENE-ASSET-ENTRY-TAIL-PA91.yaml
+  forbidden_paths:
+    - addons/smart_core/**
+    - addons/smart_construction_scene/providers/**
+    - addons/smart_construction_scene/services/**
+    - addons/smart_construction_scene/profiles/**
+    - addons/smart_construction_scene/scenes/**
+    - addons/smart_construction_core/**/payment*
+    - addons/smart_construction_core/**/settlement*
+    - addons/smart_construction_core/**/account*
+change_rules:
+  additive_only: true
+  no_contract_breaking_changes: true
+  no_acl_or_manifest_changes: true
+  no_financial_semantic_changes: true
+acceptance:
+  verification_commands:
+    - python3 -m py_compile addons/smart_construction_core/handlers/cost_tracking_enter.py addons/smart_construction_core/handlers/project_dashboard_enter.py
+reporting:
+  iteration_report_required: true
+  include:
+    - changed_files
+    - verification_result
+    - risk_summary
+    - rollback_suggestion
+    - next_iteration_suggestion

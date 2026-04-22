@@ -11,7 +11,6 @@ from ..core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.app_config_engine.services.contract_service import ContractService
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.nav_dispatcher import NavDispatcher
 from odoo.addons.smart_core.app_config_engine.utils.misc import format_versions
-from odoo.addons.smart_core.core.extension_loader import run_extension_hooks
 from odoo.addons.smart_core.core.scene_provider import (
     load_scene_contract as provider_load_scene_contract,
     load_scenes_from_db_or_fallback as provider_load_scenes_from_db_or_fallback,
@@ -21,6 +20,7 @@ from odoo.addons.smart_core.core.scene_provider import (
 from odoo.addons.smart_core.core.capability_provider import (
     build_capability_groups as provider_build_capability_groups,
     load_capabilities_for_user as provider_load_capabilities_for_user,
+    load_capabilities_for_user_with_timings as provider_load_capabilities_for_user_with_timings,
 )
 from odoo.addons.smart_core.core.intent_surface_builder import IntentSurfaceBuilder
 from odoo.addons.smart_core.core.hash_utils import stable_fingerprint
@@ -38,17 +38,29 @@ from odoo.addons.smart_core.core.scene_runtime_orchestrator import SceneRuntimeO
 from odoo.addons.smart_core.core.system_init_runtime_context import SystemInitRuntimeContext
 from odoo.addons.smart_core.core.system_init_surface_context import SystemInitSurfaceContext
 from odoo.addons.smart_core.core.system_init_surface_builder import SystemInitSurfaceBuilder
+from odoo.addons.smart_core.core.system_init_extension_fact_merger import (
+    apply_extension_fact_contributions,
+    merge_extension_facts,
+)
+from odoo.addons.smart_core.core.system_init_scene_runtime_surface_context import SystemInitSceneRuntimeSurfaceContext
+from odoo.addons.smart_core.core.system_init_scene_runtime_surface_builder import SystemInitSceneRuntimeSurfaceBuilder
+from odoo.addons.smart_core.core.system_init_dictionary_data_helper import apply_dictionary_startup_data
+from odoo.addons.smart_core.core.intent_execution_result import IntentExecutionResult
 from odoo.addons.smart_core.core.workspace_home_contract_builder import build_workspace_home_contract
-from odoo.addons.smart_core.core.page_contracts_builder import build_page_contracts
-from odoo.addons.smart_core.core.scene_nav_contract_builder import build_scene_nav_contract
+from odoo.addons.smart_core.core.runtime_page_contract_builder import mirror_workspace_home_role_context
 from odoo.addons.smart_core.core.scene_governance_payload_builder import build_scene_governance_payload_v1
 from odoo.addons.smart_core.core.ui_base_contract_asset_event_queue import get_queue_metrics
-from odoo.addons.smart_core.core.scene_ready_contract_builder import build_scene_ready_contract_v1
-from odoo.addons.smart_core.core.ui_base_contract_asset_repository import bind_scene_assets
+from odoo.addons.smart_core.core.release_navigation_contract_builder import build_release_navigation_contract
 from odoo.addons.smart_core.core.scene_delivery_policy import (
     filter_delivery_scenes,
     resolve_delivery_policy_runtime,
 )
+from odoo.addons.smart_core.core.scene_nav_contract_builder import build_scene_nav_contract
+from odoo.addons.smart_core.core.scene_ready_contract_builder import build_scene_ready_contract_v1
+from odoo.addons.smart_core.core.ui_base_contract_asset_repository import bind_scene_assets
+from odoo.addons.smart_core.delivery.delivery_engine import DeliveryEngine
+from odoo.addons.smart_core.delivery.edition_release_snapshot_service import EditionReleaseSnapshotService
+from odoo.addons.smart_core.delivery.release_audit_trail_service import ReleaseAuditTrailService
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
 from odoo.addons.smart_core.governance.scene_drift_engine import append_resolve_error as drift_append_resolve_error
@@ -81,6 +93,14 @@ _INDUSTRY_EXTENSION_MODULES = (
 
 def _load_capabilities_for_user(env, user) -> List[dict]:
     return provider_load_capabilities_for_user(env, user)
+
+
+def _load_capabilities_for_user_with_timings(env, user) -> tuple[List[dict], dict[str, int]]:
+    return provider_load_capabilities_for_user_with_timings(env, user)
+
+
+def _bind_scene_assets(*args, **kwargs):
+    return bind_scene_assets(*args, **kwargs)
 
 
 def _is_any_module_installed(env, module_names: List[str]) -> bool:
@@ -161,35 +181,21 @@ def _build_platform_minimum_nav_contract() -> dict:
     }
 
 
-def _merge_extension_facts(data: dict) -> None:
-    ext_facts = data.get("ext_facts")
-    if not isinstance(ext_facts, dict):
-        return
-    # Transitional compatibility: keep top-level reads stable while enforcing
-    # extension hooks to write facts into a namespaced container only.
-    for ext_module, module_facts in ext_facts.items():
-        if not isinstance(module_facts, dict):
-            continue
-        for key in ("entitlements", "usage"):
-            if key in module_facts and key not in data:
-                data[key] = module_facts.get(key)
-        workspace_collections = module_facts.get("workspace_collections")
-        if isinstance(workspace_collections, dict):
-            for key in ("task_items", "payment_requests", "risk_actions", "project_actions"):
-                rows = workspace_collections.get(key)
-                if key not in data and isinstance(rows, list):
-                    data[key] = rows
-        provider_payload = module_facts.get("role_surface_override_provider")
-        if isinstance(provider_payload, dict):
-            provider_key = str(provider_payload.get("key") or "").strip() or str(ext_module or "").strip()
-            if provider_key:
-                providers = data.get("role_surface_override_providers")
-                if not isinstance(providers, dict):
-                    providers = {}
-                merged = dict(provider_payload)
-                merged.pop("key", None)
-                providers[provider_key] = merged
-                data["role_surface_override_providers"] = providers
+def _normalize_access_suggested_action(data: dict) -> dict:
+    if not isinstance(data, dict):
+        return data
+    access = data.get("access") if isinstance(data.get("access"), dict) else {}
+    if not access:
+        return data
+    reason_code = str(access.get("reason_code") or "").strip()
+    suggested_action = str(access.get("suggested_action") or "").strip()
+    if not suggested_action and reason_code:
+        suggested_action = str(failure_meta_for_reason(reason_code).get("suggested_action") or "").strip()
+    if suggested_action:
+        next_access = dict(access)
+        next_access["suggested_action"] = suggested_action
+        data["access"] = next_access
+    return data
 
 
 def _normalize_scene_validation_recovery_strategy(payload) -> dict:
@@ -325,57 +331,20 @@ def _parse_with_tokens(value) -> set[str]:
     return tokens
 
 
-def _resolve_role_source_code(data: dict) -> str:
-    role_surface = data.get("role_surface") if isinstance(data.get("role_surface"), dict) else {}
-    role_code = str(role_surface.get("role_code") or "").strip().lower()
-    return role_code or "owner"
-
-
-def _ensure_role_context_mirror(data: dict) -> None:
-    if not isinstance(data, dict):
-        return
-    role_code = _resolve_role_source_code(data)
-
-    workspace_home = data.get("workspace_home") if isinstance(data.get("workspace_home"), dict) else None
-    if isinstance(workspace_home, dict):
-        record = workspace_home.get("record") if isinstance(workspace_home.get("record"), dict) else {}
-        hero = record.get("hero") if isinstance(record.get("hero"), dict) else {}
-        hero["role_code"] = role_code
-        record["hero"] = hero
-        workspace_home["record"] = record
-
-        page_orchestration_v1 = (
-            workspace_home.get("page_orchestration_v1")
-            if isinstance(workspace_home.get("page_orchestration_v1"), dict)
-            else {}
-        )
-        page = page_orchestration_v1.get("page") if isinstance(page_orchestration_v1.get("page"), dict) else {}
-        context = page.get("context") if isinstance(page.get("context"), dict) else {}
-        context["role_code"] = role_code
-        page["context"] = context
-        page_orchestration_v1["page"] = page
-        workspace_home["page_orchestration_v1"] = page_orchestration_v1
-
-    page_contracts = data.get("page_contracts") if isinstance(data.get("page_contracts"), dict) else {}
-    pages = page_contracts.get("pages") if isinstance(page_contracts.get("pages"), dict) else {}
-    home_page = pages.get("home") if isinstance(pages.get("home"), dict) else {}
-    home_orchestration = (
-        home_page.get("page_orchestration_v1")
-        if isinstance(home_page.get("page_orchestration_v1"), dict)
-        else {}
-    )
-    home_page_meta = home_orchestration.get("meta") if isinstance(home_orchestration.get("meta"), dict) else {}
-    page = home_orchestration.get("page") if isinstance(home_orchestration.get("page"), dict) else {}
-    context = page.get("context") if isinstance(page.get("context"), dict) else {}
-    context["role_code"] = role_code
-    page["context"] = context
-    home_orchestration["page"] = page
-    home_page_meta["role_source_code"] = role_code
-    home_orchestration["meta"] = home_page_meta
-    home_page["page_orchestration_v1"] = home_orchestration
-    pages["home"] = home_page
-    page_contracts["pages"] = pages
-    data["page_contracts"] = page_contracts
+def _filter_startup_scenes_for_preload(scenes, allowed_scene_keys: list[str] | None) -> list[dict]:
+    if not isinstance(scenes, list):
+        return []
+    allowed = {str(item or "").strip() for item in (allowed_scene_keys or []) if str(item or "").strip()}
+    if not allowed:
+        return [row for row in scenes if isinstance(row, dict)]
+    filtered = []
+    for row in scenes:
+        if not isinstance(row, dict):
+            continue
+        scene_key = str(row.get("code") or row.get("key") or "").strip()
+        if scene_key in allowed:
+            filtered.append(row)
+    return filtered
 
 
 def _build_minimal_intent_surface(intents: list[str], intents_meta: dict) -> list[str]:
@@ -398,8 +367,12 @@ def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, st
 def _load_scene_contract(env, scene_channel: str, use_pinned: bool) -> tuple[dict | None, str]:
     return provider_load_scene_contract(env, scene_channel, use_pinned, logger=_logger)
 
-def _load_scenes_from_db_or_fallback(env, drift):
-    return provider_load_scenes_from_db_or_fallback(env, drift=drift, logger=_logger)
+def _load_scenes_from_db_or_fallback(env, drift=None, logger=None):
+    return provider_load_scenes_from_db_or_fallback(
+        env,
+        drift=drift,
+        logger=logger or _logger,
+    )
 
 def _merge_missing_scenes_from_registry(env, scenes, warnings):
     return provider_merge_missing_scenes_from_registry(env, scenes, warnings)
@@ -421,9 +394,23 @@ class SystemInitHandler(BaseIntentHandler):
     def handle(self, payload=None, ctx=None):
         payload = payload or {}
         ts0 = time.time()
+        perf0 = time.perf_counter()
         params = payload.get("params") if isinstance(payload, dict) else None
         if not isinstance(params, dict):
             params = payload if isinstance(payload, dict) else {}
+        build_mode = SystemInitPayloadBuilder.resolve_build_mode(params)
+        startup_timings_ms: dict[str, int] = {}
+        startup_subtimings_ms: dict[str, dict[str, int]] = {}
+
+        def _mark(stage: str, started_at: float) -> float:
+            startup_timings_ms[stage] = int((time.perf_counter() - started_at) * 1000)
+            return time.perf_counter()
+
+        def _mark_substage(stage: str, substage: str, started_at: float) -> float:
+            stage_timings = startup_subtimings_ms.setdefault(stage, {})
+            stage_timings[substage] = int((time.perf_counter() - started_at) * 1000)
+            return time.perf_counter()
+
         contract_mode = resolve_contract_mode(params)
         trace_id = ""
         try:
@@ -434,6 +421,7 @@ class SystemInitHandler(BaseIntentHandler):
         env = self.env
         su_env = self.su_env or api.Environment(env.cr, SUPERUSER_ID, dict(env.context or {}))
 
+        stage_ts = time.perf_counter()
         scene_channel, channel_selector, channel_source_ref = _resolve_scene_channel(env, env.user, params)
         diagnostics_collector = RequestDiagnosticsCollector()
         scene_channel_policy = SceneChannelPolicy()
@@ -447,6 +435,7 @@ class SystemInitHandler(BaseIntentHandler):
                 diagnostic_info,
                 self_params=getattr(self, "params", {}),
             )
+        stage_ts = _mark("resolve_scene_channel", stage_ts)
 
         # 如果 finalize_contract 内部不读 ORM，可用 env；若会读，推荐 su_env
         cs = ContractService(su_env)
@@ -481,6 +470,7 @@ class SystemInitHandler(BaseIntentHandler):
                 "fingerprint": "fallback-no-app-menu-config",
                 "nav_source": "fallback_minimal",
             }
+        stage_ts = _mark("build_nav", stage_ts)
 
         nav_tree_raw = nav_data.get("nav") or []
         nav_tree = NavTreeCleaner().clean(nav_tree_raw)
@@ -504,15 +494,39 @@ class SystemInitHandler(BaseIntentHandler):
         # -------- 2.5) 可用意图（最小启动集合 + 独立目录引用）--------
         intents_all, intents_meta_all = IntentSurfaceBuilder().collect(env, user)
         intents = _build_minimal_intent_surface(intents_all, intents_meta_all)
+        stage_ts = _mark("collect_intents", stage_ts)
 
         # -------- 3/4) 首页契约 + 可选预取（仅 etag，不回传整包契约）--------
-        preload_builder = SystemInitPreloadBuilder()
-        home_contract, preload_items, etags, parts_version = preload_builder.build(
-            env=env,
-            su_env=su_env,
-            params=params,
-            default_home_action=default_home_action,
-            contract_service=cs,
+        home_contract = None
+        preload_items = []
+        etags = {}
+        parts_version = {}
+        if build_mode in {SystemInitPayloadBuilder.BUILD_MODE_PRELOAD, SystemInitPayloadBuilder.BUILD_MODE_DEBUG}:
+            preload_builder = SystemInitPreloadBuilder()
+            home_contract, preload_items, etags, parts_version = preload_builder.build(
+                env=env,
+                su_env=su_env,
+                params=params,
+                default_home_action=default_home_action,
+                contract_service=cs,
+            )
+        stage_ts = _mark("build_preload_refs", stage_ts)
+
+        prepare_runtime_context_ts = time.perf_counter()
+
+        capabilities_raw, capability_load_timings_ms = _load_capabilities_for_user_with_timings(env, user)
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "load_capabilities_for_user",
+            prepare_runtime_context_ts,
+        )
+        if capability_load_timings_ms:
+            startup_subtimings_ms["capability_load"] = dict(capability_load_timings_ms)
+        capabilities = normalize_capabilities(capabilities_raw)
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "normalize_capabilities",
+            prepare_runtime_context_ts,
         )
 
         # -------- 5) 汇总返回（统一蛇形命名 + 导航指纹 + 动态意图）--------
@@ -528,12 +542,17 @@ class SystemInitHandler(BaseIntentHandler):
             default_route=nav_data.get("defaultRoute") or {"menu_id": None},
             intents=intents,
             feature_flags=nav_data.get("feature_flags") or {"ai_enabled": True},
-            capabilities=normalize_capabilities(_load_capabilities_for_user(env, user)),
+            capabilities=capabilities,
             scene_channel=scene_channel,
             channel_selector=channel_selector,
             channel_source_ref=channel_source_ref,
             contract_mode=contract_mode,
             contract_version=CONTRACT_VERSION,
+        )
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "build_base_call",
+            prepare_runtime_context_ts,
         )
         # Keep explicit contract_mode mapping in handler for governance coverage guard.
         data.update({"contract_mode": contract_mode})
@@ -545,20 +564,72 @@ class SystemInitHandler(BaseIntentHandler):
                 channel_source_ref=channel_source_ref,
             ),
         }
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "initialize_scene_diagnostics",
+            prepare_runtime_context_ts,
+        )
         components = SystemInitComponentsFactory.create()
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "create_components",
+            prepare_runtime_context_ts,
+        )
         scene_normalizer = components["scene_normalizer"]
         scene_drift_engine = components["scene_drift_engine"]
         auto_degrade_engine = components["auto_degrade_engine"]
         capability_surface_engine = components["capability_surface_engine"]
         contract_assembler = components["contract_assembler"]
         scene_normalizer.append_act_url_deprecations(nav_tree, scene_diagnostics["normalize_warnings"])
-        SystemInitPayloadBuilder.attach_preload(data, home_contract, etags, preload_items)
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "append_act_url_deprecations",
+            prepare_runtime_context_ts,
+        )
+        if build_mode in {SystemInitPayloadBuilder.BUILD_MODE_PRELOAD, SystemInitPayloadBuilder.BUILD_MODE_DEBUG}:
+            SystemInitPayloadBuilder.attach_preload(data, home_contract, etags, preload_items)
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "attach_preload_when_enabled",
+            prepare_runtime_context_ts,
+        )
 
-        # 扩展模块可附加场景/能力等（不影响主流程）
-        run_extension_hooks(env, "smart_core_extend_system_init", data, env, user)
-        _merge_extension_facts(data)
+        # 扩展模块 facts contribution（平台 merge owner）
+        apply_extension_fact_contributions(data, env, user, context=params)
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "apply_extension_fact_contributions",
+            prepare_runtime_context_ts,
+        )
+        merge_extension_facts(data, include_workspace_collections=False)
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "merge_extension_facts",
+            prepare_runtime_context_ts,
+        )
         data["scene_validation_recovery_strategy"] = _load_scene_validation_recovery_strategy(env, params, data)
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "load_scene_validation_recovery_strategy",
+            prepare_runtime_context_ts,
+        )
         data["scene_action_surface_strategy"] = _load_scene_action_surface_strategy(env, params, data)
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "load_scene_action_surface_strategy",
+            prepare_runtime_context_ts,
+        )
+        data["scene_action_surface_strategy"] = _normalize_scene_action_surface_strategy(
+            dict(
+                action_surface_strategy=data.get("scene_action_surface_strategy")
+            ).get("action_surface_strategy")
+        )
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "normalize_scene_action_surface_strategy",
+            prepare_runtime_context_ts,
+        )
+        stage_ts = _mark("prepare_runtime_context", stage_ts)
 
         runtime_ctx = SystemInitRuntimeContext(
             env=env,
@@ -587,6 +658,7 @@ class SystemInitHandler(BaseIntentHandler):
         scene_channel = runtime_ctx.scene_channel
         rollback_active = runtime_ctx.rollback_active
         scene_diagnostics = runtime_ctx.scene_diagnostics
+        stage_ts = _mark("execute_scene_runtime", stage_ts)
         surface_ctx = SystemInitSurfaceContext(
             data=data,
             contract_mode=contract_mode,
@@ -600,14 +672,15 @@ class SystemInitHandler(BaseIntentHandler):
             apply_contract_governance_fn=apply_contract_governance,
         )
         data, scene_diagnostics = SystemInitSurfaceBuilder.apply(surface_ctx=surface_ctx)
+        stage_ts = _mark("apply_surface", stage_ts)
         with_tokens = _parse_with_tokens(params.get("with"))
         include_workspace_home = bool(params.get("with_preload", False)) or "workspace_home" in with_tokens
         if include_workspace_home:
             data["workspace_home"] = build_workspace_home_contract(data)
         else:
             data.pop("workspace_home", None)
-        data["page_contracts"] = build_page_contracts(data)
-        _ensure_role_context_mirror(data)
+        mirror_workspace_home_role_context(data)
+        stage_ts = _mark("build_workspace_home", stage_ts)
         role_surface = data.get("role_surface") if isinstance(data, dict) else {}
         role_pruned = False
         if isinstance(role_surface, dict) and isinstance(data.get("nav"), list):
@@ -618,86 +691,113 @@ class SystemInitHandler(BaseIntentHandler):
             if isinstance(data.get("nav_meta"), dict):
                 data["nav_meta"]["role_surface_pruned"] = role_pruned
                 data["nav_meta"]["role_surface_code"] = role_surface.get("role_code")
-
-        delivery_runtime = resolve_delivery_policy_runtime(env, params)
-        delivery_result = filter_delivery_scenes(
-            data.get("scenes") if isinstance(data, dict) else [],
-            surface=delivery_runtime.get("surface") or "default",
-            role_surface=role_surface if isinstance(role_surface, dict) else {},
-            contract_mode=contract_mode,
-            runtime_env=delivery_runtime.get("runtime_env") or "dev",
-            enabled=bool(delivery_runtime.get("enabled")),
-            env=env,
-        )
-        if isinstance(data.get("nav_meta"), dict):
-            data["nav_meta"]["delivery_policy"] = delivery_result.get("meta") or {}
-
-        # Scene-first nav contract (v1): sidebar nav source switches from native menu facts
-        # to scene orchestration contract. Keep legacy nav for rollback/diagnostics.
-        nav_contract_input = dict(data)
-        nav_contract_input["scenes"] = delivery_result.get("delivery_scenes") or []
-        nav_contract_input["delivery_policy_applied"] = bool(delivery_result.get("meta", {}).get("enabled"))
-        role_code = ""
-        if isinstance(role_surface, dict):
-            role_code = str(role_surface.get("role_code") or "").strip()
-        bind_result = bind_scene_assets(
-            env,
-            scenes=nav_contract_input.get("scenes") if isinstance(nav_contract_input.get("scenes"), list) else [],
-            role_code=role_code or None,
-            company_id=env.company.id if env.company else None,
-        )
-        nav_contract_input["scenes"] = bind_result.get("scenes") or nav_contract_input.get("scenes") or []
-        if isinstance(data.get("nav_meta"), dict):
-            data["nav_meta"]["ui_base_contract_asset_scene_count"] = int(bind_result.get("asset_scene_count") or 0)
-            data["nav_meta"]["ui_base_contract_bound_scene_count"] = int(bind_result.get("bound_scene_count") or 0)
-            data["nav_meta"]["ui_base_contract_missing_scene_count"] = int(bind_result.get("missing_scene_count") or 0)
-        data["scene_ready_contract_v1"] = build_scene_ready_contract_v1(
-            scenes=nav_contract_input.get("scenes") if isinstance(nav_contract_input.get("scenes"), list) else [],
-            role_surface=role_surface if isinstance(role_surface, dict) else {},
-            scene_version=data.get("scene_version"),
-            schema_version=data.get("schema_version"),
-            scene_channel=scene_channel,
-            action_surface_strategy=data.get("scene_action_surface_strategy") if isinstance(data.get("scene_action_surface_strategy"), dict) else {},
-            runtime_context={
-                "role_code": role_code,
-                "company_id": env.company.id if env.company else None,
-            },
-        )
-        scene_nav_contract = build_scene_nav_contract(nav_contract_input)
-        if isinstance(scene_nav_contract, dict) and isinstance(scene_nav_contract.get("nav"), list):
-            data["nav_legacy"] = data.get("nav") or []
-            data["nav_contract"] = scene_nav_contract
-            data["nav"] = scene_nav_contract.get("nav") or []
-            data["default_route"] = scene_nav_contract.get("default_route") or data.get("default_route") or {"menu_id": None}
-            if isinstance(data.get("nav_meta"), dict):
-                data["nav_meta"]["nav_source"] = scene_nav_contract.get("source") or "scene_contract_v1"
-                data["nav_meta"]["scene_ready_contract_v1"] = True
-                contract_meta = scene_nav_contract.get("meta")
-                if isinstance(contract_meta, dict):
-                    data["nav_meta"]["scene_nav_meta"] = contract_meta
+        stage_ts = _mark("prune_nav_for_role", stage_ts)
 
         platform_minimum_surface_mode = _is_platform_minimum_surface_mode(env)
-        if platform_minimum_surface_mode:
-            minimum_nav_contract = _build_platform_minimum_nav_contract()
-            data["nav_legacy"] = data.get("nav") or []
-            data["nav_contract"] = minimum_nav_contract
-            data["nav"] = minimum_nav_contract.get("nav") or []
-            minimum_default_route = {
-                "menu_id": None,
-                "scene_key": "workspace.home",
-                "route": "/",
-                "reason": "platform_minimum_surface",
-            }
-            data["default_route"] = minimum_default_route
-            if isinstance(minimum_nav_contract, dict):
-                minimum_nav_contract["default_route"] = dict(minimum_default_route)
-                nav_contract_meta = minimum_nav_contract.get("meta")
-                if isinstance(nav_contract_meta, dict):
-                    nav_contract_meta["platform_minimum_surface"] = True
-            if isinstance(data.get("nav_meta"), dict):
-                data["nav_meta"]["platform_minimum_surface"] = True
-                data["nav_meta"]["platform_minimum_reason"] = "industry_modules_absent"
-                data["nav_meta"]["nav_source"] = "platform_minimum_surface"
+        scene_runtime_surface_ctx = SystemInitSceneRuntimeSurfaceContext(
+            env=env,
+            params=params,
+            data=data,
+            role_surface=role_surface if isinstance(role_surface, dict) else {},
+            contract_mode=contract_mode,
+            scene_channel=scene_channel,
+            nav_tree=nav_tree,
+            platform_minimum_surface_mode=platform_minimum_surface_mode,
+            build_platform_minimum_nav_contract_fn=_build_platform_minimum_nav_contract,
+            resolve_delivery_policy_runtime_fn=resolve_delivery_policy_runtime,
+            filter_delivery_scenes_fn=filter_delivery_scenes,
+            startup_scene_subset_resolver_fn=SystemInitPayloadBuilder.resolve_startup_scene_subset,
+            filter_startup_scenes_for_preload_fn=_filter_startup_scenes_for_preload,
+            bind_scene_assets_fn=_bind_scene_assets,
+            build_scene_ready_contract_fn=build_scene_ready_contract_v1,
+            build_scene_nav_contract_fn=build_scene_nav_contract,
+        )
+        scene_runtime_surface_result = SystemInitSceneRuntimeSurfaceBuilder.apply(surface_ctx=scene_runtime_surface_ctx)
+        data = scene_runtime_surface_result["data"]
+        delivery_result = scene_runtime_surface_result["delivery_result"]
+        scene_nav_contract = scene_runtime_surface_result["scene_nav_contract"]
+        bind_result = scene_runtime_surface_result["bind_result"]
+        data["scene_ready_contract_v1"] = (
+            data.get("scene_ready_contract_v1")
+            if isinstance(data.get("scene_ready_contract_v1"), dict)
+            else {}
+        )
+        nav_meta = data.get("nav_meta") if isinstance(data.get("nav_meta"), dict) else {}
+        if isinstance(bind_result, dict):
+            nav_meta["ui_base_contract_asset_scene_count"] = int(bind_result.get("asset_scene_count") or 0)
+            nav_meta["ui_base_contract_bound_scene_count"] = int(bind_result.get("bound_scene_count") or 0)
+            nav_meta["ui_base_contract_missing_scene_count"] = int(bind_result.get("missing_scene_count") or 0)
+        else:
+            nav_meta.setdefault("ui_base_contract_asset_scene_count", 0)
+            nav_meta.setdefault("ui_base_contract_bound_scene_count", 0)
+            nav_meta.setdefault("ui_base_contract_missing_scene_count", 0)
+        data["nav_meta"] = nav_meta
+        stage_ts = _mark("build_scene_runtime_surface", stage_ts)
+        legacy_release_navigation = build_release_navigation_contract(data if isinstance(data, dict) else {})
+        delivery_engine = DeliveryEngine(env)
+        delivery_edition_key = str(((params or {}).get("edition_key") or "standard")).strip() or "standard"
+        delivery_payload = delivery_engine.build(
+            data=data if isinstance(data, dict) else {},
+            product_key=f"construction.{delivery_edition_key}",
+            edition_key=delivery_edition_key,
+            base_product_key="construction",
+            native_nav=nav_tree,
+        )
+        release_snapshot_service = EditionReleaseSnapshotService(env)
+        release_audit_service = ReleaseAuditTrailService(env)
+        data["delivery_engine_v1"] = delivery_payload
+        edition_diagnostics = (
+            delivery_payload.get("product_policy", {}).get("edition_diagnostics")
+            if isinstance(delivery_payload.get("product_policy"), dict)
+            else {}
+        )
+        effective_base_product_key = str(delivery_payload.get("base_product_key") or "construction").strip() or "construction"
+        effective_edition_key = str(delivery_payload.get("edition_key") or "standard").strip() or "standard"
+        effective_product_key = str(delivery_payload.get("product_key") or f"{effective_base_product_key}.{effective_edition_key}").strip()
+        requested_product_key = f"construction.{delivery_edition_key}"
+        released_snapshot_lineage = release_snapshot_service.resolve_active_snapshot_lineage(product_key=effective_product_key)
+        release_audit_trail_summary = release_audit_service.build_runtime_summary(product_key=effective_product_key)
+        runtime_diagnostics = dict(edition_diagnostics) if isinstance(edition_diagnostics, dict) else {}
+        if released_snapshot_lineage:
+            runtime_diagnostics["released_snapshot_lineage"] = released_snapshot_lineage
+            meta = delivery_payload.get("meta")
+            if not isinstance(meta, dict):
+                meta = {}
+                delivery_payload["meta"] = meta
+            meta["released_snapshot_lineage"] = released_snapshot_lineage
+        if release_audit_trail_summary:
+            runtime_diagnostics["release_audit_trail_summary"] = release_audit_trail_summary
+            meta = delivery_payload.get("meta")
+            if not isinstance(meta, dict):
+                meta = {}
+                delivery_payload["meta"] = meta
+            meta["release_audit_trail_summary"] = release_audit_trail_summary
+        data["edition_runtime_v1"] = {
+            "contract_version": "v1",
+            "requested": {
+                "product_key": requested_product_key,
+                "base_product_key": "construction",
+                "edition_key": delivery_edition_key,
+            },
+            "effective": {
+                "product_key": effective_product_key,
+                "base_product_key": effective_base_product_key,
+                "edition_key": effective_edition_key,
+            },
+            "diagnostics": runtime_diagnostics,
+        }
+        data["release_navigation_v1"] = {
+            "contract_version": str(delivery_payload.get("contract_version") or "v1"),
+            "source": "delivery_engine_v1",
+            "role_code": str(delivery_payload.get("role_code") or ""),
+            "nav": delivery_payload.get("nav") if isinstance(delivery_payload.get("nav"), list) else [],
+            "meta": {
+                "product_key": str(delivery_payload.get("product_key") or ""),
+                "edition_key": str(delivery_payload.get("edition_key") or ""),
+                "delivery_engine_meta": delivery_payload.get("meta") if isinstance(delivery_payload.get("meta"), dict) else {},
+                "legacy_builder_contract_version": str(legacy_release_navigation.get("contract_version") or ""),
+            },
+        }
 
         default_route_payload = data.get("default_route") if isinstance(data.get("default_route"), dict) else {}
         landing_scene_key = str(default_route_payload.get("scene_key") or "").strip()
@@ -716,22 +816,79 @@ class SystemInitHandler(BaseIntentHandler):
             "count": len(intents_all or []),
         }
 
-        data["scene_governance_v1"] = build_scene_governance_payload_v1(
-            data=data,
-            scene_diagnostics=scene_diagnostics,
-            delivery_meta=delivery_result.get("meta") if isinstance(delivery_result, dict) else {},
-            nav_contract_meta=scene_nav_contract.get("meta") if isinstance(scene_nav_contract, dict) else {},
-            asset_queue_metrics=get_queue_metrics(env),
-        )
+        if build_mode == SystemInitPayloadBuilder.BUILD_MODE_DEBUG:
+            data["scene_governance_v1"] = build_scene_governance_payload_v1(
+                data=data,
+                scene_diagnostics=scene_diagnostics,
+                delivery_meta=delivery_result.get("meta") if isinstance(delivery_result, dict) else {},
+                nav_contract_meta=scene_nav_contract.get("meta") if isinstance(scene_nav_contract, dict) else {},
+                asset_queue_metrics=get_queue_metrics(env),
+            )
+        else:
+            data.pop("scene_governance_v1", None)
         data = _strip_ui_base_contract_for_frontend(data)
-        SystemInitPayloadBuilder.attach_layered_contract(data)
-        if contract_mode == "hud":
-            data["scene_diagnostics"] = scene_diagnostics
+        extension_snapshot: dict = {}
+        apply_extension_fact_contributions(extension_snapshot, env, user, context=params)
+        snapshot_ext = (
+            extension_snapshot.get("ext_facts")
+            if isinstance(extension_snapshot.get("ext_facts"), dict)
+            else {}
+        )
+        role_entries = []
+        home_blocks = []
+        for module_facts in snapshot_ext.values():
+            if not isinstance(module_facts, dict):
+                continue
+            candidate = module_facts.get("role_entries")
+            if isinstance(candidate, list) and candidate:
+                role_entries = candidate
+            block_candidate = module_facts.get("home_blocks")
+            if isinstance(block_candidate, list) and block_candidate:
+                home_blocks = block_candidate
+        if isinstance(role_entries, list) and role_entries:
+            data["role_entries"] = role_entries
+        if isinstance(home_blocks, list) and home_blocks:
+            data["home_blocks"] = home_blocks
+        startup_inspect = {}
+        if build_mode == SystemInitPayloadBuilder.BUILD_MODE_DEBUG:
+            startup_inspect = {
+                "nav_meta": data.get("nav_meta") if isinstance(data.get("nav_meta"), dict) else {},
+                "delivery_policy": delivery_result.get("meta") if isinstance(delivery_result, dict) else {},
+                "scene_nav_meta": scene_nav_contract.get("meta") if isinstance(scene_nav_contract, dict) else {},
+                "scene_governance_v1": data.get("scene_governance_v1") if isinstance(data.get("scene_governance_v1"), dict) else {},
+                "asset_binding": bind_result if isinstance(bind_result, dict) else {},
+                "scene_diagnostics": scene_diagnostics if isinstance(scene_diagnostics, dict) else {},
+            }
+        data = SystemInitPayloadBuilder.build_startup_surface(
+            data,
+            params=params,
+            build_mode=build_mode,
+            inspect_payload=startup_inspect,
+        )
+        try:
+            data = apply_dictionary_startup_data(env, data)
+        except Exception:
+            pass
+        data = _normalize_access_suggested_action(data)
+        data["contract_mode"] = contract_mode
+        if contract_mode == "user":
+            data.pop("scene_diagnostics", None)
+            data.pop("diagnostic", None)
+            data.pop("scene_channel_selector", None)
+            data.pop("scene_channel_source_ref", None)
+        stage_ts = _mark("finalize_startup_surface", stage_ts)
 
         # 分部 etag：加入导航
         etags["nav"] = nav_fp
 
         elapsed_ms = int((time.time() - ts0) * 1000)
+        startup_profile = {
+            "build_mode": build_mode,
+            "timings_ms": startup_timings_ms,
+            "subtimings_ms": startup_subtimings_ms,
+            "total_ms": int((time.perf_counter() - perf0) * 1000),
+            "response_key_count": len(data.keys()) if isinstance(data, dict) else 0,
+        }
         scene_trace_meta, meta_with_etag = SystemInitResponseMetaBuilder.build(
             contract_assembler=contract_assembler,
             data=data,
@@ -745,16 +902,27 @@ class SystemInitHandler(BaseIntentHandler):
             api_version=API_VERSION,
             contract_mode=contract_mode,
             nav_fp=nav_fp,
+            startup_profile=startup_profile,
         )
         if contract_mode == "hud":
-            SystemInitPayloadBuilder.attach_hud(
-                data,
-                trace_id=trace_id,
-                elapsed_ms=elapsed_ms,
-                contract_version=CONTRACT_VERSION,
-                scene_trace_meta=scene_trace_meta,
-            )
-        if diag_enabled and diagnostic_info is not None and contract_mode == "hud":
-            SystemInitPayloadBuilder.attach_diagnostic(data, diagnostic_info)
+            hud_trace = data.get("hud") if isinstance(data.get("hud"), dict) else {}
+            for trace_key in ("scene_source", "scene_contract_ref", "channel_selector", "channel_source_ref"):
+                trace_value = scene_trace_meta.get(trace_key)
+                if str(trace_value or "").strip():
+                    hud_trace[trace_key] = trace_value
+            governance_payload = scene_trace_meta.get("governance")
+            if isinstance(governance_payload, dict):
+                hud_trace["governance"] = governance_payload
+            data["hud"] = hud_trace
+            if not isinstance(data.get("scene_diagnostics"), dict) and isinstance(scene_diagnostics, dict):
+                data["scene_diagnostics"] = scene_diagnostics
+        _ = scene_trace_meta
+        _ = diag_enabled
+        _ = diagnostic_info
 
-        return {"status": "success", "data": data, "meta": meta_with_etag, "ok": True}
+        return IntentExecutionResult(
+            ok=True,
+            status="success",
+            data=data,
+            meta=meta_with_etag,
+        )
