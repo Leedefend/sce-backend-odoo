@@ -8,6 +8,37 @@ from odoo import api, models
 class ProjectDemoCockpitSeed(models.Model):
     _inherit = "project.project"
 
+    _DEMO_COCKPIT_MARKER = "DEMO_COCKPIT_R2"
+    _OFFICIAL_SAMPLE_PROFILES = {
+        "展厅-智慧园区运营中心": {
+            "profile": "execution",
+            "showcase_ready": True,
+            "seed_costs": False,
+            "seed_payments": False,
+            "health_state": "warn",
+            "execution_state": "in_progress",
+            "target_lifecycle_state": "in_progress",
+        },
+        "展厅-装配式住宅试点": {
+            "profile": "payment",
+            "showcase_ready": True,
+            "seed_costs": True,
+            "seed_payments": False,
+            "health_state": "warn",
+            "execution_state": "done",
+            "target_lifecycle_state": "in_progress",
+        },
+        "展厅-产线升级改造工程": {
+            "profile": "settlement_complete",
+            "showcase_ready": True,
+            "seed_costs": True,
+            "seed_payments": True,
+            "health_state": "good",
+            "execution_state": "done",
+            "target_lifecycle_state": "done",
+        },
+    }
+
     @api.model
     def sc_demo_seed_cockpit_round2(self):
         partner_model = self.env["res.partner"]
@@ -27,6 +58,7 @@ class ProjectDemoCockpitSeed(models.Model):
         todo_type = self.env.ref("mail.mail_activity_data_todo", raise_if_not_found=False)
 
         for project in projects:
+            profile = self._sc_demo_profile(project)
             partner = project.partner_id or partner_fallback
             if not partner:
                 continue
@@ -37,66 +69,57 @@ class ProjectDemoCockpitSeed(models.Model):
                 contract_model=contract_model,
                 contract_line_model=contract_line_model,
             )
-            self._sc_demo_seed_cost_ledger(
-                project=project,
-                partner=partner,
-                cost_code=cost_code,
-                cost_ledger_model=cost_ledger_model,
-            )
-            self._sc_demo_seed_payments(
-                project=project,
-                partner=partner,
-                payment_request_model=payment_request_model,
-            )
+            if profile.get("seed_costs", True):
+                self._sc_demo_seed_cost_ledger(
+                    project=project,
+                    partner=partner,
+                    cost_code=cost_code,
+                    cost_ledger_model=cost_ledger_model,
+                )
+            else:
+                self._sc_demo_cleanup_cost_ledger(project)
+            if profile.get("seed_payments", True):
+                self._sc_demo_seed_payments(
+                    project=project,
+                    partner=partner,
+                    payment_request_model=payment_request_model,
+                )
+            else:
+                self._sc_demo_cleanup_payments(project)
             self._sc_demo_seed_risk_signals(
                 project=project,
                 activity_model=activity_model,
                 todo_type=todo_type,
                 model_id=model_id,
+                profile=profile,
             )
+            self._sc_demo_apply_showcase_profile(project, profile)
 
         return True
 
     @api.model
     def _sc_demo_release_projects(self):
-        """Pick release-grade projects for cockpit/list demo seeding.
+        """Pick showroom-first projects for cockpit demo seeding."""
 
-        Priority:
-        1) Active projects assigned to known PM demo users
-        2) Active projects that look like business/showcase projects
-        3) Fallback to first active projects
-        """
-
-        users = self.env["res.users"].sudo().search(
-            [("login", "in", ["demo_role_pm", "demo_pm", "sc_fx_pm"])],
-            order="id asc",
-        )
-        user_ids = users.ids
         project_model = self.with_context(active_test=False)
-
         projects = project_model.browse()
-        if user_ids:
+
+        sample_names = list(self._OFFICIAL_SAMPLE_PROFILES.keys())
+        if sample_names:
             projects |= project_model.search(
-                [("active", "=", True), ("user_id", "in", user_ids)],
+                [("active", "=", True), ("name", "in", sample_names)],
                 order="id asc",
-                limit=24,
             )
+
+        projects |= project_model.search(
+            [("active", "=", True), ("name", "ilike", "展厅-%")],
+            order="id asc",
+            limit=24,
+        )
 
         if len(projects) < 12:
             projects |= project_model.search(
-                [
-                    ("active", "=", True),
-                    "|",
-                    ("project_code", "!=", False),
-                    ("name", "ilike", "DEMO-"),
-                ],
-                order="id asc",
-                limit=24,
-            )
-
-        if len(projects) < 12:
-            projects |= project_model.search(
-                [("active", "=", True)],
+                [("active", "=", True), ("project_code", "ilike", "DEMO-%")],
                 order="id asc",
                 limit=24,
             )
@@ -104,8 +127,36 @@ class ProjectDemoCockpitSeed(models.Model):
         return projects
 
     @api.model
+    def _sc_demo_profile(self, project):
+        profile = dict(
+            self._OFFICIAL_SAMPLE_PROFILES.get(
+                str(project.name or "").strip(),
+                {
+                    "profile": "showroom",
+                    "showcase_ready": False,
+                    "seed_costs": True,
+                    "seed_payments": True,
+                    "health_state": "warn",
+                    "execution_state": "done",
+                    "target_lifecycle_state": str(getattr(project, "lifecycle_state", "") or "").strip().lower() or "in_progress",
+                },
+            )
+        )
+        profile.setdefault("profile", "showroom")
+        profile.setdefault("showcase_ready", False)
+        profile.setdefault("seed_costs", True)
+        profile.setdefault("seed_payments", True)
+        profile.setdefault("health_state", "warn")
+        profile.setdefault("execution_state", "done")
+        profile.setdefault(
+            "target_lifecycle_state",
+            str(getattr(project, "lifecycle_state", "") or "").strip().lower() or "in_progress",
+        )
+        return profile
+
+    @api.model
     def _sc_demo_seed_contracts(self, project, partner, contract_model, contract_line_model):
-        marker = "DEMO_COCKPIT_R2"
+        marker = self._DEMO_COCKPIT_MARKER
         existing = contract_model.search_count(
             [("project_id", "=", project.id), ("subject", "ilike", marker)]
         )
@@ -146,7 +197,7 @@ class ProjectDemoCockpitSeed(models.Model):
         if not cost_code:
             return
 
-        marker = "DEMO_COCKPIT_R2"
+        marker = self._DEMO_COCKPIT_MARKER
         base = date.today()
         samples = [
             ("材料采购", 1_180_000.0, 5),
@@ -181,8 +232,19 @@ class ProjectDemoCockpitSeed(models.Model):
                 continue
 
     @api.model
+    def _sc_demo_cleanup_cost_ledger(self, project):
+        ledger_model = self.env["project.cost.ledger"]
+        marker = self._DEMO_COCKPIT_MARKER
+        try:
+            ledger_model.search(
+                [("project_id", "=", project.id), ("note", "ilike", f"{marker}-%")]
+            ).unlink()
+        except Exception:
+            return
+
+    @api.model
     def _sc_demo_seed_payments(self, project, partner, payment_request_model):
-        marker = "DEMO_COCKPIT_R2"
+        marker = self._DEMO_COCKPIT_MARKER
         samples = [
             ("receive", "approved", 2_800_000.0, "节点回款A"),
             ("receive", "done", 1_650_000.0, "节点回款B"),
@@ -215,14 +277,33 @@ class ProjectDemoCockpitSeed(models.Model):
                 continue
 
     @api.model
-    def _sc_demo_seed_risk_signals(self, project, activity_model, todo_type, model_id):
-        if "health_state" in project._fields and (project.health_state or "ok") == "ok":
-            project.write({"health_state": "warn"})
+    def _sc_demo_cleanup_payments(self, project):
+        payment_request_model = self.env["payment.request"]
+        marker = self._DEMO_COCKPIT_MARKER
+        try:
+            payment_request_model.search(
+                [
+                    ("project_id", "=", project.id),
+                    "|",
+                    ("note", "=", marker),
+                    ("name", "ilike", f"{marker}-%"),
+                ]
+            ).unlink()
+        except Exception:
+            return
+
+    @api.model
+    def _sc_demo_seed_risk_signals(self, project, activity_model, todo_type, model_id, profile=None):
+        marker = self._DEMO_COCKPIT_MARKER
+        profile = dict(profile or {})
+        target_health = str(profile.get("health_state") or "warn").strip().lower() or "warn"
+        if "health_state" in project._fields and (project.health_state or "") != target_health:
+            project.write({"health_state": target_health})
 
         if not todo_type or not model_id:
             return
 
-        marker_summary = "DEMO_COCKPIT_R2-成本偏差复核"
+        marker_summary = f"{marker}-成本偏差复核"
         existing = activity_model.search_count(
             [
                 ("res_model", "=", "project.project"),
@@ -238,8 +319,24 @@ class ProjectDemoCockpitSeed(models.Model):
                 "res_model_id": model_id,
                 "res_id": project.id,
                 "summary": marker_summary,
-                "note": "DEMO_COCKPIT_R2：请复核本周成本偏差。",
+                "note": f"{marker}：请复核本周成本偏差。",
                 "user_id": project.user_id.id or self.env.user.id,
                 "date_deadline": date.today() - timedelta(days=2),
             }
         )
+
+    @api.model
+    def _sc_demo_apply_showcase_profile(self, project, profile):
+        vals = {"sc_demo_showcase": True, "sc_demo_showcase_ready": bool(profile.get("showcase_ready"))}
+        if "health_state" in project._fields:
+            vals["health_state"] = str(profile.get("health_state") or "warn")
+        if "sc_execution_state" in project._fields:
+            vals["sc_execution_state"] = str(profile.get("execution_state") or "done")
+        project.write(vals)
+
+        target_lifecycle = str(profile.get("target_lifecycle_state") or "").strip().lower()
+        if target_lifecycle and getattr(project, "lifecycle_state", "") != target_lifecycle:
+            try:
+                project.action_set_lifecycle_state(target_lifecycle)
+            except Exception:
+                pass

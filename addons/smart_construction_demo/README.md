@@ -25,6 +25,13 @@ make demo.rebuild DB_NAME=sc_demo
 make demo.list DB_NAME=sc_demo
 ```
 
+标准产品场景别名：
+```bash
+make demo.load SCENARIO=project_normal DB_NAME=sc_demo
+make demo.load SCENARIO=project_over_budget DB_NAME=sc_demo
+make demo.load SCENARIO=project_payment_delay DB_NAME=sc_demo
+```
+
 加载单个场景：
 ```bash
 make demo.load SCENARIO=s10_contract_payment DB_NAME=sc_demo
@@ -217,6 +224,17 @@ make demo.verify DB_NAME=sc_demo
 | S40 | 失败路径（结构/金额/关联） | sc.settlement.order / sc.settlement.order.line / payment.request | fail conditions locked |
 
 发布态默认种子集合：`S00 + S10 + S20 + S30 + S60 + S90`
+
+## Product Hardening 场景别名
+
+| 别名 | 说明 | 当前映射 |
+| --- | --- | --- |
+| `project_normal` | 正常执行项目 | `s60_project_cockpit` |
+| `project_over_budget` | 超预算风险项目 | `s60_project_cockpit` |
+| `project_payment_delay` | 付款延迟风险项目 | `s60_project_cockpit` |
+
+官方样板映射见：
+- `docs/product/demo_evidence_scenarios_v1.md`
 
 发布态默认不加载：`S40 + S50`（过程/失败演练数据）
 
