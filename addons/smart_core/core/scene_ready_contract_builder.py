@@ -200,6 +200,21 @@ def _normalize_scene(item: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _scene_switch_catalog(rows: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    catalog: Dict[str, Dict[str, Any]] = {}
+    for row in rows or []:
+        payload = _as_dict(row)
+        scene_key = _text(payload.get("code") or payload.get("key"))
+        if not scene_key:
+            continue
+        target = _as_dict(payload.get("target"))
+        catalog[scene_key] = {
+            "label": _text(payload.get("name") or payload.get("title") or scene_key),
+            "route": _text(target.get("route")) or f"/s/{scene_key}",
+        }
+    return catalog
+
+
 def _normalize_actions(item: Dict[str, Any]) -> List[Dict[str, Any]]:
     target = item.get("target") if isinstance(item.get("target"), dict) else {}
     out: List[Dict[str, Any]] = []
@@ -1038,11 +1053,28 @@ def _scene_ready_entry(
     *,
     runtime_context: Dict[str, Any] | None = None,
     action_surface_strategy: Dict[str, Any] | None = None,
+    scene_catalog: Dict[str, Dict[str, Any]] | None = None,
 ) -> Dict[str, Any]:
     scene_key = _text(item.get("code") or item.get("key"))
     scene_payload = dict(item)
     runtime_ctx = runtime_context if isinstance(runtime_context, dict) else {}
     scene_provider_payload = _resolve_scene_provider_payload(scene_key, runtime_ctx)
+
+    if scene_provider_payload:
+        for field in (
+            "guidance",
+            "primary_action",
+            "next_action",
+            "fallback_strategy",
+            "delivery_handoff_v1",
+            "next_scene",
+            "next_scene_key",
+            "next_scene_route",
+        ):
+            current = scene_payload.get(field)
+            provider_value = scene_provider_payload.get(field)
+            if current in (None, {}, [], "") and provider_value not in (None, {}, [], ""):
+                scene_payload[field] = provider_value
 
     if not isinstance(scene_payload.get("actions"), list):
         provider_actions = scene_provider_payload.get("default_actions") if isinstance(scene_provider_payload.get("default_actions"), list) else []
@@ -1098,7 +1130,20 @@ def _scene_ready_entry(
         ui_base_contract=ui_base_contract,
         provider_registry=provider_registry,
     )
-    for field in ("surface", "view_modes", "sections", "projection", "action_surface", "runtime_policy", "scene_tier"):
+    for field in (
+        "surface",
+        "view_modes",
+        "sections",
+        "projection",
+        "action_surface",
+        "runtime_policy",
+        "scene_tier",
+        "guidance",
+        "primary_action",
+        "next_action",
+        "fallback_strategy",
+        "delivery_handoff_v1",
+    ):
         if field in compiled and compiled.get(field) not in (None, {}, []):
             continue
         source_value = scene_payload.get(field)
@@ -1116,6 +1161,9 @@ def _scene_ready_entry(
             compiled_action_surface["selection_mode"] = _text(seeded_action_surface.get("selection_mode"))
     if compiled_action_surface:
         compiled["action_surface"] = compiled_action_surface
+    related_scenes = _as_list(scene_payload.get("related_scenes"))
+    if related_scenes:
+        compiled["related_scenes"] = related_scenes
     compiled_search_surface = _normalize_search_surface(_as_dict(compiled.get("search_surface")))
     seeded_search_surface = _normalize_search_surface(_as_dict(scene_payload.get("search_surface")))
     if not _search_surface_nonempty(compiled_search_surface) and _search_surface_nonempty(seeded_search_surface):
@@ -1199,14 +1247,16 @@ def _scene_ready_entry(
                 return next_key, next_route
         return "", ""
 
-    next_scene_key = _text(item.get("next_scene") or item.get("next_scene_key"))
-    next_scene_route = _text(item.get("next_scene_route"))
-    if not next_scene_key and isinstance(item.get("runtime"), dict):
-        next_scene_key = _text(item.get("runtime", {}).get("next_scene") or item.get("runtime", {}).get("next_scene_key"))
-    if not next_scene_route and isinstance(item.get("runtime"), dict):
-        next_scene_route = _text(item.get("runtime", {}).get("next_scene_route"))
-    if not next_scene_key and isinstance(item.get("policies"), dict):
-        nav_policy = item.get("policies", {}).get("navigation_policy") if isinstance(item.get("policies", {}).get("navigation_policy"), dict) else {}
+    next_scene_key = _text(scene_payload.get("next_scene") or scene_payload.get("next_scene_key") or item.get("next_scene") or item.get("next_scene_key"))
+    next_scene_route = _text(scene_payload.get("next_scene_route") or item.get("next_scene_route"))
+    payload_runtime = scene_payload.get("runtime") if isinstance(scene_payload.get("runtime"), dict) else {}
+    if not next_scene_key and payload_runtime:
+        next_scene_key = _text(payload_runtime.get("next_scene") or payload_runtime.get("next_scene_key"))
+    if not next_scene_route and payload_runtime:
+        next_scene_route = _text(payload_runtime.get("next_scene_route"))
+    policies_payload = scene_payload.get("policies") if isinstance(scene_payload.get("policies"), dict) else item.get("policies") if isinstance(item.get("policies"), dict) else {}
+    if not next_scene_key and policies_payload:
+        nav_policy = policies_payload.get("navigation_policy") if isinstance(policies_payload.get("navigation_policy"), dict) else {}
         next_scene_key = _text(nav_policy.get("next_scene") or nav_policy.get("next_scene_key"))
         next_scene_route = next_scene_route or _text(nav_policy.get("next_scene_route"))
 
@@ -1241,7 +1291,11 @@ def _scene_ready_entry(
     compiled = apply_scene_ready_parser_semantic_bridge(compiled, ui_base_contract)
     compiled = apply_scene_ready_entry_semantic_bridge(compiled)
     compiled = apply_scene_ready_search_semantic_bridge(compiled)
-    compiled = apply_scene_ready_semantic_orchestration_bridge(compiled)
+    compiled = apply_scene_ready_semantic_orchestration_bridge(
+        compiled,
+        scene_key=scene_key,
+        scene_catalog=scene_catalog,
+    )
     compiled = apply_scene_ready_action_semantic_bridge(compiled)
     compiled_list_surface = _normalize_list_surface(compiled)
     seeded_list_surface = _normalize_list_surface(scene_payload)
@@ -1282,12 +1336,14 @@ def build_scene_ready_contract_v1(
             continue
         scene_rows.append(item)
     scene_rows.sort(key=lambda row: _text(row.get("code") or row.get("key")))
+    scene_catalog = _scene_switch_catalog(scene_rows)
 
     entries = [
         _scene_ready_entry(
             row,
             runtime_context=runtime_context,
             action_surface_strategy=action_surface_strategy,
+            scene_catalog=scene_catalog,
         )
         for row in scene_rows
     ]

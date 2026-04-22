@@ -39,6 +39,98 @@ class SystemInitPayloadBuilder:
     }
 
     @staticmethod
+    def _build_entry_target(*, scene_key: str = "", route: str = "", menu_id=None, action_id=None, model: str = "", record_id=None) -> dict:
+        normalized_scene_key = str(scene_key or "").strip()
+        if not normalized_scene_key:
+            normalized_scene_key = SystemInitPayloadBuilder._extract_scene_key_from_route(route)
+        if not normalized_scene_key:
+            return {}
+        target = {
+            "type": "scene",
+            "scene_key": normalized_scene_key,
+        }
+        normalized_route = str(route or "").strip()
+        if normalized_route:
+            target["route"] = normalized_route
+        compatibility = {}
+        if isinstance(menu_id, int) and menu_id > 0:
+            compatibility["menu_id"] = menu_id
+        if isinstance(action_id, int) and action_id > 0:
+            compatibility["action_id"] = action_id
+        normalized_model = str(model or "").strip()
+        if normalized_model:
+            compatibility["model"] = normalized_model
+        if isinstance(record_id, int) and record_id > 0:
+            compatibility["record_id"] = record_id
+        if normalized_model and isinstance(record_id, int) and record_id > 0:
+            record_entry = {
+                "model": normalized_model,
+                "record_id": record_id,
+            }
+            if isinstance(action_id, int) and action_id > 0:
+                record_entry["action_id"] = action_id
+            if isinstance(menu_id, int) and menu_id > 0:
+                record_entry["menu_id"] = menu_id
+            target["record_entry"] = record_entry
+        if compatibility:
+            target["compatibility_refs"] = compatibility
+        return target
+
+    @classmethod
+    def _normalize_default_route(cls, route_payload: dict | None) -> dict:
+        payload = dict(route_payload or {})
+        if not payload:
+            return payload
+        entry_target = cls._build_entry_target(
+            scene_key=str(payload.get("scene_key") or "").strip(),
+            route=str(payload.get("route") or "").strip(),
+            menu_id=payload.get("menu_id") if isinstance(payload.get("menu_id"), int) else None,
+            action_id=payload.get("action_id") if isinstance(payload.get("action_id"), int) else None,
+            model=str(payload.get("model") or "").strip(),
+            record_id=payload.get("record_id") if isinstance(payload.get("record_id"), int) else None,
+        )
+        if entry_target:
+            payload["entry_target"] = entry_target
+        return payload
+
+    @classmethod
+    def _normalize_role_surface(cls, role_surface: dict | None) -> dict:
+        payload = dict(role_surface or {})
+        if not payload:
+            return payload
+        entry_target = cls._build_entry_target(
+            scene_key=str(payload.get("landing_scene_key") or "").strip(),
+            route=str(payload.get("landing_path") or "").strip(),
+            menu_id=payload.get("landing_menu_id") if isinstance(payload.get("landing_menu_id"), int) else None,
+        )
+        if entry_target:
+            payload["landing_entry_target"] = entry_target
+        return payload
+
+    @classmethod
+    def _normalize_nav_tree(cls, nodes: list | None) -> list:
+        normalized = []
+        for node in nodes or []:
+            if not isinstance(node, dict):
+                continue
+            row = dict(node)
+            row["children"] = cls._normalize_nav_tree(row.get("children") if isinstance(row.get("children"), list) else [])
+            meta = dict(row.get("meta") or {})
+            entry_target = cls._build_entry_target(
+                scene_key=str(row.get("scene_key") or meta.get("scene_key") or "").strip(),
+                route=str(meta.get("route") or row.get("route") or "").strip(),
+                menu_id=row.get("menu_id") if isinstance(row.get("menu_id"), int) else None,
+                action_id=meta.get("action_id") if isinstance(meta.get("action_id"), int) else None,
+                model=str(meta.get("model") or row.get("model") or "").strip(),
+                record_id=meta.get("record_id") if isinstance(meta.get("record_id"), int) else None,
+            )
+            if entry_target:
+                meta["entry_target"] = entry_target
+            row["meta"] = meta
+            normalized.append(row)
+        return normalized
+
+    @staticmethod
     def _extract_scene_key_from_route(route: str) -> str:
         raw = str(route or "").strip()
         if not raw:
@@ -155,11 +247,11 @@ class SystemInitPayloadBuilder:
         params = params if isinstance(params, dict) else {}
         resolved_build_mode = build_mode or cls.resolve_build_mode(params)
 
-        nav = row.get("nav") if isinstance(row.get("nav"), list) else []
-        default_route = row.get("default_route") if isinstance(row.get("default_route"), dict) else {}
+        nav = cls._normalize_nav_tree(row.get("nav") if isinstance(row.get("nav"), list) else [])
+        default_route = cls._normalize_default_route(row.get("default_route") if isinstance(row.get("default_route"), dict) else {})
         intents = row.get("intents") if isinstance(row.get("intents"), list) else []
         feature_flags = row.get("feature_flags") if isinstance(row.get("feature_flags"), dict) else {}
-        role_surface = row.get("role_surface") if isinstance(row.get("role_surface"), dict) else {}
+        role_surface = cls._normalize_role_surface(row.get("role_surface") if isinstance(row.get("role_surface"), dict) else {})
         role_entries = row.get("role_entries") if isinstance(row.get("role_entries"), list) else []
         home_blocks = row.get("home_blocks") if isinstance(row.get("home_blocks"), list) else []
 
@@ -253,6 +345,13 @@ class SystemInitPayloadBuilder:
                 "semantic_view",
                 "semantic_page",
                 "view_type",
+                "guidance",
+                "primary_action",
+                "next_action",
+                "fallback_strategy",
+                "delivery_handoff_v1",
+                "runtime_handoff_surface",
+                "product_delivery_surface",
                 "permission_surface",
                 "workflow_surface",
                 "actions",
@@ -443,9 +542,9 @@ class SystemInitPayloadBuilder:
     ) -> dict:
         return {
             "user": user_dict,
-            "nav": nav_tree,
+            "nav": SystemInitPayloadBuilder._normalize_nav_tree(nav_tree),
             "nav_meta": nav_meta,
-            "default_route": default_route,
+            "default_route": SystemInitPayloadBuilder._normalize_default_route(default_route),
             "intents": intents,
             "feature_flags": feature_flags,
             "capabilities": capabilities,

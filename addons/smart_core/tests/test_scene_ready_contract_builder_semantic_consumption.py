@@ -70,6 +70,66 @@ target = _load_module(
 
 
 class TestSceneReadyContractBuilderSemanticConsumption(unittest.TestCase):
+    def test_scene_ready_promotes_provider_delivery_handoff_surface(self):
+        original = target._resolve_scene_provider_payload
+        target._resolve_scene_provider_payload = lambda _scene_key, _runtime_ctx=None: {
+            "guidance": {
+                "title": "合同中心",
+                "message": "先进入合同中心场景总览，再按工作台或监控分支继续处理合同任务。",
+            },
+            "primary_action": {
+                "label": "进入合同中心",
+                "route": "/s/contract.center",
+                "semantic": "contract_root_scene_entry",
+            },
+            "fallback_strategy": {
+                "type": "native_menu_compat",
+                "menu_xmlid": "smart_construction_core.menu_sc_contract_center",
+            },
+            "next_scene": "contracts.workspace",
+            "next_scene_route": "/s/contracts.workspace",
+            "delivery_handoff_v1": {
+                "family": "contracts",
+                "runtime_entry_type": "governed_user_flow",
+                "runtime_consumer": "family_runtime_consumer",
+                "runtime_mode": "direct",
+                "user_entry": "menu:smart_construction_core.menu_sc_contract_center",
+                "final_scene": "contract.center",
+                "primary_action": {
+                    "route": "/s/contract.center",
+                },
+                "acceptance": {
+                    "runtime_ready": True,
+                    "workflow_ready": True,
+                    "advisory_only": False,
+                },
+            },
+        }
+        try:
+            contract = target.build_scene_ready_contract_v1(
+                scenes=[
+                    {
+                        "code": "contract.center",
+                        "name": "合同中心",
+                        "layout": {"kind": "workspace"},
+                        "target": {"route": "/s/contract.center"},
+                    }
+                ],
+                role_surface={"landing_scene_key": "contract.center"},
+            )
+        finally:
+            target._resolve_scene_provider_payload = original
+        row = (contract.get("scenes") or [])[0]
+
+        self.assertEqual(((row.get("guidance") or {}).get("title")), "合同中心")
+        self.assertEqual(((row.get("primary_action") or {}).get("route")), "/s/contract.center")
+        self.assertEqual(((row.get("fallback_strategy") or {}).get("type")), "native_menu_compat")
+        self.assertEqual(row.get("next_scene"), "contracts.workspace")
+        self.assertEqual(row.get("next_scene_route"), "/s/contracts.workspace")
+        self.assertEqual(((row.get("delivery_handoff_v1") or {}).get("family")), "contracts")
+        self.assertEqual(((row.get("runtime_handoff_surface") or {}).get("final_scene")), "contract.center")
+        self.assertEqual(((row.get("product_delivery_surface") or {}).get("family")), "contracts")
+
     def test_workspace_scene_ready_prefers_parser_semantic_view_mode(self):
         contract = target.build_scene_ready_contract_v1(
             scenes=[
@@ -164,18 +224,39 @@ class TestSceneReadyContractBuilderSemanticConsumption(unittest.TestCase):
                         "available_view_modes": [{"key": "tree", "label": "列表"}],
                         "default_mode": "tree",
                     },
+                    "related_scenes": ["projects.ledger"],
+                },
+                {
+                    "code": "projects.ledger",
+                    "name": "项目台账",
+                    "layout": {"kind": "ledger"},
+                    "target": {"route": "/s/projects.ledger"},
                 }
             ],
             role_surface={"landing_scene_key": "projects.list"},
         )
-        row = (contract.get("scenes") or [])[0]
+        row = next(
+            (
+                item
+                for item in (contract.get("scenes") or [])
+                if ((item.get("scene") or {}).get("key")) == "projects.list"
+            ),
+            {},
+        )
         optimization = row.get("optimization_composition") or {}
+        switch_surface = row.get("switch_surface") or {}
+        switch_items = switch_surface.get("items") or []
 
         self.assertEqual((((optimization.get("toolbar_sections") or [])[0]).get("key")), "search")
         self.assertEqual((((optimization.get("toolbar_sections") or [])[1]).get("key")), "active_conditions")
         self.assertTrue(((optimization.get("active_conditions") or {}).get("visible")))
         self.assertEqual((((optimization.get("high_frequency_filters") or [])[0]).get("key")), "activities_today")
         self.assertTrue(((optimization.get("advanced_filters") or {}).get("collapsible")))
+        self.assertEqual(((switch_items[0] or {}).get("key")), "projects.list")
+        self.assertEqual(((switch_items[0] or {}).get("label")), "项目列表")
+        self.assertTrue(bool((switch_items[0] or {}).get("active")))
+        self.assertEqual(((switch_items[1] or {}).get("route")), "/s/projects.ledger")
+        self.assertEqual(((switch_items[1] or {}).get("label")), "项目台账")
 
 
 if __name__ == "__main__":
