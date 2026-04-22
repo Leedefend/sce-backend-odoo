@@ -134,51 +134,6 @@ MODEL_CODE_MAPPING = {
     "task": "project.task",
 }
 
-CREATE_FIELD_FALLBACKS = {
-    "project.project": {
-        "selection_defaults": {
-            "privacy_visibility": "followers",
-            "rating_status": "stage",
-            "last_update_status": "to_define",
-            "rating_status_period": "monthly",
-        }
-    }
-}
-
-SURFACE_NAV_ALLOWLIST = {
-    "construction_pm_v1": [
-        "project.management",
-        "projects.dashboard",
-        "projects.ledger",
-        "projects.intake",
-        "my_work.workspace",
-    ]
-}
-SURFACE_DEEP_LINK_ALLOWLIST = {
-    "construction_pm_v1": [
-        "contract.center",
-        "cost.budget_alloc",
-        "cost.cost_compare",
-        "cost.profit_compare",
-        "cost.project_boq",
-        "cost.project_budget",
-        "cost.project_cost_ledger",
-        "cost.project_progress",
-        "data.dictionary",
-        "finance.center",
-        "finance.operating_metrics",
-        "finance.payment_ledger",
-        "finance.payment_requests",
-        "finance.settlement_orders",
-        "finance.treasury_ledger",
-        "config.project_cost_code",
-        "risk.monitor",
-        "task.center",
-    ]
-}
-SURFACE_POLICY_DEFAULT_NAME = "construction_pm_v1"
-SURFACE_POLICY_DEFAULT_FILE = "docs/product/delivery/v1/construction_pm_v1_scene_surface_policy.json"
-
 CRITICAL_SCENE_TARGET_OVERRIDES = {
     "projects.list",
     "projects.detail",
@@ -196,6 +151,17 @@ CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES = {
     "my_work.workspace": "/my-work",
 }
 
+
+INDUSTRY_CREATE_FIELD_FALLBACKS = {
+    "project.project": {
+        "selection_defaults": {
+            "privacy_visibility": "followers",
+            "rating_status": "stage",
+            "last_update_status": "to_define",
+            "rating_status_period": "monthly",
+        }
+    }
+}
 
 def _as_text(value: Any) -> str:
     if isinstance(value, dict):
@@ -224,6 +190,67 @@ def _model_has_field(env, model_name: str, field_name: str) -> bool:
     if model_name not in env:
         return False
     return field_name in env[model_name]._fields
+
+
+def _step_status_label(status: str) -> str:
+    key = str(status or "").strip().lower()
+    if key == "active":
+        return "进行中"
+    if key in {"done", "completed"}:
+        return "已完成"
+    if key in {"pending", "todo", "planned"}:
+        return "待开始"
+    return "后端未提供步骤状态标签"
+
+
+def _build_enterprise_enablement_contract(env, user) -> Dict[str, Any]:
+    company = getattr(user, "company_id", None)
+    company_id = int(getattr(company, "id", 0) or 0)
+    company_name = str(getattr(company, "name", "") or "").strip()
+    steps = [
+        {
+            "key": "enterprise_company",
+            "label": "企业信息",
+            "status": "active" if company_id else "pending",
+            "status_label": _step_status_label("active" if company_id else "pending"),
+            "entry_xmlid": "smart_enterprise_base.action_enterprise_company",
+            "action_xmlid": "smart_enterprise_base.action_enterprise_company",
+            "next_hint": "请先补齐企业基础信息。",
+            "target": {"action_id": 0, "menu_id": 0, "route": ""},
+        },
+        {
+            "key": "enterprise_department",
+            "label": "组织结构",
+            "status": "pending",
+            "status_label": _step_status_label("pending"),
+            "entry_xmlid": "smart_enterprise_base.action_enterprise_department",
+            "action_xmlid": "smart_enterprise_base.action_enterprise_department",
+            "next_hint": "请补齐部门与岗位结构。",
+            "target": {"action_id": 0, "menu_id": 0, "route": ""},
+        },
+        {
+            "key": "enterprise_user",
+            "label": "用户设置",
+            "status": "pending",
+            "status_label": _step_status_label("pending"),
+            "entry_xmlid": "smart_enterprise_base.action_enterprise_user",
+            "action_xmlid": "smart_enterprise_base.action_enterprise_user",
+            "next_hint": "请完成用户、角色和账号初始化。",
+            "target": {"action_id": 0, "menu_id": 0, "route": ""},
+        },
+    ]
+    return {
+        "mainline": {
+            "version": "v1",
+            "phase": "sprint1" if company_id else "bootstrap",
+            "theme": "enterprise_enablement",
+            "entry_root_xmlid": "smart_enterprise_base.menu_enterprise_base_root",
+            "current_company_id": company_id,
+            "current_company_name": company_name,
+            "primary_action": steps[0].get("target") or {},
+            "steps": steps,
+        }
+    }
 
 
 def _build_task_action_rows(env, user) -> List[Dict[str, Any]]:
@@ -274,8 +301,6 @@ def _build_task_action_rows(env, user) -> List[Dict[str, Any]]:
                 "title": task_name,
                 "description": f"项目任务待处理：{project_name}" if project_name else "项目任务待处理",
                 "status": status,
-                "scene_key": "task.center",
-                "route": "/s/task.center",
                 "count": 1,
                 "source_detail": "factual_record",
                 "due_date": row.get("date_deadline"),
@@ -306,8 +331,6 @@ def _build_payment_action_rows(env) -> List[Dict[str, Any]]:
                 "title": f"付款申请待审批 · {req_name}",
                 "description": f"{project_name} 申请金额 {amount}" if project_name else f"申请金额 {amount}",
                 "status": "urgent",
-                "scene_key": "finance.payment_requests",
-                "route": "/s/finance.payment_requests",
                 "amount": amount,
                 "count": 1,
                 "source_detail": "factual_record",
@@ -341,8 +364,6 @@ def _build_risk_action_rows(env) -> List[Dict[str, Any]]:
                     "title": f"风险处置 · {title}",
                     "description": f"{project_name} 风险状态：{state}" if project_name else f"风险状态：{state}",
                     "status": status,
-                    "scene_key": "risk.center",
-                    "route": "/s/risk.center",
                     "count": 1,
                     "risk_action_id": int(row.get("id") or 0),
                     "source_detail": "mutation_record",
@@ -376,8 +397,6 @@ def _build_risk_action_rows(env) -> List[Dict[str, Any]]:
                 "title": f"项目风险预警 · {title}",
                 "description": "项目健康状态异常，请优先跟进。",
                 "status": status,
-                "scene_key": "risk.center",
-                "route": "/s/risk.center",
                 "count": 1,
                 "project_id": int(row.get("id") or 0),
                 "name": title,
@@ -408,8 +427,6 @@ def _build_project_action_rows(env, user) -> List[Dict[str, Any]]:
                     "title": f"项目跟进 · {title}",
                     "description": "项目状态需要关注，请进入项目管理跟进。",
                     "status": status,
-                    "scene_key": "project.management",
-                    "route": "/s/project.management",
                     "count": 1,
                     "source_detail": "factual_record",
                 }
@@ -417,10 +434,189 @@ def _build_project_action_rows(env, user) -> List[Dict[str, Any]]:
     return result
 
 
-def smart_core_register(registry):
-    """
-    Register construction demo intent into smart_core registry.
-    """
+def smart_core_identity_profile(env):
+    return {
+        "role_surface_map": ROLE_SURFACE_OVERRIDES,
+        "role_groups_explicit": ROLE_GROUPS_EXPLICIT,
+        "role_groups_capability_fallback": ROLE_GROUPS_CAPABILITY_FALLBACK,
+        "role_precedence": ROLE_PRECEDENCE,
+    }
+
+
+def smart_core_nav_scene_maps(env):
+    return {
+        "menu_scene_map": dict(NAV_MENU_SCENE_MAP),
+        "action_xmlid_scene_map": dict(NAV_ACTION_SCENE_MAP),
+        "model_view_scene_map": dict(NAV_MODEL_VIEW_SCENE_MAP),
+    }
+
+
+def smart_core_critical_scene_target_overrides(env):
+    return set(CRITICAL_SCENE_TARGET_OVERRIDES)
+
+
+def smart_core_critical_scene_target_route_overrides(env):
+    return dict(CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES)
+
+
+def get_server_action_window_map_contributions(env):
+    return dict(SERVER_ACTION_WINDOW_MAP)
+
+
+def get_file_upload_allowed_model_contributions(env):
+    return list(FILE_UPLOAD_ALLOWED_MODELS)
+
+
+def get_file_download_allowed_model_contributions(env):
+    return list(FILE_DOWNLOAD_ALLOWED_MODELS)
+
+
+def get_api_data_write_allowlist_contributions(env):
+    return {
+        str(model_name): list(field_names)
+        for model_name, field_names in API_DATA_WRITE_ALLOWLIST.items()
+    }
+
+
+def get_api_data_unlink_allowed_model_contributions(env):
+    return list(API_DATA_UNLINK_ALLOWED_MODELS)
+
+
+def get_model_code_mapping_contributions(env):
+    return dict(MODEL_CODE_MAPPING)
+
+
+def _build_role_entry_contract_rows(env) -> List[Dict[str, Any]]:
+    rows = _safe_search_read(
+        env,
+        "sc.dictionary",
+        domain=[("type", "=", "role_entry"), ("active", "=", True)],
+        fields=["code", "name", "scope_type", "scope_ref", "value_json", "sequence"],
+        limit=200,
+    )
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    for row in rows:
+        scope_type = _as_text(row.get("scope_type")) or "global"
+        scope_ref = _as_text(row.get("scope_ref"))
+        role_code = ""
+        if scope_type == "role":
+            role_code = scope_ref
+        elif scope_type in {"global", "company"}:
+            role_code = "__global__"
+        if not role_code:
+            continue
+
+        value_json = row.get("value_json") if isinstance(row.get("value_json"), dict) else {}
+        entry_key = (
+            _as_text(row.get("code"))
+            or _as_text(value_json.get("entry_key"))
+            or _as_text(row.get("name"))
+        )
+        if not entry_key:
+            continue
+
+        entry_type = _as_text(value_json.get("entry_type")) or "menu"
+        is_enabled = value_json.get("is_enabled")
+        if isinstance(is_enabled, bool):
+            enabled = is_enabled
+        else:
+            enabled = True
+        sequence = int(row.get("sequence") or 10)
+
+        grouped.setdefault(role_code, []).append(
+            {
+                "entry_key": entry_key,
+                "entry_type": entry_type,
+                "is_enabled": enabled,
+                "sequence": sequence,
+            }
+        )
+
+    contract_rows: List[Dict[str, Any]] = []
+    for role_code, entries in grouped.items():
+        sorted_entries = sorted(
+            entries,
+            key=lambda item: (
+                int(item.get("sequence") or 10),
+                str(item.get("entry_key") or ""),
+            ),
+        )
+        contract_rows.append(
+            {
+                "role_code": role_code,
+                "entries": sorted_entries,
+            }
+        )
+
+    return sorted(contract_rows, key=lambda item: str(item.get("role_code") or ""))
+
+
+def _build_home_block_contract_rows(env) -> List[Dict[str, Any]]:
+    rows = _safe_search_read(
+        env,
+        "sc.dictionary",
+        domain=[("type", "=", "home_block"), ("active", "=", True)],
+        fields=["code", "name", "scope_type", "scope_ref", "value_json", "sequence"],
+        limit=200,
+    )
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    for row in rows:
+        scope_type = _as_text(row.get("scope_type")) or "global"
+        scope_ref = _as_text(row.get("scope_ref"))
+        role_code = ""
+        if scope_type == "role":
+            role_code = scope_ref
+        elif scope_type == "global":
+            role_code = "__global__"
+        if not role_code:
+            continue
+
+        value_json = row.get("value_json") if isinstance(row.get("value_json"), dict) else {}
+        block_key = (
+            _as_text(row.get("code"))
+            or _as_text(value_json.get("block_key"))
+            or _as_text(row.get("name"))
+        )
+        if not block_key:
+            continue
+
+        is_enabled = value_json.get("is_enabled")
+        if isinstance(is_enabled, bool):
+            enabled = is_enabled
+        else:
+            enabled = True
+        if not enabled:
+            continue
+
+        sequence = int(row.get("sequence") or 10)
+        grouped.setdefault(role_code, []).append(
+            {
+                "block_key": block_key,
+                "sequence": sequence,
+            }
+        )
+
+    contract_rows: List[Dict[str, Any]] = []
+    for role_code, blocks in grouped.items():
+        sorted_blocks = sorted(
+            blocks,
+            key=lambda item: (
+                int(item.get("sequence") or 10),
+                str(item.get("block_key") or ""),
+            ),
+        )
+        contract_rows.append(
+            {
+                "role_code": role_code,
+                "blocks": [str(item.get("block_key") or "") for item in sorted_blocks if str(item.get("block_key") or "")],
+            }
+        )
+
+    return sorted(contract_rows, key=lambda item: str(item.get("role_code") or ""))
+
+
+def get_intent_handler_contributions():
+    """Return construction intent handler contributions for platform loader."""
     try:
         from odoo.addons.smart_construction_core.handlers.system_ping_construction import (
             SystemPingConstructionHandler,
@@ -468,6 +664,69 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.risk_action_execute import (
             RiskActionExecuteHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.project_initiation_enter import (
+            ProjectInitiationEnterHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.project_dashboard_open import (
+            ProjectDashboardOpenHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.project_dashboard_enter import (
+            ProjectDashboardEnterHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.project_entry_context_resolve import (
+            ProjectEntryContextResolveHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.project_entry_context_options import (
+            ProjectEntryContextOptionsHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.business_evidence_trace import (
+            BusinessEvidenceTraceHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.project_dashboard_block_fetch import (
+            ProjectDashboardBlockFetchHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.project_plan_bootstrap_enter import (
+            ProjectPlanBootstrapEnterHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.project_plan_bootstrap_block_fetch import (
+            ProjectPlanBootstrapBlockFetchHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.project_execution_enter import (
+            ProjectExecutionEnterHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.project_execution_block_fetch import (
+            ProjectExecutionBlockFetchHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.project_execution_advance import (
+            ProjectExecutionAdvanceHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.project_connection_transition import (
+            ProjectConnectionTransitionHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.cost_tracking_enter import (
+            CostTrackingEnterHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.cost_tracking_block_fetch import (
+            CostTrackingBlockFetchHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.cost_tracking_record_create import (
+            CostTrackingRecordCreateHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.payment_slice_enter import (
+            PaymentSliceEnterHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.payment_slice_block_fetch import (
+            PaymentSliceBlockFetchHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.payment_slice_record_create import (
+            PaymentSliceRecordCreateHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.settlement_slice_enter import (
+            SettlementSliceEnterHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.settlement_slice_block_fetch import (
+            SettlementSliceBlockFetchHandler,
+        )
         from odoo.addons.smart_construction_core.handlers.app_catalog import (
             AppCatalogHandler,
         )
@@ -478,238 +737,331 @@ def smart_core_register(registry):
             AppOpenHandler,
         )
     except Exception as e:
-        _logger.warning("[smart_core_register] import handler failed: %s", e)
-        return
+        _logger.warning("[get_intent_handler_contributions] import handler failed: %s", e)
+        return []
 
-    registry["system.ping.construction"] = SystemPingConstructionHandler
-    registry["capability.describe"] = CapabilityDescribeHandler
-    registry["my.work.summary"] = MyWorkSummaryHandler
-    registry["my.work.complete"] = MyWorkCompleteHandler
-    registry["my.work.complete_batch"] = MyWorkCompleteBatchHandler
-    registry["usage.track"] = UsageTrackHandler
-    registry["telemetry.track"] = TelemetryTrackHandler
-    registry["usage.report"] = UsageReportHandler
-    registry["usage.export.csv"] = UsageExportCsvHandler
-    registry["capability.visibility.report"] = CapabilityVisibilityReportHandler
-    registry["payment.request.submit"] = PaymentRequestSubmitHandler
-    registry["payment.request.approve"] = PaymentRequestApproveHandler
-    registry["payment.request.reject"] = PaymentRequestRejectHandler
-    registry["payment.request.done"] = PaymentRequestDoneHandler
-    registry["payment.request.available_actions"] = PaymentRequestAvailableActionsHandler
-    registry["payment.request.execute"] = PaymentRequestExecuteHandler
-    registry["project.dashboard"] = ProjectDashboardHandler
-    registry["risk.action.execute"] = RiskActionExecuteHandler
-    registry["app.catalog"] = AppCatalogHandler
-    registry["app.nav"] = AppNavHandler
-    registry["app.open"] = AppOpenHandler
-    _logger.info("[smart_core_register] registered system.ping.construction")
-    _logger.info("[smart_core_register] registered capability.describe")
-    _logger.info("[smart_core_register] registered my.work.summary")
-    _logger.info("[smart_core_register] registered my.work.complete")
-    _logger.info("[smart_core_register] registered my.work.complete_batch")
-    _logger.info("[smart_core_register] registered usage.track")
-    _logger.info("[smart_core_register] registered telemetry.track")
-    _logger.info("[smart_core_register] registered usage.report")
-    _logger.info("[smart_core_register] registered usage.export.csv")
-    _logger.info("[smart_core_register] registered capability.visibility.report")
-    _logger.info("[smart_core_register] registered payment.request.submit")
-    _logger.info("[smart_core_register] registered payment.request.approve")
-    _logger.info("[smart_core_register] registered payment.request.reject")
-    _logger.info("[smart_core_register] registered payment.request.done")
-    _logger.info("[smart_core_register] registered payment.request.available_actions")
-    _logger.info("[smart_core_register] registered payment.request.execute")
-    _logger.info("[smart_core_register] registered project.dashboard")
-    _logger.info("[smart_core_register] registered risk.action.execute")
-    _logger.info("[smart_core_register] registered app.catalog")
-    _logger.info("[smart_core_register] registered app.nav")
-    _logger.info("[smart_core_register] registered app.open")
+    mapping = [
+        ("system.ping.construction", SystemPingConstructionHandler),
+        ("capability.describe", CapabilityDescribeHandler),
+        ("my.work.summary", MyWorkSummaryHandler),
+        ("my.work.complete", MyWorkCompleteHandler),
+        ("my.work.complete_batch", MyWorkCompleteBatchHandler),
+        ("usage.track", UsageTrackHandler),
+        ("telemetry.track", TelemetryTrackHandler),
+        ("usage.report", UsageReportHandler),
+        ("usage.export.csv", UsageExportCsvHandler),
+        ("capability.visibility.report", CapabilityVisibilityReportHandler),
+        ("payment.request.submit", PaymentRequestSubmitHandler),
+        ("payment.request.approve", PaymentRequestApproveHandler),
+        ("payment.request.reject", PaymentRequestRejectHandler),
+        ("payment.request.done", PaymentRequestDoneHandler),
+        ("payment.request.available_actions", PaymentRequestAvailableActionsHandler),
+        ("payment.request.execute", PaymentRequestExecuteHandler),
+        ("project.dashboard", ProjectDashboardHandler),
+        ("project.dashboard.open", ProjectDashboardOpenHandler),
+        ("project.dashboard.enter", ProjectDashboardEnterHandler),
+        ("project.entry.context.resolve", ProjectEntryContextResolveHandler),
+        ("project.entry.context.options", ProjectEntryContextOptionsHandler),
+        ("business.evidence.trace", BusinessEvidenceTraceHandler),
+        ("project.dashboard.block.fetch", ProjectDashboardBlockFetchHandler),
+        ("project.plan_bootstrap.enter", ProjectPlanBootstrapEnterHandler),
+        ("project.plan_bootstrap.block.fetch", ProjectPlanBootstrapBlockFetchHandler),
+        ("project.execution.enter", ProjectExecutionEnterHandler),
+        ("project.execution.block.fetch", ProjectExecutionBlockFetchHandler),
+        ("project.execution.advance", ProjectExecutionAdvanceHandler),
+        ("project.connection.transition", ProjectConnectionTransitionHandler),
+        ("cost.tracking.enter", CostTrackingEnterHandler),
+        ("cost.tracking.block.fetch", CostTrackingBlockFetchHandler),
+        ("cost.tracking.record.create", CostTrackingRecordCreateHandler),
+        ("payment.enter", PaymentSliceEnterHandler),
+        ("payment.block.fetch", PaymentSliceBlockFetchHandler),
+        ("payment.record.create", PaymentSliceRecordCreateHandler),
+        ("settlement.enter", SettlementSliceEnterHandler),
+        ("settlement.block.fetch", SettlementSliceBlockFetchHandler),
+        ("project.initiation.enter", ProjectInitiationEnterHandler),
+        ("risk.action.execute", RiskActionExecuteHandler),
+        ("app.catalog", AppCatalogHandler),
+        ("app.nav", AppNavHandler),
+        ("app.open", AppOpenHandler),
+    ]
+    return [
+        {
+            "intent": intent,
+            "handler": handler,
+            "source_module": "smart_construction_core",
+            "domain": "construction",
+            "status": "active",
+        }
+        for intent, handler in mapping
+    ]
 
 
-def smart_core_identity_profile(env):
-    del env
-    return {
-        "role_surface_map": ROLE_SURFACE_OVERRIDES,
-        "role_groups_explicit": ROLE_GROUPS_EXPLICIT,
-        "role_groups_capability_fallback": ROLE_GROUPS_CAPABILITY_FALLBACK,
-        "role_precedence": ROLE_PRECEDENCE,
-    }
-
-
-def smart_core_list_capabilities_for_user(env, user):
+def get_capability_contributions(env, user):
     try:
         from odoo.addons.smart_construction_core.services.capability_registry import (
             list_capabilities_for_user as registry_list_capabilities_for_user,
         )
     except Exception:
-        return None
+        return []
     try:
         capabilities = registry_list_capabilities_for_user(env, user)
     except Exception:
-        return None
-    return capabilities if isinstance(capabilities, list) and capabilities else None
+        return []
+    if not isinstance(capabilities, list) or not capabilities:
+        return []
+
+    out = []
+    for row in capabilities:
+        if not isinstance(row, dict):
+            continue
+        key = str(row.get("key") or "").strip()
+        if not key:
+            continue
+        identity_name = str(row.get("name") or row.get("ui_label") or key).strip() or key
+        group_key = str(row.get("group_key") or "others").strip() or "others"
+        intent_name = str(row.get("intent") or "ui.contract").strip() or "ui.contract"
+        entry_target = row.get("entry_target") if isinstance(row.get("entry_target"), dict) else {}
+        entry_scene_key = str(entry_target.get("scene_key") or "").strip()
+        item = {
+            "key": key,
+            "name": identity_name,
+            "domain": str(key.split(".")[0] if "." in key else "construction").strip() or "construction",
+            "type": "entry",
+            "source_module": "smart_construction_core",
+            "owner_module": "smart_core",
+            "status": str(row.get("status") or "ga").strip().lower() or "ga",
+            "group_key": group_key,
+            "group_label": str(row.get("group_label") or "").strip(),
+            "group_icon": str(row.get("group_icon") or "").strip(),
+            "group_sequence": int(row.get("group_sequence") or 0),
+            "ui_label": str(row.get("ui_label") or identity_name).strip(),
+            "ui_hint": str(row.get("ui_hint") or "").strip(),
+            "intent": intent_name,
+            "required_roles": [str(x).strip() for x in (row.get("required_roles") or []) if str(x).strip()],
+            "required_groups": [str(x).strip() for x in (row.get("required_groups") or []) if str(x).strip()],
+            "entry_target": dict(entry_target),
+            "sequence": int(row.get("sequence") or 0),
+            "tags": list(row.get("tags") or []),
+            "identity": {
+                "key": key,
+                "name": identity_name,
+                "domain": str(key.split(".")[0] if "." in key else "construction").strip() or "construction",
+                "type": "entry",
+                "version": "v1",
+            },
+            "ownership": {
+                "owner_module": "smart_core",
+                "source_module": "smart_construction_core",
+                "source_kind": "industry_contribution",
+            },
+            "ui": {
+                "label": str(row.get("ui_label") or identity_name).strip(),
+                "hint": str(row.get("ui_hint") or "").strip(),
+                "group_key": group_key,
+                "icon": str(row.get("group_icon") or "").strip(),
+                "sequence": int(row.get("sequence") or 0),
+                "tags": list(row.get("tags") or []),
+            },
+            "binding": {
+                "scene": {
+                    "entry_scene_key": entry_scene_key,
+                    "target_mode": str(entry_target.get("target_mode") or "scene").strip() or "scene",
+                },
+                "intent": {
+                    "primary_intent": intent_name,
+                },
+                "contract": {
+                    "subject": "scene",
+                    "contract_type": "entry_contract",
+                    "contract_version": "v1",
+                },
+                "exposure": {
+                    "group_key": group_key,
+                },
+            },
+            "permission": {
+                "required_roles": [str(x).strip() for x in (row.get("required_roles") or []) if str(x).strip()],
+                "required_groups": [str(x).strip() for x in (row.get("required_groups") or []) if str(x).strip()],
+                "access_mode": "execute",
+                "data_scope": "user_env",
+            },
+            "release": {
+                "tier": "standard",
+                "slice": "",
+                "exposure_mode": "default",
+                "approval_required": False,
+                "feature_flag": "",
+            },
+            "lifecycle": {
+                "status": str(row.get("status") or "ga").strip().lower() or "ga",
+                "deprecated": False,
+                "replacement_key": "",
+                "introduced_in": "",
+                "sunset_after": "",
+            },
+            "runtime": {
+                "supports_entry": True,
+                "supports_execute": False,
+                "supports_batch": False,
+                "safe_fallback": "workspace.home",
+            },
+            "audit": {
+                "audit_enabled": True,
+                "policy_trace_enabled": True,
+                "owner_trace": "smart_construction_core.get_capability_contributions",
+            },
+        }
+        out.append(item)
+    return out
 
 
-def smart_core_capability_groups(env):
+def get_capability_contributions_with_timings(env, user):
+    try:
+        from odoo.addons.smart_construction_core.services.capability_registry import (
+            list_capabilities_for_user_with_timings as registry_list_capabilities_for_user_with_timings,
+        )
+    except Exception:
+        return [], {}
+    try:
+        capabilities, timings_ms = registry_list_capabilities_for_user_with_timings(env, user)
+    except Exception:
+        return [], {}
+    if not isinstance(capabilities, list) or not capabilities:
+        return [], timings_ms if isinstance(timings_ms, dict) else {}
+
+    out = []
+    for row in capabilities:
+        if not isinstance(row, dict):
+            continue
+        key = str(row.get("key") or "").strip()
+        if not key:
+            continue
+        identity_name = str(row.get("name") or row.get("ui_label") or key).strip() or key
+        group_key = str(row.get("group_key") or "others").strip() or "others"
+        intent_name = str(row.get("intent") or "ui.contract").strip() or "ui.contract"
+        entry_target = row.get("entry_target") if isinstance(row.get("entry_target"), dict) else {}
+        entry_scene_key = str(entry_target.get("scene_key") or "").strip()
+        item = {
+            "key": key,
+            "name": identity_name,
+            "domain": str(key.split(".")[0] if "." in key else "construction").strip() or "construction",
+            "type": "entry",
+            "source_module": "smart_construction_core",
+            "owner_module": "smart_core",
+            "status": str(row.get("status") or "ga").strip().lower() or "ga",
+            "group_key": group_key,
+            "group_label": str(row.get("group_label") or "").strip(),
+            "group_icon": str(row.get("group_icon") or "").strip(),
+            "group_sequence": int(row.get("group_sequence") or 0),
+            "ui_label": str(row.get("ui_label") or identity_name).strip(),
+            "ui_hint": str(row.get("ui_hint") or "").strip(),
+            "intent": intent_name,
+            "required_roles": [str(x).strip() for x in (row.get("required_roles") or []) if str(x).strip()],
+            "required_groups": [str(x).strip() for x in (row.get("required_groups") or []) if str(x).strip()],
+            "entry_target": dict(entry_target),
+            "sequence": int(row.get("sequence") or 0),
+            "tags": list(row.get("tags") or []),
+            "identity": {
+                "key": key,
+                "name": identity_name,
+                "domain": str(key.split(".")[0] if "." in key else "construction").strip() or "construction",
+                "type": "entry",
+                "version": "v1",
+            },
+            "ownership": {
+                "owner_module": "smart_core",
+                "source_module": "smart_construction_core",
+                "source_kind": "industry_contribution",
+            },
+            "ui": {
+                "label": str(row.get("ui_label") or identity_name).strip(),
+                "hint": str(row.get("ui_hint") or "").strip(),
+                "group_key": group_key,
+                "icon": str(row.get("group_icon") or "").strip(),
+                "sequence": int(row.get("sequence") or 0),
+                "tags": list(row.get("tags") or []),
+            },
+            "binding": {
+                "scene": {
+                    "entry_scene_key": entry_scene_key,
+                    "target_mode": str(entry_target.get("target_mode") or "scene").strip() or "scene",
+                },
+                "intent": {
+                    "primary_intent": intent_name,
+                },
+                "contract": {
+                    "subject": "scene",
+                    "contract_type": "entry_contract",
+                    "contract_version": "v1",
+                },
+                "exposure": {
+                    "group_key": group_key,
+                },
+            },
+            "permission": {
+                "required_roles": [str(x).strip() for x in (row.get("required_roles") or []) if str(x).strip()],
+                "required_groups": [str(x).strip() for x in (row.get("required_groups") or []) if str(x).strip()],
+                "access_mode": "execute",
+                "data_scope": "user_env",
+            },
+            "release": {
+                "tier": "standard",
+                "slice": "",
+                "exposure_mode": "default",
+                "approval_required": False,
+                "feature_flag": "",
+            },
+            "lifecycle": {
+                "status": str(row.get("status") or "ga").strip().lower() or "ga",
+                "deprecated": False,
+                "replacement_key": "",
+                "introduced_in": "",
+                "sunset_after": "",
+            },
+            "runtime": {
+                "supports_entry": True,
+                "supports_execute": False,
+                "supports_batch": False,
+                "safe_fallback": "workspace.home",
+            },
+            "audit": {
+                "audit_enabled": True,
+                "policy_trace_enabled": True,
+                "owner_trace": "smart_construction_core.get_capability_contributions",
+            },
+        }
+        out.append(item)
+    return out, timings_ms if isinstance(timings_ms, dict) else {}
+
+
+def get_capability_group_contributions(env):
     del env
     try:
         from odoo.addons.smart_construction_core.services.capability_registry import CAPABILITY_GROUPS
     except Exception:
-        return None
-    return [dict(item) for item in CAPABILITY_GROUPS if isinstance(item, dict)]
+        return []
+    out = []
+    for item in CAPABILITY_GROUPS:
+        if not isinstance(item, dict):
+            continue
+        row = dict(item)
+        row.setdefault("source_module", "smart_construction_core")
+        out.append(row)
+    return out
 
 
-def smart_core_nav_scene_maps(env):
+def get_create_field_fallback_contributions(env, model_name):
     del env
-    return {
-        "menu_scene_map": NAV_MENU_SCENE_MAP,
-        "action_xmlid_scene_map": NAV_ACTION_SCENE_MAP,
-        "model_view_scene_map": NAV_MODEL_VIEW_SCENE_MAP,
-    }
+    return dict(INDUSTRY_CREATE_FIELD_FALLBACKS.get(str(model_name or ""), {}))
 
 
-def smart_core_scene_package_service_class(env):
-    del env
-    try:
-        from odoo.addons.smart_construction_scene.services.scene_package_service import ScenePackageService
-    except Exception:
-        return None
-    return ScenePackageService
-
-
-def smart_core_scene_governance_service_class(env):
-    del env
-    try:
-        from odoo.addons.smart_construction_scene.services.scene_governance_service import SceneGovernanceService
-    except Exception:
-        return None
-    return SceneGovernanceService
-
-
-def smart_core_load_scene_configs(env, *, drift=None):
-    try:
-        from odoo.addons.smart_construction_scene.scene_registry import load_scene_configs
-    except Exception:
-        return None
-    try:
-        return load_scene_configs(env, drift=drift)
-    except Exception:
-        return None
-
-
-def smart_core_has_db_scenes(env):
-    try:
-        from odoo.addons.smart_construction_scene.scene_registry import has_db_scenes
-    except Exception:
-        return None
-    try:
-        return bool(has_db_scenes(env))
-    except Exception:
-        return None
-
-
-def smart_core_get_scene_version(env):
-    del env
-    try:
-        from odoo.addons.smart_construction_scene.scene_registry import get_scene_version
-    except Exception:
-        return None
-    try:
-        return get_scene_version()
-    except Exception:
-        return None
-
-
-def smart_core_get_schema_version(env):
-    del env
-    try:
-        from odoo.addons.smart_construction_scene.scene_registry import get_schema_version
-    except Exception:
-        return None
-    try:
-        return get_schema_version()
-    except Exception:
-        return None
-
-
-def smart_core_server_action_window_map(env):
-    del env
-    return dict(SERVER_ACTION_WINDOW_MAP)
-
-
-def smart_core_file_upload_allowed_models(env):
-    del env
-    return list(FILE_UPLOAD_ALLOWED_MODELS)
-
-
-def smart_core_file_download_allowed_models(env):
-    del env
-    return list(FILE_DOWNLOAD_ALLOWED_MODELS)
-
-
-def smart_core_api_data_write_allowlist(env):
-    del env
-    return {str(model): list(fields) for model, fields in API_DATA_WRITE_ALLOWLIST.items()}
-
-
-def smart_core_api_data_unlink_allowed_models(env):
-    del env
-    return list(API_DATA_UNLINK_ALLOWED_MODELS)
-
-
-def smart_core_model_code_mapping(env):
-    del env
-    return dict(MODEL_CODE_MAPPING)
-
-
-def smart_core_create_field_fallbacks(env, model_name):
-    del env
-    return dict(CREATE_FIELD_FALLBACKS.get(str(model_name or ""), {}))
-
-
-def smart_core_surface_nav_allowlist(env):
-    del env
-    return {str(surface): list(codes) for surface, codes in SURFACE_NAV_ALLOWLIST.items()}
-
-
-def smart_core_surface_deep_link_allowlist(env):
-    del env
-    return {str(surface): list(codes) for surface, codes in SURFACE_DEEP_LINK_ALLOWLIST.items()}
-
-
-def smart_core_surface_policy_default_name(env):
-    del env
-    return SURFACE_POLICY_DEFAULT_NAME
-
-
-def smart_core_surface_policy_file_default(env):
-    del env
-    return SURFACE_POLICY_DEFAULT_FILE
-
-
-def smart_core_critical_scene_target_overrides(env):
-    del env
-    return list(CRITICAL_SCENE_TARGET_OVERRIDES)
-
-
-def smart_core_critical_scene_target_route_overrides(env):
-    del env
-    return dict(CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES)
-
-
-def smart_core_extend_system_init(data, env, user):
-    """
-    Enrich smart_core system.init response with construction facts only.
-    Contract shape fields (e.g. scenes/capabilities) are owned by smart_core.
-    """
+def get_system_init_fact_contributions(env, user, context=None):
+    """Return construction system.init facts contribution payload."""
+    del context
     try:
         Entitlement = env.get("sc.entitlement")
         Usage = env.get("sc.usage.counter")
-        ext_facts = data.get("ext_facts")
-        if not isinstance(ext_facts, dict):
-            ext_facts = {}
-        module_facts = ext_facts.get("smart_construction_core")
-        if not isinstance(module_facts, dict):
-            module_facts = {}
+        module_facts = {}
         if Entitlement:
             module_facts["entitlements"] = Entitlement.get_payload(user)
         if Usage:
@@ -734,17 +1086,136 @@ def smart_core_extend_system_init(data, env, user):
             "project_actions": len(project_rows),
         }
 
-        module_facts["role_surface_override_provider"] = {
-            "key": "smart_construction_core",
-            "enabled": True,
-            "priority": 100,
-            "domain_key": "construction",
-            "root_xmlids": ["smart_construction_core.menu_sc_root"],
-            "scene_codes": ["portal.dashboard", "project.management", "projects.list", "projects.intake"],
-            "role_surface_overrides": ROLE_SURFACE_OVERRIDES,
-        }
+        role_entries = _build_role_entry_contract_rows(env)
+        if role_entries:
+            module_facts["role_entries"] = role_entries
 
-        ext_facts["smart_construction_core"] = module_facts
-        data["ext_facts"] = ext_facts
+        home_blocks = _build_home_block_contract_rows(env)
+        if home_blocks:
+            module_facts["home_blocks"] = home_blocks
+
+        enterprise_enablement = _build_enterprise_enablement_contract(env, user)
+        if enterprise_enablement:
+            module_facts["enterprise_enablement"] = enterprise_enablement
+
+        return {
+            "module": "smart_construction_core",
+            "facts": module_facts,
+            "collections": module_facts.get("workspace_collections") or {},
+            "meta": {
+                "source": "smart_construction_core",
+                "status": "active",
+            },
+        }
     except Exception as exc:
-        _logger.warning("[smart_core_extend_system_init] failed: %s", exc)
+        _logger.warning("[get_system_init_fact_contributions] failed: %s", exc)
+        return None
+
+
+def smart_core_extend_system_init(data, env, user):
+    """Legacy hook shim: write construction facts only under data['ext_facts']."""
+    if not isinstance(data, dict):
+        return data
+
+    contribution = get_system_init_fact_contributions(env, user)
+    ext_facts = data.get("ext_facts")
+    if not isinstance(ext_facts, dict):
+        ext_facts = {}
+    if isinstance(contribution, dict):
+        module_key = str(contribution.get("module") or "smart_construction_core").strip() or "smart_construction_core"
+        facts_payload = contribution.get("facts") if isinstance(contribution.get("facts"), dict) else {}
+        ext_facts[module_key] = dict(facts_payload)
+    data["ext_facts"] = ext_facts
+    return data
+
+
+def smart_core_describe_project_capabilities(env, project):
+    from odoo.addons.smart_construction_core.services.lifecycle_capability_service import (
+        LifecycleCapabilityService,
+    )
+
+    return LifecycleCapabilityService(env).describe_project(project)
+
+
+def smart_core_build_portal_dashboard(env):
+    from odoo.addons.smart_construction_core.services.portal_dashboard_service import (
+        PortalDashboardService,
+    )
+
+    return PortalDashboardService(env).build_dashboard()
+
+
+def smart_core_build_capability_matrix(env):
+    from odoo.addons.smart_construction_core.services.capability_matrix_service import (
+        CapabilityMatrixService,
+    )
+
+    return CapabilityMatrixService(env).build_matrix()
+
+
+def smart_core_get_project_insight(env, record, scene):
+    from odoo.addons.smart_construction_core.services.insight.project_insight_service import (
+        ProjectInsightService,
+    )
+
+    return ProjectInsightService(env).get_insight(record, scene=scene)
+
+
+def smart_core_build_portal_execute_button_contract(env, model, res_id, method):
+    from odoo.addons.smart_construction_core.services.portal_execute_button_service import (
+        PortalExecuteButtonService,
+    )
+
+    return PortalExecuteButtonService(env).build_contract(
+        model=model,
+        res_id=res_id,
+        method=method,
+    )
+
+
+def smart_core_build_project_execution_service(env):
+    from odoo.addons.smart_construction_core.services.project_execution_service import (
+        ProjectExecutionService,
+    )
+
+    return ProjectExecutionService(env)
+
+
+def smart_core_build_project_dashboard_service(env):
+    from odoo.addons.smart_construction_core.services.project_dashboard_service import (
+        ProjectDashboardService,
+    )
+
+    return ProjectDashboardService(env)
+
+
+def smart_core_build_project_plan_bootstrap_service(env):
+    from odoo.addons.smart_construction_core.services.project_plan_bootstrap_service import (
+        ProjectPlanBootstrapService,
+    )
+
+    return ProjectPlanBootstrapService(env)
+
+
+def smart_core_build_cost_tracking_service(env):
+    from odoo.addons.smart_construction_core.services.cost_tracking_service import (
+        CostTrackingService,
+    )
+
+    return CostTrackingService(env)
+
+
+def smart_core_build_payment_slice_service(env):
+    from odoo.addons.smart_construction_core.services.payment_slice_service import (
+        PaymentSliceService,
+    )
+
+    return PaymentSliceService(env)
+
+
+def smart_core_build_settlement_slice_service(env):
+    from odoo.addons.smart_construction_core.services.settlement_slice_service import (
+        SettlementSliceService,
+    )
+
+    return SettlementSliceService(env)
