@@ -7,6 +7,149 @@ from odoo.exceptions import AccessError
 _logger = logging.getLogger(__name__)
 
 
+ROLE_SURFACE_OVERRIDES = {
+    "owner": {
+        "landing_scene_candidates": ["projects.list", "projects.intake"],
+        "menu_xmlids": [
+            "smart_construction_core.menu_sc_project_center",
+            "smart_construction_core.menu_sc_contract_center",
+        ],
+    },
+    "pm": {
+        "landing_scene_candidates": ["portal.dashboard", "projects.ledger", "projects.list", "projects.intake"],
+        "menu_xmlids": [
+            "smart_construction_core.menu_sc_project_center",
+            "smart_construction_core.menu_sc_contract_center",
+            "smart_construction_core.menu_sc_cost_center",
+        ],
+        "menu_blocklist_xmlids": ["smart_construction_core.menu_sc_project_manage"],
+    },
+    "finance": {
+        "landing_scene_candidates": ["finance.payment_requests", "projects.ledger", "projects.list"],
+        "menu_xmlids": [
+            "smart_construction_core.menu_sc_finance_center",
+            "smart_construction_core.menu_sc_settlement_center",
+            "smart_construction_core.menu_payment_request",
+        ],
+    },
+    "executive": {
+        "landing_scene_candidates": ["portal.dashboard", "project.management", "projects.list", "projects.ledger", "projects.intake"],
+        "menu_xmlids": [
+            "smart_construction_core.menu_sc_root",
+            "smart_construction_core.menu_sc_projection_root",
+            "smart_construction_core.menu_sc_project_center",
+        ],
+    },
+}
+
+ROLE_GROUPS_EXPLICIT = {
+    "executive": {
+        "smart_construction_custom.group_sc_role_executive",
+        "smart_construction_core.group_sc_super_admin",
+        "smart_construction_core.group_sc_cap_config_admin",
+        "base.group_system",
+    },
+    "pm": {
+        "smart_construction_custom.group_sc_role_pm",
+        "smart_construction_custom.group_sc_role_project_manager",
+        "smart_construction_custom.group_sc_role_project_user",
+        "smart_construction_core.group_sc_role_project_manager",
+    },
+    "finance": {
+        "smart_construction_custom.group_sc_role_finance",
+        "smart_construction_custom.group_sc_role_payment_manager",
+        "smart_construction_custom.group_sc_role_payment_user",
+        "smart_construction_custom.group_sc_role_payment_read",
+        "smart_construction_core.group_sc_role_finance_manager",
+        "smart_construction_core.group_sc_role_finance_user",
+    },
+}
+
+ROLE_GROUPS_CAPABILITY_FALLBACK = {
+    "pm": {
+        "smart_construction_core.group_sc_cap_project_manager",
+        "smart_construction_core.group_sc_cap_project_user",
+    },
+    "finance": {
+        "smart_construction_core.group_sc_cap_finance_user",
+        "smart_construction_core.group_sc_cap_finance_manager",
+    },
+}
+
+ROLE_PRECEDENCE = ("executive", "pm", "finance")
+
+NAV_MENU_SCENE_MAP = {
+    "smart_construction_demo.menu_sc_project_list_showcase": "projects.list",
+    "smart_construction_core.menu_sc_project_initiation": "projects.intake",
+    "smart_construction_core.menu_sc_project_project": "projects.ledger",
+    "smart_construction_core.menu_sc_project_management_scene": "project.management",
+    "smart_construction_core.menu_sc_project_cost_code": "config.project_cost_code",
+    "smart_construction_core.menu_sc_root": "projects.list",
+    "smart_construction_core.menu_sc_project_dashboard": "projects.dashboard",
+    "smart_construction_demo.menu_sc_project_dashboard_showcase": "projects.dashboard_showcase",
+    "smart_construction_core.menu_sc_dictionary": "data.dictionary",
+    "smart_construction_core.menu_payment_request": "finance.payment_requests",
+    "smart_construction_portal.menu_sc_portal_lifecycle": "portal.lifecycle",
+    "smart_construction_portal.menu_sc_portal_capability_matrix": "portal.capability_matrix",
+    "smart_construction_portal.menu_sc_portal_dashboard": "portal.dashboard",
+}
+
+NAV_ACTION_SCENE_MAP = {
+    "smart_construction_demo.action_sc_project_list_showcase": "projects.list",
+    "smart_construction_core.action_project_initiation": "projects.intake",
+    "smart_construction_core.action_sc_project_kanban_lifecycle": "projects.ledger",
+    "smart_construction_core.action_sc_project_list": "projects.list",
+    "smart_construction_core.action_project_dashboard": "projects.dashboard",
+    "smart_construction_demo.action_project_dashboard_showcase": "projects.dashboard_showcase",
+    "smart_construction_core.action_project_dictionary": "data.dictionary",
+    "smart_construction_core.action_project_cost_code": "config.project_cost_code",
+    "smart_construction_core.action_payment_request": "finance.payment_requests",
+    "smart_construction_core.action_payment_request_my": "finance.payment_requests",
+    "smart_construction_portal.action_sc_portal_lifecycle": "portal.lifecycle",
+    "smart_construction_portal.action_sc_portal_capability_matrix": "portal.capability_matrix",
+    "smart_construction_portal.action_sc_portal_dashboard": "portal.dashboard",
+}
+
+NAV_MODEL_VIEW_SCENE_MAP = {
+    ("project.project", "list"): "projects.list",
+    ("project.project", "form"): "projects.intake",
+    ("payment.request", "list"): "finance.payment_requests",
+    ("payment.request", "form"): "finance.payment_requests",
+}
+
+SERVER_ACTION_WINDOW_MAP = {
+    "smart_construction_core.action_exec_structure_entry": "smart_construction_core.action_exec_structure_wbs",
+}
+
+FILE_UPLOAD_ALLOWED_MODELS = ["project.project", "project.task"]
+FILE_DOWNLOAD_ALLOWED_MODELS = ["project.project", "project.task"]
+API_DATA_WRITE_ALLOWLIST = {
+    "project.project": ["name", "description", "date_start"],
+    "project.task": ["name", "description", "date_deadline", "project_id"],
+}
+API_DATA_UNLINK_ALLOWED_MODELS = ["project.task"]
+
+MODEL_CODE_MAPPING = {
+    "project": "project.project",
+    "task": "project.task",
+}
+
+CRITICAL_SCENE_TARGET_OVERRIDES = {
+    "projects.list",
+    "projects.detail",
+    "projects.intake",
+    "projects.ledger",
+    "projects.execution",
+    "projects.dashboard",
+    "project.management",
+    "my_work.workspace",
+    "portal.dashboard",
+    "finance.payment_requests",
+}
+
+CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES = {
+    "my_work.workspace": "/my-work",
+}
 INDUSTRY_CREATE_FIELD_FALLBACKS = {
     "project.project": {
         "selection_defaults": {
@@ -289,6 +432,56 @@ def _build_project_action_rows(env, user) -> List[Dict[str, Any]]:
     return result
 
 
+def smart_core_identity_profile(env):
+    return {
+        "role_surface_map": ROLE_SURFACE_OVERRIDES,
+        "role_groups_explicit": ROLE_GROUPS_EXPLICIT,
+        "role_groups_capability_fallback": ROLE_GROUPS_CAPABILITY_FALLBACK,
+        "role_precedence": ROLE_PRECEDENCE,
+    }
+
+
+def smart_core_nav_scene_maps(env):
+    return {
+        "menu_scene_map": dict(NAV_MENU_SCENE_MAP),
+        "action_xmlid_scene_map": dict(NAV_ACTION_SCENE_MAP),
+        "model_view_scene_map": dict(NAV_MODEL_VIEW_SCENE_MAP),
+    }
+
+
+def smart_core_critical_scene_target_overrides(env):
+    return set(CRITICAL_SCENE_TARGET_OVERRIDES)
+
+
+def smart_core_critical_scene_target_route_overrides(env):
+    return dict(CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES)
+
+
+def get_server_action_window_map_contributions(env):
+    return dict(SERVER_ACTION_WINDOW_MAP)
+
+
+def get_file_upload_allowed_model_contributions(env):
+    return list(FILE_UPLOAD_ALLOWED_MODELS)
+
+
+def get_file_download_allowed_model_contributions(env):
+    return list(FILE_DOWNLOAD_ALLOWED_MODELS)
+
+
+def get_api_data_write_allowlist_contributions(env):
+    return {
+        str(model_name): list(field_names)
+        for model_name, field_names in API_DATA_WRITE_ALLOWLIST.items()
+    }
+
+
+def get_api_data_unlink_allowed_model_contributions(env):
+    return list(API_DATA_UNLINK_ALLOWED_MODELS)
+
+
+def get_model_code_mapping_contributions(env):
+    return dict(MODEL_CODE_MAPPING)
 def _build_role_entry_contract_rows(env) -> List[Dict[str, Any]]:
     rows = _safe_search_read(
         env,
