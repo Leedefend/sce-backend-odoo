@@ -538,6 +538,50 @@ When this exception is used:
   changes, or business-semantic leakage beyond the handoff surface, the agent
   MUST stop immediately
 
+### 6.12 Narrow Exception For Dedicated Payment Summary And Approval Governance Residual Commit Batches
+
+The generic stop conditions for `*payment*` and `*settlement*` remain the
+default and MUST still trigger an immediate stop in ordinary batches.
+
+Exception:
+
+The agent MAY implement controlled residual `*payment*` and `*settlement*`
+path changes only when all of the following are simultaneously true:
+
+- an active task contract explicitly declares a dedicated residual-commit
+  objective for payment summary and payment approval governance cleanup
+- the task allowlist explicitly includes only these exact paths:
+  - `addons/smart_construction_core/handlers/payment_slice_enter.py`
+  - `addons/smart_construction_core/services/payment_slice_service.py`
+  - `scripts/verify/payment_slice_browser_smoke.mjs`
+  - `scripts/verify/settlement_slice_browser_smoke.mjs`
+  - `scripts/verify/scene_governance_payment_approval_branch_closure_export.py`
+  - `docs/architecture/scene-governance/assets/generated/payment_approval_closure_current_v1.csv`
+  - `docs/audit/be_finance_payment_requests_semantic_screen_fm_v1.md`
+  - `docs/audit/be_payment_approval_post_screen_fl_v1.md`
+  - `docs/audit/be_payment_approval_scene_supply_screen_fj_v1.md`
+  - `docs/audit/be_payment_domain_post_align_screen_fo_v1.md`
+  - `docs/verify/be_finance_payment_requests_semantic_implement_fn_v1.md`
+  - `docs/verify/be_payment_approval_scene_supply_implement_fk_v1.md`
+- the user has explicitly authorized proceeding with that high-risk batch
+- the planned changes are additive and scoped only to:
+  - exposing payment-slice summary rows from already-derived project payload
+  - aligning payment/settlement browser smoke bootstrap reuse
+  - materializing payment approval governance closure export and matching audit
+    or verify documentation
+- `payment.request` business-rule mutation, accounting semantics, settlement
+  decision rules, approval rule changes, security, record rules, manifests, and
+  any non-listed payment paths remain outside scope unless separately
+  authorized by a new task line
+
+When this exception is used:
+
+- the batch MUST be treated as high-risk
+- verification and reporting MUST be completed in the same batch
+- if uncertainty remains about hidden business-rule change, financial semantic
+  drift, or scope expansion beyond the listed residual files, the agent MUST
+  stop immediately
+
 ### 6.9 Narrow Exception For Dedicated No-Contract Payment Business-Continuity Batches
 
 The generic stop condition for `*payment*` remains the default and MUST still
