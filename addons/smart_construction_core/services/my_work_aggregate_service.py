@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from odoo.addons.smart_construction_scene.services.my_work_scene_targets import (
+    resolve_my_work_scene_key,
+)
+
 
 class WorkItemAggregateService:
     SORT_FIELDS = {"id", "title", "model", "deadline", "source", "reason_code", "section", "priority"}
@@ -14,8 +18,13 @@ class WorkItemAggregateService:
         item["model"] = str(item.get("model") or "").strip()
         item["record_id"] = int(item.get("record_id") or 0)
         item["deadline"] = str(item.get("deadline") or "").strip()
-        item["scene_key"] = str(item.get("scene_key") or "projects.list").strip() or "projects.list"
         item["source"] = str(item.get("source") or "").strip()
+        item["scene_key"] = resolve_my_work_scene_key(
+            explicit_scene_key=str(item.get("scene_key") or ""),
+            model_name=item["model"],
+            source_key=item["source"],
+            section_key=section_key,
+        )
         item["action_label"] = str(item.get("action_label") or "").strip()
         item["action_key"] = str(item.get("action_key") or "").strip()
         item["reason_code"] = str(item.get("reason_code") or "").strip()
