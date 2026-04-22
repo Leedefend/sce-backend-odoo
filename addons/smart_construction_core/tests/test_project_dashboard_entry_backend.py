@@ -133,3 +133,21 @@ class TestProjectDashboardEntryBackend(TransactionCase):
         block = service.build_block("progress", project=project, context={})
         self.assertTrue(isinstance(block, dict))
         self.assertTrue(str(block.get("block_type") or "").strip())
+
+    def test_dashboard_service_build_keeps_legacy_contract_shape(self):
+        project = self.env["project.project"].create(
+            {
+                "name": "Dashboard Legacy Contract Test",
+                "manager_id": self.env.user.id,
+                "user_id": self.env.user.id,
+            }
+        )
+        service = ProjectDashboardService(self.env)
+        data = service.build(project_id=project.id, context={})
+
+        self.assertEqual((data.get("scene") or {}).get("key"), "project.management")
+        self.assertEqual((data.get("page") or {}).get("key"), "project.management.dashboard")
+        self.assertEqual((data.get("route_context") or {}).get("query_key"), "project_id")
+        zones = data.get("zones") or {}
+        for key in ("header", "metrics", "progress", "contract", "cost", "finance", "risk"):
+            self.assertIn(key, zones)

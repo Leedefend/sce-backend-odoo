@@ -48,6 +48,74 @@ class ProjectDashboardService:
         self._builders = [builder_cls(env) for builder_cls in BUILDERS]
         self._builder_map = {builder.block_key: builder for builder in self._builders}
 
+    def build(self, project_id=0, context=None):
+        """Compatibility envelope retained for project.dashboard handler callers."""
+        request_context = dict(context or {})
+        project, diagnostics = self.resolve_project_with_diagnostics(project_id)
+        project_data = self.project_payload(project)
+        state_explain = self.build_state_explain(project)
+        metrics_explain = self.build_metrics_explain(project)
+        summary_rows = self.build_summary_rows(project)
+        flow_map = self.build_flow_map(project)
+        completion = self.build_completion(project)
+
+        return {
+            "scene": {
+                "key": "project.management",
+                "page": "project.management.dashboard",
+            },
+            "page": {
+                "key": "project.management.dashboard",
+                "route": "/s/project.management",
+            },
+            "route_context": {
+                "primary_protocol": "/s/project.management?project_id=<id>",
+                "query_key": "project_id",
+                "project_id": int(project_data.get("id") or 0),
+            },
+            "project": project_data,
+            "summary_rows": summary_rows,
+            "state_explain": state_explain,
+            "metrics_explain": metrics_explain,
+            "flow_map": flow_map,
+            "completion": completion,
+            "zones": {
+                "header": {
+                    "project": project_data,
+                    "state_explain": state_explain,
+                    "resolution": diagnostics,
+                },
+                "metrics": {
+                    "items": metrics_explain,
+                },
+                "progress": {
+                    "summary_rows": summary_rows,
+                    "flow_map": flow_map,
+                    "completion": completion,
+                    "block": self.build_block("progress", project=project, context=request_context),
+                },
+                "contract": {
+                    "summary_rows": [
+                        row for row in summary_rows if str(row.get("key") or "") in {"stage_label", "milestone_label"}
+                    ],
+                },
+                "cost": {
+                    "summary_rows": [row for row in summary_rows if str(row.get("key") or "") == "cost_total"],
+                },
+                "finance": {
+                    "summary_rows": [
+                        row
+                        for row in summary_rows
+                        if str(row.get("key") or "") in {"payment_total", "payment_executed_total"}
+                    ],
+                    "next_actions": self.build_block("next_actions", project=project, context=request_context),
+                },
+                "risk": {
+                    "block": self.build_block("risks", project=project, context=request_context),
+                },
+            },
+        }
+
     def build_block(self, block_key, project=None, context=None):
         normalized_key = str(block_key or "").strip().lower()
         builder_key = self.RUNTIME_BLOCK_MAP.get(normalized_key)
