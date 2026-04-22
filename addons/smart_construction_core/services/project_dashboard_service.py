@@ -400,10 +400,13 @@ class ProjectDashboardService:
         state_explain = self._state_explain_service.build(project)
         if not project:
             return {
+                "execution_stage_label": state_explain.get("execution_stage_label") or state_explain.get("stage_label") or "未选择项目",
                 "stage_label": state_explain.get("stage_label") or "未选择项目",
-                "stage_explain": state_explain.get("stage_explain") or "当前没有可用项目，无法进入项目驾驶舱。",
+                "execution_stage_explain": state_explain.get("execution_stage_explain") or state_explain.get("stage_explain") or "当前没有可用项目，无法进入项目驾驶舱。",
+                "stage_explain": state_explain.get("stage_explain") or state_explain.get("execution_stage_explain") or "当前没有可用项目，无法进入项目驾驶舱。",
                 "milestone_explain": "暂无项目里程碑。",
-                "status_explain": state_explain.get("status_explain") or "请先选择项目或创建项目。",
+                "project_condition_explain": state_explain.get("project_condition_explain") or state_explain.get("status_explain") or "请先选择项目或创建项目。",
+                "status_explain": state_explain.get("status_explain") or state_explain.get("project_condition_explain") or "请先选择项目或创建项目。",
             }
         milestone = str(getattr(project, "sc_execution_state", "") or "").strip().lower()
         milestone_explain_map = {
@@ -412,11 +415,65 @@ class ProjectDashboardService:
             "done": "当前执行动作已完成，可继续检查成本、付款与结算结果。",
         }
         return {
+            "execution_stage_label": state_explain.get("execution_stage_label") or state_explain.get("stage_label") or "未设置阶段",
             "stage_label": state_explain.get("stage_label") or "未设置阶段",
-            "stage_explain": state_explain.get("stage_explain") or "当前项目处于已发布主线中，请按下一步动作推进。",
+            "execution_stage_explain": state_explain.get("execution_stage_explain") or state_explain.get("stage_explain") or "当前项目处于已发布主线中，请按下一步动作推进。",
+            "stage_explain": state_explain.get("stage_explain") or state_explain.get("execution_stage_explain") or "当前项目处于已发布主线中，请按下一步动作推进。",
             "milestone_explain": milestone_explain_map.get(milestone, "当前里程碑尚未进入显式执行状态。"),
-            "status_explain": state_explain.get("status_explain") or "当前项目状态正常。",
+            "project_condition_explain": state_explain.get("project_condition_explain") or state_explain.get("status_explain") or "当前项目整体正常。",
+            "status_explain": state_explain.get("status_explain") or state_explain.get("project_condition_explain") or "当前项目整体正常。",
         }
+
+    def build_summary_rows(self, project):
+        project_payload = self.project_payload(project)
+        state_explain = self.build_state_explain(project)
+        metrics_explain = self.build_metrics_explain(project)
+        metrics_map = {}
+        for item in metrics_explain or []:
+            if not isinstance(item, dict):
+                continue
+            key = str(item.get("key") or "").strip()
+            if not key:
+                continue
+            metrics_map[key] = item
+        return [
+            {
+                "key": "stage_label",
+                "label": "项目执行阶段",
+                "value": str(state_explain.get("execution_stage_label") or "未设置阶段"),
+                "copy": "主流程位置",
+            },
+            {
+                "key": "milestone_label",
+                "label": "当前里程碑",
+                "value": str(project_payload.get("milestone") or ""),
+                "copy": "执行推进节点",
+            },
+            {
+                "key": "progress_percent",
+                "label": "执行进度",
+                "value": "%s%%" % str(project_payload.get("progress_percent") or 0),
+                "copy": str((metrics_map.get("progress") or {}).get("explain") or "任务与里程碑综合进度"),
+            },
+            {
+                "key": "cost_total",
+                "label": "成本合计",
+                "value": str(project_payload.get("cost_total") or 0),
+                "copy": str((metrics_map.get("cost") or {}).get("explain") or "当前经营事实"),
+            },
+            {
+                "key": "payment_total",
+                "label": "付款合计",
+                "value": str(project_payload.get("payment_total") or 0),
+                "copy": str((metrics_map.get("payment") or {}).get("explain") or "当前资金事实"),
+            },
+            {
+                "key": "payment_executed_total",
+                "label": "已支付证据",
+                "value": str(project_payload.get("payment_executed_total") or 0),
+                "copy": "%s 条 payment.ledger 台账" % str(project_payload.get("payment_executed_record_count") or 0),
+            },
+        ]
 
     def build_metrics_explain(self, project):
         return self._metrics_explain_service.build(self.project_payload(project))

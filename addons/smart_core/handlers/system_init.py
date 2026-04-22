@@ -367,8 +367,12 @@ def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, st
 def _load_scene_contract(env, scene_channel: str, use_pinned: bool) -> tuple[dict | None, str]:
     return provider_load_scene_contract(env, scene_channel, use_pinned, logger=_logger)
 
-def _load_scenes_from_db_or_fallback(env, drift):
-    return provider_load_scenes_from_db_or_fallback(env, drift=drift, logger=_logger)
+def _load_scenes_from_db_or_fallback(env, drift=None, logger=None):
+    return provider_load_scenes_from_db_or_fallback(
+        env,
+        drift=drift,
+        logger=logger or _logger,
+    )
 
 def _merge_missing_scenes_from_registry(env, scenes, warnings):
     return provider_merge_missing_scenes_from_registry(env, scenes, warnings)

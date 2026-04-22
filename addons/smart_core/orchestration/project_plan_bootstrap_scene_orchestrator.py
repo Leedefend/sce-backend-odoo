@@ -12,7 +12,7 @@ from odoo.addons.smart_core.orchestration.base_scene_entry_orchestrator import (
 class ProjectPlanBootstrapSceneOrchestrator(BaseSceneEntryOrchestrator):
     scene_key = "project.plan_bootstrap"
     scene_label = "计划准备"
-    state_fallback_text = "当前状态：正在核对计划准备度。"
+    state_fallback_text = "后端未提供计划准备状态摘要"
     title_empty = "计划编排"
     suggested_action_key = "load_plan_next_actions"
     suggested_action_reason_code = "PROJECT_PLAN_BOOTSTRAP_READY"

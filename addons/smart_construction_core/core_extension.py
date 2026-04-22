@@ -47,6 +47,67 @@ def _model_has_field(env, model_name: str, field_name: str) -> bool:
     return field_name in env[model_name]._fields
 
 
+def _step_status_label(status: str) -> str:
+    key = str(status or "").strip().lower()
+    if key == "active":
+        return "进行中"
+    if key in {"done", "completed"}:
+        return "已完成"
+    if key in {"pending", "todo", "planned"}:
+        return "待开始"
+    return "后端未提供步骤状态标签"
+
+
+def _build_enterprise_enablement_contract(env, user) -> Dict[str, Any]:
+    company = getattr(user, "company_id", None)
+    company_id = int(getattr(company, "id", 0) or 0)
+    company_name = str(getattr(company, "name", "") or "").strip()
+    steps = [
+        {
+            "key": "enterprise_company",
+            "label": "企业信息",
+            "status": "active" if company_id else "pending",
+            "status_label": _step_status_label("active" if company_id else "pending"),
+            "entry_xmlid": "smart_enterprise_base.action_enterprise_company",
+            "action_xmlid": "smart_enterprise_base.action_enterprise_company",
+            "next_hint": "请先补齐企业基础信息。",
+            "target": {"action_id": 0, "menu_id": 0, "route": ""},
+        },
+        {
+            "key": "enterprise_department",
+            "label": "组织结构",
+            "status": "pending",
+            "status_label": _step_status_label("pending"),
+            "entry_xmlid": "smart_enterprise_base.action_enterprise_department",
+            "action_xmlid": "smart_enterprise_base.action_enterprise_department",
+            "next_hint": "请补齐部门与岗位结构。",
+            "target": {"action_id": 0, "menu_id": 0, "route": ""},
+        },
+        {
+            "key": "enterprise_user",
+            "label": "用户设置",
+            "status": "pending",
+            "status_label": _step_status_label("pending"),
+            "entry_xmlid": "smart_enterprise_base.action_enterprise_user",
+            "action_xmlid": "smart_enterprise_base.action_enterprise_user",
+            "next_hint": "请完成用户、角色和账号初始化。",
+            "target": {"action_id": 0, "menu_id": 0, "route": ""},
+        },
+    ]
+    return {
+        "mainline": {
+            "version": "v1",
+            "phase": "sprint1" if company_id else "bootstrap",
+            "theme": "enterprise_enablement",
+            "entry_root_xmlid": "smart_enterprise_base.menu_enterprise_base_root",
+            "current_company_id": company_id,
+            "current_company_name": company_name,
+            "primary_action": steps[0].get("target") or {},
+            "steps": steps,
+        }
+    }
+
+
 def _build_task_action_rows(env, user) -> List[Dict[str, Any]]:
     user_domain = ["|", ("user_id", "=", user.id), ("user_ids", "in", [user.id])]
     rows = _safe_search_read(
@@ -835,6 +896,10 @@ def get_system_init_fact_contributions(env, user, context=None):
         home_blocks = _build_home_block_contract_rows(env)
         if home_blocks:
             module_facts["home_blocks"] = home_blocks
+
+        enterprise_enablement = _build_enterprise_enablement_contract(env, user)
+        if enterprise_enablement:
+            module_facts["enterprise_enablement"] = enterprise_enablement
 
         return {
             "module": "smart_construction_core",

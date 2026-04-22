@@ -259,6 +259,33 @@ class TestMyWorkBackend(TransactionCase):
         self.assertEqual(safe_page, 2)
         self.assertEqual([item["id"] for item in page_rows], [4, 5])
 
+    def test_summary_attaches_completion_capability(self):
+        handler = MyWorkSummaryHandler(self.env, payload={})
+        rows = handler._attach_targets(
+            [
+                {
+                    "id": 11,
+                    "title": "Todo row",
+                    "model": "project.task",
+                    "record_id": 11,
+                    "source": "mail.activity",
+                },
+                {
+                    "id": 12,
+                    "title": "Task row",
+                    "model": "project.task",
+                    "record_id": 12,
+                    "source": "project.task",
+                },
+            ]
+        )
+        self.assertEqual(len(rows), 2)
+        self.assertTrue(bool(rows[0].get("can_complete")))
+        self.assertEqual((rows[0].get("complete_action") or {}).get("intent"), "my.work.complete")
+        self.assertEqual((rows[0].get("complete_action") or {}).get("source"), "mail.activity")
+        self.assertFalse(bool(rows[1].get("can_complete")))
+        self.assertFalse(bool(rows[1].get("complete_action")))
+
         self.assertEqual(handler._normalize_sort_by("unknown"), "id")
         self.assertEqual(handler._normalize_sort_dir("up"), "desc")
 

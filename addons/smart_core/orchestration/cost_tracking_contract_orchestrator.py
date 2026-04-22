@@ -10,7 +10,7 @@ from odoo.addons.smart_core.orchestration.base_scene_entry_orchestrator import B
 class CostTrackingContractOrchestrator(BaseSceneEntryOrchestrator):
     scene_key = "cost.tracking"
     scene_label = "成本记录"
-    state_fallback_text = "当前状态：正在查看项目成本记录。"
+    state_fallback_text = "后端未提供成本记录状态摘要"
     title_empty = "成本记录"
     suggested_action_key = "load_cost_entry"
     suggested_action_reason_code = "COST_SLICE_PREPARED_READY"

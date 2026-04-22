@@ -10,6 +10,7 @@ from odoo.addons.smart_core.delivery.menu_fact_service import MenuFactService
 from odoo.addons.smart_core.delivery.menu_delivery_convergence_service import MenuDeliveryConvergenceService
 from odoo.addons.smart_core.delivery.menu_target_interpreter_service import MenuTargetInterpreterService
 from odoo.addons.smart_core.security.auth import get_user_from_token
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 from odoo.addons.smart_core.core.exceptions import (
     AUTH_REQUIRED,
     BAD_REQUEST,
@@ -49,6 +50,79 @@ def _json_response(payload: dict, status: int = 200):
 def _resolve_request_env():
     user = get_user_from_token()
     return request.env(user=user)
+
+
+def _merge_scene_entry(entries: list[dict], *, scene_key: str, model: str, view_mode: str) -> None:
+    normalized_scene_key = str(scene_key or "").strip()
+    normalized_model = str(model or "").strip()
+    normalized_view_mode = str(view_mode or "").strip().lower()
+    if not (normalized_scene_key and normalized_model and normalized_view_mode):
+        return
+    for row in entries:
+        if not isinstance(row, dict):
+            continue
+        target = row.get("target") if isinstance(row.get("target"), dict) else {}
+        existing_scene_key = str(row.get("code") or row.get("scene_key") or "").strip()
+        existing_model = str(target.get("model") or "").strip()
+        existing_view_mode = str(target.get("view_mode") or target.get("view_type") or "").strip().lower()
+        if existing_model == normalized_model and existing_view_mode == normalized_view_mode:
+            return
+        if existing_scene_key == normalized_scene_key and existing_model == normalized_model:
+            return
+    entries.append(
+        {
+            "code": normalized_scene_key,
+            "target": {
+                "model": normalized_model,
+                "view_type": normalized_view_mode,
+            },
+        }
+    )
+
+
+def _resolve_navigation_scene_map(env, scene_map: dict | None = None) -> dict:
+    resolved = {
+        "menu_id_to_scene": {},
+        "action_id_to_scene": {},
+        "entries": [],
+    }
+    payload = scene_map if isinstance(scene_map, dict) else {}
+    if isinstance(payload.get("menu_id_to_scene"), dict):
+        resolved["menu_id_to_scene"].update({str(k): str(v) for k, v in payload["menu_id_to_scene"].items() if str(k).strip() and str(v).strip()})
+    if isinstance(payload.get("action_id_to_scene"), dict):
+        resolved["action_id_to_scene"].update({str(k): str(v) for k, v in payload["action_id_to_scene"].items() if str(k).strip() and str(v).strip()})
+    if isinstance(payload.get("entries"), list):
+        resolved["entries"] = [dict(row) for row in payload["entries"] if isinstance(row, dict)]
+
+    extension_maps = call_extension_hook_first(env, "smart_core_nav_scene_maps", env)
+    if not isinstance(extension_maps, dict):
+        return resolved if any(resolved.values()) else {}
+
+    menu_scene_map = extension_maps.get("menu_scene_map") if isinstance(extension_maps.get("menu_scene_map"), dict) else {}
+    action_scene_map = extension_maps.get("action_xmlid_scene_map") if isinstance(extension_maps.get("action_xmlid_scene_map"), dict) else {}
+    model_view_scene_map = extension_maps.get("model_view_scene_map") if isinstance(extension_maps.get("model_view_scene_map"), dict) else {}
+
+    for xmlid, scene_key in menu_scene_map.items():
+        rec = env.ref(str(xmlid or "").strip(), raise_if_not_found=False) if env else None
+        if rec and getattr(rec, "id", None):
+            resolved["menu_id_to_scene"].setdefault(str(int(rec.id)), str(scene_key))
+
+    for xmlid, scene_key in action_scene_map.items():
+        rec = env.ref(str(xmlid or "").strip(), raise_if_not_found=False) if env else None
+        if rec and getattr(rec, "id", None):
+            resolved["action_id_to_scene"].setdefault(str(int(rec.id)), str(scene_key))
+
+    for key, scene_key in model_view_scene_map.items():
+        if not (isinstance(key, (list, tuple)) and len(key) == 2):
+            continue
+        _merge_scene_entry(
+            resolved["entries"],
+            scene_key=str(scene_key or ""),
+            model=str(key[0] or ""),
+            view_mode=str(key[1] or ""),
+        )
+
+    return resolved if any(resolved.values()) else {}
 
 
 def _fact_node(node: dict) -> dict:
@@ -121,7 +195,11 @@ class PlatformMenuAPI(http.Controller):
             "flat": [_flat_fact_node(node) for node in facts.flat],
             "tree": [_fact_node(node) for node in facts.tree],
         }
-        nav_explained = MenuTargetInterpreterService(env).interpret(nav_fact, scene_map={}, policy={})
+        nav_explained = MenuTargetInterpreterService(env).interpret(
+            nav_fact,
+            scene_map=_resolve_navigation_scene_map(env),
+            policy={},
+        )
         nav_fact_filtered, _, convergence = MenuDeliveryConvergenceService().apply(
             nav_fact,
             nav_explained,
@@ -155,7 +233,10 @@ class PlatformMenuAPI(http.Controller):
             "flat": [_flat_fact_node(node) for node in facts.flat],
             "tree": [_fact_node(node) for node in facts.tree],
         }
-        scene_map = payload.get("scene_map") if isinstance(payload.get("scene_map"), dict) else {}
+        scene_map = _resolve_navigation_scene_map(
+            env,
+            payload.get("scene_map") if isinstance(payload.get("scene_map"), dict) else {},
+        )
         policy = payload.get("policy") if isinstance(payload.get("policy"), dict) else {}
         nav_explained = MenuTargetInterpreterService(env).interpret(
             nav_fact,

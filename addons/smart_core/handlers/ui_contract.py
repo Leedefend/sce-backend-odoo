@@ -247,6 +247,8 @@ class UiContractHandler(BaseIntentHandler):
         ctx,
         view_id=None,
         action_id=None,
+        menu_id=None,
+        menu_xmlid="",
         record_id=None,
         render_profile="",
     ):
@@ -259,6 +261,10 @@ class UiContractHandler(BaseIntentHandler):
         }
         if action_id:
             payload["action_id"] = action_id
+        if menu_id:
+            payload["menu_id"] = menu_id
+        if menu_xmlid:
+            payload["menu_xmlid"] = menu_xmlid
         if record_id:
             payload["record_id"] = record_id
         if render_profile in {"create", "edit", "readonly"}:
@@ -358,8 +364,64 @@ class UiContractHandler(BaseIntentHandler):
 
         view_type = (self._get_param(p, "view_type", "viewType") or "form").strip().lower()
         view_id = self._get_param(p, "view_id", "viewId")
+        raw_action = self._get_param(p, "action_id", "actionId")
+        raw_menu = self._get_param(p, "menu_id", "menuId", "id")
+        menu_xmlid = str(self._get_param(p, "menu_xmlid", "menuXmlid") or "").strip()
+        raw_record = self._get_param(p, "record_id", "recordId", "res_id", "resId")
+        scene_key = str(self._get_param(p, "scene_key", "sceneKey") or "").strip()
+        render_profile = str(
+            self._get_param(p, "render_profile", "renderProfile", "profile", "mode") or ""
+        ).strip().lower()
+        if render_profile in {"read", "view"}:
+            render_profile = "readonly"
+        if render_profile not in {"create", "edit", "readonly"}:
+            render_profile = ""
+        try:
+            action_id = int(raw_action) if raw_action not in (None, "") else None
+        except Exception:
+            action_id = None
+        try:
+            menu_id = int(raw_menu) if raw_menu not in (None, "") else None
+        except Exception:
+            menu_id = None
+        try:
+            record_id = int(raw_record) if raw_record not in (None, "") else None
+        except Exception:
+            record_id = None
 
-        data, versions = self._dispatch_model_contract(model=model, view_type=view_type, view_id=view_id, ctx=ctx)
+        data, versions = self._dispatch_model_contract(
+            model=model,
+            view_type=view_type,
+            view_id=view_id,
+            action_id=action_id,
+            menu_id=menu_id,
+            menu_xmlid=menu_xmlid,
+            record_id=record_id,
+            render_profile=render_profile,
+            ctx=ctx,
+        )
+        if isinstance(data, dict):
+            if action_id:
+                data["action_id"] = action_id
+            if menu_id:
+                data["menu_id"] = menu_id
+            if menu_xmlid:
+                data["menu_xmlid"] = menu_xmlid
+            if scene_key:
+                data["scene_key"] = scene_key
+            head = data.get("head")
+            if isinstance(head, dict):
+                if action_id:
+                    head["action_id"] = action_id
+                if menu_id:
+                    head["menu_id"] = menu_id
+                if menu_xmlid:
+                    head["menu_xmlid"] = menu_xmlid
+                if scene_key:
+                    head["scene_key"] = scene_key
+                if render_profile:
+                    head["render_profile"] = render_profile
+                data["head"] = head
         return self._finalize_projected_contract(
             data=data,
             view_type=view_type,

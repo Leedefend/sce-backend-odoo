@@ -32,7 +32,7 @@ class TestProjectDashboardEntryBackend(TransactionCase):
     def test_entry_returns_minimal_shape(self):
         fake_entry = {
             "project_id": 11,
-            "scene_key": "project.dashboard",
+            "scene_key": "project.management",
             "scene_label": "项目驾驶舱",
             "state_fallback_text": "当前状态：已完成立项，正在查看项目驾驶舱。",
             "title": "Demo",
@@ -88,7 +88,7 @@ class TestProjectDashboardEntryBackend(TransactionCase):
     def test_dashboard_enter_uses_orchestration_carrier_shape(self):
         fake_entry = {
             "project_id": 11,
-            "scene_key": "project.dashboard",
+            "scene_key": "project.management",
             "scene_label": "项目驾驶舱",
             "state_fallback_text": "当前状态：已完成立项，正在查看项目驾驶舱。",
             "title": "项目驾驶舱：Demo",
@@ -104,7 +104,7 @@ class TestProjectDashboardEntryBackend(TransactionCase):
         ):
             result = handler.handle(payload={"project_id": 11}, ctx={})
         self.assertTrue(result.get("ok"))
-        self.assertEqual(((result.get("data") or {}).get("scene_key")), "project.dashboard")
+        self.assertEqual(((result.get("data") or {}).get("scene_key")), "project.management")
 
     def test_dashboard_orchestrator_runtime_block_shape(self):
         project = self.env["project.project"].create(

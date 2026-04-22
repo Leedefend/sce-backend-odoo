@@ -84,7 +84,7 @@
             <field name="ui_label">合同工作</field>
             <field name="ui_hint">合同台账与合同清单</field>
             <field name="intent">ui.contract</field>
-            <field name="default_payload" eval="{'action_xmlid': 'smart_construction_core.action_construction_contract_my', 'menu_xmlid': 'smart_construction_core.menu_sc_contract_income'}"/>
+            <field name="default_payload" eval="{'scene_key': 'contract.center', 'route': '/s/contract.center', 'menu_xmlid': 'smart_construction_core.menu_sc_contract_center'}"/>
             <field name="required_group_ids" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_contract_read')])]"/>
             <field name="tags">contract</field>
             <field name="status">ga</field>

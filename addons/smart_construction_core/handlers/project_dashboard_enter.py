@@ -84,6 +84,7 @@ class ProjectDashboardEnterHandler(BaseIntentHandler):
             data["metrics_explain"] = orchestrator._service.build_metrics_explain(project_for_payload)
             data["flow_map"] = orchestrator._service.build_flow_map(project_for_payload)
             data["completion"] = orchestrator._service.build_completion(project_for_payload)
+            data["summary_rows"] = orchestrator._service.build_summary_rows(project_for_payload)
             data["evidence_refs"] = list((project_payload.get("evidence_refs") or []))
             data["facts"] = dict(project_payload.get("facts") or {})
             data["fact_metrics"] = list((project_payload.get("fact_metrics") or []))

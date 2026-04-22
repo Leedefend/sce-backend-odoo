@@ -57,6 +57,39 @@ class ReleaseOperatorReadModelService:
             )
         return rows
 
+    def _build_surface_copy(self, *, product_key: str) -> dict[str, Any]:
+        identity = self._resolve_identity(product_key=product_key)
+        edition_key = _text(identity.get("edition_key")) or "standard"
+        edition_label = "标准版" if edition_key == "standard" else "预览版"
+        return {
+            "eyebrow": "Release Operator Surface",
+            "title": "发布控制台",
+            "description": f"查看 {edition_label} 当前发布状态、候选快照、待审批动作与回滚目标。",
+            "error_title": "加载失败",
+            "action_retry": "重试",
+            "action_refresh": "刷新",
+            "section_release_state": "当前发布状态",
+            "section_candidate": "可 Promote 候选",
+            "section_pending": "待审批动作",
+            "section_rollback": "回滚",
+            "section_history": "发布历史",
+            "hint_candidate": "仅展示当前产品下 candidate / approved 状态的候选快照。",
+            "hint_pending_count_prefix": "当前数量：",
+            "hint_rollback": "仅当当前 active released snapshot 存在 rollback target 时可执行。",
+            "hint_history": "最近 action 与 snapshot。",
+            "empty_candidate": "当前没有可 Promote 的候选快照。",
+            "empty_pending": "当前没有待审批动作。",
+            "metric_current_product": "当前产品",
+            "metric_active_snapshot": "Active Released Snapshot",
+            "metric_latest_action": "Latest Action",
+            "metric_approval_state": "Approval State",
+            "rollback_target_label": "Rollback Target",
+            "rollback_action_label": "执行回滚",
+            "history_actions_title": "Actions",
+            "history_snapshots_title": "Snapshots",
+            "approve_action_label": "审批并执行",
+        }
+
     def _serialize_snapshot(self, row: dict[str, Any]) -> dict[str, Any]:
         freeze_surface = _dict(row.get("freeze_surface"))
         identity = _dict(freeze_surface.get("identity"))
@@ -184,9 +217,11 @@ class ReleaseOperatorReadModelService:
             "promote": self._build_promote_actions(product_key=identity["product_key"], snapshots=candidate_snapshots),
             "rollback": self._build_rollback_action(product_key=identity["product_key"], active_snapshot=active_snapshot),
         }
+        surface_copy = self._build_surface_copy(product_key=identity["product_key"])
         return {
             "contract_version": RELEASE_OPERATOR_READ_MODEL_CONTRACT_VERSION,
             "contract_registry": build_release_operator_contract_registry(),
+            "copy": surface_copy,
             "identity": {
                 "product_key": identity["product_key"],
                 "base_product_key": identity["base_product_key"],

@@ -202,6 +202,33 @@ def apply_provider_merge(compiled_ast: Dict[str, Any], providers: List[Dict[str,
         resolved = _resolve_provider_payload(payload, ctx, out)
         if not resolved:
             continue
+        scene_payload = _as_dict(out.get("scene"))
+        resolved_scene = _as_dict(resolved.get("scene"))
+        if resolved_scene:
+            if _text(resolved_scene.get("page")) and _text(scene_payload.get("page")) != _text(resolved_scene.get("page")):
+                _record_conflict(_as_dict(out.get("meta")), layer="provider", field="scene.page", from_layer="base")
+            scene_layout = _as_dict(scene_payload.get("layout"))
+            resolved_layout = _as_dict(resolved_scene.get("layout"))
+            if resolved_layout:
+                scene_layout.update(resolved_layout)
+                scene_payload["layout"] = scene_layout
+            for field in ("page", "title", "page_type", "layout_mode", "render_mode"):
+                value = resolved_scene.get(field)
+                if value not in (None, "", {}, []):
+                    scene_payload[field] = value
+            out["scene"] = scene_payload
+
+        page_payload = _as_dict(out.get("page"))
+        resolved_page = _as_dict(resolved.get("page"))
+        if resolved_page:
+            for field in ("key", "title", "route", "page_type", "layout_mode", "render_mode", "scene_key"):
+                value = resolved_page.get(field)
+                if value not in (None, "", {}, []):
+                    page_payload[field] = value
+            resolved_zones = _as_list(resolved_page.get("zones"))
+            if resolved_zones:
+                page_payload["zones"] = resolved_zones
+            out["page"] = page_payload
         if _as_list(resolved.get("blocks")):
             out["blocks"] = _as_list(out.get("blocks")) + _as_list(resolved.get("blocks"))
         if _as_list(resolved.get("actions")):

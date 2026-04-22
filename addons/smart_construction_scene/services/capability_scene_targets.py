@@ -9,20 +9,21 @@ from odoo.addons.smart_construction_scene import scene_registry
 
 _SCENE_CONFIGS_CACHE: dict[str, list[dict[str, Any]]] = {}
 _SCENE_MAP_CACHE: dict[str, dict[str, dict[str, Any]]] = {}
+_TARGET_SCENE_LOOKUP_CACHE: dict[str, dict[tuple[str, str], str]] = {}
 
 
 CAPABILITY_ENTRY_SCENE_MAP: dict[str, str] = {
-    "project.initiation.enter": "project.initiation",
+    "project.initiation.enter": "projects.intake",
     "project.list.open": "projects.list",
     "project.board.open": "projects.ledger",
-    "project.dashboard.enter": "project.dashboard",
-    "project.dashboard.open": "project.dashboard",
+    "project.dashboard.enter": "project.management",
+    "project.dashboard.open": "project.management",
     "project.plan_bootstrap.enter": "project.plan_bootstrap",
     "project.execution.enter": "project.execution",
     "project.execution.advance": "project.execution",
     "project.lifecycle.open": "portal.lifecycle",
-    "project.task.list": "projects.ledger",
-    "project.task.board": "projects.ledger",
+    "project.task.list": "task.center",
+    "project.task.board": "task.board",
     "project.document.open": "projects.ledger",
     "project.structure.manage": "cost.project_boq",
     "project.risk.list": "projects.ledger",
@@ -43,7 +44,7 @@ CAPABILITY_ENTRY_SCENE_MAP: dict[str, str] = {
     "cost.boq.manage": "cost.project_boq",
     "cost.progress.report": "cost.project_progress",
     "cost.profit.compare": "cost.profit_compare",
-    "contract.center.open": "projects.ledger",
+    "contract.center.open": "contract.center",
     "contract.income.track": "projects.ledger",
     "contract.expense.track": "projects.ledger",
     "contract.settlement.audit": "finance.settlement_orders",
@@ -125,13 +126,77 @@ def _load_scene_map_with_timings(env) -> Tuple[dict[str, dict[str, Any]], dict[s
     return scene_map, timings_ms
 
 
-def resolve_capability_entry_scene_key(capability_key: str) -> str:
-    return str(CAPABILITY_ENTRY_SCENE_MAP.get(str(capability_key or "").strip(), "") or "").strip()
+def _build_target_scene_lookup(env) -> dict[tuple[str, str], str]:
+    cache_key = _scene_cache_key(env)
+    cached = _TARGET_SCENE_LOOKUP_CACHE.get(cache_key)
+    if isinstance(cached, dict):
+        return cached
+
+    scene_map, _timings = _load_scene_map_with_timings(env)
+    lookup: dict[tuple[str, str], str] = {}
+    for scene_key, scene in (scene_map or {}).items():
+        if not isinstance(scene, dict):
+            continue
+        target = scene.get("target") if isinstance(scene.get("target"), dict) else {}
+        action_xmlid = str(target.get("action_xmlid") or "").strip()
+        menu_xmlid = str(target.get("menu_xmlid") or "").strip()
+        model = str(target.get("model") or "").strip()
+        view_mode = str(target.get("view_mode") or target.get("view_type") or "").strip().lower()
+        if action_xmlid:
+            lookup.setdefault(("action_xmlid", action_xmlid), scene_key)
+        if menu_xmlid:
+            lookup.setdefault(("menu_xmlid", menu_xmlid), scene_key)
+        if model and view_mode:
+            lookup.setdefault(("model_view", f"{model}:{view_mode}"), scene_key)
+    _TARGET_SCENE_LOOKUP_CACHE[cache_key] = lookup
+    return lookup
 
 
-def build_capability_entry_target(capability_key: str, explicit_target: dict[str, Any] | None = None) -> dict[str, Any]:
+def _derive_scene_key_from_explicit_target(env, explicit_target: dict[str, Any] | None = None) -> str:
+    if not env or not isinstance(explicit_target, dict):
+        return ""
+    lookup = _build_target_scene_lookup(env)
+    action_xmlid = str(explicit_target.get("action_xmlid") or "").strip()
+    if action_xmlid:
+        scene_key = str(lookup.get(("action_xmlid", action_xmlid), "") or "").strip()
+        if scene_key:
+            return scene_key
+    menu_xmlid = str(explicit_target.get("menu_xmlid") or "").strip()
+    if menu_xmlid:
+        scene_key = str(lookup.get(("menu_xmlid", menu_xmlid), "") or "").strip()
+        if scene_key:
+            return scene_key
+    model = str(explicit_target.get("model") or "").strip()
+    view_mode = str(explicit_target.get("view_mode") or explicit_target.get("view_type") or "").strip().lower()
+    if model and view_mode:
+        return str(lookup.get(("model_view", f"{model}:{view_mode}"), "") or "").strip()
+    return ""
+
+
+def resolve_capability_entry_scene_key(
+    capability_key: str,
+    *,
+    env=None,
+    explicit_target: dict[str, Any] | None = None,
+) -> str:
+    resolved = str(CAPABILITY_ENTRY_SCENE_MAP.get(str(capability_key or "").strip(), "") or "").strip()
+    if resolved:
+        return resolved
+    return _derive_scene_key_from_explicit_target(env, explicit_target=explicit_target)
+
+
+def build_capability_entry_target(
+    capability_key: str,
+    explicit_target: dict[str, Any] | None = None,
+    *,
+    env=None,
+) -> dict[str, Any]:
     target = dict(explicit_target or {})
-    scene_key = resolve_capability_entry_scene_key(capability_key)
+    scene_key = resolve_capability_entry_scene_key(
+        capability_key,
+        env=env,
+        explicit_target=explicit_target,
+    )
     if scene_key and not str(target.get("scene_key") or "").strip():
         target["scene_key"] = scene_key
     return target
@@ -158,7 +223,7 @@ def resolve_capability_entry_target_payload_with_timings(
         return time.perf_counter()
 
     stage_ts = time.perf_counter()
-    target = build_capability_entry_target(capability_key, explicit_target=explicit_target)
+    target = build_capability_entry_target(capability_key, explicit_target=explicit_target, env=env)
     stage_ts = _mark("build_capability_entry_target", stage_ts)
     scene_key = str(target.get("scene_key") or "").strip()
     payload: dict[str, Any] = {}

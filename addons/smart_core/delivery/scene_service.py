@@ -48,6 +48,8 @@ class SceneService:
                 {
                     "scene_key": scene_key,
                     "label": label,
+                    "description": str(row.get("description") or source.get("description") or "").strip(),
+                    "scope": str(row.get("scope") or source.get("scope") or "").strip(),
                     "route": route,
                     "product_key": str(row.get("product_key") or "").strip(),
                     "capability_key": str(row.get("capability_key") or "").strip(),

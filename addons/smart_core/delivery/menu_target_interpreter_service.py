@@ -16,6 +16,52 @@ def _to_int(value) -> int | None:
     return parsed if parsed > 0 else None
 
 
+def _build_entry_target(
+    *,
+    menu_id=None,
+    action_id=None,
+    target_type: str = "",
+    delivery_mode: str = "",
+    route: str | None = None,
+    target: dict | None = None,
+) -> dict:
+    payload = target if isinstance(target, dict) else {}
+    scene_key = _text(payload.get("scene_key"))
+    normalized_route = _text(route)
+    entry_target: dict = {}
+
+    if scene_key:
+        entry_target = {
+            "type": "scene",
+            "scene_key": scene_key,
+        }
+        if normalized_route:
+            entry_target["route"] = normalized_route
+        return entry_target
+
+    compatibility_refs = {}
+    normalized_menu_id = _to_int(menu_id)
+    normalized_action_id = _to_int(payload.get("action_id")) or _to_int(action_id)
+    if normalized_menu_id:
+        compatibility_refs["menu_id"] = normalized_menu_id
+    if normalized_action_id:
+        compatibility_refs["action_id"] = normalized_action_id
+    if _text(target_type):
+        compatibility_refs["target_type"] = _text(target_type)
+    if _text(delivery_mode):
+        compatibility_refs["delivery_mode"] = _text(delivery_mode)
+
+    if compatibility_refs:
+        entry_target = {
+            "type": "compatibility",
+            "compatibility_refs": compatibility_refs,
+        }
+        if normalized_route:
+            entry_target["route"] = normalized_route
+
+    return entry_target
+
+
 TARGET_TYPES = {
     "directory",
     "scene",
@@ -75,20 +121,36 @@ class MenuTargetInterpreterService:
         del policy
         menu_id_to_scene: dict[int, str] = {}
         action_id_to_scene: dict[int, str] = {}
+        scene_key_to_route: dict[str, str] = {}
+        model_view_to_scene: dict[tuple[str, str], str] = {}
 
         payload = scene_map if isinstance(scene_map, dict) else {}
-        self._merge_explicit_scene_map(payload, menu_id_to_scene, action_id_to_scene)
-        self._merge_scene_registry_mapping(menu_id_to_scene, action_id_to_scene)
+        self._merge_explicit_scene_map(payload, menu_id_to_scene, action_id_to_scene, scene_key_to_route, model_view_to_scene)
+        self._merge_scene_registry_mapping(menu_id_to_scene, action_id_to_scene, scene_key_to_route, model_view_to_scene)
         return {
             "menu_id": menu_id_to_scene,
             "action_id": action_id_to_scene,
+            "scene_route": scene_key_to_route,
+            "model_view": model_view_to_scene,
         }
+
+    def _normalize_view_mode(self, raw: str | None) -> str | None:
+        if not raw:
+            return None
+        value = _text(raw).lower()
+        if value in {"tree", "list", "kanban"}:
+            return "list"
+        if value == "form":
+            return "form"
+        return value or None
 
     def _merge_explicit_scene_map(
         self,
         payload: dict,
         menu_id_to_scene: dict[int, str],
         action_id_to_scene: dict[int, str],
+        scene_key_to_route: dict[str, str],
+        model_view_to_scene: dict[tuple[str, str], str],
     ) -> None:
         menu_map = payload.get("menu_id_to_scene") if isinstance(payload.get("menu_id_to_scene"), dict) else {}
         action_map = payload.get("action_id_to_scene") if isinstance(payload.get("action_id_to_scene"), dict) else {}
@@ -112,25 +174,40 @@ class MenuTargetInterpreterService:
             scene_key = _text(row.get("scene_key") or row.get("code"))
             if not scene_key:
                 continue
-            menu_id = _to_int(row.get("menu_id"))
-            action_id = _to_int(row.get("action_id"))
+            target = row.get("target") if isinstance(row.get("target"), dict) else {}
+            route = _text(target.get("route"))
+            if route:
+                scene_key_to_route.setdefault(scene_key, route)
+            menu_id = _to_int(row.get("menu_id")) or _to_int(target.get("menu_id"))
+            action_id = _to_int(row.get("action_id")) or _to_int(target.get("action_id"))
+            model_name = _text(target.get("model"))
+            view_mode = self._normalize_view_mode(target.get("view_mode") or target.get("view_type"))
             if menu_id:
                 menu_id_to_scene.setdefault(menu_id, scene_key)
             if action_id:
                 action_id_to_scene.setdefault(action_id, scene_key)
+            if model_name and view_mode:
+                model_view_to_scene.setdefault((model_name, view_mode), scene_key)
 
     def _merge_scene_registry_mapping(
         self,
         menu_id_to_scene: dict[int, str],
         action_id_to_scene: dict[int, str],
+        scene_key_to_route: dict[str, str],
+        model_view_to_scene: dict[tuple[str, str], str],
     ) -> None:
         for row in self._load_scene_registry_entries():
             scene_key = _text(row.get("code") or row.get("scene_key"))
             if not scene_key:
                 continue
             target = row.get("target") if isinstance(row.get("target"), dict) else {}
+            route = _text(target.get("route"))
+            if route:
+                scene_key_to_route.setdefault(scene_key, route)
             menu_id = _to_int(target.get("menu_id"))
             action_id = _to_int(target.get("action_id"))
+            model_name = _text(target.get("model"))
+            view_mode = self._normalize_view_mode(target.get("view_mode") or target.get("view_type"))
 
             menu_xmlid = _text(target.get("menu_xmlid"))
             action_xmlid = _text(target.get("action_xmlid"))
@@ -143,6 +220,8 @@ class MenuTargetInterpreterService:
                 menu_id_to_scene.setdefault(menu_id, scene_key)
             if action_id:
                 action_id_to_scene.setdefault(action_id, scene_key)
+            if model_name and view_mode:
+                model_view_to_scene.setdefault((model_name, view_mode), scene_key)
 
     def _load_scene_registry_entries(self) -> list[dict]:
         try:
@@ -192,7 +271,25 @@ class MenuTargetInterpreterService:
             return _text(resolved)
         return _text(action_map.get(action_id))
 
-    def _resolve_custom_action_target(self, *, node: dict, action_id) -> dict:
+    def _resolve_scene_route(self, *, scene_key: str, resolver: dict) -> str:
+        route_map = resolver.get("scene_route") if isinstance(resolver.get("scene_route"), dict) else {}
+        return _text(route_map.get(scene_key))
+
+    def _resolve_scene_key_from_model_view(self, *, res_model: str, view_modes: list[str], resolver: dict) -> str:
+        model_view_map = resolver.get("model_view") if isinstance(resolver.get("model_view"), dict) else {}
+        normalized_model = _text(res_model)
+        if not normalized_model:
+            return ""
+        for view_mode in view_modes:
+            normalized_view = self._normalize_view_mode(view_mode)
+            if not normalized_view:
+                continue
+            resolved = model_view_map.get((normalized_model, normalized_view))
+            if _text(resolved):
+                return _text(resolved)
+        return ""
+
+    def _resolve_custom_action_target(self, *, node: dict, action_id, resolver: dict) -> dict:
         action_type = _text(node.get("action_type") or node.get("action_model"))
         if action_type != "ir.actions.act_window":
             return {}
@@ -214,6 +311,20 @@ class MenuTargetInterpreterService:
             return {}
         if any(token not in SUPPORTED_CUSTOM_ACTION_VIEW_MODES for token in view_modes):
             return {}
+        resolved_scene_key = self._resolve_scene_key_from_model_view(
+            res_model=res_model,
+            view_modes=view_modes,
+            resolver=resolver,
+        )
+        if resolved_scene_key:
+            target = {
+                "scene_key": resolved_scene_key,
+            }
+            resolved_scene_route = self._resolve_scene_route(scene_key=resolved_scene_key, resolver=resolver)
+            if resolved_scene_route:
+                target["route"] = resolved_scene_route
+            target["action_id"] = action_id
+            return target
         target = {
             "action_id": action_id,
             "res_model": res_model,
@@ -283,8 +394,11 @@ class MenuTargetInterpreterService:
     def _build_route(self, *, target_type: str, target: dict, menu_id) -> str | None:
         suffix = f"?menu_id={menu_id}" if isinstance(menu_id, int) and menu_id > 0 else ""
         if target_type == "scene":
+            explicit_route = _text(target.get("route"))
+            if explicit_route:
+                return explicit_route
             scene_key = _text(target.get("scene_key"))
-            return f"/s/{scene_key}{suffix}" if scene_key else None
+            return f"/s/{scene_key}" if scene_key else None
         if target_type == "action":
             action_id = _to_int(target.get("action_id"))
             return f"/a/{action_id}{suffix}" if action_id else None
@@ -336,7 +450,7 @@ class MenuTargetInterpreterService:
         availability_status = "blocked"
         reason_code = "TARGET_MISSING"
         resolved_scene_key = self._resolve_scene_key(menu_id=menu_id, action_id=action_id, resolver=resolver)
-        custom_action_target = self._resolve_custom_action_target(node=node, action_id=action_id)
+        custom_action_target = self._resolve_custom_action_target(node=node, action_id=action_id, resolver=resolver)
         native_bridge_target = self._resolve_native_bridge_target(node=node, action_id=action_id)
         url_target = self._resolve_url_target(node=node, action_id=action_id)
 
@@ -349,9 +463,12 @@ class MenuTargetInterpreterService:
             target = {
                 "scene_key": resolved_scene_key,
             }
+            resolved_scene_route = self._resolve_scene_route(scene_key=resolved_scene_key, resolver=resolver)
+            if resolved_scene_route:
+                target["route"] = resolved_scene_route
         elif custom_action_target:
-            target_type = "action"
-            delivery_mode = "custom_action"
+            target_type = "scene" if _text(custom_action_target.get("scene_key")) else "action"
+            delivery_mode = "custom_scene" if target_type == "scene" else "custom_action"
             is_clickable = True
             availability_status = "ok"
             reason_code = ""
@@ -398,6 +515,14 @@ class MenuTargetInterpreterService:
             route=route,
             action_id=action_id,
         )
+        entry_target = _build_entry_target(
+            menu_id=menu_id,
+            action_id=action_id,
+            target_type=target_type,
+            delivery_mode=delivery_mode,
+            route=route,
+            target=target,
+        )
 
         if target_type not in TARGET_TYPES:
             target_type = "unavailable"
@@ -414,6 +539,7 @@ class MenuTargetInterpreterService:
             "delivery_mode": delivery_mode,
             "route": route,
             "target": target,
+            "entry_target": entry_target,
             "active_match": active_match,
             "availability_status": availability_status,
             "reason_code": reason_code,

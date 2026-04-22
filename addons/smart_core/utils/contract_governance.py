@@ -271,7 +271,7 @@ _PROJECT_LIST_COLUMN_LABELS = {
     "user_id": "项目经理",
     "partner_id": "业主单位",
     "stage_id": "当前阶段",
-    "lifecycle_state": "项目状态",
+    "lifecycle_state": "项目执行阶段",
     "date_start": "开始日期",
     "date": "结束日期",
 }
@@ -359,6 +359,7 @@ def _inject_enterprise_form_governance(data: dict, *, next_action_key: str = "",
     else:
         governance.pop("next_action", None)
     data["form_governance"] = governance
+
 _FORM_PRIMARY_DISABLED_REASON = "请先完成必填字段后再执行主操作"
 _FORM_DISABLED_REASON_CAPABILITY = "缺少执行该操作所需能力"
 
@@ -862,9 +863,32 @@ def _apply_user_surface_policies(data: dict) -> None:
     model = _safe_text(head.get("model") or data.get("model"))
     filters_primary_max = _USER_SURFACE_PRIMARY_FILTER_MAX
     actions_primary_max = _USER_SURFACE_PRIMARY_ACTION_MAX
+    record_open_policy = {
+        "carry_query_mode": "preserve",
+    }
+    batch_policy = {
+        "enabled": False,
+        "delete_allowed": False,
+        "delete_only_mode": False,
+        "available_actions": [],
+    }
     if view_type in {"form"}:
         filters_primary_max = 0
         actions_primary_max = 3
+    if view_type in {"tree", "list"}:
+        delete_allowed = model not in {"project.project"}
+        delete_only_mode = model in {"project.task", "res.company", "hr.department", "res.users"}
+        available_actions = ["delete"] if delete_only_mode else ["archive", "activate", "delete"]
+        if model in {"project.project"}:
+            record_open_policy = {
+                "carry_query_mode": "clear_scene_context",
+            }
+        batch_policy = {
+            "enabled": True,
+            "delete_allowed": delete_allowed,
+            "delete_only_mode": delete_only_mode,
+            "available_actions": available_actions if delete_allowed else ["archive", "activate"],
+        }
     primary_model = _governance_primary_model(data)
     if model and primary_model and model == primary_model:
         filters_primary_max = min(filters_primary_max, 4)
@@ -874,6 +898,9 @@ def _apply_user_surface_policies(data: dict) -> None:
         "actions_primary_max": actions_primary_max,
         "filters_max": _USER_SURFACE_FILTER_MAX,
         "actions_max": _USER_SURFACE_ACTION_MAX,
+        "delete_mode": "unlink" if bool(batch_policy.get("delete_allowed")) else "none",
+        "batch_policy": batch_policy,
+        "record_open_policy": record_open_policy,
     }
 
 

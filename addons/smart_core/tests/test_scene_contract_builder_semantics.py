@@ -44,6 +44,26 @@ target = _load_module(
 
 
 class TestSceneContractBuilderSemantics(unittest.TestCase):
+    def test_delivery_entry_projects_intake_actions_publish_scene_ready_routes(self):
+        payload = target.build_release_surface_scene_contract_from_delivery_entry(
+            {
+                "scene_key": "projects.intake",
+                "label": "FR-1 项目立项",
+                "route": "/s/projects.intake",
+                "product_key": "fr1",
+                "capability_key": "delivery.fr1.project_intake",
+            }
+        )
+
+        actions = payload.get("actions") or {}
+        primary = (actions.get("primary_actions") or [{}])[0]
+        secondary = (actions.get("secondary_actions") or [{}])[0]
+
+        self.assertEqual(((primary.get("target") or {}).get("route")), "/s/projects.intake?intake_mode=quick")
+        self.assertEqual(((primary.get("target") or {}).get("scene_key")), "projects.intake")
+        self.assertEqual(((secondary.get("target") or {}).get("route")), "/s/projects.intake")
+        self.assertEqual(((secondary.get("target") or {}).get("scene_key")), "projects.intake")
+
     def test_runtime_entry_projects_parser_semantics_into_scene_contract(self):
         payload = target.build_release_surface_scene_contract_from_runtime_entry(
             {

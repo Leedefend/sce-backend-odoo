@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from typing import Any
+
 from .release_operator_read_model_service import ReleaseOperatorReadModelService
 from .release_operator_contract_versions import RELEASE_OPERATOR_SURFACE_CONTRACT_VERSION
 
@@ -19,6 +21,7 @@ class ReleaseOperatorSurfaceService:
             "contract_version": RELEASE_OPERATOR_SURFACE_CONTRACT_VERSION,
             "contract_registry": build_release_operator_contract_registry(),
             "read_model_v1": read_model,
+            "copy": dict(read_model.get("copy") or {}),
             "identity": dict(read_model.get("identity") or {}),
             "products": list(read_model.get("products") or []),
             "release_state": dict(read_model.get("current_release_state") or {}),

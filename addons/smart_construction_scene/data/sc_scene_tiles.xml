@@ -44,7 +44,7 @@
                         'icon': 'C',
                         'payload': {
                             'action_xmlid': 'smart_construction_core.action_construction_contract_my',
-                            'menu_xmlid': 'smart_construction_core.menu_sc_contract_income'
+                            'menu_xmlid': 'smart_construction_core.menu_sc_contract_center'
                         },
                         'required_capabilities': ['contract.center.open']
                     },

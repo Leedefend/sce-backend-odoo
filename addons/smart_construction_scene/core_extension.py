@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from typing import Any
+
+from odoo.addons.smart_construction_scene import scene_registry
 
 ROLE_SURFACE_OVERRIDES = {
     "owner": {
@@ -89,15 +92,18 @@ ROLE_PRECEDENCE = ("executive", "pm", "finance")
 
 NAV_MENU_SCENE_MAP = {
     "smart_construction_demo.menu_sc_project_list_showcase": "projects.list",
-    "smart_construction_core.menu_sc_project_initiation": "project.initiation",
+    "smart_construction_core.menu_sc_project_initiation": "projects.intake",
+    "smart_construction_core.menu_sc_project_manage": "project.management",
     "smart_construction_core.menu_sc_project_project": "projects.ledger",
     "smart_construction_core.menu_sc_project_management_scene": "project.management",
+    "smart_construction_core.menu_sc_project_quick_create": "projects.intake",
     "smart_construction_core.menu_sc_project_cost_code": "config.project_cost_code",
     "smart_construction_core.menu_sc_root": "projects.list",
     "smart_construction_core.menu_sc_project_dashboard": "project.dashboard",
     "smart_construction_demo.menu_sc_project_dashboard_showcase": "projects.dashboard_showcase",
     "smart_construction_core.menu_sc_dictionary": "data.dictionary",
     "smart_construction_core.menu_payment_request": "finance.payment_requests",
+    "smart_construction_core.menu_sc_tier_review_my_payment_request": "payments.approval",
     "smart_construction_portal.menu_sc_portal_lifecycle": "portal.lifecycle",
     "smart_construction_portal.menu_sc_portal_capability_matrix": "portal.capability_matrix",
     "smart_construction_portal.menu_sc_portal_dashboard": "portal.dashboard",
@@ -105,9 +111,13 @@ NAV_MENU_SCENE_MAP = {
 
 NAV_ACTION_SCENE_MAP = {
     "smart_construction_demo.action_sc_project_list_showcase": "projects.list",
-    "smart_construction_core.action_project_initiation": "project.initiation",
+    "smart_construction_core.action_project_initiation": "projects.intake",
+    "smart_construction_core.action_project_initiation_quick": "projects.intake",
     "smart_construction_core.action_sc_project_kanban_lifecycle": "projects.ledger",
     "smart_construction_core.action_sc_project_list": "projects.list",
+    "smart_construction_core.action_sc_project_manage": "project.management",
+    "smart_construction_core.action_sc_project_my_list": "projects.list",
+    "smart_construction_core.action_sc_project_overview": "projects.list",
     "smart_construction_core.action_project_dashboard": "project.dashboard",
     "smart_construction_demo.action_project_dashboard_showcase": "projects.dashboard_showcase",
     "smart_construction_core.action_project_dictionary": "data.dictionary",
@@ -165,6 +175,7 @@ SURFACE_POLICY_DEFAULT_NAME = "construction_pm_v1"
 SURFACE_POLICY_DEFAULT_FILE = "docs/product/delivery/v1/construction_pm_v1_scene_surface_policy.json"
 
 CRITICAL_SCENE_TARGET_OVERRIDES = {
+    "contract.center",
     "projects.list",
     "projects.detail",
     "projects.intake",
@@ -180,6 +191,68 @@ CRITICAL_SCENE_TARGET_OVERRIDES = {
 CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES = {
     "my_work.workspace": "/my-work",
 }
+
+_DERIVED_NAV_SCENE_MAP_CACHE: dict[str, dict[str, dict[Any, str]]] = {}
+
+
+def _scene_cache_key(env) -> str:
+    try:
+        dbname = str(getattr(getattr(env, "cr", None), "dbname", "") or "").strip()
+    except Exception:
+        dbname = ""
+    return dbname or "__default__"
+
+
+def _normalize_view_mode(raw: Any) -> str:
+    value = str(raw or "").strip().lower()
+    if value in {"tree", "list", "kanban"}:
+        return "list"
+    if value in {"form"}:
+        return "form"
+    return value
+
+
+def _derive_nav_scene_maps_from_registry(env) -> dict[str, dict[Any, str]]:
+    cache_key = _scene_cache_key(env)
+    cached = _DERIVED_NAV_SCENE_MAP_CACHE.get(cache_key)
+    if isinstance(cached, dict):
+        return cached
+
+    menu_scene_map: dict[str, str] = {}
+    action_xmlid_scene_map: dict[str, str] = {}
+    model_view_scene_map: dict[tuple[str, str], str] = {}
+
+    try:
+        scenes = scene_registry.load_scene_configs(env)
+    except Exception:
+        scenes = []
+
+    for scene in scenes or []:
+        if not isinstance(scene, dict):
+            continue
+        scene_key = str(scene.get("code") or scene.get("key") or "").strip()
+        if not scene_key:
+            continue
+        target = scene.get("target") if isinstance(scene.get("target"), dict) else {}
+        menu_xmlid = str(target.get("menu_xmlid") or "").strip()
+        action_xmlid = str(target.get("action_xmlid") or "").strip()
+        model = str(target.get("model") or "").strip()
+        view_mode = _normalize_view_mode(target.get("view_mode") or target.get("view_type"))
+
+        if menu_xmlid and menu_xmlid not in menu_scene_map:
+            menu_scene_map[menu_xmlid] = scene_key
+        if action_xmlid and action_xmlid not in action_xmlid_scene_map:
+            action_xmlid_scene_map[action_xmlid] = scene_key
+        if model and view_mode and (model, view_mode) not in model_view_scene_map:
+            model_view_scene_map[(model, view_mode)] = scene_key
+
+    derived = {
+        "menu_scene_map": menu_scene_map,
+        "action_xmlid_scene_map": action_xmlid_scene_map,
+        "model_view_scene_map": model_view_scene_map,
+    }
+    _DERIVED_NAV_SCENE_MAP_CACHE[cache_key] = derived
+    return derived
 
 
 def get_intent_handler_contributions():
@@ -197,11 +270,17 @@ def smart_core_identity_profile(env):
 
 
 def smart_core_nav_scene_maps(env):
-    del env
+    derived = _derive_nav_scene_maps_from_registry(env)
+    menu_scene_map = dict(derived.get("menu_scene_map") or {})
+    action_xmlid_scene_map = dict(derived.get("action_xmlid_scene_map") or {})
+    model_view_scene_map = dict(derived.get("model_view_scene_map") or {})
+    menu_scene_map.update(NAV_MENU_SCENE_MAP)
+    action_xmlid_scene_map.update(NAV_ACTION_SCENE_MAP)
+    model_view_scene_map.update(NAV_MODEL_VIEW_SCENE_MAP)
     return {
-        "menu_scene_map": NAV_MENU_SCENE_MAP,
-        "action_xmlid_scene_map": NAV_ACTION_SCENE_MAP,
-        "model_view_scene_map": NAV_MODEL_VIEW_SCENE_MAP,
+        "menu_scene_map": menu_scene_map,
+        "action_xmlid_scene_map": action_xmlid_scene_map,
+        "model_view_scene_map": model_view_scene_map,
     }
 
 

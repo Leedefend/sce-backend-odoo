@@ -167,6 +167,99 @@ class IdentityResolver:
                 indexed[xmlid] = node
         return indexed
 
+    def _extract_scene_key_from_route(self, route: str) -> str:
+        normalized_route = str(route or "").strip()
+        if not normalized_route.startswith("/s/"):
+            return ""
+        candidate = normalized_route.split("?", 1)[0].strip()
+        return candidate.replace("/s/", "", 1).strip()
+
+    def _collect_nav_scene_candidates(self, nodes, scene_keys: set) -> List[str]:
+        available_scene_keys = {str(item or "").strip() for item in (scene_keys or set()) if str(item or "").strip()}
+        collected: List[str] = []
+        seen = set()
+
+        def _push(scene_key: str):
+            normalized = str(scene_key or "").strip()
+            if not normalized or normalized in seen:
+                return
+            if available_scene_keys and normalized not in available_scene_keys:
+                return
+            seen.add(normalized)
+            collected.append(normalized)
+
+        for node in self._walk_nav_nodes(nodes):
+            meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+            target = node.get("target") if isinstance(node.get("target"), dict) else {}
+            entry_target = node.get("entry_target") if isinstance(node.get("entry_target"), dict) else {}
+            for candidate in (
+                meta.get("scene_key"),
+                target.get("scene_key"),
+                entry_target.get("scene_key"),
+                self._extract_scene_key_from_route(meta.get("route") or ""),
+                self._extract_scene_key_from_route(target.get("route") or ""),
+                self._extract_scene_key_from_route(entry_target.get("route") or ""),
+            ):
+                _push(candidate)
+        return collected
+
+    def _merge_scene_candidates(self, base_candidates: List[str], nav_tree: list, scene_keys: set) -> List[str]:
+        merged: List[str] = []
+        seen = set()
+
+        def _push(scene_key: str):
+            normalized = str(scene_key or "").strip()
+            if not normalized or normalized in seen:
+                return
+            seen.add(normalized)
+            merged.append(normalized)
+
+        available_scene_keys = sorted({str(item or "").strip() for item in (scene_keys or set()) if str(item or "").strip()})
+        for scene_key in base_candidates or []:
+            _push(scene_key)
+        for scene_key in self._collect_nav_scene_candidates(nav_tree, scene_keys):
+            _push(scene_key)
+        for scene_key in available_scene_keys:
+            _push(scene_key)
+        return merged
+
+    def _build_entry_target(self, *, scene_key: str = "", route: str = "", menu_id=None, action_id=None, model: str = "", record_id=None) -> dict:
+        normalized_scene_key = str(scene_key or "").strip()
+        normalized_route = str(route or "").strip()
+        if not normalized_scene_key and normalized_route.startswith("/s/"):
+            normalized_scene_key = normalized_route.replace("/s/", "", 1).strip("/")
+        if not normalized_scene_key:
+            return {}
+        target = {
+            "type": "scene",
+            "scene_key": normalized_scene_key,
+        }
+        if normalized_route:
+            target["route"] = normalized_route
+        compatibility = {}
+        if isinstance(menu_id, int) and menu_id > 0:
+            compatibility["menu_id"] = menu_id
+        if isinstance(action_id, int) and action_id > 0:
+            compatibility["action_id"] = action_id
+        normalized_model = str(model or "").strip()
+        if normalized_model:
+            compatibility["model"] = normalized_model
+        if isinstance(record_id, int) and record_id > 0:
+            compatibility["record_id"] = record_id
+        if normalized_model and isinstance(record_id, int) and record_id > 0:
+            record_entry = {
+                "model": normalized_model,
+                "record_id": record_id,
+            }
+            if isinstance(action_id, int) and action_id > 0:
+                record_entry["action_id"] = action_id
+            if isinstance(menu_id, int) and menu_id > 0:
+                record_entry["menu_id"] = menu_id
+            target["record_entry"] = record_entry
+        if compatibility:
+            target["compatibility_refs"] = compatibility
+        return target
+
     def build_role_surface(
         self,
         user_xmlids: set,
@@ -177,7 +270,11 @@ class IdentityResolver:
         role_code, role_evidence = self.resolve_role_code_with_evidence(user_xmlids)
         role_meta = self._role_surface_map.get(role_code) or self._role_surface_map.get("owner") or {}
         role_meta = self._merge_role_meta(role_code, role_meta, role_surface_overrides)
-        scene_candidates = list(role_meta.get("landing_scene_candidates") or [])
+        scene_candidates = self._merge_scene_candidates(
+            list(role_meta.get("landing_scene_candidates") or []),
+            nav_tree,
+            scene_keys,
+        )
         menu_candidates = list(role_meta.get("menu_xmlids") or [])
         menu_blocklist_xmlids = list(role_meta.get("menu_blocklist_xmlids") or [])
         landing_scene_key = self._pick_landing_scene(scene_candidates, scene_keys)
@@ -191,18 +288,27 @@ class IdentityResolver:
             landing_menu_xmlid = xmlid
             landing_menu_id = node.get("menu_id") or node.get("id")
             break
-        return {
+        landing_path = f"/s/{landing_scene_key}"
+        role_surface = {
             "role_code": role_code,
             "role_label": role_meta.get("label") or role_code,
             "role_evidence": role_evidence,
             "landing_scene_key": landing_scene_key,
             "landing_menu_xmlid": landing_menu_xmlid,
             "landing_menu_id": landing_menu_id,
-            "landing_path": f"/s/{landing_scene_key}",
+            "landing_path": landing_path,
             "scene_candidates": scene_candidates,
             "menu_xmlids": menu_candidates,
             "menu_blocklist_xmlids": menu_blocklist_xmlids,
         }
+        landing_entry_target = self._build_entry_target(
+            scene_key=landing_scene_key,
+            route=landing_path,
+            menu_id=landing_menu_id if isinstance(landing_menu_id, int) else None,
+        )
+        if landing_entry_target:
+            role_surface["landing_entry_target"] = landing_entry_target
+        return role_surface
 
     def build_role_surface_map_payload(self) -> Dict[str, dict]:
         payload = {}
@@ -285,16 +391,35 @@ class IdentityResolver:
                 menu_id = node.get("menu_id") or node.get("id")
                 if menu_id:
                     scene_key = ""
+                    model = ""
+                    record_id = None
+                    action_id = None
                     if isinstance(node.get("meta"), dict):
-                        scene_key = str((node.get("meta") or {}).get("scene_key") or "").strip()
+                        meta = node.get("meta") or {}
+                        scene_key = str(meta.get("scene_key") or "").strip()
+                        model = str(meta.get("model") or "").strip()
+                        record_id = meta.get("record_id") if isinstance(meta.get("record_id"), int) else None
+                        action_id = meta.get("action_id") if isinstance(meta.get("action_id"), int) else None
                     if not scene_key:
                         scene_key = str(node.get("scene_key") or "").strip()
-                    return {
+                    route = f"/s/{scene_key}" if scene_key else "/workbench"
+                    default_route = {
                         "menu_id": menu_id,
                         "scene_key": scene_key or None,
-                        "route": f"/workbench?scene={scene_key}" if scene_key else "/workbench",
+                        "route": route,
                         "reason": "menu_fallback",
                     }
+                    entry_target = self._build_entry_target(
+                        scene_key=scene_key,
+                        route=route,
+                        menu_id=menu_id if isinstance(menu_id, int) else None,
+                        action_id=action_id,
+                        model=model,
+                        record_id=record_id,
+                    )
+                    if entry_target:
+                        default_route["entry_target"] = entry_target
+                    return default_route
             return None
 
         default_route = dfs(nav_tree)

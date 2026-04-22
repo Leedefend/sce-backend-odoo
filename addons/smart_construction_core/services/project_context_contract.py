@@ -9,24 +9,31 @@ def build_project_context(project):
         return {
             "project_id": 0,
             "project_name": "",
+            "execution_stage": "",
+            "execution_stage_label": "",
             "stage": "",
             "stage_label": "",
             "milestone": "",
             "milestone_label": "",
+            "project_condition": "",
             "status": "",
         }
-    stage = str(getattr(project, "lifecycle_state", "") or "").strip()
-    stage_label = lifecycle_state_label(stage, default="")
+    execution_stage = str(getattr(project, "lifecycle_state", "") or "").strip()
+    execution_stage_label = lifecycle_state_label(execution_stage, default="")
     milestone = str(getattr(project, "sc_execution_state", "") or "").strip()
     milestone_label = str(getattr(project, "sc_execution_state_label", "") or "").strip()
+    project_condition = str(getattr(project, "health_state", "") or getattr(project, "state", "") or "").strip()
     return {
         "project_id": int(getattr(project, "id", 0) or 0),
         "project_name": str(getattr(project, "display_name", "") or getattr(project, "name", "") or "").strip(),
-        "stage": stage,
-        "stage_label": stage_label or stage,
+        "execution_stage": execution_stage,
+        "execution_stage_label": execution_stage_label or execution_stage,
+        "stage": execution_stage,
+        "stage_label": execution_stage_label or execution_stage,
         "milestone": milestone,
         "milestone_label": milestone_label or milestone,
-        "status": str(getattr(project, "health_state", "") or getattr(project, "state", "") or "").strip(),
+        "project_condition": project_condition,
+        "status": project_condition,
     }
 
 

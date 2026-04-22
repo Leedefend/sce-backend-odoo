@@ -10,9 +10,9 @@ from odoo.addons.smart_core.orchestration.base_scene_entry_orchestrator import (
 
 
 class ProjectDashboardSceneOrchestrator(BaseSceneEntryOrchestrator):
-    scene_key = "project.dashboard"
+    scene_key = "project.management"
     scene_label = "项目驾驶舱"
-    state_fallback_text = "当前状态：已完成立项，正在查看项目驾驶舱。"
+    state_fallback_text = "后端未提供项目驾驶舱状态摘要"
     title_empty = "项目驾驶舱"
     suggested_action_key = "load_dashboard_progress"
     suggested_action_reason_code = "PROJECT_DASHBOARD_READY"

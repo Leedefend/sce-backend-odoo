@@ -32,14 +32,14 @@ _ROUTE_ONLY_ACTIONS = {
             {
                 "key": "quick_project_create",
                 "label": "快速创建（推荐）",
-                "target": {"type": "route", "route": "/f/project.project/new?scene_key=projects.intake&intake_mode=quick"},
+                "target": {"type": "route", "route": "/s/projects.intake?intake_mode=quick", "scene_key": "projects.intake"},
             }
         ],
         "secondary_actions": [
             {
                 "key": "standard_project_intake",
                 "label": "标准立项",
-                "target": {"type": "route", "route": "/f/project.project/new?scene_key=projects.intake"},
+                "target": {"type": "route", "route": "/s/projects.intake", "scene_key": "projects.intake"},
             }
         ],
     },
@@ -229,7 +229,7 @@ def build_release_surface_scene_contract_from_delivery_entry(entry: dict[str, An
     requires_project_context = bool(row.get("requires_project_context", False))
     message = "当前发布入口已冻结到产品面" if not requires_project_context else "当前发布入口需要项目上下文后继续"
     layout = "entry_cards" if scene_key == "projects.intake" else "entry_shell"
-    return build_release_surface_scene_contract(
+    contract = build_release_surface_scene_contract(
         scene_key=scene_key,
         title=label,
         product_key=product_key,
@@ -249,6 +249,14 @@ def build_release_surface_scene_contract_from_delivery_entry(entry: dict[str, An
         released=True,
         diagnostics_ref="delivery_engine_v1.scenes",
     )
+    identity = _dict(contract.get("identity"))
+    if row.get("description"):
+        identity["description"] = _text(row.get("description"))
+    if row.get("scope"):
+        identity["scope"] = _text(row.get("scope"))
+    if identity:
+        contract["identity"] = identity
+    return contract
 
 
 def build_release_surface_scene_contract_from_runtime_entry(
@@ -288,6 +296,13 @@ def build_release_surface_scene_contract_from_runtime_entry(
         released=True,
         diagnostics_ref=diagnostics_ref,
     )
+    identity = _dict(contract.get("identity"))
+    if row.get("description"):
+        identity["description"] = _text(row.get("description"))
+    if row.get("scope"):
+        identity["scope"] = _text(row.get("scope"))
+    if identity:
+        contract["identity"] = identity
     contract = apply_scene_contract_parser_semantic_bridge(contract, row)
     return apply_scene_contract_semantic_orchestration_bridge(contract)
 
