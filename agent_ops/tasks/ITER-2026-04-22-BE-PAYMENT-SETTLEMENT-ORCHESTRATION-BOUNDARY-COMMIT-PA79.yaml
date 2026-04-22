@@ -1,0 +1,97 @@
+task_id: ITER-2026-04-22-BE-PAYMENT-SETTLEMENT-ORCHESTRATION-BOUNDARY-COMMIT-PA79
+title: Commit payment settlement orchestration boundary recovery residuals
+type: governance-optimization
+status: active
+priority: high
+mode: scan
+
+goal: >
+  Commit only the remaining payment/settlement orchestration-boundary recovery
+  residuals in smart_core orchestrators, without expanding into payment
+  business semantics, approval flows, or browser-smoke implementation paths.
+
+user_visible_outcome:
+  - "Remaining payment/settlement orchestrator residuals are committed in one bounded high-risk batch."
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-22-BE-PAYMENT-SETTLEMENT-ORCHESTRATION-BOUNDARY-COMMIT-PA79.yaml
+    - addons/smart_core/orchestration/payment_slice_contract_orchestrator.py
+    - addons/smart_core/orchestration/settlement_slice_contract_orchestrator.py
+  forbidden_paths:
+    - addons/smart_construction_core/**
+    - addons/smart_construction_scene/**
+    - scripts/verify/payment_slice_browser_smoke.mjs
+    - scripts/verify/settlement_slice_browser_smoke.mjs
+    - scripts/verify/scene_governance_payment_approval_branch_closure_export.py
+    - docs/**/payment*
+    - docs/**/settlement*
+    - security/**
+    - record_rules/**
+    - __manifest__.py
+
+limits:
+  max_files: 4
+  max_candidates: 4
+  max_output_lines: 60
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+role_parallel:
+  enabled: false
+  allowed_roles:
+    - executor
+  require_disjoint_writes: true
+  require_new_session_per_role: true
+  stop_on_conflict: true
+
+change_rules:
+  - single-stage execution only
+  - commit only the two orchestrator residual paths
+  - do not expand into payment approval, payment entry, payment slice service, or settlement business logic
+  - do not modify implementation content during commit classification
+
+context:
+  branch: codex/next-round
+  baseline_sha: 50fbd51
+  explicit_user_authorization: true
+  usability_battlefield: backend
+
+architecture:
+  layer_target: Backend governance over orchestration-boundary residuals
+  module: smart_core payment settlement orchestrators
+  module_owner: smart_core orchestration layer
+  kernel_or_scenario: kernel
+  backend_sub_layer_target: scene_orchestration
+  backend_sub_layer_reason: >
+    This batch is limited to scene-orchestration fallback wording and bounded
+    orchestrator ownership recovery for payment/settlement slices, without
+    introducing payment or settlement business facts.
+  reason: >
+    The remaining dirty set still contains two payment/settlement orchestrator
+    files that fall under the dedicated high-risk orchestration-boundary
+    recovery exception and can be committed independently from blocked payment
+    business-semantic residuals.
+
+acceptance:
+  commands:
+    - python3 agent_ops/scripts/validate_task.py agent_ops/tasks/ITER-2026-04-22-BE-PAYMENT-SETTLEMENT-ORCHESTRATION-BOUNDARY-COMMIT-PA79.yaml
+    - git diff --check -- addons/smart_core/orchestration/payment_slice_contract_orchestrator.py addons/smart_core/orchestration/settlement_slice_contract_orchestrator.py
+
+risk:
+  level: high
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - payment_or_settlement_scope_expands_beyond_orchestrators
+  - financial_semantics_change_detected
+
+deliverables:
+  - bounded payment settlement orchestration boundary commit
+
+rollback:
+  - git restore --staged addons/smart_core/orchestration/payment_slice_contract_orchestrator.py addons/smart_core/orchestration/settlement_slice_contract_orchestrator.py
+
+depends_on: []
