@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-23T06:05:00+08:00
+- blocker_key: `gov_contract_guard_baseline_fix_001_in_progress`
+- layer_target: `Governance Layer`
+- module: `smart_core contract guard baseline`
+- reason: recent retained slices are already merged, and the active blocker has shifted to repository-baseline guard debt in `load_contract.py` hard-coded reason codes plus stale `docs/contract/cases.yml` view_type aliases
+- completed_step: `已创建 ITER-2026-04-23-GOV-CONTRACT-GUARD-BASELINE-FIX-001，并冻结本批次只允许修复 verify.contract.preflight 与 verify.contract.catalog 的现存基线失败，不扩展到其它产品行为。`
+- active_commit: `7230915`
+- next_step: `replace hard-coded reason_code literals in addons/smart_core/handlers/load_contract.py with shared constants, then normalize outdated contract case view_type aliases and rerun both guards`
+
+### 2026-04-23T06:26:00+08:00
+- blocker_key: `gov_contract_catalog_inferred_examples_fix_002_in_progress`
+- layer_target: `Governance Layer`
+- module: `contract catalog explicit example coverage`
+- reason: after clearing load_contract drift and stale view_type aliases, verify.contract.catalog now fails only on inferred intent examples, so the next bounded batch is to materialize explicit case and snapshot artifacts for the flagged intents
+- completed_step: `已创建 ITER-2026-04-23-GOV-CONTRACT-CATALOG-INFERRED-EXAMPLES-FIX-002，并冻结本批次只允许修改 docs/contract/cases.yml 与 docs/contract/snapshots 下的新增覆盖产物，不改运行时代码。`
+- active_commit: `7230915`
+- next_step: `append explicit intent.invoke cases plus matching snapshot files for the currently inferred intents, then rerun make verify.contract.catalog`
+
 ### 2026-04-22T18:18:00+08:00
 - blocker_key: `fe_daily_verify_env_align_pa65_pass_v1`
 - layer_target: `Frontend verification infrastructure`
