@@ -192,13 +192,78 @@ class ProjectEntryContextService:
             "available": False,
         }
 
+    @staticmethod
+    def _safe_search(Project, domain, *, order="", limit=0):
+        try:
+            return Project.search(domain or [], order=order, limit=limit)
+        except Exception:
+            return Project.browse([])
+
+    @staticmethod
+    def _append_unique_records(target, records, seen_ids):
+        for record in records:
+            project_id = int(getattr(record, "id", 0) or 0)
+            if project_id <= 0 or project_id in seen_ids:
+                continue
+            seen_ids.add(project_id)
+            target += record
+        return target
+
+    @staticmethod
+    def _showroom_candidate_domain():
+        return [
+            "|",
+            ("name", "like", "展厅-%"),
+            "|",
+            ("sc_demo_showcase", "=", True),
+            ("sc_demo_showcase_ready", "=", True),
+        ]
+
+    def _option_candidate_records(self, Project, active_project_id=0, limit=12):
+        fetch_limit = max(int(limit or 12) * 6, 24)
+        candidates = Project.browse([])
+        seen_ids = set()
+
+        if int(active_project_id or 0) > 0:
+            active_record = self._safe_search(
+                Project,
+                [("id", "=", int(active_project_id or 0))],
+                limit=1,
+            )
+            candidates = self._append_unique_records(candidates, active_record, seen_ids)
+
+        user_domain = self._dashboard_service._project_domain_for_user()
+        user_records = self._safe_search(
+            Project,
+            user_domain,
+            order="write_date desc,id desc",
+            limit=fetch_limit,
+        )
+        candidates = self._append_unique_records(candidates, user_records, seen_ids)
+
+        showroom_records = self._safe_search(
+            Project,
+            self._showroom_candidate_domain(),
+            order="write_date desc,id desc",
+            limit=max(int(limit or 12), 6),
+        )
+        candidates = self._append_unique_records(candidates, showroom_records, seen_ids)
+
+        if len(candidates) >= min(fetch_limit, 2):
+            return candidates
+
+        fallback_records = self._safe_search(
+            Project,
+            [],
+            order="write_date desc,id desc",
+            limit=fetch_limit,
+        )
+        candidates = self._append_unique_records(candidates, fallback_records, seen_ids)
+        return candidates
+
     def list_options(self, active_project_id=0, limit=12):
         Project = self.env["project.project"]
-        domain = self._dashboard_service._project_domain_for_user()
-        try:
-            records = Project.search(domain or [], order="write_date desc,id desc", limit=max(int(limit or 12) * 6, 24))
-        except Exception:
-            records = Project.search([], order="write_date desc,id desc", limit=max(int(limit or 12) * 6, 24))
+        records = self._option_candidate_records(Project, active_project_id=active_project_id, limit=limit)
         ranked_rows = []
         for project in records:
             rank, context = self._project_rank(project, active_project_id=active_project_id)

@@ -45,7 +45,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                     model=model,
                     res_id=res_ids[0] if res_ids else None,
                     reason_code=REASON_MISSING_PARAMS,
-                    message="缺少参数 model/button.name/res_id",
+                    message="后端未收到完整按钮执行参数",
                     trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
                     status_code=400,
                 )
@@ -55,7 +55,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                     model=model,
                     res_id=res_ids[0],
                     reason_code=REASON_UNSUPPORTED_BUTTON_TYPE,
-                    message=f"不支持的按钮类型: {button_type}",
+                    message=f"后端不支持按钮类型: {button_type}",
                     trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
                     status_code=400,
                 )
@@ -68,7 +68,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                     model=model,
                     res_id=res_ids[0],
                     reason_code=REASON_NOT_FOUND,
-                    message="记录不存在",
+                    message="后端未找到目标记录",
                     trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
                     status_code=404,
                 )
@@ -81,7 +81,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                     model=model,
                     res_id=res_ids[0],
                     reason_code=REASON_METHOD_NOT_CALLABLE,
-                    message=f"方法不可调用: {method_name}",
+                    message=f"后端不可调用按钮方法: {method_name}",
                     trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
                     status_code=400,
                 )
@@ -92,7 +92,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                     "status": "success",
                     "success": True,
                     "reason_code": REASON_DRY_RUN,
-                    "message": "Dry run completed",
+                    "message": "后端已完成 dry run 校验",
                     "res_model": model,
                     "res_id": res_ids[0],
                     "method": method_name,
@@ -115,7 +115,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                 "status": "success",
                 "success": True,
                 "reason_code": REASON_OK,
-                "message": "Action executed successfully",
+                "message": "后端已执行动作",
                 "res_model": model,
                 "res_id": res_ids[0],
             }
@@ -171,7 +171,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                 model=model,
                 res_id=res_ids[0] if res_ids else None,
                 reason_code=REASON_PERMISSION_DENIED,
-                message=str(exc) or "Permission denied",
+                message=str(exc) or "后端拒绝本次按钮执行",
                 trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
                 status_code=403,
             )
@@ -180,7 +180,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                 model=model,
                 res_id=res_ids[0] if res_ids else None,
                 reason_code=REASON_BUSINESS_RULE_FAILED,
-                message=str(exc) or "Business rule failed",
+                message=str(exc) or "后端业务规则拒绝本次按钮执行",
                 trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
                 status_code=400,
             )
@@ -190,7 +190,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                 model=model,
                 res_id=res_ids[0] if res_ids else None,
                 reason_code=REASON_SYSTEM_ERROR,
-                message="Action execution failed",
+                message="后端执行按钮动作失败",
                 trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
                 status_code=500,
             )

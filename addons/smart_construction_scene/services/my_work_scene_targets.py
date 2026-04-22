@@ -23,8 +23,8 @@ def resolve_my_work_scene_key(
     normalized_section = str(section_key or "").strip().lower()
 
     model_map = {
-        "project.project": "projects.list",
-        "project.task": "projects.list",
+        "project.project": "projects.detail",
+        "project.task": "task.center",
         "payment.request": "finance.payment_requests",
         "construction.contract": "contracts.list",
         "sc.settlement.order": "settlement",
@@ -36,8 +36,8 @@ def resolve_my_work_scene_key(
         return model_map[normalized_model]
 
     source_map = {
-        "project.task": "projects.list",
-        "project.project": "projects.list",
+        "project.task": "task.center",
+        "project.project": "projects.detail",
         "project.risk": "projects.list",
         "mail.activity": "projects.list",
         "mail.message": "projects.list",

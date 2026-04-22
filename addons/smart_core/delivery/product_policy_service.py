@@ -90,6 +90,8 @@ DEFAULT_PRODUCT_POLICY = {
             "route": "/s/projects.intake",
             "product_key": "fr1",
             "capability_key": "delivery.fr1.project_intake",
+            "description": "提供项目立项入口与基础资料创建。",
+            "scope": "项目创建 -> 立项资料 -> 项目入口。",
         },
         {
             "scene_key": "project.management",
@@ -98,6 +100,8 @@ DEFAULT_PRODUCT_POLICY = {
             "product_key": "fr2",
             "capability_key": "delivery.fr2.project_flow",
             "requires_project_context": True,
+            "description": "进入项目驾驶舱、计划与执行主线。",
+            "scope": "项目驾驶舱 -> 计划准备 -> 执行推进。",
         },
         {
             "scene_key": "cost",
@@ -106,6 +110,8 @@ DEFAULT_PRODUCT_POLICY = {
             "product_key": "fr3",
             "capability_key": "delivery.fr3.cost_tracking",
             "requires_project_context": True,
+            "description": "查看与记录项目成本事实。",
+            "scope": "项目执行 -> 成本记录 -> 成本汇总。",
         },
         {
             "scene_key": "payment",
@@ -114,6 +120,8 @@ DEFAULT_PRODUCT_POLICY = {
             "product_key": "fr4",
             "capability_key": "delivery.fr4.payment_tracking",
             "requires_project_context": True,
+            "description": "查看与记录项目付款事实。",
+            "scope": "项目执行 -> 成本 -> 付款记录 -> 付款汇总。",
         },
         {
             "scene_key": "settlement",
@@ -122,6 +130,8 @@ DEFAULT_PRODUCT_POLICY = {
             "product_key": "fr5",
             "capability_key": "delivery.fr5.settlement_summary",
             "requires_project_context": True,
+            "description": "查看项目级成本与付款汇总后的结算结果。",
+            "scope": "项目执行 -> 成本 -> 付款 -> 结算结果。",
         },
         {
             "scene_key": "my_work.workspace",
@@ -129,6 +139,8 @@ DEFAULT_PRODUCT_POLICY = {
             "route": "/my-work",
             "product_key": "my_work",
             "capability_key": "delivery.my_work.workspace",
+            "description": "聚合当前用户的待办、风险与动作入口。",
+            "scope": "工作台 -> 待办 -> 风险 -> 场景入口。",
         },
     ],
     "capabilities": [

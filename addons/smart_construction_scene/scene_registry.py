@@ -5,6 +5,8 @@ import time
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
+import yaml
+
 SCENE_VERSION = "v2"
 SCHEMA_VERSION = "v2"
 IMPORTED_SCENES_PARAM = "sc.scene.package.imported_scenes"
@@ -203,6 +205,74 @@ def _normalize_scene(scene, drift=None, source="registry"):
     return scene
 
 
+def _scene_asset_root() -> Path:
+    return Path(__file__).resolve().parent / "scenes"
+
+
+def _normalize_scene_asset_payload(payload):
+    if not isinstance(payload, dict):
+        return {}
+    scene_key = str(payload.get("scene_key") or payload.get("code") or payload.get("key") or "").strip()
+    if not scene_key:
+        return {}
+    out = {
+        "code": scene_key,
+    }
+    scene_type = str(payload.get("scene_type") or "").strip()
+    if scene_type:
+        out["scene_type"] = scene_type
+
+    page = dict(payload.get("page") or {}) if isinstance(payload.get("page"), dict) else {}
+    if page:
+        out["page"] = page
+    zones = payload.get("zones")
+    if not isinstance(zones, list):
+        zones = page.get("zones") if isinstance(page.get("zones"), list) else []
+    if isinstance(zones, list) and zones:
+        out["zones"] = list(zones)
+
+    target = dict(payload.get("target") or {}) if isinstance(payload.get("target"), dict) else {}
+    route = str(page.get("route") or target.get("route") or "").strip()
+    if route:
+        target["route"] = route
+    if target:
+        out["target"] = target
+
+    for key in ("blocks", "search_surface", "permission_surface", "actions"):
+        value = payload.get(key)
+        if isinstance(value, list) and value:
+            out[key] = list(value)
+        elif isinstance(value, dict) and value:
+            out[key] = dict(value)
+    return out
+
+
+def _load_scene_asset_entries_with_timings():
+    timings_ms = {}
+    root = _scene_asset_root()
+    started = time.perf_counter()
+    if not root.exists():
+        timings_ms["asset_root_missing"] = int((time.perf_counter() - started) * 1000)
+        return [], timings_ms
+
+    stage = time.perf_counter()
+    paths = sorted(root.rglob("*.scene.yaml"))
+    timings_ms["discover_scene_asset_files"] = int((time.perf_counter() - stage) * 1000)
+
+    rows = []
+    stage = time.perf_counter()
+    for path in paths:
+        try:
+            payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        normalized = _normalize_scene_asset_payload(payload)
+        if normalized:
+            rows.append(normalized)
+    timings_ms["load_scene_asset_files"] = int((time.perf_counter() - stage) * 1000)
+    return rows, timings_ms
+
+
 def _apply_scene_defaults(scene, drift=None, source="registry"):
     code = scene.get("code") or scene.get("key") or ""
     if code == "projects.intake":
@@ -357,6 +427,24 @@ def load_scene_configs_with_timings(env, drift=None):
             "target": {"route": "/workbench?scene=scene_smoke_default"},
         },
     ]
+
+    def _merge_missing(scene, defaults):
+        for key, value in defaults.items():
+            current = scene.get(key)
+            if key not in scene or current in (None, "", [], {}):
+                scene[key] = value
+                continue
+            if isinstance(value, dict):
+                if not isinstance(current, dict):
+                    scene[key] = value
+                    continue
+                for d_key, d_val in value.items():
+                    if d_key not in current or current.get(d_key) in (None, "", [], {}):
+                        current[d_key] = d_val
+                continue
+            if isinstance(value, list) and not isinstance(current, list):
+                scene[key] = value
+
     stage_ts = time.perf_counter()
     content_entries, content_timings_ms = _load_scene_registry_content_entries_with_timings()
     if isinstance(content_timings_ms, dict):
@@ -369,6 +457,27 @@ def load_scene_configs_with_timings(env, drift=None):
         fallback = [item for item in fallback if str(item.get("code") or "").strip() != code]
         fallback.append(scene)
     stage_ts = _mark("load_scene_registry_content_entries", stage_ts)
+    stage_ts = time.perf_counter()
+    asset_entries, asset_timings_ms = _load_scene_asset_entries_with_timings()
+    if isinstance(asset_timings_ms, dict):
+        for key, value in asset_timings_ms.items():
+            timings_ms[f"scene_asset_entries.{key}"] = int(value)
+    fallback_map_for_assets = {
+        str(scene.get("code") or "").strip(): scene
+        for scene in fallback
+        if str(scene.get("code") or "").strip()
+    }
+    for asset in asset_entries:
+        code = str(asset.get("code") or "").strip()
+        if not code:
+            continue
+        existing = fallback_map_for_assets.get(code)
+        if existing:
+            _merge_missing(existing, asset)
+        else:
+            fallback.append(asset)
+            fallback_map_for_assets[code] = asset
+    stage_ts = _mark("load_scene_asset_entries", stage_ts)
     if not db_scenes:
         if not imported_scenes:
             stage_ts = time.perf_counter()
@@ -390,23 +499,6 @@ def load_scene_configs_with_timings(env, drift=None):
     imported_map = {scene.get("code"): scene for scene in imported_scenes if scene.get("code")}
     seen = {scene.get("code") for scene in db_scenes if scene.get("code")}
     stage_ts = _mark("build_maps", stage_ts)
-
-    def _merge_missing(scene, defaults):
-        for key, value in defaults.items():
-            current = scene.get(key)
-            if key not in scene or current in (None, "", [], {}):
-                scene[key] = value
-                continue
-            if isinstance(value, dict):
-                if not isinstance(current, dict):
-                    scene[key] = value
-                    continue
-                for d_key, d_val in value.items():
-                    if d_key not in current or current.get(d_key) in (None, "", [], {}):
-                        current[d_key] = d_val
-                continue
-            if isinstance(value, list) and not isinstance(current, list):
-                scene[key] = value
 
     def _upgrade_fallback_target(scene, defaults):
         current = scene.get("target")

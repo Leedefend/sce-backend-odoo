@@ -695,6 +695,19 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertGreaterEqual(int(surface_policies.get("actions_primary_max", 0)), 0)
         self.assertLessEqual(int(surface_policies.get("filters_primary_max", 99)), 4)
         self.assertLessEqual(int(surface_policies.get("actions_primary_max", 99)), 3)
+        self.assertIn(str(surface_policies.get("delete_mode") or ""), {"unlink", "none"})
+        batch_policy = surface_policies.get("batch_policy") or {}
+        self.assertIsInstance(batch_policy, dict)
+        self.assertIn("enabled", batch_policy)
+        self.assertIn("delete_allowed", batch_policy)
+        self.assertIn("delete_only_mode", batch_policy)
+        self.assertIsInstance(batch_policy.get("available_actions") or [], list)
+        record_open_policy = surface_policies.get("record_open_policy") or {}
+        self.assertIsInstance(record_open_policy, dict)
+        self.assertIn(
+            str(record_open_policy.get("carry_query_mode") or ""),
+            {"preserve", "clear_scene_context", "whitelist"},
+        )
         list_profile = out.get("list_profile") or {}
         list_semantics = ((out.get("semantic_page") or {}).get("list_semantics")) or {}
         self.assertEqual(list_semantics.get("owner_layer"), "scene_orchestration")
@@ -714,6 +727,15 @@ class TestProjectFormGovernance(unittest.TestCase):
         )
         self.assertTrue((scene_contract.get("search_surface") or {}).get("filters"))
         self.assertTrue((scene_contract.get("actions") or {}).get("primary_actions"))
+
+    def test_project_list_uses_project_execution_stage_label(self):
+        data = _sample_list_payload()
+
+        out = apply_project_form_domain_override(data, "user")
+
+        columns = ((out.get("semantic_page") or {}).get("list_semantics") or {}).get("columns") or []
+        lifecycle_column = next((row for row in columns if isinstance(row, dict) and row.get("name") == "lifecycle_state"), {})
+        self.assertEqual(lifecycle_column.get("label"), "项目执行阶段")
 
     def test_project_kanban_adds_profile_and_filters_fields(self):
         data = _sample_kanban_payload()

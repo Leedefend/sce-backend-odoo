@@ -273,7 +273,11 @@ def list_capabilities_for_user_with_timings(env, user) -> tuple[list[dict[str, A
 
         capability_key = str(defn.get("key") or "").strip()
         iter_ts = time.perf_counter()
-        entry_target = build_capability_entry_target(capability_key, explicit_target=defn.get("entry_target") or {})
+        entry_target = build_capability_entry_target(
+            capability_key,
+            explicit_target=defn.get("entry_target") or {},
+            env=env,
+        )
         entry_target_total_ms += int((time.perf_counter() - iter_ts) * 1000)
         iter_ts = time.perf_counter()
         payload, payload_timings_ms = resolve_capability_entry_target_payload_with_timings(

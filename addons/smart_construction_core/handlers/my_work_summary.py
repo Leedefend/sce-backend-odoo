@@ -142,7 +142,24 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             row.setdefault("source_label", self._source_label(row))
             row.setdefault("project_name", self._row_project_name(model, record_id, row))
             row.setdefault("action_summary", self._action_summary(row))
+            row["can_complete"] = self._can_complete(row)
+            complete_action = self._complete_action(row)
+            if complete_action:
+                row["complete_action"] = complete_action
         return attached
+
+    def _can_complete(self, row):
+        return str(row.get("source") or "").strip() == "mail.activity"
+
+    def _complete_action(self, row):
+        if not self._can_complete(row):
+            return None
+        return {
+            "intent": "my.work.complete",
+            "label": "完成",
+            "enabled": True,
+            "source": "mail.activity",
+        }
 
     def _source_label(self, row):
         source = str(row.get("source") or "").strip()

@@ -60,6 +60,7 @@ class CostTrackingEnterHandler(BaseIntentHandler):
         data = orchestrator.build_entry(project_id=project_id, context=ctx)
         project, _diag = orchestrator._service.resolve_project_with_diagnostics(project_id)
         data = attach_project_context_to_scene_payload(data, project)
+        data["summary_rows"] = orchestrator._service.build_summary_rows(project)
         target = resolve_project_management_entry_target(self.env)
         data = attach_release_surface_scene_contract(
             data,
