@@ -279,7 +279,7 @@ export class ScSidebar extends Component {
     }
 
     const sections = buildMenuSections(rootMenu, this.menuMap);
-    const domainSections = buildDomainSections(sections, this.menuMap);
+    const domainSections = normalizeDomainSectionsForRuntime(buildDomainSections(sections, this.menuMap));
     for (const domain of domainSections) {
       const isSingleSection = domain.sections.length === 1;
       for (const section of domain.sections) {
@@ -771,10 +771,13 @@ function shouldFlattenSection(domain, section, isSingleSection) {
 }
 
 function findFirstActionFromSections(sections) {
-  for (const domain of sections) {
-    for (const section of domain.sections) {
+  const domains = Array.isArray(sections) ? sections : [];
+  for (const domain of domains) {
+    const domainSections = Array.isArray(domain && domain.sections) ? domain.sections : [];
+    for (const section of domainSections) {
       if (section.actionId) return { menuId: section.id, actionId: section.actionId };
-      for (const child of section.children) {
+      const children = Array.isArray(section && section.children) ? section.children : [];
+      for (const child of children) {
         if (child.actionId) return { menuId: child.id, actionId: child.actionId };
       }
     }
@@ -783,8 +786,10 @@ function findFirstActionFromSections(sections) {
 }
 
 function findSectionById(domains, sectionId) {
-  for (const domain of domains) {
-    for (const section of domain.sections) {
+  const source = Array.isArray(domains) ? domains : [];
+  for (const domain of source) {
+    const domainSections = Array.isArray(domain && domain.sections) ? domain.sections : [];
+    for (const section of domainSections) {
       if (section.id === sectionId) return section;
     }
   }
@@ -891,6 +896,20 @@ function buildDomainSections(menuSections, menuMap) {
   }
   out.sort((a, b) => a.sequence - b.sequence);
   return out;
+}
+
+function normalizeDomainSectionsForRuntime(domainSections) {
+  const domains = Array.isArray(domainSections) ? domainSections : [];
+  return domains.map((domain) => {
+    const sections = Array.isArray(domain && domain.sections) ? domain.sections : [];
+    return {
+      ...domain,
+      sections: sections.map((section) => ({
+        ...section,
+        children: Array.isArray(section && section.children) ? section.children : [],
+      })),
+    };
+  });
 }
 
 function getStorageKey(user, suffix) {
