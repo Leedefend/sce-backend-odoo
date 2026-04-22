@@ -119,6 +119,16 @@ _PROJECT_FORM_PRIMARY_FIELDS = [
     "budget_total",
     "location",
 ]
+_PROJECT_FORM_PAGE_PRESERVE_FIELDS = {
+    "access_instruction_message",
+    "alias_id",
+    "alias_email",
+    "alias_name",
+    "alias_domain_id",
+    "alias_contact",
+    "task_ids",
+    "collaborator_ids",
+}
 _PROJECT_FORM_CREATE_HIDDEN_FIELDS = {
     "project_code",
     "code",
@@ -141,6 +151,62 @@ _PROJECT_FORM_ACTION_DEMOTE_KEYWORDS = {
     "ir_cron",
     "演示",
     "showcase",
+}
+_ENTERPRISE_COMPANY_FORM_FIELDS = [
+    "name",
+    "sc_short_name",
+    "sc_credit_code",
+    "sc_contact_phone",
+    "sc_address",
+    "sc_is_active",
+]
+_ENTERPRISE_COMPANY_FIELD_LABELS = {
+    "name": "公司名称",
+    "sc_short_name": "公司简称",
+    "sc_credit_code": "统一社会信用代码",
+    "sc_contact_phone": "联系电话",
+    "sc_address": "地址",
+    "sc_is_active": "启用",
+}
+_ENTERPRISE_DEPARTMENT_FORM_FIELDS = [
+    "name",
+    "parent_id",
+    "sc_manager_user_id",
+    "company_id",
+    "sc_is_active",
+]
+_ENTERPRISE_DEPARTMENT_FIELD_LABELS = {
+    "name": "部门名称",
+    "parent_id": "上级部门",
+    "sc_manager_user_id": "部门负责人",
+    "company_id": "所属公司",
+    "sc_is_active": "启用",
+}
+_ENTERPRISE_USER_FORM_FIELDS = [
+    "name",
+    "login",
+    "password",
+    "phone",
+    "active",
+    "company_id",
+    "sc_department_id",
+    "sc_manager_user_id",
+    "sc_role_profile",
+    "sc_role_effective",
+    "sc_role_landing_label",
+]
+_ENTERPRISE_USER_FIELD_LABELS = {
+    "name": "姓名",
+    "login": "登录账号",
+    "password": "初始密码",
+    "phone": "手机号",
+    "active": "启用",
+    "company_id": "所属公司",
+    "sc_department_id": "所属部门",
+    "sc_manager_user_id": "直属上级",
+    "sc_role_profile": "产品角色",
+    "sc_role_effective": "当前生效角色",
+    "sc_role_landing_label": "默认首页",
 }
 _PROJECT_FORM_ACTION_PRIORITIES = (
     "提交",
@@ -171,6 +237,62 @@ _PROJECT_KANBAN_STATUS_FIELDS = [
     "lifecycle_state",
     "stage_id",
 ]
+_PROJECT_TASK_FORM_FIELDS = [
+    "name",
+    "project_id",
+    "stage_id",
+    "sc_state",
+    "user_ids",
+    "date_deadline",
+    "priority",
+    "description",
+]
+_PROJECT_TASK_FIELD_LABELS = {
+    "name": "任务名称",
+    "project_id": "所属项目",
+    "stage_id": "当前阶段",
+    "sc_state": "执行状态",
+    "user_ids": "执行人",
+    "date_deadline": "截止日期",
+    "priority": "优先级",
+    "description": "执行说明",
+}
+_PROJECT_LIST_COLUMNS = [
+    "name",
+    "user_id",
+    "partner_id",
+    "stage_id",
+    "lifecycle_state",
+    "date_start",
+    "date",
+]
+_PROJECT_LIST_COLUMN_LABELS = {
+    "name": "项目名称",
+    "user_id": "项目经理",
+    "partner_id": "业主单位",
+    "stage_id": "当前阶段",
+    "lifecycle_state": "项目执行阶段",
+    "date_start": "开始日期",
+    "date": "结束日期",
+}
+_PROJECT_TASK_LIST_COLUMNS = [
+    "name",
+    "project_id",
+    "user_ids",
+    "stage_id",
+    "sc_state",
+    "date_deadline",
+    "priority",
+]
+_PROJECT_TASK_LIST_COLUMN_LABELS = {
+    "name": "任务名称",
+    "project_id": "所属项目",
+    "user_ids": "执行人",
+    "stage_id": "当前阶段",
+    "sc_state": "执行状态",
+    "date_deadline": "截止日期",
+    "priority": "优先级",
+}
 _USER_SURFACE_ACTION_GROUP_LABELS = {
     "basic": "基础操作",
     "workflow": "流程推进",
@@ -216,6 +338,28 @@ _FORM_ACTION_READONLY_KEYWORDS = (
     "open",
     "view",
 )
+
+
+def _inject_enterprise_form_governance(data: dict, *, next_action_key: str = "", next_action_label: str = "") -> None:
+    governance = _as_dict(data.get("form_governance"))
+    governance.update(
+        {
+            "surface": "enterprise_enablement",
+            "hide_workflow": True,
+            "hide_search_filters": True,
+            "hide_body_actions": True,
+            "suppress_contract_header_actions": True,
+        }
+    )
+    if _safe_text(next_action_key) and _safe_text(next_action_label):
+        governance["next_action"] = {
+            "step_key": _safe_text(next_action_key),
+            "label": _safe_text(next_action_label),
+        }
+    else:
+        governance.pop("next_action", None)
+    data["form_governance"] = governance
+
 _FORM_PRIMARY_DISABLED_REASON = "请先完成必填字段后再执行主操作"
 _FORM_DISABLED_REASON_CAPABILITY = "缺少执行该操作所需能力"
 
@@ -719,9 +863,32 @@ def _apply_user_surface_policies(data: dict) -> None:
     model = _safe_text(head.get("model") or data.get("model"))
     filters_primary_max = _USER_SURFACE_PRIMARY_FILTER_MAX
     actions_primary_max = _USER_SURFACE_PRIMARY_ACTION_MAX
+    record_open_policy = {
+        "carry_query_mode": "preserve",
+    }
+    batch_policy = {
+        "enabled": False,
+        "delete_allowed": False,
+        "delete_only_mode": False,
+        "available_actions": [],
+    }
     if view_type in {"form"}:
         filters_primary_max = 0
         actions_primary_max = 3
+    if view_type in {"tree", "list"}:
+        delete_allowed = model not in {"project.project"}
+        delete_only_mode = model in {"project.task", "res.company", "hr.department", "res.users"}
+        available_actions = ["delete"] if delete_only_mode else ["archive", "activate", "delete"]
+        if model in {"project.project"}:
+            record_open_policy = {
+                "carry_query_mode": "clear_scene_context",
+            }
+        batch_policy = {
+            "enabled": True,
+            "delete_allowed": delete_allowed,
+            "delete_only_mode": delete_only_mode,
+            "available_actions": available_actions if delete_allowed else ["archive", "activate"],
+        }
     primary_model = _governance_primary_model(data)
     if model and primary_model and model == primary_model:
         filters_primary_max = min(filters_primary_max, 4)
@@ -731,6 +898,9 @@ def _apply_user_surface_policies(data: dict) -> None:
         "actions_primary_max": actions_primary_max,
         "filters_max": _USER_SURFACE_FILTER_MAX,
         "actions_max": _USER_SURFACE_ACTION_MAX,
+        "delete_mode": "unlink" if bool(batch_policy.get("delete_allowed")) else "none",
+        "batch_policy": batch_policy,
+        "record_open_policy": record_open_policy,
     }
 
 
@@ -817,11 +987,49 @@ def _is_project_form_contract(data: dict) -> bool:
     if not view_type and has_form_view:
         view_type = "form"
     primary_model = _governance_primary_model(data)
+    if primary_model != "project.project":
+        return False
     if not primary_model or model != primary_model:
         return False
     if has_form_view:
         return "form" in view_type if view_type else True
     return view_type == "form"
+
+
+def _is_enterprise_company_form_contract(data: dict) -> bool:
+    head = _as_dict(data.get("head"))
+    views = _as_dict(data.get("views"))
+    form_view = _as_dict(views.get("form"))
+    permissions = _as_dict(data.get("permissions"))
+    model = _safe_text(
+        head.get("model")
+        or data.get("model")
+        or form_view.get("model")
+        or permissions.get("model")
+    )
+    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
+    if not view_type and isinstance(views.get("form"), dict):
+        view_type = "form"
+    primary_model = _governance_primary_model(data)
+    return bool(primary_model == "res.company" and model == "res.company" and "form" in view_type)
+
+
+def _is_enterprise_user_form_contract(data: dict) -> bool:
+    head = _as_dict(data.get("head"))
+    views = _as_dict(data.get("views"))
+    form_view = _as_dict(views.get("form"))
+    permissions = _as_dict(data.get("permissions"))
+    model = _safe_text(
+        head.get("model")
+        or data.get("model")
+        or form_view.get("model")
+        or permissions.get("model")
+    )
+    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
+    if not view_type and isinstance(views.get("form"), dict):
+        view_type = "form"
+    primary_model = _governance_primary_model(data)
+    return bool(primary_model == "res.users" and model == "res.users" and "form" in view_type)
 
 
 def _is_project_kanban_contract(data: dict) -> bool:
@@ -835,11 +1043,55 @@ def _is_project_kanban_contract(data: dict) -> bool:
         or kanban_view.get("model")
         or permissions.get("model")
     )
-    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
+    current_view_type = _safe_text(data.get("view_type")).lower()
+    if current_view_type and current_view_type != "kanban":
+        return False
+    render_profile = _safe_text(data.get("render_profile")).lower()
+    if render_profile in {_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY}:
+        return False
+    if _safe_text(data.get("record_id") or data.get("res_id")) and isinstance(views.get("form"), dict):
+        return False
+    view_type = _safe_text(current_view_type or head.get("view_type")).lower()
     if not view_type and isinstance(views.get("kanban"), dict):
         view_type = "kanban"
     primary_model = _governance_primary_model(data)
     return bool(primary_model and model == primary_model and "kanban" in view_type)
+
+
+def _is_project_task_form_contract(data: dict) -> bool:
+    head = _as_dict(data.get("head"))
+    views = _as_dict(data.get("views"))
+    form_view = _as_dict(views.get("form"))
+    permissions = _as_dict(data.get("permissions"))
+    model = _safe_text(
+        head.get("model")
+        or data.get("model")
+        or form_view.get("model")
+        or permissions.get("model")
+    )
+    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
+    if not view_type and isinstance(views.get("form"), dict):
+        view_type = "form"
+    primary_model = _governance_primary_model(data)
+    return bool(primary_model == "project.task" and model == "project.task" and "form" in view_type)
+
+
+def _is_model_tree_contract(data: dict, model_name: str) -> bool:
+    head = _as_dict(data.get("head"))
+    views = _as_dict(data.get("views"))
+    tree_view = _as_dict(views.get("tree") or views.get("list"))
+    permissions = _as_dict(data.get("permissions"))
+    model = _safe_text(
+        head.get("model")
+        or data.get("model")
+        or tree_view.get("model")
+        or permissions.get("model")
+    )
+    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
+    if not view_type and isinstance(views.get("tree"), dict):
+        view_type = "tree"
+    primary_model = _governance_primary_model(data)
+    return bool(primary_model == model_name and model == model_name and "tree" in view_type)
 
 
 def _is_form_contract(data: dict) -> bool:
@@ -855,6 +1107,8 @@ def _is_technical_field(name: str, descriptor: dict) -> bool:
     low = _safe_lower(name)
     if not low:
         return True
+    if low in _PROJECT_FORM_PAGE_PRESERVE_FIELDS:
+        return False
     if low in {"id", "__last_update", "display_name"}:
         return True
     if low.startswith(("create_", "write_", "message_", "activity_", "access_", "alias_", "website_")):
@@ -881,10 +1135,41 @@ def _pick_project_form_fields(data: dict) -> list[str]:
         return []
     ordered_fields = _iter_field_order(data)
 
+    def _collect_page_fields(nodes: list, current_page: str = "", out: list[str] | None = None) -> list[str]:
+        collected = out or []
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+            node_type = _safe_lower(node.get("type") or node.get("kind"))
+            page_name = current_page
+            if node_type == "page":
+                page_name = _safe_text(node.get("name") or node.get("label") or node.get("string"))
+            if node_type == "field" and page_name:
+                name = _safe_text(node.get("name"))
+                descriptor = _as_dict(fields_map.get(name))
+                if name and descriptor and not _is_technical_field(name, descriptor) and name not in collected:
+                    collected.append(name)
+            for key in ("children", "tabs", "pages", "nodes", "items"):
+                candidate = node.get(key)
+                if isinstance(candidate, list):
+                    _collect_page_fields(candidate, page_name, collected)
+        return collected
+
+    views = _as_dict(data.get("views"))
+    form = _as_dict(views.get("form"))
+    layout = form.get("layout")
+    page_fields = _collect_page_fields(layout if isinstance(layout, list) else [])
+
     selected: list[str] = []
     for name in _PROJECT_FORM_PRIMARY_FIELDS:
         descriptor = _as_dict(fields_map.get(name))
         if descriptor and not _is_technical_field(name, descriptor) and name not in selected:
+            selected.append(name)
+
+    for name in page_fields:
+        if len(selected) >= _PROJECT_FORM_FIELD_MAX:
+            break
+        if name not in selected:
             selected.append(name)
 
     for name in ordered_fields:
@@ -989,58 +1274,10 @@ def _restructure_project_form_layout(data: dict) -> None:
     layout = form.get("layout")
     if not isinstance(layout, list):
         return
-
-    fields_map = _as_dict(data.get("fields"))
-    field_names = [name for name in fields_map.keys() if _safe_text(name)]
-    visible_fields = data.get("visible_fields") if isinstance(data.get("visible_fields"), list) else []
-    ordered = [str(name).strip() for name in visible_fields if str(name).strip() in fields_map]
-    if not ordered:
-        ordered = field_names
-
-    profile = _as_dict(data.get("form_profile"))
-    core_raw = profile.get("core_fields") if isinstance(profile.get("core_fields"), list) else []
-    advanced_raw = profile.get("advanced_fields") if isinstance(profile.get("advanced_fields"), list) else []
-    core_fields = [str(name).strip() for name in core_raw if str(name).strip() in ordered]
-    advanced_fields = [str(name).strip() for name in advanced_raw if str(name).strip() in ordered]
-    if not core_fields:
-        core_fields = ordered[: min(8, len(ordered))]
-    if not advanced_fields:
-        advanced_fields = [name for name in ordered if name not in set(core_fields)]
-
-    header_nodes = [
-        node
-        for node in layout
-        if isinstance(node, dict) and _safe_lower(node.get("type")) == "header"
-    ]
-    groups = []
-    if core_fields:
-        groups.append(
-            {
-                "type": "group",
-                "name": "core_group",
-                "string": "核心信息",
-                "children": [{"type": "field", "name": name} for name in core_fields],
-            }
-        )
-    if advanced_fields:
-        groups.append(
-            {
-                "type": "group",
-                "name": "advanced_group",
-                "string": "高级信息",
-                "children": [{"type": "field", "name": name} for name in advanced_fields],
-            }
-        )
-    if not groups:
-        return
-
-    form["layout"] = header_nodes + [
-        {
-            "type": "sheet",
-            "name": "project_form_sheet",
-            "children": groups,
-        }
-    ]
+    # Keep parser-native container hierarchy intact. Downstream user governance will
+    # prune fields from this tree, but it should not replace notebook/page/group with
+    # synthetic buckets because frontend detail rendering depends on the native shape.
+    form["layout"] = layout
     views["form"] = form
     data["views"] = views
 
@@ -1084,14 +1321,19 @@ def _filter_project_form_layout(data: dict, selected_fields: list[str]) -> None:
                     cleaned.append(node)
                 continue
             copied = dict(node)
-            keep_node = True
+            structured_children_present = False
             for key in ("children", "tabs", "pages", "nodes", "items"):
                 raw_children = node.get(key)
                 if not isinstance(raw_children, list):
                     continue
                 pruned_children = _prune_layout(raw_children, allowed)
                 copied[key] = pruned_children
-                if node_type in {"group", "page", "notebook", "sheet", "header"} and not pruned_children and key in {"children", "tabs", "pages"}:
+                if key in {"children", "tabs", "pages"} and pruned_children:
+                    structured_children_present = True
+            keep_node = True
+            if node_type in {"group", "page", "notebook", "sheet", "header"}:
+                has_structured_key = any(isinstance(node.get(key), list) for key in ("children", "tabs", "pages"))
+                if has_structured_key and not structured_children_present:
                     keep_node = False
             if keep_node:
                 cleaned.append(copied)
@@ -1115,59 +1357,7 @@ def _filter_project_form_layout(data: dict, selected_fields: list[str]) -> None:
     missing_selected = [name for name in selected_order if name and name not in existing_set]
     for name in missing_selected:
         filtered_layout.append({"type": "field", "name": name})
-    form_profile = _as_dict(data.get("form_profile"))
-    core_raw = form_profile.get("core_fields")
-    advanced_raw = form_profile.get("advanced_fields")
-    core_fields = [
-        _safe_text(name)
-        for name in (core_raw if isinstance(core_raw, list) else [])
-        if _safe_text(name) in selected_set
-    ]
-    advanced_fields = [
-        _safe_text(name)
-        for name in (advanced_raw if isinstance(advanced_raw, list) else [])
-        if _safe_text(name) in selected_set
-    ]
-    field_order = [name for name in selected_order if name in selected_set]
-    if not core_fields and field_order:
-        core_fields = field_order[: min(8, len(field_order))]
-    if not advanced_fields:
-        advanced_fields = [name for name in field_order if name not in set(core_fields)]
-
-    header_nodes: list[dict] = []
-    for node in filtered_layout:
-        if isinstance(node, dict) and _safe_lower(node.get("type")) == "header":
-            header_nodes.append(node)
-
-    grouped_children: list[dict] = []
-    if core_fields:
-        grouped_children.append(
-            {
-                "type": "group",
-                "name": "core_group",
-                "string": "核心信息",
-                "children": [{"type": "field", "name": name} for name in core_fields],
-            }
-        )
-    if advanced_fields:
-        grouped_children.append(
-            {
-                "type": "group",
-                "name": "advanced_group",
-                "string": "高级信息",
-                "children": [{"type": "field", "name": name} for name in advanced_fields],
-            }
-        )
-
-    if grouped_children:
-        sheet_node = {
-            "type": "sheet",
-            "name": "project_form_sheet",
-            "children": grouped_children,
-        }
-        form["layout"] = header_nodes + [sheet_node]
-    else:
-        form["layout"] = filtered_layout
+    form["layout"] = filtered_layout
     views["form"] = form
     data["views"] = views
 
@@ -1257,6 +1447,18 @@ def _build_project_action_groups(rows: list[dict]) -> list[dict]:
     return result
 
 
+def _emit_scene_action_semantics(data: dict, *, header_rows: list[dict], record_rows: list[dict]) -> None:
+    semantic_page = _as_dict(data.get("semantic_page"))
+    actions = _as_dict(semantic_page.get("actions"))
+    actions["header_actions"] = [dict(row) for row in header_rows if isinstance(row, dict)]
+    actions["record_actions"] = [dict(row) for row in record_rows if isinstance(row, dict)]
+    actions.setdefault("toolbar_actions", [])
+    actions["owner_layer"] = "scene_orchestration"
+    actions["source"] = "contract_governance.curated_action_facts"
+    semantic_page["actions"] = actions
+    data["semantic_page"] = semantic_page
+
+
 def _govern_project_form_actions(data: dict) -> None:
     toolbar = _as_dict(data.get("toolbar"))
     if isinstance(toolbar.get("header"), list):
@@ -1283,6 +1485,11 @@ def _govern_project_form_actions(data: dict) -> None:
     smart_rows = sorted(smart_rows, key=lambda item: (_action_priority(item), _safe_text(item.get("label"))))
     curated = header_rows[:_PROJECT_FORM_HEADER_ACTION_MAX] + smart_rows[:_PROJECT_FORM_SMART_ACTION_MAX]
     data["buttons"] = curated
+    _emit_scene_action_semantics(
+        data,
+        header_rows=header_rows[:_PROJECT_FORM_HEADER_ACTION_MAX],
+        record_rows=smart_rows[:_PROJECT_FORM_SMART_ACTION_MAX],
+    )
     data["action_groups"] = _build_project_action_groups(curated)
 
 
@@ -1326,20 +1533,31 @@ def _build_project_lifecycle_summary(data: dict) -> None:
         "blockers": [],
         "progress_percent": 0 if state_keys else None,
     }
+    data["workflow_surface"] = {
+        "owner_layer": "business_fact",
+        "source": "contract_governance.workflow_facts",
+        "state_field": _safe_text(workflow.get("state_field"), "stage_id"),
+        "states": state_keys,
+        "transitions": transitions[:8],
+        "highlight_states": workflow.get("highlight_states") if isinstance(workflow.get("highlight_states"), list) else [],
+    }
 
 
 def _govern_project_form_contract_for_user(data: dict) -> None:
     selected = _pick_project_form_fields(data)
-    selected_set = set(selected)
     fields_map = _as_dict(data.get("fields"))
-    data["fields"] = {name: fields_map.get(name) for name in selected if name in fields_map}
+    # Keep full field map for native form-structure fidelity. Restricting fields to
+    # selected subset can prune page containers indirectly in user surface.
+    data["fields"] = fields_map
     data["visible_fields"] = selected
+    _backfill_form_layout_from_visible_fields(data)
     data["form_profile"] = {
         "core_fields": selected[:8],
         "advanced_fields": selected[8:],
         "max_fields": _PROJECT_FORM_FIELD_MAX,
     }
-    _filter_project_form_layout(data, selected)
+    # Keep parser-native notebook/page tree intact for project form alignment.
+    # Do not prune form layout by selected fields in user mode.
     views = _as_dict(data.get("views"))
     form = _as_dict(views.get("form"))
     form["form_profile"] = _as_dict(data.get("form_profile"))
@@ -1349,13 +1567,125 @@ def _govern_project_form_contract_for_user(data: dict) -> None:
     permissions = _as_dict(data.get("permissions"))
     field_groups = _as_dict(permissions.get("field_groups"))
     if field_groups:
-        permissions["field_groups"] = {name: val for name, val in field_groups.items() if name in selected_set}
+        permissions["field_groups"] = field_groups
     data["permissions"] = permissions
 
     _govern_project_form_actions(data)
     _govern_project_form_search(data)
     _build_project_lifecycle_summary(data)
     _realign_access_policy_with_visible_fields(data)
+
+
+def _govern_project_task_form_for_user(data: dict) -> None:
+    if not _is_project_task_form_contract(data):
+        return
+    fields_map = _as_dict(data.get("fields"))
+    selected = [name for name in _PROJECT_TASK_FORM_FIELDS if name in fields_map]
+    if not selected:
+        return
+
+    data["visible_fields"] = selected
+    data["field_groups"] = [
+        {
+            "name": "core",
+            "label": "任务基础信息",
+            "priority": 1,
+            "collapsible": False,
+            "fields": [name for name in selected if name != "description"],
+        },
+        {
+            "name": "advanced",
+            "label": "任务说明",
+            "priority": 2,
+            "collapsible": True,
+            "fields": [name for name in selected if name == "description"],
+        },
+    ]
+
+    views = _as_dict(data.get("views"))
+    form = _as_dict(views.get("form"))
+    form["layout"] = [
+        {
+            "type": "sheet",
+            "name": "project_task_form_sheet",
+            "children": [
+                {
+                    "type": "group",
+                    "name": "project_task_core_group",
+                    "string": "任务基础信息",
+                    "children": [
+                        _make_labeled_field_node(name, fields_map, _PROJECT_TASK_FIELD_LABELS)
+                        for name in selected
+                        if name != "description"
+                    ],
+                },
+                {
+                    "type": "group",
+                    "name": "project_task_description_group",
+                    "string": "任务说明",
+                    "children": [
+                        _make_labeled_field_node(name, fields_map, _PROJECT_TASK_FIELD_LABELS)
+                        for name in selected
+                        if name == "description"
+                    ],
+                },
+            ],
+        }
+    ]
+    views["form"] = form
+    data["views"] = views
+
+
+def _govern_standard_list_for_user(
+    data: dict,
+    *,
+    model_name: str,
+    columns_order: list[str],
+    column_labels: dict[str, str],
+    row_primary: str,
+    row_secondary: str,
+    status_field: str,
+) -> None:
+    if not _is_model_tree_contract(data, model_name):
+        return
+    fields_map = _as_dict(data.get("fields"))
+    selected = [name for name in columns_order if name in fields_map]
+    if not selected:
+        return
+
+    views = _as_dict(data.get("views"))
+    tree = _as_dict(views.get("tree") or views.get("list"))
+    tree["columns"] = selected
+    views["tree"] = tree
+    data["views"] = views
+
+    list_profile = _as_dict(data.get("list_profile"))
+    list_profile.update(
+        {
+            "columns": selected,
+            "hidden_columns": [],
+            "column_labels": {name: column_labels.get(name, name) for name in selected},
+            "row_primary": row_primary,
+            "row_secondary": row_secondary,
+            "primary_field": row_primary,
+            "status_field": status_field,
+        }
+    )
+    data["list_profile"] = list_profile
+
+    semantic_page = _as_dict(data.get("semantic_page"))
+    list_semantics = _as_dict(semantic_page.get("list_semantics"))
+    list_semantics["owner_layer"] = "scene_orchestration"
+    list_semantics["source"] = "contract_governance.curated_list_facts"
+    list_semantics["columns"] = [
+        {"name": name, "label": column_labels.get(name, name)}
+        for name in selected
+    ]
+    list_semantics["row_primary"] = row_primary
+    list_semantics["row_secondary"] = row_secondary
+    list_semantics["status_field"] = status_field
+    semantic_page["list_semantics"] = list_semantics
+    data["semantic_page"] = semantic_page
 
 
 def _realign_access_policy_with_visible_fields(data: dict) -> None:
@@ -1430,6 +1760,306 @@ def _realign_access_policy_with_visible_fields(data: dict) -> None:
         data["warnings"] = warnings
     else:
         data.pop("warnings", None)
+
+
+def _normalize_native_view_contract_surface(data: dict) -> None:
+    parser_contract = _as_dict(data.get("parser_contract"))
+    if parser_contract:
+        parser_contract.setdefault("layout", _as_dict(parser_contract.get("layout")))
+        contract_version = _safe_text(data.get("contract_version")) or "native_view.v1"
+        parser_contract.setdefault("contract_version", contract_version)
+        data["parser_contract"] = parser_contract
+
+    view_semantics = _as_dict(data.get("view_semantics"))
+    if view_semantics:
+        view_semantics.setdefault("kind", "view_semantics")
+        view_semantics["capability_flags"] = _as_dict(view_semantics.get("capability_flags"))
+        view_semantics["semantic_meta"] = _as_dict(view_semantics.get("semantic_meta"))
+        data["view_semantics"] = view_semantics
+
+    native_view = _as_dict(data.get("native_view"))
+    if native_view:
+        native_view["views"] = _as_dict(native_view.get("views"))
+        native_view["search"] = _as_dict(native_view.get("search"))
+        native_view["toolbar"] = _as_dict(native_view.get("toolbar"))
+        data["native_view"] = native_view
+
+
+def _normalize_scene_semantic_surface(data: dict) -> None:
+    def _normalize_page_surface(page_payload: dict) -> dict:
+        page = _as_dict(page_payload)
+        surface = _as_dict(page.get("surface"))
+        if surface:
+            surface["semantic_view"] = _as_dict(surface.get("semantic_view"))
+            surface["semantic_page"] = _as_dict(surface.get("semantic_page"))
+            page["surface"] = surface
+        return page
+
+    def _normalize_parser_semantic_surface(surface_payload: dict) -> dict:
+        surface = _as_dict(surface_payload)
+        if not surface:
+            return {}
+        parser_contract = _as_dict(surface.get("parser_contract"))
+        if parser_contract:
+            parser_contract.setdefault("layout", _as_dict(parser_contract.get("layout")))
+            parser_contract.setdefault(
+                "contract_version",
+                _safe_text(data.get("contract_version")) or "native_view.v1",
+            )
+            surface["parser_contract"] = parser_contract
+        view_semantics = _as_dict(surface.get("view_semantics"))
+        if view_semantics:
+            view_semantics.setdefault("kind", "view_semantics")
+            view_semantics["capability_flags"] = _as_dict(view_semantics.get("capability_flags"))
+            view_semantics["semantic_meta"] = _as_dict(view_semantics.get("semantic_meta"))
+            surface["view_semantics"] = view_semantics
+        native_view = _as_dict(surface.get("native_view"))
+        if native_view:
+            native_view["views"] = _as_dict(native_view.get("views"))
+            native_view["search"] = _as_dict(native_view.get("search"))
+            native_view["toolbar"] = _as_dict(native_view.get("toolbar"))
+            surface["native_view"] = native_view
+        semantic_page = _as_dict(surface.get("semantic_page"))
+        if semantic_page:
+            surface["semantic_page"] = semantic_page
+        return surface
+
+    scene_contract_standard = _as_dict(data.get("scene_contract_standard_v1"))
+    if scene_contract_standard:
+        scene_contract_standard["page"] = _normalize_page_surface(scene_contract_standard.get("page"))
+        governance = _as_dict(scene_contract_standard.get("governance"))
+        parser_surface = _normalize_parser_semantic_surface(governance.get("parser_semantic_surface"))
+        if parser_surface:
+            governance["parser_semantic_surface"] = parser_surface
+        scene_contract_standard["governance"] = governance
+        data["scene_contract_standard_v1"] = scene_contract_standard
+
+    scene_contract_v1 = _as_dict(data.get("scene_contract_v1"))
+    if scene_contract_v1:
+        scene_contract_v1["page"] = _normalize_page_surface(scene_contract_v1.get("page"))
+        diagnostics = _as_dict(scene_contract_v1.get("diagnostics"))
+        parser_surface = _normalize_parser_semantic_surface(diagnostics.get("parser_semantic_surface"))
+        if parser_surface:
+            diagnostics["parser_semantic_surface"] = parser_surface
+        scene_contract_v1["diagnostics"] = diagnostics
+        data["scene_contract_v1"] = scene_contract_v1
+
+    semantic_runtime = _as_dict(data.get("semantic_runtime"))
+    if semantic_runtime:
+        semantic_runtime["semantic_view"] = _as_dict(semantic_runtime.get("semantic_view"))
+        semantic_runtime["semantic_page"] = _as_dict(semantic_runtime.get("semantic_page"))
+        parser_surface = _normalize_parser_semantic_surface(semantic_runtime.get("parser_semantic_surface"))
+        if parser_surface:
+            semantic_runtime["parser_semantic_surface"] = parser_surface
+        data["semantic_runtime"] = semantic_runtime
+
+    released_scene_surface = _as_dict(data.get("released_scene_semantic_surface"))
+    if released_scene_surface:
+        released_scene_surface["page_surface"] = _normalize_page_surface({"surface": released_scene_surface.get("page_surface")}).get("surface") or {}
+        parser_surface = _normalize_parser_semantic_surface(released_scene_surface.get("parser_semantic_surface"))
+        if parser_surface:
+            released_scene_surface["parser_semantic_surface"] = parser_surface
+        data["released_scene_semantic_surface"] = released_scene_surface
+
+
+def _search_surface_from_contract(data: dict) -> dict:
+    search = _as_dict(data.get("search"))
+    if not search:
+        return {}
+    surface: dict[str, Any] = {
+        "owner_layer": "scene_orchestration",
+        "source": "contract_governance.search_surface",
+    }
+    for source_key, target_key in (
+        ("filters", "filters"),
+        ("fields", "fields"),
+        ("group_by", "group_by"),
+        ("groupBy", "group_by"),
+        ("searchpanel", "searchpanel"),
+        ("search_panel", "searchpanel"),
+        ("searchPanel", "searchpanel"),
+        ("native_search_menu", "native_search_menu"),
+        ("nativeSearchMenu", "native_search_menu"),
+        ("default_state", "default_state"),
+    ):
+        value = search.get(source_key)
+        if isinstance(value, (list, dict)) and value:
+            surface[target_key] = _deep_clone_json_like(value)
+    interaction_model = _safe_text(search.get("interaction_model") or search.get("interactionModel"))
+    if interaction_model:
+        surface["interaction_model"] = interaction_model
+    default_sort = _safe_text(search.get("default_sort") or search.get("defaultSort") or data.get("default_sort"))
+    if default_sort:
+        surface["default_sort"] = default_sort
+    mode = _safe_text(search.get("mode"))
+    if mode:
+        surface["mode"] = mode
+    elif any(surface.get(key) for key in ("filters", "group_by", "searchpanel")):
+        surface["mode"] = "faceted"
+    return surface if len(surface) > 2 else {}
+
+
+def _scene_actions_from_contract(data: dict) -> dict:
+    semantic_page = _as_dict(data.get("semantic_page"))
+    semantic_actions = _as_dict(semantic_page.get("actions"))
+    out: dict[str, Any] = {}
+
+    header_actions = semantic_actions.get("header_actions")
+    record_actions = semantic_actions.get("record_actions")
+    toolbar_actions = semantic_actions.get("toolbar_actions")
+    if isinstance(header_actions, list) and header_actions:
+        out["primary_actions"] = _deep_clone_json_like(header_actions)
+    if isinstance(record_actions, list) and record_actions:
+        out["contextual_actions"] = _deep_clone_json_like(record_actions)
+    if isinstance(toolbar_actions, list) and toolbar_actions:
+        out["secondary_actions"] = _deep_clone_json_like(toolbar_actions)
+
+    if not out:
+        grouped_rows = data.get("action_groups")
+        if isinstance(grouped_rows, list):
+            for group in grouped_rows:
+                if not isinstance(group, dict):
+                    continue
+                key = _safe_lower(group.get("key"))
+                rows = group.get("actions")
+                if not isinstance(rows, list) or not rows:
+                    continue
+                if key in {"basic", "primary", "workflow"} and "primary_actions" not in out:
+                    out["primary_actions"] = _deep_clone_json_like(rows)
+                elif key in {"drilldown", "record", "contextual"} and "contextual_actions" not in out:
+                    out["contextual_actions"] = _deep_clone_json_like(rows)
+                elif "secondary_actions" not in out:
+                    out["secondary_actions"] = _deep_clone_json_like(rows)
+
+    if not out:
+        rows = data.get("buttons")
+        if isinstance(rows, list) and rows:
+            out["primary_actions"] = _deep_clone_json_like(rows[:_USER_SURFACE_ACTION_MAX])
+
+    if out:
+        out["owner_layer"] = "scene_orchestration"
+        out["source"] = "contract_governance.action_surface"
+    return out
+
+
+def _ensure_scene_contract_v1_envelope(data: dict) -> None:
+    semantic_page = _as_dict(data.get("semantic_page"))
+    list_profile = _as_dict(data.get("list_profile"))
+    if list_profile and not _as_dict(semantic_page.get("list_semantics")):
+        list_semantics = {
+            "owner_layer": "scene_orchestration",
+            "source": "contract_governance.list_profile_bridge",
+            "columns": [
+                {"name": _safe_text(name), "label": _safe_text((_as_dict(list_profile.get("column_labels"))).get(_safe_text(name)), _safe_text(name))}
+                for name in (list_profile.get("columns") if isinstance(list_profile.get("columns"), list) else [])
+                if _safe_text(name)
+            ],
+            "hidden_columns": [
+                _safe_text(name)
+                for name in (list_profile.get("hidden_columns") if isinstance(list_profile.get("hidden_columns"), list) else [])
+                if _safe_text(name)
+            ],
+            "row_primary": _safe_text(list_profile.get("row_primary")),
+            "row_secondary": _safe_text(list_profile.get("row_secondary")),
+            "status_field": _safe_text(list_profile.get("status_field")),
+        }
+        semantic_page["list_semantics"] = list_semantics
+
+    search_surface = _search_surface_from_contract(data)
+    actions = _scene_actions_from_contract(data)
+    if not semantic_page and not search_surface and not actions:
+        return
+
+    scene_contract = _as_dict(data.get("scene_contract_v1"))
+    scene_contract["contract_version"] = "v1"
+    scene_contract.setdefault("owner_layer", "scene_orchestration")
+    scene_contract.setdefault("source", "ui.contract.delivery_surface")
+    if semantic_page:
+        current_semantic_page = _as_dict(scene_contract.get("semantic_page"))
+        current_semantic_page.update(_deep_clone_json_like(semantic_page))
+        scene_contract["semantic_page"] = current_semantic_page
+    if search_surface and not _as_dict(scene_contract.get("search_surface")):
+        scene_contract["search_surface"] = search_surface
+    if actions:
+        current_actions = _as_dict(scene_contract.get("actions"))
+        for key, value in actions.items():
+            current_actions.setdefault(key, value)
+        scene_contract["actions"] = current_actions
+    diagnostics = _as_dict(scene_contract.get("diagnostics"))
+    diagnostics.setdefault("scene_contract_supply", "ui_contract_governance_bridge")
+    diagnostics.setdefault("scene_contract_supply_owner_layer", "scene_orchestration")
+    scene_contract["diagnostics"] = diagnostics
+    data["scene_contract_v1"] = scene_contract
+
+
+def _native_node_label(node: dict) -> str:
+    attributes = node.get("attributes") if isinstance(node.get("attributes"), dict) else {}
+    label = _safe_text(attributes.get("string") or node.get("string"))
+    translations = {
+        "description": "描述",
+        "settings": "设置",
+    }
+    return translations.get(label.strip().lower(), label)
+
+
+def _preserve_native_layout_labels(data: dict) -> None:
+    views = data.get("views") if isinstance(data.get("views"), dict) else {}
+    form = views.get("form") if isinstance(views.get("form"), dict) else {}
+    layout = form.get("layout")
+    if not isinstance(layout, list):
+        return
+
+    def visit(nodes):
+        for node in nodes or []:
+            if not isinstance(node, dict):
+                continue
+            if _safe_text(node.get("type")).lower() == "page":
+                label = _native_node_label(node)
+                if label:
+                    node["title"] = label
+                    node["label"] = label
+            for key in ("children", "tabs", "pages", "nodes", "items"):
+                nested = node.get(key)
+                if isinstance(nested, list):
+                    visit(nested)
+
+    visit(layout)
+    form["layout"] = layout
+    views["form"] = form
+    data["views"] = views
+
+
+def _emit_relation_entry_semantics(data: dict) -> None:
+    fields_map = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+    entries: list[dict[str, Any]] = []
+    for field_name, descriptor_raw in fields_map.items():
+        descriptor = _as_dict(descriptor_raw)
+        relation_entry = _as_dict(descriptor.get("relation_entry"))
+        if not relation_entry:
+            continue
+        field = _safe_text(field_name)
+        if not field:
+            continue
+        entries.append(
+            {
+                "field": field,
+                "model": _safe_text(relation_entry.get("model") or descriptor.get("relation")),
+                "create_mode": _safe_text(relation_entry.get("create_mode"), "disabled"),
+                "can_read": bool(relation_entry.get("can_read", True)),
+                "can_create": bool(relation_entry.get("can_create", False)),
+                "reason_code": _safe_text(relation_entry.get("reason_code")),
+                "default_vals": _as_dict(relation_entry.get("default_vals")),
+                "action_id": relation_entry.get("action_id"),
+                "menu_id": relation_entry.get("menu_id"),
+                "source": _safe_text(relation_entry.get("source"), "field.relation_entry"),
+            }
+        )
+    if not entries:
+        return
+    semantic_page = _as_dict(data.get("semantic_page"))
+    semantic_page["relation_entries"] = entries
+    semantic_page["relation_entries_owner_layer"] = "scene_orchestration"
+    data["semantic_page"] = semantic_page
 
 
 def _to_bool(value: Any, fallback: bool = False) -> bool:
@@ -1568,6 +2198,12 @@ def _derive_form_core_fields(data: dict) -> list[str]:
 def _apply_form_field_groups(data: dict) -> None:
     if not _is_form_contract(data):
         return
+    existing_groups = data.get("field_groups") if isinstance(data.get("field_groups"), list) else []
+    if existing_groups and (
+        _is_enterprise_company_form_contract(data)
+        or _is_enterprise_user_form_contract(data)
+    ):
+        return
     fields_map = _as_dict(data.get("fields"))
     if not fields_map:
         return
@@ -1595,6 +2231,144 @@ def _apply_form_field_groups(data: dict) -> None:
             "fields": advanced_fields,
         },
     ]
+
+
+def _collect_layout_field_names(nodes: Any) -> list[str]:
+    ordered: list[str] = []
+
+    def _iter_children(node: dict) -> list[list]:
+        rows: list[list] = []
+        for key in ("children", "tabs", "pages", "nodes", "items"):
+            candidate = node.get(key)
+            if isinstance(candidate, list):
+                rows.append(candidate)
+        return rows
+
+    def _collect(items: list) -> None:
+        for node in items:
+            if not isinstance(node, dict):
+                continue
+            if _safe_lower(node.get("type")) == "field":
+                name = _safe_text(node.get("name"))
+                if name and name not in ordered:
+                    ordered.append(name)
+            for children in _iter_children(node):
+                _collect(children)
+
+    if isinstance(nodes, list):
+        _collect(nodes)
+    elif isinstance(nodes, dict):
+        _collect([nodes])
+    return ordered
+
+
+def _find_layout_sheet_node(nodes: Any) -> dict | None:
+    if isinstance(nodes, dict):
+        nodes = [nodes]
+    if not isinstance(nodes, list):
+        return None
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        if _safe_lower(node.get("type")) == "sheet":
+            return node
+        for key in ("children", "tabs", "pages", "nodes", "items"):
+            candidate = node.get(key)
+            if isinstance(candidate, list):
+                found = _find_layout_sheet_node(candidate)
+                if found:
+                    return found
+    return None
+
+
+def _backfill_form_layout_from_visible_fields(data: dict) -> None:
+    if not _is_form_contract(data):
+        return
+    fields_map = _as_dict(data.get("fields"))
+    if not fields_map:
+        return
+    visible_fields = [
+        _safe_text(name)
+        for name in (data.get("visible_fields") or [])
+        if _safe_text(name) in fields_map
+    ]
+    if not visible_fields:
+        return
+
+    views = _as_dict(data.get("views"))
+    form = _as_dict(views.get("form"))
+    layout = form.get("layout")
+    if not isinstance(layout, list) or not layout:
+        return
+
+    existing = set(_collect_layout_field_names(layout))
+    missing = [
+        name
+        for name in visible_fields
+        if name not in existing and not _is_technical_field(name, _as_dict(fields_map.get(name)))
+    ]
+    if not missing:
+        return
+
+    backfill_group = {
+        "type": "group",
+        "name": "visible_fields_backfill_group",
+        "string": "补充业务信息",
+        "children": [
+            _make_labeled_field_node(name, fields_map)
+            for name in missing
+        ],
+    }
+
+    target = _find_layout_sheet_node(layout)
+    if target:
+        children = target.get("children")
+        if not isinstance(children, list):
+            children = []
+        children.append(backfill_group)
+        target["children"] = children
+    else:
+        layout.append(backfill_group)
+    form["layout"] = layout
+    views["form"] = form
+    data["views"] = views
+
+
+def _make_labeled_field_node(
+    name: str,
+    fields_map: dict[str, Any],
+    preferred_labels: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    descriptor = _as_dict(fields_map.get(name))
+    label = _safe_text((preferred_labels or {}).get(name), "")
+    if not label:
+        label = _safe_text(_ENTERPRISE_USER_FIELD_LABELS.get(name) or _ENTERPRISE_COMPANY_FIELD_LABELS.get(name), "")
+    if not label:
+        label = _safe_text(descriptor.get("string") if descriptor else "", name)
+    ttype = _safe_lower(descriptor.get("type") or descriptor.get("ttype"))
+    widget = _safe_text(descriptor.get("widget"))
+    if not widget:
+        widget = {
+            "many2one": "many2one",
+            "one2many": "one2many_list",
+            "many2many": "many2many_tags",
+            "boolean": "boolean",
+            "date": "date",
+            "datetime": "datetime",
+            "text": "textarea",
+            "html": "html",
+            "binary": "image",
+        }.get(ttype, "")
+    node = {"type": "field", "name": name}
+    if label:
+        node["string"] = label
+    node["fieldInfo"] = {
+        "name": name,
+        "label": label or name,
+    }
+    if widget:
+        node["fieldInfo"]["widget"] = widget
+    return node
 
 
 def _infer_action_semantic(action: dict) -> str:
@@ -1963,6 +2737,214 @@ def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
     return policies
 
 
+def _govern_enterprise_company_form_for_user(data: dict) -> None:
+    if not _is_enterprise_company_form_contract(data):
+        return
+    fields_map = _as_dict(data.get("fields"))
+    selected = [name for name in _ENTERPRISE_COMPANY_FORM_FIELDS if name in fields_map]
+    if not selected:
+        return
+    data["visible_fields"] = selected
+    data["field_groups"] = [
+        {
+            "name": "core",
+            "label": "企业基础信息",
+            "priority": 1,
+            "collapsible": False,
+            "fields": selected,
+        },
+    ]
+    views = _as_dict(data.get("views"))
+    form = _as_dict(views.get("form"))
+    form["layout"] = [
+        {
+            "type": "sheet",
+            "name": "enterprise_company_form_sheet",
+            "children": [
+                {
+                    "type": "group",
+                    "name": "enterprise_company_core_group",
+                    "string": "企业基础信息",
+                    "children": [
+                        _make_labeled_field_node(name, fields_map, _ENTERPRISE_COMPANY_FIELD_LABELS)
+                        for name in selected
+                    ],
+                }
+            ],
+        }
+    ]
+    views["form"] = form
+    data["views"] = views
+
+    if _resolve_render_profile(data) == _RENDER_PROFILE_CREATE:
+        toolbar = _as_dict(data.get("toolbar"))
+        if isinstance(toolbar.get("header"), list):
+            toolbar["header"] = []
+        data["toolbar"] = toolbar
+        data["buttons"] = []
+        data["action_groups"] = []
+    _inject_enterprise_form_governance(
+        data,
+        next_action_key="department",
+        next_action_label="进入组织架构",
+    )
+
+
+def _govern_enterprise_department_form_for_user(data: dict) -> None:
+    if _governance_primary_model(data) != "hr.department":
+        return
+    if not _is_form_contract(data):
+        return
+    fields_map = _as_dict(data.get("fields"))
+    selected = [name for name in _ENTERPRISE_DEPARTMENT_FORM_FIELDS if name in fields_map]
+    if not selected:
+        return
+    data["visible_fields"] = selected
+    data["field_groups"] = [
+        {
+            "name": "core",
+            "label": "组织基础信息",
+            "priority": 1,
+            "collapsible": False,
+            "fields": selected,
+        },
+    ]
+    views = _as_dict(data.get("views"))
+    form = _as_dict(views.get("form"))
+    form["layout"] = [
+        {
+            "type": "sheet",
+            "name": "enterprise_department_form_sheet",
+            "children": [
+                {
+                    "type": "group",
+                    "name": "enterprise_department_core_group",
+                    "string": "组织基础信息",
+                    "children": [
+                        _make_labeled_field_node(name, fields_map, _ENTERPRISE_DEPARTMENT_FIELD_LABELS)
+                        for name in selected
+                    ],
+                }
+            ],
+        }
+    ]
+    views["form"] = form
+    data["views"] = views
+
+    if _resolve_render_profile(data) == _RENDER_PROFILE_CREATE:
+        toolbar = _as_dict(data.get("toolbar"))
+        if isinstance(toolbar.get("header"), list):
+            toolbar["header"] = []
+        data["toolbar"] = toolbar
+        data["buttons"] = []
+        data["action_groups"] = []
+    _inject_enterprise_form_governance(
+        data,
+        next_action_key="user",
+        next_action_label="进入用户设置",
+    )
+
+
+def _govern_enterprise_user_form_for_user(data: dict) -> None:
+    if not _is_enterprise_user_form_contract(data):
+        return
+    fields_map = _as_dict(data.get("fields"))
+    selected = [name for name in _ENTERPRISE_USER_FORM_FIELDS if name in fields_map]
+    if not selected:
+        return
+    data["visible_fields"] = selected
+    data["field_groups"] = [
+        {
+            "name": "basic",
+            "label": "用户基础信息",
+            "priority": 1,
+            "collapsible": False,
+            "fields": [name for name in selected if name in {"name", "login", "password", "phone", "active"}],
+        },
+        {
+            "name": "assignment",
+            "label": "组织与角色",
+            "priority": 2,
+            "collapsible": False,
+            "fields": [
+                name
+                for name in selected
+                if name in {"company_id", "sc_department_id", "sc_manager_user_id", "sc_role_profile", "sc_role_effective", "sc_role_landing_label"}
+            ],
+        },
+    ]
+    views = _as_dict(data.get("views"))
+    form = _as_dict(views.get("form"))
+    form["layout"] = [
+        {
+            "type": "sheet",
+            "name": "enterprise_user_form_sheet",
+            "children": [
+                {
+                    "type": "group",
+                    "name": "enterprise_user_basic_group",
+                    "string": "用户基础信息",
+                    "children": [
+                        _make_labeled_field_node(name, fields_map, _ENTERPRISE_USER_FIELD_LABELS)
+                        for name in selected
+                        if name in {"name", "login", "password", "phone", "active"}
+                    ],
+                },
+                {
+                    "type": "group",
+                    "name": "enterprise_user_assignment_group",
+                    "string": "组织与角色",
+                    "children": [
+                        _make_labeled_field_node(name, fields_map, _ENTERPRISE_USER_FIELD_LABELS)
+                        for name in selected
+                        if name in {"company_id", "sc_department_id", "sc_manager_user_id", "sc_role_profile", "sc_role_effective", "sc_role_landing_label"}
+                    ],
+                },
+            ],
+        }
+    ]
+    views["form"] = form
+    data["views"] = views
+
+    field_policies = _as_dict(data.get("field_policies"))
+    basic_fields = {"name", "login", "password", "phone", "active"}
+    readonly_fields = {"sc_role_effective", "sc_role_landing_label"}
+    contract_required_fields = set(_resolve_contract_required_fields(data, fields_map))
+    for name in selected:
+        descriptor = _as_dict(fields_map.get(name))
+        readonly = name in readonly_fields or _to_bool(descriptor.get("readonly"), fallback=False)
+        field_policies[name] = {
+            "visible_profiles": [
+                _RENDER_PROFILE_CREATE,
+                _RENDER_PROFILE_EDIT,
+                _RENDER_PROFILE_READONLY,
+            ],
+            "required_profiles": (
+                [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT]
+                if name in contract_required_fields and not readonly
+                else []
+            ),
+            "readonly_profiles": (
+                [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
+                if readonly
+                else [_RENDER_PROFILE_READONLY]
+            ),
+            "source_required": name in contract_required_fields and not readonly,
+            "source_readonly": readonly,
+            "group": "core" if name in basic_fields else "secondary",
+        }
+    data["field_policies"] = field_policies
+
+    if _resolve_render_profile(data) == _RENDER_PROFILE_CREATE:
+        toolbar = _as_dict(data.get("toolbar"))
+        if isinstance(toolbar.get("header"), list):
+            toolbar["header"] = []
+        data["toolbar"] = toolbar
+        data["buttons"] = []
+        data["action_groups"] = []
+    _inject_enterprise_form_governance(data)
+
+
 def _build_form_validation_rules(data: dict, contract_mode: str) -> list[dict[str, Any]]:
     rules: list[dict[str, Any]] = []
     fields_map = _as_dict(data.get("fields"))
@@ -2174,6 +3156,33 @@ def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
         _restructure_project_form_layout(data)
     if contract_mode == "user" and _is_project_form_contract(data):
         _govern_project_form_contract_for_user(data)
+    if contract_mode == "user" and _is_project_task_form_contract(data):
+        _govern_project_task_form_for_user(data)
+    if contract_mode == "user":
+        _govern_standard_list_for_user(
+            data,
+            model_name="project.project",
+            columns_order=_PROJECT_LIST_COLUMNS,
+            column_labels=_PROJECT_LIST_COLUMN_LABELS,
+            row_primary="name",
+            row_secondary="stage_id",
+            status_field="lifecycle_state",
+        )
+        _govern_standard_list_for_user(
+            data,
+            model_name="project.task",
+            columns_order=_PROJECT_TASK_LIST_COLUMNS,
+            column_labels=_PROJECT_TASK_LIST_COLUMN_LABELS,
+            row_primary="name",
+            row_secondary="project_id",
+            status_field="sc_state",
+        )
+    if contract_mode == "user" and _is_enterprise_company_form_contract(data):
+        _govern_enterprise_company_form_for_user(data)
+    if contract_mode == "user":
+        _govern_enterprise_department_form_for_user(data)
+    if contract_mode == "user" and _is_enterprise_user_form_contract(data):
+        _govern_enterprise_user_form_for_user(data)
     if contract_mode == "user" and _is_project_kanban_contract(data):
         _govern_project_kanban_contract_for_user(data)
 
@@ -2380,6 +3389,9 @@ def apply_contract_governance(
             inject_contract_mode=False,
         )
 
+    _normalize_native_view_contract_surface(data)
+    _normalize_scene_semantic_surface(data)
+
     effective_mode = contract_mode
     if normalized_surface == "native":
         # Native surface keeps parser-origin structure and skips user/hud policy transforms.
@@ -2389,6 +3401,9 @@ def apply_contract_governance(
         _apply_sanitize_governance(data, effective_mode)
         _apply_semantic_governance(data, effective_mode)
         override_failures = _apply_domain_overrides(data, effective_mode)
+        _preserve_native_layout_labels(data)
+        _emit_relation_entry_semantics(data)
+        _ensure_scene_contract_v1_envelope(data)
     else:
         override_failures = []
     _annotate_field_semantics(data)
