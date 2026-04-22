@@ -20,6 +20,17 @@ from odoo.addons.smart_construction_core.handlers.my_work_summary import MyWorkS
 
 @tagged("sc_smoke", "my_work_backend")
 class TestMyWorkBackend(TransactionCase):
+    def _create_project_with_partner(self, name):
+        project = self.env["project.project"].create(
+            {
+                "name": name,
+                "manager_id": self.env.user.id,
+                "user_id": self.env.user.id,
+            }
+        )
+        partner = self.env["res.partner"].create({"name": "%s Partner" % name})
+        return project, partner
+
     def test_summary_filters_apply_server_side(self):
         handler = MyWorkSummaryHandler(self.env, payload={})
         rows = [
@@ -248,6 +259,33 @@ class TestMyWorkBackend(TransactionCase):
         self.assertEqual(safe_page, 2)
         self.assertEqual([item["id"] for item in page_rows], [4, 5])
 
+    def test_summary_attaches_completion_capability(self):
+        handler = MyWorkSummaryHandler(self.env, payload={})
+        rows = handler._attach_targets(
+            [
+                {
+                    "id": 11,
+                    "title": "Todo row",
+                    "model": "project.task",
+                    "record_id": 11,
+                    "source": "mail.activity",
+                },
+                {
+                    "id": 12,
+                    "title": "Task row",
+                    "model": "project.task",
+                    "record_id": 12,
+                    "source": "project.task",
+                },
+            ]
+        )
+        self.assertEqual(len(rows), 2)
+        self.assertTrue(bool(rows[0].get("can_complete")))
+        self.assertEqual((rows[0].get("complete_action") or {}).get("intent"), "my.work.complete")
+        self.assertEqual((rows[0].get("complete_action") or {}).get("source"), "mail.activity")
+        self.assertFalse(bool(rows[1].get("can_complete")))
+        self.assertFalse(bool(rows[1].get("complete_action")))
+
         self.assertEqual(handler._normalize_sort_by("unknown"), "id")
         self.assertEqual(handler._normalize_sort_dir("up"), "desc")
 
@@ -260,6 +298,40 @@ class TestMyWorkBackend(TransactionCase):
         ]
         sorted_rows = handler._apply_sort(rows, sort_by="priority", sort_dir="desc")
         self.assertEqual([item["id"] for item in sorted_rows], [3, 1, 2])
+
+    def test_summary_includes_project_execution_projection_items(self):
+        project, partner = self._create_project_with_partner("My Work Projection Test")
+        self.env["payment.request"].create(
+            {
+                "name": "PR-MYWORK-001",
+                "project_id": project.id,
+                "partner_id": partner.id,
+                "amount": 888.0,
+            }
+        )
+        self.env["sc.settlement.order"].create(
+            {
+                "name": "SO-MYWORK-001",
+                "project_id": project.id,
+                "partner_id": partner.id,
+            }
+        )
+        self.env["construction.contract"].create(
+            {
+                "subject": "我的工作合同事项",
+                "type": "out",
+                "project_id": project.id,
+                "partner_id": partner.id,
+            }
+        )
+
+        handler = MyWorkSummaryHandler(self.env, payload={})
+        items = handler._load_project_execution_items(self.env.user, 20)
+        sources = {str(item.get("source") or "") for item in items}
+
+        self.assertIn("payment.request", sources)
+        self.assertIn("sc.settlement.order", sources)
+        self.assertIn("construction.contract", sources)
 
     def test_retryable_summary_counts(self):
         summary = _retryable_summary(
