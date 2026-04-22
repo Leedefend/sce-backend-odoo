@@ -76,18 +76,40 @@ class TestSceneRuntimeContractChain(TransactionCase):
                     "name": "项目列表",
                     "layout": {"kind": "list"},
                     "target": {"route": "/s/projects.list", "model": "project.project"},
+                    "related_scenes": ["projects.ledger"],
+                    "ui_base_contract": _sample_ui_base_contract(),
+                },
+                {
+                    "code": "projects.ledger",
+                    "name": "项目台账",
+                    "layout": {"kind": "ledger"},
+                    "target": {"route": "/s/projects.ledger", "model": "project.project"},
                     "ui_base_contract": _sample_ui_base_contract(),
                 }
             ],
             role_surface={"landing_scene_key": "projects.list"},
         )
         entries = contract.get("scenes") or []
-        self.assertEqual(len(entries), 1)
-        row = entries[0]
+        self.assertEqual(len(entries), 2)
+        row = next(
+            (
+                item
+                for item in entries
+                if ((item.get("scene") or {}).get("key")) == "projects.list"
+            ),
+            {},
+        )
+        switch_surface = row.get("switch_surface") or {}
+        switch_items = switch_surface.get("items") or []
         self.assertTrue((row.get("search_surface") or {}).get("filters"))
         self.assertTrue((row.get("permission_surface") or {}).get("allowed"))
         self.assertTrue((row.get("action_surface") or {}).get("counts"))
         self.assertTrue(((row.get("meta") or {}).get("ui_base_orchestrator_input") or {}).get("view_fact"))
+        self.assertEqual(((row.get("view_modes") or [])[0] or {}).get("key"), "tree")
+        self.assertEqual(((row.get("action_surface") or {}).get("selection_mode")), "multi")
+        self.assertEqual(((switch_items[0] or {}).get("label")), "项目列表")
+        self.assertEqual(((switch_items[1] or {}).get("key")), "projects.ledger")
+        self.assertEqual(((switch_items[1] or {}).get("route")), "/s/projects.ledger")
 
     def test_scene_ready_form_runtime_chain(self):
         contract = build_scene_ready_contract_v1(
@@ -109,6 +131,8 @@ class TestSceneRuntimeContractChain(TransactionCase):
         workflow_surface = row.get("workflow_surface") or {}
         self.assertIn("name", validation_surface.get("required_fields") or [])
         self.assertEqual(workflow_surface.get("state_field"), "state")
+        self.assertEqual(((row.get("view_modes") or [])[0] or {}).get("key"), "form")
+        self.assertEqual(((row.get("action_surface") or {}).get("selection_mode")), "single")
         self.assertEqual(row.get("next_scene"), "project.management")
         self.assertEqual(row.get("next_scene_route"), "/s/project.management")
 
