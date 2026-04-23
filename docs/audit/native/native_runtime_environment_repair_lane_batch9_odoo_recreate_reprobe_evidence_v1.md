@@ -33,3 +33,9 @@
 
 - Batch9 provides actionable blocker evidence.
 - Next batch must focus on port-collision owner identification/resolution before further runtime restore attempts.
+
+## Legacy Endpoint Deprecation Note
+- `/api/scenes/my` is deprecated.
+- Successor endpoint: `/api/v1/intent` with `intent=app.init`.
+- Sunset date: `2026-04-30`.
+- Deprecation header contract reference: `Deprecation`, `Sunset`, `Link`, `X-Legacy-Endpoint`.

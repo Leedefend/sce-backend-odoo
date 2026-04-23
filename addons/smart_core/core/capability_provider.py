@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import time
 from typing import List
 
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
@@ -121,3 +122,11 @@ def load_capabilities_for_user(env, user) -> List[dict]:
         except Exception:
             continue
     return out
+
+
+def load_capabilities_for_user_with_timings(env, user) -> tuple[List[dict], dict[str, int]]:
+    started_at = time.perf_counter()
+    capabilities = load_capabilities_for_user(env, user)
+    return capabilities, {
+        "load_capabilities_for_user": int((time.perf_counter() - started_at) * 1000),
+    }

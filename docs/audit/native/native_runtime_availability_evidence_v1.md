@@ -32,3 +32,9 @@
 - Runtime evidence matches expected policy:
   - strict default mode fails on runtime unreachable
   - fallback path requires explicit environment opt-in
+
+## Legacy Endpoint Deprecation Note
+- `/api/scenes/my` is deprecated.
+- Successor endpoint: `/api/v1/intent` with `intent=app.init`.
+- Sunset date: `2026-04-30`.
+- Deprecation header contract reference: `Deprecation`, `Sunset`, `Link`, `X-Legacy-Endpoint`.

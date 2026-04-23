@@ -1,12 +1,28 @@
 {
+  "action": null,
   "case": "api_onchange_intent_admin",
-  "op": "intent.invoke",
-  "user": "admin",
   "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
   "ui_contract_raw": {
-    "changes": {
-      "name": "Snapshot Project"
-    }
+    "applied_fields": [
+      "name"
+    ],
+    "line_patches": [],
+    "modifiers_patch": {},
+    "patch": {},
+    "schema_version": "v1",
+    "warnings": []
   },
-  "error": null
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
 }

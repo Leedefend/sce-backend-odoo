@@ -18,6 +18,8 @@ class SystemInitResponseMetaBuilder:
         api_version: str,
         contract_mode: str,
         nav_fp: str,
+        startup_profile: dict | None = None,
+        **_compat_kwargs,
     ) -> tuple[dict, dict]:
         scene_trace_meta = contract_assembler.build_scene_trace_meta(data, scene_diagnostics, elapsed_ms)
         meta = contract_assembler.build_meta(

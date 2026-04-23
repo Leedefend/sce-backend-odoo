@@ -5,6 +5,11 @@ from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from typing import Any, Dict, List
 from odoo.addons.smart_core.core.scene_dsl_compiler import scene_compile
+from odoo.addons.smart_core.core.scene_ready_entry_semantic_bridge import apply_scene_ready_entry_semantic_bridge
+from odoo.addons.smart_core.core.scene_ready_parser_semantic_bridge import apply_scene_ready_parser_semantic_bridge
+from odoo.addons.smart_core.core.scene_ready_semantic_orchestration_bridge import (
+    apply_scene_ready_semantic_orchestration_bridge,
+)
 from odoo.addons.smart_core.core.ui_base_contract_adapter import adapt_ui_base_contract
 
 
@@ -152,6 +157,83 @@ def _normalize_permission_surface(item: Dict[str, Any]) -> Dict[str, Any]:
         "reason_code": _text(access.get("reason_code")),
         "required_capabilities": list(required) if isinstance(required, list) else [],
     }
+
+
+def _search_surface_nonempty(payload: Dict[str, Any]) -> bool:
+    data = _as_dict(payload)
+    return bool(
+        _text(data.get("default_sort"))
+        or _as_list(data.get("filters"))
+        or _as_list(data.get("columns"))
+        or _as_list(data.get("hidden_columns"))
+        or _as_list(data.get("fields"))
+        or _as_list(data.get("group_by"))
+    )
+
+
+def _permission_surface_nonempty(payload: Dict[str, Any]) -> bool:
+    data = _as_dict(payload)
+    required_capabilities = _as_list(data.get("required_capabilities"))
+    return bool(required_capabilities or _text(data.get("reason_code")))
+
+
+def _workflow_surface_nonempty(payload: Dict[str, Any]) -> bool:
+    data = _as_dict(payload)
+    return bool(
+        _text(data.get("state_field"))
+        or _as_list(data.get("states"))
+        or _as_list(data.get("transitions"))
+    )
+
+
+def _validation_surface_nonempty(payload: Dict[str, Any]) -> bool:
+    data = _as_dict(payload)
+    return bool(_as_list(data.get("required_fields")) or _as_dict(data.get("field_rules")))
+
+
+def _normalize_list_surface(payload: Dict[str, Any]) -> Dict[str, Any]:
+    list_surface = payload.get("list_surface") if isinstance(payload.get("list_surface"), dict) else {}
+    return dict(list_surface)
+
+
+def _list_surface_nonempty(payload: Dict[str, Any]) -> bool:
+    data = _as_dict(payload)
+    return bool(data)
+
+
+def _normalize_form_surface(payload: Dict[str, Any]) -> Dict[str, Any]:
+    form_surface = payload.get("form_surface") if isinstance(payload.get("form_surface"), dict) else {}
+    return dict(form_surface)
+
+
+def _merge_form_surface(compiled_form_surface: Dict[str, Any], seeded_form_surface: Dict[str, Any]) -> Dict[str, Any]:
+    merged = dict(_as_dict(seeded_form_surface))
+    merged.update(_as_dict(compiled_form_surface))
+    return merged
+
+
+def _form_surface_nonempty(payload: Dict[str, Any]) -> bool:
+    data = _as_dict(payload)
+    return bool(data)
+
+
+def _normalize_optimization_composition(payload: Dict[str, Any]) -> Dict[str, Any]:
+    composition = payload.get("optimization_composition") if isinstance(payload.get("optimization_composition"), dict) else {}
+    return dict(composition)
+
+
+def _optimization_composition_nonempty(payload: Dict[str, Any]) -> bool:
+    return bool(_as_dict(payload))
+
+
+def apply_scene_ready_search_semantic_bridge(payload: Dict[str, Any] | None) -> Dict[str, Any]:
+    """Compatibility bridge: keep payload stable when optional search bridge is absent."""
+    return dict(payload or {})
+
+
+def apply_scene_ready_action_semantic_bridge(payload: Dict[str, Any] | None) -> Dict[str, Any]:
+    """Compatibility bridge: keep payload stable when optional action bridge is absent."""
+    return dict(payload or {})
 
 
 def _scene_type_consumption_metrics(entries: List[Dict[str, Any]]) -> Dict[str, Any]:

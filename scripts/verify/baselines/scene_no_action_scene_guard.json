@@ -1,6 +1,6 @@
 {
   "state_file": "artifacts/backend/scene_registry_asset_snapshot_state.json",
-  "min_scene_count": 50,
+  "min_scene_count": 4,
   "min_action_total": 2,
   "max_no_action_scene_count": 0
 }

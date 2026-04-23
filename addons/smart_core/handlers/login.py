@@ -174,6 +174,10 @@ class LoginHandler(BaseIntentHandler):
                 "token_type": token_type,
                 "expires_at": expires_at,
             },
+            # Backward-compatible alias for existing smoke/guard scripts.
+            "token": token,
+            "token_type": token_type,
+            "expires_at": expires_at,
             "user": user_data,
             "entitlement": {
                 "role_code": role_code,
@@ -201,12 +205,6 @@ class LoginHandler(BaseIntentHandler):
             data["contract"]["deprecation_notice"] = "compat_mode_disabled_fallback_to_default"
         elif compat_requested:
             data["contract"]["deprecation_notice"] = "compat_mode_deprecated_use_default"
-
-        # Compatibility surface: legacy top-level token fields only.
-        if contract_mode in {"compat", "debug"}:
-            data["token"] = token
-            data["token_type"] = token_type
-            data["expires_at"] = expires_at
 
         if contract_mode == "debug":
             data["debug"] = {

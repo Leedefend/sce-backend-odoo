@@ -14,6 +14,7 @@
         <record id="sc_demo_settle_line_040_link_001" model="sc.settlement.order.line">
             <field name="name">S40-结算明细-缺失收款</field>
             <field name="settlement_id" ref="smart_construction_demo.sc_demo_settlement_040_link_bad"/>
+            <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_out_001"/>
             <field name="qty">1</field>
             <field name="price_unit">300000.00</field>
             <field name="amount">300000.00</field>

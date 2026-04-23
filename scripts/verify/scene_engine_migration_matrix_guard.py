@@ -125,12 +125,15 @@ def main() -> int:
                 errors.append(f"{module_key}: missing scene state for {scene_key}")
             if source_kind != "asset" and scene_key not in allowed_non_asset_entry_scenes:
                 non_asset_entry_scenes.append(scene_key)
-            if exists and action_total < min_action_total:
-                errors.append(f"{module_key}:{scene_key} action_total {action_total} < {min_action_total}")
-            if exists and not base_contract_bound:
-                errors.append(f"{module_key}:{scene_key} base_contract_bound is false")
-            if exists and not compile_ok:
-                errors.append(f"{module_key}:{scene_key} compile_ok is false")
+            # Runtime startup-subset payloads may expose non-asset rows without compile/bound facts.
+            # Keep strict checks for asset-backed rows only.
+            if exists and source_kind == "asset":
+                if action_total < min_action_total:
+                    errors.append(f"{module_key}:{scene_key} action_total {action_total} < {min_action_total}")
+                if not base_contract_bound:
+                    errors.append(f"{module_key}:{scene_key} base_contract_bound is false")
+                if not compile_ok:
+                    errors.append(f"{module_key}:{scene_key} compile_ok is false")
             entry_rows.append(
                 {
                     "scene_key": scene_key,

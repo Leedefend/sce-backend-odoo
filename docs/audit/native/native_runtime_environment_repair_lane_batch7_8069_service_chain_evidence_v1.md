@@ -34,3 +34,9 @@
 
 - Batch7 PASS with stronger service-chain evidence for 8069 RemoteDisconnected.
 - Next step should target runtime service entry diagnostics (process health / proxy/app handshake boundary).
+
+## Legacy Endpoint Deprecation Note
+- `/api/scenes/my` is deprecated.
+- Successor endpoint: `/api/v1/intent` with `intent=app.init`.
+- Sunset date: `2026-04-30`.
+- Deprecation header contract reference: `Deprecation`, `Sunset`, `Link`, `X-Legacy-Endpoint`.

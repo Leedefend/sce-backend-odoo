@@ -1,12 +1,837 @@
 {
+  "action": null,
   "case": "meta_intent_catalog_intent_admin",
-  "op": "intent.invoke",
-  "user": "admin",
   "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
   "ui_contract_raw": {
-    "intents": [
-      "system.init"
+    "raw": [
+      {
+        "intent_catalog": [
+          {
+            "canonical": "api.data",
+            "name": "api.data",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "2.1.1"
+          },
+          {
+            "canonical": "app.catalog",
+            "name": "app.catalog",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "system.init",
+            "name": "app.init",
+            "required_groups_xmlids": [],
+            "status": "alias",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "app.nav",
+            "name": "app.nav",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "app.open",
+            "name": "app.open",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "login",
+            "name": "auth.login",
+            "required_groups_xmlids": [],
+            "status": "alias",
+            "version": "2.2.0"
+          },
+          {
+            "canonical": "auth.logout",
+            "name": "auth.logout",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "system.init",
+            "name": "bootstrap",
+            "required_groups_xmlids": [],
+            "status": "alias",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "business.evidence.trace",
+            "name": "business.evidence.trace",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "capability.describe",
+            "name": "capability.describe",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "capability.visibility.report",
+            "name": "capability.visibility.report",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "chatter.timeline",
+            "name": "chatter.timeline",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "cost.tracking.block.fetch",
+            "name": "cost.tracking.block.fetch",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "cost.tracking.enter",
+            "name": "cost.tracking.enter",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "file.download",
+            "name": "file.download",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "0.1.0"
+          },
+          {
+            "canonical": "load_contract",
+            "name": "load_contract",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "load_metadata",
+            "name": "load_metadata",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "load_view",
+            "name": "load_view",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "login",
+            "name": "login",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "2.2.0"
+          },
+          {
+            "canonical": "meta.describe_model",
+            "name": "meta.describe_model",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "meta.intent_catalog",
+            "name": "meta.intent_catalog",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "my.work.summary",
+            "name": "my.work.summary",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "payment.request.approve",
+            "name": "payment.request.approve",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "payment.request.available_actions",
+            "name": "payment.request.available_actions",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "payment.request.done",
+            "name": "payment.request.done",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "payment.request.execute",
+            "name": "payment.request.execute",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "payment.request.reject",
+            "name": "payment.request.reject",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "payment.request.submit",
+            "name": "payment.request.submit",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "permission.check",
+            "name": "permission.check",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "project.connection.transition",
+            "name": "project.connection.transition",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "project.dashboard",
+            "name": "project.dashboard",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "project.dashboard.block.fetch",
+            "name": "project.dashboard.block.fetch",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "project.dashboard.enter",
+            "name": "project.dashboard.enter",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "project.dashboard.open",
+            "name": "project.dashboard.open",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "project.entry.context.options",
+            "name": "project.entry.context.options",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "project.entry.context.resolve",
+            "name": "project.entry.context.resolve",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "project.execution.block.fetch",
+            "name": "project.execution.block.fetch",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "project.execution.enter",
+            "name": "project.execution.enter",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "project.initiation.enter",
+            "name": "project.initiation.enter",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "project.plan_bootstrap.block.fetch",
+            "name": "project.plan_bootstrap.block.fetch",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "project.plan_bootstrap.enter",
+            "name": "project.plan_bootstrap.enter",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "scene.health",
+            "name": "scene.health",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "session.bootstrap",
+            "name": "session.bootstrap",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "system.init",
+            "name": "system.init",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "telemetry.track",
+            "name": "telemetry.track",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "ui.contract",
+            "name": "ui.contract",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "usage.export.csv",
+            "name": "usage.export.csv",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "usage.report",
+            "name": "usage.report",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          {
+            "canonical": "usage.track",
+            "name": "usage.track",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          }
+        ],
+        "intents": [
+          "api.data",
+          "app.catalog",
+          "app.nav",
+          "app.open",
+          "auth.logout",
+          "business.evidence.trace",
+          "capability.describe",
+          "capability.visibility.report",
+          "chatter.timeline",
+          "cost.tracking.block.fetch",
+          "cost.tracking.enter",
+          "file.download",
+          "load_contract",
+          "load_metadata",
+          "load_view",
+          "login",
+          "meta.describe_model",
+          "meta.intent_catalog",
+          "my.work.summary",
+          "payment.request.approve",
+          "payment.request.available_actions",
+          "payment.request.done",
+          "payment.request.execute",
+          "payment.request.reject",
+          "payment.request.submit",
+          "permission.check",
+          "project.connection.transition",
+          "project.dashboard",
+          "project.dashboard.block.fetch",
+          "project.dashboard.enter",
+          "project.dashboard.open",
+          "project.entry.context.options",
+          "project.entry.context.resolve",
+          "project.execution.block.fetch",
+          "project.execution.enter",
+          "project.initiation.enter",
+          "project.plan_bootstrap.block.fetch",
+          "project.plan_bootstrap.enter",
+          "scene.health",
+          "session.bootstrap",
+          "system.init",
+          "telemetry.track",
+          "ui.contract",
+          "usage.export.csv",
+          "usage.report",
+          "usage.track"
+        ],
+        "intents_meta": {
+          "api.data": {
+            "aliases": [],
+            "canonical": "api.data",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "2.1.1"
+          },
+          "app.catalog": {
+            "aliases": [],
+            "canonical": "app.catalog",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "app.nav": {
+            "aliases": [],
+            "canonical": "app.nav",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "app.open": {
+            "aliases": [],
+            "canonical": "app.open",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "auth.logout": {
+            "aliases": [],
+            "canonical": "auth.logout",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "business.evidence.trace": {
+            "aliases": [],
+            "canonical": "business.evidence.trace",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "capability.describe": {
+            "aliases": [],
+            "canonical": "capability.describe",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "capability.visibility.report": {
+            "aliases": [],
+            "canonical": "capability.visibility.report",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "chatter.timeline": {
+            "aliases": [],
+            "canonical": "chatter.timeline",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "cost.tracking.block.fetch": {
+            "aliases": [],
+            "canonical": "cost.tracking.block.fetch",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "cost.tracking.enter": {
+            "aliases": [],
+            "canonical": "cost.tracking.enter",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "file.download": {
+            "aliases": [],
+            "canonical": "file.download",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "0.1.0"
+          },
+          "load_contract": {
+            "aliases": [],
+            "canonical": "load_contract",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "load_metadata": {
+            "aliases": [],
+            "canonical": "load_metadata",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "load_view": {
+            "aliases": [],
+            "canonical": "load_view",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "login": {
+            "aliases": [
+              "auth.login"
+            ],
+            "canonical": "login",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "2.2.0"
+          },
+          "meta.describe_model": {
+            "aliases": [],
+            "canonical": "meta.describe_model",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "meta.intent_catalog": {
+            "aliases": [],
+            "canonical": "meta.intent_catalog",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "my.work.summary": {
+            "aliases": [],
+            "canonical": "my.work.summary",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "payment.request.approve": {
+            "aliases": [],
+            "canonical": "payment.request.approve",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "payment.request.available_actions": {
+            "aliases": [],
+            "canonical": "payment.request.available_actions",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "payment.request.done": {
+            "aliases": [],
+            "canonical": "payment.request.done",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "payment.request.execute": {
+            "aliases": [],
+            "canonical": "payment.request.execute",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "payment.request.reject": {
+            "aliases": [],
+            "canonical": "payment.request.reject",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "payment.request.submit": {
+            "aliases": [],
+            "canonical": "payment.request.submit",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "permission.check": {
+            "aliases": [],
+            "canonical": "permission.check",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "project.connection.transition": {
+            "aliases": [],
+            "canonical": "project.connection.transition",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "project.dashboard": {
+            "aliases": [],
+            "canonical": "project.dashboard",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "project.dashboard.block.fetch": {
+            "aliases": [],
+            "canonical": "project.dashboard.block.fetch",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "project.dashboard.enter": {
+            "aliases": [],
+            "canonical": "project.dashboard.enter",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "project.dashboard.open": {
+            "aliases": [],
+            "canonical": "project.dashboard.open",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "project.entry.context.options": {
+            "aliases": [],
+            "canonical": "project.entry.context.options",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "project.entry.context.resolve": {
+            "aliases": [],
+            "canonical": "project.entry.context.resolve",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "project.execution.block.fetch": {
+            "aliases": [],
+            "canonical": "project.execution.block.fetch",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "project.execution.enter": {
+            "aliases": [],
+            "canonical": "project.execution.enter",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "project.initiation.enter": {
+            "aliases": [],
+            "canonical": "project.initiation.enter",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "project.plan_bootstrap.block.fetch": {
+            "aliases": [],
+            "canonical": "project.plan_bootstrap.block.fetch",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "project.plan_bootstrap.enter": {
+            "aliases": [],
+            "canonical": "project.plan_bootstrap.enter",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "scene.health": {
+            "aliases": [],
+            "canonical": "scene.health",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "session.bootstrap": {
+            "aliases": [],
+            "canonical": "session.bootstrap",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "system.init": {
+            "aliases": [
+              "app.init",
+              "bootstrap"
+            ],
+            "canonical": "system.init",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "telemetry.track": {
+            "aliases": [],
+            "canonical": "telemetry.track",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "ui.contract": {
+            "aliases": [],
+            "canonical": "ui.contract",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "usage.export.csv": {
+            "aliases": [],
+            "canonical": "usage.export.csv",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "usage.report": {
+            "aliases": [],
+            "canonical": "usage.report",
+            "required_groups_xmlids": [],
+            "status": "canonical",
+            "version": "1.0.0"
+          },
+          "usage.track": {
+            "aliases": [],
+            "canonical": "usage.track",
+            "required_groups_xmlids": [
+              "base.group_user"
+            ],
+            "status": "canonical",
+            "version": "1.0.0"
+          }
+        }
+      },
+      {
+        "schema_version": "1.0.0"
+      }
     ]
   },
-  "error": null
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
 }

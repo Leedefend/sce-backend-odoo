@@ -61,7 +61,7 @@
       "company_id": 1,
       "lang": null,
       "name": "portal.lifecycle_dashboard",
-      "tz": "Asia/Shanghai"
+      "tz": null
     },
     "route": "/portal/lifecycle",
     "schema_version": "portal-lifecycle-v1",
