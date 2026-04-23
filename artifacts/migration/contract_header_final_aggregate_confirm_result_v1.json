@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "mode": "contract_header_final_aggregate_confirm",
+  "database": "sc_demo",
+  "db_writes": 0,
+  "source_rows": 1332,
+  "source_unique_legacy_ids": 1332,
+  "rollback_rows": 1332,
+  "rollback_unique_legacy_ids": 1332,
+  "target_match_rows": 1332,
+  "target_unique_legacy_ids": 1332,
+  "errors": []
+}

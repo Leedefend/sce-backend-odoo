@@ -91,7 +91,9 @@ cat
 
 # accidental terminal output
 make
-artifacts/
+artifacts/*
+!artifacts/migration/
+!artifacts/migration/**
 docs/tmp/
 # audit artifacts (generated)
 docs/audit/*.csv

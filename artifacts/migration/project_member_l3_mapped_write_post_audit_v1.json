@@ -1,0 +1,32 @@
+{
+  "status": "PASS",
+  "run_id": "ITER-2026-04-14-L3-ROLE-KEY-AUDIT-MAPPED-WRITE",
+  "mapped_role_key": "manager",
+  "matched_records": 3,
+  "rollback_eligible_rows": 3,
+  "db_writes": 0,
+  "blocking_reasons": [],
+  "rows": [
+    {
+      "responsibility_id": 1,
+      "project_id": 2150,
+      "user_id": 12,
+      "role_key": "manager",
+      "rollback_eligible": true
+    },
+    {
+      "responsibility_id": 2,
+      "project_id": 2238,
+      "user_id": 12,
+      "role_key": "manager",
+      "rollback_eligible": true
+    },
+    {
+      "responsibility_id": 3,
+      "project_id": 2245,
+      "user_id": 14,
+      "role_key": "manager",
+      "rollback_eligible": true
+    }
+  ]
+}

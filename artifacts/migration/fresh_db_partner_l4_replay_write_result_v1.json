@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_partner_l4_replay_write",
+  "database": "sc_migration_fresh",
+  "target_model": "res.partner",
+  "input_rows": 4797,
+  "created_rows": 4797,
+  "post_write_identity_count": 4797,
+  "skipped_existing": 0,
+  "db_writes": 4797,
+  "demo_targets_executed": 0,
+  "write_payload": "/mnt/artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv",
+  "rollback_targets": "/mnt/artifacts/migration/fresh_db_partner_l4_replay_rollback_targets_v1.csv",
+  "decision": "partner_l4_replay_write_complete",
+  "next_step": "replay project anchors into sc_migration_fresh"
+}

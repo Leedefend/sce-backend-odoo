@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "mode": "project_member_l3_role_source_review_packet_summary",
+  "total_candidates": 362,
+  "l3_candidates": 10,
+  "promotion_ready": 0,
+  "requires_role_source": 10,
+  "write_allowed": false,
+  "db_writes": 0,
+  "blocking_reasons": []
+}

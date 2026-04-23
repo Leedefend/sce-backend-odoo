@@ -1,0 +1,169 @@
+{
+  "artifact_dir": "artifacts/migration/replay/imported_business_continuity_v1/validation_check_v2",
+  "database": "sc_demo",
+  "mode": "check",
+  "plan": [
+    {
+      "description": "Align imported projects with downstream facts to execution state.",
+      "kind": "odoo_sync",
+      "script": "project_continuity_downstream_fact_state_sync.py",
+      "step_id": "project_continuity"
+    },
+    {
+      "description": "Align imported contracts to confirmed/running from downstream facts.",
+      "kind": "odoo_sync",
+      "script": "contract_continuity_downstream_fact_state_sync.py",
+      "step_id": "contract_continuity"
+    },
+    {
+      "description": "Regenerate payment downstream approval evidence rows.",
+      "kind": "host_python",
+      "script": "legacy_payment_approval_downstream_fact_screen.py",
+      "step_id": "payment_downstream_fact_screen"
+    },
+    {
+      "description": "Align downstream-approved payment requests to done/validated.",
+      "kind": "odoo_sync",
+      "script": "legacy_payment_approval_downstream_fact_state_sync.py",
+      "step_id": "payment_done_fact"
+    },
+    {
+      "description": "Align deterministic payment company and contract links.",
+      "kind": "odoo_sync",
+      "script": "payment_linkage_fact_sync.py",
+      "step_id": "payment_linkage_fact"
+    },
+    {
+      "description": "Verify post-replay project, contract, and payment continuity metrics.",
+      "kind": "odoo_verify",
+      "script": "",
+      "step_id": "operational_verify"
+    }
+  ],
+  "run_id": "validation_check_v2",
+  "status": "PASS",
+  "steps": [
+    {
+      "description": "Align imported projects with downstream facts to execution state.",
+      "kind": "odoo_sync",
+      "runs": [
+        {
+          "command": [
+            "docker",
+            "exec",
+            "sc-backend-odoo-dev-odoo-1",
+            "sh",
+            "-lc",
+            "SYNC_MODE=check odoo shell -d sc_demo -c /var/lib/odoo/odoo.conf < /mnt/scripts/migration/project_continuity_downstream_fact_state_sync.py"
+          ],
+          "log": "artifacts/migration/replay/imported_business_continuity_v1/validation_check_v2/project_continuity.check.log",
+          "returncode": 0
+        }
+      ],
+      "status": "PASS",
+      "step_id": "project_continuity"
+    },
+    {
+      "description": "Align imported contracts to confirmed/running from downstream facts.",
+      "kind": "odoo_sync",
+      "runs": [
+        {
+          "command": [
+            "docker",
+            "exec",
+            "sc-backend-odoo-dev-odoo-1",
+            "sh",
+            "-lc",
+            "SYNC_MODE=check odoo shell -d sc_demo -c /var/lib/odoo/odoo.conf < /mnt/scripts/migration/contract_continuity_downstream_fact_state_sync.py"
+          ],
+          "log": "artifacts/migration/replay/imported_business_continuity_v1/validation_check_v2/contract_continuity.check.log",
+          "returncode": 0
+        }
+      ],
+      "status": "PASS",
+      "step_id": "contract_continuity"
+    },
+    {
+      "description": "Regenerate payment downstream approval evidence rows.",
+      "kind": "host_python",
+      "runs": [
+        {
+          "command": [
+            "python3",
+            "scripts/migration/legacy_payment_approval_downstream_fact_screen.py",
+            "--check"
+          ],
+          "log": "artifacts/migration/replay/imported_business_continuity_v1/validation_check_v2/payment_downstream_fact_screen.log",
+          "returncode": 0
+        }
+      ],
+      "status": "PASS",
+      "step_id": "payment_downstream_fact_screen"
+    },
+    {
+      "description": "Align downstream-approved payment requests to done/validated.",
+      "kind": "odoo_sync",
+      "runs": [
+        {
+          "command": [
+            "docker",
+            "exec",
+            "sc-backend-odoo-dev-odoo-1",
+            "sh",
+            "-lc",
+            "SYNC_MODE=check odoo shell -d sc_demo -c /var/lib/odoo/odoo.conf < /mnt/scripts/migration/legacy_payment_approval_downstream_fact_state_sync.py"
+          ],
+          "log": "artifacts/migration/replay/imported_business_continuity_v1/validation_check_v2/payment_done_fact.check.log",
+          "returncode": 0
+        }
+      ],
+      "status": "PASS",
+      "step_id": "payment_done_fact"
+    },
+    {
+      "description": "Align deterministic payment company and contract links.",
+      "kind": "odoo_sync",
+      "runs": [
+        {
+          "command": [
+            "docker",
+            "exec",
+            "sc-backend-odoo-dev-odoo-1",
+            "sh",
+            "-lc",
+            "SYNC_MODE=check odoo shell -d sc_demo -c /var/lib/odoo/odoo.conf < /mnt/scripts/migration/payment_linkage_fact_sync.py"
+          ],
+          "log": "artifacts/migration/replay/imported_business_continuity_v1/validation_check_v2/payment_linkage_fact.check.log",
+          "returncode": 0
+        }
+      ],
+      "status": "PASS",
+      "step_id": "payment_linkage_fact"
+    },
+    {
+      "description": "Verify post-replay project, contract, and payment continuity metrics.",
+      "kind": "odoo_verify",
+      "runs": [
+        {
+          "command": [
+            "docker",
+            "exec",
+            "-i",
+            "sc-backend-odoo-dev-odoo-1",
+            "odoo",
+            "shell",
+            "-d",
+            "sc_demo",
+            "-c",
+            "/var/lib/odoo/odoo.conf"
+          ],
+          "log": "artifacts/migration/replay/imported_business_continuity_v1/validation_check_v2/operational_verify.log",
+          "returncode": 0
+        }
+      ],
+      "status": "PASS",
+      "step_id": "operational_verify"
+    }
+  ],
+  "topic": "imported_business_continuity_v1"
+}

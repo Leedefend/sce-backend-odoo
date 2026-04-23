@@ -1,0 +1,51 @@
+{
+  "status": "PASS",
+  "mode": "project_v5_200_write_authorization_packet_no_db",
+  "candidate_csv": "artifacts/migration/project_next_200_candidate_v5.csv",
+  "dry_run_json": "artifacts/migration/project_next_200_dry_run_result_v5.json",
+  "payload_rows": 200,
+  "blocked_rows": 0,
+  "blockers": [],
+  "field_check": {
+    "missing": [],
+    "extra": []
+  },
+  "write_authorization": "not_granted",
+  "write_scope": {
+    "model": "project.project",
+    "operation": "create_only",
+    "row_count": 200,
+    "allowed_fields": [
+      "legacy_project_id",
+      "legacy_parent_id",
+      "name",
+      "short_name",
+      "project_environment",
+      "legacy_company_id",
+      "legacy_company_name",
+      "legacy_specialty_type_id",
+      "specialty_type_name",
+      "legacy_price_method",
+      "business_nature",
+      "detail_address",
+      "project_profile",
+      "project_area",
+      "legacy_is_shared_base",
+      "legacy_sort",
+      "legacy_attachment_ref",
+      "project_overview",
+      "legacy_project_nature",
+      "legacy_is_material_library",
+      "other_system_id",
+      "other_system_code"
+    ],
+    "forbidden_operations": [
+      "update",
+      "unlink",
+      "workflow replay",
+      "ACL/security changes"
+    ]
+  },
+  "authorization_boundary": "real project write requires separate explicit authorization after this packet",
+  "next_step": "stop for explicit project v5 200-row write authorization"
+}

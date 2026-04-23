@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_project_member_neutral_replay_write",
+  "database": "sc_migration_fresh",
+  "target_model": "sc.project.member.staging",
+  "created_rows": 7389,
+  "updated_rows": 0,
+  "rollback_target_rows": 7389,
+  "project_responsibility_writes": 0,
+  "visibility_changed": false,
+  "db_writes": 7389,
+  "demo_targets_executed": 0,
+  "post_errors": [],
+  "artifacts": {
+    "pre_visibility": "/mnt/artifacts/migration/fresh_db_project_member_neutral_replay_pre_visibility_v1.json",
+    "post_visibility": "/mnt/artifacts/migration/fresh_db_project_member_neutral_replay_post_visibility_v1.json",
+    "rollback_targets": "/mnt/artifacts/migration/fresh_db_project_member_neutral_replay_rollback_targets_v1.csv"
+  },
+  "decision": "project_member_neutral_replay_write_complete",
+  "next_step": "refresh fresh database replay manifest after project-member neutral replay"
+}

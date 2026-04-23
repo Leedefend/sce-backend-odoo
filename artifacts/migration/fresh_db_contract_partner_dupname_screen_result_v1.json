@@ -1,0 +1,38 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_contract_partner_dupname_screen",
+  "database": "sc_migration_fresh",
+  "db_writes": 0,
+  "input_payload_rows": 12,
+  "blocked_duplicate_names": 3,
+  "screen_rows": 6,
+  "summary": {
+    "四川宝烨金属制品有限公司": {
+      "target_match_count": 2,
+      "candidate_roles": [
+        "company_identity_candidate"
+      ],
+      "dependent_contract_rows": 1,
+      "sample_legacy_contract_id": "4dd3cbf1f2d64bd287d9ee3ab6b79485"
+    },
+    "四川高竹工程建设有限公司": {
+      "target_match_count": 2,
+      "candidate_roles": [
+        "company_identity_candidate"
+      ],
+      "dependent_contract_rows": 1,
+      "sample_legacy_contract_id": "4d89ae3135154de6a568fcc1ba63e332"
+    },
+    "德阳泰诚硕商贸有限公司": {
+      "target_match_count": 2,
+      "candidate_roles": [
+        "company_identity_candidate"
+      ],
+      "dependent_contract_rows": 1,
+      "sample_legacy_contract_id": "c24d8dfe78db4cb0810cc65dcc08735a"
+    }
+  },
+  "row_artifact": "/mnt/artifacts/migration/fresh_db_contract_partner_dupname_screen_rows_v1.csv",
+  "decision": "duplicate_name_evidence_screen_complete",
+  "next_step": "classify retry policy for contract partner anchors"
+}

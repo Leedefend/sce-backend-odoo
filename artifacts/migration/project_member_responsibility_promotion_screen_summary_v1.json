@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "mode": "project_member_responsibility_promotion_screen_summary",
+  "database": "sc_demo",
+  "db_writes": 0,
+  "total_pairs": 362,
+  "promotion_candidate_pairs": 0,
+  "blocked_pairs": 362,
+  "missing_role_fact_pairs": 362,
+  "missing_target_role_key_pairs": 362,
+  "existing_project_responsibility_pair_review_pairs": 0,
+  "blocker_distribution": {
+    "missing_target_role_key": 362,
+    "missing_verified_role_fact": 362
+  },
+  "blocking_reasons": []
+}

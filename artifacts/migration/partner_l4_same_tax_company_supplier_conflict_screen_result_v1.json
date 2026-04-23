@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_same_tax_company_supplier_conflict_screen",
+  "input": "artifacts/migration/partner_l4_remaining190_blocked_screen_rows_v1.csv",
+  "route_rows": 111,
+  "expected_route_rows": 111,
+  "missing_columns": [],
+  "decision_counts": {
+    "placeholder_tax_split_by_name_screen": 5,
+    "same_tax_company_supplier_canonical_merge_review": 102,
+    "same_tax_manual_conflict_screen": 1,
+    "tax_normalization_screen": 3
+  },
+  "reason_counts": {
+    "placeholder_tax_ones": 5,
+    "tax_format_unusable": 1,
+    "tax_format_usable": 102,
+    "tax_has_spacing_or_wrappers": 3
+  },
+  "outputs": {
+    "screen_rows": "artifacts/migration/partner_l4_same_tax_company_supplier_conflict_screen_rows_v1.csv",
+    "sample_rows": "artifacts/migration/partner_l4_same_tax_company_supplier_conflict_screen_samples_v1.csv"
+  },
+  "next_gate": "Open canonical merge no-DB design for usable-tax rows; placeholder tax rows require split-by-name handling."
+}

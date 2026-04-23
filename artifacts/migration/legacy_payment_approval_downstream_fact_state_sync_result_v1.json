@@ -1,0 +1,18 @@
+{
+  "already_done_validated": 12194,
+  "created_ledgers": 0,
+  "database": "sc_demo",
+  "db_writes": 0,
+  "mode": "check",
+  "needs_ledger_create": 0,
+  "needs_ledger_update_to_request_amount": 0,
+  "needs_state_sync": 0,
+  "rollback_csv": "/mnt/artifacts/migration/legacy_payment_approval_downstream_fact_state_sync_rollback_v1.csv",
+  "run_id": "ITER-2026-04-17-LEGACY-PAYMENT-APPROVAL-DOWNSTREAM-FACT-STATE-SYNC",
+  "snapshot_csv": "/mnt/artifacts/migration/legacy_payment_approval_downstream_fact_state_sync_snapshot_v1.csv",
+  "status": "PASS",
+  "target_count": 12194,
+  "target_fact": "historical_approved_by_downstream_business_fact",
+  "updated_ledgers": 0,
+  "updated_payment_requests": 0
+}

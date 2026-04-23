@@ -1,0 +1,34 @@
+{
+  "status": "PASS",
+  "mode": "contract_source_coverage_nodb_screen",
+  "database": "sc_demo",
+  "db_container": "sc-backend-odoo-dev-db-1",
+  "db_writes": 0,
+  "source_file": "/mnt/e/sc-backend-odoo/tmp/raw/contract/contract.csv",
+  "source_rows": 1694,
+  "safe_candidate_rows": 1332,
+  "target_contract_legacy_ids": 1344,
+  "header_lane_migrated_rows": 1332,
+  "pre_existing_target_rows": 12,
+  "remaining_blocked_rows": 350,
+  "safe_candidate_missing_target_rows": 0,
+  "route_counts": {
+    "discard_deleted_source": 65,
+    "header_lane_migrated": 1332,
+    "partner_anchor_blocked": 197,
+    "pre_existing_target": 12,
+    "project_anchor_blocked": 88
+  },
+  "blocker_counts": {
+    "deleted_flag": 65,
+    "direction_defer": 139,
+    "partner_ambiguous": 69,
+    "partner_unresolved": 219,
+    "project_unresolved": 88
+  },
+  "row_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_source_coverage_nodb_screen_rows_v1.csv",
+  "decision": "remaining_contract_source_screened",
+  "write_authorization": "not_granted",
+  "next_step": "open no-DB contract remaining-blocker policy screen; do not open payment, settlement, accounting, or line writes",
+  "errors": []
+}

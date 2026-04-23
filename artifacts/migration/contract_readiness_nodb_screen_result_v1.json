@@ -1,0 +1,174 @@
+{
+  "status": "PASS",
+  "mode": "contract_readiness_nodb_screen",
+  "database": "sc_demo",
+  "db_container": "sc-backend-odoo-dev-db-1",
+  "db_writes": 0,
+  "source_file": "/mnt/e/sc-backend-odoo/tmp/raw/contract/contract.csv",
+  "contract_rows": 1694,
+  "partner_baseline_count": 6115,
+  "project_legacy_anchor_count": 755,
+  "existing_contract_legacy_id_count": 12,
+  "direction_counts": {
+    "defer": 139,
+    "in": 1,
+    "out": 1554
+  },
+  "partner_match_counts": {
+    "ambiguous_exact": 74,
+    "exact": 1395,
+    "normalized": 6,
+    "unresolved": 219
+  },
+  "project_match_counts": {
+    "exact": 1606,
+    "missing": 88
+  },
+  "deleted_counts": {
+    "active_or_blank": 1629,
+    "deleted": 65
+  },
+  "existing_contract_counts": {
+    "existing_contract": 12,
+    "not_existing_contract": 1682
+  },
+  "safe_candidate_rows": 1332,
+  "safe_candidate_csv": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_readiness_nodb_screen_safe_candidates_v1.csv",
+  "blocker_counts": {
+    "deleted_flag": 65,
+    "direction_defer": 139,
+    "legacy_contract_already_exists": 12,
+    "partner_ambiguous": 74,
+    "partner_unresolved": 219,
+    "project_unresolved": 88
+  },
+  "top_counterparty_texts": [
+    {
+      "text": "德阳市供水安装工程队",
+      "rows": 226
+    },
+    {
+      "text": "四川工程职业技术学院",
+      "rows": 110
+    },
+    {
+      "text": "中国第二重型机械集团德阳万航模锻有限责任公司",
+      "rows": 103
+    },
+    {
+      "text": "二重（德阳）重型装备有限公司",
+      "rows": 94
+    },
+    {
+      "text": "中国建筑第四工程局有限公司",
+      "rows": 23
+    },
+    {
+      "text": "德阳经开建设工程有限公司",
+      "rows": 17
+    },
+    {
+      "text": "四川工程职业技术大学",
+      "rows": 14
+    },
+    {
+      "text": "德阳市旌阳区八角井镇卫生院",
+      "rows": 14
+    },
+    {
+      "text": "四川建筑职业技术学院",
+      "rows": 14
+    },
+    {
+      "text": "四川纹江致远建筑开发工程有限公司",
+      "rows": 14
+    },
+    {
+      "text": "德阳市城市管理行政执法局",
+      "rows": 14
+    },
+    {
+      "text": "德阳旌信城市管理服务股份有限公司",
+      "rows": 11
+    },
+    {
+      "text": "绵竹市众力工程机械设备有限公司",
+      "rows": 11
+    },
+    {
+      "text": "德阳蓉北建设工程有限公司",
+      "rows": 10
+    },
+    {
+      "text": "中建四局第一建设有限公司",
+      "rows": 9
+    },
+    {
+      "text": "拉萨市柳梧新区管理委员会",
+      "rows": 9
+    },
+    {
+      "text": "中国航发航空科技股份有限公司",
+      "rows": 9
+    },
+    {
+      "text": "四川省东方兴发建设集团有限公司",
+      "rows": 8
+    },
+    {
+      "text": "中国移动通信集团四川有限公司成都分公司",
+      "rows": 8
+    },
+    {
+      "text": "中石化西南石油工程有限公司油田工程服务分公司",
+      "rows": 8
+    },
+    {
+      "text": "四川益丰房地产开发有限公司",
+      "rows": 8
+    },
+    {
+      "text": "德阳市自来水公司",
+      "rows": 8
+    },
+    {
+      "text": "四川省第四建筑有限公司",
+      "rows": 8
+    },
+    {
+      "text": "重庆市铜梁区永嘉镇人民政府",
+      "rows": 7
+    },
+    {
+      "text": "德阳二重新业建筑工程有限责任公司",
+      "rows": 7
+    },
+    {
+      "text": "德阳大参林投资有限公司",
+      "rows": 7
+    },
+    {
+      "text": "四川智泽云天建筑工程有限公司",
+      "rows": 6
+    },
+    {
+      "text": "四川中彩源建设工程有限公司",
+      "rows": 6
+    },
+    {
+      "text": "德阳国信建设工程有限公司",
+      "rows": 6
+    },
+    {
+      "text": "德阳方兴建设有限责任公司",
+      "rows": 6
+    }
+  ],
+  "integrity_warnings": {
+    "duplicate_partner_legacy_keys": 0,
+    "duplicate_project_legacy_ids": 0
+  },
+  "decision": "candidate_dry_run_allowed",
+  "write_authorization": "not_granted",
+  "next_step": "open bounded contract header dry-run"
+}

@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_same_tax_company_conflict_21_screen",
+  "screen_rows": 21,
+  "expected_rows": 21,
+  "missing_columns": [],
+  "decision_counts": {
+    "company_same_tax_canonical_write_review": 20,
+    "company_same_tax_manual_review": 1
+  },
+  "outputs": {
+    "screen_rows": "artifacts/migration/partner_l4_same_tax_company_conflict_21_screen_rows_v1.csv"
+  },
+  "next_gate": "Open no-DB write design for company_same_tax_canonical_write_review rows."
+}

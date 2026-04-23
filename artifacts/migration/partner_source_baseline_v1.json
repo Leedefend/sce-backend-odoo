@@ -1,0 +1,5294 @@
+{
+  "status": "PASS",
+  "mode": "partner_source_baseline_no_db_write",
+  "contract_match_artifact_reference": "artifacts/migration/contract_partner_match_recompute_v1.json",
+  "sources": {
+    "company": {
+      "kind": "company",
+      "path": "tmp/raw/partner/company.csv",
+      "row_count": 7864,
+      "field_count": 131,
+      "fields": [
+        "Id",
+        "SJBMC",
+        "XMID",
+        "XMMC",
+        "DJBH",
+        "DWMC",
+        "DWJC",
+        "DQID",
+        "DQMC",
+        "XXDZ",
+        "TYSHXYDM",
+        "ZCZB",
+        "JYFW",
+        "HZLXID",
+        "HZLX",
+        "ZGLXID",
+        "ZGLX",
+        "DJFLID",
+        "DJFL",
+        "YYQX_S",
+        "YYQX_E",
+        "IsYYQXYJ",
+        "PXBH",
+        "QTXMGX",
+        "XXLYID",
+        "XXLY",
+        "DJR",
+        "DJRID",
+        "DJRQ",
+        "BZ",
+        "YWLXRXM",
+        "YWLXRHM",
+        "YWLXRYX",
+        "FRXM",
+        "FRSJHM",
+        "FRYX",
+        "LXRBZ",
+        "NSRLBID",
+        "NSRLB",
+        "FPLXID",
+        "FPLX",
+        "ZSLVID",
+        "ZSLV",
+        "SH",
+        "CSQK",
+        "FKFSID",
+        "FKFS",
+        "CSBZ",
+        "GCZYLXID",
+        "GCZYLX",
+        "AXZHM",
+        "XKZQX_S",
+        "XKZQX_E",
+        "DFDWID",
+        "DFDW",
+        "CPJPP",
+        "ZYYJ",
+        "FJ_YYZZ",
+        "FJ_KHXKZ",
+        "FJ_QYZZZS",
+        "FJ_SCXKZ",
+        "FJ_FRSFZ",
+        "FJ_DLRSFZ",
+        "FJ_QTZZ",
+        "DJZT",
+        "PJZT",
+        "LYZT",
+        "DEL",
+        "LRR",
+        "LRRID",
+        "LRSJ",
+        "XGR",
+        "XGRID",
+        "XGSJ",
+        "pid",
+        "RegisterTy",
+        "IsBlack",
+        "XMBMC",
+        "XMBID",
+        "JYZKSM",
+        "GLTXRZZS",
+        "SQXKWJ",
+        "OTHER_SYSTEM_ID",
+        "OTHER_SYSTEM_CODE",
+        "JCSFSP",
+        "LYXT",
+        "PASSWORD_MD5",
+        "PASSWORD",
+        "LOGINNAME",
+        "USERNAME",
+        "D_SCPXJGJC_DLMM",
+        "PASSWORDMODIFYDATE",
+        "BMFJ",
+        "D_SCBSJS_YHZH",
+        "D_SCBSJS_KHYH",
+        "YWLXRSFZHM",
+        "YWLXRSFZKS",
+        "YWLXRSFZJS",
+        "FDDBRSFZHM",
+        "FDDBSFZKS",
+        "FDDBSFZJS",
+        "DWLX",
+        "DGZHMC",
+        "DGZHHM",
+        "DGZHYH",
+        "DGZHBM",
+        "D_PJG_AXFW",
+        "D_PJG_QYZZBH",
+        "D_PJG_QYZZKSSJ",
+        "D_PJG_QYZZJSSJ",
+        "YWLXRSFZCQ",
+        "FDDBSFZCQ",
+        "ZZDJMX",
+        "FJ_FRSQWTS",
+        "LXDZ",
+        "DWID",
+        "MALL_DPMC",
+        "MALL_DPLOGO",
+        "MALL_DPSYLBT",
+        "MALL_DPJJ",
+        "MALL_DPXJ",
+        "MALL_DPQDE",
+        "MALL_PHSC",
+        "KSBM",
+        "SQWTQX_S",
+        "SQWTQX_E",
+        "YZBM",
+        "SZS",
+        "SZCS",
+        "SZQX",
+        "USER_ID"
+      ],
+      "name_field": "DWMC",
+      "short_field": "DWJC",
+      "nonempty_name_rows": 7864,
+      "nonempty_short_name_rows": 377,
+      "distinct_names": 7075,
+      "distinct_short_names": 374,
+      "distinct_normalized_names": 7046,
+      "duplicate_name_count": 515,
+      "top_duplicate_names": [
+        {
+          "name": "零星材料",
+          "rows": 10
+        },
+        {
+          "name": "农民工专户",
+          "rows": 8
+        },
+        {
+          "name": "餐饮费",
+          "rows": 8
+        },
+        {
+          "name": "油费",
+          "rows": 8
+        },
+        {
+          "name": "何翔宇",
+          "rows": 7
+        },
+        {
+          "name": "四川兴诚信工程造价事务所有限公司",
+          "rows": 6
+        },
+        {
+          "name": "德阳市元安物业有限公司",
+          "rows": 6
+        },
+        {
+          "name": "四川省聚益彰企业管理有限公司",
+          "rows": 6
+        },
+        {
+          "name": "四川德奥律师事务所",
+          "rows": 6
+        },
+        {
+          "name": "杭州网易竹邮科技有限公司",
+          "rows": 6
+        },
+        {
+          "name": "建信融通有限责任公司",
+          "rows": 6
+        },
+        {
+          "name": "简平凡",
+          "rows": 6
+        },
+        {
+          "name": "四川隆强建筑设备租赁有限公司",
+          "rows": 6
+        },
+        {
+          "name": "中仪国际招标有限公司",
+          "rows": 6
+        },
+        {
+          "name": "锦泰财产保险股份有限公司",
+          "rows": 6
+        },
+        {
+          "name": "公诚管理咨询有限公司",
+          "rows": 6
+        },
+        {
+          "name": "吉林市龙麒工程造价咨询有限责任公司西藏分公司",
+          "rows": 6
+        },
+        {
+          "name": "重庆兴农融资担保集团有限公司",
+          "rows": 6
+        },
+        {
+          "name": "魏杨雷",
+          "rows": 6
+        },
+        {
+          "name": "张荣",
+          "rows": 6
+        },
+        {
+          "name": "胡春",
+          "rows": 6
+        },
+        {
+          "name": "赖宇轩",
+          "rows": 6
+        },
+        {
+          "name": "谭信坤",
+          "rows": 6
+        },
+        {
+          "name": "四川信联云航科技有限公司",
+          "rows": 6
+        },
+        {
+          "name": "中国机电工程招标有限公司",
+          "rows": 6
+        },
+        {
+          "name": "四川兴溯道劳务有限公司",
+          "rows": 6
+        },
+        {
+          "name": "天恒融资担保有限公司",
+          "rows": 6
+        },
+        {
+          "name": "重庆迁源项目管理有限公司",
+          "rows": 6
+        },
+        {
+          "name": "成都和顺德非融资性担保有限公司",
+          "rows": 6
+        },
+        {
+          "name": "北京世标认证中心有限公司成都分公司",
+          "rows": 6
+        }
+      ],
+      "sample_names": [
+        "称:四川博钰诚建筑工程有限公司",
+        "德阳市区霖宇建材经营部",
+        "中环城乡规划设计有限公司喀什第一分公司",
+        "四川兴诚信工程造价事务所有限公司",
+        "杜正川",
+        "四川金通检测有限公司",
+        "绵竹市剑南镇恩泽超市",
+        "旌阳区黄许镇李氏木材经营部",
+        "凉山州渝佳商贸有限公司",
+        "格尔木李佳顺机械租赁部",
+        "四川杉尘建筑工程有限公司",
+        "德阳市鑫浩科技有限公司",
+        "四川中青家政服务有限公司",
+        "杨曾凯",
+        "新疆腾鑫木业有限责任公司",
+        "陈众",
+        "中江县南华镇邹明孝机械设备租赁服务部",
+        "广西天意顺木业有限公司",
+        "绵阳市宇洁涛家政服务有限公司",
+        "黄建军"
+      ]
+    },
+    "supplier": {
+      "kind": "supplier",
+      "path": "tmp/raw/partner/supplier.csv",
+      "row_count": 3041,
+      "field_count": 145,
+      "fields": [
+        "ID",
+        "SJBMC",
+        "f_SupplierJB",
+        "f_SupplierCode",
+        "f_SupplierNBCode",
+        "f_SupplierName",
+        "f_SupplierShortName",
+        "f_MaterialTypeID",
+        "f_MaterialTypeName",
+        "f_GradClassificationid",
+        "f_GradClassification",
+        "f_SupplierTypeid",
+        "f_SupplierType",
+        "f_Qualifications",
+        "f_InfoSource",
+        "f_InfoClassid",
+        "f_InfoClass",
+        "f_ReputationClassid",
+        "f_ReputationClas",
+        "f_initiOweMoney",
+        "f_InfoCollectionPerson",
+        "f_InfoCollectionDate",
+        "f_Audit",
+        "f_AuditState",
+        "f_AuditPerson",
+        "f_AuditDate",
+        "f_Person",
+        "f_Phone",
+        "f_ZJPhone",
+        "f_province",
+        "f_City",
+        "f_Address",
+        "f_Email",
+        "f_fax",
+        "f_IntelAddress",
+        "f_BankName",
+        "f_BankCardName",
+        "f_BankCardNumber",
+        "f_departMentID",
+        "f_departmentName",
+        "f_del",
+        "f_Black",
+        "f_PJ",
+        "f_remark",
+        "f_importPerson",
+        "f_importTime",
+        "LRRID",
+        "XGR",
+        "XGRID",
+        "XGRQ",
+        "SCRID",
+        "SCR",
+        "SCRQ",
+        "DJZT",
+        "XGBZ",
+        "f_transmissionState",
+        "FJ",
+        "FDDBR",
+        "WTDLR",
+        "NSRSBH",
+        "YHDZ",
+        "YLH",
+        "DLDJID",
+        "DLDJMC",
+        "ZZSZZID",
+        "ZZSZZMC",
+        "YX",
+        "TYPE",
+        "SPLXID",
+        "SPLXMC",
+        "ZZJGDM_FJ",
+        "SWDJZ_FJ",
+        "YHKHXKZ_FJ",
+        "MS",
+        "FRDH",
+        "DLRDH",
+        "GJDQID",
+        "GJDQ",
+        "ZCZB",
+        "YYQXSTART",
+        "YYQXEND",
+        "TISHXYDM",
+        "JYFW",
+        "GYSLBID",
+        "GYSLB",
+        "LDV",
+        "ZCFZV",
+        "ZYYWLRV",
+        "NSRLBID",
+        "NSRLB",
+        "JYZKSM",
+        "GLTSRZZS_FJ",
+        "SGQYZZDJZS_FJ",
+        "SCXKZ_FJ",
+        "SQXKWJ_FJ",
+        "QTZZZJ_FJ",
+        "SFID",
+        "SQID",
+        "HBLXID",
+        "HBLX",
+        "TSXX",
+        "CPML_FJ",
+        "SH",
+        "GYSBM",
+        "ZCLXID",
+        "ZCLX",
+        "ZJKHXKZ_FJ",
+        "FRSFZ_FJ",
+        "YJ",
+        "IsAutoCreate",
+        "SLV",
+        "OtherId",
+        "GCZYLXID",
+        "GCZYLX",
+        "RegisterTy",
+        "FRDB",
+        "SHXYDM",
+        "FPLXID",
+        "FPLX",
+        "SFWBTJ",
+        "DZ_WD",
+        "DZ_JD",
+        "GYSZT",
+        "RCBAZ_FJ",
+        "FDDBRSFZ_FJ",
+        "FDDBRSFZWJ_FJ",
+        "HTHSH_FJ",
+        "YYZZStart",
+        "YYZZEnd",
+        "ZZZSStart",
+        "ZZZSEnd",
+        "Yyzz",
+        "Zzzs",
+        "QYLX_YJ",
+        "QYLX_EJ",
+        "DJBH",
+        "XMID",
+        "D_JCLY_TZXXBZ",
+        "D_JCLY_YHZH",
+        "D_JCLY_ZHRXM",
+        "D_JCLY_YHKH",
+        "D_JCLY_YYZZFJ",
+        "D_JCLY_ZBID",
+        "f_BT",
+        "PID"
+      ],
+      "name_field": "f_SupplierName",
+      "short_field": "f_SupplierShortName",
+      "nonempty_name_rows": 3041,
+      "nonempty_short_name_rows": 368,
+      "distinct_names": 2957,
+      "distinct_short_names": 365,
+      "distinct_normalized_names": 2953,
+      "duplicate_name_count": 80,
+      "top_duplicate_names": [
+        {
+          "name": "四川坤程建材有限公司",
+          "rows": 4
+        },
+        {
+          "name": "陈嗣香",
+          "rows": 3
+        },
+        {
+          "name": "四川宏旭建材有限公司",
+          "rows": 3
+        },
+        {
+          "name": "成都鑫蓉逸商贸有限公司",
+          "rows": 2
+        },
+        {
+          "name": "重庆映锦建筑劳务有限公司",
+          "rows": 2
+        },
+        {
+          "name": "四川美克罗建材有限公司",
+          "rows": 2
+        },
+        {
+          "name": "杨守兵",
+          "rows": 2
+        },
+        {
+          "name": "四川华盈泰建设工程有限公司",
+          "rows": 2
+        },
+        {
+          "name": "德阳市金鸿混凝土有限公司",
+          "rows": 2
+        },
+        {
+          "name": "德阳市浙民电器设备有限公司",
+          "rows": 2
+        },
+        {
+          "name": "德阳凯达门业有限公司",
+          "rows": 2
+        },
+        {
+          "name": "测试供应商",
+          "rows": 2
+        },
+        {
+          "name": "中国人民财产保险股份有限公司德阳市分公司",
+          "rows": 2
+        },
+        {
+          "name": "罗江区吉兴建材经营部",
+          "rows": 2
+        },
+        {
+          "name": "旌阳区益诚建材经营部",
+          "rows": 2
+        },
+        {
+          "name": "重庆意鼎机械租赁有限公司",
+          "rows": 2
+        },
+        {
+          "name": "重庆戴杨合建材有限公司",
+          "rows": 2
+        },
+        {
+          "name": "普格县顺达经营部",
+          "rows": 2
+        },
+        {
+          "name": "铜梁区春林建筑设备租赁站",
+          "rows": 2
+        },
+        {
+          "name": "重庆市荣昌区光点广告经营部",
+          "rows": 2
+        },
+        {
+          "name": "璧山区富有建筑机械设备租赁站",
+          "rows": 2
+        },
+        {
+          "name": "四川中诚慧燃科技有限公司",
+          "rows": 2
+        },
+        {
+          "name": "重庆启和国际物流有限公司",
+          "rows": 2
+        },
+        {
+          "name": "重庆源顺建筑设备租赁有限公司",
+          "rows": 2
+        },
+        {
+          "name": "重庆扬升建筑劳务有限公司",
+          "rows": 2
+        },
+        {
+          "name": "旌阳区雷盾电动门维修经营部",
+          "rows": 2
+        },
+        {
+          "name": "重庆丹金建材有限公司",
+          "rows": 2
+        },
+        {
+          "name": "社保局",
+          "rows": 2
+        },
+        {
+          "name": "中江县龙台镇富盈门窗装饰部",
+          "rows": 2
+        },
+        {
+          "name": "中江县乐中机砖制造有限责任公司",
+          "rows": 2
+        }
+      ],
+      "sample_names": [
+        "称:四川博钰诚建筑工程有限公司",
+        "四川金通检测有限公司",
+        "绵竹市剑南镇恩泽超市",
+        "旌阳区黄许镇李氏木材经营部",
+        "凉山州渝佳商贸有限公司",
+        "格尔木李佳顺机械租赁部",
+        "四川杉尘建筑工程有限公司",
+        "杨曾凯",
+        "中江县南华镇邹明孝机械设备租赁服务部",
+        "（错误不选）德阳市新棉科技有限公司",
+        "李佳琳",
+        "成都鸿泰润翔保温材料有限公司",
+        "旌阳区和鑫石材加工厂",
+        "成都红泰塑胶管业有限公司",
+        "苍溪县从锦建材有限公司",
+        "彭州市丽春镇涌泉建材经营部",
+        "巴中市宏达钢材有限公司",
+        "新疆阿斯帕里提公路养护有限公司",
+        "成都鑫蓉逸商贸有限公司",
+        "四川万桥建筑劳务有限公司"
+      ]
+    }
+  },
+  "contract_counterparty_coverage": {
+    "counterparty_count": 568,
+    "summary_by_text": {
+      "company_multiple": 78,
+      "company_single": 419,
+      "cross_source_conflict": 8,
+      "defer": 63
+    },
+    "summary_by_contract_rows": {
+      "company_multiple": 614,
+      "company_single": 738,
+      "cross_source_conflict": 123,
+      "defer": 79
+    },
+    "top_by_match_type": {
+      "company_multiple": [
+        {
+          "counterparty_text": "德阳市供水安装工程队",
+          "contract_rows": 226,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "二重（德阳）重型装备有限公司",
+          "contract_rows": 94,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中国建筑第四工程局有限公司",
+          "contract_rows": 23,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳经开建设工程有限公司",
+          "contract_rows": 17,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳市旌阳区八角井镇卫生院",
+          "contract_rows": 14,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "四川建筑职业技术学院",
+          "contract_rows": 14,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "四川纹江致远建筑开发工程有限公司",
+          "contract_rows": 14,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "绵竹市众力工程机械设备有限公司",
+          "contract_rows": 11,
+          "match_type": "company_multiple",
+          "company_candidates": 3,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中建四局第一建设有限公司",
+          "contract_rows": 9,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "拉萨市柳梧新区管理委员会",
+          "contract_rows": 9,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "四川省东方兴发建设集团有限公司",
+          "contract_rows": 8,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳市自来水公司",
+          "contract_rows": 8,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "四川省第四建筑有限公司",
+          "contract_rows": 8,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳二重新业建筑工程有限责任公司",
+          "contract_rows": 7,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳大参林投资有限公司",
+          "contract_rows": 7,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳国信建设工程有限公司",
+          "contract_rows": 6,
+          "match_type": "company_multiple",
+          "company_candidates": 3,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中铁十八局集团有限公司巴中恩阳临港产业园项目经理部",
+          "contract_rows": 6,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中铁十九局集团有限公司",
+          "contract_rows": 6,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳市旌创建设工程有限公司",
+          "contract_rows": 5,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中铁十八局集团有限公司",
+          "contract_rows": 5,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳市人民医院",
+          "contract_rows": 4,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中国移动通信集团四川有限公司",
+          "contract_rows": 4,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "四川汉南供水有限公司",
+          "contract_rows": 4,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "重庆市渝北区双龙水库管理所",
+          "contract_rows": 4,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "绵竹市金申建筑有限公司",
+          "contract_rows": 4,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中国核工业中原建设有限公司",
+          "contract_rows": 3,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "四川省绵阳外国语学校",
+          "contract_rows": 3,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳市罗江区综合行政执法局",
+          "contract_rows": 3,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中国建筑一局（集团）有限公司",
+          "contract_rows": 3,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中国建筑第八工程局有限公司",
+          "contract_rows": 3,
+          "match_type": "company_multiple",
+          "company_candidates": 2,
+          "supplier_candidates": 0
+        }
+      ],
+      "company_single": [
+        {
+          "counterparty_text": "中国第二重型机械集团德阳万航模锻有限责任公司",
+          "contract_rows": 103,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "四川工程职业技术大学",
+          "contract_rows": 14,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳市城市管理行政执法局",
+          "contract_rows": 14,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳旌信城市管理服务股份有限公司",
+          "contract_rows": 11,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳蓉北建设工程有限公司",
+          "contract_rows": 10,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中国航发航空科技股份有限公司",
+          "contract_rows": 9,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中国移动通信集团四川有限公司成都分公司",
+          "contract_rows": 8,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "四川益丰房地产开发有限公司",
+          "contract_rows": 8,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "重庆市铜梁区永嘉镇人民政府",
+          "contract_rows": 7,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "四川智泽云天建筑工程有限公司",
+          "contract_rows": 6,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "四川中彩源建设工程有限公司",
+          "contract_rows": 6,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳方兴建设有限责任公司",
+          "contract_rows": 6,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "四川新众建筑加固工程有限公司",
+          "contract_rows": 6,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "四川致远锂业有限公司",
+          "contract_rows": 6,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "二重集团（德阳）精衡传动设备有限公司",
+          "contract_rows": 5,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "布拖县基只乡（镇）人民政府",
+          "contract_rows": 5,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中国第二重型机械集团德阳万路运业有限公司",
+          "contract_rows": 4,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "四川省玻纤集团有限公司",
+          "contract_rows": 4,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "重庆帆盾环保设备有限公司",
+          "contract_rows": 4,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中国华西企业股份有限公司",
+          "contract_rows": 3,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳华润燃气有限公司",
+          "contract_rows": 3,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳市旌合建设工程有限公司",
+          "contract_rows": 3,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "四川曜道杰建筑工程有限公司",
+          "contract_rows": 3,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "成都秦川物联网科技股份有限公司",
+          "contract_rows": 3,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中建八局第一建设有限公司",
+          "contract_rows": 3,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳市罗江区水利灌排工程管理中心",
+          "contract_rows": 3,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "四川富祥建筑工程有限公司",
+          "contract_rows": 3,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中国二重型机械集团德阳万航模锻有限责任公司",
+          "contract_rows": 3,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "玖龙纸业（重庆）有限公司",
+          "contract_rows": 3,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中国移动通信集团四川有限公司天府新区分公司",
+          "contract_rows": 3,
+          "match_type": "company_single",
+          "company_candidates": 1,
+          "supplier_candidates": 0
+        }
+      ],
+      "cross_source_conflict": [
+        {
+          "counterparty_text": "四川工程职业技术学院",
+          "contract_rows": 110,
+          "match_type": "cross_source_conflict",
+          "company_candidates": 1,
+          "supplier_candidates": 1
+        },
+        {
+          "counterparty_text": "德阳鑫凯基置业有限公司",
+          "contract_rows": 3,
+          "match_type": "cross_source_conflict",
+          "company_candidates": 1,
+          "supplier_candidates": 1
+        },
+        {
+          "counterparty_text": "中国电信股份有限公司德阳分公司",
+          "contract_rows": 3,
+          "match_type": "cross_source_conflict",
+          "company_candidates": 3,
+          "supplier_candidates": 1
+        },
+        {
+          "counterparty_text": "德阳市天韵文化发展有限公司天韵酒店",
+          "contract_rows": 2,
+          "match_type": "cross_source_conflict",
+          "company_candidates": 3,
+          "supplier_candidates": 1
+        },
+        {
+          "counterparty_text": "重庆机场集团有限公司",
+          "contract_rows": 2,
+          "match_type": "cross_source_conflict",
+          "company_candidates": 3,
+          "supplier_candidates": 2
+        },
+        {
+          "counterparty_text": "中国人寿财产保险股份有限公司德阳市中心支公司",
+          "contract_rows": 1,
+          "match_type": "cross_source_conflict",
+          "company_candidates": 1,
+          "supplier_candidates": 1
+        },
+        {
+          "counterparty_text": "特变电工（德阳）电缆股份有限公司",
+          "contract_rows": 1,
+          "match_type": "cross_source_conflict",
+          "company_candidates": 1,
+          "supplier_candidates": 1
+        },
+        {
+          "counterparty_text": "中国电信股份有限公司成都分公司",
+          "contract_rows": 1,
+          "match_type": "cross_source_conflict",
+          "company_candidates": 1,
+          "supplier_candidates": 1
+        }
+      ],
+      "defer": [
+        {
+          "counterparty_text": "中石化西南石油工程有限公司油田工程服务分公司",
+          "contract_rows": 8,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中国铁建大桥工程局集团有限公司旌阳区城市地下综合管廊建设项目经理部",
+          "contract_rows": 4,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "深圳友唱技术有限公司",
+          "contract_rows": 2,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中建四局建设发展有限公司",
+          "contract_rows": 2,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "渝北区石船镇人民政府",
+          "contract_rows": 2,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中国铁建大桥工程局集团有限公司 旌阳区城市地下综合管廊建设项目经理部",
+          "contract_rows": 2,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "山东国仁建设有限公司",
+          "contract_rows": 2,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "六盘水金地嘉仁物业服务有限公司荣昌分公司",
+          "contract_rows": 2,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "雅安蜀天开发建设有限责任公司",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "河北省送变电有限公司、绵阳市安州区桑枣镇干柏村村民委员会",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "绵阳市安州区雎水镇皇帽村村民委员会",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "重庆巴驿公共交通战场管理有限公司",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳市勘察测绘设计院",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中国人民解放军32036部队",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳市明德炉业有限公司",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "四川省交通建设集团有限责任公司G5京昆高速公路绵阳至成都段扩容项目TJ4标段项目部(下简称:成绵TJ4项目部)",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "重庆科学城高新置业有限公司（项目业主）、重庆科学城城市建设集团有限公司（代理业主）",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中铁北京工程局集团有限公司重庆轨道交通15号线项目经理部",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "重庆市璧山区人民政府青杠街道办事处",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳开发大学",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "上海二十冶建设有限公司",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "德阳工院精工科技有限公司",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "重庆市合川区人民政府合阳城街道办事处",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中国移动通信集团四川有限公司泸州分公司",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "绵阳市安州区桑枣镇小学",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "重庆未至科技有限公司",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "垫江县小厦建筑有限公司",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "新疆维吾尔自治区岳普湖县自然资源局",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中建三局基础设施建设投资有限公司",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        },
+        {
+          "counterparty_text": "中铁十九局集团第五工程有限公司1951项目经理部",
+          "contract_rows": 1,
+          "match_type": "defer",
+          "company_candidates": 0,
+          "supplier_candidates": 0
+        }
+      ]
+    },
+    "rows": [
+      {
+        "counterparty_text": "德阳市供水安装工程队",
+        "contract_rows": 226,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川工程职业技术学院",
+        "contract_rows": 110,
+        "match_type": "cross_source_conflict",
+        "company_candidates": 1,
+        "supplier_candidates": 1
+      },
+      {
+        "counterparty_text": "中国第二重型机械集团德阳万航模锻有限责任公司",
+        "contract_rows": 103,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "二重（德阳）重型装备有限公司",
+        "contract_rows": 94,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国建筑第四工程局有限公司",
+        "contract_rows": 23,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳经开建设工程有限公司",
+        "contract_rows": 17,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川工程职业技术大学",
+        "contract_rows": 14,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市旌阳区八角井镇卫生院",
+        "contract_rows": 14,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川建筑职业技术学院",
+        "contract_rows": 14,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川纹江致远建筑开发工程有限公司",
+        "contract_rows": 14,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市城市管理行政执法局",
+        "contract_rows": 14,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳旌信城市管理服务股份有限公司",
+        "contract_rows": 11,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵竹市众力工程机械设备有限公司",
+        "contract_rows": 11,
+        "match_type": "company_multiple",
+        "company_candidates": 3,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳蓉北建设工程有限公司",
+        "contract_rows": 10,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中建四局第一建设有限公司",
+        "contract_rows": 9,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "拉萨市柳梧新区管理委员会",
+        "contract_rows": 9,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国航发航空科技股份有限公司",
+        "contract_rows": 9,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川省东方兴发建设集团有限公司",
+        "contract_rows": 8,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国移动通信集团四川有限公司成都分公司",
+        "contract_rows": 8,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中石化西南石油工程有限公司油田工程服务分公司",
+        "contract_rows": 8,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川益丰房地产开发有限公司",
+        "contract_rows": 8,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市自来水公司",
+        "contract_rows": 8,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川省第四建筑有限公司",
+        "contract_rows": 8,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市铜梁区永嘉镇人民政府",
+        "contract_rows": 7,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳二重新业建筑工程有限责任公司",
+        "contract_rows": 7,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳大参林投资有限公司",
+        "contract_rows": 7,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川智泽云天建筑工程有限公司",
+        "contract_rows": 6,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川中彩源建设工程有限公司",
+        "contract_rows": 6,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳国信建设工程有限公司",
+        "contract_rows": 6,
+        "match_type": "company_multiple",
+        "company_candidates": 3,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳方兴建设有限责任公司",
+        "contract_rows": 6,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川新众建筑加固工程有限公司",
+        "contract_rows": 6,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中铁十八局集团有限公司巴中恩阳临港产业园项目经理部",
+        "contract_rows": 6,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中铁十九局集团有限公司",
+        "contract_rows": 6,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川致远锂业有限公司",
+        "contract_rows": 6,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "二重集团（德阳）精衡传动设备有限公司",
+        "contract_rows": 5,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市旌创建设工程有限公司",
+        "contract_rows": 5,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中铁十八局集团有限公司",
+        "contract_rows": 5,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "布拖县基只乡（镇）人民政府",
+        "contract_rows": 5,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国第二重型机械集团德阳万路运业有限公司",
+        "contract_rows": 4,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国铁建大桥工程局集团有限公司旌阳区城市地下综合管廊建设项目经理部",
+        "contract_rows": 4,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市人民医院",
+        "contract_rows": 4,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国移动通信集团四川有限公司",
+        "contract_rows": 4,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川汉南供水有限公司",
+        "contract_rows": 4,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川省玻纤集团有限公司",
+        "contract_rows": 4,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市渝北区双龙水库管理所",
+        "contract_rows": 4,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆帆盾环保设备有限公司",
+        "contract_rows": 4,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵竹市金申建筑有限公司",
+        "contract_rows": 4,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国华西企业股份有限公司",
+        "contract_rows": 3,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳华润燃气有限公司",
+        "contract_rows": 3,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市旌合建设工程有限公司",
+        "contract_rows": 3,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川曜道杰建筑工程有限公司",
+        "contract_rows": 3,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国核工业中原建设有限公司",
+        "contract_rows": 3,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川省绵阳外国语学校",
+        "contract_rows": 3,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市罗江区综合行政执法局",
+        "contract_rows": 3,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国建筑一局（集团）有限公司",
+        "contract_rows": 3,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "成都秦川物联网科技股份有限公司",
+        "contract_rows": 3,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国建筑第八工程局有限公司",
+        "contract_rows": 3,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市住房保障和房地产事务中心",
+        "contract_rows": 3,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中建八局第一建设有限公司",
+        "contract_rows": 3,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市罗江区水利灌排工程管理中心",
+        "contract_rows": 3,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆巴驿公共交通站场管理有限公司",
+        "contract_rows": 3,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川富祥建筑工程有限公司",
+        "contract_rows": 3,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国二重型机械集团德阳万航模锻有限责任公司",
+        "contract_rows": 3,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳旌信物业服务股份有限公司",
+        "contract_rows": 3,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳鑫凯基置业有限公司",
+        "contract_rows": 3,
+        "match_type": "cross_source_conflict",
+        "company_candidates": 1,
+        "supplier_candidates": 1
+      },
+      {
+        "counterparty_text": "中国电信股份有限公司德阳分公司",
+        "contract_rows": 3,
+        "match_type": "cross_source_conflict",
+        "company_candidates": 3,
+        "supplier_candidates": 1
+      },
+      {
+        "counterparty_text": "玖龙纸业（重庆）有限公司",
+        "contract_rows": 3,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国移动通信集团四川有限公司天府新区分公司",
+        "contract_rows": 3,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国石油天然气第七建设有限公司",
+        "contract_rows": 3,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川省第一建筑工程有限公司",
+        "contract_rows": 3,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川省第六建筑有限公司",
+        "contract_rows": 3,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国移动通信集团四川有限公司南充分公司",
+        "contract_rows": 3,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国铁建大桥工程局集团有限公司",
+        "contract_rows": 3,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳市安州区建投矿业有限公司",
+        "contract_rows": 3,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "国网新疆电力有限公司喀什供电公司",
+        "contract_rows": 3,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "金科智慧服务集团股份有限公司重庆分公司",
+        "contract_rows": 3,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市潺亭水务有限公司",
+        "contract_rows": 3,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川建设发展股份有限公司",
+        "contract_rows": 3,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "国网四川省电力公司德阳供电公司工会委员会",
+        "contract_rows": 3,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "成都市郫都区人民政府安德街道办事处",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "邛崃格润能源有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中铁八局集团有限公司",
+        "contract_rows": 2,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "眉山环天水务有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市人民政府办公室",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "米易龙信房地产开发有限责任公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市渝北区新桥水库管理所",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国建筑第六工程局有限公司",
+        "contract_rows": 2,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国航发成都发动机有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川洋洋商业管理有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川宏大建筑工程有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市天韵文化发展有限公司天韵酒店",
+        "contract_rows": 2,
+        "match_type": "cross_source_conflict",
+        "company_candidates": 3,
+        "supplier_candidates": 1
+      },
+      {
+        "counterparty_text": "西藏华泰龙矿业开发有限公司",
+        "contract_rows": 2,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市罗江区公路建设养护所",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "成都建工第一建筑工程有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "甘肃龙江电力有限责任公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中建三局集团有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市铜梁区二坪镇人民政府",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川三盛环保科技有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "北京信博云控科技发展有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市罗江区住房和城乡建设局",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆农村商业银行股份有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "伟宸建设集团有限公司",
+        "contract_rows": 2,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "新疆喀什电盛有限责任公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "安徽电气集团股份有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中建三局集团（德阳）有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳第六人民医院（东汽医院）",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳宏泰盛源实业有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市青少年宫",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川库伦电气有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "广汉市城乡建设发展有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "广元市朝天区沙河镇人民政府",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "深圳友唱技术有限公司",
+        "contract_rows": 2,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市旌阳区黄许镇卫生院",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中建四局建设发展有限公司",
+        "contract_rows": 2,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "伽师工业园区管理委员会",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "国营川西机器厂",
+        "contract_rows": 2,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市罗江区白马关镇人民政府",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市璧山区人民政府璧泉街道办事处",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳皓华光电科技有限公司",
+        "contract_rows": 2,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市罗江区鄢家镇人民政府",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国移动通信集团四川有限公司德阳分公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "雅安城投建筑工程有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川瑞荣建设有限责任公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川省中江实验中学",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市南川区第三中学校",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "渝北区石船镇人民政府",
+        "contract_rows": 2,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市永成机械厂",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市弘扬舒苑置业有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川锦泰致远智能工程有限公司",
+        "contract_rows": 2,
+        "match_type": "company_multiple",
+        "company_candidates": 3,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中铁七局集团西藏工程有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市永川区何埂镇何埂小学校",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "苍溪县兴苍建设有限公司",
+        "contract_rows": 2,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "保利长大工程有限公司",
+        "contract_rows": 2,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川高竹工程建设有限公司",
+        "contract_rows": 2,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国铁建大桥工程局集团有限公司 旌阳区城市地下综合管廊建设项目经理部",
+        "contract_rows": 2,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳玛丽妇科医院有限责任公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "苍溪县农业农村局",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "普格县农业农村局",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国移动通信集团四川有限公司绵阳分公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市商务局",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市城投路桥管理有限公司",
+        "contract_rows": 2,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国移动通信集团四川有限公司雅安分公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "陕西冶金设计研究院有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中江凯兴建设投资有限公司",
+        "contract_rows": 2,
+        "match_type": "company_multiple",
+        "company_candidates": 3,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆渝北区双龙水库管理所",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳思远重工有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳新城亿博房地产开发有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川昌意兴建筑劳务有限公司",
+        "contract_rows": 2,
+        "match_type": "company_multiple",
+        "company_candidates": 3,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "西昌海成置业有限责任公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "旌阳区德新镇胜利村股份经济合作联合社",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "攀枝花安宁新能源科技有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市罗江区调元镇人民政府",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市元安物业有限公司",
+        "contract_rows": 2,
+        "match_type": "company_multiple",
+        "company_candidates": 6,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "山东国仁建设有限公司",
+        "contract_rows": 2,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "六盘水金地嘉仁物业服务有限公司荣昌分公司",
+        "contract_rows": 2,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳第五医院股份有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市旌阳区市场监督管理局",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市南川区石溪镇人民政府",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "丹阳市丰泰工业炉有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国人民解放军 95696 部队",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "盐亭县交通运输局公路管理所",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国移动通信集团四川有限公司乐山分公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "新疆维吾尔自治区人民检察院喀什分院",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市永川区水利站",
+        "contract_rows": 2,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "成都市龙泉驿区洪安镇人民政府",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳市游仙区魏城镇竹柳村村民委员会",
+        "contract_rows": 2,
+        "match_type": "company_multiple",
+        "company_candidates": 3,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国人民解放军77626部队",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中江县辑庆镇尖寨村股份经济合作联合社",
+        "contract_rows": 2,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "广汉市城市燃气有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川自贡汇东发展股份有限公司",
+        "contract_rows": 2,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆机场集团有限公司",
+        "contract_rows": 2,
+        "match_type": "cross_source_conflict",
+        "company_candidates": 3,
+        "supplier_candidates": 2
+      },
+      {
+        "counterparty_text": "德阳市香诗美林酒店管理有限公司",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市旌阳区旌阳街道花园巷社区居民委员会",
+        "contract_rows": 2,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "雅安蜀天开发建设有限责任公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中建四局第一建筑工程有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "巴宜区教育局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆国隆农业科技发展有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市旌阳区涪江路小学校",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳经济技术开发区重点工程建设中心",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "广元市昭化区华瑞投资开发有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "遂宁市安居土壤肥料与生态工作站",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市重光机电设备有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市黄河路小学校",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "河北省送变电有限公司、绵阳市安州区桑枣镇干柏村村民委员会",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市玉皇观",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川长虹技佳精工有限公司重庆分公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "陇南市文江水电有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中江县殡仪馆",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中石油煤层气有限责任公司新疆项目经理部",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "蓬溪县鸿源投资有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳市公安局高新技术产业开发区分局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中江县御河中学校",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "莎车县艾力西湖镇人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "广汉市住房和城乡规划建设局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "石柱土家族自治县水利工程服务站",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳开发区六月雪干锅凯德店",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川豪特设备有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国人民解放军77561部队",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳市安州区雎水镇皇帽村村民委员会",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳市游仙区交通运输局公路管理所",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市博众建材销售有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆巴驿公共交通战场管理有限公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆农村商业银行股份有限公司合川分行",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国人寿财产保险股份有限公司德阳市中心支公司",
+        "contract_rows": 1,
+        "match_type": "cross_source_conflict",
+        "company_candidates": 1,
+        "supplier_candidates": 1
+      },
+      {
+        "counterparty_text": "重庆市渝北区石船镇人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市九龙坡区华岩镇人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳芯万晨商贸有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川省商贸学校",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "城口县明通镇中心小学",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市杰阳排水有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市旌阳区黄许镇人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "交通银行股份有限公司德阳分行",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中江县水利管理所",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市勘察测绘设计院",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国人民解放军32036部队",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "阿克陶县人民医院",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市明德炉业有限公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳科利机械设备租赁有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川省交通建设集团有限责任公司G5京昆高速公路绵阳至成都段扩容项目TJ4标段项目部(下简称:成绵TJ4项目部)",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳龙井公墓服务有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳新城亿博 房地产开发有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "平武县民政局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳旌城万势养老服务有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中核城市建设发展有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "南京贺普科技有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "旌阳区旌阳清真寺",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "金科智慧服务集团有限公司重庆分公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆科学城高新置业有限公司（项目业主）、重庆科学城城市建设集团有限公司（代理业主）",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳高新发展有限公司",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中铁北京工程局集团有限公司重庆轨道交通15号线项目经理部",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "会理县农业农村局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市水韵江南居住小区",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市建设工程集团有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国移动通信集团有限公司四川巴中分公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆工业职业技术学院",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "西藏自治区人民政府驻格尔木办事处医院",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川省华地建设工程有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 5,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市罗江区万安镇南塔社区居民委员会",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市璧山区人民政府青杠街道办事处",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳开发大学",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川泰鑫房屋维修工程有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川航天职业技术学院",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳旌阳区汇乐幼儿园",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "上海二十冶建设有限公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市璧山区人民政府璧城街道办事处",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆绿发城市建设有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳九源燃气工程有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川创海建筑工程有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市罗江区教育和体育局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "什邡恒基置业有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市璧山区正兴镇石龙村股份经济合作联合社",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "宁南县葫芦口镇人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "广元市朝天区花石乡人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "拉萨市堆龙德庆区住房和城乡建设局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳工院精工科技有限公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳藏珑餐饮有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆文理学院",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市罗江区公路管理所",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆合川工业园区管理委员会",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "二重德阳储能科技有限公司",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市合川区人民政府合阳城街道办事处",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川盈佳置业有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市旌阳区红樱桃幼稚园",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国人民解放军 32167 部队",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "南充市高坪区公路管理局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市艺术宫",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国移动通信集团四川有限公司泸州分公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国工程物理研究院激光聚变研究中心",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "广汉市公路养护所",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国机械总院集团北京机电研究所有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "广安亿达投资有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "明源电力公寓小区",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳市安州区桑枣镇小学",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国邮政储蓄银行股份有限公司德阳市分行",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "旌阳区左氏餐饮店",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "丰都县城市建设资产经营有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆未至科技有限公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市万兴物业有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市旌阳区旌东街道旌湖社区居民委员会",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中建地下空间有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "武汉惟景三维科技有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "喀什地区塔什库尔干县生活垃圾分类收运及处置建设项目工程总承包第三标段项目经理部",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳市安州区花荄镇兴福村股份经济合作联合社",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "垫江县小厦建筑有限公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "马边磷都发展有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川省黄猫垭农业生物科技发展有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川东电金宇置业有限公司瑞麟东方酒店",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市旌阳区仁蒙民族幼儿园",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市南开两江中学校",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "新疆维吾尔自治区岳普湖县自然资源局",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳鑫利化工厂",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中铁十九局集团第三工程有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市金山街学校",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川川交路桥有限责任公司桥梁分公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川山水美地农业投资有限公司",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "剑阁县杨村镇人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "于田县住房和城乡建设局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "莎车县住房和城乡建设局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市衡山路学校",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市茶园工业园区建设开发有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中建三局基础设施建设投资有限公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中铁十九局集团第五工程有限公司1951项目经理部",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川宝烨金属制品有限公司",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中交一公局海威工程建设有限公司",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中铁二局集团有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳市安州区人民检察院",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳新铁医院有限责任公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "洛浦县住房和城乡建设局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川瑞源建筑工程有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "旌阳区德新镇五星村股份经济合作联合社",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市水韵江南居住小区业委会",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市南岸区人民政府花园路街道办事处",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆巨能建设（集团）有限公司米易分公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "川渝高竹新区开发建设集团有限公司（四川高竹工程建设有限公司）",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "特变电工（德阳）电缆股份有限公司",
+        "contract_rows": 1,
+        "match_type": "cross_source_conflict",
+        "company_candidates": 1,
+        "supplier_candidates": 1
+      },
+      {
+        "counterparty_text": "重庆市南岸区城市管理局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市瑞键机械设备有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "喀什某单位",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆两江新区物业管理有限公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳龙泰房地产开发有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市政务服务和大数据管理局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川中烟工业有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "深圳市捷顺科技实业股份有限公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市房地产股份有限公司凯拂菻酒店分公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "达州发展（控股）有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国人民武装警察部队德阳支队",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川黑竹沟运营管理集团有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川中恒联合建设工程有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中铁建工集团有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "大唐甘肃发电有限公司碧口水力发电厂",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市生态环境局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市群运物资有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市北碚区人民政府北温泉街道办事处",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国人民解放军32167部队",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "射洪县农业服务中心",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市国有资产监督管理委员会",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "成都高智企业管理有限公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市五洲实业有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国移动通信集团四川有限公司广元分公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆农村商业银行股份有限公司大足支行",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳经济技术开发区第四幼儿园",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中江县水土保持办公室",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "剑阁县鹤岭镇人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳国信驰能科技服务有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆机场集团有限公司动力能源分公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国工程物理研究院科技信息中心",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川熙韵建筑工程有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "航天凯天环保科技股份有限公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳锦欣护理中心有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆机场空港服务有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四汇建设集团有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "成都师范学院德阳高级中学",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中铁一局集团铁路建设有限公司",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 3,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "南充市高坪区农业农村局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳一刻钟健康养老服务有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "广汉市南兴镇人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市第一小学校",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆翰博光电有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国人民解放军32166部队",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国民用航空飞行学院",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳启明酒店管理有限公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "米易县颛顼文化旅游开发有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳市发展和改革委员会",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳禾立办公有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "峨边彝族自治县新场乡人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "金阳县交通运输局",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆渝数科技有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川启美实业集团有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国水利水电第六工程局有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市益康环保工程有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆蓝竞教育科技有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国银行股份有限公司德阳分行",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中铁十九局集团第五工程有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳智茂润亚电子科技有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "布拖县 火烈乡（镇）人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市罗江区自来水公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市中恒重工机械有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市罗江区社会救助福利中心",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中石油煤层气有限责任公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川省东汽八一中学",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "浙江省建工集团有限责任公司阿合奇县分公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川璟丰源建工集团有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "塔什库尔干县塔什库尔干乡人民政府",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川绵阳外国语学校",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "越西县消防救援大队",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "喀什市农业农村局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "眉山环天建设工程集团有限公司",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "喜德县交通运输局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "大昌镇人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国移动通信集团有限公司乐山分公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川省工业设备安装集团有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "武警新疆总队机动第五支队",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市荣昌区盘龙镇白鹤村村民委员会",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳科技城新区博雅学校",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国移动通信集团四川有限公司眉山分公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "宁南县环境保护局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国人民解放军四川省德阳市旌阳区人民武装部",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆巴南区华南城充电站建设",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "新疆维吾尔自治区喀什地区大数据局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆临空经济示范区开发建设有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市经济技术开发区征收拆迁服务中心",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国移动通信集团有限公司四川分公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市旌辉投资有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "都兰县水利综合服务中心",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "汉源县文化体育和旅游局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆江北国际机场有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "巴楚县民政局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳经济技术开发区第一幼儿园",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川省德阳市人民检察院",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市永川区宏旭房地产开发有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "大英县金元镇人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳市安州区桑枣镇干柏村村民委员会",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "浪卡子县人民政府",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市渝中区绿化维护管理处",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "青海金世纪工程项目管理有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川省德阳中学校",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国建筑第七工程局有限公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "国网四川省电力公司德阳供电公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市旌海建设投资有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "广元市朝天区城乡规划建设和住房保障局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "北京易工自动化技术有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "乐山嘉洋科技发展有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "米易恒邦领晟置业有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "安徽省路港工程有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中江县凯江中学校",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳经开物业管理有限公司",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 5,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市畜牧科学院",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "旌阳区天元街道楠树村股份经济联合社",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市市政设施和园林建设处",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "山东创杰智慧装备科技有限公司",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "广汉市文化体育中心",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "雅安市华盛建筑工程有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国农业发展银行四川省分行",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市经济技术开发区城市管理局",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市建设投资发展集团有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国电信股份有限公司成都分公司",
+        "contract_rows": 1,
+        "match_type": "cross_source_conflict",
+        "company_candidates": 1,
+        "supplier_candidates": 1
+      },
+      {
+        "counterparty_text": "广日电梯（四川）有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中共英吉沙县委员会组织部",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市秀安建筑工程有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "成都七天四季投资管理有限公司德阳文庙广场店",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市渝北区两路市政环境卫生管理所",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市荣昌仁义中学校",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德昌县宽裕镇人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆国盛（物业）集团有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市罗江区农业农村局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川金顺达公路工程有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川新力葆房地产集团有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "生猪技术创新中心（重庆）",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "圈龙乡新桥村委会",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "广汉市水务局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳文旅大健康产业发展集团有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "伽师县商务和工业信息化局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国联合网络通信有限公司成都市分公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "剑阁县公兴镇新生村村民委员会",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中移动通信集团四川有限公司成都分公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "东方电气集团东方电机有限公司风电电机分公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "会理县外北乡兴荣村村民委员会",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市公路机械化工程公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "什邡市社会福利救助中心",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中铁十二局集团有限公司宜宾机场航站区配套工程项目经理部",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国共产党德阳市旌阳区委员办公室",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳市安州区农业农村局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳文鑫文化体育有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国电信股份/集团有限公司泸州分公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳市涪城区丰谷镇人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳泰诚硕商贸有限公司",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市璧山区青杠街道农业服务中心",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川得福来酒店有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳特斯联实业有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳市安州区高级职业中学",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "疏勒县第二幼儿园",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市凯州投资开发有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "二重集团(德阳)精衡传动设备有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国铁建大桥工程局集团有限公司、旌阳区城市地下综合管廊建设项目经理部",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "剑阁县圈龙乡人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国第二重型机械集团德阳我哪行模锻有限责任公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "广汉市悦弘文旅有限责任公司德阳分公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "忠县涂井乡人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "米易高恒置业有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "剑阁县鹤龄镇人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市旌阳区爱尼尔幼儿园",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "旌阳区天元街道股份经济合作联合总社",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市旌阳区德新镇人民政府",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中建六局第五建设有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市人民政府防汛抗旱指挥部办公室",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国铁建大桥工程局集团有限公司旌阳区城市地下综合管 廊建设项目经理部",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市铜梁区太平镇人民政府",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市卫生健康委员会",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中铁隧道局集团有限公司重庆轨道交通15号线一期土建工程03标项目经理部",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳精鑫资产管理有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳高新区普明街道古泉社区居民委员会",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川金路发建设工程有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "射洪县涪江土地开发整理有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "莎车县保障性住房服务中心",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川省烟草公司宜宾市公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国共产党德阳市旌阳区纪律检查委员会",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳鹏安建设工程有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国人民解放军陆军第九五〇医院",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市渝中区机关事务服务中心",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "成都市龙泉驿区第六中学",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "西藏高争民爆股份有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "蓬溪县水利工程建设管理办公室",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川天顺科技服务有限公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "河北维得利吊索具制造有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中江县联合镇中心学校",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "长信保险经纪（北京）有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "射洪县仁和中学校",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中铁广州工程局集团有限公司重庆轨道交通15号线一期土建工程01标项目经理部",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "英吉沙县代建中心",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "布拖县觉撒乡（镇）人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市土地矿权交易中心",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市璧山区青杠街道产业发展服务中心",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "西安尼通热力有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆机场集团有限公司航空物流园发展分公司",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "泸县奇峰镇共和村股份经济联合社",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市大足区农田整治建设中心",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川巨狼实业发展集团有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市德远后勤服务有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "塔尔库尔干塔吉克自治县水利服务总站",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国人民解放军陆军军医大学",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "青海省玉树公路路政执法支队",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市华山路学校",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中江县永兴镇人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "塔什库尔干塔吉克自治县交通运输局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国工程物理研究所电子工程研究所",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中江县普兴镇东升村村民委员会",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川艺术职业学院",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵阳市安州区雎水镇沸水小学",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市南川区公路事务中心",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国第二重型机械集团万航模锻有限责任公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川省第四建筑有限公司德阳云峰山路分公司",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川便捷酒店管理有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "两岛街道仙足岛社区",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国水利水电第四工程局有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "当雄县交通运输局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市市政工程维护管理处",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川通信服务有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆电子科技职业大学",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中岗第二重型机械集团德阳万航模锻有限责任公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川圆规酒店管理有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "绵竹市南轩中学",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川阆中水城农业发展有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "布拖县农业投资有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市审计局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市綦江区中小学基本建设管理服务中心",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中铁十八局集团第五工程有限公司1851项目经理部",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国人民解放军32329部队",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳德美医疗美容医院有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "布拖县沙洛乡（镇）人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市人力资源和社会保障局",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "广汉市金轮镇人民政府",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳市旌阳区公路建设投资开发管理所",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "旌阳区双东镇东美村集体经济组织",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中建二局第二建筑工程有限公司",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "华新建工集团有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "中国石油天然气股份有限公司青海格尔木销售分公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川省旌晶食品有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "国网四川省电力公司成都市龙泉驿供电分公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市荣昌区盘龙镇人民政府",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "格尔木盐湖城投资开发有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "林芝华信恒富房地产开发有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳农村商业银行股份有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "四川定弘邦路桥工程有限公司",
+        "contract_rows": 1,
+        "match_type": "defer",
+        "company_candidates": 0,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳发展控股集团有限公司",
+        "contract_rows": 1,
+        "match_type": "company_multiple",
+        "company_candidates": 2,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "攀枝花锦成建设工程有限责任公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "德阳钰鑫化工有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "罗江县经济开发区金南建设投资有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      },
+      {
+        "counterparty_text": "重庆市固体废弃物运输有限公司",
+        "contract_rows": 1,
+        "match_type": "company_single",
+        "company_candidates": 1,
+        "supplier_candidates": 0
+      }
+    ]
+  },
+  "decision": "NO-GO for partner import; source baseline only",
+  "next_step": "open partner candidate normalization and manual confirmation batch before creating partners"
+}

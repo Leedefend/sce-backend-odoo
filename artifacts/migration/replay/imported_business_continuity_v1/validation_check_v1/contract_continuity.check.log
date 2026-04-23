@@ -1,0 +1,30 @@
+2026-04-17 13:56:42,516 2934 INFO ? odoo: Odoo version 17.0-20251222 
+2026-04-17 13:56:42,516 2934 INFO ? odoo: Using configuration file at /var/lib/odoo/odoo.conf 
+2026-04-17 13:56:42,516 2934 INFO ? odoo: addons paths: ['/usr/lib/python3/dist-packages/odoo/addons', '/var/lib/odoo/addons/17.0', '/mnt/extra-addons', '/mnt/addons_external/oca_server_ux'] 
+2026-04-17 13:56:42,516 2934 INFO ? odoo: database: odoo@db:5432 
+2026-04-17 13:56:42,591 2934 INFO ? odoo.addons.base.models.ir_actions_report: Will use the Wkhtmltopdf binary at /usr/local/bin/wkhtmltopdf 
+2026-04-17 13:56:44,157 2934 INFO ? odoo.addons.smart_core.app_config_engine.controllers: ✅ smart_core controllers __init__.py 已加载 - contract_api imported 
+2026-04-17 13:56:44,157 2934 INFO ? odoo.addons.smart_core.app_config_engine: ✅ smart_core __init__.py 已加载 
+2026-04-17 13:56:47,588 2934 INFO ? odoo.addons.smart_core: ✅ Smart Core Engine 模块已加载 
+2026-04-17 13:56:47,599 2934 INFO ? odoo.service.server: Initiating shutdown 
+2026-04-17 13:56:47,599 2934 INFO ? odoo.service.server: Hit CTRL-C again or send a second signal to force the shutdown. 
+2026-04-17 13:56:47,616 2934 INFO sc_demo odoo.modules.loading: loading 1 modules... 
+2026-04-17 13:56:47,621 2934 INFO sc_demo odoo.modules.loading: 1 modules loaded in 0.00s, 0 queries (+0 extra) 
+2026-04-17 13:56:47,864 2934 INFO sc_demo odoo.modules.loading: loading 73 modules... 
+2026-04-17 13:56:51,052 2934 INFO sc_demo odoo.modules.loading: 73 modules loaded in 3.19s, 0 queries (+0 extra) 
+2026-04-17 13:56:51,193 2934 INFO sc_demo odoo.modules.loading: Modules loaded. 
+2026-04-17 13:56:51,198 2934 INFO sc_demo odoo.modules.registry: Registry loaded in 3.598s 
+Traceback (most recent call last):
+  File "/usr/bin/odoo", line 8, in <module>
+    odoo.cli.main()
+  File "/usr/lib/python3/dist-packages/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/usr/lib/python3/dist-packages/odoo/cli/shell.py", line 129, in run
+    self.shell(config['db_name'])
+  File "/usr/lib/python3/dist-packages/odoo/cli/shell.py", line 122, in shell
+    self.console(local_vars)
+  File "/usr/lib/python3/dist-packages/odoo/cli/shell.py", line 67, in console
+    exec(sys.stdin.read(), local_vars)
+  File "<string>", line 195, in <module>
+  File "<string>", line 134, in main
+RuntimeError: {'target_count_drift': 6697, 'expected': 6685}

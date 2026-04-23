@@ -1,0 +1,1541 @@
+{
+  "status": "PASS",
+  "mode": "project_member_neutral_pair_consolidation_profile",
+  "database": "sc_demo",
+  "target_model": "sc.project.member.staging",
+  "db_writes": 0,
+  "evidence_layer": true,
+  "consolidated_pair_projection": "readonly_governance_projection",
+  "pair_key": "project_id + user_id",
+  "total_evidence_rows": 534,
+  "total_distinct_pairs": 362,
+  "duplicate_pair_count": 120,
+  "max_evidence_per_pair": 5,
+  "pairs_grouped_by_evidence_count": {
+    "1": 242,
+    "2": 81,
+    "3": 29,
+    "4": 7,
+    "5": 3
+  },
+  "role_fact_status_grouped_by_pair": {
+    "missing": 362
+  },
+  "batch_distribution_by_pair": {
+    "ITER-2026-04-14-0030N": 34,
+    "ITER-2026-04-14-0030NZ": 328
+  },
+  "sample_duplicate_pairs": [
+    {
+      "pair_key": "2821:12",
+      "project_id": 2821,
+      "project_name": "2024-2025年度成都所区零星工程框架协议",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 3,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 110,
+      "last_neutral_id": 530
+    },
+    {
+      "pair_key": "2697:12",
+      "project_id": 2697,
+      "project_name": "2025年西南石油工程公司钻前辅助工程劳务框架招标（1标段：罗江、黄许等地区）项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 178,
+      "last_neutral_id": 417
+    },
+    {
+      "pair_key": "2585:12",
+      "project_id": 2585,
+      "project_name": "2025年西南石油工程公司钻前辅助工程劳务框架招标（4标段：内江、自贡等地区）项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 191,
+      "last_neutral_id": 525
+    },
+    {
+      "pair_key": "2856:12",
+      "project_id": 2856,
+      "project_name": "2025年西南石油工程公司钻前辅助工程劳务框架招标（7标段：成都、绵阳等地区）项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 169,
+      "last_neutral_id": 360
+    },
+    {
+      "pair_key": "2839:12",
+      "project_id": 2839,
+      "project_name": "A项目-建筑幕墙专业分包",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 253,
+      "last_neutral_id": 483
+    },
+    {
+      "pair_key": "2251:12",
+      "project_id": 2251,
+      "project_name": "上海二十冶西南公司四川省广汉市职业中专学校迁建项目土石方专业分包工程",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 3,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 166,
+      "last_neutral_id": 265
+    },
+    {
+      "pair_key": "2573:12",
+      "project_id": 2573,
+      "project_name": "东林智慧学校停车场工程建设项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 246,
+      "last_neutral_id": 503
+    },
+    {
+      "pair_key": "2247:12",
+      "project_id": 2247,
+      "project_name": "东湖街道老旧街区改造城市更新项目（一期）-秦岭山路（黄河路-玉泉路）提升改造工程",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 5,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 181,
+      "last_neutral_id": 501
+    },
+    {
+      "pair_key": "2807:12",
+      "project_id": 2807,
+      "project_name": "中国农业发展银行什邡市支行雨、污管道改造项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 38,
+      "last_neutral_id": 124
+    },
+    {
+      "pair_key": "2523:12",
+      "project_id": 2523,
+      "project_name": "中国移动四川公司乐山分公司2025-2026年渠道维修采购项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 46,
+      "last_neutral_id": 53
+    },
+    {
+      "pair_key": "2359:9",
+      "project_id": 2359,
+      "project_name": "中国移动四川公司市州分公司2025年—2028年管理用房及生产枢纽楼公共区域零星维修项目的标包13 南充",
+      "user_id": 9,
+      "user_name": "徐丹",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 173,
+      "last_neutral_id": 299
+    },
+    {
+      "pair_key": "2852:8",
+      "project_id": 2852,
+      "project_name": "中国移动四川公司市州分公司2025年—2028年管理用房及生产枢纽楼公共区域零星维修项目的标包1 成都",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 165,
+      "last_neutral_id": 263
+    },
+    {
+      "pair_key": "2420:8",
+      "project_id": 2420,
+      "project_name": "中国移动四川公司成都分公司2023-2025年渠道维修采购项目",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 89,
+      "last_neutral_id": 510
+    },
+    {
+      "pair_key": "2609:8",
+      "project_id": 2609,
+      "project_name": "中国航发公司郝小成零星工程",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 310,
+      "last_neutral_id": 373
+    },
+    {
+      "pair_key": "2211:8",
+      "project_id": 2211,
+      "project_name": "中央公园西一游客服务中心工程项目",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 86,
+      "last_neutral_id": 433
+    },
+    {
+      "pair_key": "2374:12",
+      "project_id": 2374,
+      "project_name": "中建七局天府大道北延线（德阳段）项目桥面防水工程",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 3,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 196,
+      "last_neutral_id": 491
+    },
+    {
+      "pair_key": "2575:12",
+      "project_id": 2575,
+      "project_name": "中核城建德阿项目(EPC)工程27#地块钢结构厂房屋面光伏安装施工专业分包",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 71,
+      "last_neutral_id": 177
+    },
+    {
+      "pair_key": "2368:12",
+      "project_id": 2368,
+      "project_name": "中铁十九局集团有限公司1415项目P、T 点位",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 322,
+      "last_neutral_id": 432
+    },
+    {
+      "pair_key": "2361:12",
+      "project_id": 2361,
+      "project_name": "仙足岛阜康医院前人行道改造项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 190,
+      "last_neutral_id": 379
+    },
+    {
+      "pair_key": "2729:12",
+      "project_id": 2729,
+      "project_name": "何东中石油煤层气公司新疆后峡项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 250,
+      "last_neutral_id": 528
+    },
+    {
+      "pair_key": "2712:12",
+      "project_id": 2712,
+      "project_name": "信息中心图书馆安全整治及服务能力提升项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 209,
+      "last_neutral_id": 258
+    },
+    {
+      "pair_key": "2522:12",
+      "project_id": 2522,
+      "project_name": "信达国际车库伸缩缝漏水维修工程项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 123,
+      "last_neutral_id": 397
+    },
+    {
+      "pair_key": "2245:14",
+      "project_id": 2245,
+      "project_name": "八角星坐标项目景观坡道优化调整工程劳务分包",
+      "user_id": 14,
+      "user_name": "江一娇",
+      "evidence_count": 4,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 149,
+      "last_neutral_id": 468
+    },
+    {
+      "pair_key": "2192:8",
+      "project_id": 2192,
+      "project_name": "凯州新城城乡一体化项目配套建设工程钢结构工程专业分包（第二次）",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 76,
+      "last_neutral_id": 134
+    },
+    {
+      "pair_key": "2254:8",
+      "project_id": 2254,
+      "project_name": "剑阁2019年村道窄路加宽工程圈龙乡太吉村",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 112,
+      "last_neutral_id": 493
+    },
+    {
+      "pair_key": "2119:8",
+      "project_id": 2119,
+      "project_name": "剑阁县文化广电新闻出版局人才基地建设项目",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 251,
+      "last_neutral_id": 529
+    },
+    {
+      "pair_key": "2514:8",
+      "project_id": 2514,
+      "project_name": "北新国际冷链商贸物流项目E地块E3#-1、E4#-1综合项目",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 385,
+      "last_neutral_id": 516
+    },
+    {
+      "pair_key": "2287:12",
+      "project_id": 2287,
+      "project_name": "医院商业服务配套安装工程",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 212,
+      "last_neutral_id": 465
+    },
+    {
+      "pair_key": "2799:12",
+      "project_id": 2799,
+      "project_name": "南川区石溪镇2024年农村公路（学校至王官果业（主干道至家禽屠宰场）、灯草湾至枫香榜）建设项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 61,
+      "last_neutral_id": 522
+    },
+    {
+      "pair_key": "2448:12",
+      "project_id": 2448,
+      "project_name": "南平智能环保产业孵化中心监控设施及道闸安装工程",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 3,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 93,
+      "last_neutral_id": 440
+    },
+    {
+      "pair_key": "2274:8",
+      "project_id": 2274,
+      "project_name": "南开两江中学学校宿舍改造工程",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 82,
+      "last_neutral_id": 141
+    },
+    {
+      "pair_key": "2248:8",
+      "project_id": 2248,
+      "project_name": "博雅学校小学部1号楼屋面装饰改造功能用房采购项目施工合同",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 145,
+      "last_neutral_id": 170
+    },
+    {
+      "pair_key": "2701:12",
+      "project_id": 2701,
+      "project_name": "合川高新区南溪组团用地整治项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 4,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 227,
+      "last_neutral_id": 490
+    },
+    {
+      "pair_key": "2668:12",
+      "project_id": 2668,
+      "project_name": "合格土销售项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 308,
+      "last_neutral_id": 369
+    },
+    {
+      "pair_key": "2195:12",
+      "project_id": 2195,
+      "project_name": "合阳城街道2024年老旧小区改造工程(二期)",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 3,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 74,
+      "last_neutral_id": 527
+    },
+    {
+      "pair_key": "2813:8",
+      "project_id": 2813,
+      "project_name": "向东工程",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 49,
+      "last_neutral_id": 519
+    },
+    {
+      "pair_key": "2580:12",
+      "project_id": 2580,
+      "project_name": "喀什地区塔什库尔干县曲什曼检查站至垃圾处理厂道路路灯采购项目（二次）",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 3,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 276,
+      "last_neutral_id": 461
+    },
+    {
+      "pair_key": "2734:8",
+      "project_id": 2734,
+      "project_name": "喀什地区检察院办案与专业技术用房外立面改造项目",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 324,
+      "last_neutral_id": 411
+    },
+    {
+      "pair_key": "2488:12",
+      "project_id": 2488,
+      "project_name": "四川司法产教融合实训基地二期项目（运动场及附属设施）土石方工程",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 5,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 39,
+      "last_neutral_id": 402
+    },
+    {
+      "pair_key": "2276:8",
+      "project_id": 2276,
+      "project_name": "四川省广汉高封橡塑有限公司地上建(构)筑物附着物拆除工程及残值处置项目",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 72,
+      "last_neutral_id": 341
+    },
+    {
+      "pair_key": "2829:12",
+      "project_id": 2829,
+      "project_name": "四川致远锂业有限公司一号窑收尘器基础工程",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 3,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 137,
+      "last_neutral_id": 283
+    },
+    {
+      "pair_key": "2542:12",
+      "project_id": 2542,
+      "project_name": "四川致远锂业有限公司氯化锂车间地基加固工程",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 401,
+      "last_neutral_id": 418
+    },
+    {
+      "pair_key": "2733:12",
+      "project_id": 2733,
+      "project_name": "四川致远锂业有限公司生产厂房土建零星及维修工程",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 4,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 103,
+      "last_neutral_id": 277
+    },
+    {
+      "pair_key": "2786:8",
+      "project_id": 2786,
+      "project_name": "四川金鑫公司职工家属区“三供一业”分离移交物业设施维修改造项目（南区）",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 70,
+      "last_neutral_id": 381
+    },
+    {
+      "pair_key": "2637:12",
+      "project_id": 2637,
+      "project_name": "国网新疆喀什供电公司110kV一明线接地网大修等2项工程",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 3,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 63,
+      "last_neutral_id": 348
+    },
+    {
+      "pair_key": "2567:12",
+      "project_id": 2567,
+      "project_name": "国网新疆喀什岳普湖县供电公司城区供电所项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 219,
+      "last_neutral_id": 454
+    },
+    {
+      "pair_key": "2660:12",
+      "project_id": 2660,
+      "project_name": "国网新疆电力有限公司阿勒泰供电公司省管产业单位2024年第一次服务类区域联合授权框架招标采购",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 3,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 98,
+      "last_neutral_id": 220
+    },
+    {
+      "pair_key": "2707:12",
+      "project_id": 2707,
+      "project_name": "垫江县城区污水处理厂提标改造项目（中水管网建设工程A段）--玉鼎桥至明月大道段（第二次）",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 150,
+      "last_neutral_id": 492
+    },
+    {
+      "pair_key": "2495:8",
+      "project_id": 2495,
+      "project_name": "塔什库尔干县达布达尔乡农业灌溉管道建设项目",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 129,
+      "last_neutral_id": 435
+    },
+    {
+      "pair_key": "2757:12",
+      "project_id": 2757,
+      "project_name": "天山北路公共卫生间改造项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 45,
+      "last_neutral_id": 386
+    }
+  ],
+  "sample_pairs": [
+    {
+      "pair_key": "2649:8",
+      "project_id": 2649,
+      "project_name": "2021年11月1日-2023年10月31日期间学校安排的防水维修项目和应急处理",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 460,
+      "last_neutral_id": 460
+    },
+    {
+      "pair_key": "2411:8",
+      "project_id": 2411,
+      "project_name": "2021年德阳经开区旌东片区保障性安居工程城镇老旧小区改造一期土建、二期项目（四标段）",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 505,
+      "last_neutral_id": 505
+    },
+    {
+      "pair_key": "2364:8",
+      "project_id": 2364,
+      "project_name": "2023年中江县普兴镇村社道路建设项目",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 319,
+      "last_neutral_id": 319
+    },
+    {
+      "pair_key": "2625:12",
+      "project_id": 2625,
+      "project_name": "2023年德阳经开区保障性安居工程城镇老旧小区主体改造项目劳务分包第十二标段",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 439,
+      "last_neutral_id": 439
+    },
+    {
+      "pair_key": "2324:12",
+      "project_id": 2324,
+      "project_name": "2023年渝中区绿管处冬季行道树修剪",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 160,
+      "last_neutral_id": 160
+    },
+    {
+      "pair_key": "2821:12",
+      "project_id": 2821,
+      "project_name": "2024-2025年度成都所区零星工程框架协议",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 3,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 110,
+      "last_neutral_id": 530
+    },
+    {
+      "pair_key": "2697:12",
+      "project_id": 2697,
+      "project_name": "2025年西南石油工程公司钻前辅助工程劳务框架招标（1标段：罗江、黄许等地区）项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 178,
+      "last_neutral_id": 417
+    },
+    {
+      "pair_key": "2585:12",
+      "project_id": 2585,
+      "project_name": "2025年西南石油工程公司钻前辅助工程劳务框架招标（4标段：内江、自贡等地区）项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 191,
+      "last_neutral_id": 525
+    },
+    {
+      "pair_key": "2196:12",
+      "project_id": 2196,
+      "project_name": "2025年西南石油工程公司钻前辅助工程劳务框架招标（5标段：中江、孝泉等地区）项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 147,
+      "last_neutral_id": 147
+    },
+    {
+      "pair_key": "2856:12",
+      "project_id": 2856,
+      "project_name": "2025年西南石油工程公司钻前辅助工程劳务框架招标（7标段：成都、绵阳等地区）项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 169,
+      "last_neutral_id": 360
+    },
+    {
+      "pair_key": "2675:12",
+      "project_id": 2675,
+      "project_name": "2025年西南石油工程公司钻前辅助工程劳务框架招标（8标段：内江、自贡等地区）项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 392,
+      "last_neutral_id": 392
+    },
+    {
+      "pair_key": "2464:12",
+      "project_id": 2464,
+      "project_name": "2025年西南石油工程公司钻前辅助工程劳务框架招标（9标段：中江、孝泉等地区）项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 35,
+      "last_neutral_id": 35
+    },
+    {
+      "pair_key": "2555:12",
+      "project_id": 2555,
+      "project_name": "40万吨高强包装纸扩建项目余土/渣土外运专业分包工程",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 244,
+      "last_neutral_id": 244
+    },
+    {
+      "pair_key": "2698:12",
+      "project_id": 2698,
+      "project_name": "66号楼整修项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 127,
+      "last_neutral_id": 127
+    },
+    {
+      "pair_key": "2351:12",
+      "project_id": 2351,
+      "project_name": "77561部队制供氧站用房新建项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 235,
+      "last_neutral_id": 235
+    },
+    {
+      "pair_key": "2839:12",
+      "project_id": 2839,
+      "project_name": "A项目-建筑幕墙专业分包",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 253,
+      "last_neutral_id": 483
+    },
+    {
+      "pair_key": "2713:12",
+      "project_id": 2713,
+      "project_name": "C4-3-1、C4-3-2等3宗地块整治工程水泥稳定碎石层铺筑",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 484,
+      "last_neutral_id": 484
+    },
+    {
+      "pair_key": "2711:12",
+      "project_id": 2711,
+      "project_name": "C地块非机动车停车场修建工程",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 151,
+      "last_neutral_id": 151
+    },
+    {
+      "pair_key": "2431:12",
+      "project_id": 2431,
+      "project_name": "PET-CT安装工程",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 307,
+      "last_neutral_id": 307
+    },
+    {
+      "pair_key": "2184:12",
+      "project_id": 2184,
+      "project_name": "S216绵竹市拱星镇(泉乐村)至汉旺镇(牛鼻村)段大修工程路面分项工程部分专业分包项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 350,
+      "last_neutral_id": 350
+    },
+    {
+      "pair_key": "2303:8",
+      "project_id": 2303,
+      "project_name": "“三供一业“院落自来水管网改造工程",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 206,
+      "last_neutral_id": 206
+    },
+    {
+      "pair_key": "2342:8",
+      "project_id": 2342,
+      "project_name": "三标段旌湖路（秦岭山路至峨眉山南路）10kv下地改造工程",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 448,
+      "last_neutral_id": 448
+    },
+    {
+      "pair_key": "2251:12",
+      "project_id": 2251,
+      "project_name": "上海二十冶西南公司四川省广汉市职业中专学校迁建项目土石方专业分包工程",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 3,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 166,
+      "last_neutral_id": 265
+    },
+    {
+      "pair_key": "2573:12",
+      "project_id": 2573,
+      "project_name": "东林智慧学校停车场工程建设项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 246,
+      "last_neutral_id": 503
+    },
+    {
+      "pair_key": "2573:8",
+      "project_id": 2573,
+      "project_name": "东林智慧学校停车场工程建设项目",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030N"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 17,
+      "last_neutral_id": 17
+    },
+    {
+      "pair_key": "2197:8",
+      "project_id": 2197,
+      "project_name": "东河农贸市场场内厕所改造",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030N"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 26,
+      "last_neutral_id": 26
+    },
+    {
+      "pair_key": "2247:12",
+      "project_id": 2247,
+      "project_name": "东湖街道老旧街区改造城市更新项目（一期）-秦岭山路（黄河路-玉泉路）提升改造工程",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 5,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 181,
+      "last_neutral_id": 501
+    },
+    {
+      "pair_key": "2807:12",
+      "project_id": 2807,
+      "project_name": "中国农业发展银行什邡市支行雨、污管道改造项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 38,
+      "last_neutral_id": 124
+    },
+    {
+      "pair_key": "2215:8",
+      "project_id": 2215,
+      "project_name": "中国电信泸州分公司2024-2026年房屋装修、维修服务项目",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030N"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 19,
+      "last_neutral_id": 19
+    },
+    {
+      "pair_key": "2271:12",
+      "project_id": 2271,
+      "project_name": "中国电信股份有限公司德阳分公司2023-2024年房屋零星维修服务",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 156,
+      "last_neutral_id": 156
+    },
+    {
+      "pair_key": "2428:12",
+      "project_id": 2428,
+      "project_name": "中国电信股份有限公司成都分公司2024年大邑县城区电信大楼外墙景观照明项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 54,
+      "last_neutral_id": 54
+    },
+    {
+      "pair_key": "2744:8",
+      "project_id": 2744,
+      "project_name": "中国移动下游采购合同平台",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 119,
+      "last_neutral_id": 119
+    },
+    {
+      "pair_key": "2780:12",
+      "project_id": 2780,
+      "project_name": "中国移动四川公司2025-2027年全省汇聚机房土建工程施工集中采购项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 109,
+      "last_neutral_id": 109
+    },
+    {
+      "pair_key": "2231:12",
+      "project_id": 2231,
+      "project_name": "中国移动四川公司2025-2027年全省汇聚机房土建工程施工集中采购项目（标包4-乐山分公司）框架协议",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 286,
+      "last_neutral_id": 286
+    },
+    {
+      "pair_key": "2204:8",
+      "project_id": 2204,
+      "project_name": "中国移动四川公司乐山分公司2020-2022年渠道维修采购项目框架协议",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 314,
+      "last_neutral_id": 314
+    },
+    {
+      "pair_key": "2523:12",
+      "project_id": 2523,
+      "project_name": "中国移动四川公司乐山分公司2025-2026年渠道维修采购项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 46,
+      "last_neutral_id": 53
+    },
+    {
+      "pair_key": "2359:9",
+      "project_id": 2359,
+      "project_name": "中国移动四川公司市州分公司2025年—2028年管理用房及生产枢纽楼公共区域零星维修项目的标包13 南充",
+      "user_id": 9,
+      "user_name": "徐丹",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 173,
+      "last_neutral_id": 299
+    },
+    {
+      "pair_key": "2852:8",
+      "project_id": 2852,
+      "project_name": "中国移动四川公司市州分公司2025年—2028年管理用房及生产枢纽楼公共区域零星维修项目的标包1 成都",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 165,
+      "last_neutral_id": 263
+    },
+    {
+      "pair_key": "2174:8",
+      "project_id": 2174,
+      "project_name": "中国移动四川公司市州分公司2025年—2028年管理用房及生产枢纽楼公共区域零星维修项目的标包22 天府",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 437,
+      "last_neutral_id": 437
+    },
+    {
+      "pair_key": "2558:8",
+      "project_id": 2558,
+      "project_name": "中国移动四川公司市州分公司2025年—2028年管理用房及生产枢纽楼公共区域零星维修项目的标包7 泸州",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 102,
+      "last_neutral_id": 102
+    },
+    {
+      "pair_key": "2420:8",
+      "project_id": 2420,
+      "project_name": "中国移动四川公司成都分公司2023-2025年渠道维修采购项目",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 89,
+      "last_neutral_id": 510
+    },
+    {
+      "pair_key": "2745:12",
+      "project_id": 2745,
+      "project_name": "中国移动四川公司成都分公司2025-2026年渠道维修采购项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 325,
+      "last_neutral_id": 325
+    },
+    {
+      "pair_key": "2706:8",
+      "project_id": 2706,
+      "project_name": "中国移动四川公司绵阳分公司2021-2022年渠道维修采购项目框架协议",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 260,
+      "last_neutral_id": 260
+    },
+    {
+      "pair_key": "2611:8",
+      "project_id": 2611,
+      "project_name": "中国移动四川公司雅安分公司2021-2022年渠道维修采购项目框架协议",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 287,
+      "last_neutral_id": 287
+    },
+    {
+      "pair_key": "2131:8",
+      "project_id": 2131,
+      "project_name": "中国移动四川西区二枢纽“车库改机房”土建工程",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 412,
+      "last_neutral_id": 412
+    },
+    {
+      "pair_key": "2609:12",
+      "project_id": 2609,
+      "project_name": "中国航发公司郝小成零星工程",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 352,
+      "last_neutral_id": 352
+    },
+    {
+      "pair_key": "2609:8",
+      "project_id": 2609,
+      "project_name": "中国航发公司郝小成零星工程",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 310,
+      "last_neutral_id": 373
+    },
+    {
+      "pair_key": "2211:8",
+      "project_id": 2211,
+      "project_name": "中央公园西一游客服务中心工程项目",
+      "user_id": 8,
+      "user_name": "段奕俊",
+      "evidence_count": 2,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 86,
+      "last_neutral_id": 433
+    },
+    {
+      "pair_key": "2374:12",
+      "project_id": 2374,
+      "project_name": "中建七局天府大道北延线（德阳段）项目桥面防水工程",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 3,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": true,
+      "first_neutral_id": 196,
+      "last_neutral_id": 491
+    },
+    {
+      "pair_key": "2620:12",
+      "project_id": 2620,
+      "project_name": "中建四局-刘兴宇项目",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "evidence_count": 1,
+      "role_fact_status_summary": "missing",
+      "batch_list": [
+        "ITER-2026-04-14-0030NZ"
+      ],
+      "duplicate_evidence": false,
+      "first_neutral_id": 273,
+      "last_neutral_id": 273
+    }
+  ],
+  "promotion_gate": {
+    "confirmed_project_id": true,
+    "confirmed_user_id": true,
+    "verified_role_fact_required": true,
+    "no_existing_project_responsibility_conflict_required": true,
+    "promotion_scope": "pair",
+    "promotion_executed_in_this_batch": false
+  },
+  "blocking_reasons": []
+}

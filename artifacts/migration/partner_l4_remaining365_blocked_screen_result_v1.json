@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_remaining365_blocked_screen",
+  "input": "artifacts/migration/partner_l4_nodb_refresh_rows_v1.csv",
+  "blocked_rows": 365,
+  "expected_blocked_rows": 365,
+  "missing_columns": [],
+  "route_counts": {
+    "duplicate_group_screen": 24,
+    "missing_tax_duplicate_group_screen": 175,
+    "missing_tax_non_primary_screen": 4,
+    "non_primary_duplicate_group_screen": 26,
+    "residual_unsafe_name_manual_screen": 4,
+    "same_tax_conflict_screen": 132
+  },
+  "top_blocker_combos": {
+    "deduplicated_group_not_create_only;missing_tax_number": 156,
+    "deduplicated_group_not_create_only;non_primary_partner_source;same_tax_multiple_names": 111,
+    "deduplicated_group_not_create_only;non_primary_partner_source": 26,
+    "deduplicated_group_not_create_only": 24,
+    "deduplicated_group_not_create_only;same_tax_multiple_names": 21,
+    "deduplicated_group_not_create_only;missing_tax_number;non_primary_partner_source": 19,
+    "missing_tax_number;non_primary_partner_source": 4,
+    "deduplicated_group_not_create_only;non_primary_partner_source;same_tax_multiple_names;unsafe_partner_name": 2,
+    "deduplicated_group_not_create_only;same_tax_multiple_names;unsafe_partner_name": 1,
+    "deduplicated_group_not_create_only;non_primary_partner_source;unsafe_partner_name": 1
+  },
+  "outputs": {
+    "screen_rows": "artifacts/migration/partner_l4_remaining365_blocked_screen_rows_v1.csv",
+    "sample_rows": "artifacts/migration/partner_l4_remaining365_blocked_screen_samples_v1.csv"
+  },
+  "next_gate": "Open no-DB screen/dry-run for the largest deterministic route; no DB write is authorized."
+}

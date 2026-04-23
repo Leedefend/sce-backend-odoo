@@ -1,0 +1,9 @@
+counterparty_text,normalized_name,contract_rows,match_type,recommended_action,manual_confirm_required,auto_create_allowed,existing_partner_hint,company_candidate_count,supplier_candidate_count,source,source_id,source_name,source_short_name,source_code,source_address,source_contact,source_phone
+四川工程职业技术学院,四川工程职业技术学院,110,cross_source_conflict,manual_confirm_source,yes,no,no,1,1,company,CBB3F3A4E6C64C23A1B17C68AE75D72C,四川工程职业技术学院,,,,,
+德阳鑫凯基置业有限公司,德阳鑫凯基置业,3,cross_source_conflict,manual_confirm_source,yes,no,no,1,1,company,9858e18c4918448fb0904a2691964064,德阳鑫凯基置业有限公司,,,,,
+中国电信股份有限公司德阳分公司,中国电信股份有限公司德阳分,3,cross_source_conflict,manual_confirm_source,yes,no,no,3,1,company,6edb2f96c55d458cab3ad8827cbc7fac,中国电信股份有限公司德阳分公司,,,,,
+德阳市天韵文化发展有限公司天韵酒店,德阳市天韵文化发展有限公司天韵酒店,2,cross_source_conflict,manual_confirm_source,yes,no,no,3,1,company,43F30D4FB38B48E3BFAA06EE7A59328F,德阳市天韵文化发展有限公司天韵酒店,,,,,
+重庆机场集团有限公司,重庆机场,2,cross_source_conflict,manual_confirm_source,yes,no,no,3,1,company,3a2ed3df769a4566a50c206fa34ed5b7,重庆机场集团有限公司,,,,,
+中国人寿财产保险股份有限公司德阳市中心支公司,中国人寿财产保险股份有限公司德阳市中心支,1,cross_source_conflict,manual_confirm_source,yes,no,no,1,1,company,115C3FA1E8894E72A7B7BDD47DEA5D12,中国人寿财产保险股份有限公司德阳市中心支公司,,,,,
+特变电工（德阳）电缆股份有限公司,特变电工德阳电缆,1,cross_source_conflict,manual_confirm_source,yes,no,no,1,1,company,a677c83fed0a4a038460825c311460c0,特变电工（德阳）电缆股份有限公司,,1,,,
+中国电信股份有限公司成都分公司,中国电信股份有限公司成都分,1,cross_source_conflict,manual_confirm_source,yes,no,no,1,1,company,e8db15bcc03044ec9474258f8f18ba78,中国电信股份有限公司成都分公司,,,,,

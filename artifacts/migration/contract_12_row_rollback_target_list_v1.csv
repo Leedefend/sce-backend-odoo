@@ -1,0 +1,13 @@
+run_id,contract_id,legacy_contract_id,legacy_project_id,project_id,partner_id,name,subject,type,state,line_count,payment_request_count,settlement_count,is_locked,write_action_result
+ITER-2026-04-14-0004,72,0a2327c0e84a47ebaf4218101ec2fdd3,28020d9fe0c345f295ebbf4b41c119e4,2235,107,CONIN2600035,绵竹市城区停车场建设项目二期设计施工（一标段）项目模板脚手架专业分包工程,out,draft,0,0,0,False,created
+ITER-2026-04-14-0004,73,102f1039d9bf4d7e8cb2946dbf2aab72,23aa1343ca99440abf7bd7315fd60c6a,2222,109,CONIN2600036,中核中原建设 2022-2023 年度华北、西北区域脚手架专业分包框架协议,out,draft,0,0,0,False,created
+ITER-2026-04-14-0004,74,2642d1906f134f568ddcf9b818b96578,14c4325bb56b408788e6f442f4384374,2172,108,CONIN2600037,广东南华工商职业学院清远校区二期建设工程 （ 学 生生活区、教学行政区）,out,draft,0,0,0,False,created
+ITER-2026-04-14-0004,75,359ceebc083241caab1db9b39a2c33ba,1524f421b94c41698305394cf8691f44,2174,118,CONIN2600038,中国移动四川公司市州分公司2025年—2028年管理用房及生产枢纽楼公共区域零星维修项目的标包22 天府,out,draft,0,0,0,False,created
+ITER-2026-04-14-0004,76,36b4b9472702459e80a3cac11f08b27d,26a87546cbc24afcb6852904c53cf90c,2231,115,CONIN2600039,中国移动四川公司2025-2027年全省汇聚机房土建工程施工集中采购项目（标包4-乐山分公司）框架协议-上市公司,out,draft,0,0,0,False,created
+ITER-2026-04-14-0004,77,3711d3dac7ba46118043cafaae7eb45c,1aef1f14fbf64e46a61e70d6cef5955f,2194,114,CONIN2600040,龙岗001-20井气田水回注安装工程,out,draft,0,0,0,False,created
+ITER-2026-04-14-0004,78,60b982a1089a4503a46fa3954832143d,23cc90c8afb441639a37ac3d7a9e4fe5,2223,91,CONIN2600041,某部机关院内及教导队营房维修项目,out,draft,0,0,0,False,created
+ITER-2026-04-14-0004,79,81dbe78d87334ee8914ac5e704aa6a28,076d8bcae3064dca8927f4f629bf2356,2131,115,CONIN2600042,中国移动四川西区二枢纽“车库改机房”土建工程,out,draft,0,0,0,False,created
+ITER-2026-04-14-0004,80,ab66b22d46754e96afe821d9cc4c49f3,1ceeb10c5d5745879b20d438e2e69534,2199,102,CONIN2600043,德阳黄河路（黄山路至秦岭山路）提档升级改造工程等7个基础设施建设项目融资 EPC工程绵远河（青衣江路大桥至钱塘江路大桥）生态整治工程（园路JLC）分包合同,out,draft,0,0,0,False,created
+ITER-2026-04-14-0004,81,bbf50c8fdc56423eb1a4339ef4eb2ab3,2001f5127b3e4265b198bef8a7553358,2209,102,CONIN2600044,德阳黄河路（黄山路至秦岭山路）提档升级改造工程等7个基础设施建设项目融资EPC工程绵远河（青衣江路大桥至钱塘江路大桥）生态整治工程,out,draft,0,0,0,False,created
+ITER-2026-04-14-0004,82,d55e6a51a92a41fe8a7cc79f2cd6ca50,059742d9ac094c018b91894306d5fc2d,2126,105,CONIN2600045,ALC预制隔墙板供应及施工分包合同,out,draft,0,0,0,False,created
+ITER-2026-04-14-0004,83,f8907855353b4e09a8101022cac1433e,0550ea3a2e1b4161b25a697476e344b5,2125,107,CONIN2600046,准环对称仿星器项目,out,draft,0,0,0,False,created

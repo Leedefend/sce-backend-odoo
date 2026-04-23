@@ -1,0 +1,16 @@
+{
+  "status": "ROLLBACK_READY",
+  "mode": "partner_company_duplicate_24_post_write_readonly_review",
+  "database": "sc_demo",
+  "rollback_key": "legacy_partner_source + legacy_partner_id",
+  "design_rows": 24,
+  "rollback_target_rows": 24,
+  "matched_partner_rows": 24,
+  "rollback_eligible_rows": 24,
+  "blocking_reasons": [],
+  "design_duplicates": [],
+  "target_duplicates": [],
+  "missing_partner_ids": [],
+  "duplicate_legacy_matches": [],
+  "wrong_rank_targets": []
+}

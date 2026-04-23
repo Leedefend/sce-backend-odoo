@@ -1,0 +1,1157 @@
+{
+  "status": "PASS",
+  "mode": "migration_acceleration_rebuild_bus_plan",
+  "database": "sc_demo",
+  "db_writes": 0,
+  "source_profiles": {
+    "project": {
+      "exists": true,
+      "rows": 755,
+      "columns": 63,
+      "headers": [
+        "ID",
+        "PID",
+        "XMMC",
+        "PROJECT_CODE",
+        "SHORT_NAME",
+        "PROJECT_ENV",
+        "SPECIALTY_TYPE_ID",
+        "SPECIALTY_TYPE_NAME",
+        "PRICE_METHOD",
+        "CONTRACT_STATUS",
+        "IS_COMPLETE_PROJECT",
+        "COMPANYID",
+        "COMPANYNAME",
+        "NATURE",
+        "TAX_ORGANIZATION_ID",
+        "TAX_ORGANIZATION_NAME",
+        "ACCOUNT_NAME",
+        "ACCOUNT_NUMBER",
+        "ACCOUNT_BANK",
+        "DETAIL_ADDRESS",
+        "PROFILE",
+        "AREA",
+        "COST",
+        "MANAGE_FEE_RATIO",
+        "IS_SHARED_BASE",
+        "SORT",
+        "NOTE",
+        "FJ",
+        "LRR",
+        "LRRID",
+        "LRSJ",
+        "XGR",
+        "XGRID",
+        "XGSJ",
+        "DEL",
+        "PROJECTMANAGER",
+        "TECHNICALRESPONSIBILITY",
+        "OWNERSUNIT",
+        "OWNERSCONTACT",
+        "OWNERSCONTACTPHONE",
+        "SUPERVISIONUNIT",
+        "SUPERVISORYENGINEER",
+        "SUPERVISOPHONE",
+        "CONTRACTAGREEMENT",
+        "PROJECTFILE",
+        "PROJECTOVERVIEW",
+        "CONTRACTINGMETHOD",
+        "PROJECT_NATURE",
+        "IS_MACHINTERIAL_LIBRARY",
+        "WBHTID",
+        "OTHER_SYSTEM_ID",
+        "OTHER_SYSTEM_CODE",
+        "ZSLX",
+        "XMJDID",
+        "XMJD",
+        "SSDQID",
+        "SSDQ",
+        "STATE",
+        "XQRGZ",
+        "XQRGZR",
+        "XQRGZRID",
+        "XQRGZXZRID",
+        "XQRGZXZR"
+      ]
+    },
+    "partner_company": {
+      "exists": true,
+      "rows": 7864,
+      "columns": 131,
+      "headers": [
+        "Id",
+        "SJBMC",
+        "XMID",
+        "XMMC",
+        "DJBH",
+        "DWMC",
+        "DWJC",
+        "DQID",
+        "DQMC",
+        "XXDZ",
+        "TYSHXYDM",
+        "ZCZB",
+        "JYFW",
+        "HZLXID",
+        "HZLX",
+        "ZGLXID",
+        "ZGLX",
+        "DJFLID",
+        "DJFL",
+        "YYQX_S",
+        "YYQX_E",
+        "IsYYQXYJ",
+        "PXBH",
+        "QTXMGX",
+        "XXLYID",
+        "XXLY",
+        "DJR",
+        "DJRID",
+        "DJRQ",
+        "BZ",
+        "YWLXRXM",
+        "YWLXRHM",
+        "YWLXRYX",
+        "FRXM",
+        "FRSJHM",
+        "FRYX",
+        "LXRBZ",
+        "NSRLBID",
+        "NSRLB",
+        "FPLXID",
+        "FPLX",
+        "ZSLVID",
+        "ZSLV",
+        "SH",
+        "CSQK",
+        "FKFSID",
+        "FKFS",
+        "CSBZ",
+        "GCZYLXID",
+        "GCZYLX",
+        "AXZHM",
+        "XKZQX_S",
+        "XKZQX_E",
+        "DFDWID",
+        "DFDW",
+        "CPJPP",
+        "ZYYJ",
+        "FJ_YYZZ",
+        "FJ_KHXKZ",
+        "FJ_QYZZZS",
+        "FJ_SCXKZ",
+        "FJ_FRSFZ",
+        "FJ_DLRSFZ",
+        "FJ_QTZZ",
+        "DJZT",
+        "PJZT",
+        "LYZT",
+        "DEL",
+        "LRR",
+        "LRRID",
+        "LRSJ",
+        "XGR",
+        "XGRID",
+        "XGSJ",
+        "pid",
+        "RegisterTy",
+        "IsBlack",
+        "XMBMC",
+        "XMBID",
+        "JYZKSM"
+      ]
+    },
+    "partner_supplier": {
+      "exists": true,
+      "rows": 3041,
+      "columns": 145,
+      "headers": [
+        "ID",
+        "SJBMC",
+        "f_SupplierJB",
+        "f_SupplierCode",
+        "f_SupplierNBCode",
+        "f_SupplierName",
+        "f_SupplierShortName",
+        "f_MaterialTypeID",
+        "f_MaterialTypeName",
+        "f_GradClassificationid",
+        "f_GradClassification",
+        "f_SupplierTypeid",
+        "f_SupplierType",
+        "f_Qualifications",
+        "f_InfoSource",
+        "f_InfoClassid",
+        "f_InfoClass",
+        "f_ReputationClassid",
+        "f_ReputationClas",
+        "f_initiOweMoney",
+        "f_InfoCollectionPerson",
+        "f_InfoCollectionDate",
+        "f_Audit",
+        "f_AuditState",
+        "f_AuditPerson",
+        "f_AuditDate",
+        "f_Person",
+        "f_Phone",
+        "f_ZJPhone",
+        "f_province",
+        "f_City",
+        "f_Address",
+        "f_Email",
+        "f_fax",
+        "f_IntelAddress",
+        "f_BankName",
+        "f_BankCardName",
+        "f_BankCardNumber",
+        "f_departMentID",
+        "f_departmentName",
+        "f_del",
+        "f_Black",
+        "f_PJ",
+        "f_remark",
+        "f_importPerson",
+        "f_importTime",
+        "LRRID",
+        "XGR",
+        "XGRID",
+        "XGRQ",
+        "SCRID",
+        "SCR",
+        "SCRQ",
+        "DJZT",
+        "XGBZ",
+        "f_transmissionState",
+        "FJ",
+        "FDDBR",
+        "WTDLR",
+        "NSRSBH",
+        "YHDZ",
+        "YLH",
+        "DLDJID",
+        "DLDJMC",
+        "ZZSZZID",
+        "ZZSZZMC",
+        "YX",
+        "TYPE",
+        "SPLXID",
+        "SPLXMC",
+        "ZZJGDM_FJ",
+        "SWDJZ_FJ",
+        "YHKHXKZ_FJ",
+        "MS",
+        "FRDH",
+        "DLRDH",
+        "GJDQID",
+        "GJDQ",
+        "ZCZB",
+        "YYQXSTART"
+      ]
+    },
+    "project_member": {
+      "exists": true,
+      "rows": 21390,
+      "columns": 8,
+      "headers": [
+        "ID",
+        "PID",
+        "USERID",
+        "XMID",
+        "XMMC",
+        "LRR",
+        "LRRID",
+        "LRSJ"
+      ]
+    },
+    "contract": {
+      "exists": true,
+      "rows": 1694,
+      "columns": 146,
+      "headers": [
+        "Id",
+        "SJBMC",
+        "DJBH",
+        "XMID",
+        "f_XMMC",
+        "f_XMJC",
+        "f_JSDW",
+        "f_XMJL",
+        "f_GCXZ",
+        "f_SJHM",
+        "f_DHHM",
+        "f_YZXMJE",
+        "f_HTGSRQ",
+        "f_HTGDRQ",
+        "f_HTDLRQ",
+        "f_GCDZ",
+        "f_GCNR",
+        "f_THGQTS",
+        "f_HTGQ",
+        "f_ZLMB",
+        "f_AQMB",
+        "f_HTJK",
+        "f_LYBZJ",
+        "f_QFBZ",
+        "f_RL",
+        "f_YFKJE",
+        "f_YFKKHFS",
+        "f_FKFSID",
+        "f_FKFS",
+        "f_GCJDK",
+        "f_JSBLSX",
+        "f_JSHFK",
+        "f_GCKGLB",
+        "f_GCKGRQ",
+        "f_BZ",
+        "f_SFGS",
+        "f_LRSJ",
+        "f_LRR",
+        "f_FJ",
+        "f_GCXZID",
+        "f_GCLBID",
+        "f_ZLJ",
+        "f_ZBJ",
+        "f_JFJSBLSX",
+        "f_GLZBGCID",
+        "LRRID",
+        "LRR",
+        "LRRQ",
+        "XGR",
+        "XGRID",
+        "XGRQ",
+        "SCRID",
+        "SCR",
+        "SCRQ",
+        "DJZT",
+        "GCQDFS",
+        "FBF",
+        "CBF",
+        "XMZJJLXDH",
+        "XMJLJLXDH",
+        "JGRQ",
+        "GCYSZJ",
+        "GCJSZJ",
+        "JSTJ",
+        "KPSD",
+        "ZBJBL",
+        "JSBLSX",
+        "GCZT",
+        "GCSKJD",
+        "GCJZJD",
+        "jdysbj",
+        "GCLJYSK_1",
+        "GCLJYSK_2",
+        "GCQK",
+        "GCLJKPJE",
+        "GCBGJL",
+        "GCZDSXJL",
+        "HTBH",
+        "HTBT",
+        "GCLXPZWH"
+      ]
+    },
+    "receipt": {
+      "exists": true,
+      "rows": 7412,
+      "columns": 96,
+      "headers": [
+        "Id",
+        "SJBMC",
+        "XMID",
+        "f_SRLBID",
+        "f_SRLBName",
+        "f_JE",
+        "f_RQ",
+        "f_KCFP",
+        "f_KCSJ",
+        "f_BZ",
+        "f_LRR",
+        "f_LRSJ",
+        "GLZFSQID",
+        "GLTPID",
+        "MBZRS",
+        "GLWLDWFKID",
+        "JHJDID",
+        "JHJD",
+        "JHMC",
+        "JHID",
+        "FKFSID",
+        "FKFSMC",
+        "WLDWID",
+        "WLDWMC",
+        "DWLX",
+        "FJ",
+        "PJH",
+        "type",
+        "SKZHID",
+        "SKZH",
+        "DJBH",
+        "FP_Id",
+        "FP_CB_Id",
+        "FP",
+        "BT",
+        "SFTH",
+        "DJZT",
+        "LRRID",
+        "LRR",
+        "LRSJ",
+        "XGRID",
+        "XGR",
+        "XGSJ",
+        "LX",
+        "JZJEDX",
+        "LYRYID",
+        "LYRY",
+        "LYXMID",
+        "LYXM",
+        "JDID",
+        "HTJD",
+        "HTID",
+        "RZQJ",
+        "SSGS",
+        "KCGLF",
+        "XMMC",
+        "GLHTID",
+        "GLHTBH",
+        "XMJLID",
+        "XMJLMC",
+        "DXJE",
+        "D_HLCSXT_TXR",
+        "D_HLCSXT_JZZH",
+        "D_HLCSXT_JZJE",
+        "D_HLCSXT_SRLB",
+        "D_HLCSXT_XMZSR",
+        "D_HLCSXT_BCJHZCZ",
+        "D_HLCSXT_JHYS",
+        "D_HLCSXT_YS",
+        "D_HLCSXT_ZHYS",
+        "D_HLCSXT_GSRLBYS",
+        "D_HLCSXT_LJKCFP",
+        "SGHTID",
+        "SGHTBH",
+        "D_JCLY_经办人ID",
+        "D_JCLY_经办人",
+        "D_JCLY_SSGSID",
+        "D_JCLY_XMJLID",
+        "TSXMID",
+        "TSXMMC"
+      ]
+    },
+    "payment": {
+      "exists": true,
+      "rows": 13646,
+      "columns": 107,
+      "headers": [
+        "Id",
+        "SJBMC",
+        "f_XMID",
+        "f_XMMC",
+        "f_SQRQ",
+        "f_TXR",
+        "f_FKFSID",
+        "f_FKFSMC",
+        "f_CBFLID",
+        "f_CBFLMC",
+        "f_JHJE",
+        "f_SFJE",
+        "f_GYSID",
+        "f_GYSMC",
+        "f_KHH",
+        "f_ZH",
+        "f_GYSHTID",
+        "f_GYSHTBH",
+        "f_ZXHTXX",
+        "f_SFCF",
+        "f_Remark",
+        "f_ZT",
+        "f_LRR",
+        "f_LRSJ",
+        "f_XMSHZT",
+        "f_XMSHSJ",
+        "f_XMSHR",
+        "f_XMSHBZ",
+        "f_SFYZF",
+        "f_ZFLX",
+        "FJ",
+        "LRRID",
+        "XGR",
+        "XGRID",
+        "XGRQ",
+        "SCRID",
+        "SCR",
+        "SCRQ",
+        "DJZT",
+        "DJBH",
+        "XGBZ",
+        "PJH",
+        "JFHKLRID",
+        "ZSJE",
+        "USERID",
+        "FKZHID",
+        "FKZH",
+        "f_JHFKJE",
+        "C_ZJTXJH_CB_XM_Id",
+        "FKZHMC",
+        "CN",
+        "JBR",
+        "SFML",
+        "ML",
+        "WFPYF",
+        "SFBL",
+        "BLRID",
+        "BLR",
+        "BLSJ",
+        "Y_C_ZFSQGL_Id",
+        "WHTYF",
+        "WYWYF",
+        "WJSYF",
+        "JEDX",
+        "RZQJ",
+        "GLDJID",
+        "YJJE",
+        "JHID_Id",
+        "ZFQR_Id",
+        "f_BMID",
+        "f_BM",
+        "f_TXRLX",
+        "f_TXRID",
+        "SFDZHFK",
+        "GLLCYQID",
+        "GLLCYQ",
+        "SJLY",
+        "HM",
+        "D_BYK_SSGSID",
+        "D_BYK_SSGS"
+      ]
+    }
+  },
+  "migration_evidence": {
+    "contract_header_final": {
+      "exists": true,
+      "status": "PASS",
+      "mode": "contract_header_final_aggregate_confirm",
+      "database": "sc_demo",
+      "db_writes": 0,
+      "source_rows": 1332,
+      "source_unique_legacy_ids": 1332,
+      "rollback_rows": 1332,
+      "rollback_unique_legacy_ids": 1332,
+      "target_match_rows": 1332,
+      "target_unique_legacy_ids": 1332,
+      "errors": []
+    },
+    "contract_source_coverage": {
+      "exists": true,
+      "status": "PASS",
+      "mode": "contract_source_coverage_nodb_screen",
+      "database": "sc_demo",
+      "db_container": "sc-backend-odoo-dev-db-1",
+      "db_writes": 0,
+      "source_file": "/mnt/e/sc-backend-odoo/tmp/raw/contract/contract.csv",
+      "source_rows": 1694,
+      "safe_candidate_rows": 1332,
+      "target_contract_legacy_ids": 1344,
+      "header_lane_migrated_rows": 1332,
+      "pre_existing_target_rows": 12,
+      "remaining_blocked_rows": 350,
+      "safe_candidate_missing_target_rows": 0,
+      "route_counts": {
+        "discard_deleted_source": 65,
+        "header_lane_migrated": 1332,
+        "partner_anchor_blocked": 197,
+        "pre_existing_target": 12,
+        "project_anchor_blocked": 88
+      },
+      "blocker_counts": {
+        "deleted_flag": 65,
+        "direction_defer": 139,
+        "partner_ambiguous": 69,
+        "partner_unresolved": 219,
+        "project_unresolved": 88
+      },
+      "row_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_source_coverage_nodb_screen_rows_v1.csv",
+      "decision": "remaining_contract_source_screened",
+      "write_authorization": "not_granted",
+      "next_step": "open no-DB contract remaining-blocker policy screen; do not open payment, settlement, accounting, or line writes",
+      "errors": []
+    },
+    "contract_remaining_blockers": {
+      "exists": true,
+      "status": "PASS",
+      "mode": "contract_remaining_blocker_policy_screen",
+      "db_writes": 0,
+      "input_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_source_coverage_nodb_screen_rows_v1.csv",
+      "input_rows": 1694,
+      "remaining_blocked_rows": 350,
+      "policy_route_counts": {
+        "discard_deleted_source": 65,
+        "partner_anchor_recovery_screen": 197,
+        "project_anchor_recovery_screen": 88
+      },
+      "blocker_counts": {
+        "deleted_flag": 65,
+        "direction_defer": 139,
+        "partner_ambiguous": 69,
+        "partner_unresolved": 219,
+        "project_unresolved": 88
+      },
+      "row_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_remaining_blocker_policy_screen_rows_v1.csv",
+      "decision": "remaining_blockers_policy_screened",
+      "write_authorization": "not_granted",
+      "next_step": "open project-anchor recovery no-DB screen first; deleted rows remain discard candidates",
+      "errors": []
+    },
+    "contract_partner_anchor_screen": {
+      "exists": true,
+      "status": "PASS",
+      "mode": "contract_partner_anchor_recovery_screen",
+      "db_writes": 0,
+      "partner_anchor_blocked_rows": 197,
+      "distinct_counterparty_texts": 75,
+      "recovery_route_counts": {
+        "direction_defer_no_counterparty": 61,
+        "partner_source_combined_source_screen": 5,
+        "partner_source_missing": 74,
+        "partner_source_recoverable_design_candidate": 57
+      },
+      "top_counterparty_texts": [
+        {
+          "text": "<direction_defer>",
+          "rows": 61
+        },
+        {
+          "text": "中国建筑第四工程局有限公司",
+          "rows": 20
+        },
+        {
+          "text": "绵竹市众力工程机械设备有限公司",
+          "rows": 11
+        },
+        {
+          "text": "德阳市旌阳区八角井镇卫生院",
+          "rows": 11
+        },
+        {
+          "text": "中石化西南石油工程有限公司油田工程服务分公司",
+          "rows": 8
+        },
+        {
+          "text": "中国铁建大桥工程局集团有限公司旌阳区城市地下综合管廊建设项目经理部",
+          "rows": 4
+        },
+        {
+          "text": "中国建筑第八工程局有限公司",
+          "rows": 3
+        },
+        {
+          "text": "中国电信股份有限公司德阳分公司",
+          "rows": 3
+        },
+        {
+          "text": "中国铁建大桥工程局集团有限公司",
+          "rows": 3
+        },
+        {
+          "text": "德阳市天韵文化发展有限公司天韵酒店",
+          "rows": 2
+        },
+        {
+          "text": "中国建筑一局（集团）有限公司",
+          "rows": 2
+        },
+        {
+          "text": "深圳友唱技术有限公司",
+          "rows": 2
+        },
+        {
+          "text": "中国石油天然气第七建设有限公司",
+          "rows": 2
+        },
+        {
+          "text": "渝北区石船镇人民政府",
+          "rows": 2
+        },
+        {
+          "text": "中国铁建大桥工程局集团有限公司 旌阳区城市地下综合管廊建设项目经理部",
+          "rows": 2
+        },
+        {
+          "text": "六盘水金地嘉仁物业服务有限公司荣昌分公司",
+          "rows": 2
+        },
+        {
+          "text": "雅安蜀天开发建设有限责任公司",
+          "rows": 1
+        },
+        {
+          "text": "绵阳市安州区雎水镇皇帽村村民委员会",
+          "rows": 1
+        },
+        {
+          "text": "重庆巴驿公共交通战场管理有限公司",
+          "rows": 1
+        },
+        {
+          "text": "德阳市勘察测绘设计院",
+          "rows": 1
+        }
+      ],
+      "row_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_partner_anchor_recovery_screen_rows_v1.csv",
+      "decision": "partner_anchor_recovery_screened",
+      "write_authorization": "not_granted",
+      "next_step": "open no-DB partner-source recoverable design only for single-source candidates; keep source-missing rows blocked",
+      "errors": []
+    },
+    "contract_partner_source_57_design": {
+      "exists": true,
+      "status": "PASS",
+      "mode": "contract_partner_source_57_design",
+      "db_writes": 0,
+      "input_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_partner_anchor_recovery_screen_rows_v1.csv",
+      "input_rows": 197,
+      "design_rows": 57,
+      "distinct_counterparties": 12,
+      "source_type_counts": {
+        "company": 57
+      },
+      "row_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_partner_source_57_design_rows_v1.csv",
+      "decision": "partner_source_57_design_ready",
+      "write_authorization": "not_granted",
+      "next_step": "open migration acceleration analysis and bus plan before any DB write",
+      "errors": []
+    },
+    "partner_l4_blocked_remainder": {
+      "exists": true,
+      "status": "PASS",
+      "mode": "partner_l4_blocked_remainder_consolidated_screen",
+      "db_writes": 0,
+      "historical_final_refresh": {
+        "report": "docs/migration_alignment/partner_l4_final_postwrite_nodb_refresh_report_v1.md",
+        "deduplicated_partner_rows": 7172,
+        "skip_existing_validation_rows": 1767,
+        "create_candidates_remaining": 0,
+        "blocked_rows": 5405,
+        "interpretation": "historical full-classifier blocked count; not the current active post-route queue"
+      },
+      "active_remainder_anchor": {
+        "report": "docs/migration_alignment/partner_l4_remaining365_blocked_screen_report_v1.md",
+        "active_blocked_rows_screened": 365
+      },
+      "route_resolution": [
+        {
+          "route": "missing_tax_duplicate_group",
+          "rows": 175,
+          "status": "resolved_by_recovered_create_only_write",
+          "evidence": "docs/migration_alignment/partner_l4_combo_source_recovery_write_report_v1.md"
+        },
+        {
+          "route": "same_tax_company_supplier_canonical",
+          "rows": 102,
+          "status": "resolved_by_create_only_write",
+          "evidence": "docs/migration_alignment/partner_l4_same_tax_company_supplier_canonical_102_write_report_v1.md"
+        },
+        {
+          "route": "company_supplier_duplicate_group",
+          "rows": 26,
+          "status": "resolved_by_create_only_write",
+          "evidence": "docs/migration_alignment/partner_l4_company_supplier_duplicate_26_write_report_v1.md"
+        },
+        {
+          "route": "company_duplicate_group",
+          "rows": 24,
+          "status": "resolved_by_create_only_write",
+          "evidence": "docs/migration_alignment/partner_l4_company_duplicate_24_write_report_v1.md"
+        },
+        {
+          "route": "same_tax_company_canonical",
+          "rows": 20,
+          "status": "resolved_by_create_only_write",
+          "evidence": "docs/migration_alignment/partner_l4_same_tax_company_canonical_20_write_report_v1.md"
+        },
+        {
+          "route": "remaining_discard_evidence",
+          "rows": 18,
+          "status": "resolved_by_no_db_discard_evidence",
+          "evidence": "docs/migration_alignment/partner_l4_remaining18_discard_evidence_refresh_report_v1.md"
+        }
+      ],
+      "route_resolution_total_rows": 365,
+      "current_active_blocked_rows": 0,
+      "current_create_candidates": 0,
+      "current_discarded_validation_rows": 1128,
+      "current_skip_existing_validation_rows": 6044,
+      "partner_l4_decision": "stable_for_downstream_readiness_screen",
+      "do_not_open": [
+        "another partner L4 create-only write from the current rule set",
+        "contract write before a contract readiness no-DB screen",
+        "payment settlement or accounting migration lane"
+      ],
+      "recommended_next_task": "ITER-2026-04-15-CONTRACT-READINESS-NODB-SCREEN",
+      "recommended_next_gate": "open a no-DB contract readiness screen against the current partner baseline"
+    },
+    "project_member_neutral_final": {
+      "exists": true,
+      "status": "PASS",
+      "mode": "project_member_neutral_aggregate_review_7389",
+      "database": "sc_demo",
+      "target_model": "sc.project.member.staging",
+      "db_writes": 0,
+      "batch_counts": {
+        "ITER-2026-04-14-0030N": 34,
+        "ITER-2026-04-14-0030NZ": 500,
+        "ITER-2026-04-14-1973N": 500,
+        "ITER-2026-04-14-1975N": 500,
+        "ITER-2026-04-14-1980N": 500,
+        "ITER-2026-04-15-1982N": 500,
+        "ITER-2026-04-15-1984N": 500,
+        "ITER-2026-04-15-1986N": 500,
+        "ITER-2026-04-15-1988N": 500,
+        "ITER-2026-04-15-1990N": 500,
+        "ITER-2026-04-15-1992N": 500,
+        "ITER-2026-04-15-1994N": 500,
+        "ITER-2026-04-15-1996N": 500,
+        "ITER-2026-04-15-1998N": 500,
+        "ITER-2026-04-15-2000N": 500,
+        "ITER-2026-04-15-2002N": 355
+      },
+      "total_expected": 7389,
+      "total_records": 7389,
+      "role_fact_status_missing_count": 7389,
+      "distinct_project_user_pairs": 769,
+      "duplicate_project_user_pair_count": 735,
+      "max_rows_per_project_user_pair": 21,
+      "project_responsibility_writes": 0,
+      "blocking_reasons": []
+    }
+  },
+  "target_profile": {
+    "models": [
+      {
+        "model": "account.payment",
+        "name": "Payments",
+        "field_count": "188",
+        "required_fields": "8"
+      },
+      {
+        "model": "account.payment.method",
+        "name": "Payment Methods",
+        "field_count": "9",
+        "required_fields": "3"
+      },
+      {
+        "model": "account.payment.method.line",
+        "name": "Payment Methods",
+        "field_count": "17",
+        "required_fields": "1"
+      },
+      {
+        "model": "account.payment.register",
+        "name": "Register Payment",
+        "field_count": "46",
+        "required_fields": "1"
+      },
+      {
+        "model": "account.payment.term",
+        "name": "Payment Terms",
+        "field_count": "24",
+        "required_fields": "2"
+      },
+      {
+        "model": "account.payment.term.line",
+        "name": "Payment Terms Line",
+        "field_count": "13",
+        "required_fields": "3"
+      },
+      {
+        "model": "construction.contract",
+        "name": "项目合同",
+        "field_count": "65",
+        "required_fields": "7"
+      },
+      {
+        "model": "construction.contract.line",
+        "name": "合同清单行",
+        "field_count": "23",
+        "required_fields": "1"
+      },
+      {
+        "model": "payment.capture.wizard",
+        "name": "Payment Capture Wizard",
+        "field_count": "18",
+        "required_fields": "0"
+      },
+      {
+        "model": "payment.ledger",
+        "name": "Payment Ledger",
+        "field_count": "15",
+        "required_fields": "3"
+      },
+      {
+        "model": "payment.link.wizard",
+        "name": "Generate Payment Link",
+        "field_count": "16",
+        "required_fields": "3"
+      },
+      {
+        "model": "payment.method",
+        "name": "Payment Method",
+        "field_count": "21",
+        "required_fields": "3"
+      },
+      {
+        "model": "payment.provider",
+        "name": "Payment Provider",
+        "field_count": "48",
+        "required_fields": "4"
+      },
+      {
+        "model": "payment.provider.onboarding.wizard",
+        "name": "Payment provider onboarding wizard",
+        "field_count": "14",
+        "required_fields": "0"
+      },
+      {
+        "model": "payment.refund.wizard",
+        "name": "Payment Refund Wizard",
+        "field_count": "15",
+        "required_fields": "0"
+      },
+      {
+        "model": "payment.request",
+        "name": "Payment Request",
+        "field_count": "70",
+        "required_fields": "6"
+      },
+      {
+        "model": "payment.token",
+        "name": "Payment Token",
+        "field_count": "16",
+        "required_fields": "4"
+      },
+      {
+        "model": "payment.transaction",
+        "name": "Payment Transaction",
+        "field_count": "44",
+        "required_fields": "7"
+      },
+      {
+        "model": "project.project",
+        "name": "Project",
+        "field_count": "240",
+        "required_fields": "10"
+      },
+      {
+        "model": "project.settlement",
+        "name": "Project Settlement",
+        "field_count": "39",
+        "required_fields": "5"
+      },
+      {
+        "model": "project.settlement.line",
+        "name": "Project Settlement Line",
+        "field_count": "11",
+        "required_fields": "2"
+      },
+      {
+        "model": "report.account.report_invoice_with_payments",
+        "name": "Account report with payment lines",
+        "field_count": "0",
+        "required_fields": "0"
+      },
+      {
+        "model": "res.partner",
+        "name": "Contact",
+        "field_count": "174",
+        "required_fields": "2"
+      },
+      {
+        "model": "sc.project.member.staging",
+        "name": "历史项目成员中性承载",
+        "field_count": "17",
+        "required_fields": "7"
+      },
+      {
+        "model": "sc.settlement.order",
+        "name": "Settlement Order",
+        "field_count": "30",
+        "required_fields": "4"
+      },
+      {
+        "model": "sc.settlement.order.line",
+        "name": "Settlement Order Line",
+        "field_count": "14",
+        "required_fields": "2"
+      }
+    ],
+    "table_counts": [
+      {
+        "table_name": "res_partner",
+        "rows": "6115"
+      },
+      {
+        "table_name": "project_project",
+        "rows": "1473"
+      },
+      {
+        "table_name": "construction_contract",
+        "rows": "1415"
+      },
+      {
+        "table_name": "sc_project_member_staging",
+        "rows": "7389"
+      }
+    ],
+    "legacy_fields": [
+      {
+        "model": "construction.contract",
+        "name": "legacy_contract_id"
+      },
+      {
+        "model": "construction.contract",
+        "name": "legacy_contract_no"
+      },
+      {
+        "model": "construction.contract",
+        "name": "legacy_counterparty_text"
+      },
+      {
+        "model": "construction.contract",
+        "name": "legacy_deleted_flag"
+      },
+      {
+        "model": "construction.contract",
+        "name": "legacy_document_no"
+      },
+      {
+        "model": "construction.contract",
+        "name": "legacy_external_contract_no"
+      },
+      {
+        "model": "construction.contract",
+        "name": "legacy_project_id"
+      },
+      {
+        "model": "construction.contract",
+        "name": "legacy_status"
+      },
+      {
+        "model": "project.project",
+        "name": "legacy_attachment_ref"
+      },
+      {
+        "model": "project.project",
+        "name": "legacy_company_id"
+      },
+      {
+        "model": "project.project",
+        "name": "legacy_company_name"
+      },
+      {
+        "model": "project.project",
+        "name": "legacy_is_material_library"
+      },
+      {
+        "model": "project.project",
+        "name": "legacy_is_shared_base"
+      },
+      {
+        "model": "project.project",
+        "name": "legacy_parent_id"
+      },
+      {
+        "model": "project.project",
+        "name": "legacy_price_method"
+      },
+      {
+        "model": "project.project",
+        "name": "legacy_project_id"
+      },
+      {
+        "model": "project.project",
+        "name": "legacy_project_manager_name"
+      },
+      {
+        "model": "project.project",
+        "name": "legacy_project_nature"
+      },
+      {
+        "model": "project.project",
+        "name": "legacy_region_id"
+      },
+      {
+        "model": "project.project",
+        "name": "legacy_region_name"
+      },
+      {
+        "model": "project.project",
+        "name": "legacy_sort"
+      },
+      {
+        "model": "project.project",
+        "name": "legacy_specialty_type_id"
+      },
+      {
+        "model": "project.project",
+        "name": "legacy_stage_id"
+      },
+      {
+        "model": "project.project",
+        "name": "legacy_stage_name"
+      },
+      {
+        "model": "project.project",
+        "name": "legacy_state"
+      },
+      {
+        "model": "project.project",
+        "name": "legacy_technical_responsibility_name"
+      },
+      {
+        "model": "res.partner",
+        "name": "legacy_credit_code"
+      },
+      {
+        "model": "res.partner",
+        "name": "legacy_deleted_flag"
+      },
+      {
+        "model": "res.partner",
+        "name": "legacy_partner_id"
+      },
+      {
+        "model": "res.partner",
+        "name": "legacy_partner_name"
+      },
+      {
+        "model": "res.partner",
+        "name": "legacy_partner_source"
+      },
+      {
+        "model": "res.partner",
+        "name": "legacy_source_evidence"
+      },
+      {
+        "model": "res.partner",
+        "name": "legacy_tax_no"
+      },
+      {
+        "model": "sc.project.member.staging",
+        "name": "legacy_member_id"
+      },
+      {
+        "model": "sc.project.member.staging",
+        "name": "legacy_project_id"
+      },
+      {
+        "model": "sc.project.member.staging",
+        "name": "legacy_role_text"
+      },
+      {
+        "model": "sc.project.member.staging",
+        "name": "legacy_user_ref"
+      }
+    ]
+  },
+  "decision": "accelerated_rebuild_bus_ready",
+  "next_step": "open 12-counterparty partner-anchor no-DB design"
+}

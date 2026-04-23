@@ -1,0 +1,72 @@
+{
+  "status": "PASS",
+  "mode": "read_only_contract_source_profile",
+  "source_file": "tmp/raw/contract/contract.csv",
+  "row_count": 1694,
+  "field_count": 146,
+  "target_model": "construction.contract",
+  "target_line_model": "construction.contract.line",
+  "legacy_project_link": {
+    "field": "XMID",
+    "non_empty_rows": 1694,
+    "raw_project_id_matches": 1606,
+    "raw_project_unique_matches": 699,
+    "known_written_project_ids_from_artifacts": 130,
+    "contract_xmid_matches_known_written_projects": 121
+  },
+  "existing_db_baseline": {
+    "database": "sc_demo",
+    "existing_contract_count": 71,
+    "existing_contract_line_count": 83
+  },
+  "field_non_empty": {
+    "Id": 1694,
+    "DJBH": 1694,
+    "XMID": 1694,
+    "f_XMMC": 1694,
+    "f_XMJL": 244,
+    "f_GCXZ": 1611,
+    "f_HTDLRQ": 1669,
+    "f_GCDZ": 1381,
+    "f_GCNR": 974,
+    "f_GCKGRQ": 329,
+    "JGRQ": 321,
+    "GCYSZJ": 1651,
+    "HTBH": 1694,
+    "HTBT": 1663,
+    "FBF": 1628,
+    "CBF": 1600,
+    "HTLX": 865,
+    "LX": 867,
+    "D_SCBSJS_HTJGFS": 108,
+    "D_SCBSJS_SFGD": 1653,
+    "DEL": 967,
+    "PID": 1694,
+    "f_WBHTBH": 867,
+    "XMBM": 2,
+    "HTYDFKFS": 1540,
+    "f_FJ": 1694
+  },
+  "distinct_top_values": {
+    "SJBMC": [["外部合同管理", 867], ["<EMPTY>", 827]],
+    "DJZT": [["2", 1484], ["0", 118], ["<EMPTY>", 41], ["1", 32], ["-1", 19]],
+    "f_GCXZ": [["联营", 1580], ["<EMPTY>", 83], ["自营", 31]],
+    "HTLX": [["<EMPTY>", 829], ["房建工程", 326], ["劳务工程", 158], ["专业分包", 128], ["消防工程", 68], ["市政工程", 63], ["装修装饰", 52], ["水利工程", 21], ["机电工程", 20], ["公路工程", 15], ["电力工程", 10], ["内部", 3], ["钢结构工程", 1]],
+    "LX": [["外部合同管理(新)", 867], ["<EMPTY>", 827]],
+    "D_SCBSJS_HTJGFS": [["<EMPTY>", 1586], ["固定单价合同", 62], ["固定总价合同", 46]],
+    "D_SCBSJS_SFGD": [["是", 1479], ["否", 174], ["<EMPTY>", 41]],
+    "DEL": [["0", 902], ["<EMPTY>", 727], ["1", 65]]
+  },
+  "identity_profile": {
+    "Id": {"non_empty_unique_values": 1694, "duplicate_values": 0},
+    "DJBH": {"non_empty_unique_values": 1693, "duplicate_values": 1},
+    "HTBH": {"non_empty_unique_values": 1611, "duplicate_values": 40},
+    "PID": {"non_empty_unique_values": 828, "duplicate_values": 1},
+    "f_WBHTBH": {"non_empty_unique_values": 867, "duplicate_values": 0}
+  },
+  "initial_gate": {
+    "direct_import_allowed": false,
+    "reason": "Contract rows depend on project, partner, dictionary, tax, line/payment terms, attachment, and downstream finance references. Only source baseline was approved in this batch.",
+    "next_step": "contract mapping dry-run and safe import slice design"
+  }
+}

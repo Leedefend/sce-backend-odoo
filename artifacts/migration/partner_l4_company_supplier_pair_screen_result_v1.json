@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_company_supplier_pair_screen",
+  "input": "artifacts/migration/partner_l4_merge_identity_screen_rows_v1.csv",
+  "route_rows": 1713,
+  "missing_columns": [],
+  "evidence_grade_counts": {
+    "deterministic_company_supplier_pair": 1713
+  },
+  "outputs": {
+    "screen_rows": "artifacts/migration/partner_l4_company_supplier_pair_screen_rows_v1.csv",
+    "sample_rows": "artifacts/migration/partner_l4_company_supplier_pair_screen_samples_v1.csv"
+  },
+  "next_gate": "Open a no-DB company_supplier_pair_merge_dry_run before any merge/update write."
+}

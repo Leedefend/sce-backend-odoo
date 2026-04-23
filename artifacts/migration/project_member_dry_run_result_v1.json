@@ -1,0 +1,2281 @@
+{
+  "status": "PASS",
+  "mode": "project_member_mapping_permission_dry_run",
+  "database": "sc_demo",
+  "input": "/mnt/artifacts/migration/project_member_source_shadow_v1.csv",
+  "total": 21390,
+  "mapped_users": 7389,
+  "unmapped_users": 14001,
+  "placeholder_used": 14001,
+  "mapped_projects": 21390,
+  "unmapped_projects": 0,
+  "duplicate_project_matches": 0,
+  "duplicate_project_user_pairs": 3,
+  "user_match_modes": {
+    "name": 7389,
+    "placeholder_user": 14001
+  },
+  "authority_impacts": {
+    "record_rule": "YES - project_member facts are candidate access truth and can alter project visibility if written",
+    "project_visibility": "YES - member bindings may grant or deny project/task visibility",
+    "responsibility_logic": "YES - member bindings may affect owner/PM/member responsibility workflows",
+    "write_allowed_by_this_batch": false
+  },
+  "unmapped_user_samples": [
+    {
+      "legacy_member_id": "000eebe41c52456390ebe355f0dadd7d",
+      "legacy_user_id": "10000009",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "0017ABF7-E0E7-4318-BE32-B6F6759C88CF",
+      "legacy_user_id": "10000070",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "001973ef3e3b475db5e38988862ce1f0",
+      "legacy_user_id": "10000018",
+      "legacy_user_name": "维护管理员"
+    },
+    {
+      "legacy_member_id": "001a18b97964406b82ca60d5a9132d6c",
+      "legacy_user_id": "10000026",
+      "legacy_user_name": "邓洪英"
+    },
+    {
+      "legacy_member_id": "001c1943521e453abc327cd451658ac0",
+      "legacy_user_id": "2afb101f2d3d41058b33517895db14f9",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00206696266e48f78c77c54dae90e245",
+      "legacy_user_id": "f612d87666434c9c90a1c32e5fc64fe8",
+      "legacy_user_name": "维护管理员"
+    },
+    {
+      "legacy_member_id": "0026dafd3d9c425eb51feaf6ce0af2cd",
+      "legacy_user_id": "10000029",
+      "legacy_user_name": "维护管理员"
+    },
+    {
+      "legacy_member_id": "002ad355c10b4b1f96b1c1979f08d60f",
+      "legacy_user_id": "8888888",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "002cea17eaef4fce9da7ef9c86ce530c",
+      "legacy_user_id": "10000020",
+      "legacy_user_name": "张志"
+    },
+    {
+      "legacy_member_id": "002e7c3194f941c38dbd40fae0c0b6a1",
+      "legacy_user_id": "4e8191d3bad04354aebfe26315ac2614",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "002F9A18-8383-4116-A464-C42C84D733AA",
+      "legacy_user_id": "10000070",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "0033271c06cc46b4b5b204e84ebdb119",
+      "legacy_user_id": "10000008",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "003d923123de49a4be974a0177a839d5",
+      "legacy_user_id": "10000011",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "003e4d45c9a34eb1a00abc25f709612a",
+      "legacy_user_id": "10000078",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00405d0dc7d242ec82edb9a29094e701",
+      "legacy_user_id": "cda47176b5bd4ad38a6eb8984a7feeca",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "0040d0df6c3e4f3295fffa51c02256fa",
+      "legacy_user_id": "10000029",
+      "legacy_user_name": "维护管理员"
+    },
+    {
+      "legacy_member_id": "0043a1f62cbb41e48330f11eefb83867",
+      "legacy_user_id": "10000026",
+      "legacy_user_name": "邓洪英"
+    },
+    {
+      "legacy_member_id": "005600b8170140ec808ceb489f53f70c",
+      "legacy_user_id": "10000008",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "0056d99aba124a4aafe416a64de5ed1f",
+      "legacy_user_id": "10000046",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "005b7d5d50c2471bb8db25c9d4037b32",
+      "legacy_user_id": "10000015",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "005fa3e7a1bd41d5bbfebed04f1fa74e",
+      "legacy_user_id": "10000015",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "006600a8731c4b66935ff25b64ce48ab",
+      "legacy_user_id": "10000034",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "007818ce4e2149358959c46e2acb13bb",
+      "legacy_user_id": "10000026",
+      "legacy_user_name": "邓洪英"
+    },
+    {
+      "legacy_member_id": "007c5fd4ad394cc19670926cea8c3671",
+      "legacy_user_id": "10000033",
+      "legacy_user_name": "张志"
+    },
+    {
+      "legacy_member_id": "007c7c31e5c14fb69279f707c1acf860",
+      "legacy_user_id": "10000078",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "007f0ab729694877a9a1ce3f31fe328c",
+      "legacy_user_id": "10000007",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "007f650c04784432bf9b21de99c2619e",
+      "legacy_user_id": "10000011",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "0084A7A4-0B19-4343-BA01-C72A59FC43C5",
+      "legacy_user_id": "10000052",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "00889ab7e84c48fb8513fe08d7fda85a",
+      "legacy_user_id": "10000041",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "00896f9081ef43ce98992266ad88189b",
+      "legacy_user_id": "10000078",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "008f3ea78d594ec592f11d79ca633800",
+      "legacy_user_id": "10000014",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "009c4a470fdf49d8a893e2d7519c523e",
+      "legacy_user_id": "8888888",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "009dbe20ba7c4fbfbf6c6becbe6a04fa",
+      "legacy_user_id": "a74a3dd36c004a4b8491675919c6be4c",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00a0dd41929a4e1e8482c84c4da3ee64",
+      "legacy_user_id": "10000034",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "00a95660ff294cd2ab86977b51641e5a",
+      "legacy_user_id": "10000000",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "00ac7da0f9e04f2ebb0471caad89c894",
+      "legacy_user_id": "10000031",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00b36a97f865448fb06eb859d5c763a7",
+      "legacy_user_id": "10000017",
+      "legacy_user_name": "邓洪英"
+    },
+    {
+      "legacy_member_id": "00b5e132afe7492797c2afa8e4248e63",
+      "legacy_user_id": "10000009",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00b92b08ef964f48b38f38d3e34fae6e",
+      "legacy_user_id": "10000029",
+      "legacy_user_name": "维护管理员"
+    },
+    {
+      "legacy_member_id": "00bb9809f2554c8fa18db170a942cd98",
+      "legacy_user_id": "10000061",
+      "legacy_user_name": "成都华略科技有限公司"
+    },
+    {
+      "legacy_member_id": "00c1034bff944232a901e1dabc723355",
+      "legacy_user_id": "cda47176b5bd4ad38a6eb8984a7feeca",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00c10b47bf934f5382a028c113f45b6b",
+      "legacy_user_id": "10000014",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "00c55e4c3911413ebc8a59b193135bff",
+      "legacy_user_id": "10000034",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00c75be23c6d47b3930629a3b884ce95",
+      "legacy_user_id": "cda47176b5bd4ad38a6eb8984a7feeca",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00ca87553f7a49dfa9e208eaecb11636",
+      "legacy_user_id": "10000028",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00d19deea62e4e46b0173f3add1d59b4",
+      "legacy_user_id": "10000018",
+      "legacy_user_name": "维护管理员"
+    },
+    {
+      "legacy_member_id": "00d1a9b144ad44caa53c1b3438c5cbf0",
+      "legacy_user_id": "10000017",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "00d5a05566284f84a725b5e74a9e9e95",
+      "legacy_user_id": "10000011",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00d5a7b122e7485683827afdfca3b2b6",
+      "legacy_user_id": "10000034",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00d62f01266644068d9a6ebf99a82b8f",
+      "legacy_user_id": "2afb101f2d3d41058b33517895db14f9",
+      "legacy_user_name": "admin"
+    }
+  ],
+  "unmapped_project_samples": [],
+  "duplicate_project_samples": [],
+  "sample_rows": [
+    {
+      "legacy_member_id": "00032811652544fba3fd87810a5191c8",
+      "legacy_project_id": "74a80ab7582e4672815771b3b2c10fbe",
+      "project_id": 2464,
+      "legacy_user_id": "4e8191d3bad04354aebfe26315ac2614",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "000eebe41c52456390ebe355f0dadd7d",
+      "legacy_project_id": "b7f07bc4b72c4cd29b5d1b445b499386",
+      "project_id": 2661,
+      "legacy_user_id": "10000009",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00132482cf5648ae860805acddc4274e",
+      "legacy_project_id": "d75424f3247646c395ff5edd2ab1b1f9",
+      "project_id": 2743,
+      "legacy_user_id": "10000077",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "00155cf5a08d4922b8b88a52bdf1952a",
+      "legacy_project_id": "dcd315ee82ba47d6a463c3090abd9577",
+      "project_id": 2761,
+      "legacy_user_id": "10000007",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0016bbe65ef64061909babaae2c7321e",
+      "legacy_project_id": "eaec532f7b9b47a4bf4c0c2989290a70",
+      "project_id": 2807,
+      "legacy_user_id": "10000029",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0017ABF7-E0E7-4318-BE32-B6F6759C88CF",
+      "legacy_project_id": "68d2896f3eaf4682b902117d4dcda350",
+      "project_id": 2436,
+      "legacy_user_id": "10000070",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00183ffd192d448c9b15706704ccd94b",
+      "legacy_project_id": "7c38d18f4d2e4ab6818f9527e46cce15",
+      "project_id": 2488,
+      "legacy_user_id": "10000009",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "001973ef3e3b475db5e38988862ce1f0",
+      "legacy_project_id": "1428742882bf4fc5988efcc289c8d5e8",
+      "project_id": 2169,
+      "legacy_user_id": "10000018",
+      "legacy_user_name": "维护管理员",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "001a18b97964406b82ca60d5a9132d6c",
+      "legacy_project_id": "ce7524b7223d46e8974e48044decb355",
+      "project_id": 2718,
+      "legacy_user_id": "10000026",
+      "legacy_user_name": "邓洪英",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "001c1943521e453abc327cd451658ac0",
+      "legacy_project_id": "57925b24d00a47ddafa39631e8df9951",
+      "project_id": 2394,
+      "legacy_user_id": "2afb101f2d3d41058b33517895db14f9",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "001e963bf5fc4f6b8d7e23687c1c83cc",
+      "legacy_project_id": "409e165a85264d6c9e22085d02dcd09a",
+      "project_id": 2312,
+      "legacy_user_id": "10000037",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "00206696266e48f78c77c54dae90e245",
+      "legacy_project_id": "52dbcbcb460349ecac1ec682f9129b29",
+      "project_id": 2378,
+      "legacy_user_id": "f612d87666434c9c90a1c32e5fc64fe8",
+      "legacy_user_name": "维护管理员",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "0026dafd3d9c425eb51feaf6ce0af2cd",
+      "legacy_project_id": "791aca08955c42f088311447b7b70e38",
+      "project_id": 2480,
+      "legacy_user_id": "10000029",
+      "legacy_user_name": "维护管理员",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "002ad355c10b4b1f96b1c1979f08d60f",
+      "legacy_project_id": "52278e622558409db167eca9eba8c8b8",
+      "project_id": 2376,
+      "legacy_user_id": "8888888",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "002cea17eaef4fce9da7ef9c86ce530c",
+      "legacy_project_id": "ecd2fbc747a541cca5ec8572052e2451",
+      "project_id": 2814,
+      "legacy_user_id": "10000020",
+      "legacy_user_name": "张志",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "002e7c3194f941c38dbd40fae0c0b6a1",
+      "legacy_project_id": "9679632240d74ff9bd55e0c7b26a0d07",
+      "project_id": 2569,
+      "legacy_user_id": "4e8191d3bad04354aebfe26315ac2614",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "002F9A18-8383-4116-A464-C42C84D733AA",
+      "legacy_project_id": "f947d45769804682af3a6233ff0b5d0d",
+      "project_id": 2846,
+      "legacy_user_id": "10000070",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "002F9A98-D361-4EF9-B876-0F9033A37367",
+      "legacy_project_id": "800fb4620f6f4afca71708d0da82500f",
+      "project_id": 2500,
+      "legacy_user_id": "10000077",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "00311eb5fac1498dafa7285275bbeba4",
+      "legacy_project_id": "5d3979512ead4bd8a20d8053164a516a",
+      "project_id": 2408,
+      "legacy_user_id": "10000037",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0033271c06cc46b4b5b204e84ebdb119",
+      "legacy_project_id": "8f874aff67254dde80a7b2a2c63ba91e",
+      "project_id": 2554,
+      "legacy_user_id": "10000008",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "003931EA-DDDE-4203-A80A-85A2448A9E85",
+      "legacy_project_id": "11e56ccc546e4532a323597457133e8c",
+      "project_id": 2162,
+      "legacy_user_id": "10000079",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "003d923123de49a4be974a0177a839d5",
+      "legacy_project_id": "059742d9ac094c018b91894306d5fc2d",
+      "project_id": 2126,
+      "legacy_user_id": "10000011",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "003e4d45c9a34eb1a00abc25f709612a",
+      "legacy_project_id": "4c93e1d422624fcf830d807d95e272a9",
+      "project_id": 2353,
+      "legacy_user_id": "10000078",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00405d0dc7d242ec82edb9a29094e701",
+      "legacy_project_id": "14c4325bb56b408788e6f442f4384374",
+      "project_id": 2172,
+      "legacy_user_id": "cda47176b5bd4ad38a6eb8984a7feeca",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "0040d0df6c3e4f3295fffa51c02256fa",
+      "legacy_project_id": "2001f5127b3e4265b198bef8a7553358",
+      "project_id": 2209,
+      "legacy_user_id": "10000029",
+      "legacy_user_name": "维护管理员",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "0043a1f62cbb41e48330f11eefb83867",
+      "legacy_project_id": "3a74f431115c4b7ba18453ff63ba3053",
+      "project_id": 2296,
+      "legacy_user_id": "10000026",
+      "legacy_user_name": "邓洪英",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "005082032d0f4619ab1bd1d3642aa3df",
+      "legacy_project_id": "6379e48fed5748af876b694457c00a80",
+      "project_id": 2421,
+      "legacy_user_id": "10000027",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "005600b8170140ec808ceb489f53f70c",
+      "legacy_project_id": "b46d0ef2c882487aae2e2858aed634e2",
+      "project_id": 2652,
+      "legacy_user_id": "10000008",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "0056d99aba124a4aafe416a64de5ed1f",
+      "legacy_project_id": "7c5bb2cf30bf470a93d959b223c7fb15",
+      "project_id": 2490,
+      "legacy_user_id": "10000046",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "005b7d5d50c2471bb8db25c9d4037b32",
+      "legacy_project_id": "51f509199c434dd0a6f1f6f3dfced9d7",
+      "project_id": 2374,
+      "legacy_user_id": "10000015",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "005c3ee5ada44bf087b00aef4b60b99d",
+      "legacy_project_id": "dc5f03ef90a749be8e3cd19daca87163",
+      "project_id": 2757,
+      "legacy_user_id": "10000011",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "005cb1ce9d1e41fe8d0decdd82fe460b",
+      "legacy_project_id": "8501f263d1874d7ea4206eea6387184f",
+      "project_id": 2523,
+      "legacy_user_id": "10000013",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "005fa3e7a1bd41d5bbfebed04f1fa74e",
+      "legacy_project_id": "2fd504d1871e4b86a2ae42d8e1ed8810",
+      "project_id": 2265,
+      "legacy_user_id": "10000015",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00610d31519c425badf9bd884a5e3ba2",
+      "legacy_project_id": "c52d2b1e41f747bbb8231326c8d2d344",
+      "project_id": 2699,
+      "legacy_user_id": "10000054",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0065dfe147a941229fceab7894180e79",
+      "legacy_project_id": "47450def75994d9899db7eef50f5c0f0",
+      "project_id": 2336,
+      "legacy_user_id": "10000054",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "006600a8731c4b66935ff25b64ce48ab",
+      "legacy_project_id": "d15f664bee1444c488e1b88b678e6af2",
+      "project_id": 2725,
+      "legacy_user_id": "10000034",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "007818ce4e2149358959c46e2acb13bb",
+      "legacy_project_id": "64127fa422624757bc12f7dae485c234",
+      "project_id": 2422,
+      "legacy_user_id": "10000026",
+      "legacy_user_name": "邓洪英",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00793c6a853942e683036cc8bba79354",
+      "legacy_project_id": "765cd5c4cb9a494187d25185290c4027",
+      "project_id": 2467,
+      "legacy_user_id": "10000037",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "007c5fd4ad394cc19670926cea8c3671",
+      "legacy_project_id": "2001f5127b3e4265b198bef8a7553358",
+      "project_id": 2209,
+      "legacy_user_id": "10000033",
+      "legacy_user_name": "张志",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "007c7c31e5c14fb69279f707c1acf860",
+      "legacy_project_id": "38f30547796a4f46886ca433be91fe6d",
+      "project_id": 2289,
+      "legacy_user_id": "10000078",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "007f0ab729694877a9a1ce3f31fe328c",
+      "legacy_project_id": "65b2b2e4f19143b2b42e4c6f1da469a9",
+      "project_id": 2427,
+      "legacy_user_id": "10000007",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "007f650c04784432bf9b21de99c2619e",
+      "legacy_project_id": "8210d117e0d14137b74221d251aba7a9",
+      "project_id": 2509,
+      "legacy_user_id": "10000011",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "0084A7A4-0B19-4343-BA01-C72A59FC43C5",
+      "legacy_project_id": "46b7613b1b2c4a6e918815ee5b8e5969",
+      "project_id": 2334,
+      "legacy_user_id": "10000052",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00889ab7e84c48fb8513fe08d7fda85a",
+      "legacy_project_id": "4fc55dfb8a2e415cbcca4db2f9df2dbf",
+      "project_id": 2367,
+      "legacy_user_id": "10000041",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00896f9081ef43ce98992266ad88189b",
+      "legacy_project_id": "37c8dab219e04007af40a2ee780477bf",
+      "project_id": 2283,
+      "legacy_user_id": "10000078",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "008f3ea78d594ec592f11d79ca633800",
+      "legacy_project_id": "a5d250ac5bbf451a9793ba879c02cfe4",
+      "project_id": 2616,
+      "legacy_user_id": "10000014",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "008F6F67-BAE3-4B0F-9D8A-CF50CB48A0C5",
+      "legacy_project_id": "ec8e6e03ff4c40cfb4ce25cdddc7474e",
+      "project_id": 2813,
+      "legacy_user_id": "10000076",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0096D6CF-E93F-4A09-8C2F-5D76B5D1A299",
+      "legacy_project_id": "65b2b2e4f19143b2b42e4c6f1da469a9",
+      "project_id": 2427,
+      "legacy_user_id": "10000077",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0096ee7e08e8464cbef024c7ea5e8361",
+      "legacy_project_id": "80ccba31ed86452683ada4a39f2027bd",
+      "project_id": 2503,
+      "legacy_user_id": "10000054",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "009725a36659408b895ecd41de7814f9",
+      "legacy_project_id": "7502f0c9996a4e0893330ccf0d85661c",
+      "project_id": 2466,
+      "legacy_user_id": "10000007",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0097ca9d9ee74a47bba5cb7a47f61ad5",
+      "legacy_project_id": "8501f263d1874d7ea4206eea6387184f",
+      "project_id": 2523,
+      "legacy_user_id": "10000001",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "009b4494be84466fa115370f186051ee",
+      "legacy_project_id": "65e7a3336fe04151962cc866422cd5fa",
+      "project_id": 2428,
+      "legacy_user_id": "8888888",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "009c4a470fdf49d8a893e2d7519c523e",
+      "legacy_project_id": "fa81dfa136ae42009e8d1d86af0bd1e2",
+      "project_id": 2848,
+      "legacy_user_id": "8888888",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "009dbe20ba7c4fbfbf6c6becbe6a04fa",
+      "legacy_project_id": "027c5b467ae94e52aabb6f6218d310d4",
+      "project_id": 2118,
+      "legacy_user_id": "a74a3dd36c004a4b8491675919c6be4c",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "009e4a5ccbd14b56b9f8a73cfdd874b0",
+      "legacy_project_id": "62b1d6342b754ae5bf6b344dc1be010e",
+      "project_id": 2418,
+      "legacy_user_id": "10000037",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "00a0dd41929a4e1e8482c84c4da3ee64",
+      "legacy_project_id": "8ef8a9d9c4884fca98f054365e1789ba",
+      "project_id": 2552,
+      "legacy_user_id": "10000034",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00a95660ff294cd2ab86977b51641e5a",
+      "legacy_project_id": "4f039bfb37e049cf890e468d00178e45",
+      "project_id": 2363,
+      "legacy_user_id": "10000000",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00ac7da0f9e04f2ebb0471caad89c894",
+      "legacy_project_id": "59680a7bdc344036bf1bc659f9090814",
+      "project_id": 2397,
+      "legacy_user_id": "10000031",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00AEA167-CE7B-402D-9F59-55AD6339FBD6",
+      "legacy_project_id": "39b007f2fcac4bcabaed31c907846e8b",
+      "project_id": 2292,
+      "legacy_user_id": "10000079",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "00b1c5f34a3f4f64bdc027373a458eba",
+      "legacy_project_id": "ad21c497c9cd46f29dcf11deb58d2e0b",
+      "project_id": 2632,
+      "legacy_user_id": "10000020",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "00b36a97f865448fb06eb859d5c763a7",
+      "legacy_project_id": "204822a6a35f4e76963dbeec9c3240d3",
+      "project_id": 2211,
+      "legacy_user_id": "10000017",
+      "legacy_user_name": "邓洪英",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00b5e132afe7492797c2afa8e4248e63",
+      "legacy_project_id": "edd87052c5a044328e248bb6b8168598",
+      "project_id": 2817,
+      "legacy_user_id": "10000009",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00B789D2-7C01-47D3-BA2F-BF89A3DD2F0E",
+      "legacy_project_id": "152f26736dd64da29f1b4f494fcfef41",
+      "project_id": 2175,
+      "legacy_user_id": "10000077",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "00b92b08ef964f48b38f38d3e34fae6e",
+      "legacy_project_id": "ecd2fbc747a541cca5ec8572052e2451",
+      "project_id": 2814,
+      "legacy_user_id": "10000029",
+      "legacy_user_name": "维护管理员",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00bb9809f2554c8fa18db170a942cd98",
+      "legacy_project_id": "bbe61b7f1a754c2a9998c3cec3e80260",
+      "project_id": 2670,
+      "legacy_user_id": "10000061",
+      "legacy_user_name": "成都华略科技有限公司",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00c1034bff944232a901e1dabc723355",
+      "legacy_project_id": "2e82c7a28d2d4455a075564650a4caf9",
+      "project_id": 2258,
+      "legacy_user_id": "cda47176b5bd4ad38a6eb8984a7feeca",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00c10b47bf934f5382a028c113f45b6b",
+      "legacy_project_id": "076d8bcae3064dca8927f4f629bf2356",
+      "project_id": 2131,
+      "legacy_user_id": "10000014",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00c2f78ff5a040a1bd257b4d93778344",
+      "legacy_project_id": "b69a287978ee4573b1b21768e3868581",
+      "project_id": 2657,
+      "legacy_user_id": "10000045",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "00c55e4c3911413ebc8a59b193135bff",
+      "legacy_project_id": "7fa5e23b3bfa44e184eeaf9f6aa891c0",
+      "project_id": 2497,
+      "legacy_user_id": "10000034",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00c75be23c6d47b3930629a3b884ce95",
+      "legacy_project_id": "55a317a482484e6fb37f023de6f063e7",
+      "project_id": 2388,
+      "legacy_user_id": "cda47176b5bd4ad38a6eb8984a7feeca",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00C7EBD5-17E5-41AF-BB8F-2ADDB1899374",
+      "legacy_project_id": "784c455d3cfe45cf9b7dfdf3d752e81a",
+      "project_id": 2477,
+      "legacy_user_id": "10000077",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "00ca87553f7a49dfa9e208eaecb11636",
+      "legacy_project_id": "ddd9a94d8aef4059a1def554a737e0e4",
+      "project_id": 2765,
+      "legacy_user_id": "10000028",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00d19deea62e4e46b0173f3add1d59b4",
+      "legacy_project_id": "135be6807d2043619fde2b6efe531cf6",
+      "project_id": 2167,
+      "legacy_user_id": "10000018",
+      "legacy_user_name": "维护管理员",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00d1a9b144ad44caa53c1b3438c5cbf0",
+      "legacy_project_id": "290615a7138e49228ce83d02514c1372",
+      "project_id": 2240,
+      "legacy_user_id": "10000017",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00d5a05566284f84a725b5e74a9e9e95",
+      "legacy_project_id": "beea539bc3a94a7d8d2c4852c1f08c25",
+      "project_id": 2681,
+      "legacy_user_id": "10000011",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00d5a7b122e7485683827afdfca3b2b6",
+      "legacy_project_id": "e9ef3126e9594e518a5e518047574439",
+      "project_id": 2802,
+      "legacy_user_id": "10000034",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00d62f01266644068d9a6ebf99a82b8f",
+      "legacy_project_id": "f6db642585394c49a6278eb0eed3119a",
+      "project_id": 2840,
+      "legacy_user_id": "2afb101f2d3d41058b33517895db14f9",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00d7349429a44e129a1a124114b2157e",
+      "legacy_project_id": "23cc90c8afb441639a37ac3d7a9e4fe5",
+      "project_id": 2223,
+      "legacy_user_id": "27cf86a8c528456da17abb6e6eec0d24",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00dd24c014e247949ad8161b0d2cf101",
+      "legacy_project_id": "84e432dea3ad41d09fb63c0470de73b3",
+      "project_id": 2521,
+      "legacy_user_id": "10000001",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00dd69da538b4703bfee905dc309d316",
+      "legacy_project_id": "d795445cf03e48b99618f3eb559a235b",
+      "project_id": 2746,
+      "legacy_user_id": "10000015",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00e6436e04d64a9ba5709864518e5b94",
+      "legacy_project_id": "7804bf2a4b6e4d258d501945273868c0",
+      "project_id": 2475,
+      "legacy_user_id": "27cf86a8c528456da17abb6e6eec0d24",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00ec65cb7a844f539b00828e997a9ba3",
+      "legacy_project_id": "4c749e69caeb45ec9708bf4db81cde17",
+      "project_id": 2352,
+      "legacy_user_id": "cda47176b5bd4ad38a6eb8984a7feeca",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00ef4679f1e94f228eac7616cd4bd666",
+      "legacy_project_id": "a6c5c648fc4c4a32b2affa2b7bcd40ff",
+      "project_id": 2618,
+      "legacy_user_id": "10000008",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00ef9d50adb54b5c94ed419a39816079",
+      "legacy_project_id": "ce7c47d08d88409da91cd433099d5cee",
+      "project_id": 2719,
+      "legacy_user_id": "10000015",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00f011b8a08649baa87a1a3f648b77b9",
+      "legacy_project_id": "072425c9c9ad453eb60c137fd4215459",
+      "project_id": 2130,
+      "legacy_user_id": "10000015",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00f102c0e7f34c539ce1581369db945a",
+      "legacy_project_id": "abcd51a9a4144153ab3c770d763e7219",
+      "project_id": 2629,
+      "legacy_user_id": "10000000",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00f14f9f207c4a8c9b449ef9bedfac51",
+      "legacy_project_id": "e8f89b108b8e4e46b84c1d3a60233d10",
+      "project_id": 2799,
+      "legacy_user_id": "10000029",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "00f690c1bf2948fd8c5f295e72eb86cf",
+      "legacy_project_id": "1ffb0ce01fdf4dc984ec3df9432623cb",
+      "project_id": 2208,
+      "legacy_user_id": "10000051",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "00fef1e8d1714a3d97c251835c50f3a6",
+      "legacy_project_id": "8210d117e0d14137b74221d251aba7a9",
+      "project_id": 2509,
+      "legacy_user_id": "10000013",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "010e4966714741458636b2cbf584ce84",
+      "legacy_project_id": "1ceeb10c5d5745879b20d438e2e69534",
+      "project_id": 2199,
+      "legacy_user_id": "4e8191d3bad04354aebfe26315ac2614",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "010ff1feb6ac42f6af84be8490701536",
+      "legacy_project_id": "ade530f935bc4134a288b363dddb4b49",
+      "project_id": 2637,
+      "legacy_user_id": "10000029",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "01196799b34b48d1929b31978752316d",
+      "legacy_project_id": "387477e67b134c0ba596acb49fccc62c",
+      "project_id": 2284,
+      "legacy_user_id": "10000038",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "011d549c17f6407981cf00c4b39c40cb",
+      "legacy_project_id": "682991317e43497dbb4119f9990fe0ce",
+      "project_id": 2434,
+      "legacy_user_id": "10000020",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "011df34afbd6457cb40e337a95a86de6",
+      "legacy_project_id": "4ac61c70932e4dfa870ddf06ed5b36d2",
+      "project_id": 2343,
+      "legacy_user_id": "10000018",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "011dff1ddb2b400587bf46ba65bc9cbb",
+      "legacy_project_id": "387477e67b134c0ba596acb49fccc62c",
+      "project_id": 2284,
+      "legacy_user_id": "10000009",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "011f0a59d6c54e46b48b5d9cd1bdda58",
+      "legacy_project_id": "615e67a1e771454bb8618d795c692760",
+      "project_id": 2416,
+      "legacy_user_id": "10000007",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "0122a771c53d4e878bbfa621f081d20e",
+      "legacy_project_id": "4de47622b3e6404a98ad734ddc53f27a",
+      "project_id": 2358,
+      "legacy_user_id": "10000033",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "012397fdbe2849dcaff02ac975eb8e9c",
+      "legacy_project_id": "eb4cf9d9b714420e89a3c2a6fff6f8d5",
+      "project_id": 2809,
+      "legacy_user_id": "10000015",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "0123F500-6A41-4E4C-AAA8-D5EF30E179A7",
+      "legacy_project_id": "3713a6cc17f7489f8639d13701cb6376",
+      "project_id": 2281,
+      "legacy_user_id": "10000076",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "01262493512c4f0097bfcc07ad22aed3",
+      "legacy_project_id": "82b352940a4446beaec40efdcd1f0c34",
+      "project_id": 2510,
+      "legacy_user_id": "4e8191d3bad04354aebfe26315ac2614",
+      "legacy_user_name": "江一娇",
+      "mapped_user_id": 14,
+      "mapped_user_name": "江一娇",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "012d89793e7043fc9803b312acb50ff9",
+      "legacy_project_id": "c2a0156bc72d457da0145ca8241ea734",
+      "project_id": 2691,
+      "legacy_user_id": "10000015",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "012d902c120f4e029b6a235037104eee",
+      "legacy_project_id": "5216a7e00d554423bb2e77f6b7dd0d9c",
+      "project_id": 2375,
+      "legacy_user_id": "10000029",
+      "legacy_user_name": "维护管理员",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "012ecbfbb9fa4a789a3c488a15d40ccb",
+      "legacy_project_id": "d397cd38ebae427ca4304745cd901ba4",
+      "project_id": 2732,
+      "legacy_user_id": "4e8191d3bad04354aebfe26315ac2614",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "013033ba84b64cdfb14ee3d057265dff",
+      "legacy_project_id": "7c468620d025454db6eb932a5a5562fa",
+      "project_id": 2489,
+      "legacy_user_id": "10000000",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0131d4291900431e95613c48a72cbef1",
+      "legacy_project_id": "2065db3e97a8409f9a30f027c2c1553e",
+      "project_id": 2212,
+      "legacy_user_id": "10000017",
+      "legacy_user_name": "邓洪英",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "0133515773a54393b3258e41634205a2",
+      "legacy_project_id": "e1603619f0814d02b4c86bc5c044ea0b",
+      "project_id": 2778,
+      "legacy_user_id": "10000003",
+      "legacy_user_name": "邓洪英",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01385e96b8f54b1bb18fb23f8a5b97cf",
+      "legacy_project_id": "38a5b46f53294ed7bcd2ed60c2a8ab46",
+      "project_id": 2286,
+      "legacy_user_id": "10000013",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "013c3a97273d4074aa54f6de7bf72401",
+      "legacy_project_id": "fbbe809ac1994bf9a245f59229553730",
+      "project_id": 2853,
+      "legacy_user_id": "10000034",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "013d03f1515241fb8739492b414939e6",
+      "legacy_project_id": "febf7841fc634ae09dfed83a425979a4",
+      "project_id": 2857,
+      "legacy_user_id": "10000011",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "014403E3-6545-4F0A-ACDB-4E708C0D12BF",
+      "legacy_project_id": "e4bccb1e4815421ba8c8778fc30f6077",
+      "project_id": 2786,
+      "legacy_user_id": "10000077",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "014d511971ab496cae1a7664f5c586a0",
+      "legacy_project_id": "99859d05ebee43d98f4b947a62aaccab",
+      "project_id": 2575,
+      "legacy_user_id": "10000007",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "014e50a18a7448e6b634b01ddd91c254",
+      "legacy_project_id": "bfd2012972084181b83a6f7e885ada70",
+      "project_id": 2683,
+      "legacy_user_id": "a74a3dd36c004a4b8491675919c6be4c",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "014ea6d0d7814636a4d2f23f0dc60ae8",
+      "legacy_project_id": "784c455d3cfe45cf9b7dfdf3d752e81a",
+      "project_id": 2477,
+      "legacy_user_id": "10000009",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01533b5466b14f4994344ddbe50a3ff2",
+      "legacy_project_id": "f3d8f9c8218e49a89d660257c4cf9dca",
+      "project_id": 2835,
+      "legacy_user_id": "cda47176b5bd4ad38a6eb8984a7feeca",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "0161baa07e8c4ebf9239876a8791a9da",
+      "legacy_project_id": "35aa78045dea48e082cae3f783e952b6",
+      "project_id": 2276,
+      "legacy_user_id": "4e8191d3bad04354aebfe26315ac2614",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0162cec8e2eb4714916987d13ccc1987",
+      "legacy_project_id": "5ce3a10946434bf3bb1a79351d5de269",
+      "project_id": 2407,
+      "legacy_user_id": "10000020",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01659CB8-E87E-48A9-84CF-396E7A624EDF",
+      "legacy_project_id": "16f30c8b960c4e6dbedd7a507d96f4ce",
+      "project_id": 2111,
+      "legacy_user_id": "10000079",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "016bcfcdf22b4c8a89e7b0e6c75ccedd",
+      "legacy_project_id": "816c71305aa94216886d5a43d371eb0f",
+      "project_id": 2504,
+      "legacy_user_id": "10000034",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "016c434e7714478b836f6406c14e6dbe",
+      "legacy_project_id": "d07b7a7a37aa473a89d006c178a4e033",
+      "project_id": 2723,
+      "legacy_user_id": "a74a3dd36c004a4b8491675919c6be4c",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "016d7248c56e416a8c69e7a38980dc23",
+      "legacy_project_id": "1b714bfd78a14049b98c6f2b8a63073e",
+      "project_id": 2195,
+      "legacy_user_id": "10000001",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "017066B7-833A-4BE5-9A3A-A4EBADA59869",
+      "legacy_project_id": "9679632240d74ff9bd55e0c7b26a0d07",
+      "project_id": 2569,
+      "legacy_user_id": "10000076",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0173bf353a164316885d2cf173e30f2e",
+      "legacy_project_id": "1abe1430e27d4765b61cf3ae4b341c24",
+      "project_id": 2192,
+      "legacy_user_id": "10000037",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0176ae673db14164bab1f0525d1e4ee7",
+      "legacy_project_id": "e237f61a7cf6461fa360da20307d6522",
+      "project_id": 2781,
+      "legacy_user_id": "10000037",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "017BF2F8-E2A9-48E5-BE3D-1A71132C9129",
+      "legacy_project_id": "f0d13d9a3be74f30a0c7389e034d1496",
+      "project_id": 2827,
+      "legacy_user_id": "10000079",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "017d081c2f6441e29ff9110ea48da09d",
+      "legacy_project_id": "2865a4a7b99940cfa2653c54b26edf99",
+      "project_id": 2238,
+      "legacy_user_id": "10000077",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "017E59A7-0675-4150-A335-8673C3D594C4",
+      "legacy_project_id": "b69a287978ee4573b1b21768e3868581",
+      "project_id": 2657,
+      "legacy_user_id": "10000079",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0186805fd4cc4f74bfd8675b522b1bfa",
+      "legacy_project_id": "46792322bab04858b17a5b9e3345cf5d",
+      "project_id": 2332,
+      "legacy_user_id": "8888888",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "01891a8c185545aa891268d32105fd79",
+      "legacy_project_id": "513f713857db46e196f61d6df8257fd1",
+      "project_id": 2371,
+      "legacy_user_id": "10000000",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "0189f7b1b6e74c158bb14336c8f7b216",
+      "legacy_project_id": "05139ca820724561bee71e016b22fd55",
+      "project_id": 2124,
+      "legacy_user_id": "10000046",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "019021647f1d4cc3b597e497f2b41447",
+      "legacy_project_id": "33bf23a069304419a4c259caf04473a8",
+      "project_id": 2274,
+      "legacy_user_id": "10000045",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0190efbc6683414d8e452b2b118c41a1",
+      "legacy_project_id": "51f509199c434dd0a6f1f6f3dfced9d7",
+      "project_id": 2374,
+      "legacy_user_id": "10000009",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "0191DFCC-F00D-4256-A1DD-1D1FD259EBE3",
+      "legacy_project_id": "7fa5e23b3bfa44e184eeaf9f6aa891c0",
+      "project_id": 2497,
+      "legacy_user_id": "10000079",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "01939e485c71490fb3692089c40fe97f",
+      "legacy_project_id": "12bab8c00273463cae235c1615796bb3",
+      "project_id": 2164,
+      "legacy_user_id": "10000012",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01948f8ee40f4b42900aa90f83d85c98",
+      "legacy_project_id": "2654c8c1ef73434dbdd7c45812a573db",
+      "project_id": 2229,
+      "legacy_user_id": "10000033",
+      "legacy_user_name": "张志",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "0194ffccd0cc437a88e10a6e0e42ac7d",
+      "legacy_project_id": "800fb4620f6f4afca71708d0da82500f",
+      "project_id": 2500,
+      "legacy_user_id": "27cf86a8c528456da17abb6e6eec0d24",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01a4bc69ebe7480795e7f53cdaf5f950",
+      "legacy_project_id": "292584f7b81f40579ab90504983a05fc",
+      "project_id": 2241,
+      "legacy_user_id": "10000028",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01a574d325e0419fa4ea7dbe5234736a",
+      "legacy_project_id": "1bc8c1acc81d4a47af1318a718bf72db",
+      "project_id": 2197,
+      "legacy_user_id": "27cf86a8c528456da17abb6e6eec0d24",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01A873E6-5698-4D45-A1D7-89844F75068D",
+      "legacy_project_id": "18345028af09432ab7505fe2ce46d2b1",
+      "project_id": 2186,
+      "legacy_user_id": "10000052",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01ae6f8283f84d04bc901873ca63b387",
+      "legacy_project_id": "5776e5836ee949b7a464ad53fb0000cb",
+      "project_id": 2393,
+      "legacy_user_id": "10000009",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01b329160a914011b07e9cf30387dc68",
+      "legacy_project_id": "23aa1343ca99440abf7bd7315fd60c6a",
+      "project_id": 2222,
+      "legacy_user_id": "10000007",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01b57d5d9f0a401bb113a8161cbcea67",
+      "legacy_project_id": "2d0c8990b9944c60b5ea355035049c1b",
+      "project_id": 2256,
+      "legacy_user_id": "10000009",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01b7472e46b1427aab4a002ba6e6bc44",
+      "legacy_project_id": "523f3ae95af74fd187567b113e642c10",
+      "project_id": 2377,
+      "legacy_user_id": "10000028",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01b988efe1d3489b8f7685c9ec070c0d",
+      "legacy_project_id": "ecd2fbc747a541cca5ec8572052e2451",
+      "project_id": 2814,
+      "legacy_user_id": "10000037",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "01b9c3630be74b6885ef023c75997f3f",
+      "legacy_project_id": "1ceeb10c5d5745879b20d438e2e69534",
+      "project_id": 2199,
+      "legacy_user_id": "10000007",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01b9ddfb2a7e49dea8c5f51e1901fc38",
+      "legacy_project_id": "4d5d46d841c24c629fd4ebdd4796980f",
+      "project_id": 2113,
+      "legacy_user_id": "10000001",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "01bd8cc6161c4e1c8ca04098899c891e",
+      "legacy_project_id": "a74d16f8345a4e29a837fb2ea222deea",
+      "project_id": 2619,
+      "legacy_user_id": "10000038",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01BF1D6A-5C3F-4AF7-B595-73FD41293868",
+      "legacy_project_id": "204822a6a35f4e76963dbeec9c3240d3",
+      "project_id": 2211,
+      "legacy_user_id": "10000077",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "01c183170dae45e6bf86aa551f9c4842",
+      "legacy_project_id": "9c9b148d8642412bbc5bb655d73ede29",
+      "project_id": 2586,
+      "legacy_user_id": "10000015",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01c342a65a434f43a364dad7a95759fb",
+      "legacy_project_id": "74d58dce00e345c3af7cbdc58dc2bbbc",
+      "project_id": 2465,
+      "legacy_user_id": "8888888",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01c56a8372ee439795d8fe4f6b334ad1",
+      "legacy_project_id": "432bb7a6a36e4ec38819ec2a5f1e0bff",
+      "project_id": 2320,
+      "legacy_user_id": "a74a3dd36c004a4b8491675919c6be4c",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01c9389d57f54e51822fc043f1eb18a1",
+      "legacy_project_id": "b68df914cf3b47b888e43028b1057da1",
+      "project_id": 2656,
+      "legacy_user_id": "10000003",
+      "legacy_user_name": "邓洪英",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01cda2716335414098ead1b2467f51bc",
+      "legacy_project_id": "ab85a39f56c54484bb2c8097a4a55b36",
+      "project_id": 2627,
+      "legacy_user_id": "8888888",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01d160d0b1cf48a1988be22c2523dc18",
+      "legacy_project_id": "8929f6ba520a4e24813d0adb7e6479e7",
+      "project_id": 2534,
+      "legacy_user_id": "10000045",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "01d32bc790d448b5a2fa5992541c4dc2",
+      "legacy_project_id": "39a156d94025490fbd873db0c05f3d37",
+      "project_id": 2291,
+      "legacy_user_id": "10000018",
+      "legacy_user_name": "维护管理员",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01da94c3dfef44b2b355a3829d1be8cb",
+      "legacy_project_id": "4f039bfb37e049cf890e468d00178e45",
+      "project_id": 2363,
+      "legacy_user_id": "10000037",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "01db52feb1de40e59c52cf7d48eaabef",
+      "legacy_project_id": "ca9894f65c5e4b3cac86e93d68fadc29",
+      "project_id": 2706,
+      "legacy_user_id": "10000015",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01dbb1d047934519a52b4e8e5042c8a7",
+      "legacy_project_id": "0db43c29f642442292d30f6b34c328a9",
+      "project_id": 2152,
+      "legacy_user_id": "10000046",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01dc0964c17442198e221a59ab08edbf",
+      "legacy_project_id": "6890dd7cde4446059d33a86af5e8ec7a",
+      "project_id": 2435,
+      "legacy_user_id": "10000031",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01e09cab47c14c0aaf34ae7972e6e82f",
+      "legacy_project_id": "0f3c19a871e446fc8cc9781f108d58e5",
+      "project_id": 2157,
+      "legacy_user_id": "10000078",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01e18aaac54f4c40a6a35bf98b40b904",
+      "legacy_project_id": "99d71acc6c124557921fbd34cd845492",
+      "project_id": 2578,
+      "legacy_user_id": "10000001",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01e26e4b3cfc4e829c3761653bc1c50f",
+      "legacy_project_id": "84294b0ce2fa49f493c40ed4d2676b79",
+      "project_id": 2517,
+      "legacy_user_id": "10000051",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01e9f67c65e34c0196d7c77524b40b29",
+      "legacy_project_id": "63151c4e794243ec8a52e85d9c0eb410",
+      "project_id": 2420,
+      "legacy_user_id": "10000028",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "01ee49e83b1b41afa4d09dde0bad41d8",
+      "legacy_project_id": "8340e78b40b54a178e8020ff2cb67fe3",
+      "project_id": 2512,
+      "legacy_user_id": "10000011",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "01f5c0c205e247c290fd19e0e09198b7",
+      "legacy_project_id": "106e8ac916084f398b89d0a564f2473f",
+      "project_id": 2160,
+      "legacy_user_id": "10000020",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "01fac98a4e6640daa08fa72998ba9cdf",
+      "legacy_project_id": "79c4128054be48bcb8377af16faba3fd",
+      "project_id": 2483,
+      "legacy_user_id": "2afb101f2d3d41058b33517895db14f9",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01fc9608f4db4f19a51006a3b476c6a0",
+      "legacy_project_id": "64e0706eed044170b60295774f2fb924",
+      "project_id": 2424,
+      "legacy_user_id": "10000037",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "01fcd502b0d84b8d861f6806fe8d046f",
+      "legacy_project_id": "702cd4f80b7c4180afc3a5730e29625f",
+      "project_id": 2452,
+      "legacy_user_id": "10000038",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "01ff3576c452478e800b66c306a0aa45",
+      "legacy_project_id": "6f39bd9ada194b63828edcb0f846c184",
+      "project_id": 2448,
+      "legacy_user_id": "10000013",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0200cbd261704b8c939dde873b3d3576",
+      "legacy_project_id": "a1df3e6b2cbe4363b1f33cb30b679822",
+      "project_id": 2599,
+      "legacy_user_id": "10000013",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "02028004abca4f8dad452bebe4ca15ff",
+      "legacy_project_id": "6890dd7cde4446059d33a86af5e8ec7a",
+      "project_id": 2435,
+      "legacy_user_id": "10000001",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "020cdf19ee4c41dca7933fc6fc2ac44d",
+      "legacy_project_id": "d673283d7f064228aa3bcdb822c8d425",
+      "project_id": 2741,
+      "legacy_user_id": "10000000",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "0213c2bb9e5440d6b220b0590e0ccdd7",
+      "legacy_project_id": "9999948fd712497985312d9b63a718fb",
+      "project_id": 2577,
+      "legacy_user_id": "10000033",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "02159ea930ff4d829e7117620afa6d2f",
+      "legacy_project_id": "09a62a54dcf645d6b7030d40fbdac1cb",
+      "project_id": 2144,
+      "legacy_user_id": "10000037",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "021847e1b6c346f497f3a0224e236d48",
+      "legacy_project_id": "4693df15d594434c95aa9a3304b3a058",
+      "project_id": 2333,
+      "legacy_user_id": "10000034",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "02195317b14a46998511d6c2d008600c",
+      "legacy_project_id": "702cd4f80b7c4180afc3a5730e29625f",
+      "project_id": 2452,
+      "legacy_user_id": "10000018",
+      "legacy_user_name": "维护管理员",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "021969cc94ba45dab5d95119092c7e09",
+      "legacy_project_id": "4f86be86dc0f46508613c812126849d5",
+      "project_id": 2365,
+      "legacy_user_id": "10000028",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "021abf43d5304b1ca5d5b7e571147ebf",
+      "legacy_project_id": "def62d8fc3df471080951397c4fdfd22",
+      "project_id": 2769,
+      "legacy_user_id": "27cf86a8c528456da17abb6e6eec0d24",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "021fc685480a4f3ebe6ce4f6851d9292",
+      "legacy_project_id": "36e5e7c783fb4fa5941a032db7afbd05",
+      "project_id": 2280,
+      "legacy_user_id": "10000013",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0220a6edf4314873b624d84f90cefa2e",
+      "legacy_project_id": "64e0706eed044170b60295774f2fb924",
+      "project_id": 2424,
+      "legacy_user_id": "10000052",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "0224c9f8c9664675902f70165775a49d",
+      "legacy_project_id": "a1c8757811764320a6915a1df6d7846b",
+      "project_id": 2597,
+      "legacy_user_id": "10000041",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "022bcc7c81db47e189726814ae54d7bf",
+      "legacy_project_id": "f947d45769804682af3a6233ff0b5d0d",
+      "project_id": 2846,
+      "legacy_user_id": "2afb101f2d3d41058b33517895db14f9",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "022fd19b00784bb28c6c3b6fafe236f9",
+      "legacy_project_id": "b7c7e4c229024786b30ee5bec6d0ad9b",
+      "project_id": 2660,
+      "legacy_user_id": "4e8191d3bad04354aebfe26315ac2614",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0230b16e560e48c9b34784d9d2c54521",
+      "legacy_project_id": "708f939840de45d7b68fc07e9200d912",
+      "project_id": 2454,
+      "legacy_user_id": "10000011",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0232E43D-7B54-4D87-A24A-CE12DCF561C2",
+      "legacy_project_id": "d54e7276be1b4244b5531898f2d2f00b",
+      "project_id": 2738,
+      "legacy_user_id": "10000077",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0233b5283dfd42d992fab9b3c5fa07a9",
+      "legacy_project_id": "267ac2470a1e48ccbd665b5a08e2ff9c",
+      "project_id": 2230,
+      "legacy_user_id": "10000061",
+      "legacy_user_name": "成都华略科技有限公司",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "0233eef2665f4a0a84eee00ceb4192c8",
+      "legacy_project_id": "8b702fa4ccca4b3b98261a07cbde8ae7",
+      "project_id": 2544,
+      "legacy_user_id": "10000034",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0234060828d8400dbae7067113f0106a",
+      "legacy_project_id": "918683f439b8487cadb404658ab90785",
+      "project_id": 2558,
+      "legacy_user_id": "27cf86a8c528456da17abb6e6eec0d24",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "02377a2b0fe34d7a9d419004cfadd0f4",
+      "legacy_project_id": "3c67d2421ff24496a410fde08278dcda",
+      "project_id": 2301,
+      "legacy_user_id": "10000033",
+      "legacy_user_name": "张志",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "023af8e18e8347fa89e41e93e418699a",
+      "legacy_project_id": "8f874aff67254dde80a7b2a2c63ba91e",
+      "project_id": 2554,
+      "legacy_user_id": "10000003",
+      "legacy_user_name": "邓洪英",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "023b437f79a54a3f8d440225335ebd7e",
+      "legacy_project_id": "d15f664bee1444c488e1b88b678e6af2",
+      "project_id": 2725,
+      "legacy_user_id": "10000051",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "024fcf99ed434620ac962375bbbe29b1",
+      "legacy_project_id": "14c4325bb56b408788e6f442f4384374",
+      "project_id": 2172,
+      "legacy_user_id": "8888888",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "0253fa45054d4b77b071738a4acf86d3",
+      "legacy_project_id": "6f5cacd6245346079d3cbc0f0dd078de",
+      "project_id": 2449,
+      "legacy_user_id": "10000012",
+      "legacy_user_name": "邓洪英",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "0257d7ef72364e0fa3ebaec34070af6e",
+      "legacy_project_id": "c2924b9b428d4542a346a60c82b82231",
+      "project_id": 2690,
+      "legacy_user_id": "27cf86a8c528456da17abb6e6eec0d24",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "025ba2be907145618cee18a058e5c126",
+      "legacy_project_id": "6ee79af1274b49ffbd25926ad5f04f4d",
+      "project_id": 2447,
+      "legacy_user_id": "10000017",
+      "legacy_user_name": "",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "025c7abe43a04841898f380e34fa7afe",
+      "legacy_project_id": "d3efb18b6f9a44f9b72343d9223c5b40",
+      "project_id": 2733,
+      "legacy_user_id": "10000007",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "025ded93094b471ca22c60e0f9e685ac",
+      "legacy_project_id": "e4c9309b78f847dba4a007a04cc6128a",
+      "project_id": 2787,
+      "legacy_user_id": "10000070",
+      "legacy_user_name": "李林旭",
+      "mapped_user_id": 12,
+      "mapped_user_name": "李林旭",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "0261559212524831b711e75a4732804c",
+      "legacy_project_id": "44169b333e24436aa3592d06b9d2a0c3",
+      "project_id": 2322,
+      "legacy_user_id": "10000078",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "02629253f129483caff2d35c468f4f11",
+      "legacy_project_id": "5d3979512ead4bd8a20d8053164a516a",
+      "project_id": 2408,
+      "legacy_user_id": "10000051",
+      "legacy_user_name": "admin",
+      "mapped_user_id": null,
+      "mapped_user_name": "placeholder_user",
+      "user_match_mode": "placeholder_user"
+    },
+    {
+      "legacy_member_id": "0265da16c2d141b0b466e5e777535d9f",
+      "legacy_project_id": "19b80dff5f32439cbbf6a31107f05832",
+      "project_id": 2190,
+      "legacy_user_id": "10000045",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    },
+    {
+      "legacy_member_id": "02664b18a5c14982b454efbf9c42a74f",
+      "legacy_project_id": "215041536acd48be89b14758cd923649",
+      "project_id": 2218,
+      "legacy_user_id": "10000013",
+      "legacy_user_name": "段奕俊",
+      "mapped_user_id": 8,
+      "mapped_user_name": "段奕俊",
+      "user_match_mode": "name"
+    }
+  ],
+  "next_gate": "screen placeholder-user and record-rule impact before any project_member write"
+}

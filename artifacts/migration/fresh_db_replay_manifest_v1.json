@@ -1,0 +1,300 @@
+{
+  "status": "FRESH_DB_REPLAY_PARTIAL_EXECUTED",
+  "mode": "fresh_db_replay_manifest",
+  "db_writes": 0,
+  "fresh_database_operation": "not_started",
+  "default_policy": {
+    "execute_database_operations": false,
+    "execute_write_scripts": false,
+    "include_high_risk_lanes": false,
+    "require_explicit_fresh_database_task": true
+  },
+  "certification_status": "FRESH_DB_REPLAY_PARTIAL_EXECUTED_NO_DEMO",
+  "lanes": [
+    {
+      "lane_id": "partner_l4_anchor_completed",
+      "layer": "L0_identity_anchor",
+      "status": "fresh_replay_executed",
+      "default_run": false,
+      "target_model": "res.partner",
+      "identity_key": "legacy_partner_source + legacy_partner_id / legacy_source_evidence",
+      "source_files": [
+        "tmp/raw/partner/company.csv",
+        "tmp/raw/partner/supplier.csv"
+      ],
+      "write_scripts": [
+        "scripts/migration/partner_safe_slice_create_only_write.py",
+        "scripts/migration/partner_missing_tax_single_source_create_write.py",
+        "scripts/migration/partner_company_supplier_pair_create_write.py",
+        "scripts/migration/partner_remaining_missing_tax_company_supplier_create_write.py"
+      ],
+      "aggregate_artifacts": [
+        "artifacts/migration/partner_l4_blocked_remainder_consolidated_screen_result_v1.json",
+        "artifacts/migration/fresh_db_partner_l4_replay_adapter_result_v1.json"
+      ],
+      "expected_current_result": {
+        "active_blocked_rows": 0,
+        "create_candidates": 0,
+        "replay_payload_rows": 4797
+      },
+      "reason": "completed through many historical write scripts; needs a fresh-db adapter to replay as one anchor lane",
+      "replay_payloads": [
+        "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv"
+      ],
+      "adapter_result_artifacts": [
+        "artifacts/migration/fresh_db_partner_l4_replay_adapter_result_v1.json"
+      ],
+      "fresh_db_execution_artifacts": [
+        "artifacts/migration/fresh_db_partner_l4_replay_write_result_v1.json"
+      ],
+      "fresh_db_execution_result": {
+        "database": "sc_migration_fresh",
+        "created_rows": 4797,
+        "db_writes": 4797,
+        "demo_targets_executed": 0
+      }
+    },
+    {
+      "lane_id": "project_anchor_completed",
+      "layer": "L0_identity_anchor",
+      "status": "fresh_replay_executed",
+      "default_run": false,
+      "target_model": "project.project",
+      "identity_key": "legacy_project_id",
+      "source_files": [
+        "tmp/raw/project/project.csv"
+      ],
+      "write_scripts": [
+        "scripts/migration/project_create_only_write_trial.py",
+        "scripts/migration/project_v2_100_create_only_write.py",
+        "scripts/migration/project_v3_100_create_only_write.py",
+        "scripts/migration/project_v4_200_create_only_write.py",
+        "scripts/migration/project_v5_200_create_only_write.py",
+        "scripts/migration/project_remaining_25_create_only_write.py",
+        "scripts/migration/project_create_only_expand_write.py"
+      ],
+      "aggregate_artifacts": [
+        "artifacts/migration/project_post_write_readonly_review_v1.json",
+        "artifacts/migration/fresh_db_project_anchor_replay_adapter_result_v1.json"
+      ],
+      "reason": "completed via incremental scripts; needs unified replay adapter and aggregate expected count",
+      "replay_payloads": [
+        "artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv"
+      ],
+      "adapter_result_artifacts": [
+        "artifacts/migration/fresh_db_project_anchor_replay_adapter_result_v1.json"
+      ],
+      "expected_current_result": {
+        "replay_payload_rows": 755
+      },
+      "fresh_db_execution_artifacts": [
+        "artifacts/migration/fresh_db_project_anchor_replay_write_result_v1.json"
+      ],
+      "fresh_db_execution_result": {
+        "database": "sc_migration_fresh",
+        "created_rows": 755,
+        "db_writes": 755,
+        "demo_targets_executed": 0
+      }
+    },
+    {
+      "lane_id": "project_member_neutral_completed",
+      "layer": "L1_core_business_fact",
+      "status": "fresh_replay_executed",
+      "default_run": false,
+      "target_model": "sc.project.member.staging",
+      "identity_key": "legacy member/project/user/role tuple",
+      "source_files": [
+        "tmp/raw/project_member/project_member.csv"
+      ],
+      "write_scripts": [
+        "scripts/migration/project_member_duplicate_relation_neutral_500_write.py",
+        "scripts/migration/project_member_duplicate_relation_neutral_next500m_write.py"
+      ],
+      "aggregate_artifacts": [
+        "artifacts/migration/project_member_neutral_aggregate_review_7389_v1.json"
+      ],
+      "expected_current_result": {
+        "target_rows": 7389
+      },
+      "reason": "aggregate closure exists; lane still requires fresh-db dependency precheck before default_run",
+      "fresh_db_execution_artifacts": [
+        "artifacts/migration/fresh_db_project_member_neutral_replay_write_result_v1.json"
+      ],
+      "fresh_db_execution_result": {
+        "database": "sc_migration_fresh",
+        "created_rows": 7389,
+        "db_writes": 7389,
+        "demo_targets_executed": 0
+      }
+    },
+    {
+      "lane_id": "contract_header_completed_1332",
+      "layer": "L1_core_business_fact",
+      "status": "fresh_replay_executed",
+      "default_run": false,
+      "target_model": "construction.contract",
+      "identity_key": "legacy_contract_id",
+      "source_files": [
+        "tmp/raw/contract/contract.csv",
+        "artifacts/migration/contract_readiness_nodb_screen_safe_candidates_v1.csv"
+      ],
+      "write_scripts": [
+        "scripts/migration/contract_header_slice200_create_write.py",
+        "scripts/migration/contract_header_next200_create_write.py",
+        "scripts/migration/contract_header_post400_next200_create_write.py",
+        "scripts/migration/contract_header_post600_next200_create_write.py",
+        "scripts/migration/contract_header_post800_next200_create_write.py",
+        "scripts/migration/contract_header_post1000_next200_create_write.py",
+        "scripts/migration/contract_header_final132_create_write.py"
+      ],
+      "aggregate_artifacts": [
+        "artifacts/migration/contract_header_final_aggregate_confirm_result_v1.json"
+      ],
+      "expected_current_result": {
+        "source_rows": 1332,
+        "target_match_rows": 1332
+      },
+      "reason": "all slices have rollback targets and final aggregate closure; can become default_run after fresh-db precheck adapter",
+      "fresh_db_execution_artifacts": [
+        "artifacts/migration/fresh_db_contract_remaining_write_result_v1.json"
+      ],
+      "fresh_db_execution_result": {
+        "database": "sc_migration_fresh",
+        "created_rows": 1332,
+        "db_writes": 1332,
+        "demo_targets_executed": 0
+      }
+    },
+    {
+      "lane_id": "contract_partner_source_12_anchor_design",
+      "layer": "L0_identity_anchor",
+      "status": "fresh_replay_executed",
+      "default_run": false,
+      "target_model": "res.partner",
+      "identity_key": "company::counterparty_text",
+      "source_files": [
+        "artifacts/migration/contract_partner_source_12_anchor_design_rows_v1.csv"
+      ],
+      "write_scripts": [],
+      "aggregate_artifacts": [
+        "artifacts/migration/contract_partner_source_12_anchor_design_result_v1.json",
+        "artifacts/migration/fresh_db_contract_partner_12_anchor_replay_adapter_result_v1.json"
+      ],
+      "expected_current_result": {
+        "anchor_rows": 12,
+        "dependent_contract_rows": 57,
+        "replay_payload_rows": 12
+      },
+      "reason": "no DB write script exists yet; must be implemented before fresh replay",
+      "replay_payloads": [
+        "artifacts/migration/fresh_db_contract_partner_12_anchor_replay_payload_v1.csv"
+      ],
+      "adapter_result_artifacts": [
+        "artifacts/migration/fresh_db_contract_partner_12_anchor_replay_adapter_result_v1.json"
+      ],
+      "fresh_db_execution_artifacts": [
+        "artifacts/migration/fresh_db_contract_partner_12_anchor_replay_recovery_write_result_v1.json"
+      ],
+      "fresh_db_execution_result": {
+        "database": "sc_migration_fresh",
+        "resolved_anchor_count": 12,
+        "db_writes": 6,
+        "demo_targets_executed": 0
+      }
+    },
+    {
+      "lane_id": "receipt_header_pending",
+      "layer": "L1_or_L2_pending_screen",
+      "status": "fresh_replay_executed",
+      "default_run": false,
+      "target_model": "payment.request",
+      "identity_key": "pending",
+      "source_files": [
+        "tmp/raw/receipt/receipt.csv"
+      ],
+      "write_scripts": [],
+      "aggregate_artifacts": [],
+      "reason": "core receipt rows replayed as draft receive requests; settlement/accounting remain out of scope",
+      "fresh_db_execution_artifacts": [
+        "artifacts/migration/fresh_db_receipt_core_write_result_v1.json"
+      ],
+      "fresh_db_execution_result": {
+        "database": "sc_migration_fresh",
+        "created_rows": 1683,
+        "db_writes": 1683,
+        "demo_targets_executed": 0
+      },
+      "expected_current_result": {
+        "receipt_core_rows": 1683
+      }
+    },
+    {
+      "lane_id": "payment_settlement_accounting",
+      "layer": "L4_high_risk",
+      "status": "excluded_high_risk",
+      "default_run": false,
+      "target_model": "payment/settlement/accounting",
+      "identity_key": "not_declared",
+      "source_files": [
+        "tmp/raw/payment/payment.csv"
+      ],
+      "write_scripts": [],
+      "aggregate_artifacts": [],
+      "reason": "excluded from default replay; requires dedicated high-risk task"
+    }
+  ],
+  "fresh_db_prerequisites": {
+    "core_tax_prerequisite": {
+      "status": "materialized",
+      "artifact": "artifacts/migration/fresh_db_core_tax_prereq_materialize_result_v1.json",
+      "database": "sc_migration_fresh",
+      "demo_targets_executed": 0,
+      "transaction_rows_created": 0
+    }
+  },
+  "fresh_db_execution_summary": {
+    "database": "sc_migration_fresh",
+    "demo_modules_installed": false,
+    "partner_l4_rows": 4797,
+    "project_anchor_rows": 755,
+    "project_member_neutral_rows": 7389,
+    "contract_partner_anchor_rows": 12,
+    "contract_missing_partner_anchor_rows": 95,
+    "contract_header_retry_rows": 57,
+    "contract_header_historical_rows": 1332,
+    "contract_header_total_rows": 1389,
+    "contract_header_full_target_rows": 1332,
+    "contract_header_remaining_rows": 0,
+    "receipt_core_rows": 1683,
+    "receipt_core_target_model": "payment.request",
+    "receipt_core_target_type": "receive",
+    "contract_line_rows": 0,
+    "payment_rows": 0,
+    "settlement_rows": 0,
+    "accounting_rows": 0
+  },
+  "fresh_db_additional_results": {
+    "contract_header_retry_57": {
+      "status": "executed",
+      "artifact": "artifacts/migration/fresh_db_contract_57_retry_write_result_v1.json",
+      "database": "sc_migration_fresh",
+      "created_rows": 57,
+      "demo_targets_executed": 0
+    },
+    "contract_missing_partner_anchors": {
+      "status": "executed",
+      "artifact": "artifacts/migration/fresh_db_contract_missing_partner_anchor_write_result_v1.json",
+      "database": "sc_migration_fresh",
+      "cumulative_created_rows": 95,
+      "demo_targets_executed": 0
+    },
+    "receipt_core_receive_requests": {
+      "status": "executed",
+      "artifact": "artifacts/migration/fresh_db_receipt_core_write_result_v1.json",
+      "database": "sc_migration_fresh",
+      "created_rows": 1683,
+      "demo_targets_executed": 0
+    }
+  }
+}

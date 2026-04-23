@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "mode": "project_member_neutral_aggregate_review_3034",
+  "database": "sc_demo",
+  "target_model": "sc.project.member.staging",
+  "db_writes": 0,
+  "batch_counts": {
+    "ITER-2026-04-14-0030N": 34,
+    "ITER-2026-04-14-0030NZ": 500,
+    "ITER-2026-04-14-1973N": 500,
+    "ITER-2026-04-14-1975N": 500,
+    "ITER-2026-04-14-1980N": 500,
+    "ITER-2026-04-15-1982N": 500,
+    "ITER-2026-04-15-1984N": 500
+  },
+  "total_expected": 3034,
+  "total_records": 3034,
+  "role_fact_status_missing_count": 3034,
+  "distinct_project_user_pairs": 737,
+  "duplicate_project_user_pair_count": 606,
+  "max_rows_per_project_user_pair": 14,
+  "project_responsibility_writes": 0,
+  "blocking_reasons": []
+}

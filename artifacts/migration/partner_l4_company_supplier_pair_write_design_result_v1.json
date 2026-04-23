@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_company_supplier_pair_write_design",
+  "input": "artifacts/migration/partner_l4_company_supplier_pair_merge_dry_run_rows_v1.csv",
+  "candidate_rows": 1713,
+  "write_design_rows": 1713,
+  "blocked_rows": 0,
+  "missing_columns": [],
+  "blockers": [],
+  "write_policy": {
+    "action": "create_merged_partner",
+    "allowed_fields": [
+      "name",
+      "company_type",
+      "customer_rank",
+      "supplier_rank",
+      "legacy_partner_id",
+      "legacy_partner_source",
+      "legacy_partner_name",
+      "legacy_credit_code",
+      "legacy_tax_no",
+      "legacy_source_evidence"
+    ],
+    "forbidden_actions": [
+      "update_existing_partner",
+      "unlink",
+      "raw_sql",
+      "acl_change"
+    ],
+    "rollback_key": "legacy_partner_source + legacy_partner_id"
+  },
+  "outputs": {
+    "write_design_rows": "artifacts/migration/partner_l4_company_supplier_pair_write_design_rows_v1.csv"
+  },
+  "next_gate": "High-risk bounded create write requires explicit authorization and immediate readonly post-write review."
+}

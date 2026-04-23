@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_missing_tax_duplicate_group_dry_run",
+  "input": "artifacts/migration/partner_l4_remaining365_blocked_screen_rows_v1.csv",
+  "route_rows": 175,
+  "expected_route_rows": 175,
+  "missing_columns": [],
+  "decision_counts": {
+    "missing_tax_company_duplicate_group_review": 156,
+    "missing_tax_company_supplier_duplicate_group_review": 19
+  },
+  "reason_counts": {
+    "company_duplicate_exact_name_without_tax": 156,
+    "company_supplier_duplicate_exact_name_without_tax": 19
+  },
+  "outputs": {
+    "dry_run_rows": "artifacts/migration/partner_l4_missing_tax_duplicate_group_dry_run_rows_v1.csv",
+    "sample_rows": "artifacts/migration/partner_l4_missing_tax_duplicate_group_dry_run_samples_v1.csv"
+  },
+  "next_gate": "Open no-DB write design for deterministic review rows; no DB write is authorized."
+}

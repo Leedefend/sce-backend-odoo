@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "mode": "partner_company_supplier_duplicate_26_create_write",
+  "database": "sc_demo",
+  "input": "/mnt/artifacts/migration/partner_l4_company_supplier_duplicate_26_write_design_rows_v1.csv",
+  "created": 26,
+  "updated": 0,
+  "errors": 0,
+  "rollback_target_rows": 26,
+  "post_write_identity_count": 26,
+  "duplicate_matches": [],
+  "missing_ids": [],
+  "post_errors": [],
+  "artifacts": {
+    "pre_write_snapshot": "/mnt/artifacts/migration/partner_l4_company_supplier_duplicate_26_pre_write_snapshot_v1.csv",
+    "post_write_snapshot": "/mnt/artifacts/migration/partner_l4_company_supplier_duplicate_26_post_write_snapshot_v1.csv",
+    "rollback_targets": "/mnt/artifacts/migration/partner_l4_company_supplier_duplicate_26_rollback_targets_v1.csv"
+  }
+}

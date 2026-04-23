@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_company_duplicate_24_write_design",
+  "input": "artifacts/migration/partner_l4_nodb_refresh_rows_v1.csv",
+  "write_design_rows": 24,
+  "expected_rows": 24,
+  "missing_columns": [],
+  "invalid_rows": 0,
+  "action_counts": {
+    "create_company_partner_with_tax_number": 24
+  },
+  "outputs": {
+    "write_design_rows": "artifacts/migration/partner_l4_company_duplicate_24_write_design_rows_v1.csv"
+  },
+  "next_gate": "Bounded create-only DB write with rollback targets."
+}

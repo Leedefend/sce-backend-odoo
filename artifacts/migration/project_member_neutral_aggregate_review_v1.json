@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "mode": "project_member_neutral_aggregate_review",
+  "database": "sc_demo",
+  "target_model": "sc.project.member.staging",
+  "db_writes": 0,
+  "batch_counts": {
+    "ITER-2026-04-14-0030N": 34,
+    "ITER-2026-04-14-0030NZ": 500
+  },
+  "total_expected": 534,
+  "total_records": 534,
+  "role_fact_status_missing_count": 534,
+  "distinct_project_user_pairs": 362,
+  "duplicate_project_user_pair_count": 120,
+  "max_rows_per_project_user_pair": 5,
+  "project_responsibility_writes": 0,
+  "blocking_reasons": []
+}

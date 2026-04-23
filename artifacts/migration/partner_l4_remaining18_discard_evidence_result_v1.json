@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_remaining18_discard_evidence_refresh",
+  "input": "artifacts/migration/partner_l4_nodb_refresh_rows_v1.csv",
+  "discard_rows": 18,
+  "expected_rows": 18,
+  "missing_columns": [],
+  "duplicate_identity_count": 0,
+  "blocker_counts": {
+    "missing_tax_number;non_primary_partner_source": 4,
+    "same_tax_multiple_names;deduplicated_group_not_create_only": 1,
+    "same_tax_multiple_names;deduplicated_group_not_create_only;non_primary_partner_source": 9,
+    "same_tax_multiple_names;unsafe_partner_name;deduplicated_group_not_create_only": 1,
+    "same_tax_multiple_names;unsafe_partner_name;deduplicated_group_not_create_only;non_primary_partner_source": 2,
+    "unsafe_partner_name;deduplicated_group_not_create_only;non_primary_partner_source": 1
+  },
+  "source_counts": {
+    "company_supplier": 12,
+    "cooperat_company": 2,
+    "supplier": 4
+  },
+  "outputs": {
+    "discard_targets": "artifacts/migration/partner_l4_remaining18_discard_targets_v1.csv"
+  },
+  "next_gate": "Run partner_rebuild_dry_run.py so these identities classify as discarded_validation."
+}

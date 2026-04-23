@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "mode": "project_member_responsibility_candidate_selection_summary",
+  "database": "sc_demo",
+  "db_writes": 0,
+  "total_pairs": 362,
+  "L0_candidates": 242,
+  "L1_candidates": 110,
+  "L2_candidates": 0,
+  "L3_candidates": 10,
+  "promotion_ready_pairs": 0,
+  "requires_role_source_pairs": 362,
+  "blocking_reasons": []
+}

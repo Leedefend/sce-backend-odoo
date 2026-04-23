@@ -1,0 +1,88 @@
+{
+  "status": "WRITE_BLOCKED",
+  "run_id": "ITER-2026-04-14-0030W",
+  "mode": "project_member_34_write_readiness_gate",
+  "database": "sc_demo",
+  "target_model": "project.responsibility",
+  "safe_slice_path": "/mnt/artifacts/migration/project_member_no_placeholder_safe_slice_v1.csv",
+  "safe_slice_rows": 34,
+  "expected_rows": 34,
+  "db_writes": 0,
+  "target_model_role_field": {
+    "name": "role_key",
+    "exists": true,
+    "required": true,
+    "selection": [
+      [
+        "manager",
+        "项目经理"
+      ],
+      [
+        "cost",
+        "成本负责人"
+      ],
+      [
+        "finance",
+        "财务"
+      ],
+      [
+        "cashier",
+        "出纳"
+      ],
+      [
+        "material",
+        "材料员"
+      ],
+      [
+        "safety",
+        "安全员"
+      ],
+      [
+        "quality",
+        "质检员"
+      ],
+      [
+        "document",
+        "资料员"
+      ]
+    ]
+  },
+  "source_columns": [
+    "ID",
+    "PID",
+    "USERID",
+    "XMID",
+    "XMMC",
+    "LRR",
+    "LRRID",
+    "LRSJ"
+  ],
+  "safe_slice_columns": [
+    "legacy_member_id",
+    "legacy_project_id",
+    "project_id",
+    "project_name",
+    "legacy_user_id",
+    "legacy_user_name",
+    "mapped_user_id",
+    "mapped_user_name",
+    "user_match_mode",
+    "source_project_name"
+  ],
+  "role_column_candidates": [],
+  "safe_slice_checks": {
+    "missing_safe_columns": [],
+    "placeholder_rows": [],
+    "duplicate_project_user_pairs": [],
+    "missing_identity_rows": [],
+    "unique_project_ids": 34,
+    "matched_project_records": 34,
+    "unique_user_ids": 2,
+    "matched_user_records": 2,
+    "existing_target_project_user_pairs": []
+  },
+  "blocking_reasons": [
+    "required_role_fact_missing"
+  ],
+  "decision": "Do not run project_member create-only write until a legacy role mapping is defined."
+}

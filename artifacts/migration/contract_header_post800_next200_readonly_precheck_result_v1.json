@@ -1,0 +1,231 @@
+{
+  "status": "PASS",
+  "mode": "contract_header_post800_next200_readonly_precheck",
+  "database": "sc_demo",
+  "db_container": "sc-backend-odoo-dev-db-1",
+  "db_writes": 0,
+  "input": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_header_next_slice200_after_800_v1.csv",
+  "row_count": 200,
+  "ready_for_write_design_rows": 200,
+  "blocked_rows": 0,
+  "existing_contract_rows": 0,
+  "project_match_rows": 102,
+  "partner_match_rows": 108,
+  "duplicate_input_legacy_ids": [],
+  "blocker_counts": {},
+  "write_authorization": "not_granted",
+  "contract_write_decision": "NO-GO until separate write design and explicit write authorization",
+  "rows": [
+    {
+      "legacy_contract_id": "9bcdce377da746999e52836ccb15582f",
+      "project_id": "2670",
+      "partner_id": "4146",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "9c3f861d16f04e1e974e36b4e1f9c894",
+      "project_id": "2444",
+      "partner_id": "3600",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "9c76fe2a272a475b9fd292a8956d8e0a",
+      "project_id": "2588",
+      "partner_id": "4470",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "9c85e7a2effa4d7ab1adb6586b6076d5",
+      "project_id": "2602",
+      "partner_id": "4041",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "9cc950d13afc4ca7b5dba2461133f647",
+      "project_id": "2572",
+      "partner_id": "5846",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "9d286fdd46eb4a37b881f0afca2744c3",
+      "project_id": "2444",
+      "partner_id": "5803",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "9e7831356e264ff2bea69af39bf6351c",
+      "project_id": "2588",
+      "partner_id": "125",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "9eb1d739f3254085957e678665cc4248",
+      "project_id": "2813",
+      "partner_id": "5871",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "9ebb815a6fc54ecd9fb028016afc5894",
+      "project_id": "2588",
+      "partner_id": "5909",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "9ec6f1faf46f4791a18e626bb68595ca",
+      "project_id": "2813",
+      "partner_id": "5871",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "9ef9d937336143ee90043b8874ea37f9",
+      "project_id": "2667",
+      "partner_id": "4947",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "9f4cfaa7205f4c39b27de7cc8ce5f98c",
+      "project_id": "2776",
+      "partner_id": "4103",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "9f8f87219c304e31be2a146f6f5737b7",
+      "project_id": "2813",
+      "partner_id": "5871",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "9fb396528ca6429db487f95b5b54180c",
+      "project_id": "2566",
+      "partner_id": "5830",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "a014d73af732436f95996c16ba8a618f",
+      "project_id": "2434",
+      "partner_id": "5800",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "a0293ddcbe96418d84be79668dc519e0",
+      "project_id": "2444",
+      "partner_id": "3955",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "a02c7db53944432989854b4a189423ba",
+      "project_id": "2165",
+      "partner_id": "4475",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "a11ccd4e7c4647f38d5c51e3fe9a1934",
+      "project_id": "2813",
+      "partner_id": "5871",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "a15ffbb7a7ca4ff78b7ebbcfcd337b08",
+      "project_id": "2813",
+      "partner_id": "5871",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "a1b387d05e324800a4a13b00fbea9650",
+      "project_id": "2813",
+      "partner_id": "5871",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "a210a718f88941888f5faa64ebcb92f7",
+      "project_id": "2324",
+      "partner_id": "4951",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "a22d06b55cda44b8b1b144a9c0c39e45",
+      "project_id": "2614",
+      "partner_id": "5070",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "a27dcadee63c45cea5d2dc2243b5edee",
+      "project_id": "2588",
+      "partner_id": "4010",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "a2957d704ac94348b571b3f75c0ac8ff",
+      "project_id": "2444",
+      "partner_id": "5803",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "a2b4eb68c3e748a490d2a652f50aec6f",
+      "project_id": "2661",
+      "partner_id": "3935",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "a2bc5a7c0e4a45f1880046b19482cbb1",
+      "project_id": "2645",
+      "partner_id": "3655",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "a2e1cc5c7f7c4f3f9fd9f5ab14fa7b6d",
+      "project_id": "2813",
+      "partner_id": "5871",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "a343ac7bc6fa4148b441bfc958ca1dc7",
+      "project_id": "2444",
+      "partner_id": "5803",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "a34bb7d3986a46a683883e369e706380",
+      "project_id": "2715",
+      "partner_id": "4741",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "a389168735db4ea5a83a5e3b06112c6b",
+      "project_id": "2703",
+      "partner_id": "5925",
+      "status": "READY_FOR_WRITE_DESIGN",
+      "blockers": []
+    }
+  ],
+  "next_step": "open no-DB write design for the next 200-row slice"
+}

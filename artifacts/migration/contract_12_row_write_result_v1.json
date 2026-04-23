@@ -1,0 +1,120 @@
+{
+  "status": "PASS",
+  "mode": "contract_12_row_create_only_write",
+  "database": "sc_demo",
+  "input": "/mnt/artifacts/migration/contract_12_row_write_authorization_payload_v1.csv",
+  "row_count": 12,
+  "safe_field_count": 12,
+  "rollback_key": "legacy_contract_id",
+  "summary": {
+    "created": 12,
+    "updated": 0,
+    "errors": 0,
+    "post_write_identity_count": 12,
+    "rollback_targets": 12
+  },
+  "created": [
+    {
+      "contract_id": 72,
+      "legacy_contract_id": "0a2327c0e84a47ebaf4218101ec2fdd3",
+      "name": "CONIN2600035",
+      "subject": "绵竹市城区停车场建设项目二期设计施工（一标段）项目模板脚手架专业分包工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 73,
+      "legacy_contract_id": "102f1039d9bf4d7e8cb2946dbf2aab72",
+      "name": "CONIN2600036",
+      "subject": "中核中原建设 2022-2023 年度华北、西北区域脚手架专业分包框架协议",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 74,
+      "legacy_contract_id": "2642d1906f134f568ddcf9b818b96578",
+      "name": "CONIN2600037",
+      "subject": "广东南华工商职业学院清远校区二期建设工程 （ 学 生生活区、教学行政区）",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 75,
+      "legacy_contract_id": "359ceebc083241caab1db9b39a2c33ba",
+      "name": "CONIN2600038",
+      "subject": "中国移动四川公司市州分公司2025年—2028年管理用房及生产枢纽楼公共区域零星维修项目的标包22 天府",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 76,
+      "legacy_contract_id": "36b4b9472702459e80a3cac11f08b27d",
+      "name": "CONIN2600039",
+      "subject": "中国移动四川公司2025-2027年全省汇聚机房土建工程施工集中采购项目（标包4-乐山分公司）框架协议-上市公司",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 77,
+      "legacy_contract_id": "3711d3dac7ba46118043cafaae7eb45c",
+      "name": "CONIN2600040",
+      "subject": "龙岗001-20井气田水回注安装工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 78,
+      "legacy_contract_id": "60b982a1089a4503a46fa3954832143d",
+      "name": "CONIN2600041",
+      "subject": "某部机关院内及教导队营房维修项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 79,
+      "legacy_contract_id": "81dbe78d87334ee8914ac5e704aa6a28",
+      "name": "CONIN2600042",
+      "subject": "中国移动四川西区二枢纽“车库改机房”土建工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 80,
+      "legacy_contract_id": "ab66b22d46754e96afe821d9cc4c49f3",
+      "name": "CONIN2600043",
+      "subject": "德阳黄河路（黄山路至秦岭山路）提档升级改造工程等7个基础设施建设项目融资 EPC工程绵远河（青衣江路大桥至钱塘江路大桥）生态整治工程（园路JLC）分包合同",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 81,
+      "legacy_contract_id": "bbf50c8fdc56423eb1a4339ef4eb2ab3",
+      "name": "CONIN2600044",
+      "subject": "德阳黄河路（黄山路至秦岭山路）提档升级改造工程等7个基础设施建设项目融资EPC工程绵远河（青衣江路大桥至钱塘江路大桥）生态整治工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 82,
+      "legacy_contract_id": "d55e6a51a92a41fe8a7cc79f2cd6ca50",
+      "name": "CONIN2600045",
+      "subject": "ALC预制隔墙板供应及施工分包合同",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 83,
+      "legacy_contract_id": "f8907855353b4e09a8101022cac1433e",
+      "name": "CONIN2600046",
+      "subject": "准环对称仿星器项目",
+      "type": "out",
+      "state": "draft"
+    }
+  ],
+  "post_errors": [],
+  "artifacts": {
+    "pre_write_snapshot": "/mnt/artifacts/migration/contract_12_row_pre_write_snapshot_v1.csv",
+    "post_write_snapshot": "/mnt/artifacts/migration/contract_12_row_post_write_snapshot_v1.csv",
+    "rollback_target_list": "/mnt/artifacts/migration/contract_12_row_rollback_target_list_v1.csv"
+  }
+}

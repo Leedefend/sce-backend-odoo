@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "mode": "project_member_duplicate_relation_neutral_final355_write",
+  "database": "sc_demo",
+  "run_id": "ITER-2026-04-15-2002N",
+  "target_model": "sc.project.member.staging",
+  "created": 355,
+  "updated": 0,
+  "rollback_target_rows": 355,
+  "project_responsibility_writes": 0,
+  "visibility_changed": false,
+  "errors": [],
+  "artifacts": {
+    "pre_visibility": "/mnt/artifacts/migration/project_member_duplicate_relation_final355_pre_visibility_v1.json",
+    "post_visibility": "/mnt/artifacts/migration/project_member_duplicate_relation_final355_post_visibility_v1.json",
+    "rollback_targets": "/mnt/artifacts/migration/project_member_duplicate_relation_final355_rollback_targets_v1.csv"
+  }
+}

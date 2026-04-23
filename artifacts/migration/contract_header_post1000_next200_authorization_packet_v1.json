@@ -1,0 +1,43 @@
+{
+  "status": "PASS",
+  "mode": "contract_header_post1000_next200_authorization_packet_no_db",
+  "database": "sc_demo",
+  "db_writes": 0,
+  "input_design": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_header_post1000_next200_write_design_result_v1.json",
+  "input_design_rows": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_header_post1000_next200_write_design_rows_v1.csv",
+  "payload_csv": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_header_post1000_next200_authorization_payload_v1.csv",
+  "payload_rows": 200,
+  "blocked_rows": 0,
+  "blockers": [],
+  "write_authorization": "packet_ready_write_not_executed",
+  "write_scope": {
+    "model": "construction.contract",
+    "operation": "create_only",
+    "row_count": 200,
+    "allowed_fields": [
+      "legacy_contract_id",
+      "legacy_project_id",
+      "project_id",
+      "partner_id",
+      "subject",
+      "type",
+      "legacy_contract_no",
+      "legacy_document_no",
+      "legacy_external_contract_no",
+      "legacy_status",
+      "legacy_deleted_flag",
+      "legacy_counterparty_text"
+    ],
+    "rollback_key": "legacy_contract_id",
+    "forbidden_operations": [
+      "update",
+      "unlink",
+      "workflow_replay",
+      "line_creation",
+      "payment_linkage",
+      "settlement_linkage",
+      "accounting_semantics"
+    ]
+  },
+  "next_step": "open dedicated DB write batch for the post1000 next 200-row payload"
+}

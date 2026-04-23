@@ -1,0 +1,28 @@
+2026-04-17 13:56:32,417 2914 INFO ? odoo: Odoo version 17.0-20251222 
+2026-04-17 13:56:32,418 2914 INFO ? odoo: Using configuration file at /var/lib/odoo/odoo.conf 
+2026-04-17 13:56:32,418 2914 INFO ? odoo: addons paths: ['/usr/lib/python3/dist-packages/odoo/addons', '/var/lib/odoo/addons/17.0', '/mnt/extra-addons', '/mnt/addons_external/oca_server_ux'] 
+2026-04-17 13:56:32,418 2914 INFO ? odoo: database: odoo@db:5432 
+2026-04-17 13:56:32,490 2914 INFO ? odoo.addons.base.models.ir_actions_report: Will use the Wkhtmltopdf binary at /usr/local/bin/wkhtmltopdf 
+2026-04-17 13:56:33,964 2914 INFO ? odoo.addons.smart_core.app_config_engine.controllers: ✅ smart_core controllers __init__.py 已加载 - contract_api imported 
+2026-04-17 13:56:33,964 2914 INFO ? odoo.addons.smart_core.app_config_engine: ✅ smart_core __init__.py 已加载 
+2026-04-17 13:56:37,487 2914 INFO ? odoo.addons.smart_core: ✅ Smart Core Engine 模块已加载 
+2026-04-17 13:56:37,500 2914 INFO ? odoo.service.server: Initiating shutdown 
+2026-04-17 13:56:37,500 2914 INFO ? odoo.service.server: Hit CTRL-C again or send a second signal to force the shutdown. 
+2026-04-17 13:56:37,518 2914 INFO sc_demo odoo.modules.loading: loading 1 modules... 
+2026-04-17 13:56:37,523 2914 INFO sc_demo odoo.modules.loading: 1 modules loaded in 0.00s, 0 queries (+0 extra) 
+2026-04-17 13:56:37,788 2914 INFO sc_demo odoo.modules.loading: loading 73 modules... 
+2026-04-17 13:56:41,064 2914 INFO sc_demo odoo.modules.loading: 73 modules loaded in 3.28s, 0 queries (+0 extra) 
+2026-04-17 13:56:41,205 2914 INFO sc_demo odoo.modules.loading: Modules loaded. 
+2026-04-17 13:56:41,210 2914 INFO sc_demo odoo.modules.registry: Registry loaded in 3.709s 
+{
+  "already_synced_count": 701,
+  "database": "sc_demo",
+  "mode": "check",
+  "needs_sync_count": 0,
+  "rollback_csv": "/mnt/artifacts/migration/project_continuity_downstream_fact_state_sync_rollback_v1.csv",
+  "run_id": "ITER-2026-04-17-PROJECT-CONTINUITY-TRANSITION-GUARD-RECOVERY",
+  "sample_ids": [],
+  "snapshot_csv": "/mnt/artifacts/migration/project_continuity_downstream_fact_state_sync_snapshot_v1.csv",
+  "target_total": 701,
+  "written_count": 0
+}

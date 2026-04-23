@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_unsafe_name_discard_evidence_refresh",
+  "input": "artifacts/migration/partner_l4_unsafe_name_policy_screen_rows_v1.csv",
+  "discard_rows": 1110,
+  "expected_discard_rows": 1110,
+  "missing_columns": [],
+  "duplicate_identity_count": 0,
+  "reason_counts": {
+    "blank_or_numeric": 3,
+    "expense_or_invoice_marker": 13,
+    "generic_non_entity_name": 4,
+    "likely_person_name": 1090
+  },
+  "source_counts": {
+    "company": 719,
+    "company;supplier": 391
+  },
+  "outputs": {
+    "discard_targets": "artifacts/migration/partner_l4_unsafe_name_discard_targets_v1.csv",
+    "discard_samples": "artifacts/migration/partner_l4_unsafe_name_discard_samples_v1.csv"
+  },
+  "next_gate": "Run partner_rebuild_dry_run.py so discard targets are classified as discarded_validation; no DB write is authorized."
+}

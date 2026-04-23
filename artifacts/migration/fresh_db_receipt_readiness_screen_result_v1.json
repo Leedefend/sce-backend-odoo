@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_receipt_readiness_screen",
+  "source_rows": 7412,
+  "expected_source_rows": 7412,
+  "screen_rows": 7412,
+  "contract_reference_count": 1389,
+  "project_reference_count": 755,
+  "partner_legacy_reference_count": 4797,
+  "bucket_counts": {
+    "auxiliary_or_discard_zero_amount": 1908,
+    "blocked_contract_not_replayed": 121,
+    "blocked_missing_contract_link": 3630,
+    "blocked_partner_not_replayed": 21,
+    "core_candidate_ready": 1683,
+    "discard_deleted": 49
+  },
+  "db_writes": 0,
+  "decision": "receipt_readiness_screen_complete",
+  "next_step": "open dedicated receipt policy screen for core candidates and blocker handling"
+}

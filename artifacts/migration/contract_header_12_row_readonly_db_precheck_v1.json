@@ -1,0 +1,282 @@
+{
+  "status": "PASS",
+  "mode": "contract_header_12_row_readonly_db_precheck",
+  "database": "sc_demo",
+  "input": "/mnt/artifacts/migration/contract_header_12_row_dry_run_rows_v1.csv",
+  "row_count": 12,
+  "ready_for_write_authorization_gate_rows": 12,
+  "blocked_rows": 0,
+  "type_counts": {
+    "out": 12
+  },
+  "blocker_counts": {},
+  "write_authorization": "not_granted",
+  "contract_write_decision": "NO-GO until separate explicit contract write authorization",
+  "rows": [
+    {
+      "legacy_contract_id": "0a2327c0e84a47ebaf4218101ec2fdd3",
+      "project_id": "2235",
+      "partner_id": "107",
+      "type": "out",
+      "existing_contract_count": 0,
+      "project_exists": true,
+      "partner_exists": true,
+      "tax": {
+        "type_tax_use": "sale",
+        "expected_name": "销项VAT 9%",
+        "expected_amount": 9.0,
+        "candidate_count": 2,
+        "exact_name_count": 1,
+        "picked_tax_id": 1,
+        "picked_tax_active": true
+      },
+      "sequence_code": "construction.contract.income",
+      "sequence_count": 1,
+      "status": "READY_FOR_WRITE_AUTHORIZATION_GATE",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "102f1039d9bf4d7e8cb2946dbf2aab72",
+      "project_id": "2222",
+      "partner_id": "109",
+      "type": "out",
+      "existing_contract_count": 0,
+      "project_exists": true,
+      "partner_exists": true,
+      "tax": {
+        "type_tax_use": "sale",
+        "expected_name": "销项VAT 9%",
+        "expected_amount": 9.0,
+        "candidate_count": 2,
+        "exact_name_count": 1,
+        "picked_tax_id": 1,
+        "picked_tax_active": true
+      },
+      "sequence_code": "construction.contract.income",
+      "sequence_count": 1,
+      "status": "READY_FOR_WRITE_AUTHORIZATION_GATE",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "2642d1906f134f568ddcf9b818b96578",
+      "project_id": "2172",
+      "partner_id": "108",
+      "type": "out",
+      "existing_contract_count": 0,
+      "project_exists": true,
+      "partner_exists": true,
+      "tax": {
+        "type_tax_use": "sale",
+        "expected_name": "销项VAT 9%",
+        "expected_amount": 9.0,
+        "candidate_count": 2,
+        "exact_name_count": 1,
+        "picked_tax_id": 1,
+        "picked_tax_active": true
+      },
+      "sequence_code": "construction.contract.income",
+      "sequence_count": 1,
+      "status": "READY_FOR_WRITE_AUTHORIZATION_GATE",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "359ceebc083241caab1db9b39a2c33ba",
+      "project_id": "2174",
+      "partner_id": "118",
+      "type": "out",
+      "existing_contract_count": 0,
+      "project_exists": true,
+      "partner_exists": true,
+      "tax": {
+        "type_tax_use": "sale",
+        "expected_name": "销项VAT 9%",
+        "expected_amount": 9.0,
+        "candidate_count": 2,
+        "exact_name_count": 1,
+        "picked_tax_id": 1,
+        "picked_tax_active": true
+      },
+      "sequence_code": "construction.contract.income",
+      "sequence_count": 1,
+      "status": "READY_FOR_WRITE_AUTHORIZATION_GATE",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "36b4b9472702459e80a3cac11f08b27d",
+      "project_id": "2231",
+      "partner_id": "115",
+      "type": "out",
+      "existing_contract_count": 0,
+      "project_exists": true,
+      "partner_exists": true,
+      "tax": {
+        "type_tax_use": "sale",
+        "expected_name": "销项VAT 9%",
+        "expected_amount": 9.0,
+        "candidate_count": 2,
+        "exact_name_count": 1,
+        "picked_tax_id": 1,
+        "picked_tax_active": true
+      },
+      "sequence_code": "construction.contract.income",
+      "sequence_count": 1,
+      "status": "READY_FOR_WRITE_AUTHORIZATION_GATE",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "3711d3dac7ba46118043cafaae7eb45c",
+      "project_id": "2194",
+      "partner_id": "114",
+      "type": "out",
+      "existing_contract_count": 0,
+      "project_exists": true,
+      "partner_exists": true,
+      "tax": {
+        "type_tax_use": "sale",
+        "expected_name": "销项VAT 9%",
+        "expected_amount": 9.0,
+        "candidate_count": 2,
+        "exact_name_count": 1,
+        "picked_tax_id": 1,
+        "picked_tax_active": true
+      },
+      "sequence_code": "construction.contract.income",
+      "sequence_count": 1,
+      "status": "READY_FOR_WRITE_AUTHORIZATION_GATE",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "60b982a1089a4503a46fa3954832143d",
+      "project_id": "2223",
+      "partner_id": "91",
+      "type": "out",
+      "existing_contract_count": 0,
+      "project_exists": true,
+      "partner_exists": true,
+      "tax": {
+        "type_tax_use": "sale",
+        "expected_name": "销项VAT 9%",
+        "expected_amount": 9.0,
+        "candidate_count": 2,
+        "exact_name_count": 1,
+        "picked_tax_id": 1,
+        "picked_tax_active": true
+      },
+      "sequence_code": "construction.contract.income",
+      "sequence_count": 1,
+      "status": "READY_FOR_WRITE_AUTHORIZATION_GATE",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "81dbe78d87334ee8914ac5e704aa6a28",
+      "project_id": "2131",
+      "partner_id": "115",
+      "type": "out",
+      "existing_contract_count": 0,
+      "project_exists": true,
+      "partner_exists": true,
+      "tax": {
+        "type_tax_use": "sale",
+        "expected_name": "销项VAT 9%",
+        "expected_amount": 9.0,
+        "candidate_count": 2,
+        "exact_name_count": 1,
+        "picked_tax_id": 1,
+        "picked_tax_active": true
+      },
+      "sequence_code": "construction.contract.income",
+      "sequence_count": 1,
+      "status": "READY_FOR_WRITE_AUTHORIZATION_GATE",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "ab66b22d46754e96afe821d9cc4c49f3",
+      "project_id": "2199",
+      "partner_id": "102",
+      "type": "out",
+      "existing_contract_count": 0,
+      "project_exists": true,
+      "partner_exists": true,
+      "tax": {
+        "type_tax_use": "sale",
+        "expected_name": "销项VAT 9%",
+        "expected_amount": 9.0,
+        "candidate_count": 2,
+        "exact_name_count": 1,
+        "picked_tax_id": 1,
+        "picked_tax_active": true
+      },
+      "sequence_code": "construction.contract.income",
+      "sequence_count": 1,
+      "status": "READY_FOR_WRITE_AUTHORIZATION_GATE",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "bbf50c8fdc56423eb1a4339ef4eb2ab3",
+      "project_id": "2209",
+      "partner_id": "102",
+      "type": "out",
+      "existing_contract_count": 0,
+      "project_exists": true,
+      "partner_exists": true,
+      "tax": {
+        "type_tax_use": "sale",
+        "expected_name": "销项VAT 9%",
+        "expected_amount": 9.0,
+        "candidate_count": 2,
+        "exact_name_count": 1,
+        "picked_tax_id": 1,
+        "picked_tax_active": true
+      },
+      "sequence_code": "construction.contract.income",
+      "sequence_count": 1,
+      "status": "READY_FOR_WRITE_AUTHORIZATION_GATE",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "d55e6a51a92a41fe8a7cc79f2cd6ca50",
+      "project_id": "2126",
+      "partner_id": "105",
+      "type": "out",
+      "existing_contract_count": 0,
+      "project_exists": true,
+      "partner_exists": true,
+      "tax": {
+        "type_tax_use": "sale",
+        "expected_name": "销项VAT 9%",
+        "expected_amount": 9.0,
+        "candidate_count": 2,
+        "exact_name_count": 1,
+        "picked_tax_id": 1,
+        "picked_tax_active": true
+      },
+      "sequence_code": "construction.contract.income",
+      "sequence_count": 1,
+      "status": "READY_FOR_WRITE_AUTHORIZATION_GATE",
+      "blockers": []
+    },
+    {
+      "legacy_contract_id": "f8907855353b4e09a8101022cac1433e",
+      "project_id": "2125",
+      "partner_id": "107",
+      "type": "out",
+      "existing_contract_count": 0,
+      "project_exists": true,
+      "partner_exists": true,
+      "tax": {
+        "type_tax_use": "sale",
+        "expected_name": "销项VAT 9%",
+        "expected_amount": 9.0,
+        "candidate_count": 2,
+        "exact_name_count": 1,
+        "picked_tax_id": 1,
+        "picked_tax_active": true
+      },
+      "sequence_code": "construction.contract.income",
+      "sequence_count": 1,
+      "status": "READY_FOR_WRITE_AUTHORIZATION_GATE",
+      "blockers": []
+    }
+  ],
+  "next_step": "if PASS, open a dedicated contract write authorization packet; otherwise fix blockers first"
+}

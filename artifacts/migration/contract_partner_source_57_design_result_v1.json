@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "mode": "contract_partner_source_57_design",
+  "db_writes": 0,
+  "input_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_partner_anchor_recovery_screen_rows_v1.csv",
+  "input_rows": 197,
+  "design_rows": 57,
+  "distinct_counterparties": 12,
+  "source_type_counts": {
+    "company": 57
+  },
+  "row_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_partner_source_57_design_rows_v1.csv",
+  "decision": "partner_source_57_design_ready",
+  "write_authorization": "not_granted",
+  "next_step": "open migration acceleration analysis and bus plan before any DB write",
+  "errors": []
+}

@@ -1,0 +1,17 @@
+2026-04-17 14:01:56,040 3265 INFO ? odoo: Odoo version 17.0-20251222 
+2026-04-17 14:01:56,041 3265 INFO ? odoo: Using configuration file at /var/lib/odoo/odoo.conf 
+2026-04-17 14:01:56,041 3265 INFO ? odoo: addons paths: ['/usr/lib/python3/dist-packages/odoo/addons', '/var/lib/odoo/addons/17.0', '/mnt/extra-addons', '/mnt/addons_external/oca_server_ux'] 
+2026-04-17 14:01:56,041 3265 INFO ? odoo: database: odoo@db:5432 
+2026-04-17 14:01:56,186 3265 INFO ? odoo.addons.base.models.ir_actions_report: Will use the Wkhtmltopdf binary at /usr/local/bin/wkhtmltopdf 
+2026-04-17 14:01:58,747 3265 INFO ? odoo.addons.smart_core.app_config_engine.controllers: ✅ smart_core controllers __init__.py 已加载 - contract_api imported 
+2026-04-17 14:01:58,748 3265 INFO ? odoo.addons.smart_core.app_config_engine: ✅ smart_core __init__.py 已加载 
+2026-04-17 14:02:04,820 3265 INFO ? odoo.addons.smart_core: ✅ Smart Core Engine 模块已加载 
+2026-04-17 14:02:04,839 3265 INFO ? odoo.service.server: Initiating shutdown 
+2026-04-17 14:02:04,839 3265 INFO ? odoo.service.server: Hit CTRL-C again or send a second signal to force the shutdown. 
+2026-04-17 14:02:04,868 3265 INFO sc_demo odoo.modules.loading: loading 1 modules... 
+2026-04-17 14:02:04,876 3265 INFO sc_demo odoo.modules.loading: 1 modules loaded in 0.01s, 0 queries (+0 extra) 
+2026-04-17 14:02:05,338 3265 INFO sc_demo odoo.modules.loading: loading 73 modules... 
+2026-04-17 14:02:10,832 3265 INFO sc_demo odoo.modules.loading: 73 modules loaded in 5.49s, 0 queries (+0 extra) 
+2026-04-17 14:02:11,067 3265 INFO sc_demo odoo.modules.loading: Modules loaded. 
+2026-04-17 14:02:11,074 3265 INFO sc_demo odoo.modules.registry: Registry loaded in 6.234s 
+BUSINESS_TOPIC_REPLAY_VERIFY={"contract": {"draft": 108, "missing_required_links": 0, "total": 6793, "usable": 6685}, "database": "sc_demo", "payment": {"company_linked": 12108, "contract_linked": 12108, "done_validated": 12194, "missing_company": 17994, "missing_contract": 17994, "total": 30102}, "payment_contract_company_mismatch": {"mismatch": 0}, "project": {"draft": 55, "running": 701, "total": 756}}

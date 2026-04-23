@@ -1,0 +1,7511 @@
+{
+  "status": "PASS",
+  "mode": "legacy_db_readonly_full_rebuild_blueprint_probe",
+  "database": "LegacyDb",
+  "top_tables": [
+    {
+      "schema": "dbo",
+      "table": "T_Base_MaterialDetail",
+      "rows": 2279734
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_function_RecordUserClick",
+      "rows": 510288
+    },
+    {
+      "schema": "dbo",
+      "table": "S_Execute_Detail_Step",
+      "rows": 165532
+    },
+    {
+      "schema": "dbo",
+      "table": "S_Execute_Approval",
+      "rows": 163245
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_rolefunction_History",
+      "rows": 143089
+    },
+    {
+      "schema": "dbo",
+      "table": "C_Base_CBFL",
+      "rows": 130605
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_SYSTEM_FILE",
+      "rows": 126967
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_system_loginData",
+      "rows": 122046
+    },
+    {
+      "schema": "dbo",
+      "table": "CheckInData",
+      "rows": 106208
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_LOWCODE_HISTORYDATA",
+      "rows": 97037
+    },
+    {
+      "schema": "dbo",
+      "table": "S_Execute_OtherReader",
+      "rows": 87759
+    },
+    {
+      "schema": "dbo",
+      "table": "S_Execute_DetailStatus",
+      "rows": 81622
+    },
+    {
+      "schema": "dbo",
+      "table": "T_BASE_TASKDONE",
+      "rows": 78822
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_SYSTEM_LOG",
+      "rows": 78350
+    },
+    {
+      "schema": "dbo",
+      "table": "T_System_UserAndXXGL_History",
+      "rows": 70871
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_SYSTEM_MOBILE_PUSHLOG",
+      "rows": 56258
+    },
+    {
+      "schema": "dbo",
+      "table": "T_BILL_FILE",
+      "rows": 51964
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_SYSTEM_APILOG",
+      "rows": 47511
+    },
+    {
+      "schema": "dbo",
+      "table": "C_JXXP_ZYFPJJD_CB",
+      "rows": 25393
+    },
+    {
+      "schema": "dbo",
+      "table": "S_Execute_Detail_Step_bak",
+      "rows": 25314
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_SYSTEM_PROJECT_USER",
+      "rows": 21390
+    },
+    {
+      "schema": "dbo",
+      "table": "PM_RYYDGL",
+      "rows": 20804
+    },
+    {
+      "schema": "dbo",
+      "table": "T_System_UserAndXXGL",
+      "rows": 20000
+    },
+    {
+      "schema": "dbo",
+      "table": "S_Execute_Approval_bak",
+      "rows": 19182
+    },
+    {
+      "schema": "dbo",
+      "table": "S_Execute_AuditBill_RecordPrintCount",
+      "rows": 18442
+    },
+    {
+      "schema": "dbo",
+      "table": "S_FieldMaintenance",
+      "rows": 17801
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003271019042_BuildMaterialDetail",
+      "rows": 17502
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_201907231134347_BuildMaterialDetail",
+      "rows": 17500
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202206021500257_BuildMaterialDetail",
+      "rows": 17459
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202205190949085_BuildMaterialDetail",
+      "rows": 17453
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_201909290947286_BuildMaterialDetail",
+      "rows": 17452
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202108161639218_BuildMaterialDetail",
+      "rows": 17452
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_20190222519124_AZ_SD_ZS_CaiLiaoKuMoBan_BuildMaterialDetail",
+      "rows": 17451
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_201907260854522_BuildMaterialDetail",
+      "rows": 17451
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_201908211511190_BuildMaterialDetail",
+      "rows": 17451
+    },
+    {
+      "schema": "dbo",
+      "table": "C_ZFSQGL_CB",
+      "rows": 17413
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_201810261713304_BuildMaterialDetail_Hand",
+      "rows": 17128
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_201810261046364_BuildMaterialDetail_Hand",
+      "rows": 16945
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_201810260944225_BuildMaterialDetail_Hand",
+      "rows": 16942
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_rolefunction",
+      "rows": 16780
+    },
+    {
+      "schema": "dbo",
+      "table": "C_JXXP_ZYFPJJD",
+      "rows": 16616
+    },
+    {
+      "schema": "dbo",
+      "table": "S_Execute_DetailStatus_bak",
+      "rows": 16077
+    },
+    {
+      "schema": "dbo",
+      "table": "T_FK_Supplier_CB",
+      "rows": 15966
+    },
+    {
+      "schema": "dbo",
+      "table": "C_JXXP_ZYFPJJD_CB_BAK222",
+      "rows": 15222
+    },
+    {
+      "schema": "dbo",
+      "table": "S_Execute_CancelRecord",
+      "rows": 13996
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202005061445037_BuildMaterialDetail_Hand",
+      "rows": 13960
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202007161539095_BuildMaterialDetail_Hand",
+      "rows": 13921
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202004271103248_BuildMaterialDetail_Hand",
+      "rows": 13873
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202108020935307_BuildMaterialDetail",
+      "rows": 13873
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202009301653293_BuildMaterialDetail_Hand",
+      "rows": 13866
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202005261006321_BuildMaterialDetail_Hand",
+      "rows": 13861
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202004070907036_BuildMaterialDetail_Hand",
+      "rows": 13859
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202007021708212_BuildMaterialDetail_Hand",
+      "rows": 13858
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202010161423414_BuildMaterialDetail_Hand",
+      "rows": 13856
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202005211022542_BuildMaterialDetail_Hand",
+      "rows": 13855
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202010131435141_BuildMaterialDetail_Hand",
+      "rows": 13853
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202011021435303_BuildMaterialDetail_Hand",
+      "rows": 13853
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202009291802036_BuildMaterialDetail_Hand",
+      "rows": 13850
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202010150845063_BuildMaterialDetail_Hand",
+      "rows": 13850
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202005291148435_BuildMaterialDetail_Hand",
+      "rows": 13849
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003121707026_BuildMaterialDetail_Hand",
+      "rows": 13848
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202004271712258_BuildMaterialDetail_Hand",
+      "rows": 13848
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202006111634052_BuildMaterialDetail_Hand",
+      "rows": 13848
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003231602320_BuildMaterialDetail_Hand",
+      "rows": 13846
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202005071424343_BuildMaterialDetail_Hand",
+      "rows": 13846
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_201906042059350_BuildMaterialDetail_Hand",
+      "rows": 13845
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003121639034_BuildMaterialDetail_Hand",
+      "rows": 13845
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202005061645210_BuildMaterialDetail_Hand",
+      "rows": 13845
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_201512101507259_BuildMaterialDetail",
+      "rows": 13844
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202009010909568_BuildMaterialDetail_Hand",
+      "rows": 13844
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202011031112302_BuildMaterialDetail_Hand",
+      "rows": 13844
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202011110926425_BuildMaterialDetail_Hand",
+      "rows": 13844
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_201512161820265_BuildMaterialDetail_Hand",
+      "rows": 13843
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003311419061_BuildMaterialDetail_Hand",
+      "rows": 13843
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202010221204118_BuildMaterialDetail_Hand",
+      "rows": 13843
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202109161716376_BuildMaterialDetail",
+      "rows": 13843
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003121625482_BuildMaterialDetail_Hand",
+      "rows": 13842
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202004131116195_BuildMaterialDetail_Hand",
+      "rows": 13842
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202009141031428_BuildMaterialDetail_Hand",
+      "rows": 13842
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_201510101749184_BuildMaterialDetail",
+      "rows": 13841
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003181505485_BuildMaterialDetail_Hand",
+      "rows": 13841
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_20140412_shisiju_BuildMaterialDetail",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_20140412_tumu_BuildMaterialDetail",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003121513042_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003121745079_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003121754075_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003131122235_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003131123402_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003160843595_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003171454297_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003181504543_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003201106476_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003201117020_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003201118367_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003201641313_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003241044321_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003261742496_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003261746174_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003261758499_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003261759317_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003261800452_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003261800555_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003261802446_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003271730531_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003301458518_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003301626489_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202003311442089_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202004101104395_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202004101107153_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202004101114005_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202004101122538_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202004131024344_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202004141543360_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202004151531481_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202004170943426_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202004241133172_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202004271054137_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202004271111130_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202004271625386_BuildMaterialDetail_Hand",
+      "rows": 13840
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_Import_202004271703151_BuildMaterialDetail_Hand",
+      "rows": 13840
+    }
+  ],
+  "core_table_columns": {
+    "BASE_SYSTEM_PROJECT": [
+      {
+        "ordinal": 1,
+        "name": "ID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": false
+      },
+      {
+        "ordinal": 2,
+        "name": "PID",
+        "type": "bigint",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 3,
+        "name": "XMMC",
+        "type": "nvarchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 4,
+        "name": "PROJECT_CODE",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 5,
+        "name": "SHORT_NAME",
+        "type": "nvarchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 6,
+        "name": "PROJECT_ENV",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 7,
+        "name": "SPECIALTY_TYPE_ID",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 8,
+        "name": "SPECIALTY_TYPE_NAME",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 9,
+        "name": "PRICE_METHOD",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 10,
+        "name": "CONTRACT_STATUS",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 11,
+        "name": "IS_COMPLETE_PROJECT",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 12,
+        "name": "COMPANYID",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 13,
+        "name": "COMPANYNAME",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 14,
+        "name": "NATURE",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 15,
+        "name": "TAX_ORGANIZATION_ID",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 16,
+        "name": "TAX_ORGANIZATION_NAME",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 17,
+        "name": "ACCOUNT_NAME",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 18,
+        "name": "ACCOUNT_NUMBER",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 19,
+        "name": "ACCOUNT_BANK",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 20,
+        "name": "DETAIL_ADDRESS",
+        "type": "nvarchar",
+        "max_length": 2000,
+        "nullable": true
+      },
+      {
+        "ordinal": 21,
+        "name": "PROFILE",
+        "type": "nvarchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 22,
+        "name": "AREA",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 23,
+        "name": "COST",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 24,
+        "name": "MANAGE_FEE_RATIO",
+        "type": "decimal",
+        "max_length": 9,
+        "nullable": true
+      },
+      {
+        "ordinal": 25,
+        "name": "IS_SHARED_BASE",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 26,
+        "name": "SORT",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 27,
+        "name": "NOTE",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 28,
+        "name": "FJ",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 29,
+        "name": "LRR",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 30,
+        "name": "LRRID",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 31,
+        "name": "LRSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 32,
+        "name": "XGR",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 33,
+        "name": "XGRID",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 34,
+        "name": "XGSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 35,
+        "name": "DEL",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 36,
+        "name": "PROJECTMANAGER",
+        "type": "nvarchar",
+        "max_length": 400,
+        "nullable": true
+      },
+      {
+        "ordinal": 37,
+        "name": "TECHNICALRESPONSIBILITY",
+        "type": "nvarchar",
+        "max_length": 400,
+        "nullable": true
+      },
+      {
+        "ordinal": 38,
+        "name": "OWNERSUNIT",
+        "type": "nvarchar",
+        "max_length": 400,
+        "nullable": true
+      },
+      {
+        "ordinal": 39,
+        "name": "OWNERSCONTACT",
+        "type": "nvarchar",
+        "max_length": 400,
+        "nullable": true
+      },
+      {
+        "ordinal": 40,
+        "name": "OWNERSCONTACTPHONE",
+        "type": "nvarchar",
+        "max_length": 200,
+        "nullable": true
+      },
+      {
+        "ordinal": 41,
+        "name": "SUPERVISIONUNIT",
+        "type": "nvarchar",
+        "max_length": 400,
+        "nullable": true
+      },
+      {
+        "ordinal": 42,
+        "name": "SUPERVISORYENGINEER",
+        "type": "nvarchar",
+        "max_length": 200,
+        "nullable": true
+      },
+      {
+        "ordinal": 43,
+        "name": "SUPERVISOPHONE",
+        "type": "nvarchar",
+        "max_length": 200,
+        "nullable": true
+      },
+      {
+        "ordinal": 44,
+        "name": "CONTRACTAGREEMENT",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 45,
+        "name": "PROJECTFILE",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 46,
+        "name": "PROJECTOVERVIEW",
+        "type": "nvarchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 47,
+        "name": "CONTRACTINGMETHOD",
+        "type": "nvarchar",
+        "max_length": 400,
+        "nullable": true
+      },
+      {
+        "ordinal": 48,
+        "name": "PROJECT_NATURE",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 49,
+        "name": "IS_MACHINTERIAL_LIBRARY",
+        "type": "nvarchar",
+        "max_length": 400,
+        "nullable": true
+      },
+      {
+        "ordinal": 50,
+        "name": "WBHTID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 51,
+        "name": "OTHER_SYSTEM_ID",
+        "type": "nvarchar",
+        "max_length": 400,
+        "nullable": true
+      },
+      {
+        "ordinal": 52,
+        "name": "OTHER_SYSTEM_CODE",
+        "type": "nvarchar",
+        "max_length": 400,
+        "nullable": true
+      },
+      {
+        "ordinal": 53,
+        "name": "ZSLX",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 54,
+        "name": "XMJDID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 55,
+        "name": "XMJD",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 56,
+        "name": "SSDQID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 57,
+        "name": "SSDQ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 58,
+        "name": "STATE",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 59,
+        "name": "XQRGZ",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 60,
+        "name": "XQRGZR",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 61,
+        "name": "XQRGZRID",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 62,
+        "name": "XQRGZXZRID",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 63,
+        "name": "XQRGZXZR",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      }
+    ],
+    "T_System_XMGL": [
+      {
+        "ordinal": 1,
+        "name": "ID",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": false
+      },
+      {
+        "ordinal": 2,
+        "name": "SJBMC",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 4,
+        "name": "WBHTID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 5,
+        "name": "XMMC",
+        "type": "nvarchar",
+        "max_length": 300,
+        "nullable": false
+      },
+      {
+        "ordinal": 6,
+        "name": "XMXZ",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 7,
+        "name": "JJFSID",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 8,
+        "name": "JJFSMC",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 9,
+        "name": "WZLXR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 10,
+        "name": "WZLXDH",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 11,
+        "name": "CBLXR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 12,
+        "name": "CBLXDH",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 13,
+        "name": "ZYLXID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 14,
+        "name": "ZYLXMC",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 15,
+        "name": "LXR",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 16,
+        "name": "LRSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 17,
+        "name": "LXDH",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 18,
+        "name": "Email",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 19,
+        "name": "SSGSID",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": false
+      },
+      {
+        "ordinal": 20,
+        "name": "GSMC",
+        "type": "nvarchar",
+        "max_length": 300,
+        "nullable": false
+      },
+      {
+        "ordinal": 21,
+        "name": "XMDZ",
+        "type": "nvarchar",
+        "max_length": 300,
+        "nullable": true
+      },
+      {
+        "ordinal": 22,
+        "name": "BZ",
+        "type": "nvarchar",
+        "max_length": 800,
+        "nullable": true
+      },
+      {
+        "ordinal": 23,
+        "name": "BuildMaterialIsShare",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 24,
+        "name": "Del",
+        "type": "nvarchar",
+        "max_length": 20,
+        "nullable": true
+      },
+      {
+        "ordinal": 25,
+        "name": "XMBZ",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 26,
+        "name": "orderNum",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 27,
+        "name": "IsCompleteProject",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 28,
+        "name": "Bank",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 29,
+        "name": "AccountNumbers",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 30,
+        "name": "XMLX",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 31,
+        "name": "XMMCJP",
+        "type": "varchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 32,
+        "name": "XMMCQP",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 33,
+        "name": "Add1",
+        "type": "varchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 34,
+        "name": "Add2",
+        "type": "varchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 35,
+        "name": "Add3",
+        "type": "varchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 36,
+        "name": "Add4",
+        "type": "varchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 37,
+        "name": "ZSLX",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 38,
+        "name": "XMLBID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 39,
+        "name": "XMLBMC",
+        "type": "varchar",
+        "max_length": 150,
+        "nullable": true
+      },
+      {
+        "ordinal": 40,
+        "name": "XMMJ",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 41,
+        "name": "Remark",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 42,
+        "name": "FJ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 43,
+        "name": "XMJC",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 44,
+        "name": "XMBS",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 45,
+        "name": "SCR",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 46,
+        "name": "SCSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 47,
+        "name": "OtherId",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 48,
+        "name": "XMBM",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 49,
+        "name": "NCBM",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 50,
+        "name": "NCMC",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 51,
+        "name": "XMGS",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 52,
+        "name": "XQRGZ",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 53,
+        "name": "XQRGZRID",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 54,
+        "name": "XQRGZR",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 55,
+        "name": "XQRGZXZRID",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 56,
+        "name": "XQRGZXZR",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 57,
+        "name": "NKDRMBMC",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 58,
+        "name": "NSZZID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 59,
+        "name": "NSZZMC",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 60,
+        "name": "XMDZ_JD",
+        "type": "nvarchar",
+        "max_length": 300,
+        "nullable": true
+      },
+      {
+        "ordinal": 61,
+        "name": "XMDZ_WD",
+        "type": "nvarchar",
+        "max_length": 300,
+        "nullable": true
+      },
+      {
+        "ordinal": 62,
+        "name": "GLFKCBL",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 63,
+        "name": "XMZZJ",
+        "type": "varchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 64,
+        "name": "XMDZ_SF",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 65,
+        "name": "QYZT",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 66,
+        "name": "IsNew",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 67,
+        "name": "JHXM",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 68,
+        "name": "XMLXJ",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 69,
+        "name": "FaceGroupId",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 70,
+        "name": "pid",
+        "type": "bigint",
+        "max_length": 8,
+        "nullable": true
+      }
+    ],
+    "BASE_SYSTEM_PROJECT_USER": [
+      {
+        "ordinal": 1,
+        "name": "ID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": false
+      },
+      {
+        "ordinal": 2,
+        "name": "PID",
+        "type": "bigint",
+        "max_length": 8,
+        "nullable": false
+      },
+      {
+        "ordinal": 3,
+        "name": "USERID",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 4,
+        "name": "XMID",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 5,
+        "name": "XMMC",
+        "type": "varchar",
+        "max_length": 3000,
+        "nullable": true
+      },
+      {
+        "ordinal": 6,
+        "name": "LRR",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 7,
+        "name": "LRRID",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 8,
+        "name": "LRSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      }
+    ],
+    "T_ProjectContract_Out": [
+      {
+        "ordinal": 1,
+        "name": "Id",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": false
+      },
+      {
+        "ordinal": 2,
+        "name": "SJBMC",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 3,
+        "name": "DJBH",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 4,
+        "name": "XMID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 5,
+        "name": "f_XMMC",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 6,
+        "name": "f_XMJC",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 7,
+        "name": "f_JSDW",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 8,
+        "name": "f_XMJL",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 9,
+        "name": "f_GCXZ",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 10,
+        "name": "f_SJHM",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 11,
+        "name": "f_DHHM",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 12,
+        "name": "f_YZXMJE",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 13,
+        "name": "f_HTGSRQ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 14,
+        "name": "f_HTGDRQ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 15,
+        "name": "f_HTDLRQ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 16,
+        "name": "f_GCDZ",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 17,
+        "name": "f_GCNR",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 18,
+        "name": "f_THGQTS",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 19,
+        "name": "f_HTGQ",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 20,
+        "name": "f_ZLMB",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 21,
+        "name": "f_AQMB",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 22,
+        "name": "f_HTJK",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 23,
+        "name": "f_LYBZJ",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 24,
+        "name": "f_QFBZ",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 25,
+        "name": "f_RL",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 26,
+        "name": "f_YFKJE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 27,
+        "name": "f_YFKKHFS",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 28,
+        "name": "f_FKFSID",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 29,
+        "name": "f_FKFS",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 30,
+        "name": "f_GCJDK",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 31,
+        "name": "f_JSBLSX",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 32,
+        "name": "f_JSHFK",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 33,
+        "name": "f_GCKGLB",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 34,
+        "name": "f_GCKGRQ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 35,
+        "name": "f_BZ",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 36,
+        "name": "f_SFGS",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 37,
+        "name": "f_LRSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 38,
+        "name": "f_LRR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 39,
+        "name": "f_FJ",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 40,
+        "name": "f_GCXZID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 41,
+        "name": "f_GCLBID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 42,
+        "name": "f_ZLJ",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 43,
+        "name": "f_ZBJ",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 44,
+        "name": "f_JFJSBLSX",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 45,
+        "name": "f_GLZBGCID",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 46,
+        "name": "LRRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 47,
+        "name": "LRR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 48,
+        "name": "LRRQ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 49,
+        "name": "XGR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 50,
+        "name": "XGRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 51,
+        "name": "XGRQ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 52,
+        "name": "SCRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 53,
+        "name": "SCR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 54,
+        "name": "SCRQ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 55,
+        "name": "DJZT",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 56,
+        "name": "GCQDFS",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 57,
+        "name": "FBF",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 58,
+        "name": "CBF",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 59,
+        "name": "XMZJJLXDH",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 60,
+        "name": "XMJLJLXDH",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 61,
+        "name": "JGRQ",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 62,
+        "name": "GCYSZJ",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 63,
+        "name": "GCJSZJ",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 64,
+        "name": "JSTJ",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 65,
+        "name": "KPSD",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 66,
+        "name": "ZBJBL",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 67,
+        "name": "JSBLSX",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 68,
+        "name": "GCZT",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 69,
+        "name": "GCSKJD",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 70,
+        "name": "GCJZJD",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 71,
+        "name": "jdysbj",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 72,
+        "name": "GCLJYSK_1",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 73,
+        "name": "GCLJYSK_2",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 74,
+        "name": "GCQK",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 75,
+        "name": "GCLJKPJE",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 76,
+        "name": "GCBGJL",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 77,
+        "name": "GCZDSXJL",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 78,
+        "name": "HTBH",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 79,
+        "name": "HTBT",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 80,
+        "name": "GCLXPZWH",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 81,
+        "name": "GCCBFW",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 82,
+        "name": "ZJLY",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 83,
+        "name": "AQWMSGF",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 84,
+        "name": "CLHGCSBZGJJE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 85,
+        "name": "ZYGCZGJJE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 86,
+        "name": "ZLJE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 87,
+        "name": "HTJGXS",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 88,
+        "name": "QDDD",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 89,
+        "name": "LX",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 90,
+        "name": "GKR",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 91,
+        "name": "SFGLGXZT",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 92,
+        "name": "GL_SQL",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 93,
+        "name": "ZFBHT",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 94,
+        "name": "ZFBHTID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 95,
+        "name": "SFSDBM",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 96,
+        "name": "ZBQ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 97,
+        "name": "HTYDFKFS",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 98,
+        "name": "JLYZ",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 99,
+        "name": "JKTZFS",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 100,
+        "name": "GLFBL",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 101,
+        "name": "JSBLID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 102,
+        "name": "JSBL",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 103,
+        "name": "KSBLID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 104,
+        "name": "KSBL",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 105,
+        "name": "KJCBJBLID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 106,
+        "name": "KJCBJBL",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 107,
+        "name": "IsUpload",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 108,
+        "name": "UploadTime",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 109,
+        "name": "YFK",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 110,
+        "name": "ZLBZJ",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 111,
+        "name": "YFKBL",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 112,
+        "name": "WBHTBH",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 113,
+        "name": "HTLXID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 114,
+        "name": "HTLX",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 115,
+        "name": "GQSM",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 116,
+        "name": "ZBSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 117,
+        "name": "GLZBXMID",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 118,
+        "name": "KHDL",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 119,
+        "name": "GCJSDW",
+        "type": "varchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 120,
+        "name": "GCJLDWMC",
+        "type": "varchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 121,
+        "name": "NMGBZJ",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 122,
+        "name": "NMGBZJDX",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 123,
+        "name": "FKBL",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 124,
+        "name": "ZLBZJBL",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 125,
+        "name": "XMSS",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 126,
+        "name": "XMBM",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 127,
+        "name": "HTLX_1",
+        "type": "varchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 128,
+        "name": "GLYHTID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 129,
+        "name": "GLYHTMC",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 130,
+        "name": "f_XMJLID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 131,
+        "name": "XZ_HTYJSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 132,
+        "name": "XZ_HTYJFS",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 133,
+        "name": "XZ_HTYJR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 134,
+        "name": "XZ_HTJSR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 135,
+        "name": "XZ_HTYJBZ",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 136,
+        "name": "D_XXJZ_FPSLV",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 137,
+        "name": "DEL",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 138,
+        "name": "PID",
+        "type": "bigint",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 139,
+        "name": "f_WBHTBH",
+        "type": "bigint",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 140,
+        "name": "D_SCBSJS_QYHTJ",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 141,
+        "name": "D_SCBSJS_JSJE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 142,
+        "name": "D_SCBSJS_HTJGFS",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 143,
+        "name": "D_SCBSJS_SFGD",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 144,
+        "name": "D_SCBSJS_QYHTJBCE",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 145,
+        "name": "D_SCBSJS_QYHTJBC3",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 146,
+        "name": "D_SCBSJS_QYHTJBC4",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      }
+    ],
+    "C_ZFSQGL": [
+      {
+        "ordinal": 1,
+        "name": "Id",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": false
+      },
+      {
+        "ordinal": 2,
+        "name": "SJBMC",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 3,
+        "name": "f_XMID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 4,
+        "name": "f_XMMC",
+        "type": "varchar",
+        "max_length": 3000,
+        "nullable": true
+      },
+      {
+        "ordinal": 5,
+        "name": "f_SQRQ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 6,
+        "name": "f_TXR",
+        "type": "varchar",
+        "max_length": 200,
+        "nullable": true
+      },
+      {
+        "ordinal": 7,
+        "name": "f_FKFSID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 8,
+        "name": "f_FKFSMC",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 9,
+        "name": "f_CBFLID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 10,
+        "name": "f_CBFLMC",
+        "type": "varchar",
+        "max_length": 200,
+        "nullable": true
+      },
+      {
+        "ordinal": 11,
+        "name": "f_JHJE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 12,
+        "name": "f_SFJE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 13,
+        "name": "f_GYSID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 14,
+        "name": "f_GYSMC",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 15,
+        "name": "f_KHH",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 16,
+        "name": "f_ZH",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 17,
+        "name": "f_GYSHTID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 18,
+        "name": "f_GYSHTBH",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 19,
+        "name": "f_ZXHTXX",
+        "type": "varchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 20,
+        "name": "f_SFCF",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 21,
+        "name": "f_Remark",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 22,
+        "name": "f_ZT",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 23,
+        "name": "f_LRR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 24,
+        "name": "f_LRSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 25,
+        "name": "f_XMSHZT",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 26,
+        "name": "f_XMSHSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 27,
+        "name": "f_XMSHR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 28,
+        "name": "f_XMSHBZ",
+        "type": "varchar",
+        "max_length": 3000,
+        "nullable": true
+      },
+      {
+        "ordinal": 29,
+        "name": "f_SFYZF",
+        "type": "nchar",
+        "max_length": 20,
+        "nullable": true
+      },
+      {
+        "ordinal": 30,
+        "name": "f_ZFLX",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 31,
+        "name": "FJ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 32,
+        "name": "LRRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 33,
+        "name": "XGR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 34,
+        "name": "XGRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 35,
+        "name": "XGRQ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 36,
+        "name": "SCRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 37,
+        "name": "SCR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 38,
+        "name": "SCRQ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 39,
+        "name": "DJZT",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 40,
+        "name": "DJBH",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": false
+      },
+      {
+        "ordinal": 41,
+        "name": "XGBZ",
+        "type": "varchar",
+        "max_length": 3000,
+        "nullable": true
+      },
+      {
+        "ordinal": 42,
+        "name": "PJH",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 43,
+        "name": "JFHKLRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 44,
+        "name": "ZSJE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 45,
+        "name": "USERID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 46,
+        "name": "FKZHID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 47,
+        "name": "FKZH",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 48,
+        "name": "f_JHFKJE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 49,
+        "name": "C_ZJTXJH_CB_XM_Id",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 50,
+        "name": "FKZHMC",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 51,
+        "name": "CN",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 52,
+        "name": "JBR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 53,
+        "name": "SFML",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 54,
+        "name": "ML",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 55,
+        "name": "WFPYF",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 56,
+        "name": "SFBL",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 57,
+        "name": "BLRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 58,
+        "name": "BLR",
+        "type": "varchar",
+        "max_length": 150,
+        "nullable": true
+      },
+      {
+        "ordinal": 59,
+        "name": "BLSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 60,
+        "name": "Y_C_ZFSQGL_Id",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 61,
+        "name": "WHTYF",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 62,
+        "name": "WYWYF",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 63,
+        "name": "WJSYF",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 64,
+        "name": "JEDX",
+        "type": "varchar",
+        "max_length": 200,
+        "nullable": true
+      },
+      {
+        "ordinal": 65,
+        "name": "RZQJ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 66,
+        "name": "GLDJID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 67,
+        "name": "YJJE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 68,
+        "name": "JHID_Id",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 69,
+        "name": "ZFQR_Id",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 70,
+        "name": "f_BMID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 71,
+        "name": "f_BM",
+        "type": "varchar",
+        "max_length": 2000,
+        "nullable": true
+      },
+      {
+        "ordinal": 72,
+        "name": "f_TXRLX",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 73,
+        "name": "f_TXRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 74,
+        "name": "SFDZHFK",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 75,
+        "name": "GLLCYQID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 76,
+        "name": "GLLCYQ",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 77,
+        "name": "SJLY",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 78,
+        "name": "HM",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 79,
+        "name": "D_BYK_SSGSID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 80,
+        "name": "D_BYK_SSGS",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 81,
+        "name": "LXXMMC",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 82,
+        "name": "LXXMMCID",
+        "type": "varchar",
+        "max_length": 200,
+        "nullable": true
+      },
+      {
+        "ordinal": 83,
+        "name": "SFJHXM",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 84,
+        "name": "f_NEW_JHJE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 85,
+        "name": "SFHJFKXM",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 86,
+        "name": "FKHJXMID",
+        "type": "varchar",
+        "max_length": 2000,
+        "nullable": true
+      },
+      {
+        "ordinal": 87,
+        "name": "FKHJXMMC",
+        "type": "varchar",
+        "max_length": 2000,
+        "nullable": true
+      },
+      {
+        "ordinal": 88,
+        "name": "FKXMBID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 89,
+        "name": "FKXMHJJE",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 90,
+        "name": "GXXMID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 91,
+        "name": "HH",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 92,
+        "name": "f_PID",
+        "type": "bigint",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 93,
+        "name": "XMZCZ",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 94,
+        "name": "LJSK",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 95,
+        "name": "LJFK",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 96,
+        "name": "ZMYE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 97,
+        "name": "ZTZJ",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 98,
+        "name": "SJKYYE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 99,
+        "name": "DQWFQK",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 100,
+        "name": "LJQK",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 101,
+        "name": "QTKK",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 102,
+        "name": "LJYFK",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 103,
+        "name": "DEL",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 104,
+        "name": "FKJDID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 105,
+        "name": "FKJD",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 106,
+        "name": "D_SCBSJS_YFTEXT",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 107,
+        "name": "PID",
+        "type": "bigint",
+        "max_length": 8,
+        "nullable": true
+      }
+    ],
+    "C_JFHKLR": [
+      {
+        "ordinal": 1,
+        "name": "Id",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": false
+      },
+      {
+        "ordinal": 2,
+        "name": "SJBMC",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 3,
+        "name": "XMID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 4,
+        "name": "f_SRLBID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 5,
+        "name": "f_SRLBName",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 6,
+        "name": "f_JE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 7,
+        "name": "f_RQ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 8,
+        "name": "f_KCFP",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 9,
+        "name": "f_KCSJ",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 10,
+        "name": "f_BZ",
+        "type": "varchar",
+        "max_length": 2000,
+        "nullable": true
+      },
+      {
+        "ordinal": 11,
+        "name": "f_LRR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 12,
+        "name": "f_LRSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 13,
+        "name": "GLZFSQID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 14,
+        "name": "GLTPID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 15,
+        "name": "MBZRS",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 16,
+        "name": "GLWLDWFKID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 17,
+        "name": "JHJDID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 18,
+        "name": "JHJD",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 19,
+        "name": "JHMC",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 20,
+        "name": "JHID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 21,
+        "name": "FKFSID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 22,
+        "name": "FKFSMC",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 23,
+        "name": "WLDWID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 24,
+        "name": "WLDWMC",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 25,
+        "name": "DWLX",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 26,
+        "name": "FJ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 27,
+        "name": "PJH",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 28,
+        "name": "type",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 29,
+        "name": "SKZHID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 30,
+        "name": "SKZH",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 31,
+        "name": "DJBH",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 32,
+        "name": "FP_Id",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 33,
+        "name": "FP_CB_Id",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 34,
+        "name": "FP",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 35,
+        "name": "BT",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 36,
+        "name": "SFTH",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 37,
+        "name": "DJZT",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 38,
+        "name": "LRRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 39,
+        "name": "LRR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 40,
+        "name": "LRSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 41,
+        "name": "XGRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 42,
+        "name": "XGR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 43,
+        "name": "XGSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 44,
+        "name": "LX",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 45,
+        "name": "JZJEDX",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 46,
+        "name": "LYRYID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 47,
+        "name": "LYRY",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 48,
+        "name": "LYXMID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 49,
+        "name": "LYXM",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 50,
+        "name": "JDID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 51,
+        "name": "HTJD",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 52,
+        "name": "HTID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 53,
+        "name": "RZQJ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 54,
+        "name": "SSGS",
+        "type": "varchar",
+        "max_length": 200,
+        "nullable": true
+      },
+      {
+        "ordinal": 55,
+        "name": "KCGLF",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 56,
+        "name": "XMMC",
+        "type": "varchar",
+        "max_length": 3000,
+        "nullable": true
+      },
+      {
+        "ordinal": 57,
+        "name": "GLHTID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 58,
+        "name": "GLHTBH",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 59,
+        "name": "XMJLID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 60,
+        "name": "XMJLMC",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 61,
+        "name": "DXJE",
+        "type": "varchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 62,
+        "name": "D_HLCSXT_TXR",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 63,
+        "name": "D_HLCSXT_JZZH",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 64,
+        "name": "D_HLCSXT_JZJE",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 65,
+        "name": "D_HLCSXT_SRLB",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 66,
+        "name": "D_HLCSXT_XMZSR",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 67,
+        "name": "D_HLCSXT_BCJHZCZ",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 68,
+        "name": "D_HLCSXT_JHYS",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 69,
+        "name": "D_HLCSXT_YS",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 70,
+        "name": "D_HLCSXT_ZHYS",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 71,
+        "name": "D_HLCSXT_GSRLBYS",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 72,
+        "name": "D_HLCSXT_LJKCFP",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 73,
+        "name": "SGHTID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 74,
+        "name": "SGHTBH",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 75,
+        "name": "D_JCLY_经办人ID",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 76,
+        "name": "D_JCLY_经办人",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 77,
+        "name": "D_JCLY_SSGSID",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 78,
+        "name": "D_JCLY_XMJLID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 79,
+        "name": "TSXMID",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 80,
+        "name": "TSXMMC",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 81,
+        "name": "GLYWID",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 82,
+        "name": "SFXYTHID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 83,
+        "name": "DEL",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 84,
+        "name": "SFTS",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 85,
+        "name": "TSMSG",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 86,
+        "name": "CZID",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 87,
+        "name": "CZMC",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 88,
+        "name": "CZJE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 89,
+        "name": "YSJE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 90,
+        "name": "OTHER_SYSTEM_ID",
+        "type": "varchar",
+        "max_length": 200,
+        "nullable": true
+      },
+      {
+        "ordinal": 91,
+        "name": "OTHER_SYSTEM_CODE",
+        "type": "varchar",
+        "max_length": 200,
+        "nullable": true
+      },
+      {
+        "ordinal": 92,
+        "name": "WFPYF",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 93,
+        "name": "D_SCBSJS_SKYTID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 94,
+        "name": "D_SCBSJS_SKYT",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 95,
+        "name": "D_SCBSJS_IsPush",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 96,
+        "name": "PID",
+        "type": "bigint",
+        "max_length": 8,
+        "nullable": true
+      }
+    ],
+    "T_Base_CooperatCompany": [
+      {
+        "ordinal": 1,
+        "name": "Id",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": false
+      },
+      {
+        "ordinal": 2,
+        "name": "SJBMC",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 4,
+        "name": "XMID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 5,
+        "name": "XMMC",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 6,
+        "name": "DJBH",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 7,
+        "name": "DWMC",
+        "type": "nvarchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 8,
+        "name": "DWJC",
+        "type": "varchar",
+        "max_length": 2000,
+        "nullable": true
+      },
+      {
+        "ordinal": 9,
+        "name": "DQID",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 10,
+        "name": "DQMC",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 11,
+        "name": "XXDZ",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 12,
+        "name": "TYSHXYDM",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 13,
+        "name": "ZCZB",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 14,
+        "name": "JYFW",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 15,
+        "name": "HZLXID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 16,
+        "name": "HZLX",
+        "type": "varchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 17,
+        "name": "ZGLXID",
+        "type": "varchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 18,
+        "name": "ZGLX",
+        "type": "varchar",
+        "max_length": 2000,
+        "nullable": true
+      },
+      {
+        "ordinal": 19,
+        "name": "DJFLID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 20,
+        "name": "DJFL",
+        "type": "varchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 21,
+        "name": "YYQX_S",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 22,
+        "name": "YYQX_E",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 23,
+        "name": "IsYYQXYJ",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 24,
+        "name": "PXBH",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 25,
+        "name": "QTXMGX",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 26,
+        "name": "XXLYID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 27,
+        "name": "XXLY",
+        "type": "varchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 28,
+        "name": "DJR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 29,
+        "name": "DJRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 30,
+        "name": "DJRQ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 31,
+        "name": "BZ",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 32,
+        "name": "YWLXRXM",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 33,
+        "name": "YWLXRHM",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 34,
+        "name": "YWLXRYX",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 35,
+        "name": "FRXM",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 36,
+        "name": "FRSJHM",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 37,
+        "name": "FRYX",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 38,
+        "name": "LXRBZ",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 39,
+        "name": "NSRLBID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 40,
+        "name": "NSRLB",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 41,
+        "name": "FPLXID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 42,
+        "name": "FPLX",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 43,
+        "name": "ZSLVID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 44,
+        "name": "ZSLV",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 45,
+        "name": "SH",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 46,
+        "name": "CSQK",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 47,
+        "name": "FKFSID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 48,
+        "name": "FKFS",
+        "type": "varchar",
+        "max_length": 2000,
+        "nullable": true
+      },
+      {
+        "ordinal": 49,
+        "name": "CSBZ",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 50,
+        "name": "GCZYLXID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 51,
+        "name": "GCZYLX",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 52,
+        "name": "AXZHM",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 53,
+        "name": "XKZQX_S",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 54,
+        "name": "XKZQX_E",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 55,
+        "name": "DFDWID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 56,
+        "name": "DFDW",
+        "type": "varchar",
+        "max_length": 2000,
+        "nullable": true
+      },
+      {
+        "ordinal": 57,
+        "name": "CPJPP",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 58,
+        "name": "ZYYJ",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 59,
+        "name": "FJ_YYZZ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 60,
+        "name": "FJ_KHXKZ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 61,
+        "name": "FJ_QYZZZS",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 62,
+        "name": "FJ_SCXKZ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 63,
+        "name": "FJ_FRSFZ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 64,
+        "name": "FJ_DLRSFZ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 65,
+        "name": "FJ_QTZZ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 66,
+        "name": "DJZT",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 67,
+        "name": "PJZT",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 68,
+        "name": "LYZT",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 69,
+        "name": "DEL",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 70,
+        "name": "LRR",
+        "type": "varchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 71,
+        "name": "LRRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 72,
+        "name": "LRSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 73,
+        "name": "XGR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 74,
+        "name": "XGRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 75,
+        "name": "XGSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 76,
+        "name": "pid",
+        "type": "bigint",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 77,
+        "name": "RegisterTy",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 78,
+        "name": "IsBlack",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 79,
+        "name": "XMBMC",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 80,
+        "name": "XMBID",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 81,
+        "name": "JYZKSM",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 82,
+        "name": "GLTXRZZS",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 83,
+        "name": "SQXKWJ",
+        "type": "varchar",
+        "max_length": 255,
+        "nullable": true
+      },
+      {
+        "ordinal": 84,
+        "name": "OTHER_SYSTEM_ID",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 85,
+        "name": "OTHER_SYSTEM_CODE",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 86,
+        "name": "JCSFSP",
+        "type": "varchar",
+        "max_length": 200,
+        "nullable": true
+      },
+      {
+        "ordinal": 87,
+        "name": "LYXT",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 88,
+        "name": "PASSWORD_MD5",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 89,
+        "name": "PASSWORD",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 90,
+        "name": "LOGINNAME",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 91,
+        "name": "USERNAME",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 92,
+        "name": "D_SCPXJGJC_DLMM",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 93,
+        "name": "PASSWORDMODIFYDATE",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 94,
+        "name": "BMFJ",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 95,
+        "name": "D_SCBSJS_YHZH",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 96,
+        "name": "D_SCBSJS_KHYH",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 97,
+        "name": "YWLXRSFZHM",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 98,
+        "name": "YWLXRSFZKS",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 99,
+        "name": "YWLXRSFZJS",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 100,
+        "name": "FDDBRSFZHM",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 101,
+        "name": "FDDBSFZKS",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 102,
+        "name": "FDDBSFZJS",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 103,
+        "name": "DWLX",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 104,
+        "name": "DGZHMC",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 105,
+        "name": "DGZHHM",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 106,
+        "name": "DGZHYH",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 107,
+        "name": "DGZHBM",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 108,
+        "name": "D_PJG_AXFW",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 109,
+        "name": "D_PJG_QYZZBH",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 110,
+        "name": "D_PJG_QYZZKSSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 111,
+        "name": "D_PJG_QYZZJSSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 112,
+        "name": "YWLXRSFZCQ",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 113,
+        "name": "FDDBSFZCQ",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 114,
+        "name": "ZZDJMX",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 115,
+        "name": "FJ_FRSQWTS",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 116,
+        "name": "LXDZ",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 117,
+        "name": "DWID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 118,
+        "name": "MALL_DPMC",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 119,
+        "name": "MALL_DPLOGO",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 120,
+        "name": "MALL_DPSYLBT",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 121,
+        "name": "MALL_DPJJ",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 122,
+        "name": "MALL_DPXJ",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 123,
+        "name": "MALL_DPQDE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 124,
+        "name": "MALL_PHSC",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 125,
+        "name": "KSBM",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 126,
+        "name": "SQWTQX_S",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 127,
+        "name": "SQWTQX_E",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 128,
+        "name": "YZBM",
+        "type": "varchar",
+        "max_length": 255,
+        "nullable": true
+      },
+      {
+        "ordinal": 129,
+        "name": "SZS",
+        "type": "varchar",
+        "max_length": 255,
+        "nullable": true
+      },
+      {
+        "ordinal": 130,
+        "name": "SZCS",
+        "type": "varchar",
+        "max_length": 255,
+        "nullable": true
+      },
+      {
+        "ordinal": 131,
+        "name": "SZQX",
+        "type": "varchar",
+        "max_length": 255,
+        "nullable": true
+      },
+      {
+        "ordinal": 132,
+        "name": "USER_ID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      }
+    ],
+    "T_Base_SupplierInfo": [
+      {
+        "ordinal": 1,
+        "name": "ID",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": false
+      },
+      {
+        "ordinal": 2,
+        "name": "SJBMC",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 3,
+        "name": "f_SupplierJB",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 4,
+        "name": "f_SupplierCode",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 5,
+        "name": "f_SupplierNBCode",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 6,
+        "name": "f_SupplierName",
+        "type": "nvarchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 7,
+        "name": "f_SupplierShortName",
+        "type": "nvarchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 8,
+        "name": "f_MaterialTypeID",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 9,
+        "name": "f_MaterialTypeName",
+        "type": "nvarchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 10,
+        "name": "f_GradClassificationid",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 11,
+        "name": "f_GradClassification",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 12,
+        "name": "f_SupplierTypeid",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 13,
+        "name": "f_SupplierType",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 14,
+        "name": "f_Qualifications",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 15,
+        "name": "f_InfoSource",
+        "type": "nvarchar",
+        "max_length": 400,
+        "nullable": true
+      },
+      {
+        "ordinal": 16,
+        "name": "f_InfoClassid",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 17,
+        "name": "f_InfoClass",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 18,
+        "name": "f_ReputationClassid",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 19,
+        "name": "f_ReputationClas",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 20,
+        "name": "f_initiOweMoney",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 21,
+        "name": "f_InfoCollectionPerson",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 22,
+        "name": "f_InfoCollectionDate",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 23,
+        "name": "f_Audit",
+        "type": "nvarchar",
+        "max_length": 20,
+        "nullable": true
+      },
+      {
+        "ordinal": 24,
+        "name": "f_AuditState",
+        "type": "nvarchar",
+        "max_length": 20,
+        "nullable": true
+      },
+      {
+        "ordinal": 25,
+        "name": "f_AuditPerson",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 26,
+        "name": "f_AuditDate",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 27,
+        "name": "f_Person",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 28,
+        "name": "f_Phone",
+        "type": "nvarchar",
+        "max_length": 400,
+        "nullable": true
+      },
+      {
+        "ordinal": 29,
+        "name": "f_ZJPhone",
+        "type": "nvarchar",
+        "max_length": 400,
+        "nullable": true
+      },
+      {
+        "ordinal": 30,
+        "name": "f_province",
+        "type": "nvarchar",
+        "max_length": 40,
+        "nullable": true
+      },
+      {
+        "ordinal": 31,
+        "name": "f_City",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 32,
+        "name": "f_Address",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 33,
+        "name": "f_Email",
+        "type": "varchar",
+        "max_length": 2000,
+        "nullable": true
+      },
+      {
+        "ordinal": 34,
+        "name": "f_fax",
+        "type": "varchar",
+        "max_length": 2000,
+        "nullable": true
+      },
+      {
+        "ordinal": 35,
+        "name": "f_IntelAddress",
+        "type": "nvarchar",
+        "max_length": 60,
+        "nullable": true
+      },
+      {
+        "ordinal": 36,
+        "name": "f_BankName",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 37,
+        "name": "f_BankCardName",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 38,
+        "name": "f_BankCardNumber",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 39,
+        "name": "f_departMentID",
+        "type": "nvarchar",
+        "max_length": 20,
+        "nullable": true
+      },
+      {
+        "ordinal": 40,
+        "name": "f_departmentName",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 41,
+        "name": "f_del",
+        "type": "nvarchar",
+        "max_length": 20,
+        "nullable": true
+      },
+      {
+        "ordinal": 42,
+        "name": "f_Black",
+        "type": "nvarchar",
+        "max_length": 20,
+        "nullable": true
+      },
+      {
+        "ordinal": 43,
+        "name": "f_PJ",
+        "type": "nvarchar",
+        "max_length": 800,
+        "nullable": true
+      },
+      {
+        "ordinal": 44,
+        "name": "f_remark",
+        "type": "nvarchar",
+        "max_length": 800,
+        "nullable": true
+      },
+      {
+        "ordinal": 45,
+        "name": "f_importPerson",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 46,
+        "name": "f_importTime",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 47,
+        "name": "LRRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 48,
+        "name": "XGR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 49,
+        "name": "XGRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 50,
+        "name": "XGRQ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 51,
+        "name": "SCRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 52,
+        "name": "SCR",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 53,
+        "name": "SCRQ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 54,
+        "name": "DJZT",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 55,
+        "name": "XGBZ",
+        "type": "varchar",
+        "max_length": 3000,
+        "nullable": true
+      },
+      {
+        "ordinal": 56,
+        "name": "f_transmissionState",
+        "type": "char",
+        "max_length": 2,
+        "nullable": true
+      },
+      {
+        "ordinal": 57,
+        "name": "FJ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 58,
+        "name": "FDDBR",
+        "type": "varchar",
+        "max_length": 150,
+        "nullable": true
+      },
+      {
+        "ordinal": 59,
+        "name": "WTDLR",
+        "type": "varchar",
+        "max_length": 150,
+        "nullable": true
+      },
+      {
+        "ordinal": 60,
+        "name": "NSRSBH",
+        "type": "varchar",
+        "max_length": 150,
+        "nullable": true
+      },
+      {
+        "ordinal": 61,
+        "name": "YHDZ",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 62,
+        "name": "YLH",
+        "type": "varchar",
+        "max_length": 150,
+        "nullable": true
+      },
+      {
+        "ordinal": 63,
+        "name": "DLDJID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 64,
+        "name": "DLDJMC",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 65,
+        "name": "ZZSZZID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 66,
+        "name": "ZZSZZMC",
+        "type": "varchar",
+        "max_length": 150,
+        "nullable": true
+      },
+      {
+        "ordinal": 67,
+        "name": "YX",
+        "type": "varchar",
+        "max_length": 300,
+        "nullable": true
+      },
+      {
+        "ordinal": 68,
+        "name": "TYPE",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 69,
+        "name": "SPLXID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 70,
+        "name": "SPLXMC",
+        "type": "varchar",
+        "max_length": 200,
+        "nullable": true
+      },
+      {
+        "ordinal": 71,
+        "name": "ZZJGDM_FJ",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 72,
+        "name": "SWDJZ_FJ",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 73,
+        "name": "YHKHXKZ_FJ",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 74,
+        "name": "MS",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 75,
+        "name": "FRDH",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 76,
+        "name": "DLRDH",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 77,
+        "name": "GJDQID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 78,
+        "name": "GJDQ",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 79,
+        "name": "ZCZB",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 80,
+        "name": "YYQXSTART",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 81,
+        "name": "YYQXEND",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 82,
+        "name": "TISHXYDM",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 83,
+        "name": "JYFW",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 84,
+        "name": "GYSLBID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 85,
+        "name": "GYSLB",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 86,
+        "name": "LDV",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 87,
+        "name": "ZCFZV",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 88,
+        "name": "ZYYWLRV",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 89,
+        "name": "NSRLBID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 90,
+        "name": "NSRLB",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 91,
+        "name": "JYZKSM",
+        "type": "varchar",
+        "max_length": 8000,
+        "nullable": true
+      },
+      {
+        "ordinal": 92,
+        "name": "GLTSRZZS_FJ",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 93,
+        "name": "SGQYZZDJZS_FJ",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 94,
+        "name": "SCXKZ_FJ",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 95,
+        "name": "SQXKWJ_FJ",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 96,
+        "name": "QTZZZJ_FJ",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 97,
+        "name": "SFID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 98,
+        "name": "SQID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 99,
+        "name": "HBLXID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 100,
+        "name": "HBLX",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 101,
+        "name": "TSXX",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 102,
+        "name": "CPML_FJ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 103,
+        "name": "SH",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 104,
+        "name": "GYSBM",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 105,
+        "name": "ZCLXID",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 106,
+        "name": "ZCLX",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 107,
+        "name": "ZJKHXKZ_FJ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 108,
+        "name": "FRSFZ_FJ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 109,
+        "name": "YJ",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 110,
+        "name": "IsAutoCreate",
+        "type": "varchar",
+        "max_length": 10,
+        "nullable": true
+      },
+      {
+        "ordinal": 111,
+        "name": "SLV",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 112,
+        "name": "OtherId",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 113,
+        "name": "GCZYLXID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 114,
+        "name": "GCZYLX",
+        "type": "varchar",
+        "max_length": 200,
+        "nullable": true
+      },
+      {
+        "ordinal": 115,
+        "name": "RegisterTy",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 116,
+        "name": "FRDB",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 117,
+        "name": "SHXYDM",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 118,
+        "name": "FPLXID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 119,
+        "name": "FPLX",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 120,
+        "name": "SFWBTJ",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 121,
+        "name": "DZ_WD",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 122,
+        "name": "DZ_JD",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 123,
+        "name": "GYSZT",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 124,
+        "name": "RCBAZ_FJ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 125,
+        "name": "FDDBRSFZ_FJ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 126,
+        "name": "FDDBRSFZWJ_FJ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 127,
+        "name": "HTHSH_FJ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 128,
+        "name": "YYZZStart",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 129,
+        "name": "YYZZEnd",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 130,
+        "name": "ZZZSStart",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 131,
+        "name": "ZZZSEnd",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 132,
+        "name": "Yyzz",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 133,
+        "name": "Zzzs",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 134,
+        "name": "QYLX_YJ",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 135,
+        "name": "QYLX_EJ",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 136,
+        "name": "DJBH",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 137,
+        "name": "XMID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 138,
+        "name": "D_JCLY_TZXXBZ",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 139,
+        "name": "D_JCLY_YHZH",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 140,
+        "name": "D_JCLY_ZHRXM",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 141,
+        "name": "D_JCLY_YHKH",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 142,
+        "name": "D_JCLY_YYZZFJ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 143,
+        "name": "D_JCLY_ZBID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 144,
+        "name": "f_BT",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 145,
+        "name": "PID",
+        "type": "bigint",
+        "max_length": 8,
+        "nullable": true
+      }
+    ],
+    "T_FK_Supplier": [
+      {
+        "ordinal": 1,
+        "name": "Id",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": false
+      },
+      {
+        "ordinal": 2,
+        "name": "SJBMC",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 4,
+        "name": "f_XMID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": false
+      },
+      {
+        "ordinal": 5,
+        "name": "f_ZFSQGLId",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 6,
+        "name": "f_FKRQ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 7,
+        "name": "f_LB",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 8,
+        "name": "f_SupplierID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 9,
+        "name": "f_SupplierName",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 10,
+        "name": "f_HTID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 11,
+        "name": "f_HTHB",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 12,
+        "name": "f_ZPH",
+        "type": "varchar",
+        "max_length": 200,
+        "nullable": true
+      },
+      {
+        "ordinal": 13,
+        "name": "f_FPH",
+        "type": "varchar",
+        "max_length": 200,
+        "nullable": true
+      },
+      {
+        "ordinal": 14,
+        "name": "f_FKJE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 15,
+        "name": "f_CBFLID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 16,
+        "name": "f_BZ",
+        "type": "varchar",
+        "max_length": 3000,
+        "nullable": true
+      },
+      {
+        "ordinal": 17,
+        "name": "f_LRR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 18,
+        "name": "f_LRSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 19,
+        "name": "f_FKFSID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 20,
+        "name": "f_FKFSMC",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 21,
+        "name": "f_FPJE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 22,
+        "name": "f_LDJE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 23,
+        "name": "f_YT",
+        "type": "varchar",
+        "max_length": 2000,
+        "nullable": true
+      },
+      {
+        "ordinal": 24,
+        "name": "f_BWTDW",
+        "type": "varchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 25,
+        "name": "f_BWTZH",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 26,
+        "name": "f_BWTYH",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 27,
+        "name": "f_FKLX",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 28,
+        "name": "FJ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 29,
+        "name": "DJBH",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": false
+      },
+      {
+        "ordinal": 30,
+        "name": "f_TXR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 31,
+        "name": "ZFSQDH",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 32,
+        "name": "KHH",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 33,
+        "name": "ZH",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 34,
+        "name": "DJZT",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 35,
+        "name": "Remark",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 36,
+        "name": "FKZHID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 37,
+        "name": "FKZH",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 38,
+        "name": "LRRID",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 39,
+        "name": "FKZHMC",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 40,
+        "name": "SFML",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 41,
+        "name": "ML",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 42,
+        "name": "SFBL",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 43,
+        "name": "BLRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 44,
+        "name": "BLR",
+        "type": "varchar",
+        "max_length": 150,
+        "nullable": true
+      },
+      {
+        "ordinal": 45,
+        "name": "BLSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 46,
+        "name": "XGR",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 47,
+        "name": "XGRID",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 48,
+        "name": "XGSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 49,
+        "name": "BZ",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 50,
+        "name": "WFPYF",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 51,
+        "name": "SFZFTK",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 52,
+        "name": "WHTYF",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 53,
+        "name": "WYWYF",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 54,
+        "name": "WJSYF",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 55,
+        "name": "JEDX",
+        "type": "varchar",
+        "max_length": 200,
+        "nullable": true
+      },
+      {
+        "ordinal": 56,
+        "name": "f_LYXMID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 57,
+        "name": "f_LYXM",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 58,
+        "name": "GLYDJID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 59,
+        "name": "RZQJ",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 60,
+        "name": "JBR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 61,
+        "name": "JBRDH",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 62,
+        "name": "JHID_Id",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 63,
+        "name": "ZFQR_Id",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 64,
+        "name": "f_BMID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 65,
+        "name": "f_BM",
+        "type": "varchar",
+        "max_length": 2000,
+        "nullable": true
+      },
+      {
+        "ordinal": 66,
+        "name": "f_TXRLX",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 67,
+        "name": "f_TXRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 68,
+        "name": "LBID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 69,
+        "name": "SFDZHFK",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 70,
+        "name": "GLLCYQID",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 71,
+        "name": "GLLCYQ",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 72,
+        "name": "HM",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 73,
+        "name": "FKJDID",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 74,
+        "name": "FKJDMC",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 75,
+        "name": "XMJLID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 76,
+        "name": "XMJLMC",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 77,
+        "name": "TSXMID",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 78,
+        "name": "TSXMMC",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 79,
+        "name": "D_BQJT_XMMC",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 80,
+        "name": "D_BQJT_QKJE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 81,
+        "name": "D_BQJT_LJYFJE1",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 82,
+        "name": "D_BQJT_LJYFJE2",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 83,
+        "name": "D_BQJT_SYWFJE",
+        "type": "numeric",
+        "max_length": 17,
+        "nullable": true
+      },
+      {
+        "ordinal": 84,
+        "name": "pid",
+        "type": "bigint",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 85,
+        "name": "XMMC",
+        "type": "varchar",
+        "max_length": 5000,
+        "nullable": true
+      },
+      {
+        "ordinal": 86,
+        "name": "DEL",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 87,
+        "name": "GLYWID",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 88,
+        "name": "OTHER_SYSTEM_ID",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 89,
+        "name": "OTHER_SYSTEM_CODE",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 90,
+        "name": "D_SCBSJS_IsPush",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 91,
+        "name": "ZZFSID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 92,
+        "name": "ZZFS",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      }
+    ],
+    "BASE_SYSTEM_FILE": [
+      {
+        "ordinal": 1,
+        "name": "ID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": false
+      },
+      {
+        "ordinal": 2,
+        "name": "PID",
+        "type": "bigint",
+        "max_length": 8,
+        "nullable": false
+      },
+      {
+        "ordinal": 3,
+        "name": "BILLID",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 4,
+        "name": "ATTR_NAME",
+        "type": "nvarchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 5,
+        "name": "ATTR_PATH",
+        "type": "nvarchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 6,
+        "name": "PREVIEW_PATH",
+        "type": "nvarchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 7,
+        "name": "FILEMD5",
+        "type": "nvarchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 8,
+        "name": "FILESIZE",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 9,
+        "name": "NOTE",
+        "type": "nvarchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 10,
+        "name": "SOURCE",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 11,
+        "name": "LRR",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 12,
+        "name": "LRRID",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 13,
+        "name": "LRSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 14,
+        "name": "SCR",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 15,
+        "name": "SCRID",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 16,
+        "name": "SCSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 17,
+        "name": "DEL",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 18,
+        "name": "WJJMFS",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 19,
+        "name": "WJMM",
+        "type": "nvarchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 20,
+        "name": "WJSFJM",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 21,
+        "name": "DHHM",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 22,
+        "name": "JMSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 23,
+        "name": "PLGXID",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 24,
+        "name": "PLAINTEXT",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 25,
+        "name": "ISENCRYPT",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 26,
+        "name": "TEXTCONTENT",
+        "type": "text",
+        "max_length": 16,
+        "nullable": true
+      },
+      {
+        "ordinal": 27,
+        "name": "IsTemporary",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 28,
+        "name": "XGR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 29,
+        "name": "XGRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 30,
+        "name": "XGSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 31,
+        "name": "BUSINESSID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 32,
+        "name": "GROUP_SSGSMC",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 33,
+        "name": "TEXTWATERMARKJSON",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 34,
+        "name": "THUMBNAILPATH",
+        "type": "nvarchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 35,
+        "name": "GROUP_SSGSID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      }
+    ],
+    "T_BILL_FILE": [
+      {
+        "ordinal": 1,
+        "name": "KeyId",
+        "type": "varchar",
+        "max_length": 40,
+        "nullable": false
+      },
+      {
+        "ordinal": 2,
+        "name": "BillType",
+        "type": "nvarchar",
+        "max_length": 128,
+        "nullable": false
+      },
+      {
+        "ordinal": 3,
+        "name": "BillId",
+        "type": "varchar",
+        "max_length": 64,
+        "nullable": false
+      },
+      {
+        "ordinal": 4,
+        "name": "AttrName",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 5,
+        "name": "AttrPath",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 6,
+        "name": "IsDelete",
+        "type": "char",
+        "max_length": 1,
+        "nullable": true
+      },
+      {
+        "ordinal": 7,
+        "name": "UpdateTime",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 8,
+        "name": "f_transmissionState",
+        "type": "char",
+        "max_length": 2,
+        "nullable": true
+      },
+      {
+        "ordinal": 9,
+        "name": "IsCgpt",
+        "type": "varchar",
+        "max_length": 10,
+        "nullable": true
+      },
+      {
+        "ordinal": 11,
+        "name": "SizeNum",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 12,
+        "name": "LX",
+        "type": "varchar",
+        "max_length": 10,
+        "nullable": true
+      },
+      {
+        "ordinal": 13,
+        "name": "PicWidth",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 14,
+        "name": "PicHeight",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 15,
+        "name": "PcOrMobile",
+        "type": "varchar",
+        "max_length": 1000,
+        "nullable": true
+      },
+      {
+        "ordinal": 16,
+        "name": "LRRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 17,
+        "name": "LRR",
+        "type": "varchar",
+        "max_length": 150,
+        "nullable": true
+      },
+      {
+        "ordinal": 18,
+        "name": "LRSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 19,
+        "name": "FileSystemDataId",
+        "type": "varchar",
+        "max_length": 40,
+        "nullable": true
+      },
+      {
+        "ordinal": 20,
+        "name": "IsMakeUp",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 21,
+        "name": "PreviewHtmlPath",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 22,
+        "name": "WaterMarkPath",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 23,
+        "name": "SCR",
+        "type": "varchar",
+        "max_length": 150,
+        "nullable": true
+      },
+      {
+        "ordinal": 24,
+        "name": "SCRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 25,
+        "name": "SCSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 26,
+        "name": "IsTemporary",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 27,
+        "name": "TextContent",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 28,
+        "name": "IsEncrypt",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 29,
+        "name": "Plaintext",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 30,
+        "name": "WJJMFS",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 31,
+        "name": "WJMM",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 32,
+        "name": "WJSFJM",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 33,
+        "name": "DHHM",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 34,
+        "name": "JMSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 35,
+        "name": "PLGXID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 36,
+        "name": "XGR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 37,
+        "name": "XGRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 38,
+        "name": "XGSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 39,
+        "name": "pid",
+        "type": "bigint",
+        "max_length": 8,
+        "nullable": true
+      }
+    ],
+    "BASE_SYSTEM_MENU": [
+      {
+        "ordinal": 1,
+        "name": "ID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": false
+      },
+      {
+        "ordinal": 2,
+        "name": "PID",
+        "type": "bigint",
+        "max_length": 8,
+        "nullable": false
+      },
+      {
+        "ordinal": 3,
+        "name": "TREEPID",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 4,
+        "name": "MENU_NAME",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 5,
+        "name": "ICON",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 6,
+        "name": "DEFAULT_NAME",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 7,
+        "name": "LINK_URL",
+        "type": "nvarchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 8,
+        "name": "SORT",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 9,
+        "name": "BUSINESSID",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 10,
+        "name": "ISENABLED_PROJECT",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 11,
+        "name": "ISENABLED_COMPANY",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 12,
+        "name": "CUSTOMER_NAME",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 13,
+        "name": "NOTE",
+        "type": "nvarchar",
+        "max_length": 2000,
+        "nullable": true
+      },
+      {
+        "ordinal": 14,
+        "name": "LRR",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 15,
+        "name": "LRRID",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 16,
+        "name": "LRSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 17,
+        "name": "XGR",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 18,
+        "name": "XGRID",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 19,
+        "name": "XGSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      },
+      {
+        "ordinal": 20,
+        "name": "DEL",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 21,
+        "name": "OLDLINK_URL",
+        "type": "varchar",
+        "max_length": 4000,
+        "nullable": true
+      },
+      {
+        "ordinal": 22,
+        "name": "BUSINESSID_NEW",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 23,
+        "name": "ISWINDOW",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 24,
+        "name": "CORNERMARK",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 25,
+        "name": "MICON",
+        "type": "nvarchar",
+        "max_length": 510,
+        "nullable": true
+      },
+      {
+        "ordinal": 26,
+        "name": "XJCXFS",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 27,
+        "name": "MENUSTATUS",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 28,
+        "name": "IS_LINK_PARAM_ENABLE",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 29,
+        "name": "LINK_PARAM_JSON",
+        "type": "nvarchar",
+        "max_length": 2000,
+        "nullable": true
+      }
+    ],
+    "ts_function": [
+      {
+        "ordinal": 1,
+        "name": "function_id",
+        "type": "int",
+        "max_length": 4,
+        "nullable": false
+      },
+      {
+        "ordinal": 2,
+        "name": "functiontype_id",
+        "type": "int",
+        "max_length": 4,
+        "nullable": false
+      },
+      {
+        "ordinal": 3,
+        "name": "function_name",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": false
+      },
+      {
+        "ordinal": 4,
+        "name": "function_linkAddress",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 5,
+        "name": "function_order",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 6,
+        "name": "del",
+        "type": "char",
+        "max_length": 1,
+        "nullable": false
+      },
+      {
+        "ordinal": 7,
+        "name": "IS_CompanyFunction",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 8,
+        "name": "IS_ProjectFunction",
+        "type": "nvarchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 9,
+        "name": "function_BZ",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 10,
+        "name": "function_IsCustomizing",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 11,
+        "name": "function_CustomerName",
+        "type": "varchar",
+        "max_length": 100,
+        "nullable": true
+      },
+      {
+        "ordinal": 12,
+        "name": "Remark",
+        "type": "varchar",
+        "max_length": -1,
+        "nullable": true
+      },
+      {
+        "ordinal": 13,
+        "name": "function_name_default",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 14,
+        "name": "IsExternalLinks",
+        "type": "int",
+        "max_length": 4,
+        "nullable": true
+      },
+      {
+        "ordinal": 15,
+        "name": "ExternalDatasourceId",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 16,
+        "name": "ExternalDatasourceText",
+        "type": "varchar",
+        "max_length": 500,
+        "nullable": true
+      },
+      {
+        "ordinal": 17,
+        "name": "LRR",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 18,
+        "name": "LRRID",
+        "type": "varchar",
+        "max_length": 50,
+        "nullable": true
+      },
+      {
+        "ordinal": 19,
+        "name": "LRSJ",
+        "type": "datetime",
+        "max_length": 8,
+        "nullable": true
+      }
+    ]
+  },
+  "metrics": {
+    "project_rows": 755,
+    "project_deleted_rows": 61,
+    "project_other_system_id_rows": 696,
+    "legacy_project_ext_rows": 721,
+    "project_user_rows": 21390,
+    "contract_rows": 1694,
+    "contract_deleted_rows": 65,
+    "contract_project_match_rows": 1606,
+    "contract_distinct_project_ids": 762,
+    "company_rows": 7864,
+    "company_deleted_rows": 676,
+    "company_credit_code_rows": 3964,
+    "supplier_rows": 3041,
+    "supplier_bank_rows": 2521,
+    "receipt_rows": 7412,
+    "receipt_contract_linked_rows": 1857,
+    "receipt_single_counterparty_contracts": 628,
+    "file_index_rows": 126967,
+    "legacy_file_index_rows": 51964,
+    "menu_rows": 1827,
+    "function_rows": 3079
+  },
+  "recommended_rebuild_order": [
+    "platform baseline and dictionaries",
+    "partner primary source from T_Base_CooperatCompany",
+    "partner supplemental source from T_Base_SupplierInfo",
+    "project skeleton from BASE_SYSTEM_PROJECT and T_System_XMGL",
+    "project membership from BASE_SYSTEM_PROJECT_USER",
+    "contract skeleton from T_ProjectContract_Out after partner/project readiness",
+    "contract counterparty linking from strong evidence and confirmed mappings",
+    "receipt and request slices after contract readiness",
+    "attachments after business record identities are materialized",
+    "menus/functions only as legacy reference, not direct import"
+  ],
+  "decision": "full rebuild blueprint ready; no production write permitted yet",
+  "next_step": "promote partner rebuild importer design under repeatable pipeline gates"
+}

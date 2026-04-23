@@ -1,0 +1,75 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_remaining_missing_tax_screen",
+  "input": "artifacts/migration/partner_l4_nodb_refresh_rows_v1.csv",
+  "total_rows": 7172,
+  "remaining_missing_tax_rows": 1760,
+  "missing_columns": [],
+  "subroute_counts": {
+    "remaining_missing_tax_merge_identity_review": 827,
+    "remaining_missing_tax_non_primary_review": 4,
+    "remaining_missing_tax_unsafe_merge_identity_review": 303,
+    "remaining_missing_tax_unsafe_name_review": 626
+  },
+  "blocker_counts": {
+    "deduplicated_group_not_create_only": 1130,
+    "missing_tax_number": 1760,
+    "non_primary_partner_source": 912,
+    "unsafe_partner_name": 929
+  },
+  "source_counts": {
+    "company": 848,
+    "company;supplier": 908,
+    "supplier": 4
+  },
+  "source_row_count_counts": {
+    "1": 630,
+    "2": 967,
+    "3": 91,
+    "4": 21,
+    "5": 20,
+    "6": 25,
+    "7": 2,
+    "8": 2,
+    "9": 2
+  },
+  "top_blocker_combinations": [
+    {
+      "blockers": "missing_tax_number;deduplicated_group_not_create_only;non_primary_partner_source",
+      "rows": 671
+    },
+    {
+      "blockers": "unsafe_partner_name;missing_tax_number",
+      "rows": 626
+    },
+    {
+      "blockers": "unsafe_partner_name;missing_tax_number;deduplicated_group_not_create_only;non_primary_partner_source",
+      "rows": 237
+    },
+    {
+      "blockers": "missing_tax_number;deduplicated_group_not_create_only",
+      "rows": 156
+    },
+    {
+      "blockers": "unsafe_partner_name;missing_tax_number;deduplicated_group_not_create_only",
+      "rows": 66
+    },
+    {
+      "blockers": "missing_tax_number;non_primary_partner_source",
+      "rows": 4
+    }
+  ],
+  "subroute_priority": [
+    "remaining_missing_tax_merge_identity_review",
+    "remaining_missing_tax_unsafe_name_review",
+    "remaining_missing_tax_unsafe_merge_identity_review",
+    "remaining_missing_tax_non_primary_review",
+    "remaining_missing_tax_conflict_review",
+    "remaining_missing_tax_misc_review"
+  ],
+  "outputs": {
+    "screen_rows": "artifacts/migration/partner_l4_remaining_missing_tax_screen_rows_v1.csv",
+    "sample_rows": "artifacts/migration/partner_l4_remaining_missing_tax_screen_samples_v1.csv"
+  },
+  "next_gate": "Open a no-DB dry-run for remaining_missing_tax_merge_identity_review before any write design."
+}

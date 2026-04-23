@@ -1,0 +1,13 @@
+{
+  "candidate_rows": 0,
+  "company_updates_needed": 0,
+  "contract_updates_needed": 0,
+  "database": "sc_demo",
+  "mode": "check",
+  "rollback_csv": "/mnt/artifacts/migration/payment_linkage_fact_sync_rollback_v1.csv",
+  "run_id": "ITER-2026-04-17-PAYMENT-LINKAGE-FACT-SYNC",
+  "snapshot_csv": "/mnt/artifacts/migration/payment_linkage_fact_sync_snapshot_v1.csv",
+  "status": "PASS",
+  "updated_company": 0,
+  "updated_contract": 0
+}

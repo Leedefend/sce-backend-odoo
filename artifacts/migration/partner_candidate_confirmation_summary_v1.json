@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "mode": "partner_candidate_confirmation_no_db_write",
+  "counterparty_texts": 568,
+  "contract_rows_in_scope": 1554,
+  "summary_by_text": {
+    "company_multiple": 78,
+    "company_single": 419,
+    "cross_source_conflict": 8,
+    "defer": 63
+  },
+  "summary_by_contract_rows": {
+    "company_multiple": 614,
+    "company_single": 738,
+    "cross_source_conflict": 123,
+    "defer": 79
+  },
+  "output_csv": "artifacts/migration/partner_candidate_confirmation_v1.csv",
+  "decision": "NO-GO for partner import; manual confirmation table prepared",
+  "next_step": "manual confirmation is required before partner creation dry-run"
+}

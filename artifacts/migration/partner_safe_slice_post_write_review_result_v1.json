@@ -1,0 +1,1019 @@
+{
+  "status": "ROLLBACK_READY",
+  "mode": "partner_safe_slice_post_write_readonly_review",
+  "database": "sc_demo",
+  "rollback_key": "legacy_partner_source + legacy_partner_id",
+  "safe_slice_rows": 100,
+  "rollback_target_rows": 100,
+  "matched_partner_rows": 100,
+  "rollback_eligible_rows": 100,
+  "blocking_reasons": [],
+  "sample_duplicates": [],
+  "target_duplicates": [],
+  "missing_partner_ids": [],
+  "missing_legacy_matches": [],
+  "duplicate_legacy_matches": [],
+  "out_of_scope_targets": [],
+  "rows": [
+    {
+      "partner_id": 274,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "00f7720309de433794f5b78e8f45965d",
+      "name": "重庆瑞程祥城市环卫服务有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 268,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "02127b7cd988479497364ddc7fce57a0",
+      "name": "利宝保险有限公司山东分公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 247,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "022268a2943f4c79bab1372f07786794",
+      "name": "中山市建设工程质量检测中心有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 304,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "024c75ca30c443f1a4a7009e38653947",
+      "name": "中国大地财产保险股份有限公司重庆分公司营业部",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 249,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "03b94fa74f9c4c048fe0f7c67d5af638",
+      "name": "广西鹏象木业有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 248,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "053bcc630f5d4e798df896dbd67f2a93",
+      "name": "中山市鑫弘建筑工程有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 294,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "05702b9004b34a7f86ca5485ec1a043e",
+      "name": "重庆胜才建筑劳务有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 271,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "06219123ceee40c18aed61d26aabd433",
+      "name": "阳光信用保证保险股份有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 273,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "0b1afecb6dd34f36b95d8dbd449a4457",
+      "name": "重庆招标采购（集团）有限责任公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 240,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "0b2b10aa4d704be8a294f9e2e671176d",
+      "name": "佛山市川建建筑材料有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 242,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "1304e9378a0f40eda6cda64009ccc3dc",
+      "name": "湛江市广创建材有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 287,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "13865907350e4fc88b2218db43ba14ce",
+      "name": "重庆市群冠商贸有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 226,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "18709cfc12044584b46784827d3da5fd",
+      "name": "深圳市鼎银融资担保有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 236,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "1a422ab4449e4810a0bdf1accd975736",
+      "name": "广东昊铂金属制品有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 245,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "1b95a173ddb34097824ed2f05ad899da",
+      "name": "广东焙跃建设工程有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 292,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "1be009e9db6943dba62cfeed48953415",
+      "name": "重庆中承亿工程担保有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 315,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "1efb293578f14148818734d17c88849e",
+      "name": "重庆阳泽亮建材有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 257,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "20133510bfed4e519c0effd94d4b04a0",
+      "name": "广西来宾东扬木业有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 234,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "286c4e38744446ea88a6d309c326347e",
+      "name": "陕西电广传媒保险经纪有限公局深圳分公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 227,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "29412115d0674ea39bd8d7e2f443a03c",
+      "name": "深圳市海洋王照明工程有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 239,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "30afc9a4cdf245aaa5018571a7b701bd",
+      "name": "广东三睿法务咨询有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 313,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "31e295f20f1b496aa53f4d69dea72ef9",
+      "name": "重庆恒泰工程技术服务有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 277,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "391d7376483d423c900a536f99e339ae",
+      "name": "重庆正诚标研工程检测有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 296,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "3b8853b19b074ddfb5ab75ead2119832",
+      "name": "重庆星恰商贸有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 270,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "3e195ac2399b4b38b82d126853bdd639",
+      "name": "重庆海渝建设工程施工设计审图有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 221,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "40629b1dcae0462f915437314234434f",
+      "name": "广州坚基环保材料有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 301,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "40e1b51f23cc48c2adbf954c5934976c",
+      "name": "重庆国际投资咨询集团有限公司四川分公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 241,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "483978d3fe01402daec76fe02b70f8fd",
+      "name": "开平市聚壹城工程机械设备租赁有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 289,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "4c75cec6b67b4fccb3a217ff59f710b2",
+      "name": "重庆巴驿公共交通站场管理有限公司（排除重名往来单位）",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 295,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "4dfdfb2145f54e009049229d470b5a72",
+      "name": "重庆沿建科技有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 266,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "4edfe5e49943472c9963ac5979e2ef3f",
+      "name": "重庆市农业投资集团有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 228,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "4f9704455a55472c942c339dd2c6eae3",
+      "name": "深圳中联银融资担保有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 300,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "5037911b40de444a852dd40c99ec90b5",
+      "name": "重庆北润机电设备有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 230,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "5410ac23e9004c929acba432af01e7fb",
+      "name": "深圳市远正非融资性担保有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 260,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "56012045384f4b32b5ddc00fa7746a42",
+      "name": "广西来宾市悦途木业有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 286,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "57d19c46af4d46a6a37b33ab27dd0cb4",
+      "name": "重庆市成前防水工程有限责任公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 256,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "593591af957a4c42acdcf57658149e3d",
+      "name": "来宾市日月星木业有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 305,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "5967f8012cc840f5bc539622bd2afc98",
+      "name": "重庆凡安建材有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 262,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "5a8428e6a0e44321a480e9d31c9e7d01",
+      "name": "广西百成恒林木业有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 298,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "5aa8ae96608e479393a7437f9cfe46b4",
+      "name": "重庆市工程管理有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 311,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "5ac43411e91e47f0bfffd519b0ad1395",
+      "name": "重庆驰乔科技有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 235,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "5afdb839949d4c1ba612c3dd243cc4d2",
+      "name": "深圳市深担增信融资担保有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 253,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "5b7f5f5e851c45a19e9c98827077001a",
+      "name": "贵港沈氏木业有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 279,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "5eab95dc4e2b4396a4168b7938896673",
+      "name": "重庆旭驰建筑劳务有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 261,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "650e3b2d6b8f49919c22db7639d33348",
+      "name": "广西坤权木业有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 306,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "67e7e79a26c345479ddeb43284a5e3f9",
+      "name": "重庆升圆电梯销售有限责任公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 302,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "68201349939b4af486c0a7624d55e8df",
+      "name": "重庆金若管道制造有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 285,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "689b47d78b914cb280a62116f2d5e1d1",
+      "name": "永安财产保险股份有限公司涪陵中心支公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 259,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "739b14660ed34f1ab13d66f86c40bb04",
+      "name": "广西丰宏木业有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 278,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "746d8edabff64676991014a8eec873e3",
+      "name": "重庆建汇工程咨询有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 272,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "754e39dc740d4b398a38e5d7c73fc7f1",
+      "name": "天之瓴建设股份有限公司重庆分公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 244,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "75ba19b074214e428d655edc4a73982e",
+      "name": "清远市广进公路工程有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 308,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "76b02da161154a4f987622f8894ec9f2",
+      "name": "重庆良森科技有限责任公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 250,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "793411f4414940d5873fead8bdd144ee",
+      "name": "贵港市百样通木业有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 284,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "7944ce37cdf242c8989011208bac5792",
+      "name": "重庆筒筹劳务有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 283,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "7b3655169a12479aab936d576b85b2b6",
+      "name": "重庆净易涂建材有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 307,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "7c79698237b54c0cafcd7dbba9aa76a8",
+      "name": "重庆卓达检测技术有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 263,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "83ab82be48e7417593d1e42507c08289",
+      "name": "广西新中林木业有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 264,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "879c5ebe897d4590b86faba3bba5cda2",
+      "name": "重庆荣路建筑工程有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 231,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "88b02f1187c94cd9a69f670782c4a5ed",
+      "name": "深圳市美轩食品有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 233,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "8afe9dfaf4b04fa09946b9d62a2af4d2",
+      "name": "深圳市宙斯工程管理服务有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 310,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "8dbeb76e25b7486f9e9f874192105601",
+      "name": "重庆市全城建筑设计有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 318,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "90c128e5b14c489d8c5e2fe81fb08063",
+      "name": "成都大成百盛建筑工程管理有限公司重庆分公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 224,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "981aaceb2e464ef7b3cb222634d06c81",
+      "name": "华西盛世商业（深圳）有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 280,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "9842ef7fdb55459988827328f958d6d7",
+      "name": "重庆欢林建材销售有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 267,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "9b9915627ecd4efa8925ad57ae414179",
+      "name": "重庆高速公路集团有限公司南方营运分公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 255,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "a0d64458f6464f2897c09470855f75af",
+      "name": "河池市宜州区富丽桉木业有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 238,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "a138a4e9a172469f989696d711f66bc4",
+      "name": "佛山市君大陶瓷有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 288,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "a25a91c228364dd9b3ed5bdf14dbd6b3",
+      "name": "国道石化（重庆）有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 243,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "a2e9b912f540489f8c71ce343116b44d",
+      "name": "广东腾发林业发展有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 291,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "a548cc326cf04808b882ee07f5937117",
+      "name": "重庆立顿门业有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 232,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "a66ae88f5eb9419db2e9defd48faf1fc",
+      "name": "广东穗合鑫工程担保有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 251,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "a7bebc10025a413d8b5a099d066fdcd6",
+      "name": "贵港市嘉荣木业有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 252,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "a95676de82084f8683e30aeec044aee3",
+      "name": "广西大别山木业有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 282,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "acb58e35ec5f400db748c0497896c0df",
+      "name": "重庆索来建筑劳务有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 316,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "b53ed5536092475a950d56a207d6f1f6",
+      "name": "渝丰水漆(重庆)有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 317,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "b92cc9d30fd24283a7ecd9a02be48a4f",
+      "name": "重庆渝之居装饰工程有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 299,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "ba00088afc2346bfa847220b9b1caf36",
+      "name": "重庆林翰科技发展有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 258,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "bac6e03b120e4e6d92a6f999ad2c995e",
+      "name": "广西来宾市慕杭木业有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 220,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "be5dda67a32d465fb57bd3a3d8f3ef19",
+      "name": "广东雄峰房产物业发展有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 229,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "c37de2fddd16487097843f87bfb7f87e",
+      "name": "深圳市宝星通达科技有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 297,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "c3c5f0e779e8454fa0dcc7b611be5ca2",
+      "name": "重庆银航物资有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 293,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "c48d4487d1914f4e8e4047aafcf4e3b0",
+      "name": "重庆泉博商贸有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 223,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "ca331c2ef16b4b29822882ee485e1748",
+      "name": "深圳市华商工程担保有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 276,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "cb863fa34f0d4171bf23d2ddae996975",
+      "name": "重庆宝来发电设备有限责任公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 314,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "d2ba7c5212194a6a8797e4674c3182b9",
+      "name": "重庆泉盟物资有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 303,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "d81a332fbd4d4ec19a33d7e981a9abaf",
+      "name": "重庆市固体废弃物运输有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 312,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "da4c116f75f34c24b61685d1c49d59dc",
+      "name": "重庆博锐达建材有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 290,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "daccb03e2c00465eb0b70f8b2e8a8712",
+      "name": "重庆士杰铝业有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 254,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "dad407a884e24de595c4b79f5275ea82",
+      "name": "河池市宜州区森斌木业有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 319,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "e16ab35b05ee471f8fb4d42cc502ac19",
+      "name": "重庆众兴通环保科技有限责任公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 269,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "e8cea4216aea4180b1a5a24ccbab442f",
+      "name": "中国大地财产保险股份有限公司重庆分公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 281,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "ea408861b361420eb1ccc23c0f999968",
+      "name": "重庆辰创建设工程有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 309,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "ea6112cf2868460bbf2fb8583e2056d3",
+      "name": "重庆欧汇电气有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 225,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "ebfc444fb8264bf7acbf3467494355e3",
+      "name": "深圳沈飞钢地板有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 237,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "ed2f8c5ec265467b913dcde0ee305bf7",
+      "name": "珠海玥铭隆建筑工程有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 246,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "ede42cad1c75468890de4d6076f31078",
+      "name": "东莞市天亿园林绿化工程有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 275,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "f0e7e4c6fe8344bda3b28b3dda371f88",
+      "name": "重庆阿贝娜商贸有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 265,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "fd30e26f459b4190944dab958cb59d7c",
+      "name": "重庆龙锦建筑装饰（集团）有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 222,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "fe4b2532d130410697cc3b713ee45656",
+      "name": "广州有铖五金建材有限公司",
+      "match_count": 1,
+      "in_safe_slice": true,
+      "rollback_eligible": true
+    }
+  ]
+}

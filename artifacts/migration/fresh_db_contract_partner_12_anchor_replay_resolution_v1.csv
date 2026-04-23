@@ -1,0 +1,13 @@
+anchor_name,partner_id,resolution,legacy_partner_source,legacy_partner_id,legacy_deleted_flag,legacy_credit_code,dependent_contract_rows
+中国农业发展银行四川省分行,4829,created_missing_anchor,,,,,1
+中国建筑一局（集团）有限公司,4825,reuse_existing_canonical,,,,,2
+中国建筑第八工程局有限公司,4826,reuse_existing_canonical,,,,,3
+中国建筑第四工程局有限公司,4827,reuse_existing_canonical,,,,,20
+中国石油天然气第七建设有限公司,4828,reuse_existing_canonical,,,,,2
+中国铁建大桥工程局集团有限公司,1664,reuse_existing_canonical,cooperat_company,57822067795845d7802849576225ad53,0,,3
+四川宝烨金属制品有限公司,1819,reuse_existing_canonical,cooperat_company,5fbf32a872e745ea92bef65081cc1f19,0,91510600MA62KQ9Y5P,1
+四川锦泰致远智能工程有限公司,3159,reuse_existing_canonical,cooperat_company,a1199b58273e4b0e88f0f738c7419f7e,0,91510681797859022L,1
+四川高竹工程建设有限公司,2982,reuse_existing_canonical,cooperat_company,9dfda9741955462f9e21e44c64f9b6aa,0,,1
+德阳市旌阳区八角井镇卫生院,3024,reuse_existing_canonical,cooperat_company,A9DBA3704B674D39B794A9EF25A9322D,0,,11
+德阳泰诚硕商贸有限公司,1686,reuse_existing_canonical,cooperat_company,589ebf8ecaea47fda16baa15655f54cc,0,91510600MA68GJNM0M,1
+绵竹市众力工程机械设备有限公司,4830,created_missing_anchor,,,,,11

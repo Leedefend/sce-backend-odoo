@@ -1,0 +1,99 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_blocked_screen",
+  "input": "artifacts/migration/partner_l4_nodb_refresh_rows_v1.csv",
+  "total_rows": 7172,
+  "blocked_rows": 5405,
+  "create_candidate_rows": 0,
+  "skip_existing_validation_rows": 1767,
+  "missing_columns": [],
+  "blocker_counts": {
+    "deduplicated_group_not_create_only": 3183,
+    "missing_tax_number": 3325,
+    "non_primary_partner_source": 2930,
+    "same_tax_multiple_names": 135,
+    "unsafe_partner_name": 1114
+  },
+  "route_counts": {
+    "manual_conflict_screen": 135,
+    "merge_identity_screen": 3048,
+    "missing_tax_screen": 2180,
+    "supplier_or_non_primary_screen": 15,
+    "unsafe_name_screen": 27
+  },
+  "top_blocker_combinations": [
+    {
+      "blockers": "deduplicated_group_not_create_only;non_primary_partner_source",
+      "rows": 1739
+    },
+    {
+      "blockers": "missing_tax_number",
+      "rows": 1554
+    },
+    {
+      "blockers": "missing_tax_number;deduplicated_group_not_create_only;non_primary_partner_source",
+      "rows": 671
+    },
+    {
+      "blockers": "unsafe_partner_name;missing_tax_number",
+      "rows": 626
+    },
+    {
+      "blockers": "unsafe_partner_name;missing_tax_number;deduplicated_group_not_create_only;non_primary_partner_source",
+      "rows": 237
+    },
+    {
+      "blockers": "missing_tax_number;deduplicated_group_not_create_only",
+      "rows": 156
+    },
+    {
+      "blockers": "unsafe_partner_name;deduplicated_group_not_create_only;non_primary_partner_source",
+      "rows": 155
+    },
+    {
+      "blockers": "same_tax_multiple_names;deduplicated_group_not_create_only;non_primary_partner_source",
+      "rows": 111
+    },
+    {
+      "blockers": "unsafe_partner_name;missing_tax_number;deduplicated_group_not_create_only",
+      "rows": 66
+    },
+    {
+      "blockers": "unsafe_partner_name",
+      "rows": 27
+    },
+    {
+      "blockers": "deduplicated_group_not_create_only",
+      "rows": 24
+    },
+    {
+      "blockers": "same_tax_multiple_names;deduplicated_group_not_create_only",
+      "rows": 21
+    },
+    {
+      "blockers": "missing_tax_number;non_primary_partner_source",
+      "rows": 15
+    },
+    {
+      "blockers": "same_tax_multiple_names;unsafe_partner_name;deduplicated_group_not_create_only;non_primary_partner_source",
+      "rows": 2
+    },
+    {
+      "blockers": "same_tax_multiple_names;unsafe_partner_name;deduplicated_group_not_create_only",
+      "rows": 1
+    }
+  ],
+  "route_priority": [
+    "merge_identity_screen",
+    "missing_tax_screen",
+    "supplier_or_non_primary_screen",
+    "unsafe_name_screen",
+    "manual_conflict_screen",
+    "blocked_misc_screen"
+  ],
+  "outputs": {
+    "screen_rows": "artifacts/migration/partner_l4_blocked_screen_rows_v1.csv",
+    "sample_rows": "artifacts/migration/partner_l4_blocked_screen_samples_v1.csv"
+  },
+  "next_gate": "Open a dedicated route-specific no-DB screen before any merge/update or rule expansion write."
+}

@@ -1,0 +1,30 @@
+{
+  "status": "FROZEN",
+  "run_id": "ITER-2026-04-14-L3-ROLE-KEY-AUDIT-MAPPED-WRITE",
+  "source_business_semantic": "historical_project_member_l3_sample",
+  "target_model": "project.responsibility",
+  "target_field": "role_key",
+  "mapped_role_key": "manager",
+  "mapped_role_label": "项目经理",
+  "mapping_rule": "choose_highest_frequency_existing_legal_role_key_in_target_distribution",
+  "mapping_basis": "existing_distribution",
+  "mapping_evidence": {
+    "selected_role_key_existing_count": 3,
+    "existing_distribution": {
+      "manager": 3
+    },
+    "legal_role_keys": [
+      "manager",
+      "cost",
+      "finance",
+      "cashier",
+      "material",
+      "safety",
+      "quality",
+      "document"
+    ]
+  },
+  "sample_size": 3,
+  "no_acl_record_rule_change": true,
+  "no_model_selection_change": true
+}

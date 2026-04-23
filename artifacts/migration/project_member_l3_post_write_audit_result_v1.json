@@ -1,0 +1,11 @@
+{
+  "status": "SKIPPED_NO_WRITE",
+  "run_id": "ITER-2026-04-14-L3-ROLE-SOURCE-CLOSURE",
+  "write_status": "BLOCKED_BY_APPROVAL",
+  "matched_records": 0,
+  "rollback_eligible_rows": 0,
+  "db_writes": 0,
+  "blocking_reasons": [
+    "approved_3_row_sample_required"
+  ]
+}

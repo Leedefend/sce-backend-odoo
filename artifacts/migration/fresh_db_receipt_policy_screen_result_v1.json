@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_receipt_policy_screen",
+  "source_rows": 7412,
+  "core_payload_rows": 1683,
+  "excluded_rows": 5729,
+  "excluded_counts": {
+    "discard_deleted": 49,
+    "exclude_from_core_missing_contract_link": 3630,
+    "exclude_from_core_zero_amount": 1908,
+    "hold_blocked_contract_not_replayed": 121,
+    "hold_blocked_partner_not_replayed": 21
+  },
+  "db_writes": 0,
+  "errors": [],
+  "decision": "receipt_core_payload_ready",
+  "next_step": "open receipt write design for core payload"
+}

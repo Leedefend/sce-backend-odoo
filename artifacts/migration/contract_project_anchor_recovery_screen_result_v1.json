@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "mode": "contract_project_anchor_recovery_screen",
+  "db_writes": 0,
+  "blocker_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_remaining_blocker_policy_screen_rows_v1.csv",
+  "project_source_file": "/mnt/e/sc-backend-odoo/tmp/raw/project/project.csv",
+  "project_anchor_blocked_rows": 88,
+  "distinct_legacy_project_ids": 63,
+  "recovery_route_counts": {
+    "legacy_project_source_missing": 63
+  },
+  "contract_row_route_counts": {
+    "legacy_project_source_missing": 88
+  },
+  "row_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_project_anchor_recovery_screen_rows_v1.csv",
+  "decision": "project_anchor_recovery_screened",
+  "write_authorization": "not_granted",
+  "next_step": "open no-DB project anchor recoverable write-design screen for active single-source project ids",
+  "errors": []
+}

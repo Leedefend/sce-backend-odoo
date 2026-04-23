@@ -1,0 +1,34 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_replay_payload_precheck",
+  "database": "sc_migration_fresh",
+  "db_writes": 0,
+  "database_operations": 0,
+  "write_scripts_executed": 0,
+  "payload_rows": {
+    "partner_l4": 4797,
+    "project_anchor": 755,
+    "contract_partner_12": 12
+  },
+  "missing_models": [],
+  "missing_required_fields": [],
+  "missing_optional_fields": [
+    {
+      "model": "project.project",
+      "field": "legacy_deleted_flag"
+    }
+  ],
+  "identity_collisions": {
+    "partner_l4": 0,
+    "project_anchor": 0,
+    "contract_partner_12": 0
+  },
+  "current_counts": {
+    "res.partner": 23,
+    "project.project": 1,
+    "construction.contract": 0,
+    "sc.project.member.staging": 0
+  },
+  "decision": "fresh_db_replay_payloads_precheck_ready",
+  "next_step": "execute bounded replay writes in dependency order: partner anchors, project anchors, contract partner 12 anchors"
+}

@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_replay_manifest_execution_refresh",
+  "db_writes": 0,
+  "database_operations": 0,
+  "write_scripts_executed": 0,
+  "execution_lanes_refreshed": 6,
+  "prerequisites_attached": 1,
+  "additional_results_attached": 3,
+  "contract_header_historical_rows": 1332,
+  "contract_header_retry_rows": 57,
+  "contract_header_total_rows": 1389,
+  "receipt_core_rows": 1683,
+  "partial_contract_replay_rows": 0,
+  "default_run_lanes": 0,
+  "contract_replay_coverage_overstated": false,
+  "errors": [],
+  "decision": "fresh_db_replay_manifest_execution_refreshed",
+  "next_step": "open next migration lane after receipt core replay"
+}

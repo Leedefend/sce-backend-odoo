@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_receipt_write_design",
+  "target_model": "payment.request",
+  "target_type": "receive",
+  "source_rows": 1683,
+  "design_payload_rows": 1683,
+  "missing_project_id_count": 0,
+  "missing_contract_id_count": 0,
+  "missing_partner_id_count": 0,
+  "unsafe_field_count": 0,
+  "db_writes": 0,
+  "errors": [],
+  "decision": "receipt_write_design_ready",
+  "next_step": "open controlled receipt write batch for 1683 receive requests"
+}

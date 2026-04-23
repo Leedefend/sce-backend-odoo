@@ -1,0 +1,40 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_remaining_unsafe_name_screen",
+  "input": "artifacts/migration/partner_l4_remaining_blocked_screen_rows_v1.csv",
+  "route_rows": 1111,
+  "missing_columns": [],
+  "subroute_counts": {
+    "unsafe_name_merge_review": 155,
+    "unsafe_name_missing_tax_merge_review": 303,
+    "unsafe_name_missing_tax_single_review": 626,
+    "unsafe_name_single_review": 27
+  },
+  "top_blocker_combinations": [
+    {
+      "blockers": "unsafe_partner_name;missing_tax_number",
+      "rows": 626
+    },
+    {
+      "blockers": "unsafe_partner_name;missing_tax_number;deduplicated_group_not_create_only;non_primary_partner_source",
+      "rows": 237
+    },
+    {
+      "blockers": "unsafe_partner_name;deduplicated_group_not_create_only;non_primary_partner_source",
+      "rows": 155
+    },
+    {
+      "blockers": "unsafe_partner_name;missing_tax_number;deduplicated_group_not_create_only",
+      "rows": 66
+    },
+    {
+      "blockers": "unsafe_partner_name",
+      "rows": 27
+    }
+  ],
+  "outputs": {
+    "screen_rows": "artifacts/migration/partner_l4_remaining_unsafe_name_screen_rows_v1.csv",
+    "sample_rows": "artifacts/migration/partner_l4_remaining_unsafe_name_screen_samples_v1.csv"
+  },
+  "next_gate": "Unsafe-name routes require manual/name-normalization policy before any write design."
+}

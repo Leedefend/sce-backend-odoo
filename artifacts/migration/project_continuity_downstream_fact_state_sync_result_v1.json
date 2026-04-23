@@ -1,0 +1,12 @@
+{
+  "already_synced_count": 701,
+  "database": "sc_demo",
+  "mode": "check",
+  "needs_sync_count": 0,
+  "rollback_csv": "/mnt/artifacts/migration/project_continuity_downstream_fact_state_sync_rollback_v1.csv",
+  "run_id": "ITER-2026-04-17-PROJECT-CONTINUITY-TRANSITION-GUARD-RECOVERY",
+  "sample_ids": [],
+  "snapshot_csv": "/mnt/artifacts/migration/project_continuity_downstream_fact_state_sync_snapshot_v1.csv",
+  "target_total": 701,
+  "written_count": 0
+}

@@ -1,0 +1,13 @@
+{
+  "already_active_baseline_count": 642,
+  "created_baseline_count": 0,
+  "database": "sc_demo",
+  "eligible_total": 642,
+  "enabled_project_count": 0,
+  "mode": "check",
+  "rollback_csv": "/mnt/artifacts/migration/funding_carrier_fact_sync_rollback_v1.csv",
+  "run_id": "ITER-2026-04-17-FUNDING-CARRIER-FACT-SYNC",
+  "sample_project_ids": [],
+  "snapshot_csv": "/mnt/artifacts/migration/funding_carrier_fact_sync_snapshot_v1.csv",
+  "target_without_active_baseline_count": 0
+}

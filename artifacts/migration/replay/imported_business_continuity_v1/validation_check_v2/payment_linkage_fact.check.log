@@ -1,0 +1,17 @@
+2026-04-17 14:01:37,527 3245 INFO ? odoo: Odoo version 17.0-20251222 
+2026-04-17 14:01:37,528 3245 INFO ? odoo: Using configuration file at /var/lib/odoo/odoo.conf 
+2026-04-17 14:01:37,528 3245 INFO ? odoo: addons paths: ['/usr/lib/python3/dist-packages/odoo/addons', '/var/lib/odoo/addons/17.0', '/mnt/extra-addons', '/mnt/addons_external/oca_server_ux'] 
+2026-04-17 14:01:37,528 3245 INFO ? odoo: database: odoo@db:5432 
+2026-04-17 14:01:37,660 3245 INFO ? odoo.addons.base.models.ir_actions_report: Will use the Wkhtmltopdf binary at /usr/local/bin/wkhtmltopdf 
+2026-04-17 14:01:40,565 3245 INFO ? odoo.addons.smart_core.app_config_engine.controllers: ✅ smart_core controllers __init__.py 已加载 - contract_api imported 
+2026-04-17 14:01:40,566 3245 INFO ? odoo.addons.smart_core.app_config_engine: ✅ smart_core __init__.py 已加载 
+2026-04-17 14:01:46,946 3245 INFO ? odoo.addons.smart_core: ✅ Smart Core Engine 模块已加载 
+2026-04-17 14:01:46,970 3245 INFO ? odoo.service.server: Initiating shutdown 
+2026-04-17 14:01:46,971 3245 INFO ? odoo.service.server: Hit CTRL-C again or send a second signal to force the shutdown. 
+2026-04-17 14:01:47,001 3245 INFO sc_demo odoo.modules.loading: loading 1 modules... 
+2026-04-17 14:01:47,009 3245 INFO sc_demo odoo.modules.loading: 1 modules loaded in 0.01s, 0 queries (+0 extra) 
+2026-04-17 14:01:47,455 3245 INFO sc_demo odoo.modules.loading: loading 73 modules... 
+2026-04-17 14:01:53,545 3245 INFO sc_demo odoo.modules.loading: 73 modules loaded in 6.09s, 0 queries (+0 extra) 
+2026-04-17 14:01:53,800 3245 INFO sc_demo odoo.modules.loading: Modules loaded. 
+2026-04-17 14:01:53,809 3245 INFO sc_demo odoo.modules.registry: Registry loaded in 6.838s 
+PAYMENT_LINKAGE_FACT_SYNC={"candidate_rows": 0, "company_updates_needed": 0, "contract_updates_needed": 0, "database": "sc_demo", "mode": "check", "rollback_csv": "/mnt/artifacts/migration/payment_linkage_fact_sync_rollback_v1.csv", "run_id": "ITER-2026-04-17-PAYMENT-LINKAGE-FACT-SYNC", "snapshot_csv": "/mnt/artifacts/migration/payment_linkage_fact_sync_snapshot_v1.csv", "status": "PASS", "updated_company": 0, "updated_contract": 0}

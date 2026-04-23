@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_project_anchor_replay_adapter",
+  "db_writes": 0,
+  "database_operations": 0,
+  "write_scripts_executed": 0,
+  "write_result_files": 7,
+  "missing_write_result_files": [],
+  "created_evidence_rows": 755,
+  "replay_payload_rows": 755,
+  "duplicate_replay_identities": 0,
+  "duplicate_samples": [],
+  "raw_source_misses": 0,
+  "raw_source_miss_samples": [],
+  "deleted_source_rows": 61,
+  "stage_counts": {
+    "unknown": 755
+  },
+  "row_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv",
+  "decision": "project_anchor_replay_payload_ready",
+  "next_step": "implement contract partner 12 anchor replay adapter before fresh database operation"
+}

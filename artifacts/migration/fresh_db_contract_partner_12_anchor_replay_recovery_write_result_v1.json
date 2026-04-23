@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_contract_partner_12_anchor_replay_recovery_write",
+  "database": "sc_migration_fresh",
+  "target_model": "res.partner",
+  "input_rows": 12,
+  "created_rows": 2,
+  "cumulative_created_rows": 6,
+  "reused_existing_canonical": 10,
+  "resolved_anchor_count": 12,
+  "dependent_contract_rows": 57,
+  "db_writes": 2,
+  "demo_targets_executed": 0,
+  "write_payload": "/mnt/artifacts/migration/fresh_db_contract_partner_12_anchor_replay_payload_v1.csv",
+  "rollback_targets": "/mnt/artifacts/migration/fresh_db_contract_partner_12_anchor_replay_recovery_rollback_targets_v1.csv",
+  "resolution_artifact": "/mnt/artifacts/migration/fresh_db_contract_partner_12_anchor_replay_resolution_v1.csv",
+  "decision": "contract_partner_12_anchor_recovery_write_complete",
+  "next_step": "retry the 57 dependent contract rows in sc_migration_fresh"
+}
