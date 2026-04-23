@@ -101,7 +101,16 @@ docs/audit/*.sc_*.csv
 docs/audit/*.tsv
 docs/audit/*.json
 tmp/
+!tmp/
+tmp/*
+!tmp/raw/
+!tmp/raw/**
 .tmp/
+
+# Migration asset package materializes this generated XML from tracked parts.
+migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml
+!migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/
+!migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/**
 .codex_home/
 .cache/
 .state/
