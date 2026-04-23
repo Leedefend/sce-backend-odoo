@@ -1,0 +1,62 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "legacy_attachment_backfill_sc_v1",
+  "assets": [
+    {
+      "path": "30_relation/legacy_attachment_backfill/legacy_attachment_backfill_v1.xml",
+      "sha256": "276dbba1ca0b3ce72fb627e0d56156ace676d0469edbaf5752eeb2bee54f103e"
+    },
+    {
+      "path": "manifest/legacy_attachment_backfill_external_id_manifest_v1.json",
+      "sha256": "124d0b5b17f38f1535046977a7a4989626a1f8a001bafd7a07c9ee8bb44fef7a"
+    },
+    {
+      "path": "manifest/legacy_attachment_backfill_validation_manifest_v1.json",
+      "sha256": "8dd7add1eddbe9733d4bf12bf9ff839b8fe5157ff508bb721f7844aa91a75adb"
+    }
+  ],
+  "baseline_package": true,
+  "counts": {
+    "blocked_records": 0,
+    "loadable_records": 18458,
+    "matched_target_records": 18456,
+    "raw_rows": 126967
+  },
+  "db_writes": 0,
+  "dependencies": [
+    "project_sc_v1",
+    "project_member_sc_v1",
+    "actual_outflow_sc_v1",
+    "supplier_contract_sc_v1",
+    "supplier_contract_line_sc_v1",
+    "outflow_request_line_sc_v1"
+  ],
+  "generated_at": "2026-04-15T16:20:00+00:00",
+  "lane": {
+    "lane_id": "legacy_attachment_backfill",
+    "layer": "30_relation"
+  },
+  "odoo_shell": false,
+  "source_counts": {
+    "lane_counts": {
+      "actual_outflow": 5443,
+      "outflow_request_line": 4689,
+      "project": 464,
+      "project_member": 7860,
+      "supplier_contract": 1,
+      "supplier_contract_line": 1
+    }
+  },
+  "target": {
+    "model": "ir.attachment",
+    "res_models": [
+      "construction.contract",
+      "construction.contract.line",
+      "payment.request",
+      "payment.request.line",
+      "project.project",
+      "sc.project.member.staging"
+    ],
+    "type": "url"
+  }
+}

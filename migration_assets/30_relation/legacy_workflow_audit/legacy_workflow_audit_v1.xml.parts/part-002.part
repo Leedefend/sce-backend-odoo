@@ -1,0 +1,99 @@
+8291829808d4a4f186" model="sc.legacy.workflow.audit">
+      <field name="legacy_workflow_id">fff591be4a5e408291829808d4a4f186</field>
+      <field name="legacy_pid">95169</field>
+      <field name="legacy_djid">ce978eb36f8242d0b8f30921b691130a</field>
+      <field name="legacy_business_id">1c143832d73847fb994dd7bf1d975ca1</field>
+      <field name="legacy_source_table">审批意见信息表</field>
+      <field name="legacy_detail_status_id">30d11ec802e24a458fe62dca8239d208</field>
+      <field name="legacy_detail_step_id">504f7645123d4376839c2e18e1016d75</field>
+      <field name="legacy_setup_step_id">cea2a4179fc04b2e989fbe04dc1aea84</field>
+      <field name="legacy_template_id">ddef8a140af34661a3fd2d2884a41f4f</field>
+      <field name="legacy_step_name">董事长</field>
+      <field name="legacy_template_name">支付申请-文楠审核</field>
+      <field name="target_model">payment.request</field>
+      <field name="target_external_id">legacy_outflow_sc_ce978eb36f8242d0b8f30921b691130a</field>
+      <field name="target_lane">outflow_request</field>
+      <field name="actor_legacy_user_id">10000009</field>
+      <field name="actor_name">吴涛</field>
+      <field name="approved_at">2023-05-29 11:55:45</field>
+      <field name="received_at">2023-05-29 10:59:02</field>
+      <field name="approval_note">同意支付</field>
+      <field name="action_classification">unknown</field>
+      <field name="legacy_status">0</field>
+      <field name="legacy_back_type">0</field>
+      <field name="legacy_approval_type">自审</field>
+    </record>
+    <record id="legacy_workflow_audit_sc_fff7a091e3b84f769dd464faa0392288" model="sc.legacy.workflow.audit">
+      <field name="legacy_workflow_id">fff7a091e3b84f769dd464faa0392288</field>
+      <field name="legacy_pid">76762</field>
+      <field name="legacy_djid">8958005d63f045da91352b0dae09ba8f</field>
+      <field name="legacy_business_id">1c143832d73847fb994dd7bf1d975ca1</field>
+      <field name="legacy_source_table">审批意见信息表</field>
+      <field name="legacy_detail_status_id">93b8fbd0bf9447c3afc68c81b4af61d0</field>
+      <field name="legacy_detail_step_id">747951c9bbaa4ee6a8a364889c42d7e8</field>
+      <field name="legacy_setup_step_id">6e824bb2389b4aa5888aac8b4daf3b69</field>
+      <field name="legacy_template_id">4183021da5c1404ea805d029a8ca7dd3</field>
+      <field name="legacy_step_name">工程部</field>
+      <field name="legacy_template_name">支付申请-尹佳梅、卢燕审核</field>
+      <field name="target_model">payment.request</field>
+      <field name="target_external_id">legacy_outflow_sc_8958005d63f045da91352b0dae09ba8f</field>
+      <field name="target_lane">outflow_request</field>
+      <field name="actor_legacy_user_id">10000020</field>
+      <field name="actor_name">杨德胜</field>
+      <field name="approved_at">2022-10-09 16:32:46</field>
+      <field name="received_at">2022-10-09 16:16:46</field>
+      <field name="approval_note">同意</field>
+      <field name="action_classification">unknown</field>
+      <field name="legacy_status">0</field>
+      <field name="legacy_back_type">0</field>
+      <field name="legacy_approval_type">自审</field>
+    </record>
+    <record id="legacy_workflow_audit_sc_fffbed48a5774ee89bac16bf90fc62e7" model="sc.legacy.workflow.audit">
+      <field name="legacy_workflow_id">fffbed48a5774ee89bac16bf90fc62e7</field>
+      <field name="legacy_pid">27110</field>
+      <field name="legacy_djid">4e1620f83f1f4c56be955da82e013cf2</field>
+      <field name="legacy_business_id">bbf3f94fed3d4393a2d30041a12d9291</field>
+      <field name="legacy_source_table">审批意见信息表</field>
+      <field name="legacy_detail_status_id">d6f7fefecaa242f9972e18f60b69b933</field>
+      <field name="legacy_detail_step_id">87cd12ac92ec4e3a874990637d8c35c7</field>
+      <field name="legacy_setup_step_id">8c11afb0673640c7bf58bbb9e2e513b0</field>
+      <field name="legacy_template_id">f71238420f6a48d4acfe3413ab818753</field>
+      <field name="legacy_step_name">财务总监</field>
+      <field name="legacy_template_name">工程款收入</field>
+      <field name="target_model">payment.request</field>
+      <field name="target_external_id">legacy_receipt_sc_4e1620f83f1f4c56be955da82e013cf2</field>
+      <field name="target_lane">receipt</field>
+      <field name="actor_legacy_user_id">10000015</field>
+      <field name="actor_name">文楠</field>
+      <field name="approved_at">2020-12-03 14:41:29</field>
+      <field name="received_at">2020-12-03 14:26:38</field>
+      <field name="action_classification">unknown</field>
+      <field name="legacy_status">0</field>
+      <field name="legacy_back_type">0</field>
+    </record>
+    <record id="legacy_workflow_audit_sc_fffc11b514bc48f08576eb0614280606" model="sc.legacy.workflow.audit">
+      <field name="legacy_workflow_id">fffc11b514bc48f08576eb0614280606</field>
+      <field name="legacy_pid">17484988247730000</field>
+      <field name="legacy_djid">dba2ff5ac0f04c5b8d658b8dfb9fab69</field>
+      <field name="legacy_business_id">616ff3e4069e40d187b2dd768e6a3173</field>
+      <field name="legacy_detail_status_id">c19269e99c5a4419ad15bbb1d8b48905</field>
+      <field name="legacy_detail_step_id">855595cecd9b43c4af7604084240dbfd</field>
+      <field name="legacy_setup_step_id">8839741eb2a546dba386e77ac1d7478b</field>
+      <field name="legacy_template_id">4ace6d2abbd24e45af51e5151ea29ba7</field>
+      <field name="legacy_step_name">工程部经理</field>
+      <field name="legacy_template_name">审批流程</field>
+      <field name="target_model">construction.contract</field>
+      <field name="target_external_id">legacy_supplier_contract_sc_dba2ff5ac0f04c5b8d658b8dfb9fab69</field>
+      <field name="target_lane">supplier_contract</field>
+      <field name="actor_legacy_user_id">10000020</field>
+      <field name="actor_name">杨德胜</field>
+      <field name="approved_at">2025-05-29 14:07:04</field>
+      <field name="received_at">2025-05-29 13:52:50</field>
+      <field name="approval_note">同意</field>
+      <field name="action_classification">unknown</field>
+      <field name="legacy_status">0</field>
+      <field name="legacy_back_type">0</field>
+      <field name="legacy_approval_type">自审</field>
+    </record>
+  </data>
+</odoo>

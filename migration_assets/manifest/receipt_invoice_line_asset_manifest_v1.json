@@ -1,0 +1,51 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "receipt_invoice_line_sc_v1",
+  "assets": [
+    {
+      "path": "20_business/receipt_invoice_line/receipt_invoice_line_v1.xml",
+      "sha256": "b0ed53b80a6e9d8cc569eb19071452bf1ffd10d6435c9292ac5807932c20a2ca"
+    },
+    {
+      "path": "manifest/receipt_invoice_line_external_id_manifest_v1.json",
+      "sha256": "9e706d0b7a897c9a9b9161d9b44e3d17212ffa0d51fbb29046ff8e5c3116dffd"
+    },
+    {
+      "path": "manifest/receipt_invoice_line_validation_manifest_v1.json",
+      "sha256": "5adb5fd1716fa4fb5bf3fc039e8934d10a07f8a6483dc40122db973c72a1a419"
+    }
+  ],
+  "baseline_package": true,
+  "counts": {
+    "blocked_records": 37,
+    "loadable_records": 4454,
+    "raw_rows": 4491
+  },
+  "db_writes": 0,
+  "dependencies": [
+    "receipt_sc_v1"
+  ],
+  "generated_at": "2026-04-15T15:20:00+00:00",
+  "lane": {
+    "lane_id": "receipt_invoice_line",
+    "layer": "20_business"
+  },
+  "odoo_shell": false,
+  "source_counts": {
+    "amount_source_counts": {
+      "KPJE": 4454
+    },
+    "blocked_reason_counts": {
+      "amount_not_positive": 10,
+      "receipt_anchor_missing": 28
+    },
+    "invoice_no_counts": {
+      "invoice_no_empty": 1,
+      "invoice_no_present": 4490
+    }
+  },
+  "target": {
+    "model": "sc.receipt.invoice.line",
+    "source_table": "C_JFHKLR_CB"
+  }
+}

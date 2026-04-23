@@ -1,0 +1,90 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "outflow_request_sc_v1",
+  "assets": [
+    {
+      "asset_id": "outflow_request_core_xml_v1",
+      "format": "xml",
+      "path": "20_business/outflow/outflow_request_core_v1.xml",
+      "record_count": 12284,
+      "required": true,
+      "sha256": "60495ebb480255fab5b530d39f6f6ea77b7d12fb5d6ee258f3f90a2a6b594355"
+    },
+    {
+      "asset_id": "outflow_request_external_id_manifest_v1",
+      "format": "json",
+      "path": "manifest/outflow_request_external_id_manifest_v1.json",
+      "record_count": 12284,
+      "required": true,
+      "sha256": "fe3360178fd45cad6f47acc18ca1d0408e7f9b03ec678aba4e9b1f4ff41feea9"
+    },
+    {
+      "asset_id": "outflow_request_validation_manifest_v1",
+      "format": "json",
+      "path": "manifest/outflow_request_validation_manifest_v1.json",
+      "record_count": 1,
+      "required": true,
+      "sha256": "aa65d13c1862752be98cb052a26a6a1d4212c5a7cb7c62b3a89e52a254b36a14"
+    }
+  ],
+  "baseline_package": true,
+  "counts": {
+    "blocked_records": 1362,
+    "loadable_records": 12284,
+    "raw_rows": 13646
+  },
+  "db_writes": 0,
+  "dependencies": [
+    "project_sc_v1",
+    "partner_sc_v1",
+    "contract_counterparty_partner_sc_v1",
+    "receipt_counterparty_partner_sc_v1",
+    "contract_sc_v1"
+  ],
+  "generated_at": "2026-04-15T10:20:00+00:00",
+  "idempotency": {
+    "conflict_policy": "block_package",
+    "duplicate_policy": "update_existing_same_external_id",
+    "mode": "odoo_xml_external_id"
+  },
+  "lane": {
+    "business_priority": "outflow_request_core_fact",
+    "lane_id": "outflow",
+    "layer": "20_business",
+    "risk_class": "authorized_outflow_request_core"
+  },
+  "load_order": [
+    "outflow_request_core_xml_v1",
+    "outflow_request_external_id_manifest_v1",
+    "outflow_request_validation_manifest_v1"
+  ],
+  "odoo_shell": false,
+  "source_snapshot": {
+    "extract_batch_id": "outflow_request_core_xml_baseline_v1",
+    "source_system": "sc",
+    "source_tables": [
+      "C_ZFSQGL"
+    ]
+  },
+  "target": {
+    "identity_field": "legacy_outflow_id",
+    "load_strategy": "odoo_xml_external_id",
+    "model": "payment.request",
+    "type": "pay"
+  },
+  "validation_gates": [
+    "source_outflow_file_exists",
+    "required_source_headers_present",
+    "legacy_outflow_id_non_empty",
+    "legacy_outflow_id_unique",
+    "amount_positive",
+    "project_anchor_resolves",
+    "partner_anchor_resolves",
+    "contract_id_optional_when_missing_in_legacy",
+    "state_not_written",
+    "settlement_not_written",
+    "ledger_not_written",
+    "accounting_not_written",
+    "workflow_not_written"
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "project_sc_v1",
+  "baseline_package": true,
+  "failure_policy": {
+    "duplicate_legacy_project_id": "block_package",
+    "external_id_duplicate": "block_package",
+    "high_risk_lane_leakage": "block_package",
+    "lifecycle_normalization_attempted": "block_package",
+    "missing_project_name": "discard_record",
+    "missing_required_header": "block_package",
+    "missing_source_file": "block_package"
+  },
+  "generated_asset_hashes": {
+    "project_external_id_manifest_v1": "873681f0b8ab86bac3aa637ce73bafeffdf4c6c90d33c2527ddf2c8194986889",
+    "project_master_xml_v1": "1ec12a858e8e9455e90a1e2ec4762d946273d96fd88dabb2e60abcc34a8e7261"
+  },
+  "missing_deferred_headers": [],
+  "missing_optional_headers": [],
+  "validation_gates": {
+    "generate_time": [
+      "source_project_file_exists",
+      "required_source_headers_present",
+      "legacy_project_id_non_empty",
+      "legacy_project_id_unique",
+      "project_name_present",
+      "external_id_unique",
+      "legacy_identity_key_unique",
+      "deferred_fields_written",
+      "discard_summary_written",
+      "no_lifecycle_fabrication",
+      "no_partner_dependency_fabrication",
+      "no_high_risk_lane_leakage"
+    ],
+    "postload": [
+      "target_count_matches_manifest",
+      "external_id_resolves",
+      "rerun_is_idempotent",
+      "no_duplicate_business_identity"
+    ],
+    "preload": [
+      "asset_files_exist",
+      "asset_hashes_match",
+      "target_model_available"
+    ]
+  }
+}

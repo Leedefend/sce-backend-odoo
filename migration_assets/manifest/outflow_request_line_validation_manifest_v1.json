@@ -1,0 +1,47 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "outflow_request_line_sc_v1",
+  "business_boundary": {
+    "ledger_fact": "excluded",
+    "line_fact": "included",
+    "parent_outflow_request_anchor": "required",
+    "settlement_fact": "excluded",
+    "supplier_contract_anchor": "optional_when_resolved"
+  },
+  "db_writes": 0,
+  "generated_at": "2026-04-15T14:30:00+00:00",
+  "odoo_shell": false,
+  "screen_profile": {
+    "amount_source_counts": {
+      "CCZFJE": 70,
+      "ZJE": 15847
+    },
+    "blocked_rows": 1496,
+    "blocker_counts": {
+      "amount_not_positive": 816,
+      "outflow_request_anchor_missing": 888
+    },
+    "ready_rows": 15917,
+    "supplier_contract_anchor_counts": {
+      "supplier_contract_anchor_empty": 850,
+      "supplier_contract_anchor_resolved": 6779,
+      "supplier_contract_anchor_unresolved": 9784
+    }
+  },
+  "source_table": "C_ZFSQGL_CB",
+  "target_model": "payment.request.line",
+  "validation_gates": {
+    "generate_time": [
+      "legacy_outflow_line_id_unique",
+      "outflow_request_external_id_resolves",
+      "amount_positive",
+      "supplier_contract_external_id_resolves_when_emitted",
+      "line_fact_not_ledger",
+      "line_fact_not_settlement"
+    ],
+    "postload": [
+      "xml_external_id_resolves",
+      "parent_request_line_visible"
+    ]
+  }
+}

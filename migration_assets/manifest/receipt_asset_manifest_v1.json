@@ -1,0 +1,89 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "receipt_sc_v1",
+  "assets": [
+    {
+      "asset_id": "receipt_core_xml_v1",
+      "format": "xml",
+      "path": "20_business/receipt/receipt_core_v1.xml",
+      "record_count": 5355,
+      "required": true,
+      "sha256": "b357d437330c6f6c960071c99b2259a67b435c13a99d22439d6ff59c53529727"
+    },
+    {
+      "asset_id": "receipt_external_id_manifest_v1",
+      "format": "json",
+      "path": "manifest/receipt_external_id_manifest_v1.json",
+      "record_count": 5355,
+      "required": true,
+      "sha256": "e7c0e32e039d346f4ab834798fbbb00b52840d22d924088886bdf47c6eddc5b8"
+    },
+    {
+      "asset_id": "receipt_validation_manifest_v1",
+      "format": "json",
+      "path": "manifest/receipt_validation_manifest_v1.json",
+      "record_count": 1,
+      "required": true,
+      "sha256": "b32da2f46a76e6d413c48fb1cd9e9460644cb37dcec5002aa77a80c66ef57f82"
+    }
+  ],
+  "baseline_package": true,
+  "counts": {
+    "blocked_records": 2057,
+    "loadable_records": 5355,
+    "raw_rows": 7412
+  },
+  "db_writes": 0,
+  "dependencies": [
+    "project_sc_v1",
+    "partner_sc_v1",
+    "receipt_counterparty_partner_sc_v1",
+    "contract_sc_v1"
+  ],
+  "generated_at": "2026-04-15T08:15:00+00:00",
+  "idempotency": {
+    "conflict_policy": "block_package",
+    "duplicate_policy": "update_existing_same_external_id",
+    "mode": "odoo_xml_external_id"
+  },
+  "lane": {
+    "business_priority": "receipt_core_fact",
+    "lane_id": "receipt",
+    "layer": "20_business",
+    "risk_class": "authorized_receipt_core"
+  },
+  "load_order": [
+    "receipt_core_xml_v1",
+    "receipt_external_id_manifest_v1",
+    "receipt_validation_manifest_v1"
+  ],
+  "odoo_shell": false,
+  "source_snapshot": {
+    "extract_batch_id": "receipt_core_xml_baseline_v1",
+    "source_system": "sc",
+    "source_tables": [
+      "C_JFHKLR"
+    ]
+  },
+  "target": {
+    "identity_field": "legacy_receipt_id",
+    "load_strategy": "odoo_xml_external_id",
+    "model": "payment.request",
+    "type": "receive"
+  },
+  "validation_gates": [
+    "source_receipt_file_exists",
+    "required_source_headers_present",
+    "legacy_receipt_id_non_empty",
+    "legacy_receipt_id_unique",
+    "amount_positive",
+    "project_anchor_resolves",
+    "contract_anchor_resolves",
+    "contract_id_optional_when_missing_in_legacy",
+    "partner_anchor_resolves",
+    "state_not_written",
+    "settlement_not_written",
+    "ledger_not_written",
+    "accounting_not_written"
+  ]
+}

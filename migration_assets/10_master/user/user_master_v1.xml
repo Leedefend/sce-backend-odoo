@@ -1,0 +1,611 @@
+<?xml version='1.0' encoding='utf-8'?>
+<odoo>
+  <data noupdate="1">
+    <record id="legacy_user_sc_8888888" model="res.users">
+      <field name="name">维护管理员</field>
+      <field name="login">legacy_8888888</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_10000000" model="res.users">
+      <field name="name">admin</field>
+      <field name="login">legacy_10000000</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_10000001" model="res.users">
+      <field name="name">段奕俊</field>
+      <field name="login">legacy_10000001</field>
+      <field name="active">1</field>
+      <field name="email">774261219@qq.com</field>
+    </record>
+    <record id="legacy_user_sc_10000002" model="res.users">
+      <field name="name">邓洪英</field>
+      <field name="login">legacy_10000002</field>
+      <field name="active">1</field>
+      <field name="email">573985922@qq.com</field>
+    </record>
+    <record id="legacy_user_sc_10000003" model="res.users">
+      <field name="name">张志</field>
+      <field name="login">legacy_10000003</field>
+      <field name="active">0</field>
+      <field name="email">592487991@qq.com</field>
+    </record>
+    <record id="legacy_user_sc_10000004" model="res.users">
+      <field name="name">邓洪英</field>
+      <field name="login">legacy_10000004</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000005" model="res.users">
+      <field name="name">江一娇</field>
+      <field name="login">legacy_10000005</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000006" model="res.users">
+      <field name="name">江一娇</field>
+      <field name="login">legacy_10000006</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000007" model="res.users">
+      <field name="name">陈帅</field>
+      <field name="login">legacy_10000007</field>
+      <field name="active">1</field>
+      <field name="email">512669193@qq.com</field>
+    </record>
+    <record id="legacy_user_sc_10000008" model="res.users">
+      <field name="name">华略技术—米</field>
+      <field name="login">legacy_10000008</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000009" model="res.users">
+      <field name="name">吴涛</field>
+      <field name="login">legacy_10000009</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_10000010" model="res.users">
+      <field name="name">魏玲</field>
+      <field name="login">legacy_10000010</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000011" model="res.users">
+      <field name="name">胡俊</field>
+      <field name="login">legacy_10000011</field>
+      <field name="active">1</field>
+      <field name="email">1427193363@qq.com</field>
+    </record>
+    <record id="legacy_user_sc_10000012" model="res.users">
+      <field name="name">马丹</field>
+      <field name="login">legacy_10000012</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000013" model="res.users">
+      <field name="name">江一娇</field>
+      <field name="login">legacy_10000013</field>
+      <field name="active">1</field>
+      <field name="email">454921462@qq.com</field>
+    </record>
+    <record id="legacy_user_sc_10000014" model="res.users">
+      <field name="name">朱铁明</field>
+      <field name="login">legacy_10000014</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000015" model="res.users">
+      <field name="name">文楠</field>
+      <field name="login">legacy_10000015</field>
+      <field name="active">1</field>
+      <field name="email">88390400@qq.com</field>
+    </record>
+    <record id="legacy_user_sc_10000016" model="res.users">
+      <field name="name">陈天祚</field>
+      <field name="login">legacy_10000016</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000017" model="res.users">
+      <field name="name">焦玲</field>
+      <field name="login">legacy_10000017</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000018" model="res.users">
+      <field name="name">尹佳梅</field>
+      <field name="login">legacy_10000018</field>
+      <field name="active">1</field>
+      <field name="email">1737647153@qq.com</field>
+    </record>
+    <record id="legacy_user_sc_10000019" model="res.users">
+      <field name="name">易德富</field>
+      <field name="login">legacy_10000019</field>
+      <field name="active">0</field>
+      <field name="email">179710826@qq.com</field>
+    </record>
+    <record id="legacy_user_sc_10000020" model="res.users">
+      <field name="name">杨德胜</field>
+      <field name="login">legacy_10000020</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000021" model="res.users">
+      <field name="name">杨永田</field>
+      <field name="login">legacy_10000021</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000022" model="res.users">
+      <field name="name">谢锐</field>
+      <field name="login">legacy_10000022</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000023" model="res.users">
+      <field name="name">倪德珍</field>
+      <field name="login">legacy_10000023</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000024" model="res.users">
+      <field name="name">陈天友</field>
+      <field name="login">legacy_10000024</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000025" model="res.users">
+      <field name="name">杨永田</field>
+      <field name="login">legacy_10000025</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000026" model="res.users">
+      <field name="name">邱杰</field>
+      <field name="login">legacy_10000026</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000027" model="res.users">
+      <field name="name">郑建华</field>
+      <field name="login">legacy_10000027</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_10000028" model="res.users">
+      <field name="name">邓世娇</field>
+      <field name="login">legacy_10000028</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_10000029" model="res.users">
+      <field name="name">陈天友</field>
+      <field name="login">legacy_10000029</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_10000030" model="res.users">
+      <field name="name">钱光海</field>
+      <field name="login">legacy_10000030</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_10000031" model="res.users">
+      <field name="name">吴冉</field>
+      <field name="login">legacy_10000031</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000032" model="res.users">
+      <field name="name">魏玲</field>
+      <field name="login">legacy_10000032</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000033" model="res.users">
+      <field name="name">李伟</field>
+      <field name="login">legacy_10000033</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000034" model="res.users">
+      <field name="name">李林旭</field>
+      <field name="login">legacy_10000034</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000035" model="res.users">
+      <field name="name">刘应木</field>
+      <field name="login">legacy_10000035</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_10000036" model="res.users">
+      <field name="name">何翔宇</field>
+      <field name="login">legacy_10000036</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_10000037" model="res.users">
+      <field name="name">刘汉丹</field>
+      <field name="login">legacy_10000037</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000038" model="res.users">
+      <field name="name">韦晶华</field>
+      <field name="login">legacy_10000038</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000039" model="res.users">
+      <field name="name">张龙根</field>
+      <field name="login">legacy_10000039</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000040" model="res.users">
+      <field name="name">范晓龙</field>
+      <field name="login">legacy_10000040</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000041" model="res.users">
+      <field name="name">吴涛</field>
+      <field name="login">legacy_10000041</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000042" model="res.users">
+      <field name="name">刘林</field>
+      <field name="login">legacy_10000042</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000043" model="res.users">
+      <field name="name">王浩辰</field>
+      <field name="login">legacy_10000043</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_10000044" model="res.users">
+      <field name="name">蒋毅</field>
+      <field name="login">legacy_10000044</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000045" model="res.users">
+      <field name="name">卢燕</field>
+      <field name="login">legacy_10000045</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_10000046" model="res.users">
+      <field name="name">测试</field>
+      <field name="login">legacy_10000046</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000047" model="res.users">
+      <field name="name">测试王</field>
+      <field name="login">legacy_10000047</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000048" model="res.users">
+      <field name="name">赖宇轩</field>
+      <field name="login">legacy_10000048</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000049" model="res.users">
+      <field name="name">曾小东</field>
+      <field name="login">legacy_10000049</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_10000050" model="res.users">
+      <field name="name">谭信坤</field>
+      <field name="login">legacy_10000050</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000051" model="res.users">
+      <field name="name">严宗波</field>
+      <field name="login">legacy_10000051</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000052" model="res.users">
+      <field name="name">李文慧</field>
+      <field name="login">legacy_10000052</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000053" model="res.users">
+      <field name="name">叶凌越</field>
+      <field name="login">legacy_10000053</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_10000054" model="res.users">
+      <field name="name">李俭锋</field>
+      <field name="login">legacy_10000054</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_10000055" model="res.users">
+      <field name="name">王银</field>
+      <field name="login">legacy_10000055</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000056" model="res.users">
+      <field name="name">肖辉玖</field>
+      <field name="login">legacy_10000056</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000057" model="res.users">
+      <field name="name">文勇</field>
+      <field name="login">legacy_10000057</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000058" model="res.users">
+      <field name="name">张文翠</field>
+      <field name="login">legacy_10000058</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000059" model="res.users">
+      <field name="name">刘汶衔</field>
+      <field name="login">legacy_10000059</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000060" model="res.users">
+      <field name="name">王丽（王雷）</field>
+      <field name="login">legacy_10000060</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000061" model="res.users">
+      <field name="name">测试李</field>
+      <field name="login">legacy_10000061</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000062" model="res.users">
+      <field name="name">测试向</field>
+      <field name="login">legacy_10000062</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_10000063" model="res.users">
+      <field name="name">赵伟</field>
+      <field name="login">legacy_10000063</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000064" model="res.users">
+      <field name="name">梁兵</field>
+      <field name="login">legacy_10000064</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_10000065" model="res.users">
+      <field name="name">侯忠磊</field>
+      <field name="login">legacy_10000065</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000066" model="res.users">
+      <field name="name">陈加国</field>
+      <field name="login">legacy_10000066</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000067" model="res.users">
+      <field name="name">倪德模</field>
+      <field name="login">legacy_10000067</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000068" model="res.users">
+      <field name="name">魏杨雷</field>
+      <field name="login">legacy_10000068</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000069" model="res.users">
+      <field name="name">魏杨雷2</field>
+      <field name="login">legacy_10000069</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000070" model="res.users">
+      <field name="name">徐丹</field>
+      <field name="login">legacy_10000070</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000071" model="res.users">
+      <field name="name">测试龙</field>
+      <field name="login">legacy_10000071</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000072" model="res.users">
+      <field name="name">刘钧</field>
+      <field name="login">legacy_10000072</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000073" model="res.users">
+      <field name="name">徐丹</field>
+      <field name="login">legacy_10000073</field>
+      <field name="active">0</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000074" model="res.users">
+      <field name="name">尹丹梅</field>
+      <field name="login">legacy_10000074</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_10000075" model="res.users">
+      <field name="name">王银</field>
+      <field name="login">legacy_10000075</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000076" model="res.users">
+      <field name="name">刘溪婷</field>
+      <field name="login">legacy_10000076</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000077" model="res.users">
+      <field name="name">蔡思琪</field>
+      <field name="login">legacy_10000077</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000078" model="res.users">
+      <field name="name">康晓宇</field>
+      <field name="login">legacy_10000078</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000079" model="res.users">
+      <field name="name">临时账号</field>
+      <field name="login">legacy_10000079</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_10000080" model="res.users">
+      <field name="name">华略潘</field>
+      <field name="login">legacy_10000080</field>
+      <field name="active">1</field>
+      <field name="email" />
+    </record>
+    <record id="legacy_user_sc_14c5f56b013e4c1282c4003d9ea3adba" model="res.users">
+      <field name="name">唐明龙</field>
+      <field name="login">legacy_14c5f56b013e4c1282c4003d9ea3adba</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_5ccaaf8e7007408d9590486a9a0e8189" model="res.users">
+      <field name="name">张宇亭</field>
+      <field name="login">legacy_5ccaaf8e7007408d9590486a9a0e8189</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_d215084d524f4090b822347eaa186f37" model="res.users">
+      <field name="name">秦军</field>
+      <field name="login">legacy_d215084d524f4090b822347eaa186f37</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_637416bf2ff94fce8b9476a02fb601d6" model="res.users">
+      <field name="name">倪德珍</field>
+      <field name="login">legacy_637416bf2ff94fce8b9476a02fb601d6</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_5fa1c183823140d1a907235682bc2215" model="res.users">
+      <field name="name">陈茂</field>
+      <field name="login">legacy_5fa1c183823140d1a907235682bc2215</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_7528691b8b78486b8c54ae4576af2db1" model="res.users">
+      <field name="name">王雷</field>
+      <field name="login">legacy_7528691b8b78486b8c54ae4576af2db1</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_8f60d70e74974863ac514c7f4ba87e0f" model="res.users">
+      <field name="name">易德富</field>
+      <field name="login">legacy_8f60d70e74974863ac514c7f4ba87e0f</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_8522b4a54bec4a09a2561440eedbe7c7" model="res.users">
+      <field name="name">凌林</field>
+      <field name="login">legacy_8522b4a54bec4a09a2561440eedbe7c7</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_6b92871645c0413695fa3a42657e9199" model="res.users">
+      <field name="name">廖中行</field>
+      <field name="login">legacy_6b92871645c0413695fa3a42657e9199</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_6a5aeff488c641e8b6ff8ef77b5a97bd" model="res.users">
+      <field name="name">测试测试</field>
+      <field name="login">legacy_6a5aeff488c641e8b6ff8ef77b5a97bd</field>
+      <field name="active">0</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_a74a3dd36c004a4b8491675919c6be4c" model="res.users">
+      <field name="name">李娜</field>
+      <field name="login">legacy_a74a3dd36c004a4b8491675919c6be4c</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_cda47176b5bd4ad38a6eb8984a7feeca" model="res.users">
+      <field name="name">杨雨雪</field>
+      <field name="login">legacy_cda47176b5bd4ad38a6eb8984a7feeca</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_4e8191d3bad04354aebfe26315ac2614" model="res.users">
+      <field name="name">罗萌</field>
+      <field name="login">legacy_4e8191d3bad04354aebfe26315ac2614</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_f612d87666434c9c90a1c32e5fc64fe8" model="res.users">
+      <field name="name">技术李</field>
+      <field name="login">legacy_f612d87666434c9c90a1c32e5fc64fe8</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_d4885f319a7b4e3692838730afc50206" model="res.users">
+      <field name="name">蒋毅</field>
+      <field name="login">legacy_d4885f319a7b4e3692838730afc50206</field>
+      <field name="active">0</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_8d9e7a4e37a94228882bd4ec8a0da424" model="res.users">
+      <field name="name">谢勤林</field>
+      <field name="login">legacy_8d9e7a4e37a94228882bd4ec8a0da424</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_94ab9e22f4e9488e9b83b6e7eadb819c" model="res.users">
+      <field name="name">李德学</field>
+      <field name="login">legacy_94ab9e22f4e9488e9b83b6e7eadb819c</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_27cf86a8c528456da17abb6e6eec0d24" model="res.users">
+      <field name="name">梁明阳</field>
+      <field name="login">legacy_27cf86a8c528456da17abb6e6eec0d24</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+    <record id="legacy_user_sc_2afb101f2d3d41058b33517895db14f9" model="res.users">
+      <field name="name">税务经办人</field>
+      <field name="login">legacy_2afb101f2d3d41058b33517895db14f9</field>
+      <field name="active">1</field>
+      <field name="email">null</field>
+    </record>
+  </data>
+</odoo>
