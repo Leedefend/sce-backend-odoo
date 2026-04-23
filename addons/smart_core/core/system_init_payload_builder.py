@@ -411,7 +411,7 @@ class SystemInitPayloadBuilder:
                 compact["workflow_surface"] = compact_workflow_surface
             meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
             compact_meta = {}
-            for key in ("target", "next_scene", "ui_base_contract_source", "parser_semantic_surface"):
+            for key in ("target", "next_scene", "ui_base_contract_source", "parser_semantic_surface", "compile_verdict"):
                 value = meta.get(key)
                 if value not in (None, {}, []):
                     compact_meta[key] = value
@@ -422,7 +422,13 @@ class SystemInitPayloadBuilder:
 
         meta = raw.get("meta") if isinstance(raw.get("meta"), dict) else {}
         compact_meta = {}
-        for key in ("generated_by", "scene_count", "mode"):
+        for key in (
+            "generated_by",
+            "scene_count",
+            "mode",
+            "base_contract_bound_scene_count",
+            "compile_issue_scene_count",
+        ):
             value = meta.get(key)
             if value not in (None, {}, []):
                 compact_meta[key] = value
