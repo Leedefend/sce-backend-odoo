@@ -97,6 +97,7 @@ def _auto_refresh_missing_assets(
     env,
     *,
     scene_keys: list[str],
+    scene_rows: list[dict] | None = None,
     role_code: str | None,
     company_id: int | None,
 ) -> None:
@@ -108,6 +109,7 @@ def _auto_refresh_missing_assets(
         refresh_ui_base_contract_assets(
             env,
             scene_keys=scene_keys,
+            scene_rows=scene_rows,
             limit=max(len(scene_keys), 1),
             role_code=role_code,
             company_id=company_id,
@@ -443,6 +445,7 @@ def bind_scene_assets(
         _auto_refresh_missing_assets(
             env,
             scene_keys=missing_keys,
+            scene_rows=[row for row in rows if _text(row.get("code") or row.get("key")) in set(missing_keys)],
             role_code=role_code,
             company_id=company_id,
         )

@@ -46,6 +46,7 @@ from odoo.addons.smart_core.core.system_init_scene_runtime_surface_context impor
 from odoo.addons.smart_core.core.system_init_scene_runtime_surface_builder import SystemInitSceneRuntimeSurfaceBuilder
 from odoo.addons.smart_core.core.system_init_dictionary_data_helper import apply_dictionary_startup_data
 from odoo.addons.smart_core.core.intent_execution_result import IntentExecutionResult
+from odoo.addons.smart_core.core.page_contracts_builder import build_page_contracts
 from odoo.addons.smart_core.core.workspace_home_contract_builder import build_workspace_home_contract
 from odoo.addons.smart_core.core.runtime_page_contract_builder import mirror_workspace_home_role_context
 from odoo.addons.smart_core.core.scene_governance_payload_builder import build_scene_governance_payload_v1
@@ -679,6 +680,7 @@ class SystemInitHandler(BaseIntentHandler):
             data["workspace_home"] = build_workspace_home_contract(data)
         else:
             data.pop("workspace_home", None)
+        data["page_contracts"] = build_page_contracts(data)
         mirror_workspace_home_role_context(data)
         stage_ts = _mark("build_workspace_home", stage_ts)
         role_surface = data.get("role_surface") if isinstance(data, dict) else {}
