@@ -725,6 +725,19 @@ const blockHeroData = computed<Record<string, unknown>>(() => workspaceBlocksByT
 const blockMetricData = computed<Record<string, unknown>>(() => workspaceBlocksByType.value.get('metric') || {});
 const blockRiskData = computed<Record<string, unknown>>(() => workspaceBlocksByType.value.get('risk') || {});
 const blockOpsData = computed<Record<string, unknown>>(() => workspaceBlocksByType.value.get('ops') || {});
+const workspaceHomeMetrics = computed<unknown[]>(() => {
+  return Array.isArray(workspaceHome.value.metrics) ? workspaceHome.value.metrics : [];
+});
+const workspaceHomeRisk = computed<Record<string, unknown>>(() => {
+  return (workspaceHome.value.risk && typeof workspaceHome.value.risk === 'object')
+    ? workspaceHome.value.risk as Record<string, unknown>
+    : {};
+});
+const workspaceHomeOps = computed<Record<string, unknown>>(() => {
+  return (workspaceHome.value.ops && typeof workspaceHome.value.ops === 'object')
+    ? workspaceHome.value.ops as Record<string, unknown>
+    : {};
+});
 const workspaceHeroEffective = computed<Record<string, unknown>>(() => {
   return (blockHeroData.value.hero && typeof blockHeroData.value.hero === 'object')
     ? blockHeroData.value.hero as Record<string, unknown>
@@ -1089,7 +1102,9 @@ function keywordList(key: string, fallbackCsv: string) {
 }
 
 const coreMetrics = computed<CoreMetric[]>(() => {
-  const source = Array.isArray(blockMetricData.value.metrics) ? blockMetricData.value.metrics : [];
+  const source = workspaceHomeMetrics.value.length
+    ? workspaceHomeMetrics.value
+    : (Array.isArray(blockMetricData.value.metrics) ? blockMetricData.value.metrics : []);
   return source
     .map((item, idx) => {
       const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
@@ -1135,9 +1150,11 @@ const primaryTodos = computed<SuggestionItem[]>(() => concreteTodos.value.slice(
 const hasMoreTodos = computed(() => concreteTodos.value.length > 3);
 
 const workspaceRisk = computed<Record<string, unknown>>(() => {
-  return (blockRiskData.value.risk && typeof blockRiskData.value.risk === 'object')
-    ? blockRiskData.value.risk as Record<string, unknown>
-    : {};
+  return Object.keys(workspaceHomeRisk.value).length
+    ? workspaceHomeRisk.value
+    : ((blockRiskData.value.risk && typeof blockRiskData.value.risk === 'object')
+      ? blockRiskData.value.risk as Record<string, unknown>
+      : {});
 });
 
 const riskBuckets = computed(() => {
@@ -1216,9 +1233,11 @@ const riskSources = computed(() => {
 });
 
 const workspaceOps = computed<Record<string, unknown>>(() => {
-  return (blockOpsData.value.ops && typeof blockOpsData.value.ops === 'object')
-    ? blockOpsData.value.ops as Record<string, unknown>
-    : {};
+  return Object.keys(workspaceHomeOps.value).length
+    ? workspaceHomeOps.value
+    : ((blockOpsData.value.ops && typeof blockOpsData.value.ops === 'object')
+      ? blockOpsData.value.ops as Record<string, unknown>
+      : {});
 });
 
 const opsBars = computed(() => {

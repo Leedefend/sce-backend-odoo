@@ -66,6 +66,10 @@ def _load_scene_rows(env) -> tuple[list[dict], str]:
         return [], "fallback"
 
 
+def _normalize_scene_rows(scene_rows: list[dict] | None) -> list[dict]:
+    return [row for row in (scene_rows or []) if isinstance(row, dict)]
+
+
 def _build_runtime_ui_base_contract(env, *, action_id: int) -> dict:
     if int(action_id or 0) <= 0:
         return {}
@@ -105,6 +109,7 @@ def refresh_ui_base_contract_assets(
     env,
     *,
     scene_keys: list[str] | None = None,
+    scene_rows: list[dict] | None = None,
     limit: int = 50,
     role_code: str | None = None,
     company_id: int | None = None,
@@ -113,6 +118,10 @@ def refresh_ui_base_contract_assets(
 ) -> dict:
     requested_keys = {_text(item) for item in (scene_keys or []) if _text(item)}
     rows, scene_source = _load_scene_rows(env)
+    if not rows:
+        rows = _normalize_scene_rows(scene_rows)
+        if rows:
+            scene_source = "runtime_rows"
     produced = 0
     skipped = 0
     failed = 0
