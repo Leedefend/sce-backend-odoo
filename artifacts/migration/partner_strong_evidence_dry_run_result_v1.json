@@ -1,0 +1,3707 @@
+{
+  "status": "PASS",
+  "mode": "partner_strong_evidence_no_db_write_dry_run",
+  "input_rows": 369,
+  "action_counts": {
+    "create_candidate": 369
+  },
+  "blocker_counts": {},
+  "create_candidate_rows": 369,
+  "reuse_candidate_rows": 0,
+  "manual_review_rows": 0,
+  "reject_rows": 0,
+  "rows": [
+    {
+      "legacy_partner_id": "e6e3e9546ec44933bd8a409d22ba3457",
+      "partner_name": "中共英吉沙县委员会组织部",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "8A7CA37FD82D451881660F2AECD0F5AB",
+      "partner_name": "中国人民武装警察部队德阳支队",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "bf6a3f3440394de28c3728980930304d",
+      "partner_name": "中国人民解放军32038部队",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "34a812ec5d8945b58f79d23ee1e685ec",
+      "partner_name": "中国人民解放军32166部队",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "f27ae94fa3b04727a72bb078c88c40c7",
+      "partner_name": "中国人民解放军32167部队",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "b69b807fca85444b8fd5d0ed9db4e232",
+      "partner_name": "中国人民解放军32329部队",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 5,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "ea9f3b0b703f4cc090cbccdff6ba20aa",
+      "partner_name": "中国人民解放军77561部队",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "ff8c245f048645bf8092fb8e4f52d2cf",
+      "partner_name": "中国人民解放军77626部队",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 13,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "fb2bf5016bab42f69487693a92693747",
+      "partner_name": "中国人民解放军陆军军医大学",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 8,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "a8b96fc78d654a369436520cc31c8ecc",
+      "partner_name": "中国人民解放军陆军第九五〇医院",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "9befdb558e81467e85dec7535e82be10",
+      "partner_name": "中国共产党苍溪县纪律检查委员会",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "e6d7c9a7691c4db082b6f7df9a1b1d9b",
+      "partner_name": "中国农业发展银行四川省分行",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "C0D75F520DE543C690CE8D9E105447DA",
+      "partner_name": "中国华西企业股份有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "DC2E90C04254434BB642D5D0F165D27A",
+      "partner_name": "中国工程物理研究所电子工程研究所",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "7f229f39bec84d69b38daa4cc97dc6dd",
+      "partner_name": "中国工程物理研究院激光聚变研究中心",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "437ee3d15a2548d781620fa3fdc7b1be",
+      "partner_name": "中国建筑一局（集团）有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 6,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "cf17ecba9f99423ab926a612ab6e7dda",
+      "partner_name": "中国建筑第八工程局有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 6,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "7ce672292518434bac72c88850ecd357",
+      "partner_name": "中国建筑第六工程局有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "E761D25EBB404B95A754AC023D70D3A3",
+      "partner_name": "中国建筑第四工程局有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 14,
+      "linked_repayment_rows": 64,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "9D1DEAFCBB2D410185C657F95D399C19",
+      "partner_name": "中国核工业中原建设有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 17,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "baf8caba0b764e98bc9d665c26336f61",
+      "partner_name": "中国水利水电第六工程局有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "bc4aa28d768649838675a1c3567cca1c",
+      "partner_name": "中国水利水电第四工程局有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "8102955d449748f7b65a62d35a7d8ed4",
+      "partner_name": "中国电信股份有限公司德阳分公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "4d1dc8c755b34fdfb7eb9c8fcf0e181f",
+      "partner_name": "中国电信股份有限公司泸州分公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 10,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "26e255b6ebb54b678dfdd3463743d479",
+      "partner_name": "中国石油天然气第七建设有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 5,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "287c461b2f76478697038144e47b9279",
+      "partner_name": "中国移动通信集团四川有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "A894F86DDAA04C20AF9A0032677DF052",
+      "partner_name": "中国移动通信集团四川有限公司乐山分公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 6,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "840C13AEDE5E4CF392C157701066B95E",
+      "partner_name": "中国移动通信集团四川有限公司南充分公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 3,
+      "linked_repayment_rows": 11,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "0E6294EEDE0C421EA16938E0E1D1DF55",
+      "partner_name": "中国移动通信集团四川有限公司天府新区分公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 9,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "CA1787B3C4FA47AE9092722F2E9673B3",
+      "partner_name": "中国移动通信集团四川有限公司广元分公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "B693A65E3FA24EF9B3BF125FFB709A4E",
+      "partner_name": "中国移动通信集团四川有限公司德阳分公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "BC479EED8D8B4B3485D9309AE05265AF",
+      "partner_name": "中国移动通信集团四川有限公司成都分公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 6,
+      "linked_repayment_rows": 83,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "1D8CD8B42D314D869150313EF836C1D6",
+      "partner_name": "中国移动通信集团四川有限公司眉山分公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "235DC5FBD338480BB6322FC527C2A018",
+      "partner_name": "中国移动通信集团四川有限公司绵阳分公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "9B581193F61B4416A9553DEAF85B29B8",
+      "partner_name": "中国移动通信集团有限公司乐山分公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "B626B00FAAE44A94B194E0662903B49B",
+      "partner_name": "中国移动通信集团有限公司四川巴中分公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "587c5af87ae14c5392b4406df6c6551c",
+      "partner_name": "中国第二重型机械集团(德阳)万安物业发展有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "d1af09ef518946ee8fc69c6ea614ff3a",
+      "partner_name": "中国第二重型机械集团德阳万航模锻有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 7,
+      "linked_repayment_rows": 7,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "608B77A96BEA467D9CC65621CE53E20B",
+      "partner_name": "中国第二重型机械集团德阳万路运业有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "c10a75642ff44c29b304138e5c89b513",
+      "partner_name": "中国航发成都发动机有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "0DA6497A8F5C4B9E80C6D2F0BC482100",
+      "partner_name": "中国航发航空科技股份有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 6,
+      "linked_repayment_rows": 13,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "57822067795845d7802849576225ad53",
+      "partner_name": "中国铁建大桥工程局集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 6,
+      "linked_repayment_rows": 15,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "9e78e723b0d246369e29f3f243345d5f",
+      "partner_name": "中建三局集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "20a228b3c7da4c919cbe21c2aaf566d2",
+      "partner_name": "中建三局集团（德阳）有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "ee4fcd359feb4907ad9d47300fef29eb",
+      "partner_name": "中建六局第五建设有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "3a029de2e6594261bf4a15b5293e7f53",
+      "partner_name": "中建四局第一建筑工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "8d8201f8a31346cfb19f301bdba8330d",
+      "partner_name": "中建四局第一建设有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 12,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "ce98a8c06db048f0ad18e84dbeffe7f7",
+      "partner_name": "中核城市建设发展有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "FDDE1826C41E4D8E95814E3EE331E7B1",
+      "partner_name": "中江县御河中学校",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 8,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "DD11B831F40040F4BC196BB28865BD8A",
+      "partner_name": "中江县普兴镇东升村村民委员会",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "DDDEE8504BEC47669FA20973DC29C1D1",
+      "partner_name": "中江县殡仪馆",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "f741fbfe88e142b79d86dc1000023297",
+      "partner_name": "中江县永兴镇人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "858F0CED8D424DB985154C5EDC30B1C5",
+      "partner_name": "中石油煤层气有限责任公司新疆项目经理部",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "0c942819a1654d8d8a933b14557623e9",
+      "partner_name": "中铁一局集团铁路建设有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "892FE5A8B1BC43C78A7336601350BA36",
+      "partner_name": "中铁二局集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "e34c4e3705d94e20ba58ff0a323d98fa",
+      "partner_name": "中铁八局集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 11,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "2244f8ba357a4d63b6217a2904102558",
+      "partner_name": "中铁十九局集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "08fb496d3ce0479c85388fd2716cd0ad",
+      "partner_name": "中铁十九局集团第三工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "4799E1C864514190BAC0FC885FA0E991",
+      "partner_name": "中铁十九局集团第五工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "E6755496D74443B6A54C6EB7E7E43696",
+      "partner_name": "中铁十二局集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "9d04bff9ac15462e98252a7916b0e505",
+      "partner_name": "中铁十八局集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 4,
+      "linked_repayment_rows": 8,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "f4d9c4dc096448f3ad1c5d2149697757",
+      "partner_name": "中铁十八局集团有限公司巴中恩阳临港产业园项目经理部",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 6,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "1C83D9D712AE4B389AC38E03A49441F9",
+      "partner_name": "中铁十八局集团第五工程有限公司1851项目经理部",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "36fa74bc7bab4bde99e79ccc10cb431a",
+      "partner_name": "中铁广州工程局集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "9e0baa8ec1ac46ac98893126fcbe685f",
+      "partner_name": "中铁建工集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "10f0342425314adf8ce794a78763fbf8",
+      "partner_name": "中铁隧道局集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "F14775F79EDE43CF84F80AA2447E7F52",
+      "partner_name": "丰都县城市建设资产经营有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "1146dfcc65b84ed8b2d533f97748e4a2",
+      "partner_name": "丹阳市丰泰工业炉有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 5,
+      "linked_repayment_rows": 5,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "69563B1582AB4D4D9B387C95DC52F045",
+      "partner_name": "乐山嘉洋科技发展有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 10,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "34ae583a09d34a25864e4a1f7ec631e6",
+      "partner_name": "二重德阳储能科技有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "eb39e14be2434a5fbdb033d2098103de",
+      "partner_name": "二重（德阳）重型装备有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 23,
+      "linked_repayment_rows": 28,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "39779398B288427493E518740C467ADD",
+      "partner_name": "于田县住房和城乡建设局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "d9ff1dfd51de4bebaf91adcd735e0bf8",
+      "partner_name": "交通银行股份有限公司德阳分行",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "BC92860E41CF4B4C8B7123C0C2481230",
+      "partner_name": "什邡市社会福利救助中心",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "670C63FFCFA34604848EBC93724804F6",
+      "partner_name": "什邡恒基置业有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "a767ba7cc38b44ce9ae63685c3ce9123",
+      "partner_name": "伟宸建设集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "8251bbafb5bf43cdbbd284d8d8b05635",
+      "partner_name": "伽师工业园区管理委员会",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 5,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "af92191fafbb4a3db361973efd89ce1e",
+      "partner_name": "保利长大工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "fd9d50ce42a14ee79563182158015999",
+      "partner_name": "剑阁县圈龙乡人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "3DBF0AD2BB614F8DA7295B68E3E3796B",
+      "partner_name": "剑阁县杨村镇人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "0E63073131F74607A3ECF2FD141859A0",
+      "partner_name": "华新建工集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "15A75EDC149B4BF58779237BD78F46D5",
+      "partner_name": "南充市高坪区农业农村局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 5,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "dbe2e49cb22c4a9896a56365049aa72a",
+      "partner_name": "古蔺县水务局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "3dbb244e9c4d4846994010ca11a8744b",
+      "partner_name": "喀什市农业农村局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "baa29928fcda40d680f5495eb39ac197",
+      "partner_name": "喜德县交通运输局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "96540ef257254b7ca5c2a4f4e244eabf",
+      "partner_name": "四川三盛环保科技有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "9fb89c0bc2214bbb9ae07685c1bde80d",
+      "partner_name": "四川东电金宇置业有限公司瑞麟东方酒店",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "4caa48ce557a49aa899ad0b2d1b349f0",
+      "partner_name": "四川中彩源建设工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 3,
+      "linked_repayment_rows": 9,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "7C975FDCED1A4181BAF92C2DEDF24826",
+      "partner_name": "四川中烟工业有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "114d0fa5de9b484b8a310a0187bc83d3",
+      "partner_name": "四川便捷酒店管理有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "DC1E620181A447048BFD071215617B2B",
+      "partner_name": "四川创海建筑工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "0702d4fba99740fbb13ef7257a0c1c8a",
+      "partner_name": "四川圆规酒店管理有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "B17ADBE7062041959703E9961E4FBD9A",
+      "partner_name": "四川宏大建筑工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "C4607CDAFBA646C3943BFCE3E549DDA1",
+      "partner_name": "四川富祥建筑工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "A6C339A2D83048D0902D06687B4322E9",
+      "partner_name": "四川川交路桥有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "e503328ab7e4465b8d0c9834a528230a",
+      "partner_name": "四川工程职业技术大学",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 3,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "CBB3F3A4E6C64C23A1B17C68AE75D72C",
+      "partner_name": "四川工程职业技术学院",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 38,
+      "linked_repayment_rows": 68,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "6bbfe93a19da42fc834eb5ff869c2fdc",
+      "partner_name": "四川巨狼实业发展集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "E79565AD944A484CBA17A88B47088431",
+      "partner_name": "四川广汉火车站省粮食储备库",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "773E88C0B774452592F6B68AD23B6294",
+      "partner_name": "四川库伦电气有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "8019d3289465482eb92a8d4c2415bf67",
+      "partner_name": "四川建筑职业技术学院",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 6,
+      "linked_repayment_rows": 11,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "dc6823036dd74bd88c5610fb86e64fff",
+      "partner_name": "四川建设发展股份有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "fdea6bcb5a974b7197f06ddeb5f44c6c",
+      "partner_name": "四川得福来酒店有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "E5C471B8007B4F9481863EE6FE1A4372",
+      "partner_name": "四川新众建筑加固工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 3,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "6C5AFE91667640278D556503E233C0B0",
+      "partner_name": "四川新力葆房地产集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "c07a05307e534aa587bc55b6799e4e36",
+      "partner_name": "四川昌意兴建筑劳务有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "be83bedd3b3b41fe8a59b3b6d8146887",
+      "partner_name": "四川智泽云天建筑工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 10,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "CCA6FED9457D4A5EB0A230172F25E145",
+      "partner_name": "四川曜道杰建筑工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "9a259d34ce444e3db6bbd3f3823bff51",
+      "partner_name": "四川汉南供水有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 5,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "1D64AA3B6A6143419FFA2DBD57395328",
+      "partner_name": "四川泰鑫房屋维修工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 5,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "65da8e6241ce44ebb86ffb9dc73db094",
+      "partner_name": "四川洋洋商业管理有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "5dbaeed773884841af4c966aab9cc78f",
+      "partner_name": "四川熙韵建筑工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "113e0cf09e0e480c85a5dcca63c3738b",
+      "partner_name": "四川盈佳置业有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "e6ab4b1c8fb546b0a0700df7bda3817a",
+      "partner_name": "四川省东方兴发建设集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 6,
+      "linked_repayment_rows": 8,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "436718F022DC42B0B639D3AEE5AC56C0",
+      "partner_name": "四川省东汽八一中学",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "012cc1690acf4cf7892ed3e2603c7677",
+      "partner_name": "四川省交通建设集团有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "CCF7587130A74E20BEAEB9056073BB64",
+      "partner_name": "四川省华地建设工程有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "433a5c0d9b5d4b5ab253a4fabc12bde3",
+      "partner_name": "四川省商贸学校",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "bddae04392f54da0a774f512b1aec594",
+      "partner_name": "四川省工业设备安装集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "EBEE06AF85C449CB963E24010EE87A85",
+      "partner_name": "四川省德阳中学校",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "a77e3629aca14dfa956dce07639624bd",
+      "partner_name": "四川省旌晶食品有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "D1C685AE296943F1A7A5F31202CADF2F",
+      "partner_name": "四川省烟草公司宜宾市公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "C73B5808228B49DC9DE0BB66013C589B",
+      "partner_name": "四川省玻纤集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 29,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "31C4952941CA49B5A0B2ECB7FD07DDAB",
+      "partner_name": "四川省第一建筑工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 3,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "2D635F3D64D8428A863BE03E0CBA8C68",
+      "partner_name": "四川省第六建筑有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "55a4b780064547da91beedb39369552d",
+      "partner_name": "四川省第四建筑有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 5,
+      "linked_repayment_rows": 17,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "2e112a1d31384dc1bbb2e9342e9a89c5",
+      "partner_name": "四川省绵阳外国语学校",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "FA3A39EED3F34DC7AF4238DCBB90EBA6",
+      "partner_name": "四川省黄猫垭农业生物科技发展有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "a314a1b7f80149deaccbde95f9d02937",
+      "partner_name": "四川纹江致远建筑开发工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 6,
+      "linked_repayment_rows": 10,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "7b311c19fd7e4785a80f82fee5b47773",
+      "partner_name": "四川自贡汇东发展股份有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "b3a8413ea57040cf91984e22ba261d21",
+      "partner_name": "四川致远锂业有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "3F09FC5ACB9A4182A390FC156B0C22D6",
+      "partner_name": "四川通信服务有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 5,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "4F25F2122EDB41FB80D12E1C12CB9ED4",
+      "partner_name": "四川金路发建设工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "7159A517D37942BFA99114F8D5D88B72",
+      "partner_name": "四川金顺达公路工程有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "0e264f213e764dc3a0f57251de731e22",
+      "partner_name": "四川长虹技佳精工有限公司重庆分公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "ea705b0667f541a9bdd05d7cb22531ed",
+      "partner_name": "四川阆中水城农业发展有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "9dfda9741955462f9e21e44c64f9b6aa",
+      "partner_name": "四川高竹工程建设有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 5,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "ea8b0dfc9de9429da2879cb9a827fb7e",
+      "partner_name": "四川黑竹沟运营管理集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "3881CDDAFE914A29A9F7E44005E4BBEF",
+      "partner_name": "四汇建设集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "FFA32CA80E7941AC9513D523836F956B",
+      "partner_name": "国网四川省电力公司德阳供电公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "30FE9AE3FBEA40F7825B4D0D12642FB7",
+      "partner_name": "国网四川省电力公司成都市龙泉驿供电分公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "3e5dfb41a1f0455abcc5b42a079c1353",
+      "partner_name": "国网新疆电力有限公司喀什供电公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 5,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "27c88614ffea40bfb9d65e7be9eb6bcd",
+      "partner_name": "国营川西机器厂",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "CFBDF653A31043DBADE6AC1947711180",
+      "partner_name": "圈龙乡新桥村委会",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "1C5C014AB0FE4C919321FCA67296B89D",
+      "partner_name": "城口县明通镇中心小学",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 34,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "F5760C2B7ACF407AAE095737C561C5D6",
+      "partner_name": "塔什库尔干塔吉克自治县农业农村局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "c516c3c3588a4b389984a73410f1cc96",
+      "partner_name": "大唐甘肃发电有限公司碧口水力发电厂",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "c98bacd1fd324157919bfff214863a68",
+      "partner_name": "安徽电气集团股份有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "B94A97DA4D524F16AC2D8AC505670885",
+      "partner_name": "射洪县农业服务中心",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "969222dbbb3347708f17357ee52e4ddd",
+      "partner_name": "山东创杰智慧装备科技有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "6C0B5A9FC4AD4E6EA5B9B21AB87BCE08",
+      "partner_name": "川北幼儿师范高等专科学校",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "de54373fa545462b898cae59e05ef9cd",
+      "partner_name": "巫山县大昌镇人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "9652EA990FAA494D9D285550F29E3362",
+      "partner_name": "巴宜区教育局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "2F8848C719E346ECBCE2FA0F12A33EE4",
+      "partner_name": "巴楚县民政局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "E64398348677402EAEC166387EED0ADB",
+      "partner_name": "布拖县 火烈乡（镇）人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "0C329C94CFD44DC9A864273490221743",
+      "partner_name": "布拖县基只乡（镇）人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "e85ea746b8034726bb027effaba04918",
+      "partner_name": "平武县民政局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "dffe576713d34fb987be67cecd2f1d0b",
+      "partner_name": "广元市昭化区华瑞投资开发有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "078A0ED6585341779F27890B42AEACFB",
+      "partner_name": "广元市朝天区沙河镇人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 6,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "AF2187DC12E146C7BB37F3978AB55CCB",
+      "partner_name": "广元市朝天区花石乡人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "C4FCC7A7DBC2416A8DFA76543D6D1938",
+      "partner_name": "广安亿达投资有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 6,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "E5C1309D92564844B95B4CF7101D6C50",
+      "partner_name": "广日电梯（四川）有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "bd5040dcd3944b7b8b9a2f7afe2fe79a",
+      "partner_name": "广汉市住房和城乡建设局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "0f7c4317dc9e4deea17c2879be9c62f2",
+      "partner_name": "广汉市南兴镇人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "fee4a13103ac433eb68003b47f69e1aa",
+      "partner_name": "广汉市城乡建设发展有限公司（供应商）",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "BAC96214F0CC419C983C1A444A7F95FD",
+      "partner_name": "广汉市水务局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "7d75c257c823410f8c8c2d1425d9cb9d",
+      "partner_name": "德昌县巴洞镇人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "AB2AEEB9D43940428E29D7D29209C7F8",
+      "partner_name": "德阳九源燃气工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "8ADBC72F2FE849B4A2DAEDB3B817D12C",
+      "partner_name": "德阳二重新业建筑工程有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "104f0e9b81d64f2893166f483b02dca0",
+      "partner_name": "德阳农村商业银行股份有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "014189e76b1746c1ae4aec5a65033814",
+      "partner_name": "德阳华润燃气有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 7,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "6a3a08de895c4018840c9a7b442273c1",
+      "partner_name": "德阳发展城市建设开发有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "465d51947a364767a9b2c9f30c7b1f40",
+      "partner_name": "德阳发展控股集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "8379780ff57f4edcb8683ac026afdb1e",
+      "partner_name": "德阳国信建设工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 5,
+      "linked_repayment_rows": 18,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "44dd7fdfdc32442680b94f237afbe3f7",
+      "partner_name": "德阳国信驰能科技服务有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "e99e7c77c4e64ed2ae2bbc2ffc4c8265",
+      "partner_name": "德阳大参林投资有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 4,
+      "linked_repayment_rows": 42,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "F3E2D591364841BFAD6FB2D79740A935",
+      "partner_name": "德阳市万兴物业有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "0227f9af47894ca8a3be5547b0f80cd7",
+      "partner_name": "德阳市中恒重工机械有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "c52fda1b0d2d4ff1bafd20fdd98d55ef",
+      "partner_name": "德阳市人民医院",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "cd8ce354a88e4fe2a7a864928f8735cd",
+      "partner_name": "德阳市人民政府办公室",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "79F11E80D2B44E27BE57C89D2DFED758",
+      "partner_name": "德阳市供水安装工程队",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 10,
+      "linked_repayment_rows": 12,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "0314be9ce8d546fe879b50ba72faafa6",
+      "partner_name": "德阳市元安物业有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "6AED48140F1B459E96C915E9009A1A0B",
+      "partner_name": "德阳市凯州投资开发有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "8503b255f23441b4ab21585d89b70544",
+      "partner_name": "德阳市华山路学校",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "a1ada15041054c148dacaa406d1fb380",
+      "partner_name": "德阳市商务局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "676A55A37FDB44A3A8B567A6D939DA7C",
+      "partner_name": "德阳市国有资产监督管理委员会",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "336D6F4B517C4A8DB2DBBA885C865B31",
+      "partner_name": "德阳市土地矿权交易中心",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "B8DE79C91F004B8F927D51B644DE254C",
+      "partner_name": "德阳市城市管理行政执法局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 5,
+      "linked_repayment_rows": 20,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "7E83CA9C5950475A8A8AF195B8B502F6",
+      "partner_name": "德阳市审计局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "92AAC307BDC846EF8E888CA5DB74A488",
+      "partner_name": "德阳市市政工程维护管理处",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "D23659098E8F489891681AA14E80ECE2",
+      "partner_name": "德阳市政务服务和大数据管理局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "08748a8a4a134be6bd7dbcbe1d159645",
+      "partner_name": "德阳市旌创建设工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 3,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "db4536268b824d21b9e0059f97b17ffa",
+      "partner_name": "德阳市旌合建设工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "5F01C29E553F45ECB16BFCCBAD3522BF",
+      "partner_name": "德阳市旌辉投资有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 6,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "1ef830727e994db792028dc17642fbdc",
+      "partner_name": "德阳市旌阳区八角社区卫生服务中心",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "D259770DB26C496AA39DD991F2914A21",
+      "partner_name": "德阳市旌阳区公路建设投资开发管理所",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "F8E54AAFF3F94065BBCEE7C37FD5C53B",
+      "partner_name": "德阳市旌阳区市场监督管理局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "54B26AAA722C420ABC92683C06495C19",
+      "partner_name": "德阳市旌阳区德新镇人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "44e6ec9d67c343a7a33f8db2dcb0ae03",
+      "partner_name": "德阳市旌阳区旌东街道旌湖社区居民委员会",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "79bcbc0505004f21b0ce99d69e5336cc",
+      "partner_name": "德阳市旌阳区旌阳街道花园巷社区居民委员会",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "C0DE4E19E6B84935B4B0B085328D36F7",
+      "partner_name": "德阳市旌阳区涪江路小学校",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 5,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "64576204872a420b877d62516b14e10a",
+      "partner_name": "德阳市杰阳排水有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "532f750efd65409cab30fcb99da705cf",
+      "partner_name": "德阳市水利局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "0263dea130b6471db64885c8ba259bb9",
+      "partner_name": "德阳市永成机械厂",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "906d8d2007a5412fa25e9b3b8fa72089",
+      "partner_name": "德阳市潺亭水务有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 19,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "720717e548e94122b750f436aa078e63",
+      "partner_name": "德阳市玉皇观",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "AE0C8A5B4F3F43D3B3A86EE2AB6609C8",
+      "partner_name": "德阳市第一小学校",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "B9621FF5FBB741AABA7E06DF503F36DA",
+      "partner_name": "德阳市经济技术开发区征收拆迁服务中心",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "72ABD6591F684C9981EA0065B5008B5A",
+      "partner_name": "德阳市罗江区万安镇南塔社区居民委员会",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "7706DF8AD0904E2982954E17031E2368",
+      "partner_name": "德阳市罗江区住房和城乡建设局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 6,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "3698c87c05c7474aaced71187e3da397",
+      "partner_name": "德阳市罗江区公路建设养护所",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "7e257b17080c4dd6baa04e6b34f102ba",
+      "partner_name": "德阳市罗江区公路管理所",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "a4f665d674cf4c38b7057054b698b585",
+      "partner_name": "德阳市罗江区教育和体育局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "6A01A2851104408C8E7DCF445BE934C5",
+      "partner_name": "德阳市罗江区水利灌排工程管理中心",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 6,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "3C18E5599CE144FAB8690930FE9F01D8",
+      "partner_name": "德阳市罗江区白马关镇人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "E44D558ACEF6409C8680D5DE87D31710",
+      "partner_name": "德阳市罗江区综合行政执法局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "8ee477a2e5ff49ab9d18a361f89df2ed",
+      "partner_name": "德阳市罗江区自来水公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "4EAAE36D04FF40E5B7AF6BD5EBC0038A",
+      "partner_name": "德阳市罗江区调元镇人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "305e9fb55c5740fb8e5982e524b5b534",
+      "partner_name": "德阳市群运物资有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "021c3886541e4515bb8377ca3e65d9f8",
+      "partner_name": "德阳市自来水公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 6,
+      "linked_repayment_rows": 10,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "1daf00e4bc3b4764b4fb2b5ad8d6b62a",
+      "partner_name": "德阳市艺术宫",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "573f3a5cdfc145e6b5cc6b3d51a7964e",
+      "partner_name": "德阳市衡山路学校",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "6cfbff6651dc47d9947e119022286335",
+      "partner_name": "德阳市金山街学校",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "82aef4d7acb341caaed0657e9f806791",
+      "partner_name": "德阳市青少年宫",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "2024d7775b604ded85cf44d3aec393b3",
+      "partner_name": "德阳市黄河路小学校",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "4bb3cba9d20d4457aa7b6b611cbc7f96",
+      "partner_name": "德阳开发区六月雪干锅凯德店",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "427cba4e01f34510b2390ab56d007e96",
+      "partner_name": "德阳开放大学",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "2c40b8dec4a54202ba450b0643e44472",
+      "partner_name": "德阳德美医疗美容医院有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "536d48c63c104390ba0508391a4a5f14",
+      "partner_name": "德阳思远重工有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "8FB70C95AF5A423F8C7F605FEB149ABB",
+      "partner_name": "德阳文鑫文化体育有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "FF1FB27380DB4791B057B918A2AB1133",
+      "partner_name": "德阳方兴建设有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "deeeafcc916347f382bbc93978993055",
+      "partner_name": "德阳旌信城市管理服务股份有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 5,
+      "linked_repayment_rows": 5,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "C92FF7377F364901AC2A78E1FEB2C069",
+      "partner_name": "德阳智茂润亚电子科技有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 12,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "1e8acf67165d4f47a44d072a5b94b119",
+      "partner_name": "德阳特斯联实业有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "1F0E93B702CD4D288F198171A102C9FA",
+      "partner_name": "德阳玛丽妇科医院有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "c2bc8c89f3ef471b99c928f29b7c6a03",
+      "partner_name": "德阳禾顺房地产开发有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "FB0C0B02ED3B492988EB41D0106474DD",
+      "partner_name": "德阳第五医院股份有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "23fed041947e4db399e268da884d57e5",
+      "partner_name": "德阳经开建设工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 13,
+      "linked_repayment_rows": 40,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "c9ec83ac8455420e9070757a70ce20e6",
+      "partner_name": "德阳经开物业管理有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "4848421c0c504f068c2e3b136cb3e103",
+      "partner_name": "德阳经济技术开发区城市管理综合服务中心",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "48d92babc2094a4c967d1b7053f06cf6",
+      "partner_name": "德阳经济技术开发区第一幼儿园",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "E88B1F6779D1499BBF89764300C26A9A",
+      "partner_name": "德阳经济技术开发区重点工程建设中心",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 6,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "70068fdd7b9f48cfb45a8ba2f8b8d816",
+      "partner_name": "德阳芯万晨商贸有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "9E2706663D884F908162D738EED275E5",
+      "partner_name": "德阳蓉北建设工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 8,
+      "linked_repayment_rows": 55,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "9858e18c4918448fb0904a2691964064",
+      "partner_name": "德阳鑫凯基置业有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 3,
+      "linked_repayment_rows": 6,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "d5b4d768787c4e95ac70dd62c8337e66",
+      "partner_name": "德阳鑫利化工厂",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "a2bbebc2328b4fb4a03c66368f071b40",
+      "partner_name": "德阳钰鑫化工有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "2b3124837d8547cea19b91673c16837c",
+      "partner_name": "德阳高新发展有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "23313DA5387447E19E618C7C8A5CA6B7",
+      "partner_name": "德阳龙井公墓服务有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "069E35D50F9A450E86A1DCF587ADFC27",
+      "partner_name": "成都七天四季投资管理有限公司德阳文庙广场店",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "89378D9C8861488783344CFCB5E7392A",
+      "partner_name": "成都市郫都区人民政府安德街道办事处",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "D742B604386E44E7AC87FB5CA8904D14",
+      "partner_name": "成都市龙泉驿区洪安镇人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "648EA61D5BBF42768F35F4BE7BCF935B",
+      "partner_name": "成都市龙泉驿区第六中学校",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "ef8db704d80b4430a7cbe9afc7250f30",
+      "partner_name": "成都师范学院德阳高级中学",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "863d91062db340cd998c6b3f93850050",
+      "partner_name": "成都建工第一建筑工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "2db04500c3d542259f898ecb0eae3fcd",
+      "partner_name": "成都建工第五建筑工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "e8a2a9c209734fa9ad96d96618968e0a",
+      "partner_name": "成都煜嘉建筑工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "fc6e819bc4f1486eae8ae80bc48d50d0",
+      "partner_name": "成都环境水务建设有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "062420f967c846b9bdd446d11c1f717d",
+      "partner_name": "成都秦川物联网科技股份有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "12d27da254434a6ba86d7bbbde74ae0e",
+      "partner_name": "拉萨市堆龙德庆区住房和城乡建设局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "ffc69b4cd87145538d3ea60ef1227439",
+      "partner_name": "拉萨市柳梧新区管理委员会",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 5,
+      "linked_repayment_rows": 9,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "7E969CB12DFA48C3B0A62BD0529907BF",
+      "partner_name": "攀枝花安宁新能源科技有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 5,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "a2da464f15f14648bbc59f71edcda375",
+      "partner_name": "新疆喀什电盛有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 5,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "2ca4f201a1604613ab20d3015e6a6bc1",
+      "partner_name": "新疆维吾尔自治区人民检察院喀什分院",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 6,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "fa6c17afaa9d48ebaa4a4b1fc09e352d",
+      "partner_name": "旌阳区双东镇东美村股份经济合作联合社",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "A62A0C75189F4F38BC81407AFCDDA065",
+      "partner_name": "旌阳区天元街道楠树村股份经济合作联合社",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "36d0952b1d114999856e665afe600477",
+      "partner_name": "旌阳区左氏餐饮店",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "9f9d0c53467e4ab480236bf0e729a8fc",
+      "partner_name": "旌阳区德新镇胜利村股份经济合作联合社",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "4c7f8b1b4a2140bdb979232425a642e3",
+      "partner_name": "普格县农业农村局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "4F45316C4E4B4247930254D833AD9929",
+      "partner_name": "林芝华信恒富房地产开发有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "196126a7bf2b4caba6dd0be44e78001a",
+      "partner_name": "武警新疆总队机动第五支队",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "FEE1881A1743436B918A83DAFA07F39B",
+      "partner_name": "汉源县文化体育和旅游局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "33687b850d6445219ae57488c140c815",
+      "partner_name": "河北省送变电有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "4503d05e798442cabd93d9d46ef50723",
+      "partner_name": "河北维得利吊索具制造有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "58edce0e10364357a65a608fd749ca20",
+      "partner_name": "泸县奇峰镇共和村股份经济联合社",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "6d78df0e6c394d02bdee2211bc70a9a8",
+      "partner_name": "浙江省建工集团有限责任公司阿合奇县分公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "93E4EAA3B631441A8ABB1B75A65DBBC0",
+      "partner_name": "玖龙纸业（重庆）有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "a29b73db6fb640618befff9cd5ff3f63",
+      "partner_name": "甘肃龙江电力有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "d607abbc87464420a9519a00f2d111e3",
+      "partner_name": "生猪技术创新中心(重庆)",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "fbea29a3c08f477fabb306e7d98fe273",
+      "partner_name": "疏勒县第二幼儿园",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 6,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "9e43df64fc7e4b2085099cc7fe4d4518",
+      "partner_name": "盐亭县交通运输局公路管理所",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "0b3cd5219da747369f12af3dad1b3187",
+      "partner_name": "眉山环天建设工程集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "0867ABF0E4CA4A80BB7ADF62D45F8A80",
+      "partner_name": "石柱土家族自治县水利工程服务站",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 12,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "EA721D9C570348C6BBDFA60ABA275DCF",
+      "partner_name": "米易县颛顼文化旅游开发有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "83B4499694DB42769BAEDBF691FB0D62",
+      "partner_name": "米易恒邦领晟置业有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "470544403DE64C9F820AC12849906FC9",
+      "partner_name": "米易高恒置业有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "C6421AAE919F46AF922232E140161FCD",
+      "partner_name": "米易龙信房地产开发有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "45dc4ba6750c4a199773c7d3c4600de6",
+      "partner_name": "绵竹市众力工程机械设备有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 8,
+      "linked_repayment_rows": 14,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "f12e1ad34a6540e9bf72e417ebdb187b",
+      "partner_name": "绵竹市金申建筑有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "1b11fbadb1284946b305905c9d64c316",
+      "partner_name": "绵阳市公安局高新技术产业开发区分局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "3ff2625c8e3b414fa2819810f5377dde",
+      "partner_name": "绵阳市安州区人民检察院",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "e8c93ce05a034da09b6bd7529a998f26",
+      "partner_name": "绵阳市安州区农业农村局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "968CF9376A1E4377B78AA53E219A3581",
+      "partner_name": "绵阳市安州区建投矿业有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "7e4525b185174629b551ef598914a5fe",
+      "partner_name": "绵阳市安州区花荄镇兴福村股份经济合作联合社",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "4068b3a429484af88580203246b779c0",
+      "partner_name": "绵阳市涪城区丰谷镇人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "0FC7902D5662486BB07878BF403E28BC",
+      "partner_name": "绵阳市游仙区交通运输局公路管理所",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 8,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "aed66a6e7e9746fc8ff1b553d997c537",
+      "partner_name": "绵阳市游仙区魏城镇竹柳村村民委员会.",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "a8fc65544b87438aa5ed08c85eb571cd",
+      "partner_name": "绵阳皓华光电科技有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "EAFF596A8091490C86F51C961FD3BB49",
+      "partner_name": "绵阳科技城新区博雅学校",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "DE63F76B13C248928EE7B64E38D83C51",
+      "partner_name": "绵阳精鑫资产管理有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "e459edd33a76465186d88ad0b5e810be",
+      "partner_name": "绵阳高新区普明街道古泉社区居民委员会",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "4bce7c04d63d46f8ace8a3b2973681cc",
+      "partner_name": "绵阳鹏安建设工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "5dad61f6c20e4091b7db6d33f8e0b5ad",
+      "partner_name": "苍溪县兴苍建设有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "d5fe6cbb4c824b29861586b2f439fa7e",
+      "partner_name": "英吉沙县财政局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "01fffa7989ea48f0b37e85878c350f80",
+      "partner_name": "莎车县住房和城乡建设局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 14,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "3a474dfec7e548a695525615c7e19458",
+      "partner_name": "莎车县艾力西湖镇人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 5,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "636F18CD00F44C13907AD4FA2CBDB5DB",
+      "partner_name": "蓬溪县水利工程建设管理办公室",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "9d2e8c596e534df2a266650a06f35d79",
+      "partner_name": "西安尼通热力有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "d68d7bf1907c4db29e073d739ca6ef15",
+      "partner_name": "西昌海成置业有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "9423f1bf60cd49a4b78298d9db2e97e8",
+      "partner_name": "西藏拉萨市城关区两岛街道办事处",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "953930b5888c4b9d9eb17da1979a6146",
+      "partner_name": "西藏浪卡子县农业农村局零余额账户",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "EC8BA0267C2847CAB17E134499A55B9C",
+      "partner_name": "西藏自治区人民政府驻格尔木办事处医院",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "e23e35ec814b498da94cd5971c3d04a5",
+      "partner_name": "西藏高争民爆股份有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "17616A45A80F4A8B859805425F3F05AF",
+      "partner_name": "越西县消防救援大队",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "D4D8895914EC4243871921673120F3CA",
+      "partner_name": "达州发展（控股）有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 12,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "0DC4BA86C79C4076A9A2C8C4BA5E8D4D",
+      "partner_name": "邛崃格润能源有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "7fa382506c3046faa9a5806318dba2e4",
+      "partner_name": "都兰县水利局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "339be9f5b22745819f0dcf57c81b207f",
+      "partner_name": "重庆两江新区土地征收和住房事务中心",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "28bcf97dc9064dd48c227d5c2e6e2084",
+      "partner_name": "重庆临空经济示范区开发建设有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "7abbd3cd837c472e8a572e4e08fcc0dd",
+      "partner_name": "重庆农村商业银行股份有限公司合川分行",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "90025a595d614e74a2fa169b2046293e",
+      "partner_name": "重庆农村商业银行股份有限公司大足支行",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "1444cbc41ded4cf5a9e1a6aa0614b03b",
+      "partner_name": "重庆农村商业银行股份有限公司潼南支行",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "908efa8a84284bda9f3be541f05b80f6",
+      "partner_name": "重庆合川高新技术产业开发区管理委员会",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "714255073cdb4000ab76594f6584a173",
+      "partner_name": "重庆国盛（物业）集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 8,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "44c97020ed7c4f4a98352c4b0249633a",
+      "partner_name": "重庆巴驿公共交通站场管理有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 3,
+      "linked_repayment_rows": 5,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "01219d47384b4ce89c813fe068671767",
+      "partner_name": "重庆市九龙坡区华岩镇人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "B8C420D19331494FA7CD7F58DFCF7034",
+      "partner_name": "重庆市南岸区人民政府花园路街道办事处",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "d5d425d2509f42a39b265152bc658f76",
+      "partner_name": "重庆市南岸区城市管理局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "1d6fd2d004334f89bf856781d43172c3",
+      "partner_name": "重庆市南川区公路事务中心",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "7079B66DD3754723B1BAA4E125564F33",
+      "partner_name": "重庆市南川区第三中学校",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 16,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "d81a332fbd4d4ec19a33d7e981a9abaf",
+      "partner_name": "重庆市固体废弃物运输有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "48bf6eebc71f4a07b5480465b75fb70a",
+      "partner_name": "重庆市城投路桥管理有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "99ab248531894384a40192bca3dfa3cc",
+      "partner_name": "重庆市大足区农业农村委员会",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 7,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "AA5D2693CCBE4A8480BACCDB9326FBDD",
+      "partner_name": "重庆市永川区何埂镇何埂小学校",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "da49de839af946439196db1ca6b85cd1",
+      "partner_name": "重庆市永川区宏旭房地产开发有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "ab9a97a3c00d456cb312920a96dc6a86",
+      "partner_name": "重庆市永川区水利站",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 10,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "400b675ff7954605ba45068a9fb41129",
+      "partner_name": "重庆市渝中区机关事务服务中心",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "ca1b3c639b0f4dae9b2a37e013f42beb",
+      "partner_name": "重庆市渝中区绿化维护管理处",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "ea472822392241a6b4142e92ff851832",
+      "partner_name": "重庆市渝北区双龙水库管理所",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "622EF07F6C614B7C8ED59D926CF0BA44",
+      "partner_name": "重庆市渝北区新桥水库管理所",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "f9a7f16fae674681bea98fe3fb33a41f",
+      "partner_name": "重庆市渝北区石船镇人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "739b430531d04af19dcda549f7851acf",
+      "partner_name": "重庆市璧山区人民政府璧城街道办事处",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 5,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "7209db88639b4b489b570126cc09e368",
+      "partner_name": "重庆市璧山区人民政府璧泉街道办事处",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "ca2a44a7398a4e69a80355ef6c46bdc0",
+      "partner_name": "重庆市璧山区正兴镇石龙村股份经济合作联合社",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "4e3c5fb319494c2d8f1708307bf3765f",
+      "partner_name": "重庆市璧山区青杠街道产业发展服务中心",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 11,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "9217c3400f814e39a2fe33623c1621d3",
+      "partner_name": "重庆市畜牧科学院",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "0488d95a24b1453888283df4697c5de4",
+      "partner_name": "重庆市益康环保工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "e089e134405746d5b34929aae037054a",
+      "partner_name": "重庆市綦江区中小学基本建设管理服务中心",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 13,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "AE38EB995C8C4C3E81CB9BB5FA3F79CE",
+      "partner_name": "重庆市茶园工业园区建设开发有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "5A3F3F9F21F047ACB5B6EECFAC87BB81",
+      "partner_name": "重庆市荣昌仁义中学校",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 16,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "5b5ecca536a04364a798b46f9488307c",
+      "partner_name": "重庆市荣昌区盘龙镇人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "308F2E544BAB46639CB137FF21E27DBD",
+      "partner_name": "重庆市荣昌区盘龙镇白鹤村村民委员会",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 2,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "8A3E2F0D1A8F439292E68E84738AF155",
+      "partner_name": "重庆市铜梁区二坪镇人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "DEED2F9499C04CE786FA70EF9FDA91CE",
+      "partner_name": "重庆市铜梁区太平镇人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "C96E4454CD904B2D861B87AC02C762E5",
+      "partner_name": "重庆市铜梁区永嘉镇人民政府",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "c2b800c0c38c423484cd49f725dc0a8a",
+      "partner_name": "重庆文理学院",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "A7E13C63CE784589A0FCDB9BCCB23362",
+      "partner_name": "重庆机场空港服务有限责任公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "a2bc26cfe66f4af3926cc4dc9eb1e714",
+      "partner_name": "重庆机场集团有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 3,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "0F509F3D891E4FD1A3CFA7B811AB3722",
+      "partner_name": "重庆机场集团有限公司动力能源分公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "e91564642e074c038f7a268c2f85d576",
+      "partner_name": "重庆电子科技职业大学",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "1477b28fe29c48c09d0eb39846d63552",
+      "partner_name": "重庆科学城高新置业有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "1f5a44c0c10f406c86a87be2d3184cfe",
+      "partner_name": "重庆绿发城市建设有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "30f6e290c7d046898ad5fd41c5ddffa8",
+      "partner_name": "重庆翰博光电有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "3097D72E8FF94F75AC4CB725C11E2CE0",
+      "partner_name": "金阳县交通运输局",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "232E2A18F0794F12B02824C164F9D0FE",
+      "partner_name": "阿克陶县人民医院",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "DAEAF4B412B44782AE4618A65875E1A5",
+      "partner_name": "陇南市文江水电有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 4,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "48006db75b91464c9bc0ac414c79a965",
+      "partner_name": "陕西冶金设计研究院有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "780460C5D17743EE93C2271B97C0474B",
+      "partner_name": "雅安城投建筑工程有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 2,
+      "linked_repayment_rows": 5,
+      "manual_confirm_required": true
+    },
+    {
+      "legacy_partner_id": "8762154C8EF4436D97C47988192D417B",
+      "partner_name": "青海金世纪工程项目管理有限公司",
+      "dry_run_action": "create_candidate",
+      "blockers": [],
+      "matched_partner_ids": [],
+      "linked_contract_count": 1,
+      "linked_repayment_rows": 1,
+      "manual_confirm_required": true
+    }
+  ],
+  "decision": "NO-GO for real partner creation; dry-run only",
+  "next_step": "manual review dry-run result and define partner legacy identity field before trial write"
+}

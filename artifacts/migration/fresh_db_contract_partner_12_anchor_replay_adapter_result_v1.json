@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_contract_partner_12_anchor_replay_adapter",
+  "db_writes": 0,
+  "database_operations": 0,
+  "write_scripts_executed": 0,
+  "input_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_partner_source_12_anchor_design_rows_v1.csv",
+  "input_anchor_rows": 12,
+  "replay_payload_rows": 12,
+  "dependent_contract_rows": 57,
+  "duplicate_replay_identities": 0,
+  "duplicate_samples": [],
+  "blank_counterparty_anchors": 0,
+  "blank_counterparty_samples": [],
+  "non_company_anchors": 0,
+  "non_company_anchor_samples": [],
+  "row_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/fresh_db_contract_partner_12_anchor_replay_payload_v1.csv",
+  "decision": "contract_partner_12_anchor_replay_payload_ready",
+  "next_step": "retry the 57 dependent contract rows after these 12 partner anchors are written in the fresh database replay"
+}

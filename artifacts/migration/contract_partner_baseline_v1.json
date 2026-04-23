@@ -1,0 +1,430 @@
+{
+  "count": 85,
+  "partners": [
+    {
+      "id": 1,
+      "display_name": "My Company",
+      "name": "My Company"
+    },
+    {
+      "id": 3,
+      "display_name": "Administrator",
+      "name": "Administrator"
+    },
+    {
+      "id": 7,
+      "display_name": "四川保盛建设集团有限公司",
+      "name": "四川保盛建设集团有限公司"
+    },
+    {
+      "id": 8,
+      "display_name": "吴涛",
+      "name": "吴涛"
+    },
+    {
+      "id": 9,
+      "display_name": "杨德胜",
+      "name": "杨德胜"
+    },
+    {
+      "id": 10,
+      "display_name": "段奕俊",
+      "name": "段奕俊"
+    },
+    {
+      "id": 11,
+      "display_name": "徐丹",
+      "name": "徐丹"
+    },
+    {
+      "id": 12,
+      "display_name": "陈天友",
+      "name": "陈天友"
+    },
+    {
+      "id": 13,
+      "display_name": "文楠",
+      "name": "文楠"
+    },
+    {
+      "id": 14,
+      "display_name": "李林旭",
+      "name": "李林旭"
+    },
+    {
+      "id": 15,
+      "display_name": "李娜",
+      "name": "李娜"
+    },
+    {
+      "id": 16,
+      "display_name": "江一娇",
+      "name": "江一娇"
+    },
+    {
+      "id": 17,
+      "display_name": "尹佳梅",
+      "name": "尹佳梅"
+    },
+    {
+      "id": 18,
+      "display_name": "张文翠",
+      "name": "张文翠"
+    },
+    {
+      "id": 19,
+      "display_name": "李俭锋",
+      "name": "李俭锋"
+    },
+    {
+      "id": 20,
+      "display_name": "叶凌越",
+      "name": "叶凌越"
+    },
+    {
+      "id": 21,
+      "display_name": "李德学",
+      "name": "李德学"
+    },
+    {
+      "id": 22,
+      "display_name": "陈帅",
+      "name": "陈帅"
+    },
+    {
+      "id": 23,
+      "display_name": "税务经办人",
+      "name": "税务经办人"
+    },
+    {
+      "id": 24,
+      "display_name": "肖辉玖",
+      "name": "肖辉玖"
+    },
+    {
+      "id": 25,
+      "display_name": "罗萌",
+      "name": "罗萌"
+    },
+    {
+      "id": 26,
+      "display_name": "胡俊",
+      "name": "胡俊"
+    },
+    {
+      "id": 27,
+      "display_name": "外部观察员",
+      "name": "外部观察员"
+    },
+    {
+      "id": 28,
+      "display_name": "Demo-合同相对方",
+      "name": "Demo-合同相对方"
+    },
+    {
+      "id": 29,
+      "display_name": "Demo-业主单位",
+      "name": "Demo-业主单位"
+    },
+    {
+      "id": 30,
+      "display_name": "Demo-供应商",
+      "name": "Demo-供应商"
+    },
+    {
+      "id": 31,
+      "display_name": "Demo-全能力",
+      "name": "Demo-全能力"
+    },
+    {
+      "id": 32,
+      "display_name": "Demo-项目经理",
+      "name": "Demo-项目经理"
+    },
+    {
+      "id": 33,
+      "display_name": "Demo-财务经办",
+      "name": "Demo-财务经办"
+    },
+    {
+      "id": 34,
+      "display_name": "Demo-成控经办",
+      "name": "Demo-成控经办"
+    },
+    {
+      "id": 35,
+      "display_name": "Demo-只读",
+      "name": "Demo-只读"
+    },
+    {
+      "id": 36,
+      "display_name": "演示业主 · 城市建设集团",
+      "name": "演示业主 · 城市建设集团"
+    },
+    {
+      "id": 37,
+      "display_name": "演示供应商 · 建材科技",
+      "name": "演示供应商 · 建材科技"
+    },
+    {
+      "id": 38,
+      "display_name": "演示分包 · 桥梁施工队",
+      "name": "演示分包 · 桥梁施工队"
+    },
+    {
+      "id": 39,
+      "display_name": "Demo-数据审计",
+      "name": "Demo-数据审计"
+    },
+    {
+      "id": 40,
+      "display_name": "城市建设投资集团",
+      "name": "城市建设投资集团"
+    },
+    {
+      "id": 41,
+      "display_name": "建材供应有限公司",
+      "name": "建材供应有限公司"
+    },
+    {
+      "id": 42,
+      "display_name": "桥梁分包工程队",
+      "name": "桥梁分包工程队"
+    },
+    {
+      "id": 43,
+      "display_name": "德阳市某产业发展有限公司（示例）",
+      "name": "德阳市某产业发展有限公司（示例）"
+    },
+    {
+      "id": 44,
+      "display_name": "德阳某某商砼有限公司（示例）",
+      "name": "德阳某某商砼有限公司（示例）"
+    },
+    {
+      "id": 45,
+      "display_name": "德阳某某钢材贸易有限公司（示例）",
+      "name": "德阳某某钢材贸易有限公司（示例）"
+    },
+    {
+      "id": 46,
+      "display_name": "测试-项目经理A",
+      "name": "测试-项目经理A"
+    },
+    {
+      "id": 47,
+      "display_name": "测试-物资员A",
+      "name": "测试-物资员A"
+    },
+    {
+      "id": 48,
+      "display_name": "测试-物资主管A",
+      "name": "测试-物资主管A"
+    },
+    {
+      "id": 49,
+      "display_name": "测试-采购员A",
+      "name": "测试-采购员A"
+    },
+    {
+      "id": 50,
+      "display_name": "测试-出纳A",
+      "name": "测试-出纳A"
+    },
+    {
+      "id": 51,
+      "display_name": "测试-财务经理A",
+      "name": "测试-财务经理A"
+    },
+    {
+      "id": 52,
+      "display_name": "测试-合同管理员A",
+      "name": "测试-合同管理员A"
+    },
+    {
+      "id": 53,
+      "display_name": "测试-成本员A",
+      "name": "测试-成本员A"
+    },
+    {
+      "id": 54,
+      "display_name": "测试-财务经理",
+      "name": "测试-财务经理"
+    },
+    {
+      "id": 55,
+      "display_name": "测试-物资主管",
+      "name": "测试-物资主管"
+    },
+    {
+      "id": 56,
+      "display_name": "测试-项目只读",
+      "name": "测试-项目只读"
+    },
+    {
+      "id": 57,
+      "display_name": "测试-项目经办",
+      "name": "测试-项目经办"
+    },
+    {
+      "id": 58,
+      "display_name": "测试-项目审批",
+      "name": "测试-项目审批"
+    },
+    {
+      "id": 59,
+      "display_name": "测试-成本只读",
+      "name": "测试-成本只读"
+    },
+    {
+      "id": 60,
+      "display_name": "测试-成本经办",
+      "name": "测试-成本经办"
+    },
+    {
+      "id": 61,
+      "display_name": "测试-成本审批",
+      "name": "测试-成本审批"
+    },
+    {
+      "id": 62,
+      "display_name": "测试-合同只读",
+      "name": "测试-合同只读"
+    },
+    {
+      "id": 63,
+      "display_name": "测试-合同经办",
+      "name": "测试-合同经办"
+    },
+    {
+      "id": 64,
+      "display_name": "测试-合同审批",
+      "name": "测试-合同审批"
+    },
+    {
+      "id": 65,
+      "display_name": "测试-采购只读",
+      "name": "测试-采购只读"
+    },
+    {
+      "id": 66,
+      "display_name": "测试-采购经办",
+      "name": "测试-采购经办"
+    },
+    {
+      "id": 67,
+      "display_name": "测试-采购审批",
+      "name": "测试-采购审批"
+    },
+    {
+      "id": 68,
+      "display_name": "测试-物资只读",
+      "name": "测试-物资只读"
+    },
+    {
+      "id": 69,
+      "display_name": "测试-物资经办",
+      "name": "测试-物资经办"
+    },
+    {
+      "id": 70,
+      "display_name": "测试-财务只读",
+      "name": "测试-财务只读"
+    },
+    {
+      "id": 71,
+      "display_name": "测试-财务经办",
+      "name": "测试-财务经办"
+    },
+    {
+      "id": 72,
+      "display_name": "测试-结算只读",
+      "name": "测试-结算只读"
+    },
+    {
+      "id": 73,
+      "display_name": "测试-结算经办",
+      "name": "测试-结算经办"
+    },
+    {
+      "id": 74,
+      "display_name": "测试-结算审批",
+      "name": "测试-结算审批"
+    },
+    {
+      "id": 75,
+      "display_name": "Demo Project Read",
+      "name": "Demo Project Read"
+    },
+    {
+      "id": 76,
+      "display_name": "Demo Project User",
+      "name": "Demo Project User"
+    },
+    {
+      "id": 77,
+      "display_name": "Demo Project Manager",
+      "name": "Demo Project Manager"
+    },
+    {
+      "id": 78,
+      "display_name": "E2E Smoke User",
+      "name": "E2E Smoke User"
+    },
+    {
+      "id": 79,
+      "display_name": "Demo Role Owner",
+      "name": "Demo Role Owner"
+    },
+    {
+      "id": 80,
+      "display_name": "Demo Role PM",
+      "name": "Demo Role PM"
+    },
+    {
+      "id": 81,
+      "display_name": "Demo Role Finance",
+      "name": "Demo Role Finance"
+    },
+    {
+      "id": 82,
+      "display_name": "Demo Role Executive",
+      "name": "Demo Role Executive"
+    },
+    {
+      "id": 83,
+      "display_name": "Fixture PM",
+      "name": "Fixture PM"
+    },
+    {
+      "id": 84,
+      "display_name": "Fixture Executive",
+      "name": "Fixture Executive"
+    },
+    {
+      "id": 85,
+      "display_name": "Fixture Finance",
+      "name": "Fixture Finance"
+    },
+    {
+      "id": 86,
+      "display_name": "Fixture Contract Admin",
+      "name": "Fixture Contract Admin"
+    },
+    {
+      "id": 87,
+      "display_name": "Fixture Project Member",
+      "name": "Fixture Project Member"
+    },
+    {
+      "id": 88,
+      "display_name": "Fixture Material User",
+      "name": "Fixture Material User"
+    },
+    {
+      "id": 89,
+      "display_name": "Fixture Cost User",
+      "name": "Fixture Cost User"
+    }
+  ]
+}

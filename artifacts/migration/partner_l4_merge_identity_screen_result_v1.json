@@ -1,0 +1,47 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_merge_identity_screen",
+  "input": "artifacts/migration/partner_l4_blocked_screen_rows_v1.csv",
+  "merge_identity_rows": 3048,
+  "missing_columns": [],
+  "subroute_counts": {
+    "company_duplicate_pair_merge_review": 24,
+    "company_supplier_pair_merge_review": 1713,
+    "complex_multirow_merge_review": 189,
+    "missing_tax_merge_review": 967,
+    "unsafe_name_merge_review": 155
+  },
+  "blocker_counts": {
+    "deduplicated_group_not_create_only": 3048,
+    "missing_tax_number": 1130,
+    "non_primary_partner_source": 2802,
+    "unsafe_partner_name": 458
+  },
+  "source_counts": {
+    "company": 246,
+    "company;supplier": 2802
+  },
+  "source_row_count_counts": {
+    "2": 2859,
+    "3": 101,
+    "4": 37,
+    "5": 20,
+    "6": 25,
+    "7": 2,
+    "8": 2,
+    "9": 2
+  },
+  "subroute_priority": [
+    "company_supplier_pair_merge_review",
+    "company_duplicate_pair_merge_review",
+    "missing_tax_merge_review",
+    "unsafe_name_merge_review",
+    "complex_multirow_merge_review",
+    "merge_identity_misc_review"
+  ],
+  "outputs": {
+    "screen_rows": "artifacts/migration/partner_l4_merge_identity_screen_rows_v1.csv",
+    "sample_rows": "artifacts/migration/partner_l4_merge_identity_screen_samples_v1.csv"
+  },
+  "next_gate": "Open company_supplier_pair_merge_review as a no-DB evidence screen before any merge/update write."
+}

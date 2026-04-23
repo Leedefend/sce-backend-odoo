@@ -1,0 +1,621 @@
+{
+  "status": "PASS",
+  "mode": "project_member_placeholder_screen_no_placeholder_safe_slice",
+  "database": "sc_demo",
+  "input": "/mnt/artifacts/migration/project_member_source_shadow_v1.csv",
+  "total": 21390,
+  "mapped_projects": 21390,
+  "unmapped_projects": 0,
+  "duplicate_project_matches": 0,
+  "mapped_users": 7389,
+  "placeholder_user": 14001,
+  "safe_candidates": 7389,
+  "unique_safe_candidates": 34,
+  "duplicate_project_user_pairs": 735,
+  "safe_slice_rows": 34,
+  "safe_slice": "/mnt/artifacts/migration/project_member_no_placeholder_safe_slice_v1.csv",
+  "placeholder_policy": "block write; do not materialize placeholder_user rows",
+  "placeholder_samples": [
+    {
+      "legacy_member_id": "000eebe41c52456390ebe355f0dadd7d",
+      "legacy_project_id": "b7f07bc4b72c4cd29b5d1b445b499386",
+      "legacy_user_id": "10000009",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "0017ABF7-E0E7-4318-BE32-B6F6759C88CF",
+      "legacy_project_id": "68d2896f3eaf4682b902117d4dcda350",
+      "legacy_user_id": "10000070",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "001973ef3e3b475db5e38988862ce1f0",
+      "legacy_project_id": "1428742882bf4fc5988efcc289c8d5e8",
+      "legacy_user_id": "10000018",
+      "legacy_user_name": "维护管理员"
+    },
+    {
+      "legacy_member_id": "001a18b97964406b82ca60d5a9132d6c",
+      "legacy_project_id": "ce7524b7223d46e8974e48044decb355",
+      "legacy_user_id": "10000026",
+      "legacy_user_name": "邓洪英"
+    },
+    {
+      "legacy_member_id": "001c1943521e453abc327cd451658ac0",
+      "legacy_project_id": "57925b24d00a47ddafa39631e8df9951",
+      "legacy_user_id": "2afb101f2d3d41058b33517895db14f9",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00206696266e48f78c77c54dae90e245",
+      "legacy_project_id": "52dbcbcb460349ecac1ec682f9129b29",
+      "legacy_user_id": "f612d87666434c9c90a1c32e5fc64fe8",
+      "legacy_user_name": "维护管理员"
+    },
+    {
+      "legacy_member_id": "0026dafd3d9c425eb51feaf6ce0af2cd",
+      "legacy_project_id": "791aca08955c42f088311447b7b70e38",
+      "legacy_user_id": "10000029",
+      "legacy_user_name": "维护管理员"
+    },
+    {
+      "legacy_member_id": "002ad355c10b4b1f96b1c1979f08d60f",
+      "legacy_project_id": "52278e622558409db167eca9eba8c8b8",
+      "legacy_user_id": "8888888",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "002cea17eaef4fce9da7ef9c86ce530c",
+      "legacy_project_id": "ecd2fbc747a541cca5ec8572052e2451",
+      "legacy_user_id": "10000020",
+      "legacy_user_name": "张志"
+    },
+    {
+      "legacy_member_id": "002e7c3194f941c38dbd40fae0c0b6a1",
+      "legacy_project_id": "9679632240d74ff9bd55e0c7b26a0d07",
+      "legacy_user_id": "4e8191d3bad04354aebfe26315ac2614",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "002F9A18-8383-4116-A464-C42C84D733AA",
+      "legacy_project_id": "f947d45769804682af3a6233ff0b5d0d",
+      "legacy_user_id": "10000070",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "0033271c06cc46b4b5b204e84ebdb119",
+      "legacy_project_id": "8f874aff67254dde80a7b2a2c63ba91e",
+      "legacy_user_id": "10000008",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "003d923123de49a4be974a0177a839d5",
+      "legacy_project_id": "059742d9ac094c018b91894306d5fc2d",
+      "legacy_user_id": "10000011",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "003e4d45c9a34eb1a00abc25f709612a",
+      "legacy_project_id": "4c93e1d422624fcf830d807d95e272a9",
+      "legacy_user_id": "10000078",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00405d0dc7d242ec82edb9a29094e701",
+      "legacy_project_id": "14c4325bb56b408788e6f442f4384374",
+      "legacy_user_id": "cda47176b5bd4ad38a6eb8984a7feeca",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "0040d0df6c3e4f3295fffa51c02256fa",
+      "legacy_project_id": "2001f5127b3e4265b198bef8a7553358",
+      "legacy_user_id": "10000029",
+      "legacy_user_name": "维护管理员"
+    },
+    {
+      "legacy_member_id": "0043a1f62cbb41e48330f11eefb83867",
+      "legacy_project_id": "3a74f431115c4b7ba18453ff63ba3053",
+      "legacy_user_id": "10000026",
+      "legacy_user_name": "邓洪英"
+    },
+    {
+      "legacy_member_id": "005600b8170140ec808ceb489f53f70c",
+      "legacy_project_id": "b46d0ef2c882487aae2e2858aed634e2",
+      "legacy_user_id": "10000008",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "0056d99aba124a4aafe416a64de5ed1f",
+      "legacy_project_id": "7c5bb2cf30bf470a93d959b223c7fb15",
+      "legacy_user_id": "10000046",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "005b7d5d50c2471bb8db25c9d4037b32",
+      "legacy_project_id": "51f509199c434dd0a6f1f6f3dfced9d7",
+      "legacy_user_id": "10000015",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "005fa3e7a1bd41d5bbfebed04f1fa74e",
+      "legacy_project_id": "2fd504d1871e4b86a2ae42d8e1ed8810",
+      "legacy_user_id": "10000015",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "006600a8731c4b66935ff25b64ce48ab",
+      "legacy_project_id": "d15f664bee1444c488e1b88b678e6af2",
+      "legacy_user_id": "10000034",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "007818ce4e2149358959c46e2acb13bb",
+      "legacy_project_id": "64127fa422624757bc12f7dae485c234",
+      "legacy_user_id": "10000026",
+      "legacy_user_name": "邓洪英"
+    },
+    {
+      "legacy_member_id": "007c5fd4ad394cc19670926cea8c3671",
+      "legacy_project_id": "2001f5127b3e4265b198bef8a7553358",
+      "legacy_user_id": "10000033",
+      "legacy_user_name": "张志"
+    },
+    {
+      "legacy_member_id": "007c7c31e5c14fb69279f707c1acf860",
+      "legacy_project_id": "38f30547796a4f46886ca433be91fe6d",
+      "legacy_user_id": "10000078",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "007f0ab729694877a9a1ce3f31fe328c",
+      "legacy_project_id": "65b2b2e4f19143b2b42e4c6f1da469a9",
+      "legacy_user_id": "10000007",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "007f650c04784432bf9b21de99c2619e",
+      "legacy_project_id": "8210d117e0d14137b74221d251aba7a9",
+      "legacy_user_id": "10000011",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "0084A7A4-0B19-4343-BA01-C72A59FC43C5",
+      "legacy_project_id": "46b7613b1b2c4a6e918815ee5b8e5969",
+      "legacy_user_id": "10000052",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "00889ab7e84c48fb8513fe08d7fda85a",
+      "legacy_project_id": "4fc55dfb8a2e415cbcca4db2f9df2dbf",
+      "legacy_user_id": "10000041",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "00896f9081ef43ce98992266ad88189b",
+      "legacy_project_id": "37c8dab219e04007af40a2ee780477bf",
+      "legacy_user_id": "10000078",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "008f3ea78d594ec592f11d79ca633800",
+      "legacy_project_id": "a5d250ac5bbf451a9793ba879c02cfe4",
+      "legacy_user_id": "10000014",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "009c4a470fdf49d8a893e2d7519c523e",
+      "legacy_project_id": "fa81dfa136ae42009e8d1d86af0bd1e2",
+      "legacy_user_id": "8888888",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "009dbe20ba7c4fbfbf6c6becbe6a04fa",
+      "legacy_project_id": "027c5b467ae94e52aabb6f6218d310d4",
+      "legacy_user_id": "a74a3dd36c004a4b8491675919c6be4c",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00a0dd41929a4e1e8482c84c4da3ee64",
+      "legacy_project_id": "8ef8a9d9c4884fca98f054365e1789ba",
+      "legacy_user_id": "10000034",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "00a95660ff294cd2ab86977b51641e5a",
+      "legacy_project_id": "4f039bfb37e049cf890e468d00178e45",
+      "legacy_user_id": "10000000",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "00ac7da0f9e04f2ebb0471caad89c894",
+      "legacy_project_id": "59680a7bdc344036bf1bc659f9090814",
+      "legacy_user_id": "10000031",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00b36a97f865448fb06eb859d5c763a7",
+      "legacy_project_id": "204822a6a35f4e76963dbeec9c3240d3",
+      "legacy_user_id": "10000017",
+      "legacy_user_name": "邓洪英"
+    },
+    {
+      "legacy_member_id": "00b5e132afe7492797c2afa8e4248e63",
+      "legacy_project_id": "edd87052c5a044328e248bb6b8168598",
+      "legacy_user_id": "10000009",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00b92b08ef964f48b38f38d3e34fae6e",
+      "legacy_project_id": "ecd2fbc747a541cca5ec8572052e2451",
+      "legacy_user_id": "10000029",
+      "legacy_user_name": "维护管理员"
+    },
+    {
+      "legacy_member_id": "00bb9809f2554c8fa18db170a942cd98",
+      "legacy_project_id": "bbe61b7f1a754c2a9998c3cec3e80260",
+      "legacy_user_id": "10000061",
+      "legacy_user_name": "成都华略科技有限公司"
+    },
+    {
+      "legacy_member_id": "00c1034bff944232a901e1dabc723355",
+      "legacy_project_id": "2e82c7a28d2d4455a075564650a4caf9",
+      "legacy_user_id": "cda47176b5bd4ad38a6eb8984a7feeca",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00c10b47bf934f5382a028c113f45b6b",
+      "legacy_project_id": "076d8bcae3064dca8927f4f629bf2356",
+      "legacy_user_id": "10000014",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "00c55e4c3911413ebc8a59b193135bff",
+      "legacy_project_id": "7fa5e23b3bfa44e184eeaf9f6aa891c0",
+      "legacy_user_id": "10000034",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00c75be23c6d47b3930629a3b884ce95",
+      "legacy_project_id": "55a317a482484e6fb37f023de6f063e7",
+      "legacy_user_id": "cda47176b5bd4ad38a6eb8984a7feeca",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00ca87553f7a49dfa9e208eaecb11636",
+      "legacy_project_id": "ddd9a94d8aef4059a1def554a737e0e4",
+      "legacy_user_id": "10000028",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00d19deea62e4e46b0173f3add1d59b4",
+      "legacy_project_id": "135be6807d2043619fde2b6efe531cf6",
+      "legacy_user_id": "10000018",
+      "legacy_user_name": "维护管理员"
+    },
+    {
+      "legacy_member_id": "00d1a9b144ad44caa53c1b3438c5cbf0",
+      "legacy_project_id": "290615a7138e49228ce83d02514c1372",
+      "legacy_user_id": "10000017",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "00d5a05566284f84a725b5e74a9e9e95",
+      "legacy_project_id": "beea539bc3a94a7d8d2c4852c1f08c25",
+      "legacy_user_id": "10000011",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00d5a7b122e7485683827afdfca3b2b6",
+      "legacy_project_id": "e9ef3126e9594e518a5e518047574439",
+      "legacy_user_id": "10000034",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00d62f01266644068d9a6ebf99a82b8f",
+      "legacy_project_id": "f6db642585394c49a6278eb0eed3119a",
+      "legacy_user_id": "2afb101f2d3d41058b33517895db14f9",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00d7349429a44e129a1a124114b2157e",
+      "legacy_project_id": "23cc90c8afb441639a37ac3d7a9e4fe5",
+      "legacy_user_id": "27cf86a8c528456da17abb6e6eec0d24",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00dd24c014e247949ad8161b0d2cf101",
+      "legacy_project_id": "84e432dea3ad41d09fb63c0470de73b3",
+      "legacy_user_id": "10000001",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00dd69da538b4703bfee905dc309d316",
+      "legacy_project_id": "d795445cf03e48b99618f3eb559a235b",
+      "legacy_user_id": "10000015",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00e6436e04d64a9ba5709864518e5b94",
+      "legacy_project_id": "7804bf2a4b6e4d258d501945273868c0",
+      "legacy_user_id": "27cf86a8c528456da17abb6e6eec0d24",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00ec65cb7a844f539b00828e997a9ba3",
+      "legacy_project_id": "4c749e69caeb45ec9708bf4db81cde17",
+      "legacy_user_id": "cda47176b5bd4ad38a6eb8984a7feeca",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00ef4679f1e94f228eac7616cd4bd666",
+      "legacy_project_id": "a6c5c648fc4c4a32b2affa2b7bcd40ff",
+      "legacy_user_id": "10000008",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "00ef9d50adb54b5c94ed419a39816079",
+      "legacy_project_id": "ce7c47d08d88409da91cd433099d5cee",
+      "legacy_user_id": "10000015",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00f011b8a08649baa87a1a3f648b77b9",
+      "legacy_project_id": "072425c9c9ad453eb60c137fd4215459",
+      "legacy_user_id": "10000015",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "00f102c0e7f34c539ce1581369db945a",
+      "legacy_project_id": "abcd51a9a4144153ab3c770d763e7219",
+      "legacy_user_id": "10000000",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "00f690c1bf2948fd8c5f295e72eb86cf",
+      "legacy_project_id": "1ffb0ce01fdf4dc984ec3df9432623cb",
+      "legacy_user_id": "10000051",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "010e4966714741458636b2cbf584ce84",
+      "legacy_project_id": "1ceeb10c5d5745879b20d438e2e69534",
+      "legacy_user_id": "4e8191d3bad04354aebfe26315ac2614",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "01196799b34b48d1929b31978752316d",
+      "legacy_project_id": "387477e67b134c0ba596acb49fccc62c",
+      "legacy_user_id": "10000038",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "011d549c17f6407981cf00c4b39c40cb",
+      "legacy_project_id": "682991317e43497dbb4119f9990fe0ce",
+      "legacy_user_id": "10000020",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "011dff1ddb2b400587bf46ba65bc9cbb",
+      "legacy_project_id": "387477e67b134c0ba596acb49fccc62c",
+      "legacy_user_id": "10000009",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "011f0a59d6c54e46b48b5d9cd1bdda58",
+      "legacy_project_id": "615e67a1e771454bb8618d795c692760",
+      "legacy_user_id": "10000007",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "0122a771c53d4e878bbfa621f081d20e",
+      "legacy_project_id": "4de47622b3e6404a98ad734ddc53f27a",
+      "legacy_user_id": "10000033",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "012397fdbe2849dcaff02ac975eb8e9c",
+      "legacy_project_id": "eb4cf9d9b714420e89a3c2a6fff6f8d5",
+      "legacy_user_id": "10000015",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "012d902c120f4e029b6a235037104eee",
+      "legacy_project_id": "5216a7e00d554423bb2e77f6b7dd0d9c",
+      "legacy_user_id": "10000029",
+      "legacy_user_name": "维护管理员"
+    },
+    {
+      "legacy_member_id": "012ecbfbb9fa4a789a3c488a15d40ccb",
+      "legacy_project_id": "d397cd38ebae427ca4304745cd901ba4",
+      "legacy_user_id": "4e8191d3bad04354aebfe26315ac2614",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "0131d4291900431e95613c48a72cbef1",
+      "legacy_project_id": "2065db3e97a8409f9a30f027c2c1553e",
+      "legacy_user_id": "10000017",
+      "legacy_user_name": "邓洪英"
+    },
+    {
+      "legacy_member_id": "0133515773a54393b3258e41634205a2",
+      "legacy_project_id": "e1603619f0814d02b4c86bc5c044ea0b",
+      "legacy_user_id": "10000003",
+      "legacy_user_name": "邓洪英"
+    },
+    {
+      "legacy_member_id": "013c3a97273d4074aa54f6de7bf72401",
+      "legacy_project_id": "fbbe809ac1994bf9a245f59229553730",
+      "legacy_user_id": "10000034",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "013d03f1515241fb8739492b414939e6",
+      "legacy_project_id": "febf7841fc634ae09dfed83a425979a4",
+      "legacy_user_id": "10000011",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "014e50a18a7448e6b634b01ddd91c254",
+      "legacy_project_id": "bfd2012972084181b83a6f7e885ada70",
+      "legacy_user_id": "a74a3dd36c004a4b8491675919c6be4c",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "014ea6d0d7814636a4d2f23f0dc60ae8",
+      "legacy_project_id": "784c455d3cfe45cf9b7dfdf3d752e81a",
+      "legacy_user_id": "10000009",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "01533b5466b14f4994344ddbe50a3ff2",
+      "legacy_project_id": "f3d8f9c8218e49a89d660257c4cf9dca",
+      "legacy_user_id": "cda47176b5bd4ad38a6eb8984a7feeca",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "0162cec8e2eb4714916987d13ccc1987",
+      "legacy_project_id": "5ce3a10946434bf3bb1a79351d5de269",
+      "legacy_user_id": "10000020",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "016bcfcdf22b4c8a89e7b0e6c75ccedd",
+      "legacy_project_id": "816c71305aa94216886d5a43d371eb0f",
+      "legacy_user_id": "10000034",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "016c434e7714478b836f6406c14e6dbe",
+      "legacy_project_id": "d07b7a7a37aa473a89d006c178a4e033",
+      "legacy_user_id": "a74a3dd36c004a4b8491675919c6be4c",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "01891a8c185545aa891268d32105fd79",
+      "legacy_project_id": "513f713857db46e196f61d6df8257fd1",
+      "legacy_user_id": "10000000",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "0189f7b1b6e74c158bb14336c8f7b216",
+      "legacy_project_id": "05139ca820724561bee71e016b22fd55",
+      "legacy_user_id": "10000046",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "0190efbc6683414d8e452b2b118c41a1",
+      "legacy_project_id": "51f509199c434dd0a6f1f6f3dfced9d7",
+      "legacy_user_id": "10000009",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "01939e485c71490fb3692089c40fe97f",
+      "legacy_project_id": "12bab8c00273463cae235c1615796bb3",
+      "legacy_user_id": "10000012",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "01948f8ee40f4b42900aa90f83d85c98",
+      "legacy_project_id": "2654c8c1ef73434dbdd7c45812a573db",
+      "legacy_user_id": "10000033",
+      "legacy_user_name": "张志"
+    },
+    {
+      "legacy_member_id": "0194ffccd0cc437a88e10a6e0e42ac7d",
+      "legacy_project_id": "800fb4620f6f4afca71708d0da82500f",
+      "legacy_user_id": "27cf86a8c528456da17abb6e6eec0d24",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "01a4bc69ebe7480795e7f53cdaf5f950",
+      "legacy_project_id": "292584f7b81f40579ab90504983a05fc",
+      "legacy_user_id": "10000028",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "01a574d325e0419fa4ea7dbe5234736a",
+      "legacy_project_id": "1bc8c1acc81d4a47af1318a718bf72db",
+      "legacy_user_id": "27cf86a8c528456da17abb6e6eec0d24",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "01A873E6-5698-4D45-A1D7-89844F75068D",
+      "legacy_project_id": "18345028af09432ab7505fe2ce46d2b1",
+      "legacy_user_id": "10000052",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "01ae6f8283f84d04bc901873ca63b387",
+      "legacy_project_id": "5776e5836ee949b7a464ad53fb0000cb",
+      "legacy_user_id": "10000009",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "01b329160a914011b07e9cf30387dc68",
+      "legacy_project_id": "23aa1343ca99440abf7bd7315fd60c6a",
+      "legacy_user_id": "10000007",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "01b57d5d9f0a401bb113a8161cbcea67",
+      "legacy_project_id": "2d0c8990b9944c60b5ea355035049c1b",
+      "legacy_user_id": "10000009",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "01b7472e46b1427aab4a002ba6e6bc44",
+      "legacy_project_id": "523f3ae95af74fd187567b113e642c10",
+      "legacy_user_id": "10000028",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "01b9c3630be74b6885ef023c75997f3f",
+      "legacy_project_id": "1ceeb10c5d5745879b20d438e2e69534",
+      "legacy_user_id": "10000007",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "01bd8cc6161c4e1c8ca04098899c891e",
+      "legacy_project_id": "a74d16f8345a4e29a837fb2ea222deea",
+      "legacy_user_id": "10000038",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "01c183170dae45e6bf86aa551f9c4842",
+      "legacy_project_id": "9c9b148d8642412bbc5bb655d73ede29",
+      "legacy_user_id": "10000015",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "01c342a65a434f43a364dad7a95759fb",
+      "legacy_project_id": "74d58dce00e345c3af7cbdc58dc2bbbc",
+      "legacy_user_id": "8888888",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "01c56a8372ee439795d8fe4f6b334ad1",
+      "legacy_project_id": "432bb7a6a36e4ec38819ec2a5f1e0bff",
+      "legacy_user_id": "a74a3dd36c004a4b8491675919c6be4c",
+      "legacy_user_name": "admin"
+    },
+    {
+      "legacy_member_id": "01c9389d57f54e51822fc043f1eb18a1",
+      "legacy_project_id": "b68df914cf3b47b888e43028b1057da1",
+      "legacy_user_id": "10000003",
+      "legacy_user_name": "邓洪英"
+    },
+    {
+      "legacy_member_id": "01cda2716335414098ead1b2467f51bc",
+      "legacy_project_id": "ab85a39f56c54484bb2c8097a4a55b36",
+      "legacy_user_id": "8888888",
+      "legacy_user_name": ""
+    },
+    {
+      "legacy_member_id": "01d32bc790d448b5a2fa5992541c4dc2",
+      "legacy_project_id": "39a156d94025490fbd873db0c05f3d37",
+      "legacy_user_id": "10000018",
+      "legacy_user_name": "维护管理员"
+    }
+  ],
+  "next_gate": "L3 bounded write may use only no-placeholder safe slice after explicit write task"
+}

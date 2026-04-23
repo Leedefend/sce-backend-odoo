@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_no_demo_reset",
+  "database": "sc_migration_fresh",
+  "operation": "make db.reset",
+  "without_demo": "--without-demo=all",
+  "demo_targets_executed": 0,
+  "replay_write_scripts_executed": 0,
+  "installed_module_states": {
+    "base": "installed",
+    "smart_platform_bootstrap": "installed",
+    "smart_construction_bootstrap": "installed",
+    "smart_construction_demo": "uninstalled"
+  },
+  "database_probe": {
+    "database": "sc_migration_fresh",
+    "res_partner_count": 2,
+    "project_project_model_exists": false,
+    "construction_contract_model_exists": false
+  },
+  "decision": "fresh_database_no_demo_ready_for_business_module_install",
+  "next_step": "install required business modules without demo before replaying migration payloads"
+}

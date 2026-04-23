@@ -1,0 +1,795 @@
+{
+  "status": "WARN",
+  "db": "sc_demo",
+  "sample_rows": 30,
+  "records_found": 30,
+  "unique_identities_found": 30,
+  "missing": [],
+  "duplicates": {},
+  "empty_name": [],
+  "unsafe_relation_values": [
+    {
+      "legacy_project_id": "00a4bb196d944fa5a8c56e3bd3f1e448",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "00c73f013e234461883beac337e8d75d",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "00db8d3baa894d1e8efd7acd181f6499",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "04c36990cc144f04b8f2423c36e5f713",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "16f30c8b960c4e6dbedd7a507d96f4ce",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "2ea97dc724a9493ea18676d910616d8a",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "4d5d46d841c24c629fd4ebdd4796980f",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "7f29aa1fea1745cf8868ec7db11261f2",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "910ed968bceb422f9ce302e2799da9b8",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "0201344da1b74e008006a7a96f90be6f",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "020eddc09afb4260a5843a84ee58d826",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "027c5b467ae94e52aabb6f6218d310d4",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "02df67b4ddb6469b81ed551e9b544d25",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "037fddc6219449c3840477989cc06f82",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "03f8997135504039a36557ec6e57909b",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "045206e3bf2f49b6b6b544b1be1aff22",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "04d0a65675424e41b8c65ba26ef48b4e",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "05139ca820724561bee71e016b22fd55",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "0550ea3a2e1b4161b25a697476e344b5",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "059742d9ac094c018b91894306d5fc2d",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "069cd56871fd4307b836a3167fddf14b",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "06c94694eb3e418bb4ceb5e55a987583",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "06cd855d5ede4a279a81568903836256",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "072425c9c9ad453eb60c137fd4215459",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "076d8bcae3064dca8927f4f629bf2356",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "07e6484cc40d4609b0bcafcf187dd9af",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "080a2d8ee204424a8b7edd08817eee20",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "088193c97f1443b58f1489b321c1288a",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "08ac2e586f574d39a3272852fa22bf71",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "legacy_project_id": "08fa00e1bf9d4c88bcbfa652610aa347",
+      "relations": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    }
+  ],
+  "rollback_target_locked_by": "legacy_project_id",
+  "review_rows": [
+    {
+      "id": 2107,
+      "legacy_project_id": "00a4bb196d944fa5a8c56e3bd3f1e448",
+      "name": "德阳市罗江区鄢家镇高垭村山坪塘整治项目",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "房建工程",
+      "project_environment": "",
+      "other_system_id": "162253",
+      "other_system_code": "17137750339650000",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2108,
+      "legacy_project_id": "00c73f013e234461883beac337e8d75d",
+      "name": "石亭江-绵远河生态廊道场地平整工程",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "市政",
+      "project_environment": "正式项目",
+      "other_system_id": "109745",
+      "other_system_code": "16982985823040001",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2109,
+      "legacy_project_id": "00db8d3baa894d1e8efd7acd181f6499",
+      "name": "渝数科技公司重庆数字大厦第6层办公用房装修改造项目",
+      "short_name": "",
+      "legacy_company_name": "保盛重庆分公司",
+      "specialty_type_name": "房建工程",
+      "project_environment": "正式项目",
+      "other_system_id": "109396",
+      "other_system_code": "16982984795710000",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2110,
+      "legacy_project_id": "04c36990cc144f04b8f2423c36e5f713",
+      "name": "喀什地区一市四县带动农户养殖喀什黑鸡基础设施建设项目-喀什市一期电力",
+      "short_name": "",
+      "legacy_company_name": "保盛新疆分公司",
+      "specialty_type_name": "电力工程",
+      "project_environment": "",
+      "other_system_id": "109359",
+      "other_system_code": "16982984750710000",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2111,
+      "legacy_project_id": "16f30c8b960c4e6dbedd7a507d96f4ce",
+      "name": "明源电力公寓小区路灯维修改造",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "市政工程",
+      "project_environment": "测试项目",
+      "other_system_id": "109440",
+      "other_system_code": "16982984852430000",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2112,
+      "legacy_project_id": "2ea97dc724a9493ea18676d910616d8a",
+      "name": "盐亭县2024年新章路、垢巨路、刘黑路水毁恢复工程",
+      "short_name": "",
+      "legacy_company_name": "保盛绵阳分公司",
+      "specialty_type_name": "公路工程",
+      "project_environment": "",
+      "other_system_id": "198589",
+      "other_system_code": "17376221885650000",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2113,
+      "legacy_project_id": "4d5d46d841c24c629fd4ebdd4796980f",
+      "name": "大唐甘肃发电有限公司碧口水力发电厂碧口水电站右岸泄洪洞护坦防护结构改造施工",
+      "short_name": "",
+      "legacy_company_name": "保盛广元分公司",
+      "specialty_type_name": "水利工程",
+      "project_environment": "",
+      "other_system_id": "177128",
+      "other_system_code": "17222242739170000",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2114,
+      "legacy_project_id": "7f29aa1fea1745cf8868ec7db11261f2",
+      "name": "高地库房",
+      "short_name": "",
+      "legacy_company_name": "项目实施分公司",
+      "specialty_type_name": "市政工程",
+      "project_environment": "正式项目",
+      "other_system_id": "",
+      "other_system_code": "",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2115,
+      "legacy_project_id": "910ed968bceb422f9ce302e2799da9b8",
+      "name": "西藏方向军事设施建设项目施工总承包合同90项目工程工序劳务作业",
+      "short_name": "",
+      "legacy_company_name": "保盛西藏分公司",
+      "specialty_type_name": "房建工程",
+      "project_environment": "",
+      "other_system_id": "139653",
+      "other_system_code": "17065045389810000",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2116,
+      "legacy_project_id": "0201344da1b74e008006a7a96f90be6f",
+      "name": "四川艺术职业学院消防隐患整治工程",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "专业分包",
+      "project_environment": "正式项目",
+      "other_system_id": "109506",
+      "other_system_code": "16982984933830000",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2117,
+      "legacy_project_id": "020eddc09afb4260a5843a84ee58d826",
+      "name": "龙泉驿区2020年人行道整治提升工程（怡安路、合聚路、玉扬路）",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "劳务工程",
+      "project_environment": "正式项目",
+      "other_system_id": "109702",
+      "other_system_code": "16982985767570001",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2118,
+      "legacy_project_id": "027c5b467ae94e52aabb6f6218d310d4",
+      "name": "成渝双城经济圈川渝高竹新区制造产业园及配套基础设施建设项目（L3-1线道路及配套工程劳务分包）",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "劳务工程",
+      "project_environment": "正式项目",
+      "other_system_id": "109507",
+      "other_system_code": "16982984935080000",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2119,
+      "legacy_project_id": "02df67b4ddb6469b81ed551e9b544d25",
+      "name": "剑阁县文化广电新闻出版局人才基地建设项目",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "房建",
+      "project_environment": "正式项目",
+      "other_system_id": "109812",
+      "other_system_code": "16982986211630000",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2120,
+      "legacy_project_id": "037fddc6219449c3840477989cc06f82",
+      "name": "中江县仓山镇郪江桥梁工程",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "市政工程",
+      "project_environment": "正式项目",
+      "other_system_id": "109716",
+      "other_system_code": "16982985785070001",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2121,
+      "legacy_project_id": "03f8997135504039a36557ec6e57909b",
+      "name": "工程部后油库油罐清洗",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "专业分包",
+      "project_environment": "",
+      "other_system_id": "178417",
+      "other_system_code": "17243120631790000",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2122,
+      "legacy_project_id": "045206e3bf2f49b6b6b544b1be1aff22",
+      "name": "中国移动四川公司2025-2027年全省汇聚机房土建工程施工集中采购项目（标包4-乐山分公司）框架协议-（TD）",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "房建工程",
+      "project_environment": "",
+      "other_system_id": "",
+      "other_system_code": "",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2123,
+      "legacy_project_id": "04d0a65675424e41b8c65ba26ef48b4e",
+      "name": "中江公司变电检修班“工人先锋号”环境整治",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "装修装饰",
+      "project_environment": "正式项目",
+      "other_system_id": "109703",
+      "other_system_code": "16982985768670001",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2124,
+      "legacy_project_id": "05139ca820724561bee71e016b22fd55",
+      "name": "2022年日常维护项目（竞标12）",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "桥梁隧道",
+      "project_environment": "正式项目",
+      "other_system_id": "109474",
+      "other_system_code": "16982984893830000",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2125,
+      "legacy_project_id": "0550ea3a2e1b4161b25a697476e344b5",
+      "name": "准环对称仿星器项目",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "专业分包",
+      "project_environment": "",
+      "other_system_id": "191777",
+      "other_system_code": "17366521192490001",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2126,
+      "legacy_project_id": "059742d9ac094c018b91894306d5fc2d",
+      "name": "ALC预制隔墙板供应及施工分包合同",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "专业分包",
+      "project_environment": "正式项目",
+      "other_system_id": "109622",
+      "other_system_code": "16982985664760001",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2127,
+      "legacy_project_id": "069cd56871fd4307b836a3167fddf14b",
+      "name": "和田地区于田县高速公路10千伏线路迁改工程",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "市政工程",
+      "project_environment": "正式项目",
+      "other_system_id": "109570",
+      "other_system_code": "16982985598510000",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2128,
+      "legacy_project_id": "06c94694eb3e418bb4ceb5e55a987583",
+      "name": "崴和路边坡滑坡治理",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "公路工程",
+      "project_environment": "",
+      "other_system_id": "",
+      "other_system_code": "",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2129,
+      "legacy_project_id": "06cd855d5ede4a279a81568903836256",
+      "name": "白鹤花园修建建筑垃圾池",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "市政工程",
+      "project_environment": "",
+      "other_system_id": "191770",
+      "other_system_code": "17366521172650000",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2130,
+      "legacy_project_id": "072425c9c9ad453eb60c137fd4215459",
+      "name": "珠峰文化旅游创意产业园区基础设施项目一期工程第三标段",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "市政工程",
+      "project_environment": "正式项目",
+      "other_system_id": "109667",
+      "other_system_code": "16982985724290001",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2131,
+      "legacy_project_id": "076d8bcae3064dca8927f4f629bf2356",
+      "name": "中国移动四川西区二枢纽“车库改机房”土建工程",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "装修装饰",
+      "project_environment": "正式项目",
+      "other_system_id": "109735",
+      "other_system_code": "16982985809600001",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2132,
+      "legacy_project_id": "07e6484cc40d4609b0bcafcf187dd9af",
+      "name": "德阳市天府旌城石亭江河段堤防改建给水迁改工程",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "市政工程",
+      "project_environment": "",
+      "other_system_id": "115139",
+      "other_system_code": "17018337601850001",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2133,
+      "legacy_project_id": "080a2d8ee204424a8b7edd08817eee20",
+      "name": "2017年公路水毁修复工程（双石镇）",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "公路交通",
+      "project_environment": "正式项目",
+      "other_system_id": "109681",
+      "other_system_code": "16982985741790001",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2134,
+      "legacy_project_id": "088193c97f1443b58f1489b321c1288a",
+      "name": "浪卡子县白地乡龙桑村水塘工程项目(1标段)",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "水利工程",
+      "project_environment": "",
+      "other_system_id": "190048",
+      "other_system_code": "17339744856300000",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2135,
+      "legacy_project_id": "08ac2e586f574d39a3272852fa22bf71",
+      "name": "德昌县宽裕镇花园村文化休闲广场",
+      "short_name": "德阳市公安局罗江区德昌县宽裕镇花园村文化休闲广场",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "市政工程",
+      "project_environment": "正式项目",
+      "other_system_id": "109837",
+      "other_system_code": "16982986242720001",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    },
+    {
+      "id": 2136,
+      "legacy_project_id": "08fa00e1bf9d4c88bcbfa652610aa347",
+      "name": "永川区卫星中型灌区续建配套与节水改造工程",
+      "short_name": "",
+      "legacy_company_name": "四川保盛建设集团有限公司",
+      "specialty_type_name": "水利水电工程",
+      "project_environment": "正式项目",
+      "other_system_id": "109492",
+      "other_system_code": "16982984916330001",
+      "relation_values": {
+        "company_id": false,
+        "project_type_id": false,
+        "project_category_id": false,
+        "stage_id": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,921 @@
+{
+  "status": "PASS",
+  "target_state": "USABILITY_REVIEW_READY",
+  "mode": "read_only_business_usability_review",
+  "db": "sc_demo",
+  "input": "/mnt/artifacts/migration/project_create_only_expand_post_write_snapshot_v1.csv",
+  "lock_result": {
+    "source": "/mnt/artifacts/migration/project_expand_rollback_dry_run_result_v1.json",
+    "status": "ROLLBACK_READY",
+    "total_targets": 100,
+    "matched_rows": 100,
+    "missing_rows": 0,
+    "duplicate_matches": 0,
+    "out_of_scope_matches": 0,
+    "projection_mismatches": 0
+  },
+  "summary": {
+    "locked_rows": 100,
+    "current_matched_records": 100,
+    "deep_review_rows": 10,
+    "quick_review_rows": 20,
+    "native_view_checks": 3,
+    "native_view_failures": 0,
+    "deep_review_failures": 0,
+    "quick_review_failures": 0,
+    "recommendation": "keep sample for observation"
+  },
+  "sample_strategy": {
+    "deep_legacy_project_ids": [
+      "092bc953078b42ab89b7a9d07fecab66",
+      "0a098ceefc5046c380028104a3caa2af",
+      "0b3b88a05d6d454b9cbbe6b4c3c342d5",
+      "0bb1dac8c9a94e39b421b3a619491c1f",
+      "0f314b7eb259455f8ad3bb3419f66957",
+      "15bc8bfa1f964a609140a3c52c72efaa",
+      "1b94da17ad1a42c291a59a5ec6d4996b",
+      "211a1be6b5ee4d6c830d2cf06378107b",
+      "28020d9fe0c345f295ebbf4b41c119e4",
+      "282fc5242a4f465cae7d7630c279ef91"
+    ],
+    "quick_legacy_project_ids": [
+      "092bc953078b42ab89b7a9d07fecab66",
+      "0a098ceefc5046c380028104a3caa2af",
+      "0b3b88a05d6d454b9cbbe6b4c3c342d5",
+      "0c028a6f51ea4e728448ce29b1e2eaab",
+      "339f28c8a4a44c5bb33e1c9d7ab1ff30",
+      "c4fd674a84cc4c2bbeae55d8207443ce",
+      "e27eae2a90224ae1a7a6025b4dded66d",
+      "09a62a54dcf645d6b7030d40fbdac1cb",
+      "09ba719dfd18431a951ec77d29ea6194",
+      "0bb1dac8c9a94e39b421b3a619491c1f",
+      "0c4f914eee3547c185a2108fc1f768df",
+      "0c8c213e89204a6fb61a4c8ac79f0d4a",
+      "0cdd82e96265456494a1de15f36c433e",
+      "0d21826a7ebb4dbfb7317338baaf57a0",
+      "0dac2896cb43443eaaf4d5247683a40b",
+      "0db43c29f642442292d30f6b34c328a9",
+      "0dde523bf5414461b937c9d5d4c220cf",
+      "0e04e445c6304b5f9e3b79ffdde72eb1",
+      "0e4c810fe22644c399650bca0528898a",
+      "0f314b7eb259455f8ad3bb3419f66957"
+    ]
+  },
+  "native_views": [
+    {
+      "view_type": "form",
+      "view_loaded": true,
+      "field_ref_count": 52,
+      "missing_field_refs": [],
+      "error": "",
+      "status": "PASS"
+    },
+    {
+      "view_type": "tree",
+      "view_loaded": true,
+      "field_ref_count": 14,
+      "missing_field_refs": [],
+      "error": "",
+      "status": "PASS"
+    },
+    {
+      "view_type": "kanban",
+      "view_loaded": true,
+      "field_ref_count": 25,
+      "missing_field_refs": [],
+      "error": "",
+      "status": "PASS"
+    }
+  ],
+  "deep_results": [
+    {
+      "project_id": 2137,
+      "legacy_project_id": "092bc953078b42ab89b7a9d07fecab66",
+      "name": "德阳市罗江区自来水公司2019年12月至2020年11月管网安装（抢修）零星土石方开挖恢复及用工等外包",
+      "lifecycle_state": "draft",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "labels": {
+        "expected_lifecycle_label": "筹备中",
+        "payload_stage_name": "筹备中",
+        "state_explain_stage_label": "筹备中",
+        "dashboard_state_explain_stage_label": "筹备中",
+        "project_context_stage_label": "筹备中",
+        "insight_stage": "筹备中",
+        "header_stage_name": "筹备中",
+        "header_current_stage": "筹备中"
+      },
+      "label_mismatches": [],
+      "read_outputs": {
+        "project_payload": {
+          "ok": true,
+          "stage_name": "筹备中"
+        },
+        "state_explain": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_context": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_insight": {
+          "ok": true,
+          "stage": "筹备中"
+        },
+        "header_summary": {
+          "ok": true,
+          "error": "",
+          "stage_name": "筹备中",
+          "current_stage": "筹备中"
+        },
+        "flow_map": {
+          "ok": true,
+          "current_stage": "initiation",
+          "item_count": 5
+        },
+        "dashboard_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        },
+        "execution_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        }
+      },
+      "output_failures": [],
+      "status": "PASS"
+    },
+    {
+      "project_id": 2138,
+      "legacy_project_id": "0a098ceefc5046c380028104a3caa2af",
+      "name": "中建天投天河区育新街南侧AT0304011-1地块项目",
+      "lifecycle_state": "draft",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "labels": {
+        "expected_lifecycle_label": "筹备中",
+        "payload_stage_name": "筹备中",
+        "state_explain_stage_label": "筹备中",
+        "dashboard_state_explain_stage_label": "筹备中",
+        "project_context_stage_label": "筹备中",
+        "insight_stage": "筹备中",
+        "header_stage_name": "筹备中",
+        "header_current_stage": "筹备中"
+      },
+      "label_mismatches": [],
+      "read_outputs": {
+        "project_payload": {
+          "ok": true,
+          "stage_name": "筹备中"
+        },
+        "state_explain": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_context": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_insight": {
+          "ok": true,
+          "stage": "筹备中"
+        },
+        "header_summary": {
+          "ok": true,
+          "error": "",
+          "stage_name": "筹备中",
+          "current_stage": "筹备中"
+        },
+        "flow_map": {
+          "ok": true,
+          "current_stage": "initiation",
+          "item_count": 5
+        },
+        "dashboard_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        },
+        "execution_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        }
+      },
+      "output_failures": [],
+      "status": "PASS"
+    },
+    {
+      "project_id": 2139,
+      "legacy_project_id": "0b3b88a05d6d454b9cbbe6b4c3c342d5",
+      "name": "岳普湖县防沙治沙电力配套设施建设项目",
+      "lifecycle_state": "draft",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "labels": {
+        "expected_lifecycle_label": "筹备中",
+        "payload_stage_name": "筹备中",
+        "state_explain_stage_label": "筹备中",
+        "dashboard_state_explain_stage_label": "筹备中",
+        "project_context_stage_label": "筹备中",
+        "insight_stage": "筹备中",
+        "header_stage_name": "筹备中",
+        "header_current_stage": "筹备中"
+      },
+      "label_mismatches": [],
+      "read_outputs": {
+        "project_payload": {
+          "ok": true,
+          "stage_name": "筹备中"
+        },
+        "state_explain": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_context": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_insight": {
+          "ok": true,
+          "stage": "筹备中"
+        },
+        "header_summary": {
+          "ok": true,
+          "error": "",
+          "stage_name": "筹备中",
+          "current_stage": "筹备中"
+        },
+        "flow_map": {
+          "ok": true,
+          "current_stage": "initiation",
+          "item_count": 5
+        },
+        "dashboard_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        },
+        "execution_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        }
+      },
+      "output_failures": [],
+      "status": "PASS"
+    },
+    {
+      "project_id": 2146,
+      "legacy_project_id": "0bb1dac8c9a94e39b421b3a619491c1f",
+      "name": "公司综合管理平台",
+      "lifecycle_state": "draft",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "labels": {
+        "expected_lifecycle_label": "筹备中",
+        "payload_stage_name": "筹备中",
+        "state_explain_stage_label": "筹备中",
+        "dashboard_state_explain_stage_label": "筹备中",
+        "project_context_stage_label": "筹备中",
+        "insight_stage": "筹备中",
+        "header_stage_name": "筹备中",
+        "header_current_stage": "筹备中"
+      },
+      "label_mismatches": [],
+      "read_outputs": {
+        "project_payload": {
+          "ok": true,
+          "stage_name": "筹备中"
+        },
+        "state_explain": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_context": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_insight": {
+          "ok": true,
+          "stage": "筹备中"
+        },
+        "header_summary": {
+          "ok": true,
+          "error": "",
+          "stage_name": "筹备中",
+          "current_stage": "筹备中"
+        },
+        "flow_map": {
+          "ok": true,
+          "current_stage": "initiation",
+          "item_count": 5
+        },
+        "dashboard_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        },
+        "execution_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        }
+      },
+      "output_failures": [],
+      "status": "PASS"
+    },
+    {
+      "project_id": 2156,
+      "legacy_project_id": "0f314b7eb259455f8ad3bb3419f66957",
+      "name": "绵竹市星旺大桥与货运通道连接匝道工程项目",
+      "lifecycle_state": "draft",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "labels": {
+        "expected_lifecycle_label": "筹备中",
+        "payload_stage_name": "筹备中",
+        "state_explain_stage_label": "筹备中",
+        "dashboard_state_explain_stage_label": "筹备中",
+        "project_context_stage_label": "筹备中",
+        "insight_stage": "筹备中",
+        "header_stage_name": "筹备中",
+        "header_current_stage": "筹备中"
+      },
+      "label_mismatches": [],
+      "read_outputs": {
+        "project_payload": {
+          "ok": true,
+          "stage_name": "筹备中"
+        },
+        "state_explain": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_context": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_insight": {
+          "ok": true,
+          "stage": "筹备中"
+        },
+        "header_summary": {
+          "ok": true,
+          "error": "",
+          "stage_name": "筹备中",
+          "current_stage": "筹备中"
+        },
+        "flow_map": {
+          "ok": true,
+          "current_stage": "initiation",
+          "item_count": 5
+        },
+        "dashboard_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        },
+        "execution_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        }
+      },
+      "output_failures": [],
+      "status": "PASS"
+    },
+    {
+      "project_id": 2176,
+      "legacy_project_id": "15bc8bfa1f964a609140a3c52c72efaa",
+      "name": "重庆江北国际机场飞行区服务综合服务外包项目",
+      "lifecycle_state": "draft",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "labels": {
+        "expected_lifecycle_label": "筹备中",
+        "payload_stage_name": "筹备中",
+        "state_explain_stage_label": "筹备中",
+        "dashboard_state_explain_stage_label": "筹备中",
+        "project_context_stage_label": "筹备中",
+        "insight_stage": "筹备中",
+        "header_stage_name": "筹备中",
+        "header_current_stage": "筹备中"
+      },
+      "label_mismatches": [],
+      "read_outputs": {
+        "project_payload": {
+          "ok": true,
+          "stage_name": "筹备中"
+        },
+        "state_explain": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_context": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_insight": {
+          "ok": true,
+          "stage": "筹备中"
+        },
+        "header_summary": {
+          "ok": true,
+          "error": "",
+          "stage_name": "筹备中",
+          "current_stage": "筹备中"
+        },
+        "flow_map": {
+          "ok": true,
+          "current_stage": "initiation",
+          "item_count": 5
+        },
+        "dashboard_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        },
+        "execution_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        }
+      },
+      "output_failures": [],
+      "status": "PASS"
+    },
+    {
+      "project_id": 2196,
+      "legacy_project_id": "1b94da17ad1a42c291a59a5ec6d4996b",
+      "name": "2025年西南石油工程公司钻前辅助工程劳务框架招标（5标段：中江、孝泉等地区）项目",
+      "lifecycle_state": "draft",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "labels": {
+        "expected_lifecycle_label": "筹备中",
+        "payload_stage_name": "筹备中",
+        "state_explain_stage_label": "筹备中",
+        "dashboard_state_explain_stage_label": "筹备中",
+        "project_context_stage_label": "筹备中",
+        "insight_stage": "筹备中",
+        "header_stage_name": "筹备中",
+        "header_current_stage": "筹备中"
+      },
+      "label_mismatches": [],
+      "read_outputs": {
+        "project_payload": {
+          "ok": true,
+          "stage_name": "筹备中"
+        },
+        "state_explain": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_context": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_insight": {
+          "ok": true,
+          "stage": "筹备中"
+        },
+        "header_summary": {
+          "ok": true,
+          "error": "",
+          "stage_name": "筹备中",
+          "current_stage": "筹备中"
+        },
+        "flow_map": {
+          "ok": true,
+          "current_stage": "initiation",
+          "item_count": 5
+        },
+        "dashboard_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        },
+        "execution_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        }
+      },
+      "output_failures": [],
+      "status": "PASS"
+    },
+    {
+      "project_id": 2216,
+      "legacy_project_id": "211a1be6b5ee4d6c830d2cf06378107b",
+      "name": "德阳凯州新城检验检测创新产业园建设项目-实验室装修项目",
+      "lifecycle_state": "draft",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "labels": {
+        "expected_lifecycle_label": "筹备中",
+        "payload_stage_name": "筹备中",
+        "state_explain_stage_label": "筹备中",
+        "dashboard_state_explain_stage_label": "筹备中",
+        "project_context_stage_label": "筹备中",
+        "insight_stage": "筹备中",
+        "header_stage_name": "筹备中",
+        "header_current_stage": "筹备中"
+      },
+      "label_mismatches": [],
+      "read_outputs": {
+        "project_payload": {
+          "ok": true,
+          "stage_name": "筹备中"
+        },
+        "state_explain": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_context": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_insight": {
+          "ok": true,
+          "stage": "筹备中"
+        },
+        "header_summary": {
+          "ok": true,
+          "error": "",
+          "stage_name": "筹备中",
+          "current_stage": "筹备中"
+        },
+        "flow_map": {
+          "ok": true,
+          "current_stage": "initiation",
+          "item_count": 5
+        },
+        "dashboard_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        },
+        "execution_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        }
+      },
+      "output_failures": [],
+      "status": "PASS"
+    },
+    {
+      "project_id": 2235,
+      "legacy_project_id": "28020d9fe0c345f295ebbf4b41c119e4",
+      "name": "绵竹市城区停车场建设项目二期设计施工（一标段）项目模板脚手架专业分包工程",
+      "lifecycle_state": "draft",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "labels": {
+        "expected_lifecycle_label": "筹备中",
+        "payload_stage_name": "筹备中",
+        "state_explain_stage_label": "筹备中",
+        "dashboard_state_explain_stage_label": "筹备中",
+        "project_context_stage_label": "筹备中",
+        "insight_stage": "筹备中",
+        "header_stage_name": "筹备中",
+        "header_current_stage": "筹备中"
+      },
+      "label_mismatches": [],
+      "read_outputs": {
+        "project_payload": {
+          "ok": true,
+          "stage_name": "筹备中"
+        },
+        "state_explain": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_context": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_insight": {
+          "ok": true,
+          "stage": "筹备中"
+        },
+        "header_summary": {
+          "ok": true,
+          "error": "",
+          "stage_name": "筹备中",
+          "current_stage": "筹备中"
+        },
+        "flow_map": {
+          "ok": true,
+          "current_stage": "initiation",
+          "item_count": 5
+        },
+        "dashboard_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        },
+        "execution_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        }
+      },
+      "output_failures": [],
+      "status": "PASS"
+    },
+    {
+      "project_id": 2236,
+      "legacy_project_id": "282fc5242a4f465cae7d7630c279ef91",
+      "name": "德阳市寿丰河截污干管工程、中江县城 镇污水处理设施及配套管网项目等四个项目厂站及管网维修、服务单位的采购项目",
+      "lifecycle_state": "draft",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "labels": {
+        "expected_lifecycle_label": "筹备中",
+        "payload_stage_name": "筹备中",
+        "state_explain_stage_label": "筹备中",
+        "dashboard_state_explain_stage_label": "筹备中",
+        "project_context_stage_label": "筹备中",
+        "insight_stage": "筹备中",
+        "header_stage_name": "筹备中",
+        "header_current_stage": "筹备中"
+      },
+      "label_mismatches": [],
+      "read_outputs": {
+        "project_payload": {
+          "ok": true,
+          "stage_name": "筹备中"
+        },
+        "state_explain": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_context": {
+          "ok": true,
+          "stage_label": "筹备中"
+        },
+        "project_insight": {
+          "ok": true,
+          "stage": "筹备中"
+        },
+        "header_summary": {
+          "ok": true,
+          "error": "",
+          "stage_name": "筹备中",
+          "current_stage": "筹备中"
+        },
+        "flow_map": {
+          "ok": true,
+          "current_stage": "initiation",
+          "item_count": 5
+        },
+        "dashboard_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        },
+        "execution_next_actions": {
+          "ok": true,
+          "error": "",
+          "state": "ready",
+          "action_count": 4
+        }
+      },
+      "output_failures": [],
+      "status": "PASS"
+    }
+  ],
+  "quick_results": [
+    {
+      "project_id": 2137,
+      "legacy_project_id": "092bc953078b42ab89b7a9d07fecab66",
+      "name": "德阳市罗江区自来水公司2019年12月至2020年11月管网安装（抢修）零星土石方开挖恢复及用工等外包",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2138,
+      "legacy_project_id": "0a098ceefc5046c380028104a3caa2af",
+      "name": "中建天投天河区育新街南侧AT0304011-1地块项目",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2139,
+      "legacy_project_id": "0b3b88a05d6d454b9cbbe6b4c3c342d5",
+      "name": "岳普湖县防沙治沙电力配套设施建设项目",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2140,
+      "legacy_project_id": "0c028a6f51ea4e728448ce29b1e2eaab",
+      "name": "南川区S531西龙路K18+800-K27+230日常维修养护工程（换填、边沟）项目",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2141,
+      "legacy_project_id": "339f28c8a4a44c5bb33e1c9d7ab1ff30",
+      "name": "某部队年度零星工程建设项目",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2142,
+      "legacy_project_id": "c4fd674a84cc4c2bbeae55d8207443ce",
+      "name": "堆龙德庆区乃琼亲子公园建设项目",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2143,
+      "legacy_project_id": "e27eae2a90224ae1a7a6025b4dded66d",
+      "name": "龙江大酒店装修改造项目",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2144,
+      "legacy_project_id": "09a62a54dcf645d6b7030d40fbdac1cb",
+      "name": "林芝市财富阳光建设项目消防工程",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2145,
+      "legacy_project_id": "09ba719dfd18431a951ec77d29ea6194",
+      "name": "焙浸车间硫酸罐区防腐项目工程",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2146,
+      "legacy_project_id": "0bb1dac8c9a94e39b421b3a619491c1f",
+      "name": "公司综合管理平台",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2147,
+      "legacy_project_id": "0c4f914eee3547c185a2108fc1f768df",
+      "name": "太行山路（钱塘江路-信江路）道路工程水泥稳定基层施工专业分包",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2148,
+      "legacy_project_id": "0c8c213e89204a6fb61a4c8ac79f0d4a",
+      "name": "二重厂西路（华山路-衡山路）等4条路砂石工程专业分包",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2149,
+      "legacy_project_id": "0cdd82e96265456494a1de15f36c433e",
+      "name": "何埂小学生化池及室外污水管网",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2150,
+      "legacy_project_id": "0d21826a7ebb4dbfb7317338baaf57a0",
+      "name": "重庆文理学院2025年附属工程项目(不可预测的零星维修工程)",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2151,
+      "legacy_project_id": "0dac2896cb43443eaaf4d5247683a40b",
+      "name": "2025年西南石油工程公司钻前主体工程劳务框架招标（6标段：罗江、黄许等地区）项目",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2152,
+      "legacy_project_id": "0db43c29f642442292d30f6b34c328a9",
+      "name": "巫山县大昌镇树木修剪及路灯更换服务合同",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2153,
+      "legacy_project_id": "0dde523bf5414461b937c9d5d4c220cf",
+      "name": "53019工程、3644-3、4、3617消防工程",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2154,
+      "legacy_project_id": "0e04e445c6304b5f9e3b79ffdde72eb1",
+      "name": "绵阳金能集中办公室维修改造项目",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2155,
+      "legacy_project_id": "0e4c810fe22644c399650bca0528898a",
+      "name": "2021年中江县辑庆镇尖寨村中药材园区四升五产村相融建设项目",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    },
+    {
+      "project_id": 2156,
+      "legacy_project_id": "0f314b7eb259455f8ad3bb3419f66957",
+      "name": "绵竹市星旺大桥与货运通道连接匝道工程项目",
+      "list_search_hit": true,
+      "form_readable": true,
+      "kanban_readable": true,
+      "header_state_label": "筹备中",
+      "status": "PASS"
+    }
+  ],
+  "minor_notes": [],
+  "blocking_reasons": [],
+  "decision": {
+    "keep_for_observation": true,
+    "enter_real_rollback_authorization_batch": false,
+    "next_batch": "ITER-2026-04-13-1838 project create-only 100-row observation sample retention decision"
+  }
+}

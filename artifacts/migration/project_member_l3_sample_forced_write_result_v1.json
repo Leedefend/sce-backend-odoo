@@ -1,0 +1,10 @@
+{
+  "status": "FAIL",
+  "run_id": "ITER-2026-04-14-L3-SAMPLE-FORCED-WRITE",
+  "target_model": "project.responsibility",
+  "forced_role_key": "project_member",
+  "sample_rows": 3,
+  "created": 0,
+  "db_writes": 0,
+  "error": "ValueError(\"Wrong value for project.responsibility.role_key: 'project_member'\")"
+}

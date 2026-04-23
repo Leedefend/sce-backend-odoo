@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_core_tax_prereq_materialize",
+  "database": "sc_migration_fresh",
+  "tax_count_before": 2,
+  "tax_count_after": 6,
+  "required_taxes": [
+    {
+      "id": 7,
+      "name": "销项VAT 9%",
+      "amount": 9.0,
+      "type_tax_use": "sale",
+      "active": true
+    },
+    {
+      "id": 8,
+      "name": "进项VAT 13%",
+      "amount": 13.0,
+      "type_tax_use": "purchase",
+      "active": true
+    }
+  ],
+  "missing_required_taxes": [],
+  "demo_targets_executed": 0,
+  "transaction_rows_created": 0,
+  "decision": "core_tax_prereq_ready",
+  "next_step": "retry fresh_db_contract_57_retry_write"
+}

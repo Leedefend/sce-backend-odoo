@@ -1,0 +1,47 @@
+{
+  "status": "PASS",
+  "run_id": "ITER-2026-04-14-L3-ROLE-KEY-AUDIT-MAPPED-WRITE",
+  "mapped_role_key": "manager",
+  "mapped_role_label": "项目经理",
+  "mapping_rule": "choose_highest_frequency_existing_legal_role_key_in_target_distribution",
+  "sample_rows": 3,
+  "created": 3,
+  "updated": 0,
+  "db_writes": 3,
+  "created_rows": [
+    {
+      "responsibility_id": 1,
+      "project_id": 2150,
+      "project_name": "重庆文理学院2025年附属工程项目(不可预测的零星维修工程)",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "role_key": "manager",
+      "role_label": "项目经理",
+      "pair_key": "2150:12",
+      "write_action_result": "recovered_existing_created_by_run_id"
+    },
+    {
+      "responsibility_id": 2,
+      "project_id": 2238,
+      "project_name": "璧山区正兴镇龙家河河堤水毁修复工程",
+      "user_id": 12,
+      "user_name": "李林旭",
+      "role_key": "manager",
+      "role_label": "项目经理",
+      "pair_key": "2238:12",
+      "write_action_result": "recovered_existing_created_by_run_id"
+    },
+    {
+      "responsibility_id": 3,
+      "project_id": 2245,
+      "project_name": "八角星坐标项目景观坡道优化调整工程劳务分包",
+      "user_id": 14,
+      "user_name": "江一娇",
+      "role_key": "manager",
+      "role_label": "项目经理",
+      "pair_key": "2245:14",
+      "write_action_result": "recovered_existing_created_by_run_id"
+    }
+  ],
+  "rollback_targets": "/mnt/artifacts/migration/project_member_l3_mapped_write_rollback_targets_v1.csv"
+}

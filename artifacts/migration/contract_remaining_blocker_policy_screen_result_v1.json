@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "mode": "contract_remaining_blocker_policy_screen",
+  "db_writes": 0,
+  "input_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_source_coverage_nodb_screen_rows_v1.csv",
+  "input_rows": 1694,
+  "remaining_blocked_rows": 350,
+  "policy_route_counts": {
+    "discard_deleted_source": 65,
+    "partner_anchor_recovery_screen": 197,
+    "project_anchor_recovery_screen": 88
+  },
+  "blocker_counts": {
+    "deleted_flag": 65,
+    "direction_defer": 139,
+    "partner_ambiguous": 69,
+    "partner_unresolved": 219,
+    "project_unresolved": 88
+  },
+  "row_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_remaining_blocker_policy_screen_rows_v1.csv",
+  "decision": "remaining_blockers_policy_screened",
+  "write_authorization": "not_granted",
+  "next_step": "open project-anchor recovery no-DB screen first; deleted rows remain discard candidates",
+  "errors": []
+}

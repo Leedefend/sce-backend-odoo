@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "mode": "contract_partner_source_12_anchor_design",
+  "db_writes": 0,
+  "input_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_partner_source_57_design_rows_v1.csv",
+  "input_rows": 57,
+  "anchor_rows": 12,
+  "dependent_contract_rows": 57,
+  "row_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_partner_source_12_anchor_design_rows_v1.csv",
+  "decision": "partner_source_12_anchor_design_ready",
+  "write_authorization": "not_granted",
+  "next_step": "open bounded DB write task for 12 partner anchors, then retry dependent 57 contract rows",
+  "errors": []
+}

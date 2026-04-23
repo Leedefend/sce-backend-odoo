@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_contract_remaining_adapter",
+  "db_writes": 0,
+  "source_rows": 1332,
+  "existing_fresh_reference_rows": 57,
+  "excluded_existing_fresh_rows": 0,
+  "replay_payload_rows": 1332,
+  "expected_replay_rows": 1332,
+  "missing_project_anchor_count": 0,
+  "missing_partner_anchor_count": 0,
+  "ambiguous_partner_anchor_count": 0,
+  "duplicate_input_legacy_contract_ids": 0,
+  "errors": [],
+  "artifacts": {
+    "replay_payload": "/mnt/e/sc-backend-odoo/artifacts/migration/fresh_db_contract_remaining_replay_payload_v1.csv",
+    "report": "/mnt/e/sc-backend-odoo/docs/migration_alignment/fresh_db_contract_remaining_adapter_report_v1.md"
+  },
+  "decision": "fresh_db_contract_remaining_adapter_ready",
+  "next_step": "write remaining contract headers into sc_migration_fresh"
+}

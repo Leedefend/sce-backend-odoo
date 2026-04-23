@@ -1,0 +1,203 @@
+{
+  "status": "PASS",
+  "mode": "project_remaining_create_only_dry_run_v6_no_db_no_orm",
+  "raw_project_rows": 755,
+  "materialized_source_counts": {
+    "artifacts/migration/project_create_only_post_write_snapshot_v1.csv": 30,
+    "artifacts/migration/project_create_only_expand_post_write_snapshot_v1.csv": 100,
+    "artifacts/migration/project_v2_100_post_write_snapshot.csv": 100,
+    "artifacts/migration/project_v3_100_post_write_snapshot.csv": 100,
+    "artifacts/migration/project_v4_200_post_write_snapshot.csv": 200,
+    "artifacts/migration/project_v5_200_post_write_snapshot.csv": 200
+  },
+  "already_materialized_project_rows": 730,
+  "skipped_existing_rows": 730,
+  "candidate_csv": "artifacts/migration/project_remaining_candidate_v6.csv",
+  "row_count": 25,
+  "batch_limit": 200,
+  "safe_field_count": 22,
+  "summary": {
+    "create": 25,
+    "update": 0,
+    "error": 0
+  },
+  "errors": [],
+  "results": [
+    {
+      "line": 2,
+      "legacy_project_id": "f566b87da9024087a8da380d976a5554",
+      "name": "河黄路种子加工中心至双佳养殖场、罗绵路至种子加工中心、制种基地展示中心至种子加工中心、罗绵路至彩色油路沥青摊铺项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 3,
+      "legacy_project_id": "f63676e5d4b844eaaecbe42cc2218d75",
+      "name": "德阳高新区万福棚户区改造工程一期一标段“8.11”特大暴雨灾后修复工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 4,
+      "legacy_project_id": "f680bdc8b1ae4a6a84fe7066f7b8056c",
+      "name": "A项目-建筑幕墙专业分包",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 5,
+      "legacy_project_id": "f6db642585394c49a6278eb0eed3119a",
+      "name": "柳梧新区雨污水管网及防洪渠维保服务采购项目一标段",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 6,
+      "legacy_project_id": "f73c2f32e28d4180a093122ef1129461",
+      "name": "柳梧新区地下雨水管网清理项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 7,
+      "legacy_project_id": "f772a3bb0b27467eaf46a8b7e13155c9",
+      "name": "全民健身活动中心五人制足球场实施维修改造项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 8,
+      "legacy_project_id": "f77d5a1eff67405982b3178110ab35b6",
+      "name": "盾构机制造、总装调试及再制造项目区域工程厂房钢结构专业分包施工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 9,
+      "legacy_project_id": "f818ed35825945368619a8ed681101dc",
+      "name": "齐家堰水生态保护修复项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 10,
+      "legacy_project_id": "f83ec03b24d24fec8c8fb9cfadb304f7",
+      "name": "重庆市沙坪坝区土主街道桐子林黄金湾C1栋 二层",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 11,
+      "legacy_project_id": "f947d45769804682af3a6233ff0b5d0d",
+      "name": "中国移动四川分公司巴中分公司2021-2022渠道维修采购项目框架协议",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 12,
+      "legacy_project_id": "fa54a849d16840faa4991732709c30b6",
+      "name": "德阳市旌北13、14#地块（德阳北站TOD及基础设施配套项目）项目示范区园林景观工程专业分包",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 13,
+      "legacy_project_id": "fa81dfa136ae42009e8d1d86af0bd1e2",
+      "name": "德阳市罗江区一根松应急抢险工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 14,
+      "legacy_project_id": "faa210f1d28440a8b24e787a2db4e1d8",
+      "name": "塔什库尔干县塔什库尔干乡托格伦夏村村容村貌整治提升项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 15,
+      "legacy_project_id": "fafad4e03da24e98b7f8cf26706127b8",
+      "name": "中国移动四川分公司天府新区2018-2020年渠道零星维修项目（标包4）",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 16,
+      "legacy_project_id": "fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "name": "公司综合平台",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 17,
+      "legacy_project_id": "fb6de3927cc44f4497c986be12ecd05f",
+      "name": "中国移动四川公司市州分公司2025年—2028年管理用房及生产枢纽楼公共区域零星维修项目的标包1 成都",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 18,
+      "legacy_project_id": "fbbe809ac1994bf9a245f59229553730",
+      "name": "四川建筑职业技术学院成都校区迁建工程（二期）室内外消防工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 19,
+      "legacy_project_id": "fd55ff03dc53471a90744a6e145fbba7",
+      "name": "新能源电气控制系统研发制造中心项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 20,
+      "legacy_project_id": "fdeb2bb017b94856850715fb5f1ec2c0",
+      "name": "射洪县金鹤乡白店村、长房村、大榆镇松林村等3个高标准基本农田建设项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 21,
+      "legacy_project_id": "fe69283d9c29498bab1083b9a12cce88",
+      "name": "2025年西南石油工程公司钻前辅助工程劳务框架招标（7标段：成都、绵阳等地区）项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 22,
+      "legacy_project_id": "febf7841fc634ae09dfed83a425979a4",
+      "name": "成青路（S105）、河黄路、子汉路路面维修工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 23,
+      "legacy_project_id": "fee87af934dd4759852f0af8b05b6022",
+      "name": "石灵社区杂物室、防腐木扶手等零星项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 24,
+      "legacy_project_id": "ff1cd896b4c94a229a243a8228fa9816",
+      "name": "修剪田坝村、中南村、西铁村社区老旧小区存量违法建筑周边树木",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 25,
+      "legacy_project_id": "ff88aca287f94ee09bcc0a53649e5c0f",
+      "name": "广清城际轨道交通项目（花都段）安置区工程（秀 全街乐同安置区）一期施工总承包项目 【园林园建】工程专业分包",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 26,
+      "legacy_project_id": "ff9ee430d28a4fb2b4279a6e9634c247",
+      "name": "绵阳市游仙区魏城镇竹柳村（原柳塔村二组）通组路建设工程项目",
+      "action": "create",
+      "errors": []
+    }
+  ],
+  "next_step": "open write authorization packet for remaining project candidate"
+}

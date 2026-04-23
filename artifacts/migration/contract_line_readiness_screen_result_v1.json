@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "mode": "contract_line_readiness_screen",
+  "db_writes": 0,
+  "raw_contract_rows": 1694,
+  "fresh_contract_reference_count": 1389,
+  "fresh_raw_overlap": 1389,
+  "independent_line_source_count": 0,
+  "independent_line_sources": [],
+  "bucket_counts": {
+    "blocked_contract_header_not_replayed": 240,
+    "discard_deleted_contract": 65,
+    "fallback_single_line_candidate": 1342,
+    "no_structured_line_source_zero_amount": 47
+  },
+  "fallback_single_line_candidates": 1342,
+  "write_go_no_go": "CONDITIONAL_GO_FOR_FALLBACK_SINGLE_LINE_POLICY",
+  "recommendation_detail": "No independent line source was found. A degraded one-line-per-contract policy is possible for replayed contracts with positive header amount, but it must be explicitly accepted because it is not a structured BOQ line reconstruction.",
+  "next_step": "open contract line policy screen for fallback single-line candidates"
+}

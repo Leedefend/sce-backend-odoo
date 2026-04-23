@@ -1,0 +1,81 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_missing_tax_screen",
+  "input": "artifacts/migration/partner_l4_nodb_refresh_rows_v1.csv",
+  "total_rows": 7172,
+  "missing_tax_rows": 3325,
+  "missing_columns": [],
+  "subroute_counts": {
+    "missing_tax_merge_identity_review": 827,
+    "missing_tax_non_primary_review": 15,
+    "missing_tax_single_source_create_review": 1554,
+    "missing_tax_unsafe_merge_identity_review": 303,
+    "missing_tax_unsafe_name_review": 626
+  },
+  "blocker_counts": {
+    "deduplicated_group_not_create_only": 1130,
+    "missing_tax_number": 3325,
+    "non_primary_partner_source": 923,
+    "unsafe_partner_name": 929
+  },
+  "source_counts": {
+    "company": 2402,
+    "company;supplier": 908,
+    "supplier": 15
+  },
+  "source_row_count_counts": {
+    "1": 2195,
+    "2": 967,
+    "3": 91,
+    "4": 21,
+    "5": 20,
+    "6": 25,
+    "7": 2,
+    "8": 2,
+    "9": 2
+  },
+  "top_blocker_combinations": [
+    {
+      "blockers": "missing_tax_number",
+      "rows": 1554
+    },
+    {
+      "blockers": "missing_tax_number;deduplicated_group_not_create_only;non_primary_partner_source",
+      "rows": 671
+    },
+    {
+      "blockers": "unsafe_partner_name;missing_tax_number",
+      "rows": 626
+    },
+    {
+      "blockers": "unsafe_partner_name;missing_tax_number;deduplicated_group_not_create_only;non_primary_partner_source",
+      "rows": 237
+    },
+    {
+      "blockers": "missing_tax_number;deduplicated_group_not_create_only",
+      "rows": 156
+    },
+    {
+      "blockers": "unsafe_partner_name;missing_tax_number;deduplicated_group_not_create_only",
+      "rows": 66
+    },
+    {
+      "blockers": "missing_tax_number;non_primary_partner_source",
+      "rows": 15
+    }
+  ],
+  "subroute_priority": [
+    "missing_tax_single_source_create_review",
+    "missing_tax_merge_identity_review",
+    "missing_tax_unsafe_merge_identity_review",
+    "missing_tax_unsafe_name_review",
+    "missing_tax_non_primary_review",
+    "missing_tax_conflict_review",
+    "missing_tax_misc_review"
+  ],
+  "outputs": {
+    "screen_rows": "artifacts/migration/partner_l4_missing_tax_screen_rows_v1.csv",
+    "sample_rows": "artifacts/migration/partner_l4_missing_tax_screen_samples_v1.csv"
+  },
+  "next_gate": "Open a no-DB missing_tax_single_source_create_review dry-run before any write or rule expansion."
+}

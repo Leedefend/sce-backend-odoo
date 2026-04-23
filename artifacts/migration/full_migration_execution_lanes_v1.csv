@@ -1,0 +1,8 @@
+lane,source,raw_rows,materialized_rows,next_action,risk,write_allowed_now,reason
+project_expand,tmp/raw/project/project.csv,755,130,bounded create-only expansion dry-run,medium,no,requires next bounded payload and post-write rollback lock
+partner_company_expand,tmp/raw/partner/company.csv,7864,30,bounded company-primary create-only expansion dry-run,medium,no,cross-source conflicts remain manually gated
+partner_supplier_supplement,tmp/raw/partner/supplier.csv,3041,0,no-DB supplement enrichment design after company-primary expansion,medium,no,supplier is supplemental-only and must not override company-primary identity
+contract_expand,tmp/raw/contract/contract.csv,1694,12,bounded header expansion dry-run after project/partner anchors expand,high,no,depends on broader project and partner anchors
+project_member,tmp/raw/project_member/project_member.csv,21390,0,readiness screening only,high,no,may imply user/permission semantics and must not touch ACL implicitly
+payment,tmp/raw/payment/payment.csv,13646,0,STOP: dedicated financial/payment task line required,stop_domain,no,payment lane is a financial stop domain
+receipt,tmp/raw/receipt/receipt.csv,7412,0,STOP: dedicated financial/receipt task line required,stop_domain,no,receipt lane is a financial/cashflow stop domain

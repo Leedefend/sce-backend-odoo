@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_company_supplier_pair_merge_dry_run",
+  "inputs": {
+    "pair_screen": "artifacts/migration/partner_l4_company_supplier_pair_screen_rows_v1.csv",
+    "company": "tmp/raw/partner/company.csv",
+    "supplier": "tmp/raw/partner/supplier.csv"
+  },
+  "route_rows": 1713,
+  "merge_dry_run_candidate_rows": 1713,
+  "blocked_rows": 0,
+  "missing_columns": [],
+  "blocker_counts": {},
+  "outputs": {
+    "dry_run_rows": "artifacts/migration/partner_l4_company_supplier_pair_merge_dry_run_rows_v1.csv",
+    "sample_rows": "artifacts/migration/partner_l4_company_supplier_pair_merge_dry_run_samples_v1.csv"
+  },
+  "target_policy": "retain company/cooperat_company identity and set supplier_rank=1 with supplier legacy evidence",
+  "next_gate": "Open a bounded write-design review before any merge/update write."
+}

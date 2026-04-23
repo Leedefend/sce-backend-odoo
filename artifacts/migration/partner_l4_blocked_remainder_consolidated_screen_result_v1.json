@@ -1,0 +1,68 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_blocked_remainder_consolidated_screen",
+  "db_writes": 0,
+  "historical_final_refresh": {
+    "report": "docs/migration_alignment/partner_l4_final_postwrite_nodb_refresh_report_v1.md",
+    "deduplicated_partner_rows": 7172,
+    "skip_existing_validation_rows": 1767,
+    "create_candidates_remaining": 0,
+    "blocked_rows": 5405,
+    "interpretation": "historical full-classifier blocked count; not the current active post-route queue"
+  },
+  "active_remainder_anchor": {
+    "report": "docs/migration_alignment/partner_l4_remaining365_blocked_screen_report_v1.md",
+    "active_blocked_rows_screened": 365
+  },
+  "route_resolution": [
+    {
+      "route": "missing_tax_duplicate_group",
+      "rows": 175,
+      "status": "resolved_by_recovered_create_only_write",
+      "evidence": "docs/migration_alignment/partner_l4_combo_source_recovery_write_report_v1.md"
+    },
+    {
+      "route": "same_tax_company_supplier_canonical",
+      "rows": 102,
+      "status": "resolved_by_create_only_write",
+      "evidence": "docs/migration_alignment/partner_l4_same_tax_company_supplier_canonical_102_write_report_v1.md"
+    },
+    {
+      "route": "company_supplier_duplicate_group",
+      "rows": 26,
+      "status": "resolved_by_create_only_write",
+      "evidence": "docs/migration_alignment/partner_l4_company_supplier_duplicate_26_write_report_v1.md"
+    },
+    {
+      "route": "company_duplicate_group",
+      "rows": 24,
+      "status": "resolved_by_create_only_write",
+      "evidence": "docs/migration_alignment/partner_l4_company_duplicate_24_write_report_v1.md"
+    },
+    {
+      "route": "same_tax_company_canonical",
+      "rows": 20,
+      "status": "resolved_by_create_only_write",
+      "evidence": "docs/migration_alignment/partner_l4_same_tax_company_canonical_20_write_report_v1.md"
+    },
+    {
+      "route": "remaining_discard_evidence",
+      "rows": 18,
+      "status": "resolved_by_no_db_discard_evidence",
+      "evidence": "docs/migration_alignment/partner_l4_remaining18_discard_evidence_refresh_report_v1.md"
+    }
+  ],
+  "route_resolution_total_rows": 365,
+  "current_active_blocked_rows": 0,
+  "current_create_candidates": 0,
+  "current_discarded_validation_rows": 1128,
+  "current_skip_existing_validation_rows": 6044,
+  "partner_l4_decision": "stable_for_downstream_readiness_screen",
+  "do_not_open": [
+    "another partner L4 create-only write from the current rule set",
+    "contract write before a contract readiness no-DB screen",
+    "payment settlement or accounting migration lane"
+  ],
+  "recommended_next_task": "ITER-2026-04-15-CONTRACT-READINESS-NODB-SCREEN",
+  "recommended_next_gate": "open a no-DB contract readiness screen against the current partner baseline"
+}

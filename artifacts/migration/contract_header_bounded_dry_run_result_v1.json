@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "mode": "contract_header_bounded_no_db_dry_run",
+  "database": "no_db_access",
+  "db_writes": 0,
+  "upstream_readiness": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_readiness_nodb_screen_result_v1.json",
+  "upstream_safe_candidate_rows": 1332,
+  "input_candidate_rows": 1332,
+  "dry_run_rows": 1332,
+  "ready_for_readonly_precheck_rows": 1332,
+  "blocked_rows": 0,
+  "slice_limit": 200,
+  "slice_rows": 200,
+  "type_counts": {
+    "out": 1332
+  },
+  "legacy_status_counts": {
+    "-1": 2,
+    "0": 5,
+    "1": 18,
+    "2": 1307
+  },
+  "distinct_project_ids": 540,
+  "distinct_partner_ids": 478,
+  "blocker_counts": {},
+  "dry_run_rows_csv": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_header_bounded_dry_run_rows_v1.csv",
+  "dry_run_slice_csv": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_header_bounded_dry_run_slice200_v1.csv",
+  "write_authorization": "not_granted",
+  "contract_write_decision": "NO-GO until separate readonly DB precheck and explicit write authorization",
+  "next_step": "open readonly DB precheck for the 200-row dry-run slice"
+}

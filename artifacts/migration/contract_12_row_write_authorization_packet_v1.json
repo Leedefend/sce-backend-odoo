@@ -1,0 +1,50 @@
+{
+  "status": "PASS",
+  "mode": "contract_12_row_write_authorization_packet_no_db",
+  "database": "sc_demo",
+  "input_dry_run": "artifacts/migration/contract_header_12_row_dry_run_rows_v1.csv",
+  "input_precheck": "artifacts/migration/contract_header_12_row_readonly_db_precheck_v1.json",
+  "payload_csv": "artifacts/migration/contract_12_row_write_authorization_payload_v1.csv",
+  "payload_rows": 12,
+  "blocked_rows": 0,
+  "blockers": [],
+  "write_authorization": "not_granted",
+  "write_scope": {
+    "model": "construction.contract",
+    "operation": "create_only",
+    "row_count": 12,
+    "allowed_fields": [
+      "legacy_contract_id",
+      "legacy_project_id",
+      "project_id",
+      "partner_id",
+      "subject",
+      "type",
+      "legacy_contract_no",
+      "legacy_document_no",
+      "legacy_external_contract_no",
+      "legacy_status",
+      "legacy_deleted_flag",
+      "legacy_counterparty_text",
+      "tax_policy",
+      "name_policy",
+      "state_policy"
+    ],
+    "forbidden_operations": [
+      "update",
+      "unlink",
+      "workflow replay",
+      "line creation",
+      "payment linkage",
+      "settlement linkage"
+    ]
+  },
+  "precheck_summary": {
+    "row_count": 12,
+    "ready_for_write_authorization_gate_rows": 12,
+    "blocked_rows": 0,
+    "blocker_counts": {}
+  },
+  "authorization_boundary": "real contract write requires separate explicit authorization after this packet",
+  "next_step": "stop for explicit contract write authorization, or continue no-DB rollback/post-write review design"
+}

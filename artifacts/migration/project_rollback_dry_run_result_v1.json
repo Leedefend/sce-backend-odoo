@@ -1,0 +1,325 @@
+{
+  "status": "ROLLBACK_READY",
+  "mode": "rollback_dry_run_no_delete",
+  "db": "sc_demo",
+  "input": "/mnt/artifacts/migration/project_sample_v1.csv",
+  "rollback_key": "legacy_project_id",
+  "total_targets": 30,
+  "matched_rows": 30,
+  "missing_rows": 0,
+  "duplicate_matches": [],
+  "out_of_scope_matches": [],
+  "stage_id_summary": [
+    {
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "count": 30
+    }
+  ],
+  "stage_id_all_same": true,
+  "target_input_duplicates": [],
+  "missing_legacy_project_ids": [],
+  "blocking_reasons": [],
+  "rows": [
+    {
+      "legacy_project_id": "00a4bb196d944fa5a8c56e3bd3f1e448",
+      "matched": true,
+      "project_id": 2107,
+      "name": "德阳市罗江区鄢家镇高垭村山坪塘整治项目",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "00c73f013e234461883beac337e8d75d",
+      "matched": true,
+      "project_id": 2108,
+      "name": "石亭江-绵远河生态廊道场地平整工程",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "00db8d3baa894d1e8efd7acd181f6499",
+      "matched": true,
+      "project_id": 2109,
+      "name": "渝数科技公司重庆数字大厦第6层办公用房装修改造项目",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "04c36990cc144f04b8f2423c36e5f713",
+      "matched": true,
+      "project_id": 2110,
+      "name": "喀什地区一市四县带动农户养殖喀什黑鸡基础设施建设项目-喀什市一期电力",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "16f30c8b960c4e6dbedd7a507d96f4ce",
+      "matched": true,
+      "project_id": 2111,
+      "name": "明源电力公寓小区路灯维修改造",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "2ea97dc724a9493ea18676d910616d8a",
+      "matched": true,
+      "project_id": 2112,
+      "name": "盐亭县2024年新章路、垢巨路、刘黑路水毁恢复工程",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "4d5d46d841c24c629fd4ebdd4796980f",
+      "matched": true,
+      "project_id": 2113,
+      "name": "大唐甘肃发电有限公司碧口水力发电厂碧口水电站右岸泄洪洞护坦防护结构改造施工",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "7f29aa1fea1745cf8868ec7db11261f2",
+      "matched": true,
+      "project_id": 2114,
+      "name": "高地库房",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "910ed968bceb422f9ce302e2799da9b8",
+      "matched": true,
+      "project_id": 2115,
+      "name": "西藏方向军事设施建设项目施工总承包合同90项目工程工序劳务作业",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "0201344da1b74e008006a7a96f90be6f",
+      "matched": true,
+      "project_id": 2116,
+      "name": "四川艺术职业学院消防隐患整治工程",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "020eddc09afb4260a5843a84ee58d826",
+      "matched": true,
+      "project_id": 2117,
+      "name": "龙泉驿区2020年人行道整治提升工程（怡安路、合聚路、玉扬路）",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "027c5b467ae94e52aabb6f6218d310d4",
+      "matched": true,
+      "project_id": 2118,
+      "name": "成渝双城经济圈川渝高竹新区制造产业园及配套基础设施建设项目（L3-1线道路及配套工程劳务分包）",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "02df67b4ddb6469b81ed551e9b544d25",
+      "matched": true,
+      "project_id": 2119,
+      "name": "剑阁县文化广电新闻出版局人才基地建设项目",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "037fddc6219449c3840477989cc06f82",
+      "matched": true,
+      "project_id": 2120,
+      "name": "中江县仓山镇郪江桥梁工程",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "03f8997135504039a36557ec6e57909b",
+      "matched": true,
+      "project_id": 2121,
+      "name": "工程部后油库油罐清洗",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "045206e3bf2f49b6b6b544b1be1aff22",
+      "matched": true,
+      "project_id": 2122,
+      "name": "中国移动四川公司2025-2027年全省汇聚机房土建工程施工集中采购项目（标包4-乐山分公司）框架协议-（TD）",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "04d0a65675424e41b8c65ba26ef48b4e",
+      "matched": true,
+      "project_id": 2123,
+      "name": "中江公司变电检修班“工人先锋号”环境整治",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "05139ca820724561bee71e016b22fd55",
+      "matched": true,
+      "project_id": 2124,
+      "name": "2022年日常维护项目（竞标12）",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "0550ea3a2e1b4161b25a697476e344b5",
+      "matched": true,
+      "project_id": 2125,
+      "name": "准环对称仿星器项目",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "059742d9ac094c018b91894306d5fc2d",
+      "matched": true,
+      "project_id": 2126,
+      "name": "ALC预制隔墙板供应及施工分包合同",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "069cd56871fd4307b836a3167fddf14b",
+      "matched": true,
+      "project_id": 2127,
+      "name": "和田地区于田县高速公路10千伏线路迁改工程",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "06c94694eb3e418bb4ceb5e55a987583",
+      "matched": true,
+      "project_id": 2128,
+      "name": "崴和路边坡滑坡治理",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "06cd855d5ede4a279a81568903836256",
+      "matched": true,
+      "project_id": 2129,
+      "name": "白鹤花园修建建筑垃圾池",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "072425c9c9ad453eb60c137fd4215459",
+      "matched": true,
+      "project_id": 2130,
+      "name": "珠峰文化旅游创意产业园区基础设施项目一期工程第三标段",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "076d8bcae3064dca8927f4f629bf2356",
+      "matched": true,
+      "project_id": 2131,
+      "name": "中国移动四川西区二枢纽“车库改机房”土建工程",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "07e6484cc40d4609b0bcafcf187dd9af",
+      "matched": true,
+      "project_id": 2132,
+      "name": "德阳市天府旌城石亭江河段堤防改建给水迁改工程",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "080a2d8ee204424a8b7edd08817eee20",
+      "matched": true,
+      "project_id": 2133,
+      "name": "2017年公路水毁修复工程（双石镇）",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "088193c97f1443b58f1489b321c1288a",
+      "matched": true,
+      "project_id": 2134,
+      "name": "浪卡子县白地乡龙桑村水塘工程项目(1标段)",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "08ac2e586f574d39a3272852fa22bf71",
+      "matched": true,
+      "project_id": 2135,
+      "name": "德昌县宽裕镇花园村文化休闲广场",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    },
+    {
+      "legacy_project_id": "08fa00e1bf9d4c88bcbfa652610aa347",
+      "matched": true,
+      "project_id": 2136,
+      "name": "永川区卫星中型灌区续建配套与节水改造工程",
+      "stage_id": 5,
+      "stage_name": "筹备中",
+      "out_of_scope": false,
+      "match_count": 1
+    }
+  ]
+}

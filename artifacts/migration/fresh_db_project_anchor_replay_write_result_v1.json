@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_project_anchor_replay_write",
+  "database": "sc_migration_fresh",
+  "target_model": "project.project",
+  "input_rows": 755,
+  "created_rows": 755,
+  "post_write_identity_count": 755,
+  "skipped_existing": 0,
+  "db_writes": 755,
+  "demo_targets_executed": 0,
+  "source_only_fields_not_written": [
+    "current_db_project_id",
+    "evidence_file",
+    "idempotency_key",
+    "legacy_deleted_flag",
+    "replay_action"
+  ],
+  "write_payload": "/mnt/artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv",
+  "rollback_targets": "/mnt/artifacts/migration/fresh_db_project_anchor_replay_rollback_targets_v1.csv",
+  "decision": "project_anchor_replay_write_complete",
+  "next_step": "replay contract partner anchors into sc_migration_fresh"
+}

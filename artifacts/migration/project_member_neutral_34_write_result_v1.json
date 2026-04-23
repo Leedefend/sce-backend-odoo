@@ -1,0 +1,293 @@
+{
+  "status": "PASS",
+  "mode": "project_member_neutral_34_create_only_write",
+  "database": "sc_demo",
+  "target_model": "sc.project.member.staging",
+  "forbidden_model": "project.responsibility",
+  "project_responsibility_writes": 0,
+  "created": 34,
+  "updated": 0,
+  "errors": 0,
+  "rollback_target_rows": 34,
+  "visibility_changed": false,
+  "post_errors": [],
+  "created_rows": [
+    {
+      "neutral_id": 1,
+      "legacy_member_id": "00610d31519c425badf9bd884a5e3ba2",
+      "project_id": 2699,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 2,
+      "legacy_member_id": "027818fb63244b7e8e2bef6b6ca6b866",
+      "project_id": 2463,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 3,
+      "legacy_member_id": "06aab7395c70471aa631acc7a58b44c0",
+      "project_id": 2755,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 4,
+      "legacy_member_id": "0b8f1d574b584e1abacf339c01443f47",
+      "project_id": 2476,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 5,
+      "legacy_member_id": "0dfd6df85b93487b97925c18fda04794",
+      "project_id": 2632,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 6,
+      "legacy_member_id": "19a2ed3f14d8486cbfe1e9b92408059e",
+      "project_id": 2454,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 7,
+      "legacy_member_id": "1dd09233e5ac4b7cb28d26c65255561a",
+      "project_id": 2396,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 8,
+      "legacy_member_id": "2dfeafd4220543c8983f1baf9751cae5",
+      "project_id": 2417,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 9,
+      "legacy_member_id": "324ccafb8019499c82f295186a76d060",
+      "project_id": 2510,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 10,
+      "legacy_member_id": "3337ab6f44234fb2b9de421f99acba60",
+      "project_id": 2830,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 11,
+      "legacy_member_id": "3478b477c96d46219a0ae5825540e755",
+      "project_id": 2753,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 12,
+      "legacy_member_id": "35f96b89a7bd449ca8bb5ebd094a3c25",
+      "project_id": 2140,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 13,
+      "legacy_member_id": "37f18e60a3964ce688a050241129d66a",
+      "project_id": 2304,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 14,
+      "legacy_member_id": "3b78d30d11c24a30bcd46178951ce5a5",
+      "project_id": 2799,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 15,
+      "legacy_member_id": "412468dcbe924293b43ea4c72d6e86f5",
+      "project_id": 2159,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 16,
+      "legacy_member_id": "4787c65aef614bfd9820fcf5451d8061",
+      "project_id": 2388,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 17,
+      "legacy_member_id": "5584cedec88644dea3dff050eeaf3bc2",
+      "project_id": 2573,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 18,
+      "legacy_member_id": "5cd6a54a4e4e41f0ac03e3df38fb83ff",
+      "project_id": 2522,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 19,
+      "legacy_member_id": "618763182c0b49b68dab161aad9cc843",
+      "project_id": 2215,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 20,
+      "legacy_member_id": "63685b933a81465e81c6a1429e79baec",
+      "project_id": 2515,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 21,
+      "legacy_member_id": "704b1623053b4c54893727d4b55019ff",
+      "project_id": 2544,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 22,
+      "legacy_member_id": "7238b4de12b74c82b7f943df6fc92bdc",
+      "project_id": 2179,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 23,
+      "legacy_member_id": "7357b94dfae448b4a706a0e8d5e5566d",
+      "project_id": 2812,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 24,
+      "legacy_member_id": "736c8c8145ff45f0b2d8be5a1627964b",
+      "project_id": 2355,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 25,
+      "legacy_member_id": "7701e636212a4555a38e80f4e3420ac0",
+      "project_id": 2851,
+      "user_id": 20,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 26,
+      "legacy_member_id": "7c5ca763a27c41ad9a58172da6bb245e",
+      "project_id": 2197,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 27,
+      "legacy_member_id": "8d172f01ecdc468e9a02286a23c92439",
+      "project_id": 2134,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 28,
+      "legacy_member_id": "953a369430964c0d9ad929a3ea2cc223",
+      "project_id": 2107,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 29,
+      "legacy_member_id": "9a6688838bb24a7190fb33e3338e24e3",
+      "project_id": 2663,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 30,
+      "legacy_member_id": "c4d6dc574f6341f5ae7a90e05f7c5c97",
+      "project_id": 2425,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 31,
+      "legacy_member_id": "e670e01c92b84ae096cfdd577b06a585",
+      "project_id": 2233,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 32,
+      "legacy_member_id": "f46a883fea4f42c0ae9ecf42fb590a67",
+      "project_id": 2337,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 33,
+      "legacy_member_id": "f4776933c33b49a49eb907b625bbf418",
+      "project_id": 2219,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    },
+    {
+      "neutral_id": 34,
+      "legacy_member_id": "f6da4311d2fd47acbf6f6c0043121fe4",
+      "project_id": 2360,
+      "user_id": 8,
+      "role_fact_status": "missing",
+      "import_batch": "ITER-2026-04-14-0030N"
+    }
+  ],
+  "artifacts": {
+    "pre_visibility": "/mnt/artifacts/migration/project_member_neutral_34_pre_visibility_v1.json",
+    "post_visibility": "/mnt/artifacts/migration/project_member_neutral_34_post_visibility_v1.json",
+    "rollback_targets": "/mnt/artifacts/migration/project_member_rollback_targets_v1.csv"
+  }
+}

@@ -1,0 +1,4 @@
+﻿run_id,responsibility_id,project_id,project_name,user_id,user_name,role_key,role_label,pair_key,write_action_result
+ITER-2026-04-14-L3-ROLE-KEY-AUDIT-MAPPED-WRITE,1,2150,重庆文理学院2025年附属工程项目(不可预测的零星维修工程),12,李林旭,manager,项目经理,2150:12,recovered_existing_created_by_run_id
+ITER-2026-04-14-L3-ROLE-KEY-AUDIT-MAPPED-WRITE,2,2238,璧山区正兴镇龙家河河堤水毁修复工程,12,李林旭,manager,项目经理,2238:12,recovered_existing_created_by_run_id
+ITER-2026-04-14-L3-ROLE-KEY-AUDIT-MAPPED-WRITE,3,2245,八角星坐标项目景观坡道优化调整工程劳务分包,14,江一娇,manager,项目经理,2245:14,recovered_existing_created_by_run_id

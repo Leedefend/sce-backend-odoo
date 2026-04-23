@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "mode": "no_db_partner_rebuild_importer",
+  "run_id": "ITER-2026-04-13-1851",
+  "input": "artifacts/migration/partner_strong_evidence_dry_run_input_v1.csv",
+  "input_rows": 369,
+  "output_rows": 369,
+  "action_counts": {
+    "create_candidate": 369
+  },
+  "blocker_counts": {},
+  "output_csv": "artifacts/migration/partner_rebuild_importer_rows_v1.csv",
+  "decision": "NO-GO for write mode; no-DB importer shape validated",
+  "next_step": "define partner write-mode gate and small-sample authorization criteria"
+}

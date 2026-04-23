@@ -1,0 +1,17 @@
+2026-04-17 14:01:11,943 3209 INFO ? odoo: Odoo version 17.0-20251222 
+2026-04-17 14:01:11,943 3209 INFO ? odoo: Using configuration file at /var/lib/odoo/odoo.conf 
+2026-04-17 14:01:11,943 3209 INFO ? odoo: addons paths: ['/usr/lib/python3/dist-packages/odoo/addons', '/var/lib/odoo/addons/17.0', '/mnt/extra-addons', '/mnt/addons_external/oca_server_ux'] 
+2026-04-17 14:01:11,944 3209 INFO ? odoo: database: odoo@db:5432 
+2026-04-17 14:01:12,100 3209 INFO ? odoo.addons.base.models.ir_actions_report: Will use the Wkhtmltopdf binary at /usr/local/bin/wkhtmltopdf 
+2026-04-17 14:01:16,527 3209 INFO ? odoo.addons.smart_core.app_config_engine.controllers: ✅ smart_core controllers __init__.py 已加载 - contract_api imported 
+2026-04-17 14:01:16,527 3209 INFO ? odoo.addons.smart_core.app_config_engine: ✅ smart_core __init__.py 已加载 
+2026-04-17 14:01:25,379 3209 INFO ? odoo.addons.smart_core: ✅ Smart Core Engine 模块已加载 
+2026-04-17 14:01:25,406 3209 INFO ? odoo.service.server: Initiating shutdown 
+2026-04-17 14:01:25,407 3209 INFO ? odoo.service.server: Hit CTRL-C again or send a second signal to force the shutdown. 
+2026-04-17 14:01:25,441 3209 INFO sc_demo odoo.modules.loading: loading 1 modules... 
+2026-04-17 14:01:25,451 3209 INFO sc_demo odoo.modules.loading: 1 modules loaded in 0.01s, 0 queries (+0 extra) 
+2026-04-17 14:01:25,983 3209 INFO sc_demo odoo.modules.loading: loading 73 modules... 
+2026-04-17 14:01:32,481 3209 INFO sc_demo odoo.modules.loading: 73 modules loaded in 6.50s, 0 queries (+0 extra) 
+2026-04-17 14:01:32,767 3209 INFO sc_demo odoo.modules.loading: Modules loaded. 
+2026-04-17 14:01:32,778 3209 INFO sc_demo odoo.modules.registry: Registry loaded in 7.371s 
+LEGACY_PAYMENT_APPROVAL_DOWNSTREAM_FACT_STATE_SYNC={"already_done_validated": 12194, "created_ledgers": 0, "database": "sc_demo", "db_writes": 0, "mode": "check", "needs_ledger_create": 0, "needs_ledger_update_to_request_amount": 0, "needs_state_sync": 0, "rollback_csv": "/mnt/artifacts/migration/legacy_payment_approval_downstream_fact_state_sync_rollback_v1.csv", "run_id": "ITER-2026-04-17-LEGACY-PAYMENT-APPROVAL-DOWNSTREAM-FACT-STATE-SYNC", "snapshot_csv": "/mnt/artifacts/migration/legacy_payment_approval_downstream_fact_state_sync_snapshot_v1.csv", "status": "PASS", "target_count": 12194, "target_fact": "historical_approved_by_downstream_business_fact", "updated_ledgers": 0, "updated_payment_requests": 0}

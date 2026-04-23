@@ -1,0 +1,47 @@
+{
+  "artifact_dir": "artifacts/migration/replay/imported_business_continuity_v1/validation_plan_v1",
+  "database": "sc_demo",
+  "mode": "plan",
+  "plan": [
+    {
+      "description": "Align imported projects with downstream facts to execution state.",
+      "kind": "odoo_sync",
+      "script": "project_continuity_downstream_fact_state_sync.py",
+      "step_id": "project_continuity"
+    },
+    {
+      "description": "Align imported contracts to confirmed/running from downstream facts.",
+      "kind": "odoo_sync",
+      "script": "contract_continuity_downstream_fact_state_sync.py",
+      "step_id": "contract_continuity"
+    },
+    {
+      "description": "Regenerate payment downstream approval evidence rows.",
+      "kind": "host_python",
+      "script": "legacy_payment_approval_downstream_fact_screen.py",
+      "step_id": "payment_downstream_fact_screen"
+    },
+    {
+      "description": "Align downstream-approved payment requests to done/validated.",
+      "kind": "odoo_sync",
+      "script": "legacy_payment_approval_downstream_fact_state_sync.py",
+      "step_id": "payment_done_fact"
+    },
+    {
+      "description": "Align deterministic payment company and contract links.",
+      "kind": "odoo_sync",
+      "script": "payment_linkage_fact_sync.py",
+      "step_id": "payment_linkage_fact"
+    },
+    {
+      "description": "Verify post-replay project, contract, and payment continuity metrics.",
+      "kind": "odoo_verify",
+      "script": "",
+      "step_id": "operational_verify"
+    }
+  ],
+  "run_id": "validation_plan_v1",
+  "status": "PASS",
+  "steps": [],
+  "topic": "imported_business_continuity_v1"
+}

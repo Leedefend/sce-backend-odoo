@@ -1,0 +1,13 @@
+{
+  "status": "BLOCKED_BY_APPROVAL",
+  "run_id": "ITER-2026-04-14-L3-ROLE-SOURCE-CLOSURE",
+  "mode": "apply",
+  "created": 0,
+  "updated": 0,
+  "db_writes": 0,
+  "write_allowed": false,
+  "blocking_reasons": [
+    "approved_3_row_sample_required"
+  ],
+  "dry_run_status": "BLOCKED_BY_APPROVAL"
+}

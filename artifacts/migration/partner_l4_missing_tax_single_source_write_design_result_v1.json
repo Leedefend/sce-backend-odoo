@@ -1,0 +1,38 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_missing_tax_single_source_write_design",
+  "input": "artifacts/migration/partner_l4_missing_tax_single_source_dry_run_rows_v1.csv",
+  "input_rows": 1554,
+  "write_design_rows": 1554,
+  "blocked_rows": 0,
+  "missing_columns": [],
+  "evidence_grade_counts": {
+    "single_source_company_missing_tax_only": 1554
+  },
+  "proposed_action_counts": {
+    "create_company_partner_without_tax_number": 1554
+  },
+  "allowed_future_fields": [
+    "name",
+    "company_type",
+    "customer_rank",
+    "supplier_rank",
+    "legacy_partner_id",
+    "legacy_partner_source",
+    "legacy_partner_name",
+    "legacy_source_evidence"
+  ],
+  "forbidden_actions": [
+    "update_existing_partner",
+    "unlink",
+    "raw_sql",
+    "acl_change",
+    "tax_number_fabrication",
+    "tax_number_backfill"
+  ],
+  "outputs": {
+    "write_design_rows": "artifacts/migration/partner_l4_missing_tax_single_source_write_design_rows_v1.csv",
+    "sample_rows": "artifacts/migration/partner_l4_missing_tax_single_source_write_design_samples_v1.csv"
+  },
+  "next_gate": "STOP before high-risk DB write; explicit authorization is required for the 1554-row missing-tax bounded write."
+}

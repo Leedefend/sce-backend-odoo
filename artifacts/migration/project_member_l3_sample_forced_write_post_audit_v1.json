@@ -1,0 +1,11 @@
+{
+  "status": "FAIL",
+  "run_id": "ITER-2026-04-14-L3-SAMPLE-FORCED-WRITE",
+  "matched_records": 0,
+  "rollback_eligible_rows": 0,
+  "db_writes": 0,
+  "blocking_reasons": [
+    "write_failed"
+  ],
+  "error": "ValueError(\"Wrong value for project.responsibility.role_key: 'project_member'\")"
+}

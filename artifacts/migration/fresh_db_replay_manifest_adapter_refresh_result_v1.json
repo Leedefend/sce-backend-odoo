@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_replay_manifest_adapter_refresh",
+  "db_writes": 0,
+  "database_operations": 0,
+  "write_scripts_executed": 0,
+  "refreshed_lanes": 3,
+  "missing_adapter_references": [],
+  "adapter_failures": [],
+  "default_run_lanes": 0,
+  "high_risk_default_violations": [],
+  "decision": "manifest_adapter_payloads_ready",
+  "next_step": "run fresh database replay runner dry-run, then open a dedicated fresh database operation contract"
+}

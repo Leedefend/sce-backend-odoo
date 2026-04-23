@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "mode": "project_member_consolidated_pair_projection_summary",
+  "database": "sc_demo",
+  "db_writes": 0,
+  "total_pairs": 362,
+  "pairs_with_duplicates": 120,
+  "pairs_without_duplicates": 242,
+  "max_evidence_per_pair": 5,
+  "role_fact_missing_pairs": 362,
+  "promotion_candidate_pairs": 0,
+  "pairs_grouped_by_evidence_count": {
+    "1": 242,
+    "2": 81,
+    "3": 29,
+    "4": 7,
+    "5": 3
+  },
+  "role_fact_status_grouped_by_pair": {
+    "missing": 362
+  },
+  "batch_distribution_by_pair": {
+    "ITER-2026-04-14-0030N": 34,
+    "ITER-2026-04-14-0030NZ": 328
+  },
+  "blocking_reasons": []
+}

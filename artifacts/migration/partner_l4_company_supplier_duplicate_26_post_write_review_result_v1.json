@@ -1,0 +1,18 @@
+{
+  "status": "ROLLBACK_READY",
+  "mode": "partner_company_supplier_duplicate_26_post_write_readonly_review",
+  "database": "sc_demo",
+  "rollback_key": "legacy_partner_source + legacy_partner_id",
+  "design_rows": 26,
+  "rollback_target_rows": 26,
+  "matched_partner_rows": 26,
+  "rollback_eligible_rows": 26,
+  "blocking_reasons": [],
+  "design_duplicates": [],
+  "target_duplicates": [],
+  "missing_partner_ids": [],
+  "missing_legacy_matches": [],
+  "duplicate_legacy_matches": [],
+  "out_of_scope_targets": [],
+  "wrong_rank_targets": []
+}

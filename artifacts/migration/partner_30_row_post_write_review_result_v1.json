@@ -1,0 +1,319 @@
+{
+  "status": "ROLLBACK_READY",
+  "mode": "partner_30_row_post_write_readonly_review",
+  "database": "sc_demo",
+  "rollback_key": "legacy_partner_source + legacy_partner_id",
+  "sample_rows": 30,
+  "rollback_target_rows": 30,
+  "matched_partner_rows": 30,
+  "missing_partner_ids": [],
+  "sample_duplicates": [],
+  "target_input_duplicates": [],
+  "missing_legacy_matches": [],
+  "duplicate_legacy_matches": [],
+  "out_of_scope_targets": [],
+  "blocking_reasons": [],
+  "rollback_eligible_rows": 30,
+  "rows": [
+    {
+      "partner_id": 90,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "e6e3e9546ec44933bd8a409d22ba3457",
+      "name": "中共英吉沙县委员会组织部",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 91,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "8A7CA37FD82D451881660F2AECD0F5AB",
+      "name": "中国人民武装警察部队德阳支队",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 92,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "bf6a3f3440394de28c3728980930304d",
+      "name": "中国人民解放军32038部队",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 93,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "34a812ec5d8945b58f79d23ee1e685ec",
+      "name": "中国人民解放军32166部队",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 94,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "f27ae94fa3b04727a72bb078c88c40c7",
+      "name": "中国人民解放军32167部队",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 95,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "b69b807fca85444b8fd5d0ed9db4e232",
+      "name": "中国人民解放军32329部队",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 96,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "ea9f3b0b703f4cc090cbccdff6ba20aa",
+      "name": "中国人民解放军77561部队",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 97,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "ff8c245f048645bf8092fb8e4f52d2cf",
+      "name": "中国人民解放军77626部队",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 98,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "fb2bf5016bab42f69487693a92693747",
+      "name": "中国人民解放军陆军军医大学",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 99,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "a8b96fc78d654a369436520cc31c8ecc",
+      "name": "中国人民解放军陆军第九五〇医院",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 100,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "9befdb558e81467e85dec7535e82be10",
+      "name": "中国共产党苍溪县纪律检查委员会",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 101,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "e6d7c9a7691c4db082b6f7df9a1b1d9b",
+      "name": "中国农业发展银行四川省分行",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 102,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "C0D75F520DE543C690CE8D9E105447DA",
+      "name": "中国华西企业股份有限公司",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 103,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "DC2E90C04254434BB642D5D0F165D27A",
+      "name": "中国工程物理研究所电子工程研究所",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 104,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "7f229f39bec84d69b38daa4cc97dc6dd",
+      "name": "中国工程物理研究院激光聚变研究中心",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 105,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "437ee3d15a2548d781620fa3fdc7b1be",
+      "name": "中国建筑一局（集团）有限公司",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 106,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "cf17ecba9f99423ab926a612ab6e7dda",
+      "name": "中国建筑第八工程局有限公司",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 107,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "7ce672292518434bac72c88850ecd357",
+      "name": "中国建筑第六工程局有限公司",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 108,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "E761D25EBB404B95A754AC023D70D3A3",
+      "name": "中国建筑第四工程局有限公司",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 109,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "9D1DEAFCBB2D410185C657F95D399C19",
+      "name": "中国核工业中原建设有限公司",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 110,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "baf8caba0b764e98bc9d665c26336f61",
+      "name": "中国水利水电第六工程局有限公司",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 111,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "bc4aa28d768649838675a1c3567cca1c",
+      "name": "中国水利水电第四工程局有限公司",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 112,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "8102955d449748f7b65a62d35a7d8ed4",
+      "name": "中国电信股份有限公司德阳分公司",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 113,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "4d1dc8c755b34fdfb7eb9c8fcf0e181f",
+      "name": "中国电信股份有限公司泸州分公司",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 114,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "26e255b6ebb54b678dfdd3463743d479",
+      "name": "中国石油天然气第七建设有限公司",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 115,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "287c461b2f76478697038144e47b9279",
+      "name": "中国移动通信集团四川有限公司",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 116,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "A894F86DDAA04C20AF9A0032677DF052",
+      "name": "中国移动通信集团四川有限公司乐山分公司",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 117,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "840C13AEDE5E4CF392C157701066B95E",
+      "name": "中国移动通信集团四川有限公司南充分公司",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 118,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "0E6294EEDE0C421EA16938E0E1D1DF55",
+      "name": "中国移动通信集团四川有限公司天府新区分公司",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    },
+    {
+      "partner_id": 119,
+      "matched": true,
+      "legacy_partner_source": "cooperat_company",
+      "legacy_partner_id": "CA1787B3C4FA47AE9092722F2E9673B3",
+      "name": "中国移动通信集团四川有限公司广元分公司",
+      "match_count": 1,
+      "in_sample": true,
+      "rollback_eligible": true
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_replay_runner_dry_run",
+  "db_writes": 0,
+  "database_operations": 0,
+  "write_scripts_executed": 0,
+  "manifest": "/mnt/e/sc-backend-odoo/artifacts/migration/fresh_db_replay_manifest_v1.json",
+  "lane_count": 7,
+  "lane_status_counts": {
+    "excluded_high_risk": 1,
+    "not_ready": 1,
+    "replay_ready_candidate": 5
+  },
+  "default_run_lanes": 0,
+  "missing_references": [],
+  "blocking_missing_references": [],
+  "high_risk_default_violations": [],
+  "decision": "manifest_dry_run_valid",
+  "next_step": "open a dedicated fresh database operation contract; keep default_run disabled until that contract exists"
+}

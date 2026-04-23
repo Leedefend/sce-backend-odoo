@@ -1,0 +1,58 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_replay_adapter_plan",
+  "db_writes": 0,
+  "database_operations": 0,
+  "write_scripts_executed": 0,
+  "manifest": "/mnt/e/sc-backend-odoo/artifacts/migration/fresh_db_replay_manifest_v1.json",
+  "manifest_lane_count": 7,
+  "adapter_lane_count": 3,
+  "excluded_high_risk_lanes": 1,
+  "adapters": [
+    {
+      "lane_id": "partner_l4_anchor_completed",
+      "source_status": "needs_adapter",
+      "adapter_task": "FRESH-DB-REPLAY-PARTNER-L4-ADAPTER",
+      "adapter_type": "consolidated_anchor_replay",
+      "write_policy": "idempotent_create_only_by_legacy_partner_key",
+      "required_outputs": [
+        "single partner anchor replay payload",
+        "rollback targets",
+        "aggregate source/target review",
+        "discard/hold ledger"
+      ],
+      "batch_size_rule": "500-1000 anchors per low-risk batch after dry-run"
+    },
+    {
+      "lane_id": "project_anchor_completed",
+      "source_status": "needs_adapter",
+      "adapter_task": "FRESH-DB-REPLAY-PROJECT-ANCHOR-ADAPTER",
+      "adapter_type": "consolidated_project_replay",
+      "write_policy": "idempotent_create_only_by_legacy_project_id",
+      "required_outputs": [
+        "single project anchor replay payload",
+        "rollback targets",
+        "aggregate source/target review",
+        "source-missing contract blocker ledger"
+      ],
+      "batch_size_rule": "500-1000 projects when precheck is clean"
+    },
+    {
+      "lane_id": "contract_partner_source_12_anchor_design",
+      "source_status": "design_only",
+      "adapter_task": "FRESH-DB-REPLAY-CONTRACT-PARTNER-12-ANCHOR-ADAPTER",
+      "adapter_type": "new_anchor_recovery_replay",
+      "write_policy": "idempotent_create_only_by company::counterparty_text",
+      "required_outputs": [
+        "12 partner anchor write payload",
+        "rollback targets",
+        "post-write partner anchor review",
+        "57 contract retry readiness packet"
+      ],
+      "batch_size_rule": "single 12-anchor batch"
+    }
+  ],
+  "errors": [],
+  "decision": "adapter_plan_ready",
+  "next_step": "implement partner L4 consolidated replay adapter first"
+}

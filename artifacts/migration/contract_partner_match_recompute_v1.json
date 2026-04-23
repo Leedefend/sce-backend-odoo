@@ -1,0 +1,640 @@
+{
+  "status": "PASS",
+  "mode": "contract_partner_match_recompute_no_db_write",
+  "row_count": 1694,
+  "partner_baseline_count": 85,
+  "direction_counts": {
+    "defer": 139,
+    "in": 1,
+    "out": 1554
+  },
+  "counterparty": {
+    "distinct_count": 568,
+    "top_unmatched_texts": [
+      {
+        "text": "德阳市供水安装工程队",
+        "rows": 226
+      },
+      {
+        "text": "四川工程职业技术学院",
+        "rows": 110
+      },
+      {
+        "text": "中国第二重型机械集团德阳万航模锻有限责任公司",
+        "rows": 103
+      },
+      {
+        "text": "二重（德阳）重型装备有限公司",
+        "rows": 94
+      },
+      {
+        "text": "中国建筑第四工程局有限公司",
+        "rows": 23
+      },
+      {
+        "text": "德阳经开建设工程有限公司",
+        "rows": 17
+      },
+      {
+        "text": "四川工程职业技术大学",
+        "rows": 14
+      },
+      {
+        "text": "德阳市旌阳区八角井镇卫生院",
+        "rows": 14
+      },
+      {
+        "text": "四川建筑职业技术学院",
+        "rows": 14
+      },
+      {
+        "text": "四川纹江致远建筑开发工程有限公司",
+        "rows": 14
+      },
+      {
+        "text": "德阳市城市管理行政执法局",
+        "rows": 14
+      },
+      {
+        "text": "德阳旌信城市管理服务股份有限公司",
+        "rows": 11
+      },
+      {
+        "text": "绵竹市众力工程机械设备有限公司",
+        "rows": 11
+      },
+      {
+        "text": "德阳蓉北建设工程有限公司",
+        "rows": 10
+      },
+      {
+        "text": "中建四局第一建设有限公司",
+        "rows": 9
+      },
+      {
+        "text": "拉萨市柳梧新区管理委员会",
+        "rows": 9
+      },
+      {
+        "text": "中国航发航空科技股份有限公司",
+        "rows": 9
+      },
+      {
+        "text": "四川省东方兴发建设集团有限公司",
+        "rows": 8
+      },
+      {
+        "text": "中国移动通信集团四川有限公司成都分公司",
+        "rows": 8
+      },
+      {
+        "text": "中石化西南石油工程有限公司油田工程服务分公司",
+        "rows": 8
+      },
+      {
+        "text": "四川益丰房地产开发有限公司",
+        "rows": 8
+      },
+      {
+        "text": "德阳市自来水公司",
+        "rows": 8
+      },
+      {
+        "text": "四川省第四建筑有限公司",
+        "rows": 8
+      },
+      {
+        "text": "重庆市铜梁区永嘉镇人民政府",
+        "rows": 7
+      },
+      {
+        "text": "德阳二重新业建筑工程有限责任公司",
+        "rows": 7
+      },
+      {
+        "text": "德阳大参林投资有限公司",
+        "rows": 7
+      },
+      {
+        "text": "四川智泽云天建筑工程有限公司",
+        "rows": 6
+      },
+      {
+        "text": "四川中彩源建设工程有限公司",
+        "rows": 6
+      },
+      {
+        "text": "德阳国信建设工程有限公司",
+        "rows": 6
+      },
+      {
+        "text": "德阳方兴建设有限责任公司",
+        "rows": 6
+      }
+    ]
+  },
+  "match_counts": {
+    "defer": 1694
+  },
+  "project_scope_counts": {
+    "project_not_written_scope": 1548,
+    "written_project_match": 146
+  },
+  "deleted_counts": {
+    "active_or_blank": 1629,
+    "deleted": 65
+  },
+  "safe_candidate_blockers": {
+    "deleted_flag": 65,
+    "direction_defer": 139,
+    "partner_unresolved": 1694,
+    "project_not_written_scope": 1548
+  },
+  "safe_candidate_recompute": {
+    "candidate_rows": 0,
+    "decision": "NO-GO for contract write"
+  },
+  "sample_matches": [
+    {
+      "counterparty_text": "雅安蜀天开发建设有限责任公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "中建四局第一建筑工程有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "巴宜区教育局",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "中国华西企业股份有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市供水安装工程队",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "二重（德阳）重型装备有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "四川工程职业技术学院",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "成都市郫都区人民政府安德街道办事处",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "四川工程职业技术大学",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "四川工程职业技术学院",
+      "row_count_for_text": 2,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "邛崃格润能源有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "四川省东方兴发建设集团有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "重庆国隆农业科技发展有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市旌阳区涪江路小学校",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市供水安装工程队",
+      "row_count_for_text": 2,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "中建四局第一建设有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳经济技术开发区重点工程建设中心",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市供水安装工程队",
+      "row_count_for_text": 3,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "广元市昭化区华瑞投资开发有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "四川工程职业技术学院",
+      "row_count_for_text": 3,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "遂宁市安居土壤肥料与生态工作站",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市重光机电设备有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市黄河路小学校",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "中铁八局集团有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "二重（德阳）重型装备有限公司",
+      "row_count_for_text": 2,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "河北省送变电有限公司、绵阳市安州区桑枣镇干柏村村民委员会",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市供水安装工程队",
+      "row_count_for_text": 4,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "中国移动通信集团四川有限公司成都分公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市玉皇观",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "眉山环天水务有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳旌信城市管理服务股份有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "中石化西南石油工程有限公司油田工程服务分公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "四川智泽云天建筑工程有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市人民政府办公室",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市供水安装工程队",
+      "row_count_for_text": 5,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "四川工程职业技术学院",
+      "row_count_for_text": 4,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市旌阳区八角井镇卫生院",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳华润燃气有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "中国第二重型机械集团德阳万航模锻有限责任公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "四川长虹技佳精工有限公司重庆分公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "米易龙信房地产开发有限责任公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "中国第二重型机械集团德阳万航模锻有限责任公司",
+      "row_count_for_text": 2,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市供水安装工程队",
+      "row_count_for_text": 6,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "重庆市渝北区新桥水库管理所",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "四川中彩源建设工程有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "中国第二重型机械集团德阳万航模锻有限责任公司",
+      "row_count_for_text": 3,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "中国建筑第四工程局有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "陇南市文江水电有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "中江县殡仪馆",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳国信建设工程有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市供水安装工程队",
+      "row_count_for_text": 7,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "中国第二重型机械集团德阳万航模锻有限责任公司",
+      "row_count_for_text": 4,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市供水安装工程队",
+      "row_count_for_text": 8,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "中国第二重型机械集团德阳万航模锻有限责任公司",
+      "row_count_for_text": 5,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳方兴建设有限责任公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市供水安装工程队",
+      "row_count_for_text": 9,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "中石油煤层气有限责任公司新疆项目经理部",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "中国第二重型机械集团德阳万航模锻有限责任公司",
+      "row_count_for_text": 6,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "蓬溪县鸿源投资有限责任公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "绵阳市公安局高新技术产业开发区分局",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "四川工程职业技术学院",
+      "row_count_for_text": 5,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市旌合建设工程有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "中江县御河中学校",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "四川新众建筑加固工程有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市供水安装工程队",
+      "row_count_for_text": 10,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "中国建筑第六工程局有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "四川曜道杰建筑工程有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "中国航发成都发动机有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市供水安装工程队",
+      "row_count_for_text": 11,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市供水安装工程队",
+      "row_count_for_text": 12,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "四川工程职业技术学院",
+      "row_count_for_text": 6,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "莎车县艾力西湖镇人民政府",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "广汉市住房和城乡规划建设局",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "二重（德阳）重型装备有限公司",
+      "row_count_for_text": 3,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳方兴建设有限责任公司",
+      "row_count_for_text": 2,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "四川益丰房地产开发有限公司",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "二重（德阳）重型装备有限公司",
+      "row_count_for_text": 4,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市供水安装工程队",
+      "row_count_for_text": 13,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "石柱土家族自治县水利工程服务站",
+      "row_count_for_text": 1,
+      "match_type": "defer",
+      "candidates": []
+    },
+    {
+      "counterparty_text": "德阳市供水安装工程队",
+      "row_count_for_text": 14,
+      "match_type": "defer",
+      "candidates": []
+    }
+  ],
+  "next_step": "partner master-data preparation is required before contract write"
+}

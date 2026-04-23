@@ -1,0 +1,31 @@
+{
+  "status": "FROZEN",
+  "run_id": "ITER-2026-04-14-L3-ROLE-SOURCE-CLOSURE",
+  "sample_size": 3,
+  "valid_role_keys": [
+    "cashier",
+    "cost",
+    "document",
+    "finance",
+    "manager",
+    "material",
+    "quality",
+    "safety"
+  ],
+  "write_rule": {
+    "business_decision": "approved",
+    "role_source_evidence": "required",
+    "business_reviewer": "required",
+    "proposed_role_key": "required_valid_selection",
+    "sample_scope": "first_3_review_rows_only",
+    "default_role_allowed": false,
+    "role_key_fabrication_allowed": false
+  },
+  "forbidden": [
+    "write_pending_or_rejected_rows",
+    "write_more_than_3_rows",
+    "modify_acl_or_record_rule",
+    "infer_role_key_from_evidence_count",
+    "use_migration_authorization_as_business_role_source"
+  ]
+}

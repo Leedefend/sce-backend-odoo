@@ -1,0 +1,4167 @@
+{
+  "status": "PASS",
+  "mode": "project_member_legacy_db_role_source_probe",
+  "database": "LegacyDb",
+  "project_member_table": "dbo.BASE_SYSTEM_PROJECT_USER",
+  "project_member_rows": 21390,
+  "project_member_columns": [
+    {
+      "ordinal": 1,
+      "name": "ID",
+      "type": "varchar",
+      "max_length": 50,
+      "nullable": false
+    },
+    {
+      "ordinal": 2,
+      "name": "PID",
+      "type": "bigint",
+      "max_length": 8,
+      "nullable": false
+    },
+    {
+      "ordinal": 3,
+      "name": "USERID",
+      "type": "nvarchar",
+      "max_length": 510,
+      "nullable": true
+    },
+    {
+      "ordinal": 4,
+      "name": "XMID",
+      "type": "nvarchar",
+      "max_length": 510,
+      "nullable": true
+    },
+    {
+      "ordinal": 5,
+      "name": "XMMC",
+      "type": "varchar",
+      "max_length": 3000,
+      "nullable": true
+    },
+    {
+      "ordinal": 6,
+      "name": "LRR",
+      "type": "nvarchar",
+      "max_length": 510,
+      "nullable": true
+    },
+    {
+      "ordinal": 7,
+      "name": "LRRID",
+      "type": "nvarchar",
+      "max_length": 510,
+      "nullable": true
+    },
+    {
+      "ordinal": 8,
+      "name": "LRSJ",
+      "type": "datetime",
+      "max_length": 8,
+      "nullable": true
+    }
+  ],
+  "project_member_role_like_columns": [],
+  "source_has_authoritative_role": false,
+  "role_mapping_rate_from_member_table": 0.0,
+  "role_like_columns": [
+    {
+      "schema": "dbo",
+      "table": "ts_rolefunction_History",
+      "column": "role_id",
+      "type": "int",
+      "rows": 143089
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_rolefunction_History",
+      "column": "rolefunction_id",
+      "type": "int",
+      "rows": 143089
+    },
+    {
+      "schema": "dbo",
+      "table": "PM_RYYDGL",
+      "column": "ZWID",
+      "type": "varchar",
+      "rows": 20804
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_rolefunction",
+      "column": "role_id",
+      "type": "int",
+      "rows": 16780
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_rolefunction",
+      "column": "rolefunction_id",
+      "type": "int",
+      "rows": 16780
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_SYSTEM_MENU_ROLE",
+      "column": "ROLEID",
+      "type": "nvarchar",
+      "rows": 13642
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_ORGANIZATION_DEPARTMENT_PDUTY_USER",
+      "column": "GZGW",
+      "type": "varchar",
+      "rows": 4915
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_ORGANIZATION_DEPARTMENT_PDUTY_USER",
+      "column": "PDUTYID",
+      "type": "nvarchar",
+      "rows": 4915
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_ORGANIZATION_DEPARTMENT_PDUTY_USER",
+      "column": "PDUTYNAME",
+      "type": "nvarchar",
+      "rows": 4915
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_GZ_CB",
+      "column": "GWJT",
+      "type": "numeric",
+      "rows": 3458
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_GZ_CB",
+      "column": "GWZJ",
+      "type": "varchar",
+      "rows": 3458
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_GZ_CB",
+      "column": "GWZJID",
+      "type": "varchar",
+      "rows": 3458
+    },
+    {
+      "schema": "dbo",
+      "table": "S_REGIONDICTIONARY",
+      "column": "POSTALCODE",
+      "type": "varchar",
+      "rows": 3256
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_SupplierInfo",
+      "column": "FDDBRSFZWJ_FJ",
+      "type": "varchar",
+      "rows": 3041
+    },
+    {
+      "schema": "dbo",
+      "table": "P_ZTB_GCBMGL",
+      "column": "D_ZTZH_XMPZWH",
+      "type": "varchar",
+      "rows": 2848
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_JXDJ",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 2527
+    },
+    {
+      "schema": "dbo",
+      "table": "S_Setup_Step",
+      "column": "GWID",
+      "type": "varchar",
+      "rows": 2080
+    },
+    {
+      "schema": "dbo",
+      "table": "S_Setup_Step",
+      "column": "GWMC",
+      "type": "varchar",
+      "rows": 2080
+    },
+    {
+      "schema": "dbo",
+      "table": "CWGL_FYBX",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 1866
+    },
+    {
+      "schema": "dbo",
+      "table": "T_ProjectContract_Out",
+      "column": "GCLXPZWH",
+      "type": "varchar",
+      "rows": 1694
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZD_YZSYSPB",
+      "column": "GZWJNBGY",
+      "type": "varchar",
+      "rows": 1565
+    },
+    {
+      "schema": "dbo",
+      "table": "tr_RoleToUser_History",
+      "column": "roleId",
+      "type": "int",
+      "rows": 1508
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_SYSTEM_PROJECT",
+      "column": "TECHNICALRESPONSIBILITY",
+      "type": "nvarchar",
+      "rows": 755
+    },
+    {
+      "schema": "dbo",
+      "table": "wx_ts_rolefunction",
+      "column": "role_id",
+      "type": "int",
+      "rows": 467
+    },
+    {
+      "schema": "dbo",
+      "table": "wx_ts_rolefunction",
+      "column": "rolefunction_id",
+      "type": "int",
+      "rows": 467
+    },
+    {
+      "schema": "dbo",
+      "table": "T_System_RoleAndProject",
+      "column": "RoleId",
+      "type": "varchar",
+      "rows": 462
+    },
+    {
+      "schema": "dbo",
+      "table": "wx_tr_RoleToUser",
+      "column": "roleId",
+      "type": "int",
+      "rows": 397
+    },
+    {
+      "schema": "dbo",
+      "table": "GZGL_BMSJWH",
+      "column": "GWGZ",
+      "type": "numeric",
+      "rows": 389
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_HBZJ_XZD_QJXJSPB",
+      "column": "D_JCLY_ZW",
+      "type": "varchar",
+      "rows": 347
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_HBZJ_XZD_QJXJSPB",
+      "column": "D_JCLY_ZWID",
+      "type": "varchar",
+      "rows": 347
+    },
+    {
+      "schema": "dbo",
+      "table": "C_JXXP_KJFPSQ",
+      "column": "CZWCBL",
+      "type": "numeric",
+      "rows": 260
+    },
+    {
+      "schema": "dbo",
+      "table": "DataSpider_ScjstProjectRoughInfo",
+      "column": "ProjectRoles",
+      "type": "nvarchar",
+      "rows": 219
+    },
+    {
+      "schema": "dbo",
+      "table": "CWGL_SQGL_CCSQ",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 177
+    },
+    {
+      "schema": "dbo",
+      "table": "CWGL_SQGL_CCSQ",
+      "column": "ZWDLR",
+      "type": "varchar",
+      "rows": 177
+    },
+    {
+      "schema": "dbo",
+      "table": "Pm_Person_Department_PDuty_History",
+      "column": "PdutyGuid",
+      "type": "varchar",
+      "rows": 177
+    },
+    {
+      "schema": "dbo",
+      "table": "Pm_Person_Department_PDuty_History",
+      "column": "PDutyId",
+      "type": "varchar",
+      "rows": 177
+    },
+    {
+      "schema": "dbo",
+      "table": "tr_RoleToUser",
+      "column": "roleId",
+      "type": "int",
+      "rows": 170
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_SYSTEM_USER_ROLE",
+      "column": "ROLEID",
+      "type": "nvarchar",
+      "rows": 160
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_BZ",
+      "column": "BMGW",
+      "type": "varchar",
+      "rows": 115
+    },
+    {
+      "schema": "dbo",
+      "table": "Pm_Person_Department_PDuty",
+      "column": "PdutyGuid",
+      "type": "varchar",
+      "rows": 102
+    },
+    {
+      "schema": "dbo",
+      "table": "Pm_Person_Department_PDuty",
+      "column": "PDutyId",
+      "type": "varchar",
+      "rows": 102
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_SYSTEM_USER",
+      "column": "D_AXB_GWGZ",
+      "type": "varchar",
+      "rows": 101
+    },
+    {
+      "schema": "dbo",
+      "table": "JHJRZ_FBRW_CB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 96
+    },
+    {
+      "schema": "dbo",
+      "table": "GLFY_XMFYBXD",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 93
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_HBZJ_GZZB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 90
+    },
+    {
+      "schema": "dbo",
+      "table": "tr_user",
+      "column": "user_roleid",
+      "type": "int",
+      "rows": 82
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_BZ_CB",
+      "column": "BMGW",
+      "type": "varchar",
+      "rows": 77
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_SYSTEM_ROLE",
+      "column": "ROLE_NAME",
+      "type": "nvarchar",
+      "rows": 66
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_SYSTEM_ROLE",
+      "column": "ROLE_TYPE",
+      "type": "int",
+      "rows": 66
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_role",
+      "column": "role_id",
+      "type": "int",
+      "rows": 47
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_role",
+      "column": "role_isdefault",
+      "type": "int",
+      "rows": 47
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_role",
+      "column": "role_mark",
+      "type": "varchar",
+      "rows": 47
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_role",
+      "column": "role_name",
+      "type": "varchar",
+      "rows": 47
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_role",
+      "column": "role_state",
+      "type": "int",
+      "rows": 47
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_role",
+      "column": "role_type",
+      "type": "int",
+      "rows": 47
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_SB",
+      "column": "BMGW",
+      "type": "varchar",
+      "rows": 33
+    },
+    {
+      "schema": "dbo",
+      "table": "JHJRZ_FBRW",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 31
+    },
+    {
+      "schema": "dbo",
+      "table": "wx_ts_role",
+      "column": "pc_role_id",
+      "type": "int",
+      "rows": 26
+    },
+    {
+      "schema": "dbo",
+      "table": "wx_ts_role",
+      "column": "role_id",
+      "type": "int",
+      "rows": 26
+    },
+    {
+      "schema": "dbo",
+      "table": "wx_ts_role",
+      "column": "role_isdefault",
+      "type": "int",
+      "rows": 26
+    },
+    {
+      "schema": "dbo",
+      "table": "wx_ts_role",
+      "column": "role_mark",
+      "type": "varchar",
+      "rows": 26
+    },
+    {
+      "schema": "dbo",
+      "table": "wx_ts_role",
+      "column": "role_name",
+      "type": "varchar",
+      "rows": 26
+    },
+    {
+      "schema": "dbo",
+      "table": "wx_ts_role",
+      "column": "role_state",
+      "type": "int",
+      "rows": 26
+    },
+    {
+      "schema": "dbo",
+      "table": "wx_ts_role",
+      "column": "role_type",
+      "type": "int",
+      "rows": 26
+    },
+    {
+      "schema": "dbo",
+      "table": "P_ZTB_GCXXGL",
+      "column": "D_DCYL_ZW",
+      "type": "varchar",
+      "rows": 20
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_role_manage",
+      "column": "role_manage_id",
+      "type": "int",
+      "rows": 9
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_role_manage",
+      "column": "role_self_id",
+      "type": "int",
+      "rows": 9
+    },
+    {
+      "schema": "dbo",
+      "table": "GLFY_GLRYGZB_CB",
+      "column": "GWJT",
+      "type": "numeric",
+      "rows": 8
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_Base_AQSGRQ_GSLPHP",
+      "column": "CZWTJCLQK",
+      "type": "varchar",
+      "rows": 7
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_LOWCODE_COMPONENT_ROLE",
+      "column": "ROLEID",
+      "type": "nvarchar",
+      "rows": 6
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_LOWCODE_COMPONENT_ROLE",
+      "column": "ROLENAME",
+      "type": "varchar",
+      "rows": 6
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZD_PQZYGQJSPDB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 6
+    },
+    {
+      "schema": "dbo",
+      "table": "BGOA_BGYPSQ",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 6
+    },
+    {
+      "schema": "dbo",
+      "table": "T_System_RoleAndProject_WX",
+      "column": "RoleId",
+      "type": "varchar",
+      "rows": 6
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_ZCJYP_CL_SCGYSQ",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 4
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_HBZJ_XZD_YGWBPXSQ",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 3
+    },
+    {
+      "schema": "dbo",
+      "table": "JHJRZ_GZHB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 3
+    },
+    {
+      "schema": "dbo",
+      "table": "XAKW_BGGL_SGYBPSB",
+      "column": "CZWT",
+      "type": "varchar",
+      "rows": 3
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_GWGZB",
+      "column": "ZWCJ",
+      "type": "varchar",
+      "rows": 2
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_GWGZB",
+      "column": "ZWCJID",
+      "type": "varchar",
+      "rows": 2
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_GWGZB",
+      "column": "ZWGW",
+      "type": "varchar",
+      "rows": 2
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_GWGZB",
+      "column": "ZWGWID",
+      "type": "varchar",
+      "rows": 2
+    },
+    {
+      "schema": "dbo",
+      "table": "CWGL_CLBX",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 2
+    },
+    {
+      "schema": "dbo",
+      "table": "CWGL_CLBX",
+      "column": "GWID",
+      "type": "varchar",
+      "rows": 2
+    },
+    {
+      "schema": "dbo",
+      "table": "CGPT_T_Enterprise",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 1
+    },
+    {
+      "schema": "dbo",
+      "table": "D_BYK_ZZXT_HBZJ_QSJRW_RWFB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 1
+    },
+    {
+      "schema": "dbo",
+      "table": "D_BYK_ZZXT_HBZJ_QSJRW_RWFB_CB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 1
+    },
+    {
+      "schema": "dbo",
+      "table": "P_ZTB_ZBGCJD",
+      "column": "f_DZWD",
+      "type": "varchar",
+      "rows": 1
+    },
+    {
+      "schema": "dbo",
+      "table": "P_ZTB_ZBGCJD",
+      "column": "f_TBDZWJ",
+      "type": "varchar",
+      "rows": 1
+    },
+    {
+      "schema": "dbo",
+      "table": "P_ZTB_ZBGCJD",
+      "column": "f_ZZWJ",
+      "type": "varchar",
+      "rows": 1
+    },
+    {
+      "schema": "dbo",
+      "table": "Pm_base_Person_GZJL",
+      "column": "DRZW",
+      "type": "varchar",
+      "rows": 1
+    },
+    {
+      "schema": "dbo",
+      "table": "Pm_base_Person_GZJL",
+      "column": "ZWMS",
+      "type": "varchar",
+      "rows": 1
+    },
+    {
+      "schema": "dbo",
+      "table": "Pm_base_Person_RYXQSQ",
+      "column": "NAPGW",
+      "type": "varchar",
+      "rows": 1
+    },
+    {
+      "schema": "dbo",
+      "table": "T_ProjectContract_Process",
+      "column": "DZWD",
+      "type": "varchar",
+      "rows": 1
+    },
+    {
+      "schema": "dbo",
+      "table": "ZJGL_ZSJYGL_CB",
+      "column": "DZWJLX",
+      "type": "varchar",
+      "rows": 1
+    },
+    {
+      "schema": "dbo",
+      "table": "A_BGGB_JDQDDJ_CB",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_DHZRB",
+      "column": "SFXJPG_JHZGWC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_DHZRB",
+      "column": "SFXJPG_LJZGWC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_DHZRB",
+      "column": "SFXJPG_ZGWC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_FQPF_CB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_FQPF_CB",
+      "column": "GWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_FQPF_CB_PJR",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_FQPF_CB_PJR",
+      "column": "GWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_FQPF_CB_Score",
+      "column": "BPFGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_FQPF_CB_Score",
+      "column": "BPFGWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_FQPF_CB_Score",
+      "column": "PFGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_FQPF_CB_Score",
+      "column": "PFGWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_GSJDKH_ZDGZZB",
+      "column": "ZZWCQK",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_GWPJSD",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_GWPJSD",
+      "column": "GWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_GWPJSD",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_GWPJSD",
+      "column": "ZWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_XMYB",
+      "column": "ZGWC",
+      "type": "numeric",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_XMZB",
+      "column": "LJZGWC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_XMZB",
+      "column": "SJZGWC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_YDPMQJ_CB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_CQKTJS_YDPMQJ_CB",
+      "column": "GWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_LJSM_GSXMJLQK_CB",
+      "column": "GWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_LJSM_GSXMJLQK_CB",
+      "column": "GWZYXQ",
+      "type": "datetime",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_LJSM_XMLXB",
+      "column": "ZM_JZWLM",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_SCGL_BMFZJYGNDLZPJ",
+      "column": "BKHRGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_SCGL_BMFZJYGNDLZPJ",
+      "column": "KHRGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_SCGL_FZRNDLZPJ",
+      "column": "BKHRGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_SCGL_FZRNDLZPJ",
+      "column": "KHRGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_SCGL_JXKHSS",
+      "column": "SSRGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_SCGL_JXKHSS",
+      "column": "SSRGWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_SFJG_LJGT",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_SJJM_CWGL_CLBX",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_Temp_Report_CGTZ",
+      "column": "CGWJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "A_ZMKJ_SGJF",
+      "column": "GWYCF",
+      "type": "numeric",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "AQZL_AQZL_GCYS_DXGCYSSQ",
+      "column": "ZGWCSJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BG_GXZL_ZLGL_ZLGLS",
+      "column": "JGWD",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BG_GXZL_ZLGL_ZLGLS",
+      "column": "JGWDSMJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BG_GZJB_GZJB_XMGLZBB",
+      "column": "BZWCDZYRW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BG_RS_RSGX_YGBD",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BG_RS_RSGX_YGBD_CB",
+      "column": "DRZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BG_RSGL_RSGX_LZJJ",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BG_XZ_XZD_YGRZ",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_BGGL_QT_YKSQ",
+      "column": "DRZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_BT_ZCDNBTSQ",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_BT_ZCDNBTSQ",
+      "column": "GWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_GWGL_FWLBJM",
+      "column": "GWLXID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_GWGL_FWLBJM",
+      "column": "GWLXMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_GWGL_FWLBJM",
+      "column": "ZWFJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_GWGL_FWLBJM",
+      "column": "ZWLX",
+      "type": "int",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_GWGL_FWLBJM",
+      "column": "ZWNR",
+      "type": "text",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_HBZJ_XZD_JBSQSP",
+      "column": "YGZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_HYGL_HYKBGL",
+      "column": "ZWS",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_HYGL_HYKBGL_JYHYS",
+      "column": "ZWS",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_RSGL_CCSPD_DY_CB",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_RSGL_DJ_XFDY_CB",
+      "column": "ZWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_RSGL_DJ_XFDY_CB",
+      "column": "ZWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_RSGL_GWBD",
+      "column": "BDHZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_RSGL_GWBD",
+      "column": "DQZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_RSGL_YGGL_JSSQB",
+      "column": "NJSGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_RSGL_YGGL_JSSQB",
+      "column": "XGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_RSGL_YGGL_TXSQB",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_RSGL_YGGL_XZYRZYDB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_RSGL_YGGL_YGLZJJD",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_RSGL_YGGL_ZGSQB",
+      "column": "NSQGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_RSGL_YGGL_ZGSQB",
+      "column": "XGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_RSJKQ_RSDA_XZTZSQB",
+      "column": "BCSQTZLX_GWTZ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_RSJKQ_RSDA_XZTZSQB",
+      "column": "BCSQTZLX_ZWTZ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_RSJKQ_RSDA_XZTZSQB",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_RSJKQ_RSDA_YGGWBDSPB",
+      "column": "BDHZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_RSJKQ_RSDA_YGGWBDSPB",
+      "column": "DQZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_TZXX_GZRBTX_KT",
+      "column": "GWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_TZXX_GZRBTX_KT",
+      "column": "GWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_TZXX_HY_JY_CB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_TZXX_HY_JY_CB",
+      "column": "GWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_GZDJ_CB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_GZDJ_CB",
+      "column": "GWGZ",
+      "type": "numeric",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_GZDJ_CB",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_JJ",
+      "column": "BMGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_JJ_CB",
+      "column": "BMGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_KK",
+      "column": "BMGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_KK_CB",
+      "column": "BMGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZD_BTSQD",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_ZPGL_GWYRSQ",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_ZPGL_GWYRSQ",
+      "column": "GWZZ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_ZPGL_GWYRSQ",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_ZPGL_MSGL",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_ZPGL_RCK",
+      "column": "DQZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_ZPGL_RCK",
+      "column": "ZWLX",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_ZPGL_RCK",
+      "column": "ZWPJTEXT",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_ZPGL_RCK_GZJL",
+      "column": "GZZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_ZPGL_RCK_SJJL",
+      "column": "SJZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_ZPGL_RCK_XMJL",
+      "column": "XMZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_ZPGL_RZTZCB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGOA_GZGL_GZJHGL_NDJHGL",
+      "column": "GZGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGOA_GZGL_GZJHGL_NDJHGL",
+      "column": "JZGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGOA_GZGL_GZJHGL_YDJHGL",
+      "column": "GZGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGOA_GZGL_GZJHGL_YDJHGL",
+      "column": "JZGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGOA_GZGL_GZJHGL_ZGZ",
+      "column": "GZGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGOA_GZGL_GZJHGL_ZGZ",
+      "column": "JZGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGOA_GZGL_GZJHGL_ZGZJH",
+      "column": "GZGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGOA_GZGL_GZJHGL_ZGZJH",
+      "column": "JZGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGOA_GZGL_GZZJ_GRGZZJ",
+      "column": "GWZZZJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGOA_GZGL_GZZJ_GRGZZJ",
+      "column": "JZGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGOA_GZGL_GZZJ_GRGZZJ",
+      "column": "ZSGWZZ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGOA_GZGL_GZZJ_GRGZZJ",
+      "column": "ZWPJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "BGOA_GZGL_GZZJ_GRGZZJ",
+      "column": "ZZGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "C_JXXP_ZYFPJJD_CB_SDJZ",
+      "column": "SFYZZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "CG_FBMK_XMZC",
+      "column": "CGWJSPB",
+      "type": "nvarchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "CG_FBMK_XMZC",
+      "column": "D_CGYHYGLXT_CGWJ",
+      "type": "nvarchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "CG_FBMK_XMZC",
+      "column": "D_CGYHYGLXT_CGWJID",
+      "type": "nvarchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "CGPT_NEW_BASE_PBZJGL",
+      "column": "NBHZWBZJ",
+      "type": "nvarchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "CGPT_NEW_T_BASE_ZCSZ_CSQJPZ",
+      "column": "FOOTER_GWABDJLJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "CGPT_NEW_T_BASE_ZCSZ_CSQJPZ",
+      "column": "FOOTER_GWABH",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "CGPT_T_Base_PolicyRegulations",
+      "column": "GWYDCS",
+      "type": "int",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "CGPT_T_Base_PolicyRegulations",
+      "column": "SFTBGW",
+      "type": "int",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "CGPT_T_IssueInquiry_Info",
+      "column": "FBGGWZ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "CGPT_T_IssueInquiry_Info",
+      "column": "GGWZ",
+      "type": "text",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "CWB_ZZJG_CWZZJG_CWRYXXDJ_CB",
+      "column": "XRGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "CWB_ZZJG_CWZZJG_CWRYXXDJ_CB",
+      "column": "XRZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "CWB_ZZJG_CWZZJG_CWRYXXDJ_CB",
+      "column": "XRZWSJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "CWGL_SQGL_CCSQ_History",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "CWGL_SQGL_CCSQ_History",
+      "column": "ZWDLR",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "CWGL_SQGL_YGDDSPB",
+      "column": "NRGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "CWGL_SQGL_YGDDSPB",
+      "column": "YGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_BJQK_XM_QD_CB_DB_CB",
+      "column": "DBJGWB",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_BYK_ZZXT_XZD_YZSYSP",
+      "column": "GZWJNBGY",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_CDGJ_LY_HTSP_CGHT",
+      "column": "CGWP",
+      "type": "nvarchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_CDGJJC_HY_HT_HZDW_GYSC_SXR",
+      "column": "DUTY",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_CDGJJC_SZ_JCSZ_PBZJGL_PBZJK",
+      "column": "NBHZWBZJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_CDGJJC_ZC_DWQDHT",
+      "column": "D_CDGJJC_GSFLGWSHRQ",
+      "type": "datetime",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_CDGJJC_ZC_DWQDHT",
+      "column": "D_CDGJJC_GSFLGWSHRY",
+      "type": "nvarchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_FZKGJT_SG_XMB_GLRY_GLRYBCB",
+      "column": "ZWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_FZKGJT_SG_XMB_GLRY_GLRYBCB1",
+      "column": "ZWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_FZKGJT_SG_XMB_GLRY_GLRYBCB2",
+      "column": "ZWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_FZKGJT_SG_XMB_GLRY_GLRYBCB3",
+      "column": "ZWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_FZKGJT_SG_XMB_GLRY_GLRYBCB4",
+      "column": "ZWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_FZKGJT_SG_XMB_GLRY_GLRYBCB5",
+      "column": "ZWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_FZKGJT_SG_XMB_XMBS_XMZYB_CB",
+      "column": "ZTXXJDJBZWCQK",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_FZKGJT_SG_XMB_XMBS_XMZYB_CB2",
+      "column": "ZTXXJDJBZWCQK",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_GXJS_ZAB_ZABGL_ZABGL_AQYHTGZGHFD",
+      "column": "TGWT",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_GXJS_ZAB_ZABGL_ZABGL_AQYHZGHFD",
+      "column": "ZGWT",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_GXJS_ZAB_ZABGL_ZABGL_LDDBJCJLB",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_GYXF_BG_RLGL_RLGL_YZSYSPB",
+      "column": "GZWJNBGY",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_JCLY_BGGL_XZ_JXDJ_CB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_JSXLXJS_AQGL_AQGL_AQGL_XMAQJD",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_JSXLXJS_RSXZ_RLZY_KQGL_QJT",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_PJG_JYFZ_TBGL_TBPS_TBRYPZ_CB",
+      "column": "GWZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_PJG_XMB_SGGL_SGZL_XMGLBZ_CB",
+      "column": "GWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_PJG_ZCYY_ZCJC_ZCJC_ZCPD",
+      "column": "GWPT",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_PYJT_BGGL_RSJKQ_RSDA_NBRYMC",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_QKXYJD_BGOA_RSDA_YGGL_LDHTXQ",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_XSTZ_GCXMTZ_XMFJJH_XMBS_XMZB_CB",
+      "column": "BZWCQK",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_XSTZ_RZ_RZGL_GCGL_RZMXDJ",
+      "column": "SFWGXZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_XSTZ_RZ_RZGL_GCGL_ZWDJ",
+      "column": "ZWDQSJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_XSTZ_RZ_RZGL_GCGL_ZWDJ",
+      "column": "ZWDYXMMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_XSTZ_RZ_RZGL_GCGL_ZWDJ",
+      "column": "ZWLB",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_XSTZ_RZ_RZGL_GCGL_ZWDJ",
+      "column": "ZWXCSJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_XSTZ_RZ_RZGL_GCGL_ZWDJ",
+      "column": "ZWZJYTFL",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_YWXT_JC_JCSZ_PBZJ",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_ZQKTJS_BG_GSGGBB_GSGGBB_GSGGBBA",
+      "column": "D_ZQKTJS_SSBMGWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_ZQKTJS_BG_GSGGBB_GSGGBB_GSGGBBA",
+      "column": "SSBMGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_ZQKTJS_BG_GSGGBB_GSGGBB_GSGGBBA_CB",
+      "column": "GGWCSJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "DC_API_REG",
+      "column": "POSTTASKIDS",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "DC_API_REG",
+      "column": "POSTTASKNAMES",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "DDDJQD",
+      "column": "DRGWJB",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "DDDJQD",
+      "column": "DRGWXJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "DDDJQD",
+      "column": "GWJB",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "DDDJQD",
+      "column": "GWXJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "DYJT_PQQG_PQRWGL",
+      "column": "CZWT",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "DYJY_ZCGL_ZCDJ_CQDJ",
+      "column": "PZWH",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "GBZWBDDJB_CB",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "GCJSB_XMGC_XMGC_XMGCGL_CB",
+      "column": "XCCZWT",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "GCJSB_XMJC_XMJC_XMKGJGJC_CB",
+      "column": "CZWT",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "GHFZ_KJGL_KJXMSB_ZB",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "GHFZ_XMGL_QQSX",
+      "column": "RZWCQK",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "GHFZ_ZSYZ_ZSYZ_ZSYZXSXM",
+      "column": "DWJZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "GHFZ_ZSYZ_ZSYZ_ZSYZXSXM",
+      "column": "XMCZWT",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "GHFZ_ZSYZ_ZSYZ_ZSYZXSXM",
+      "column": "XMYXZWZ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "GROUP_BASE_ORGANIZATION_DEPARTMENT_PDUTY_USER",
+      "column": "GZGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "GROUP_BASE_ORGANIZATION_DEPARTMENT_PDUTY_USER",
+      "column": "PDUTYID",
+      "type": "nvarchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "GZGL_GZXX",
+      "column": "GWGZ",
+      "type": "numeric",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "HTFG_JCGL_JCSZ_DBZJ",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "HTFG_JCGL_JCSZ_PBZJ",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "HTGL_ZLHT_ZLHT_JX_KZ_JXBZHT_HL",
+      "column": "JF_ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "HTGL_ZLHT_ZLHT_JX_KZ_JXBZHT_HL",
+      "column": "JZWS",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "HTGL_ZLHT_ZLHT_JX_KZ_JXBZHT_HL",
+      "column": "YF_ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "HY_JC_CZGL_CZXX_CB",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "JCGL_Base_JCRSZ_CB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "JCGL_Base_XTRSZ_CB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "JCGL_JCD_JCFZR",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "JCGL_JCD_JCXZR",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "JGGL_JGGL_ZSYS_ZSYSGL_CB",
+      "column": "ZGWTZXQK",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "JYB_ZZZJGL_ZZZJGL_BDY_CB",
+      "column": "GWZSBH",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "JYB_ZZZJGL_ZZZJGL_SLDYZJ_CB",
+      "column": "GWZSBH",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "JYFZB_XMJLJP_JPBM",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "JYFZB_XMJLJP_JPLRBJ",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "LW_BZHTGL_Ext_BZCBXY",
+      "column": "ZLBZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "LX_BA_BAGL_XMBA",
+      "column": "ZYJZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "LX_FXBG_BG_PGBGSB",
+      "column": "JNPGWJFJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "MALL_T_BASE_ZCSZ_CSQJPZ",
+      "column": "FOOTER_GWABDJLJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "MALL_T_BASE_ZCSZ_CSQJPZ",
+      "column": "FOOTER_GWABH",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "MALL_T_BASE_ZCSZ_CSQJPZ",
+      "column": "FOOTER_GWDZ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "OA_BG_BG_ZDGZJH_CB",
+      "column": "ZDGZWCNR",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "P_ZTB_CustomerProfile_CB",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "P_ZTB_CustomerProfile_WHRCB",
+      "column": "ZZWHRID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "P_ZTB_XSJH",
+      "column": "MBJLJZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "P_ZTB_XSJH",
+      "column": "ZWDYQK",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "Pm_base_Person_LZSQ",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "Pm_base_Person_ZZSQ",
+      "column": "SQGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "Pm_base_Person_ZZSQ",
+      "column": "SYQGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "Pm_base_Person_ZZSQ",
+      "column": "ZWPJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "Pm_Person_Recruit",
+      "column": "ZPZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "QQ_YDGH_YD_XKZDJ",
+      "column": "JHPZWH",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "QYGLB_AQSC_AQJGXXHZ_AQYHPCZLTZ_CB",
+      "column": "ZGWCRQ",
+      "type": "datetime",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RCJ_RCJ_GRKQGL_ZRBZCQB_CB",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RCJ_RCJ_GRKQGL_ZRBZRYMD_CB",
+      "column": "XMZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RLZY_KQXJ_KQXJ_CCSPD",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RLZY_RSDA_RSDA_SYQYGZZSPD",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RLZY_RSDA_SRDA_RYPZSQB",
+      "column": "SQPZGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RLZY_RYBD_RYBD_JCLWHT",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RLZY_RYBD_RYBD_LWPQYGKHB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RLZY_RYBD_RYBD_RYJDSPD_CB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RLZY_RYBD_RYBD_YGDDD_CB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RLZY_RYBD_RYBD_YGLZJJQD",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RLZY_RYKH_RYKH_ZCGBYDKH",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RLZY_RYKH_RYKH_ZGRYKHB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RPA_APPBID_BIDDATA",
+      "column": "GGZW_ZBXXNR",
+      "type": "text",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RSXZ_RLZY_PXGL_PXJHBSB_CB",
+      "column": "PXGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RSXZ_RLZY_PXGL_PXJHBSB_CB",
+      "column": "XRZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RSXZ_RLZY_XJGL_GLRYYKH_CB",
+      "column": "GWGZ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RSXZ_RLZY_XJGL_GLRYYKH_CB",
+      "column": "GWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RSXZ_RLZY_XJGL_GLRYYKH_CB",
+      "column": "GWZLGZ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "RSXZ_RLZY_XJGL_GLRYYKH_CB",
+      "column": "JZGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "S_Division",
+      "column": "RespectiveProvinces",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "S_Setup_AuditRulesSet",
+      "column": "ZDYCZWZ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SG_XMB_XMB_GLRYCQHZCB",
+      "column": "GSZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_Base_GCKSQB",
+      "column": "SGWCQK",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_Base_GCZB",
+      "column": "MQCZWT",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_Base_GCZB",
+      "column": "SZWCQK",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_Base_SGJDSBCB_SR",
+      "column": "TBRGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_Base_SGJHCB_SR",
+      "column": "TBRGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_SGGL_XMBGL_GLRYBGGL_CB",
+      "column": "DRZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_SGGL_XMBGL_GLRYZZGL_CB",
+      "column": "GWZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_SGGL_XMBGL_XGGSRYB_CB",
+      "column": "GWZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_XMRYGL_CB",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_XMTXL_CB",
+      "column": "ZWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_ZLJC_SGYBYSJLB",
+      "column": "CZWTZGCS",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGZL_JJQZ",
+      "column": "f_DZWD",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGZL_JSHY",
+      "column": "f_DZWD",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGZL_KGBG",
+      "column": "f_DZWD",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGZLGL_KCD",
+      "column": "DZWDSC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SM_XQJSP_XQ_LWPQXQ",
+      "column": "GWGZ",
+      "type": "numeric",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SM_XQJSP_XQ_LWPQXQ",
+      "column": "GWLB",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SM_XQJSP_XQ_LWPQXQ",
+      "column": "GWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SM_XQJSP_XQ_LWPQXQ",
+      "column": "GWZZ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SPXSGL_BSCGL_RYJXSD_CB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SPXSGL_BSCGL_RYJXSD_CB",
+      "column": "GWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SZLAQ_AQGL_AQJC_SGGL",
+      "column": "YGZZWCDGZRWSFYBZDCZCX",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SZLAQ_AQGL_AQJC_SGGL",
+      "column": "YGZZWCDGZRWSFYBZDCZCX_ID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SZLAQ_AQGL_AQJC_SGGL",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_BMFZJYGJDKH",
+      "column": "BKHGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_BMFZJYGJDKH",
+      "column": "BKHGWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_BMFZJYGJDKH",
+      "column": "KHGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_BMFZJYGJDKH",
+      "column": "KHGWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_BMFZRJDKH",
+      "column": "BKHGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_BMFZRJDKH",
+      "column": "BKHGWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_BMFZRJDKH",
+      "column": "KHGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_BMFZRJDKH",
+      "column": "KHGWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_CloudData_PermissionSet",
+      "column": "ROLEID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_CloudData_PermissionSet",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_CloudData_PermissionSet",
+      "column": "ZWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_SupplierInfo_And_LYPJ_JCGW",
+      "column": "GWCode",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_SupplierInfo_And_LYPJ_JCGW",
+      "column": "PJGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_SupplierInfo_And_LYPJ_User",
+      "column": "GWCode",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_SupplierInfo_LYPJB_CB_PS",
+      "column": "GWCode",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_BGGL_RGGL_HKGWSZ",
+      "column": "BGHGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_BGGL_RGGL_HKGWSZ",
+      "column": "BGHGWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_BGGL_RGGL_HKGWSZ_CB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_BGGL_RGGL_HKGWSZ_CB",
+      "column": "GWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_BGGL_RGGL_JXPF",
+      "column": "BKHGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_BGGL_RGGL_JXPF",
+      "column": "BKHGWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_BGGL_RGGL_JXPF",
+      "column": "KHGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_BGGL_RGGL_JXPF",
+      "column": "KHGWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_BGGL_RGGL_RYJXKH",
+      "column": "BGHGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_BGGL_RGGL_RYJXKH",
+      "column": "BKHGWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_BGGL_RGGL_RYJXKH_BKHRY",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_BGGL_RGGL_RYJXKH_BKHRY",
+      "column": "GWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_BGGL_RGGL_RYJXKH_KHRY",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_BGGL_RGGL_RYJXKH_KHRY",
+      "column": "GWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_CGGL_CGJH_ZCFAHSD",
+      "column": "CGWZ_FW_FW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_CollectionPlan_New_SDJZ",
+      "column": "JBZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_CollectionPlan_New_SDJZ",
+      "column": "JBZWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Customer_Base_Info_SXTJCB",
+      "column": "GZWJZL",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_FK_Supplier_SDJZ",
+      "column": "JBZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_GYSHT_INFO_Ext_CLCGBZHT",
+      "column": "AZWCZJK",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_GYSHT_INFO_Ext_HL",
+      "column": "QZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_GYSHT_INFO_Ext_LGS",
+      "column": "BZWHS_BHS",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_GYSHT_INFO_Ext_LGS",
+      "column": "BZWHS_GFZXHS",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_GYSHT_INFO_Ext_LGS",
+      "column": "BZWHS_QT",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_GYSHT_INFO_Ext_LGS",
+      "column": "BZWHS_QT_NR",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_HT_JLHT_SGHT",
+      "column": "GCLXPZWH",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_ProjectContract_HTJS_SDJZ",
+      "column": "JBZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_ProjectContract_HTJS_SDJZ",
+      "column": "JBZWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_ProjectContract_HTQZ_SDJZ",
+      "column": "JBZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_ProjectContract_HTQZ_SDJZ",
+      "column": "JBZWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_ProjectContract_Out_SDJZ_Ext",
+      "column": "JBZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "tr_roleAndLJ",
+      "column": "roleid",
+      "type": "bigint",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "tr_user_HandoverWork_History",
+      "column": "SFJJ_BMZW",
+      "type": "int",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_rolefunction_Component",
+      "column": "role_id",
+      "type": "int",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_rolefunction_RowColAuthority",
+      "column": "role_id",
+      "type": "int",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "wx_tr_RoleToUser_History",
+      "column": "roleId",
+      "type": "int",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XFJD_ZDXMJD_ZCGZCZXM_ZCCZ",
+      "column": "PGWTS",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XM_DZCD_HNFY_YGGZWCQKKHB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XM_LWFB_LWFD_LWRYGZBS_CB",
+      "column": "GWGZ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XM_LWFB_LWFD_LWRYGZBS_CB",
+      "column": "GWJT",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XM_LWFB_LWFD_LWRYGZBS_CB",
+      "column": "GWZJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XM_QTFY_FYD_GLRYGZBS_CB",
+      "column": "GWGZ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XM_QTFY_FYD_GLRYGZBS_CB",
+      "column": "GWJT",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XM_QTFY_FYD_GLRYGZBS_CB",
+      "column": "GWZJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XMB_SGGL_JDJH_SGZJH",
+      "column": "SZWWCGZNRJBJ",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XMGL_GCGL_SXBP_LXSX",
+      "column": "CZWT",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XMGL_JSJSH_SH_XMSHBXD",
+      "column": "GZWXJPX",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XMGL_XMBS_XMZB_CB",
+      "column": "BZWCQK",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XMGL_ZCHT_XMZHFY_CB",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XMGL_ZHJC_JCJH",
+      "column": "JCTZWB",
+      "type": "text",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XMYXFX_FXGL_FXSB",
+      "column": "FXXSYSZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XZBG_RLZY_KQGL_QJT",
+      "column": "SZBMJZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XZBG_RLZY_ZPGL_LZSQB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XZBG_RLZY_ZPGL_ZPJHB_CB",
+      "column": "XQGWJHZPRS",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XZBG_RLZY_ZPGL_ZPJHB_CB",
+      "column": "XQGWLB",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XZBG_RLZY_ZPGL_ZPJHB_CB",
+      "column": "XQGWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XZBG_RLZY_ZPGL_ZPJHB_CB",
+      "column": "XQGWYJJSRS",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XZBG_RLZY_ZPGL_ZPJHB_CB",
+      "column": "XQGWYYRS",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XZBG_XZGL_XFWW_JFXFDJ_CB",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XZBG_XZGL_YZDAJYGL_YZWDSPB",
+      "column": "XDYZWCSJ",
+      "type": "datetime",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XZBG_XZGL_YZDAJYGL_YZWDSPB",
+      "column": "XDYZWCSYY",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XZRS_RSJKQ_JX_SYQGZZJKH",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XZRS_RSJKQ_XC_FZJYSRYGZWCQKKCB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XZRS_RSJKQ_XC_FZJYSRYGZWCQKKCB",
+      "column": "GWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XZRS_RSJKQXC_JX_JCYGGZWCQKKHB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XZRS_RSJKQXC_JX_ZCYGGZWCQKKHB",
+      "column": "GW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XZRS_RSJKQXC_JX_ZCYGGZWCQKKHB",
+      "column": "GWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "YHHY_ZY_CZZYGL_RYXX",
+      "column": "ZW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "YSZJ_CZBS_GCJB",
+      "column": "CZWT",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "YT_NBCZ_CZBS_SDJZ",
+      "column": "JBGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "YT_NBCZ_CZBS_SDJZ",
+      "column": "JBGWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ZJGL_XMYZ_CB",
+      "column": "ZJLXZWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ZJGL_XMYZ_CB",
+      "column": "ZJLXZWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ZJGL_XMYZ_YZJLB",
+      "column": "ZJLXZWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ZJGL_XMYZ_YZJLB",
+      "column": "ZJLXZWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ZJGL_ZJJS_CB_BN",
+      "column": "ZJLXZWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ZJGL_ZJJS_CB_BN",
+      "column": "ZJLXZWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ZJGL_ZJLXZWSZ",
+      "column": "ZWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ZJGL_ZZDJ_ZJFSZ_BN",
+      "column": "ZJLXZWID",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ZJGL_ZZDJ_ZJFSZ_BN",
+      "column": "ZJLXZWMC",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ZTB_TBGL_XMSZFA_XMGLRYBS_CBE",
+      "column": "XRGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ZTB_TBGL_XMSZFA_XMGLRYBS_CBY",
+      "column": "XRGW",
+      "type": "varchar",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ZTB_TBGL_XMSZFA_XMRYPB",
+      "column": "GWMC",
+      "type": "varchar",
+      "rows": 0
+    }
+  ],
+  "project_user_like_tables": [
+    {
+      "schema": "dbo",
+      "table": "ts_rolefunction_History",
+      "rows": 143089
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_SYSTEM_PROJECT_USER",
+      "rows": 21390
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_rolefunction",
+      "rows": 16780
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_SYSTEM_MENU_ROLE",
+      "rows": 13642
+    },
+    {
+      "schema": "dbo",
+      "table": "tr_RoleToUser_History",
+      "rows": 1508
+    },
+    {
+      "schema": "dbo",
+      "table": "wx_ts_rolefunction",
+      "rows": 467
+    },
+    {
+      "schema": "dbo",
+      "table": "T_System_RoleAndProject",
+      "rows": 462
+    },
+    {
+      "schema": "dbo",
+      "table": "wx_tr_RoleToUser",
+      "rows": 397
+    },
+    {
+      "schema": "dbo",
+      "table": "tr_RoleToUser",
+      "rows": 170
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_SYSTEM_USER_ROLE",
+      "rows": 160
+    },
+    {
+      "schema": "dbo",
+      "table": "XMGL_LYGL_LYRY",
+      "rows": 147
+    },
+    {
+      "schema": "dbo",
+      "table": "S_Setup_PostTaskConfig",
+      "rows": 67
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_SYSTEM_ROLE",
+      "rows": 66
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_role",
+      "rows": 47
+    },
+    {
+      "schema": "dbo",
+      "table": "wx_ts_role",
+      "rows": 26
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_role_manage",
+      "rows": 9
+    },
+    {
+      "schema": "dbo",
+      "table": "BASE_LOWCODE_COMPONENT_ROLE",
+      "rows": 6
+    },
+    {
+      "schema": "dbo",
+      "table": "T_System_RoleAndProject_WX",
+      "rows": 6
+    },
+    {
+      "schema": "dbo",
+      "table": "D_FZKGJT_SG_XMB_GLRY_GLRYB",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_FZKGJT_SG_XMB_GLRY_GLRYBCB",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_FZKGJT_SG_XMB_GLRY_GLRYBCB1",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_FZKGJT_SG_XMB_GLRY_GLRYBCB2",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_FZKGJT_SG_XMB_GLRY_GLRYBCB3",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_FZKGJT_SG_XMB_GLRY_GLRYBCB4",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_FZKGJT_SG_XMB_GLRY_GLRYBCB5",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_PJG_XMB_SGGL_AQJC_TZRYDJ",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_PJG_XMB_SGGL_AQJC_TZRYDJ_CB",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_PJG_XMB_SGGL_YQFK_SGRYDJ",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "D_SFJGXT_XFJD_ZDXMJD_GCJSXM_LQRYK",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SG_XMB_XMB_GLRYCQHZ",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SG_XMB_XMB_GLRYCQHZCB",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_SGGL_XMBGL_GLRYBGGL",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_SGGL_XMBGL_GLRYBGGL_CB",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_SGGL_XMBGL_GLRYCQMX",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_SGGL_XMBGL_GLRYCQMX_CB",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_SGGL_XMBGL_GLRYJTCDJ",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_SGGL_XMBGL_GLRYJTCDJ_CB",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_SGGL_XMBGL_GLRYZZGL",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_SGGL_XMBGL_GLRYZZGL_CB",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_SGGL_XMBGL_SJRYBABBGSP",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_SGGL_XMBGL_SJRYBABBGSP_CB",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_SGGL_XMBGL_TBWJRYPBB",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_SGGL_XMBGL_TBWJRYPBB_CB",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_SGGL_XMBGL_XGGSRYB",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_SGGL_XMBGL_XGGSRYB_CB",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_XMRYGL",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "SGGL_XMRYGL_CB",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "T_JH_XMZJH_History",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "tr_roleAndLJ",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_rolefunction_Component",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ts_rolefunction_RowColAuthority",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "wx_tr_RoleToUser_History",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XM_LWFB_LWFD_LWRYGZBS",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XM_LWFB_LWFD_LWRYGZBS_CB",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XM_QTFY_FYD_GLRYGZBS",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XM_QTFY_FYD_GLRYGZBS_CB",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "XMGL_LWFB_LWYG_RYCJ",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ZTB_TBGL_XMSZFA_XMGLRYBS",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ZTB_TBGL_XMSZFA_XMGLRYBS_CBE",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ZTB_TBGL_XMSZFA_XMGLRYBS_CBY",
+      "rows": 0
+    },
+    {
+      "schema": "dbo",
+      "table": "ZTB_TBGL_XMSZFA_XMRYPB",
+      "rows": 0
+    }
+  ],
+  "project_user_role_triad_candidates": [
+    {
+      "schema": "dbo",
+      "table": "BASE_ORGANIZATION_DEPARTMENT_PDUTY_USER",
+      "rows": 4915,
+      "project_columns": "XMID",
+      "user_columns": "USERID, USERNAME",
+      "role_columns": "GZGW, PDUTYID, PDUTYNAME"
+    },
+    {
+      "schema": "dbo",
+      "table": "P_ZTB_GCBMGL",
+      "rows": 2848,
+      "project_columns": "XMID",
+      "user_columns": "LXR_UserID, XMJL_UserID, XMJL_UserID1",
+      "role_columns": "D_ZTZH_XMPZWH"
+    },
+    {
+      "schema": "dbo",
+      "table": "Pm_Person_Department_PDuty_History",
+      "rows": 177,
+      "project_columns": "XMID",
+      "user_columns": "Ding_Userid",
+      "role_columns": "PdutyGuid, PDutyId"
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_BZ",
+      "rows": 115,
+      "project_columns": "XMID",
+      "user_columns": "RYID",
+      "role_columns": "BMGW"
+    },
+    {
+      "schema": "dbo",
+      "table": "Pm_Person_Department_PDuty",
+      "rows": 102,
+      "project_columns": "XMID",
+      "user_columns": "Ding_Userid",
+      "role_columns": "PdutyGuid, PDutyId"
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_HBZJ_GZZB",
+      "rows": 90,
+      "project_columns": "XMID",
+      "user_columns": "Userid",
+      "role_columns": "GW"
+    },
+    {
+      "schema": "dbo",
+      "table": "P_ZTB_GCXXGL",
+      "rows": 20,
+      "project_columns": "XMID",
+      "user_columns": "LXR_UserID, XMJL_UserID",
+      "role_columns": "D_DCYL_ZW"
+    },
+    {
+      "schema": "dbo",
+      "table": "JHJRZ_GZHB",
+      "rows": 3,
+      "project_columns": "XMID",
+      "user_columns": "Userid",
+      "role_columns": "GW"
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_TZXX_GZRBTX_KT",
+      "rows": 0,
+      "project_columns": "XMID",
+      "user_columns": "USER_ID, USER_NAME, USER_PERSONID",
+      "role_columns": "GWID, GWMC"
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_JJ",
+      "rows": 0,
+      "project_columns": "XMID",
+      "user_columns": "RYID",
+      "role_columns": "BMGW"
+    },
+    {
+      "schema": "dbo",
+      "table": "CGPT_NEW_BASE_PBZJGL",
+      "rows": 0,
+      "project_columns": "XMID",
+      "user_columns": "YHID",
+      "role_columns": "NBHZWBZJ"
+    },
+    {
+      "schema": "dbo",
+      "table": "D_CDGJJC_SZ_JCSZ_PBZJGL_PBZJK",
+      "rows": 0,
+      "project_columns": "XMID",
+      "user_columns": "USERID",
+      "role_columns": "NBHZWBZJ"
+    },
+    {
+      "schema": "dbo",
+      "table": "D_CDGJJC_ZC_DWQDHT",
+      "rows": 0,
+      "project_columns": "XMID",
+      "user_columns": "D_CDGJJC_DB_USERNAMES",
+      "role_columns": "D_CDGJJC_GSFLGWSHRQ, D_CDGJJC_GSFLGWSHRY"
+    },
+    {
+      "schema": "dbo",
+      "table": "GROUP_BASE_ORGANIZATION_DEPARTMENT_PDUTY_USER",
+      "rows": 0,
+      "project_columns": "XMID",
+      "user_columns": "USERID",
+      "role_columns": "GZGW, PDUTYID"
+    },
+    {
+      "schema": "dbo",
+      "table": "HTFG_JCGL_JCSZ_DBZJ",
+      "rows": 0,
+      "project_columns": "XMID",
+      "user_columns": "YHID",
+      "role_columns": "ZW"
+    },
+    {
+      "schema": "dbo",
+      "table": "HTFG_JCGL_JCSZ_PBZJ",
+      "rows": 0,
+      "project_columns": "XMID",
+      "user_columns": "YHID",
+      "role_columns": "ZW"
+    },
+    {
+      "schema": "dbo",
+      "table": "T_Base_SupplierInfo_And_LYPJ_User",
+      "rows": 0,
+      "project_columns": "XMID",
+      "user_columns": "USER_ID, USER_NAME",
+      "role_columns": "GWCode"
+    }
+  ],
+  "project_user_role_triad_coverage": [
+    {
+      "schema": "dbo",
+      "table": "BASE_ORGANIZATION_DEPARTMENT_PDUTY_USER",
+      "rows": 4915,
+      "project_column": "XMID",
+      "user_column": "USERID",
+      "role_column": "PDUTYNAME",
+      "matched_project_member_rows": 0,
+      "mapping_rate": 0.0,
+      "role_value_samples": []
+    },
+    {
+      "schema": "dbo",
+      "table": "P_ZTB_GCBMGL",
+      "rows": 2848,
+      "project_column": "XMID",
+      "user_column": "LXR_UserID",
+      "role_column": "D_ZTZH_XMPZWH",
+      "matched_project_member_rows": 0,
+      "mapping_rate": 0.0,
+      "role_value_samples": []
+    },
+    {
+      "schema": "dbo",
+      "table": "Pm_Person_Department_PDuty_History",
+      "rows": 177,
+      "project_column": "XMID",
+      "user_column": "Ding_Userid",
+      "role_column": "PDutyId",
+      "matched_project_member_rows": 0,
+      "mapping_rate": 0.0,
+      "role_value_samples": [
+        {
+          "value": "3",
+          "rows": 113
+        },
+        {
+          "value": "13",
+          "rows": 18
+        },
+        {
+          "value": "5",
+          "rows": 16
+        },
+        {
+          "value": "12",
+          "rows": 6
+        },
+        {
+          "value": "9",
+          "rows": 4
+        },
+        {
+          "value": "7",
+          "rows": 4
+        },
+        {
+          "value": "6",
+          "rows": 3
+        },
+        {
+          "value": "4",
+          "rows": 1
+        },
+        {
+          "value": "10",
+          "rows": 1
+        }
+      ]
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_XZ_BZ",
+      "rows": 115,
+      "project_column": "XMID",
+      "user_column": "RYID",
+      "role_column": "BMGW",
+      "matched_project_member_rows": 0,
+      "mapping_rate": 0.0,
+      "role_value_samples": [
+        {
+          "value": "（工程部,总经办,公司员工）/（负责人,总经办,职员）",
+          "rows": 21
+        },
+        {
+          "value": "（副总经理（行政、劳务）,总经办,公司员工）/（副总经理（行政、劳务）,总经办,职员）",
+          "rows": 10
+        },
+        {
+          "value": "（公司员工,成控部,经营部）/（职员）",
+          "rows": 4
+        },
+        {
+          "value": "（公司员工）/（职员）",
+          "rows": 4
+        },
+        {
+          "value": "（工程部,四川保盛建设集团有限公司,总经办）/（负责人,负责人,总经办）",
+          "rows": 3
+        },
+        {
+          "value": "（会计,公司员工）/（职员,职员）",
+          "rows": 3
+        },
+        {
+          "value": "（行政部,公司员工）/（职员,职员）",
+          "rows": 1
+        },
+        {
+          "value": "（公司员工,成控部）/（职员）",
+          "rows": 1
+        },
+        {
+          "value": "（副总经理（行政、劳务）,四川保盛建设集团有限公司,总经办）/（副总经理（行政、劳务）,副总经理（行政、劳务）,总经办）",
+          "rows": 1
+        }
+      ]
+    },
+    {
+      "schema": "dbo",
+      "table": "Pm_Person_Department_PDuty",
+      "rows": 102,
+      "project_column": "XMID",
+      "user_column": "Ding_Userid",
+      "role_column": "PDutyId",
+      "matched_project_member_rows": 0,
+      "mapping_rate": 0.0,
+      "role_value_samples": [
+        {
+          "value": "3",
+          "rows": 74
+        },
+        {
+          "value": "5",
+          "rows": 7
+        },
+        {
+          "value": "13",
+          "rows": 7
+        },
+        {
+          "value": "12",
+          "rows": 4
+        },
+        {
+          "value": "9",
+          "rows": 1
+        },
+        {
+          "value": "8",
+          "rows": 1
+        },
+        {
+          "value": "7",
+          "rows": 1
+        },
+        {
+          "value": "11",
+          "rows": 1
+        },
+        {
+          "value": "10",
+          "rows": 1
+        }
+      ]
+    },
+    {
+      "schema": "dbo",
+      "table": "BGGL_HBZJ_GZZB",
+      "rows": 90,
+      "project_column": "XMID",
+      "user_column": "Userid",
+      "role_column": "GW",
+      "matched_project_member_rows": 0,
+      "mapping_rate": 0.0,
+      "role_value_samples": []
+    },
+    {
+      "schema": "dbo",
+      "table": "P_ZTB_GCXXGL",
+      "rows": 20,
+      "project_column": "XMID",
+      "user_column": "LXR_UserID",
+      "role_column": "D_DCYL_ZW",
+      "matched_project_member_rows": 0,
+      "mapping_rate": 0.0,
+      "role_value_samples": []
+    },
+    {
+      "schema": "dbo",
+      "table": "JHJRZ_GZHB",
+      "rows": 3,
+      "project_column": "XMID",
+      "user_column": "Userid",
+      "role_column": "GW",
+      "matched_project_member_rows": 0,
+      "mapping_rate": 0.0,
+      "role_value_samples": []
+    }
+  ],
+  "candidate_samples": {
+    "T_System_RoleAndProject": [
+      {
+        "Id": "4",
+        "SJBMC": "角色和项目关系",
+        "SSXMID": "10155",
+        "RoleId": "136",
+        "LX": "0"
+      },
+      {
+        "Id": "6",
+        "SJBMC": "角色和项目关系",
+        "SSXMID": "10155",
+        "RoleId": "126",
+        "LX": "1"
+      },
+      {
+        "Id": "159",
+        "SJBMC": "角色和项目关系",
+        "SSXMID": "10377",
+        "RoleId": "155",
+        "LX": "0"
+      },
+      {
+        "Id": "160",
+        "SJBMC": "角色和项目关系",
+        "SSXMID": "10375",
+        "RoleId": "155",
+        "LX": "0"
+      },
+      {
+        "Id": "161",
+        "SJBMC": "角色和项目关系",
+        "SSXMID": "10376",
+        "RoleId": "155",
+        "LX": "0"
+      },
+      {
+        "Id": "162",
+        "SJBMC": "角色和项目关系",
+        "SSXMID": "99999999",
+        "RoleId": "155",
+        "LX": "1"
+      },
+      {
+        "Id": "163",
+        "SJBMC": "角色和项目关系",
+        "SSXMID": "10359",
+        "RoleId": "155",
+        "LX": "1"
+      },
+      {
+        "Id": "164",
+        "SJBMC": "角色和项目关系",
+        "SSXMID": "10360",
+        "RoleId": "155",
+        "LX": "1"
+      },
+      {
+        "Id": "165",
+        "SJBMC": "角色和项目关系",
+        "SSXMID": "10362",
+        "RoleId": "155",
+        "LX": "1"
+      },
+      {
+        "Id": "166",
+        "SJBMC": "角色和项目关系",
+        "SSXMID": "10364",
+        "RoleId": "155",
+        "LX": "1"
+      }
+    ],
+    "BASE_SYSTEM_USER_ROLE": [
+      {
+        "ID": "00075c05e82f4f218536ec6413eac179",
+        "PID": "17752013263360033",
+        "USERID": "10000029",
+        "USERNAME": "陈天友",
+        "ROLEID": "137"
+      },
+      {
+        "ID": "009cd89ea9e24294b0bb36d286bfa889",
+        "PID": "17126548097380041",
+        "USERID": "10000037",
+        "USERNAME": "刘汉丹",
+        "ROLEID": "127"
+      },
+      {
+        "ID": "04716a23ab1b4e8fa3e18898d3dca033",
+        "PID": "17222242691360047",
+        "USERID": "10000075",
+        "USERNAME": "王银",
+        "ROLEID": "133"
+      },
+      {
+        "ID": "07baad9de9f64dd39f50343d21ed2f75",
+        "PID": "16971689320730011",
+        "USERID": "d215084d524f4090b822347eaa186f37",
+        "USERNAME": "秦军",
+        "ROLEID": "eceebe99149d430b86e61a2c2dc6d57c"
+      },
+      {
+        "ID": "0976cd5b391947e3b0d721f484144bb2",
+        "PID": "17752013263360004",
+        "USERID": "10000007",
+        "USERNAME": "陈帅",
+        "ROLEID": "152"
+      },
+      {
+        "ID": "09fef15bb2404dde8a28b0ae537aaef0",
+        "PID": "17016580002920042",
+        "USERID": "637416bf2ff94fce8b9476a02fb601d6",
+        "USERNAME": "倪德珍",
+        "ROLEID": "134"
+      },
+      {
+        "ID": "146b7672f1114ee59b77ba193b325082",
+        "PID": "16971968591690000",
+        "USERID": "5fa1c183823140d1a907235682bc2215",
+        "USERNAME": "陈茂",
+        "ROLEID": "eceebe99149d430b86e61a2c2dc6d57c"
+      },
+      {
+        "ID": "14a3addb736e4dfaa037190a9a85ab22",
+        "PID": "17065118696060043",
+        "USERID": "10000048",
+        "USERNAME": "赖宇轩",
+        "ROLEID": "134"
+      },
+      {
+        "ID": "1a97708bca894f36908df6dbb4ccc8fc",
+        "PID": "17752013263360022",
+        "USERID": "10000015",
+        "USERNAME": "文楠",
+        "ROLEID": "912b7c78746c44b99e400e3f8378f8a0"
+      },
+      {
+        "ID": "1bc6d06b67034dd1a3a35783fb0cae2c",
+        "PID": "16944044100680004",
+        "USERID": "10000059",
+        "USERNAME": "刘汶衔",
+        "ROLEID": "a869b0d2dd4d4794b101665f343fdca2"
+      }
+    ],
+    "BASE_SYSTEM_ROLE": [
+      {
+        "ID": "055a3cdc91ea41d68edddeaa0beb2e29",
+        "ROLE_NAME": "测试-项目权限1",
+        "ROLE_TYPE": "1",
+        "NOTE": "NULL"
+      },
+      {
+        "ID": "126",
+        "ROLE_NAME": "公司-办公室主任权限",
+        "ROLE_TYPE": "3",
+        "NOTE": ""
+      },
+      {
+        "ID": "127",
+        "ROLE_NAME": "行政部",
+        "ROLE_TYPE": "1",
+        "NOTE": ""
+      },
+      {
+        "ID": "128",
+        "ROLE_NAME": "1232",
+        "ROLE_TYPE": "1",
+        "NOTE": ""
+      },
+      {
+        "ID": "129",
+        "ROLE_NAME": "副总经理（经营、成控、行政、劳务）",
+        "ROLE_TYPE": "1",
+        "NOTE": ""
+      },
+      {
+        "ID": "130",
+        "ROLE_NAME": "789",
+        "ROLE_TYPE": "1",
+        "NOTE": ""
+      },
+      {
+        "ID": "131",
+        "ROLE_NAME": "公司-财务部-出纳",
+        "ROLE_TYPE": "3",
+        "NOTE": ""
+      },
+      {
+        "ID": "133",
+        "ROLE_NAME": "经营部",
+        "ROLE_TYPE": "1",
+        "NOTE": ""
+      },
+      {
+        "ID": "1330518a214f4f3f828937ada83c573b",
+        "ROLE_NAME": "项目-总经理",
+        "ROLE_TYPE": "1",
+        "NOTE": "NULL"
+      },
+      {
+        "ID": "134",
+        "ROLE_NAME": "项目部",
+        "ROLE_TYPE": "1",
+        "NOTE": ""
+      }
+    ],
+    "tr_RoleToUser": [
+      {
+        "Id": "39",
+        "userId": "10000000",
+        "roleId": "3",
+        "GSID": "1"
+      },
+      {
+        "Id": "379",
+        "userId": "8888888",
+        "roleId": "3",
+        "GSID": "1"
+      },
+      {
+        "Id": "3867",
+        "userId": "10000022",
+        "roleId": "136",
+        "GSID": "1"
+      },
+      {
+        "Id": "20086",
+        "userId": "10000040",
+        "roleId": "133",
+        "GSID": "1"
+      },
+      {
+        "Id": "20094",
+        "userId": "10000042",
+        "roleId": "133",
+        "GSID": "1"
+      },
+      {
+        "Id": "22988",
+        "userId": "10000017",
+        "roleId": "136",
+        "GSID": "1"
+      },
+      {
+        "Id": "23353",
+        "userId": "10000054",
+        "roleId": "133",
+        "GSID": "1"
+      },
+      {
+        "Id": "23354",
+        "userId": "10000055",
+        "roleId": "133",
+        "GSID": "1"
+      },
+      {
+        "Id": "23355",
+        "userId": "10000056",
+        "roleId": "133",
+        "GSID": "1"
+      },
+      {
+        "Id": "23356",
+        "userId": "10000057",
+        "roleId": "133",
+        "GSID": "1"
+      }
+    ]
+  },
+  "candidate_table_csv": "artifacts/migration/project_member_legacy_role_candidate_tables_v1.csv",
+  "decision": "no_authoritative_role_source_in_project_member_table",
+  "next_step": "evaluate neutral membership carrier before default role"
+}

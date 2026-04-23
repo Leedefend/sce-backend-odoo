@@ -1,0 +1,100 @@
+{
+  "status": "PASS",
+  "mode": "contract_partner_anchor_recovery_screen",
+  "db_writes": 0,
+  "partner_anchor_blocked_rows": 197,
+  "distinct_counterparty_texts": 75,
+  "recovery_route_counts": {
+    "direction_defer_no_counterparty": 61,
+    "partner_source_combined_source_screen": 5,
+    "partner_source_missing": 74,
+    "partner_source_recoverable_design_candidate": 57
+  },
+  "top_counterparty_texts": [
+    {
+      "text": "<direction_defer>",
+      "rows": 61
+    },
+    {
+      "text": "中国建筑第四工程局有限公司",
+      "rows": 20
+    },
+    {
+      "text": "绵竹市众力工程机械设备有限公司",
+      "rows": 11
+    },
+    {
+      "text": "德阳市旌阳区八角井镇卫生院",
+      "rows": 11
+    },
+    {
+      "text": "中石化西南石油工程有限公司油田工程服务分公司",
+      "rows": 8
+    },
+    {
+      "text": "中国铁建大桥工程局集团有限公司旌阳区城市地下综合管廊建设项目经理部",
+      "rows": 4
+    },
+    {
+      "text": "中国建筑第八工程局有限公司",
+      "rows": 3
+    },
+    {
+      "text": "中国电信股份有限公司德阳分公司",
+      "rows": 3
+    },
+    {
+      "text": "中国铁建大桥工程局集团有限公司",
+      "rows": 3
+    },
+    {
+      "text": "德阳市天韵文化发展有限公司天韵酒店",
+      "rows": 2
+    },
+    {
+      "text": "中国建筑一局（集团）有限公司",
+      "rows": 2
+    },
+    {
+      "text": "深圳友唱技术有限公司",
+      "rows": 2
+    },
+    {
+      "text": "中国石油天然气第七建设有限公司",
+      "rows": 2
+    },
+    {
+      "text": "渝北区石船镇人民政府",
+      "rows": 2
+    },
+    {
+      "text": "中国铁建大桥工程局集团有限公司 旌阳区城市地下综合管廊建设项目经理部",
+      "rows": 2
+    },
+    {
+      "text": "六盘水金地嘉仁物业服务有限公司荣昌分公司",
+      "rows": 2
+    },
+    {
+      "text": "雅安蜀天开发建设有限责任公司",
+      "rows": 1
+    },
+    {
+      "text": "绵阳市安州区雎水镇皇帽村村民委员会",
+      "rows": 1
+    },
+    {
+      "text": "重庆巴驿公共交通战场管理有限公司",
+      "rows": 1
+    },
+    {
+      "text": "德阳市勘察测绘设计院",
+      "rows": 1
+    }
+  ],
+  "row_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/contract_partner_anchor_recovery_screen_rows_v1.csv",
+  "decision": "partner_anchor_recovery_screened",
+  "write_authorization": "not_granted",
+  "next_step": "open no-DB partner-source recoverable design only for single-source candidates; keep source-missing rows blocked",
+  "errors": []
+}

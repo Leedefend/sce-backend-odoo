@@ -1,0 +1,32 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_business_modules_no_demo_install",
+  "database": "sc_migration_fresh",
+  "operation": "make mod.install",
+  "module": "smart_construction_custom",
+  "without_demo": "--without-demo=all",
+  "demo_targets_executed": 0,
+  "replay_write_scripts_executed": 0,
+  "module_states": {
+    "project": "installed",
+    "account": "installed",
+    "smart_construction_core": "installed",
+    "smart_construction_custom": "installed",
+    "smart_construction_seed": "uninstalled",
+    "smart_construction_demo": "uninstalled"
+  },
+  "model_exists": {
+    "res.partner": true,
+    "project.project": true,
+    "construction.contract": true,
+    "sc.project.member.staging": true
+  },
+  "database_probe": {
+    "res.partner": 23,
+    "project.project": 1,
+    "construction.contract": 0,
+    "sc.project.member.staging": 0
+  },
+  "decision": "fresh_database_business_surface_ready_for_replay_precheck",
+  "next_step": "run replay payload prechecks against sc_migration_fresh before executing payload writes"
+}

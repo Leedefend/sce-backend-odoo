@@ -1,0 +1,11 @@
+﻿review_rank,sample_scope,pair_key,project_id,project_name,user_id,user_name,evidence_count,candidate_level,role_fact_status,proposed_role_key,role_source_evidence,business_reviewer,business_decision,approval_required,write_allowed,allowed_role_keys
+1,yes,2150:12,2150,重庆文理学院2025年附属工程项目(不可预测的零星维修工程),12,李林旭,4,L3,missing,,,,pending,yes,no,"cashier,cost,document,finance,manager,material,quality,safety"
+2,yes,2238:12,2238,璧山区正兴镇龙家河河堤水毁修复工程,12,李林旭,5,L3,missing,,,,pending,yes,no,"cashier,cost,document,finance,manager,material,quality,safety"
+3,yes,2245:14,2245,八角星坐标项目景观坡道优化调整工程劳务分包,14,江一娇,4,L3,missing,,,,pending,yes,no,"cashier,cost,document,finance,manager,material,quality,safety"
+4,no,2247:12,2247,东湖街道老旧街区改造城市更新项目（一期）-秦岭山路（黄河路-玉泉路）提升改造工程,12,李林旭,5,L3,missing,,,,pending,yes,no,"cashier,cost,document,finance,manager,material,quality,safety"
+5,no,2488:12,2488,四川司法产教融合实训基地二期项目（运动场及附属设施）土石方工程,12,李林旭,5,L3,missing,,,,pending,yes,no,"cashier,cost,document,finance,manager,material,quality,safety"
+6,no,2503:12,2503,驻渝某单位废油罐拆装工程（第三次）,12,李林旭,4,L3,missing,,,,pending,yes,no,"cashier,cost,document,finance,manager,material,quality,safety"
+7,no,2688:12,2688,重庆轨道交通15号线一期土建工程03标绣湖路DN400给水管道迁改工程,12,李林旭,4,L3,missing,,,,pending,yes,no,"cashier,cost,document,finance,manager,material,quality,safety"
+8,no,2701:12,2701,合川高新区南溪组团用地整治项目,12,李林旭,4,L3,missing,,,,pending,yes,no,"cashier,cost,document,finance,manager,material,quality,safety"
+9,no,2733:12,2733,四川致远锂业有限公司生产厂房土建零星及维修工程,12,李林旭,4,L3,missing,,,,pending,yes,no,"cashier,cost,document,finance,manager,material,quality,safety"
+10,no,2737:12,2737,德阳市漓江路大桥-穿绵远河给水管道工程,12,李林旭,4,L3,missing,,,,pending,yes,no,"cashier,cost,document,finance,manager,material,quality,safety"

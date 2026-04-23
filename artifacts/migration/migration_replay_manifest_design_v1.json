@@ -1,0 +1,96 @@
+{
+  "status": "PASS",
+  "mode": "migration_replay_manifest_design",
+  "db_writes": 0,
+  "fresh_database_operation": "not_started",
+  "current_replay_certification": "NOT_CERTIFIED_YET",
+  "certification_reason": "Completed migration lanes have scripts and evidence, but no unified manifest, replay runner, or fresh-database replay proof has been executed yet.",
+  "required_before_fresh_rebuild": [
+    "migration replay manifest with lane order and dependencies",
+    "runner design for precheck, write, aggregate review, and residual blocker ledger",
+    "lane status tags: replayable, current-db-only, deprecated, high-risk-deferred",
+    "fresh database name and destructive-operation boundary contract",
+    "post-replay aggregate verification plan"
+  ],
+  "replay_lane_order": [
+    {
+      "order": 0,
+      "lane": "schema_and_module_install",
+      "layer": "bootstrap",
+      "default_run": false,
+      "reason": "fresh database creation/install is a separate high-risk operation"
+    },
+    {
+      "order": 1,
+      "lane": "partner_anchor",
+      "layer": "L0_identity_anchor",
+      "default_run": true,
+      "identity_key": "res.partner.legacy_partner_source + legacy_partner_id / normalized evidence"
+    },
+    {
+      "order": 2,
+      "lane": "project_anchor",
+      "layer": "L0_identity_anchor",
+      "default_run": true,
+      "identity_key": "project.project.legacy_project_id"
+    },
+    {
+      "order": 3,
+      "lane": "project_member_neutral",
+      "layer": "L1_core_business_fact",
+      "default_run": true,
+      "identity_key": "sc.project.member.staging legacy tuple"
+    },
+    {
+      "order": 4,
+      "lane": "contract_header",
+      "layer": "L1_core_business_fact",
+      "default_run": true,
+      "identity_key": "construction.contract.legacy_contract_id"
+    },
+    {
+      "order": 5,
+      "lane": "contract_partner_anchor_recovery",
+      "layer": "L0_identity_anchor",
+      "default_run": true,
+      "identity_key": "12 company-source counterparty anchors before 57 contract retry"
+    },
+    {
+      "order": 6,
+      "lane": "contract_retry_after_anchor_recovery",
+      "layer": "L1_core_business_fact",
+      "default_run": true,
+      "identity_key": "construction.contract.legacy_contract_id"
+    },
+    {
+      "order": 7,
+      "lane": "receipt_header",
+      "layer": "L1_or_L2_pending_screen",
+      "default_run": false,
+      "reason": "requires dedicated readiness screen"
+    },
+    {
+      "order": 8,
+      "lane": "payment_settlement_accounting",
+      "layer": "L4_high_risk",
+      "default_run": false,
+      "reason": "requires dedicated high-risk task contracts"
+    }
+  ],
+  "data_layers": {
+    "L0_identity_anchor": "project, partner, user/member identity anchors required by downstream facts",
+    "L1_core_business_fact": "provable business headers and neutral facts such as project, partner, contract header, neutral project member",
+    "L2_business_auxiliary": "optional business support fields such as notes, contacts, addresses, attachments, source text",
+    "L3_detail_or_derived": "details, lines, derived or weak historical facts after headers close",
+    "L4_high_risk": "payment, settlement, accounting, ACL and authority-sensitive facts"
+  },
+  "missing_data_policy": {
+    "not_required_in_new_system": "leave empty",
+    "required_anchor_missing": "block or discard; do not fabricate",
+    "legacy_deleted": "discard ledger unless separately authorized",
+    "garbage_data": "discard with evidence",
+    "ambiguous_identity": "hold ledger until deterministic rule exists",
+    "financial_or_authority_semantics": "dedicated high-risk line only"
+  },
+  "next_task": "fresh database replay manifest implementation and runner dry-run design"
+}

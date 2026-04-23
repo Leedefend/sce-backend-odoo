@@ -1,0 +1,1078 @@
+{
+  "status": "PASS",
+  "mode": "contract_header_final132_create_only_write",
+  "database": "sc_demo",
+  "run_id": "ITER-2026-04-15-CONTRACT-FINAL132",
+  "expected_count": 132,
+  "created": 132,
+  "updated": 0,
+  "pre_existing_count": 0,
+  "post_write_match_count": 132,
+  "rollback_target_rows": 132,
+  "duplicate_matches": [],
+  "missing_ids": [],
+  "post_errors": [],
+  "created_rows": [
+    {
+      "contract_id": 1284,
+      "legacy_contract_id": "e625638a3de54fc6ad2bbd8351973c2d",
+      "name": "CONIN2601247",
+      "subject": "四川艺术职业学院消防隐患整治工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1285,
+      "legacy_contract_id": "e640e977c0b945c7bde642feb12e4de0",
+      "name": "CONIN2601248",
+      "subject": "炼钢厂9米跨安全走道隐患整治",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1286,
+      "legacy_contract_id": "e64e4deb55f84a1495821f33e25ca994",
+      "name": "CONIN2601249",
+      "subject": "4-8舍边和建筑系实训四合院门口透水砖恢复",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1287,
+      "legacy_contract_id": "e671ca51b0604754b464f402c5b03689",
+      "name": "CONIN2601250",
+      "subject": "模锻厂-南电平车电源线铺设",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1288,
+      "legacy_contract_id": "e68951591e664ba583f2563258f71503",
+      "name": "CONIN2601251",
+      "subject": "增加餐厨废弃物存放间",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1289,
+      "legacy_contract_id": "e68dbdfe6ccd45e8896f9e351618fd30",
+      "name": "CONIN2601252",
+      "subject": "德阳市香诗美林酒店管理有限公司食堂燃气报警系统安装工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1290,
+      "legacy_contract_id": "e6a65e33620e4e358c74341a123b79b8",
+      "name": "CONIN2601253",
+      "subject": "海正广场防护栏拆除",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1291,
+      "legacy_contract_id": "e6b86b78d41b4e9b95f665b780023409",
+      "name": "CONIN2601254",
+      "subject": "玉泉路315号商校花园4栋一单元迁管工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1292,
+      "legacy_contract_id": "e6d3d11f2e1044a0ac76aba3ef58d88f",
+      "name": "CONIN2601255",
+      "subject": "炼钢厂8号炉平台安全整治",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1293,
+      "legacy_contract_id": "e6e946096c7b438e86da7e1cfcd340cb",
+      "name": "CONIN2601256",
+      "subject": "模锻厂-锤跨蒸汽管道修理",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1294,
+      "legacy_contract_id": "e7137d1a28f74c56b805623910a66a02",
+      "name": "CONIN2601257",
+      "subject": "智慧之心项目5#泡沫混凝土工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1295,
+      "legacy_contract_id": "e73c1b3a04ee4b9a920ddbb726cd80f6",
+      "name": "CONIN2601258",
+      "subject": "南川区S531西龙路K18+800-K27+230日常维修养护工程（换填、边沟）",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1296,
+      "legacy_contract_id": "e74718a2bf6f425b9ff1b42c36ab0960",
+      "name": "CONIN2601259",
+      "subject": "盐亭县2024年新章路、垢巨路、刘黑路水毁恢复工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1297,
+      "legacy_contract_id": "e7d161b10c7540ff90d1695ef931c76f",
+      "name": "CONIN2601260",
+      "subject": "中国移动四川公司全省市州分公司2019-2022年管理用房及生产枢纽楼公共区域零星维修服务项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1298,
+      "legacy_contract_id": "e7d90e2c73364102843779a5e88e81e1",
+      "name": "CONIN2601261",
+      "subject": "梧桐.骊府项目 1-7#楼及地下室",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1299,
+      "legacy_contract_id": "e8527070b38544c29d09bae6e0eb1fb1",
+      "name": "CONIN2601262",
+      "subject": "张家河洪安镇三村村10组和大同村11组护坡整治工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1300,
+      "legacy_contract_id": "e89372f20ed24781a978f746839fe98e",
+      "name": "CONIN2601263",
+      "subject": "郫都区安德街道崇德沟黑臭水体整治项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1301,
+      "legacy_contract_id": "e8ce6b6d7ca14c87b4a25b4c145c8a41",
+      "name": "CONIN2601264",
+      "subject": "北新国际冷链商贸物流项目E地块E3#-1、E4#-1装饰装修工程专业分包",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1302,
+      "legacy_contract_id": "e95e633125164bfb9da3280525daa5f3",
+      "name": "CONIN2601265",
+      "subject": "德阳市海正广场大中厅顶棚玻璃钢架屋顶拆除工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1303,
+      "legacy_contract_id": "e9a1cda7f1d94c90a39a01695649c39d",
+      "name": "CONIN2601266",
+      "subject": "德阳市金江街消防迁管工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1304,
+      "legacy_contract_id": "e9bd9ecfc1754fc6ba8b39a1f8ada499",
+      "name": "CONIN2601267",
+      "subject": "结算审核报告",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1305,
+      "legacy_contract_id": "e9d59ff438a44d04a3aac852e028637c",
+      "name": "CONIN2601268",
+      "subject": "四川便捷酒店管理有限公司管理的德阳格林豪泰酒店厨房及锅炉房燃气报警系统安装",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1306,
+      "legacy_contract_id": "ea384c38f6cc437b804567c6ff808b0c",
+      "name": "CONIN2601269",
+      "subject": "喀什地区检察院办案与专业技术用房外立面改造项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1307,
+      "legacy_contract_id": "ea8c67bedb404c5a925251df2b9a148f",
+      "name": "CONIN2601270",
+      "subject": "德阳第五医院股份有限公司食堂厨房燃气报警系统安装",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1308,
+      "legacy_contract_id": "eaba7223e21243bcaa256642c3277abe",
+      "name": "CONIN2601271",
+      "subject": "原第四中学宿舍户表改造工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1309,
+      "legacy_contract_id": "eb14f40dd0244a57aea78fb2f803b466",
+      "name": "CONIN2601272",
+      "subject": "德阳市旌阳区七色花幼儿园分户工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1310,
+      "legacy_contract_id": "eba73f0be7a54020945beac7e55095df",
+      "name": "CONIN2601273",
+      "subject": "2026年校园环境维修工程（单项预算金额在5万元以下）",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1311,
+      "legacy_contract_id": "ebac3cef9bed43a4b18252d142f03c59",
+      "name": "CONIN2601274",
+      "subject": "驻渝某单位废油罐拆装工程（第三次）",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1312,
+      "legacy_contract_id": "ebb4a30ea4ea4aaa856d69d8413d786c",
+      "name": "CONIN2601275",
+      "subject": "老篮球场堡坎修复加固项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1313,
+      "legacy_contract_id": "ebbf73126d634e26827e4bd08d76b065",
+      "name": "CONIN2601276",
+      "subject": "德阳经开区第五幼儿园大门及消防通道开口工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1314,
+      "legacy_contract_id": "ec44a4460a784352b86b9e6bcf15c1f2",
+      "name": "CONIN2601277",
+      "subject": "濛阳河路（泰山路-蓥华山路）市政道路工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1315,
+      "legacy_contract_id": "ec7461b607754ff6b1ff256c788ed960",
+      "name": "CONIN2601278",
+      "subject": "蓬莱镇城乡一体化建设项目四标段项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1316,
+      "legacy_contract_id": "ecbd940716794f1191792c43834fe35d",
+      "name": "CONIN2601279",
+      "subject": "中国水利水电第四工程局有限公司林芝区域办事处办公用房装修工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1317,
+      "legacy_contract_id": "ecc8c5c72b7c4f91bf8d7a84f566c893",
+      "name": "CONIN2601280",
+      "subject": "S206线K3+440-K4+040段改建工程施工全一标段",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1318,
+      "legacy_contract_id": "ecdb7f811e034e94a3e2628af1651627",
+      "name": "CONIN2601281",
+      "subject": "青衣江路、泰山路等市政道路维修整治工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1319,
+      "legacy_contract_id": "ed3b331f1dec45b9a2493005f9cdae93",
+      "name": "CONIN2601282",
+      "subject": "齿轮厂19台设备整治",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1320,
+      "legacy_contract_id": "ed446bc73a04490e9aa70cd13fa95f47",
+      "name": "CONIN2601283",
+      "subject": "华西-雅河苑施工用水工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1321,
+      "legacy_contract_id": "edbe777d2e134820b18a5616b6ca074a",
+      "name": "CONIN2601284",
+      "subject": "机加厂2跨3跨新建隔墙工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1322,
+      "legacy_contract_id": "ee1f293c6daa4f518e1bf8fb9c6a3692",
+      "name": "CONIN2601285",
+      "subject": "模锻厂800MN生产现场整治",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1323,
+      "legacy_contract_id": "ee4994f908814c5cb172d841ab5b4864",
+      "name": "CONIN2601286",
+      "subject": "库伦电气厨房 燃气报警系统安装",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1324,
+      "legacy_contract_id": "ee81d99c84d84f689b17d20f09749087",
+      "name": "CONIN2601287",
+      "subject": "集团五楼男卫生间渗水修缮项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1325,
+      "legacy_contract_id": "eeec441e38ed4750b3b0eb8c07d241be",
+      "name": "CONIN2601288",
+      "subject": "2024年度制冷机维护",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1326,
+      "legacy_contract_id": "ef53b994cd75408a8a2b0fb2501ab983",
+      "name": "CONIN2601289",
+      "subject": "渝北区龙泉水库大坝公路西侧人行便道扶助工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1327,
+      "legacy_contract_id": "ef6b3bb8432e40b58567c784eec92d08",
+      "name": "CONIN2601290",
+      "subject": "德阳文德房地产开发有限公司移表工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1328,
+      "legacy_contract_id": "ef716640261741c98499eb662495d4e5",
+      "name": "CONIN2601291",
+      "subject": "《建设工程施工合同》补充协议三",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1329,
+      "legacy_contract_id": "ef77776fc8c94171b82d470d43a2a08c",
+      "name": "CONIN2601292",
+      "subject": "中国移动四川分公司成都分公司2021-2025年管理用房及生产枢纽楼办公区域维修服务项目-通服",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1330,
+      "legacy_contract_id": "ef9603107b644e559e9b479ba921f691",
+      "name": "CONIN2601293",
+      "subject": "商贸分公司办公室装修项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1331,
+      "legacy_contract_id": "efc89935f0344c898082050889b66b66",
+      "name": "CONIN2601294",
+      "subject": "3号门岗亭维修及下穿隧道北口栏杆车位项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1332,
+      "legacy_contract_id": "f00879f77a4a42cb8a4ee0889e2cb588",
+      "name": "CONIN2601295",
+      "subject": "地下二层机房燃气报警系统安装",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1333,
+      "legacy_contract_id": "f062ff56379e458ea9fdbdc711945ac6",
+      "name": "CONIN2601296",
+      "subject": "南区水管铺设项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1334,
+      "legacy_contract_id": "f066c34132d64b1fbab0fa2116e7b504",
+      "name": "CONIN2601297",
+      "subject": "重庆电子工科技职业大学应急与抢险工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1335,
+      "legacy_contract_id": "f084efcdb62d4c618c29bcfc58f973c2",
+      "name": "CONIN2601298",
+      "subject": "德阳大参林有限公司施工用水工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1336,
+      "legacy_contract_id": "f0a8cbb8d07d4688b02ea41cecadf4e2",
+      "name": "CONIN2601299",
+      "subject": "结算审核报告书（集萃园东北角乒乓球场地建设）",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1337,
+      "legacy_contract_id": "f0fe114c85724a7eb04c6e07509138a7",
+      "name": "CONIN2601300",
+      "subject": "城南壹号·熙悦府（一期）安装工程专业分包",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1338,
+      "legacy_contract_id": "f16705adb88745a18e0be88b2b6cc70a",
+      "name": "CONIN2601301",
+      "subject": "补充协议",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1339,
+      "legacy_contract_id": "f168512ef21044e0b5ce6b5fc7f9d46f",
+      "name": "CONIN2601302",
+      "subject": "G5连接线项目市庐山路与南湖路交口给水管道迁改工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1340,
+      "legacy_contract_id": "f173fd159f0244fca221bb80590f4b67",
+      "name": "CONIN2601303",
+      "subject": "结算审核报告书",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1341,
+      "legacy_contract_id": "f1ac0953bf114e9a98a1f7a14b4e29b6",
+      "name": "CONIN2601304",
+      "subject": "四川圆规酒店管理有限公司厨房及锅炉房燃气报警系统安装",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1342,
+      "legacy_contract_id": "f2003815a43244ef8e076e2b53949206",
+      "name": "CONIN2601305",
+      "subject": "绵竹市南轩中学体育馆篮球场维修改造工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1343,
+      "legacy_contract_id": "f22eb20682014b8fa6eed1bee474afab",
+      "name": "CONIN2601306",
+      "subject": "阆中水城项目唐家山片区一期酒店热水及地暖改造工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1344,
+      "legacy_contract_id": "f2322e95be7649e7a4aa6a0440681e38",
+      "name": "CONIN2601307",
+      "subject": "齿轮厂污水处理站维修工程管道拆除补充协议",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1345,
+      "legacy_contract_id": "f23be2f971b7475ca0585924f05acaba",
+      "name": "CONIN2601308",
+      "subject": "布拖县拉达乡现代设施蔬菜产业融合示范园附属工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1346,
+      "legacy_contract_id": "f252f9656c6d47ffa5ed9420a7f54d29",
+      "name": "CONIN2601309",
+      "subject": "卞二宝乐山街阳光小筑直饮机分户工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1347,
+      "legacy_contract_id": "f29a6b6118a24ca9a783b7c45a295999",
+      "name": "CONIN2601310",
+      "subject": "智慧之心项目2#楼及2#楼裙楼泡沫混凝土工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1348,
+      "legacy_contract_id": "f29be691e85a4fdcbc3cf5079e44ce07",
+      "name": "CONIN2601311",
+      "subject": "7号台试车间天花板维修项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1349,
+      "legacy_contract_id": "f2ac66c912174b16b8c2918f190016d2",
+      "name": "CONIN2601312",
+      "subject": "机加厂-职工休息室楼层屋面防水整治",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1350,
+      "legacy_contract_id": "f2b9694390a1458391b4a46a892b4983",
+      "name": "CONIN2601313",
+      "subject": "违法建（构）筑物拆除工程施工协议",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1351,
+      "legacy_contract_id": "f30859737f444ac29ed5c6b33fd30039",
+      "name": "CONIN2601314",
+      "subject": "苍溪县2020年高标准农田建设（施工六）",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1352,
+      "legacy_contract_id": "f36491327f444995ad9ba222c36e7d63",
+      "name": "CONIN2601315",
+      "subject": "德阳市审计局食堂燃气报警系统安装工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1353,
+      "legacy_contract_id": "f36fb5d521db447d88b8c701275b886f",
+      "name": "CONIN2601316",
+      "subject": "德阳市罗江区一根松应急抢险工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1354,
+      "legacy_contract_id": "f37c61463a8d441f859b0ccb371eec43",
+      "name": "CONIN2601317",
+      "subject": "五号门停车棚修建",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1355,
+      "legacy_contract_id": "f3868ce974644bc8a92298ed340fdf13",
+      "name": "CONIN2601318",
+      "subject": "审核报告",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1356,
+      "legacy_contract_id": "f388cf7856c24d3cb03deb6e0a440089",
+      "name": "CONIN2601319",
+      "subject": "苍溪县歧坪镇增减挂钩项目劳务分包",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1357,
+      "legacy_contract_id": "f3ace5cbe5324b5cb83b2e4050640d8a",
+      "name": "CONIN2601320",
+      "subject": "重庆市綦江区育英高级中学建设工程（一标段）",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1358,
+      "legacy_contract_id": "f3e05c6a42c54664b0bf0a5ff5b6caea",
+      "name": "CONIN2601321",
+      "subject": "华山南路二段莫与伦关闭自备水工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1359,
+      "legacy_contract_id": "f3fdb679b2094e799cceeda350b3b242",
+      "name": "CONIN2601322",
+      "subject": "1851-20项目消防联调联试及通风系统安装工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1360,
+      "legacy_contract_id": "f41372ad53ec4b53a5e1fe0f867ff914",
+      "name": "CONIN2601323",
+      "subject": "某部车库建设项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1361,
+      "legacy_contract_id": "f4b40c1fa420461ca7422b0cc664a7a2",
+      "name": "CONIN2601324",
+      "subject": "校园环境零星维修合同",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1362,
+      "legacy_contract_id": "f4b80a37433a4d7ba8ed9975719a1a22",
+      "name": "CONIN2601325",
+      "subject": "综合部-劳模工匠创新工作室建设",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1363,
+      "legacy_contract_id": "f4bff0b41c9e45939a466300f9e20b31",
+      "name": "CONIN2601326",
+      "subject": "燃气报警器（系统）安装工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1364,
+      "legacy_contract_id": "f4cf246e18f64c5f982089df21d3dea8",
+      "name": "CONIN2601327",
+      "subject": "中国移动四川公司成都分公司2023-2025年渠道维修采购项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1365,
+      "legacy_contract_id": "f4fb438ccd254ec2884bb5e23eb9a4fa",
+      "name": "CONIN2601328",
+      "subject": "米易县南部新城市政道路及生态湿地公园PPP项目-湿地公园建设项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1366,
+      "legacy_contract_id": "f56d4689279d464c9b0b88e073b490ad",
+      "name": "CONIN2601329",
+      "subject": "德美整形医院燃气报警系统安装",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1367,
+      "legacy_contract_id": "f5b77943a1b045e09909f8e9945b1ba6",
+      "name": "CONIN2601330",
+      "subject": "炼钢厂原万通楼职工休息室厕所修理",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1368,
+      "legacy_contract_id": "f5fe13f1390d4e98941cae44dd4cd96e",
+      "name": "CONIN2601331",
+      "subject": "德阳市人力资源和社会保障局公用用气燃气报警系统安装工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1369,
+      "legacy_contract_id": "f660daa2a02d48e1a43c2734b869eb3e",
+      "name": "CONIN2601332",
+      "subject": "广汉市城市更新城西片区城中村改造项目——配套道路路面工程专业分包",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1370,
+      "legacy_contract_id": "f692597db427423cbc7e034f8e4065e6",
+      "name": "CONIN2601333",
+      "subject": "广汉市金轮镇铁塔路维修工程项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1371,
+      "legacy_contract_id": "f693ea5b2d9e4be494f5f8b81b3b83b1",
+      "name": "CONIN2601334",
+      "subject": "旌阳区黄许镇糖场桥暴雨洪涝灾害水毁重建工程项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1372,
+      "legacy_contract_id": "f6ad117e52ae4fe68b2580b6f8d202eb",
+      "name": "CONIN2601335",
+      "subject": "融发雅居新建户表给水管道工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1373,
+      "legacy_contract_id": "f6e45bd6026c417aa9c2d926ddfb142c",
+      "name": "CONIN2601336",
+      "subject": "德阳市旌阳区乡镇通组道路工程(双东镇)",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1374,
+      "legacy_contract_id": "f703acec2e6c49d487380bc6201b8ecb",
+      "name": "CONIN2601337",
+      "subject": "中天新村自动售水机分户工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1375,
+      "legacy_contract_id": "f717dae206c94c6784a6ed757e3f4294",
+      "name": "CONIN2601338",
+      "subject": "德阳万达小贰楼项目土方开挖工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1376,
+      "legacy_contract_id": "f743da6bd07241b8a9ad614c86685417",
+      "name": "CONIN2601339",
+      "subject": "易静工程（德阳二重工程项目）",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1377,
+      "legacy_contract_id": "f752d599499d47e7810ca95762a807b6",
+      "name": "CONIN2601340",
+      "subject": "结算审核报告书",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1378,
+      "legacy_contract_id": "f75936ab0d734e35b8a4970d785e02e0",
+      "name": "CONIN2601341",
+      "subject": "德阳市第2中学职工宿舍户表改造工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1379,
+      "legacy_contract_id": "f770b204fb164a48bfdc1ed33279fdb9",
+      "name": "CONIN2601342",
+      "subject": "中江实验中学新建教学及辅助用房和附属工程（一期）",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1380,
+      "legacy_contract_id": "f7e515cba4ee48999791f16b4d2131bf",
+      "name": "CONIN2601343",
+      "subject": "理塘碧桂园项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1381,
+      "legacy_contract_id": "f85c546211e6492a91fa9a5784ca85d1",
+      "name": "CONIN2601344",
+      "subject": "滨河路加油站室外污水管网修建项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1382,
+      "legacy_contract_id": "f8b43a2b0f364d379f3db0dab4f5b987",
+      "name": "CONIN2601345",
+      "subject": "热处理厂-车间除尘",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1383,
+      "legacy_contract_id": "f8c668a4286c4be78e42daf7021e46fe",
+      "name": "CONIN2601346",
+      "subject": "热处理厂-打磨除尘房更换滤筒及室内清洁",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1384,
+      "legacy_contract_id": "f8f3c7f475c7467184e9ccf2e88ea3c5",
+      "name": "CONIN2601347",
+      "subject": "临时器材库和装备库建设项目（2302项目）",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1385,
+      "legacy_contract_id": "f934fc58e27343eeafb9f4a1c35cca12",
+      "name": "CONIN2601348",
+      "subject": "南区食堂周边弃土和建渣转运",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1386,
+      "legacy_contract_id": "f96b2883716f4eb09d549515323721aa",
+      "name": "CONIN2601349",
+      "subject": "金结厂机器人项目地坪漆和围栏制作修理",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1387,
+      "legacy_contract_id": "f9951b7138844da7a9ca9b073c7a6d55",
+      "name": "CONIN2601350",
+      "subject": "旌晶食品锅炉房燃气报警系统安装",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1388,
+      "legacy_contract_id": "f9cb07e138c64af0867d3f0f3f757a6e",
+      "name": "CONIN2601351",
+      "subject": "国网四川天府新区龙泉驿区供电公司柏合供电所",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1389,
+      "legacy_contract_id": "f9d53377c11d463793a3afb7abd96596",
+      "name": "CONIN2601352",
+      "subject": "T2A指廊机房挡水墙改造项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1390,
+      "legacy_contract_id": "f9dce6b68f9d43c98ef39ed4e5f3b06a",
+      "name": "CONIN2601353",
+      "subject": "北街牛肉巷51号渝都国际明珠小区内直饮机分户工程(合同编号：Y2022—027）",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1391,
+      "legacy_contract_id": "fa2930dc25af4bf9838f7d135254260e",
+      "name": "CONIN2601354",
+      "subject": "生态岛智能智造成果转化空间工程钢结构专业分包",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1392,
+      "legacy_contract_id": "fa4d4453a2b54a8695a571de7209d891",
+      "name": "CONIN2601355",
+      "subject": "炼钢厂废钢切割除尘挡墙安全整治",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1393,
+      "legacy_contract_id": "fa99e536c922465aa8405c57694ae0aa",
+      "name": "CONIN2601356",
+      "subject": "旌阳区凯江路枣阳小区1-(4-7）号商铺分户工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1394,
+      "legacy_contract_id": "faac190d5bdc46a1817f33856d764675",
+      "name": "CONIN2601357",
+      "subject": "荣昌区盘龙镇黄桷滩水库库区集体经济产业基础设施配套",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1395,
+      "legacy_contract_id": "fb99b35f8854481eb6a1c307610ad0e8",
+      "name": "CONIN2601358",
+      "subject": "锦利锦御府施工用水工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1396,
+      "legacy_contract_id": "fba63d2454214d41802760281c7f494c",
+      "name": "CONIN2601359",
+      "subject": "罗江县2018年水利发展资金高效节水灌溉项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1397,
+      "legacy_contract_id": "fbc73b229bc44b589f124bc622fa7ecb",
+      "name": "CONIN2601360",
+      "subject": "格尔木市2021年城市污水处理提质增效项目第二次",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1398,
+      "legacy_contract_id": "fbc7bcf41ca44d90b4de4f75d43d97b1",
+      "name": "CONIN2601361",
+      "subject": "林芝市财富阳光建设项目消防工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1399,
+      "legacy_contract_id": "fbc9e2db2cea4073b14187c6e987ebe7",
+      "name": "CONIN2601362",
+      "subject": "2020校区局部排危零星项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1400,
+      "legacy_contract_id": "fbe002812afe4caab592dc8f8398bb92",
+      "name": "CONIN2601363",
+      "subject": "德阳农村商业银行股份有限公司厨房燃气报警系统安装",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1401,
+      "legacy_contract_id": "fcaf126f756b4e599eeb65bcd3d93bf4",
+      "name": "CONIN2601364",
+      "subject": "集萃苑曲桥油漆、老年大学铁艺栏杆处理",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1402,
+      "legacy_contract_id": "fcd7a8600f9940408829007979b469f9",
+      "name": "CONIN2601365",
+      "subject": "德阳市旌江线城市路灯及绿化工程(八角路口交通改善)项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1403,
+      "legacy_contract_id": "fceb15bb69ca4bb796cfbc9366116a5b",
+      "name": "CONIN2601366",
+      "subject": "绵竹市高新区科技服务中心项目消防工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1404,
+      "legacy_contract_id": "fcf24dc6e05549e4b6a6f1e22437915a",
+      "name": "CONIN2601367",
+      "subject": "渭河路（庐山北路至秦岭山北路）道路改造工程道路沥青砼路面专业分包施工",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1405,
+      "legacy_contract_id": "fd2818bdf6e741e799b4a4fc78259a03",
+      "name": "CONIN2601368",
+      "subject": "模锻厂-维修架管搭建",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1406,
+      "legacy_contract_id": "fe14ea47de36437d8aff1db7efb518db",
+      "name": "CONIN2601369",
+      "subject": "OPPO 长安研发中心项目市政道路工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1407,
+      "legacy_contract_id": "fe26d9b8ec1741feab6bb09e819df836",
+      "name": "CONIN2601370",
+      "subject": "米易县高铁站前广场环境整治项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1408,
+      "legacy_contract_id": "fe4395bc1f2242f98010a89abedc6e61",
+      "name": "CONIN2601371",
+      "subject": "德阳市旌阳区崴螺山-高屋（寿崴路改线）道路改建工程项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1409,
+      "legacy_contract_id": "ff44bf69264346ea954ec9a2eee02a3a",
+      "name": "CONIN2601372",
+      "subject": "模锻厂-800MN压机现场参观区整治",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1410,
+      "legacy_contract_id": "ff5569298f67418abc0f7d17d31949dc",
+      "name": "CONIN2601373",
+      "subject": "国网德阳供电公司综合中心建设场地平整工程（办公大楼恢复）",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1411,
+      "legacy_contract_id": "ffcf4f074e1a446485db994b405db9d1",
+      "name": "CONIN2601374",
+      "subject": "德阳钰鑫化工有限公司锅炉房燃气报警系统安装",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1412,
+      "legacy_contract_id": "ffd2ff719a0a429dad31f6d8d099fe6c",
+      "name": "CONIN2601375",
+      "subject": "罗江县蟠龙镇2016年农业综合开发高标准农田建设项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1413,
+      "legacy_contract_id": "ffeffa68a4e845e4a886e1055c68390f",
+      "name": "CONIN2601376",
+      "subject": "鸿成·仁何府（二期）新建户表工程",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1414,
+      "legacy_contract_id": "fffb346230da40f29947dbc8b439a83f",
+      "name": "CONIN2601377",
+      "subject": "界石围栏采购项目",
+      "type": "out",
+      "state": "draft"
+    },
+    {
+      "contract_id": 1415,
+      "legacy_contract_id": "fffe3fc0c47c46988908ca8a21bd762c",
+      "name": "CONIN2601378",
+      "subject": "旌阳区钉居建材经营部关闭自备水工程",
+      "type": "out",
+      "state": "draft"
+    }
+  ],
+  "artifacts": {
+    "pre_write_snapshot": "/mnt/artifacts/migration/contract_header_final132_pre_write_snapshot_v1.csv",
+    "post_write_snapshot": "/mnt/artifacts/migration/contract_header_final132_post_write_snapshot_v1.csv",
+    "rollback_targets": "/mnt/artifacts/migration/contract_header_final132_rollback_targets_v1.csv"
+  }
+}

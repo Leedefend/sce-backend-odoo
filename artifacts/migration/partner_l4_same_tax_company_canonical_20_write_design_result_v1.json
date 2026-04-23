@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_same_tax_company_canonical_20_write_design",
+  "write_design_rows": 20,
+  "expected_rows": 20,
+  "missing_columns": [],
+  "action_counts": {
+    "create_company_partner_with_canonical_tax_number": 20
+  },
+  "outputs": {
+    "write_design_rows": "artifacts/migration/partner_l4_same_tax_company_canonical_20_write_design_rows_v1.csv"
+  },
+  "next_gate": "Bounded create-only DB write with rollback targets."
+}

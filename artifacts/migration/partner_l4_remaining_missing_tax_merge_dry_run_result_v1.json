@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "mode": "partner_l4_remaining_missing_tax_merge_dry_run",
+  "input": "artifacts/migration/partner_l4_remaining_missing_tax_screen_rows_v1.csv",
+  "route_rows": 827,
+  "missing_columns": [],
+  "evidence_grade_counts": {
+    "missing_tax_company_duplicate_review": 156,
+    "missing_tax_company_supplier_pair_review": 652,
+    "missing_tax_complex_merge_review": 19
+  },
+  "outputs": {
+    "dry_run_rows": "artifacts/migration/partner_l4_remaining_missing_tax_merge_dry_run_rows_v1.csv",
+    "sample_rows": "artifacts/migration/partner_l4_remaining_missing_tax_merge_dry_run_samples_v1.csv"
+  },
+  "next_gate": "Open a no-DB design for missing_tax_company_supplier_pair_review before any write."
+}

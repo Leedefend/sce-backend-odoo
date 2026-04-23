@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_contract_missing_partner_anchor_write",
+  "database": "sc_migration_fresh",
+  "target_model": "res.partner",
+  "missing_names": 95,
+  "dependent_contract_rows": 557,
+  "created_rows": 0,
+  "cumulative_created_rows": 95,
+  "reused_existing_rows": 95,
+  "resolved_anchor_count": 95,
+  "db_writes": 0,
+  "demo_targets_executed": 0,
+  "rollback_targets": "/mnt/artifacts/migration/fresh_db_contract_missing_partner_anchor_rollback_targets_v1.csv",
+  "resolution_artifact": "/mnt/artifacts/migration/fresh_db_contract_missing_partner_anchor_resolution_v1.csv",
+  "decision": "contract_missing_partner_anchors_materialized",
+  "next_step": "rerun remaining contract header adapter"
+}

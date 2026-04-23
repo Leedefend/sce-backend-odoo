@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "mode": "contract_header_12_row_no_db_dry_run",
+  "database": "no_db_access",
+  "upstream_readiness": "artifacts/migration/contract_anchor_readiness_recheck_v1.json",
+  "upstream_safe_candidate_rows": 12,
+  "input_candidate_rows": 12,
+  "dry_run_rows": 12,
+  "ready_for_db_precheck_rows": 12,
+  "blocked_rows": 0,
+  "type_counts": {
+    "out": 12
+  },
+  "legacy_status_counts": {
+    "2": 12
+  },
+  "blocker_counts": {},
+  "dry_run_rows_csv": "artifacts/migration/contract_header_12_row_dry_run_rows_v1.csv",
+  "write_authorization": "not_granted",
+  "contract_write_decision": "NO-GO until explicit contract write authorization plus DB precheck",
+  "db_precheck_required": [
+    "resolve default tax_id for each contract type",
+    "confirm construction.contract sequence availability",
+    "confirm legacy_contract_id uniqueness in target DB",
+    "confirm project_id and partner_id still exist in target DB"
+  ],
+  "next_step": "open readonly DB precheck for the 12 dry-run rows or request explicit contract write authorization after precheck"
+}

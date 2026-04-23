@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_contract_57_retry_write",
+  "database": "sc_migration_fresh",
+  "target_model": "construction.contract",
+  "input_rows": 57,
+  "created_rows": 57,
+  "post_write_match_count": 57,
+  "rollback_target_rows": 57,
+  "updated_rows": 0,
+  "contract_line_rows": 0,
+  "payment_rows": 0,
+  "settlement_rows": 0,
+  "accounting_rows": 0,
+  "demo_targets_executed": 0,
+  "post_errors": [],
+  "artifacts": {
+    "pre_write_snapshot": "/mnt/artifacts/migration/fresh_db_contract_57_retry_pre_write_snapshot_v1.csv",
+    "post_write_snapshot": "/mnt/artifacts/migration/fresh_db_contract_57_retry_post_write_snapshot_v1.csv",
+    "rollback_targets": "/mnt/artifacts/migration/fresh_db_contract_57_retry_rollback_targets_v1.csv"
+  },
+  "decision": "contract_57_retry_write_complete",
+  "next_step": "refresh fresh database replay manifest and continue remaining migration layers"
+}

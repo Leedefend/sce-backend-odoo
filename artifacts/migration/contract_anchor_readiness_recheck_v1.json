@@ -1,0 +1,37 @@
+{
+  "status": "PASS",
+  "mode": "contract_anchor_readiness_recheck_readonly",
+  "database": "sc_demo",
+  "partner_anchor_input": "artifacts/migration/partner_30_row_rollback_target_list_v1.csv",
+  "contract_rows": 1694,
+  "partner_anchor_count": 30,
+  "written_project_anchor_count": 130,
+  "direction_counts": {
+    "defer": 139,
+    "in": 1,
+    "out": 1554
+  },
+  "partner_match_counts": {
+    "defer": 1622,
+    "exact": 71,
+    "normalized": 1
+  },
+  "project_scope_counts": {
+    "project_not_written_scope": 1548,
+    "written_project_match": 146
+  },
+  "deleted_counts": {
+    "active_or_blank": 1629,
+    "deleted": 65
+  },
+  "safe_candidate_rows": 12,
+  "safe_candidate_csv": "artifacts/migration/contract_anchor_safe_candidates_v1.csv",
+  "blocker_counts": {
+    "deleted_flag": 65,
+    "direction_defer": 139,
+    "partner_unresolved": 1622,
+    "project_not_written_scope": 1548
+  },
+  "decision": "candidate dry-run allowed",
+  "next_step": "prepare bounded contract header dry-run"
+}

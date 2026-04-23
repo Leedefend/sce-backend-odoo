@@ -1,0 +1,719 @@
+{
+  "status": "PASS",
+  "mode": "project_next_100_create_only_dry_run_no_db_no_orm",
+  "raw_project_rows": 755,
+  "already_materialized_project_rows": 130,
+  "skipped_existing_rows": 125,
+  "candidate_csv": "artifacts/migration/project_next_100_candidate_v2.csv",
+  "row_count": 100,
+  "safe_field_count": 22,
+  "summary": {
+    "create": 100,
+    "update": 0,
+    "error": 0
+  },
+  "errors": [],
+  "results": [
+    {
+      "line": 2,
+      "legacy_project_id": "2838f6304aa84ca891cf8b55fafca171",
+      "name": "美林康城售楼部绿化改造",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 3,
+      "legacy_project_id": "2865a4a7b99940cfa2653c54b26edf99",
+      "name": "璧山区正兴镇龙家河河堤水毁修复工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 4,
+      "legacy_project_id": "28b43ef4516445d8a54326b977288fba",
+      "name": "重庆市璧山区青杠街道山洪沟整治项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 5,
+      "legacy_project_id": "290615a7138e49228ce83d02514c1372",
+      "name": "鸿图府项目第二期建筑安装工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 6,
+      "legacy_project_id": "292584f7b81f40579ab90504983a05fc",
+      "name": "蓬溪县汽车城二期建设项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 7,
+      "legacy_project_id": "29c0549f98024dc0937823da66701bbc",
+      "name": "阿克陶县人民医院医技楼配电安装工程项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 8,
+      "legacy_project_id": "29cf2f89c2b94a19b4c8689f8199a2a3",
+      "name": "某部车库建设项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 9,
+      "legacy_project_id": "29dff975ab4b42b5bc941af2c04b7cec",
+      "name": "普格县2019年产业扶贫特色水果种植示范项目大棚及果园灌溉工程（施工2）",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 10,
+      "legacy_project_id": "2a90203d1f0f420b841d1eca197f3a4d",
+      "name": "八角星坐标项目景观坡道优化调整工程劳务分包",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 11,
+      "legacy_project_id": "2ac906a09ef840688c8e4045a351367f",
+      "name": "引入社会资金共同打造游泳高水平运动员后备人才培养项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 12,
+      "legacy_project_id": "2adfc1940c6446e5b5db0f0e3339eeff",
+      "name": "东湖街道老旧街区改造城市更新项目（一期）-秦岭山路（黄河路-玉泉路）提升改造工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 13,
+      "legacy_project_id": "2afee25a79664b53a6a8a8740bcf6d4b",
+      "name": "博雅学校小学部1号楼屋面装饰改造功能用房采购项目施工合同",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 14,
+      "legacy_project_id": "2b26ad9411f0477886faff502f0d606d",
+      "name": "广元龙江电力宾馆消防管道改造施工",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 15,
+      "legacy_project_id": "2b62b87ee1a04fcb862ba23ce0e72367",
+      "name": "德阳市旌阳区医养结合中心及精神病院区建设项目新增电缆及给排水管工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 16,
+      "legacy_project_id": "2c2cf0230879448b8aa65a135baa1292",
+      "name": "上海二十冶西南公司四川省广汉市职业中专学校迁建项目土石方专业分包工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 17,
+      "legacy_project_id": "2c8212fcec854602883cf1f1b88f9354",
+      "name": "中江县北塔南北干道至东二环道路二期工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 18,
+      "legacy_project_id": "2cc4764ad05e4c5ebaeaf4d5a85c5cd7",
+      "name": "绵阳市游仙区魏城镇竹柳村（原柳塔村3组）通组道路硬化工程项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 19,
+      "legacy_project_id": "2cd51f2a8f064ef691347e5fee5d83fb",
+      "name": "剑阁2019年村道窄路加宽工程圈龙乡太吉村",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 20,
+      "legacy_project_id": "2cdca43cbcab4faf95cdbc99a09a1454",
+      "name": "罗江区2020年暴雨洪灾水毁后重建护岸覆土工程劳务（第二次）",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 21,
+      "legacy_project_id": "2d0c8990b9944c60b5ea355035049c1b",
+      "name": "国网四川天府新区龙泉驿区供电公司柏合供电所",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 22,
+      "legacy_project_id": "2e22b1e9bd614b3a9b1abc3ac9cdc912",
+      "name": "东湖山水零星工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 23,
+      "legacy_project_id": "2e82c7a28d2d4455a075564650a4caf9",
+      "name": "四川建筑职业技术学院德阳校区综合办公楼西侧会议室等维修改造项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 24,
+      "legacy_project_id": "2e9c130a609342e28328c728d28b9eb7",
+      "name": "2015年市级农业综合开发土地治理项目工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 25,
+      "legacy_project_id": "2ec0da21560a45959b90a77d12866c51",
+      "name": "巴中恩阳临港产业园建设项目-制造业组团项目1-8号厂房消防工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 26,
+      "legacy_project_id": "2f3cdff1dafd40c4b92d3be23af67b52",
+      "name": "龙洲湾公交站场排水沟沟盖板维修",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 27,
+      "legacy_project_id": "2f4e8d6faf9840918cd916598df3b526",
+      "name": "绵竹市南轩中学体育馆篮球场维修改造工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 28,
+      "legacy_project_id": "2f52db447c8f40c386caad3664fade2b",
+      "name": "德阳市人民医院门诊大楼装饰工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 29,
+      "legacy_project_id": "2fc661b9f89343febe46538b446c07f5",
+      "name": "四川航天技术学院龙泉校区停车场维修项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 30,
+      "legacy_project_id": "2fd504d1871e4b86a2ae42d8e1ed8810",
+      "name": "米易县南部新城市政道路及生态湿地公园PPP项目-绿化工程补充协议",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 31,
+      "legacy_project_id": "3021356f755143a8b18255091cc9c42b",
+      "name": "玖龙纸业（重庆）有限公司年产55万吨牛卡及瓦楞纸生产线配套湿式造纸联合厂房工程第三方整改（307.77667）",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 32,
+      "legacy_project_id": "308f3a386994423093c36b6d02452501",
+      "name": "剑阁县2018年鹤龄镇村级公共服务项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 33,
+      "legacy_project_id": "30f93b0db7b445d7afc04dbc99de3d65",
+      "name": "剑阁县公兴镇新生村风貌打造项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 34,
+      "legacy_project_id": "31a7ff8889074872ba3fb0ffe36c48a3",
+      "name": "17中核二三中核城建德阿项目屋面光伏安装专业分包常规采购",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 35,
+      "legacy_project_id": "32cdeb11726f42ec80dc90d7405ef8a3",
+      "name": "华西十二公司三分公司成都市成华区龙潭街道桂林村中小学项目保温采购",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 36,
+      "legacy_project_id": "332807dc401e4bc5802578da12fe8d98",
+      "name": "中国电信股份有限公司德阳分公司2023-2024年房屋零星维修服务",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 37,
+      "legacy_project_id": "335e9c88d30c46f6bdd970a80d241b00",
+      "name": "剑阁县广播局会议室装修工程项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 38,
+      "legacy_project_id": "33ab9f94a9bb46ad94b52504ab8f807f",
+      "name": "天府*零星维修工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 39,
+      "legacy_project_id": "33bf23a069304419a4c259caf04473a8",
+      "name": "南开两江中学学校宿舍改造工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 40,
+      "legacy_project_id": "33ff927b2a7349f4a3ec8e8795db98ee",
+      "name": "绵阳市安州区2025年制种大县项目-生产机电设施建设工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 41,
+      "legacy_project_id": "35aa78045dea48e082cae3f783e952b6",
+      "name": "四川省广汉高封橡塑有限公司地上建(构)筑物附着物拆除工程及残值处置项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 42,
+      "legacy_project_id": "35d5e3007cae414ebdcf9b2dc65d84b4",
+      "name": "谢勤林工程（万兴项目）",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 43,
+      "legacy_project_id": "3621dc3c5f164603adc3ed0e9ac83aa0",
+      "name": "广州铁路运输检察分院、广州铁路运输检察院办案和专业技术用房工程项目室外园建工程及配套工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 44,
+      "legacy_project_id": "369f099d737d448aa55cd8f191da953b",
+      "name": "铜梁区二坪镇严家村二、三、五组公路工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 45,
+      "legacy_project_id": "36e5e7c783fb4fa5941a032db7afbd05",
+      "name": "邛崃市羊安工业园区天然气分布式能源项目综合楼外墙装修工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 46,
+      "legacy_project_id": "3713a6cc17f7489f8639d13701cb6376",
+      "name": "璧山区 2022 年广普镇丘陵山区高标准农田改造提升示范工程试点项目五标段",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 47,
+      "legacy_project_id": "37a2903cc4f94a9194faedfa2148bb0e",
+      "name": "苍溪县2020年龙山镇金虎村12个村和龙山镇水娅村等12个村城乡建设用地增减挂钩项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 48,
+      "legacy_project_id": "37c8dab219e04007af40a2ee780477bf",
+      "name": "莎车县低压电力设施改造项目施工第二标段",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 49,
+      "legacy_project_id": "387477e67b134c0ba596acb49fccc62c",
+      "name": "雅安市汉源县文化体育和旅游局体育馆及文化馆维修工程采购项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 50,
+      "legacy_project_id": "3874b7b8947c4d5295911523127a1f1e",
+      "name": "什邡市经济开发区横十七路",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 51,
+      "legacy_project_id": "38a5b46f53294ed7bcd2ed60c2a8ab46",
+      "name": "广汉市城市更新天府旌城南片区城中村改造项目地基基础工程专业分包",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 52,
+      "legacy_project_id": "38a935363c53402fa59ee99c9170f8de",
+      "name": "医院商业服务配套安装工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 53,
+      "legacy_project_id": "38c01559277a45fb94bb9ed9f5786812",
+      "name": "成绵高速德阳收费站维修工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 54,
+      "legacy_project_id": "38f30547796a4f46886ca433be91fe6d",
+      "name": "宝峰山艺术大集项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 55,
+      "legacy_project_id": "39285206b95d44a08baa37c84a6324ed",
+      "name": "金螺湾及文德湖游乐设备维修与更换",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 56,
+      "legacy_project_id": "39a156d94025490fbd873db0c05f3d37",
+      "name": "中国移动四川分公司绵阳片区2018-2020年渠道零星维修项目（标包2）",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 57,
+      "legacy_project_id": "39b007f2fcac4bcabaed31c907846e8b",
+      "name": "德阳市旌阳区东湖-和新（崴和路）道路改建工程二标段",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 58,
+      "legacy_project_id": "39fd0175180d446094aec581afd6d558",
+      "name": "西昌市西部城区B2-05地块房地产开发项目泛光照明",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 59,
+      "legacy_project_id": "3a08110abc76473aa8180fc16f9395b7",
+      "name": "旌阳区综合管廊项目钱塘江路段支护及防水工程二标",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 60,
+      "legacy_project_id": "3a2e0ff623244bde8579b35b0c53afad",
+      "name": "龙泉驿区第六中学校维修改造工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 61,
+      "legacy_project_id": "3a74f431115c4b7ba18453ff63ba3053",
+      "name": "广清城际轨道交通项目（花都段）安置区工程(狮岭镇军田安置区一期工程）园林园建专业分包工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 62,
+      "legacy_project_id": "3adb3048f736424e8d5ebd782afd9da0",
+      "name": "米易东站屋顶花园项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 63,
+      "legacy_project_id": "3ae7963b49614ce8ba4c2066b4134452",
+      "name": "生态岛智能智造成果转化空间工程钢结构专业分包",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 64,
+      "legacy_project_id": "3af445162bf648d5908818cb37d4e006",
+      "name": "国道G105线中山沙朗至古鹤段改建工程及市政配套工程堆料场场地处理",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 65,
+      "legacy_project_id": "3bad15a1318247b5b6c8250d31dff07f",
+      "name": "绵阳市安州区雎水镇皇帽村2024年河堤护岸水毁修复工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 66,
+      "legacy_project_id": "3c67d2421ff24496a410fde08278dcda",
+      "name": "通江大道石塔立交北侧下穿通道工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 67,
+      "legacy_project_id": "3ce020ce08294f8dbdb7c86f5d9ba50a",
+      "name": "德阳市泰山路（金沙江路-新收费站）提档升级改造工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 68,
+      "legacy_project_id": "3ce2dcf5527242848ef633aa08088b48",
+      "name": "“三供一业“院落自来水管网改造工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 69,
+      "legacy_project_id": "3d9adf1f35c648e182d821f1fd826589",
+      "name": "德阳高新区万福棚改二期大门改造工程机电安装专业分包",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 70,
+      "legacy_project_id": "3ddb4ef7f09a4280b7ef904a6f6e5275",
+      "name": "简乃华工程（八角卫生院项目）",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 71,
+      "legacy_project_id": "3ddc904f2c7b43d283abbfa56acf1c43",
+      "name": "会理县2017年国家农业综合开发土地治理结余资金建设项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 72,
+      "legacy_project_id": "3e1ee921c69441e4abd84185189267dc",
+      "name": "安广公司工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 73,
+      "legacy_project_id": "3f40674fb14b4bcd9225f37b21e5c2d3",
+      "name": "德阳市中心城区穿城堰、丁家堰、干河子、胜利堰四条黑臭水体整治工程-劳务分包（第一批）胜利堰二标段",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 74,
+      "legacy_project_id": "3ffba2d0c30c466d8e835e1e5b73c165",
+      "name": "剑阁县圈龙乡新桥村文化室",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 75,
+      "legacy_project_id": "401b1e7a1b11498e92e74070e4b7fbb7",
+      "name": "杰阳排水有限公司采购零星修缮服务",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 76,
+      "legacy_project_id": "4084a60acdd3440bb5503c043ea20f8f",
+      "name": "德阳万达小贰楼项目土方开挖工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 77,
+      "legacy_project_id": "409e165a85264d6c9e22085d02dcd09a",
+      "name": "布拖县2016年—2019年安全住房地质隐患应急抢险项目建设工程（火烈乡）",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 78,
+      "legacy_project_id": "410aacffed5d4eec9736cdf5395bb301",
+      "name": "德阳市中心城区照明改造工程-千山街国土局路段等5处10KV配电工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 79,
+      "legacy_project_id": "412983e6b51f4ee294e20096b18c608d",
+      "name": "渝北区龙泉水库大坝公路西侧人行便道扶助工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 80,
+      "legacy_project_id": "417d8d223a784630877b006d8067e142",
+      "name": "岳普湖县2020年棚户区改造安置小区建设项目一标段",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 81,
+      "legacy_project_id": "41aca2a81e6c4a9bb7ed5f31a3c42b7b",
+      "name": "李家沱战场入口地面修复工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 82,
+      "legacy_project_id": "422cc4f78b52472eb1b71ad9ff9200c5",
+      "name": "疏勒县第二幼儿园消防改造项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 83,
+      "legacy_project_id": "4286c6fbba3849cfb7511f2328f88115",
+      "name": "旌阳区综合管廊项目钱塘江路段支护及防水工程一标",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 84,
+      "legacy_project_id": "42bdd94db1f945cf9f7d6d328bd15859",
+      "name": "德阳市自来水公司给水管道维修工程2022",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 85,
+      "legacy_project_id": "432bb7a6a36e4ec38819ec2a5f1e0bff",
+      "name": "2018年省级农业综合开发现代农业产业带罗江区3500亩柑橘种植基地改扩建项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 86,
+      "legacy_project_id": "43e058a2dd5943058742f938cc67e10e",
+      "name": "喀什西克尔水库架空线路和配电工程专业分包",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 87,
+      "legacy_project_id": "44169b333e24436aa3592d06b9d2a0c3",
+      "name": "四川省区域应急救援雅安基地项目综合业务大楼外墙铝格栅专业分包工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 88,
+      "legacy_project_id": "44a080a6bc8748249e2bf6b80e78ed62",
+      "name": "智慧之心项目3#楼及3#楼裙楼泡沫混凝土工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 89,
+      "legacy_project_id": "4550afe95e6749fd9dfcb7a7706464ee",
+      "name": "2023年渝中区绿管处冬季行道树修剪",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 90,
+      "legacy_project_id": "4599a87b64d84b98ba596dee410c0ace",
+      "name": "中国移动四川分公司雅安片区2018-2020年渠道零星维修项目（标包15）",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 91,
+      "legacy_project_id": "45cbbe788bee4d1eb75ce24a99344dc7",
+      "name": "拉萨市柳梧新区管网改造",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 92,
+      "legacy_project_id": "45d84b461f8a4be491fda41b4a6c5d13",
+      "name": "五里坪站场发停车区域调整综合改造工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 93,
+      "legacy_project_id": "462accb179fa48fa936ec1384f15cdc9",
+      "name": "长江西路北侧（泰山路-华山路）机非隔离带拆除维修工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 94,
+      "legacy_project_id": "4634958cd5bc4cf8a096f5771b235fe2",
+      "name": "重庆机场集团有限公司李俭锋零星综合项目",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 95,
+      "legacy_project_id": "4634f972dcbe42ed88343d4e9e994daf",
+      "name": "“首府花雨树”，“第一生活宿舍区”、“天湖银杏苑”给水工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 96,
+      "legacy_project_id": "466147b763814ec5811faa81275d1081",
+      "name": "绵阳市涪城区教工幼儿园维修装饰工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 97,
+      "legacy_project_id": "46792322bab04858b17a5b9e3345cf5d",
+      "name": "广汉市连山镇农村集体经济融合发展示范项目——广汉市连山镇农产品展示展销中心（二期）劳务分包工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 98,
+      "legacy_project_id": "4693df15d594434c95aa9a3304b3a058",
+      "name": "高坪区2020年中央财政高标准农田建设项目（老君东观片区）标段",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 99,
+      "legacy_project_id": "46b7613b1b2c4a6e918815ee5b8e5969",
+      "name": "金阳县青松乡中坪村至白银厂村连接路工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 100,
+      "legacy_project_id": "47134879c069447c8eb6730a33939c9c",
+      "name": "临空经济总部大楼A栋9层装修装饰工程",
+      "action": "create",
+      "errors": []
+    },
+    {
+      "line": 101,
+      "legacy_project_id": "47450def75994d9899db7eef50f5c0f0",
+      "name": "渝北区双龙水库管理所2024年水库维修养护工程",
+      "action": "create",
+      "errors": []
+    }
+  ],
+  "next_step": "open write authorization packet for this 100-row project create-only candidate"
+}

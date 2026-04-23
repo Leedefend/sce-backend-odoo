@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "mode": "contract_header_post800_nodb_refresh",
+  "database": "sc_demo",
+  "db_writes": 0,
+  "input_rows": 1332,
+  "upstream_created_rows": 800,
+  "rollback_target_rows": 800,
+  "existing_candidate_rows": 800,
+  "written_existing_rows": 800,
+  "extra_existing_rows": 0,
+  "missing_written_rows": 0,
+  "remaining_rows": 532,
+  "next_slice_rows": 200,
+  "errors": [],
+  "artifacts": {
+    "remaining_csv": "/mnt/artifacts/migration/contract_header_remaining_after_800_v1.csv",
+    "next_slice_csv": "/mnt/artifacts/migration/contract_header_next_slice200_after_800_v1.csv"
+  },
+  "next_step": "open next 200-row contract header readonly precheck"
+}

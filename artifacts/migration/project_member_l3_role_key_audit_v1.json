@@ -1,0 +1,87 @@
+{
+  "status": "PASS",
+  "run_id": "ITER-2026-04-14-L3-ROLE-KEY-AUDIT-MAPPED-WRITE",
+  "model": "project.responsibility",
+  "field": "role_key",
+  "legal_selection": [
+    {
+      "role_key": "manager",
+      "label": "项目经理"
+    },
+    {
+      "role_key": "cost",
+      "label": "成本负责人"
+    },
+    {
+      "role_key": "finance",
+      "label": "财务"
+    },
+    {
+      "role_key": "cashier",
+      "label": "出纳"
+    },
+    {
+      "role_key": "material",
+      "label": "材料员"
+    },
+    {
+      "role_key": "safety",
+      "label": "安全员"
+    },
+    {
+      "role_key": "quality",
+      "label": "质检员"
+    },
+    {
+      "role_key": "document",
+      "label": "资料员"
+    }
+  ],
+  "legal_role_keys": [
+    "manager",
+    "cost",
+    "finance",
+    "cashier",
+    "material",
+    "safety",
+    "quality",
+    "document"
+  ],
+  "existing_distribution": {
+    "manager": 3
+  },
+  "existing_total": 3,
+  "sample_user_ids": [
+    12,
+    14
+  ],
+  "sample_project_ids": [
+    2150,
+    2238,
+    2245
+  ],
+  "sample_user_distribution": {
+    "manager": 3
+  },
+  "sample_project_existing_responsibilities": [
+    {
+      "responsibility_id": 3,
+      "project_id": 2245,
+      "user_id": 14,
+      "role_key": "manager"
+    },
+    {
+      "responsibility_id": 2,
+      "project_id": 2238,
+      "user_id": 12,
+      "role_key": "manager"
+    },
+    {
+      "responsibility_id": 1,
+      "project_id": 2150,
+      "user_id": 12,
+      "role_key": "manager"
+    }
+  ],
+  "db_writes": 0
+}

@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_project_member_neutral_replay_adapter",
+  "db_writes": 0,
+  "database_operations": 0,
+  "completed_source_rows": 7389,
+  "replay_payload_rows": 7389,
+  "duplicate_replay_identities": 0,
+  "duplicate_samples": [],
+  "missing_raw_member_rows": 0,
+  "missing_raw_member_samples": [],
+  "missing_fresh_project_anchors": 0,
+  "missing_fresh_project_samples": [],
+  "row_artifact": "/mnt/e/sc-backend-odoo/artifacts/migration/fresh_db_project_member_neutral_replay_payload_v1.csv",
+  "decision": "project_member_neutral_replay_payload_ready",
+  "next_step": "precheck and write project-member neutral payload into sc_migration_fresh"
+}

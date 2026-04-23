@@ -1,0 +1,99 @@
+{
+  "status": "PASS",
+  "mode": "full_migration_scope_freeze_no_db",
+  "raw_counts": {
+    "project": 755,
+    "partner_company": 7864,
+    "partner_supplier": 3041,
+    "contract": 1694,
+    "project_member": 21390,
+    "payment": 13646,
+    "receipt": 7412
+  },
+  "current_materialized": {
+    "project_created": 130,
+    "partner_created": 30,
+    "contract_created": 12,
+    "contract_post_write_review_status": "ROLLBACK_READY"
+  },
+  "lanes_csv": "artifacts/migration/full_migration_execution_lanes_v1.csv",
+  "lanes": [
+    {
+      "lane": "project_expand",
+      "source": "tmp/raw/project/project.csv",
+      "raw_rows": 755,
+      "materialized_rows": 130,
+      "next_action": "bounded create-only expansion dry-run",
+      "risk": "medium",
+      "write_allowed_now": "no",
+      "reason": "requires next bounded payload and post-write rollback lock"
+    },
+    {
+      "lane": "partner_company_expand",
+      "source": "tmp/raw/partner/company.csv",
+      "raw_rows": 7864,
+      "materialized_rows": 30,
+      "next_action": "bounded company-primary create-only expansion dry-run",
+      "risk": "medium",
+      "write_allowed_now": "no",
+      "reason": "cross-source conflicts remain manually gated"
+    },
+    {
+      "lane": "partner_supplier_supplement",
+      "source": "tmp/raw/partner/supplier.csv",
+      "raw_rows": 3041,
+      "materialized_rows": 0,
+      "next_action": "no-DB supplement enrichment design after company-primary expansion",
+      "risk": "medium",
+      "write_allowed_now": "no",
+      "reason": "supplier is supplemental-only and must not override company-primary identity"
+    },
+    {
+      "lane": "contract_expand",
+      "source": "tmp/raw/contract/contract.csv",
+      "raw_rows": 1694,
+      "materialized_rows": 12,
+      "next_action": "bounded header expansion dry-run after project/partner anchors expand",
+      "risk": "high",
+      "write_allowed_now": "no",
+      "reason": "depends on broader project and partner anchors"
+    },
+    {
+      "lane": "project_member",
+      "source": "tmp/raw/project_member/project_member.csv",
+      "raw_rows": 21390,
+      "materialized_rows": 0,
+      "next_action": "readiness screening only",
+      "risk": "high",
+      "write_allowed_now": "no",
+      "reason": "may imply user/permission semantics and must not touch ACL implicitly"
+    },
+    {
+      "lane": "payment",
+      "source": "tmp/raw/payment/payment.csv",
+      "raw_rows": 13646,
+      "materialized_rows": 0,
+      "next_action": "STOP: dedicated financial/payment task line required",
+      "risk": "stop_domain",
+      "write_allowed_now": "no",
+      "reason": "payment lane is a financial stop domain"
+    },
+    {
+      "lane": "receipt",
+      "source": "tmp/raw/receipt/receipt.csv",
+      "raw_rows": 7412,
+      "materialized_rows": 0,
+      "next_action": "STOP: dedicated financial/receipt task line required",
+      "risk": "stop_domain",
+      "write_allowed_now": "no",
+      "reason": "receipt lane is a financial/cashflow stop domain"
+    }
+  ],
+  "decision": "full migration opened as controlled batch chain; no monolithic write",
+  "next_safe_batch": "project_expand bounded create-only dry-run",
+  "stop_lanes": [
+    "payment",
+    "receipt",
+    "project_member if it implies permissions"
+  ]
+}

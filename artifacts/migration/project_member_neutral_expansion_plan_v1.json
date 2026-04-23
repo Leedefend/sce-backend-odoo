@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "mode": "project_member_neutral_expansion_dry_run",
+  "database": "sc_demo",
+  "run_id": "ITER-2026-04-14-0030NX",
+  "db_writes": 0,
+  "target_model": "sc.project.member.staging",
+  "source_rows": 21390,
+  "mapped_project_user_rows": 7389,
+  "already_neutral_rows": 7389,
+  "remaining_relation_unique_rows": 0,
+  "remaining_duplicate_relation_evidence_rows": 0,
+  "relation_unique_slice_rows": 0,
+  "duplicate_relation_evidence_slice_rows": 0,
+  "distinct_relation_keys": 769,
+  "duplicate_relation_keys": 735,
+  "blocked_or_unmapped": {
+    "placeholder_or_unmapped_user": 14001
+  },
+  "role_fact_status": "missing",
+  "remaining_evidence_rows": 0,
+  "recommended_next_gate": "Neutral carrier coverage is complete for all mapped project/user rows; no expansion write remains.",
+  "artifacts": {
+    "relation_unique_slice": "/mnt/artifacts/migration/project_member_neutral_expansion_relation_unique_slice_v1.csv",
+    "duplicate_relation_evidence_slice": "/mnt/artifacts/migration/project_member_neutral_expansion_duplicate_relation_evidence_slice_v1.csv"
+  },
+  "blocking_reasons": []
+}
