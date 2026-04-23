@@ -1,0 +1,35 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "partner_sc_v1",
+  "baseline_package": true,
+  "failure_policy": {
+    "external_id_duplicate": "block_package",
+    "missing_legacy_partner_id": "discard_record",
+    "missing_required_header": "block_package",
+    "missing_source_file": "block_package",
+    "partner_rank_field_requested": "block_package",
+    "unsafe_partner_name": "discard_record"
+  },
+  "validation_gates": {
+    "generate_time": [
+      "source_partner_files_exist",
+      "required_source_headers_present",
+      "legacy_partner_id_non_empty",
+      "partner_name_safe",
+      "external_id_unique",
+      "garbage_rows_discarded",
+      "no_partner_rank_fields",
+      "no_high_risk_lane_leakage"
+    ],
+    "postload": [
+      "target_count_matches_manifest",
+      "external_id_resolves",
+      "rerun_is_idempotent"
+    ],
+    "preload": [
+      "asset_files_exist",
+      "asset_hashes_match",
+      "target_model_available"
+    ]
+  }
+}

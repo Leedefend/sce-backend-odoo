@@ -1,0 +1,48 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "receipt_invoice_attachment_sc_v1",
+  "assets": [
+    {
+      "path": "30_relation/receipt_invoice_attachment/receipt_invoice_attachment_v1.xml",
+      "sha256": "96f930e543da623d47fe746f6c2d1d14afae74ced71b09eafa670f54a68a126e"
+    },
+    {
+      "path": "manifest/receipt_invoice_attachment_external_id_manifest_v1.json",
+      "sha256": "47f2a65585d5ba1791d7719155ccf36ad8cc7681e80463043275143da218523d"
+    },
+    {
+      "path": "manifest/receipt_invoice_attachment_validation_manifest_v1.json",
+      "sha256": "59d74f3a4ea90d77db341e0aaec8a6a72aa4e64d42af3605bd568cdb3bf9fc50"
+    }
+  ],
+  "baseline_package": true,
+  "counts": {
+    "blocked_records": 0,
+    "loadable_records": 1079,
+    "matched_receipt_invoice_lines": 1079,
+    "raw_rows": 126967
+  },
+  "db_writes": 0,
+  "dependencies": [
+    "receipt_invoice_line_sc_v1"
+  ],
+  "generated_at": "2026-04-15T15:50:00+00:00",
+  "lane": {
+    "lane_id": "receipt_invoice_attachment",
+    "layer": "30_relation"
+  },
+  "odoo_shell": false,
+  "source_counts": {
+    "match_counts": {
+      "PID->pid": 1079
+    },
+    "skipped_counts": {
+      "pid_not_receipt_invoice_line": 125888
+    }
+  },
+  "target": {
+    "model": "ir.attachment",
+    "res_model": "sc.receipt.invoice.line",
+    "type": "url"
+  }
+}

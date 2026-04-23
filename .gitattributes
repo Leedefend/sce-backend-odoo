@@ -6,3 +6,5 @@
 *.ts text eol=lf
 *.vue text eol=lf
 artifacts/migration/** -text
+tmp/raw/** -text
+migration_assets/** -text

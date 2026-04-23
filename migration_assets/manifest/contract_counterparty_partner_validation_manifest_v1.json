@@ -1,0 +1,46 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "contract_counterparty_partner_sc_v1",
+  "baseline_package": true,
+  "business_boundary": {
+    "contract_inclusion_policy": "explicit_income_or_expense_and_project_anchor_required",
+    "counterparty_anchor_policy": "materialize_unresolved_contract_counterparty_text_only",
+    "financial_semantics": "not_changed"
+  },
+  "db_writes": 0,
+  "generated_at": "2026-04-15T08:00:05.838403+00:00",
+  "odoo_shell": false,
+  "screen_profile": {
+    "blocked_contract_rows": 1255,
+    "blocker_counts": {
+      "deleted_flag": 65,
+      "direction_defer": 139,
+      "partner_anchor_already_resolved": 1108,
+      "project_anchor_missing": 88,
+      "unsafe_counterparty_name": 140
+    },
+    "candidate_contract_rows": 439,
+    "candidate_current_partner_match_types": {
+      "ambiguous": 393,
+      "missing": 46
+    },
+    "ready_partner_records": 88
+  },
+  "source": "tmp/raw/contract/contract.csv",
+  "target_model": "res.partner",
+  "validation_gates": {
+    "generate_time": [
+      "contract_direction_explicit",
+      "project_external_id_resolves",
+      "subject_present",
+      "counterparty_name_safe",
+      "external_id_unique",
+      "supplement_source_explicit",
+      "no_partner_rank_fields",
+      "no_db_writes"
+    ],
+    "postload": [
+      "xml_external_id_resolves"
+    ]
+  }
+}

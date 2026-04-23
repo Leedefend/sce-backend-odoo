@@ -1,0 +1,84 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "contract_sc_v1",
+  "assets": [
+    {
+      "asset_id": "contract_header_xml_v1",
+      "format": "xml",
+      "path": "20_business/contract/contract_header_v1.xml",
+      "record_count": 1492,
+      "required": true,
+      "sha256": "8bd010830d455b189ce3518a5bbe2c1243f084d298080035d22003de7e86245f"
+    },
+    {
+      "asset_id": "contract_external_id_manifest_v1",
+      "format": "json",
+      "path": "manifest/contract_external_id_manifest_v1.json",
+      "record_count": 1492,
+      "required": true,
+      "sha256": "e8b07110e1c76266851b8ab942a9eb46bb04563465faa40a8552ec5b33c16d92"
+    },
+    {
+      "asset_id": "contract_validation_manifest_v1",
+      "format": "json",
+      "path": "manifest/contract_validation_manifest_v1.json",
+      "record_count": 1,
+      "required": true,
+      "sha256": "98b637694e1b64c71ad3fcfb98f6d01303636642eb1ffb7e089a4edd26c4c425"
+    }
+  ],
+  "baseline_package": true,
+  "counts": {
+    "blocked_records": 202,
+    "loadable_records": 1492,
+    "raw_rows": 1694
+  },
+  "db_writes": 0,
+  "dependencies": [
+    "project_sc_v1",
+    "partner_sc_v1",
+    "contract_counterparty_partner_sc_v1"
+  ],
+  "generated_at": "2026-04-15T07:45:00+00:00",
+  "idempotency": {
+    "conflict_policy": "block_package",
+    "duplicate_policy": "update_existing_same_external_id",
+    "mode": "odoo_xml_external_id"
+  },
+  "lane": {
+    "business_priority": "business_header_fact",
+    "lane_id": "contract",
+    "layer": "20_business",
+    "risk_class": "anchored_subset"
+  },
+  "load_order": [
+    "contract_header_xml_v1",
+    "contract_external_id_manifest_v1",
+    "contract_validation_manifest_v1"
+  ],
+  "odoo_shell": false,
+  "source_snapshot": {
+    "extract_batch_id": "contract_header_xml_baseline_v1",
+    "source_system": "sc",
+    "source_tables": [
+      "T_ProjectContract_Out"
+    ]
+  },
+  "target": {
+    "identity_field": "legacy_contract_id",
+    "load_strategy": "odoo_xml_external_id",
+    "model": "construction.contract"
+  },
+  "validation_gates": [
+    "source_contract_file_exists",
+    "required_source_headers_present",
+    "legacy_contract_id_non_empty",
+    "legacy_contract_id_unique",
+    "project_anchor_resolves",
+    "partner_anchor_resolves",
+    "contract_counterparty_supplement_resolves",
+    "receipt_contract_reference_direction_resolves",
+    "receipt_single_counterparty_anchor_resolves",
+    "tax_id_omitted_target_default"
+  ]
+}

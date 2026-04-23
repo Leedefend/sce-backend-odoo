@@ -1,0 +1,464 @@
+{
+  "catalog_id": "migration_asset_catalog_v1",
+  "catalog_version": "1.0",
+  "generated_at": "2026-04-15T16:10:00+00:00",
+  "package_order": [
+    "project_sc_v1",
+    "partner_sc_v1",
+    "contract_counterparty_partner_sc_v1",
+    "receipt_counterparty_partner_sc_v1",
+    "user_sc_v1",
+    "project_member_sc_v1",
+    "contract_sc_v1",
+    "contract_line_sc_v1",
+    "receipt_sc_v1",
+    "outflow_request_sc_v1",
+    "actual_outflow_sc_v1",
+    "supplier_contract_sc_v1",
+    "supplier_contract_line_sc_v1",
+    "outflow_request_line_sc_v1",
+    "receipt_invoice_line_sc_v1",
+    "receipt_invoice_attachment_sc_v1",
+    "legacy_attachment_backfill_sc_v1",
+    "legacy_expense_deposit_sc_v1",
+    "legacy_invoice_tax_sc_v1",
+    "legacy_receipt_income_sc_v1",
+    "legacy_financing_loan_sc_v1",
+    "legacy_fund_daily_snapshot_sc_v1",
+    "legacy_workflow_audit_sc_v1"
+  ],
+  "packages": [
+    {
+      "asset_manifest_path": "manifest/project_asset_manifest_v1.json",
+      "asset_manifest_sha256": "e111989d30376afadfbc42ec2a698e81556e64b9294cf385f7e1119cc6eadf31",
+      "asset_package_id": "project_sc_v1",
+      "baseline_package": true,
+      "business_priority": "core_business_body",
+      "dependencies": [],
+      "layer": "10_master",
+      "load_phase": 10,
+      "package_type": "business_ontology_master_data",
+      "required": true,
+      "risk_class": "normal",
+      "target_model": "project.project",
+      "verification_command": "python3 scripts/migration/project_asset_verify.py --asset-root migration_assets --lane project --check"
+    },
+    {
+      "asset_manifest_path": "manifest/partner_asset_manifest_v1.json",
+      "asset_manifest_sha256": "6edf355491635f5ce240b73bf9e3a6c82abe0eb447062ab37a4b44012c842d77",
+      "asset_package_id": "partner_sc_v1",
+      "baseline_package": true,
+      "business_priority": "core_master",
+      "dependencies": [],
+      "layer": "10_master",
+      "load_phase": 10,
+      "package_type": "dependency_master_data",
+      "required": true,
+      "risk_class": "normal",
+      "target_model": "res.partner",
+      "verification_command": "python3 scripts/migration/partner_asset_verify.py --asset-root migration_assets --lane partner --check"
+    },
+    {
+      "asset_manifest_path": "manifest/contract_counterparty_partner_asset_manifest_v1.json",
+      "asset_manifest_sha256": "d672b12cd541088ce049ca07ff09bd1aacf954686249750392c1ee9028448e7d",
+      "asset_package_id": "contract_counterparty_partner_sc_v1",
+      "baseline_package": true,
+      "business_priority": "contract_counterparty_anchor_master",
+      "dependencies": [
+        "partner_sc_v1"
+      ],
+      "layer": "10_master",
+      "load_phase": 10,
+      "package_type": "supplemental_master_data",
+      "required": true,
+      "risk_class": "supplemental_master_data",
+      "target_model": "res.partner",
+      "verification_command": "python3 scripts/migration/contract_counterparty_partner_asset_verify.py --asset-root migration_assets --lane contract_counterparty_partner --check"
+    },
+    {
+      "asset_manifest_path": "manifest/receipt_counterparty_partner_asset_manifest_v1.json",
+      "asset_manifest_sha256": "ca9552b870f1cd8807748fe27f5f3dbe8994f2f6a70a116d82af9a3f504ef090",
+      "asset_package_id": "receipt_counterparty_partner_sc_v1",
+      "baseline_package": true,
+      "business_priority": "receipt_counterparty_anchor_master",
+      "dependencies": [
+        "partner_sc_v1"
+      ],
+      "layer": "10_master",
+      "load_phase": 10,
+      "package_type": "supplemental_master_data",
+      "required": true,
+      "risk_class": "supplemental_master_data",
+      "target_model": "res.partner",
+      "verification_command": "python3 scripts/migration/receipt_counterparty_partner_asset_verify.py --asset-root migration_assets --lane receipt_counterparty_partner --check"
+    },
+    {
+      "asset_manifest_path": "manifest/user_asset_manifest_v1.json",
+      "asset_manifest_sha256": "87fe499939b0cf1e743c7fcbc22b89e4425ced754b002847f4121d9c41ca40d0",
+      "asset_package_id": "user_sc_v1",
+      "baseline_package": true,
+      "business_priority": "dependency_master_data",
+      "dependencies": [],
+      "layer": "10_master",
+      "load_phase": 10,
+      "package_type": "authority_anchor_master_data",
+      "required": true,
+      "risk_class": "authority_anchor",
+      "target_model": "res.users",
+      "verification_command": "python3 scripts/migration/user_asset_verify.py --asset-root migration_assets --lane user --check"
+    },
+    {
+      "asset_manifest_path": "manifest/project_member_asset_manifest_v1.json",
+      "asset_manifest_sha256": "5b4b3a2d363f50e3ee1c0009f7739a0e9a9db611e292c45b918890cc2152b3f1",
+      "asset_package_id": "project_member_sc_v1",
+      "baseline_package": true,
+      "business_priority": "relation_business_fact",
+      "dependencies": [
+        "project_sc_v1",
+        "user_sc_v1"
+      ],
+      "layer": "30_relation",
+      "load_phase": 30,
+      "package_type": "neutral_relation_staging",
+      "required": true,
+      "risk_class": "neutral_relation",
+      "target_model": "sc.project.member.staging",
+      "verification_command": "python3 scripts/migration/project_member_asset_verify.py --asset-root migration_assets --lane project_member --check"
+    },
+    {
+      "asset_manifest_path": "manifest/contract_asset_manifest_v1.json",
+      "asset_manifest_sha256": "9220da635cc53eaa2008423cb9eb6a06a3c868773a07aa86158665573d4424c5",
+      "asset_package_id": "contract_sc_v1",
+      "baseline_package": true,
+      "business_priority": "business_header_fact",
+      "dependencies": [
+        "project_sc_v1",
+        "partner_sc_v1",
+        "contract_counterparty_partner_sc_v1"
+      ],
+      "layer": "20_business",
+      "load_phase": 20,
+      "package_type": "business_header_subset",
+      "required": true,
+      "risk_class": "anchored_subset",
+      "target_model": "construction.contract",
+      "verification_command": "python3 scripts/migration/contract_header_asset_verify.py --asset-root migration_assets --lane contract --check"
+    },
+    {
+      "asset_manifest_path": "manifest/contract_line_asset_manifest_v1.json",
+      "asset_manifest_sha256": "89306223c059f15df8a6570f6630c6851dbcb043eaa1519c21794f1cd5095433",
+      "asset_package_id": "contract_line_sc_v1",
+      "baseline_package": true,
+      "business_priority": "contract_amount_fact",
+      "dependencies": [
+        "contract_sc_v1"
+      ],
+      "layer": "20_business",
+      "load_phase": 20,
+      "package_type": "contract_summary_line",
+      "required": true,
+      "risk_class": "summary_fact",
+      "target_model": "construction.contract.line",
+      "verification_command": "python3 scripts/migration/contract_line_summary_asset_verify.py --asset-root migration_assets --lane contract_line --check"
+    },
+    {
+      "asset_manifest_path": "manifest/receipt_asset_manifest_v1.json",
+      "asset_manifest_sha256": "531b985a9e64c5d9751c58788f1f0fc8c2c18fb6b0548e3f2fb03057a7648567",
+      "asset_package_id": "receipt_sc_v1",
+      "baseline_package": true,
+      "business_priority": "receipt_core_fact",
+      "dependencies": [
+        "project_sc_v1",
+        "partner_sc_v1",
+        "receipt_counterparty_partner_sc_v1",
+        "contract_sc_v1"
+      ],
+      "layer": "20_business",
+      "load_phase": 20,
+      "package_type": "authorized_receive_request_core",
+      "required": true,
+      "risk_class": "authorized_receipt_core",
+      "target_model": "payment.request",
+      "verification_command": "python3 scripts/migration/receipt_core_asset_verify.py --asset-root migration_assets --lane receipt --check"
+    },
+    {
+      "asset_manifest_path": "manifest/outflow_request_asset_manifest_v1.json",
+      "asset_manifest_sha256": "de94fea342a052137bc7703f87aa69e7b850deed121585782577b266c38939c7",
+      "asset_package_id": "outflow_request_sc_v1",
+      "baseline_package": true,
+      "business_priority": "outflow_request_core_fact",
+      "dependencies": [
+        "project_sc_v1",
+        "partner_sc_v1",
+        "contract_counterparty_partner_sc_v1",
+        "receipt_counterparty_partner_sc_v1",
+        "contract_sc_v1"
+      ],
+      "layer": "20_business",
+      "load_phase": 20,
+      "package_type": "authorized_outflow_request_core",
+      "required": true,
+      "risk_class": "authorized_outflow_request_core",
+      "target_model": "payment.request",
+      "verification_command": "python3 scripts/migration/legacy_outflow_request_asset_verify.py --asset-root migration_assets --lane outflow --check"
+    },
+    {
+      "asset_manifest_path": "manifest/actual_outflow_asset_manifest_v1.json",
+      "asset_manifest_sha256": "341282b32eb92ea6f8251b9e2abb84166e6f58e3f506c0d063c72451c76e7fce",
+      "asset_package_id": "actual_outflow_sc_v1",
+      "baseline_package": true,
+      "business_priority": "actual_outflow_core_fact",
+      "dependencies": [
+        "project_sc_v1",
+        "partner_sc_v1",
+        "contract_counterparty_partner_sc_v1",
+        "receipt_counterparty_partner_sc_v1",
+        "outflow_request_sc_v1"
+      ],
+      "layer": "20_business",
+      "load_phase": 20,
+      "package_type": "draft_actual_outflow_core",
+      "required": true,
+      "risk_class": "draft_actual_outflow_core",
+      "target_model": "payment.request",
+      "verification_command": "python3 scripts/migration/legacy_actual_outflow_asset_verify.py --asset-root migration_assets --lane actual_outflow --check"
+    },
+    {
+      "asset_manifest_path": "manifest/supplier_contract_asset_manifest_v1.json",
+      "asset_manifest_sha256": "75e571817cb31123bfcac6d57cfdedba52a9161ea858cc8a065c34f0e75f0e70",
+      "asset_package_id": "supplier_contract_sc_v1",
+      "baseline_package": true,
+      "business_priority": "supplier_contract_header_fact",
+      "dependencies": [
+        "project_sc_v1",
+        "partner_sc_v1",
+        "contract_counterparty_partner_sc_v1",
+        "receipt_counterparty_partner_sc_v1"
+      ],
+      "layer": "20_business",
+      "load_phase": 20,
+      "package_type": "supplier_contract_header",
+      "required": true,
+      "risk_class": "supplier_contract_header",
+      "target_model": "construction.contract",
+      "verification_command": "python3 scripts/migration/legacy_supplier_contract_asset_verify.py --asset-root migration_assets --lane supplier_contract --check"
+    },
+    {
+      "asset_manifest_path": "manifest/supplier_contract_line_asset_manifest_v1.json",
+      "asset_manifest_sha256": "d89539d27c2cd1da1434153431ab7eec2ca89cfdbca033cd1d6eb40f47346bff",
+      "asset_package_id": "supplier_contract_line_sc_v1",
+      "baseline_package": true,
+      "business_priority": "supplier_contract_amount_fact",
+      "dependencies": [
+        "supplier_contract_sc_v1"
+      ],
+      "layer": "20_business",
+      "load_phase": 20,
+      "package_type": "supplier_contract_summary_amount_line",
+      "required": true,
+      "risk_class": "summary_amount_line",
+      "target_model": "construction.contract.line",
+      "verification_command": "python3 scripts/migration/legacy_supplier_contract_line_asset_verify.py --asset-root migration_assets --lane supplier_contract_line --check"
+    },
+    {
+      "asset_manifest_path": "manifest/outflow_request_line_asset_manifest_v1.json",
+      "asset_manifest_sha256": "bec72d615399e06bb9305ae32ac0b12ec84db69b5577e33c5ad61131bd0ee8b5",
+      "asset_package_id": "outflow_request_line_sc_v1",
+      "baseline_package": true,
+      "business_priority": "outflow_request_line_fact",
+      "dependencies": [
+        "outflow_request_sc_v1",
+        "supplier_contract_sc_v1"
+      ],
+      "layer": "20_business",
+      "load_phase": 20,
+      "package_type": "outflow_request_line_fact",
+      "required": true,
+      "risk_class": "line_fact",
+      "target_model": "payment.request.line",
+      "verification_command": "python3 scripts/migration/legacy_outflow_request_line_asset_verify.py --asset-root migration_assets --lane outflow_request_line --check"
+    },
+    {
+      "asset_manifest_path": "manifest/receipt_invoice_line_asset_manifest_v1.json",
+      "asset_manifest_sha256": "a1b81f721af349c9db71b673d82f316e769f49a2e05003c3ea7cddeeb5d3400e",
+      "asset_package_id": "receipt_invoice_line_sc_v1",
+      "baseline_package": true,
+      "business_priority": "receipt_invoice_line_fact",
+      "dependencies": [
+        "receipt_sc_v1"
+      ],
+      "layer": "20_business",
+      "load_phase": 20,
+      "package_type": "receipt_invoice_line_fact",
+      "required": true,
+      "risk_class": "auxiliary_invoice_line_fact",
+      "target_model": "sc.receipt.invoice.line",
+      "verification_command": "python3 scripts/migration/legacy_receipt_invoice_asset_verify.py --asset-root migration_assets --lane receipt_invoice_line --check"
+    },
+    {
+      "asset_manifest_path": "manifest/receipt_invoice_attachment_asset_manifest_v1.json",
+      "asset_manifest_sha256": "2bf055688cd6abb82707097e11d900b8a65cb2617172184a7e2487ea880ab2d7",
+      "asset_package_id": "receipt_invoice_attachment_sc_v1",
+      "baseline_package": true,
+      "business_priority": "receipt_invoice_attachment_relation",
+      "dependencies": [
+        "receipt_invoice_line_sc_v1"
+      ],
+      "layer": "30_relation",
+      "load_phase": 30,
+      "package_type": "url_attachment_relation",
+      "required": true,
+      "risk_class": "attachment_url_relation",
+      "target_model": "ir.attachment",
+      "verification_command": "python3 scripts/migration/legacy_receipt_invoice_attachment_asset_verify.py --asset-root migration_assets --lane receipt_invoice_attachment --check"
+    },
+    {
+      "asset_manifest_path": "manifest/legacy_attachment_backfill_asset_manifest_v1.json",
+      "asset_manifest_sha256": "03f99e1f9de99bdf9f5d6c240c3958b282411d8017051e584b9a9ad66b74c8f7",
+      "asset_package_id": "legacy_attachment_backfill_sc_v1",
+      "baseline_package": true,
+      "business_priority": "legacy_attachment_backfill",
+      "dependencies": [
+        "project_sc_v1",
+        "project_member_sc_v1",
+        "actual_outflow_sc_v1",
+        "supplier_contract_sc_v1",
+        "supplier_contract_line_sc_v1",
+        "outflow_request_line_sc_v1"
+      ],
+      "layer": "30_relation",
+      "load_phase": 30,
+      "package_type": "url_attachment_relation",
+      "required": true,
+      "risk_class": "attachment_url_relation",
+      "target_model": "ir.attachment",
+      "verification_command": "python3 scripts/migration/legacy_attachment_backfill_asset_verify.py --asset-root migration_assets --lane legacy_attachment_backfill --check"
+    },
+    {
+      "asset_manifest_path": "manifest/legacy_expense_deposit_asset_manifest_v1.json",
+      "asset_manifest_sha256": "7bd3ddd9443f67a80381b5a4fcb6cc09ca79dc1a634ca084bde8a3b4ac693d10",
+      "asset_package_id": "legacy_expense_deposit_sc_v1",
+      "baseline_package": true,
+      "business_priority": "legacy_expense_deposit_fact",
+      "dependencies": [
+        "project_sc_v1",
+        "partner_sc_v1"
+      ],
+      "layer": "30_relation",
+      "load_phase": 30,
+      "package_type": "legacy_expense_deposit_fact",
+      "required": true,
+      "risk_class": "historical_finance_adjacent_fact",
+      "target_model": "sc.legacy.expense.deposit.fact",
+      "verification_command": "python3 scripts/migration/legacy_expense_deposit_asset_verify.py --asset-root migration_assets --lane legacy_expense_deposit --check"
+    },
+    {
+      "asset_manifest_path": "manifest/legacy_invoice_tax_asset_manifest_v1.json",
+      "asset_manifest_sha256": "01c6e0e1b72f3d210ff2af919023688bbd169ce5a913b0c4a75e94b820f53d09",
+      "asset_package_id": "legacy_invoice_tax_sc_v1",
+      "baseline_package": true,
+      "business_priority": "legacy_invoice_tax_fact",
+      "dependencies": [
+        "project_sc_v1",
+        "partner_sc_v1"
+      ],
+      "layer": "30_relation",
+      "load_phase": 30,
+      "package_type": "legacy_invoice_tax_fact",
+      "required": true,
+      "risk_class": "historical_invoice_tax_fact",
+      "target_model": "sc.legacy.invoice.tax.fact",
+      "verification_command": "python3 scripts/migration/legacy_invoice_tax_asset_verify.py --asset-root migration_assets --lane legacy_invoice_tax --check"
+    },
+    {
+      "asset_manifest_path": "manifest/legacy_receipt_income_asset_manifest_v1.json",
+      "asset_manifest_sha256": "67425c66d003c99f79dcebacbb842f4dd5b31d1facca1d8814f47e352b5c93a6",
+      "asset_package_id": "legacy_receipt_income_sc_v1",
+      "baseline_package": true,
+      "business_priority": "legacy_receipt_income_fact",
+      "dependencies": [
+        "project_sc_v1",
+        "partner_sc_v1"
+      ],
+      "layer": "30_relation",
+      "load_phase": 30,
+      "package_type": "legacy_receipt_income_fact",
+      "required": true,
+      "risk_class": "historical_income_fact",
+      "target_model": "sc.legacy.receipt.income.fact",
+      "verification_command": "python3 scripts/migration/legacy_receipt_income_asset_verify.py --asset-root migration_assets --lane legacy_receipt_income --check"
+    },
+    {
+      "asset_manifest_path": "manifest/legacy_financing_loan_asset_manifest_v1.json",
+      "asset_manifest_sha256": "d174f119fce2c285005c3170e17a87c66579fa43dc767b52345785582d45b69e",
+      "asset_package_id": "legacy_financing_loan_sc_v1",
+      "baseline_package": true,
+      "business_priority": "legacy_financing_loan_fact",
+      "dependencies": [
+        "project_sc_v1"
+      ],
+      "layer": "30_relation",
+      "load_phase": 30,
+      "package_type": "legacy_financing_loan_fact",
+      "required": true,
+      "risk_class": "historical_financing_fact",
+      "target_model": "sc.legacy.financing.loan.fact",
+      "verification_command": "python3 scripts/migration/legacy_financing_loan_asset_verify.py --asset-root migration_assets --lane legacy_financing_loan --check"
+    },
+    {
+      "asset_manifest_path": "manifest/legacy_fund_daily_snapshot_asset_manifest_v1.json",
+      "asset_manifest_sha256": "9718eeea8ee5efda2a86329071e161bd9447f05db72bd79817e054643aae10fb",
+      "asset_package_id": "legacy_fund_daily_snapshot_sc_v1",
+      "baseline_package": true,
+      "business_priority": "legacy_fund_daily_snapshot_fact",
+      "dependencies": [
+        "project_sc_v1"
+      ],
+      "layer": "30_relation",
+      "load_phase": 30,
+      "package_type": "legacy_fund_daily_snapshot_fact",
+      "required": true,
+      "risk_class": "historical_balance_snapshot_fact",
+      "target_model": "sc.legacy.fund.daily.snapshot.fact",
+      "verification_command": "python3 scripts/migration/legacy_fund_daily_snapshot_asset_verify.py --asset-root migration_assets --lane legacy_fund_daily_snapshot --check"
+    },
+    {
+      "asset_manifest_path": "manifest/legacy_workflow_audit_asset_manifest_v1.json",
+      "asset_manifest_sha256": "4c25e472406efb335cac69c5c77388820d247b1500bf2c2ea74babec5151166d",
+      "asset_package_id": "legacy_workflow_audit_sc_v1",
+      "baseline_package": true,
+      "business_priority": "legacy_workflow_audit_fact",
+      "dependencies": [
+        "contract_sc_v1",
+        "receipt_sc_v1",
+        "outflow_request_sc_v1",
+        "actual_outflow_sc_v1",
+        "supplier_contract_sc_v1"
+      ],
+      "layer": "30_relation",
+      "load_phase": 30,
+      "package_type": "historical_workflow_audit_fact",
+      "required": true,
+      "risk_class": "historical_audit_fact",
+      "target_model": "sc.legacy.workflow.audit",
+      "verification_command": "python3 scripts/migration/legacy_workflow_audit_asset_verify.py --asset-root migration_assets --lane legacy_workflow_audit --check"
+    }
+  ],
+  "rebuild_policy": {
+    "db_writes_in_catalog_stage": 0,
+    "demo_module_required": false,
+    "loader_strategy": "manifest_ordered_assets",
+    "odoo_shell_required": false
+  },
+  "validation_gates": [
+    "catalog_schema_valid",
+    "package_order_complete",
+    "asset_manifest_exists",
+    "asset_manifest_hash_matches",
+    "package_dependencies_declared_before_dependents",
+    "package_verifier_declared",
+    "no_demo_module_dependency",
+    "no_db_write_in_catalog_stage",
+    "no_high_risk_lane_leakage"
+  ]
+}

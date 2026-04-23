@@ -1,0 +1,128 @@
+task_id: ITER-2026-04-23-GOV-MIGRATION-RAW-SOURCE-ASSETS-PB04
+title: Track raw migration source CSVs and recover workflow-audit asset chain
+type: governance-optimization
+status: active
+priority: high
+mode: implement
+
+goal: >
+  Complete the repository-backed migration rebuild assets by tracking the raw
+  source CSVs required by `fresh_db_replay_manifest_v1.json` and by recovering
+  the historical workflow-audit asset generator/manifest chain from repository
+  history.
+
+user_visible_outcome:
+  - "fresh DB replay dry-run no longer fails because raw source CSVs are absent."
+  - "migration asset bus has the workflow-audit generator and manifests needed to verify or regenerate the XML package."
+
+scope:
+  allowed_paths:
+    - .gitignore
+    - .gitattributes
+    - tmp/raw/**
+    - scripts/migration/legacy_workflow_audit_asset_generator.py
+    - scripts/migration/legacy_workflow_audit_asset_verify.py
+    - scripts/migration/*_asset_generator.py
+    - scripts/migration/*_asset_verify.py
+    - scripts/migration/fresh_db_replay_runner_dry_run.py
+    - scripts/migration/migration_asset_bus.py
+    - scripts/migration/migration_asset_catalog_verify.py
+    - migration_assets/manifest/**
+    - migration_assets/manifest/legacy_workflow_audit_asset_manifest_v1.json
+    - migration_assets/manifest/legacy_workflow_audit_external_id_manifest_v1.json
+    - migration_assets/manifest/legacy_workflow_audit_validation_manifest_v1.json
+    - migration_assets/manifest/migration_asset_catalog_v1.json
+    - migration_assets/10_master/**
+    - migration_assets/20_business/**
+    - migration_assets/30_relation/**
+    - migration_assets/30_relation/legacy_workflow_audit/**
+    - docs/migration_alignment/frozen/legacy_workflow_audit_asset_package_v1.md
+    - agent_ops/tasks/ITER-2026-04-23-GOV-MIGRATION-RAW-SOURCE-ASSETS-PB04.yaml
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - runtime/**
+    - frontend/apps/web/dist/**
+    - frontend/apps/web/.vite/**
+    - addons/**/security/**
+    - addons/**/ir.model.access.csv
+    - addons/**/__manifest__.py
+    - record_rules/**
+
+limits:
+  max_output_lines: 160
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+role_parallel:
+  enabled: false
+  allowed_roles:
+    - executor
+  require_disjoint_writes: true
+  require_new_session_per_role: true
+  stop_on_conflict: true
+
+change_rules:
+  - do not unignore the whole `tmp/` tree
+  - only track raw CSVs already referenced by the replay manifest
+  - preserve raw and generated migration asset bytes without line-ending normalization
+  - do not fabricate workflow-audit XML if its source generator cannot reproduce it
+  - do not modify business runtime code, ACLs, manifests, or frontend assets
+
+context:
+  branch: feature/migration-raw-source-assets-pb04
+  baseline_sha: 4ceddfc
+  explicit_user_authorization: true
+  replay_manifest: artifacts/migration/fresh_db_replay_manifest_v1.json
+
+architecture:
+  layer_target: Governance Layer
+  module: migration raw source and workflow-audit assets
+  module_owner: delivery reproducibility surface
+  kernel_or_scenario: scenario
+  backend_sub_layer_target: business-fact layer
+  backend_sub_layer_reason: >
+    The raw CSVs and workflow-audit XML package preserve legacy business facts
+    for controlled replay/rebuild. This batch only tracks or restores source
+    assets and does not write runtime business data.
+  reason: >
+    Server validation showed the replay manifest is readable but dry-run fails
+    because seven raw source CSVs are missing, and migration_asset_bus still
+    expects the workflow-audit XML package.
+
+acceptance:
+  commands:
+    - test -s tmp/raw/partner/company.csv
+    - test -s tmp/raw/partner/supplier.csv
+    - test -s tmp/raw/project/project.csv
+    - test -s tmp/raw/project_member/project_member.csv
+    - test -s tmp/raw/contract/contract.csv
+    - test -s tmp/raw/receipt/receipt.csv
+    - test -s tmp/raw/payment/payment.csv
+    - python3 -m py_compile scripts/migration/legacy_workflow_audit_asset_generator.py scripts/migration/legacy_workflow_audit_asset_verify.py scripts/migration/migration_asset_bus.py scripts/migration/migration_asset_catalog_verify.py
+    - python3 scripts/migration/legacy_workflow_audit_asset_generator.py --asset-root migration_assets --check
+    - git diff --check -- .gitignore .gitattributes docs/ops/iterations/delivery_context_switch_log_v1.md
+
+risk:
+  level: high
+  manual_approval_required: false
+  reason: >
+    Raw source CSVs include financial/payment-adjacent legacy source data, but
+    this batch is asset tracking only and performs no runtime writes.
+
+stop_conditions:
+  - forbidden_path_touched
+  - raw_source_missing
+  - workflow_audit_xml_cannot_be_recovered_or_regenerated
+  - runtime_write_required
+  - non_manifest_raw_tmp_scope_expansion
+
+deliverables:
+  - tracked raw migration source CSVs
+  - recovered workflow-audit generator/verifier/manifest chain
+  - tracked workflow-audit XML parts with verifier-side materialization for the original manifest SHA
+  - iteration log entry
+
+rollback:
+  - git restore .gitignore .gitattributes docs/ops/iterations/delivery_context_switch_log_v1.md
+  - git rm -r --cached tmp/raw migration_assets scripts/migration docs/migration_alignment/frozen/legacy_workflow_audit_asset_package_v1.md agent_ops/tasks/ITER-2026-04-23-GOV-MIGRATION-RAW-SOURCE-ASSETS-PB04.yaml

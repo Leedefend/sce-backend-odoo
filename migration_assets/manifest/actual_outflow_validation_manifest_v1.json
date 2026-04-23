@@ -1,0 +1,53 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "actual_outflow_sc_v1",
+  "business_boundary": {
+    "accounting": "excluded",
+    "carrier": "draft_carrier",
+    "ledger": "excluded",
+    "settlement_link": "excluded",
+    "state_replay": "excluded",
+    "workflow": "excluded"
+  },
+  "db_writes": 0,
+  "generated_at": "2026-04-15T11:10:00+00:00",
+  "odoo_shell": false,
+  "screen_profile": {
+    "blocked_rows": 1166,
+    "blocker_counts": {
+      "discard_deleted": 56,
+      "missing_partner_ref": 4,
+      "partner_not_in_asset": 814,
+      "project_not_in_asset": 111,
+      "zero_or_negative_amount": 227
+    },
+    "ready_rows": 12463,
+    "request_anchor_counts": {
+      "request_optional_empty": 62,
+      "request_optional_unresolved": 118,
+      "request_ref": 12283
+    }
+  },
+  "source_table": "T_FK_Supplier",
+  "target_model": "payment.request",
+  "target_type": "pay",
+  "validation_gates": {
+    "generate_time": [
+      "legacy_actual_outflow_id_unique",
+      "amount_positive",
+      "project_external_id_resolves",
+      "partner_external_id_resolves",
+      "type_pay_only",
+      "state_not_written",
+      "settlement_not_written",
+      "ledger_not_written",
+      "accounting_not_written",
+      "workflow_not_written",
+      "source_request_anchor_optional"
+    ],
+    "postload": [
+      "xml_external_id_resolves",
+      "draft_defaults_apply"
+    ]
+  }
+}

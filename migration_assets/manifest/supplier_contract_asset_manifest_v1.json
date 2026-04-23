@@ -1,0 +1,88 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "supplier_contract_sc_v1",
+  "assets": [
+    {
+      "asset_id": "supplier_contract_header_xml_v1",
+      "format": "xml",
+      "path": "20_business/supplier_contract/supplier_contract_header_v1.xml",
+      "record_count": 5301,
+      "required": true,
+      "sha256": "ada4a568722af5a75c382fa53a664eaa0dae80492f57fd4f5f714d89c9b36a08"
+    },
+    {
+      "asset_id": "supplier_contract_external_id_manifest_v1",
+      "format": "json",
+      "path": "manifest/supplier_contract_external_id_manifest_v1.json",
+      "record_count": 5301,
+      "required": true,
+      "sha256": "3f3b674cbba8dcddbcc3bc4d9d17dd6d4a94e4264aa729a69baddd4731c66d19"
+    },
+    {
+      "asset_id": "supplier_contract_validation_manifest_v1",
+      "format": "json",
+      "path": "manifest/supplier_contract_validation_manifest_v1.json",
+      "record_count": 1,
+      "required": true,
+      "sha256": "5a817130c04f225c006321f4ef562cef98f31a92aeebe933a8df39bf2cd10bc9"
+    }
+  ],
+  "baseline_package": true,
+  "counts": {
+    "blocked_records": 234,
+    "loadable_records": 5301,
+    "raw_rows": 5535
+  },
+  "db_writes": 0,
+  "dependencies": [
+    "project_sc_v1",
+    "partner_sc_v1",
+    "contract_counterparty_partner_sc_v1",
+    "receipt_counterparty_partner_sc_v1"
+  ],
+  "generated_at": "2026-04-15T12:00:00+00:00",
+  "idempotency": {
+    "conflict_policy": "block_package",
+    "duplicate_policy": "update_existing_same_external_id",
+    "mode": "odoo_xml_external_id"
+  },
+  "lane": {
+    "business_priority": "supplier_contract_header_fact",
+    "lane_id": "supplier_contract",
+    "layer": "20_business",
+    "risk_class": "supplier_contract_header"
+  },
+  "load_order": [
+    "supplier_contract_header_xml_v1",
+    "supplier_contract_external_id_manifest_v1",
+    "supplier_contract_validation_manifest_v1"
+  ],
+  "odoo_shell": false,
+  "source_snapshot": {
+    "extract_batch_id": "supplier_contract_header_xml_baseline_v1",
+    "source_system": "sc",
+    "source_tables": [
+      "T_GYSHT_INFO"
+    ]
+  },
+  "target": {
+    "identity_field": "legacy_supplier_contract_id",
+    "load_strategy": "odoo_xml_external_id",
+    "model": "construction.contract",
+    "type": "in"
+  },
+  "validation_gates": [
+    "source_supplier_contract_query_passed",
+    "legacy_supplier_contract_id_non_empty",
+    "legacy_supplier_contract_id_unique",
+    "contract_identity_present",
+    "project_anchor_resolves",
+    "partner_anchor_resolves",
+    "type_in_supplier_expense",
+    "type_key_not_renamed",
+    "amount_header_not_written",
+    "tax_not_written",
+    "state_not_written",
+    "line_not_written"
+  ]
+}

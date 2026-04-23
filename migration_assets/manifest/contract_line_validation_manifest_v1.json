@@ -1,0 +1,37 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "contract_line_sc_v1",
+  "business_boundary": {
+    "boq_detail_reconstruction": "excluded",
+    "summary_line_policy": "one_line_per_contract_from_header_amount"
+  },
+  "db_writes": 0,
+  "generated_at": "2026-04-15T08:35:00+00:00",
+  "odoo_shell": false,
+  "screen_profile": {
+    "amount_source_counts": {
+      "D_SCBSJS_JSJE": 18,
+      "GCYSZJ": 1423
+    },
+    "blocked_rows": 51,
+    "blocker_counts": {
+      "contract_not_in_asset": 202,
+      "no_positive_amount": 106
+    },
+    "ready_rows": 1441
+  },
+  "source": "tmp/raw/contract/contract.csv",
+  "target_model": "construction.contract.line",
+  "validation_gates": {
+    "generate_time": [
+      "contract_external_id_resolves",
+      "amount_positive",
+      "one_summary_line_per_contract",
+      "boq_detail_not_fabricated"
+    ],
+    "postload": [
+      "xml_external_id_resolves",
+      "contract_id_ref_resolves"
+    ]
+  }
+}
