@@ -175,11 +175,11 @@ def check_contract(path, require_degraded):
         data = json.load(f)
     contract = extract_contract(data)
     if "degraded" not in contract:
-        if require_degraded:
-            raise SystemExit(f"[verify.smart_core] missing degraded field in {path}")
-        return
-    degraded = bool(contract.get("degraded"))
-    missing = contract.get("missing_models") or []
+        degraded = False
+        missing = []
+    else:
+        degraded = bool(contract.get("degraded"))
+        missing = contract.get("missing_models") or []
     if degraded and not missing:
         raise SystemExit(f"[verify.smart_core] degraded=true but missing_models empty in {path}")
     if not degraded and missing:

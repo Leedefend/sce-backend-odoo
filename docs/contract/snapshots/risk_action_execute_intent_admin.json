@@ -1,11 +1,41 @@
 {
+  "action": null,
   "case": "risk_action_execute_intent_admin",
-  "op": "intent.invoke",
-  "user": "admin",
   "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
   "ui_contract_raw": {
-    "success": true,
-    "intent_action": "claim"
+    "exception": {
+      "assigned_to": 0,
+      "id": 0,
+      "status": ""
+    },
+    "intent_action": "claim",
+    "mutation": {
+      "model": "project.risk.action",
+      "operation": "claim",
+      "type": "transition"
+    },
+    "reason_code": "OK",
+    "risk_action": {
+      "id": 1,
+      "name": "Snapshot Risk Action",
+      "owner_id": 2,
+      "project_id": 1,
+      "risk_level": "medium",
+      "state": "claimed"
+    },
+    "success": true
   },
-  "error": null
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
 }

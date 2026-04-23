@@ -6,10 +6,26 @@ from odoo import api
 from ..registry import SeedStep, register
 
 
-def _ensure_lang(env, code):
-    lang = env["res.lang"].sudo().search([("code", "=", code)], limit=1)
-    if lang and not lang.active:
-        lang.write({"active": True})
+def _resolve_lang(env, preferred="zh_CN", fallback="en_US"):
+    Lang = env["res.lang"].sudo().with_context(active_test=False)
+    for code in [preferred, fallback]:
+        if not code:
+            continue
+        lang = Lang.search([("code", "=", code)], limit=1)
+        if not lang:
+            continue
+        if not lang.active:
+            lang.write({"active": True})
+        return lang.code
+    lang = Lang.search([("active", "=", True)], limit=1)
+    if lang:
+        return lang.code
+    lang = Lang.search([], limit=1)
+    if lang:
+        if not lang.active:
+            lang.write({"active": True})
+        return lang.code
+    return False
 
 
 def _resolve_groups(env, xmlids):
@@ -29,7 +45,6 @@ def _ensure_user(env, login, name, groups_xmlids, password, lang, tz):
         "name": name,
         "login": login,
         "password": password,
-        "lang": lang,
         "tz": tz,
         "company_id": env.ref("base.main_company").id,
         "company_ids": [(6, 0, [env.ref("base.main_company").id])],
@@ -37,6 +52,8 @@ def _ensure_user(env, login, name, groups_xmlids, password, lang, tz):
         "share": False,
         "active": True,
     }
+    if lang:
+        vals["lang"] = lang
     if user:
         user.write(vals)
     else:
@@ -45,9 +62,8 @@ def _ensure_user(env, login, name, groups_xmlids, password, lang, tz):
 
 def run(env):
     password = os.getenv("SC_DEMO_PASSWORD", "demo")
-    lang = "zh_CN"
+    lang = _resolve_lang(env, preferred=os.getenv("SC_DEMO_LANG", "zh_CN"))
     tz = "Asia/Shanghai"
-    _ensure_lang(env, lang)
 
     base_group = "base.group_user"
 

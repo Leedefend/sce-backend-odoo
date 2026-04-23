@@ -59,6 +59,8 @@ def main() -> int:
         if key and key not in report:
             errors.append(f"missing top-level key: {key}")
     summary = report.get("summary") if isinstance(report.get("summary"), dict) else {}
+    has_previous_brief = bool(summary.get("has_previous_brief")) if isinstance(summary, dict) else False
+    has_previous_matrix = bool(summary.get("has_previous_matrix")) if isinstance(summary, dict) else False
     for key in required_summary_keys:
         key = str(key).strip()
         if key and key not in summary:
@@ -66,7 +68,12 @@ def main() -> int:
     for key, expected in summary_key_types.items():
         key = str(key).strip()
         expected = str(expected).strip()
-        if key and key in summary and expected and not _type_ok(summary.get(key), expected):
+        value = summary.get(key) if key in summary else None
+        if value is None and key.startswith("brief_delta_") and not has_previous_brief:
+            continue
+        if value is None and key.startswith("matrix_delta_") and not has_previous_matrix:
+            continue
+        if key and key in summary and expected and not _type_ok(value, expected):
             errors.append(f"summary.{key} must be {expected}")
 
     if not isinstance(report.get("ok"), bool):

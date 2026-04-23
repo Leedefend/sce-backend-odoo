@@ -17,13 +17,13 @@
     "tracked": [
       "usage.scene_open.user.2.total",
       "usage.scene_open.user.2.my.work",
-      "usage.scene_open.user.2.daily.2026-03-20",
+      "usage.scene_open.user.2.daily.2026-04-23",
       "usage.scene_open.role.admin.total",
       "usage.scene_open.role.admin.my.work",
-      "usage.scene_open.role.admin.daily.2026-03-20",
+      "usage.scene_open.role.admin.daily.2026-04-23",
       "usage.scene_open.total",
       "usage.scene_open.my.work",
-      "usage.scene_open.daily.2026-03-20"
+      "usage.scene_open.daily.2026-04-23"
     ]
   },
   "user": "pm",

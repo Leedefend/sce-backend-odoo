@@ -6,6 +6,7 @@
     <record id="sc_demo_settle_line_020_001" model="sc.settlement.order.line">
       <field name="name">S20-结算明细-001</field>
       <field name="settlement_id" ref="smart_construction_demo.sc_demo_settlement_020_001"/>
+      <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_out_001"/>
       <field name="qty">1.0</field>
       <field name="price_unit">3000000.00</field>
       <field name="amount">3000000.00</field>
@@ -15,6 +16,7 @@
     <record id="sc_demo_settle_line_020_002" model="sc.settlement.order.line">
       <field name="name">S20-结算明细-002</field>
       <field name="settlement_id" ref="smart_construction_demo.sc_demo_settlement_020_001"/>
+      <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_out_001"/>
       <field name="qty">1.0</field>
       <field name="price_unit">2000000.00</field>
       <field name="amount">2000000.00</field>

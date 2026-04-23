@@ -28,3 +28,7 @@ from . import portal_execute
 from . import scene_orchestration
 from . import pack_registry
 from . import subscription
+from . import partner_legacy
+from . import project_legacy
+from . import contract_legacy
+from . import project_member_staging

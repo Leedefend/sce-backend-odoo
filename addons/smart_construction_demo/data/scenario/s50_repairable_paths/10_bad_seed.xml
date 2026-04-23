@@ -15,6 +15,7 @@
         <record id="sc_demo_settlement_line_050_001" model="sc.settlement.order.line">
             <field name="name">S50 结算明细</field>
             <field name="settlement_id" ref="smart_construction_demo.sc_demo_settlement_050_001"/>
+            <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_out_001"/>
             <field name="qty">1</field>
             <field name="price_unit">1000000.00</field>
             <field name="amount">1000000.00</field>

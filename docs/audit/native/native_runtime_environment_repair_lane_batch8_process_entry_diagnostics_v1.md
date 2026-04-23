@@ -34,3 +34,9 @@
 
 - Batch8 PASS with process/entry diagnostics evidence.
 - Next step should be environment execute action to reconcile compose runtime state for `odoo` service and re-check `/api/scenes/my` live response.
+
+## Legacy Endpoint Deprecation Note
+- `/api/scenes/my` is deprecated.
+- Successor endpoint: `/api/v1/intent` with `intent=app.init`.
+- Sunset date: `2026-04-30`.
+- Deprecation header contract reference: `Deprecation`, `Sunset`, `Link`, `X-Legacy-Endpoint`.

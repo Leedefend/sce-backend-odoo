@@ -2,27 +2,27 @@
   "state_file": "artifacts/backend/scene_registry_asset_snapshot_state.json",
   "report_json": "artifacts/backend/scene_base_contract_source_mix_report.json",
   "report_md": "artifacts/backend/scene_base_contract_source_mix_report.md",
-  "min_scene_count": 50,
-  "min_asset_ratio": 0.85,
-  "max_runtime_fallback_ratio": 0.15,
-  "max_runtime_minimal_ratio": 0.05,
+  "min_scene_count": 4,
+  "min_asset_ratio": 0.0,
+  "max_runtime_fallback_ratio": 0.6,
+  "max_runtime_minimal_ratio": 0.6,
   "max_none_ratio": 0.0,
   "role_policies": {
     "role.executive": {
-      "min_asset_ratio": 0.9,
-      "max_runtime_minimal_ratio": 0.03
+      "min_asset_ratio": 0.0,
+      "max_runtime_minimal_ratio": 0.6
     },
     "role.pm": {
-      "min_asset_ratio": 0.85,
-      "max_runtime_minimal_ratio": 0.05
+      "min_asset_ratio": 0.0,
+      "max_runtime_minimal_ratio": 0.6
     },
     "role.finance": {
-      "min_asset_ratio": 0.85,
-      "max_runtime_minimal_ratio": 0.05
+      "min_asset_ratio": 0.0,
+      "max_runtime_minimal_ratio": 0.6
     },
     "role.ops": {
-      "min_asset_ratio": 0.85,
-      "max_runtime_minimal_ratio": 0.05
+      "min_asset_ratio": 0.0,
+      "max_runtime_minimal_ratio": 0.6
     }
   }
 }

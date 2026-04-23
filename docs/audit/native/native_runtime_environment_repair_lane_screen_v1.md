@@ -40,3 +40,9 @@ transport anomaly (`RemoteDisconnected`) observed across live probes.
 ## Decision
 
 - Screen PASS: open dedicated runtime environment repair lane next.
+
+## Legacy Endpoint Deprecation Note
+- `/api/scenes/my` is deprecated.
+- Successor endpoint: `/api/v1/intent` with `intent=app.init`.
+- Sunset date: `2026-04-30`.
+- Deprecation header contract reference: `Deprecation`, `Sunset`, `Link`, `X-Legacy-Endpoint`.

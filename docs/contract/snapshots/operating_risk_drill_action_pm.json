@@ -1,0 +1,927 @@
+{
+  "action": null,
+  "case": "operating_risk_drill_action_pm",
+  "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": [
+    {
+      "domain": null,
+      "help": null,
+      "name": "activity_date_deadline",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Next Activity Deadline",
+      "ttype": "date"
+    },
+    {
+      "domain": null,
+      "help": "Type of the exception activity on record.",
+      "name": "activity_exception_decoration",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "warning",
+          "Alert"
+        ],
+        [
+          "danger",
+          "Error"
+        ]
+      ],
+      "string": "Activity Exception Decoration",
+      "ttype": "selection"
+    },
+    {
+      "domain": null,
+      "help": "Icon to indicate an exception activity.",
+      "name": "activity_exception_icon",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Icon",
+      "ttype": "char"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "activity_ids",
+      "readonly": false,
+      "relation": "mail.activity",
+      "required": false,
+      "selection": null,
+      "string": "Activities",
+      "ttype": "one2many"
+    },
+    {
+      "domain": null,
+      "help": "Status based on activities\nOverdue: Due date is already passed\nToday: Activity date is today\nPlanned: Future activities.",
+      "name": "activity_state",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "overdue",
+          "Overdue"
+        ],
+        [
+          "today",
+          "Today"
+        ],
+        [
+          "planned",
+          "Planned"
+        ]
+      ],
+      "string": "Activity State",
+      "ttype": "selection"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "activity_summary",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Next Activity Summary",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": "Font awesome icon e.g. fa-tasks",
+      "name": "activity_type_icon",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Activity Type Icon",
+      "ttype": "char"
+    },
+    {
+      "domain": "['|', ('res_model', '=', False), ('res_model', '=', res_model)]",
+      "help": null,
+      "name": "activity_type_id",
+      "readonly": false,
+      "relation": "mail.activity.type",
+      "required": false,
+      "selection": null,
+      "string": "Next Activity Type",
+      "ttype": "many2one"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "activity_user_id",
+      "readonly": true,
+      "relation": "res.users",
+      "required": false,
+      "selection": null,
+      "string": "Responsible User",
+      "ttype": "many2one"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "amount",
+      "readonly": false,
+      "relation": null,
+      "required": true,
+      "selection": null,
+      "string": "申请金额",
+      "ttype": "monetary"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "can_review",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Can Review",
+      "ttype": "boolean"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "company_id",
+      "readonly": true,
+      "relation": "res.company",
+      "required": false,
+      "selection": null,
+      "string": "公司",
+      "ttype": "many2one"
+    },
+    {
+      "domain": "[('project_id', '=', project_id)]",
+      "help": null,
+      "name": "contract_id",
+      "readonly": false,
+      "relation": "construction.contract",
+      "required": false,
+      "selection": null,
+      "string": "合同",
+      "ttype": "many2one"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "create_date",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Created on",
+      "ttype": "datetime"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "create_uid",
+      "readonly": true,
+      "relation": "res.users",
+      "required": false,
+      "selection": null,
+      "string": "Created by",
+      "ttype": "many2one"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "currency_id",
+      "readonly": false,
+      "relation": "res.currency",
+      "required": true,
+      "selection": null,
+      "string": "币种",
+      "ttype": "many2one"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "date_request",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "申请日期",
+      "ttype": "date"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "display_name",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Display Name",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": "If set, Allow the reviewer to leave a comment on the review.",
+      "name": "has_comment",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Has Comment",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "has_message",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Has Message",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "hide_reviews",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Hide Reviews",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "id",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "ID",
+      "ttype": "integer"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "is_fully_paid",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "已结清",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": "用于列表高亮：当申请金额超过结算可付余额时为 True。",
+      "name": "is_overpay_risk",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "超付风险",
+      "ttype": "boolean"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "ledger_line_ids",
+      "readonly": false,
+      "relation": "payment.ledger",
+      "required": false,
+      "selection": null,
+      "string": "付款记录",
+      "ttype": "one2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "message_attachment_count",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Attachment Count",
+      "ttype": "integer"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "message_follower_ids",
+      "readonly": false,
+      "relation": "mail.followers",
+      "required": false,
+      "selection": null,
+      "string": "Followers",
+      "ttype": "one2many"
+    },
+    {
+      "domain": null,
+      "help": "If checked, some messages have a delivery error.",
+      "name": "message_has_error",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Message Delivery error",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": "Number of messages with delivery error",
+      "name": "message_has_error_counter",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Number of errors",
+      "ttype": "integer"
+    },
+    {
+      "domain": null,
+      "help": "If checked, some messages have a delivery error.",
+      "name": "message_has_sms_error",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "SMS Delivery error",
+      "ttype": "boolean"
+    },
+    {
+      "domain": [
+        [
+          "message_type",
+          "!=",
+          "user_notification"
+        ]
+      ],
+      "help": null,
+      "name": "message_ids",
+      "readonly": false,
+      "relation": "mail.message",
+      "required": false,
+      "selection": null,
+      "string": "Messages",
+      "ttype": "one2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "message_is_follower",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Is Follower",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": "If checked, new messages require your attention.",
+      "name": "message_needaction",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Action Needed",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": "Number of messages requiring action",
+      "name": "message_needaction_counter",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Number of Actions",
+      "ttype": "integer"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "message_partner_ids",
+      "readonly": false,
+      "relation": "res.partner",
+      "required": false,
+      "selection": null,
+      "string": "Followers (Partners)",
+      "ttype": "many2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "move_type",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "pay",
+          "付款"
+        ],
+        [
+          "receive",
+          "收款"
+        ]
+      ],
+      "string": "单据类型(兼容)",
+      "ttype": "selection"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "my_activity_date_deadline",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "My Activity Deadline",
+      "ttype": "date"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "name",
+      "readonly": false,
+      "relation": null,
+      "required": true,
+      "selection": null,
+      "string": "申请单号",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "need_validation",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Need Validation",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "next_review",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Next Review",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "note",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "备注",
+      "ttype": "text"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "paid_amount_total",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "已付款合计",
+      "ttype": "monetary"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "partner_id",
+      "readonly": false,
+      "relation": "res.partner",
+      "required": true,
+      "selection": null,
+      "string": "往来单位",
+      "ttype": "many2one"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "project_id",
+      "readonly": false,
+      "relation": "project.project",
+      "required": true,
+      "selection": null,
+      "string": "项目",
+      "ttype": "many2one"
+    },
+    {
+      "domain": [
+        [
+          "res_model",
+          "=",
+          "payment.request"
+        ]
+      ],
+      "help": null,
+      "name": "rating_ids",
+      "readonly": false,
+      "relation": "rating.rating",
+      "required": false,
+      "selection": null,
+      "string": "Ratings",
+      "ttype": "one2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "rejected",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Rejected",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "rejected_message",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Rejected Message",
+      "ttype": "html"
+    },
+    {
+      "domain": [
+        [
+          "model",
+          "=",
+          "payment.request"
+        ]
+      ],
+      "help": null,
+      "name": "review_ids",
+      "readonly": false,
+      "relation": "tier.review",
+      "required": false,
+      "selection": null,
+      "string": "Validations",
+      "ttype": "one2many"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "reviewer_ids",
+      "readonly": true,
+      "relation": "res.users",
+      "required": false,
+      "selection": null,
+      "string": "Reviewers",
+      "ttype": "many2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "settlement_amount_insufficient",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "结算额度不足",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": "可付余额 = 结算金额 - 已付累计；为负时代表存在超付风险。",
+      "name": "settlement_amount_payable",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "可付余额",
+      "ttype": "monetary"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "settlement_amount_total",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "结算总额",
+      "ttype": "monetary"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "settlement_compliance_message",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "匹配提示",
+      "ttype": "text"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "settlement_compliance_state",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "ok",
+          "通过"
+        ],
+        [
+          "warn",
+          "警告"
+        ],
+        [
+          "block",
+          "阻断"
+        ]
+      ],
+      "string": "匹配状态",
+      "ttype": "selection"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "settlement_currency_id",
+      "readonly": true,
+      "relation": "res.currency",
+      "required": false,
+      "selection": null,
+      "string": "结算币种",
+      "ttype": "many2one"
+    },
+    {
+      "domain": "[('project_id', '=', project_id), ('state', '=', 'approve')]",
+      "help": null,
+      "name": "settlement_id",
+      "readonly": false,
+      "relation": "sc.settlement.order",
+      "required": false,
+      "selection": null,
+      "string": "结算单",
+      "ttype": "many2one"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "settlement_match_blocked",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "匹配阻断",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "settlement_match_warn",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "匹配警告",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "settlement_paid_amount",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "结算已付款",
+      "ttype": "monetary"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "settlement_remaining_amount",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "剩余额度",
+      "ttype": "monetary"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "state",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "draft",
+          "草稿"
+        ],
+        [
+          "submit",
+          "提交"
+        ],
+        [
+          "approve",
+          "审批中"
+        ],
+        [
+          "approved",
+          "已批准"
+        ],
+        [
+          "rejected",
+          "已驳回"
+        ],
+        [
+          "done",
+          "已完成"
+        ],
+        [
+          "cancel",
+          "已取消"
+        ]
+      ],
+      "string": "状态",
+      "ttype": "selection"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "to_validate_message",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "To Validate Message",
+      "ttype": "html"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "type",
+      "readonly": false,
+      "relation": null,
+      "required": true,
+      "selection": [
+        [
+          "pay",
+          "付款"
+        ],
+        [
+          "receive",
+          "收款"
+        ]
+      ],
+      "string": "类型",
+      "ttype": "selection"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "unpaid_amount",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "未付款金额",
+      "ttype": "monetary"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "validated",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Validated",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "validated_message",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Validated Message",
+      "ttype": "html"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "validation_status",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "no",
+          "Without validation"
+        ],
+        [
+          "waiting",
+          "Waiting"
+        ],
+        [
+          "pending",
+          "Pending"
+        ],
+        [
+          "rejected",
+          "Rejected"
+        ],
+        [
+          "validated",
+          "Validated"
+        ]
+      ],
+      "string": "Validation Status",
+      "ttype": "selection"
+    },
+    {
+      "domain": [
+        [
+          "model",
+          "=",
+          "payment.request"
+        ],
+        [
+          "message_type",
+          "in",
+          [
+            "comment",
+            "email",
+            "email_outgoing",
+            "auto_comment"
+          ]
+        ]
+      ],
+      "help": "Website communication history",
+      "name": "website_message_ids",
+      "readonly": false,
+      "relation": "mail.message",
+      "required": false,
+      "selection": null,
+      "string": "Website Messages",
+      "ttype": "one2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "write_date",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Last Updated on",
+      "ttype": "datetime"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "write_uid",
+      "readonly": true,
+      "relation": "res.users",
+      "required": false,
+      "selection": null,
+      "string": "Last Updated by",
+      "ttype": "many2one"
+    }
+  ],
+  "model": "payment.request",
+  "op": "action_open",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {},
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
+}

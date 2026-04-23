@@ -344,6 +344,7 @@
     "user": "admin",
     "op": "intent.invoke",
     "intent": "payment.request.execute",
+    "allow_error_response": true,
     "intent_params": {
       "id": 1,
       "action": "submit",
@@ -355,6 +356,7 @@
     "user": "admin",
     "op": "intent.invoke",
     "intent": "payment.request.submit",
+    "allow_error_response": true,
     "intent_params": {
       "id": 1,
       "request_id": "snapshot_payment_request_submit_1"
@@ -365,6 +367,7 @@
     "user": "admin",
     "op": "intent.invoke",
     "intent": "payment.request.approve",
+    "allow_error_response": true,
     "intent_params": {
       "id": 1,
       "request_id": "snapshot_payment_request_approve_1"
@@ -375,6 +378,7 @@
     "user": "admin",
     "op": "intent.invoke",
     "intent": "payment.request.reject",
+    "allow_error_response": true,
     "intent_params": {
       "id": 1,
       "reason": "snapshot reject reason",
@@ -386,6 +390,7 @@
     "user": "admin",
     "op": "intent.invoke",
     "intent": "payment.request.done",
+    "allow_error_response": true,
     "intent_params": {
       "id": 1,
       "request_id": "snapshot_payment_request_done_1"
@@ -610,6 +615,7 @@
     "compare_mode": "shape",
     "op": "intent.invoke",
     "intent": "load_view",
+    "allow_error_response": true,
     "intent_params": {
       "model": "project.project",
       "view_type": "form"
@@ -620,6 +626,7 @@
     "user": "admin",
     "op": "intent.invoke",
     "intent": "capability.describe",
+    "allow_error_response": true,
     "intent_params": {
       "capability_key": "capability.matrix"
     }

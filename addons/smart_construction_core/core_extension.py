@@ -693,9 +693,13 @@ def get_intent_handler_contributions():
         from odoo.addons.smart_construction_core.handlers.project_execution_block_fetch import (
             ProjectExecutionBlockFetchHandler,
         )
-        from odoo.addons.smart_construction_core.handlers.project_execution_advance import (
-            ProjectExecutionAdvanceHandler,
-        )
+        try:
+            from odoo.addons.smart_construction_core.handlers.project_execution_advance import (
+                ProjectExecutionAdvanceHandler,
+            )
+        except Exception as exc:
+            ProjectExecutionAdvanceHandler = None
+            _logger.warning("[get_intent_handler_contributions] skip project_execution_advance: %s", exc)
         from odoo.addons.smart_construction_core.handlers.project_connection_transition import (
             ProjectConnectionTransitionHandler,
         )
@@ -705,24 +709,48 @@ def get_intent_handler_contributions():
         from odoo.addons.smart_construction_core.handlers.cost_tracking_block_fetch import (
             CostTrackingBlockFetchHandler,
         )
-        from odoo.addons.smart_construction_core.handlers.cost_tracking_record_create import (
-            CostTrackingRecordCreateHandler,
-        )
-        from odoo.addons.smart_construction_core.handlers.payment_slice_enter import (
-            PaymentSliceEnterHandler,
-        )
-        from odoo.addons.smart_construction_core.handlers.payment_slice_block_fetch import (
-            PaymentSliceBlockFetchHandler,
-        )
-        from odoo.addons.smart_construction_core.handlers.payment_slice_record_create import (
-            PaymentSliceRecordCreateHandler,
-        )
-        from odoo.addons.smart_construction_core.handlers.settlement_slice_enter import (
-            SettlementSliceEnterHandler,
-        )
-        from odoo.addons.smart_construction_core.handlers.settlement_slice_block_fetch import (
-            SettlementSliceBlockFetchHandler,
-        )
+        try:
+            from odoo.addons.smart_construction_core.handlers.cost_tracking_record_create import (
+                CostTrackingRecordCreateHandler,
+            )
+        except Exception as exc:
+            CostTrackingRecordCreateHandler = None
+            _logger.warning("[get_intent_handler_contributions] skip cost_tracking_record_create: %s", exc)
+        try:
+            from odoo.addons.smart_construction_core.handlers.payment_slice_enter import (
+                PaymentSliceEnterHandler,
+            )
+        except Exception as exc:
+            PaymentSliceEnterHandler = None
+            _logger.warning("[get_intent_handler_contributions] skip payment_slice_enter: %s", exc)
+        try:
+            from odoo.addons.smart_construction_core.handlers.payment_slice_block_fetch import (
+                PaymentSliceBlockFetchHandler,
+            )
+        except Exception as exc:
+            PaymentSliceBlockFetchHandler = None
+            _logger.warning("[get_intent_handler_contributions] skip payment_slice_block_fetch: %s", exc)
+        try:
+            from odoo.addons.smart_construction_core.handlers.payment_slice_record_create import (
+                PaymentSliceRecordCreateHandler,
+            )
+        except Exception as exc:
+            PaymentSliceRecordCreateHandler = None
+            _logger.warning("[get_intent_handler_contributions] skip payment_slice_record_create: %s", exc)
+        try:
+            from odoo.addons.smart_construction_core.handlers.settlement_slice_enter import (
+                SettlementSliceEnterHandler,
+            )
+        except Exception as exc:
+            SettlementSliceEnterHandler = None
+            _logger.warning("[get_intent_handler_contributions] skip settlement_slice_enter: %s", exc)
+        try:
+            from odoo.addons.smart_construction_core.handlers.settlement_slice_block_fetch import (
+                SettlementSliceBlockFetchHandler,
+            )
+        except Exception as exc:
+            SettlementSliceBlockFetchHandler = None
+            _logger.warning("[get_intent_handler_contributions] skip settlement_slice_block_fetch: %s", exc)
         from odoo.addons.smart_construction_core.handlers.app_catalog import (
             AppCatalogHandler,
         )
@@ -789,6 +817,7 @@ def get_intent_handler_contributions():
             "status": "active",
         }
         for intent, handler in mapping
+        if handler is not None
     ]
 
 

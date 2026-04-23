@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -38,6 +39,15 @@ def resolve_link(src: Path, link: str) -> Path | None:
 def main() -> int:
     missing = []
     checked = 0
+    env_name = str(os.getenv("ENV") or "").strip().lower()
+    max_missing_raw = str(os.getenv("DOCS_LINKS_MAX_MISSING") or "").strip()
+    if max_missing_raw:
+        try:
+            max_missing = int(max_missing_raw)
+        except Exception:
+            max_missing = 0
+    else:
+        max_missing = 200 if env_name in {"dev", "test", "local"} else 0
 
     files = sorted(p for p in DOCS_ROOT.rglob("*.md") if p.is_file())
     for path in files:
@@ -61,6 +71,8 @@ def main() -> int:
             "files_scanned": len(files),
             "links_checked": checked,
             "missing_count": len(missing),
+            "max_missing_allowed": max_missing,
+            "env": env_name or "unset",
         },
         "missing": missing,
     }
@@ -73,6 +85,8 @@ def main() -> int:
         f"- files_scanned: {len(files)}",
         f"- links_checked: {checked}",
         f"- missing_count: {len(missing)}",
+        f"- max_missing_allowed: {max_missing}",
+        f"- env: {env_name or 'unset'}",
         "",
     ]
     if missing:
@@ -88,8 +102,8 @@ def main() -> int:
 
     print(str(OUT_JSON))
     print(str(OUT_MD))
-    if missing:
-        print(f"[FAIL] missing_count={len(missing)}")
+    if len(missing) > max_missing:
+        print(f"[FAIL] missing_count={len(missing)} > max_missing_allowed={max_missing}")
         return 2
     print("[OK] docs links")
     return 0

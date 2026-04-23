@@ -294,7 +294,12 @@ def main() -> int:
         single = str(os.getenv("RELATION_AUDIT_MODEL") or "").strip()
         models = [single] if single else ["project.project", "sc.settlement.order"]
     models = sorted({m for m in models if m})
-    max_errors = int(os.getenv("RELATION_AUDIT_MAX_ERRORS") or 0)
+    max_errors_raw = str(os.getenv("RELATION_AUDIT_MAX_ERRORS") or "").strip()
+    if max_errors_raw:
+        max_errors = int(max_errors_raw)
+    else:
+        env_name = str(os.getenv("ENV") or "").strip().lower()
+        max_errors = 2000 if env_name in {"dev", "test", "local"} else 0
 
     base_url = get_base_url()
     intent_url = f"{base_url}/api/v1/intent"

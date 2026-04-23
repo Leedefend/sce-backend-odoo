@@ -33,3 +33,9 @@
 
 - Screen PASS: blocker is external runtime permission boundary.
 - Next eligible step is gated by runtime capability availability, not code mutation.
+
+## Legacy Endpoint Deprecation Note
+- `/api/scenes/my` is deprecated.
+- Successor endpoint: `/api/v1/intent` with `intent=app.init`.
+- Sunset date: `2026-04-30`.
+- Deprecation header contract reference: `Deprecation`, `Sunset`, `Link`, `X-Legacy-Endpoint`.

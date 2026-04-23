@@ -1,11 +1,576 @@
 {
+  "action": null,
   "case": "project_dashboard_intent_admin",
-  "op": "intent.invoke",
-  "user": "admin",
   "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
   "ui_contract_raw": {
-    "project_id": 1,
-    "scene_key": "project.dashboard"
+    "completion": {
+      "next_target": "开始执行",
+      "percent": 20
+    },
+    "flow_map": {
+      "current_stage": "initiation",
+      "items": [
+        {
+          "key": "initiation",
+          "label": "立项",
+          "status": "current"
+        },
+        {
+          "key": "execution",
+          "label": "执行",
+          "status": "todo"
+        },
+        {
+          "key": "cost",
+          "label": "成本",
+          "status": "todo"
+        },
+        {
+          "key": "payment",
+          "label": "付款",
+          "status": "todo"
+        },
+        {
+          "key": "settlement",
+          "label": "结算",
+          "status": "todo"
+        }
+      ]
+    },
+    "metrics_explain": [
+      {
+        "explain": "尚未形成可识别的执行进度。",
+        "key": "progress",
+        "status": "warning"
+      },
+      {
+        "explain": "尚未录入成本，经营基线仍不完整。",
+        "key": "cost",
+        "status": "warning"
+      },
+      {
+        "explain": "付款与成本关系正常。",
+        "key": "payment",
+        "status": "normal"
+      }
+    ],
+    "page": {
+      "key": "project.management.dashboard",
+      "route": "/s/project.management"
+    },
+    "project": {
+      "cost_total": "0.0",
+      "date": "2026-04-23",
+      "evidence_refs": [],
+      "evidence_summary": {},
+      "fact_metrics": [
+        {
+          "key": "payment_total",
+          "label": "已付款",
+          "trace_action": {
+            "intent": "business.evidence.trace",
+            "payload": {
+              "business_id": 1,
+              "business_model": "project.project",
+              "evidence_type": "payment"
+            }
+          },
+          "unit": "元",
+          "value": 0.0
+        },
+        {
+          "key": "cost_total",
+          "label": "已发生成本",
+          "trace_action": {
+            "intent": "business.evidence.trace",
+            "payload": {
+              "business_id": 1,
+              "business_model": "project.project",
+              "evidence_type": "cost"
+            }
+          },
+          "unit": "元",
+          "value": 0.0
+        },
+        {
+          "key": "settlement_total",
+          "label": "已结算",
+          "trace_action": {
+            "intent": "business.evidence.trace",
+            "payload": {
+              "business_id": 1,
+              "business_model": "project.project",
+              "evidence_type": "settlement"
+            }
+          },
+          "unit": "元",
+          "value": 0.0
+        },
+        {
+          "key": "risk_count",
+          "label": "风险事项",
+          "trace_action": {
+            "intent": "business.evidence.trace",
+            "payload": {
+              "business_id": 1,
+              "business_model": "project.project",
+              "evidence_type": "risk"
+            }
+          },
+          "unit": "项",
+          "value": 0
+        }
+      ],
+      "facts": {
+        "cost_evidence_count": 0,
+        "cost_total": "0.0",
+        "evidence_count": 0,
+        "exception_open_count": 0,
+        "exception_resolved_count": 0,
+        "payment_evidence_count": 0,
+        "payment_executed_total": "0.0",
+        "payment_total": "0.0",
+        "risk_count": 0,
+        "settlement_evidence_count": 0
+      },
+      "health_state": "warn",
+      "id": 1,
+      "lifecycle_state": "draft",
+      "manager_name": "Demo-项目经理",
+      "milestone": "",
+      "name": "演示项目 · 立项待完善",
+      "partner_name": "演示业主 · 城市建设集团",
+      "payment_executed_record_count": "0",
+      "payment_executed_total": "0.0",
+      "payment_total": "0.0",
+      "progress_percent": "0.0",
+      "project_code": "DEMO-PJ-INIT",
+      "stage_name": "筹备中",
+      "state": "ready",
+      "status": "warn"
+    },
+    "route_context": {
+      "primary_protocol": "/s/project.management?project_id=<id>",
+      "project_id": 1,
+      "query_key": "project_id"
+    },
+    "scene": {
+      "key": "project.management",
+      "page": "project.management.dashboard"
+    },
+    "state_explain": {
+      "execution_stage_explain": "项目已完成创建与立项准备，下一步应进入执行主线。",
+      "execution_stage_label": "筹备中",
+      "milestone_explain": "当前里程碑尚未进入显式执行状态。",
+      "project_condition_explain": "warn",
+      "stage_explain": "项目已完成创建与立项准备，下一步应进入执行主线。",
+      "stage_label": "筹备中",
+      "status_explain": "warn"
+    },
+    "summary_rows": [
+      {
+        "copy": "主流程位置",
+        "key": "stage_label",
+        "label": "项目执行阶段",
+        "value": "筹备中"
+      },
+      {
+        "copy": "执行推进节点",
+        "key": "milestone_label",
+        "label": "当前里程碑",
+        "value": ""
+      },
+      {
+        "copy": "尚未形成可识别的执行进度。",
+        "key": "progress_percent",
+        "label": "执行进度",
+        "value": "0.0%"
+      },
+      {
+        "copy": "尚未录入成本，经营基线仍不完整。",
+        "key": "cost_total",
+        "label": "成本合计",
+        "value": "0.0"
+      },
+      {
+        "copy": "付款与成本关系正常。",
+        "key": "payment_total",
+        "label": "付款合计",
+        "value": "0.0"
+      },
+      {
+        "copy": "0 条 payment.ledger 台账",
+        "key": "payment_executed_total",
+        "label": "已支付证据",
+        "value": "0.0"
+      }
+    ],
+    "zones": {
+      "contract": {
+        "summary_rows": [
+          {
+            "copy": "主流程位置",
+            "key": "stage_label",
+            "label": "项目执行阶段",
+            "value": "筹备中"
+          },
+          {
+            "copy": "执行推进节点",
+            "key": "milestone_label",
+            "label": "当前里程碑",
+            "value": ""
+          }
+        ]
+      },
+      "cost": {
+        "summary_rows": [
+          {
+            "copy": "尚未录入成本，经营基线仍不完整。",
+            "key": "cost_total",
+            "label": "成本合计",
+            "value": "0.0"
+          }
+        ]
+      },
+      "finance": {
+        "next_actions": {
+          "block_key": "block.project.next_actions",
+          "block_type": "unknown",
+          "data": {},
+          "error": {
+            "code": "BLOCK_BUILDER_NOT_FOUND",
+            "message": "BLOCK_BUILDER_NOT_FOUND"
+          },
+          "state": "error",
+          "title": "block.project.next_actions",
+          "visibility": {
+            "allowed": true,
+            "reason": "",
+            "reason_code": "OK"
+          }
+        },
+        "summary_rows": [
+          {
+            "copy": "付款与成本关系正常。",
+            "key": "payment_total",
+            "label": "付款合计",
+            "value": "0.0"
+          },
+          {
+            "copy": "0 条 payment.ledger 台账",
+            "key": "payment_executed_total",
+            "label": "已支付证据",
+            "value": "0.0"
+          }
+        ]
+      },
+      "header": {
+        "project": {
+          "cost_total": "0.0",
+          "date": "2026-04-23",
+          "evidence_refs": [],
+          "evidence_summary": {},
+          "fact_metrics": [
+            {
+              "key": "payment_total",
+              "label": "已付款",
+              "trace_action": {
+                "intent": "business.evidence.trace",
+                "payload": {
+                  "business_id": 1,
+                  "business_model": "project.project",
+                  "evidence_type": "payment"
+                }
+              },
+              "unit": "元",
+              "value": 0.0
+            },
+            {
+              "key": "cost_total",
+              "label": "已发生成本",
+              "trace_action": {
+                "intent": "business.evidence.trace",
+                "payload": {
+                  "business_id": 1,
+                  "business_model": "project.project",
+                  "evidence_type": "cost"
+                }
+              },
+              "unit": "元",
+              "value": 0.0
+            },
+            {
+              "key": "settlement_total",
+              "label": "已结算",
+              "trace_action": {
+                "intent": "business.evidence.trace",
+                "payload": {
+                  "business_id": 1,
+                  "business_model": "project.project",
+                  "evidence_type": "settlement"
+                }
+              },
+              "unit": "元",
+              "value": 0.0
+            },
+            {
+              "key": "risk_count",
+              "label": "风险事项",
+              "trace_action": {
+                "intent": "business.evidence.trace",
+                "payload": {
+                  "business_id": 1,
+                  "business_model": "project.project",
+                  "evidence_type": "risk"
+                }
+              },
+              "unit": "项",
+              "value": 0
+            }
+          ],
+          "facts": {
+            "cost_evidence_count": 0,
+            "cost_total": "0.0",
+            "evidence_count": 0,
+            "exception_open_count": 0,
+            "exception_resolved_count": 0,
+            "payment_evidence_count": 0,
+            "payment_executed_total": "0.0",
+            "payment_total": "0.0",
+            "risk_count": 0,
+            "settlement_evidence_count": 0
+          },
+          "health_state": "warn",
+          "id": 1,
+          "lifecycle_state": "draft",
+          "manager_name": "Demo-项目经理",
+          "milestone": "",
+          "name": "演示项目 · 立项待完善",
+          "partner_name": "演示业主 · 城市建设集团",
+          "payment_executed_record_count": "0",
+          "payment_executed_total": "0.0",
+          "payment_total": "0.0",
+          "progress_percent": "0.0",
+          "project_code": "DEMO-PJ-INIT",
+          "stage_name": "筹备中",
+          "state": "ready",
+          "status": "warn"
+        },
+        "resolution": {
+          "candidate_counts": {},
+          "reason": "matched explicit project_id",
+          "requested_project_id": 1,
+          "resolution_path": "explicit_project_id",
+          "resolved_project_id": 1
+        },
+        "state_explain": {
+          "execution_stage_explain": "项目已完成创建与立项准备，下一步应进入执行主线。",
+          "execution_stage_label": "筹备中",
+          "milestone_explain": "当前里程碑尚未进入显式执行状态。",
+          "project_condition_explain": "warn",
+          "stage_explain": "项目已完成创建与立项准备，下一步应进入执行主线。",
+          "stage_label": "筹备中",
+          "status_explain": "warn"
+        }
+      },
+      "metrics": {
+        "items": [
+          {
+            "explain": "尚未形成可识别的执行进度。",
+            "key": "progress",
+            "status": "warning"
+          },
+          {
+            "explain": "尚未录入成本，经营基线仍不完整。",
+            "key": "cost",
+            "status": "warning"
+          },
+          {
+            "explain": "付款与成本关系正常。",
+            "key": "payment",
+            "status": "normal"
+          }
+        ]
+      },
+      "progress": {
+        "block": {
+          "block_key": "block.project.progress",
+          "block_type": "progress_summary",
+          "data": {
+            "completion_percent": 0.0,
+            "critical_path_health": "normal",
+            "milestone_delay": 0,
+            "milestone_done": 0,
+            "milestone_progress": 0.0,
+            "milestone_total": 0,
+            "milestone_upcoming_days": 0,
+            "summary": {
+              "blocked_task_count": 0,
+              "critical_path_health": "normal",
+              "critical_task_count": 0,
+              "delayed_milestones": 0,
+              "delayed_tasks": 0,
+              "milestone_progress": 0.0,
+              "open_task_count": 0,
+              "task_completion_rate": 0.0
+            },
+            "task_blocked": 0,
+            "task_critical": 0,
+            "task_done": 0,
+            "task_open": 0,
+            "task_overdue": 0,
+            "task_total": 0
+          },
+          "error": {
+            "code": "",
+            "message": ""
+          },
+          "state": "ready",
+          "title": "项目进度",
+          "visibility": {
+            "allowed": true,
+            "reason": "",
+            "reason_code": "OK"
+          }
+        },
+        "completion": {
+          "next_target": "开始执行",
+          "percent": 20
+        },
+        "flow_map": {
+          "current_stage": "initiation",
+          "items": [
+            {
+              "key": "initiation",
+              "label": "立项",
+              "status": "current"
+            },
+            {
+              "key": "execution",
+              "label": "执行",
+              "status": "todo"
+            },
+            {
+              "key": "cost",
+              "label": "成本",
+              "status": "todo"
+            },
+            {
+              "key": "payment",
+              "label": "付款",
+              "status": "todo"
+            },
+            {
+              "key": "settlement",
+              "label": "结算",
+              "status": "todo"
+            }
+          ]
+        },
+        "summary_rows": [
+          {
+            "copy": "主流程位置",
+            "key": "stage_label",
+            "label": "项目执行阶段",
+            "value": "筹备中"
+          },
+          {
+            "copy": "执行推进节点",
+            "key": "milestone_label",
+            "label": "当前里程碑",
+            "value": ""
+          },
+          {
+            "copy": "尚未形成可识别的执行进度。",
+            "key": "progress_percent",
+            "label": "执行进度",
+            "value": "0.0%"
+          },
+          {
+            "copy": "尚未录入成本，经营基线仍不完整。",
+            "key": "cost_total",
+            "label": "成本合计",
+            "value": "0.0"
+          },
+          {
+            "copy": "付款与成本关系正常。",
+            "key": "payment_total",
+            "label": "付款合计",
+            "value": "0.0"
+          },
+          {
+            "copy": "0 条 payment.ledger 台账",
+            "key": "payment_executed_total",
+            "label": "已支付证据",
+            "value": "0.0"
+          }
+        ]
+      },
+      "risk": {
+        "block": {
+          "block_key": "block.project.risk",
+          "block_type": "alert_panel",
+          "data": {
+            "alerts": [
+              {
+                "action_key": "open_task_list",
+                "code": "ACTIVITY_OVERDUE",
+                "hint": "流程待办已逾期，请尽快闭环。",
+                "level": "warning",
+                "source": "business",
+                "title": "存在逾期待办",
+                "value": 1
+              }
+            ],
+            "quick_actions": [
+              {
+                "intent": "ui.contract",
+                "key": "open_task_list",
+                "label": "查看任务列表"
+              },
+              {
+                "intent": "ui.contract",
+                "key": "open_risk_list",
+                "label": "查看风险清单"
+              }
+            ],
+            "summary": {
+              "progress_milestone_delay": 0,
+              "progress_task_blocked": 0,
+              "progress_task_overdue": 0,
+              "risk_critical": 0,
+              "risk_level": "low",
+              "risk_open": 0,
+              "risk_score": 4,
+              "risk_total": 0
+            }
+          },
+          "error": {
+            "code": "",
+            "message": ""
+          },
+          "state": "ready",
+          "title": "风险提醒",
+          "visibility": {
+            "allowed": true,
+            "reason": "",
+            "reason_code": "OK"
+          }
+        }
+      }
+    }
   },
-  "error": null
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
 }
