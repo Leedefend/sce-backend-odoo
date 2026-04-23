@@ -9,6 +9,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE_PATH = ROOT / "scripts" / "verify" / "baselines" / "scene_engine_migration_matrix_guard.json"
+DEFAULT_FIELD_SCHEMA_STATE_PATH = ROOT / "artifacts" / "backend" / "scene_contract_v1_field_schema_state.json"
 
 
 def _text(value: Any) -> str:
@@ -58,6 +59,74 @@ def _write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def _derive_runtime_state_from_scene_ready(payload: dict) -> dict:
+    ready = _as_dict(payload.get("scene_ready_contract_v1")) if isinstance(payload.get("scene_ready_contract_v1"), dict) else payload
+    if not ready:
+        return {}
+    scene_meta = _as_dict(ready.get("meta"))
+    scenes = _as_list(ready.get("scenes"))
+    if not scenes:
+        return {}
+
+    per_scene: dict[str, dict[str, Any]] = {}
+    source_kind_counts = {
+        "asset": 0,
+        "runtime_fallback": 0,
+        "runtime_minimal": 0,
+        "inline": 0,
+        "none": 0,
+        "other": 0,
+    }
+    scene_keys: list[str] = []
+    for row in scenes:
+        item = _as_dict(row)
+        scene_key = _text(_as_dict(item.get("scene")).get("key"))
+        if not scene_key:
+            continue
+        scene_keys.append(scene_key)
+        meta = _as_dict(item.get("meta"))
+        verdict = _as_dict(meta.get("compile_verdict"))
+        source_meta = _as_dict(meta.get("ui_base_contract_source"))
+        source_kind = _text(source_meta.get("kind")) or "none"
+        if source_kind not in source_kind_counts:
+            source_kind = "other"
+        source_kind_counts[source_kind] = _safe_int(source_kind_counts.get(source_kind), 0) + 1
+        action_total = _safe_int(_as_dict(_as_dict(item.get("action_surface")).get("counts")).get("total"), 0)
+        per_scene[scene_key] = {
+            "base_contract_bound": bool(verdict.get("base_contract_bound")),
+            "compile_ok": bool(verdict.get("ok")),
+            "source_kind": source_kind,
+            "action_total": action_total,
+        }
+
+    total_scene_count = _safe_int(scene_meta.get("scene_count"), len(scene_keys))
+    denom = float(total_scene_count) if total_scene_count > 0 else 1.0
+    source_kind_ratios = {
+        key: float(_safe_int(value, 0)) / denom
+        for key, value in source_kind_counts.items()
+    }
+    return {
+        "scene_count": total_scene_count,
+        "base_contract_bound_scene_count": _safe_int(scene_meta.get("base_contract_bound_scene_count"), 0),
+        "compile_issue_scene_count": _safe_int(scene_meta.get("compile_issue_scene_count"), 0),
+        "scene_keys": sorted(set(scene_keys)),
+        "source_kind_counts": source_kind_counts,
+        "source_kind_ratios": source_kind_ratios,
+        "per_scene": per_scene,
+    }
+
+
+def _load_runtime_state(state_path: Path) -> tuple[dict, str]:
+    field_schema_state = _load_json(DEFAULT_FIELD_SCHEMA_STATE_PATH)
+    derived_state = _derive_runtime_state_from_scene_ready(field_schema_state)
+    if derived_state:
+        return derived_state, DEFAULT_FIELD_SCHEMA_STATE_PATH.relative_to(ROOT).as_posix()
+    fallback_state = _load_json(state_path)
+    if fallback_state:
+        return fallback_state, state_path.relative_to(ROOT).as_posix()
+    return {}, state_path.relative_to(ROOT).as_posix()
+
+
 def main() -> int:
     baseline = _load_json(BASELINE_PATH)
     if not baseline:
@@ -89,7 +158,7 @@ def main() -> int:
     }
 
     module_map = _load_json(module_map_path)
-    state = _load_json(state_path)
+    state, effective_state_source = _load_runtime_state(state_path)
     if not module_map:
         print("[scene_engine_migration_matrix_guard] FAIL")
         print(f" - missing module map: {module_map_path.relative_to(ROOT).as_posix()}")
@@ -172,7 +241,7 @@ def main() -> int:
         "sources": {
             "baseline": BASELINE_PATH.relative_to(ROOT).as_posix(),
             "module_map_file": module_map_path.relative_to(ROOT).as_posix(),
-            "state_file": state_path.relative_to(ROOT).as_posix(),
+            "state_file": effective_state_source,
         },
     }
 

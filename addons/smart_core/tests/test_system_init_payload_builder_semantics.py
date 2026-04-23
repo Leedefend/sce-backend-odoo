@@ -275,6 +275,40 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
         self.assertEqual(((scene.get("runtime_handoff_surface") or {}).get("family")), "contracts")
         self.assertEqual(((scene.get("product_delivery_surface") or {}).get("delivery_mode")), "direct_delivery")
 
+    def test_minimal_scene_ready_contract_preserves_gate_meta(self):
+        payload = target.SystemInitPayloadBuilder._build_minimal_scene_ready_contract(
+            {
+                "scenes": [
+                    {
+                        "scene": {"key": "projects.list", "title": "项目列表"},
+                        "page": {"route": "/s/projects.list"},
+                        "meta": {
+                            "target": {"route": "/s/projects.list"},
+                            "ui_base_contract_source": {"kind": "asset", "asset_id": 12},
+                            "compile_verdict": {
+                                "ok": True,
+                                "grammar_ok": True,
+                                "semantic_ok": True,
+                                "base_contract_bound": True,
+                            },
+                        },
+                    }
+                ],
+                "meta": {
+                    "generated_by": "test",
+                    "scene_count": 1,
+                    "mode": "dual_track",
+                    "base_contract_bound_scene_count": 1,
+                    "compile_issue_scene_count": 0,
+                },
+            }
+        )
+
+        scene = ((payload.get("scenes") or [])[0] or {})
+        self.assertTrue(((scene.get("meta") or {}).get("compile_verdict") or {}).get("base_contract_bound"))
+        self.assertEqual(((payload.get("meta") or {}).get("base_contract_bound_scene_count")), 1)
+        self.assertEqual(((payload.get("meta") or {}).get("compile_issue_scene_count")), 0)
+
 
 if __name__ == "__main__":
     unittest.main()
