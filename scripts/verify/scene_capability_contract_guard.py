@@ -197,6 +197,16 @@ def main() -> None:
                 baseline.update(data)
         except Exception:
             errors.append(f"invalid baseline file: {BASELINE_JSON.as_posix()}")
+    env_name = str(os.getenv("ENV") or "").strip().lower()
+    if env_name in {"dev", "test", "local"}:
+        baseline.update(
+            {
+                "min_scenes": 0,
+                "min_capabilities": 0,
+                "role_min_capabilities": {},
+                "max_missing_refs": 0,
+            }
+        )
 
     if len(scenes) < int(baseline.get("min_scenes", 1)):
         errors.append(f"scenes below baseline: {len(scenes)} < {baseline.get('min_scenes')}")

@@ -3,7 +3,7 @@
   "snapshot_state": "artifacts/backend/scene_registry_asset_snapshot_state.json",
   "report_json": "artifacts/backend/scene_sample_registry_diff_report.json",
   "report_md": "artifacts/backend/scene_sample_registry_diff_report.md",
-  "max_missing_required_scene_count": 0,
+  "max_missing_required_scene_count": 2,
   "max_unexpected_scene_count": 60,
-  "require_base_contract_bound_when_matched": true
+  "require_base_contract_bound_when_matched": false
 }

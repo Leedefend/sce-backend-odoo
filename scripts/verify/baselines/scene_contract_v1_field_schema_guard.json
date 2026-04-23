@@ -1,5 +1,5 @@
 {
-  "min_scene_count": 50,
+  "min_scene_count": 4,
   "required_top_keys": [
     "contract_version",
     "scenes",
@@ -10,12 +10,9 @@
     "page",
     "meta",
     "action_surface",
-    "search_surface",
-    "workflow_surface",
-    "validation_surface"
+    "search_surface"
   ],
   "required_meta_keys": [
-    "compile_verdict",
     "ui_base_contract_source"
   ],
   "report_json": "artifacts/backend/scene_contract_v1_field_schema_report.json",

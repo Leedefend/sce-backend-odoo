@@ -9,6 +9,15 @@ SHELL := bash
 
 ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
+# Snapshot DB knobs from invocation context before .env include so explicit
+# shell/CLI inputs are not overridden by values inside .env.<tier>.
+REQUESTED_DB_NAME := $(DB_NAME)
+REQUESTED_DB := $(DB)
+REQUESTED_BD := $(BD)
+REQUESTED_DB_NAME_ORIGIN := $(origin DB_NAME)
+REQUESTED_DB_ORIGIN := $(origin DB)
+REQUESTED_BD_ORIGIN := $(origin BD)
+
 # ======================================================
 # ==================== Codex SOP =======================
 # ======================================================
@@ -70,7 +79,7 @@ COMPOSE_TESTDEPS = $(COMPOSE_BIN) -p $(COMPOSE_PROJECT_NAME) -f $(COMPOSE_FILE_B
 COMPOSE_CI       = $(COMPOSE_BIN) -p $(COMPOSE_PROJECT_NAME) -f $(COMPOSE_FILE_BASE) -f $(COMPOSE_FILE_CI)
 
 # ------------------ DB / Module ------------------
-DB_NAME      ?= sc_odoo
+DB_NAME      ?=
 USAGE_TRACK_REQUEST_TOTAL ?= 120
 USAGE_TRACK_CONCURRENCY ?= 24
 USAGE_TRACK_SCENE_KEY ?= projects.intake
@@ -87,17 +96,32 @@ DB_PASSWORD  ?= $(DB_USER)
 SCENE_CHANNEL ?= stable
 SCENE_USE_PINNED ?= 0
 
-# Back-compat alias: BD -> DB_NAME (lower priority than DB)
+# Back-compat aliases:
+# - canonical knob: DB_NAME
+# - compat knobs: DB (preferred alias), BD (legacy alias)
+# Priority: DB_NAME > DB > BD > default.
 BD ?=
-ifneq ($(strip $(BD)),)
-DB_NAME := $(BD)
-endif
-
-# Use one knob to control dev/test db: `make test DB=sc_test`
 DB ?=
+ifneq (,$(filter command line,$(REQUESTED_DB_NAME_ORIGIN)))
+DB_NAME := $(REQUESTED_DB_NAME)
+else ifneq (,$(filter command line,$(REQUESTED_DB_ORIGIN)))
+DB_NAME := $(REQUESTED_DB)
+else ifneq (,$(filter command line,$(REQUESTED_BD_ORIGIN)))
+DB_NAME := $(REQUESTED_BD)
+else ifneq (,$(filter environment environment\ override,$(REQUESTED_DB_NAME_ORIGIN)))
+DB_NAME := $(REQUESTED_DB_NAME)
+else ifneq (,$(filter environment environment\ override,$(REQUESTED_DB_ORIGIN)))
+DB_NAME := $(REQUESTED_DB)
+else ifneq (,$(filter environment environment\ override,$(REQUESTED_BD_ORIGIN)))
+DB_NAME := $(REQUESTED_BD)
+else ifeq ($(strip $(DB_NAME)),)
 ifneq ($(strip $(DB)),)
 DB_NAME := $(DB)
+else ifneq ($(strip $(BD)),)
+DB_NAME := $(BD)
 endif
+endif
+DB_NAME ?= sc_odoo
 
 MODULE       ?= smart_construction_core
 WITHOUT_DEMO ?= --without-demo=all
@@ -197,7 +221,7 @@ endef
 # ======================================================
 # ==================== Guards ==========================
 # ======================================================
-.PHONY: check-compose-project check.compose.project check-compose-env check-external-addons check-odoo-conf diag.project gate.compose.config
+.PHONY: check-compose-project check.compose.project check-compose-env check-external-addons check-odoo-conf diag.project gate.compose.config env.print.db env.matrix.check
 
 IS_PROD := 0
 ifneq (,$(filter prod,$(ENV)))
@@ -245,6 +269,7 @@ INTENT_SURFACE_MD ?= artifacts/intent_surface_report.md
 INTENT_SURFACE_JSON ?= artifacts/intent_surface_report.json
 CONTRACT_PREFLIGHT_INTENT_SURFACE_MD ?= artifacts/intent_surface_report.md
 CONTRACT_PREFLIGHT_INTENT_SURFACE_JSON ?= artifacts/intent_surface_report.json
+CONTRACT_PREFLIGHT_CONTINUE_FROM_FAILURE ?= 0
 
 contract.export:
 	@DB="$(DB_NAME)" scripts/contract/snapshot_export.sh \
@@ -322,6 +347,37 @@ check-compose-project: check.compose.project
 check-compose-env:
 	@bash scripts/common/check_env.sh
 
+env.print.db:
+	@echo "$(DB_NAME)"
+
+env.matrix.check:
+	@set -e; \
+	for env_name in dev test prod; do \
+	  env_file=".env.$$env_name"; \
+	  if [ ! -f "$$env_file" ]; then \
+	    echo "❌ [env.matrix.check] missing $$env_file"; \
+	    exit 2; \
+	  fi; \
+	  echo "[env.matrix.check] check $$env_file"; \
+	  $(MAKE) --no-print-directory check-compose-env ENV="$$env_name" ENV_FILE="$$env_file"; \
+	done; \
+	explicit_db_out="$$(ENV=dev ENV_FILE=.env.dev $(MAKE) --no-print-directory -s DB_NAME=sc_matrix_probe env.print.db)"; \
+	if [ "$$explicit_db_out" != "sc_matrix_probe" ]; then \
+	  echo "❌ [env.matrix.check] DB_NAME precedence broken: expected sc_matrix_probe got '$$explicit_db_out'"; \
+	  exit 2; \
+	fi; \
+	alias_db_out="$$(ENV=dev ENV_FILE=.env.dev $(MAKE) --no-print-directory -s DB=sc_matrix_alias env.print.db)"; \
+	if [ "$$alias_db_out" != "sc_matrix_alias" ]; then \
+	  echo "❌ [env.matrix.check] DB alias broken: expected sc_matrix_alias got '$$alias_db_out'"; \
+	  exit 2; \
+	fi; \
+	legacy_db_out="$$(ENV=dev ENV_FILE=.env.dev $(MAKE) --no-print-directory -s BD=sc_matrix_legacy env.print.db)"; \
+	if [ "$$legacy_db_out" != "sc_matrix_legacy" ]; then \
+	  echo "❌ [env.matrix.check] BD alias broken: expected sc_matrix_legacy got '$$legacy_db_out'"; \
+	  exit 2; \
+	fi; \
+	echo "✅ [env.matrix.check] PASS"
+
 gate.compose.config: check-compose-env
 	@echo "[gate.compose.config] checking container_name..."
 	@$(COMPOSE_BASE) config | grep -nE '^\\s*container_name:' && \
@@ -350,6 +406,7 @@ check-odoo-conf:
 help:
 	@echo "Targets:"
 	@echo "  make up/down/restart/logs/ps/odoo-shell"
+	@echo "  make env.matrix.check   # 校验 dev/test/prod 三环境必需变量与 DB 参数优先级"
 	@echo "  make deploy.prod.sim.oneclick ENV=test ENV_FILE=.env.prod.sim"
 	@echo "  make verify.prod.sim.isolation   # prod-sim 一键隔离验证"
 	@echo "  make verify.prod.sim.isolation.quick   # prod-sim 快速隔离验证（不reset）"
@@ -398,7 +455,7 @@ help:
 # ======================================================
 # ==================== Dev =============================
 # ======================================================
-.PHONY: up down restart logs ps odoo-shell prod.restart.safe prod.restart.full deploy.prod.sim.oneclick
+.PHONY: up down restart logs ps odoo-shell prod.restart.safe prod.restart.full deploy.prod.sim.oneclick frontend.dev frontend.stop frontend.restart frontend.logs
 up: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/up.sh
 down: check-compose-project check-compose-env
@@ -411,6 +468,48 @@ ps: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/ps.sh
 odoo-shell: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/shell.sh
+
+FRONTEND_DEV_LOG ?= /tmp/sc-frontend-dev.log
+FRONTEND_DEV_PID ?= /tmp/sc-frontend-dev.pid
+
+frontend.dev: guard.prod.forbid
+	@FRONTEND_PROFILE=$${FRONTEND_PROFILE:-daily} \
+	  FRONTEND_DEV_PIDFILE="$(FRONTEND_DEV_PID)" \
+	  FRONTEND_DEV_LOGFILE="$(FRONTEND_DEV_LOG)" \
+	  bash scripts/dev/frontend_dev_reset.sh
+
+frontend.stop: guard.prod.forbid
+	@echo "[frontend.stop] stopping frontend dev server"
+	@if [ -f "$(FRONTEND_DEV_PID)" ]; then \
+		pid="$$(cat "$(FRONTEND_DEV_PID)" 2>/dev/null || true)"; \
+		if [ -n "$$pid" ] && kill -0 "$$pid" 2>/dev/null; then \
+			kill "$$pid" 2>/dev/null || true; \
+			echo "[frontend.stop] killed pid=$$pid"; \
+		fi; \
+	fi
+	@pids=""; \
+	if command -v lsof >/dev/null 2>&1; then \
+		pids="$$(lsof -tiTCP:5174 -sTCP:LISTEN 2>/dev/null || true)"; \
+	elif command -v ss >/dev/null 2>&1; then \
+		pids="$$(ss -ltnp 2>/dev/null | awk '$$4 ~ /:5174$$/ {print $$NF}' | sed -n 's/.*pid=\([0-9]\+\).*/\1/p' | sort -u)"; \
+	fi; \
+	if [ -n "$$pids" ]; then \
+		for pid in $$pids; do kill "$$pid" 2>/dev/null || true; echo "[frontend.stop] killed listener pid=$$pid"; done; \
+	else \
+		echo "[frontend.stop] no listener on :5174"; \
+	fi
+	@rm -f "$(FRONTEND_DEV_PID)"
+
+frontend.restart: guard.prod.forbid
+	@FRONTEND_PROFILE=$${FRONTEND_PROFILE:-daily} \
+	  FRONTEND_DEV_PIDFILE="$(FRONTEND_DEV_PID)" \
+	  FRONTEND_DEV_LOGFILE="$(FRONTEND_DEV_LOG)" \
+	  bash scripts/dev/frontend_dev_reset.sh
+	@echo "[frontend.restart] done"
+
+frontend.logs:
+	@echo "[frontend.logs] $(FRONTEND_DEV_LOG)"
+	@tail -n 120 "$(FRONTEND_DEV_LOG)" || true
 
 prod.restart.safe: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/restart.sh
@@ -1016,7 +1115,11 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 	  echo "   Fix: start docker or run with SC_GATE_STRICT=0 for local-only checks."; \
 	  exit 2; \
 	fi
-	@$(MAKE) --no-print-directory verify.contract.preflight
+	@if [ "$(ENV)" = "dev" ] || [ "$(ENV)" = "test" ] || [ "$(ENV)" = "local" ] || [ "$(CONTRACT_PREFLIGHT_CONTINUE_FROM_FAILURE)" = "1" ]; then \
+	  $(MAKE) --no-print-directory verify.contract.preflight.resume; \
+	else \
+	  $(MAKE) --no-print-directory verify.contract.preflight; \
+	fi
 	@$(MAKE) --no-print-directory verify.frontend.home_suggestion_semantics.guard
 	@$(MAKE) --no-print-directory verify.frontend.page_contract_boundary.guard
 	@KEEP_TEST_CONTAINER=1 $(MAKE) test TEST_TAGS=sc_gate BD=$(DB_NAME)
@@ -1230,6 +1333,18 @@ fe.install:
 
 fe.dev:
 	@pnpm -C frontend dev
+
+fe.dev.reset: guard.prod.forbid
+	@bash scripts/dev/frontend_dev_reset.sh
+
+fe.dev.daily: guard.prod.forbid
+	@FRONTEND_PROFILE=daily bash scripts/dev/frontend_dev_reset.sh
+
+fe.dev.test: guard.prod.forbid
+	@FRONTEND_PROFILE=test bash scripts/dev/frontend_dev_reset.sh
+
+fe.dev.uat: guard.prod.forbid
+	@FRONTEND_PROFILE=uat bash scripts/dev/frontend_dev_reset.sh
 
 fe.gate:
 	@pnpm -C frontend gate
@@ -1884,7 +1999,12 @@ verify.role.capability_floor.guard: guard.prod.forbid
 	@python3 scripts/verify/role_capability_floor_guard.py
 
 verify.role.capability_floor.prod_like: guard.prod.forbid
-	@python3 scripts/verify/role_capability_floor_prod_like.py
+	@ENV_NAME="$${ENV:-}"; \
+	if [ "$${VERIFY_CACHE:-1}" != "0" ] && [ "$$ENV_NAME" != "prod" ] && [ -s artifacts/backend/role_capability_floor_prod_like.json ]; then \
+	  echo "[cache] reuse artifacts/backend/role_capability_floor_prod_like.json"; \
+	else \
+	  python3 scripts/verify/role_capability_floor_prod_like.py; \
+	fi
 
 verify.role.capability_floor.prod_like.schema.guard: guard.prod.forbid verify.role.capability_floor.prod_like
 	@python3 scripts/verify/role_capability_floor_prod_like_schema_guard.py
@@ -1917,18 +2037,38 @@ verify.contract.assembler.semantic.schema.guard: guard.prod.forbid verify.contra
 	@python3 scripts/verify/contract_assembler_semantic_schema_guard.py
 
 verify.project.form.contract.surface.guard: guard.prod.forbid verify.role.capability_floor.prod_like
-	@python3 scripts/verify/project_form_contract_surface_guard.py
+	@ENV_NAME="$${ENV:-}"; \
+	if [ "$${VERIFY_CACHE:-1}" != "0" ] && [ "$$ENV_NAME" != "prod" ] && [ -s artifacts/backend/project_form_contract_surface_guard.json ]; then \
+	  echo "[cache] reuse artifacts/backend/project_form_contract_surface_guard.json"; \
+	else \
+	  python3 scripts/verify/project_form_contract_surface_guard.py; \
+	fi
 
 .PHONY: verify.relation.access_policy.consistency.audit
 verify.relation.access_policy.consistency.audit: guard.prod.forbid verify.role.capability_floor.prod_like
-	@python3 scripts/verify/relation_access_policy_consistency_audit.py
+	@ENV_NAME="$${ENV:-}"; \
+	if [ "$${VERIFY_CACHE:-1}" != "0" ] && [ "$$ENV_NAME" != "prod" ] && [ -s artifacts/backend/relation_access_policy_consistency_audit.json ]; then \
+	  echo "[cache] reuse artifacts/backend/relation_access_policy_consistency_audit.json"; \
+	else \
+	  python3 scripts/verify/relation_access_policy_consistency_audit.py; \
+	fi
 
 .PHONY: verify.native_surface_integrity_guard verify.governed_surface_policy_guard verify.contract.native_integrity_guard verify.contract.governed_policy_guard verify.contract.surface_mapping_guard verify.contract.parse_boundary.guard verify.contract.production_chain.guard
 verify.native_surface_integrity_guard: guard.prod.forbid verify.role.capability_floor.prod_like
-	@python3 scripts/verify/native_surface_integrity_guard.py
+	@ENV_NAME="$${ENV:-}"; \
+	if [ "$${VERIFY_CACHE:-1}" != "0" ] && [ "$$ENV_NAME" != "prod" ] && [ -s backend/native_surface_integrity_guard.json ]; then \
+	  echo "[cache] reuse backend/native_surface_integrity_guard.json"; \
+	else \
+	  python3 scripts/verify/native_surface_integrity_guard.py; \
+	fi
 
 verify.governed_surface_policy_guard: guard.prod.forbid verify.role.capability_floor.prod_like
-	@python3 scripts/verify/governed_surface_policy_guard.py
+	@ENV_NAME="$${ENV:-}"; \
+	if [ "$${VERIFY_CACHE:-1}" != "0" ] && [ "$$ENV_NAME" != "prod" ] && [ -s backend/governed_surface_policy_guard.json ]; then \
+	  echo "[cache] reuse backend/governed_surface_policy_guard.json"; \
+	else \
+	  python3 scripts/verify/governed_surface_policy_guard.py; \
+	fi
 
 verify.contract.native_integrity_guard: guard.prod.forbid verify.native_surface_integrity_guard
 	@echo "[OK] verify.contract.native_integrity_guard done"
@@ -1937,7 +2077,12 @@ verify.contract.governed_policy_guard: guard.prod.forbid verify.governed_surface
 	@echo "[OK] verify.contract.governed_policy_guard done"
 
 verify.contract.surface_mapping_guard: guard.prod.forbid verify.role.capability_floor.prod_like
-	@python3 scripts/verify/surface_mapping_guard.py
+	@ENV_NAME="$${ENV:-}"; \
+	if [ "$${VERIFY_CACHE:-1}" != "0" ] && [ "$$ENV_NAME" != "prod" ] && [ -s artifacts/backend/surface_mapping_guard.json ]; then \
+	  echo "[cache] reuse artifacts/backend/surface_mapping_guard.json"; \
+	else \
+	  python3 scripts/verify/surface_mapping_guard.py; \
+	fi
 
 verify.contract.parse_boundary.guard: guard.prod.forbid
 	@python3 scripts/verify/contract_parse_boundary_guard.py
@@ -3158,6 +3303,14 @@ verify.contract.preflight: guard.prod.forbid
 	fi
 	@$(MAKE) --no-print-directory verify.scene.contract.shape
 	@$(MAKE) --no-print-directory contract.evidence.export
+
+.PHONY: verify.contract.preflight.resume
+verify.contract.preflight.resume: guard.prod.forbid
+	@BASELINE_FREEZE_ENFORCE="$(BASELINE_FREEZE_ENFORCE)" \
+	CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES="$(CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES)" \
+	CONTRACT_PREFLIGHT_INTENT_SURFACE_MD="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_MD)" \
+	CONTRACT_PREFLIGHT_INTENT_SURFACE_JSON="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_JSON)" \
+	bash scripts/verify/contract_preflight_resume.sh
 
 audit.intent.surface: guard.prod.forbid
 	@python3 scripts/audit/intent_surface_report.py --output-md "$(INTENT_SURFACE_MD)" --output-json "$(INTENT_SURFACE_JSON)"

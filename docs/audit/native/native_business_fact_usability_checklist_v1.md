@@ -30,3 +30,9 @@ If any future checklist item requires changing:
 - `__manifest__.py`
 
 then stop low-risk lane and open a dedicated high-risk gated task contract.
+
+## Legacy Endpoint Deprecation Note
+- `/api/scenes/my` is deprecated.
+- Successor endpoint: `/api/v1/intent` with `intent=app.init`.
+- Sunset date: `2026-04-30`.
+- Deprecation header contract reference: `Deprecation`, `Sunset`, `Link`, `X-Legacy-Endpoint`.

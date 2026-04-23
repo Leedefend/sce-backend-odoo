@@ -1,11 +1,257 @@
 {
+  "action": null,
   "case": "cost_tracking_enter_intent_admin",
-  "op": "intent.invoke",
-  "user": "admin",
   "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
   "ui_contract_raw": {
+    "blocks": [
+      {
+        "key": "cost_entry",
+        "state": "deferred",
+        "title": "成本录入"
+      },
+      {
+        "key": "cost_list",
+        "state": "deferred",
+        "title": "成本记录"
+      },
+      {
+        "key": "cost_summary",
+        "state": "deferred",
+        "title": "成本汇总"
+      },
+      {
+        "key": "next_actions",
+        "state": "deferred",
+        "title": "成本下一步"
+      }
+    ],
+    "lifecycle_hints": {
+      "next_step_label": "load cost entry",
+      "primary_action_label": "成本记录",
+      "project_id": 1,
+      "reason_code": "COST_SLICE_PREPARED_READY",
+      "scene_key": "cost.tracking",
+      "stage": "entry_ready",
+      "suggested_action_intent": "cost.tracking.block.fetch"
+    },
+    "project_context": {
+      "execution_stage": "draft",
+      "execution_stage_label": "筹备中",
+      "milestone": "",
+      "milestone_label": "",
+      "project_condition": "warn",
+      "project_id": 1,
+      "project_name": "演示项目 · 立项待完善",
+      "stage": "draft",
+      "stage_label": "筹备中",
+      "status": "warn"
+    },
     "project_id": 1,
-    "scene_key": "cost.tracking"
+    "runtime_fetch_hints": {
+      "blocks": {
+        "cost_entry": {
+          "intent": "cost.tracking.block.fetch",
+          "params": {
+            "block_key": "cost_entry",
+            "project_context": {
+              "execution_stage": "draft",
+              "execution_stage_label": "筹备中",
+              "milestone": "",
+              "milestone_label": "",
+              "project_condition": "warn",
+              "project_id": 1,
+              "project_name": "演示项目 · 立项待完善",
+              "stage": "draft",
+              "stage_label": "筹备中",
+              "status": "warn"
+            },
+            "project_id": 1
+          }
+        },
+        "cost_list": {
+          "intent": "cost.tracking.block.fetch",
+          "params": {
+            "block_key": "cost_list",
+            "project_context": {
+              "execution_stage": "draft",
+              "execution_stage_label": "筹备中",
+              "milestone": "",
+              "milestone_label": "",
+              "project_condition": "warn",
+              "project_id": 1,
+              "project_name": "演示项目 · 立项待完善",
+              "stage": "draft",
+              "stage_label": "筹备中",
+              "status": "warn"
+            },
+            "project_id": 1
+          }
+        },
+        "cost_summary": {
+          "intent": "cost.tracking.block.fetch",
+          "params": {
+            "block_key": "cost_summary",
+            "project_context": {
+              "execution_stage": "draft",
+              "execution_stage_label": "筹备中",
+              "milestone": "",
+              "milestone_label": "",
+              "project_condition": "warn",
+              "project_id": 1,
+              "project_name": "演示项目 · 立项待完善",
+              "stage": "draft",
+              "stage_label": "筹备中",
+              "status": "warn"
+            },
+            "project_id": 1
+          }
+        },
+        "next_actions": {
+          "intent": "cost.tracking.block.fetch",
+          "params": {
+            "block_key": "next_actions",
+            "project_context": {
+              "execution_stage": "draft",
+              "execution_stage_label": "筹备中",
+              "milestone": "",
+              "milestone_label": "",
+              "project_condition": "warn",
+              "project_id": 1,
+              "project_name": "演示项目 · 立项待完善",
+              "stage": "draft",
+              "stage_label": "筹备中",
+              "status": "warn"
+            },
+            "project_id": 1
+          }
+        }
+      }
+    },
+    "scene_contract_standard_v1": {
+      "actions": {
+        "next_action": {
+          "intent": "cost.tracking.block.fetch",
+          "key": "load_cost_entry",
+          "label": "cost.tracking.block.fetch",
+          "params": {
+            "block_key": "cost_entry",
+            "project_id": 1
+          },
+          "reason_code": "COST_SLICE_PREPARED_READY",
+          "target": {
+            "route": "",
+            "scene_key": "",
+            "type": "intent"
+          }
+        },
+        "primary_actions": [],
+        "secondary_actions": []
+      },
+      "contract_version": "scene_contract_standard_v1",
+      "governance": {
+        "contract_version": "scene_contract_standard_v1",
+        "diagnostics_ref": "cost.tracking.enter",
+        "policy_match": true,
+        "released": true
+      },
+      "identity": {
+        "capability": "delivery.fr3.cost_tracking",
+        "product_key": "fr3",
+        "scene_key": "cost.tracking",
+        "title": "成本记录：演示项目 · 立项待完善",
+        "version": "v1"
+      },
+      "page": {
+        "blocks": [
+          {
+            "block_type": "runtime_block",
+            "key": "cost_entry",
+            "source": "runtime_entry",
+            "state": "deferred",
+            "title": "成本录入"
+          },
+          {
+            "block_type": "runtime_block",
+            "key": "cost_list",
+            "source": "runtime_entry",
+            "state": "deferred",
+            "title": "成本记录"
+          },
+          {
+            "block_type": "runtime_block",
+            "key": "cost_summary",
+            "source": "runtime_entry",
+            "state": "deferred",
+            "title": "成本汇总"
+          },
+          {
+            "block_type": "runtime_block",
+            "key": "next_actions",
+            "source": "runtime_entry",
+            "state": "deferred",
+            "title": "成本下一步"
+          }
+        ],
+        "layout": "workspace_stack",
+        "zones": [
+          {
+            "block_keys": [
+              "cost_entry",
+              "cost_list",
+              "cost_summary",
+              "next_actions"
+            ],
+            "key": "primary",
+            "layout": "workspace_stack",
+            "title": "Primary"
+          }
+        ]
+      },
+      "state": {
+        "message": "后端未提供成本记录状态摘要",
+        "reason_code": "COST_SLICE_PREPARED_READY",
+        "state_tone": "stable",
+        "status": "ready"
+      },
+      "target": {
+        "openable": true,
+        "route": "/s/project.management",
+        "target": "same_tab"
+      }
+    },
+    "scene_key": "cost.tracking",
+    "scene_label": "成本记录",
+    "state_fallback_text": "后端未提供成本记录状态摘要",
+    "suggested_action": {
+      "intent": "cost.tracking.block.fetch",
+      "key": "load_cost_entry",
+      "params": {
+        "block_key": "cost_entry",
+        "project_id": 1
+      },
+      "reason_code": "COST_SLICE_PREPARED_READY"
+    },
+    "summary": {
+      "cost_record_count": "",
+      "cost_total_amount": "",
+      "manager_name": "",
+      "project_code": "DEMO-PJ-INIT",
+      "stage_name": ""
+    },
+    "summary_rows": [],
+    "title": "成本记录：演示项目 · 立项待完善"
   },
-  "error": null
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
 }

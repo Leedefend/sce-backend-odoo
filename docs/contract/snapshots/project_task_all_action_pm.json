@@ -1,0 +1,1420 @@
+{
+  "action": null,
+  "case": "project_task_all_action_pm",
+  "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": [
+    {
+      "domain": null,
+      "help": null,
+      "name": "access_token",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Security Token",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": "Customer Portal URL",
+      "name": "access_url",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Portal Access URL",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "access_warning",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Access warning",
+      "ttype": "text"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "active",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Active",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "activity_date_deadline",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Next Activity Deadline",
+      "ttype": "date"
+    },
+    {
+      "domain": null,
+      "help": "Type of the exception activity on record.",
+      "name": "activity_exception_decoration",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "warning",
+          "Alert"
+        ],
+        [
+          "danger",
+          "Error"
+        ]
+      ],
+      "string": "Activity Exception Decoration",
+      "ttype": "selection"
+    },
+    {
+      "domain": null,
+      "help": "Icon to indicate an exception activity.",
+      "name": "activity_exception_icon",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Icon",
+      "ttype": "char"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "activity_ids",
+      "readonly": false,
+      "relation": "mail.activity",
+      "required": false,
+      "selection": null,
+      "string": "Activities",
+      "ttype": "one2many"
+    },
+    {
+      "domain": null,
+      "help": "Status based on activities\nOverdue: Due date is already passed\nToday: Activity date is today\nPlanned: Future activities.",
+      "name": "activity_state",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "overdue",
+          "Overdue"
+        ],
+        [
+          "today",
+          "Today"
+        ],
+        [
+          "planned",
+          "Planned"
+        ]
+      ],
+      "string": "Activity State",
+      "ttype": "selection"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "activity_summary",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Next Activity Summary",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": "Font awesome icon e.g. fa-tasks",
+      "name": "activity_type_icon",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Activity Type Icon",
+      "ttype": "char"
+    },
+    {
+      "domain": "['|', ('res_model', '=', False), ('res_model', '=', res_model)]",
+      "help": null,
+      "name": "activity_type_id",
+      "readonly": false,
+      "relation": "mail.activity.type",
+      "required": false,
+      "selection": null,
+      "string": "Next Activity Type",
+      "ttype": "many2one"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "activity_user_id",
+      "readonly": true,
+      "relation": "res.users",
+      "required": false,
+      "selection": null,
+      "string": "Responsible User",
+      "ttype": "many2one"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "allocated_hours",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Allocated Time",
+      "ttype": "float"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "allow_milestones",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Milestones",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "allow_task_dependencies",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Task Dependencies",
+      "ttype": "boolean"
+    },
+    {
+      "domain": "[('company_id', '=?', company_id)]",
+      "help": "Analytic account to which this task and its timesheets are linked.\nTrack the costs and revenues of your task by setting its analytic account on your related documents (e.g. sales orders, invoices, purchase orders, vendor bills, expenses etc.).\nBy default, the analytic account of the project is set. However, it can be changed on each task individually if necessary.",
+      "name": "analytic_account_id",
+      "readonly": false,
+      "relation": "account.analytic.account",
+      "required": false,
+      "selection": null,
+      "string": "Analytic Account",
+      "ttype": "many2one"
+    },
+    {
+      "domain": [],
+      "help": "Attachments that don't come from a message.",
+      "name": "attachment_ids",
+      "readonly": true,
+      "relation": "ir.attachment",
+      "required": false,
+      "selection": null,
+      "string": "Main Attachments",
+      "ttype": "one2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "boq_amount_total",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "BOQ合价汇总",
+      "ttype": "monetary"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "boq_generated",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "来源: BOQ聚合",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "boq_group_key",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "BOQ分组键",
+      "ttype": "char"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "boq_line_ids",
+      "readonly": true,
+      "relation": "project.boq.line",
+      "required": false,
+      "selection": null,
+      "string": "关联BOQ行",
+      "ttype": "many2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "boq_quantity_total",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "BOQ工程量",
+      "ttype": "float"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "boq_section_type",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "building",
+          "建筑"
+        ],
+        [
+          "installation",
+          "安装/机电"
+        ],
+        [
+          "decoration",
+          "装饰"
+        ],
+        [
+          "landscape",
+          "景观"
+        ],
+        [
+          "other",
+          "其他"
+        ]
+      ],
+      "string": "工程类别",
+      "ttype": "selection"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "boq_uom_id",
+      "readonly": true,
+      "relation": "uom.uom",
+      "required": false,
+      "selection": null,
+      "string": "工程量单位",
+      "ttype": "many2one"
+    },
+    {
+      "domain": "[('recurring_task', '=', False)]",
+      "help": null,
+      "name": "child_ids",
+      "readonly": false,
+      "relation": "project.task",
+      "required": false,
+      "selection": null,
+      "string": "Sub-tasks",
+      "ttype": "one2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "closed_subtask_count",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Closed Sub-tasks Count",
+      "ttype": "integer"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "color",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Color Index",
+      "ttype": "integer"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "company_id",
+      "readonly": false,
+      "relation": "res.company",
+      "required": false,
+      "selection": null,
+      "string": "Company",
+      "ttype": "many2one"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "create_date",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Created On",
+      "ttype": "datetime"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "create_uid",
+      "readonly": true,
+      "relation": "res.users",
+      "required": false,
+      "selection": null,
+      "string": "Created by",
+      "ttype": "many2one"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "currency_id",
+      "readonly": true,
+      "relation": "res.currency",
+      "required": false,
+      "selection": null,
+      "string": "币种",
+      "ttype": "many2one"
+    },
+    {
+      "domain": null,
+      "help": "Date on which this task was last assigned (or unassigned). Based on this, you can get statistics on the time it usually takes to assign tasks.",
+      "name": "date_assign",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Assigning Date",
+      "ttype": "datetime"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "date_deadline",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Deadline",
+      "ttype": "datetime"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "date_end",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Ending Date",
+      "ttype": "datetime"
+    },
+    {
+      "domain": null,
+      "help": "Date on which the state of your task has last been modified.\nBased on this information you can identify tasks that are stalling and get statistics on the time it usually takes to move tasks from one stage/state to another.",
+      "name": "date_last_stage_update",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Last Stage Update",
+      "ttype": "datetime"
+    },
+    {
+      "domain": "[('project_id', '!=', False), ('id', '!=', id)]",
+      "help": null,
+      "name": "depend_on_ids",
+      "readonly": false,
+      "relation": "project.task",
+      "required": false,
+      "selection": null,
+      "string": "Blocked By",
+      "ttype": "many2many"
+    },
+    {
+      "domain": "[('project_id', '!=', False), ('id', '!=', id)]",
+      "help": null,
+      "name": "dependent_ids",
+      "readonly": false,
+      "relation": "project.task",
+      "required": false,
+      "selection": null,
+      "string": "Block",
+      "ttype": "many2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "dependent_tasks_count",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Dependent Tasks",
+      "ttype": "integer"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "description",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Description",
+      "ttype": "html"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "display_in_project",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Display In Project",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": "Use these keywords in the title to set new tasks:\n\n            #tags Set tags on the task\n            @user Assign the task to a user\n            ! Set the task a high priority\n\n            Make sure to use the right format and order e.g. Improve the configuration screen #feature #v16 @Mitchell !",
+      "name": "display_name",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Display Name",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "display_parent_task_button",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Display Parent Task Button",
+      "ttype": "boolean"
+    },
+    {
+      "domain": "[('res_model', '=', 'project.task'), ('res_id', '=', id), ('mimetype', 'ilike', 'image')]",
+      "help": null,
+      "name": "displayed_image_id",
+      "readonly": false,
+      "relation": "ir.attachment",
+      "required": false,
+      "selection": null,
+      "string": "Cover Image",
+      "ttype": "many2one"
+    },
+    {
+      "domain": null,
+      "help": "JSON that maps ids from a many2one field to seconds spent",
+      "name": "duration_tracking",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Status time",
+      "ttype": "json"
+    },
+    {
+      "domain": null,
+      "help": "Email addresses that were in the CC of the incoming emails from this task and that are not currently linked to an existing customer.",
+      "name": "email_cc",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Email cc",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "has_late_and_unreached_milestone",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Has Late And Unreached Milestone",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "has_message",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Has Message",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "id",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "ID",
+      "ttype": "integer"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "message_attachment_count",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Attachment Count",
+      "ttype": "integer"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "message_follower_ids",
+      "readonly": false,
+      "relation": "mail.followers",
+      "required": false,
+      "selection": null,
+      "string": "Followers",
+      "ttype": "one2many"
+    },
+    {
+      "domain": null,
+      "help": "If checked, some messages have a delivery error.",
+      "name": "message_has_error",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Message Delivery error",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": "Number of messages with delivery error",
+      "name": "message_has_error_counter",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Number of errors",
+      "ttype": "integer"
+    },
+    {
+      "domain": null,
+      "help": "If checked, some messages have a delivery error.",
+      "name": "message_has_sms_error",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "SMS Delivery error",
+      "ttype": "boolean"
+    },
+    {
+      "domain": [
+        [
+          "message_type",
+          "!=",
+          "user_notification"
+        ]
+      ],
+      "help": null,
+      "name": "message_ids",
+      "readonly": false,
+      "relation": "mail.message",
+      "required": false,
+      "selection": null,
+      "string": "Messages",
+      "ttype": "one2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "message_is_follower",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Is Follower",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": "If checked, new messages require your attention.",
+      "name": "message_needaction",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Action Needed",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": "Number of messages requiring action",
+      "name": "message_needaction_counter",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Number of Actions",
+      "ttype": "integer"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "message_partner_ids",
+      "readonly": false,
+      "relation": "res.partner",
+      "required": false,
+      "selection": null,
+      "string": "Followers (Partners)",
+      "ttype": "many2many"
+    },
+    {
+      "domain": "[('project_id', '=', project_id)]",
+      "help": "Deliver your services automatically when a milestone is reached by linking it to a sales order item.",
+      "name": "milestone_id",
+      "readonly": false,
+      "relation": "project.milestone",
+      "required": false,
+      "selection": null,
+      "string": "Milestone",
+      "ttype": "many2one"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "my_activity_date_deadline",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "My Activity Deadline",
+      "ttype": "date"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "name",
+      "readonly": false,
+      "relation": null,
+      "required": true,
+      "selection": null,
+      "string": "Title",
+      "ttype": "char"
+    },
+    {
+      "domain": "['!', ('id', 'child_of', id)]",
+      "help": null,
+      "name": "parent_id",
+      "readonly": false,
+      "relation": "project.task",
+      "required": false,
+      "selection": null,
+      "string": "Parent Task",
+      "ttype": "many2one"
+    },
+    {
+      "domain": "['|', ('company_id', '=?', company_id), ('company_id', '=', False)]",
+      "help": null,
+      "name": "partner_id",
+      "readonly": false,
+      "relation": "res.partner",
+      "required": false,
+      "selection": null,
+      "string": "Customer",
+      "ttype": "many2one"
+    },
+    {
+      "domain": [],
+      "help": "The current user's personal stage.",
+      "name": "personal_stage_id",
+      "readonly": true,
+      "relation": "project.task.stage.personal",
+      "required": false,
+      "selection": null,
+      "string": "Personal Stage State",
+      "ttype": "many2one"
+    },
+    {
+      "domain": "[('user_id', '=', uid)]",
+      "help": "The current user's personal task stage.",
+      "name": "personal_stage_type_id",
+      "readonly": false,
+      "relation": "project.task.type",
+      "required": false,
+      "selection": null,
+      "string": "Personal Stage",
+      "ttype": "many2one"
+    },
+    {
+      "domain": "[('user_id', '=', user.id)]",
+      "help": null,
+      "name": "personal_stage_type_ids",
+      "readonly": false,
+      "relation": "project.task.type",
+      "required": false,
+      "selection": null,
+      "string": "Personal Stages",
+      "ttype": "many2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "portal_user_names",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Portal User Names",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "priority",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "0",
+          "Low"
+        ],
+        [
+          "1",
+          "High"
+        ]
+      ],
+      "string": "Priority",
+      "ttype": "selection"
+    },
+    {
+      "domain": "['|', ('company_id', '=', False), ('company_id', '=?',  company_id)]",
+      "help": null,
+      "name": "project_id",
+      "readonly": false,
+      "relation": "project.project",
+      "required": false,
+      "selection": null,
+      "string": "Project",
+      "ttype": "many2one"
+    },
+    {
+      "domain": null,
+      "help": "People to whom this project and its tasks will be visible.\n\n- Invited internal users: when following a project, internal users will get access to all of its tasks without distinction. Otherwise, they will only get access to the specific tasks they are following.\n A user with the project > administrator access right level can still access this project and its tasks, even if they are not explicitly part of the followers.\n\n- All internal users: all internal users can access the project and all of its tasks without distinction.\n\n- Invited portal users and all internal users: all internal users can access the project and all of its tasks without distinction.\nWhen following a project, portal users will get access to all of its tasks without distinction. Otherwise, they will only get access to the specific tasks they are following.\n\nWhen a project is shared in read-only, the portal user is redirected to their portal. They can view the tasks, but not edit them.\nWhen a project is shared in edit, the portal user is redirected to the kanban and list views of the tasks. They can modify a selected number of fields on the tasks.\n\nIn any case, an internal user with no project access rights can still access a task, provided that they are given the corresponding URL (and that they are part of the followers if the project is private).",
+      "name": "project_privacy_visibility",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "followers",
+          "Invited internal users (private)"
+        ],
+        [
+          "employees",
+          "All internal users"
+        ],
+        [
+          "portal",
+          "Invited portal users and all internal users (public)"
+        ]
+      ],
+      "string": "Project Visibility",
+      "ttype": "selection"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "rating_active",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Project Rating Status",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "rating_avg",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Average Rating",
+      "ttype": "float"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "rating_avg_text",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "top",
+          "Satisfied"
+        ],
+        [
+          "ok",
+          "Okay"
+        ],
+        [
+          "ko",
+          "Dissatisfied"
+        ],
+        [
+          "none",
+          "No Rating yet"
+        ]
+      ],
+      "string": "Rating Avg Text",
+      "ttype": "selection"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "rating_count",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Rating count",
+      "ttype": "integer"
+    },
+    {
+      "domain": [
+        [
+          "res_model",
+          "=",
+          "project.task"
+        ]
+      ],
+      "help": null,
+      "name": "rating_ids",
+      "readonly": false,
+      "relation": "rating.rating",
+      "required": false,
+      "selection": null,
+      "string": "Ratings",
+      "ttype": "one2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "rating_last_feedback",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Rating Last Feedback",
+      "ttype": "text"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "rating_last_image",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Rating Last Image",
+      "ttype": "binary"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "rating_last_text",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "top",
+          "Satisfied"
+        ],
+        [
+          "ok",
+          "Okay"
+        ],
+        [
+          "ko",
+          "Dissatisfied"
+        ],
+        [
+          "none",
+          "No Rating yet"
+        ]
+      ],
+      "string": "Rating Text",
+      "ttype": "selection"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "rating_last_value",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Rating Last Value",
+      "ttype": "float"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "rating_percentage_satisfaction",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Rating Satisfaction",
+      "ttype": "float"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "readiness_blockers",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "就绪阻断项",
+      "ttype": "text"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "readiness_missing_fields",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "就绪缺失字段",
+      "ttype": "text"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "readiness_status",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "ready",
+          "就绪"
+        ],
+        [
+          "blocked",
+          "阻断"
+        ],
+        [
+          "missing",
+          "缺失"
+        ]
+      ],
+      "string": "就绪状态",
+      "ttype": "selection"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "recurrence_id",
+      "readonly": false,
+      "relation": "project.task.recurrence",
+      "required": false,
+      "selection": null,
+      "string": "Recurrence",
+      "ttype": "many2one"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "recurring_count",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Tasks in Recurrence",
+      "ttype": "integer"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "recurring_task",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Recurrent",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "repeat_interval",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Repeat Every",
+      "ttype": "integer"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "repeat_type",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "forever",
+          "Forever"
+        ],
+        [
+          "until",
+          "Until"
+        ]
+      ],
+      "string": "Until",
+      "ttype": "selection"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "repeat_unit",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "day",
+          "Days"
+        ],
+        [
+          "week",
+          "Weeks"
+        ],
+        [
+          "month",
+          "Months"
+        ],
+        [
+          "year",
+          "Years"
+        ]
+      ],
+      "string": "Repeat Unit",
+      "ttype": "selection"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "repeat_until",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "End Date",
+      "ttype": "date"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "sc_state",
+      "readonly": false,
+      "relation": null,
+      "required": true,
+      "selection": [
+        [
+          "draft",
+          "草稿"
+        ],
+        [
+          "ready",
+          "就绪"
+        ],
+        [
+          "in_progress",
+          "进行中"
+        ],
+        [
+          "done",
+          "已完成"
+        ],
+        [
+          "cancelled",
+          "已取消"
+        ]
+      ],
+      "string": "工程状态",
+      "ttype": "selection"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "sequence",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Sequence",
+      "ttype": "integer"
+    },
+    {
+      "domain": "[('project_ids', '=', project_id)]",
+      "help": null,
+      "name": "stage_id",
+      "readonly": false,
+      "relation": "project.task.type",
+      "required": false,
+      "selection": null,
+      "string": "Stage",
+      "ttype": "many2one"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "state",
+      "readonly": false,
+      "relation": null,
+      "required": true,
+      "selection": [
+        [
+          "01_in_progress",
+          "In Progress"
+        ],
+        [
+          "02_changes_requested",
+          "Changes Requested"
+        ],
+        [
+          "03_approved",
+          "Approved"
+        ],
+        [
+          "1_done",
+          "Done"
+        ],
+        [
+          "1_canceled",
+          "Canceled"
+        ],
+        [
+          "04_waiting_normal",
+          "Waiting"
+        ]
+      ],
+      "string": "State",
+      "ttype": "selection"
+    },
+    {
+      "domain": null,
+      "help": "Sum of the hours allocated for all the sub-tasks (and their own sub-tasks) linked to this task. Usually less than or equal to the allocated hours of this task.",
+      "name": "subtask_allocated_hours",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Sub-tasks Allocated Time",
+      "ttype": "float"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "subtask_count",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Sub-task Count",
+      "ttype": "integer"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "tag_ids",
+      "readonly": false,
+      "relation": "project.tags",
+      "required": false,
+      "selection": null,
+      "string": "Tags",
+      "ttype": "many2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "task_properties",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Properties",
+      "ttype": "properties"
+    },
+    {
+      "domain": "[('share', '=', False), ('active', '=', True)]",
+      "help": null,
+      "name": "user_ids",
+      "readonly": false,
+      "relation": "res.users",
+      "required": false,
+      "selection": null,
+      "string": "Assignees",
+      "ttype": "many2many"
+    },
+    {
+      "domain": [
+        [
+          "model",
+          "=",
+          "project.task"
+        ],
+        [
+          "message_type",
+          "in",
+          [
+            "auto_comment",
+            "comment",
+            "email",
+            "email_outgoing"
+          ]
+        ]
+      ],
+      "help": "Website communication history",
+      "name": "website_message_ids",
+      "readonly": false,
+      "relation": "mail.message",
+      "required": false,
+      "selection": null,
+      "string": "Website Messages",
+      "ttype": "one2many"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "work_id",
+      "readonly": false,
+      "relation": "construction.work.breakdown",
+      "required": false,
+      "selection": null,
+      "string": "工程结构节点",
+      "ttype": "many2one"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "working_days_close",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Working Days to Close",
+      "ttype": "float"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "working_days_open",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Working Days to Assign",
+      "ttype": "float"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "working_hours_close",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Working Hours to Close",
+      "ttype": "float"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "working_hours_open",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Working Hours to Assign",
+      "ttype": "float"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "write_date",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Last Updated On",
+      "ttype": "datetime"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "write_uid",
+      "readonly": true,
+      "relation": "res.users",
+      "required": false,
+      "selection": null,
+      "string": "Last Updated by",
+      "ttype": "many2one"
+    }
+  ],
+  "model": "project.task",
+  "op": "action_open",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {},
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
+}

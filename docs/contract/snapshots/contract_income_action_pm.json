@@ -1,0 +1,827 @@
+{
+  "action": null,
+  "case": "contract_income_action_pm",
+  "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": [
+    {
+      "domain": null,
+      "help": null,
+      "name": "activity_date_deadline",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Next Activity Deadline",
+      "ttype": "date"
+    },
+    {
+      "domain": null,
+      "help": "Type of the exception activity on record.",
+      "name": "activity_exception_decoration",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "warning",
+          "Alert"
+        ],
+        [
+          "danger",
+          "Error"
+        ]
+      ],
+      "string": "Activity Exception Decoration",
+      "ttype": "selection"
+    },
+    {
+      "domain": null,
+      "help": "Icon to indicate an exception activity.",
+      "name": "activity_exception_icon",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Icon",
+      "ttype": "char"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "activity_ids",
+      "readonly": false,
+      "relation": "mail.activity",
+      "required": false,
+      "selection": null,
+      "string": "Activities",
+      "ttype": "one2many"
+    },
+    {
+      "domain": null,
+      "help": "Status based on activities\nOverdue: Due date is already passed\nToday: Activity date is today\nPlanned: Future activities.",
+      "name": "activity_state",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "overdue",
+          "Overdue"
+        ],
+        [
+          "today",
+          "Today"
+        ],
+        [
+          "planned",
+          "Planned"
+        ]
+      ],
+      "string": "Activity State",
+      "ttype": "selection"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "activity_summary",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Next Activity Summary",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": "Font awesome icon e.g. fa-tasks",
+      "name": "activity_type_icon",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Activity Type Icon",
+      "ttype": "char"
+    },
+    {
+      "domain": "['|', ('res_model', '=', False), ('res_model', '=', res_model)]",
+      "help": null,
+      "name": "activity_type_id",
+      "readonly": false,
+      "relation": "mail.activity.type",
+      "required": false,
+      "selection": null,
+      "string": "Next Activity Type",
+      "ttype": "many2one"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "activity_user_id",
+      "readonly": true,
+      "relation": "res.users",
+      "required": false,
+      "selection": null,
+      "string": "Responsible User",
+      "ttype": "many2one"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "amount_change",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "累计变更金额",
+      "ttype": "monetary"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "amount_final",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "最终合同价",
+      "ttype": "monetary"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "amount_tax",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "税额",
+      "ttype": "monetary"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "amount_total",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "含税金额",
+      "ttype": "monetary"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "amount_untaxed",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "不含税金额",
+      "ttype": "monetary"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "analytic_id",
+      "readonly": false,
+      "relation": "account.analytic.account",
+      "required": false,
+      "selection": null,
+      "string": "分析账户",
+      "ttype": "many2one"
+    },
+    {
+      "domain": "[('project_id', '=', project_id), ('is_active', '=', True)]",
+      "help": null,
+      "name": "budget_id",
+      "readonly": false,
+      "relation": "project.budget",
+      "required": false,
+      "selection": null,
+      "string": "控制预算版本",
+      "ttype": "many2one"
+    },
+    {
+      "domain": [
+        [
+          "type",
+          "=",
+          "contract_category"
+        ]
+      ],
+      "help": null,
+      "name": "category_id",
+      "readonly": false,
+      "relation": "sc.dictionary",
+      "required": false,
+      "selection": null,
+      "string": "合同类别",
+      "ttype": "many2one"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "company_id",
+      "readonly": true,
+      "relation": "res.company",
+      "required": true,
+      "selection": null,
+      "string": "公司",
+      "ttype": "many2one"
+    },
+    {
+      "domain": [
+        [
+          "type",
+          "=",
+          "contract_type"
+        ]
+      ],
+      "help": null,
+      "name": "contract_type_id",
+      "readonly": false,
+      "relation": "sc.dictionary",
+      "required": false,
+      "selection": null,
+      "string": "合同方向类型",
+      "ttype": "many2one"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "create_date",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Created on",
+      "ttype": "datetime"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "create_uid",
+      "readonly": true,
+      "relation": "res.users",
+      "required": false,
+      "selection": null,
+      "string": "Created by",
+      "ttype": "many2one"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "currency_id",
+      "readonly": false,
+      "relation": "res.currency",
+      "required": true,
+      "selection": null,
+      "string": "币种",
+      "ttype": "many2one"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "date_contract",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "签订日期",
+      "ttype": "date"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "date_end",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "计划竣工日",
+      "ttype": "date"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "date_start",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "计划开工日",
+      "ttype": "date"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "display_name",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Display Name",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "has_message",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Has Message",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "id",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "ID",
+      "ttype": "integer"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "is_locked",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "被引用锁定",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "legacy_contract_id",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Legacy Contract",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "legacy_contract_no",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Legacy Contract No",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "legacy_counterparty_text",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Legacy Counterparty Text",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "legacy_deleted_flag",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Legacy Deleted Flag",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "legacy_document_no",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Legacy Document No",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "legacy_external_contract_no",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Legacy External Contract No",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "legacy_project_id",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Legacy Project",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "legacy_status",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Legacy Status",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "line_amount_total",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "合同行金额",
+      "ttype": "monetary"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "line_ids",
+      "readonly": false,
+      "relation": "construction.contract.line",
+      "required": false,
+      "selection": null,
+      "string": "合同行",
+      "ttype": "one2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "message_attachment_count",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Attachment Count",
+      "ttype": "integer"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "message_follower_ids",
+      "readonly": false,
+      "relation": "mail.followers",
+      "required": false,
+      "selection": null,
+      "string": "Followers",
+      "ttype": "one2many"
+    },
+    {
+      "domain": null,
+      "help": "If checked, some messages have a delivery error.",
+      "name": "message_has_error",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Message Delivery error",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": "Number of messages with delivery error",
+      "name": "message_has_error_counter",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Number of errors",
+      "ttype": "integer"
+    },
+    {
+      "domain": null,
+      "help": "If checked, some messages have a delivery error.",
+      "name": "message_has_sms_error",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "SMS Delivery error",
+      "ttype": "boolean"
+    },
+    {
+      "domain": [
+        [
+          "message_type",
+          "!=",
+          "user_notification"
+        ]
+      ],
+      "help": null,
+      "name": "message_ids",
+      "readonly": false,
+      "relation": "mail.message",
+      "required": false,
+      "selection": null,
+      "string": "Messages",
+      "ttype": "one2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "message_is_follower",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Is Follower",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": "If checked, new messages require your attention.",
+      "name": "message_needaction",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Action Needed",
+      "ttype": "boolean"
+    },
+    {
+      "domain": null,
+      "help": "Number of messages requiring action",
+      "name": "message_needaction_counter",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Number of Actions",
+      "ttype": "integer"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "message_partner_ids",
+      "readonly": false,
+      "relation": "res.partner",
+      "required": false,
+      "selection": null,
+      "string": "Followers (Partners)",
+      "ttype": "many2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "my_activity_date_deadline",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "My Activity Deadline",
+      "ttype": "date"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "name",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "合同编号",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "name_short",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "简称",
+      "ttype": "char"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "note",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "备注",
+      "ttype": "text"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "partner_id",
+      "readonly": false,
+      "relation": "res.partner",
+      "required": true,
+      "selection": null,
+      "string": "合同相对方",
+      "ttype": "many2one"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "payment_request_count",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "付款申请数",
+      "ttype": "integer"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "project_id",
+      "readonly": false,
+      "relation": "project.project",
+      "required": true,
+      "selection": null,
+      "string": "所属项目",
+      "ttype": "many2one"
+    },
+    {
+      "domain": [
+        [
+          "res_model",
+          "=",
+          "construction.contract"
+        ]
+      ],
+      "help": null,
+      "name": "rating_ids",
+      "readonly": false,
+      "relation": "rating.rating",
+      "required": false,
+      "selection": null,
+      "string": "Ratings",
+      "ttype": "one2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "settlement_count",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "结算单数",
+      "ttype": "integer"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "state",
+      "readonly": false,
+      "relation": null,
+      "required": false,
+      "selection": [
+        [
+          "draft",
+          "草稿"
+        ],
+        [
+          "confirmed",
+          "已生效"
+        ],
+        [
+          "running",
+          "执行中"
+        ],
+        [
+          "closed",
+          "已关闭"
+        ],
+        [
+          "cancel",
+          "已取消"
+        ]
+      ],
+      "string": "状态",
+      "ttype": "selection"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "subject",
+      "readonly": false,
+      "relation": null,
+      "required": true,
+      "selection": null,
+      "string": "合同名称",
+      "ttype": "char"
+    },
+    {
+      "domain": [],
+      "help": "使用 account.tax 主数据进行税额计算，收入合同使用销项税，支出合同使用进项税。",
+      "name": "tax_id",
+      "readonly": false,
+      "relation": "account.tax",
+      "required": true,
+      "selection": null,
+      "string": "税率",
+      "ttype": "many2one"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "type",
+      "readonly": false,
+      "relation": null,
+      "required": true,
+      "selection": [
+        [
+          "out",
+          "收入合同"
+        ],
+        [
+          "in",
+          "支出合同"
+        ]
+      ],
+      "string": "合同类型",
+      "ttype": "selection"
+    },
+    {
+      "domain": [
+        [
+          "model",
+          "=",
+          "construction.contract"
+        ],
+        [
+          "message_type",
+          "in",
+          [
+            "comment",
+            "email",
+            "email_outgoing",
+            "auto_comment"
+          ]
+        ]
+      ],
+      "help": "Website communication history",
+      "name": "website_message_ids",
+      "readonly": false,
+      "relation": "mail.message",
+      "required": false,
+      "selection": null,
+      "string": "Website Messages",
+      "ttype": "one2many"
+    },
+    {
+      "domain": null,
+      "help": null,
+      "name": "write_date",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "Last Updated on",
+      "ttype": "datetime"
+    },
+    {
+      "domain": [],
+      "help": null,
+      "name": "write_uid",
+      "readonly": true,
+      "relation": "res.users",
+      "required": false,
+      "selection": null,
+      "string": "Last Updated by",
+      "ttype": "many2one"
+    }
+  ],
+  "model": "construction.contract",
+  "op": "action_open",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {},
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
+}

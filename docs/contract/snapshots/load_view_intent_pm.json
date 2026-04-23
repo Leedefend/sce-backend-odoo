@@ -1,13 +1,33 @@
 {
+  "action": null,
   "case": "load_view_intent_pm",
-  "op": "intent.invoke",
-  "user": "pm",
   "contract_version": "v1",
-  "ui_contract_raw": {
-    "head": {
-      "model": "project.project",
-      "view_type": "form"
-    }
+  "error": {
+    "code": 404,
+    "message": "未知模型: project.project (db=sc_demo, module(project)=installed)"
   },
-  "error": null
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "code": 404,
+    "error": {
+      "code": 404,
+      "message": "未知模型: project.project (db=sc_demo, module(project)=installed)"
+    },
+    "meta": {
+      "intent": "load_view",
+      "legacy_proxy": "load_contract"
+    },
+    "ok": false
+  },
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
 }

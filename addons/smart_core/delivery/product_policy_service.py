@@ -245,7 +245,17 @@ class ProductPolicyService:
             resolved_edition_key,
         )
 
+    def _model_registered(self, model_name: str) -> bool:
+        token = str(model_name or "").strip()
+        if not token:
+            return False
+        registry = getattr(self.env, "registry", None)
+        models = getattr(registry, "models", {}) if registry is not None else {}
+        return token in models
+
     def _snapshot_binding_is_releaseable(self, *, scene_key: str, product_key: str, binding: dict | None) -> bool:
+        if not self._model_registered("sc.scene.snapshot"):
+            return False
         row = binding if isinstance(binding, dict) else {}
         version = str(row.get("version") or "").strip() or "v1"
         channel = str(row.get("channel") or "").strip() or "stable"

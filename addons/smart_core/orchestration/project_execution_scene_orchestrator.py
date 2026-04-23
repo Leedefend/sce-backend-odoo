@@ -1,0 +1,41 @@
+# -*- coding: utf-8 -*-
+from __future__ import annotations
+
+from odoo.addons.smart_core.core.industry_orchestration_service_adapter import (
+    build_project_execution_service,
+)
+from odoo.addons.smart_core.orchestration.base_scene_entry_orchestrator import (
+    BaseSceneEntryOrchestrator,
+)
+
+
+class ProjectExecutionSceneOrchestrator(BaseSceneEntryOrchestrator):
+    scene_key = "project.execution"
+    scene_label = "项目执行"
+    state_fallback_text = "后端未提供项目执行状态摘要"
+    title_empty = "项目执行"
+    suggested_action_key = "load_execution_next_actions"
+    suggested_action_reason_code = "PROJECT_EXECUTION_READY"
+    block_fetch_intent = "project.execution.block.fetch"
+    entry_summary_keys = (
+        "project_code",
+        "manager_name",
+        "stage_name",
+        "date_start",
+        "date_end",
+    )
+    entry_blocks = (
+        ("execution_tasks", "执行任务", "deferred"),
+        ("pilot_precheck", "上线前检查", "deferred"),
+        ("next_actions", "下一步动作", "deferred"),
+    )
+
+    def __init__(self, env):
+        super().__init__(env, build_project_execution_service(env))
+
+    def resolve_first_action(self, runtime_fetch_hints):
+        blocks = runtime_fetch_hints.get("blocks") if isinstance(runtime_fetch_hints.get("blocks"), dict) else {}
+        return blocks.get("next_actions") or blocks.get("execution_tasks") or {}
+
+    def resolve_title(self, project_payload):
+        return "项目执行：%s" % str(project_payload.get("name") or "项目")

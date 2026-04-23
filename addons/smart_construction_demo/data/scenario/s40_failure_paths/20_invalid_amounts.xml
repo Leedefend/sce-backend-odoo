@@ -14,6 +14,7 @@
         <record id="sc_demo_settle_line_040_amount_001" model="sc.settlement.order.line">
             <field name="name">S40-结算明细-金额不一致</field>
             <field name="settlement_id" ref="smart_construction_demo.sc_demo_settlement_040_amount_bad"/>
+            <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_out_001"/>
             <field name="qty">1</field>
             <field name="price_unit">500000.00</field>
             <field name="amount">500000.00</field>
