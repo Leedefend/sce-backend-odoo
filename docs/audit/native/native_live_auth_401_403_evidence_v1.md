@@ -31,3 +31,9 @@
 
 - Keep current strict policy unchanged.
 - Open dedicated runtime availability repair lane if live endpoint is expected to return 401/403 in this environment.
+
+## Legacy Endpoint Deprecation Note
+- `/api/scenes/my` is deprecated.
+- Successor endpoint: `/api/v1/intent` with `intent=app.init`.
+- Sunset date: `2026-04-30`.
+- Deprecation header contract reference: `Deprecation`, `Sunset`, `Link`, `X-Legacy-Endpoint`.

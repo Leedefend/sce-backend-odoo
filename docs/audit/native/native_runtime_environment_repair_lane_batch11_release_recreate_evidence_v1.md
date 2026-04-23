@@ -36,3 +36,9 @@
 
 - Batch11 PASS: runtime restore now succeeds; collision risk removed.
 - Next batch should focus on `RemoteDisconnected` at app-entry layer while service is up.
+
+## Legacy Endpoint Deprecation Note
+- `/api/scenes/my` is deprecated.
+- Successor endpoint: `/api/v1/intent` with `intent=app.init`.
+- Sunset date: `2026-04-30`.
+- Deprecation header contract reference: `Deprecation`, `Sunset`, `Link`, `X-Legacy-Endpoint`.

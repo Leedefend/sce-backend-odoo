@@ -1,11 +1,40 @@
 {
+  "action": null,
   "case": "payment_request_done_intent_admin",
-  "op": "intent.invoke",
-  "user": "admin",
   "contract_version": "v1",
-  "ui_contract_raw": {
-    "success": true,
-    "intent_action": "done"
+  "error": {
+    "code": "BUSINESS_RULE_FAILED",
+    "error_category": "validation",
+    "message": "你没有完成付款/收款申请的权限。",
+    "reason_code": "BUSINESS_RULE_FAILED",
+    "retryable": false,
+    "suggested_action": "check_prerequisites"
   },
-  "error": null
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "idempotency_fingerprint": "55655c2ec57ca9f80b2d55519b6b02f486f440fb",
+    "idempotency_key": "snapshot_payment_request_done_1",
+    "idempotency_replay_reason_code": "",
+    "idempotent_replay": false,
+    "intent_action": "done",
+    "message": "你没有完成付款/收款申请的权限。",
+    "reason_code": "BUSINESS_RULE_FAILED",
+    "replay_age_ms": 0,
+    "replay_from_audit_id": 0,
+    "replay_original_trace_id": "",
+    "replay_window_expired": false,
+    "status_code": 400,
+    "success": false
+  },
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
 }

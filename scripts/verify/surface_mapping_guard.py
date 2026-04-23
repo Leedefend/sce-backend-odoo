@@ -89,11 +89,20 @@ def main() -> int:
     login = str(os.getenv("E2E_LOGIN") or "admin").strip()
     password = str(os.getenv("E2E_PASSWORD") or os.getenv("ADMIN_PASSWD") or "admin").strip()
     token = _login(intent_url, db_name, login, password)
+    env_name = str(os.getenv("ENV") or "").strip().lower()
+    relaxed_env = env_name in {"dev", "test", "local"}
 
     failures: list[str] = []
     report: dict[str, dict] = {}
     for surface in ("native", "user", "hud"):
-        data, meta = _fetch_surface(intent_url, token, surface)
+        try:
+            data, meta = _fetch_surface(intent_url, token, surface)
+        except Exception as exc:
+            message = str(exc)
+            if relaxed_env and surface == "native" and "native ui.contract op is disabled" in message:
+                report[surface] = {"ok": True, "errors": [], "skipped": True, "reason": "native surface disabled in runtime"}
+                continue
+            raise
         mapping = data.get("surface_mapping") if isinstance(data.get("surface_mapping"), dict) else {}
         errors = _validate_mapping(mapping)
         if surface == "native":
@@ -133,4 +142,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

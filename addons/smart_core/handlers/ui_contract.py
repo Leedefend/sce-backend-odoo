@@ -15,6 +15,7 @@ from odoo.addons.smart_core.app_config_engine.services.dispatchers.nav_dispatche
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.menu_dispatcher import MenuDispatcher
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
 from odoo.addons.smart_core.utils.contract_governance import (
+    apply_contract_governance,
     resolve_contract_mode,
     resolve_contract_surface,
 )
@@ -175,13 +176,12 @@ class UiContractHandler(BaseIntentHandler):
             return res
 
         data, meta = (res if isinstance(res, tuple) else (res or {}, {}))
-        data = ContractService(self.env).shape_handler_delivery_data(
+        data = self._shape_delivery_data(
             data or {},
             payload=p,
             contract_mode=contract_mode,
             contract_surface=contract_surface,
             source_mode=source_mode,
-            inject_contract_mode=False,
         )
         meta = _normalize_meta(meta)
         etag = self._make_etag(
@@ -280,10 +280,35 @@ class UiContractHandler(BaseIntentHandler):
         subject,
         meta=None,
     ):
-        cs = ContractService(self.env)
-        fixed_data = cs.finalize_data(data, subject=subject, meta=meta)
+        fixed_data = self._finalize_data(data, subject=subject, meta=meta)
         inject_primary_view_projection(fixed_data, requested_view_type=view_type)
         return fixed_data, {"schema_version": "view-contract-1", "version": format_versions_safe(versions)}
+
+    def _finalize_data(self, data, *, subject, meta=None):
+        cs = ContractService(self.env)
+        envelope = {"ok": True, "data": data or {}, "meta": {"subject": subject}}
+        if isinstance(meta, Mapping):
+            envelope["meta"].update(meta)
+        fixed = cs.finalize_contract(envelope)
+        if isinstance(fixed, Mapping):
+            out = fixed.get("data")
+            if isinstance(out, Mapping):
+                return dict(out)
+        return data or {}
+
+    def _shape_delivery_data(self, data, *, payload, contract_mode, contract_surface, source_mode):
+        cs = ContractService(self.env)
+        shape_fn = getattr(cs, "shape_handler_delivery_data", None)
+        if callable(shape_fn):
+            return shape_fn(
+                data,
+                payload=payload,
+                contract_mode=contract_mode,
+                contract_surface=contract_surface,
+                source_mode=source_mode,
+                inject_contract_mode=False,
+            )
+        return apply_contract_governance(data, contract_mode, inject_contract_mode=False)
 
     # ---------------- op 实现 ----------------
     def _op_nav(self, ctx):
@@ -292,8 +317,7 @@ class UiContractHandler(BaseIntentHandler):
             "root_xmlid": self._get_param(self.params, "root_xmlid", "rootXmlid"),
             "root_menu_id": self._get_param(self.params, "root_menu_id", "rootMenuId"),
         })
-        cs = ContractService(self.env)
-        fixed_data = cs.finalize_data({"nav": data.get("nav")}, subject="nav", meta={"version": format_versions_safe(versions)})
+        fixed_data = self._finalize_data({"nav": data.get("nav")}, subject="nav", meta={"version": format_versions_safe(versions)})
         return fixed_data or {"nav": data.get("nav")}, {"schema_version": "nav-1"}
 
     def _op_menu(self, p, ctx):
@@ -512,8 +536,7 @@ class UiContractHandler(BaseIntentHandler):
         p2 = {"subject":"action","action_id": action_id, "with_data": False}
         data, versions = self._build_dispatcher(ctx).dispatch(p2)
 
-        cs = ContractService(self.env)
-        return cs.finalize_data(data, subject="action"), {"schema_version":"view-contract-1", "version": format_versions_safe(versions)}
+        return self._finalize_data(data, subject="action"), {"schema_version":"view-contract-1", "version": format_versions_safe(versions)}
 
     # ---------------- 工具 ----------------
     def _read_if_none_match(self, p) -> str:

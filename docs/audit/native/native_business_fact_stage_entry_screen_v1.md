@@ -37,3 +37,9 @@ Determine whether the execution lane can move from runtime-recovery governance i
 
 - This screen batch: **low risk / PASS**.
 - Next batch: **low risk** if constrained to evidence + verify helpers; otherwise must branch into high-risk gate flow.
+
+## Legacy Endpoint Deprecation Note
+- `/api/scenes/my` is deprecated.
+- Successor endpoint: `/api/v1/intent` with `intent=app.init`.
+- Sunset date: `2026-04-30`.
+- Deprecation header contract reference: `Deprecation`, `Sunset`, `Link`, `X-Legacy-Endpoint`.

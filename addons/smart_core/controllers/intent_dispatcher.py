@@ -177,6 +177,37 @@ def _normalize_result_shape(res: Any) -> Dict[str, Any]:
     if _is_response(res):
         return {"__response__": res}
 
+    # Support dataclass-like wrappers such as IntentExecutionResult.
+    to_legacy = getattr(res, "to_legacy_dict", None)
+    if callable(to_legacy):
+        try:
+            legacy = to_legacy()
+        except Exception:
+            legacy = None
+        if isinstance(legacy, dict):
+            out = dict(legacy)
+            out.setdefault("ok", True)
+            out.setdefault("data", {})
+            out.setdefault("meta", {})
+            return out
+
+    if hasattr(res, "ok") and hasattr(res, "data"):
+        out = {
+            "ok": bool(getattr(res, "ok", True)),
+            "data": getattr(res, "data", {}) or {},
+            "meta": getattr(res, "meta", {}) or {},
+        }
+        err = getattr(res, "error", None)
+        if err is not None:
+            out["error"] = err if isinstance(err, dict) else {"raw": str(err)}
+        code = getattr(res, "code", None)
+        if isinstance(code, int):
+            out["code"] = code
+        status = getattr(res, "status", None)
+        if status is not None:
+            out["status"] = str(status)
+        return out
+
     if isinstance(res, (list, tuple)):
         if len(res) == 2 and isinstance(res[0], dict):
             data, second = res

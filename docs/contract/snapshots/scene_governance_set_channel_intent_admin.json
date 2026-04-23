@@ -16,6 +16,7 @@
     "action": "set_channel",
     "company_id": 1,
     "from_channel": "stable",
+    "rollback_active": false,
     "to_channel": "dev"
   },
   "user": "admin",

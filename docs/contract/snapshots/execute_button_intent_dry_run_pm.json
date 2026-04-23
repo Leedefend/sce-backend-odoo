@@ -19,7 +19,7 @@
     },
     "result": {
       "button_type": "object",
-      "message": "Dry run completed",
+      "message": "后端已完成 dry run 校验",
       "method": "write",
       "reason_code": "DRY_RUN",
       "res_id": 1,

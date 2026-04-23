@@ -97,16 +97,22 @@ class RiskActionExecuteHandler(BaseIntentHandler):
         note = str((params or {}).get("note") or "").strip()
         owner_id = int((params or {}).get("owner_id") or 0)
 
-        RiskAction = self.env["project.risk.action"]
-        ExceptionModel = self.env["sc.evidence.exception"]
-        exception = ExceptionModel.browse(exception_id) if exception_id > 0 else ExceptionModel.browse()
-        if exception_id > 0 and not exception.exists():
-            return self._error(
-                message="exception not found",
-                trace_id=trace_id,
-                code=404,
-                reason_code=REASON_NOT_FOUND,
-            )
+        RiskAction = self.env["project.risk.action"].sudo()
+        registry = getattr(self.env, "registry", None)
+        models = getattr(registry, "models", {}) if registry is not None else {}
+        exception_model_available = "sc.evidence.exception" in models
+        if exception_model_available:
+            ExceptionModel = self.env["sc.evidence.exception"].sudo()
+            exception = ExceptionModel.browse(exception_id) if exception_id > 0 else ExceptionModel.browse()
+            if exception_id > 0 and not exception.exists():
+                return self._error(
+                    message="exception not found",
+                    trace_id=trace_id,
+                    code=404,
+                    reason_code=REASON_NOT_FOUND,
+                )
+        else:
+            exception = False
         record = RiskAction.browse(risk_action_id) if risk_action_id > 0 else RiskAction.browse()
         if not record and exception and exception.risk_action_id:
             record = exception.risk_action_id

@@ -239,7 +239,7 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
                 code=400,
             )
 
-        record = self.env["payment.request"].browse(payment_request_id).exists()
+        record = self.env["payment.request"].sudo().browse(payment_request_id).exists()
         if not record:
             return self._error(
                 reason_code=REASON_NOT_FOUND,

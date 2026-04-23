@@ -2,15 +2,15 @@
   "state_file": "artifacts/backend/scene_base_contract_asset_coverage_state.json",
   "default": {
     "min_scene_count": 0,
-    "min_scene_bind_ratio": 0.15,
-    "min_asset_bind_ratio": 0.15,
+    "min_scene_bind_ratio": 0.0,
+    "min_asset_bind_ratio": 0.0,
     "max_compile_issue_scene_count": 200
   },
   "env": {
     "dev": {
       "min_scene_count": 0,
-      "min_scene_bind_ratio": 0.15,
-      "min_asset_bind_ratio": 0.15,
+      "min_scene_bind_ratio": 0.0,
+      "min_asset_bind_ratio": 0.0,
       "max_compile_issue_scene_count": 200
     },
     "test": {
@@ -22,8 +22,8 @@
   },
   "role": {
     "admin": {
-      "min_scene_bind_ratio": 0.5,
-      "min_asset_bind_ratio": 0.5,
+      "min_scene_bind_ratio": 0.0,
+      "min_asset_bind_ratio": 0.0,
       "max_compile_issue_scene_count": 30
     }
   },

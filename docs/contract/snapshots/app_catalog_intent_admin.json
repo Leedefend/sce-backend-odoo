@@ -13,9 +13,23 @@
   "record_error": null,
   "ui_contract": null,
   "ui_contract_raw": {
-    "apps": [],
+    "apps": [
+      {
+        "badges": {
+          "todo": 0
+        },
+        "icon": null,
+        "key": "app:workspace",
+        "label": "工作台",
+        "meta": {
+          "app_id": "workspace",
+          "category": "platform",
+          "fallback": true
+        }
+      }
+    ],
     "meta": {
-      "fingerprint": "fbaa2801ab385c947d1ade85445d55d3",
+      "fingerprint": "f2a4e65a08719ed379e8a0fd920846d4",
       "scene": "web"
     }
   },

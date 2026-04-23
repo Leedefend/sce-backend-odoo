@@ -1,6 +1,7 @@
 {
   "allowed_importers": [
-    "addons/smart_core/handlers/system_init.py"
+    "addons/smart_core/handlers/system_init.py",
+    "addons/smart_core/handlers/app_shell.py"
   ],
   "required_symbols": [
     "resolve_scene_channel",

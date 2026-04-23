@@ -27,15 +27,30 @@ if not isinstance(cases, list):
     print("cases.yml must be a JSON array", file=sys.stderr)
     sys.exit(2)
 
+start_case = str(os.environ.get("START_CASE") or "").strip()
+case_only = str(os.environ.get("CASE_ONLY") or "").strip()
+started = not bool(start_case)
+if case_only and start_case:
+    print("START_CASE and CASE_ONLY are mutually exclusive", file=sys.stderr)
+    sys.exit(2)
+
 for case in cases:
     if not isinstance(case, dict):
         print("case item must be object", file=sys.stderr)
         sys.exit(2)
+    case_name = str(case.get("case") or "").strip()
+    if case_only and case_name != case_only:
+        continue
+    if not started:
+        if case_name == start_case:
+            started = True
+        else:
+            continue
     cmd = [
         "scripts/contract/snapshot_export.sh",
         "--db", os.environ.get("DB") or os.environ.get("DB_NAME"),
         "--user", case.get("user", "admin"),
-        "--case", case["case"],
+        "--case", case_name,
         "--view_type", case.get("view_type", "form"),
     ]
     cfg = os.environ.get("CONTRACT_CONFIG") or os.environ.get("ODOO_CONF")
@@ -85,7 +100,7 @@ for case in cases:
         )
         raise SystemExit(124) from exc
     except subprocess.CalledProcessError as exc:
-        case_name = case.get("case", "<unknown>")
+        case_name = case_name or "<unknown>"
         intent_name = case.get("intent") or ""
         op_name = case.get("op") or ""
         detail = f"intent={intent_name}" if intent_name else f"op={op_name}"
@@ -94,4 +109,8 @@ for case in cases:
             file=sys.stderr,
         )
         raise
+
+if start_case and not started:
+    print(f"START_CASE not found in cases file: {start_case}", file=sys.stderr)
+    sys.exit(2)
 PY

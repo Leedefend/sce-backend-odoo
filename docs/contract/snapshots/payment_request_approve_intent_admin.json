@@ -1,11 +1,40 @@
 {
+  "action": null,
   "case": "payment_request_approve_intent_admin",
-  "op": "intent.invoke",
-  "user": "admin",
   "contract_version": "v1",
-  "ui_contract_raw": {
-    "success": true,
-    "intent_action": "approve"
+  "error": {
+    "code": "PERMISSION_DENIED",
+    "error_category": "permission",
+    "message": "You are not allowed to access 'Payment Request' (payment.request) records.\n\nThis operation is allowed for the following groups:\n\t- Smart Construction/SC 能力 - 财务中心只读\n\t- Smart Construction/SC 能力 - 财务中心审批\n\t- Smart Construction/SC 能力 - 财务中心经办\n\t- Smart Construction/付款中心-只读\n\t- Smart Construction/付款中心-审批\n\t- Smart Construction/付款中心-经办\n\nContact your administrator to request access if necessary.",
+    "reason_code": "PERMISSION_DENIED",
+    "retryable": false,
+    "suggested_action": "request_access"
   },
-  "error": null
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "idempotency_fingerprint": "0ca415e6a8af4a58423bd5fddf53d71471e49127",
+    "idempotency_key": "snapshot_payment_request_approve_1",
+    "idempotency_replay_reason_code": "",
+    "idempotent_replay": false,
+    "intent_action": "approve",
+    "message": "You are not allowed to access 'Payment Request' (payment.request) records.\n\nThis operation is allowed for the following groups:\n\t- Smart Construction/SC 能力 - 财务中心只读\n\t- Smart Construction/SC 能力 - 财务中心审批\n\t- Smart Construction/SC 能力 - 财务中心经办\n\t- Smart Construction/付款中心-只读\n\t- Smart Construction/付款中心-审批\n\t- Smart Construction/付款中心-经办\n\nContact your administrator to request access if necessary.",
+    "reason_code": "PERMISSION_DENIED",
+    "replay_age_ms": 0,
+    "replay_from_audit_id": 0,
+    "replay_original_trace_id": "",
+    "replay_window_expired": false,
+    "status_code": 403,
+    "success": false
+  },
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
 }

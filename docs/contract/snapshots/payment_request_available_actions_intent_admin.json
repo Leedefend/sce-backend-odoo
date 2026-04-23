@@ -1,11 +1,165 @@
 {
+  "action": null,
   "case": "payment_request_available_actions_intent_admin",
-  "op": "intent.invoke",
-  "user": "admin",
   "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
   "ui_contract_raw": {
-    "success": true,
-    "actions": []
+    "actions": [
+      {
+        "actor_matches_required_role": false,
+        "allowed": false,
+        "allowed_by_method": true,
+        "allowed_by_precheck": false,
+        "allowed_by_state": false,
+        "blocked_message": "BUSINESS_RULE_FAILED",
+        "current_state": "done",
+        "delivery_priority": 10,
+        "execute_intent": "payment.request.execute",
+        "execute_params": {
+          "action": "submit",
+          "id": 1
+        },
+        "handoff_hint": "请由财务提交申请后进入审批链路。",
+        "handoff_required": true,
+        "idempotency_required": true,
+        "intent": "payment.request.submit",
+        "key": "submit",
+        "label": "提交",
+        "method": "action_submit",
+        "next_state_hint": "submit",
+        "reason_code": "BUSINESS_RULE_FAILED",
+        "required_group_xmlid": "smart_construction_custom.group_sc_role_finance",
+        "required_params": [],
+        "required_role_key": "finance",
+        "required_role_label": "财务",
+        "requires_reason": false,
+        "state_required": [
+          "draft"
+        ],
+        "suggested_action": "check_prerequisites"
+      },
+      {
+        "actor_matches_required_role": false,
+        "allowed": false,
+        "allowed_by_method": true,
+        "allowed_by_precheck": true,
+        "allowed_by_state": false,
+        "blocked_message": "BUSINESS_RULE_FAILED",
+        "current_state": "done",
+        "delivery_priority": 20,
+        "execute_intent": "payment.request.execute",
+        "execute_params": {
+          "action": "approve",
+          "id": 1
+        },
+        "handoff_hint": "请由管理层执行审批决策。",
+        "handoff_required": true,
+        "idempotency_required": true,
+        "intent": "payment.request.approve",
+        "key": "approve",
+        "label": "审批",
+        "method": "action_approve",
+        "next_state_hint": "approved",
+        "reason_code": "BUSINESS_RULE_FAILED",
+        "required_group_xmlid": "smart_construction_custom.group_sc_role_executive",
+        "required_params": [],
+        "required_role_key": "executive",
+        "required_role_label": "管理层",
+        "requires_reason": false,
+        "state_required": [
+          "submit"
+        ],
+        "suggested_action": "check_prerequisites"
+      },
+      {
+        "actor_matches_required_role": false,
+        "allowed": false,
+        "allowed_by_method": true,
+        "allowed_by_precheck": true,
+        "allowed_by_state": false,
+        "blocked_message": "BUSINESS_RULE_FAILED",
+        "current_state": "done",
+        "delivery_priority": 30,
+        "execute_intent": "payment.request.execute",
+        "execute_params": {
+          "action": "reject",
+          "id": 1
+        },
+        "handoff_hint": "请由管理层执行驳回并填写原因。",
+        "handoff_required": true,
+        "idempotency_required": true,
+        "intent": "payment.request.reject",
+        "key": "reject",
+        "label": "驳回",
+        "method": "action_on_tier_rejected",
+        "next_state_hint": "draft",
+        "reason_code": "BUSINESS_RULE_FAILED",
+        "required_group_xmlid": "smart_construction_custom.group_sc_role_executive",
+        "required_params": [
+          "reason"
+        ],
+        "required_role_key": "executive",
+        "required_role_label": "管理层",
+        "requires_reason": true,
+        "state_required": [
+          "submit"
+        ],
+        "suggested_action": "check_prerequisites"
+      },
+      {
+        "actor_matches_required_role": false,
+        "allowed": false,
+        "allowed_by_method": true,
+        "allowed_by_precheck": false,
+        "allowed_by_state": false,
+        "blocked_message": "BUSINESS_RULE_FAILED",
+        "current_state": "done",
+        "delivery_priority": 40,
+        "execute_intent": "payment.request.execute",
+        "execute_params": {
+          "action": "done",
+          "id": 1
+        },
+        "handoff_hint": "审批完成后由财务确认办结。",
+        "handoff_required": true,
+        "idempotency_required": true,
+        "intent": "payment.request.done",
+        "key": "done",
+        "label": "完成",
+        "method": "action_done",
+        "next_state_hint": "done",
+        "reason_code": "BUSINESS_RULE_FAILED",
+        "required_group_xmlid": "smart_construction_custom.group_sc_role_finance",
+        "required_params": [],
+        "required_role_key": "finance",
+        "required_role_label": "财务",
+        "requires_reason": false,
+        "state_required": [
+          "approved"
+        ],
+        "suggested_action": "check_prerequisites"
+      }
+    ],
+    "payment_request": {
+      "id": 1,
+      "name": "PRQ2600001",
+      "state": "done",
+      "type": "pay"
+    },
+    "primary_action_key": "",
+    "reason_code": "OK",
+    "success": true
   },
-  "error": null
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
 }

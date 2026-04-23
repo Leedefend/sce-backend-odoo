@@ -18,21 +18,7 @@
         "icon": "briefcase",
         "items": [
           {
-            "action_id": 502,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "创建并发起项目立项流程",
-            "icon": "briefcase",
-            "key": "project.initiation.enter",
-            "label": "项目立项",
-            "menu_id": 278,
-            "order": 10,
-            "scene_key": "projects.intake",
-            "target_url": "/workbench?scene=projects.intake"
-          },
-          {
-            "action_id": 449,
+            "action_id": 452,
             "allowed": true,
             "capability_state": "allow",
             "deny_reason": [],
@@ -43,10 +29,10 @@
             "menu_id": 265,
             "order": 20,
             "scene_key": "projects.list",
-            "target_url": "/workbench?scene=projects.list"
+            "target_url": "/s/projects.list"
           },
           {
-            "action_id": 495,
+            "action_id": 499,
             "allowed": true,
             "capability_state": "allow",
             "deny_reason": [],
@@ -54,41 +40,13 @@
             "icon": "briefcase",
             "key": "project.board.open",
             "label": "项目看板",
-            "menu_id": 280,
+            "menu_id": 281,
             "order": 30,
             "scene_key": "projects.ledger",
-            "target_url": "/workbench?scene=projects.ledger"
+            "target_url": "/s/projects.ledger"
           },
           {
-            "action_id": 484,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "查看项目核心指标和异常",
-            "icon": "briefcase",
-            "key": "project.dashboard.open",
-            "label": "项目驾驶舱",
-            "menu_id": 279,
-            "order": 40,
-            "scene_key": "projects.dashboard",
-            "target_url": "/pm/dashboard"
-          },
-          {
-            "action_id": null,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "查看项目生命周期与阻塞项",
-            "icon": "briefcase",
-            "key": "project.lifecycle.open",
-            "label": "生命周期视图",
-            "menu_id": null,
-            "order": 50,
-            "scene_key": "portal.lifecycle",
-            "target_url": "/s/projects.dashboard"
-          },
-          {
-            "action_id": 495,
+            "action_id": 314,
             "allowed": true,
             "capability_state": "allow",
             "deny_reason": [],
@@ -96,553 +54,15 @@
             "icon": "briefcase",
             "key": "project.task.list",
             "label": "任务列表",
-            "menu_id": 280,
-            "order": 60,
-            "scene_key": "projects.ledger",
-            "target_url": "/workbench?scene=projects.ledger"
-          },
-          {
-            "action_id": 495,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "按状态查看任务推进",
-            "icon": "briefcase",
-            "key": "project.task.board",
-            "label": "任务看板",
-            "menu_id": 280,
-            "order": 70,
-            "scene_key": "projects.ledger",
-            "target_url": "/workbench?scene=projects.ledger"
-          },
-          {
-            "action_id": 495,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "进入项目文档视图",
-            "icon": "briefcase",
-            "key": "project.document.open",
-            "label": "项目文档",
-            "menu_id": 280,
-            "order": 80,
-            "scene_key": "projects.ledger",
-            "target_url": "/workbench?scene=projects.ledger"
-          },
-          {
-            "action_id": 465,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "进入执行结构与WBS能力",
-            "icon": "briefcase",
-            "key": "project.structure.manage",
-            "label": "执行结构",
-            "menu_id": 287,
-            "order": 90,
-            "scene_key": "cost.project_boq",
-            "target_url": "/workbench?scene=cost.project_boq"
-          },
-          {
-            "action_id": 495,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "查看项目风险清单",
-            "icon": "briefcase",
-            "key": "project.risk.list",
-            "label": "风险清单",
-            "menu_id": 280,
-            "order": 100,
-            "scene_key": "projects.ledger",
-            "target_url": "/workbench?scene=projects.ledger"
-          },
-          {
-            "action_id": 495,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "进入项目周报与周度复盘",
-            "icon": "briefcase",
-            "key": "project.weekly_report.open",
-            "label": "周报入口",
-            "menu_id": 280,
-            "order": 110,
-            "scene_key": "projects.ledger",
-            "target_url": "/workbench?scene=projects.ledger"
-          },
-          {
-            "action_id": null,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "执行项目生命周期流转动作",
-            "icon": "briefcase",
-            "key": "project.lifecycle.transition",
-            "label": "生命周期流转",
             "menu_id": null,
-            "order": 120,
-            "scene_key": "portal.lifecycle",
-            "target_url": "/s/projects.dashboard"
+            "order": 100,
+            "scene_key": "task.center",
+            "target_url": "/s/task.center"
           }
         ],
         "key": "project_management",
         "label": "项目管理",
         "sequence": 10
-      },
-      {
-        "icon": "wallet",
-        "items": [
-          {
-            "action_id": 493,
-            "allowed": false,
-            "capability_state": "deny",
-            "deny_reason": [
-              "PERMISSION_DENIED"
-            ],
-            "desc": "查看付款申请列表",
-            "icon": "wallet",
-            "key": "finance.payment_request.list",
-            "label": "付款申请列表",
-            "menu_id": 273,
-            "order": 130,
-            "scene_key": "finance.payment_requests",
-            "target_url": "/workbench?scene=finance.payment_requests"
-          },
-          {
-            "action_id": 493,
-            "allowed": false,
-            "capability_state": "deny",
-            "deny_reason": [
-              "PERMISSION_DENIED"
-            ],
-            "desc": "进入付款申请详情与编辑",
-            "icon": "wallet",
-            "key": "finance.payment_request.form",
-            "label": "付款申请表单",
-            "menu_id": 273,
-            "order": 140,
-            "scene_key": "finance.payment_requests",
-            "target_url": "/workbench?scene=finance.payment_requests"
-          },
-          {
-            "action_id": 490,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "进入财务审批工作台",
-            "icon": "wallet",
-            "key": "finance.approval.center",
-            "label": "审批中心入口",
-            "menu_id": 270,
-            "order": 150,
-            "scene_key": "finance.center",
-            "target_url": "/workbench?scene=finance.center"
-          },
-          {
-            "action_id": 492,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "查看收付款台账",
-            "icon": "wallet",
-            "key": "finance.ledger.payment",
-            "label": "收付款台账",
-            "menu_id": 272,
-            "order": 160,
-            "scene_key": "finance.payment_ledger",
-            "target_url": "/workbench?scene=finance.payment_ledger"
-          },
-          {
-            "action_id": 497,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "查看资金余额与流水",
-            "icon": "wallet",
-            "key": "finance.ledger.treasury",
-            "label": "资金台账",
-            "menu_id": 276,
-            "order": 170,
-            "scene_key": "finance.treasury_ledger",
-            "target_url": "/workbench?scene=finance.treasury_ledger"
-          },
-          {
-            "action_id": 496,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "查看结算单流程",
-            "icon": "wallet",
-            "key": "finance.settlement.order",
-            "label": "结算单",
-            "menu_id": 275,
-            "order": 180,
-            "scene_key": "finance.settlement_orders",
-            "target_url": "/workbench?scene=finance.settlement_orders"
-          },
-          {
-            "action_id": 490,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "进入发票相关清单",
-            "icon": "wallet",
-            "key": "finance.invoice.list",
-            "label": "发票列表",
-            "menu_id": 270,
-            "order": 190,
-            "scene_key": "finance.center",
-            "target_url": "/workbench?scene=finance.center"
-          },
-          {
-            "action_id": 490,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "查看资金计划与安排",
-            "icon": "wallet",
-            "key": "finance.plan.funding",
-            "label": "资金计划",
-            "menu_id": 270,
-            "order": 200,
-            "scene_key": "finance.center",
-            "target_url": "/workbench?scene=finance.center"
-          },
-          {
-            "action_id": 481,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "查看经营指标看板",
-            "icon": "wallet",
-            "key": "finance.metrics.operating",
-            "label": "经营指标",
-            "menu_id": 268,
-            "order": 210,
-            "scene_key": "finance.operating_metrics",
-            "target_url": "/workbench?scene=finance.operating_metrics"
-          },
-          {
-            "action_id": 481,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "查看财务异常清单",
-            "icon": "wallet",
-            "key": "finance.exception.monitor",
-            "label": "财务异常",
-            "menu_id": 268,
-            "order": 220,
-            "scene_key": "finance.operating_metrics",
-            "target_url": "/workbench?scene=finance.operating_metrics"
-          }
-        ],
-        "key": "finance_management",
-        "label": "财务管理",
-        "sequence": 20
-      },
-      {
-        "icon": "calculator",
-        "items": [
-          {
-            "action_id": 454,
-            "allowed": false,
-            "capability_state": "deny",
-            "deny_reason": [
-              "PERMISSION_DENIED"
-            ],
-            "desc": "进入成本台账",
-            "icon": "calculator",
-            "key": "cost.ledger.open",
-            "label": "成本台账",
-            "menu_id": 298,
-            "order": 230,
-            "scene_key": "cost.project_cost_ledger",
-            "target_url": "/workbench?scene=cost.project_cost_ledger"
-          },
-          {
-            "action_id": 450,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "进入预算与控制能力",
-            "icon": "calculator",
-            "key": "cost.budget.manage",
-            "label": "预算管理",
-            "menu_id": 294,
-            "order": 240,
-            "scene_key": "cost.project_budget",
-            "target_url": "/workbench?scene=cost.project_budget"
-          },
-          {
-            "action_id": 465,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "进入工程量清单能力",
-            "icon": "calculator",
-            "key": "cost.boq.manage",
-            "label": "工程量清单",
-            "menu_id": 287,
-            "order": 250,
-            "scene_key": "cost.project_boq",
-            "target_url": "/workbench?scene=cost.project_boq"
-          },
-          {
-            "action_id": 458,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "进入进度填报与对比",
-            "icon": "calculator",
-            "key": "cost.progress.report",
-            "label": "进度填报",
-            "menu_id": 297,
-            "order": 260,
-            "scene_key": "cost.project_progress",
-            "target_url": "/workbench?scene=cost.project_progress"
-          },
-          {
-            "action_id": 453,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "查看盈亏对比分析",
-            "icon": "calculator",
-            "key": "cost.profit.compare",
-            "label": "盈亏对比",
-            "menu_id": 300,
-            "order": 270,
-            "scene_key": "cost.profit_compare",
-            "target_url": "/workbench?scene=cost.profit_compare"
-          }
-        ],
-        "key": "cost_management",
-        "label": "成本管理",
-        "sequence": 30
-      },
-      {
-        "icon": "file-text",
-        "items": [
-          {
-            "action_id": 495,
-            "allowed": false,
-            "capability_state": "deny",
-            "deny_reason": [
-              "PERMISSION_DENIED"
-            ],
-            "desc": "进入合同中心",
-            "icon": "file-text",
-            "key": "contract.center.open",
-            "label": "合同中心",
-            "menu_id": 280,
-            "order": 280,
-            "scene_key": "projects.ledger",
-            "target_url": "/workbench?scene=projects.ledger"
-          },
-          {
-            "action_id": 495,
-            "allowed": false,
-            "capability_state": "deny",
-            "deny_reason": [
-              "PERMISSION_DENIED"
-            ],
-            "desc": "查看收入合同进展",
-            "icon": "file-text",
-            "key": "contract.income.track",
-            "label": "收入合同",
-            "menu_id": 280,
-            "order": 290,
-            "scene_key": "projects.ledger",
-            "target_url": "/workbench?scene=projects.ledger"
-          },
-          {
-            "action_id": 495,
-            "allowed": false,
-            "capability_state": "deny",
-            "deny_reason": [
-              "PERMISSION_DENIED"
-            ],
-            "desc": "查看支出合同与付款",
-            "icon": "file-text",
-            "key": "contract.expense.track",
-            "label": "支出合同",
-            "menu_id": 280,
-            "order": 300,
-            "scene_key": "projects.ledger",
-            "target_url": "/workbench?scene=projects.ledger"
-          },
-          {
-            "action_id": 496,
-            "allowed": false,
-            "capability_state": "deny",
-            "deny_reason": [
-              "PERMISSION_DENIED"
-            ],
-            "desc": "查看结算审核视图",
-            "icon": "file-text",
-            "key": "contract.settlement.audit",
-            "label": "结算审核",
-            "menu_id": 275,
-            "order": 310,
-            "scene_key": "finance.settlement_orders",
-            "target_url": "/workbench?scene=finance.settlement_orders"
-          }
-        ],
-        "key": "contract_management",
-        "label": "合同管理",
-        "sequence": 40
-      },
-      {
-        "icon": "chart",
-        "items": [
-          {
-            "action_id": 484,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "高层经营看板",
-            "icon": "chart",
-            "key": "analytics.dashboard.executive",
-            "label": "经营驾驶舱",
-            "menu_id": 279,
-            "order": 320,
-            "scene_key": "projects.dashboard",
-            "target_url": "/pm/dashboard"
-          },
-          {
-            "action_id": null,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "监控生命周期推进效率",
-            "icon": "chart",
-            "key": "analytics.lifecycle.monitor",
-            "label": "生命周期监控",
-            "menu_id": null,
-            "order": 330,
-            "scene_key": "portal.lifecycle",
-            "target_url": "/s/projects.dashboard"
-          },
-          {
-            "action_id": 481,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "查看经营与执行异常",
-            "icon": "chart",
-            "key": "analytics.exception.list",
-            "label": "异常列表",
-            "menu_id": 268,
-            "order": 340,
-            "scene_key": "finance.operating_metrics",
-            "target_url": "/workbench?scene=finance.operating_metrics"
-          },
-          {
-            "action_id": 449,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "查看重点关注项目",
-            "icon": "chart",
-            "key": "analytics.project.focus",
-            "label": "我关注的项目",
-            "menu_id": 265,
-            "order": 350,
-            "scene_key": "projects.list",
-            "target_url": "/workbench?scene=projects.list"
-          }
-        ],
-        "key": "analytics",
-        "label": "经营分析",
-        "sequence": 50
-      },
-      {
-        "icon": "shield",
-        "items": [
-          {
-            "action_id": null,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "查看角色能力覆盖",
-            "icon": "shield",
-            "key": "governance.capability.matrix",
-            "label": "能力矩阵",
-            "menu_id": null,
-            "order": 360,
-            "scene_key": "portal.capability_matrix",
-            "target_url": "/s/project.management"
-          },
-          {
-            "action_id": null,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "查看场景可打开性状态",
-            "icon": "shield",
-            "key": "governance.scene.openability",
-            "label": "场景可打开性",
-            "menu_id": null,
-            "order": 370,
-            "scene_key": "portal.capability_matrix",
-            "target_url": "/s/project.management"
-          },
-          {
-            "action_id": null,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "查看运行态治理审计",
-            "icon": "shield",
-            "key": "governance.runtime.audit",
-            "label": "运行态审计",
-            "menu_id": null,
-            "order": 380,
-            "scene_key": "portal.dashboard",
-            "target_url": "/"
-          }
-        ],
-        "key": "governance",
-        "label": "治理配置",
-        "sequence": 60
-      },
-      {
-        "icon": "boxes",
-        "items": [
-          {
-            "action_id": 495,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "查看物资目录与分类",
-            "icon": "boxes",
-            "key": "material.catalog.open",
-            "label": "物资目录",
-            "menu_id": 280,
-            "order": 390,
-            "scene_key": "projects.ledger",
-            "target_url": "/workbench?scene=projects.ledger"
-          },
-          {
-            "action_id": 495,
-            "allowed": true,
-            "capability_state": "allow",
-            "deny_reason": [],
-            "desc": "查看采购与供应入口",
-            "icon": "boxes",
-            "key": "material.procurement.list",
-            "label": "采购清单",
-            "menu_id": 280,
-            "order": 400,
-            "scene_key": "projects.ledger",
-            "target_url": "/workbench?scene=projects.ledger"
-          }
-        ],
-        "key": "material_management",
-        "label": "物资管理",
-        "sequence": 70
       },
       {
         "icon": "grid",
@@ -657,12 +77,12 @@
             "key": "workspace.today.focus",
             "label": "今日关键动作",
             "menu_id": null,
-            "order": 410,
+            "order": 450,
             "scene_key": "portal.dashboard",
             "target_url": "/"
           },
           {
-            "action_id": 449,
+            "action_id": 452,
             "allowed": true,
             "capability_state": "allow",
             "deny_reason": [],
@@ -671,9 +91,9 @@
             "key": "workspace.project.watch",
             "label": "我关注的项目",
             "menu_id": 265,
-            "order": 420,
+            "order": 460,
             "scene_key": "projects.list",
-            "target_url": "/workbench?scene=projects.list"
+            "target_url": "/s/projects.list"
           }
         ],
         "key": "others",

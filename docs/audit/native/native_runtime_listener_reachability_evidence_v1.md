@@ -28,3 +28,9 @@
 
 - Runtime readiness remains constrained by environment-level socket permissions.
 - Next reachable-window verification for `/api/scenes/my` 401/403 should run when host/network policy allows active socket probe.
+
+## Legacy Endpoint Deprecation Note
+- `/api/scenes/my` is deprecated.
+- Successor endpoint: `/api/v1/intent` with `intent=app.init`.
+- Sunset date: `2026-04-30`.
+- Deprecation header contract reference: `Deprecation`, `Sunset`, `Link`, `X-Legacy-Endpoint`.

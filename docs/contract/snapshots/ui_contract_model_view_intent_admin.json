@@ -4,7 +4,7 @@
   "contract_version": "v1",
   "error": {
     "code": 404,
-    "message": "intent handler not found: ui.contract.model.view modules=['smart_construction_core']",
+    "message": "intent handler not found: ui.contract.model.view modules=['smart_construction_core', 'smart_construction_portal']",
     "type": "HandlerNotFound"
   },
   "execute_error": null,

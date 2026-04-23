@@ -39,3 +39,9 @@ behavior observed in live probe, without touching business facts or ACL/rules.
 ## Decision
 
 - Pre-screen PASS: runtime repair lane can be opened as low-risk verify-helper lane.
+
+## Legacy Endpoint Deprecation Note
+- `/api/scenes/my` is deprecated.
+- Successor endpoint: `/api/v1/intent` with `intent=app.init`.
+- Sunset date: `2026-04-30`.
+- Deprecation header contract reference: `Deprecation`, `Sunset`, `Link`, `X-Legacy-Endpoint`.
