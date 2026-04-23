@@ -1,7 +1,7 @@
 ## Summary
-- branch: codex/dev-env-setup
-- head: 9b5616ab
-- changed files: 898
+- branch: codex/dev-env-setup-pr-clean
+- head: 357a6e58
+- changed files: 851
 - upgrade needed: yes
 
 ## Architecture Impact
@@ -33,6 +33,7 @@
 
 ## Evidence
 - latest artifacts: artifacts/codex/codex/dev-env-setup/20260423-183212
+- clean PR branch rebuilt from `origin/main` to avoid large-file history from the abandoned `codex/dev-env-setup` branch
 
 ## Changes
 ```
