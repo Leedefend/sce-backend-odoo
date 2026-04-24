@@ -541,12 +541,111 @@ odoo.exec: check-compose-project check-compose-env
 # ======================================================
 # ==================== Diagnostics =====================
 # ======================================================
-.PHONY: diag.project odoo.shell.exec
+.PHONY: diag.project odoo.shell.exec history.users.verify history.users.rebuild history.continuity.rehearse history.continuity.replay migration.assets.verify_all history.contract.core.gap.audit history.contract.partner.gap.audit history.contract.strong_evidence.backtrace.audit history.contract.direction_defer.audit history.partner.master.targeted.replay.adapter history.contract.partner.recovery.adapter history.contract.direction_defer.recovery.adapter history.partner.master.direction_defer.replay.adapter history.supplier.partner.targeted.replay.adapter history.outflow.partner.targeted.replay.adapter history.actual_outflow.partner.targeted.replay.adapter history.receipt.parent.recovery.adapter history.receipt.partner.targeted.replay.adapter history.receipt_income.partner.targeted.replay.adapter history.expense_deposit.partner.targeted.replay.adapter history.project_member.attachment.targeted.replay.adapter fresh_db.outflow_request.replay.adapter fresh_db.actual_outflow.replay.adapter fresh_db.outflow_request_line.replay.adapter fresh_db.receipt_invoice_line.replay.adapter fresh_db.receipt_invoice_attachment.replay.adapter fresh_db.legacy_attachment_backfill.replay.adapter fresh_db.legacy_fund_daily_snapshot.replay.adapter fresh_db.legacy_financing_loan.replay.adapter fresh_db.legacy_receipt_income.replay.adapter fresh_db.legacy_expense_deposit.replay.adapter fresh_db.legacy_invoice_tax.replay.adapter fresh_db.legacy_workflow_audit.replay.adapter
 diag.project: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/diag/project.sh
 
 odoo.shell.exec: check-compose-project check-compose-env
 	@DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh
+
+history.users.verify: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/user_asset_verify.py --asset-root migration_assets --lane user --check
+
+history.users.rebuild: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/migration/user_history_rebuild.sh
+
+history.continuity.rehearse: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) HISTORY_CONTINUITY_MODE=rehearse RUN_ID="$(RUN_ID)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/migration/history_continuity_oneclick.sh
+
+history.continuity.replay: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) HISTORY_CONTINUITY_MODE=replay RUN_ID="$(RUN_ID)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/migration/history_continuity_oneclick.sh
+
+migration.assets.verify_all: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/migration_asset_bus.py --asset-root migration_assets --catalog migration_assets/manifest/migration_asset_catalog_v1.json --verify-only --check
+
+history.contract.core.gap.audit: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_contract_core_gap_audit.py
+
+history.contract.partner.gap.audit: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_contract_partner_gap_audit.py
+
+history.contract.strong_evidence.backtrace.audit: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_contract_strong_evidence_backtrace_audit.py
+
+history.contract.direction_defer.audit: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_contract_direction_defer_audit.py
+
+history.contract.direction_defer.recovery.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_contract_direction_defer_recovery_adapter.py
+
+history.partner.master.targeted.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_partner_master_targeted_replay_adapter.py
+
+history.contract.partner.recovery.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_contract_partner_recovery_adapter.py
+
+history.partner.master.direction_defer.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_partner_master_direction_defer_replay_adapter.py
+
+history.supplier.partner.targeted.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_supplier_partner_targeted_replay_adapter.py
+
+history.outflow.partner.targeted.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_outflow_partner_targeted_replay_adapter.py
+
+history.actual_outflow.partner.targeted.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_actual_outflow_partner_targeted_replay_adapter.py
+
+history.receipt.parent.recovery.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_receipt_parent_recovery_adapter.py
+
+history.receipt.partner.targeted.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_receipt_partner_targeted_replay_adapter.py
+
+history.receipt_income.partner.targeted.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_receipt_income_partner_targeted_replay_adapter.py
+
+history.expense_deposit.partner.targeted.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_expense_deposit_partner_targeted_replay_adapter.py
+
+history.project_member.attachment.targeted.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_project_member_attachment_targeted_replay_adapter.py
+
+fresh_db.outflow_request.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_outflow_request_replay_adapter.py
+
+fresh_db.actual_outflow.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_actual_outflow_replay_adapter.py
+
+fresh_db.outflow_request_line.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_outflow_request_line_replay_adapter.py
+
+fresh_db.receipt_invoice_line.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_receipt_invoice_line_replay_adapter.py
+
+fresh_db.receipt_invoice_attachment.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_receipt_invoice_attachment_replay_adapter.py
+
+fresh_db.legacy_attachment_backfill.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_attachment_backfill_replay_adapter.py
+
+fresh_db.legacy_fund_daily_snapshot.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_fund_daily_snapshot_replay_adapter.py
+
+fresh_db.legacy_financing_loan.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_financing_loan_replay_adapter.py
+
+fresh_db.legacy_receipt_income.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_receipt_income_replay_adapter.py
+
+fresh_db.legacy_expense_deposit.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_expense_deposit_replay_adapter.py
+
+fresh_db.legacy_invoice_tax.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_invoice_tax_replay_adapter.py
+
+fresh_db.legacy_workflow_audit.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_workflow_audit_replay_adapter.py
 
 .PHONY: bsi.create bsi.verify
 bsi.create: ## Create/update Business Service Identity user (system-bound)

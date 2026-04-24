@@ -5,16 +5,36 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 from collections import Counter
 from pathlib import Path
 
 
-REPO_ROOT = Path("/mnt")
+def repo_root() -> Path:
+    env_root = os.getenv("MIGRATION_REPO_ROOT")
+    candidates = []
+    if env_root:
+        candidates.append(Path(env_root))
+    candidates.extend([Path("/mnt"), Path.cwd()])
+    for candidate in candidates:
+        if (candidate / "artifacts/migration/fresh_db_replay_manifest_v1.json").exists():
+            return candidate
+    return Path.cwd()
+
+
+def ensure_allowed_db() -> None:
+    allowlist = {item.strip() for item in os.getenv("MIGRATION_REPLAY_DB_ALLOWLIST", "sc_migration_fresh").split(",") if item.strip()}
+    if env.cr.dbname not in allowlist:  # noqa: F821
+        raise RuntimeError({"db_name_not_allowed_for_replay": env.cr.dbname, "allowlist": sorted(allowlist)})  # noqa: F821
+
+
+REPO_ROOT = repo_root()
+ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(REPO_ROOT / "artifacts/migration")))
 PAYLOAD_CSV = REPO_ROOT / "artifacts/migration/fresh_db_contract_remaining_replay_payload_v1.csv"
-OUTPUT_JSON = REPO_ROOT / "artifacts/migration/fresh_db_contract_remaining_write_result_v1.json"
-ROLLBACK_CSV = REPO_ROOT / "artifacts/migration/fresh_db_contract_remaining_rollback_targets_v1.csv"
-PRE_SNAPSHOT_CSV = REPO_ROOT / "artifacts/migration/fresh_db_contract_remaining_pre_write_snapshot_v1.csv"
-POST_SNAPSHOT_CSV = REPO_ROOT / "artifacts/migration/fresh_db_contract_remaining_post_write_snapshot_v1.csv"
+OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_contract_remaining_write_result_v1.json"
+ROLLBACK_CSV = ARTIFACT_ROOT / "fresh_db_contract_remaining_rollback_targets_v1.csv"
+PRE_SNAPSHOT_CSV = ARTIFACT_ROOT / "fresh_db_contract_remaining_pre_write_snapshot_v1.csv"
+POST_SNAPSHOT_CSV = ARTIFACT_ROOT / "fresh_db_contract_remaining_post_write_snapshot_v1.csv"
 EXPECTED_ROWS = 1332
 SAFE_FIELDS = {
     "legacy_contract_id",
@@ -124,8 +144,39 @@ def build_vals(row: dict[str, str]) -> dict[str, object]:
     return {field: value for field, value in vals.items() if value not in ("", None)}
 
 
-if env.cr.dbname != "sc_migration_fresh":  # noqa: F821
-    raise RuntimeError({"db_name_not_sc_migration_fresh": env.cr.dbname})  # noqa: F821
+def resolve_project_id(row: dict[str, str], project_model) -> int | None:
+    legacy_project_id = clean(row.get("legacy_project_id"))
+    if legacy_project_id:
+        matches = project_model.search([("legacy_project_id", "=", legacy_project_id)], limit=2)
+        if len(matches) == 1:
+            return matches.id
+        if len(matches) > 1:
+            raise RuntimeError({"duplicate_legacy_project_matches": legacy_project_id, "project_ids": matches.ids})
+    project_id = clean(row.get("project_id"))
+    if project_id:
+        rec = project_model.browse(int(project_id)).exists()
+        if rec:
+            return rec.id
+    return None
+
+
+def resolve_partner_id(row: dict[str, str], partner_model) -> int | None:
+    partner_id = clean(row.get("partner_id"))
+    if partner_id:
+        rec = partner_model.browse(int(partner_id)).exists()
+        if rec:
+            return rec.id
+    partner_text = clean(row.get("legacy_counterparty_text"))
+    if partner_text:
+        matches = partner_model.search([("name", "=", partner_text)], limit=2)
+        if len(matches) == 1:
+            return matches.id
+        if len(matches) > 1:
+            raise RuntimeError({"duplicate_partner_name_matches": partner_text, "partner_ids": matches.ids})
+    return None
+
+
+ensure_allowed_db()
 
 Contract = env["construction.contract"].sudo()  # noqa: F821
 Project = env["project.project"].sudo()  # noqa: F821
@@ -156,6 +207,12 @@ if pre_records:
 create_vals = []
 for index, row in enumerate(rows, start=2):
     vals = build_vals(row)
+    resolved_project_id = resolve_project_id(row, Project)
+    resolved_partner_id = resolve_partner_id(row, Partner)
+    if resolved_project_id:
+        vals["project_id"] = resolved_project_id
+    if resolved_partner_id:
+        vals["partner_id"] = resolved_partner_id
     unsafe_fields = sorted(set(vals) - SAFE_FIELDS)
     if unsafe_fields:
         errors.append({"line": index, "legacy_contract_id": vals.get("legacy_contract_id"), "error": "unsafe_fields", "fields": unsafe_fields})
@@ -163,10 +220,10 @@ for index, row in enumerate(rows, start=2):
         errors.append({"line": index, "legacy_contract_id": vals.get("legacy_contract_id"), "error": "invalid_contract_type", "type": vals.get("type")})
     if not vals.get("subject"):
         errors.append({"line": index, "legacy_contract_id": vals.get("legacy_contract_id"), "error": "missing_subject"})
-    if not Project.browse(vals["project_id"]).exists():
-        errors.append({"line": index, "legacy_contract_id": vals.get("legacy_contract_id"), "error": "project_missing", "project_id": vals["project_id"]})
-    if not Partner.browse(vals["partner_id"]).exists():
-        errors.append({"line": index, "legacy_contract_id": vals.get("legacy_contract_id"), "error": "partner_missing", "partner_id": vals["partner_id"]})
+    if not vals.get("project_id") or not Project.browse(vals["project_id"]).exists():
+        errors.append({"line": index, "legacy_contract_id": vals.get("legacy_contract_id"), "error": "project_missing", "legacy_project_id": vals.get("legacy_project_id"), "project_id": vals.get("project_id")})
+    if not vals.get("partner_id") or not Partner.browse(vals["partner_id"]).exists():
+        errors.append({"line": index, "legacy_contract_id": vals.get("legacy_contract_id"), "error": "partner_missing", "legacy_counterparty_text": vals.get("legacy_counterparty_text"), "partner_id": vals.get("partner_id")})
     create_vals.append(vals)
 
 if errors:

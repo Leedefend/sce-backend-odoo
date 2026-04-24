@@ -102,6 +102,32 @@
                         <group>
                             <field name="note"/>
                         </group>
+                        <group string="付款申请明细">
+                            <field name="outflow_line_ids" nolabel="1">
+                                <tree editable="bottom" create="false" delete="false">
+                                    <field name="sequence" readonly="1"/>
+                                    <field name="source_line_type" readonly="1"/>
+                                    <field name="source_document_no" readonly="1"/>
+                                    <field name="contract_id"/>
+                                    <field name="amount"/>
+                                    <field name="paid_before_amount"/>
+                                    <field name="remaining_amount"/>
+                                    <field name="current_pay_amount"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group string="收款发票明细">
+                            <field name="receipt_invoice_line_ids" nolabel="1">
+                                <tree editable="bottom" create="false" delete="false">
+                                    <field name="sequence" readonly="1"/>
+                                    <field name="invoice_no"/>
+                                    <field name="invoice_party_name"/>
+                                    <field name="invoice_amount"/>
+                                    <field name="current_receipt_amount"/>
+                                    <field name="invoiced_before_amount"/>
+                                </tree>
+                            </field>
+                        </group>
                         <group string="付款记录">
                             <field name="ledger_line_ids" nolabel="1" readonly="1"
                                    context="{'allow_payment_ledger_create': 1}">

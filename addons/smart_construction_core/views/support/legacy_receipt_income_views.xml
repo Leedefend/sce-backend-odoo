@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_legacy_receipt_income_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.receipt.income.fact.tree</field>
+        <field name="model">sc.legacy.receipt.income.fact</field>
+        <field name="arch" type="xml">
+            <tree string="历史收款收入事实" create="0" edit="0" delete="0">
+                <field name="document_date"/>
+                <field name="document_no"/>
+                <field name="source_family"/>
+                <field name="income_category"/>
+                <field name="project_id"/>
+                <field name="partner_id"/>
+                <field name="source_amount"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_receipt_income_fact_form" model="ir.ui.view">
+        <field name="name">sc.legacy.receipt.income.fact.form</field>
+        <field name="model">sc.legacy.receipt.income.fact</field>
+        <field name="arch" type="xml">
+            <form string="历史收款收入事实" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="document_date"/>
+                            <field name="document_no"/>
+                            <field name="source_family"/>
+                            <field name="direction"/>
+                            <field name="legacy_state"/>
+                            <field name="income_category"/>
+                            <field name="project_id"/>
+                            <field name="partner_id"/>
+                            <field name="source_amount"/>
+                        </group>
+                        <group>
+                            <field name="legacy_project_id"/>
+                            <field name="legacy_project_name"/>
+                            <field name="legacy_partner_id"/>
+                            <field name="legacy_partner_name"/>
+                            <field name="legacy_source_table"/>
+                            <field name="legacy_record_id"/>
+                            <field name="legacy_pid"/>
+                            <field name="import_batch"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="note"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

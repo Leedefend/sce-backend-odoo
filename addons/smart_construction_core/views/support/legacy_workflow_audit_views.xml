@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_sc_legacy_workflow_audit_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.workflow.audit.tree</field>
+    <field name="model">sc.legacy.workflow.audit</field>
+    <field name="arch" type="xml">
+      <tree string="历史审批审计" create="false" edit="false" delete="false">
+        <field name="approved_at"/>
+        <field name="received_at"/>
+        <field name="action_classification"/>
+        <field name="legacy_step_name"/>
+        <field name="legacy_template_name"/>
+        <field name="target_lane"/>
+        <field name="target_model"/>
+        <field name="target_external_id"/>
+        <field name="actor_name"/>
+        <field name="legacy_status"/>
+        <field name="legacy_back_type"/>
+        <field name="import_batch"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_sc_legacy_workflow_audit_form" model="ir.ui.view">
+    <field name="name">sc.legacy.workflow.audit.form</field>
+    <field name="model">sc.legacy.workflow.audit</field>
+    <field name="arch" type="xml">
+      <form string="历史审批审计" create="false" edit="false" delete="false">
+        <sheet>
+          <group>
+            <group>
+              <field name="approved_at"/>
+              <field name="received_at"/>
+              <field name="action_classification"/>
+              <field name="actor_name"/>
+              <field name="actor_legacy_user_id"/>
+              <field name="legacy_approval_type"/>
+              <field name="legacy_status"/>
+              <field name="legacy_back_type"/>
+            </group>
+            <group>
+              <field name="legacy_step_name"/>
+              <field name="legacy_template_name"/>
+              <field name="target_lane"/>
+              <field name="target_model"/>
+              <field name="target_external_id"/>
+              <field name="legacy_workflow_id"/>
+              <field name="legacy_source_table"/>
+              <field name="import_batch"/>
+            </group>
+          </group>
+          <group>
+            <field name="legacy_pid"/>
+            <field name="legacy_djid"/>
+            <field name="legacy_business_id"/>
+            <field name="legacy_detail_status_id"/>
+            <field name="legacy_detail_step_id"/>
+            <field name="legacy_setup_step_id"/>
+            <field name="legacy_template_id"/>
+            <field name="approval_note"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_sc_legacy_workflow_audit" model="ir.actions.act_window">
+    <field name="name">历史审批审计</field>
+    <field name="res_model">sc.legacy.workflow.audit</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+</odoo>
