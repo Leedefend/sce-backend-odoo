@@ -28,11 +28,11 @@ export function resolveBatchExportDomainState(options: {
   mergeSceneDomainFn: (base: unknown, sceneFilters: unknown) => unknown[];
   mergeActiveFilterDomainFn: (base: unknown) => unknown[];
 }): unknown[] {
+  void options.actionMetaDomainRaw;
+  void options.sceneFiltersRaw;
+  void options.mergeSceneDomainFn;
   return options.mergeActiveFilterDomainFn(
-    options.mergeSceneDomainFn(
-      options.mergeSceneDomainFn(options.actionMetaDomainRaw, options.sceneFiltersRaw),
-      options.effectiveFilterDomain,
-    ),
+    Array.isArray(options.effectiveFilterDomain) ? options.effectiveFilterDomain : [],
   );
 }
 

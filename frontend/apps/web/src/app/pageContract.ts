@@ -16,11 +16,16 @@ function asTextList(value: unknown): string[] {
 type SectionTag = 'header' | 'section' | 'details' | 'div' | '';
 type SectionConfig = { enabled: boolean; order: number; tag: SectionTag; open: boolean | null };
 type GlobalActionConfig = { key: string; label: string; intent: string };
+type UsePageContractOptions = {
+  allowSceneContractFallback?: boolean;
+};
 
-export function usePageContract(pageKey: string) {
+export function usePageContract(pageKey: string, options: UsePageContractOptions = {}) {
   const session = useSessionStore();
   const contract = computed<PageContract>(() => session.pageContracts?.[pageKey] || {});
+  const allowSceneContractFallback = options.allowSceneContractFallback === true;
   const sceneContractV1 = computed<Record<string, unknown>>(() => {
+    if (!allowSceneContractFallback) return {};
     const raw = contract.value?.scene_contract_v1;
     if (!raw || typeof raw !== 'object') return {};
     if (asText((raw as Record<string, unknown>).contract_version) !== 'v1') return {};

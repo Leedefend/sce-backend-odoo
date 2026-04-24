@@ -1855,6 +1855,18 @@ verify.frontend.actionview.scene_specialcase.guard: guard.prod.forbid
 verify.frontend.error_context.contract.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_error_context_contract_guard.py
 
+.PHONY: verify.frontend.contract_consumer_intrusion.report
+verify.frontend.contract_consumer_intrusion.report: guard.prod.forbid
+	@python3 scripts/verify/frontend_contract_consumer_intrusion_guard.py --report-only
+
+.PHONY: verify.frontend.contract_consumer_intrusion.guard
+verify.frontend.contract_consumer_intrusion.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_contract_consumer_intrusion_guard.py
+
+.PHONY: verify.frontend.list_selection_contract_smoke
+verify.frontend.list_selection_contract_smoke: guard.prod.forbid
+	@cd frontend/apps/web && pnpm exec node scripts/list_selection_contract_smoke.mjs
+
 .PHONY: verify.render.semantic.ready
 verify.render.semantic.ready: guard.prod.forbid
 	@python3 scripts/verify/render_semantic_ready_guard.py

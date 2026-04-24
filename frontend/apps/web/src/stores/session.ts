@@ -139,7 +139,109 @@ export interface WorkspaceHomeContract {
   today_actions?: unknown[];
   risk?: Record<string, unknown>;
   ops?: Record<string, unknown>;
+  scene_groups?: unknown[];
+  group_overview?: unknown[];
   advice?: unknown[];
+}
+
+export interface WorkspaceHeroRow {
+  key: string;
+  value: string;
+}
+
+export interface WorkspaceAdviceRow {
+  id: string;
+  level: 'red' | 'amber' | 'green';
+  title: string;
+  description: string;
+  actionLabel: string;
+  actionEntryId: string;
+  actionPath: string;
+  actionQuery: Record<string, string>;
+}
+
+export interface WorkspaceMetricRow {
+  key: string;
+  label: string;
+  value: string;
+  delta: string;
+  hint: string;
+  tone: string;
+  progress: string;
+}
+
+export interface WorkspaceTodayActionRow {
+  id: string;
+  title: string;
+  description: string;
+  count: number;
+  status: string;
+  tone: string;
+  source: string;
+  actionLabel: string;
+  actionKey: string;
+  entryId: string;
+  sceneKey: string;
+  route: string;
+}
+
+export interface WorkspaceRiskAlertRow {
+  id: string;
+  title: string;
+  description: string;
+  tone: string;
+  source: string;
+  actionLabel: string;
+  actionKey: string;
+  sceneKey: string;
+  path: string;
+  query: Record<string, string>;
+  entryKey: string;
+  entryId: string;
+}
+
+export interface WorkspaceOpsSummary {
+  bars: Record<string, unknown>;
+  kpi: Record<string, unknown>;
+  summary: string;
+}
+
+export interface WorkspaceSceneEntryRow {
+  id: string;
+  key: string;
+  title: string;
+  actionLabel: string;
+  subtitle: string;
+  sceneKey: string;
+  sceneLabel: string;
+  sequence: number;
+  status: string;
+  state: string;
+  capabilityState: string;
+  groupKey: string;
+  groupLabel: string;
+  reason: string;
+  reasonCode: string;
+  route: string;
+  targetActionId: number;
+  targetMenuId: number;
+  targetModel: string;
+  targetRecordId: string;
+  contextQuery: Record<string, string>;
+  sceneTags: string[];
+  tileTags: string[];
+}
+
+export interface WorkspaceCapabilityGroupRow {
+  key: string;
+  label: string;
+  sequence: number;
+  capabilityCount: number;
+  allowCount: number;
+  readonlyCount: number;
+  denyCount: number;
+  readyCount: number;
+  score: number;
 }
 
 export interface PageContract {
@@ -260,6 +362,29 @@ function resolveUserCompanyId(user: unknown): number | null {
   return null;
 }
 
+function asText(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : String(value ?? '').trim();
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function normalizeContextQuery(raw: unknown): Record<string, string> {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  return Object.entries(raw as Record<string, unknown>).reduce<Record<string, string>>((acc, [key, value]) => {
+    const text = asText(value);
+    if (text) acc[key] = text;
+    return acc;
+  }, {});
+}
+
+function asObjectList(value: unknown): Record<string, unknown>[] {
+  return Array.isArray(value)
+    ? value.map((item) => asRecord(item)).filter((item) => Object.keys(item).length > 0)
+    : [];
+}
+
 export const useSessionStore = defineStore('session', {
   state: (): SessionState => ({
     token: null,
@@ -296,6 +421,218 @@ export const useSessionStore = defineStore('session', {
     defaultRoute: null,
     bootstrapNextIntent: 'system.init',
   }),
+  getters: {
+    workspaceHeroRows(state): WorkspaceHeroRow[] {
+      const rows: WorkspaceHeroRow[] = [];
+      const roleLabel = asText(state.roleSurface?.role_label) || asText(state.roleSurface?.role_code);
+      if (roleLabel) {
+        rows.push({ key: 'role_label', value: roleLabel });
+      }
+
+      const landingSceneKey = asText(state.roleSurface?.landing_scene_key);
+      if (landingSceneKey) {
+        const landingScene = state.scenes.find((scene) => asText(scene.key) === landingSceneKey);
+        const landingLabel = asText(landingScene?.label) || landingSceneKey;
+        rows.push({ key: 'landing_label', value: landingLabel });
+      }
+
+      const hero = asRecord(state.workspaceHome?.hero);
+      const runtimeValue = asText(hero.status_notice) || '状态正常';
+      rows.push({ key: 'runtime', value: runtimeValue });
+      return rows;
+    },
+    workspaceAdviceRows(state): WorkspaceAdviceRow[] {
+      const source = Array.isArray(state.workspaceHome?.advice) ? state.workspaceHome?.advice : [];
+      return source.map((item, index) => {
+        const row = asRecord(item);
+        const levelRaw = asText(row.level).toLowerCase();
+        const level: 'red' | 'amber' | 'green' = levelRaw === 'red' || levelRaw === 'amber' ? levelRaw : 'green';
+        return {
+          id: asText(row.id) || `advice-${index + 1}`,
+          level,
+          title: asText(row.title) || `建议 ${index + 1}`,
+          description: asText(row.description),
+          actionLabel: asText(row.action_label),
+          actionEntryId: asText(row.entry_id),
+          actionPath: asText(row.path),
+          actionQuery: normalizeContextQuery(row.query),
+        };
+      });
+    },
+    workspaceMetricRows(state): WorkspaceMetricRow[] {
+      const source = Array.isArray(state.workspaceHome?.metrics) ? state.workspaceHome?.metrics : [];
+      return source.map((item, index) => {
+        const row = asRecord(item);
+        return {
+          key: asText(row.key) || `metric-${index + 1}`,
+          label: asText(row.label) || `指标 ${index + 1}`,
+          value: asText(row.value) || '0',
+          delta: asText(row.delta),
+          hint: asText(row.hint),
+          tone: asText(row.tone).toLowerCase() || 'neutral',
+          progress: asText(row.progress).toLowerCase() || 'running',
+        };
+      });
+    },
+    workspaceTodayActionRows(state): WorkspaceTodayActionRow[] {
+      const source = Array.isArray(state.workspaceHome?.today_actions) ? state.workspaceHome?.today_actions : [];
+      return source.map((item, index) => {
+        const row = asRecord(item);
+        return {
+          id: asText(row.id) || `todo-${index + 1}`,
+          title: asText(row.title) || `待办 ${index + 1}`,
+          description: asText(row.description),
+          count: Number(row.count || row.pending_count || 0),
+          status: asText(row.status).toLowerCase() || 'normal',
+          tone: asText(row.tone).toLowerCase() || 'warning',
+          source: asText(row.source) || 'business',
+          actionLabel: asText(row.action_label),
+          actionKey: asText(row.action_key) || 'open_scene',
+          entryId: asText(row.entry_id),
+          sceneKey: asText(row.scene_key),
+          route: asText(row.route),
+        };
+      });
+    },
+    workspaceRiskAlertRows(state): WorkspaceRiskAlertRow[] {
+      const risk = asRecord(state.workspaceHome?.risk);
+      const source = asObjectList(risk.actions);
+      return source.map((item, index) => ({
+        id: asText(item.id) || `risk-${index + 1}`,
+        title: asText(item.title) || `风险事项 ${index + 1}`,
+        description: asText(item.description),
+        tone: asText(item.tone).toLowerCase() || 'danger',
+        source: asText(item.source) || 'business',
+        actionLabel: asText(item.action_label),
+        actionKey: asText(item.action_key) || 'open_scene',
+        sceneKey: asText(item.scene_key),
+        path: asText(item.path),
+        query: normalizeContextQuery(item.query),
+        entryKey: asText(item.entry_key),
+        entryId: asText(item.entry_id),
+      }));
+    },
+    workspaceOpsSummary(state): WorkspaceOpsSummary {
+      const ops = asRecord(state.workspaceHome?.ops);
+      return {
+        bars: asRecord(ops.bars),
+        kpi: asRecord(ops.kpi),
+        summary: asText(ops.summary),
+      };
+    },
+    workspaceSceneEntryRows(state): WorkspaceSceneEntryRow[] {
+      const source = Array.isArray(state.workspaceHome?.scene_groups) ? state.workspaceHome?.scene_groups : [];
+      if (source.length) {
+        return source.map((item, index) => {
+          const row = asRecord(item);
+          return {
+            id: asText(row.id) || `scene-group-${index + 1}`,
+            key: asText(row.key),
+            title: asText(row.title) || `功能 ${index + 1}`,
+            actionLabel: asText(row.action_label),
+            subtitle: asText(row.subtitle),
+            sceneKey: asText(row.scene_key),
+            sceneLabel: asText(row.scene_label) || asText(row.scene_key),
+            sequence: Number(row.sequence ?? 9999),
+            status: asText(row.status).toLowerCase() || 'ga',
+            state: asText(row.state).toUpperCase(),
+            capabilityState: asText(row.capability_state).toLowerCase(),
+            groupKey: asText(row.group_key),
+            groupLabel: asText(row.group_label),
+            reason: asText(row.reason),
+            reasonCode: asText(row.reason_code),
+            route: asText(row.route),
+            targetActionId: Number(row.action_id || 0),
+            targetMenuId: Number(row.menu_id || 0),
+            targetModel: asText(row.model),
+            targetRecordId: asText(row.record_id),
+            contextQuery: normalizeContextQuery(row.query),
+            sceneTags: Array.isArray(row.scene_tags) ? (row.scene_tags as unknown[]).map((item) => asText(item).toLowerCase()).filter(Boolean) : [],
+            tileTags: Array.isArray(row.tile_tags) ? (row.tile_tags as unknown[]).map((item) => asText(item).toLowerCase()).filter(Boolean) : [],
+          };
+        });
+      }
+      const list: WorkspaceSceneEntryRow[] = [];
+      const capabilityCatalog = state.capabilityCatalog || {};
+      state.scenes.forEach((scene, sceneIndex) => {
+        const sceneKey = asText(scene.key);
+        if (!sceneKey) return;
+        const sceneLabel = asText(scene.label) || sceneKey;
+        const sceneTags = Array.isArray((scene as unknown as Record<string, unknown>).tags)
+          ? ((scene as unknown as Record<string, unknown>).tags as unknown[]).map((item) => asText(item).toLowerCase()).filter(Boolean)
+          : [];
+        const tiles = Array.isArray(scene.tiles) ? scene.tiles : [];
+        tiles.forEach((tile, tileIndex) => {
+          const tileRow = asRecord(tile);
+          const key = asText(tileRow.key);
+          if (!key) return;
+          const capabilityMeta = capabilityCatalog[key];
+          const payload = asRecord(tileRow.payload);
+          const title = asText(tileRow.title) || asText(capabilityMeta?.label) || `功能 ${sceneIndex + 1}-${tileIndex + 1}`;
+          list.push({
+            id: `${sceneKey}-${key}-${sceneIndex}-${tileIndex}`,
+            key,
+            title,
+            actionLabel: asText(tileRow.action_label) || asText(payload.action_label),
+            subtitle: asText(tileRow.subtitle),
+            sceneKey,
+            sceneLabel,
+            sequence: Number(tileRow.sequence ?? 9999),
+            status: asText(tileRow.status).toLowerCase() || 'ga',
+            state: asText(tileRow.state).toUpperCase(),
+            capabilityState: asText(capabilityMeta?.capability_state).toLowerCase(),
+            groupKey: asText(capabilityMeta?.group_key),
+            groupLabel: asText(capabilityMeta?.group_label),
+            reason: asText(tileRow.reason) || asText(capabilityMeta?.reason),
+            reasonCode: asText(tileRow.reason_code) || asText(capabilityMeta?.reason_code),
+            route: asText(tileRow.route),
+            targetActionId: Number(payload.action_id || 0),
+            targetMenuId: Number(payload.menu_id || 0),
+            targetModel: asText(payload.model),
+            targetRecordId: asText(payload.record_id),
+            contextQuery: normalizeContextQuery(payload.context_query || payload.query || payload.context),
+            sceneTags,
+            tileTags: Array.isArray(tileRow.tags) ? (tileRow.tags as unknown[]).map((item) => asText(item).toLowerCase()).filter(Boolean) : [],
+          });
+        });
+      });
+      return list;
+    },
+    workspaceCapabilityGroupRows(state): WorkspaceCapabilityGroupRow[] {
+      const source = Array.isArray(state.workspaceHome?.group_overview) ? state.workspaceHome?.group_overview : [];
+      if (source.length) {
+        return source.map((item) => {
+          const row = asRecord(item);
+          return {
+            key: asText(row.key),
+            label: asText(row.label) || asText(row.key),
+            sequence: Number(row.sequence || 0),
+            capabilityCount: Number(row.capability_count || 0),
+            allowCount: Number(row.allow_count || 0),
+            readonlyCount: Number(row.readonly_count || 0),
+            denyCount: Number(row.deny_count || 0),
+            readyCount: Number(row.ready_count || 0),
+            score: Number(row.score || 0),
+          };
+        });
+      }
+      return state.capabilityGroups.map((group) => {
+        const readyCount = Number(group.state_counts?.READY || 0);
+        const allowCount = Number(group.capability_state_counts?.allow || 0);
+        return {
+          key: group.key,
+          label: group.label || group.key,
+          sequence: Number(group.sequence || 0),
+          capabilityCount: Number(group.capability_count || 0),
+          allowCount,
+          readonlyCount: Number(group.capability_state_counts?.readonly || 0),
+          denyCount: Number(group.capability_state_counts?.deny || 0),
+          readyCount,
+          score: readyCount * 2 + allowCount,
+        };
+      });
+    },
+  },
   actions: {
     setToken(token: string) {
       this.token = token;
@@ -304,6 +641,10 @@ export const useSessionStore = defineStore('session', {
       sessionStorage.removeItem(TOKEN_STORAGE_KEY_LEGACY);
     },
     restore() {
+      this.isReady = false;
+      this.initStatus = 'idle';
+      this.initError = null;
+      this.initTraceId = null;
       const cached = localStorage.getItem(STORAGE_KEY);
       if (cached) {
         try {
@@ -348,10 +689,6 @@ export const useSessionStore = defineStore('session', {
       }
       // Always purge legacy unscoped token to avoid cross-db pollution.
       sessionStorage.removeItem(TOKEN_STORAGE_KEY_LEGACY);
-      if (this.menuTree.length) {
-        this.isReady = true;
-        this.initStatus = 'ready';
-      }
     },
     clearSession() {
       this.token = null;
@@ -853,10 +1190,42 @@ export const useSessionStore = defineStore('session', {
   },
 });
 
+function resolveSceneDisplayLabel(node: NavNode): string {
+  const meta = (node.meta && typeof node.meta === 'object')
+    ? node.meta as Record<string, unknown>
+    : {};
+  const sceneSource = String(meta.scene_source || '').trim().toLowerCase();
+  const actionType = String(meta.action_type || '').trim().toLowerCase();
+  if (sceneSource !== 'scene_contract' && actionType !== 'scene.contract') {
+    return '';
+  }
+  const sceneKey = String(
+    (node as NavNode & { scene_key?: string; sceneKey?: string }).scene_key
+      || (node as NavNode & { scene_key?: string; sceneKey?: string }).sceneKey
+      || node.meta?.scene_key
+      || '',
+  ).trim();
+  if (!sceneKey) {
+    return '';
+  }
+  const scene = getSceneByKey(sceneKey);
+  return String(scene?.label || '').trim();
+}
+
 function addKeys(node: NavNode, index = 0): NavNode {
   const key = (node as NavNode & { xmlid?: string }).xmlid || node.key || `menu_${node.menu_id || node.id || index}`;
   const children = node.children?.map((child, idx) => addKeys(child, idx)) ?? [];
-  return { ...node, key, children };
+  const sceneLabel = resolveSceneDisplayLabel(node);
+  if (!sceneLabel) {
+    return { ...node, key, children };
+  }
+  return {
+    ...node,
+    key,
+    title: sceneLabel,
+    label: sceneLabel,
+    children,
+  };
 }
 
 function filterExpandedKeys(tree: NavNode[], keys: string[]): string[] {

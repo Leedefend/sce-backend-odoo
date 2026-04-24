@@ -14,10 +14,12 @@ export function resolveLoadListDomainState(options: {
   baseDomain: unknown[];
   activeDomain: unknown[];
 } {
-  const baseDomain = options.mergeSceneDomainFn(
-    options.mergeSceneDomainFn(options.metaDomainRaw, options.sceneFiltersRaw),
-    options.effectiveFilterDomain,
-  );
+  void options.metaDomainRaw;
+  void options.sceneFiltersRaw;
+  void options.mergeSceneDomainFn;
+  const baseDomain = Array.isArray(options.effectiveFilterDomain)
+    ? options.effectiveFilterDomain
+    : [];
   return {
     baseDomain,
     activeDomain: options.mergeActiveFilterDomainFn(baseDomain),
@@ -33,8 +35,9 @@ export function resolveLoadListContextState(options: {
   requestContext: Dict;
   requestContextRaw: string;
 } {
+  void options.metaContextRaw;
   return {
-    requestContext: options.mergeContextFn(options.metaContextRaw as Record<string, unknown> | string | undefined, options.effectiveRequestContext),
+    requestContext: options.mergeContextFn({}, options.effectiveRequestContext),
     requestContextRaw: options.effectiveRequestContextRaw,
   };
 }

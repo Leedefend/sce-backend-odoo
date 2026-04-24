@@ -52,11 +52,6 @@ export async function executePageContractAction(deps: ContractActionDeps): Promi
     return true;
   }
 
-  if (intent === 'ui.contract' && scene) {
-    await deps.router.push({ path: resolveScenePath(scene), query });
-    return true;
-  }
-
   if (deps.onFallback) {
     const handled = await deps.onFallback(deps.actionKey);
     return handled === true;

@@ -122,12 +122,17 @@ export function useActionPageModel(options: UseActionPageModelOptions) {
 
     const strictSummary = asText(unref(options.strict.missingSummary));
     const strictDefaults = asText(unref(options.strict.defaultsSummary));
+    const focusIntent = unref(options.focus.surfaceIntent);
+    const focusTitle = asText(focusIntent.title);
+    const focusSummary = asText(focusIntent.summary);
+    const focusActions = Array.isArray(focusIntent.actions) ? focusIntent.actions : [];
+    const hasFocusIntent = Boolean(focusTitle || focusSummary || focusActions.length);
 
     const sectionVisibility = resolveActionPageSections({
       showQuickFilters: quickPrimary.length > 0 || quickOverflow.length > 0,
       showSavedFilters: savedPrimary.length > 0 || savedOverflow.length > 0,
       showGroupBy: groupByPrimary.length > 0 || groupByOverflow.length > 0,
-      showFocus: true,
+      showFocus: hasFocusIntent,
       showStrictAlert: Boolean(strictSummary),
       showGroupSummary: asList(unref(options.groupSummary.items)).length > 0,
       showQuickActions:
@@ -135,8 +140,6 @@ export function useActionPageModel(options: UseActionPageModelOptions) {
         || asList(unref(options.actions.overflowGroups)).length > 0,
       showHud: Boolean(unref(options.hud.visible)),
     });
-
-    const focusIntent = unref(options.focus.surfaceIntent);
 
     const actionPrimary = asList(unref(options.actions.primary))
       .map((item) => toActionButtonVM(item))
@@ -201,9 +204,9 @@ export function useActionPageModel(options: UseActionPageModelOptions) {
         },
       },
       focus: {
-        title: asText(focusIntent.title),
-        summary: asText(focusIntent.summary),
-        actions: Array.isArray(focusIntent.actions) ? focusIntent.actions : [],
+        title: focusTitle,
+        summary: focusSummary,
+        actions: focusActions,
       },
       strictAlert: sectionVisibility.strictAlert
         ? {

@@ -172,14 +172,13 @@ async function onSubmit() {
     await session.login(username.value, password.value, dbName.value);
     await session.loadAppInit();
     const rawRedirect = typeof route.query.redirect === 'string' ? route.query.redirect : '';
-    const hasWorkspaceHome = Boolean(session.workspaceHome && Object.keys(session.workspaceHome).length > 0);
     const isLikelyUnboundActionRoute =
       /^\/(f|a|r)\//.test(rawRedirect)
       && !/[?&](action_id|menu_id|scene_key|scene)=/.test(rawRedirect);
     const normalizedRedirect = normalizeLegacyWorkbenchPath(rawRedirect);
-    const redirect = (!hasWorkspaceHome || isLikelyUnboundActionRoute)
-      ? session.resolveLandingPath('/')
-      : (normalizedRedirect || session.resolveLandingPath('/'));
+    const redirect = (normalizedRedirect && !isLikelyUnboundActionRoute)
+      ? normalizedRedirect
+      : session.resolveLandingPath('/');
     await router.push(redirect);
   } catch (err) {
     error.value = normalizeLoginError(err);
