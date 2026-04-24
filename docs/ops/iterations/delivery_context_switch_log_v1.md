@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-24T10:30:00+08:00
+- blocker_key: `fe_nav_contract_consumer_fact_audit_batch_001_in_progress`
+- layer_target: `Frontend Layer`
+- module: `frontend/apps/web contract consumer fact audit`
+- reason: 页面已能部分渲染，但前端实际同时混用 `system.init/nav`、`page_contracts`、`scene_ready_contract_v1`、`scene_contract_v1`、`ui.contract` 与 `api.data` 请求上下文；继续局部修补会放大语义漂移，必须先冻结事实审计清单，再判断是契约缺失还是消费错位
+- completed_step: `已冻结本批次只允许做前端消费链事实审计与归因，不继续做补丁式实现；专题文档已补充全量消费入口盘点、页面/链路矩阵、初步归因。`
+- active_commit: `b2cf23ab`
+- next_step: `for 3-5 条关键路径补 route -> contract -> request -> render 的实证样本，输出契约缺失/消费错位/双向问题的正式归因结论`
+
 ### 2026-04-23T06:05:00+08:00
 - blocker_key: `gov_contract_guard_baseline_fix_001_in_progress`
 - layer_target: `Governance Layer`
@@ -28497,3 +28506,237 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - 2026-04-23T16:06:00+08:00 executor: branch `feature/legacy-data-rebuild-assets-pb03` at `099bcea`; Layer Target `Governance Layer`; Module `migration rebuild assets`; Reason the prepared legacy business-data reconstruction assets live under `artifacts/migration/**`, but the parent `artifacts/` ignore rule prevents them from entering `main`. started PB03 to unignore only `artifacts/migration/**`, keep other disposable artifacts ignored, and preserve migration replay manifests, payloads, snapshots, validation evidence, and rollback targets for server rebuild.
 - 2026-04-23T17:04:00+08:00 executor: branch `feature/migration-raw-source-assets-pb04` at `4ceddfc`; Layer Target `Governance Layer`; Module `migration raw source and workflow-audit assets`; Reason fresh-db replay dry-run still reports missing `tmp/raw/**` source CSVs and migration asset bus still references the workflow-audit asset package. started PB04 to track only manifest-referenced raw CSVs, recover the workflow-audit generator/manifest chain from history, and attempt real XML regeneration without touching runtime business code.
 - 2026-04-23T17:42:00+08:00 executor: PB04 recovered the full migration asset bus package set: seven manifest-referenced raw CSVs under `tmp/raw/**`, 23 `migration_assets` packages, verifier/generator scripts, and `fresh_db_replay_runner_dry_run.py`. `legacy_workflow_audit_v1.xml` is materialized from tracked `.parts/` to avoid a new >100MB Git blob while preserving the manifest SHA `6e782e3d...`. verification passed: raw source `test -s`, `fresh_db_replay_runner_dry_run.py` PASS, `legacy_workflow_audit_asset_verify.py` PASS after part materialization, and `migration_asset_bus.py --verify-only --check` PASS for 23 packages.
+- 2026-04-24T09:50:56+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Frontend Layer`; Module `frontend/apps/web`; Reason legacy 主导航恢复后，自定义前端仍把导航动作链、scene 链、`ui.contract` 链、数据请求链混用，导致菜单点击、空列表、页面渲染都不能忠实消费契约。已启动 `Batch-FE-NavContract-Decouple`，并将当前真实链路与混用点固化到 `docs/ops/iterations/frontend_nav_contract_decouple_batch_fe_20260424.md`，后续修复将按该清单逐项拆解。
+- 2026-04-24T15:35:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Backend Contract Layer`; Module `system.init / workspace_home / page_contracts / scene_ready_contract_v1`; Reason `MyWork / Workbench` 在前端已确认属于后端事实层供给不足，不应继续靠前端推导补齐。已完成 BE-A 前置事实审计：`page_contracts` 在 `system.init` 中会构建但不会进入最终 startup surface；`workspace_home` 仅在 `with_preload=true` 时暴露；顶层 `workspace_home_ref` 未进入 user startup surface；`init_meta.page_contract_meta.intent=scene.page_contract` 目前仅见引用提示，未见 handler 闭环；live `scene_ready_contract_v1` 仅含 `default/projects.intake/projects.ledger/projects.list`，不覆盖 `workspace.home/my_work.workspace`。审计结论已写入 `docs/ops/iterations/frontend_nav_contract_decouple_batch_fe_20260424.md`。
+- 2026-04-24T19:28:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Backend Contract Layer`; Module `system.init startup surface`; Reason owner 已拍板 `system.init` 默认返回 `home / my_work / workbench` 三个页面契约。已完成 BE-A.1 实现：在 `SystemInitPayloadBuilder.build_startup_surface()` 中默认暴露白名单 `page_contracts.pages.{home,my_work,workbench}`，保持 `workspace_home`/`scene_ready_contract_v1`/`default_route` 现状不变；补充 payload-builder 语义回归与 smoke 断言。当前验证状态：纯 Python 单测 PASS，后端已重启；Odoo HttpCase 与本地 live probe 仍待在可用执行通道下补最终实测回包。
+- 2026-04-24T20:05:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Frontend Layer`; Module `frontend/apps/web/src/views/HomeView.vue`; Reason user要求不要再凭感觉点修工作台，必须先做 strict consumer 事实审计。已完成首页 owner 清单落盘：将工作台当前消费面拆为 `contract-owned / workspace_home-owned / frontend-derived / frontend-inferred` 四类，确认首页仅骨架进入 `page_contracts.home` 主链，正文大部分仍依赖 `workspace_home` 与 session 聚合，且仍存在动作文案与布局分流等前端自由发挥逻辑。审计清单已补入 `docs/ops/iterations/frontend_nav_contract_decouple_batch_fe_20260424.md`。
+- 2026-04-24T20:18:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Frontend Layer`; Module `frontend/apps/web/src/views/HomeView.vue`; Reason 已按首页 owner 审计结论启动 `FE-B.Home.1`，先清理 `frontend-inferred` 中最明显的动作文案猜测。已移除 `HomeView` 中基于标题/关键词推断“审核付款申请/查看合同异常/处理风险事项”等入口文案的逻辑；`today_actions` 与 scene entry 现在优先使用后端显式 `action_label`，否则只回退通用默认文案。类型检查 `pnpm -C frontend/apps/web typecheck:strict` PASS。
+- 2026-04-24T20:24:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Frontend Layer`; Module `frontend/apps/web/src/components/page/PageRenderer.vue`; Reason 继续按首页 strict consumer 审计收敛 `frontend-inferred`，去除工作台首页在渲染器内的硬编码区位分流。已删除 `workspace.home/portal.dashboard` 的 `today_focus + analysis + quick_entries` 特例布局，工作台首页现改为直接按 `contract.zones` 优先级顺序渲染；项目驾驶舱特例未动。验证：`pnpm -C frontend/apps/web typecheck:strict` PASS，`make frontend.restart` PASS。
+- 2026-04-24T20:31:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Frontend Layer`; Module `frontend/apps/web/src/views/HomeView.vue`; Reason 继续按首页 strict consumer 审计收敛 `frontend-derived`，先冻结首页 datasets 的供数边界。已将 `homeOrchestrationDatasets` 从“固定散发一整包前端命名 ds_*”收口为“严格按 `home.page_orchestration_v1.data_sources` 声明键供数”；当前先构造 section payloads，再依据 `provider/section_keys` 映射到契约 data source key。验证：`pnpm -C frontend/apps/web typecheck:strict` PASS。
+- 2026-04-24T20:38:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Frontend Layer`; Module `frontend/apps/web/src/views/HomeView.vue`; Reason 继续对首页 `frontend-derived` 做事实审计，明确 `homeSectionDatasetPayloads` 每个 payload 的 owner 和迁移方向。已完成 datasets owner matrix：`hero/advice` 归为 `store-mapping candidate`，`metrics/today_actions/risk/ops` 归为 `backend-provider candidate`，`scene_groups/group_overview/filters` 归为 `page-layer temporary assembly`。审计结果已补入 `docs/ops/iterations/frontend_nav_contract_decouple_batch_fe_20260424.md`，作为下一批迁移顺序依据。
+- 2026-04-24T20:46:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Frontend Layer`; Module `frontend/apps/web/src/stores/session.ts` and `frontend/apps/web/src/views/HomeView.vue`; Reason 继续执行首页 strict consumer 的 store-mapping 批次，先迁 `hero` / `advice`。已在 `session` 中新增 `workspaceHeroRows` 与 `workspaceAdviceRows` 两个只读 getter，并让 `HomeView` 改为消费这些 getter；页面层只保留 labels 的 UI 文案装配，不再直接从 `workspaceHome` 组装 `hero/advice` 原始事实。验证：`pnpm -C frontend/apps/web typecheck:strict` PASS。
+- 2026-04-24T20:54:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Frontend Layer`; Module `frontend/apps/web/src/stores/session.ts` and `frontend/apps/web/src/views/HomeView.vue`; Reason 继续执行首页 strict consumer 的 store-mapping 批次，把 `metrics / today_actions / risk / ops` 的 dataset 供数从页面层迁到 store getter。已新增 `workspaceMetricRows / workspaceTodayActionRows / workspaceRiskAlertRows / workspaceOpsSummary`，并让 `HomeView.homeSectionDatasetPayloads` 改为消费这些 getter；页面层仅保留对 block 组件字段的最薄装配。验证：`pnpm -C frontend/apps/web typecheck:strict` PASS。
+- 2026-04-24T21:02:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Frontend Layer`; Module `frontend/apps/web/src/stores/session.ts` and `frontend/apps/web/src/views/HomeView.vue`; Reason 继续收首页 `scene_groups / group_overview` 的 owner 边界，把原始行映射从页面层迁到 store。已新增 `workspaceSceneEntryRows / workspaceCapabilityGroupRows`，并让 `HomeView.entries` 与 `capabilityGroupCards` 改为基于这些 getter；页面层仅保留 internal 过滤、state 归一化、最近使用与 grouping/filtering/chips 等页面态逻辑。验证：`pnpm -C frontend/apps/web typecheck:strict` PASS。
+- 2026-04-24T21:08:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Frontend Layer`; Module `frontend/apps/web/src/views/HomeView.vue`; Reason 对首页 strict consumer 做收口复盘，判断剩余页面层逻辑哪些应保留、哪些继续下沉会过度工程化。结论已固化到专题文档：当前首页已收敛到“contract 骨架 + store 原始数据映射 + 页面交互态/最薄 block adapter”；`filters/groupedEntries/recent/collapse` 等页面态保留在 `HomeView` 合理，继续大规模下沉优先级已低。
+- 2026-04-24T21:15:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Backend Contract Layer`; Module `workspace_home providers / home page contract`; Reason user要求判断后端缺口到底还有多大，避免继续在前端盲目搬运。已完成 `BE-home-gap` 审计：后端主链缺口已小，首页页面契约缺口已小；当前主要缺口集中在 provider 最终 block-ready shape，其中 `workspace.metrics.summary / workspace.todo.today / workspace.risk.alerts / workspace.progress.summary` 为小到中等缺口，`workspace.scene.groups / workspace.capability.groups` 为中等缺口。建议后端优先顺序已写入专题文档。
+- 2026-04-24T21:26:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Backend Contract Layer`; Module `addons/smart_core/core/workspace_home_contract_builder.py`; Reason 按 `BE-home-gap` 顺序启动第一批后端收口，仅补 `workspace.todo.today` 的 block-ready provider shape，让首页不再必须由前端补 `action_label / action_key / entry_id`。已新增 `_normalize_today_action_row()`，并将 business/fallback 两条 `today_actions` 构建链统一收口到 `action_key=open_scene`、默认 `action_label=查看详情`、默认 `entry_id=entry_key` 的规范行结构；同时补充纯 Python 单测 `addons/smart_core/tests/test_workspace_home_contract_builder_semantics.py`，验证 business row 与 capability fallback row 都已具备上述字段。验证：`python3 -m unittest addons.smart_core.tests.test_workspace_home_contract_builder_semantics` PASS。当前尚未重启后端做 live probe，后续如继续将进入下一 provider 批次或补 runtime 级复验。
+- 2026-04-24T12:39:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Backend Contract Layer`; Module `addons/smart_core/core/workspace_home_contract_builder.py`; Reason 完成 `BE-home-gap.1` 后补 runtime 级取证，确认 `workspace.todo.today` 新字段已真实进入 startup preload 回包。已执行 `make restart`，并对本地 dev backend 发起 `demo_full/sc_demo` 的 `system.init(with_preload=true)` probe；live `workspace_home.today_actions[0]` 已出现 `entry_id=project.risk.list`、`action_key=open_scene`、`action_label=查看详情`，说明本批 block-ready 字段补齐已在运行时生效。附带发现：该首条 row 仍无 `scene_key/route`，属于后续 `today_actions` target identity completeness 残留，不纳入本批目标。
+- 2026-04-24T12:44:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Backend Contract Layer`; Module `addons/smart_core/core/workspace_home_contract_builder.py`; Reason 延续 `workspace.todo.today` provider 收口，补齐运行时 row 的 target identity，避免首页 block 仍需前端猜 scene/route。已扩展 `_normalize_today_action_row()`：当 provider row 缺 `scene_key/route` 时，先从 `route` 反解 scene；若仍为空，则根据 `entry_key/source_detail/source/id` 走 `_route_scene_by_source()` 回填，并统一生成 `/s/<scene_key>` route。新增纯 Python 单测覆盖缺失 identity 的风险 row，验证 PASS；重启后端并重放 `demo_full/sc_demo` 的 `system.init(with_preload=true)` probe，live 首条 `today_actions` row 已变为 `scene_key=risk.center`、`route=/s/risk.center`，与 `entry_id/action_key/action_label` 一起形成完整 block-ready target。
+- 2026-04-24T12:58:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Backend Contract Layer` + `Frontend strict consumer follow-up`; Module `addons/smart_core/core/workspace_home_contract_builder.py`, `frontend/apps/web/src/stores/session.ts`, `frontend/apps/web/src/views/HomeView.vue`; Reason user要求把首页剩余 provider 缺口全部收完，不停留在 `workspace.todo.today`。已补完 `workspace.risk.alerts` 动作 target/label/path/query、`workspace.progress.summary.summary`、`workspace.metrics.summary` 指标规范化，以及 `workspace.scene.groups / workspace.capability.groups` 两组首页 data source；前端 store 现优先消费 `workspaceHome.scene_groups/group_overview`，`today_actions/risk` dataset 也改为优先吃 provider 给出的 `action_key` 等字段。验证：`python3 -m unittest addons.smart_core.tests.test_workspace_home_contract_builder_semantics addons.smart_core.tests.test_workspace_home_provider_shapes` PASS；`pnpm -C frontend/apps/web typecheck:strict` PASS；`make restart` PASS；`make frontend.restart` PASS；live `system.init(with_preload=true)` probe 显示 `ops.summary`、`risk.actions[0].action_key/path/entry_id`、`scene_groups_count=2`、`group_overview_count=8` 均已就位。当前首页 provider gap 关闭。
+- 2026-04-24: workspace home homepage factual closure. Browser proof showed `/` rendered the home skeleton with fallback zeros because `system.init(with=["workspace_home"])` returned `workspace_home_ref.loaded=true` without the actual `workspace_home` payload. Fixed `SystemInitPayloadBuilder` so `with=["workspace_home"]` returns `workspace_home`, added unit coverage, restarted backend, and verified via Playwright that the logged-in homepage now renders populated workspace sections instead of the `0 / 0` fallback.
+- 2026-04-24: homepage unified renderer closure. Playwright showed the logged-in `/` route was still using the legacy `HomeView` template because `page_contracts.home.page_orchestration_v1` was a skeletal shell (`zones=[]`) while the real orchestration lived under `workspace_home.page_orchestration_v1`. Updated `HomeView` to treat page orchestration as usable only when it has zones and to accept `contract_version=page_orchestration_v1` for unified rendering. Verified live with `PageRenderer` active, 4 rendered zones, 1 progress block, 1 entry grid, and visible `ops.summary`.
+- 2026-04-24: My Work chain closure step 1. Playwright showed `redirect=/my-work` login still landed on `/` because `LoginView` ignored valid page redirects whenever `workspaceHome` was absent. Updated login redirect resolution to preserve normalized page redirects and only fall back for unbound native action routes. After that, `/my-work` rendered through the unified page renderer but still showed generic contract copy. Patched `page_contracts_builder` with `my_work`-specific zone titles, descriptions, block titles, and corrected `open_list`/`open_failed` action targets. Live browser proof now lands on `/my-work` and shows `工作概览 / 待办处理 / 事项动态 / 失败与重试`.
+- 2026-04-24T20:18:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Backend Contract/Data Fact Layer`; Module `smart_construction_seed demo my-work facts`; Reason `My Work` route, contract, and renderer were already correct, but live probes proved `demo_full` in `sc_demo` had zero project/task/activity/mention/follower bindings, so `my.work.summary` legitimately returned `NO_WORK_ITEMS`. Added seed step `z_demo_full_my_work` to attach `demo_full` to demo projects, tasks, activities, followers, and mentions; wired the step into the seed profile and added a focused `demo_full my_work` guard inside `demo_90_verify`. Live post-seed verification now shows `demo_full` counts `doc_manager=6 task_user_ids=24 activity_user=6 mentions=36 followers=30`, and `my.work.summary` returns `READY/OK` with non-empty items. Full `demo_90_verify` still fails on older showroom completeness debt unrelated to this closure.
+- 2026-04-24T20:32:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Domain Seed / Demo Governance Layer`; Module `smart_construction_seed showroom reconciliation and verify alignment`; Reason after closing `demo_full my_work`, `demo_90_verify` still exposed older showroom debt: current `load_all/load_release` only replayed `demo_showroom,project_stage_sync`, leaving scenario-imported showroom projects without later contract/BOQ/WBS/attachments reconciliation, and `step_demo_showroom` only backfilled project prerequisites for newly created/draft projects. Expanded replay chains in `scripts/demo/load_all.sh` and `scripts/demo/load_release.sh` to include `demo_40_contracts,demo_50_boq_wbs,demo_60_attachments,z_demo_full_my_work`; changed `step_demo_showroom` to always backfill `partner_id/owner/location`; refined `demo_90_verify` to ignore BOQ group/header rows when checking `boq_no_structure` and to validate lifecycle samples plus stage definitions instead of requiring every stage xmlid to have live occupancy after monotonic signal-based stage sync. Verification: reconciliation seed chain PASS, `STEPS=demo_90_verify DB_NAME=sc_demo make seed.run` PASS.
+- 2026-04-24T21:05:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Frontend Layer / Governance Gate`; Module `frontend/apps/web`, `scripts/verify`, `Makefile`; Reason user要求把前端所有“自己搞的业务语义”系统性找出来，而不是继续人工点修。已新增 `frontend_contract_consumer_intrusion_guard.py` 及对应 Make targets，首批静态规则覆盖列表批量动作硬编码、批量 runtime 固定枚举/分支、首页关键词推导、列表默认排序 fallback；guard 可直接输出 JSON/Markdown 审计报告并在发现越界项时失败，后续将以该报告作为逐批清理清单。
+- 2026-04-24T21:32:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Frontend Layer / Contract Consumer`; Module `ActionView/ListPage/HomeView/list preflight`; Reason user要求立即处理首批越界项。已移除 `ListPage` 固定批量业务栏，`ActionView` 不再把 batch/assignee runtime 接入列表页；旧 `useActionViewBatchRuntime.ts` 降级为空 shim，避免残留硬编码 bulk semantics。同步去掉 `HomeView` 中 groups/关键词/错误文案推导，以及列表 `id desc` 默认排序 fallback。验证：`frontend_contract_consumer_intrusion_guard.py --report-only` PASS，`pnpm -C frontend/apps/web typecheck:strict` PASS。
+- 2026-04-24T21:43:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Frontend Layer / Contract Consumer`; Module `ActionView/ListPage contract selection actions`; Reason在移除旧批量栏后，需要保留 contract 明确声明的 multi/single 动作，不然列表选择态会退化。已扩展 `useActionViewActionPresentationRuntime` 暴露完整契约动作集合，由 `ActionView` 过滤出 `selectionActions` 并传给 `ListPage`；`ListPage` 只按传入契约动作渲染选择态按钮，点击直接回调 `runContractAction`。验证：`pnpm -C frontend/apps/web typecheck:strict` PASS；`make verify.frontend.contract_consumer_intrusion.guard` PASS。
+- 2026-04-24T21:58:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Contract Audit / List Selection State`; Module `smart_core ui.contract/load_contract` + `frontend list selection consumer`; Reason用户要求先把“当前只剩清空”判断清楚并记档，不盲目补功能。已完成只读审计：协议层 `app_action_config` 与 view parser 均支持 `selection=none|single|multi`；前端当前只消费 contract 声明的 `selectionActions`；live `ui.contract(action_open)` 代表样本 `491/453/506` 均未交付任何 `selection` 动作；同时确认 `addons/smart_core/handlers/load_contract.py::_normalize_action()` 当前会丢失 `selection` 元数据。结论已写入专题文档：现阶段“只有清空”更符合后端 selection supply / normalization gap，而不是前端仍在自造批量动作。
+- 2026-04-24T22:08:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Frontend Contract Consumer / List Selection State`; Module `useActionViewActionPresentationRuntime`; Reason继续 live 取证后发现上一条审计结论不完整：`ui.contract(action_open=491)` 实际返回 `buttons_count=7`、`toolbar.header_count=4`，且首个 `buttons[0]` 已含 `selection=single`。直接根因不是“后端没给”，而是前端旧实现只合并 `contract.actions + toolbar.action/print/sidebar/footer`，漏读 `contract.buttons` 和 `toolbar.header`。已修正 consumer 合并源，前端现在会把 live `ui.contract` 已交付的选择动作纳入 `selectionActions`；`load_contract._normalize_action()` 丢失 `selection` 仍记为后端次级债务，但不再作为本问题的直接 blocker。
+- 2026-04-24T22:18:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Contract Audit / List Multi-Selection Facts`; Module `smart_core ui.contract` + `app.action.config`; Reason用户继续指出“单选动作已出，多选动作为空”。已完成 live 对照审计：`action_open=491`（`construction.contract`）当前动作分布为 `single=6 / none=5 / multi=0`，`action_open=453`（`project.budget`）为 `none=3 / single=0 / multi=0`；对应 `app.action.config` 原始定义与 live `ui.contract` 分布一致。结论：当前多选动作为空不是前端再次漏读，而是 sampled model/action 配置本身没有声明 `selection=multi`。已写入专题文档，后续如需多选动作，应转后端 action config / 业务动作设计，不应由前端补造。
+- 2026-04-24T22:27:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Frontend Contract Consumer / List Selection Execution Alignment`; Module `ActionView selectionActions filter`; Reason用户继续指出“动作显示出来了，但点击执行也没有对齐”。继续 live 审计确认：当前冒出的单选动作来自 `construction.contract` 的 `header` object buttons，且 `visible_profiles=create/edit`，属于表单 header 语义，不应进入列表选择态。已收紧前端 consumer：列表选择态仅接受非 `header` 且 profile 对列表只读兼容的契约动作，不再把 form-header 单选动作暴露给列表选择栏。验证：`pnpm -C frontend/apps/web typecheck:strict` PASS；`make frontend.restart` PASS。
+- 2026-04-24T22:39:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Backend Contract Layer`; Module `smart_core app.action.config / native button parser`; Reason用户同意开后端专题并明确要求“不做产品设计，直接与原生能力对齐”。已按 Odoo native 语义收口 selection extraction：form/kanban header button -> `none`，tree row button -> `none`，tree header button -> `multi`，stat/smart -> `none`；`ir.actions.server` 默认 selection 改为按 `binding_view_types` 对齐（list/tree -> `multi`，form-only -> `none`），并开始产出 `visible_profiles`。同一规则同步到 parser `_button_to_action()`，新增 `test_native_action_selection_alignment.py` 覆盖 4 条语义，`make test.safe MODULE=smart_core TEST_TAGS=native_action_selection DB_NAME=sc_demo` PASS，`make restart` PASS。补充 live 事实：representative models `construction.contract` 与 `project.budget` 当前原生本身没有 list multi action，因此这轮 backend 对齐后它们仍可能只剩 `清空`，这是 native-aligned 的正确结果。
+- 2026-04-24T22:48:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Backend Audit / Native List Capability Inventory`; Module `smart_construction_core act_window + native views + server actions`; Reason用户同意继续做逐模型 native 能力盘点。已完成只读 inventory：扫描 `smart_construction_core.*` 下全部 `view_mode` 含 `tree/list` 的 act_window，统计 tree header buttons、tree row buttons、以及 `binding_view_types` 命中的 server actions。结论：绝大多数业务列表原生并无 list multi action；`construction.contract`、`project.budget`、`project.cost.ledger`、`project.progress.entry`、`sc.project.stage.requirement.item` 等均属此类。当前真正具有 list-bound server action 的代表模型只有 `payment.request`、`project.material.plan`、`project.project`。专题文档已更新，下一步若继续，应优先验证这三类模型的契约交付完整性，而不是继续在无原生 multi 的列表上追前端表现。
+- 2026-04-24T22:59:00+08:00 executor: branch `codex/sidebar-nav-de-scene-20260424` at `b2cf23ab`; Layer Target `Backend Contract Layer`; Module `smart_core PageAssembler / app.action.config runtime filtering / user-surface action governance`; Reason用户同意继续核查 `payment.request` 与 `project.material.plan` 两类原生具备 list-bound server action 的模型。live probe 最终确认 root cause 并完成修复：`PageAssembler` 先用 `su_env` 生成 `app.action.config`，又直接在 `su_env` record 上执行 `get_action_contract()`，导致 runtime groups/filtering 误按 `SUPERUSER_ID` 生效，`demo_full` 可见的 native list multi server actions 在 `action_open` 源头即被过滤掉。已改为 `acfg.with_env(env).get_action_contract()`，保留 `su_env` 生成、改正 runtime 过滤用户源；同时 user-surface action truncation 已调整为优先保留 `selection=multi`。回归补到 `addons/smart_core/tests/test_action_dispatcher_server_mapping.py`，`make test.safe MODULE=smart_core TEST_TAGS=action_dispatcher DB_NAME=sc_demo` PASS；live `ui.contract(action_open)` 复验通过：`payment.request` 与 `project.material.plan` 均返回 `head.view_type=tree`，且最终 `buttons + toolbar.header` 已包含 native `selection=multi` rows。
+## 2026-04-24 18:58 CST
+
+- Branch: `codex/sidebar-nav-de-scene-20260424`
+- SHA: `b2cf23ab`
+- Layer Target: `Frontend Verification Layer`
+- Module: `frontend/apps/web/scripts/list_selection_contract_smoke.mjs`
+- Reason: 将“列表选择态 contract-vs-DOM 对齐”沉淀为自动浏览器回归，覆盖 `payment.request` 与 `project.material.plan` 两张具备原生 list multi action 的代表列表。
+- Verification:
+  - `make verify.frontend.list_selection_contract_smoke`: PASS
+- Artifacts:
+  - `artifacts/playwright/logs/list_selection_contract_smoke.json`
+  - `artifacts/playwright/screenshots/list_selection_finance.png`
+  - `artifacts/playwright/screenshots/list_selection_material.png`
+### 2026-04-24 19:14 CST
+- Branch: `codex/sidebar-nav-de-scene-20260424`
+- SHA: `b2cf23ab`
+- Layer Target: `Backend Contract Layer` + `Frontend Contract Consumer Layer`
+- Module: `ui.contract action_open(form)` / `ContractFormPage`
+- Reason: 审核表单按钮过多，live 取证确认 form contract 混入 list multi/server/nav 动作，需与原生 form 能力对齐。
+- Changes:
+  - `addons/smart_core/handlers/ui_contract.py`
+    - 新增 form action surface 过滤：`selection != none`、`toolbar.header`、非 form-compatible levels 不再进入 `action_open -> form` 契约。
+  - `addons/smart_core/tests/test_action_dispatcher_server_mapping.py`
+    - 新增 `payment.request` form contract 回归，断言 form surface 不再暴露 toolbar header/list multi。
+  - `frontend/apps/web/src/pages/ContractFormPage.vue`
+    - 表单页动作消费增加 `selection / visibleProfiles / level !== toolbar` 过滤，禁止 list toolbar 动作进入表单头部。
+- Verification:
+  - `pnpm -C frontend/apps/web typecheck:strict` PASS
+  - `make test.safe MODULE=smart_core TEST_TAGS=action_dispatcher DB_NAME=sc_demo` PASS
+  - `make restart` PASS
+  - `make frontend.restart` PASS
+  - Playwright live probe PASS:
+    - `payment.request action_open=473 record_id=1` 顶层 form contract 仅剩 `取消/完成/审批中/批准/提交/付款记录`
+    - `toolbar.header = []`
+
+### 2026-04-24 19:30 CST
+- Branch: `codex/sidebar-nav-de-scene-20260424`
+- SHA: `b2cf23ab`
+- Layer Target: `Backend Contract Layer`
+- Module: `tier.review list contract governance`
+- Reason: 待审列表页出现循环导航动作（当前页/兄弟页 act_window），“快速动作”与原生列表能力不对齐。
+- Changes:
+  - `addons/smart_core/utils/contract_governance.py`
+    - 新增 `tier.review` list targeted governance，剔除 `smart_construction_core.action_sc_tier_review_my_*` 导航动作，避免用户 contract 暴露循环入口。
+  - `addons/smart_core/tests/test_action_dispatcher_server_mapping.py`
+    - 新增回归：`action_open=494` 不再返回该组导航动作。
+- Verification:
+  - `pnpm -C frontend/apps/web typecheck:strict` PASS
+  - `make test.safe MODULE=smart_core TEST_TAGS=action_dispatcher DB_NAME=sc_demo` PASS
+  - `make restart` PASS
+  - Playwright live probe PASS:
+  - `action_open=494` → `buttons=[]`, `toolbar.header=[]`
+  - `action_open=495` → `buttons=[]`, `toolbar.header=[]`
+
+### 2026-04-24 19:45 CST
+- Branch: `codex/sidebar-nav-de-scene-20260424`
+- SHA: `b2cf23ab`
+- Layer Target: `Frontend Contract Consumer Layer` + `Backend Contract Layer`
+- Module: `ListPage / ActionView / PageToolbar / ui.contract(action_open tree)`
+- Reason: 用户开启“列表整体渲染与原生对齐”专题，要求先冻结事实、分步骤推进，不直接改实现。
+- Audit:
+  - 完成 `452(project.project)`、`473(payment.request)`、`471(project.material.plan)` 三个代表列表的 live DOM + live contract 对照。
+  - live DOM 事实：
+    - 三个页面都直接渲染表格主体；
+    - 当前默认主链均有 `focusStrip=1`；
+    - `pageToolbar / summaryStrip / batchBar / groupedTable / quickFilters / routePreset / quickActions` 当前都未默认露出。
+  - live contract 事实：
+    - 三个页面都返回 `head.view_type=tree` 与完整 `search`；
+    - 只有 `project.project` 返回 `list_profile`；
+    - `payment.request` / `project.material.plan` 的 contract 动作面仍混有 `header/smart/toolbar` rows，说明列表动作面尚未完全收敛到 native tree semantics。
+- Decision:
+  - 冻结 `List-A` owner matrix：
+    - `native-required`
+    - `contract-declared`
+    - `frontend-derived`
+    - `frontend-inferred`
+  - 后续按 `List-B/List-C/List-D` 分批推进，不在 List-A 阶段直接动实现。
+
+### 2026-04-24 19:47 CST
+- Branch: `codex/sidebar-nav-de-scene-20260424`
+- SHA: `b2cf23ab`
+- Layer Target: `Frontend Contract Consumer Layer`
+- Module: `ListPage / ActionView / PageToolbar`
+- Reason: 进入 `List-B`，先清掉列表默认主链里的 `frontend-inferred` 固定露出，不调整后端契约与取数链。
+- Changes:
+  - `PageToolbar.vue`
+    - 去掉固定 filter chips：`全部 / 在办 / 已归档`
+    - 仅保留搜索和 contract-driven 排序
+  - `ListPage.vue`
+    - 不再向 `PageToolbar` 传递固定过滤 UI 语义
+  - `ActionView.vue`
+    - 将 `route_preset / focus_strip / quick_filters / saved_filters / group_view / group_summary / quick_actions` 的默认露出全部改为 `false`
+    - 仅在 page contract/section 明确开启时显示
+- Verification:
+  - `pnpm -C frontend/apps/web typecheck:strict` PASS
+  - `make frontend.restart` PASS
+
+### 2026-04-24 19:51 CST
+- Branch: `codex/sidebar-nav-de-scene-20260424`
+- SHA: `b2cf23ab`
+- Layer Target: `Frontend Contract Consumer Layer`
+- Module: `PageHeader / ListPage / ActionView / action grouping runtime`
+- Reason: 进入 `List-C`，继续清 `frontend-derived`，把列表默认视觉层和动作面进一步收回到更接近原生 tree/list。
+- Changes:
+  - `PageHeader.vue`
+    - 去掉 `mode/count/status/refresh` 这些前端派生 pills 与按钮，仅保留标题、副标题。
+  - `ListPage.vue`
+    - `summary-strip` 默认关闭，仅在显式 `summary_strip` section 开启时显示。
+    - 自定义 `grouped-table` 默认关闭，仅在显式 `grouped_table` section 开启时显示。
+  - `ActionView.vue`
+    - 显式把 `summary_strip` / `grouped_table` 默认值收为 `false`。
+  - `useActionViewActionGroupingRuntime.ts`
+    - 不再按 `basic/workflow/drilldown` 做前端语义重排。
+    - primary actions 改为保持 contract 原顺序截断。
+    - overflow actions 改为统一“更多操作”单组。
+- Verification:
+  - `pnpm -C frontend/apps/web typecheck:strict` PASS
+  - `make frontend.restart` PASS
+
+### 2026-04-24 19:56 CST
+- Branch: `codex/sidebar-nav-de-scene-20260424`
+- SHA: `b2cf23ab`
+- Layer Target: `Frontend Contract Consumer Layer`
+- Module: `ActionView listProfile bridge / contract column label resolution`
+- Reason: 用户指出列表页列标题、列顺序明显不对；事实排查确认 `ActionView` 把 `listProfile` 固定为 `null`，导致列表页完全吃不到后端 `list_profile`，列标题也只回退到 `fields.string`。
+- Changes:
+  - `frontend/apps/web/src/views/ActionView.vue`
+    - `listProfile` 现在改为从 `actionContract` 提取，不再固定返回 `null`
+  - `frontend/apps/web/src/app/action_runtime/useActionViewContractShapeRuntime.ts`
+    - 新增 `extractListProfile()`
+    - `contractColumnLabels` 现在按优先级合并：
+      - `fields.string`
+      - `list_profile.column_labels`
+      - `semantic_page.list_semantics.columns[].label`
+- Expected result:
+  - 列顺序优先按 `list_profile.columns`
+  - 列标题优先按 `list_profile/semantic_page` 的 curated labels，而不是原始字段名/字段 string
+- Verification:
+  - `pnpm -C frontend/apps/web typecheck:strict` PASS
+  - `make frontend.restart` PASS
+## 2026-04-24 20:18 CST
+
+- Context: user reported `项目列表` scene route still wrong even after list header consumer fixes; action route `/a/452` already correct.
+- Facts:
+  - `/s/projects.list` and `/s/projects.ledger` were resolving to stale numeric targets from scene payload.
+  - Registry source `scene_registry_content.py` already pointed to correct xmlid targets.
+  - Drift root cause was `smart_construction_scene.scene_registry.load_scene_configs_with_timings()` merging DB scene payload with registry fallback without replacing stale numeric `action_id/menu_id`.
+- Action:
+  - Added target identity upgrade in `addons/smart_construction_scene/scene_registry.py` to prefer fallback `action_xmlid/menu_xmlid` and clear stale numeric ids during DB/fallback merge.
+  - Added regression in `addons/smart_construction_scene/tests/test_scene_registry_yaml_asset_merge.py`.
+- Verification:
+  - `python3 -m unittest addons.smart_construction_scene.tests.test_scene_registry_yaml_asset_merge` PASS
+  - `pnpm -C frontend/apps/web typecheck:strict` PASS
+  - `make restart` PASS
+## 2026-04-24 20:36 CST
+
+- Context: user continued reporting `/s/projects.list` still showed wrong raw headers; browser and live `system.init` probes confirmed the issue had moved from frontend list rendering to scene runtime asset drift.
+- Facts:
+  - live `scene_ready_contract_v1.projects.list.meta.target` was still `519/329`
+  - live `ui_base_contract_source.source_ref` was still `action:519`
+  - this proved stale base-contract binding inside scene runtime, not a list header consumer fallback
+- Action:
+  - updated `addons/smart_core/core/scene_provider.py` to upgrade critical scene target identity from provider `primary_action/fallback_strategy`
+  - updated `addons/smart_core/core/ui_base_contract_asset_repository.py` so action-backed scenes treat mismatched `source_ref=action:*` assets as stale
+  - added regressions:
+    - `addons/smart_core/tests/test_scene_provider_target_identity_merge.py`
+    - `addons/smart_core/tests/test_ui_base_contract_asset_repository.py`
+- Verification:
+  - `python3 addons/smart_core/tests/test_scene_provider_target_identity_merge.py` PASS
+  - `python3 addons/smart_core/tests/test_ui_base_contract_asset_repository.py` PASS
+  - live `system.init` now returns:
+    - `projects.list.meta.target.action_id = 452`
+    - `projects.list.meta.target.menu_id = 265`
+    - `projects.list.meta.ui_base_contract_source.source_ref = action:452`
+## 2026-04-24 Batch-Nav-DualTrack-Freeze
+
+- 冻结导航双轨语义：`action/menu` 与 `scene` 允许并存，但不得互相伪装。
+- 明确 owner signal：
+  - `scene_key` 不是 owner signal
+  - `meta.scene_source=scene_contract` / `meta.action_type=scene.contract` 才是 scene owner signal
+- 定稿口径：
+  - `action = native source of truth`
+  - `scene = compiled delivery surface`
+- 约束：
+  - 只允许“选中的 canonical action/menu”被编译为 scene
+  - 不允许把所有 native action 全量 scene 化
+- 已钉住当前混线样本：
+  - canonical 项目列表：`projects.list -> /s/projects.list -> action 452`
+  - 旧 demo showcase：`menu 343 / action 536 / 项目列表（演示）`
+- 结论：`343/536` 属于旧 action/menu 轨，不得再被前端改名或改跳成 canonical `projects.list`
+- 产物：
+  - `docs/architecture/navigation_dual_track_contract_v1.md`
+
+## 2026-04-24 Batch-Nav-DualTrack-Cleanup-1
+
+- 从 `smart_construction_core.core_extension` 与 `smart_construction_scene.core_extension` 中移除：
+  - `smart_construction_demo.menu_sc_project_list_showcase -> projects.list`
+  - `smart_construction_demo.action_sc_project_list_showcase -> projects.list`
+- 目的：拆开旧 demo showcase `343/536` 与 canonical `projects.list/452` 的 scene 身份混线。
+- 回归：
+  - `addons.smart_construction_scene.tests.test_action_only_scene_semantic_supply`
+  - 新断言：showcase xmlid 不再进入 `menu_scene_map / action_xmlid_scene_map`
