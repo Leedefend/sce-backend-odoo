@@ -15,7 +15,6 @@ type ActionContractLike = {
 type UseActionViewPageDisplayStateRuntimeOptions = {
   routeSceneLabel: Ref<string>;
   actionContract: Ref<ActionContractLike | null>;
-  sceneContractV1: ComputedRef<Dict>;
   injectedTitle: ComputedRef<string>;
   actionMetaName: ComputedRef<string>;
   t: (key: string, fallback?: string) => string;
@@ -40,8 +39,6 @@ export function useActionViewPageDisplayStateRuntime(options: UseActionViewPageD
     }
     const fromSurfacePolicy = String(options.actionContract.value?.surface_policies?.empty_reason || '').trim();
     if (fromSurfacePolicy) return fromSurfacePolicy;
-    const fromExtensions = String((options.sceneContractV1.value.extensions as Dict | undefined)?.empty_reason || '').trim();
-    if (fromExtensions) return fromExtensions;
     return options.t('empty_reason_default', '');
   });
 
@@ -54,4 +51,3 @@ export function useActionViewPageDisplayStateRuntime(options: UseActionViewPageD
     errorMessage: options.errorMessage,
   };
 }
-

@@ -4,6 +4,12 @@ type Dict = Record<string, unknown>;
 
 type ContractActionButton = {
   key: string;
+  label: string;
+  enabled: boolean;
+  hint?: string;
+  selection?: 'none' | 'single' | 'multi';
+  level?: string;
+  visibleProfiles?: string[];
 };
 
 type ContractActionGroupRaw = {
@@ -20,7 +26,6 @@ type ActionGroup = {
 
 type UseActionViewActionPresentationRuntimeOptions = {
   actionContract: Ref<Dict | null>;
-  sceneReadyListSurface: Ref<{ actions: Array<Record<string, unknown>>; actionSurface?: unknown }>;
   strictContractMode: Ref<boolean>;
   toContractActionButton: (row: Dict, dedup: Set<string>) => ContractActionButton | null;
   resolveContractActionPresentation: (options: {
@@ -41,25 +46,21 @@ export function useActionViewActionPresentationRuntime(options: UseActionViewAct
   const contractActionButtons = computed<ContractActionButton[]>(() => {
     const contract = options.actionContract.value;
     const merged: Array<Record<string, unknown>> = [];
-    const sceneActions = options.sceneReadyListSurface.value.actions;
-    if (sceneActions.length) {
-      merged.push(...sceneActions);
-    } else {
-      if (!contract) return [];
-      if (Array.isArray(contract.actions)) merged.push(...(contract.actions as Array<Record<string, unknown>>));
-      if (contract.toolbar && typeof contract.toolbar === 'object') {
-        const toolbar = contract.toolbar as Record<string, unknown>;
-        if (Array.isArray(toolbar.action)) merged.push(...(toolbar.action as Array<Record<string, unknown>>));
-        if (Array.isArray(toolbar.print)) merged.push(...(toolbar.print as Array<Record<string, unknown>>));
-        if (Array.isArray(toolbar.sidebar)) merged.push(...(toolbar.sidebar as Array<Record<string, unknown>>));
-        if (Array.isArray(toolbar.footer)) merged.push(...(toolbar.footer as Array<Record<string, unknown>>));
-      }
+    if (!contract) return [];
+    if (Array.isArray(contract.buttons)) merged.push(...(contract.buttons as Array<Record<string, unknown>>));
+    if (Array.isArray(contract.actions)) merged.push(...(contract.actions as Array<Record<string, unknown>>));
+    if (contract.toolbar && typeof contract.toolbar === 'object') {
+      const toolbar = contract.toolbar as Record<string, unknown>;
+      if (Array.isArray(toolbar.header)) merged.push(...(toolbar.header as Array<Record<string, unknown>>));
+      if (Array.isArray(toolbar.action)) merged.push(...(toolbar.action as Array<Record<string, unknown>>));
+      if (Array.isArray(toolbar.print)) merged.push(...(toolbar.print as Array<Record<string, unknown>>));
+      if (Array.isArray(toolbar.sidebar)) merged.push(...(toolbar.sidebar as Array<Record<string, unknown>>));
+      if (Array.isArray(toolbar.footer)) merged.push(...(toolbar.footer as Array<Record<string, unknown>>));
     }
     const dedup = new Set<string>();
     return merged
       .map((row) => options.toContractActionButton(row, dedup))
-      .filter((item): item is ContractActionButton => Boolean(item))
-      .slice(0, 8);
+      .filter((item): item is ContractActionButton => Boolean(item));
   });
 
   const actionPrimaryBudget = computed(() => {
@@ -71,7 +72,7 @@ export function useActionViewActionPresentationRuntime(options: UseActionViewAct
   const contractActionPresentation = computed(() => {
     return options.resolveContractActionPresentation({
       strictContractMode: options.strictContractMode.value,
-      actionSurface: (options.sceneReadyListSurface.value.actionSurface || {}) as Dict,
+      actionSurface: {},
       contractActionGroupsRaw: Array.isArray(options.actionContract.value?.action_groups)
         ? (options.actionContract.value?.action_groups as ContractActionGroupRaw[])
         : [],
@@ -92,6 +93,7 @@ export function useActionViewActionPresentationRuntime(options: UseActionViewAct
   const contractActionCount = computed(() => contractActionButtons.value.length);
 
   return {
+    contractActionButtons,
     contractActionCount,
     contractPrimaryActions,
     contractOverflowActionGroups,

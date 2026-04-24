@@ -83,20 +83,7 @@ export function useActionViewActionGroupingRuntime() {
     allButtons: ContractActionButton[];
     actionPrimaryBudget: number;
   }): ContractActionButton[] {
-    const groups = options.groups;
-    if (!groups.length) return options.allButtons.slice(0, options.actionPrimaryBudget);
-    const primaryGroupOrder = ['basic', 'workflow', 'drilldown'];
-    const merged: ContractActionButton[] = [];
-    for (const key of primaryGroupOrder) {
-      const group = groups.find((item) => item.key === key);
-      if (!group) continue;
-      for (const action of group.actions) {
-        if (merged.some((item) => item.key === action.key)) continue;
-        merged.push(action);
-        if (merged.length >= options.actionPrimaryBudget) return merged;
-      }
-    }
-    return merged.slice(0, options.actionPrimaryBudget);
+    return options.allButtons.slice(0, options.actionPrimaryBudget);
   }
 
   function resolveContractOverflowActions(options: {
@@ -109,16 +96,18 @@ export function useActionViewActionGroupingRuntime() {
 
   function resolveContractOverflowActionGroups(options: {
     groups: ActionGroup[];
+    allButtons: ContractActionButton[];
     primaryActions: ContractActionButton[];
+    pageText: (key: string, fallback: string) => string;
   }): ActionGroup[] {
     const primaryKeys = new Set(options.primaryActions.map((item) => item.key));
-    const out: ActionGroup[] = [];
-    for (const group of options.groups) {
-      const actions = group.actions.filter((item) => !primaryKeys.has(item.key));
-      if (!actions.length) continue;
-      out.push({ key: group.key, label: group.label, actions });
-    }
-    return out;
+    const actions = options.allButtons.filter((item) => !primaryKeys.has(item.key));
+    if (!actions.length) return [];
+    return [{
+      key: 'overflow',
+      label: options.pageText('group_label_more_actions', '更多操作'),
+      actions,
+    }];
   }
 
   function resolveContractActionPresentation(options: {
@@ -143,7 +132,9 @@ export function useActionViewActionGroupingRuntime() {
     });
     const overflowActionGroups = resolveContractOverflowActionGroups({
       groups,
+      allButtons: options.allButtons,
       primaryActions,
+      pageText: options.pageText,
     });
 
     return {

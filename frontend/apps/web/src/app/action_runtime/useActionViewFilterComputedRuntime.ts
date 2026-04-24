@@ -3,10 +3,6 @@ import { computed, type Ref } from 'vue';
 type Dict = Record<string, unknown>;
 
 type UseActionViewFilterComputedRuntimeOptions = {
-  sceneReadyListSurface: Ref<{
-    filters: Array<Record<string, unknown>>;
-    groupBy: Array<Record<string, unknown>>;
-  }>;
   actionContract: Ref<{
     search?: {
       filters?: Array<Record<string, unknown>>;
@@ -25,9 +21,7 @@ type UseActionViewFilterComputedRuntimeOptions = {
 
 export function useActionViewFilterComputedRuntime(options: UseActionViewFilterComputedRuntimeOptions) {
   const contractFilterChips = computed(() => {
-    const rows = options.sceneReadyListSurface.value.filters?.length
-      ? options.sceneReadyListSurface.value.filters
-      : options.actionContract.value?.search?.filters;
+    const rows = options.actionContract.value?.search?.filters;
     if (!Array.isArray(rows)) return [];
     return rows
       .map((row) => {
@@ -91,9 +85,7 @@ export function useActionViewFilterComputedRuntime(options: UseActionViewFilterC
   );
 
   const contractGroupByChips = computed(() => {
-    const rows = options.sceneReadyListSurface.value.groupBy?.length
-      ? options.sceneReadyListSurface.value.groupBy
-      : options.actionContract.value?.search?.group_by;
+    const rows = options.actionContract.value?.search?.group_by;
     if (!Array.isArray(rows)) return [];
     return rows
       .map((row) => {
@@ -140,4 +132,3 @@ export function useActionViewFilterComputedRuntime(options: UseActionViewFilterC
     activeGroupByLabel,
   };
 }
-

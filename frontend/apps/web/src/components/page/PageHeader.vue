@@ -4,12 +4,6 @@
       <h2 class="title">{{ title }}</h2>
       <p class="subtitle">{{ subtitle }}</p>
     </div>
-    <div class="actions">
-      <span v-if="modeLabel" class="pill mode">{{ modeLabel }}</span>
-      <span v-if="recordCount >= 0" class="pill count">{{ recordCount }} 条</span>
-      <span class="pill" :class="status">{{ statusLabel }}</span>
-      <button class="ghost" :disabled="loading" @click="onReload">刷新</button>
-    </div>
   </header>
 </template>
 
@@ -17,12 +11,6 @@
 defineProps<{
   title: string;
   subtitle: string;
-  status: 'loading' | 'ok' | 'empty' | 'error';
-  statusLabel: string;
-  loading: boolean;
-  onReload: () => void;
-  modeLabel?: string;
-  recordCount?: number;
 }>();
 </script>
 
@@ -46,65 +34,5 @@ defineProps<{
   margin: 6px 0 0;
   color: #64748b;
   font-size: 13px;
-}
-
-.actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.pill {
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  background: #e2e8f0;
-  color: #1e293b;
-}
-
-.pill.mode {
-  background: #eff6ff;
-  color: #1d4ed8;
-}
-
-.pill.count {
-  background: #f8fafc;
-  color: #334155;
-}
-
-.pill.ok {
-  background: #dcfce7;
-  color: #14532d;
-}
-
-.pill.error {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.pill.loading {
-  background: #e0f2fe;
-  color: #075985;
-}
-
-.pill.empty {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.ghost {
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  background: transparent;
-  color: #111827;
-  cursor: pointer;
-}
-
-.ghost:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 </style>

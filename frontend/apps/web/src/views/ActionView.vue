@@ -1,7 +1,14 @@
 <template>
   <section class="page">
     <!-- Page intent: 在列表场景中先判断状态，再给出下一步可执行动作。 -->
-    <section v-if="vm.header.actions.length" class="page-actions">
+    <StatusPanel
+      v-if="renderErrorMessage"
+      title="页面渲染失败"
+      :message="renderErrorMessage"
+      variant="error"
+      :on-retry="reload"
+    />
+    <section v-else-if="vm.header.actions.length" class="page-actions">
       <button v-for="action in vm.header.actions" :key="`header-${action.key}`" class="contract-chip ghost" @click="executeHeaderAction(action.key)">
         {{ action.label || action.key }}
       </button>
@@ -25,14 +32,14 @@
         </button>
       </div>
     </section>
-    <section v-if="isSectionVisible('route_preset', { defaultEnabled: pageSectionEnabled('route_preset', true), tag: 'section', vmVisible: Boolean(vm.filters.routePreset) })" class="route-preset" :style="getSectionStyle('route_preset')">
+    <section v-if="isSectionVisible('route_preset', { defaultEnabled: pageSectionEnabled('route_preset', false), tag: 'section', vmVisible: Boolean(vm.filters.routePreset) })" class="route-preset" :style="getSectionStyle('route_preset')">
       <p>
         {{ t('route_preset_applied_prefix', '已应用推荐筛选：') }}{{ vm.filters.routePreset?.label }}
         <span v-if="vm.filters.routePreset?.source">（{{ t('route_preset_source_prefix', '来源：') }}{{ vm.filters.routePreset?.source }}）</span>
       </p>
       <button class="clear-btn" @click="clearRoutePreset">{{ t('route_preset_clear', '清除推荐') }}</button>
     </section>
-    <section v-if="isSectionVisible('focus_strip', { defaultEnabled: pageSectionEnabled('focus_strip', true), tag: 'section', vmVisible: vm.sections.focus })" class="focus-strip" :style="getSectionStyle('focus_strip')">
+    <section v-if="isSectionVisible('focus_strip', { defaultEnabled: pageSectionEnabled('focus_strip', false), tag: 'section', vmVisible: vm.sections.focus })" class="focus-strip" :style="getSectionStyle('focus_strip')">
       <div>
         <p class="focus-intent">{{ vm.focus.title }}</p>
         <p class="focus-summary">{{ vm.focus.summary }}</p>
@@ -48,7 +55,7 @@
       <p class="contract-missing-summary">{{ vm.strictAlert.summary }}</p>
       <p v-if="vm.strictAlert.defaultsSummary" class="contract-missing-defaults">{{ vm.strictAlert.defaultsSummary }}</p>
     </section>
-    <section v-if="isSectionVisible('quick_filters', { defaultEnabled: pageSectionEnabled('quick_filters', true), tag: 'section', vmVisible: vm.sections.quickFilters && vm.filters.quickFilters.visible })" class="contract-block" :style="getSectionStyle('quick_filters')">
+    <section v-if="isSectionVisible('quick_filters', { defaultEnabled: pageSectionEnabled('quick_filters', false), tag: 'section', vmVisible: vm.sections.quickFilters && vm.filters.quickFilters.visible })" class="contract-block" :style="getSectionStyle('quick_filters')">
       <p class="contract-label">{{ t('label.quick_filters', '快速筛选') }}</p>
       <div class="contract-chips">
         <button
@@ -95,7 +102,7 @@
         </button>
       </div>
     </section>
-    <section v-if="isSectionVisible('saved_filters', { defaultEnabled: pageSectionEnabled('saved_filters', true), tag: 'section', vmVisible: vm.sections.savedFilters && vm.filters.savedFilters.visible })" class="contract-block" :style="getSectionStyle('saved_filters')">
+    <section v-if="isSectionVisible('saved_filters', { defaultEnabled: pageSectionEnabled('saved_filters', false), tag: 'section', vmVisible: vm.sections.savedFilters && vm.filters.savedFilters.visible })" class="contract-block" :style="getSectionStyle('saved_filters')">
       <p class="contract-label">{{ t('label.saved_filters', '已保存筛选') }}</p>
       <div class="contract-chips">
         <button
@@ -142,7 +149,7 @@
         </button>
       </div>
     </section>
-    <section v-if="isSectionVisible('group_view', { defaultEnabled: pageSectionEnabled('group_view', true), tag: 'section', vmVisible: vm.sections.groupBy && vm.filters.groupBy.visible })" class="contract-block" :style="getSectionStyle('group_view')">
+    <section v-if="isSectionVisible('group_view', { defaultEnabled: pageSectionEnabled('group_view', false), tag: 'section', vmVisible: vm.sections.groupBy && vm.filters.groupBy.visible })" class="contract-block" :style="getSectionStyle('group_view')">
       <p class="contract-label">{{ t('label.group_view', '分组查看') }}</p>
       <div class="contract-chips">
         <button
@@ -190,7 +197,7 @@
       </div>
     </section>
     <GroupSummaryBar
-      v-if="isSectionVisible('group_summary', { defaultEnabled: pageSectionEnabled('group_summary', true), tag: 'section', vmVisible: vm.sections.groupSummary && Boolean(vm.groupSummary?.visible) })"
+      v-if="isSectionVisible('group_summary', { defaultEnabled: pageSectionEnabled('group_summary', false), tag: 'section', vmVisible: vm.sections.groupSummary && Boolean(vm.groupSummary?.visible) })"
       :style="getSectionStyle('group_summary')"
       :items="vm.groupSummary?.items || []"
       :group-by-label="activeGroupByLabel"
@@ -207,7 +214,7 @@
       :on-prev-window="handleGroupWindowPrev"
       :on-next-window="handleGroupWindowNext"
     />
-    <section v-if="isSectionVisible('quick_actions', { defaultEnabled: pageSectionEnabled('quick_actions', true), tag: 'section', vmVisible: vm.sections.quickActions && Boolean(vm.actions.primary.length || vm.actions.overflowGroups.length) })" class="contract-block" :style="getSectionStyle('quick_actions')">
+    <section v-if="isSectionVisible('quick_actions', { defaultEnabled: pageSectionEnabled('quick_actions', false), tag: 'section', vmVisible: vm.sections.quickActions && Boolean(vm.actions.primary.length || vm.actions.overflowGroups.length) })" class="contract-block" :style="getSectionStyle('quick_actions')">
       <p class="contract-label">{{ t('label.quick_actions', '快捷操作') }}</p>
       <div class="contract-chips">
         <button
@@ -301,20 +308,13 @@
       :filter-value="filterValue"
       :search-term="searchTerm"
       :subtitle="vm.page.subtitle"
-      :status-label="vm.page.statusLabel"
       :scene-key="vm.page.sceneKey"
-      :page-mode="vm.page.pageMode"
-      :record-count="recordCount"
+      :enable-summary-strip="pageSectionEnabled('summary_strip', false)"
+      :enable-grouped-rows="pageSectionEnabled('grouped_table', false)"
       :summary-items="vm.content.list?.summaryItems || []"
       :selected-ids="selectedIds"
+      :selection-actions="selectionActions"
       :batch-message="batchMessage"
-      :batch-details="batchDetails"
-      :failed-csv-available="Boolean(failedCsvContentB64)"
-      :has-more-failures="batchHasMoreFailures"
-      :show-assign="hasAssigneeField"
-      :show-delete="canBatchDelete"
-      :assignee-options="assigneeOptions"
-      :selected-assignee-id="selectedAssigneeId"
       :list-profile="listProfile"
       :grouped-rows="groupedRows"
       :on-open-group="handleOpenGroupedRows"
@@ -328,16 +328,9 @@
       :on-reload="reload"
       :on-search="handleSearch"
       :on-sort="handleSort"
-      :on-filter="handleFilter"
       :on-toggle-selection="handleToggleSelection"
       :on-toggle-selection-all="handleToggleSelectionAll"
-      :on-batch-action="handleBatchAction"
-      :on-batch-assign="handleBatchAssign"
-      :on-batch-export="handleBatchExport"
-      :on-assignee-change="handleAssigneeChange"
-      :on-download-failed-csv="handleDownloadFailedCsv"
-      :on-load-more-failures="handleLoadMoreFailures"
-      :on-batch-detail-action="handleBatchDetailAction"
+      :on-run-selection-action="handleSelectionAction"
       :on-clear-selection="clearSelection"
       :on-row-click="handleRowClick"
     />
@@ -387,9 +380,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, ref, watch } from 'vue';
+import { computed, inject, onErrorCaptured, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { batchUpdateRecords, exportRecordsCsv, listRecordsRaw } from '../api/data';
+import { listRecordsRaw } from '../api/data';
 import { executeButton } from '../api/executeButton';
 import { trackUsageEvent } from '../api/usage';
 import { resolveAction } from '../app/resolvers/actionResolver';
@@ -414,12 +407,11 @@ import {
 } from '../app/contractActionRuntime';
 import { detectObjectMethodFromActionKey, normalizeActionKind, toPositiveInt } from '../app/contractRuntime';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
-import { findSceneReadyEntry, resolveListSceneReady } from '../app/resolvers/sceneReadyResolver';
+import { findSceneReadyEntry } from '../app/resolvers/sceneReadyResolver';
 import { normalizeSceneActionProtocol, type MutationContract, type ProjectionRefreshPolicy } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { useActionViewActionRuntime } from '../app/action_runtime/useActionViewActionRuntime';
-import { useActionViewBatchRuntime } from '../app/action_runtime/useActionViewBatchRuntime';
 import { useActionViewSelectionRuntime } from '../app/action_runtime/useActionViewSelectionRuntime';
 import { useActionViewTriggerRuntime } from '../app/action_runtime/useActionViewTriggerRuntime';
 import { useActionViewGroupedRowsRuntime } from '../app/action_runtime/useActionViewGroupedRowsRuntime';
@@ -432,8 +424,6 @@ import { useActionViewScopedMetricsRuntime } from '../app/action_runtime/useActi
 import { useActionViewContractShapeRuntime } from '../app/action_runtime/useActionViewContractShapeRuntime';
 import { useActionViewActionMetaRuntime } from '../app/action_runtime/useActionViewActionMetaRuntime';
 import { useActionViewSceneIdentityRuntime } from '../app/action_runtime/useActionViewSceneIdentityRuntime';
-import { useActionViewBatchArtifactGlueRuntime } from '../app/action_runtime/useActionViewBatchArtifactGlueRuntime';
-import { useActionViewAssigneeRuntime } from '../app/action_runtime/useActionViewAssigneeRuntime';
 import { useActionViewModeRuntime } from '../app/action_runtime/useActionViewModeRuntime';
 import { useActionViewProjectMetricRuntime } from '../app/action_runtime/useActionViewProjectMetricRuntime';
 import { useActionViewContractActionButtonRuntime } from '../app/action_runtime/useActionViewContractActionButtonRuntime';
@@ -556,84 +546,8 @@ import {
   shouldNavigateContractAction,
 } from '../app/runtime/actionViewContractActionRuntime';
 import {
-  buildBatchErrorLine,
-  resolveBatchActionGuardMessage,
-  resolveBatchActionErrorLabel,
-  buildBatchUpdateRequest,
-  resolveBatchActionFailureMessage,
-  resolveBatchActionResultMessage,
-  resolveBatchAssignGuardMessage,
-} from '../app/runtime/actionViewBatchRuntime';
-import {
-  resolveBatchActionDeleteMode,
-  resolveBatchActionGuardDecision,
-  resolveBatchActionTargetModel,
-  resolveBatchDeleteExecutionSeed,
-  resolveBatchStandardExecutionSeed,
-} from '../app/runtime/actionViewBatchActionFlowRuntime';
-import {
-  resolveBatchAssignAssigneeLabel,
-  resolveBatchAssignExecutionSeed,
-  resolveBatchAssignFailureMessage,
-  resolveBatchAssignGuardDecision,
-  resolveBatchAssignTargetModel,
-} from '../app/runtime/actionViewBatchAssignFlowRuntime';
-import {
-  resolveBatchActionErrorFallback,
-  resolveBatchAssignErrorFallback,
-  resolveBatchExportErrorFallback,
-} from '../app/runtime/actionViewBatchErrorDetailFlowRuntime';
-import {
-  resolveBatchActionLastRequestState,
-} from '../app/runtime/actionViewBatchRequestSeedRuntime';
-import {
-  resolveAssigneeLoadFailureState,
-  resolveAssigneeLoadSuccessState,
-  resolveAssigneeOptionsLoadGuard,
-  resolveAssigneeOptions,
   resolveExportDoneMessage,
-  resolveExportFailedMessage,
-  resolveAssigneePermissionWarningMessage,
-  resolveAssigneePermissionWarning,
-  resolveExportGuardMessage,
-  resolveExportNoContentMessage,
 } from '../app/runtime/actionViewAssigneeExportRuntime';
-import {
-  resolveBatchExportDomainState,
-  resolveBatchExportGuardDecision,
-  resolveBatchExportNoContent,
-  resolveBatchExportRequestPayload,
-  resolveBatchExportTargetModel,
-} from '../app/runtime/actionViewBatchExportFlowRuntime';
-import {
-  type ActionViewBatchRequest,
-} from '../app/runtime/actionViewBatchArtifactsRuntime';
-import {
-  resolveBatchFailureCsvApplyState,
-  resolveBatchFailureDetailMergeState,
-  resolveBatchFailureLinesState,
-  resolveBatchFailurePagingApplyState,
-  resolveBatchFailurePreviewState,
-} from '../app/runtime/actionViewBatchFailureApplyFlowRuntime';
-import {
-  resolveBatchErrorHintResolver,
-  resolveBatchFailureActionMetaResolver,
-  resolveBatchFailureHintResolver,
-  resolveBatchRetryTagTexts,
-} from '../app/runtime/actionViewBatchHintResolverRuntime';
-import {
-  resolveBatchExportCatchState,
-  resolveBatchExportResetState,
-  resolveBatchFailureCatchState,
-  resolveBatchOperationResetState,
-  resolveLoadMoreFailuresCatchState,
-} from '../app/runtime/actionViewBatchArtifactStateFlowRuntime';
-import {
-  resolveLoadMoreFailuresApplyPlan,
-  resolveLoadMoreFailuresErrorFallback,
-  resolveLoadMoreFailuresGuardPlan,
-  resolveLoadMoreFailuresRequestPayload,
-} from '../app/runtime/actionViewLoadMoreFailuresFlowRuntime';
 import { applyActionViewLoadResetState } from '../app/runtime/actionViewLoadResetRuntime';
 import {
   resolveContractFlagApplyState,
@@ -775,6 +689,7 @@ const {
 const routeQueryMap = computed<Record<string, unknown>>(() => normalizeActionViewRouteQuery(route.query));
 
 const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>('idle');
+const renderErrorMessage = ref('');
 const traceId = ref('');
 const lastTraceId = ref('');
 const records = ref<Array<Record<string, unknown>>>([]);
@@ -789,20 +704,14 @@ const kanbanFields = ref<string[]>([]);
 const kanbanPrimaryFields = ref<string[]>([]);
 const kanbanSecondaryFields = ref<string[]>([]);
 const kanbanStatusFields = ref<string[]>([]);
+const kanbanMetricFields = ref<string[]>([]);
+const kanbanQuickActionCount = ref(0);
 const kanbanTitleFieldHint = ref('');
 const hasActiveField = ref(false);
 const hasAssigneeField = ref(false);
-const assigneeOptions = ref<Array<{ id: number; name: string }>>([]);
 const selectedAssigneeId = ref<number | null>(null);
 const selectedIds = ref<number[]>([]);
 const batchMessage = ref('');
-type BatchDetailLine = { text: string; actionRaw?: string; actionLabel?: string };
-const batchDetails = ref<BatchDetailLine[]>([]);
-const failedCsvFileName = ref('');
-const failedCsvContentB64 = ref('');
-const batchFailedOffset = ref(0);
-const batchFailedLimit = ref(12);
-const batchHasMoreFailures = ref(false);
 const groupRuntimeCapsule = createActionViewGroupRuntimeCapsule();
 const { state: groupRuntimeState } = groupRuntimeCapsule;
 const {
@@ -829,7 +738,6 @@ const {
 } = groupRuntimeState;
 const headerActions = computed(() => pageGlobalActions.value);
 const advancedFields = ref<string[]>([]);
-const lastBatchRequest = ref<ActionViewBatchRequest | null>(null);
 const batchBusy = ref(false);
 const {
   isUiBusy,
@@ -862,6 +770,8 @@ type ContractViewBlock = {
     primary_fields?: string[];
     secondary_fields?: string[];
     status_fields?: string[];
+    metric_fields?: string[];
+    quick_action_count?: number;
     max_meta?: number;
   };
   model?: string;
@@ -931,12 +841,14 @@ type ContractActionButton = {
   key: string;
   label: string;
   kind: string;
+  level: string;
   actionId: number | null;
   methodName: string;
   model: string;
   target: string;
   url: string;
   selection: ContractActionSelection;
+  visibleProfiles: string[];
   context: Record<string, unknown>;
   domainRaw: string;
   enabled: boolean;
@@ -961,13 +873,13 @@ const actionMeta = computed(() => session.currentAction);
 const routeSceneLabel = computed(() => String(route.query.scene_label || '').trim());
 const menuId = computed(() => Number(route.query.menu_id ?? 0));
 const keepSceneRoute = computed(() => String(route.name || '').toLowerCase() === 'scene');
+const sceneContextEnabled = computed(() => keepSceneRoute.value);
 const sceneKey = computed(() => {
+  if (!sceneContextEnabled.value) return '';
   const metaKey = route.meta?.sceneKey as string | undefined;
   if (metaKey) return metaKey;
   const queryKey = (route.query.scene_key || route.query.scene) as string | undefined;
-  if (queryKey) return String(queryKey);
-  const node = findMenuNode(session.menuTree, menuId.value);
-  return node ? resolveNodeSceneKey(node) : '';
+  return queryKey ? String(queryKey) : '';
 });
 const scene = computed<Scene | null>(() => {
   if (!sceneKey.value) return null;
@@ -977,13 +889,12 @@ const pageMode = computed(() => resolvePageMode(sceneKey.value, String(scene.val
 const hasLedgerOverviewStrip = computed(() => pageMode.value === 'ledger');
 
 const listProfile = computed<SceneListProfile | null>(() => {
-  return (scene.value?.list_profile as SceneListProfile) || null;
+  return extractListProfile(actionContract.value);
 });
 const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
-  if (!sceneKey.value) return null;
+  if (!sceneContextEnabled.value || !sceneKey.value) return null;
   return findSceneReadyEntry(session.sceneReadyContractV1, sceneKey.value);
 });
-const sceneReadyListSurface = computed(() => resolveListSceneReady(sceneReadyEntry.value));
 const {
   strictContractMode,
   strictSurfaceContract,
@@ -993,7 +904,7 @@ const {
   strictAdvancedViewContract,
   strictViewModeLabelMap,
 } = useActionViewStrictContractBundle({
-  sceneKey,
+  sceneKey: computed(() => (sceneContextEnabled.value ? sceneKey.value : '')),
   sceneReadyEntry,
   pageText,
 });
@@ -1006,10 +917,6 @@ const contractWarningCount = ref(0);
 const contractDegraded = ref(false);
 const actionContract = ref<ActionContractLoose | null>(null);
 const resolvedModelRef = ref('');
-const canBatchDelete = computed(() => {
-  const unlinkRight = actionContract.value?.permissions?.effective?.rights?.unlink;
-  return unlinkRight === true && viewMode.value === 'list';
-});
 const activeGroupByField = ref('');
 const {
   activeContractFilterKey,
@@ -1064,18 +971,30 @@ const {
   resolveActionViewModeLabel,
   load: requestLoadPage,
 });
-const sceneContractV1 = computed<Record<string, unknown>>(() => {
-  const raw = pageContract.contract.value?.scene_contract_v1;
-  if (!raw || typeof raw !== 'object') return {};
-  if (String((raw as Record<string, unknown>).contract_version || '') !== 'v1') return {};
-  return raw as Record<string, unknown>;
+const {
+  contractColumnLabels,
+  extractListProfile,
+  extractColumnsFromContract,
+  extractListOrderFromContract,
+  buildListSortOptions,
+  convergeColumnsForSurface,
+  extractKanbanFields,
+  extractKanbanProfile,
+  extractAdvancedViewFields,
+  advancedRowTitle,
+  advancedRowMeta,
+  buildGroupKey,
+  resolveModelFromContract,
+} = useActionViewContractShapeRuntime({
+  pageText,
+  actionContract,
+  advancedFields,
+  activeGroupByField,
 });
 const {
   sortLabel,
-  surfaceKind,
 } = useActionViewSurfaceDisplayRuntime({
   sortValue,
-  sceneContractV1,
   strictContractMode,
   strictSurfaceContract,
   actionContract,
@@ -1088,19 +1007,19 @@ const {
   pageStatus,
   recordCount,
 } = useActionViewDisplayComputedRuntime({
-  surfaceKind,
+  actionContract,
   records,
   sortLabel,
   status,
   listTotalCount,
   pageText,
+  buildListSortOptions,
 });
 
 const {
   resolveProjectStateCell,
   resolveProjectAmount,
   isCompletedState,
-  resolveDefaultSort,
 } = useActionViewProjectMetricRuntime();
 
 const {
@@ -1128,10 +1047,8 @@ const {
   surfaceIntent,
 } = useActionViewSurfaceIntentRuntime({
   actionContract,
-  sceneContractV1,
   strictContractMode,
   strictSurfaceContract,
-  sceneKey,
   pageText,
   resolveActionViewSurfaceIntent,
 });
@@ -1145,7 +1062,6 @@ const {
 } = useActionViewPageDisplayStateRuntime({
   routeSceneLabel,
   actionContract,
-  sceneContractV1,
   injectedTitle,
   actionMetaName,
   t,
@@ -1157,9 +1073,6 @@ const {
 });
 
 function resolveContractActionCountForHud() {
-  const sceneActions = sceneReadyListSurface.value.actions;
-  if (sceneActions.length) return sceneActions.length;
-
   const contract = actionContract.value;
   if (!contract) return 0;
 
@@ -1225,7 +1138,6 @@ const {
   groupByOverflowChips,
   activeGroupByLabel,
 } = useActionViewFilterComputedRuntime({
-  sceneReadyListSurface,
   actionContract,
   activeGroupByField,
   parseContractContextRaw,
@@ -1252,34 +1164,38 @@ const {
   resolveContractActionPresentation,
 } = useActionViewActionGroupingRuntime();
 const {
+  contractActionButtons,
   contractPrimaryActions,
   contractOverflowActionGroups,
 } = useActionViewActionPresentationRuntime({
   actionContract,
-  sceneReadyListSurface,
   strictContractMode,
   toContractActionButton: (row, dedup) => toContractActionButton(row, dedup) as ContractActionButton | null,
   resolveContractActionPresentation,
   pageText,
 });
 
-const {
-  contractColumnLabels,
-  extractColumnsFromContract,
-  convergeColumnsForSurface,
-  extractKanbanFields,
-  extractKanbanProfile,
-  extractAdvancedViewFields,
-  advancedRowTitle,
-  advancedRowMeta,
-  buildGroupKey,
-  resolveModelFromContract,
-} = useActionViewContractShapeRuntime({
-  pageText,
-  actionContract,
-  advancedFields,
-  activeGroupByField,
-});
+const selectionActions = computed(() =>
+  contractActionButtons.value
+    .filter((action) => {
+      if (action.selection !== 'single' && action.selection !== 'multi') return false;
+      const visibleProfiles = Array.isArray(action.visibleProfiles) ? action.visibleProfiles : [];
+      if (!visibleProfiles.length) return true;
+      return visibleProfiles.includes('readonly') || visibleProfiles.includes('list');
+    })
+    .map((action) => ({
+      key: action.key,
+      label: action.label,
+      enabled: action.enabled,
+      hint: action.hint,
+    })),
+);
+
+function handleSelectionAction(key: string) {
+  const target = contractActionButtons.value.find((action) => action.key === key);
+  if (!target) return;
+  void runContractAction(target as ContractActionButton);
+}
 
 const advancedRows = computed(() => {
   return records.value.slice(0, 20).map((row, idx) => {
@@ -1550,32 +1466,6 @@ const {
 });
 
 const {
-  downloadCsvBase64: downloadCsvBase64Runtime,
-  applyBatchFailureArtifacts,
-  handleBatchDetailAction,
-} = useActionViewBatchArtifactGlueRuntime({
-  batchDetails,
-  batchFailedOffset,
-  batchFailedLimit,
-  batchHasMoreFailures,
-  failedCsvFileName,
-  failedCsvContentB64,
-  pageText,
-  resolveSuggestedAction,
-  describeSuggestedAction,
-  runSuggestedAction,
-  reload,
-  resolveBatchFailurePreviewState,
-  resolveBatchRetryTagTexts,
-  resolveBatchFailureLinesState,
-  resolveBatchFailureHintResolver,
-  resolveBatchFailureActionMetaResolver,
-  resolveBatchFailureDetailMergeState,
-  resolveBatchFailurePagingApplyState,
-  resolveBatchFailureCsvApplyState,
-});
-
-const {
   getActionType,
   isClientAction,
   isUrlAction,
@@ -1654,19 +1544,7 @@ const { runContractAction } = useActionViewActionRuntime({
   shouldNavigate: shouldNavigateContractAction,
 });
 
-const { loadAssigneeOptions } = useActionViewAssigneeRuntime({
-  hasAssigneeField,
-  assigneeOptions,
-  selectedAssigneeId,
-  batchMessage,
-  pageText,
-  resolveAssigneeOptionsLoadGuard,
-  resolveAssigneeLoadSuccessState,
-  resolveAssigneeLoadFailureState,
-  resolveAssigneeOptions,
-  resolveAssigneePermissionWarning,
-  resolveAssigneePermissionWarningMessage,
-});
+const loadAssigneeOptions = async () => {};
 
 const {
   beginActionViewLoad,
@@ -1851,8 +1729,8 @@ const {
     routeFilterRaw: route.query.preset_filter,
     routeSavedFilterRaw: route.query.saved_filter,
     routeGroupByRaw: route.query.group_by,
-    sceneReadyDefaultSortRaw: sceneReadyListSurface.value.defaultSort,
-    sceneDefaultSortRaw: scene.value?.default_sort,
+    sceneReadyDefaultSortRaw: '',
+    sceneDefaultSortRaw: '',
     sessionCapabilities: session.capabilities,
     currentSortRaw: sortValue.value,
     activeContractFilterKey: activeContractFilterKey.value,
@@ -1883,7 +1761,7 @@ const {
     resolveCapabilityMissingRedirectTarget,
     isUrlAction,
     redirectUrlAction,
-    resolveDefaultSort,
+    extractListOrderFromContract,
     resolveLoadPreflightSortValue,
     resolveLoadPreflightContractLimit,
     evaluateCapabilityPolicy,
@@ -2000,7 +1878,7 @@ const {
   buildLoadRequestInput,
 } = useActionViewLoadRequestInputRuntime({
   staticInput: () => ({
-    sceneReadyColumns: sceneReadyListSurface.value.columns,
+    sceneReadyColumns: [],
     listProfile: listProfile.value,
     actionId: actionId.value,
     resolveEffectiveFilterDomainRaw,
@@ -2037,6 +1915,8 @@ const {
     kanbanPrimaryFieldsRef: kanbanPrimaryFields,
     kanbanSecondaryFieldsRef: kanbanSecondaryFields,
     kanbanStatusFieldsRef: kanbanStatusFields,
+    kanbanMetricFieldsRef: kanbanMetricFields,
+    kanbanQuickActionCountRef: kanbanQuickActionCount,
     hasActiveFieldRef: hasActiveField,
     hasAssigneeFieldRef: hasAssigneeField,
   }),
@@ -2098,7 +1978,6 @@ const {
 
 const {
   clearSelection: selectionRuntimeClearSelection,
-  handleAssigneeChange,
   handleToggleSelection,
   handleToggleSelectionAll,
   buildIfMatchMap,
@@ -2111,137 +1990,23 @@ const {
 });
 clearSelectionInvoker = selectionRuntimeClearSelection;
 
-
-
-
-const {
-  handleBatchAction,
-  handleBatchAssign,
-  handleBatchExport,
-  handleDownloadFailedCsv,
-  handleLoadMoreFailures,
-} = useActionViewBatchRuntime({
-  selectedIds,
-  selectedAssigneeId,
-  batchBusy,
-  batchMessage,
-  batchDetails,
-  failedCsvFileName,
-  failedCsvContentB64,
-  batchFailedOffset,
-  batchFailedLimit,
-  batchHasMoreFailures,
-  lastBatchRequest,
-  pageText,
-  setError,
-  load: requestLoadPage,
-  clearSelection,
-  resolveTargetModel: () => resolveBatchAssignTargetModel({
-    resolvedModelRaw: resolvedModelRef.value,
-    routeModelRaw: model.value,
-  }),
-  resolveRequestContext: resolveEffectiveRequestContext,
-  mergeContext,
-  actionMetaContext: () => actionMeta.value?.context,
-  buildIfMatchMap,
-  buildIdempotencyKey,
-  batchUpdateRecords,
-  exportRecordsCsv,
-  downloadCsvBase64: downloadCsvBase64Runtime,
-  buildBatchUpdateRequest,
-  buildBatchErrorLine,
-  applyBatchFailureArtifacts,
-  resolveBatchOperationResetState,
-  resolveBatchActionTargetModel,
-  resolveBatchActionDeleteMode,
-  resolveBatchActionGuardDecision,
-  resolveBatchActionGuardMessage,
-  resolveBatchDeleteExecutionSeed,
-  resolveBatchActionResultMessage,
-  resolveBatchStandardExecutionSeed,
-  resolveBatchActionLastRequestState,
-  resolveBatchActionSuccessMessage: resolveBatchActionResultMessage,
-  resolveBatchFailureCatchState,
-  resolveBatchActionFailureFallback: (input) => resolveBatchActionErrorFallback({
-    targetModel: String(input.targetModel || ''),
-    action: (input.action as 'archive' | 'activate' | 'delete') || 'archive',
-    resolveActionLabel: (action) => resolveBatchActionErrorLabel({ action, text: pageText }),
-  }),
-  resolveBatchAssignGuardDecision,
-  resolveBatchAssignGuardMessage,
-  resolveBatchAssignSeedState: (input) => ({
-    ...resolveBatchAssignExecutionSeed({
-      selectedIds: input.selectedIds,
-      assigneeId: input.selectedAssigneeId,
-      buildIfMatchMap: input.buildIfMatchMap,
-      buildIdempotencyKey: input.buildIdempotencyKey,
-    }),
-    assigneeId: input.selectedAssigneeId,
-  }),
-  resolveBatchAssignResultMessage: (input) => resolveBatchActionFailureMessage({
-    action: 'assign',
-    assigneeName: resolveBatchAssignAssigneeLabel({
-      assigneeId: Number(selectedAssigneeId.value || 0),
-      assigneeOptions: assigneeOptions.value,
-    }),
-    idempotentReplay: Boolean(input.idempotentReplay),
-    succeeded: Number(input.succeeded || 0),
-    failed: Number(input.failed || 0),
-    text: pageText,
-  }),
-  resolveBatchAssignSuccessMessage: (input) => resolveBatchActionFailureMessage({
-    action: 'assign',
-    assigneeName: resolveBatchAssignAssigneeLabel({
-      assigneeId: Number(selectedAssigneeId.value || 0),
-      assigneeOptions: assigneeOptions.value,
-    }),
-    idempotentReplay: Boolean(input.idempotentReplay),
-    succeeded: Number(input.succeeded || 0),
-    failed: Number(input.failed || 0),
-    text: pageText,
-  }),
-  resolveBatchAssignFailureMessage,
-  resolveBatchAssignErrorFallback,
-  resolveBatchErrorHintResolver,
-  resolveSuggestedAction,
-  resolveBatchExportResetState,
-  resolveBatchExportTargetModel,
-  resolveBatchExportGuardDecision,
-  resolveExportGuardMessage,
-  resolveBatchExportDomainState,
-  actionMetaDomain: () => actionMeta.value?.domain,
-  sceneFilters: () => scene.value?.filters,
-  resolveEffectiveFilterDomain,
-  mergeSceneDomain,
-  mergeActiveFilterDomain,
-  columns: () => columns.value,
-  sortLabel: () => sortLabel.value,
-  resolveBatchExportRequestPayload,
-  resolveBatchExportNoContent,
-  resolveExportNoContentMessage,
-  resolveExportDoneMessage,
-  resolveExportFailedMessage,
-  resolveBatchExportCatchState,
-  resolveBatchExportErrorFallback,
-  resolveLoadMoreFailuresGuardPlan,
-  resolveLoadMoreFailuresRequestPayload,
-  resolveLoadMoreFailuresApplyPlan,
-  resolveLoadMoreFailuresCatchState,
-  resolveLoadMoreFailuresErrorFallback,
-  hasActiveField: () => hasActiveField.value,
-  contractDeleteMode: () => actionContract.value?.surface_policies?.delete_mode,
-  resolvedModelRaw: () => resolvedModelRef.value,
-  routeModelRaw: () => model.value,
-});
-
 onMounted(async () => {
+  renderErrorMessage.value = '';
   applyRoutePreset();
   await requestLoadPage();
+});
+
+onErrorCaptured((err) => {
+  const message = err instanceof Error ? err.message : String(err || 'unknown render error');
+  renderErrorMessage.value = `ActionView render error: ${message}`;
+  console.error('[ActionView] render failed', err);
+  return false;
 });
 
 watch(
   () => route.fullPath,
   () => {
+    renderErrorMessage.value = '';
     if (applyRoutePreset()) {
       void requestLoadPage();
     }

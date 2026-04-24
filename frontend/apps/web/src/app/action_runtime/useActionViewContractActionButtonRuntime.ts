@@ -9,12 +9,14 @@ type ContractActionButton = {
   key: string;
   label: string;
   kind: string;
+  level: string;
   actionId: number | null;
   methodName: string;
   model: string;
   target: string;
   url: string;
   selection: ContractActionSelection;
+  visibleProfiles: string[];
   context: Record<string, unknown>;
   domainRaw: string;
   enabled: boolean;
@@ -68,9 +70,15 @@ export function useActionViewContractActionButtonRuntime(options: UseActionViewC
         : explicitKind;
     const actionId = options.toPositiveInt(payload.action_id) ?? options.toPositiveInt(payload.ref);
     const methodName = options.detectObjectMethodFromActionKey(key, String(payload.method || '').trim());
+    const level = String(row.level || '').trim().toLowerCase();
     const selectionRaw = String(row.selection || 'none').toLowerCase();
     const selection: ContractActionSelection =
       selectionRaw === 'single' || selectionRaw === 'multi' ? selectionRaw : 'none';
+    const visibleProfiles = Array.isArray(row.visible_profiles)
+      ? (row.visible_profiles as unknown[])
+        .map((item) => String(item || '').trim().toLowerCase())
+        .filter(Boolean)
+      : [];
     const groups = Array.isArray(row.groups_xmlids) ? (row.groups_xmlids as string[]) : [];
     const userGroups = options.userGroupsXmlids();
     const allowedByGroup = !groups.length || groups.some((group) => userGroups.includes(group));
@@ -89,12 +97,14 @@ export function useActionViewContractActionButtonRuntime(options: UseActionViewC
       key,
       label: rawLabel,
       kind,
+      level,
       actionId,
       methodName,
       model: String(row.target_model || row.model || protocol?.mutation?.model || options.resolvedModelRef.value || options.modelRef.value || '').trim(),
       target: String(payload.target || '').trim(),
       url: String(payload.url || payload.route || '').trim(),
       selection,
+      visibleProfiles,
       context: options.parseContractContextRaw(payload.context_raw),
       domainRaw: String(payload.domain_raw || '').trim(),
       enabled,
@@ -108,4 +118,3 @@ export function useActionViewContractActionButtonRuntime(options: UseActionViewC
     toContractActionButton,
   };
 }
-

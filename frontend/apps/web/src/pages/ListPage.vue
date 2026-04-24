@@ -3,12 +3,6 @@
     <PageHeader
       :title="title"
       :subtitle="subtitle"
-      :status="status"
-      :status-label="statusLabel"
-      :loading="loading"
-      :on-reload="onReload"
-      :mode-label="pageModeLabelText"
-      :record-count="recordCountSafe"
     />
 
     <PageToolbar
@@ -16,13 +10,11 @@
       :search-term="searchTerm || ''"
       :sort-options="sortOptions || []"
       :sort-value="sortValue || ''"
-      :filter-value="filterValue || 'all'"
       :on-search="onSearch"
       :on-sort="onSort"
-      :on-filter="onFilter"
     />
 
-    <section v-if="summaryItems.length" class="summary-strip">
+    <section v-if="enableSummaryStrip && summaryItems.length" class="summary-strip">
       <article v-for="item in summaryItems" :key="item.key" class="summary-card" :class="`tone-${item.tone || 'neutral'}`">
         <p class="summary-label">{{ item.label }}</p>
         <p class="summary-value">{{ item.value }}</p>
@@ -55,58 +47,22 @@
 
     <section v-if="status === 'ok' && showBatchBar" class="batch-bar">
       <span>已选 {{ selectedCount }} 条</span>
-      <button type="button" :disabled="loading || !selectedCount" @click="callBatchAction('archive')">批量归档</button>
-      <button type="button" :disabled="loading || !selectedCount" @click="callBatchAction('activate')">批量激活</button>
-      <button v-if="showDelete" type="button" :disabled="loading || !selectedCount" @click="callBatchAction('delete')">批量删除</button>
-      <template v-if="showAssign">
-        <select :value="String(selectedAssigneeId || '')" :disabled="loading" @change="onAssigneeSelectChange">
-          <option value="">选择负责人</option>
-          <option v-for="opt in assigneeOptions || []" :key="opt.id" :value="String(opt.id)">{{ opt.name }}</option>
-        </select>
-        <button type="button" :disabled="loading || !selectedCount || !selectedAssigneeId" @click="callBatchAssign">批量指派</button>
-      </template>
-      <button type="button" :disabled="loading || !selectedCount" @click="callBatchExport('selected')">导出选中 CSV</button>
-      <button type="button" :disabled="loading || !records.length" @click="callBatchExport('all')">导出当前页 CSV</button>
+      <button
+        v-for="action in selectionActions"
+        :key="`selection-action-${action.key}`"
+        type="button"
+        :disabled="loading || !selectedCount || !action.enabled"
+        :title="action.hint || ''"
+        @click="runSelectionAction(action.key)"
+      >
+        {{ action.label }}
+      </button>
       <button type="button" class="ghost" :disabled="loading" @click="clearSelection">清空</button>
-      <span v-if="showDelete" class="batch-note">当前按归档处理，物理删除能力未开放</span>
       <span v-if="batchMessage" class="batch-message">{{ batchMessage }}</span>
     </section>
 
-    <section v-if="status === 'ok' && batchDetails.length" class="batch-details">
-      <p v-for="(line, idx) in batchDetails" :key="idx">
-        <span>{{ batchDetailText(line) }}</span>
-        <button
-          v-if="batchDetailActionLabel(line) && onBatchDetailAction"
-          type="button"
-          class="batch-detail-action"
-          :disabled="loading"
-          @click="runBatchDetailAction(line)"
-        >
-          {{ batchDetailActionLabel(line) }}
-        </button>
-      </p>
-      <button
-        v-if="hasMoreFailures"
-        type="button"
-        class="batch-load-more"
-        :disabled="loading"
-        @click="loadMoreFailures"
-      >
-        加载更多失败
-      </button>
-      <button
-        v-if="failedCsvAvailable"
-        type="button"
-        class="batch-download"
-        :disabled="loading"
-        @click="downloadFailedCsv"
-      >
-        下载失败清单 CSV
-      </button>
-    </section>
-
     <section v-if="status === 'ok'" class="table">
-      <section v-if="groupedRows.length" class="grouped-table">
+      <section v-if="enableGroupedRows && groupedRows.length" class="grouped-table">
         <header class="grouped-toolbar">
           <span>分组结果</span>
           <div class="grouped-toolbar-actions">
@@ -269,12 +225,12 @@ import PageToolbar from '../components/page/PageToolbar.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import type { SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { semanticValueByField } from '../utils/semantic';
-import { pageModeLabel } from '../app/pageMode';
 
-type BatchDetailLine = {
-  text: string;
-  actionRaw?: string;
-  actionLabel?: string;
+type SelectionAction = {
+  key: string;
+  label: string;
+  enabled: boolean;
+  hint?: string;
 };
 
 const props = defineProps<{
@@ -303,29 +259,19 @@ const props = defineProps<{
   pageMode?: string;
   sceneKey?: string;
   recordCount?: number;
+  enableSummaryStrip?: boolean;
+  enableGroupedRows?: boolean;
   listProfile?: SceneListProfile | null;
   columnLabels?: Record<string, string>;
   onFilter: (value: 'all' | 'active' | 'archived') => void;
   summaryItems?: Array<{ key: string; label: string; value: string; tone?: string }>;
   selectedIds?: number[];
+  selectionActions?: SelectionAction[];
   onToggleSelection?: (id: number, selected: boolean) => void;
   onToggleSelectionAll?: (ids: number[], selected: boolean) => void;
-  onBatchAction?: (action: 'archive' | 'activate' | 'delete') => void;
-  showDelete?: boolean;
-  onBatchAssign?: (assigneeId: number) => void;
-  onBatchExport?: (scope: 'selected' | 'all') => void;
-  onAssigneeChange?: (assigneeId: number | null) => void;
+  onRunSelectionAction?: (key: string) => void;
   onClearSelection?: () => void;
   batchMessage?: string;
-  batchDetails?: Array<string | BatchDetailLine>;
-  failedCsvAvailable?: boolean;
-  onDownloadFailedCsv?: () => void;
-  hasMoreFailures?: boolean;
-  onLoadMoreFailures?: () => void;
-  onBatchDetailAction?: (actionRaw: string) => void;
-  showAssign?: boolean;
-  assigneeOptions?: Array<{ id: number; name: string }>;
-  selectedAssigneeId?: number | null;
   groupedRows?: Array<{
     key: string;
     label: string;
@@ -387,12 +333,6 @@ const sortedGroupedRows = computed(() => {
 });
 const groupSortLabel = computed(() => (groupSortDesc.value ? '按数量降序' : '按数量升序'));
 const summaryItems = computed(() => Array.isArray(props.summaryItems) ? props.summaryItems : []);
-const recordCountSafe = computed(() => {
-  const raw = Number(props.recordCount);
-  if (Number.isFinite(raw) && raw >= 0) return Math.trunc(raw);
-  return props.records.length;
-});
-const pageModeLabelText = computed(() => pageModeLabel(props.pageMode || 'list'));
 const collapsedSet = computed(() => new Set(Array.isArray(props.collapsedGroupKeys) ? props.collapsedGroupKeys : []));
 const allGroupsCollapsed = computed(() => {
   if (!sortedGroupedRows.value.length) return false;
@@ -602,12 +542,12 @@ function rowId(row: Record<string, unknown>) {
 
 const selectedIdSet = computed(() => new Set((props.selectedIds || []).filter((id) => Number.isFinite(id))));
 const selectedCount = computed(() => (props.selectedIds || []).length);
-const batchDetails = computed<Array<string | BatchDetailLine>>(() =>
-  Array.isArray(props.batchDetails) ? props.batchDetails : [],
+const selectionActions = computed(() =>
+  Array.isArray(props.selectionActions) ? props.selectionActions : [],
 );
 const selectableRows = computed(() => props.records.map((row) => rowId(row)).filter((id): id is number => typeof id === 'number'));
-const showSelectionColumn = computed(() => !!props.onToggleSelection && !!props.onToggleSelectionAll && !!props.onBatchAction);
-const showBatchBar = computed(() => showSelectionColumn.value);
+const showSelectionColumn = computed(() => !!props.onToggleSelection && !!props.onToggleSelectionAll);
+const showBatchBar = computed(() => showSelectionColumn.value && selectedCount.value > 0);
 const allSelected = computed(() => {
   const rows = selectableRows.value;
   if (!rows.length) return false;
@@ -635,32 +575,9 @@ function clearSelection() {
   props.onClearSelection?.();
 }
 
-function callBatchAction(action: 'archive' | 'activate' | 'delete') {
-  if (selectedCount.value <= 0) return;
-  const label = action === 'archive' ? '归档' : action === 'activate' ? '激活' : '删除';
-  if (!window.confirm(`确认批量${label} ${selectedCount.value} 条记录？`)) {
-    return;
-  }
-  props.onBatchAction?.(action);
-}
-
-function callBatchAssign() {
-  if (!props.selectedAssigneeId) return;
-  if (selectedCount.value <= 0) return;
-  if (!window.confirm(`确认将 ${selectedCount.value} 条记录批量指派给当前负责人？`)) {
-    return;
-  }
-  props.onBatchAssign?.(props.selectedAssigneeId);
-}
-
-function callBatchExport(scope: 'selected' | 'all') {
-  const count = scope === 'selected' ? selectedCount.value : props.records.length;
-  if (count <= 0) return;
-  const label = scope === 'selected' ? '导出选中' : '导出当前页';
-  if (!window.confirm(`确认${label}（${count} 条）为 CSV？`)) {
-    return;
-  }
-  props.onBatchExport?.(scope);
+function runSelectionAction(key: string) {
+  if (!key || selectedCount.value <= 0) return;
+  props.onRunSelectionAction?.(key);
 }
 
 function onSelectAllChange(event: Event) {
@@ -671,43 +588,6 @@ function onSelectAllChange(event: Event) {
 function onRowCheckboxChange(row: Record<string, unknown>, event: Event) {
   const checked = Boolean((event.target as HTMLInputElement | null)?.checked);
   onToggleRow(row, checked);
-}
-
-function onAssigneeSelectChange(event: Event) {
-  const value = String((event.target as HTMLSelectElement | null)?.value || '').trim();
-  if (!props.onAssigneeChange) return;
-  if (!value) {
-    props.onAssigneeChange(null);
-    return;
-  }
-  const id = Number(value);
-  props.onAssigneeChange(Number.isNaN(id) ? null : id);
-}
-
-function downloadFailedCsv() {
-  props.onDownloadFailedCsv?.();
-}
-
-function loadMoreFailures() {
-  props.onLoadMoreFailures?.();
-}
-
-function batchDetailText(line: string | BatchDetailLine) {
-  if (typeof line === 'string') return line;
-  return String(line?.text || '');
-}
-
-function batchDetailActionLabel(line: string | BatchDetailLine) {
-  if (!line || typeof line === 'string') return '';
-  return String(line.actionLabel || '');
-}
-
-function runBatchDetailAction(line: string | BatchDetailLine) {
-  if (!props.onBatchDetailAction) return;
-  if (!line || typeof line === 'string') return;
-  const raw = String(line.actionRaw || '').trim();
-  if (!raw) return;
-  props.onBatchDetailAction(raw);
 }
 
 const rowPrimary = computed(() => props.listProfile?.row_primary || '');
@@ -723,8 +603,7 @@ const columnLabels = computed(() => props.listProfile?.column_labels || {});
 const contractColumnLabels = computed(() => props.columnLabels || {});
 const displayedColumns = computed(() => {
   const source = preferredColumns.value.length ? preferredColumns.value : props.columns;
-  const filtered = source.filter((col) => !hiddenColumns.value[col]);
-  return filtered.length ? filtered : props.columns.filter((col) => !hiddenColumns.value[col]);
+  return source.filter((col) => !hiddenColumns.value[col]);
 });
 
 function columnLabel(col: string) {

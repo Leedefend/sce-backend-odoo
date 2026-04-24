@@ -126,7 +126,6 @@ import { hasWorkspaceContext as hasWorkspaceContextValue, readWorkspaceContext, 
 import { normalizeEmbeddedSceneQuery, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
-import { resolvePageOrchestrationContractFromSceneV1 } from '../app/sceneContractV1';
 import PageRenderer from '../components/page/PageRenderer.vue';
 import type { PageBlockActionEvent, PageOrchestrationContract } from '../app/pageOrchestration';
 import type { Scene } from '../app/resolvers/sceneRegistry';
@@ -208,11 +207,8 @@ const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionTagIs = pageContract.sectionTagIs;
 
 const workbenchOrchestrationContract = computed<PageOrchestrationContract>(() => {
-  return resolvePageOrchestrationContractFromSceneV1(
-    pageContract.contract.value?.scene_contract_v1,
-    pageContract.contract.value?.page_orchestration_v1,
-    { pageType: 'workspace', layoutMode: 'workspace' },
-  );
+  const contract = pageContract.contract.value?.page_orchestration_v1;
+  return (contract && typeof contract === 'object') ? contract as PageOrchestrationContract : {};
 });
 const useUnifiedWorkbenchRenderer = computed(() => {
   if (asText(route.query.legacy_workbench) === '1') return false;
