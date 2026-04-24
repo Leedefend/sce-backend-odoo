@@ -1,0 +1,158 @@
+{
+  "status": "PASS",
+  "mode": "history_contract_direction_defer_audit",
+  "direction_defer_rows": 12,
+  "anchor_reason_code_counts": {},
+  "source_coverage_blocker_counts": {
+    "direction_defer|partner_unresolved": 12
+  },
+  "missing_anchor_rows": [],
+  "missing_source_rows": [],
+  "row_artifact": "artifacts/migration/history_contract_direction_defer_rows_v1.csv",
+  "sample_rows": [
+    {
+      "legacy_contract_id": "062e24ff0f0e4401a108ef7c2923b1a0",
+      "subject": "补录老项目合同",
+      "legacy_contract_no": "2018-34",
+      "fbf": "成都市兴蓉安科建设工程有限公司",
+      "cbf": "",
+      "gap_blockers": "direction_defer|partner_unresolved",
+      "anchor_policy_bucket": "",
+      "anchor_reason_code": "",
+      "source_coverage_bucket": "",
+      "source_coverage_blockers": "direction_defer|partner_unresolved"
+    },
+    {
+      "legacy_contract_id": "0fa88c601e9b492386bfc1671f5147a7",
+      "subject": "川北幼儿师范高等专科学校三期工程-室外附属一批次工程",
+      "legacy_contract_no": "GYS2017-35",
+      "fbf": "川北幼儿师范高等专科学校",
+      "cbf": "四川汇发园林建设工程有限公司",
+      "gap_blockers": "direction_defer|partner_unresolved",
+      "anchor_policy_bucket": "",
+      "anchor_reason_code": "",
+      "source_coverage_bucket": "",
+      "source_coverage_blockers": "direction_defer|partner_unresolved"
+    },
+    {
+      "legacy_contract_id": "1f63ffd7e5774c1db64743b588da15ae",
+      "subject": "补录老项目合同",
+      "legacy_contract_no": "2018-23、24",
+      "fbf": "四川省宇汇建设工程有限公司日喀则分公司",
+      "cbf": "",
+      "gap_blockers": "direction_defer|partner_unresolved",
+      "anchor_policy_bucket": "",
+      "anchor_reason_code": "",
+      "source_coverage_bucket": "",
+      "source_coverage_blockers": "direction_defer|partner_unresolved"
+    },
+    {
+      "legacy_contract_id": "54243d3dc8464b69a20937710fd691f0",
+      "subject": "补录老项目合同",
+      "legacy_contract_no": "0",
+      "fbf": "",
+      "cbf": "",
+      "gap_blockers": "direction_defer|partner_unresolved",
+      "anchor_policy_bucket": "",
+      "anchor_reason_code": "",
+      "source_coverage_bucket": "",
+      "source_coverage_blockers": "direction_defer|partner_unresolved"
+    },
+    {
+      "legacy_contract_id": "54f1837aebcf4ae78dd6eac7468a3f3b",
+      "subject": "和兴中心库消防泵房、地磅房、综合楼、厕所、烘干房及机械罩棚、仓间罩棚、1-2#平房仓工程",
+      "legacy_contract_no": "DYS2016-32",
+      "fbf": "四川广汉火车站省粮食储备库",
+      "cbf": "四川汇发园林建设工程有限公司",
+      "gap_blockers": "direction_defer|partner_unresolved",
+      "anchor_policy_bucket": "",
+      "anchor_reason_code": "",
+      "source_coverage_bucket": "",
+      "source_coverage_blockers": "direction_defer|partner_unresolved"
+    },
+    {
+      "legacy_contract_id": "55d4383159c84ab49774cb650575d6fb",
+      "subject": "德阳市中心城区穿城堰、丁家堰、干河子、胜利堰四条黑臭水体整治工程-劳务分包（第一批）胜利堰二标段",
+      "legacy_contract_no": "2018",
+      "fbf": "德阳蓉北建设工程有限公司",
+      "cbf": "",
+      "gap_blockers": "direction_defer|partner_unresolved",
+      "anchor_policy_bucket": "",
+      "anchor_reason_code": "",
+      "source_coverage_bucket": "",
+      "source_coverage_blockers": "direction_defer|partner_unresolved"
+    },
+    {
+      "legacy_contract_id": "77ef7dfe94ad452499f136f7f95fdf32",
+      "subject": "科发泰升人和装饰装修专业分包",
+      "legacy_contract_no": "MYS2024-119",
+      "fbf": "成都建工第五建筑工程有限公司",
+      "cbf": "四川保感建设集团有限公司",
+      "gap_blockers": "direction_defer|partner_unresolved",
+      "anchor_policy_bucket": "",
+      "anchor_reason_code": "",
+      "source_coverage_bucket": "",
+      "source_coverage_blockers": "direction_defer|partner_unresolved"
+    },
+    {
+      "legacy_contract_id": "973abd65ee5446518e13bc4f54fb7131",
+      "subject": "WBHTGL-20240408-001",
+      "legacy_contract_no": "DYS2015-补录数据",
+      "fbf": "德阳市水利局",
+      "cbf": "",
+      "gap_blockers": "direction_defer|partner_unresolved",
+      "anchor_policy_bucket": "",
+      "anchor_reason_code": "",
+      "source_coverage_bucket": "",
+      "source_coverage_blockers": "direction_defer|partner_unresolved"
+    },
+    {
+      "legacy_contract_id": "af35fb6a1aec4ccb8c0c725524809da2",
+      "subject": "补录老项目合同",
+      "legacy_contract_no": "2018-64",
+      "fbf": "",
+      "cbf": "",
+      "gap_blockers": "direction_defer|partner_unresolved",
+      "anchor_policy_bucket": "",
+      "anchor_reason_code": "",
+      "source_coverage_bucket": "",
+      "source_coverage_blockers": "direction_defer|partner_unresolved"
+    },
+    {
+      "legacy_contract_id": "cde8b5fd161e4189bdd7ddc9ee411d6d",
+      "subject": "补录老项目合同",
+      "legacy_contract_no": "2018-023",
+      "fbf": "",
+      "cbf": "",
+      "gap_blockers": "direction_defer|partner_unresolved",
+      "anchor_policy_bucket": "",
+      "anchor_reason_code": "",
+      "source_coverage_bucket": "",
+      "source_coverage_blockers": "direction_defer|partner_unresolved"
+    },
+    {
+      "legacy_contract_id": "d38cb138e7df40b2a356d01f0e6c634b",
+      "subject": "罗江翰林豪锦苑一期工程",
+      "legacy_contract_no": "DYS2017-43",
+      "fbf": "德阳禾顺房地产开发有限公司",
+      "cbf": "四川汇发园林建设工程有限公司",
+      "gap_blockers": "direction_defer|partner_unresolved",
+      "anchor_policy_bucket": "",
+      "anchor_reason_code": "",
+      "source_coverage_bucket": "",
+      "source_coverage_blockers": "direction_defer|partner_unresolved"
+    },
+    {
+      "legacy_contract_id": "f77d0e3616294244948b016d7f817925",
+      "subject": "补录老项目合同",
+      "legacy_contract_no": "ABZ2020-14",
+      "fbf": "九寨沟县城市投资开发有限公司",
+      "cbf": "",
+      "gap_blockers": "direction_defer|partner_unresolved",
+      "anchor_policy_bucket": "",
+      "anchor_reason_code": "",
+      "source_coverage_bucket": "",
+      "source_coverage_blockers": "direction_defer|partner_unresolved"
+    }
+  ]
+}

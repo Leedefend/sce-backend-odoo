@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "mode": "history_contract_direction_defer_recovery_adapter",
+  "payload_rows": 12,
+  "payload_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/history_contract_direction_defer_recovery_payload_v1.csv",
+  "evidence_type_counts": {
+    "repayment_single_counterparty": 12
+  }
+}

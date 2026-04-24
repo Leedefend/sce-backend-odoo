@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "mode": "history_partner_master_targeted_replay_adapter",
+  "target_rows": 4,
+  "target_names": [
+    "中国人民解放军32038部队",
+    "中国电信股份有限公司泸州分公司",
+    "德阳开放大学",
+    "重庆市璧山区青杠街道产业发展服务中心"
+  ],
+  "payload_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/history_partner_master_targeted_replay_payload_v1.csv"
+}

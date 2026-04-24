@@ -1,0 +1,13 @@
+﻿external_id,name,company_type,is_company,vat,phone,email,legacy_partner_id,legacy_partner_source,legacy_partner_name,legacy_credit_code,legacy_tax_no,legacy_source_evidence
+legacy_partner_sc_0c942819a1654d8d8a933b14557623e9,中铁一局集团铁路建设有限公司,company,1,,,,0c942819a1654d8d8a933b14557623e9,cooperat_company,中铁一局集团铁路建设有限公司,,,tmp/raw/partner/company.csv:T_Base_CooperatCompany
+legacy_partner_sc_2db04500c3d542259f898ecb0eae3fcd,成都建工第五建筑工程有限公司,company,1,,,,2db04500c3d542259f898ecb0eae3fcd,cooperat_company,成都建工第五建筑工程有限公司,,,tmp/raw/partner/company.csv:T_Base_CooperatCompany
+legacy_partner_sc_31C4952941CA49B5A0B2ECB7FD07DDAB,四川省第一建筑工程有限公司,company,1,,,,31C4952941CA49B5A0B2ECB7FD07DDAB,cooperat_company,四川省第一建筑工程有限公司,,,tmp/raw/partner/company.csv:T_Base_CooperatCompany
+legacy_partner_sc_465d51947a364767a9b2c9f30c7b1f40,德阳发展控股集团有限公司,company,1,,,,465d51947a364767a9b2c9f30c7b1f40,cooperat_company,德阳发展控股集团有限公司,,,tmp/raw/partner/company.csv:T_Base_CooperatCompany
+legacy_partner_sc_532f750efd65409cab30fcb99da705cf,德阳市水利局,company,1,,,,532f750efd65409cab30fcb99da705cf,cooperat_company,德阳市水利局,,,tmp/raw/partner/company.csv:T_Base_CooperatCompany
+legacy_partner_sc_6C0B5A9FC4AD4E6EA5B9B21AB87BCE08,川北幼儿师范高等专科学校,company,1,,,,6C0B5A9FC4AD4E6EA5B9B21AB87BCE08,cooperat_company,川北幼儿师范高等专科学校,,,tmp/raw/partner/company.csv:T_Base_CooperatCompany
+legacy_partner_sc_9E2706663D884F908162D738EED275E5,德阳蓉北建设工程有限公司,company,1,,,,9E2706663D884F908162D738EED275E5,cooperat_company,德阳蓉北建设工程有限公司,,,tmp/raw/partner/company.csv:T_Base_CooperatCompany
+legacy_partner_sc_E79565AD944A484CBA17A88B47088431,四川广汉火车站省粮食储备库,company,1,,,,E79565AD944A484CBA17A88B47088431,cooperat_company,四川广汉火车站省粮食储备库,,,tmp/raw/partner/company.csv:T_Base_CooperatCompany
+legacy_partner_sc_c2bc8c89f3ef471b99c928f29b7c6a03,德阳禾顺房地产开发有限公司,company,1,,,,c2bc8c89f3ef471b99c928f29b7c6a03,cooperat_company,德阳禾顺房地产开发有限公司,,,tmp/raw/partner/company.csv:T_Base_CooperatCompany
+legacy_partner_sc_dbe2e49cb22c4a9896a56365049aa72a,古蔺县水务局,company,1,,,,dbe2e49cb22c4a9896a56365049aa72a,cooperat_company,古蔺县水务局,,,tmp/raw/partner/company.csv:T_Base_CooperatCompany
+legacy_partner_sc_e8a2a9c209734fa9ad96d96618968e0a,成都煜嘉建筑工程有限公司,company,1,,,,e8a2a9c209734fa9ad96d96618968e0a,cooperat_company,成都煜嘉建筑工程有限公司,,,tmp/raw/partner/company.csv:T_Base_CooperatCompany
+legacy_partner_sc_fc6e819bc4f1486eae8ae80bc48d50d0,成都环境水务建设有限公司,company,1,,,,fc6e819bc4f1486eae8ae80bc48d50d0,cooperat_company,成都环境水务建设有限公司,,,tmp/raw/partner/company.csv:T_Base_CooperatCompany

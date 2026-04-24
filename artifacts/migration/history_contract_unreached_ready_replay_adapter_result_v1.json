@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "mode": "history_contract_unreached_ready_replay_adapter",
+  "source_rows": 91,
+  "ready_rows": 56,
+  "replay_payload_rows": 56,
+  "payload_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/history_contract_unreached_ready_replay_payload_v1.csv",
+  "next_step": "run history_contract_unreached_ready_replay_write.py"
+}

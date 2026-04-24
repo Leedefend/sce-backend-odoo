@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_actual_outflow_replay_adapter",
+  "expected_rows": 12463,
+  "replay_payload_rows": 12463,
+  "payload_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/fresh_db_actual_outflow_replay_payload_v1.csv"
+}

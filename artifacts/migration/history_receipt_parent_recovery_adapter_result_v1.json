@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "mode": "history_receipt_parent_recovery_adapter",
+  "payload_rows": 1372,
+  "invoice_line_rows_covered": 2137,
+  "policy_action_counts": {
+    "exclude_from_core_missing_contract_link": 1238,
+    "hold_blocked_contract_not_replayed": 115,
+    "hold_blocked_partner_not_replayed": 19
+  },
+  "payload_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/history_receipt_parent_recovery_payload_v1.csv"
+}

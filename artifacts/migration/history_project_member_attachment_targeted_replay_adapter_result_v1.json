@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "mode": "history_project_member_attachment_targeted_replay_adapter",
+  "requested_member_refs": 7858,
+  "payload_rows": 7858,
+  "missing_xml_rows": 0,
+  "payload_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/history_project_member_attachment_targeted_replay_payload_v1.csv"
+}

@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "mode": "history_actual_outflow_partner_targeted_replay_adapter",
+  "requested_partner_refs": 3857,
+  "payload_rows": 3857,
+  "source_bucket_counts": {
+    "partner_master": 3756,
+    "receipt_counterparty": 101,
+    "contract_counterparty": 0
+  },
+  "payload_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/history_actual_outflow_partner_targeted_replay_payload_v1.csv"
+}

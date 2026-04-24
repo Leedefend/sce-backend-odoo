@@ -28740,3 +28740,523 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - 回归：
   - `addons.smart_construction_scene.tests.test_action_only_scene_semantic_supply`
   - 新断言：showcase xmlid 不再进入 `menu_scene_map / action_xmlid_scene_map`
+
+## 2026-04-24 Batch-Migration-sc_demo-Replay-Matrix
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `31c62372`
+- Layer Target: `Migration Alignment Layer`
+- Module: `fresh_db replay -> sc_demo adaptation`
+- Reason: 用户确认仓库里已经存在完整历史重建方案与 carrier/staging 设计，因此停止扩 ad-hoc 用户导入链，改为盘点 full replay 主链如何进入 `sc_demo`。
+- 事实冻结：
+  - 现有 canonical 主链：
+    - `docs/migration_alignment/fresh_db_operation_contract_v1.md`
+    - `artifacts/migration/fresh_db_replay_manifest_v1.json`
+    - `scripts/migration/fresh_db_replay_runner_dry_run.py`
+  - 已存在中性承载模型：
+    - `sc.project.member.staging`
+  - 当前 manifest 7 条 lane 中：
+    - `partner_l4_anchor_completed` -> `direct-reusable`
+    - `project_anchor_completed` -> `direct-reusable`
+    - `project_member_neutral_completed` -> `carrier-first`
+    - `contract_header_completed_1332` -> `direct-reusable`
+    - `contract_partner_source_12_anchor_design` -> `fresh-db-only`
+    - `receipt_header_pending` -> `direct-reusable`
+    - `payment_settlement_accounting` -> `blocked-high-risk`
+- 新产物：
+  - `docs/migration_alignment/sc_demo_replay_adaptation_matrix_v1.md`
+- 批次结论：
+  - 下一批不再增加 importer 快捷链；
+  - 直接进入 `Batch-Migration-sc_demo-Replay-Adapter-A`，只参数化 `fresh_db` guard/path，并为 5 条允许 lane 形成 `sc_demo replay contract`。
+
+## 2026-04-24 Batch-History-Continuity-A
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `31c62372`
+- Layer Target: `Migration Alignment Layer`
+- Module: `history continuity replay + rehearse contract`
+- Reason: 用户明确目标不是“把历史数据 replay 进去”，而是“历史数据进入新系统后用户能继续开展业务”，因此本批将 full replay 主链升级为 continuity contract，并沉淀一键 rehearse/replay 能力。
+- 实现范围：
+  - 参数化允许 lane 的 DB guard：
+    - `fresh_db_partner_l4_replay_write.py`
+    - `fresh_db_project_anchor_replay_write.py`
+    - `fresh_db_project_member_neutral_replay_write.py`
+    - `fresh_db_contract_remaining_write.py`
+    - `fresh_db_receipt_core_write.py`
+  - 参数化 `fresh_db_replay_payload_precheck.py` artifact 输出路径
+  - 新增：
+    - `scripts/migration/history_continuity_oneclick.sh`
+    - `scripts/migration/history_continuity_usability_probe.py`
+    - `docs/migration_alignment/history_continuity_execution_plan_v1.md`
+    - `docs/migration_alignment/history_continuity_replay_contract_v1.md`
+  - 新增 Make 入口：
+    - `history.continuity.rehearse`
+    - `history.continuity.replay`
+- 约束：
+  - 保持 `project_member_neutral_completed` 为 carrier-first
+  - 继续排除 `payment_settlement_accounting`
+- 演练结果：
+  - `python3 -m py_compile scripts/migration/fresh_db_replay_payload_precheck.py scripts/migration/fresh_db_partner_l4_replay_write.py scripts/migration/fresh_db_project_anchor_replay_write.py scripts/migration/fresh_db_project_member_neutral_replay_write.py scripts/migration/fresh_db_contract_remaining_write.py scripts/migration/fresh_db_receipt_core_write.py scripts/migration/history_continuity_usability_probe.py` PASS
+  - `bash -n scripts/migration/history_continuity_oneclick.sh scripts/ops/odoo_shell_exec.sh` PASS
+  - `DB_NAME=sc_demo make history.continuity.rehearse` PASS
+- rehearse 证据：
+  - manifest dry-run: PASS
+  - user asset verify: PASS
+  - replay payload precheck: PASS
+  - continuity probe: code-level PASS, runtime result `conditional`
+- 当前 `sc_demo` continuity counts：
+  - `legacy_users=101`
+  - `partner_l4_anchors=0`
+  - `project_anchors=0`
+  - `project_member_carrier=0`
+  - `contract_headers=0`
+  - `receipt_core_requests=0`
+- 结论：
+  - 一键 rehearse/replay contract 已经可用；
+  - 但当前 `sc_demo` 仍未完成除用户外的历史主体 replay，因此“用户进入新系统后可继续开展业务”尚未成立；
+  - 下一批必须进入真实 replay/提升链，而不是继续停留在 users-only 快捷链。
+
+## 2026-04-24 Batch-History-Continuity-B
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `31c62372`
+- Layer Target: `Migration Alignment Layer`
+- Module: `history continuity real replay on sc_demo`
+- Reason: 在 rehearse 打通后，继续执行真实允许 lane replay，验证历史主体是否能真正进入新系统事实面并支撑业务连续性。
+- replay 执行结果：
+  - `partner_l4_anchor_completed` PASS
+    - created `4797`
+  - `project_anchor_completed` PASS
+    - created `755`
+  - `project_member_neutral_completed` 初次 FAIL，根因是 payload 仍绑定 `fresh_project_id`；已改为优先按 `legacy_project_id` 解析后续跑 PASS
+    - created `7389`
+    - `project_responsibility_writes = 0`
+    - `visibility_changed = false`
+  - `contract_header_completed_1332` PASS
+    - created `1332`
+  - `receipt_header_pending` 初次 FAIL，根因是固定 `receive` + fresh runtime ids 与新系统 contract semantics 冲突；已改为 contract-anchored relation/type resolution 后 PASS
+    - created `1683`
+    - `ledger_rows_created = 0`
+    - `settlement_rows_created = 0`
+    - `account_move_rows_created = 0`
+- continuity 终态计数：
+  - `legacy_users = 101`
+  - `partner_l4_anchors = 4797`
+  - `project_anchors = 755`
+  - `project_member_carrier = 7389`
+  - `contract_headers = 1332`
+  - `receipt_core_requests = 1683`
+- continuity probe：
+  - `HISTORY_CONTINUITY_USABILITY_PROBE status=PASS`
+  - `zero_critical_counts = 0`
+- 新增能力：
+  - `history.continuity.replay` 支持 `HISTORY_CONTINUITY_START_AT=<step_name>` 断点续跑
+  - 允许 lane 全部改成 `legacy-first / runtime-id-fallback` 关系解析
+
+## 2026-04-24 Batch-History-Continuity-Full-Package-Matrix
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `31c62372`
+- Layer Target: `Migration Alignment Layer`
+- Module: `23-package continuity coverage`
+- Reason: 用户明确要求不是“核心 replay 成立就进入下一步”，而是 23 个历史包全部进入新系统后，再进入后续批次。
+- 事实冻结：
+  - `migration_asset_catalog_v1.json` 当前 `package_order_count = 23`
+  - 其中已进入 `sc_demo` continuity baseline 的只有 6 包：
+    - `project_sc_v1`
+    - `partner_sc_v1`
+    - `user_sc_v1`
+    - `project_member_sc_v1`
+    - `contract_sc_v1`
+    - `receipt_sc_v1`
+  - 其余 17 包仍为 `pending_full_package`
+- 新产物：
+  - `docs/migration_alignment/history_continuity_full_package_matrix_v1.md`
+  - `Makefile` target: `migration.assets.verify_all`
+- 下一批方向：
+  - 先接 `Group A`：
+    - `contract_counterparty_partner_sc_v1`
+    - `receipt_counterparty_partner_sc_v1`
+  - 再进入 business line/attachment/audit packages
+
+## 2026-04-24 Batch-History-Continuity-C
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `31c62372`
+- Layer Target: `Migration Alignment Layer`
+- Module: `23-package continuity / Group A master anchor packages`
+- Reason: 用户要求 23 包全部进入新系统后再进入下一步，因此先把剩余 master anchor 组正式纳入 one-click continuity replay。
+- 实现：
+  - 新增 host-side adapters：
+    - `scripts/migration/fresh_db_contract_counterparty_partner_replay_adapter.py`
+    - `scripts/migration/fresh_db_receipt_counterparty_partner_replay_adapter.py`
+  - 新增 replay writers：
+    - `scripts/migration/fresh_db_contract_counterparty_partner_replay_write.py`
+    - `scripts/migration/fresh_db_receipt_counterparty_partner_replay_write.py`
+  - `history_continuity_oneclick.sh` 已接入 Group A：
+    - `contract_counterparty_partner_adapter`
+    - `contract_counterparty_partner_completed`
+    - `receipt_counterparty_partner_adapter`
+    - `receipt_counterparty_partner_completed`
+  - `history_continuity_usability_probe.py` 增加计数：
+    - `contract_counterparty_partners`
+    - `receipt_counterparty_partners`
+- 验证：
+  - `python3 scripts/migration/fresh_db_contract_counterparty_partner_replay_adapter.py` PASS
+  - `python3 scripts/migration/fresh_db_receipt_counterparty_partner_replay_adapter.py` PASS
+  - `make migration.assets.verify_all` PASS
+  - `DB_NAME=sc_demo make odoo.shell.exec < scripts/migration/fresh_db_contract_counterparty_partner_replay_write.py` PASS
+    - created `88`
+  - `DB_NAME=sc_demo make odoo.shell.exec < scripts/migration/fresh_db_receipt_counterparty_partner_replay_write.py` PASS
+    - created `250`
+  - `DB_NAME=sc_demo make odoo.shell.exec < scripts/migration/history_continuity_usability_probe.py` PASS
+- continuity counts after Group A:
+  - `legacy_users = 101`
+  - `partner_l4_anchors = 4797`
+  - `contract_counterparty_partners = 88`
+  - `receipt_counterparty_partners = 250`
+  - `project_anchors = 755`
+  - `project_member_carrier = 7389`
+  - `contract_headers = 1332`
+  - `receipt_core_requests = 1683`
+- 结论：
+  - 23 包 continuity 已从 6 包扩展到 8 包
+  - 下一批应进入 Group B business header/line facts，而不是回头继续补快捷导入链
+
+## 2026-04-24 Batch-History-Continuity-D
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `31c62372`
+- Layer Target: `Migration Alignment Layer`
+- Module: `Group B business fact continuity feasibility`
+- Reason: 继续把 23 包从 anchor 扩到业务头/行事实，但必须先验证父锚点和运行态模型是否成立，避免把后续包硬灌进不完整 runtime。
+- 本批实现：
+  - 新增 adapters：
+    - `fresh_db_contract_line_replay_adapter.py`
+    - `fresh_db_supplier_contract_replay_adapter.py`
+    - `fresh_db_supplier_contract_line_replay_adapter.py`
+  - 新增 writers：
+    - `fresh_db_contract_line_replay_write.py`
+    - `fresh_db_supplier_contract_replay_write.py`
+    - `fresh_db_supplier_contract_line_replay_write.py`
+  - `history_continuity_oneclick.sh` 已接入这 3 条 step
+  - `history_continuity_usability_probe.py` 增加了：
+    - `contract_summary_lines`
+    - `supplier_contract_headers`
+    - `supplier_contract_lines`
+- 验证：
+  - adapters 全部 PASS：
+    - `contract_line = 1441`
+    - `supplier_contract = 5301`
+    - `supplier_contract_line = 5065`
+  - 真实 replay 结果：
+    - `contract_line` FAIL
+      - blocker: parent contract header missing in current `sc_demo`
+      - representative `legacy_contract_id = 002cc1eac1a54e889f7c28531ab6553f`
+      - this id exists in `contract_header_v1.xml` but is absent from current replayed `construction.contract`
+    - `supplier_contract` FAIL
+      - blocker: required `legacy_partner_sc_*` anchor missing in current `sc_demo`
+      - representative `legacy_partner_id = a4d55ad0464b43dab4f89d8ed06b5bed`
+      - exact id absent from current loaded partner/core/counterparty payloads
+    - `supplier_contract_line` FAIL
+      - blocked by parent supplier contract not loaded
+  - continuity probe still PASS on previous baseline
+- 结论：
+  - Group B 不是“writer 还没写好”，而是已经暴露出两个上游事实缺口：
+    1. `contract_sc_v1` 当前在 `sc_demo` 不是 full coverage，仍缺 parent contract headers
+    2. supplier contracts 依赖的通用 partner anchors 不在当前 `sc_demo`
+  - 下一批不该继续冲 `outflow_request / actual_outflow`，而应先补：
+    - contract core gap recovery
+    - supplier/general partner anchor recovery
+
+## 2026-04-24 Batch-History-Upstream-Recovery-A
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `31c62372`
+- Layer Target: `Migration Alignment Layer`
+- Module: `history upstream rebuild recovery`
+- Reason: 用户明确要求不能按当前缺口点修，必须回到原始重建过程本身判断。为此先冻结 upstream recovery plan，再决定后续恢复批次。
+- 复盘结论：
+  - 原始重建流程固定为：
+    - `source probe -> asset generate/verify -> adapter -> replay precheck -> bounded replay -> carrier/promote -> business usable`
+  - `Group B` 当前阻断不是单个 writer 问题，而是 upstream chain 未闭合：
+    - `contract_line_sc_v1` 被 `contract_sc_v1` coverage gap 卡住
+    - `supplier_contract_sc_v1` 被 general/supplier partner anchor gap 卡住
+- 新增产物：
+  - `docs/migration_alignment/history_upstream_recovery_plan_v1.md`
+- 下步冻结：
+  - `Batch-UR-A`: contract core coverage recovery
+  - `Batch-UR-B`: general/supplier partner recovery
+  - `Batch-UR-C`: 仅在 A/B 通过后恢复 Group B downstream replay
+
+## 2026-04-25 Batch-History-Upstream-Recovery-B
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `31c62372`
+- Layer Target: `Migration Contract Layer`
+- Module: `contract_sc_v1 upstream coverage audit`
+- Reason: `Group B` 被父合同头缺口阻断后，先回到原 bounded replay 过程，确认 `contract_sc_v1` 是只执行了 `1332` 主包，还是原设计里本来就还有未纳入的 slice/retry/recovery。
+- 本批实现：
+  - 新增只读审计脚本：
+    - `scripts/migration/history_contract_core_gap_audit.py`
+  - 新增 Make 入口：
+    - `make history.contract.core.gap.audit`
+  - 新增产物：
+    - `artifacts/migration/history_contract_core_gap_audit_v1.json`
+    - `artifacts/migration/ur_a_contract_unreached_asset_rows_v1.csv`
+    - `docs/migration_alignment/history_contract_core_gap_report_v1.md`
+  - 同步修正：
+    - `docs/migration_alignment/history_upstream_recovery_plan_v1.md`
+    - `docs/migration_alignment/history_continuity_full_package_matrix_v1.md`
+- 事实结论：
+  - `contract_sc_v1` 资产总量是 `1492`
+  - 历史 bounded payload 七段合计 `1332`
+  - 特殊 `12-row` payload 另有 `12`
+  - bounded payload 并集共 `1344`
+  - `57 retry` 单独存在且不与 bounded 并集重叠
+  - bounded + retry 总覆盖 `1401`
+  - 仍有 `91` 条合同头资产从未进入任何 replay payload
+  - live `sc_demo` probe 结果：
+    - bounded rows present = `1332 / 1344`
+    - retry57 present = `0 / 57`
+- 冻结决策：
+  - `UR-A` 不再笼统表述为 “contract core gap”
+  - 现在拆成 3 个明确子缺口：
+    1. `special_slice_gap_12`
+    2. `retry_lane_gap_57`
+    3. `never_reached_asset_gap_91`
+  - `Group B` 继续保持阻断，直到这 3 条按顺序决定恢复路径
+
+## 2026-04-25 Batch-History-Upstream-Recovery-C
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `31c62372`
+- Layer Target: `Migration Contract Layer`
+- Module: `contract_sc_v1 special/retry recovery`
+- Reason: `UR-A` 已拆成 `12 + 57 + 91` 三个子缺口；先恢复原始已存在的 `12-row` 与 `57-retry`，不提前触碰 `91 never-reached`。
+- 本批实现：
+  - 参数化现有 writer：
+    - `scripts/migration/contract_12_row_create_only_write.py`
+    - `scripts/migration/fresh_db_contract_57_retry_write.py`
+  - 新增最小依赖补齐：
+    - `scripts/migration/contract_12_row_missing_partner_anchor_write.py`
+  - `history_continuity_oneclick.sh` 默认主链现在新增：
+    - `contract_12_row_missing_partner_anchor_write`
+    - `contract_12_row_create_only_write`
+    - `fresh_db_contract_57_retry_write`
+  - `history_continuity_oneclick.sh` 默认不再执行已知阻断的 Group B lanes，需显式设置：
+    - `HISTORY_CONTINUITY_INCLUDE_BLOCKED_GROUP_B=1`
+- live 执行结果（`sc_demo`）：
+  - `fresh_db_contract_57_retry_write`：PASS，`created_rows = 57`
+  - `contract_12_row_missing_partner_anchor_write`：PASS，`created_rows = 4`
+  - `contract_12_row_create_only_write`：PASS，`created = 12`
+  - 覆盖 probe：
+    - bounded payload present = `1344 / 1344`
+    - retry57 present = `57 / 57`
+    - effective contract runtime coverage = `1401 / 1492`
+  - continuity probe：PASS
+- 结论：
+  - `special_slice_gap_12` 已关闭
+  - `retry_lane_gap_57` 已关闭
+  - 合同头上游缺口现只剩：
+    - `never_reached_asset_gap_91`
+  - `contract_line_sc_v1` 当前后续阻断应改写为：
+    - “被 91 条从未进入任何 payload 的父合同头缺口阻断”
+
+## 2026-04-25 Batch-History-Upstream-Recovery-D
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `31c62372`
+- Layer Target: `Migration Continuity Layer`
+- Module: `history_contract_unreached_ready_replay_*`
+- Reason: `UR-A.1` 之后剩余 `91` 条 never-reached 合同头不能再整体阻断；先把其中当前已具备 project/partner 条件的 `56` 条收进正式 ready-only replay lane，再把剩余问题收敛到真正的上游 blocker。
+- 本批实现：
+  - 新增 ready-only adapter：
+    - `scripts/migration/history_contract_unreached_ready_replay_adapter.py`
+  - 新增 ready-only writer：
+    - `scripts/migration/history_contract_unreached_ready_replay_write.py`
+  - writer 补齐 normalized partner match，和 `history_contract_unreached_reason_audit.py` 的判定口径对齐
+  - one-click 默认主链新增：
+    - `contract_unreached_ready_adapter`
+    - `contract_unreached_ready_replay`
+- live 执行结果（`sc_demo`）：
+  - adapter：PASS，`ready_rows = 56`
+  - writer：PASS，`created_rows = 56`
+  - continuity probe：PASS，`zero_critical_counts = 0`
+- 结论：
+  - `never_reached_asset_gap_91` 已拆成：
+    - `ready_recovered_56`
+    - `blocked_remaining_35`
+  - 当前有效合同头 runtime 覆盖已经提升到：
+    - `1457 / 1492`
+  - 下游 `Group B` 的合同侧阻断，不再是“91 条整体未恢复”，而是“剩余 35 条需先完成 partner/direction 上游恢复”
+
+## 2026-04-25 Batch-History-Upstream-Recovery-E
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `31c62372`
+- Layer Target: `Migration Audit Layer`
+- Module: `history_contract_partner_gap_audit.py`
+- Reason: `UR-A.2` 后剩余 `35` 条 blocked contract headers 不能再整体视为一个“partner gap”；需要先区分哪些是当前资产内可恢复的 anchor 覆盖缺口，哪些是当前 23 包内根本无源的 source gap，避免继续误写 downstream replay。
+- 本批实现：
+  - 新增只读审计脚本：
+    - `scripts/migration/history_contract_partner_gap_audit.py`
+  - 新增 Make 入口：
+    - `make history.contract.partner.gap.audit`
+  - 新增产物：
+    - `artifacts/migration/history_contract_partner_gap_audit_v1.json`
+    - `artifacts/migration/history_contract_partner_gap_rows_v1.csv`
+    - `docs/migration_alignment/history_contract_partner_gap_report_v1.md`
+- 事实结论：
+  - blocked rows = `35`
+  - partner source buckets：
+    - `partner_master_recoverable = 4`
+    - `no_asset_source_in_current_packages = 31`
+  - direction buckets：
+    - `both_blank = 3`
+    - `both_non_own = 3`
+    - `fbf_only_non_own = 5`
+    - `mixed_own_non_own = 1`
+  - 当前 35 条里，只有：
+    - `渝北区石船镇人民政府`（2）
+    - `中石油煤层气有限责任公司`（1）
+    - `成都市龙泉驿区第六中学`（1）
+    已在 `partner_master_v1` 中存在来源
+- 冻结决策：
+  - `UR-B` 正式拆成两条：
+    1. `UR-B.1 partner_master_replay_gap_4`
+    2. `UR-B.2 source_probe_gap_31`
+  - `direction_defer` 继续保持独立 blocker family，不并入 partner replay lane
+
+## 2026-04-25 Batch-History-Upstream-Recovery-F
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `31c62372`
+- Layer Target: `Migration Audit Layer`
+- Module: `history_contract_strong_evidence_backtrace_audit.py`
+- Reason: 用户明确要求回到“原始完整重建分析资产”而不是当前 continuity delivery 资产。需要确认剩余 blocked partner rows 是否早已进入原始 business-analysis 结果，避免把“未进当前 23 包”误判成“原始无源”。
+- 本批实现：
+  - 新增只读回溯脚本：
+    - `scripts/migration/history_contract_strong_evidence_backtrace_audit.py`
+  - 新增 Make 入口：
+    - `make history.contract.strong_evidence.backtrace.audit`
+  - 新增产物：
+    - `artifacts/migration/history_contract_strong_evidence_backtrace_audit_v1.json`
+    - `artifacts/migration/history_contract_strong_evidence_backtrace_rows_v1.csv`
+    - `docs/migration_alignment/history_contract_strong_evidence_backtrace_report_v1.md`
+- 事实结论：
+  - 当前 blocked rows 总数仍是 `35`
+  - 其中：
+    - `4` 条已在 `partner_master_v1`，属于 anchor replay gap
+    - `19` 条虽未进入当前 continuity delivery 资产，但 `19 / 19` 全部已命中原始 `contract_counterparty_strong_evidence_candidates_v1.csv`
+    - 这 `19` 条统一是：
+      - `evidence_type = repayment_single_counterparty`
+      - `evidence_strength = strong`
+      - `manual_confirm_required = yes`
+      - `confirmed_partner_action = <empty>`
+    - `12` 条则仍是 `direction_defer` 且无有效 counterparty 文本
+- 冻结决策：
+  - `UR-B` 进一步改写为三条：
+    1. `UR-B.1 partner_master_replay_gap_4`
+    2. `UR-B.2 strong_evidence_promotion_gap_19`
+    3. `UR-B.3 direction_defer_blank_counterparty_12`
+  - 不再使用“source_probe_gap_31”这一旧表述
+
+## 2026-04-25 Batch-History-Upstream-Recovery-G
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `31c62372`
+- Layer Target: `Migration Replay Layer`
+- Module: `history_partner_master_targeted_replay_*` + `history_contract_partner_recovery_*`
+- Reason: 回到原始完整重建分析链后，剩余 blocked 合同头已经收敛成可执行恢复面：`4` 条 partner-master replay gap 和 `19` 条 strong-evidence promotion gap，不应再停留在只读审计。
+- 本批实现：
+  - 新增 targeted partner-master adapter / writer：
+    - `scripts/migration/history_partner_master_targeted_replay_adapter.py`
+    - `scripts/migration/history_partner_master_targeted_replay_write.py`
+  - 新增 contract partner recovery adapter / writer：
+    - `scripts/migration/history_contract_partner_recovery_adapter.py`
+    - `scripts/migration/history_contract_partner_recovery_write.py`
+  - `history_continuity_oneclick.sh` 默认主链新增：
+    - `partner_master_targeted_adapter`
+    - `partner_master_targeted_replay`
+    - `contract_partner_recovery_adapter`
+    - `contract_partner_recovery_replay`
+- live 执行结果（`sc_demo`）：
+  - targeted partner-master backfill：PASS，`created_rows = 4`
+  - partner-recovered contract headers：PASS，`created_rows = 23`
+  - continuity probe：PASS，`zero_critical_counts = 0`
+  - 合同头 runtime 覆盖提升到：
+    - `1480 / 1492`
+- 关键事实：
+  - `UR-B.1 partner_master_replay_gap_4` 已关闭
+  - `UR-B.2 strong_evidence_promotion_gap_19` 已关闭
+  - 当前只剩：
+    - `UR-B.3 direction_defer_blank_counterparty_12`
+
+## 2026-04-25 Batch-History-Upstream-Recovery-H
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `31c62372`
+- Layer Target: `Migration Replay Layer`
+- Module: `history_partner_master_direction_defer_replay_*` + `history_contract_direction_defer_recovery_*`
+- Reason: `direction_defer_blank_counterparty_12` 不能再停留在 blocker 标签上；原始完整重建分析已经给出 `repayment_single_counterparty` strong-evidence 候选，需要通过 dedicated lane 提升进 continuity。
+- 本批实现：
+  - 新增 dedicated partner replay adapter / writer：
+    - `scripts/migration/history_partner_master_direction_defer_replay_adapter.py`
+    - `scripts/migration/history_partner_master_direction_defer_replay_write.py`
+  - 新增 direction-defer contract recovery adapter / writer：
+    - `scripts/migration/history_contract_direction_defer_recovery_adapter.py`
+    - `scripts/migration/history_contract_direction_defer_recovery_write.py`
+  - `history_continuity_oneclick.sh` 默认主链新增：
+    - `partner_master_direction_defer_adapter`
+    - `partner_master_direction_defer_replay`
+    - `contract_direction_defer_recovery_adapter`
+    - `contract_direction_defer_recovery_replay`
+- live 执行结果（`sc_demo`）：
+  - direction-defer partner targeted replay：PASS
+    - `input_rows = 12`
+    - `created_rows = 2`
+    - `skipped_existing = 10`
+  - direction-defer contract recovery：PASS
+    - `created_rows = 12`
+  - continuity probe：PASS
+    - `zero_critical_counts = 0`
+  - 合同头 runtime 覆盖提升到：
+    - `1492 / 1492`
+- 关键事实：
+  - `UR-B.3 direction_defer_blank_counterparty_12` 已关闭
+  - `contract_sc_v1` 合同头 continuity 覆盖已完整
+  - 下一步不再是 contract header recovery，而是恢复 `Group B` 下游：
+    - `contract_line_sc_v1`
+    - `supplier_contract_sc_v1`
+    - `supplier_contract_line_sc_v1`
+
+## 2026-04-25 Batch-History-Continuity-Finalize
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `31c62372`
+- Layer Target: `Migration Replay Layer / Ops Runbook Layer`
+- Module: `history_continuity_oneclick + legacy_* carrier/replay packages + server replay runbook`
+- Reason: 需要把 23 包历史连续性从“现场补链”收口成“服务器可一键重放”的正式交付。
+- 本批完成：
+  - 新增并落地最后 4 组历史事实 carrier/replay：
+    - `legacy_receipt_income_sc_v1`
+    - `legacy_expense_deposit_sc_v1`
+    - `legacy_invoice_tax_sc_v1`
+    - `legacy_workflow_audit_sc_v1`
+  - `history_continuity_oneclick.sh` 已覆盖完整 23 包主链
+  - 新增服务器 runbook：
+    - `docs/ops/history_continuity_server_replay_runbook_v1.md`
+- live 结果（`sc_demo`）：
+  - `legacy_receipt_income_sc_v1`: `7220 / 7220`
+  - `legacy_expense_deposit_sc_v1`: `11167 / 11167`
+  - `legacy_invoice_tax_sc_v1`: `5920 / 5920`
+  - `legacy_workflow_audit_sc_v1`: `79702 / 79702`
+  - `DB_NAME=sc_demo make history.continuity.rehearse`: `PASS`
+  - `HISTORY_CONTINUITY_USABILITY_PROBE`: `PASS`
+  - `zero_critical_counts = 0`
+- 结论：
+  - 历史连续性 replay 基线已完成
+  - 服务器端正式入口冻结为：
+    - `DB_NAME=<target_db> make history.continuity.replay`
+  - 下一阶段应转入 promotion / business usable，而不是继续补资产 ingress

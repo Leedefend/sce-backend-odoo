@@ -1,0 +1,72 @@
+{
+  "status": "PASS",
+  "mode": "history_contract_core_gap_audit",
+  "asset_rows": 1492,
+  "historical_bounded_rows": 1332,
+  "historical_bounded_union_rows": 1332,
+  "special_12_rows": 12,
+  "bounded_union_rows": 1344,
+  "retry_57_rows": 57,
+  "bounded_plus_retry_rows": 1401,
+  "never_reached_rows": 91,
+  "never_reached_ids_sample": [
+    "002cc1eac1a54e889f7c28531ab6553f",
+    "0537b6b19f3e47d9aa22b69a8c536953",
+    "062e24ff0f0e4401a108ef7c2923b1a0",
+    "0f5af263112a4ed79612602c5c570bf2",
+    "0fa88c601e9b492386bfc1671f5147a7",
+    "10a7ebce8f614491aadc01452f93a9b4",
+    "112b0910df974102b579d4c3364271f2",
+    "187e78a4a64b4c85a7c5537fdd6a7bac",
+    "19481c190e6747f4bb600c5c562a55bc",
+    "1b212fc98390446a9799344382bfed21",
+    "1d2cb08808a84a32b220095c57ca3928",
+    "1f63ffd7e5774c1db64743b588da15ae",
+    "201fdc7080bf402c918dae7b6c04880a",
+    "23284b7dd1304bb3ae1edcc3caf6bcf8",
+    "2412fe6aadc64c699e639e3c677b2c76",
+    "244b71e59c284777afa594b7155865c7",
+    "28862cb1f3ba40c6b78adb7960bbe7f6",
+    "28d5343d4cc5475bb925d9a5af03628f",
+    "293dbf3ae5e0468ca027eaf04bc3f9c8",
+    "2a49b8624fd145f2aa90177d3c2f4c9c",
+    "2e9bfcf0107a4c60bbe81d34ddc4c107",
+    "30ea518c2a09455cb40f4559c675dbe7",
+    "32d04f89e8fe427786b4130a8fd1845b",
+    "34322d7f3dc245d8b74e091c51a12fdf",
+    "36ae4d26b8494b2592ea400fa201beec",
+    "3836f50c190c4c438eabaacbdb60b80b",
+    "3d3e5b7d82eb4f78b1bc5691925a7684",
+    "424361fe38ef4de2ae7c74a10e91801b",
+    "4512209014a642b78248b2bde9d5d60c",
+    "4a3e6eca2f7d41e889fad2a3a61a069a"
+  ],
+  "unreached_shape": {
+    "project_ref_present": 91,
+    "partner_ref_present": 91,
+    "partner_master": 45,
+    "partner_contract_counterparty": 46,
+    "partner_other": 0
+  },
+  "unreached_distributions": {
+    "type": {
+      "out": 79,
+      "in": 12
+    },
+    "legacy_status": {
+      "2": 76,
+      "0": 8,
+      "1": 7
+    }
+  },
+  "decision": {
+    "special_slice_gap": 12,
+    "retry_lane_gap": 57,
+    "never_reached_asset_gap": 91
+  },
+  "artifacts": {
+    "json": "artifacts/migration/history_contract_core_gap_audit_v1.json",
+    "report": "docs/migration_alignment/history_contract_core_gap_report_v1.md",
+    "unreached_csv": "artifacts/migration/ur_a_contract_unreached_asset_rows_v1.csv"
+  }
+}
