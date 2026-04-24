@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_legacy_financing_loan_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.financing.loan.fact.tree</field>
+        <field name="model">sc.legacy.financing.loan.fact</field>
+        <field name="arch" type="xml">
+            <tree string="历史融资借款事实" create="0" edit="0" delete="0">
+                <field name="document_date"/>
+                <field name="document_no"/>
+                <field name="source_family"/>
+                <field name="source_direction"/>
+                <field name="project_id"/>
+                <field name="partner_id"/>
+                <field name="source_amount"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_financing_loan_fact_form" model="ir.ui.view">
+        <field name="name">sc.legacy.financing.loan.fact.form</field>
+        <field name="model">sc.legacy.financing.loan.fact</field>
+        <field name="arch" type="xml">
+            <form string="历史融资借款事实" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="document_date"/>
+                            <field name="document_no"/>
+                            <field name="source_family"/>
+                            <field name="source_direction"/>
+                            <field name="legacy_state"/>
+                            <field name="project_id"/>
+                            <field name="partner_id"/>
+                            <field name="source_amount"/>
+                        </group>
+                        <group>
+                            <field name="legacy_project_id"/>
+                            <field name="legacy_project_name"/>
+                            <field name="legacy_counterparty_id"/>
+                            <field name="legacy_counterparty_name"/>
+                            <field name="source_amount_field"/>
+                            <field name="source_type_label"/>
+                            <field name="source_extra_ref"/>
+                            <field name="source_extra_label"/>
+                            <field name="due_date"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="purpose"/>
+                            <field name="note"/>
+                        </group>
+                        <group>
+                            <field name="legacy_source_table"/>
+                            <field name="legacy_record_id"/>
+                            <field name="legacy_pid"/>
+                            <field name="import_batch"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

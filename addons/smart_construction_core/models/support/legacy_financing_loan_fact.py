@@ -1,0 +1,32 @@
+# -*- coding: utf-8 -*-
+from odoo import fields, models
+
+
+class ScLegacyFinancingLoanFact(models.Model):
+    _name = "sc.legacy.financing.loan.fact"
+    _description = "Legacy Financing Loan Fact"
+    _order = "document_date desc, id desc"
+
+    legacy_source_table = fields.Char(required=True, index=True)
+    legacy_record_id = fields.Char(required=True, index=True)
+    legacy_pid = fields.Char(index=True)
+    source_family = fields.Char(index=True)
+    source_direction = fields.Char(index=True)
+    document_no = fields.Char(index=True)
+    document_date = fields.Date(index=True)
+    legacy_state = fields.Char(index=True)
+    project_id = fields.Many2one("project.project", required=True, index=True, ondelete="cascade")
+    legacy_project_id = fields.Char(index=True)
+    legacy_project_name = fields.Char()
+    partner_id = fields.Many2one("res.partner", index=True, ondelete="set null")
+    legacy_counterparty_id = fields.Char(index=True)
+    legacy_counterparty_name = fields.Char()
+    source_amount = fields.Float()
+    source_amount_field = fields.Char()
+    purpose = fields.Text()
+    source_type_label = fields.Char()
+    source_extra_ref = fields.Char()
+    source_extra_label = fields.Char()
+    due_date = fields.Date(index=True)
+    note = fields.Text()
+    import_batch = fields.Char(required=True, index=True)

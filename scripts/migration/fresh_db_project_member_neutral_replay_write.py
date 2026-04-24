@@ -5,16 +5,36 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 from collections import Counter
 from pathlib import Path
 
 
-REPO_ROOT = Path("/mnt")
+def repo_root() -> Path:
+    env_root = os.getenv("MIGRATION_REPO_ROOT")
+    candidates = []
+    if env_root:
+        candidates.append(Path(env_root))
+    candidates.extend([Path("/mnt"), Path.cwd()])
+    for candidate in candidates:
+        if (candidate / "artifacts/migration/fresh_db_replay_manifest_v1.json").exists():
+            return candidate
+    return Path.cwd()
+
+
+def ensure_allowed_db() -> None:
+    allowlist = {item.strip() for item in os.getenv("MIGRATION_REPLAY_DB_ALLOWLIST", "sc_migration_fresh").split(",") if item.strip()}
+    if env.cr.dbname not in allowlist:  # noqa: F821
+        raise RuntimeError({"db_name_not_allowed_for_replay": env.cr.dbname, "allowlist": sorted(allowlist)})  # noqa: F821
+
+
+REPO_ROOT = repo_root()
+ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(REPO_ROOT / "artifacts/migration")))
 INPUT_CSV = REPO_ROOT / "artifacts/migration/fresh_db_project_member_neutral_replay_payload_v1.csv"
-OUTPUT_JSON = REPO_ROOT / "artifacts/migration/fresh_db_project_member_neutral_replay_write_result_v1.json"
-ROLLBACK_CSV = REPO_ROOT / "artifacts/migration/fresh_db_project_member_neutral_replay_rollback_targets_v1.csv"
-PRE_VISIBILITY_JSON = REPO_ROOT / "artifacts/migration/fresh_db_project_member_neutral_replay_pre_visibility_v1.json"
-POST_VISIBILITY_JSON = REPO_ROOT / "artifacts/migration/fresh_db_project_member_neutral_replay_post_visibility_v1.json"
+OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_project_member_neutral_replay_write_result_v1.json"
+ROLLBACK_CSV = ARTIFACT_ROOT / "fresh_db_project_member_neutral_replay_rollback_targets_v1.csv"
+PRE_VISIBILITY_JSON = ARTIFACT_ROOT / "fresh_db_project_member_neutral_replay_pre_visibility_v1.json"
+POST_VISIBILITY_JSON = ARTIFACT_ROOT / "fresh_db_project_member_neutral_replay_post_visibility_v1.json"
 EXPECTED_ROWS = 7389
 TARGET_MODEL = "sc.project.member.staging"
 FORBIDDEN_MODEL = "project.responsibility"
@@ -59,13 +79,48 @@ def visibility_snapshot(project_ids: list[int], user_ids: list[int]) -> dict[str
     return {"project_ids": sorted(project_ids), "user_ids": sorted(user_ids), "rows": rows}
 
 
-def build_vals(row: dict[str, str]) -> dict[str, object]:
+def resolve_project_id(row: dict[str, str], project_model) -> int | None:
+    legacy_project_id = clean(row.get("legacy_project_id"))
+    if legacy_project_id:
+        matches = project_model.search([("legacy_project_id", "=", legacy_project_id)], limit=2)
+        if len(matches) == 1:
+            return matches.id
+        if len(matches) > 1:
+            raise RuntimeError({"duplicate_legacy_project_matches": legacy_project_id, "project_ids": matches.ids})
+    fresh_project_id = clean(row.get("fresh_project_id"))
+    if fresh_project_id:
+        rec = project_model.browse(int(fresh_project_id)).exists()
+        if rec:
+            return rec.id
+    return None
+
+
+def resolve_user_id(row: dict[str, str], user_model) -> int | None:
+    target_user_id = clean(row.get("target_user_id"))
+    if target_user_id:
+        rec = user_model.browse(int(target_user_id)).exists()
+        if rec:
+            return rec.id
+    legacy_user_ref = clean(row.get("legacy_user_ref"))
+    if legacy_user_ref:
+        for login in [legacy_user_ref, f"legacy_{legacy_user_ref}"]:
+            matches = user_model.search([("login", "=", login)], limit=2)
+            if len(matches) == 1:
+                return matches.id
+            if len(matches) > 1:
+                raise RuntimeError({"duplicate_login_matches": login, "user_ids": matches.ids})
+    return None
+
+
+def build_vals(row: dict[str, str], project_model, user_model) -> dict[str, object]:
+    project_id = resolve_project_id(row, project_model)
+    user_id = resolve_user_id(row, user_model)
     return {
         "legacy_member_id": clean(row.get("legacy_member_id")),
         "legacy_project_id": clean(row.get("legacy_project_id")),
         "legacy_user_ref": clean(row.get("legacy_user_ref")),
-        "project_id": int(clean(row.get("fresh_project_id"))),
-        "user_id": int(clean(row.get("target_user_id"))),
+        "project_id": project_id or 0,
+        "user_id": user_id or 0,
         "legacy_role_text": "",
         "role_fact_status": clean(row.get("role_fact_status")) or "missing",
         "import_batch": clean(row.get("import_batch")),
@@ -75,8 +130,7 @@ def build_vals(row: dict[str, str]) -> dict[str, object]:
     }
 
 
-if env.cr.dbname != "sc_migration_fresh":  # noqa: F821
-    raise RuntimeError({"db_name_not_sc_migration_fresh": env.cr.dbname})  # noqa: F821
+ensure_allowed_db()
 
 Model = env[TARGET_MODEL].sudo()  # noqa: F821
 Responsibility = env[FORBIDDEN_MODEL].sudo()  # noqa: F821
@@ -94,15 +148,15 @@ if duplicate_keys:
 
 create_vals = []
 for index, row in enumerate(rows, start=2):
-    vals = build_vals(row)
+    vals = build_vals(row, Project, Users)
     if clean(row.get("replay_action")) != "create_if_missing":
         errors.append({"line": index, "error": "unexpected_replay_action", "value": clean(row.get("replay_action"))})
     if vals["role_fact_status"] != "missing":
         errors.append({"line": index, "error": "role_fact_status_not_missing", "value": vals["role_fact_status"]})
-    if not Project.browse(vals["project_id"]).exists():
-        errors.append({"line": index, "error": "project_missing", "project_id": vals["project_id"]})
-    if not Users.browse(vals["user_id"]).exists():
-        errors.append({"line": index, "error": "user_missing", "user_id": vals["user_id"]})
+    if not vals["project_id"]:
+        errors.append({"line": index, "error": "project_missing", "legacy_project_id": vals["legacy_project_id"], "fresh_project_id": clean(row.get("fresh_project_id"))})
+    if not vals["user_id"]:
+        errors.append({"line": index, "error": "user_missing", "legacy_user_ref": vals["legacy_user_ref"], "target_user_id": clean(row.get("target_user_id"))})
     create_vals.append(vals)
 
 legacy_batch_pairs = [(vals["legacy_member_id"], vals["import_batch"]) for vals in create_vals]

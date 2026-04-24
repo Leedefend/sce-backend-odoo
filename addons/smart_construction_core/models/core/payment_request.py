@@ -152,6 +152,16 @@ class PaymentRequest(models.Model):
         "payment_request_id",
         string="付款记录",
     )
+    outflow_line_ids = fields.One2many(
+        "payment.request.line",
+        "request_id",
+        string="付款申请明细",
+    )
+    receipt_invoice_line_ids = fields.One2many(
+        "sc.receipt.invoice.line",
+        "request_id",
+        string="收款发票明细",
+    )
     paid_amount_total = fields.Monetary(
         string="已付款合计",
         currency_field="currency_id",

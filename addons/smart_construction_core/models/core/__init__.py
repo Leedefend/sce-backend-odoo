@@ -13,6 +13,8 @@ from . import settlement_order
 from . import settlement
 from . import funding_baseline
 from . import payment_request
+from . import payment_request_line
+from . import receipt_invoice_line
 from . import payment_ledger
 from . import project_dashboard
 from . import contract_recon_summary

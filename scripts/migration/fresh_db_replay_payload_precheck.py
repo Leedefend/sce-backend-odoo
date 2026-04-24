@@ -9,22 +9,29 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 from pathlib import Path
 
 
 def repo_root() -> Path:
-    for candidate in [Path("/mnt"), Path.cwd()]:
+    env_root = os.getenv("MIGRATION_REPO_ROOT")
+    candidates = []
+    if env_root:
+        candidates.append(Path(env_root))
+    candidates.extend([Path("/mnt"), Path.cwd()])
+    for candidate in candidates:
         if (candidate / "artifacts/migration/fresh_db_replay_manifest_v1.json").exists():
             return candidate
     return Path.cwd()
 
 
 REPO_ROOT = repo_root()
+ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(REPO_ROOT / "artifacts/migration")))
 PARTNER_PAYLOAD = REPO_ROOT / "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv"
 PROJECT_PAYLOAD = REPO_ROOT / "artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv"
 CONTRACT_PARTNER_PAYLOAD = REPO_ROOT / "artifacts/migration/fresh_db_contract_partner_12_anchor_replay_payload_v1.csv"
-OUTPUT_JSON = REPO_ROOT / "artifacts/migration/fresh_db_replay_payload_precheck_result_v1.json"
-OUTPUT_REPORT = REPO_ROOT / "docs/migration_alignment/fresh_db_replay_payload_precheck_report_v1.md"
+OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_replay_payload_precheck_result_v1.json"
+OUTPUT_REPORT = ARTIFACT_ROOT / "fresh_db_replay_payload_precheck_report_v1.md"
 
 
 def clean(value: object) -> str:
@@ -50,7 +57,7 @@ Task: `ITER-2026-04-15-FRESH-DB-REPLAY-PAYLOAD-PRECHECK`
 
 ## Scope
 
-Read-only validation of ready replay payloads against `sc_migration_fresh`.
+Read-only validation of ready replay payloads against the current replay target.
 This batch does not create, update, or delete business records.
 
 ## Payload Rows
