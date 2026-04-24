@@ -195,15 +195,24 @@ class TestV1IntentSmoke(HttpCase):
         self.assertIn("capability_groups", data.get("data", {}))
         self.assertIn("init_contract_v1", data.get("data", {}))
         self.assertIn("system_init_sections_v1", data.get("data", {}))
+        self.assertIn("page_contracts", data.get("data", {}))
         self.assertIn("workspace_home_ref", data.get("data", {}))
         self.assertNotIn("workspace_home", data.get("data", {}))
         workspace_home_ref = data.get("data", {}).get("workspace_home_ref") or {}
+        self.assertEqual(str(workspace_home_ref.get("scene_key") or "").strip(), "workspace.home")
         self.assertFalse(bool(workspace_home_ref.get("loaded")))
+        page_contracts = data.get("data", {}).get("page_contracts") if isinstance(data.get("data", {}).get("page_contracts"), dict) else {}
+        pages = page_contracts.get("pages") if isinstance(page_contracts.get("pages"), dict) else {}
+        self.assertIn("home", pages)
+        self.assertIn("my_work", pages)
+        self.assertIn("workbench", pages)
         default_route = data.get("data", {}).get("default_route") or {}
         if isinstance(default_route, dict):
             self.assertIn("reason", default_route)
             self.assertIn("route", default_route)
             self.assertIn("scene_key", default_route)
+            self.assertEqual(str(default_route.get("scene_key") or "").strip(), "workspace.home")
+            self.assertEqual(str(default_route.get("route") or "").strip(), "/")
         init_contract = data.get("data", {}).get("init_contract_v1") or {}
         sections_v1 = data.get("data", {}).get("system_init_sections_v1") or {}
         self.assertEqual(sections_v1.get("contract_version"), "1.0.0")

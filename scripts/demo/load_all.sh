@@ -34,5 +34,5 @@ load_all(env, mode="update")
 print("[demo.load.all] done")
 PY
 
-printf '[demo.load.all] seed showroom\n'
-STEPS=demo_showroom,project_stage_sync DB_NAME="$DB_NAME" bash "$ROOT_DIR/scripts/seed/run.sh"
+printf '[demo.load.all] apply showroom reconciliation seed chain\n'
+STEPS=demo_showroom,demo_40_contracts,demo_50_boq_wbs,demo_60_attachments,z_demo_full_my_work,project_stage_sync DB_NAME="$DB_NAME" bash "$ROOT_DIR/scripts/seed/run.sh"

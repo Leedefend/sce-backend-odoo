@@ -957,6 +957,227 @@ def _to_business_action(
     }
 
 
+def _today_action_default_label() -> str:
+    actions = _workspace_layout_actions({"todo_default": "查看详情"})
+    return _to_text(actions.get("todo_default")) or "查看详情"
+
+
+def _today_action_coming_soon_label() -> str:
+    texts = _workspace_layout_texts({"today_actions.coming_soon_action": "即将开放"})
+    return _to_text(texts.get("today_actions.coming_soon_action")) or "即将开放"
+
+
+def _normalize_today_action_row(row: Dict[str, Any]) -> Dict[str, Any]:
+    candidate = dict(row or {})
+    entry_key = _to_text(candidate.get("entry_key") or candidate.get("key") or candidate.get("id"))
+    if entry_key:
+        candidate["entry_key"] = entry_key
+    scene_key = _to_text(candidate.get("scene_key") or candidate.get("scene"))
+    route = _to_text(candidate.get("route"))
+    if not scene_key and route:
+        scene_key = _scene_from_route(route)
+    if not scene_key:
+        scene_key = _route_scene_by_source(
+            entry_key
+            or _to_text(candidate.get("source_detail"))
+            or _to_text(candidate.get("source"))
+            or _to_text(candidate.get("id"))
+        )
+    if scene_key:
+        candidate["scene_key"] = scene_key
+    if not route and scene_key:
+        candidate["route"] = f"/s/{scene_key}"
+    entry_id = _to_text(candidate.get("entry_id") or entry_key or candidate.get("id"))
+    if entry_id:
+        candidate["entry_id"] = entry_id
+    candidate["action_key"] = _to_text(candidate.get("action_key")) or "open_scene"
+    if not _to_text(candidate.get("action_label")):
+        candidate["action_label"] = (
+            _today_action_coming_soon_label()
+            if candidate.get("ready") is False
+            else _today_action_default_label()
+        )
+    return candidate
+
+
+def _risk_action_default_label() -> str:
+    texts = _workspace_layout_texts({"risk.actions.detail": "看详情"})
+    return _to_text(texts.get("risk.actions.detail")) or "看详情"
+
+
+def _normalize_risk_action_row(row: Dict[str, Any]) -> Dict[str, Any]:
+    candidate = dict(row or {})
+    scene_key = _to_text(candidate.get("scene_key") or candidate.get("scene")) or _workspace_scene("risk_center")
+    candidate["scene_key"] = scene_key
+    route = _to_text(candidate.get("route"))
+    path = _to_text(candidate.get("path")) or route or f"/s/{scene_key}"
+    candidate["route"] = route or path
+    candidate["path"] = path
+    query = candidate.get("query")
+    candidate["query"] = query if isinstance(query, dict) else {}
+    entry_key = _to_text(candidate.get("entry_key") or candidate.get("key") or candidate.get("id"))
+    if entry_key:
+        candidate["entry_key"] = entry_key
+    entry_id = _to_text(candidate.get("entry_id") or entry_key or candidate.get("id"))
+    if entry_id:
+        candidate["entry_id"] = entry_id
+    candidate["action_key"] = _to_text(candidate.get("action_key")) or "open_scene"
+    candidate["action_label"] = _to_text(candidate.get("action_label")) or _risk_action_default_label()
+    return candidate
+
+
+def _normalize_metric_row(row: Dict[str, Any], index: int) -> Dict[str, Any]:
+    candidate = dict(row or {})
+    level = _to_text(candidate.get("level")).lower()
+    if level not in {"red", "amber", "green"}:
+        level = "green"
+    candidate["key"] = _to_text(candidate.get("key")) or f"metric-{index + 1}"
+    candidate["label"] = _to_text(candidate.get("label")) or f"指标 {index + 1}"
+    candidate["value"] = _to_text(candidate.get("value")) or "0"
+    candidate["delta"] = _to_text(candidate.get("delta"))
+    candidate["hint"] = _to_text(candidate.get("hint"))
+    candidate["level"] = level
+    candidate["tone"] = _to_text(candidate.get("tone")) or _tone_from_level(level)
+    candidate["progress"] = _to_text(candidate.get("progress")) or ("pending" if candidate["tone"] == "warning" else "running")
+    return candidate
+
+
+def _workspace_ops_summary_text(*, has_business_signal: bool, risk_business_count: int, today_business_count: int) -> str:
+    if not has_business_signal:
+        return "当前未采集到完整业务事实，已回退到最小运行态指标。"
+    if risk_business_count > 0:
+        return f"已识别 {risk_business_count} 条关键事项，建议先处理风险后再推进日常动作。"
+    if today_business_count > 0:
+        return f"当前有 {today_business_count} 条今日行动待处理，整体运行保持稳定。"
+    return "当前运行平稳，未发现需要优先处理的关键事项。"
+
+
+def _build_scene_group_rows(scenes: Iterable[Dict[str, Any]], capabilities: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    capability_map = {
+        _to_text(cap.get("key")): cap
+        for cap in capabilities
+        if isinstance(cap, dict) and _to_text(cap.get("key"))
+    }
+    rows: List[Dict[str, Any]] = []
+    for scene_index, scene in enumerate(scenes):
+        if not isinstance(scene, dict):
+            continue
+        scene_key = _to_text(scene.get("key"))
+        if not scene_key:
+            continue
+        scene_label = _to_text(scene.get("label")) or scene_key
+        scene_tags = [
+            _to_text(item).lower()
+            for item in (scene.get("tags") if isinstance(scene.get("tags"), list) else [])
+            if _to_text(item)
+        ]
+        tiles = scene.get("tiles") if isinstance(scene.get("tiles"), list) else []
+        for tile_index, tile in enumerate(tiles):
+            if not isinstance(tile, dict):
+                continue
+            key = _to_text(tile.get("key"))
+            if not key:
+                continue
+            payload = tile.get("payload") if isinstance(tile.get("payload"), dict) else {}
+            cap = capability_map.get(key, {})
+            rows.append(
+                {
+                    "id": f"{scene_key}-{key}-{scene_index}-{tile_index}",
+                    "key": key,
+                    "title": _to_text(tile.get("title")) or _to_text(cap.get("label")) or f"功能 {scene_index + 1}-{tile_index + 1}",
+                    "action_label": _to_text(tile.get("action_label")) or _to_text(payload.get("action_label")) or _today_action_default_label(),
+                    "subtitle": _to_text(tile.get("subtitle")),
+                    "scene_key": scene_key,
+                    "scene_label": scene_label,
+                    "sequence": _to_int(tile.get("sequence") if tile.get("sequence") is not None else 9999),
+                    "status": _to_text(tile.get("status")).lower() or "ga",
+                    "state": _to_text(tile.get("state")).upper(),
+                    "capability_state": _to_text(cap.get("capability_state")).lower(),
+                    "group_key": _to_text(cap.get("group_key")),
+                    "group_label": _to_text(cap.get("group_label")),
+                    "reason": _to_text(tile.get("reason")) or _to_text(cap.get("reason")),
+                    "reason_code": _to_text(tile.get("reason_code")) or _to_text(cap.get("reason_code")),
+                    "route": _to_text(tile.get("route")) or _to_text(payload.get("route")) or f"/s/{scene_key}",
+                    "action_id": _to_int(payload.get("action_id")),
+                    "menu_id": _to_int(payload.get("menu_id")),
+                    "model": _to_text(payload.get("model")),
+                    "record_id": _to_text(payload.get("record_id")),
+                    "query": payload.get("context_query") or payload.get("query") or payload.get("context") or {},
+                    "scene_tags": list(scene_tags),
+                    "tile_tags": [
+                        _to_text(item).lower()
+                        for item in (tile.get("tags") if isinstance(tile.get("tags"), list) else [])
+                        if _to_text(item)
+                    ],
+                }
+            )
+    return rows
+
+
+def _build_capability_group_rows(
+    capability_groups: Iterable[Dict[str, Any]],
+    capabilities: Iterable[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    normalized_groups = [row for row in capability_groups if isinstance(row, dict)]
+    if normalized_groups:
+        rows: List[Dict[str, Any]] = []
+        for row in normalized_groups:
+            state_counts = row.get("state_counts") if isinstance(row.get("state_counts"), dict) else {}
+            capability_state_counts = row.get("capability_state_counts") if isinstance(row.get("capability_state_counts"), dict) else {}
+            ready_count = _to_int(state_counts.get("READY"))
+            allow_count = _to_int(capability_state_counts.get("allow"))
+            rows.append(
+                {
+                    "key": _to_text(row.get("key")),
+                    "label": _to_text(row.get("label")) or _to_text(row.get("key")),
+                    "sequence": _to_int(row.get("sequence")),
+                    "capability_count": _to_int(row.get("capability_count")),
+                    "allow_count": allow_count,
+                    "readonly_count": _to_int(capability_state_counts.get("readonly")),
+                    "deny_count": _to_int(capability_state_counts.get("deny")),
+                    "ready_count": ready_count,
+                    "score": ready_count * 2 + allow_count,
+                }
+            )
+        return [row for row in rows if row.get("key")]
+
+    bucket: Dict[str, Dict[str, Any]] = {}
+    for cap in capabilities:
+        if not isinstance(cap, dict):
+            continue
+        group_key = _to_text(cap.get("group_key"))
+        if not group_key:
+            continue
+        row = bucket.setdefault(
+            group_key,
+            {
+                "key": group_key,
+                "label": _to_text(cap.get("group_label")) or group_key,
+                "sequence": _to_int(cap.get("group_sequence")),
+                "capability_count": 0,
+                "allow_count": 0,
+                "readonly_count": 0,
+                "deny_count": 0,
+                "ready_count": 0,
+            },
+        )
+        row["capability_count"] += 1
+        capability_state = _to_text(cap.get("capability_state")).lower()
+        if capability_state == "allow":
+            row["allow_count"] += 1
+        elif capability_state == "readonly":
+            row["readonly_count"] += 1
+        elif capability_state == "deny":
+            row["deny_count"] += 1
+        if _capability_state(cap) == "READY":
+            row["ready_count"] += 1
+    rows = list(bucket.values())
+    for row in rows:
+        row["score"] = _to_int(row.get("ready_count")) * 2 + _to_int(row.get("allow_count"))
+    rows.sort(key=lambda item: (_to_int(item.get("sequence")), _to_text(item.get("label"))))
+    return rows
+
+
 def _build_business_today_actions(
     data: Dict[str, Any],
     role_code: str = "",
@@ -984,16 +1205,18 @@ def _build_business_today_actions(
     for source_key in ordered_sources:
         rows = collections.get(source_key, [])
         for idx, row in enumerate(rows[:6]):
-            candidates.append(
-                _to_business_action(
-                    source_key,
-                    row,
-                    idx,
-                    role_code=role_code,
-                    source_kind="business",
-                    keyword_overrides=keyword_overrides,
-                )
+            action = _to_business_action(
+                source_key,
+                row,
+                idx,
+                role_code=role_code,
+                source_kind="business",
+                keyword_overrides=keyword_overrides,
             )
+            action["action_label"] = _to_text(row.get("action_label"))
+            action["action_key"] = _to_text(row.get("action_key"))
+            action["entry_id"] = _to_text(row.get("entry_id") or row.get("entry_key") or row.get("key"))
+            candidates.append(_normalize_today_action_row(action))
     candidates.sort(key=lambda item: (-_to_int(item.get("urgency_score")), 0 if item.get("status") == "urgent" else 1))
     dedup: List[Dict[str, Any]] = []
     seen: set = set()
@@ -1036,7 +1259,7 @@ def _build_capability_today_actions(ready_caps: Iterable[Dict[str, Any]], role_c
                         source_kind=source_kind,
                     )
                     candidate["impact_score"] = _impact_score(candidate)
-                    normalized.append(candidate)
+                    normalized.append(_normalize_today_action_row(candidate))
                 return normalized
     actions: List[Dict[str, Any]] = []
     for cap in list(ready_caps)[:6]:
@@ -1071,7 +1294,7 @@ def _build_capability_today_actions(ready_caps: Iterable[Dict[str, Any]], role_c
                 "impact_score": 0,
             }
         )
-    return actions
+    return [_normalize_today_action_row(item) for item in actions]
 
 
 def _build_today_actions(
@@ -1190,7 +1413,7 @@ def _build_risk_actions(
             action["source"] = "business"
             action["status"] = "urgent"
             action["tone"] = "danger"
-            actions.append(action)
+            actions.append(_normalize_risk_action_row(action))
     if actions:
         actions.sort(key=lambda item: -_to_int(item.get("urgency_score")))
         return actions[:3]
@@ -1225,7 +1448,7 @@ def _build_risk_actions(
                 action["source_detail"] = "semantic_template"
                 action["status"] = "urgent"
                 action["tone"] = "danger"
-                signal_actions.append(action)
+                signal_actions.append(_normalize_risk_action_row(action))
             if signal_actions:
                 signal_actions.sort(key=lambda item: -_to_int(item.get("urgency_score")))
                 deduped: List[Dict[str, Any]] = []
@@ -1244,7 +1467,7 @@ def _build_risk_actions(
     fallback: List[Dict[str, Any]] = []
     for cap in list(locked_caps)[:2]:
         fallback.append(
-            {
+            _normalize_risk_action_row({
                 "id": _to_text(cap.get("key")),
                 "title": _to_text(cap.get("ui_label") or cap.get("name") or cap.get("key")) or "受限能力",
                 "description": _to_text(cap.get("reason")) or "当前账号尚未开通该能力。",
@@ -1262,7 +1485,7 @@ def _build_risk_actions(
                     source_kind="capability_fallback",
                 ),
                 "impact_score": 0,
-            }
+            })
         )
     return fallback[:2]
 
@@ -1353,7 +1576,10 @@ def _build_metric_sets(ready_count: int, locked_count: int, preview_count: int, 
         {"key": "platform.preview_caps", "label": "预览能力", "value": str(preview_count)},
         {"key": "platform.scene_count", "label": "场景配置数", "value": str(scene_count)},
     ]
-    return business_metrics, platform_metrics
+    return (
+        [_normalize_metric_row(row, index) for index, row in enumerate(business_metrics)],
+        [_normalize_metric_row(row, index) for index, row in enumerate(platform_metrics)],
+    )
 
 
 def _build_interaction_contract() -> Dict[str, Any]:
@@ -2054,6 +2280,7 @@ def _build_advice_items(locked_caps: Iterable[Dict[str, Any]]) -> List[Dict[str,
 def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
     capabilities = data.get("capabilities") if isinstance(data.get("capabilities"), list) else []
     scenes = data.get("scenes") if isinstance(data.get("scenes"), list) else []
+    capability_groups = data.get("capability_groups") if isinstance(data.get("capability_groups"), list) else []
 
     normalized_caps = [cap for cap in capabilities if isinstance(cap, dict)]
     total_caps = len(normalized_caps)
@@ -2228,6 +2455,8 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         today_business_count=today_business_count,
     )
     ops_meta = _workspace_ops_meta(has_business_signal=has_business_signal)
+    scene_group_rows = _build_scene_group_rows(scenes, normalized_caps)
+    capability_group_rows = _build_capability_group_rows(capability_groups, normalized_caps)
     return {
         "scene": scene_contract_core.get("scene") or {},
         "page": scene_contract_core.get("page") or {},
@@ -2253,7 +2482,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 {"key": "group_overview", "enabled": True, "tag": "section"},
                 {"key": "advice", "enabled": True, "tag": "details", "open": False},
                 {"key": "filters", "enabled": False, "tag": "section"},
-                {"key": "scene_groups", "enabled": False, "tag": "div"},
+                {"key": "scene_groups", "enabled": True, "tag": "section"},
             ],
             "texts": _workspace_layout_texts({
                 "hero.role_label": "当前角色",
@@ -2328,10 +2557,17 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         "ops": {
             "bars": ops_payload.get("bars") or {},
             "kpi": ops_payload.get("kpi") or {},
+            "summary": _workspace_ops_summary_text(
+                has_business_signal=has_business_signal,
+                risk_business_count=risk_business_count,
+                today_business_count=today_business_count,
+            ),
             "tone": _to_text(ops_meta.get("tone")) or "info",
             "progress": _to_text(ops_meta.get("progress")) or "running",
             "data_state": _to_text(ops_meta.get("data_state")) or "fallback",
         },
+        "scene_groups": list(scene_group_rows),
+        "group_overview": list(capability_group_rows),
         "blocks": [
             {
                 "type": "hero",

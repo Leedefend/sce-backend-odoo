@@ -87,6 +87,23 @@ class TestUiBaseContractAssetRepository(unittest.TestCase):
         self.assertFalse(target._is_canonical_scene_root(scene))
         self.assertFalse(target._asset_is_stale_for_scene(asset, scene))
 
+    def test_rejects_action_asset_when_action_backed_scene_identity_drifted(self):
+        scene = {
+            "code": "projects.list",
+            "target": {
+                "route": "/s/projects.list",
+                "action_id": 452,
+            },
+        }
+        asset = {
+            "id": 34,
+            "source_ref": "action:519",
+            "payload": {"model": "project.project"},
+        }
+
+        self.assertFalse(target._is_canonical_scene_root(scene))
+        self.assertTrue(target._asset_is_stale_for_scene(asset, scene))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -524,6 +524,7 @@ class UiContractHandler(BaseIntentHandler):
                         if not head.get("context") and action.context:
                             head["context"] = _safe_eval_or(action.context, {})
                         data["head"] = head
+                    _restrict_form_action_surface(data, render_profile=render_profile)
                 return self._finalize_projected_contract(
                     data=data,
                     view_type="form",
@@ -535,8 +536,13 @@ class UiContractHandler(BaseIntentHandler):
         # 统一服务的 action 分发
         p2 = {"subject":"action","action_id": action_id, "with_data": False}
         data, versions = self._build_dispatcher(ctx).dispatch(p2)
-
-        return self._finalize_data(data, subject="action"), {"schema_version":"view-contract-1", "version": format_versions_safe(versions)}
+        return self._finalize_projected_contract(
+            data=data,
+            view_type=requested_view_type or None,
+            versions=versions,
+            subject="action",
+            meta={"action_id": action_id},
+        )
 
     # ---------------- 工具 ----------------
     def _read_if_none_match(self, p) -> str:
@@ -580,6 +586,50 @@ def _safe_eval_or(val, default):
         return val if val is not None else default
     except Exception:
         return default
+
+
+def _normalize_render_profile_name(value):
+    raw = str(value or "").strip().lower()
+    if raw in {"read", "view"}:
+        return "readonly"
+    if raw in {"create", "edit", "readonly"}:
+        return raw
+    return ""
+
+
+def _is_form_compatible_action_row(row, render_profile=""):
+    if not isinstance(row, dict):
+        return False
+    selection = str(row.get("selection") or "none").strip().lower()
+    if selection != "none":
+        return False
+    profiles = row.get("visible_profiles")
+    if isinstance(profiles, (list, tuple)):
+        normalized = [str(item or "").strip().lower() for item in profiles if str(item or "").strip()]
+        if render_profile and normalized and render_profile not in normalized:
+            return False
+    level = str(row.get("level") or "").strip().lower()
+    return level in {"header", "smart", "sidebar", "footer"}
+
+
+def _restrict_form_action_surface(data, render_profile=""):
+    if not isinstance(data, dict):
+        return data
+    profile = _normalize_render_profile_name(render_profile)
+    buttons = data.get("buttons")
+    if isinstance(buttons, list):
+        data["buttons"] = [
+            dict(row)
+            for row in buttons
+            if _is_form_compatible_action_row(row, profile)
+        ]
+    toolbar = data.get("toolbar")
+    if isinstance(toolbar, dict):
+        data["toolbar"] = {"header": [], "sidebar": [], "footer": []}
+    action_groups = data.get("action_groups")
+    if isinstance(action_groups, list):
+        data["action_groups"] = []
+    return data
 
 def format_versions_safe(v):
     try:

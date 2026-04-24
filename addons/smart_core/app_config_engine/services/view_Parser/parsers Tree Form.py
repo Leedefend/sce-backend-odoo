@@ -21,6 +21,52 @@ _logger = logging.getLogger(__name__)
 
 
 class _TreeFormParserMixin:
+    def _native_button_contract_scope(self, btn_node, level='header'):
+        classes = [c.strip() for c in (btn_node.get('class') or '').split() if c.strip()]
+        if 'oe_stat_button' in classes or 'oe_stat_info' in classes:
+            return {
+                "level": "smart",
+                "selection": "none",
+                "visible_profiles": ["create", "edit", "readonly"],
+            }
+
+        in_header = False
+        host = ""
+        p = btn_node.getparent()
+        while p is not None:
+            tag = getattr(p, 'tag', '')
+            if tag == 'header':
+                in_header = True
+            if tag in ('tree', 'list'):
+                host = 'list'
+                break
+            if tag == 'form':
+                host = 'form'
+                break
+            if tag == 'kanban':
+                host = 'kanban'
+                break
+            p = p.getparent()
+
+        if host == 'list':
+            if in_header:
+                return {
+                    "level": "toolbar",
+                    "selection": "multi",
+                    "visible_profiles": ["readonly", "list"],
+                }
+            return {
+                "level": "row",
+                "selection": "none",
+                "visible_profiles": ["readonly", "list"],
+            }
+
+        return {
+            "level": "header" if level != 'smart' else 'smart',
+            "selection": "none",
+            "visible_profiles": ["create", "edit", "readonly"],
+        }
+
     # ---------------- tree 解析 ----------------
     def _parse_tree_view(self, arch, fields_info):
         columns, row_actions, row_classes = [], [], []
@@ -216,21 +262,10 @@ class _TreeFormParserMixin:
             context_raw = btn_node.get('context')
             priority    = btn_node.get('priority')
 
-            # 层级判定
-            lvl = level
-            p = btn_node.getparent()
-            while p is not None:
-                tag = getattr(p, 'tag', '')
-                if tag == 'tree':
-                    lvl = 'row'; break
-                if tag in ('form', 'kanban'):
-                    lvl = 'header'; break
-                p = p.getparent()
-            if 'oe_stat_button' in classes or 'oe_stat_info' in classes:
-                lvl = 'smart'
-
-            # 选择模式
-            selection = 'multi' if lvl == 'row' else 'single'
+            scope = self._native_button_contract_scope(btn_node, level=level)
+            lvl = scope["level"]
+            selection = scope["selection"]
+            visible_profiles = scope["visible_profiles"]
             ctx_val = self._safe_eval_expr(context_raw)
             if isinstance(ctx_val, dict):
                 sel = ctx_val.get('selection')
@@ -264,6 +299,7 @@ class _TreeFormParserMixin:
                 "kind": "object",
                 "level": lvl,
                 "selection": selection,
+                "visible_profiles": visible_profiles,
                 "groups": [],
                 "visible": {"domain": [], "states": states, "attrs": visible_attrs},
                 "intent": "execute",
@@ -284,7 +320,7 @@ class _TreeFormParserMixin:
 
             def _finalize(base, btype):
                 if base.get("selection") not in ("single", "multi", "none"):
-                    base["selection"] = "multi" if base.get("level") == "row" else "single"
+                    base["selection"] = "none"
                 if btype == 'object':
                     base["kind"] = "server"; base["intent"] = "execute"
                     if not base["payload"].get("method"):
@@ -293,7 +329,7 @@ class _TreeFormParserMixin:
                         base["name"] = base["payload"]["method"]
                 if btype == 'action':
                     base["kind"] = "open"; base["intent"] = "open"
-                    if base.get("level") != "row":
+                    if base.get("level") not in ("row", "toolbar"):
                         base["selection"] = "none"
                 if btype == 'url' or base["payload"].get("url"):
                     base["kind"] = "url"; base["intent"] = "url"; base["selection"] = "none"
@@ -316,7 +352,6 @@ class _TreeFormParserMixin:
                 base["name"] = ref
                 base["kind"] = "open"
                 base["intent"] = "open"
-                base["selection"] = "single" if level == 'row' else "none"
                 base["payload"]["ref"] = ref
                 if not (base["label"] or '').strip():
                     base["label"] = "Action"
