@@ -16,6 +16,52 @@ def _load_module():
 
 
 class TestSceneRegistryYamlAssetMerge(unittest.TestCase):
+    def test_load_scene_configs_prefers_registry_target_xmlids_over_stale_db_numeric_ids(self):
+        target = _load_module()
+        original_load_from_db = target._load_from_db
+        original_load_imported = target._load_imported_scenes
+        original_load_content = target._load_scene_registry_content_entries_with_timings
+        try:
+            target._load_from_db = lambda env, drift=None: [
+                {
+                    "code": "projects.list",
+                    "name": "项目列表",
+                    "target": {
+                        "route": "/s/projects.list",
+                        "action_id": 519,
+                        "menu_id": 329,
+                    },
+                }
+            ]
+            target._load_imported_scenes = lambda env, drift=None: []
+            target._load_scene_registry_content_entries_with_timings = lambda: (
+                [
+                    {
+                        "code": "projects.list",
+                        "name": "项目列表",
+                        "target": {
+                            "route": "/s/projects.list",
+                            "menu_xmlid": "smart_construction_core.menu_sc_root",
+                            "action_xmlid": "smart_construction_core.action_sc_project_list",
+                        },
+                    }
+                ],
+                {},
+            )
+            rows, _timings = target.load_scene_configs_with_timings(None)
+        finally:
+            target._load_from_db = original_load_from_db
+            target._load_imported_scenes = original_load_imported
+            target._load_scene_registry_content_entries_with_timings = original_load_content
+
+        projects_list = next((row for row in rows if row.get("code") == "projects.list"), {})
+        scene_target = (projects_list.get("target") or {})
+        self.assertEqual(scene_target.get("route"), "/s/projects.list")
+        self.assertEqual(scene_target.get("action_xmlid"), "smart_construction_core.action_sc_project_list")
+        self.assertEqual(scene_target.get("menu_xmlid"), "smart_construction_core.menu_sc_root")
+        self.assertNotIn("action_id", scene_target)
+        self.assertNotIn("menu_id", scene_target)
+
     def test_load_scene_configs_merges_yaml_asset_fields_into_registry_row(self):
         target = _load_module()
         original_load_from_db = target._load_from_db

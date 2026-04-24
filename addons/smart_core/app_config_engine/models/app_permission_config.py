@@ -139,7 +139,7 @@ class AppPermissionConfig(models.Model):
 
     # ================== 标准化输出（服务层直接使用） ==================
 
-    def get_permission_contract(self, filter_runtime=False):
+    def get_permission_contract(self, filter_runtime=False, uid=None):
         """
         返回标准化权限契约
         - filter_runtime=False：返回“全量定义”（服务层自行按用户裁剪）
@@ -152,7 +152,7 @@ class AppPermissionConfig(models.Model):
             return perm
 
         # 运行态裁剪：按当前用户组聚合
-        eff = self.compile_effective_for_user(uid=self.env.uid)
+        eff = self.compile_effective_for_user(uid=uid or self.env.uid)
         # 将四权与命中规则回填到 permission_def 的副本上，便于服务层直用
         perm['effective'] = eff
         return perm

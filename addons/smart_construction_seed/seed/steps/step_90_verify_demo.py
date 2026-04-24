@@ -45,6 +45,37 @@ def _get_showroom_projects(env):
     return Project.search(domain)
 
 
+def _verify_demo_full_my_work(env):
+    Users = env["res.users"].sudo()
+    demo_full = Users.search([("login", "=", "demo_full")], limit=1)
+    if not demo_full:
+        raise UserError("demo_full missing for my_work verification.")
+
+    partner = demo_full.partner_id
+    Project = env["project.project"].sudo()
+    Task = env["project.task"].sudo()
+    Activity = env["mail.activity"].sudo()
+    Message = env["mail.message"].sudo()
+    Followers = env["mail.followers"].sudo()
+
+    project_count = Project.search_count([("doc_manager_id", "=", demo_full.id)]) if "doc_manager_id" in Project._fields else 0
+    task_count = Task.search_count([("user_ids", "in", demo_full.id)]) if "user_ids" in Task._fields else 0
+    activity_count = Activity.search_count([("user_id", "=", demo_full.id)])
+    mention_count = Message.search_count([("partner_ids", "in", partner.id)]) if partner else 0
+    follow_count = Followers.search_count([("partner_id", "=", partner.id)]) if partner else 0
+
+    if project_count <= 0:
+        raise UserError("demo_full my_work verification failed: no responsible demo projects.")
+    if task_count <= 0:
+        raise UserError("demo_full my_work verification failed: no assigned demo tasks.")
+    if activity_count <= 0:
+        raise UserError("demo_full my_work verification failed: no assigned activities.")
+    if mention_count <= 0:
+        raise UserError("demo_full my_work verification failed: no mentions.")
+    if follow_count <= 0:
+        raise UserError("demo_full my_work verification failed: no follows.")
+
+
 def _collect_missing(env, project):
     missing = []
     if not project.partner_id:
@@ -65,7 +96,10 @@ def _collect_missing(env, project):
         missing.append("boq")
     if Boq.search_count([("project_id", "=", project.id), ("work_id", "!=", False)]) > 0:
         missing.append("boq_has_wbs")
-    if Boq.search_count([("project_id", "=", project.id), ("structure_id", "=", False)]) > 0:
+    boq_no_structure_domain = [("project_id", "=", project.id), ("structure_id", "=", False)]
+    if "is_group" in Boq._fields:
+        boq_no_structure_domain.append(("is_group", "=", False))
+    if Boq.search_count(boq_no_structure_domain) > 0:
         missing.append("boq_no_structure")
     work_count = Work.search_count([("project_id", "=", project.id)])
     if work_count == 0:
@@ -219,6 +253,8 @@ def run(env):
         if warn_ratio < 0.15 or warn_ratio > 0.25:
             raise UserError(f"Warn ratio out of range: {warn_ratio:.2f}")
 
+    _verify_demo_full_my_work(env)
+
     stage_xmlids = [
         "smart_construction_core.project_stage_planning",
         "smart_construction_core.project_stage_running",
@@ -229,11 +265,27 @@ def run(env):
         "smart_construction_core.project_stage_archived",
     ]
     for xmlid in stage_xmlids:
-        stage = env.ref(xmlid, raise_if_not_found=False)
-        if not stage:
-            continue
-        if env["project.project"].sudo().search_count([("stage_id", "=", stage.id)]) < 1:
-            raise UserError(f"Demo projects missing for stage: {stage.display_name}")
+        if not env.ref(xmlid, raise_if_not_found=False):
+            raise UserError(f"Project stage missing: {xmlid}")
+
+    lifecycle_samples = {
+        "draft": ["DEMO-PJ-INIT", "DEMO-PJ-TENDER", "DEMO-PJ-STAGE-DRAFT"],
+        "in_progress": ["DEMO-PJ-EXEC", "DEMO-PJ-STAGE-RUN"],
+        "paused": ["DEMO-PJ-STAGE-PAUSE"],
+        "closing": ["DEMO-PJ-STAGE-CLOSING"],
+        "done": ["DEMO-PJ-STAGE-DONE"],
+        "warranty": ["DEMO-PJ-STAGE-WARRANTY"],
+        "closed": ["DEMO-PJ-STAGE-CLOSED"],
+    }
+    for lifecycle_state, codes in lifecycle_samples.items():
+        count = env["project.project"].sudo().search_count(
+            [
+                ("project_code", "in", codes),
+                ("lifecycle_state", "=", lifecycle_state),
+            ]
+        )
+        if count < 1:
+            raise UserError(f"Demo projects missing lifecycle sample: {lifecycle_state}")
 
     ICP = env["ir.config_parameter"].sudo()
     ICP.set_param("sc.seed.demo.verify", fields.Datetime.now().isoformat())

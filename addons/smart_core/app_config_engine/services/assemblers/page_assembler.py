@@ -198,7 +198,7 @@ class PageAssembler:
         #    - 返回时开启 filter_runtime=True，按“当前用户组”裁剪出 effective.rights/rules
         try:
             pcfg = su['app.permission.config']._generate_from_access_rights(model)
-            data["permissions"] = pcfg.get_permission_contract(filter_runtime=True)
+            data["permissions"] = pcfg.get_permission_contract(filter_runtime=True, uid=env.uid)
             versions["perm"] = pcfg.version
         except KeyError:
             mark_missing("app.permission.config")
@@ -209,7 +209,7 @@ class PageAssembler:
         # 6) 动作按钮 + 工具栏（元数据可 su_env，最终显隐由前端结合 groups/permissions 再次裁剪）
         try:
             acfg = su['app.action.config']._generate_from_ir_actions(model)
-            buttons_data = acfg.get_action_contract()
+            buttons_data = acfg.with_env(env).get_action_contract()
             versions["actions"] = acfg.version if getattr(acfg, 'version', None) else 1
         except KeyError:
             mark_missing("app.action.config")

@@ -35,7 +35,7 @@ load_release_seed(env, mode="update")
 print("[demo.load.release] scenario seed done")
 PY
 
-printf '[demo.load.release] apply seed steps=demo_showroom,project_stage_sync\n'
-STEPS=demo_showroom,project_stage_sync DB_NAME="$DB_NAME" bash "$ROOT_DIR/scripts/seed/run.sh"
+printf '[demo.load.release] apply showroom reconciliation seed chain\n'
+STEPS=demo_showroom,demo_40_contracts,demo_50_boq_wbs,demo_60_attachments,z_demo_full_my_work,project_stage_sync DB_NAME="$DB_NAME" bash "$ROOT_DIR/scripts/seed/run.sh"
 
 printf '[demo.load.release] done\n'

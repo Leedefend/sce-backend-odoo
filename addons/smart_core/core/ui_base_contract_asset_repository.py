@@ -174,10 +174,19 @@ def _asset_is_stale_for_scene(asset: dict | None, scene: dict) -> bool:
     payload = asset if isinstance(asset, dict) else {}
     if not payload:
         return False
-    if not _is_canonical_scene_root(scene):
-        return False
     source_ref = _text(payload.get("source_ref"))
-    return source_ref.startswith("action:")
+    if not source_ref.startswith("action:"):
+        return False
+    if _is_canonical_scene_root(scene):
+        return True
+    expected_action_id = _resolve_scene_action_id(None, scene)
+    if expected_action_id <= 0:
+        return False
+    try:
+        current_action_id = int(source_ref.split(":", 1)[1] or 0)
+    except Exception:
+        current_action_id = 0
+    return current_action_id > 0 and current_action_id != expected_action_id
 
 
 def _minimal_ui_base_contract(scene_key: str) -> dict:

@@ -101,6 +101,201 @@ class TestActionDispatcherServerMapping(TransactionCase):
         self.assertTrue(model, f"ui.contract(action_open) returned empty model: {result}")
         self.assertNotEqual(contract_type, "diagnostic", f"unexpected diagnostic contract: {result}")
 
+    def test_ui_contract_action_open_project_list_preserves_list_multi_actions(self):
+        action = self.env.ref("smart_construction_core.action_sc_project_list", raise_if_not_found=False)
+        if not action:
+            self.skipTest("smart_construction_core.action_sc_project_list not installed")
+
+        run_env = self.env
+        demo_user = self.env["res.users"].sudo().search([("login", "=", "demo_full")], limit=1)
+        if demo_user:
+            run_env = self.env(user=demo_user)
+
+        handler = UiContractHandler(run_env)
+        result = handler.handle(payload={"params": {"op": "action_open", "action_id": int(action.id)}})
+
+        self.assertTrue(result.get("ok"), result)
+        data = result.get("data") or {}
+        head = data.get("head") if isinstance(data.get("head"), dict) else {}
+        self.assertEqual(str(head.get("view_type") or data.get("view_type") or "").strip().lower(), "tree")
+
+        buttons = data.get("buttons") if isinstance(data.get("buttons"), list) else []
+        toolbar = data.get("toolbar") if isinstance(data.get("toolbar"), dict) else {}
+        header_rows = toolbar.get("header") if isinstance(toolbar.get("header"), list) else []
+        multi_rows = [
+            row
+            for row in buttons + header_rows
+            if isinstance(row, dict) and row.get("selection") == "multi"
+        ]
+        self.assertTrue(multi_rows, f"expected list multi actions in project list contract: {result}")
+        list_profile = data.get("list_profile") if isinstance(data.get("list_profile"), dict) else {}
+        self.assertEqual(
+            list_profile.get("columns") or [],
+            [
+                "name",
+                "user_id",
+                "partner_id",
+                "stage_id",
+                "lifecycle_state",
+                "date_start",
+                "date",
+            ],
+        )
+        self.assertEqual((list_profile.get("column_labels") or {}).get("name"), "名称")
+        self.assertEqual((list_profile.get("column_labels") or {}).get("user_id"), "项目管理员")
+        self.assertEqual((list_profile.get("column_labels") or {}).get("date"), "有效期")
+
+    def test_ui_contract_action_open_payment_list_preserves_list_multi_actions(self):
+        action = self.env.ref("smart_construction_core.action_sc_finance_dashboard", raise_if_not_found=False)
+        if not action:
+            self.skipTest("smart_construction_core.action_sc_finance_dashboard not installed")
+
+        run_env = self.env
+        demo_user = self.env["res.users"].sudo().search([("login", "=", "demo_full")], limit=1)
+        if demo_user:
+            run_env = self.env(user=demo_user)
+
+        handler = UiContractHandler(run_env)
+        result = handler.handle(payload={"params": {"op": "action_open", "action_id": int(action.id)}})
+
+        self.assertTrue(result.get("ok"), result)
+        data = result.get("data") or {}
+        head = data.get("head") if isinstance(data.get("head"), dict) else {}
+        self.assertEqual(str(head.get("view_type") or data.get("view_type") or "").strip().lower(), "tree")
+
+        buttons = data.get("buttons") if isinstance(data.get("buttons"), list) else []
+        toolbar = data.get("toolbar") if isinstance(data.get("toolbar"), dict) else {}
+        header_rows = toolbar.get("header") if isinstance(toolbar.get("header"), list) else []
+        multi_rows = [
+            row
+            for row in buttons + header_rows
+            if isinstance(row, dict) and row.get("selection") == "multi"
+        ]
+        self.assertTrue(multi_rows, f"expected list multi actions in payment list contract: {result}")
+        list_profile = data.get("list_profile") if isinstance(data.get("list_profile"), dict) else {}
+        self.assertEqual(
+            list_profile.get("columns") or [],
+            [
+                "name",
+                "type",
+                "project_id",
+                "contract_id",
+                "settlement_id",
+                "settlement_amount_payable",
+                "partner_id",
+                "amount",
+                "state",
+                "date_request",
+            ],
+        )
+        self.assertEqual((list_profile.get("column_labels") or {}).get("name"), "申请单号")
+        self.assertEqual((list_profile.get("column_labels") or {}).get("date_request"), "申请日期")
+
+    def test_ui_contract_action_open_material_plan_list_preserves_list_multi_actions(self):
+        action = self.env.ref("smart_construction_core.action_project_material_plan", raise_if_not_found=False)
+        if not action:
+            self.skipTest("smart_construction_core.action_project_material_plan not installed")
+
+        run_env = self.env
+        demo_user = self.env["res.users"].sudo().search([("login", "=", "demo_full")], limit=1)
+        if demo_user:
+            run_env = self.env(user=demo_user)
+
+        handler = UiContractHandler(run_env)
+        result = handler.handle(payload={"params": {"op": "action_open", "action_id": int(action.id)}})
+
+        self.assertTrue(result.get("ok"), result)
+        data = result.get("data") or {}
+        head = data.get("head") if isinstance(data.get("head"), dict) else {}
+        self.assertEqual(str(head.get("view_type") or data.get("view_type") or "").strip().lower(), "tree")
+
+        buttons = data.get("buttons") if isinstance(data.get("buttons"), list) else []
+        toolbar = data.get("toolbar") if isinstance(data.get("toolbar"), dict) else {}
+        header_rows = toolbar.get("header") if isinstance(toolbar.get("header"), list) else []
+        multi_rows = [
+            row
+            for row in buttons + header_rows
+            if isinstance(row, dict) and row.get("selection") == "multi"
+        ]
+        self.assertTrue(multi_rows, f"expected list multi actions in material plan contract: {result}")
+        list_profile = data.get("list_profile") if isinstance(data.get("list_profile"), dict) else {}
+        self.assertEqual(
+            list_profile.get("columns") or [],
+            ["name", "project_id", "date_plan", "state"],
+        )
+        self.assertEqual((list_profile.get("column_labels") or {}).get("name"), "单号")
+        self.assertEqual((list_profile.get("column_labels") or {}).get("date_plan"), "需用日期")
+
+    def test_ui_contract_action_open_payment_form_excludes_list_toolbar_actions(self):
+        action = self.env.ref("smart_construction_core.action_sc_finance_dashboard", raise_if_not_found=False)
+        if not action:
+            self.skipTest("smart_construction_core.action_sc_finance_dashboard not installed")
+
+        payment = self.env["payment.request"].sudo().search([], limit=1)
+        if not payment:
+            self.skipTest("payment.request demo data not installed")
+
+        run_env = self.env
+        demo_user = self.env["res.users"].sudo().search([("login", "=", "demo_full")], limit=1)
+        if demo_user:
+            run_env = self.env(user=demo_user)
+
+        handler = UiContractHandler(run_env)
+        result = handler.handle(payload={"params": {
+            "op": "action_open",
+            "action_id": int(action.id),
+            "record_id": int(payment.id),
+            "render_profile": "edit",
+        }})
+
+        self.assertTrue(result.get("ok"), result)
+        data = result.get("data") or {}
+        head = data.get("head") if isinstance(data.get("head"), dict) else {}
+        self.assertEqual(str(head.get("view_type") or data.get("view_type") or "").strip().lower(), "form")
+
+        buttons = data.get("buttons") if isinstance(data.get("buttons"), list) else []
+        toolbar = data.get("toolbar") if isinstance(data.get("toolbar"), dict) else {}
+        header_rows = toolbar.get("header") if isinstance(toolbar.get("header"), list) else []
+        self.assertFalse(header_rows, f"form contract should not expose toolbar header rows: {result}")
+
+        for row in buttons:
+            if not isinstance(row, dict):
+                continue
+            self.assertEqual(str(row.get("selection") or "none").strip().lower(), "none", result)
+            self.assertIn(str(row.get("level") or "").strip().lower(), {"header", "smart", "sidebar", "footer"}, result)
+
+    def test_ui_contract_action_open_tier_review_payment_list_hides_nav_loop_actions(self):
+        action = self.env.ref("smart_construction_core.action_sc_tier_review_my_payment_request", raise_if_not_found=False)
+        if not action:
+            self.skipTest("smart_construction_core.action_sc_tier_review_my_payment_request not installed")
+
+        run_env = self.env
+        demo_user = self.env["res.users"].sudo().search([("login", "=", "demo_full")], limit=1)
+        if demo_user:
+            run_env = self.env(user=demo_user)
+
+        handler = UiContractHandler(run_env)
+        result = handler.handle(payload={"params": {"op": "action_open", "action_id": int(action.id)}})
+
+        self.assertTrue(result.get("ok"), result)
+        data = result.get("data") or {}
+        head = data.get("head") if isinstance(data.get("head"), dict) else {}
+        self.assertEqual(str(head.get("model") or "").strip(), "tier.review")
+        self.assertEqual(str(head.get("view_type") or data.get("view_type") or "").strip().lower(), "tree")
+
+        def has_nav_loop(rows):
+            return any(
+                isinstance(row, dict)
+                and str(row.get("key") or "").startswith("smart_construction_core.action_sc_tier_review_my_")
+                for row in rows
+            )
+
+        buttons = data.get("buttons") if isinstance(data.get("buttons"), list) else []
+        toolbar = data.get("toolbar") if isinstance(data.get("toolbar"), dict) else {}
+        header_rows = toolbar.get("header") if isinstance(toolbar.get("header"), list) else []
+        self.assertFalse(has_nav_loop(buttons), result)
+        self.assertFalse(has_nav_loop(header_rows), result)
+
     def test_nav_enrich_server_action_infers_mapped_model(self):
         menu = self.env.ref("smart_construction_core.menu_sc_project_wbs", raise_if_not_found=False)
         if not menu:

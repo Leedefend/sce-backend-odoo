@@ -33,6 +33,107 @@ target = _load_module(
 
 
 class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
+    def test_build_startup_surface_keeps_workspace_home_ref(self):
+        payload = target.SystemInitPayloadBuilder.build_startup_surface(
+            {
+                "user": {"id": 1},
+                "nav": [],
+                "nav_meta": {},
+                "default_route": {"scene_key": "workspace.home"},
+                "intents": [],
+                "feature_flags": {},
+                "role_surface": {"landing_scene_key": "workspace.home"},
+                "contract_version": "1.0.0",
+                "schema_version": "1.0.0",
+                "scene_version": "v1",
+                "workspace_home_ref": {
+                    "intent": "ui.contract",
+                    "scene_key": "workspace.home",
+                    "loaded": False,
+                },
+            }
+        )
+
+        workspace_home_ref = payload.get("workspace_home_ref") or {}
+        self.assertEqual(workspace_home_ref.get("intent"), "ui.contract")
+        self.assertEqual(workspace_home_ref.get("scene_key"), "workspace.home")
+        self.assertFalse(bool(workspace_home_ref.get("loaded")))
+
+    def test_build_startup_surface_keeps_default_page_contracts_only(self):
+        payload = target.SystemInitPayloadBuilder.build_startup_surface(
+            {
+                "user": {"id": 1},
+                "nav": [],
+                "nav_meta": {},
+                "default_route": {"scene_key": "workspace.home"},
+                "intents": [],
+                "feature_flags": {},
+                "role_surface": {"landing_scene_key": "workspace.home"},
+                "contract_version": "1.0.0",
+                "schema_version": "1.0.0",
+                "scene_version": "v1",
+                "page_contracts": {
+                    "schema_version": "v1",
+                    "contract_version": "page_contracts_v1",
+                    "pages": {
+                        "home": {"schema_version": "v1", "texts": {"title": "工作台"}},
+                        "my_work": {"schema_version": "v1", "texts": {"title": "我的工作"}},
+                        "workbench": {"schema_version": "v1", "texts": {"title": "工作台诊断"}},
+                        "action": {"schema_version": "v1", "texts": {"title": "动作页"}},
+                    },
+                },
+            }
+        )
+
+        page_contracts = payload.get("page_contracts") or {}
+        pages = page_contracts.get("pages") or {}
+        self.assertEqual(page_contracts.get("schema_version"), "v1")
+        self.assertEqual(page_contracts.get("contract_version"), "page_contracts_v1")
+        self.assertEqual(set(pages.keys()), {"home", "my_work", "workbench"})
+        self.assertNotIn("action", pages)
+        default_route = payload.get("default_route") or {}
+        self.assertEqual(default_route.get("scene_key"), "workspace.home")
+        self.assertEqual(default_route.get("route"), "/")
+        self.assertEqual(default_route.get("reason"), "workspace_home_default")
+        self.assertEqual(((default_route.get("entry_target") or {}).get("scene_key")), "workspace.home")
+        workspace_home_ref = payload.get("workspace_home_ref") or {}
+        self.assertEqual(workspace_home_ref.get("scene_key"), "workspace.home")
+
+    def test_build_startup_surface_includes_workspace_home_when_requested_via_with(self):
+        payload = target.SystemInitPayloadBuilder.build_startup_surface(
+            {
+                "user": {"id": 1},
+                "nav": [],
+                "nav_meta": {},
+                "default_route": {"scene_key": "workspace.home"},
+                "intents": [],
+                "feature_flags": {},
+                "role_surface": {"landing_scene_key": "workspace.home"},
+                "contract_version": "1.0.0",
+                "schema_version": "1.0.0",
+                "scene_version": "v1",
+                "page_contracts": {
+                    "pages": {
+                        "home": {"schema_version": "v1", "texts": {"title": "工作台"}},
+                    },
+                },
+                "workspace_home_ref": {
+                    "intent": "ui.contract",
+                    "scene_key": "workspace.home",
+                    "loaded": True,
+                },
+                "workspace_home": {
+                    "layout": {"sections": [{"key": "scene_groups", "enabled": True}]},
+                    "ops": {"summary": "ready"},
+                },
+            },
+            params={"with": ["workspace_home"]},
+        )
+
+        self.assertIn("workspace_home", payload)
+        workspace_home = payload.get("workspace_home") or {}
+        self.assertEqual(((workspace_home.get("ops") or {}).get("summary")), "ready")
+
     def test_build_startup_surface_preserves_runtime_semantics(self):
         payload = target.SystemInitPayloadBuilder.build_startup_surface(
             {

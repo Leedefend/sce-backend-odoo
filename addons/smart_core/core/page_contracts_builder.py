@@ -324,6 +324,21 @@ def _zone_for_section(page_key: str, section_key: str, tag: str) -> Dict[str, st
             if isinstance(payload, dict) and payload:
                 return payload
     payload = _zone_from_tag(tag)
+    page = str(page_key or "").strip().lower()
+    section = str(section_key or "").strip().lower()
+    if page == "my_work":
+        if section == "hero":
+            payload["title"] = "工作概览"
+            payload["description"] = "角色上下文、建议入口与工作总览。"
+            return payload
+        if section in {"todo_focus", "list_main"}:
+            payload["title"] = "待办处理"
+            payload["description"] = "按优先级处理当前工作项与动态。"
+            return payload
+        if section == "retry_panel":
+            payload["title"] = "失败与重试"
+            payload["description"] = "集中处理失败项、重试请求与证据。"
+            return payload
     payload["description"] = ""
     return payload
 
@@ -392,6 +407,15 @@ def _action_templates_for_page(page_key: str, section_key: str) -> list[Dict[str
             payload = fn(page_key, section_key)
             if isinstance(payload, list):
                 return payload
+    page = str(page_key or "").strip().lower()
+    section = str(section_key or "").strip().lower()
+    if page == "my_work":
+        if section == "todo_focus":
+            return [{"key": "open_my_work", "label": "进入工作区", "intent": "ui.contract"}]
+        if section == "list_main":
+            return [{"key": "open_list", "label": "查看全部事项", "intent": "ui.contract"}]
+        if section == "retry_panel":
+            return [{"key": "open_failed", "label": "查看失败项", "intent": "ui.contract"}]
     return _action_templates(section_key)
 
 
@@ -403,10 +427,28 @@ def _block_title(page_key: str, section_key: str) -> str:
             value = str(fn(page_key, section_key) or "").strip()
             if value:
                 return value
+    page = str(page_key or "").strip().lower()
+    section = str(section_key or "").strip().lower()
+    if page == "my_work":
+        titles = {
+            "hero": "工作概览",
+            "todo_focus": "待我处理",
+            "list_main": "事项动态",
+            "retry_panel": "失败与重试",
+        }
+        if section in titles:
+            return titles[section]
     return str(section_key or "").strip()
 
 
 def _action_target(action_key: str, page_key: str) -> Dict[str, Any]:
+    page = str(page_key or "").strip().lower()
+    key = str(action_key or "").strip().lower()
+    if page == "my_work":
+        if key == "open_list":
+            return {"kind": "route.path", "path": "/my-work"}
+        if key == "open_failed":
+            return {"kind": "route.path", "path": "/my-work"}
     return _shared_action_target(action_key, page_key)
 
 
