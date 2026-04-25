@@ -79,6 +79,8 @@ Supported resume step names:
 - `user_rebuild`
 - `legacy_user_context_adapter`
 - `legacy_user_context_replay`
+- `legacy_user_project_scope_adapter`
+- `legacy_user_project_scope_replay`
 - `replay_payload_precheck`
 - `partner_l4_anchor_completed`
 - `project_anchor_completed`
@@ -171,6 +173,7 @@ Supported resume step names:
 
 - users historical asset lane
 - `legacy_user_context`
+- `legacy_user_project_scope_sc_v1`
 - `partner_l4_anchor_completed`
 - `project_anchor_completed`
 - `legacy_material_catalog_sc_v1`

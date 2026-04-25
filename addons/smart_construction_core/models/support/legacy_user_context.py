@@ -71,3 +71,32 @@ class ScLegacyUserRole(models.Model):
     source_table = fields.Char(required=True, index=True)
     note = fields.Text()
     active = fields.Boolean(default=True, index=True)
+
+
+class ScLegacyUserProjectScope(models.Model):
+    _name = "sc.legacy.user.project.scope"
+    _description = "Legacy User Project Scope Fact"
+    _order = "created_time desc, legacy_scope_key"
+
+    legacy_scope_key = fields.Char(required=True, index=True)
+    source_table = fields.Char(required=True, index=True)
+    legacy_assignment_id = fields.Char(required=True, index=True)
+    relation_name = fields.Char(index=True)
+    legacy_user_id = fields.Char(required=True, index=True)
+    user_id = fields.Many2one("res.users", index=True, ondelete="set null")
+    company_legacy_id = fields.Char(index=True)
+    project_legacy_id = fields.Char(index=True)
+    project_id = fields.Many2one("project.project", index=True, ondelete="set null")
+    scope_state = fields.Char(required=True, index=True)
+    created_by_legacy_user_id = fields.Char(index=True)
+    created_by_name = fields.Char(index=True)
+    created_time = fields.Datetime(index=True)
+    removed_by_legacy_user_id = fields.Char(index=True)
+    removed_by_name = fields.Char(index=True)
+    removed_time = fields.Datetime(index=True)
+    note = fields.Text()
+    active = fields.Boolean(default=True, index=True)
+
+    _sql_constraints = [
+        ("legacy_scope_key_unique", "unique(legacy_scope_key)", "Legacy user project scope key must be unique."),
+    ]

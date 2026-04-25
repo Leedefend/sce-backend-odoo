@@ -132,6 +132,13 @@ The default replay chain also includes the legacy file index archive:
   flags, and source table identity are retained
 - binary file transfer is intentionally not performed by this lane
 
+The default replay chain preserves old user-project scope evidence:
+
+- 20,000 current rows and 70,871 removed/history rows are retained from
+  `T_System_UserAndXXGL` and `T_System_UserAndXXGL_History`
+- rows are linked to historical users and project anchors when possible
+- these records are evidence only and do not grant new-system access
+
 If a rehearsal needs to isolate only core headers, set:
 
 ```bash
@@ -170,6 +177,7 @@ DB_NAME=<target_db> RUN_ID=<run_id> MIGRATION_ARTIFACT_ROOT=/tmp/history_continu
 The one-click path now covers:
 
 - users / partner / project / project-member carrier
+- legacy user project scope evidence
 - contract / contract line / supplier contract / supplier contract line
 - receipt / outflow request / actual outflow / outflow request line
 - receipt invoice line / receipt invoice attachment
