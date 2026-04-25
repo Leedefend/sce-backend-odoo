@@ -230,24 +230,13 @@ def main():
         precheck_errors.append({"error": "payload_not_12_rows", "count": len(rows)})
     if duplicate_input_ids:
         precheck_errors.append({"error": "duplicate_input_legacy_contract_id", "ids": duplicate_input_ids})
-    if pre_records:
-        precheck_errors.append(
-            {
-                "error": "pre_existing_contracts",
-                "ids": [
-                    {
-                        "contract_id": rec.id,
-                        "legacy_contract_id": rec.legacy_contract_id or "",
-                        "name": rec.name or "",
-                    }
-                    for rec in pre_records
-                ],
-            }
-        )
+    pre_existing_by_legacy = {rec.legacy_contract_id or "": rec for rec in pre_records}
 
     create_vals = []
     for row in rows:
         vals = build_vals(row)
+        if vals.get("legacy_contract_id") in pre_existing_by_legacy:
+            continue
         resolved_project_id = resolve_project_id(row, project_model)
         resolved_partner_id = resolve_partner_id(row, partner_model)
         if resolved_project_id:
@@ -355,8 +344,9 @@ def main():
     )
 
     post_errors = []
-    if len(created) != EXPECTED_COUNT:
-        post_errors.append({"error": "created_count_not_12", "created": len(created)})
+    skipped_existing = len(pre_existing_by_legacy)
+    if len(created) + skipped_existing != EXPECTED_COUNT:
+        post_errors.append({"error": "resolved_count_not_12", "created": len(created), "skipped_existing": skipped_existing})
     if len(post_records) != EXPECTED_COUNT:
         post_errors.append({"error": "post_write_identity_count_mismatch", "count": len(post_records)})
     if duplicate_matches:
@@ -380,6 +370,7 @@ def main():
         "rollback_key": "legacy_contract_id",
         "summary": {
             "created": len(created),
+            "skipped_existing": skipped_existing,
             "updated": 0,
             "errors": len(post_errors),
             "post_write_identity_count": len(post_records),

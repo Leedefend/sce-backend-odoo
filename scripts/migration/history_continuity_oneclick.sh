@@ -19,6 +19,7 @@ ALLOWED_DBS="${MIGRATION_REPLAY_DB_ALLOWLIST:-sc_migration_fresh,sc_demo}"
 ARTIFACT_ROOT="${MIGRATION_ARTIFACT_ROOT:-/tmp/history_continuity/${DB_NAME}/${RUN_ID}}"
 START_AT="${HISTORY_CONTINUITY_START_AT:-}"
 export MIGRATION_REPO_ROOT="${MIGRATION_REPO_ROOT:-$ROOT_DIR}"
+MIGRATION_REPO_ROOT_ODOO="${MIGRATION_REPO_ROOT_ODOO:-/mnt}"
 export MIGRATION_REPLAY_DB_ALLOWLIST="$ALLOWED_DBS"
 export MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT"
 
@@ -32,11 +33,22 @@ CONTRACT_LINE_ADAPTER="$ROOT_DIR/scripts/migration/fresh_db_contract_line_replay
 SUPPLIER_CONTRACT_ADAPTER="$ROOT_DIR/scripts/migration/fresh_db_supplier_contract_replay_adapter.py"
 SUPPLIER_CONTRACT_LINE_ADAPTER="$ROOT_DIR/scripts/migration/fresh_db_supplier_contract_line_replay_adapter.py"
 INCLUDE_BLOCKED_GROUP_B="${HISTORY_CONTINUITY_INCLUDE_BLOCKED_GROUP_B:-0}"
+MATERIALIZED_FILES=()
+
+cleanup_materialized_files() {
+  local path
+  for path in "${MATERIALIZED_FILES[@]:-}"; do
+    if [[ -n "$path" && -f "$path" ]]; then
+      rm -f "$path"
+    fi
+  done
+}
+trap cleanup_materialized_files EXIT
 
 run_odoo_script() {
   local script_path="$1"
   DB_NAME="$DB_NAME" \
-  MIGRATION_REPO_ROOT="$MIGRATION_REPO_ROOT" \
+  MIGRATION_REPO_ROOT="$MIGRATION_REPO_ROOT_ODOO" \
   MIGRATION_REPLAY_DB_ALLOWLIST="$MIGRATION_REPLAY_DB_ALLOWLIST" \
   MIGRATION_ARTIFACT_ROOT="$MIGRATION_ARTIFACT_ROOT" \
   bash "$SHELL_EXEC" <"$script_path"
@@ -47,6 +59,26 @@ run_python_validator() {
   MIGRATION_REPO_ROOT="$MIGRATION_REPO_ROOT" \
   MIGRATION_ARTIFACT_ROOT="$MIGRATION_ARTIFACT_ROOT" \
   python3 "$script_path"
+}
+
+materialize_xml_parts() {
+  local target="$1"
+  local parts_dir="${target}.parts"
+  if [[ -f "$target" ]]; then
+    return 0
+  fi
+  if [[ ! -d "$parts_dir" ]]; then
+    echo "❌ missing xml and parts dir: $target" >&2
+    exit 2
+  fi
+  echo "[history.continuity] materialize xml parts: $target"
+  cat "$parts_dir"/part-*.part >"$target"
+  MATERIALIZED_FILES+=("$target")
+}
+
+run_legacy_workflow_audit_adapter() {
+  materialize_xml_parts "$ROOT_DIR/migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_workflow_audit_replay_adapter.py"
 }
 
 STEP_ACTIVE=1
@@ -136,14 +168,18 @@ case "$MODE" in
     run_step legacy_expense_deposit_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_deposit_replay_write.py"
     run_step legacy_invoice_tax_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_tax_replay_adapter.py"
     run_step legacy_invoice_tax_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_tax_replay_write.py"
-    run_step legacy_workflow_audit_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_workflow_audit_replay_adapter.py"
+    run_step legacy_workflow_audit_adapter run_legacy_workflow_audit_adapter
     run_step legacy_workflow_audit_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_workflow_audit_replay_write.py"
-    run_step payment_request_outflow_state_activation_adapter python3 "$ROOT_DIR/scripts/migration/history_payment_request_outflow_state_activation_adapter.py"
-    run_step payment_request_outflow_state_activation_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_payment_request_outflow_state_activation_write.py"
-    run_step payment_request_outflow_approved_recovery_adapter python3 "$ROOT_DIR/scripts/migration/history_payment_request_outflow_approved_recovery_adapter.py"
-    run_step payment_request_outflow_approved_recovery_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_payment_request_outflow_approved_recovery_write.py"
-    run_step payment_request_outflow_done_recovery_adapter python3 "$ROOT_DIR/scripts/migration/history_payment_request_outflow_done_recovery_adapter.py"
-    run_step payment_request_outflow_done_recovery_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_payment_request_outflow_done_recovery_write.py"
+    if [[ "$INCLUDE_BLOCKED_GROUP_B" == "1" ]]; then
+      run_step payment_request_outflow_state_activation_adapter python3 "$ROOT_DIR/scripts/migration/history_payment_request_outflow_state_activation_adapter.py"
+      run_step payment_request_outflow_state_activation_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_payment_request_outflow_state_activation_write.py"
+      run_step payment_request_outflow_approved_recovery_adapter python3 "$ROOT_DIR/scripts/migration/history_payment_request_outflow_approved_recovery_adapter.py"
+      run_step payment_request_outflow_approved_recovery_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_payment_request_outflow_approved_recovery_write.py"
+      run_step payment_request_outflow_done_recovery_adapter python3 "$ROOT_DIR/scripts/migration/history_payment_request_outflow_done_recovery_adapter.py"
+      run_step payment_request_outflow_done_recovery_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_payment_request_outflow_done_recovery_write.py"
+    else
+      echo "[history.continuity] skip payment outflow state recovery because Group B lanes are disabled"
+    fi
     run_step project_lifecycle_continuity_adapter python3 "$ROOT_DIR/scripts/migration/history_project_lifecycle_continuity_adapter.py"
     run_step project_lifecycle_continuity_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_project_lifecycle_continuity_write.py"
     run_step legacy_financing_loan_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_financing_loan_replay_adapter.py"

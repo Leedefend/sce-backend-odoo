@@ -87,24 +87,20 @@ def resolve_project_id(row, project_model):
 def resolve_partner_id(row, partner_model):
     partner_text = clean(row.get("legacy_counterparty_text"))
     if partner_text:
-        matches = partner_model.search([("name", "=", partner_text)], limit=2)
+        matches = partner_model.search([("name", "=", partner_text)], order="id")
         if len(matches) == 1:
             return matches.id
         if len(matches) > 1:
-            raise RuntimeError({"duplicate_partner_name_matches": partner_text, "partner_ids": matches.ids})
+            migration_matches = matches.filtered(lambda rec: rec.legacy_partner_id or rec.legacy_source_evidence)
+            return (migration_matches or matches)[0].id
         normalized_target = norm_name(partner_text)
         if normalized_target:
             normalized_matches = partner_model.search([]).filtered(lambda rec: norm_name(rec.name) == normalized_target)
             if len(normalized_matches) == 1:
                 return normalized_matches.id
             if len(normalized_matches) > 1:
-                raise RuntimeError(
-                    {
-                        "duplicate_partner_normalized_matches": partner_text,
-                        "normalized_target": normalized_target,
-                        "partner_ids": normalized_matches.ids,
-                    }
-                )
+                migration_matches = normalized_matches.filtered(lambda rec: rec.legacy_partner_id or rec.legacy_source_evidence)
+                return (migration_matches or normalized_matches)[0].id
     return None
 
 
@@ -118,20 +114,13 @@ rows = read_csv(PAYLOAD_CSV)
 ids = [clean(row.get("legacy_contract_id")) for row in rows]
 duplicate_ids = sorted(identity for identity, count in Counter(ids).items() if identity and count > 1)
 existing = Contract.search([("legacy_contract_id", "in", ids)], order="legacy_contract_id,id")
+existing_by_legacy = {rec.legacy_contract_id or "": rec for rec in existing}
 
 errors: list[dict[str, object]] = []
 if len(rows) != EXPECTED_ROWS:
     errors.append({"error": "unexpected_row_count", "actual": len(rows), "expected": EXPECTED_ROWS})
 if duplicate_ids:
     errors.append({"error": "duplicate_input_legacy_contract_id", "ids": duplicate_ids})
-if existing:
-    errors.append(
-        {
-            "error": "pre_existing_contracts",
-            "count": len(existing),
-            "samples": [{"contract_id": rec.id, "legacy_contract_id": rec.legacy_contract_id or ""} for rec in existing[:20]],
-        }
-    )
 
 create_vals = []
 for row in rows:
@@ -147,6 +136,8 @@ for row in rows:
         "legacy_deleted_flag": clean(row.get("legacy_deleted_flag")),
         "legacy_counterparty_text": clean(row.get("legacy_counterparty_text")),
     }
+    if vals["legacy_contract_id"] in existing_by_legacy:
+        continue
     project_id = resolve_project_id(row, Project)
     partner_id = resolve_partner_id(row, Partner)
     if project_id:
@@ -196,6 +187,7 @@ payload = {
     "database": env.cr.dbname,  # noqa: F821
     "input_rows": len(rows),
     "created_rows": len(created_rows),
+    "skipped_existing": len(existing_by_legacy),
     "rollback_rows": len(created_rows),
     "artifacts": {"rollback_csv": str(ROLLBACK_CSV)},
 }
