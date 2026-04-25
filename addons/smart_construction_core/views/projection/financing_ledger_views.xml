@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_financing_ledger_search" model="ir.ui.view">
+            <field name="name">sc.financing.ledger.search</field>
+            <field name="model">sc.legacy.financing.loan.fact</field>
+            <field name="arch" type="xml">
+                <search string="融资台账">
+                    <field name="document_no"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="source_type_label"/>
+                    <field name="source_extra_label"/>
+                    <field name="due_date"/>
+                    <filter string="流入" name="direction_in" domain="[('source_direction', '=', 'in')]"/>
+                    <filter string="流出" name="direction_out" domain="[('source_direction', '=', 'out')]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="按来源" name="group_source_family" context="{'group_by': 'source_family'}"/>
+                    <filter string="按到期日" name="group_due_date" context="{'group_by': 'due_date'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_sc_financing_ledger" model="ir.actions.act_window">
+            <field name="name">融资台账</field>
+            <field name="res_model">sc.legacy.financing.loan.fact</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="smart_construction_core.view_sc_legacy_financing_loan_fact_tree"/>
+            <field name="search_view_id" ref="view_sc_financing_ledger_search"/>
+            <field name="context">{'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+
+        <menuitem id="menu_sc_financing_ledger"
+                  name="融资台账"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  action="action_sc_financing_ledger"
+                  sequence="34"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    </data>
+</odoo>

@@ -6,7 +6,7 @@
             <field name="name">sc.receipt.invoice.line.tree</field>
             <field name="model">sc.receipt.invoice.line</field>
             <field name="arch" type="xml">
-                <tree string="收款发票明细" create="false" delete="false">
+                <tree string="收款发票台账" create="false" delete="false">
                     <field name="request_id"/>
                     <field name="sequence"/>
                     <field name="project_id"/>
@@ -14,6 +14,7 @@
                     <field name="contract_id"/>
                     <field name="invoice_no"/>
                     <field name="invoice_party_name"/>
+                    <field name="invoice_issue_company"/>
                     <field name="invoice_amount"/>
                     <field name="current_receipt_amount"/>
                     <field name="invoiced_before_amount"/>
@@ -25,7 +26,7 @@
             <field name="name">sc.receipt.invoice.line.form</field>
             <field name="model">sc.receipt.invoice.line</field>
             <field name="arch" type="xml">
-                <form string="收款发票明细" create="false" delete="false">
+                <form string="收款发票台账" create="false" delete="false">
                     <sheet>
                         <group>
                             <group>
@@ -70,16 +71,19 @@
             <field name="name">sc.receipt.invoice.line.search</field>
             <field name="model">sc.receipt.invoice.line</field>
             <field name="arch" type="xml">
-                <search string="收款发票明细">
+                <search string="收款发票台账">
                     <field name="request_id"/>
                     <field name="project_id"/>
                     <field name="partner_id"/>
                     <field name="contract_id"/>
                     <field name="invoice_no"/>
+                    <field name="invoice_party_name"/>
+                    <field name="invoice_issue_company"/>
                     <field name="legacy_invoice_line_id"/>
                     <group expand="0" string="分组">
                         <filter string="收款申请" name="group_by_request_id" context="{'group_by': 'request_id'}"/>
                         <filter string="项目" name="group_by_project_id" context="{'group_by': 'project_id'}"/>
+                        <filter string="往来单位" name="group_by_partner_id" context="{'group_by': 'partner_id'}"/>
                         <filter string="合同" name="group_by_contract_id" context="{'group_by': 'contract_id'}"/>
                     </group>
                 </search>
@@ -87,11 +91,11 @@
         </record>
 
         <record id="action_receipt_invoice_line" model="ir.actions.act_window">
-            <field name="name">收款发票明细</field>
+            <field name="name">收款发票台账</field>
             <field name="res_model">sc.receipt.invoice.line</field>
             <field name="view_mode">tree,form</field>
             <field name="search_view_id" ref="view_receipt_invoice_line_search"/>
-            <field name="context">{'search_default_group_by_request_id': 1}</field>
+            <field name="context">{'search_default_group_by_project_id': 1}</field>
             <field name="groups_id" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_finance_read'),
                 ref('smart_construction_core.group_sc_cap_finance_user'),
@@ -100,10 +104,10 @@
         </record>
 
         <menuitem id="menu_receipt_invoice_line"
-                  name="收款发票明细"
+                  name="收款发票台账"
                   parent="smart_construction_core.menu_sc_finance_center"
                   action="action_receipt_invoice_line"
-                  sequence="27"
+                  sequence="28"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
     </data>

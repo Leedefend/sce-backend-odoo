@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_fund_daily_search" model="ir.ui.view">
+            <field name="name">sc.fund.daily.search</field>
+            <field name="model">sc.legacy.fund.daily.snapshot.fact</field>
+            <field name="arch" type="xml">
+                <search string="资金日报">
+                    <field name="snapshot_date"/>
+                    <field name="project_id"/>
+                    <field name="subject"/>
+                    <field name="document_no"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按日期" name="group_snapshot_date" context="{'group_by': 'snapshot_date'}"/>
+                    <filter string="有差异" name="has_difference" domain="[('source_bank_system_difference', '!=', 0)]"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_sc_fund_daily" model="ir.actions.act_window">
+            <field name="name">资金日报</field>
+            <field name="res_model">sc.legacy.fund.daily.snapshot.fact</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="smart_construction_core.view_sc_legacy_fund_daily_snapshot_fact_tree"/>
+            <field name="search_view_id" ref="view_sc_fund_daily_search"/>
+            <field name="context">{'search_default_group_snapshot_date': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+
+        <menuitem id="menu_sc_fund_daily"
+                  name="资金日报"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  action="action_sc_fund_daily"
+                  sequence="35"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    </data>
+</odoo>
