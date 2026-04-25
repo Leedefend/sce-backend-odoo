@@ -338,6 +338,25 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
         scene_payload["target"] = next_target
         return True
 
+    def _merge_registry_target_without_overwriting_identity(current_target: dict, registry_target: dict) -> dict:
+        if not isinstance(current_target, dict):
+            current_target = {}
+        if not isinstance(registry_target, dict):
+            return dict(current_target)
+        has_xmlid_identity = bool(
+            str(current_target.get("action_xmlid") or "").strip()
+            or str(current_target.get("menu_xmlid") or "").strip()
+        )
+        if not has_xmlid_identity:
+            return dict(registry_target)
+        next_target = dict(current_target)
+        for key, value in registry_target.items():
+            if key in ("action_id", "menu_id"):
+                continue
+            if next_target.get(key) in (None, "", [], {}) and value not in (None, "", [], {}):
+                next_target[key] = value
+        return next_target
+
     current = [scene for scene in (scenes or []) if isinstance(scene, dict)]
     dropped_pkg_variants = []
     filtered = []
@@ -401,8 +420,9 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
         registry_target = registry_scene.get("target")
         if isinstance(registry_target, dict) and registry_target:
             current_target = scene.get("target")
-            if current_target != registry_target:
-                scene["target"] = dict(registry_target)
+            merged_target = _merge_registry_target_without_overwriting_identity(current_target, registry_target)
+            if current_target != merged_target:
+                scene["target"] = merged_target
                 reconciled.append(code)
 
         capability_target = capability_map.get(code)
