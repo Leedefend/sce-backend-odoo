@@ -139,6 +139,12 @@ The default replay chain preserves old user-project scope evidence:
 - rows are linked to historical users and project anchors when possible
 - these records are evidence only and do not grant new-system access
 
+The default replay chain preserves old task/todo evidence:
+
+- 78,822 old `T_BASE_TASKDONE` rows are retained as historical evidence
+- executor, read, done, source, business, URL, and timeline fields are retained
+- no `mail.activity`, approval, or active workflow todo is created from old rows
+
 If a rehearsal needs to isolate only core headers, set:
 
 ```bash
@@ -178,6 +184,7 @@ The one-click path now covers:
 
 - users / partner / project / project-member carrier
 - legacy user project scope evidence
+- legacy task/todo evidence
 - contract / contract line / supplier contract / supplier contract line
 - receipt / outflow request / actual outflow / outflow request line
 - receipt invoice line / receipt invoice attachment

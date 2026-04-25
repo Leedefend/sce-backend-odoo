@@ -18,6 +18,7 @@ semantics.
 | `sc.legacy.department` | 828 |
 | `sc.legacy.user.role` | 330 |
 | `sc.legacy.user.project.scope` | 90871 |
+| `sc.legacy.task.evidence` | 78822 |
 | `sc.project.member.staging` | 15155 |
 | `sc.legacy.workflow.audit` | 79702 |
 | `sc.legacy.invoice.tax.fact` | 5920 |
@@ -38,7 +39,7 @@ semantics.
 | --- | --- | --- | ---: | --- |
 | P0 | material catalog search archive | `T_Base_MaterialDetail`, `T_Base_BuildMaterialClass`, `C_Base_CBFL` | 2,279,734 material rows; 16 global material categories; 3 orphan category keys; 130,605 cost category rows | Covered by neutral archive. Do not load as products; preserve as searchable historical material/category facts. |
 | P0 | attachment index expansion | `BASE_SYSTEM_FILE`, `T_BILL_FILE` | 126,967 + 51,964 rows; about 124.6 GB referenced size | Covered by neutral file index. Binary transfer remains a separate file-custody decision. |
-| P1 | task / todo evidence | `T_BASE_TASKDONE` | 78,822 rows | Useful for old to-do, read/done evidence, and user continuity. Keep as evidence, not new activities. |
+| P1 | task / todo evidence | `T_BASE_TASKDONE` | 78,822 rows | Covered by neutral evidence archive. Kept as historical read/done evidence, not new activities. |
 | P1 | user project scope evidence | `T_System_UserAndXXGL`, `T_System_UserAndXXGL_History` | 20,000 current + 70,871 history rows | Covered by neutral scope evidence. Does not grant new-system visibility. |
 | P1 | special invoice registration | `C_JXXP_ZYFPJJD`, `C_JXXP_ZYFPJJD_CB` | 16,616 headers; 25,393 lines; line total about 2.28B | Appears more detailed than current invoice-tax carrier. Candidate for a line-level legacy invoice registration carrier. |
 | P1 | deduction / settlement adjustment | `T_KK_SJDJB`, `T_KK_SJDJB_CB` | 2,636 headers; 13,521 lines; current line sum about 264.8M | Strong finance fact. Preserve as historical deduction/settlement evidence, not native settlement state. |

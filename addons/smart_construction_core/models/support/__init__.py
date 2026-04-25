@@ -41,3 +41,4 @@ from . import legacy_fund_daily_snapshot_fact
 from . import legacy_user_context
 from . import legacy_material_catalog
 from . import legacy_file_index
+from . import legacy_task_evidence
