@@ -124,6 +124,14 @@ The default replay chain also includes the legacy material catalog archive:
   categories, and orphan category keys referenced by details
 - no `product.product` records are created from the old catalog
 
+The default replay chain also includes the legacy file index archive:
+
+- 178,931 old file metadata rows are preserved from `BASE_SYSTEM_FILE` and
+  `T_BILL_FILE`
+- file names, paths, sizes, bill keys, upload users, delete flags, encryption
+  flags, and source table identity are retained
+- binary file transfer is intentionally not performed by this lane
+
 If a rehearsal needs to isolate only core headers, set:
 
 ```bash
@@ -134,6 +142,12 @@ If a limited rehearsal must skip the large material archive, set:
 
 ```bash
 HISTORY_CONTINUITY_INCLUDE_MATERIAL_CATALOG=0
+```
+
+If a limited rehearsal must skip the file index archive, set:
+
+```bash
+HISTORY_CONTINUITY_INCLUDE_FILE_INDEX=0
 ```
 
 The old `HISTORY_CONTINUITY_INCLUDE_BLOCKED_GROUP_B` flag is deprecated for the
@@ -166,6 +180,7 @@ The one-click path now covers:
 - legacy financing loan
 - legacy fund daily snapshot
 - legacy material catalog archive
+- legacy file index archive
 - legacy workflow audit
 
 ## Expected Validation

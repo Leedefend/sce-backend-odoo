@@ -203,3 +203,5 @@ access_sc_legacy_material_category_admin,sc.legacy.material.category.admin,model
 access_sc_legacy_material_category_read,sc.legacy.material.category.read,model_sc_legacy_material_category,smart_construction_core.group_sc_internal_user,1,0,0,0
 access_sc_legacy_material_detail_admin,sc.legacy.material.detail.admin,model_sc_legacy_material_detail,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
 access_sc_legacy_material_detail_read,sc.legacy.material.detail.read,model_sc_legacy_material_detail,smart_construction_core.group_sc_internal_user,1,0,0,0
+access_sc_legacy_file_index_admin,sc.legacy.file.index.admin,model_sc_legacy_file_index,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
+access_sc_legacy_file_index_read,sc.legacy.file.index.read,model_sc_legacy_file_index,smart_construction_core.group_sc_internal_user,1,0,0,0

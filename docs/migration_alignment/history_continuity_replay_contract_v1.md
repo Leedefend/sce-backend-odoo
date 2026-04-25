@@ -84,6 +84,8 @@ Supported resume step names:
 - `project_anchor_completed`
 - `legacy_material_catalog_adapter`
 - `legacy_material_catalog_replay`
+- `legacy_file_index_adapter`
+- `legacy_file_index_replay`
 - `contract_counterparty_partner_adapter`
 - `contract_counterparty_partner_completed`
 - `receipt_counterparty_partner_adapter`
@@ -172,6 +174,7 @@ Supported resume step names:
 - `partner_l4_anchor_completed`
 - `project_anchor_completed`
 - `legacy_material_catalog_sc_v1`
+- `legacy_file_index_sc_v1`
 - `contract_counterparty_partner_sc_v1`
 - `receipt_counterparty_partner_sc_v1`
 - `contract_counterparty_partner_completed`
@@ -202,6 +205,7 @@ Supported resume step names:
 - `legacy_financing_loan_sc_v1`
 - `legacy_fund_daily_snapshot_sc_v1`
 - `legacy_material_catalog_sc_v1`
+- `legacy_file_index_sc_v1`
 
 ## Default-Excluded / Opt-In Lanes
 
@@ -225,6 +229,15 @@ large neutral archive in a limited rehearsal, set:
 
 ```bash
 HISTORY_CONTINUITY_INCLUDE_MATERIAL_CATALOG=0
+```
+
+Legacy file index archive is also included by default. It preserves old file
+metadata and business keys from `BASE_SYSTEM_FILE` and `T_BILL_FILE` without
+copying binary content into Odoo. To skip this large neutral index in a limited
+rehearsal, set:
+
+```bash
+HISTORY_CONTINUITY_INCLUDE_FILE_INDEX=0
 ```
 
 ## Guardrails
