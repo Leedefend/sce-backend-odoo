@@ -10,7 +10,7 @@ Provide one one-click contract for:
 
 - historical replay rehearsal in `sc_demo`
 - bounded replay into `sc_demo`
-- future server-side one-click execution
+- server-side fresh production initialization
 
 This contract is the canonical entry. It must not be replaced by isolated
 importer scripts.
@@ -27,6 +27,13 @@ Replay:
 
 ```bash
 DB_NAME=<target_db> make history.continuity.replay
+```
+
+Fresh production initialization:
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=<target_db> PROD_DANGER=1 \
+  make history.production.fresh_init
 ```
 
 Resume from a failed step:
@@ -72,22 +79,32 @@ Replay mode:
 12. special 12-row contract partner anchor supplement
 13. special 12-row contract replay
 14. contract retry-57 replay
-15. receipt core replay
-16. receipt partner targeted replay
-17. receipt parent recovery
-18. receipt invoice line replay
-19. receipt invoice attachment replay
-20. project-member attachment targeted replay
-21. legacy attachment backfill replay
-22. receipt-income partner targeted replay
-23. legacy receipt income replay
-24. expense-deposit partner targeted replay
-25. legacy expense deposit replay
-26. legacy invoice tax replay
-27. legacy workflow audit replay
-28. legacy financing loan replay
-29. legacy fund daily snapshot replay
-30. usability probe
+15. contract unreached-ready replay
+16. contract partner recovery
+17. partner/contract direction defer recovery
+18. receipt core replay
+19. receipt partner targeted replay
+20. receipt parent recovery
+21. receipt invoice line replay
+22. receipt invoice attachment replay
+23. project-member attachment targeted replay
+24. outflow partner targeted replay
+25. outflow request replay
+26. actual outflow replay
+27. legacy attachment backfill replay
+28. receipt-income partner targeted replay
+29. legacy receipt income replay
+30. expense-deposit partner targeted replay
+31. legacy expense deposit replay
+32. legacy invoice tax replay
+33. legacy workflow audit replay
+34. outflow request state recovery
+35. outflow request approved recovery
+36. outflow request done recovery and ledger fact materialization
+37. project lifecycle continuity replay
+38. legacy financing loan replay
+39. legacy fund daily snapshot replay
+40. usability probe
 
 Supported resume step names:
 
@@ -105,6 +122,16 @@ Supported resume step names:
 - `contract_12_missing_partner_anchors`
 - `contract_header_special_12`
 - `contract_header_retry_57`
+- `contract_unreached_ready_adapter`
+- `contract_unreached_ready_replay`
+- `partner_master_targeted_adapter`
+- `partner_master_targeted_replay`
+- `contract_partner_recovery_adapter`
+- `contract_partner_recovery_replay`
+- `partner_master_direction_defer_adapter`
+- `partner_master_direction_defer_replay`
+- `contract_direction_defer_recovery_adapter`
+- `contract_direction_defer_recovery_replay`
 - `receipt_header_pending`
 - `receipt_partner_targeted_adapter`
 - `receipt_partner_targeted_replay`
@@ -116,6 +143,14 @@ Supported resume step names:
 - `receipt_invoice_attachment_replay`
 - `project_member_attachment_targeted_adapter`
 - `project_member_attachment_targeted_replay`
+- `outflow_partner_targeted_adapter`
+- `outflow_partner_targeted_replay`
+- `outflow_request_adapter`
+- `outflow_request_replay`
+- `actual_outflow_adapter`
+- `actual_outflow_partner_targeted_adapter`
+- `actual_outflow_partner_targeted_replay`
+- `actual_outflow_replay`
 - `legacy_attachment_backfill_adapter`
 - `legacy_attachment_backfill_replay`
 - `receipt_income_partner_targeted_adapter`
@@ -130,6 +165,14 @@ Supported resume step names:
 - `legacy_invoice_tax_replay`
 - `legacy_workflow_audit_adapter`
 - `legacy_workflow_audit_replay`
+- `payment_request_outflow_state_activation_adapter`
+- `payment_request_outflow_state_activation_replay`
+- `payment_request_outflow_approved_recovery_adapter`
+- `payment_request_outflow_approved_recovery_replay`
+- `payment_request_outflow_done_recovery_adapter`
+- `payment_request_outflow_done_recovery_replay`
+- `project_lifecycle_continuity_adapter`
+- `project_lifecycle_continuity_replay`
 - `legacy_financing_loan_adapter`
 - `legacy_financing_loan_replay`
 - `legacy_fund_daily_snapshot_adapter`
@@ -158,6 +201,11 @@ Supported resume step names:
 - `legacy_expense_deposit_sc_v1`
 - `legacy_invoice_tax_sc_v1`
 - `legacy_workflow_audit_sc_v1`
+- `outflow_request_core`
+- `actual_outflow_core`
+- `outflow_request_state_recovery`
+- `outflow_request_ledger_fact`
+- `project_lifecycle_continuity`
 - `legacy_financing_loan_sc_v1`
 - `legacy_fund_daily_snapshot_sc_v1`
 
@@ -176,16 +224,21 @@ HISTORY_CONTINUITY_INCLUDE_BLOCKED_GROUP_B=1
 
 ## Guardrails
 
-- dev/test only
+- dev/test by default
+- production requires `history.production.fresh_init`, `PROD_DANGER=1`, and
+  `HISTORY_CONTINUITY_ALLOW_PROD=1` inside the production entry script
 - DB allowlist:
   - `sc_migration_fresh`
   - `sc_demo`
+  - production entry defaults the allowlist to the explicit `DB_NAME`
 - artifact root must be isolated per run
 - `project_member_neutral_completed` remains carrier-only
 - receipt replay is contract-anchored:
   - `type/project/partner` follow the resolved contract first
   - runtime ids are fallback only
-- no ledger/settlement/account.move side effects are allowed
+- no settlement/account.move side effects are allowed
+- ledger facts are allowed only for recovered historical done-state outflow
+  requests and must keep migration evidence
 
 ## Acceptance
 
@@ -199,8 +252,11 @@ Rehearsal acceptance:
 Replay acceptance:
 
 - only allowed lanes execute
-- excluded lanes remain untouched
+- high-risk line-level lanes remain untouched unless explicitly enabled
 - usability probe produces runtime/carrier evidence
+- historical facts are visible even when old-system data does not satisfy new
+  workflow rules
+- new business smoke is not globally blocked by historical gaps
 
 ## Current Validation
 
@@ -218,4 +274,11 @@ Server deployment should call the same Make target:
 DB_NAME=<server_db> make history.continuity.replay
 ```
 
-No separate server-only replay script should be introduced.
+Fresh production deployment should call:
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=<server_db> PROD_DANGER=1 \
+  make history.production.fresh_init
+```
+
+No ad-hoc server-only importer should be introduced.

@@ -7,12 +7,20 @@ Status: READY
 Use the same one-click history continuity contract on a server database without
 introducing any server-only replay script.
 
+For a brand-new production database, the goal is historical fact continuity:
+
+- old-system facts must be visible and traceable in the new system
+- old-system gaps are allowed when they are true historical facts
+- new-system rules apply to new actions after go-live
+- historical gaps must not globally block unrelated new business actions
+
 ## Preconditions
 
 - target branch is already deployed
 - target DB already exists
-- server environment is `dev` or `test-like`, not production-danger mode
+- target production DB is brand-new when using the production initialization path
 - migration assets are present in the deployed repo
+- platform baseline initialization has not been bypassed
 
 ## One-Click Commands
 
@@ -41,8 +49,42 @@ Replay:
 DB_NAME=<target_db> make history.continuity.replay
 ```
 
-The default replay chain now includes historical outflow-request state
-activation:
+For a fresh production database, use the auditable production entry:
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=<target_db> PROD_DANGER=1 \
+  RUN_ID=prod_history_init_$(date +%Y%m%dT%H%M%S) \
+  BASE_URL=https://<production-host> FRONTEND_BASE_URL=https://<production-host> \
+  make history.production.fresh_init
+```
+
+This production entry runs:
+
+1. start the compose stack
+2. install the production module set with `--without-demo=all`
+3. apply extension module registry
+4. restart Odoo
+5. platform initialization preflight
+6. history continuity replay
+7. business usable probe
+8. full business smoke
+9. role matrix smoke
+10. frontend smoke
+
+If modules have already been installed by an external release job, set:
+
+```bash
+HISTORY_PRODUCTION_INSTALL_MODULES=0
+```
+
+The default replay chain includes historical outflow-request runtime facts:
+
+- `outflow_request_core` runtime headers are materialized
+- actual outflow runtime carriers are materialized
+- legacy attachments linked to actual outflow are backfilled when anchors exist
+
+The default replay chain also includes historical outflow-request state
+recovery:
 
 - `outflow_request_core` rows with workflow audit evidence are promoted
   `draft -> submit`
@@ -63,6 +105,15 @@ The chain now also includes historical done-state recovery:
 - `validation_status` is restored to `validated`
 - one minimal `payment.ledger` fact is materialized per recovered request
 - settlement runtime is still not reconstructed
+
+High-risk line-level lanes remain opt-in:
+
+```bash
+HISTORY_CONTINUITY_INCLUDE_BLOCKED_GROUP_B=1
+```
+
+Do not enable this flag for the production go-live run unless the supplier
+contract / outflow-request-line anchors have been separately reviewed.
 
 Resume from a failed step:
 
@@ -101,14 +152,23 @@ Successful rehearse should produce:
 - `HISTORY_CONTINUITY_USABILITY_PROBE = PASS`
 - `zero_critical_counts = 0`
 - `HISTORY_BUSINESS_USABLE_PROBE = PASS`
-- `history_business_usable_ready`
+- either `history_business_usable_ready` or
+  `history_business_usable_visible_but_promotion_gaps`
+
+For production cutover, `history_business_usable_visible_but_promotion_gaps` is
+acceptable when the remaining gaps are old workflow/todo promotion only
+(`mail.activity` / `tier.review`) and the following smokes pass:
+
+- `scripts/audit/smoke_business_full.sh`
+- `scripts/audit/smoke_role_matrix.sh`
+- `scripts/diag/fe_smoke.sh`
 
 Business-usable probe decisions:
 
 - `history_business_usable_ready`
   - runtime list/form surfaces exist and actionable todo/approval surfaces are present
 - `history_business_usable_visible_but_promotion_gaps`
-  - runtime records are visible but one or more continuity gaps still block real user business continuation
+  - runtime records are visible, but old workflow/todo promotion is incomplete
 - `history_business_usable_runtime_gap`
   - even the core runtime list/form surfaces are not yet present
 
@@ -139,3 +199,10 @@ Any future lane addition must be merged back into:
 - `scripts/migration/history_continuity_oneclick.sh`
 - `Makefile`
 - `docs/migration_alignment/history_continuity_replay_contract_v1.md`
+
+## Production Boundary
+
+Do not copy a simulated-production database into production as the default
+cutover method. For a brand-new production DB, run the committed replay chain on
+the server so the production database has its own `RUN_ID`, artifacts, logs, and
+validation evidence.

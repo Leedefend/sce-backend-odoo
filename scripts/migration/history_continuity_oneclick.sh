@@ -11,7 +11,11 @@ source "$ROOT_DIR/scripts/common/guard_prod.sh"
 
 : "${DB_NAME:?DB_NAME is required}"
 
-guard_prod_forbid
+if [[ "${HISTORY_CONTINUITY_ALLOW_PROD:-0}" == "1" ]]; then
+  guard_prod_danger
+else
+  guard_prod_forbid
+fi
 
 MODE="${HISTORY_CONTINUITY_MODE:-rehearse}"
 RUN_ID="${RUN_ID:-$(date +%Y%m%dT%H%M%S)}"
@@ -33,6 +37,7 @@ CONTRACT_LINE_ADAPTER="$ROOT_DIR/scripts/migration/fresh_db_contract_line_replay
 SUPPLIER_CONTRACT_ADAPTER="$ROOT_DIR/scripts/migration/fresh_db_supplier_contract_replay_adapter.py"
 SUPPLIER_CONTRACT_LINE_ADAPTER="$ROOT_DIR/scripts/migration/fresh_db_supplier_contract_line_replay_adapter.py"
 INCLUDE_BLOCKED_GROUP_B="${HISTORY_CONTINUITY_INCLUDE_BLOCKED_GROUP_B:-0}"
+INCLUDE_PAYMENT_STATE_RECOVERY="${HISTORY_CONTINUITY_INCLUDE_PAYMENT_STATE_RECOVERY:-1}"
 MATERIALIZED_FILES=()
 
 cleanup_materialized_files() {
@@ -156,6 +161,14 @@ case "$MODE" in
     run_step receipt_invoice_attachment_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_attachment_replay_write.py"
     run_step project_member_attachment_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_project_member_attachment_targeted_replay_adapter.py"
     run_step project_member_attachment_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_project_member_attachment_targeted_replay_write.py"
+    run_step outflow_request_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_outflow_request_replay_adapter.py"
+    run_step outflow_partner_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_outflow_partner_targeted_replay_adapter.py"
+    run_step outflow_partner_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_outflow_partner_targeted_replay_write.py"
+    run_step outflow_request_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_outflow_request_replay_write.py"
+    run_step actual_outflow_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_replay_adapter.py"
+    run_step actual_outflow_partner_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_actual_outflow_partner_targeted_replay_adapter.py"
+    run_step actual_outflow_partner_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_actual_outflow_partner_targeted_replay_write.py"
+    run_step actual_outflow_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_replay_write.py"
     run_step legacy_attachment_backfill_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_attachment_backfill_replay_adapter.py"
     run_step legacy_attachment_backfill_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_attachment_backfill_replay_write.py"
     run_step receipt_income_partner_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_receipt_income_partner_targeted_replay_adapter.py"
@@ -170,7 +183,7 @@ case "$MODE" in
     run_step legacy_invoice_tax_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_tax_replay_write.py"
     run_step legacy_workflow_audit_adapter run_legacy_workflow_audit_adapter
     run_step legacy_workflow_audit_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_workflow_audit_replay_write.py"
-    if [[ "$INCLUDE_BLOCKED_GROUP_B" == "1" ]]; then
+    if [[ "$INCLUDE_PAYMENT_STATE_RECOVERY" == "1" ]]; then
       run_step payment_request_outflow_state_activation_adapter python3 "$ROOT_DIR/scripts/migration/history_payment_request_outflow_state_activation_adapter.py"
       run_step payment_request_outflow_state_activation_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_payment_request_outflow_state_activation_write.py"
       run_step payment_request_outflow_approved_recovery_adapter python3 "$ROOT_DIR/scripts/migration/history_payment_request_outflow_approved_recovery_adapter.py"
@@ -178,7 +191,7 @@ case "$MODE" in
       run_step payment_request_outflow_done_recovery_adapter python3 "$ROOT_DIR/scripts/migration/history_payment_request_outflow_done_recovery_adapter.py"
       run_step payment_request_outflow_done_recovery_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_payment_request_outflow_done_recovery_write.py"
     else
-      echo "[history.continuity] skip payment outflow state recovery because Group B lanes are disabled"
+      echo "[history.continuity] skip payment outflow state recovery by HISTORY_CONTINUITY_INCLUDE_PAYMENT_STATE_RECOVERY=0"
     fi
     run_step project_lifecycle_continuity_adapter python3 "$ROOT_DIR/scripts/migration/history_project_lifecycle_continuity_adapter.py"
     run_step project_lifecycle_continuity_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_project_lifecycle_continuity_write.py"
