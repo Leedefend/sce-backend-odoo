@@ -5,14 +5,34 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 from collections import Counter
 from pathlib import Path
 
 
-REPO_ROOT = Path("/mnt")
+def repo_root() -> Path:
+    env_root = os.getenv("MIGRATION_REPO_ROOT")
+    candidates = []
+    if env_root:
+        candidates.append(Path(env_root))
+    candidates.extend([Path("/mnt"), Path.cwd()])
+    for candidate in candidates:
+        if (candidate / "artifacts/migration/fresh_db_replay_manifest_v1.json").exists():
+            return candidate
+    return Path.cwd()
+
+
+def ensure_allowed_db() -> None:
+    allowlist = {item.strip() for item in os.getenv("MIGRATION_REPLAY_DB_ALLOWLIST", "sc_migration_fresh").split(",") if item.strip()}
+    if env.cr.dbname not in allowlist:  # noqa: F821
+        raise RuntimeError({"db_name_not_allowed_for_replay": env.cr.dbname, "allowlist": sorted(allowlist)})  # noqa: F821
+
+
+REPO_ROOT = repo_root()
+ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(REPO_ROOT / "artifacts/migration")))
 INPUT_CSV = REPO_ROOT / "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv"
-OUTPUT_JSON = REPO_ROOT / "artifacts/migration/fresh_db_partner_l4_replay_write_result_v1.json"
-ROLLBACK_CSV = REPO_ROOT / "artifacts/migration/fresh_db_partner_l4_replay_rollback_targets_v1.csv"
+OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_partner_l4_replay_write_result_v1.json"
+ROLLBACK_CSV = ARTIFACT_ROOT / "fresh_db_partner_l4_replay_rollback_targets_v1.csv"
 EXPECTED_ROWS = 4797
 SAFE_FIELDS = [
     "name",
@@ -72,8 +92,7 @@ def build_vals(row: dict[str, str]) -> dict[str, object]:
     }
 
 
-if env.cr.dbname != "sc_migration_fresh":  # noqa: F821
-    raise RuntimeError({"db_name_not_sc_migration_fresh": env.cr.dbname})  # noqa: F821
+ensure_allowed_db()
 
 Partner = env["res.partner"].sudo()  # noqa: F821
 missing_fields = [field for field in SAFE_FIELDS if field not in Partner._fields]

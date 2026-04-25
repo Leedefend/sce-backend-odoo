@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_sc_legacy_invoice_tax_fact_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.invoice.tax.fact.tree</field>
+    <field name="model">sc.legacy.invoice.tax.fact</field>
+    <field name="arch" type="xml">
+      <tree string="历史发票税额事实" create="false" edit="false" delete="false">
+        <field name="document_date"/>
+        <field name="document_no"/>
+        <field name="direction"/>
+        <field name="invoice_type"/>
+        <field name="project_id"/>
+        <field name="legacy_partner_name"/>
+        <field name="source_amount"/>
+        <field name="source_tax_amount"/>
+        <field name="legacy_state"/>
+        <field name="source_family"/>
+        <field name="legacy_source_table"/>
+        <field name="legacy_record_id"/>
+        <field name="import_batch"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_sc_legacy_invoice_tax_fact_form" model="ir.ui.view">
+    <field name="name">sc.legacy.invoice.tax.fact.form</field>
+    <field name="model">sc.legacy.invoice.tax.fact</field>
+    <field name="arch" type="xml">
+      <form string="历史发票税额事实" create="false" edit="false" delete="false">
+        <sheet>
+          <group>
+            <group>
+              <field name="document_date"/>
+              <field name="document_no"/>
+              <field name="direction"/>
+              <field name="invoice_type"/>
+              <field name="project_id"/>
+              <field name="legacy_partner_id"/>
+              <field name="legacy_partner_name"/>
+              <field name="legacy_partner_tax_no"/>
+            </group>
+            <group>
+              <field name="source_amount"/>
+              <field name="source_tax_amount"/>
+              <field name="source_amount_field"/>
+              <field name="note"/>
+              <field name="legacy_state"/>
+              <field name="source_family"/>
+              <field name="legacy_source_table"/>
+              <field name="legacy_record_id"/>
+              <field name="legacy_pid"/>
+              <field name="import_batch"/>
+            </group>
+          </group>
+          <group>
+            <field name="legacy_project_id"/>
+            <field name="legacy_project_name"/>
+            <field name="legacy_partner_id"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_sc_legacy_invoice_tax_fact" model="ir.actions.act_window">
+    <field name="name">历史发票税额事实</field>
+    <field name="res_model">sc.legacy.invoice.tax.fact</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+</odoo>

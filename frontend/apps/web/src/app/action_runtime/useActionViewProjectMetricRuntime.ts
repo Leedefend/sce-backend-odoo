@@ -1,4 +1,3 @@
-import { resolveDefaultSortFromContract } from '../runtime/actionViewRequestRuntime';
 import { semanticStatus } from '../../utils/semantic';
 
 export function useActionViewProjectMetricRuntime() {
@@ -28,16 +27,9 @@ export function useActionViewProjectMetricRuntime() {
     const text = String(stateText || '');
     return ['完成', '完工', '归档', '关闭', '交付'].some((keyword) => text.includes(keyword));
   }
-
-  function resolveDefaultSort(fields: Record<string, unknown>) {
-    return resolveDefaultSortFromContract(fields);
-  }
-
   return {
     resolveProjectStateCell,
     resolveProjectAmount,
     isCompletedState,
-    resolveDefaultSort,
   };
 }
-

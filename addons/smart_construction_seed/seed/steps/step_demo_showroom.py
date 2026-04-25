@@ -83,6 +83,10 @@ def _ensure_project_prereqs(env, project):
         if not partner:
             partner = env["res.partner"].sudo().create({"name": "Demo-业主单位"})
         vals["owner_id"] = partner.id
+        if not project.partner_id:
+            vals["partner_id"] = partner.id
+    elif not project.partner_id:
+        vals["partner_id"] = project.owner_id.id
     if not project.location:
         vals["location"] = "示范区"
     if vals:
@@ -172,8 +176,8 @@ def run(env):
             created = True
         _ensure_boq(env, project, idx)
         _ensure_tasks(env, project, demo_pm, TASKS_PER_PROJECT)
+        _ensure_project_prereqs(env, project)
         if created or project.lifecycle_state == "draft":
-            _ensure_project_prereqs(env, project)
             _ensure_lifecycle(project, spec["state"])
         if spec["with_chain"]:
             _ensure_contract_chain(env, project, idx)

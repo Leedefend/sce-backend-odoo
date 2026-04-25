@@ -1,29 +1,22 @@
 import { computed, type Ref } from 'vue';
 
 type UseActionViewDisplayComputedRuntimeOptions = {
-  surfaceKind: Ref<string>;
+  actionContract: Ref<Record<string, unknown> | null>;
   records: Ref<Array<Record<string, unknown>>>;
   sortLabel: Ref<string>;
   status: Ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>;
   listTotalCount: Ref<number | null>;
   pageText: (key: string, fallback: string) => string;
+  buildListSortOptions: (contract: unknown, currentSort: string, fallbackLabel: string) => Array<{ label: string; value: string }>;
 };
 
 export function useActionViewDisplayComputedRuntime(options: UseActionViewDisplayComputedRuntimeOptions) {
   const sortOptions = computed(() => {
-    if (options.surfaceKind.value === 'risk' || options.surfaceKind.value === 'cost') {
-      return [
-        { label: options.pageText('sort_option_priority_deadline', '优先级↓ / 截止日↑'), value: 'priority desc,deadline asc,write_date desc' },
-        { label: options.pageText('sort_option_deadline_updated', '截止日↑ / 更新时间↓'), value: 'deadline asc,write_date desc' },
-        { label: options.pageText('sort_option_updated_id', '更新时间↓ / ID↓'), value: 'write_date desc,id desc' },
-      ];
-    }
-    return [
-      { label: options.pageText('sort_option_updated_name_asc', '更新时间↓ / 名称↑'), value: 'write_date desc,name asc' },
-      { label: options.pageText('sort_option_updated_asc_name_asc', '更新时间↑ / 名称↑'), value: 'write_date asc,name asc' },
-      { label: options.pageText('sort_option_name_updated', '名称↑ / 更新时间↓'), value: 'name asc,write_date desc' },
-      { label: options.pageText('sort_option_name_desc_updated', '名称↓ / 更新时间↓'), value: 'name desc,write_date desc' },
-    ];
+    return options.buildListSortOptions(
+      options.actionContract.value,
+      options.sortLabel.value,
+      options.pageText('sort_option_contract_default', '契约默认排序'),
+    );
   });
 
   const subtitle = computed(
@@ -57,4 +50,3 @@ export function useActionViewDisplayComputedRuntime(options: UseActionViewDispla
     recordCount,
   };
 }
-

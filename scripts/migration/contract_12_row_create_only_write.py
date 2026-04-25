@@ -13,16 +13,43 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 from collections import Counter
 from pathlib import Path
 
 
-PAYLOAD_CSV = Path("/mnt/artifacts/migration/contract_12_row_write_authorization_payload_v1.csv")
-PACKET_JSON = Path("/mnt/artifacts/migration/contract_12_row_write_authorization_packet_v1.json")
-PRE_WRITE_SNAPSHOT_CSV = Path("/mnt/artifacts/migration/contract_12_row_pre_write_snapshot_v1.csv")
-POST_WRITE_SNAPSHOT_CSV = Path("/mnt/artifacts/migration/contract_12_row_post_write_snapshot_v1.csv")
-WRITE_RESULT_JSON = Path("/mnt/artifacts/migration/contract_12_row_write_result_v1.json")
-ROLLBACK_TARGET_CSV = Path("/mnt/artifacts/migration/contract_12_row_rollback_target_list_v1.csv")
+def repo_root() -> Path:
+    env_root = os.getenv("MIGRATION_REPO_ROOT")
+    candidates = []
+    if env_root:
+        candidates.append(Path(env_root))
+    candidates.extend([Path("/mnt"), Path.cwd()])
+    for candidate in candidates:
+        if (candidate / "artifacts/migration/contract_12_row_write_authorization_payload_v1.csv").exists():
+            return candidate
+    return Path.cwd()
+
+
+def ensure_allowed_db() -> None:
+    allowlist = {
+        item.strip()
+        for item in os.getenv("MIGRATION_REPLAY_DB_ALLOWLIST", "sc_demo").split(",")
+        if item.strip()
+    }
+    if env.cr.dbname not in allowlist:  # noqa: F821 - provided by Odoo shell
+        raise RuntimeError({"db_name_not_allowed_for_replay": env.cr.dbname, "allowlist": sorted(allowlist)})  # noqa: F821
+
+
+REPO_ROOT = repo_root()
+ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(REPO_ROOT / "artifacts/migration")))
+
+PAYLOAD_CSV = REPO_ROOT / "artifacts/migration/contract_12_row_write_authorization_payload_v1.csv"
+PACKET_JSON = REPO_ROOT / "artifacts/migration/contract_12_row_write_authorization_packet_v1.json"
+PRE_WRITE_SNAPSHOT_CSV = ARTIFACT_ROOT / "contract_12_row_pre_write_snapshot_v1.csv"
+POST_WRITE_SNAPSHOT_CSV = ARTIFACT_ROOT / "contract_12_row_post_write_snapshot_v1.csv"
+WRITE_RESULT_JSON = ARTIFACT_ROOT / "contract_12_row_write_result_v1.json"
+ROLLBACK_TARGET_CSV = ARTIFACT_ROOT / "contract_12_row_rollback_target_list_v1.csv"
+RESOLUTION_CSV = ARTIFACT_ROOT / "contract_12_row_missing_partner_anchor_resolution_v1.csv"
 
 RUN_ID = "ITER-2026-04-14-0004"
 EXPECTED_COUNT = 12
@@ -131,8 +158,8 @@ def build_vals(row):
     vals = {
         "legacy_contract_id": clean(row.get("legacy_contract_id")),
         "legacy_project_id": clean(row.get("legacy_project_id")),
-        "project_id": int(clean(row.get("project_id"))),
-        "partner_id": int(clean(row.get("partner_id"))),
+        "project_id": int(clean(row.get("project_id"))) if clean(row.get("project_id")) else None,
+        "partner_id": int(clean(row.get("partner_id"))) if clean(row.get("partner_id")) else None,
         "subject": clean(row.get("subject")),
         "type": clean(row.get("type")),
         "legacy_contract_no": clean(row.get("legacy_contract_no")),
@@ -145,9 +172,46 @@ def build_vals(row):
     return {field: value for field, value in vals.items() if value not in ("", None)}
 
 
+def resolve_project_id(row, project_model):
+    legacy_project_id = clean(row.get("legacy_project_id"))
+    if legacy_project_id:
+        matches = project_model.search([("legacy_project_id", "=", legacy_project_id)], limit=2)
+        if len(matches) == 1:
+            return matches.id
+        if len(matches) > 1:
+            raise RuntimeError({"duplicate_legacy_project_matches": legacy_project_id, "project_ids": matches.ids})
+    project_id = clean(row.get("project_id"))
+    if project_id:
+        rec = project_model.browse(int(project_id)).exists()
+        if rec:
+            return rec.id
+    return None
+
+
+def resolve_partner_id(row, partner_model):
+    if RESOLUTION_CSV.exists():
+        _columns, resolution_rows = read_csv(RESOLUTION_CSV)
+        resolution = {clean(item.get("anchor_name")): int(clean(item.get("partner_id"))) for item in resolution_rows if clean(item.get("partner_id"))}
+        partner_text = clean(row.get("legacy_counterparty_text"))
+        if partner_text in resolution:
+            return resolution[partner_text]
+    partner_id = clean(row.get("partner_id"))
+    if partner_id:
+        rec = partner_model.browse(int(partner_id)).exists()
+        if rec:
+            return rec.id
+    partner_text = clean(row.get("legacy_counterparty_text"))
+    if partner_text:
+        matches = partner_model.search([("name", "=", partner_text)], limit=2)
+        if len(matches) == 1:
+            return matches.id
+        if len(matches) > 1:
+            raise RuntimeError({"duplicate_partner_name_matches": partner_text, "partner_ids": matches.ids})
+    return None
+
+
 def main():
-    if env.cr.dbname != "sc_demo":  # noqa: F821 - provided by Odoo shell
-        raise RuntimeError({"db_name_not_sc_demo": env.cr.dbname})  # noqa: F821
+    ensure_allowed_db()
 
     packet = json.loads(PACKET_JSON.read_text(encoding="utf-8"))
     _columns, rows = read_csv(PAYLOAD_CSV)
@@ -184,14 +248,20 @@ def main():
     create_vals = []
     for row in rows:
         vals = build_vals(row)
+        resolved_project_id = resolve_project_id(row, project_model)
+        resolved_partner_id = resolve_partner_id(row, partner_model)
+        if resolved_project_id:
+            vals["project_id"] = resolved_project_id
+        if resolved_partner_id:
+            vals["partner_id"] = resolved_partner_id
         unsafe_fields = sorted(set(vals) - SAFE_FIELDS)
         if unsafe_fields:
             precheck_errors.append({"error": "unsafe_fields", "legacy_contract_id": vals.get("legacy_contract_id"), "fields": unsafe_fields})
         if vals.get("type") not in {"out", "in"}:
             precheck_errors.append({"error": "invalid_contract_type", "legacy_contract_id": vals.get("legacy_contract_id"), "type": vals.get("type")})
-        if not project_model.browse(vals["project_id"]).exists():
+        if not vals.get("project_id") or not project_model.browse(vals["project_id"]).exists():
             precheck_errors.append({"error": "project_missing", "legacy_contract_id": vals.get("legacy_contract_id"), "project_id": vals["project_id"]})
-        if not partner_model.browse(vals["partner_id"]).exists():
+        if not vals.get("partner_id") or not partner_model.browse(vals["partner_id"]).exists():
             precheck_errors.append({"error": "partner_missing", "legacy_contract_id": vals.get("legacy_contract_id"), "partner_id": vals["partner_id"]})
         create_vals.append(vals)
 

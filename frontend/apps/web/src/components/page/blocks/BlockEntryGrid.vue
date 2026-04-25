@@ -25,6 +25,11 @@
       >
         <p class="entry-title">{{ item.title }}</p>
         <p class="entry-hint">{{ item.hint }}</p>
+        <div v-if="item.metaRows.length" class="entry-meta">
+          <span v-for="meta in item.metaRows" :key="`${item.id}-${meta.label}`" class="entry-meta-chip">
+            {{ meta.label }} {{ meta.value }}
+          </span>
+        </div>
       </button>
     </div>
 
@@ -64,6 +69,16 @@ const items = computed(() => {
       title: String(row.title || row.label || `入口 ${index + 1}`),
       hint: String(row.hint || row.subtitle || ''),
       actionKey: String(row.action_key || ''),
+      metaRows: [
+        {
+          label: '可用',
+          value: Number(row.allow_count || row.ready_count || 0),
+        },
+        {
+          label: '功能',
+          value: Number(row.capability_count || 0),
+        },
+      ].filter((meta) => Number.isFinite(meta.value) && meta.value > 0),
       raw: row,
     };
   });
@@ -143,6 +158,20 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
   margin: 6px 0 0;
   font-size: 13px;
   color: #6b7280;
+}
+.entry-meta {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.entry-meta-chip {
+  font-size: 11px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  background: #eff6ff;
 }
 .entry-empty {
   margin: 8px 0 0;

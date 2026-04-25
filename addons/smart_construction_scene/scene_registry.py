@@ -445,6 +445,27 @@ def load_scene_configs_with_timings(env, drift=None):
             if isinstance(value, list) and not isinstance(current, list):
                 scene[key] = value
 
+    def _upgrade_registry_target_identity(scene, defaults):
+        current = scene.get("target")
+        default_target = defaults.get("target") if isinstance(defaults, dict) else None
+        if not isinstance(current, dict) or not isinstance(default_target, dict):
+            return
+        default_action_xmlid = str(default_target.get("action_xmlid") or "").strip()
+        default_menu_xmlid = str(default_target.get("menu_xmlid") or "").strip()
+        if not (default_action_xmlid or default_menu_xmlid):
+            return
+        if default_action_xmlid:
+            current["action_xmlid"] = default_action_xmlid
+            current.pop("action_id", None)
+        if default_menu_xmlid:
+            current["menu_xmlid"] = default_menu_xmlid
+            current.pop("menu_id", None)
+        for key in ("route", "model", "view_mode", "view_type", "record_id"):
+            if key not in current or current.get(key) in (None, "", [], {}):
+                value = default_target.get(key)
+                if value not in (None, "", [], {}):
+                    current[key] = value
+
     stage_ts = time.perf_counter()
     content_entries, content_timings_ms = _load_scene_registry_content_entries_with_timings()
     if isinstance(content_timings_ms, dict):
@@ -531,6 +552,7 @@ def load_scene_configs_with_timings(env, drift=None):
         defaults = fallback_map.get(code)
         if defaults:
             _merge_missing(scene, defaults)
+            _upgrade_registry_target_identity(scene, defaults)
             _upgrade_fallback_target(scene, defaults)
         imported = imported_map.get(code)
         if imported:

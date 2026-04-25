@@ -33,6 +33,7 @@ _PROFILES: Dict[str, List[str]] = {
         "demo_40_contracts",
         "demo_50_boq_wbs",
         "demo_60_attachments",
+        "z_demo_full_my_work",
         "demo_90_verify",
     ],
 }

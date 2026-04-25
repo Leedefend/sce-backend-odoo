@@ -79,7 +79,6 @@ ROLE_GROUPS_CAPABILITY_FALLBACK = {
 ROLE_PRECEDENCE = ("executive", "pm", "finance")
 
 NAV_MENU_SCENE_MAP = {
-    "smart_construction_demo.menu_sc_project_list_showcase": "projects.list",
     "smart_construction_core.menu_sc_project_initiation": "projects.intake",
     "smart_construction_core.menu_sc_project_project": "projects.ledger",
     "smart_construction_core.menu_sc_project_management_scene": "project.management",
@@ -95,7 +94,6 @@ NAV_MENU_SCENE_MAP = {
 }
 
 NAV_ACTION_SCENE_MAP = {
-    "smart_construction_demo.action_sc_project_list_showcase": "projects.list",
     "smart_construction_core.action_project_initiation": "projects.intake",
     "smart_construction_core.action_sc_project_kanban_lifecycle": "projects.ledger",
     "smart_construction_core.action_sc_project_list": "projects.list",

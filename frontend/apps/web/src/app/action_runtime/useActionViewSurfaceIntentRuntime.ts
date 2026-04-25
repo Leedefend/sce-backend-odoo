@@ -1,4 +1,4 @@
-import { computed, type ComputedRef, type Ref } from 'vue';
+import { computed, type Ref } from 'vue';
 
 type Dict = Record<string, unknown>;
 
@@ -10,10 +10,8 @@ type ActionContractLike = {
 
 type UseActionViewSurfaceIntentRuntimeOptions = {
   actionContract: Ref<ActionContractLike | null>;
-  sceneContractV1: ComputedRef<Dict>;
   strictContractMode: Ref<boolean>;
   strictSurfaceContract: Ref<Dict>;
-  sceneKey: Ref<string>;
   pageText: (key: string, fallback?: string) => string;
   resolveActionViewSurfaceIntent: (input: Dict) => unknown;
 };
@@ -24,13 +22,7 @@ export function useActionViewSurfaceIntentRuntime(options: UseActionViewSurfaceI
     if (fromSurfacePolicies && typeof fromSurfacePolicies === 'object' && !Array.isArray(fromSurfacePolicies)) {
       return fromSurfacePolicies as Dict;
     }
-    const extensions = options.sceneContractV1.value.extensions;
-    const fromExtensions = extensions && typeof extensions === 'object'
-      ? (extensions as Dict).surface_intent
-      : null;
-    return fromExtensions && typeof fromExtensions === 'object' && !Array.isArray(fromExtensions)
-      ? fromExtensions as Dict
-      : {};
+    return {};
   });
 
   const surfaceIntent = computed(() => {
@@ -38,7 +30,6 @@ export function useActionViewSurfaceIntentRuntime(options: UseActionViewSurfaceI
       strictContractMode: options.strictContractMode.value,
       strictSurfaceContract: options.strictSurfaceContract.value,
       contractSurfaceIntent: contractSurfaceIntent.value,
-      sceneKey: options.sceneKey.value,
       pageText: options.pageText,
     });
   });
@@ -48,4 +39,3 @@ export function useActionViewSurfaceIntentRuntime(options: UseActionViewSurfaceI
     surfaceIntent,
   };
 }
-

@@ -222,6 +222,9 @@ _PROJECT_FORM_ACTION_GROUP_LABELS = {
     "drilldown": "业务查看",
     "other": "更多操作",
 }
+_TIER_REVIEW_LIST_NAV_ACTION_PREFIXES = (
+    "smart_construction_core.action_sc_tier_review_my_",
+)
 _PROJECT_KANBAN_PRIMARY_FIELDS = [
     "name",
     "project_code",
@@ -292,6 +295,42 @@ _PROJECT_TASK_LIST_COLUMN_LABELS = {
     "sc_state": "执行状态",
     "date_deadline": "截止日期",
     "priority": "优先级",
+}
+_PAYMENT_REQUEST_LIST_COLUMNS = [
+    "name",
+    "type",
+    "project_id",
+    "contract_id",
+    "settlement_id",
+    "settlement_amount_payable",
+    "partner_id",
+    "amount",
+    "state",
+    "date_request",
+]
+_PAYMENT_REQUEST_LIST_COLUMN_LABELS = {
+    "name": "申请单号",
+    "type": "类型",
+    "project_id": "项目",
+    "contract_id": "合同",
+    "settlement_id": "结算单",
+    "settlement_amount_payable": "可付余额",
+    "partner_id": "往来单位",
+    "amount": "申请金额",
+    "state": "状态",
+    "date_request": "申请日期",
+}
+_MATERIAL_PLAN_LIST_COLUMNS = [
+    "name",
+    "project_id",
+    "date_plan",
+    "state",
+]
+_MATERIAL_PLAN_LIST_COLUMN_LABELS = {
+    "name": "单号",
+    "project_id": "项目",
+    "date_plan": "需用日期",
+    "state": "状态",
 }
 _USER_SURFACE_ACTION_GROUP_LABELS = {
     "basic": "基础操作",
@@ -777,6 +816,9 @@ def _is_noisy_action_row(row: dict) -> bool:
     label = _safe_text(row.get("label") or key)
     if not key or not label:
         return True
+    selection = _safe_lower(row.get("selection"))
+    if selection == "multi":
+        return False
     if _is_numeric_token(key) or _is_numeric_token(label):
         return True
     return _contains_noise_marker(key, label, row.get("name"), row.get("xml_id"))
@@ -823,7 +865,7 @@ def _build_user_surface_action_groups(rows: list[dict]) -> list[dict]:
 def _sanitize_user_action_rows(rows: Any, max_count: int = _USER_SURFACE_ACTION_MAX) -> list[dict]:
     if not isinstance(rows, list):
         return []
-    out: list[dict] = []
+    cleaned: list[dict] = []
     seen: set[str] = set()
     for row in rows:
         if not isinstance(row, dict):
@@ -834,10 +876,16 @@ def _sanitize_user_action_rows(rows: Any, max_count: int = _USER_SURFACE_ACTION_
         if not key or key in seen:
             continue
         seen.add(key)
-        out.append(row)
-        if len(out) >= max_count:
-            break
-    return out
+        cleaned.append(row)
+    if len(cleaned) <= max_count:
+        return cleaned
+
+    # Preserve list selection actions before trimming user-surface action groups.
+    multi_rows = [row for row in cleaned if _safe_lower(row.get("selection")) == "multi"]
+    other_rows = [row for row in cleaned if _safe_lower(row.get("selection")) != "multi"]
+    if len(multi_rows) >= max_count:
+        return multi_rows
+    return multi_rows + other_rows[: max_count - len(multi_rows)]
 
 
 def _apply_user_surface_noise_reduction(data: dict) -> None:
@@ -1686,6 +1734,46 @@ def _govern_standard_list_for_user(
     list_semantics["status_field"] = status_field
     semantic_page["list_semantics"] = list_semantics
     data["semantic_page"] = semantic_page
+
+
+def _govern_tier_review_list_for_user(data: dict) -> None:
+    if not _is_model_tree_contract(data, "tier.review"):
+        return
+
+    def _keep_action(row: Any) -> bool:
+        if not isinstance(row, dict):
+            return False
+        key = _safe_text(row.get("key"))
+        return not any(key.startswith(prefix) for prefix in _TIER_REVIEW_LIST_NAV_ACTION_PREFIXES)
+
+    buttons = data.get("buttons")
+    if isinstance(buttons, list):
+        data["buttons"] = [dict(row) for row in buttons if _keep_action(row)]
+
+    toolbar = _as_dict(data.get("toolbar"))
+    if toolbar:
+        for slot in ("header", "sidebar", "footer"):
+            rows = toolbar.get(slot)
+            if isinstance(rows, list):
+                toolbar[slot] = [dict(row) for row in rows if _keep_action(row)]
+        data["toolbar"] = toolbar
+
+    groups = data.get("action_groups")
+    if isinstance(groups, list):
+        normalized = []
+        for group in groups:
+            if not isinstance(group, dict):
+                continue
+            actions = group.get("actions")
+            if not isinstance(actions, list):
+                continue
+            kept = [dict(row) for row in actions if _keep_action(row)]
+            if not kept:
+                continue
+            next_group = dict(group)
+            next_group["actions"] = kept
+            normalized.append(next_group)
+        data["action_groups"] = normalized
 
 
 def _realign_access_policy_with_visible_fields(data: dict) -> None:
@@ -3177,6 +3265,25 @@ def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
             row_secondary="project_id",
             status_field="sc_state",
         )
+        _govern_standard_list_for_user(
+            data,
+            model_name="payment.request",
+            columns_order=_PAYMENT_REQUEST_LIST_COLUMNS,
+            column_labels=_PAYMENT_REQUEST_LIST_COLUMN_LABELS,
+            row_primary="name",
+            row_secondary="project_id",
+            status_field="state",
+        )
+        _govern_standard_list_for_user(
+            data,
+            model_name="project.material.plan",
+            columns_order=_MATERIAL_PLAN_LIST_COLUMNS,
+            column_labels=_MATERIAL_PLAN_LIST_COLUMN_LABELS,
+            row_primary="name",
+            row_secondary="project_id",
+            status_field="state",
+        )
+        _govern_tier_review_list_for_user(data)
     if contract_mode == "user" and _is_enterprise_company_form_contract(data):
         _govern_enterprise_company_form_for_user(data)
     if contract_mode == "user":

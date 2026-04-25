@@ -136,6 +136,66 @@ class AppActionConfig(models.Model):
 
     # ================== 各来源扫描（内部） ==================
 
+    def _native_button_contract_scope(self, btn_node):
+        classes = [c.strip() for c in (btn_node.get('class') or '').split() if c.strip()]
+        if 'oe_stat_button' in classes or 'oe_stat_info' in classes:
+            return {
+                "level": "smart",
+                "selection": "none",
+                "visible_profiles": ["create", "edit", "readonly"],
+            }
+
+        in_header = False
+        host = ""
+        p = btn_node.getparent()
+        while p is not None:
+            tag = getattr(p, 'tag', '')
+            if tag == 'header':
+                in_header = True
+            if tag in ('tree', 'list'):
+                host = 'list'
+                break
+            if tag == 'form':
+                host = 'form'
+                break
+            if tag == 'kanban':
+                host = 'kanban'
+                break
+            p = p.getparent()
+
+        if host == 'list':
+            if in_header:
+                return {
+                    "level": "toolbar",
+                    "selection": "multi",
+                    "visible_profiles": ["readonly", "list"],
+                }
+            return {
+                "level": "row",
+                "selection": "none",
+                "visible_profiles": ["readonly", "list"],
+            }
+
+        return {
+            "level": "header",
+            "selection": "none",
+            "visible_profiles": ["create", "edit", "readonly"],
+        }
+
+    def _native_server_action_scope(self, binding_view_types):
+        raw = str(binding_view_types or "").strip().lower()
+        tokens = [token.strip() for token in raw.replace("tree", "list").split(",") if token.strip()]
+        token_set = set(tokens)
+        if "list" in token_set:
+            return {
+                "selection": "multi",
+                "visible_profiles": ["readonly", "list"],
+            }
+        return {
+            "selection": "none",
+            "visible_profiles": ["create", "edit", "readonly"],
+        }
+
     def _scan_window_actions(self, model_name):
         """扫描 ir.actions.act_window（打开窗口类），统一为 kind='open'"""
         res = []
@@ -151,6 +211,7 @@ class AppActionConfig(models.Model):
                 "target_model": a.res_model,
                 "level": "toolbar",          # 缺省放工具栏；具体布局交给 view.config
                 "selection": "none",
+                "visible_profiles": ["create", "edit", "readonly", "list"],
                 "groups": [], "groups_xmlids": [],
                 "visible": {"domain": [], "states": []},
                 "intent": "open",
@@ -177,8 +238,7 @@ class AppActionConfig(models.Model):
         for s in srvs:
             key = s.xml_id or f"srv_{s.id}"
             label = s.name or key
-            # 选择约束：大多数 server action 允许多选；若 state 特殊可改
-            selection = "multi"
+            scope = self._native_server_action_scope(getattr(s, 'binding_view_types', None))
             entry = {
                 "key": key,
                 "label": label,
@@ -186,7 +246,8 @@ class AppActionConfig(models.Model):
                 "model": model_name,
                 "target_model": model_name,
                 "level": "toolbar",
-                "selection": selection,
+                "selection": scope["selection"],
+                "visible_profiles": scope["visible_profiles"],
                 "groups": [g.id for g in s.groups_id],
                 "groups_xmlids": self._groups_xmlids(s.groups_id),
                 "visible": {"domain": [], "states": []},
@@ -221,6 +282,7 @@ class AppActionConfig(models.Model):
                 "target_model": None,
                 "level": "toolbar",
                 "selection": "none",
+                "visible_profiles": ["create", "edit", "readonly", "list"],
                 "groups": [], "groups_xmlids": [],
                 "visible": {"domain": [], "states": []},
                 "intent": "url",
@@ -266,29 +328,13 @@ class AppActionConfig(models.Model):
                     states = (btn.get('states') or '').split(',')
                     context_raw = btn.get('context') or None
 
-                    # 粗判所在层级：在 tree 节点下且有 class o_list_button_* 视为 row；含 oe_stat_button 视为 smart/stat
-                    level = 'header'
-                    p = btn.getparent()
-                    while p is not None:
-                        tag = p.tag
-                        if tag == 'tree':
-                            level = 'row'
-                            break
-                        if tag == 'form':
-                            level = 'header'
-                            break
-                        if tag == 'kanban':
-                            level = 'header'
-                            break
-                        p = p.getparent()
-                    if 'oe_stat_button' in classes or 'oe_stat_info' in classes:
-                        level = 'smart'
+                    scope = self._native_button_contract_scope(btn)
+                    level = scope["level"]
+                    selection = scope["selection"]
+                    visible_profiles = scope["visible_profiles"]
 
                     # 解析 groups
                     groups_ids, groups_xmlids = self._parse_groups_attr(groups_attr)
-
-                    # 选择约束：object 默认支持 multi；header 的部分按钮可能只支持 single（这里给提示位）
-                    selection = 'multi' if level in ('row',) else 'single'
 
                     if b_type == 'object':
                         # 调用模型方法
@@ -301,6 +347,7 @@ class AppActionConfig(models.Model):
                             "target_model": model_name,
                             "level": level,
                             "selection": selection,
+                            "visible_profiles": visible_profiles,
                             "groups": groups_ids,
                             "groups_xmlids": groups_xmlids,
                             "visible": {"domain": [], "states": [s for s in states if s]},
@@ -325,7 +372,8 @@ class AppActionConfig(models.Model):
                             "model": model_name,
                             "target_model": None,
                             "level": level,
-                            "selection": selection if level == 'row' else 'none',
+                            "selection": selection,
+                            "visible_profiles": visible_profiles,
                             "groups": groups_ids,
                             "groups_xmlids": groups_xmlids,
                             "visible": {"domain": [], "states": [s for s in states if s]},

@@ -5,6 +5,8 @@ import json
 import os
 from urllib.parse import parse_qs, urlparse
 from typing import Callable
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
 
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 from odoo.addons.smart_core.core.scene_registry_provider import (
@@ -143,6 +145,41 @@ def load_scene_contract(env, scene_channel: str, use_pinned: bool, *, logger=Non
         return None, ref
 
 
+def _resolve_scene_provider_payload(scene_key: str, runtime_context: dict | None = None) -> dict:
+    runtime_payload = runtime_context if isinstance(runtime_context, dict) else {}
+    try:
+        from odoo.addons.smart_scene.core.scene_provider_registry import resolve_scene_provider_path
+    except Exception:
+        return {}
+
+    provider_path = resolve_scene_provider_path(scene_key, Path(__file__).resolve())
+    if not provider_path or not provider_path.exists() or not provider_path.is_file():
+        return {}
+
+    spec = spec_from_file_location(
+        f"scene_provider_{scene_key.replace('.', '_')}",
+        provider_path,
+    )
+    if spec is None or spec.loader is None:
+        return {}
+    module = module_from_spec(spec)
+    try:
+        spec.loader.exec_module(module)
+    except Exception:
+        return {}
+
+    builder = getattr(module, "build", None)
+    if not callable(builder):
+        builder = getattr(module, "get_scene_content", None)
+    if not callable(builder):
+        return {}
+    try:
+        payload = builder(scene_key=scene_key, runtime=runtime_payload, context={})
+    except Exception:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
 def merge_missing_scenes_from_registry(env, scenes, warnings):
     critical_target_overrides = _critical_scene_target_overrides(env)
     critical_route_overrides = _critical_scene_target_route_overrides(env)
@@ -246,6 +283,61 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
             hydrated["route"] = f"/s/{code}"
         scene_payload["target"] = hydrated
 
+    def _upgrade_target_identity_from_registry(scene_payload: dict, registry_payload: dict) -> bool:
+        if not isinstance(scene_payload, dict) or not isinstance(registry_payload, dict):
+            return False
+        current_target = scene_payload.get("target") if isinstance(scene_payload.get("target"), dict) else {}
+        registry_target = registry_payload.get("target") if isinstance(registry_payload.get("target"), dict) else {}
+        if not isinstance(current_target, dict) or not isinstance(registry_target, dict):
+            return False
+        action_xmlid = str(registry_target.get("action_xmlid") or "").strip()
+        menu_xmlid = str(registry_target.get("menu_xmlid") or "").strip()
+        if not (action_xmlid or menu_xmlid):
+            return False
+        next_target = dict(current_target)
+        if action_xmlid:
+            next_target["action_xmlid"] = action_xmlid
+            next_target.pop("action_id", None)
+        if menu_xmlid:
+            next_target["menu_xmlid"] = menu_xmlid
+            next_target.pop("menu_id", None)
+        for key in ("route", "model", "view_mode", "view_type", "record_id"):
+            if next_target.get(key) in (None, "", [], {}):
+                value = registry_target.get(key)
+                if value not in (None, "", [], {}):
+                    next_target[key] = value
+        if next_target == current_target:
+            return False
+        scene_payload["target"] = next_target
+        return True
+
+    def _upgrade_target_identity_from_provider(scene_payload: dict, provider_payload: dict) -> bool:
+        if not isinstance(scene_payload, dict) or not isinstance(provider_payload, dict):
+            return False
+        current_target = scene_payload.get("target") if isinstance(scene_payload.get("target"), dict) else {}
+        if not isinstance(current_target, dict):
+            current_target = {}
+        primary_action = provider_payload.get("primary_action") if isinstance(provider_payload.get("primary_action"), dict) else {}
+        fallback_strategy = provider_payload.get("fallback_strategy") if isinstance(provider_payload.get("fallback_strategy"), dict) else {}
+        action_xmlid = str(primary_action.get("action_xmlid") or fallback_strategy.get("action_xmlid") or "").strip()
+        menu_xmlid = str(fallback_strategy.get("menu_xmlid") or "").strip()
+        target_route = str(current_target.get("route") or scene_payload.get("page", {}).get("route") or f"/s/{scene_payload.get('code') or scene_payload.get('key') or ''}").strip()
+        if not (action_xmlid or menu_xmlid or target_route):
+            return False
+        next_target = dict(current_target)
+        if action_xmlid:
+            next_target["action_xmlid"] = action_xmlid
+            next_target.pop("action_id", None)
+        if menu_xmlid:
+            next_target["menu_xmlid"] = menu_xmlid
+            next_target.pop("menu_id", None)
+        if target_route:
+            next_target["route"] = target_route
+        if next_target == current_target:
+            return False
+        scene_payload["target"] = next_target
+        return True
+
     current = [scene for scene in (scenes or []) if isinstance(scene, dict)]
     dropped_pkg_variants = []
     filtered = []
@@ -297,6 +389,15 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
         if code not in critical_target_overrides:
             continue
         registry_scene = registry_map.get(code) or {}
+        if _upgrade_target_identity_from_registry(scene, registry_scene):
+            reconciled.append(code)
+            if isinstance(scene.get("target"), dict):
+                scene["target"] = _hydrate_target(scene.get("target"))
+        provider_scene = _resolve_scene_provider_payload(code)
+        if _upgrade_target_identity_from_provider(scene, provider_scene):
+            reconciled.append(code)
+            if isinstance(scene.get("target"), dict):
+                scene["target"] = _hydrate_target(scene.get("target"))
         registry_target = registry_scene.get("target")
         if isinstance(registry_target, dict) and registry_target:
             current_target = scene.get("target")

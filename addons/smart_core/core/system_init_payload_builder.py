@@ -37,6 +37,17 @@ class SystemInitPayloadBuilder:
     MINIMAL_EXT_FACT_KEYS = {
         "enterprise_enablement",
     }
+    DEFAULT_STARTUP_PAGE_KEYS = ("home", "my_work", "workbench")
+
+    @staticmethod
+    def _parse_with_tokens(value) -> set[str]:
+        if isinstance(value, str):
+            raw = [item.strip() for item in value.split(",")]
+        elif isinstance(value, (list, tuple, set)):
+            raw = [str(item or "").strip() for item in value]
+        else:
+            raw = []
+        return {item for item in raw if item}
 
     @staticmethod
     def _build_entry_target(*, scene_key: str = "", route: str = "", menu_id=None, action_id=None, model: str = "", record_id=None) -> dict:
@@ -224,6 +235,46 @@ class SystemInitPayloadBuilder:
         return minimal
 
     @classmethod
+    def _build_minimal_page_contracts(cls, row: dict) -> dict:
+        payload = row.get("page_contracts") if isinstance(row.get("page_contracts"), dict) else {}
+        pages = payload.get("pages") if isinstance(payload.get("pages"), dict) else {}
+        selected_pages: dict = {}
+        for page_key in cls.DEFAULT_STARTUP_PAGE_KEYS:
+            page = pages.get(page_key)
+            if isinstance(page, dict):
+                selected_pages[page_key] = page
+        if not selected_pages:
+            return {}
+        out = {"pages": selected_pages}
+        for key in ("schema_version", "contract_version", "meta"):
+            value = payload.get(key)
+            if value is not None:
+                out[key] = value
+        return out
+
+    @classmethod
+    def _build_workspace_home_default_route(cls) -> dict:
+        route = {
+            "menu_id": None,
+            "scene_key": "workspace.home",
+            "route": "/",
+            "reason": "workspace_home_default",
+        }
+        entry_target = cls._build_entry_target(scene_key="workspace.home", route="/")
+        if entry_target:
+            route["entry_target"] = entry_target
+        return route
+
+    @classmethod
+    def _build_workspace_home_ref(cls, row: dict) -> dict:
+        payload = row.get("workspace_home_ref") if isinstance(row.get("workspace_home_ref"), dict) else {}
+        out = dict(payload)
+        out["intent"] = str(out.get("intent") or "ui.contract")
+        out["scene_key"] = "workspace.home"
+        out["loaded"] = bool(out.get("loaded"))
+        return out
+
+    @classmethod
     def resolve_startup_scene_subset(cls, row: dict, *, params: dict | None = None) -> list[str]:
         init_meta = cls._build_minimal_init_meta(row if isinstance(row, dict) else {}, params=params)
         scene_subset = init_meta.get("scene_subset") if isinstance(init_meta.get("scene_subset"), list) else []
@@ -246,6 +297,8 @@ class SystemInitPayloadBuilder:
         row = data if isinstance(data, dict) else {}
         params = params if isinstance(params, dict) else {}
         resolved_build_mode = build_mode or cls.resolve_build_mode(params)
+        with_tokens = cls._parse_with_tokens(params.get("with"))
+        include_workspace_home = bool(params.get("with_preload", False)) or "workspace_home" in with_tokens
 
         nav = cls._normalize_nav_tree(row.get("nav") if isinstance(row.get("nav"), list) else [])
         default_route = cls._normalize_default_route(row.get("default_route") if isinstance(row.get("default_route"), dict) else {})
@@ -318,7 +371,17 @@ class SystemInitPayloadBuilder:
                 minimal["scene_ready_contract_v1"] = cls._build_minimal_scene_ready_contract(
                     row.get("scene_ready_contract_v1")
                 )
-        if bool(params.get("with_preload", False)):
+        minimal_page_contracts = cls._build_minimal_page_contracts(row)
+        if minimal_page_contracts:
+            minimal["page_contracts"] = minimal_page_contracts
+        if isinstance((minimal.get("page_contracts") or {}).get("pages"), dict) and "home" in (minimal.get("page_contracts") or {}).get("pages", {}):
+            minimal["default_route"] = cls._build_workspace_home_default_route()
+            minimal["workspace_home_ref"] = cls._build_workspace_home_ref(row)
+        else:
+            workspace_home_ref = row.get("workspace_home_ref") if isinstance(row.get("workspace_home_ref"), dict) else {}
+            if workspace_home_ref:
+                minimal["workspace_home_ref"] = workspace_home_ref
+        if include_workspace_home:
             if isinstance(row.get("workspace_home"), dict):
                 minimal["workspace_home"] = row.get("workspace_home")
         if role_entries:

@@ -3,6 +3,7 @@
     <header class="block-header">
       <h4>{{ block.title || '进展' }}</h4>
     </header>
+    <p v-if="summaryText" class="summary-text">{{ summaryText }}</p>
     <div class="progress-list">
       <article v-for="item in rows" :key="item.key" class="progress-item" :class="`kind-${item.kind}`">
         <div class="progress-line">
@@ -62,11 +63,17 @@ const rows = computed(() => {
   ];
   return rowsLocal.filter((row) => row.value > 0);
 });
+
+const summaryText = computed(() => {
+  const source = props.dataset && typeof props.dataset === 'object' ? props.dataset as Record<string, unknown> : {};
+  return String(source.summary || '').trim();
+});
 </script>
 
 <style scoped>
 .block { border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; padding: 12px; height: 100%; }
 .block-header h4 { margin: 0 0 10px; font-size: 15px; font-weight: 600; }
+.summary-text { margin: 0 0 10px; color: #475569; font-size: 13px; line-height: 1.5; }
 .progress-list { display: grid; gap: 10px; }
 .progress-item { border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px; background: #f8fbff; min-height: 66px; }
 .progress-item.kind-count { background: #fff7ed; border-color: #fed7aa; }

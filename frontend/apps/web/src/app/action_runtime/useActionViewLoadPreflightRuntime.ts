@@ -52,7 +52,7 @@ type ExecuteLoadPreflightOptions = {
   }) => unknown;
   isUrlAction: (meta: unknown, contract: unknown) => boolean;
   redirectUrlAction: (meta: unknown, contract: unknown) => Promise<boolean>;
-  resolveDefaultSort: (fields: Record<string, unknown>) => string;
+  extractListOrderFromContract: (contract: unknown) => string;
   resolveLoadPreflightSortValue: (input: Dict) => string;
   resolveLoadPreflightContractLimit: (input: Dict) => number;
   evaluateCapabilityPolicy: (input: { source: unknown; available: unknown }) => { state?: unknown; missing?: unknown };
@@ -183,14 +183,14 @@ export function useActionViewLoadPreflightRuntime() {
       const viewsTree = (typedContract.views as Dict | undefined)?.tree as Dict | undefined;
       const uiContractViews = (typedContract.ui_contract as Dict | undefined)?.views as Dict | undefined;
       const uiContractTree = uiContractViews?.tree as Dict | undefined;
-      const fallbackSort = options.resolveDefaultSort((typedContract.fields || {}) as Record<string, unknown>) || 'id desc';
+      const fallbackSort = options.extractListOrderFromContract(contract) || '';
       sortValue = options.resolveLoadPreflightSortValue({
         currentSortRaw: sortValue,
         sceneReadyDefaultSortRaw: options.sceneReadyDefaultSortRaw,
         sceneDefaultSortRaw: options.sceneDefaultSortRaw,
         searchDefaultOrderRaw: searchDefaults?.order,
         viewOrderRaw: viewsTree?.order || uiContractTree?.order,
-        metaOrderRaw: (nextMeta as Dict | null)?.order,
+        metaOrderRaw: '',
         fallbackSortRaw: fallbackSort,
       });
     }

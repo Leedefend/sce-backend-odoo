@@ -133,7 +133,7 @@ import type { Scene, SceneTarget } from '../app/resolvers/sceneRegistry';
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
-const pageContract = usePageContract('scene');
+const pageContract = usePageContract('scene', { allowSceneContractFallback: true });
 const pageText = pageContract.text;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
@@ -141,9 +141,6 @@ const pageSectionTagIs = pageContract.sectionTagIs;
 const pageActionIntent = pageContract.actionIntent;
 const pageActionTarget = pageContract.actionTarget;
 const pageGlobalActions = pageContract.globalActions;
-const pageConsumerRuntime = pageContract.consumerRuntime;
-const pageConsumerRuntimeStatus = pageContract.consumerRuntimeStatus;
-const pageConsumerRuntimeBridgeAligned = pageContract.consumerRuntimeBridgeAligned;
 const headerActions = computed(() => pageGlobalActions.value);
 const currentSceneKey = computed(() => String(route.params.sceneKey || route.meta?.sceneKey || '').trim());
 const findActionNodeByModelRef = findActionNodeByModel;
@@ -182,18 +179,18 @@ const idleDiagnosticMessage = computed(() => {
 });
 
 const runtimeDiagnosticTitle = computed(() => {
-  const statusKey = String(pageConsumerRuntimeStatus() || '').trim();
+  const statusKey = String(resolveSceneRuntimeStatus() || '').trim();
   if (!statusKey) return pageText('runtime_diag_title_default', '场景运行状态');
   return pageText(`runtime_diag_title_${statusKey.toLowerCase()}`, statusKey);
 });
 
 const runtimeDiagnosticMessage = computed(() => {
-  const runtime = pageConsumerRuntime.value || {};
-  const statusKey = String(pageConsumerRuntimeStatus() || '').trim();
+  const runtime = resolveSceneRuntime();
+  const statusKey = String(resolveSceneRuntimeStatus() || '').trim();
   const currentState = String(runtime.current_state || '').trim();
   const missingRequiredCount = Number(runtime.missing_required_count || 0);
   const activeTransitionCount = Number(runtime.active_transition_count || 0);
-  const bridgeAligned = pageConsumerRuntimeBridgeAligned();
+  const bridgeAligned = isSceneRuntimeBridgeAligned();
   const parts: string[] = [];
 
   if (statusKey && statusKey !== 'ready') {
@@ -214,6 +211,55 @@ const runtimeDiagnosticMessage = computed(() => {
 
   return parts.join('；');
 });
+
+function asRuntimeRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? value as Record<string, unknown> : {};
+}
+
+function resolveSceneRuntime() {
+  const currentScene = scene.value;
+  if (!currentScene) return {};
+  const runtimeSources = [
+    currentScene.runtime_handoff_surface,
+    currentScene.scene_ready?.runtime_handoff_surface,
+    currentScene.scene_ready?.runtime_policy,
+    currentScene.page?.runtime,
+    currentScene.validation_surface,
+  ];
+  for (const item of runtimeSources) {
+    const runtime = asRuntimeRecord(item);
+    if (Object.keys(runtime).length) {
+      return runtime;
+    }
+  }
+  return {};
+}
+
+function resolveSceneRuntimeStatus() {
+  const runtime = resolveSceneRuntime();
+  const statusCandidates = [
+    runtime.runtime_status,
+    runtime.status,
+    runtime.delivery_mode,
+    runtime.family,
+  ];
+  for (const item of statusCandidates) {
+    const text = String(item || '').trim();
+    if (text) return text;
+  }
+  return '';
+}
+
+function isSceneRuntimeBridgeAligned() {
+  const runtime = resolveSceneRuntime();
+  if (typeof runtime.bridge_aligned === 'boolean') {
+    return runtime.bridge_aligned;
+  }
+  if (typeof runtime.semantic_bridge_aligned === 'boolean') {
+    return runtime.semantic_bridge_aligned;
+  }
+  return true;
+}
 
 const sceneResolveSignature = computed(() => JSON.stringify({
   path: route.path,

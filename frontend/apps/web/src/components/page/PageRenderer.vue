@@ -29,35 +29,7 @@
       </button>
     </div>
 
-    <div v-if="isWorkbenchPage" class="workbench-zone-layout">
-      <ZoneRenderer
-        v-if="todayFocusZone"
-        :key="todayFocusZone.key"
-        :zone="todayFocusZone"
-        :datasets="datasets"
-        @action="onZoneAction"
-      />
-
-      <div class="workbench-secondary-grid">
-        <ZoneRenderer
-          v-for="zone in secondaryZones"
-          :key="zone.key"
-          :zone="zone"
-          :datasets="datasets"
-          @action="onZoneAction"
-        />
-      </div>
-
-      <ZoneRenderer
-        v-for="zone in trailingZones"
-        :key="zone.key"
-        :zone="zone"
-        :datasets="datasets"
-        @action="onZoneAction"
-      />
-    </div>
-
-    <div v-else-if="isProjectCockpitPage" class="cockpit-zone-layout">
+    <div v-if="isProjectCockpitPage" class="cockpit-zone-layout">
       <ZoneRenderer
         v-if="cockpitMetricsZone"
         :key="cockpitMetricsZone.key"
@@ -148,34 +120,12 @@ const orderedZones = computed<PageOrchestrationZone[]>(() => {
 });
 
 const pageKey = computed(() => String(props.contract.page?.key || ''));
-const isWorkbenchPage = computed(() => pageKey.value === 'portal.dashboard' || pageKey.value === 'workspace.home');
 const isProjectCockpitPage = computed(() => pageKey.value === 'project.management.dashboard');
 
 function zoneMatches(zone: PageOrchestrationZone, name: string) {
   const key = String(zone.key || '');
   return key === name || key.endsWith(`.${name}`);
 }
-
-const todayFocusZone = computed<PageOrchestrationZone | null>(() => (
-  orderedZones.value.find((zone) => zone.key === 'today_focus') || null
-));
-
-const secondaryZones = computed<PageOrchestrationZone[]>(() => {
-  if (!isWorkbenchPage.value) return [];
-  const wantedOrder = ['analysis', 'quick_entries'];
-  return wantedOrder
-    .map((key) => orderedZones.value.find((zone) => zone.key === key))
-    .filter((zone): zone is PageOrchestrationZone => Boolean(zone));
-});
-
-const trailingZones = computed<PageOrchestrationZone[]>(() => {
-  if (!isWorkbenchPage.value) return [];
-  return orderedZones.value.filter((zone) => (
-    zone.key !== 'today_focus'
-    && zone.key !== 'analysis'
-    && zone.key !== 'quick_entries'
-  ));
-});
 
 const cockpitMetricsZone = computed<PageOrchestrationZone | null>(() => (
   orderedZones.value.find((zone) => zoneMatches(zone, 'metrics')) || null
@@ -245,11 +195,6 @@ function onZoneAction(payload: PageBlockActionEvent) {
 }
 .cockpit-zone-layout {
   display: grid;
-  gap: 16px;
-}
-.workbench-secondary-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
   gap: 16px;
 }
 .cockpit-focus-grid {

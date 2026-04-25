@@ -28,6 +28,7 @@
           v-show="expanded.has(nodeKey(node))"
           :nodes="node.children"
           :active-menu-id="activeMenuId"
+          :capabilities="capabilities"
           :level="level + 1"
           @select="emit('select', $event)"
         />
