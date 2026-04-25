@@ -162,6 +162,10 @@ Supported resume step names:
 - `actual_outflow_replay`
 - `outflow_request_line_adapter`
 - `outflow_request_line_replay`
+- `actual_outflow_residual_adapter`
+- `actual_outflow_residual_replay`
+- `actual_outflow_line_adapter`
+- `actual_outflow_line_replay`
 - `legacy_attachment_backfill_adapter`
 - `legacy_attachment_backfill_replay`
 - `receipt_income_partner_targeted_adapter`
@@ -214,12 +218,14 @@ Supported resume step names:
 - `legacy_workflow_audit_sc_v1`
 - `outflow_request_core`
 - `actual_outflow_core`
+- `actual_outflow_residual_parent`
 - `outflow_request_state_recovery`
 - `outflow_request_ledger_fact`
 - `project_lifecycle_continuity`
 - `supplier_contract`
 - `supplier_contract_line`
 - `outflow_request_line`
+- `actual_outflow_line`
 - `legacy_financing_loan_sc_v1`
 - `legacy_fund_daily_snapshot_sc_v1`
 

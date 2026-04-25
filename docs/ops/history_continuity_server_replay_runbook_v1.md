@@ -113,6 +113,9 @@ historical fact continuity over forcing old data to satisfy new workflow rules:
 - supplier contract headers
 - supplier contract summary lines
 - outflow request lines
+- actual outflow child lines
+- residual actual outflow parent carriers for line facts that strict core rules
+  excluded; these carriers are marked as non-ledger/non-settlement history facts
 
 If a rehearsal needs to isolate only core headers, set:
 

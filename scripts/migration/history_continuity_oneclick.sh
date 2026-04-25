@@ -178,8 +178,12 @@ case "$MODE" in
     if [[ "$INCLUDE_DETAIL_FACTS" == "1" ]]; then
       run_step outflow_request_line_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_outflow_request_line_replay_adapter.py"
       run_step outflow_request_line_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_outflow_request_line_replay_write.py"
+      run_step actual_outflow_residual_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_residual_replay_adapter.py"
+      run_step actual_outflow_residual_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_residual_replay_write.py"
+      run_step actual_outflow_line_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_line_replay_adapter.py"
+      run_step actual_outflow_line_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_line_replay_write.py"
     else
-      echo "[history.continuity] skip outflow request line facts by HISTORY_CONTINUITY_INCLUDE_DETAIL_FACTS=0"
+      echo "[history.continuity] skip payment request line facts by HISTORY_CONTINUITY_INCLUDE_DETAIL_FACTS=0"
     fi
     run_step legacy_attachment_backfill_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_attachment_backfill_replay_adapter.py"
     run_step legacy_attachment_backfill_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_attachment_backfill_replay_write.py"
