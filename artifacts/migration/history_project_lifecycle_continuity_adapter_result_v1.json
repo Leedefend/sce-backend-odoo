@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "mode": "history_project_lifecycle_continuity_adapter",
+  "snapshot_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/project_continuity_downstream_fact_state_sync_snapshot_v1.csv",
+  "payload_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/history_project_lifecycle_continuity_payload_v1.csv",
+  "payload_rows": 701,
+  "db_writes": 0,
+  "decision": "project_lifecycle_continuity_payload_ready"
+}

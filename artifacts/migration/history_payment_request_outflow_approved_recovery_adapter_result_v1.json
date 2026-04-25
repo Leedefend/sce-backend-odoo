@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "mode": "history_payment_request_outflow_approved_recovery_adapter",
+  "payload_rows": 12201,
+  "fact_counts": {
+    "historical_approved_by_downstream_business_fact": 12194,
+    "historical_approved": 7
+  },
+  "payload_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/history_payment_request_outflow_approved_recovery_payload_v1.csv"
+}

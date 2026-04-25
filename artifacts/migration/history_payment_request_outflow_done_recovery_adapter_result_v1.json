@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "mode": "history_payment_request_outflow_done_recovery_adapter",
+  "payload_rows": 12194,
+  "fact_counts": {
+    "historical_paid_by_downstream_business_fact": 12194
+  },
+  "payload_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/history_payment_request_outflow_done_recovery_payload_v1.csv"
+}
