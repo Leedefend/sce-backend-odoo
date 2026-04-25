@@ -93,6 +93,64 @@ def _ensure_project_prereqs(env, project):
         project.write(vals)
 
 
+def _ensure_purchase_order(env, settlement):
+    if settlement.purchase_order_ids:
+        return
+
+    Purchase = env["purchase.order"].sudo()
+    PurchaseLine = env["purchase.order.line"].sudo()
+    Product = env["product.product"].sudo()
+    uom_unit = env.ref("uom.product_uom_unit", raise_if_not_found=False)
+    if not uom_unit:
+        uom_unit = env["uom.uom"].sudo().search([], limit=1)
+
+    product = Product.search([("name", "=", "展厅采购服务")], limit=1)
+    if not product:
+        product = Product.create(
+            {
+                "name": "展厅采购服务",
+                "type": "service",
+                "uom_id": uom_unit.id if uom_unit else False,
+                "uom_po_id": uom_unit.id if uom_unit else False,
+                "purchase_ok": True,
+                "sale_ok": False,
+            }
+        )
+
+    po = Purchase.search(
+        [
+            ("partner_id", "=", settlement.partner_id.id),
+            ("origin", "=", settlement.name),
+        ],
+        limit=1,
+    )
+    if not po:
+        po = Purchase.create(
+            {
+                "partner_id": settlement.partner_id.id,
+                "date_order": fields.Datetime.now(),
+                "origin": settlement.name,
+            }
+        )
+    if not po.order_line:
+        total = settlement.amount_total or sum(settlement.line_ids.mapped("amount")) or 0.0
+        PurchaseLine.create(
+            {
+                "order_id": po.id,
+                "name": "展厅-采购服务",
+                "product_id": product.id,
+                "product_qty": 1.0,
+                "product_uom": uom_unit.id if uom_unit else product.uom_po_id.id,
+                "price_unit": total,
+                "date_planned": fields.Datetime.now(),
+            }
+        )
+    if po.state not in ("purchase", "done"):
+        env.cr.execute("UPDATE purchase_order SET state=%s WHERE id=%s", ("purchase", po.id))
+        env.invalidate_all()
+    settlement.purchase_order_ids = [(4, po.id)]
+
+
 def _ensure_contract_chain(env, project, idx):
     partner = env.ref("smart_construction_seed.seed_partner_contract", raise_if_not_found=False)
     if not partner:
@@ -144,6 +202,7 @@ def _ensure_contract_chain(env, project, idx):
                 "price_unit": 100.0,
             }
         )
+    _ensure_purchase_order(env, settlement)
     if settlement.state != "done":
         settlement.action_done()
 

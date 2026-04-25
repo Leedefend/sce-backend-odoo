@@ -11,6 +11,9 @@
         "smart_construction_core",
     ],
     "data": [
+        "data/company_currency.xml",
+        "data/password_policy.xml",
+        "data/platform_initialization.xml",
         "security/role_matrix_groups.xml",
         "security/ir.model.access.csv",
         "data/security_policy_actions.xml",

@@ -24,4 +24,7 @@ log "prod-sim deploy: current status"
 # shellcheck disable=SC2086
 compose ${COMPOSE_FILES} ps
 
+log "prod-sim deploy: platform initialization preflight"
+DB_NAME="${DB_NAME}" COMPOSE_FILES="${COMPOSE_FILES}" scripts/verify/platform_init_preflight.sh
+
 log "prod-sim deploy: ready (nginx :80 -> frontend, /api -> odoo)"

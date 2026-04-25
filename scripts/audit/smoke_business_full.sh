@@ -45,6 +45,59 @@ def exec_kw(uid, pwd, model, method, args, kwargs=None):
 def login(user, pwd):
     return jsonrpc("common", "login", [DB, user, pwd])
 
+def xmlid_to_id(uid_admin, xmlid):
+    module, name = xmlid.split(".", 1)
+    rows = exec_kw(
+        uid_admin,
+        ADMIN_PWD,
+        "ir.model.data",
+        "search_read",
+        [[("module", "=", module), ("name", "=", name)]],
+        {"fields": ["res_id"], "limit": 1},
+    )
+    if not rows:
+        raise RuntimeError("missing xmlid: %s" % xmlid)
+    return rows[0]["res_id"]
+
+def ensure_business_user():
+    uid_admin = login(ADMIN_USER, ADMIN_PWD)
+    if not uid_admin:
+        raise RuntimeError("login failed for admin user")
+    group_xmlids = [
+        "base.group_user",
+        "purchase.group_purchase_manager",
+        "smart_construction_core.group_sc_cap_project_manager",
+        "smart_construction_core.group_sc_cap_material_manager",
+        "smart_construction_core.group_sc_cap_contract_manager",
+        "smart_construction_core.group_sc_cap_settlement_manager",
+        "smart_construction_core.group_sc_cap_finance_manager",
+        "smart_construction_core.group_sc_cap_purchase_user",
+    ]
+    group_ids = [xmlid_to_id(uid_admin, xmlid) for xmlid in group_xmlids]
+    rows = exec_kw(
+        uid_admin,
+        ADMIN_PWD,
+        "res.users",
+        "search_read",
+        [[("login", "=", USER)]],
+        {"fields": ["id"], "limit": 1, "context": {"active_test": False}},
+    )
+    values = {
+        "name": "Business Full Smoke User",
+        "active": True,
+        "share": False,
+        "password": PWD,
+        "lang": "zh_CN",
+        "tz": "Asia/Shanghai",
+        "groups_id": [(6, 0, sorted(set(group_ids)))],
+    }
+    if rows:
+        exec_kw(uid_admin, ADMIN_PWD, "res.users", "write", [[rows[0]["id"]], values])
+    else:
+        values.update({"login": USER, "email": "%s@example.com" % USER})
+        exec_kw(uid_admin, ADMIN_PWD, "res.users", "create", [values])
+
+ensure_business_user()
 uid = login(USER, PWD)
 if not uid:
     raise RuntimeError("login failed for %s" % USER)
@@ -166,6 +219,16 @@ if contract_state != "confirmed":
 print("OK: contract confirm success")
 
 step("create settlement order + line")
+purchase_order_id = exec_kw(
+    uid,
+    PWD,
+    "purchase.order",
+    "create",
+    [{
+        "partner_id": partner_id,
+    }],
+)
+exec_kw(uid, PWD, "purchase.order", "write", [[purchase_order_id], {"state": "purchase"}])
 settlement_id = exec_kw(
     uid,
     PWD,
@@ -176,6 +239,7 @@ settlement_id = exec_kw(
         "contract_id": contract_id,
         "partner_id": partner_id,
         "settlement_type": "out",
+        "purchase_order_ids": [(6, 0, [purchase_order_id])],
     }],
 )
 exec_kw(
@@ -195,6 +259,7 @@ settle_state = exec_kw(uid, PWD, "sc.settlement.order", "read", [[settlement_id]
 if settle_state != "submit":
     raise RuntimeError("settlement submit failed: state=%s" % settle_state)
 print("OK: settlement submit success")
+exec_kw(uid, PWD, "sc.settlement.order", "write", [[settlement_id], {"state": "approve"}])
 
 step("ensure project funding ready + baseline")
 exec_kw(uid, PWD, "project.project", "write", [[project_id], {"funding_enabled": True}])
@@ -232,6 +297,20 @@ payment_id = exec_kw(
         "settlement_id": settlement_id,
         "partner_id": partner_id,
         "amount": 50.0,
+    }],
+)
+exec_kw(
+    uid,
+    PWD,
+    "ir.attachment",
+    "create",
+    [{
+        "name": "bf_smoke_payment.txt",
+        "res_model": "payment.request",
+        "res_id": payment_id,
+        "type": "binary",
+        "datas": "YnVzaW5lc3MtZnVsbC1zbW9rZQ==",
+        "mimetype": "text/plain",
     }],
 )
 exec_kw(uid, PWD, "payment.request", "action_submit", [[payment_id]])

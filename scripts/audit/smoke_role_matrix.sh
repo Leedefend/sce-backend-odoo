@@ -253,6 +253,8 @@ def _ensure_fixture_user(uid_admin, login_name, password):
         "active": True,
         "share": False,
         "password": password,
+        "lang": "zh_CN",
+        "tz": "Asia/Shanghai",
         "groups_id": [(6, 0, sorted(set(group_ids)))],
     }
     if rows:
@@ -278,6 +280,8 @@ if not admin_uid:
 
 if AUTO_PROVISION:
     step("preflight role fixtures")
+    purchase_manager_group_id = _xmlid_to_group_id(admin_uid, "purchase.group_purchase_manager")
+    exec_kw(admin_uid, ADMIN_PWD, "res.users", "write", [[admin_uid], {"groups_id": [(4, purchase_manager_group_id)]}], {})
     _ensure_fixture_user(admin_uid, READ_USER, READ_PWD)
     _ensure_fixture_user(admin_uid, USER_USER, USER_PWD)
     _ensure_fixture_user(admin_uid, MANAGER_USER, MANAGER_PWD)
@@ -387,6 +391,16 @@ if state != "confirmed":
     raise RuntimeError("manager role failed to confirm contract")
 
 step("user role: create settlement + line")
+purchase_order_id = exec_kw(
+    admin_uid,
+    ADMIN_PWD,
+    "purchase.order",
+    "create",
+    [{
+        "partner_id": partner_id,
+    }],
+)
+exec_kw(admin_uid, ADMIN_PWD, "purchase.order", "write", [[purchase_order_id], {"state": "purchase"}])
 settlement_id = exec_kw(
     uid_user,
     USER_PWD,
@@ -397,6 +411,7 @@ settlement_id = exec_kw(
         "contract_id": contract_id,
         "partner_id": partner_id,
         "settlement_type": "out",
+        "purchase_order_ids": [(6, 0, [purchase_order_id])],
     }],
 )
 exec_kw(
