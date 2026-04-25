@@ -4,8 +4,9 @@ export function resolveMenuActionCore(menuTree, menuId) {
     return { kind: 'broken', node: null, reason: 'menu not found' };
   }
   const ownMenuId = node.menu_id || node.id;
-  const ownSceneKey = node.scene_key || node.sceneKey || node.meta?.scene_key;
-  if (ownSceneKey && ownMenuId) {
+  const ownSceneKey = resolveSceneKey(node);
+  const ownActionId = resolveActionId(node);
+  if (shouldUseSceneRoute(node, ownActionId) && ownSceneKey && ownMenuId) {
     return {
       kind: 'redirect',
       node,
@@ -16,7 +17,7 @@ export function resolveMenuActionCore(menuTree, menuId) {
       },
     };
   }
-  if (node.meta && node.meta.action_id) {
+  if (ownActionId) {
     return { kind: 'leaf', meta: node.meta, node };
   }
   if (node.children && node.children.length) {
@@ -41,18 +42,19 @@ function findFirstResolvableTarget(nodes) {
     if (!menuId) {
       continue;
     }
-    const sceneKey = node.scene_key || node.sceneKey || node.meta?.scene_key;
-    if (sceneKey) {
+    const actionId = resolveActionId(node);
+    const sceneKey = resolveSceneKey(node);
+    if (shouldUseSceneRoute(node, actionId) && sceneKey) {
       return {
         menu_id: menuId,
         scene_key: sceneKey,
         node,
       };
     }
-    if (node.meta && node.meta.action_id) {
+    if (actionId) {
       return {
         menu_id: menuId,
-        action_id: node.meta.action_id,
+        action_id: actionId,
         meta: node.meta,
         node,
       };
@@ -65,6 +67,28 @@ function findFirstResolvableTarget(nodes) {
     }
   }
   return null;
+}
+
+function resolveActionId(node) {
+  const actionId = Number(node?.meta?.action_id || 0);
+  return Number.isFinite(actionId) && actionId > 0 ? actionId : 0;
+}
+
+function resolveSceneKey(node) {
+  return node?.scene_key || node?.sceneKey || node?.meta?.scene_key || '';
+}
+
+function shouldUseSceneRoute(node, actionId) {
+  const explicitSceneKey = resolveSceneKey(node);
+  if (!explicitSceneKey) {
+    return false;
+  }
+  const sceneSource = String(node?.meta?.scene_source || '').trim().toLowerCase();
+  const actionType = String(node?.meta?.action_type || '').trim().toLowerCase();
+  if (sceneSource === 'scene_contract' || actionType === 'scene.contract') {
+    return true;
+  }
+  return false;
 }
 
 function findMenuNode(nodes, menuId) {

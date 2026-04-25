@@ -5,17 +5,41 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 from collections import Counter
 from pathlib import Path
 
 
-REPO_ROOT = Path("/mnt")
+def repo_root() -> Path:
+    env_root = os.getenv("MIGRATION_REPO_ROOT")
+    candidates = []
+    if env_root:
+        candidates.append(Path(env_root))
+    candidates.extend([Path("/mnt"), Path.cwd()])
+    for candidate in candidates:
+        if (candidate / "artifacts/migration/contract_partner_source_57_design_rows_v1.csv").exists():
+            return candidate
+    return Path.cwd()
+
+
+def ensure_allowed_db() -> None:
+    allowlist = {
+        item.strip()
+        for item in os.getenv("MIGRATION_REPLAY_DB_ALLOWLIST", "sc_migration_fresh").split(",")
+        if item.strip()
+    }
+    if env.cr.dbname not in allowlist:  # noqa: F821
+        raise RuntimeError({"db_name_not_allowed_for_replay": env.cr.dbname, "allowlist": sorted(allowlist)})  # noqa: F821
+
+
+REPO_ROOT = repo_root()
+ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(REPO_ROOT / "artifacts/migration")))
 DESIGN_CSV = REPO_ROOT / "artifacts/migration/contract_partner_source_57_design_rows_v1.csv"
 RESOLUTION_CSV = REPO_ROOT / "artifacts/migration/fresh_db_contract_partner_12_anchor_replay_resolution_v1.csv"
-OUTPUT_JSON = REPO_ROOT / "artifacts/migration/fresh_db_contract_57_retry_write_result_v1.json"
-ROLLBACK_CSV = REPO_ROOT / "artifacts/migration/fresh_db_contract_57_retry_rollback_targets_v1.csv"
-PRE_SNAPSHOT_CSV = REPO_ROOT / "artifacts/migration/fresh_db_contract_57_retry_pre_write_snapshot_v1.csv"
-POST_SNAPSHOT_CSV = REPO_ROOT / "artifacts/migration/fresh_db_contract_57_retry_post_write_snapshot_v1.csv"
+OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_contract_57_retry_write_result_v1.json"
+ROLLBACK_CSV = ARTIFACT_ROOT / "fresh_db_contract_57_retry_rollback_targets_v1.csv"
+PRE_SNAPSHOT_CSV = ARTIFACT_ROOT / "fresh_db_contract_57_retry_pre_write_snapshot_v1.csv"
+POST_SNAPSHOT_CSV = ARTIFACT_ROOT / "fresh_db_contract_57_retry_post_write_snapshot_v1.csv"
 EXPECTED_ROWS = 57
 SAFE_FIELDS = {
     "legacy_contract_id",
@@ -103,8 +127,7 @@ def build_vals(row: dict[str, str], project_id: int, partner_id: int) -> dict[st
     return {field: value for field, value in vals.items() if value not in ("", None)}
 
 
-if env.cr.dbname != "sc_migration_fresh":  # noqa: F821
-    raise RuntimeError({"db_name_not_sc_migration_fresh": env.cr.dbname})  # noqa: F821
+ensure_allowed_db()
 
 Contract = env["construction.contract"].sudo()  # noqa: F821
 Project = env["project.project"].sudo()  # noqa: F821

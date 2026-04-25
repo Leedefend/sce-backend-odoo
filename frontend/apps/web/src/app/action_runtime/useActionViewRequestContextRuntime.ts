@@ -133,11 +133,10 @@ export function useActionViewRequestContextRuntime(options: UseActionViewRequest
   }
 
   function mergeContext(base: Dict | string | undefined, extra?: Dict) {
-    const routeContext = parseContextRaw(options.routeContextRaw());
     return mergeRequestContext({
       base,
       extra,
-      routeContext,
+      routeContext: {},
       menuId: options.menuId.value,
     });
   }

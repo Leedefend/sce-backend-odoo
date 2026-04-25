@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "mode": "history_expense_deposit_partner_targeted_replay_adapter",
+  "requested_partner_refs": 276,
+  "payload_rows": 276,
+  "source_bucket_counts": {
+    "partner_master": 276,
+    "receipt_counterparty": 0,
+    "contract_counterparty": 0
+  },
+  "payload_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/history_expense_deposit_partner_targeted_replay_payload_v1.csv"
+}

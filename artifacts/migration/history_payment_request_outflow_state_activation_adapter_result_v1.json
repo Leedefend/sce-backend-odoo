@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "mode": "history_payment_request_outflow_state_activation_adapter",
+  "outflow_asset_rows": 12284,
+  "workflow_covered_rows": 12247,
+  "workflow_uncovered_rows": 37,
+  "workflow_row_total": 45693,
+  "payload_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/history_payment_request_outflow_state_activation_payload_v1.csv"
+}

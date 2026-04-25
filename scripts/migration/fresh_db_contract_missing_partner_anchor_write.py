@@ -5,11 +5,35 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 from collections import Counter, defaultdict
 from pathlib import Path
 
 
-REPO_ROOT = Path("/mnt")
+def repo_root() -> Path:
+    env_root = os.getenv("MIGRATION_REPO_ROOT")
+    candidates = []
+    if env_root:
+        candidates.append(Path(env_root))
+    candidates.extend([Path("/mnt"), Path.cwd()])
+    for candidate in candidates:
+        if (candidate / "artifacts/migration/contract_header_slice200_authorization_payload_v1.csv").exists():
+            return candidate
+    return Path.cwd()
+
+
+def ensure_allowed_db() -> None:
+    allowlist = {
+        item.strip()
+        for item in os.getenv("MIGRATION_REPLAY_DB_ALLOWLIST", "sc_migration_fresh").split(",")
+        if item.strip()
+    }
+    if env.cr.dbname not in allowlist:  # noqa: F821
+        raise RuntimeError({"db_name_not_allowed_for_replay": env.cr.dbname, "allowlist": sorted(allowlist)})  # noqa: F821
+
+
+REPO_ROOT = repo_root()
+ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(REPO_ROOT / "artifacts/migration")))
 PAYLOADS = [
     REPO_ROOT / "artifacts/migration/contract_header_slice200_authorization_payload_v1.csv",
     REPO_ROOT / "artifacts/migration/contract_header_next200_authorization_payload_v1.csv",
@@ -20,10 +44,10 @@ PAYLOADS = [
     REPO_ROOT / "artifacts/migration/contract_header_final132_authorization_payload_v1.csv",
 ]
 FRESH_CONTRACT_57_ROLLBACK = REPO_ROOT / "artifacts/migration/fresh_db_contract_57_retry_rollback_targets_v1.csv"
-OUTPUT_JSON = REPO_ROOT / "artifacts/migration/fresh_db_contract_missing_partner_anchor_write_result_v1.json"
-ROLLBACK_CSV = REPO_ROOT / "artifacts/migration/fresh_db_contract_missing_partner_anchor_rollback_targets_v1.csv"
-RESOLUTION_CSV = REPO_ROOT / "artifacts/migration/fresh_db_contract_missing_partner_anchor_resolution_v1.csv"
-OUTPUT_REPORT = REPO_ROOT / "docs/migration_alignment/fresh_db_contract_missing_partner_anchor_write_report_v1.md"
+OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_contract_missing_partner_anchor_write_result_v1.json"
+ROLLBACK_CSV = ARTIFACT_ROOT / "fresh_db_contract_missing_partner_anchor_rollback_targets_v1.csv"
+RESOLUTION_CSV = ARTIFACT_ROOT / "fresh_db_contract_missing_partner_anchor_resolution_v1.csv"
+OUTPUT_REPORT = ARTIFACT_ROOT / "fresh_db_contract_missing_partner_anchor_write_report_v1.md"
 
 EXPECTED_MISSING_NAMES = 95
 EXPECTED_DEPENDENT_CONTRACT_ROWS = 557
@@ -144,8 +168,7 @@ def build_vals(name: str, dependent_rows: int) -> dict[str, object]:
     }
 
 
-if env.cr.dbname != "sc_migration_fresh":  # noqa: F821
-    raise RuntimeError({"db_name_not_sc_migration_fresh": env.cr.dbname})  # noqa: F821
+ensure_allowed_db()
 
 Partner = env["res.partner"].sudo()  # noqa: F821
 missing_fields = [field for field in SAFE_FIELDS if field not in Partner._fields]

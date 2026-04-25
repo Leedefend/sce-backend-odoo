@@ -10,36 +10,7 @@
         @keydown.enter.prevent="submitSearch"
       />
     </div>
-    <div class="filters">
-      <button
-        type="button"
-        class="filter"
-        :class="{ active: filterValue === 'all' }"
-        :disabled="loading"
-        @click="onFilter('all')"
-      >
-        全部
-      </button>
-      <button
-        type="button"
-        class="filter"
-        :class="{ active: filterValue === 'active' }"
-        :disabled="loading"
-        @click="onFilter('active')"
-      >
-        在办
-      </button>
-      <button
-        type="button"
-        class="filter"
-        :class="{ active: filterValue === 'archived' }"
-        :disabled="loading"
-        @click="onFilter('archived')"
-      >
-        已归档
-      </button>
-    </div>
-    <div class="sort">
+    <div v-if="sortOptions.length" class="sort">
       <span class="label">排序</span>
       <div class="sort-options">
         <button
@@ -63,10 +34,8 @@ const props = defineProps<{
   searchTerm: string;
   sortOptions: Array<{ label: string; value: string }>;
   sortValue: string;
-  filterValue: 'all' | 'active' | 'archived';
   onSearch: (value: string) => void;
   onSort: (value: string) => void;
-  onFilter: (value: 'all' | 'active' | 'archived') => void;
 }>();
 
 function onSearchInput(event: Event) {
@@ -82,7 +51,7 @@ function submitSearch() {
 <style scoped>
 .toolbar {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto;
   gap: 12px;
   background: white;
   border-radius: 12px;
@@ -97,27 +66,6 @@ function submitSearch() {
   border-radius: 10px;
   border: 1px solid rgba(15, 23, 42, 0.1);
   background: #f8fafc;
-}
-
-.filters {
-  display: flex;
-  gap: 8px;
-}
-
-.filter {
-  border: 1px solid transparent;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #f1f5f9;
-  font-size: 12px;
-  color: #475569;
-  cursor: pointer;
-}
-
-.filter.active {
-  border-color: #111827;
-  background: #111827;
-  color: #f8fafc;
 }
 
 .sort {

@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "mode": "history_partner_master_direction_defer_replay_adapter",
+  "target_rows": 12,
+  "payload_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/history_partner_master_direction_defer_replay_payload_v1.csv"
+}

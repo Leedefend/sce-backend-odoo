@@ -4,12 +4,11 @@
   "db_writes": 0,
   "database_operations": 0,
   "write_scripts_executed": 0,
-  "manifest": "/mnt/e/sc-backend-odoo/artifacts/migration/fresh_db_replay_manifest_v1.json",
+  "manifest": "/home/lidefend/sce-backend-odoo/artifacts/migration/fresh_db_replay_manifest_v1.json",
   "lane_count": 7,
   "lane_status_counts": {
     "excluded_high_risk": 1,
-    "not_ready": 1,
-    "replay_ready_candidate": 5
+    "fresh_replay_executed": 6
   },
   "default_run_lanes": 0,
   "missing_references": [],

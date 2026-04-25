@@ -136,7 +136,6 @@ export function resolveActionViewSurfaceIntent(options: {
   strictContractMode: boolean;
   strictSurfaceContract: Dict;
   contractSurfaceIntent: SurfaceIntentContract;
-  sceneKey: string;
   pageText: (key: string, fallback: string) => string;
 }): SurfaceIntent {
   const intentSource = options.strictContractMode
@@ -145,6 +144,7 @@ export function resolveActionViewSurfaceIntent(options: {
   const primaryAction = asDict(intentSource.primary_action);
   const secondaryAction = asDict(intentSource.secondary_action);
   const actions = Array.isArray(intentSource.actions) ? (intentSource.actions as FocusNavAction[]) : [];
+  const secondaryTarget = String(secondaryAction.target || '').trim();
 
   return {
     title: String(intentSource.title || '').trim() || options.pageText('intent_title_default', '业务列表'),
@@ -156,10 +156,10 @@ export function resolveActionViewSurfaceIntent(options: {
       label: String(primaryAction.label || '').trim() || options.pageText('primary_action_default', '去我的工作'),
       to: String(primaryAction.target || '/my-work'),
     },
-    secondaryAction: Object.keys(secondaryAction).length
+    secondaryAction: Object.keys(secondaryAction).length && secondaryTarget
       ? {
           label: String(secondaryAction.label || '').trim() || options.pageText('secondary_action_default', '进入场景'),
-          to: String(secondaryAction.target || `/s/${options.sceneKey || ''}`),
+          to: secondaryTarget,
         }
       : undefined,
   };

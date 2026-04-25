@@ -423,7 +423,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useSessionStore, type CapabilityRuntimeMeta } from '../stores/session';
+import { useSessionStore, type CapabilityRuntimeMeta, type WorkspaceAdviceRow, type WorkspaceCapabilityGroupRow, type WorkspaceHeroRow, type WorkspaceSceneEntryRow } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { isDeliveryModeEnabled, isHudEnabled as resolveHudEnabled } from '../config/debug';
@@ -448,6 +448,7 @@ type CapabilityEntry = {
   key: string;
   recentKey: string;
   title: string;
+  actionLabel: string;
   subtitle: string;
   sceneKey: string;
   sceneTitle: string;
@@ -470,6 +471,7 @@ type CapabilityEntry = {
 type SuggestionItem = {
   id: string;
   title: string;
+  actionLabel: string;
   description: string;
   count?: number;
   status?: SuggestionStatus;
@@ -516,12 +518,17 @@ const router = useRouter();
 const route = useRoute();
 const session = useSessionStore();
 const pageContract = usePageContract('home');
+const homePageContractRow = computed<Record<string, unknown>>(() => (
+  pageContract.contract.value && typeof pageContract.contract.value === 'object'
+    ? pageContract.contract.value as Record<string, unknown>
+    : {}
+));
 const pageTextByPageContract = pageContract.text;
 const pageActionIntent = pageContract.actionIntent;
 const pageActionTarget = pageContract.actionTarget;
 const pageGlobalActions = pageContract.globalActions;
 const homeOrchestrationActions = computed<Record<string, unknown>>(() => {
-  const actionSchema = workspacePageOrchestrationV1.value.action_schema;
+  const actionSchema = homePageOrchestrationV1.value.action_schema;
   if (!actionSchema || typeof actionSchema !== 'object') return {};
   const actions = (actionSchema as Record<string, unknown>).actions;
   return actions && typeof actions === 'object' ? actions as Record<string, unknown> : {};
@@ -545,10 +552,7 @@ const lastTrackedEmptySignature = ref('');
 const showEmptyHelp = ref(false);
 const isHudEnabled = computed(() => resolveHudEnabled(route));
 const isDeliveryMode = computed(() => isDeliveryModeEnabled());
-const isAdmin = computed(() => {
-  const groups = session.user?.groups_xmlids || [];
-  return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
-});
+const isAdmin = computed(() => String(roleSurface.value?.role_code || '').trim() === 'executive');
 const heroQuickActions = computed(() => {
   const supported = new Set(['open_my_work', 'open_usage_analytics']);
   const actions = pageGlobalActions.value.filter((item) => {
@@ -577,10 +581,21 @@ const workspaceLayoutTexts = computed(() => (
     ? workspaceLayout.value.texts as Record<string, unknown>
     : {}
 ));
+function hasUsablePageOrchestration(value: unknown): value is Record<string, unknown> {
+  if (!value || typeof value !== 'object') return false;
+  const row = value as Record<string, unknown>;
+  const zones = Array.isArray(row.zones) ? row.zones : [];
+  return zones.length > 0;
+}
+const homePageOrchestrationV1 = computed(() => {
+  const raw = homePageContractRow.value.page_orchestration_v1;
+  if (hasUsablePageOrchestration(raw)) return raw;
+  return workspacePageOrchestrationV1.value;
+});
 const homeSceneKey = computed(() => {
   const fromQuery = asText(route.query.scene_key);
   if (fromQuery) return fromQuery;
-  const page = workspacePageOrchestrationV1.value.page;
+  const page = homePageOrchestrationV1.value.page;
   if (page && typeof page === 'object') {
     const fromPage = asText((page as Record<string, unknown>).key);
     if (fromPage) return fromPage;
@@ -645,32 +660,29 @@ const workspaceSceneContractV1 = computed(() => (
     : {}
 ));
 const workspacePageOrchestrationV1DataSources = computed(() => (
-  workspacePageOrchestrationV1.value.data_sources && typeof workspacePageOrchestrationV1.value.data_sources === 'object'
-    ? workspacePageOrchestrationV1.value.data_sources as Record<string, unknown>
+  homePageOrchestrationV1.value.data_sources && typeof homePageOrchestrationV1.value.data_sources === 'object'
+    ? homePageOrchestrationV1.value.data_sources as Record<string, unknown>
     : {}
 ));
 const homeOrchestrationContract = computed<PageOrchestrationContract>(() => {
-  return workspacePageOrchestrationV1.value as PageOrchestrationContract;
+  return homePageOrchestrationV1.value as PageOrchestrationContract;
 });
+const hasHomePageContract = computed(() => Object.keys(homePageContractRow.value).length > 0);
 const useUnifiedHomeRenderer = computed(() => {
   if (asText(route.query.legacy_home) === '1') return false;
   const contract = homeOrchestrationContract.value || {};
   const zones = Array.isArray(contract.zones) ? contract.zones : [];
-  const sceneZones = Array.isArray(workspaceSceneContractV1.value.zones)
-    ? workspaceSceneContractV1.value.zones
-    : [];
   const page = contract.page && typeof contract.page === 'object'
     ? contract.page as Record<string, unknown>
     : {};
-  const hasV1 = asText(contract.schema_version) === 'v1';
+  const hasV1 = asText(contract.schema_version) === 'v1'
+    || asText(contract.contract_version) === 'page_orchestration_v1';
   const isDashboard = asText(page.key) === 'workspace.home';
-  const hasSceneContract = asText(workspaceSceneContractV1.value.contract_version) === 'v1' && sceneZones.length > 0;
-  if (hasSceneContract) return true;
   return hasV1 && isDashboard && zones.length > 0;
 });
 const orchestrationBlocks = computed(() => {
   return flattenHomeOrchestrationBlocks(
-    workspacePageOrchestrationV1.value,
+    homePageOrchestrationV1.value,
     workspacePageOrchestration.value,
     workspacePageOrchestrationV1DataSources.value,
   );
@@ -681,7 +693,7 @@ const roleVariantCode = computed(() => {
     const roleCode = asText((roleVariant as Record<string, unknown>).role_code);
     if (roleCode) return roleCode;
   }
-  const orchestrationPage = workspacePageOrchestrationV1.value.page;
+  const orchestrationPage = homePageOrchestrationV1.value.page;
   if (orchestrationPage && typeof orchestrationPage === 'object') {
     return asText((orchestrationPage as Record<string, unknown>).role_code);
   }
@@ -771,27 +783,24 @@ const sceneTitleMap = computed(() => {
   return map;
 });
 const capabilityGroupCards = computed(() => {
-  const scoreMap = capabilityGroupScoreMap.value;
-  return capabilityGroups.value
+  return session.workspaceCapabilityGroupRows
     .slice()
-    .sort((a, b) => a.sequence - b.sequence)
-    .filter((group) => !isDeliveryMode.value || (scoreMap.get(group.key) || 0) >= 0)
+    .sort((a: WorkspaceCapabilityGroupRow, b: WorkspaceCapabilityGroupRow) => a.sequence - b.sequence)
+    .filter((group: WorkspaceCapabilityGroupRow) => !isDeliveryMode.value || group.score >= 0)
     .slice(0, 8)
     .map((group) => ({
       key: group.key,
       label: group.label || group.key,
-      capabilityCount: Number(group.capability_count || 0),
-      allowCount: Number(group.capability_state_counts?.allow || 0),
-      readonlyCount: Number(group.capability_state_counts?.readonly || 0),
-      denyCount: Number(group.capability_state_counts?.deny || 0),
+      capabilityCount: group.capabilityCount,
+      allowCount: group.allowCount,
+      readonlyCount: group.readonlyCount,
+      denyCount: group.denyCount,
     }));
 });
 const capabilityGroupScoreMap = computed(() => {
   const map = new Map<string, number>();
-  capabilityGroups.value.forEach((group) => {
-    const readyCount = Number(group.state_counts?.READY || 0);
-    const allowCount = Number(group.capability_state_counts?.allow || 0);
-    map.set(group.key, readyCount * 2 + allowCount);
+  session.workspaceCapabilityGroupRows.forEach((group: WorkspaceCapabilityGroupRow) => {
+    map.set(group.key, group.score);
   });
   return map;
 });
@@ -845,7 +854,7 @@ const workspaceContextQuery = computed(() => {
 const showMinimumWorkspaceFallback = computed(() => {
   if (useUnifiedHomeRenderer.value) return false;
   const hasWorkspaceHome = Object.keys(workspaceHome.value || {}).length > 0;
-  return !hasWorkspaceHome;
+  return !hasHomePageContract.value && !hasWorkspaceHome;
 });
 
 function homeLayoutText(key: string, fallback: string) {
@@ -960,8 +969,7 @@ function isInternalEntry(params: {
   tileTags?: unknown;
 }) {
   if (hasInternalTag(params.sceneTags) || hasInternalTag(params.tileTags)) return true;
-  const merged = `${params.sceneKey} ${params.title} ${params.key}`.toLowerCase();
-  return merged.includes('smoke') || merged.includes('internal') || merged.includes('test');
+  return false;
 }
 
 function mapState(rawState: string | undefined, status: string, allowed?: unknown): EntryState {
@@ -1007,99 +1015,58 @@ function normalizeEntryWithCapabilityMeta(
 
 const entries = computed<CapabilityEntry[]>(() => {
   const list: CapabilityEntry[] = [];
-  const capabilityCatalog = session.capabilityCatalog || {};
-  session.scenes.forEach((scene, sceneIndex) => {
-    const sceneKey = asText(scene.key);
-    if (!sceneKey) return;
-    const sceneTitle = resolveSceneTitle(scene as { title?: unknown; key?: unknown });
-    const tiles = Array.isArray(scene.tiles) ? scene.tiles : [];
-    tiles.forEach((tile, tileIndex) => {
-      const key = asText(tile.key);
-      if (!key) return;
-      const capabilityMeta = capabilityCatalog[key];
-      const title =
-        asText((tile as { title?: string }).title) ||
-        asText(capabilityMeta?.label) ||
-        (isHudEnabled.value ? key : `${pageText('tile_title_fallback_prefix', '功能 ')}${sceneIndex + 1}-${tileIndex + 1}`);
-      if (
-        !isHudEnabled.value &&
-        isInternalEntry({
-          sceneKey,
-          title,
-          key,
-          sceneTags: (scene as { tags?: unknown }).tags,
-          tileTags: (tile as { tags?: unknown }).tags,
-        })
-      ) {
-        return;
-      }
-      const rawStatus = asText((tile as { status?: unknown }).status).toLowerCase();
-      const status = rawStatus || 'ga';
-      const reason = String((tile as { reason?: string }).reason || '');
-      const reasonCode = String((tile as { reason_code?: string }).reason_code || '');
-      const state = mapState((tile as { state?: string }).state, rawStatus, (tile as { allowed?: unknown }).allowed);
-      const normalizedByMeta = normalizeEntryWithCapabilityMeta(
-        {
-          state,
-          capabilityState: '',
-          reason,
-          reasonCode,
-        },
-        capabilityMeta,
-      );
-      const payload = ((tile as { payload?: unknown }).payload || {}) as Record<string, unknown>;
-      const route = asText((tile as { route?: unknown }).route);
-      const contextQuery = normalizeContextQuery(payload.context_query || payload.query || payload.context);
-      list.push({
-        id: `${sceneKey}-${key}-${sceneIndex}-${tileIndex}`,
-        key,
-        recentKey: `${sceneKey}::${key}`,
+  session.workspaceSceneEntryRows.forEach((row: WorkspaceSceneEntryRow) => {
+    const title = row.title || (isHudEnabled.value ? row.key : pageText('tile_title_fallback_prefix', '功能'));
+    if (
+      !isHudEnabled.value &&
+      isInternalEntry({
+        sceneKey: row.sceneKey,
         title,
-        subtitle: asText((tile as { subtitle?: string }).subtitle),
-        sceneKey,
-        sceneTitle,
-        sequence: Number((tile as { sequence?: number }).sequence ?? 9999),
-        status,
-        state: normalizedByMeta.state,
-        capabilityState: normalizedByMeta.capabilityState,
-        groupKey: String(capabilityMeta?.group_key || ''),
-        groupLabel: String(capabilityMeta?.group_label || ''),
-        reason: normalizedByMeta.reason,
-        reasonCode: normalizedByMeta.reasonCode,
-        route,
-        targetActionId: toPositiveInt(payload.action_id),
-        targetMenuId: toPositiveInt(payload.menu_id),
-        targetModel: asText(payload.model),
-        targetRecordId: asText(payload.record_id),
-        contextQuery,
-        tags: [
-          ...new Set(
-            [
-              ...(Array.isArray((scene as { tags?: unknown }).tags) ? (scene as { tags?: string[] }).tags : []),
-              ...(Array.isArray((tile as { tags?: unknown }).tags) ? (tile as { tags?: string[] }).tags : []),
-            ]
-              .map((item) => asText(item).toLowerCase())
-              .filter(Boolean),
-          ),
-        ],
-      });
+        key: row.key,
+        sceneTags: row.sceneTags,
+        tileTags: row.tileTags,
+      })
+    ) {
+      return;
+    }
+    const state = mapState(row.state, row.status, undefined);
+    const normalizedByMeta = normalizeEntryWithCapabilityMeta(
+      {
+        state,
+        capabilityState: row.capabilityState,
+        reason: row.reason,
+        reasonCode: row.reasonCode,
+      },
+      undefined,
+    );
+    list.push({
+      id: row.id,
+      key: row.key,
+      recentKey: `${row.sceneKey}::${row.key}`,
+      title,
+      actionLabel: row.actionLabel,
+      subtitle: row.subtitle,
+      sceneKey: row.sceneKey,
+      sceneTitle: row.sceneLabel,
+      sequence: Number(row.sequence || 9999),
+      status: row.status,
+      state: normalizedByMeta.state,
+      capabilityState: normalizedByMeta.capabilityState,
+      groupKey: row.groupKey,
+      groupLabel: row.groupLabel,
+      reason: normalizedByMeta.reason,
+      reasonCode: normalizedByMeta.reasonCode,
+      route: row.route,
+      targetActionId: toPositiveInt(row.targetActionId),
+      targetMenuId: toPositiveInt(row.targetMenuId),
+      targetModel: row.targetModel,
+      targetRecordId: row.targetRecordId,
+      contextQuery: row.contextQuery,
+      tags: [...new Set([...row.sceneTags, ...row.tileTags])],
     });
   });
   return list.sort((a, b) => a.sequence - b.sequence || a.title.localeCompare(b.title));
 });
-
-function includesAny(value: string, keywords: string[]) {
-  const text = String(value || '').toLowerCase();
-  if (!text) return false;
-  return keywords.some((item) => text.includes(String(item || '').toLowerCase()));
-}
-
-function keywordList(key: string, fallbackCsv: string) {
-  return String(pageText(key, fallbackCsv) || '')
-    .split(',')
-    .map((item) => item.trim().toLowerCase())
-    .filter(Boolean);
-}
 
 const coreMetrics = computed<CoreMetric[]>(() => {
   const source = workspaceHomeMetrics.value.length
@@ -1135,6 +1102,7 @@ const concreteTodos = computed<SuggestionItem[]>(() => {
     return {
       id: asText(row.id) || `todo-${idx + 1}`,
       title: asText(row.title) || `${pageText('todo_title_fallback_prefix', '待办 ')}${idx + 1}`,
+      actionLabel: asText(row.action_label),
       description: asText(row.description) || pageText('todo_desc_fallback', '点击进入处理'),
       count: Number(row.count || 0),
       status: statusRaw === 'urgent' ? 'urgent' : 'normal',
@@ -1274,42 +1242,22 @@ function trendText(delta: number) {
   return pageText('trend_flat', '→ 0%');
 }
 
-function todoActionLabel(title: string) {
-  const text = String(title || '').toLowerCase();
-  if (includesAny(text, keywordList('todo_keywords_approval', '付款,支付,approval,审批'))) {
-    return homeLayoutText('actions.todo_approval', pageText('todo_label_approval', '审核付款申请'));
-  }
-  if (includesAny(text, keywordList('todo_keywords_contract', '合同,contract'))) {
-    return homeLayoutText('actions.todo_contract', pageText('todo_label_contract', '查看合同异常'));
-  }
-  if (includesAny(text, keywordList('todo_keywords_risk', '风险,risk'))) {
-    return homeLayoutText('actions.todo_risk', pageText('todo_label_risk', '处理风险事项'));
-  }
-  if (includesAny(text, keywordList('todo_keywords_change', '变更,change'))) {
-    return homeLayoutText('actions.todo_change', pageText('todo_label_change', '确认变更事项'));
-  }
-  if (includesAny(text, keywordList('todo_keywords_overdue', '逾期,任务,todo'))) {
-    return homeLayoutText('actions.todo_overdue', pageText('todo_label_overdue', '处理逾期任务'));
-  }
+function todoActionLabel(label: string) {
+  if (asText(label)) return asText(label);
   return asText(workspaceLayoutActions.value.todo_default) || homeLayoutText('actions.todo_default', pageText('todo_label_default', '查看详情'));
 }
 
 const systemAdvice = computed<AdviceItem[]>(() => {
-  const source = Array.isArray(workspaceHome.value.advice) ? workspaceHome.value.advice : [];
-  return source.map((item, idx) => {
-    const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
-    const levelRaw = asText(row.level).toLowerCase();
-    return {
-      id: asText(row.id) || `advice-${idx + 1}`,
-      level: levelRaw === 'red' || levelRaw === 'amber' ? levelRaw : 'green',
-      title: asText(row.title) || `${pageText('advice_title_fallback_prefix', '建议 ')}${idx + 1}`,
-      description: asText(row.description),
-      actionLabel: asText(row.action_label),
-      actionEntryId: asText(row.entry_id),
-      actionPath: asText(row.path),
-      actionQuery: normalizeContextQuery(row.query),
-    };
-  });
+  return session.workspaceAdviceRows.map((item: WorkspaceAdviceRow, idx) => ({
+    id: item.id || `advice-${idx + 1}`,
+    level: item.level,
+    title: item.title || `${pageText('advice_title_fallback_prefix', '建议 ')}${idx + 1}`,
+    description: item.description,
+    actionLabel: item.actionLabel,
+    actionEntryId: item.actionEntryId,
+    actionPath: item.actionPath,
+    actionQuery: item.actionQuery,
+  }));
 });
 
 function openAdvice(item: AdviceItem) {
@@ -1562,7 +1510,7 @@ const groupedEntries = computed(() => {
   return [{ sceneKey: '__recent__', sceneTitle: pageText('recent_group_title', '最近使用'), sceneSummary: '', items: recentItems }, ...grouped];
 });
 const hasRecentGroup = computed(() => groupedEntries.value.some((group) => group.sceneKey === '__recent__'));
-const homeOrchestrationDatasets = computed<Record<string, unknown>>(() => {
+const homeSectionDatasetPayloads = computed<Record<string, unknown>>(() => {
   const readyEntries = entries.value
     .filter((entry) => entry.state === 'READY')
     .slice(0, 12)
@@ -1592,27 +1540,20 @@ const homeOrchestrationDatasets = computed<Record<string, unknown>>(() => {
         scene_key: matched?.sceneKey || '',
       };
     });
-  const riskAlerts = primaryRiskActionItems.value.map((item) => ({
-    id: item.id,
-    title: item.title,
-    description: item.description,
-    tone: 'danger',
-    source: item.source || 'business',
-    action_label: homeLayoutText('risk.actions.detail', '看详情'),
-    action_key: 'open_scene',
-    scene_key: item.sceneKey,
-    path: item.path,
-    query: item.query,
-    entry_key: item.entryKey,
-  }));
   return {
-    ds_hero: [
-      { key: 'role_label', label: homeLayoutText('hero.role_label', '当前角色'), value: roleLabel.value },
-      { key: 'landing_label', label: homeLayoutText('hero.landing_label', '默认入口'), value: roleLandingLabel.value },
-      { key: 'runtime', label: homeLayoutText('hero.steady_notice', '当前运行平稳'), value: homeLayoutText('hero.runtime_ok', '状态正常') },
+    hero: [
+      ...session.workspaceHeroRows.map((item: WorkspaceHeroRow) => ({
+        key: item.key,
+        label: item.key === 'role_label'
+          ? homeLayoutText('hero.role_label', '当前角色')
+          : item.key === 'landing_label'
+            ? homeLayoutText('hero.landing_label', '默认入口')
+            : homeLayoutText('hero.steady_notice', '当前运行平稳'),
+        value: item.value || (item.key === 'runtime' ? homeLayoutText('hero.runtime_ok', '状态正常') : ''),
+      })),
     ],
-    ds_metrics: coreMetrics.value,
-    ds_today_todos: primaryTodos.value.map((item) => ({
+    metrics: session.workspaceMetricRows,
+    today_actions: session.workspaceTodayActionRows.map((item) => ({
       id: item.id,
       title: item.title,
       description: item.description,
@@ -1620,24 +1561,71 @@ const homeOrchestrationDatasets = computed<Record<string, unknown>>(() => {
       status: item.status,
       count: item.count,
       source: item.source || 'business',
-      action_label: todoActionLabel(item.title),
+      action_label: todoActionLabel(item.actionLabel),
       entry_id: item.entryId,
-      action_key: 'open_scene',
+      action_key: item.actionKey || 'open_scene',
+      scene_key: item.sceneKey,
+      route: item.route,
     })),
-    ds_risk_alerts: riskAlerts,
-    ds_ops_progress: {
-      bars: opsBars.value,
-      kpi: opsKpi.value,
-      summary: riskSummaryLine.value,
-    },
-    ds_scene_groups: readyEntries,
-    ds_capability_groups: capabilityEntries,
-    ds_advice: systemAdvice.value,
-    ds_filters: {
+    risk: session.workspaceRiskAlertRows.map((item) => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      tone: item.tone || 'danger',
+      source: item.source || 'business',
+      action_label: item.actionLabel || homeLayoutText('risk.actions.detail', '看详情'),
+      action_key: item.actionKey || 'open_scene',
+      scene_key: item.sceneKey,
+      path: item.path,
+      query: item.query,
+      entry_key: item.entryKey,
+      entry_id: item.entryId,
+    })),
+    ops: session.workspaceOpsSummary,
+    scene_groups: readyEntries,
+    group_overview: capabilityEntries,
+    advice: systemAdvice.value,
+    filters: {
       result_summary: resultSummaryText.value,
       active_filters: activeFilterChips.value,
     },
   };
+});
+
+function resolveHomeDatasetForSpec(dataSourceKey: string, spec: Record<string, unknown>, payloads: Record<string, unknown>) {
+  const provider = asText(spec.provider);
+  if (provider === 'workspace.hero') return payloads.hero ?? null;
+  if (provider === 'workspace.metrics.summary') return payloads.metrics ?? null;
+  if (provider === 'workspace.todo.today') return payloads.today_actions ?? null;
+  if (provider === 'workspace.risk.alerts') return payloads.risk ?? null;
+  if (provider === 'workspace.progress.summary') return payloads.ops ?? null;
+  if (provider === 'workspace.scene.groups') return payloads.scene_groups ?? null;
+  if (provider === 'workspace.capability.groups') return payloads.group_overview ?? null;
+  if (provider === 'workspace.advice') return payloads.advice ?? null;
+  if (provider === 'workspace.filters') return payloads.filters ?? null;
+
+  const sectionKeys = Array.isArray(spec.section_keys)
+    ? spec.section_keys.map((item) => asText(item)).filter(Boolean)
+    : [];
+  if (sectionKeys.includes('_all')) return payloads;
+  for (const sectionKey of sectionKeys) {
+    if (sectionKey in payloads) return payloads[sectionKey];
+  }
+
+  if (dataSourceKey in payloads) return payloads[dataSourceKey];
+  return null;
+}
+
+const homeOrchestrationDatasets = computed<Record<string, unknown>>(() => {
+  const specs = workspacePageOrchestrationV1DataSources.value;
+  const payloads = homeSectionDatasetPayloads.value;
+  const entries = Object.entries(specs);
+  if (!entries.length) return {};
+  return entries.reduce<Record<string, unknown>>((acc, [dataSourceKey, rawSpec]) => {
+    const spec = rawSpec && typeof rawSpec === 'object' ? rawSpec as Record<string, unknown> : {};
+    acc[dataSourceKey] = resolveHomeDatasetForSpec(dataSourceKey, spec, payloads);
+    return acc;
+  }, {});
 });
 
 const lockedReasonOptions = computed(() => {
@@ -1715,12 +1703,7 @@ function actionLabel(entry: CapabilityEntry) {
   if (entry.state === 'LOCKED') return pageText('action_enter_disabled', '暂不可用');
   if (entry.state === 'PREVIEW') return pageText('action_enter_preview', '即将开放');
   if (entry.capabilityState === 'readonly') return pageText('action_enter_readonly', '只读进入');
-  const mergeText = `${entry.title} ${entry.subtitle} ${entry.key} ${entry.sceneKey}`.toLowerCase();
-  if (includesAny(mergeText, keywordList('action_enter_keywords_approval', 'payment,付款,支付,approval,审批'))) return pageText('action_enter_approval', '审核付款申请');
-  if (includesAny(mergeText, keywordList('action_enter_keywords_contract', 'contract,合同'))) return pageText('action_enter_contract', '查看合同异常');
-  if (includesAny(mergeText, keywordList('action_enter_keywords_risk', 'risk,风险,预警'))) return pageText('action_enter_risk', '处理风险事项');
-  if (includesAny(mergeText, keywordList('action_enter_keywords_change', 'change,变更'))) return pageText('action_enter_change', '确认变更事项');
-  if (includesAny(mergeText, keywordList('action_enter_keywords_task', 'task,任务,todo,待办'))) return pageText('action_enter_task', '处理任务');
+  if (entry.actionLabel) return entry.actionLabel;
   return pageText('action_enter_default', '进入处理');
 }
 
@@ -2015,14 +1998,9 @@ function handleKeydown(event: KeyboardEvent) {
 
 function resolveEnterErrorMessage(error: unknown) {
   const message = asText((error as { message?: unknown })?.message) || pageText('enter_error_message_fallback', '功能入口暂时不可用');
-  const lowered = message.toLowerCase();
-  const code = lowered.includes('permission')
-    ? 'PERMISSION_DENIED'
-    : lowered.includes('not found')
-      ? 'ROUTE_NOT_FOUND'
-      : lowered.includes('timeout')
-        ? 'TIMEOUT'
-        : 'ENTER_FAILED';
+  const code = asText((error as { code?: unknown })?.code)
+    || asText((error as { reasonCode?: unknown })?.reasonCode)
+    || 'ENTER_FAILED';
   const traceId = asText((error as { trace_id?: unknown })?.trace_id) || asText((error as { traceId?: unknown })?.traceId);
   return { message, code, traceId };
 }
@@ -2040,7 +2018,7 @@ onMounted(() => {
     workspaceHomeRef
     && workspaceHomeRef.loaded === false
     && String(workspaceHomeRef.intent || '').trim() === 'ui.contract'
-    && String(workspaceHomeRef.scene_key || '').trim() === 'portal.dashboard',
+    && ['workspace.home', 'portal.dashboard'].includes(String(workspaceHomeRef.scene_key || '').trim()),
   );
   if (shouldLoadWorkspaceHome) {
     void session.loadWorkspaceHomeOnDemand().catch(() => {});

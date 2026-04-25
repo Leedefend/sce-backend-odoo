@@ -621,6 +621,14 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
             maps["action_xmlid_scene_map"]["smart_construction_core.action_project_initiation_quick"],
             "projects.intake",
         )
+        self.assertNotIn(
+            "smart_construction_demo.menu_sc_project_list_showcase",
+            maps["menu_scene_map"],
+        )
+        self.assertNotIn(
+            "smart_construction_demo.action_sc_project_list_showcase",
+            maps["action_xmlid_scene_map"],
+        )
 
     def test_projects_detail_remains_route_plus_record_context_authority_not_shared_action_owner(self):
         _reset_caches()

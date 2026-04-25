@@ -14,9 +14,10 @@ class ScProjectStageRequirementItem(models.Model):
     sequence = fields.Integer("排序", default=10)
     lifecycle_state = fields.Selection(
         ScStateMachine.selection(ScStateMachine.PROJECT),
-        string="生命周期阶段",
+        string="适用项目阶段",
         required=True,
         index=True,
+        help="该要求项适用于哪些项目生命周期阶段，不表示配置记录自身状态。",
     )
     required = fields.Boolean("必做", default=True)
     action_xmlid = fields.Char(
@@ -41,7 +42,7 @@ class ScProjectStageRequirementWizard(models.TransientModel):
     )
     lifecycle_state = fields.Selection(
         ScStateMachine.selection(ScStateMachine.PROJECT),
-        string="当前阶段",
+        string="当前项目阶段",
         readonly=True,
     )
     line_ids = fields.One2many(
@@ -96,7 +97,7 @@ class ScProjectStageRequirementWizardLine(models.TransientModel):
     project_id = fields.Many2one("project.project", string="项目", readonly=True)
     lifecycle_state = fields.Selection(
         ScStateMachine.selection(ScStateMachine.PROJECT),
-        string="生命周期阶段",
+        string="项目阶段",
         readonly=True,
     )
     sequence = fields.Integer("排序", readonly=True)

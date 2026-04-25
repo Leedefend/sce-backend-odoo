@@ -1,0 +1,228 @@
+{
+  "status": "PASS",
+  "mode": "history_contract_unreached_reason_audit",
+  "database": "sc_demo",
+  "unreached_rows": 91,
+  "ready_rows": 56,
+  "blocked_rows": 35,
+  "blocker_counts": {
+    "direction_defer": 12,
+    "partner_unresolved": 35
+  },
+  "blocker_combo_counts": {
+    "READY_FOR_RECOVERY": 56,
+    "direction_defer|partner_unresolved": 12,
+    "partner_unresolved": 23
+  },
+  "partner_match_counts": {
+    "exact": 50,
+    "normalized": 6,
+    "unresolved": 35
+  },
+  "project_match_counts": {
+    "exact": 91
+  },
+  "rows_artifact": "artifacts/migration/history_contract_unreached_reason_rows_v1.csv",
+  "sample_rows": [
+    {
+      "legacy_contract_id": "002cc1eac1a54e889f7c28531ab6553f",
+      "counterparty_text": "雅安蜀天开发建设有限责任公司",
+      "direction": "out",
+      "legacy_project_id": "725351f017384485b35a2a9297a4739d",
+      "partner_match_type": "exact",
+      "project_match_type": "exact",
+      "blockers": "",
+      "subject": "雅安市雨城区生活垃圾资源化利用项目包件2钢结构劳务班组"
+    },
+    {
+      "legacy_contract_id": "0537b6b19f3e47d9aa22b69a8c536953",
+      "counterparty_text": "中石化西南石油工程有限公司油田工程服务分公司",
+      "direction": "out",
+      "legacy_project_id": "93f06cd7b4224d759b02bd71317c00d9",
+      "partner_match_type": "exact",
+      "project_match_type": "exact",
+      "blockers": "",
+      "subject": "2025年度钻前辅助工程及劳务项目第五标段2025年度西南油气分公司中江、孝泉、 德新、广汉、什邡地区钻前辅助工程分包项目"
+    },
+    {
+      "legacy_contract_id": "062e24ff0f0e4401a108ef7c2923b1a0",
+      "counterparty_text": "",
+      "direction": "defer",
+      "legacy_project_id": "3ce2dcf5527242848ef633aa08088b48",
+      "partner_match_type": "unresolved",
+      "project_match_type": "exact",
+      "blockers": "direction_defer|partner_unresolved",
+      "subject": "补录老项目合同"
+    },
+    {
+      "legacy_contract_id": "0f5af263112a4ed79612602c5c570bf2",
+      "counterparty_text": "德阳市天韵文化发展有限公司天韵酒店",
+      "direction": "out",
+      "legacy_project_id": "9ebba094a48443a39dd7e1421da8dfbb",
+      "partner_match_type": "exact",
+      "project_match_type": "exact",
+      "blockers": "",
+      "subject": "德阳市天韵文化发展有限公司天韵酒店厨房燃气报警系统安装工程"
+    },
+    {
+      "legacy_contract_id": "0fa88c601e9b492386bfc1671f5147a7",
+      "counterparty_text": "",
+      "direction": "defer",
+      "legacy_project_id": "bedcf08fe3a040b6a2123a148f45dd5c",
+      "partner_match_type": "unresolved",
+      "project_match_type": "exact",
+      "blockers": "direction_defer|partner_unresolved",
+      "subject": "川北幼儿师范高等专科学校三期工程-室外附属一批次工程"
+    },
+    {
+      "legacy_contract_id": "10a7ebce8f614491aadc01452f93a9b4",
+      "counterparty_text": "绵阳市安州区雎水镇皇帽村村民委员会",
+      "direction": "out",
+      "legacy_project_id": "3bad15a1318247b5b6c8250d31dff07f",
+      "partner_match_type": "exact",
+      "project_match_type": "exact",
+      "blockers": "",
+      "subject": "绵阳市安州区雎水镇皇帽2024年河堤护岸水毁修复工程项目"
+    },
+    {
+      "legacy_contract_id": "112b0910df974102b579d4c3364271f2",
+      "counterparty_text": "重庆巴驿公共交通战场管理有限公司",
+      "direction": "out",
+      "legacy_project_id": "41aca2a81e6c4a9bb7ed5f31a3c42b7b",
+      "partner_match_type": "exact",
+      "project_match_type": "exact",
+      "blockers": "",
+      "subject": "李家沱战场入口地面修复工程"
+    },
+    {
+      "legacy_contract_id": "187e78a4a64b4c85a7c5537fdd6a7bac",
+      "counterparty_text": "德阳市勘察测绘设计院",
+      "direction": "out",
+      "legacy_project_id": "9ebba094a48443a39dd7e1421da8dfbb",
+      "partner_match_type": "exact",
+      "project_match_type": "exact",
+      "blockers": "",
+      "subject": "德阳市勘察测绘设计院职工食堂厨房燃气报警系统安装"
+    },
+    {
+      "legacy_contract_id": "19481c190e6747f4bb600c5c562a55bc",
+      "counterparty_text": "中国人民解放军32036部队",
+      "direction": "out",
+      "legacy_project_id": "8c4d70aba64643968392105d93c77f4b",
+      "partner_match_type": "unresolved",
+      "project_match_type": "exact",
+      "blockers": "partner_unresolved",
+      "subject": "2025年度零星维修服务项目"
+    },
+    {
+      "legacy_contract_id": "1b212fc98390446a9799344382bfed21",
+      "counterparty_text": "德阳市明德炉业有限公司",
+      "direction": "out",
+      "legacy_project_id": "6b4e37cd90a94055a69de211efdab846",
+      "partner_match_type": "unresolved",
+      "project_match_type": "exact",
+      "blockers": "partner_unresolved",
+      "subject": "热处理厂卷扬机基础施工"
+    },
+    {
+      "legacy_contract_id": "1d2cb08808a84a32b220095c57ca3928",
+      "counterparty_text": "四川省交通建设集团有限责任公司G5京昆高速公路绵阳至成都段扩容项目TJ4标段项目部(下简称:成绵TJ4项目部)",
+      "direction": "out",
+      "legacy_project_id": "85a4017a9c604e0391500307328339fb",
+      "partner_match_type": "unresolved",
+      "project_match_type": "exact",
+      "blockers": "partner_unresolved",
+      "subject": "G5京昆高速公路绵阳至成都段扩容项目TJ4标段项目部驻地房屋恢复装修合同"
+    },
+    {
+      "legacy_contract_id": "1f63ffd7e5774c1db64743b588da15ae",
+      "counterparty_text": "",
+      "direction": "defer",
+      "legacy_project_id": "8e1e8ffb0e244123a5f5b269a540fb17",
+      "partner_match_type": "unresolved",
+      "project_match_type": "exact",
+      "blockers": "direction_defer|partner_unresolved",
+      "subject": "补录老项目合同"
+    },
+    {
+      "legacy_contract_id": "201fdc7080bf402c918dae7b6c04880a",
+      "counterparty_text": "中国铁建大桥工程局集团有限公司旌阳区城市地下综合管廊建设项目经理部",
+      "direction": "out",
+      "legacy_project_id": "16979c84c8ba410eab2e7117be52eddf",
+      "partner_match_type": "normalized",
+      "project_match_type": "exact",
+      "blockers": "",
+      "subject": "旌阳区综合管廊项目泰山路段支护及防水 2标工程"
+    },
+    {
+      "legacy_contract_id": "23284b7dd1304bb3ae1edcc3caf6bcf8",
+      "counterparty_text": "中石化西南石油工程有限公司油田工程服务分公司",
+      "direction": "out",
+      "legacy_project_id": "93f06cd7b4224d759b02bd71317c00d9",
+      "partner_match_type": "exact",
+      "project_match_type": "exact",
+      "blockers": "",
+      "subject": "2025 年度钻前辅助工程及劳务项目第六标段2025年度西南油气分公司罗江、黄许、扬嘉、孝感、和新、新中、柏隆、绵竹、双东地区钻 前主体工程劳务分包项目"
+    },
+    {
+      "legacy_contract_id": "2412fe6aadc64c699e639e3c677b2c76",
+      "counterparty_text": "重庆科学城高新置业有限公司（项目业主）、重庆科学城城市建设集团有限公司（代理业主）",
+      "direction": "out",
+      "legacy_project_id": "e91ab58b0d264ccaba5f9356ad85ae44",
+      "partner_match_type": "unresolved",
+      "project_match_type": "exact",
+      "blockers": "partner_unresolved",
+      "subject": "西部(重庆)科学城保障性住房(一期)室外综合管网、景观、绿化、围 墙、精装修及标识标牌系统工程"
+    },
+    {
+      "legacy_contract_id": "244b71e59c284777afa594b7155865c7",
+      "counterparty_text": "中铁北京工程局集团有限公司重庆轨道交通15号线项目经理部",
+      "direction": "out",
+      "legacy_project_id": "9bd11b5b52694523b3eecb0ccf6c3c04",
+      "partner_match_type": "unresolved",
+      "project_match_type": "exact",
+      "blockers": "partner_unresolved",
+      "subject": "重庆轨道交通15号线一期土建工程01标金童路站2B出入口 DN500 给水管道迁改工程"
+    },
+    {
+      "legacy_contract_id": "28862cb1f3ba40c6b78adb7960bbe7f6",
+      "counterparty_text": "重庆市璧山区人民政府青杠街道办事处",
+      "direction": "out",
+      "legacy_project_id": "28b43ef4516445d8a54326b977288fba",
+      "partner_match_type": "unresolved",
+      "project_match_type": "exact",
+      "blockers": "partner_unresolved",
+      "subject": "补充协议"
+    },
+    {
+      "legacy_contract_id": "28d5343d4cc5475bb925d9a5af03628f",
+      "counterparty_text": "德阳开发大学",
+      "direction": "out",
+      "legacy_project_id": "9ebba094a48443a39dd7e1421da8dfbb",
+      "partner_match_type": "unresolved",
+      "project_match_type": "exact",
+      "blockers": "partner_unresolved",
+      "subject": "德阳开放大学厨房送排风系统安装工程"
+    },
+    {
+      "legacy_contract_id": "293dbf3ae5e0468ca027eaf04bc3f9c8",
+      "counterparty_text": "中国电信股份有限公司德阳分公司",
+      "direction": "out",
+      "legacy_project_id": "9ebba094a48443a39dd7e1421da8dfbb",
+      "partner_match_type": "exact",
+      "project_match_type": "exact",
+      "blockers": "",
+      "subject": "中国电信股份有限公司德阳分公司厨房及空调机房燃气报警系统安装"
+    },
+    {
+      "legacy_contract_id": "2a49b8624fd145f2aa90177d3c2f4c9c",
+      "counterparty_text": "上海二十冶建设有限公司",
+      "direction": "out",
+      "legacy_project_id": "2c2cf0230879448b8aa65a135baa1292",
+      "partner_match_type": "exact",
+      "project_match_type": "exact",
+      "blockers": "",
+      "subject": "四川省广汉市职业中专学校迁建项目土石方专业分包工程"
+    }
+  ]
+}

@@ -70,14 +70,13 @@ class SystemInitSceneRuntimeSurfaceBuilder:
 
         scene_nav_contract = surface_ctx.build_scene_nav_contract_fn(nav_contract_input)
         if isinstance(scene_nav_contract, dict) and isinstance(scene_nav_contract.get("nav"), list):
+            # Scene nav remains available as an auxiliary contract for workbench/scene entry use.
+            # The primary app sidebar must continue to consume legacy menu navigation until
+            # scene navigation can represent the full business nav surface without pruning it.
             data["nav_legacy"] = data.get("nav") or []
             data["nav_contract"] = scene_nav_contract
-            data["nav"] = scene_nav_contract.get("nav") or []
-            data["default_route"] = (
-                scene_nav_contract.get("default_route") or data.get("default_route") or {"menu_id": None}
-            )
             if isinstance(data.get("nav_meta"), dict):
-                data["nav_meta"]["nav_source"] = scene_nav_contract.get("source") or "scene_contract_v1"
+                data["nav_meta"]["scene_nav_contract_available"] = True
                 data["nav_meta"]["scene_ready_contract_v1"] = bool(
                     isinstance(data.get("scene_ready_contract_v1"), dict)
                     and ((data.get("scene_ready_contract_v1") or {}).get("scenes"))

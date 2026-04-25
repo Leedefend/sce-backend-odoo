@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_contract_line_replay_adapter",
+  "db_writes": 0,
+  "asset_package_id": "contract_line_sc_v1",
+  "expected_rows": 1441,
+  "replay_payload_rows": 1441,
+  "row_artifact": "/home/lidefend/sce-backend-odoo/artifacts/migration/fresh_db_contract_line_replay_payload_v1.csv",
+  "decision": "contract_line_replay_payload_ready"
+}

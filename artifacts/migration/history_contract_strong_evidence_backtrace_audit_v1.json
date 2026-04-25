@@ -1,0 +1,251 @@
+{
+  "status": "PASS",
+  "mode": "history_contract_strong_evidence_backtrace_audit",
+  "gap_rows": 19,
+  "matched_rows": 19,
+  "missing_rows": 0,
+  "evidence_type_counts": {
+    "repayment_single_counterparty": 19
+  },
+  "evidence_strength_counts": {
+    "strong": 19
+  },
+  "manual_confirm_required_counts": {
+    "yes": 19
+  },
+  "confirmed_partner_action_counts": {
+    "<empty>": 19
+  },
+  "row_artifact": "artifacts/migration/history_contract_strong_evidence_backtrace_rows_v1.csv",
+  "missing_contract_ids": [],
+  "sample_rows": [
+    {
+      "legacy_contract_id": "19481c190e6747f4bb600c5c562a55bc",
+      "counterparty_text": "中国人民解放军32036部队",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "中国人民解放军32038部队",
+      "company_name": "中国人民解放军32038部队",
+      "review_note": ""
+    },
+    {
+      "legacy_contract_id": "1b212fc98390446a9799344382bfed21",
+      "counterparty_text": "德阳市明德炉业有限公司",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "二重（德阳）重型装备有限公司",
+      "company_name": "二重（德阳）重型装备有限公司",
+      "review_note": ""
+    },
+    {
+      "legacy_contract_id": "1d2cb08808a84a32b220095c57ca3928",
+      "counterparty_text": "四川省交通建设集团有限责任公司G5京昆高速公路绵阳至成都段扩容项目TJ4标段项目部(下简称:成绵TJ4项目部)",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "四川省交通建设集团有限责任公司",
+      "company_name": "四川省交通建设集团有限责任公司",
+      "review_note": ""
+    },
+    {
+      "legacy_contract_id": "2412fe6aadc64c699e639e3c677b2c76",
+      "counterparty_text": "重庆科学城高新置业有限公司（项目业主）、重庆科学城城市建设集团有限公司（代理业主）",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "重庆科学城高新置业有限公司",
+      "company_name": "重庆科学城高新置业有限公司",
+      "review_note": ""
+    },
+    {
+      "legacy_contract_id": "244b71e59c284777afa594b7155865c7",
+      "counterparty_text": "中铁北京工程局集团有限公司重庆轨道交通15号线项目经理部",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "中铁广州工程局集团有限公司",
+      "company_name": "中铁广州工程局集团有限公司",
+      "review_note": ""
+    },
+    {
+      "legacy_contract_id": "28862cb1f3ba40c6b78adb7960bbe7f6",
+      "counterparty_text": "重庆市璧山区人民政府青杠街道办事处",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "重庆市璧山区青杠街道产业发展服务中心",
+      "company_name": "重庆市璧山区青杠街道产业发展服务中心",
+      "review_note": ""
+    },
+    {
+      "legacy_contract_id": "28d5343d4cc5475bb925d9a5af03628f",
+      "counterparty_text": "德阳开发大学",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "德阳开放大学",
+      "company_name": "德阳开放大学",
+      "review_note": ""
+    },
+    {
+      "legacy_contract_id": "2e9bfcf0107a4c60bbe81d34ddc4c107",
+      "counterparty_text": "德阳工院精工科技有限公司",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "四川工程职业技术学院",
+      "company_name": "四川工程职业技术学院",
+      "review_note": ""
+    },
+    {
+      "legacy_contract_id": "4a3e6eca2f7d41e889fad2a3a61a069a",
+      "counterparty_text": "中建三局基础设施建设投资有限公司",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "中建三局集团有限公司",
+      "company_name": "中建三局集团有限公司",
+      "review_note": ""
+    },
+    {
+      "legacy_contract_id": "4b79bd768ce644c4a1957126bbe23d03",
+      "counterparty_text": "中铁十九局集团第五工程有限公司1951项目经理部",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "中铁十九局集团第五工程有限公司",
+      "company_name": "中铁十九局集团第五工程有限公司",
+      "review_note": ""
+    },
+    {
+      "legacy_contract_id": "57e5161c923143ba9821dda76da2f744",
+      "counterparty_text": "喀什某单位",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "武警新疆总队机动第五支队",
+      "company_name": "武警新疆总队机动第五支队",
+      "review_note": ""
+    },
+    {
+      "legacy_contract_id": "a049d8dc69e54f65a3cd5f7b277e1369",
+      "counterparty_text": "绵阳市安州区桑枣镇干柏村村民委员会",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "河北省送变电有限公司",
+      "company_name": "河北省送变电有限公司",
+      "review_note": ""
+    },
+    {
+      "legacy_contract_id": "a07b47241cc643fd8cc5ca9df0532c53",
+      "counterparty_text": "浪卡子县人民政府",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "西藏浪卡子县农业农村局零余额账户",
+      "company_name": "西藏浪卡子县农业农村局零余额账户",
+      "review_note": ""
+    },
+    {
+      "legacy_contract_id": "ae8a483819584297a38268ccd6629ae6",
+      "counterparty_text": "旌阳区天元街道楠树村股份经济联合社",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "旌阳区天元街道楠树村股份经济合作联合社",
+      "company_name": "旌阳区天元街道楠树村股份经济合作联合社",
+      "review_note": ""
+    },
+    {
+      "legacy_contract_id": "bc45eefc891648839f481c9e125691cf",
+      "counterparty_text": "中移动通信集团四川有限公司成都分公司",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "中国移动通信集团四川有限公司成都分公司",
+      "company_name": "中国移动通信集团四川有限公司成都分公司",
+      "review_note": ""
+    },
+    {
+      "legacy_contract_id": "c1a0c575b6de4a3caa783df6713bb2b7",
+      "counterparty_text": "中国电信股份/集团有限公司泸州分公司",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "中国电信股份有限公司泸州分公司",
+      "company_name": "中国电信股份有限公司泸州分公司",
+      "review_note": ""
+    },
+    {
+      "legacy_contract_id": "d209acaaf4f7405b849c007287ab50b3",
+      "counterparty_text": "中铁隧道局集团有限公司重庆轨道交通15号线一期土建工程03标项目经理部",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "中铁隧道局集团有限公司",
+      "company_name": "中铁隧道局集团有限公司",
+      "review_note": ""
+    },
+    {
+      "legacy_contract_id": "e1319f0165e54ee0ab937496693c4870",
+      "counterparty_text": "英吉沙县代建中心",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "英吉沙县财政局",
+      "company_name": "英吉沙县财政局",
+      "review_note": ""
+    },
+    {
+      "legacy_contract_id": "ec796ee5e80c4c518452f72d7e0e1058",
+      "counterparty_text": "两岛街道仙足岛社区",
+      "backtrace_status": "matched_in_strong_evidence_candidates",
+      "evidence_type": "repayment_single_counterparty",
+      "evidence_strength": "strong",
+      "manual_confirm_required": "yes",
+      "confirmed_partner_action": "",
+      "repayment_partner_name": "西藏拉萨市城关区两岛街道办事处",
+      "company_name": "西藏拉萨市城关区两岛街道办事处",
+      "review_note": ""
+    }
+  ]
+}

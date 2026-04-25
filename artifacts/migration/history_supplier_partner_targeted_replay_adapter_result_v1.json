@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "mode": "history_supplier_partner_targeted_replay_adapter",
+  "requested_partner_ids": 3076,
+  "payload_rows": 3076,
+  "source_bucket_counts": {
+    "partner_master": 3075,
+    "receipt_counterparty": 1
+  },
+  "payload_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/history_supplier_partner_targeted_replay_payload_v1.csv"
+}

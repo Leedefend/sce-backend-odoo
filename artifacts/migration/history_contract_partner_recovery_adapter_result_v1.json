@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "mode": "history_contract_partner_recovery_adapter",
+  "payload_rows": 23,
+  "recovery_family_counts": {
+    "partner_master_replay_gap_4": 4,
+    "strong_evidence_promotion_gap_19": 19
+  },
+  "payload_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/history_contract_partner_recovery_payload_v1.csv"
+}

@@ -34,7 +34,7 @@ def resolve_primary_view_type(
                 return key
     head_view_type = str((head or {}).get("view_type") or "").strip()
     if head_view_type:
-        return head_view_type
+        return head_view_type.split(",")[0].strip()
     for candidate in PREFERRED_VIEW_ORDER:
         if candidate in (views or {}):
             return candidate
@@ -77,8 +77,10 @@ def inject_primary_view_projection(data: Dict[str, Any] | None, requested_view_t
             }
     if "model" not in data and head.get("model"):
         data["model"] = head.get("model")
-    if "view_type" not in data and primary_view_type:
+    if primary_view_type:
         data["view_type"] = primary_view_type
+        head["view_type"] = primary_view_type
+        data["head"] = head
     if "permissions" not in data and isinstance(data.get("permissions"), dict):
         data["permissions"] = data.get("permissions")
     if "fields" not in data and isinstance(data.get("fields"), dict):

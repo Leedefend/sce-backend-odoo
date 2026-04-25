@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_legacy_invoice_tax_replay_adapter",
+  "expected_rows": 5920,
+  "replay_payload_rows": 5920,
+  "payload_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/fresh_db_legacy_invoice_tax_replay_payload_v1.csv"
+}

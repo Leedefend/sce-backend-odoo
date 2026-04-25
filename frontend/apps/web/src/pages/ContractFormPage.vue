@@ -1,12 +1,12 @@
 <template>
-  <LayoutShell :flow="isProjectCreatePage">
+  <LayoutShell :flow="isProjectIntakeCreateMode">
     <PageHeaderTemplate :title="pageDisplayTitle" :subtitle="pageDisplaySubtitle || undefined">
       <template #meta>
         <p v-if="showHud" class="meta">model={{ model }} · id={{ recordIdDisplay }} · action={{ actionId || '-' }}</p>
         <p v-if="showHud && contractMetaLine" class="meta">{{ contractMetaLine }}</p>
       </template>
       <template #status>
-        <template v-if="isProjectCreatePage">
+        <template v-if="isProjectIntakeCreateMode">
           <p class="header-status-item">当前进度：{{ intakeRequiredSummary }}</p>
           <p class="header-status-item" :class="{ 'header-status-item--danger': intakeMissingSummary !== '无' }">缺少：{{ intakeMissingSummary }}</p>
         </template>
@@ -23,36 +23,37 @@
           {{ action.label }}
         </button>
         <button
-          v-if="!isProjectCreatePage && !hasPrimaryHeaderAction"
+          v-if="!isProjectIntakeCreateMode && !hasPrimaryHeaderAction"
           class="primary"
           :disabled="isQuickSubmitDisabled"
           @click="saveRecord"
         >
           {{ submitButtonLabel }}
         </button>
-        <button v-if="showDebugActionsVisible && !isProjectCreatePage" class="ghost" :disabled="busy || !contract" @click="copyContractJson">复制契约</button>
-        <button v-if="showDebugActionsVisible && !isProjectCreatePage" class="ghost" :disabled="busy || !contract" @click="exportContractJson">导出契约</button>
-        <button v-if="showDebugActionsVisible && !isProjectCreatePage" class="ghost" :disabled="busy" @click="reload">重新加载</button>
+        <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="ghost" :disabled="busy || !contract" @click="copyContractJson">复制契约</button>
+        <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="ghost" :disabled="busy || !contract" @click="exportContractJson">导出契约</button>
+        <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="ghost" :disabled="busy" @click="reload">重新加载</button>
       </template>
     </PageHeaderTemplate>
 
-    <StatusPanel v-if="status === 'loading'" title="正在加载页面..." variant="info" />
+    <StatusPanel v-if="renderErrorMessage" title="页面渲染失败" :message="renderErrorMessage" variant="error" :on-retry="reload" />
+    <StatusPanel v-else-if="status === 'loading'" title="正在加载页面..." variant="info" />
     <StatusPanel v-else-if="status === 'error'" title="页面加载失败" :message="errorMessage" variant="error" :on-retry="reload" />
 
-    <section v-else :class="['card', { 'card--flow': isProjectCreatePage }]">
-      <section v-if="warnings.length && !isProjectCreatePage" class="block warn">
+    <section v-else :class="['card', { 'card--flow': isProjectIntakeCreateMode }]">
+      <section v-if="warnings.length && !isProjectIntakeCreateMode" class="block warn">
         <h3>提示信息</h3>
         <ul>
           <li v-for="item in warnings" :key="item">{{ item }}</li>
         </ul>
       </section>
-      <section v-if="strictContractMissingSummary && !isProjectCreatePage" class="block contract-missing-block">
+      <section v-if="strictContractMissingSummary && !isProjectIntakeCreateMode" class="block contract-missing-block">
         <h3>契约缺口提示</h3>
         <p class="contract-missing-summary">{{ strictContractMissingSummary }}</p>
         <p v-if="strictContractDefaultsSummary" class="contract-missing-defaults">{{ strictContractDefaultsSummary }}</p>
       </section>
 
-      <section v-if="workflowTransitions.length && !isProjectCreatePage" class="block">
+      <section v-if="workflowTransitions.length && !isProjectIntakeCreateMode" class="block">
         <h3>流程操作</h3>
         <div class="chips">
           <button
@@ -68,7 +69,7 @@
         </div>
       </section>
 
-      <section v-if="showSearchFilters && searchFilters.length && !isProjectCreatePage" class="block">
+      <section v-if="showSearchFilters && searchFilters.length && !isProjectIntakeCreateMode" class="block">
         <h3>快捷筛选</h3>
         <div class="chips">
           <button
@@ -85,7 +86,7 @@
       </section>
 
       <section class="form-grid">
-        <div v-if="isProjectCreatePage" class="form-flow-guide">
+        <div v-if="isProjectIntakeCreateMode" class="form-flow-guide">
           <p class="form-flow-guide-main">只需完成核心信息即可创建项目</p>
         </div>
         <StatusPanel
@@ -120,7 +121,7 @@
           :fields="section.fields"
           @field-change="onTemplateFieldChange"
         >
-          <template v-if="isProjectCreatePage && section.isAdvanced" #action>
+          <template v-if="isProjectIntakeCreateMode && section.isAdvanced" #action>
             <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
               {{ advancedExpanded ? '收起' : '展开' }}
             </button>
@@ -132,7 +133,7 @@
             <RelationFallbackRenderer :field="field" :adapter="relationFallbackAdapter" />
           </template>
         </FormSectionTemplate>
-        <div v-if="hasAdvancedFields && !isProjectCreatePage" class="layout-divider advanced-toggle">
+        <div v-if="hasAdvancedFields && !isProjectIntakeCreateMode" class="layout-divider advanced-toggle">
           <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
             {{ advancedExpanded ? '收起高级信息' : '展开高级信息' }}
           </button>
@@ -140,7 +141,7 @@
 
       </section>
 
-      <PageFooterTemplate v-if="isProjectCreatePage" hint="填写完成后点击“创建项目”">
+      <PageFooterTemplate v-if="isProjectIntakeCreateMode" hint="填写完成后点击“创建项目”">
         <template #default>
           <button class="ghost" :disabled="busy" @click="cancelIntake">取消</button>
           <button class="primary" :disabled="isIntakeCreateDisabled" @click="saveRecord">
@@ -149,7 +150,7 @@
         </template>
       </PageFooterTemplate>
 
-      <section v-if="bodyActions.length && !isProjectCreatePage" class="block">
+      <section v-if="bodyActions.length && !isProjectIntakeCreateMode" class="block">
         <h3>可执行操作</h3>
         <div class="chips">
           <button
@@ -175,7 +176,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onErrorCaptured, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
@@ -233,6 +234,7 @@ type ContractAction = {
   label: string;
   kind: string;
   level: string;
+  selection: 'none' | 'single' | 'multi';
   actionId: number | null;
   methodName: string;
   targetModel: string;
@@ -334,6 +336,7 @@ function resolveWorkspaceContextQuery() {
 }
 
 const status = ref<UiStatus>('loading');
+const renderErrorMessage = ref('');
 const errorMessage = ref('');
 const validationErrors = ref<string[]>([]);
 const submissionFeedback = ref<{ kind: 'success' | 'warn' | 'error'; message: string } | null>(null);
@@ -425,14 +428,9 @@ const isProjectStandardIntakeMode = computed(() => {
   if (isProjectQuickIntakeMode.value) return false;
   return String(route.query.scene_key || '').trim() === 'projects.intake';
 });
-const isProjectCreatePage = computed(() => {
-  const routeModel = String(route.params.model || '').trim();
-  const routeId = String(route.params.id || '').trim().toLowerCase();
-  return routeModel === 'project.project' && routeId === 'new';
-});
 const isProjectIntakeCreateMode = computed(() => isProjectQuickIntakeMode.value || isProjectStandardIntakeMode.value);
 const intakeAutosaveKey = computed(() => {
-  if (!isProjectCreatePage.value) return '';
+  if (!isProjectIntakeCreateMode.value) return '';
   const mode = isProjectQuickIntakeMode.value ? 'quick' : 'standard';
   const userId = Number(session.user?.id || 0) || 0;
   return `sc:intake:autosave:project.project:${mode}:u${userId}`;
@@ -467,14 +465,14 @@ const changedFieldCount = computed(() =>
 );
 
 const intakeRequiredFields = computed(() => {
-  if (!isProjectCreatePage.value) return [];
+  if (!isProjectIntakeCreateMode.value) return [];
   return layoutNodes.value
     .filter((node) => node.kind === 'field' && node.required && isFieldVisible(node.name))
     .map((node) => ({ name: node.name, label: node.label || node.name }));
 });
 
 const intakeRequiredReadyCount = computed(() => {
-  if (!isProjectCreatePage.value) return 0;
+  if (!isProjectIntakeCreateMode.value) return 0;
   return intakeRequiredFields.value.filter((field) => {
     const value = formData[field.name];
     if (value === null || value === undefined) return false;
@@ -487,7 +485,7 @@ const intakeRequiredReadyCount = computed(() => {
 });
 
 const intakeMissingRequiredLabels = computed(() => {
-  if (!isProjectCreatePage.value) return [];
+  if (!isProjectIntakeCreateMode.value) return [];
   return intakeRequiredFields.value
     .filter((field) => {
       const value = formData[field.name];
@@ -506,7 +504,7 @@ const intakeMissingRequiredLabels = computed(() => {
 });
 
 const intakeRequiredSummary = computed(() => {
-  if (!isProjectCreatePage.value) return '';
+  if (!isProjectIntakeCreateMode.value) return '';
   const total = intakeRequiredFields.value.length;
   const done = intakeRequiredReadyCount.value;
   if (total <= 0) return '当前契约未提供必填字段约束。';
@@ -514,7 +512,7 @@ const intakeRequiredSummary = computed(() => {
 });
 
 const intakeMissingSummary = computed(() => {
-  if (!isProjectCreatePage.value) return '';
+  if (!isProjectIntakeCreateMode.value) return '';
   if (!intakeMissingRequiredLabels.value.length) return '无';
   return intakeMissingRequiredLabels.value.join('、');
 });
@@ -528,19 +526,19 @@ const pageTitle = computed(() => {
 });
 
 const pageDisplayTitle = computed(() => {
-  if (isProjectCreatePage.value) return '创建项目';
+  if (isProjectIntakeCreateMode.value) return '创建项目';
   return pageTitle.value;
 });
 
 const pageDisplaySubtitle = computed(() => {
-  if (isProjectCreatePage.value) {
+  if (isProjectIntakeCreateMode.value) {
     return '填写核心信息即可完成项目立项';
   }
   return '';
 });
 
 const intakeCreateButtonLabel = computed(() => {
-  if (!isProjectCreatePage.value) return '创建项目';
+  if (!isProjectIntakeCreateMode.value) return '创建项目';
   return busy.value && busyKind.value === 'save' ? '创建中…' : '创建项目';
 });
 
@@ -576,7 +574,7 @@ const isStandardCreateDisabled = computed(() => {
 });
 
 const isIntakeCreateDisabled = computed(() => {
-  if (!isProjectCreatePage.value) return false;
+  if (!isProjectIntakeCreateMode.value) return false;
   if (isProjectQuickIntakeMode.value) return isQuickSubmitDisabled.value;
   return isStandardCreateDisabled.value;
 });
@@ -1560,6 +1558,7 @@ const contractActions = computed<ContractAction[]>(() => {
       label: String(row.label || key),
       kind,
       level: placement,
+      selection: 'none',
       actionId,
       methodName: detectMethodName(key, String(target.method || '').trim()),
       targetModel: String(target.model || model.value || '').trim(),
@@ -1576,23 +1575,29 @@ const contractActions = computed<ContractAction[]>(() => {
     };
   };
 
-  const sceneReadyActions = Array.isArray(sceneReadyFormSurface.value.actions)
+  const sceneReadyActions = useSceneFormAugmentations.value && Array.isArray(sceneReadyFormSurface.value.actions)
     ? sceneReadyFormSurface.value.actions as Array<Record<string, unknown>>
     : [];
   const merged: Array<Record<string, unknown>> = [];
+  if (Array.isArray(contract.value?.buttons)) merged.push(...(contract.value?.buttons as Array<Record<string, unknown>>));
+  if (Array.isArray(contract.value?.toolbar?.header)) merged.push(...(contract.value?.toolbar?.header as Array<Record<string, unknown>>));
+  if (Array.isArray(contract.value?.toolbar?.sidebar)) merged.push(...(contract.value?.toolbar?.sidebar as Array<Record<string, unknown>>));
+  if (Array.isArray(contract.value?.toolbar?.footer)) merged.push(...(contract.value?.toolbar?.footer as Array<Record<string, unknown>>));
   if (sceneReadyActions.length) {
     merged.push(...sceneReadyActions);
-  } else {
-    if (Array.isArray(contract.value?.buttons)) merged.push(...(contract.value?.buttons as Array<Record<string, unknown>>));
-    if (Array.isArray(contract.value?.toolbar?.header)) merged.push(...(contract.value?.toolbar?.header as Array<Record<string, unknown>>));
-    if (Array.isArray(contract.value?.toolbar?.sidebar)) merged.push(...(contract.value?.toolbar?.sidebar as Array<Record<string, unknown>>));
-    if (Array.isArray(contract.value?.toolbar?.footer)) merged.push(...(contract.value?.toolbar?.footer as Array<Record<string, unknown>>));
   }
 
   const dedup = new Set<string>();
   const out: ContractAction[] = [];
   for (const row of merged) {
-    if (sceneReadyActions.length) {
+    if (sceneReadyActions.length && !String(row.key || '').trim()) {
+      const mapped = mapSceneReadyAction(row);
+      if (!mapped || dedup.has(mapped.key)) continue;
+      dedup.add(mapped.key);
+      out.push(mapped);
+      continue;
+    }
+    if (sceneReadyActions.includes(row)) {
       const mapped = mapSceneReadyAction(row);
       if (!mapped || dedup.has(mapped.key)) continue;
       dedup.add(mapped.key);
@@ -1611,6 +1616,8 @@ const contractActions = computed<ContractAction[]>(() => {
     const context = parseMaybeJsonRecord(payload.context_raw);
     const domainRaw = String(payload.domain_raw || '').trim();
     const target = String(payload.target || '').trim();
+    const selectionRaw = String(row.selection || 'none').trim().toLowerCase();
+    const selection = selectionRaw === 'single' || selectionRaw === 'multi' ? selectionRaw : 'none';
     const groups = Array.isArray(row.groups_xmlids) ? (row.groups_xmlids as string[]) : [];
     const visibleProfiles = (
       Array.isArray(row.visible_profiles) ? row.visible_profiles : ['create', 'edit']
@@ -1627,6 +1634,7 @@ const contractActions = computed<ContractAction[]>(() => {
       label: String(row.label || key),
       kind,
       level,
+      selection,
       actionId,
       methodName,
       targetModel,
@@ -1646,6 +1654,11 @@ const contractActions = computed<ContractAction[]>(() => {
     const levelDelta = a.level.localeCompare(b.level);
     if (levelDelta !== 0) return levelDelta;
     return a.label.localeCompare(b.label, 'zh-CN');
+  }).filter((item) => {
+    const profiles = Array.isArray(item.visibleProfiles) ? item.visibleProfiles : [];
+    if (profiles.length && !profiles.includes(renderProfile.value)) return false;
+    if (item.selection !== 'none') return false;
+    return item.level !== 'toolbar';
   });
 });
 
@@ -1759,7 +1772,12 @@ const policyRequiredFields = computed(() => {
   return out;
 });
 const sceneReadySceneKey = computed(() => String(route.query.scene_key || route.params.sceneKey || '').trim());
+const useSceneFormAugmentations = computed(() => {
+  if (isProjectIntakeCreateMode.value) return true;
+  return String(route.name || '').trim().toLowerCase() === 'scene' && Boolean(sceneReadySceneKey.value);
+});
 const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
+  if (!useSceneFormAugmentations.value) return null;
   const key = sceneReadySceneKey.value;
   return key ? findSceneReadyEntry(session.sceneReadyContractV1, key) : null;
 });
@@ -1794,9 +1812,11 @@ const strictContractDefaultsSummary = computed(() => {
   return `当前由后端兜底补齐：${defaults.join(', ')}`;
 });
 const sceneValidationRequiredFields = computed<string[]>(() => {
+  if (!useSceneFormAugmentations.value) return [];
   return resolveFormSceneReady(sceneReadyEntry.value).requiredFields;
 });
 const sceneReadyFormSurface = computed(() => {
+  if (!useSceneFormAugmentations.value) return resolveFormSceneReady(null);
   return resolveFormSceneReady(sceneReadyEntry.value);
 });
 const validationRequiredFields = computed(() => {
@@ -1821,6 +1841,7 @@ const validationRequiredFields = computed(() => {
 });
 const sceneValidationErrorPrefix = `${ErrorCodes.SCENE_VALIDATION_REQUIRED}:`;
 const sceneValidationPanel = computed(() => {
+  if (!useSceneFormAugmentations.value) return null;
   const rows = validationErrors.value
     .map((item) => String(item || '').trim())
     .filter((item) => item.startsWith(sceneValidationErrorPrefix));
@@ -2080,7 +2101,7 @@ const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
 
 const templateSections = computed<TemplateSectionView[]>(() => layoutSections.value.map((section) => {
   const presentation = resolveTemplateSectionPresentation(section, {
-    projectCreateMode: isProjectCreatePage.value,
+    projectCreateMode: isProjectIntakeCreateMode.value,
   });
   return {
     key: section.key,
@@ -2455,9 +2476,26 @@ function analyzeFormContractReadiness(
   const requirePureFormViewType = options?.requirePureFormViewType !== false;
   const collectLayoutFieldNames = (layoutRaw: unknown): Set<string> => {
     const names = new Set<string>();
-    const walk = (nodeRaw: unknown) => {
+    type LayoutGroupLike = { fields?: Array<Record<string, unknown>>; sub_groups?: LayoutGroupLike[] };
+    type LayoutPageLike = { groups?: LayoutGroupLike[] };
+    type LayoutNotebookLike = { pages?: LayoutPageLike[] };
+
+    const walkStructuredGroup = (groupRaw: unknown) => {
+      if (!groupRaw || typeof groupRaw !== 'object' || Array.isArray(groupRaw)) return;
+      const group = groupRaw as LayoutGroupLike;
+      const fields = Array.isArray(group.fields) ? group.fields : [];
+      fields.forEach((fieldRaw) => {
+        const field = fieldRaw && typeof fieldRaw === 'object' ? fieldRaw : {};
+        const fieldName = String((field as Record<string, unknown>).name || '').trim();
+        if (fieldName) names.add(fieldName);
+      });
+      const subGroups = Array.isArray(group.sub_groups) ? group.sub_groups : [];
+      subGroups.forEach((sub) => walkStructuredGroup(sub));
+    };
+
+    const walkLegacyNode = (nodeRaw: unknown) => {
       if (Array.isArray(nodeRaw)) {
-        nodeRaw.forEach((item) => walk(item));
+        nodeRaw.forEach((item) => walkLegacyNode(item));
         return;
       }
       if (!nodeRaw || typeof nodeRaw !== 'object') return;
@@ -2467,9 +2505,38 @@ function analyzeFormContractReadiness(
         const fieldName = String(node.name || '').trim();
         if (fieldName) names.add(fieldName);
       }
-      ['children', 'tabs', 'pages', 'nodes', 'items'].forEach((key) => walk(node[key]));
+      ['children', 'tabs', 'pages', 'nodes', 'items'].forEach((key) => walkLegacyNode(node[key]));
     };
-    walk(layoutRaw);
+
+    if (Array.isArray(layoutRaw)) {
+      walkLegacyNode(layoutRaw);
+      return names;
+    }
+    if (!layoutRaw || typeof layoutRaw !== 'object') {
+      return names;
+    }
+
+    const layout = layoutRaw as Record<string, unknown>;
+    const groups = Array.isArray(layout.groups) ? layout.groups : [];
+    groups.forEach((group) => walkStructuredGroup(group));
+    const notebooks = Array.isArray(layout.notebooks) ? layout.notebooks : [];
+    notebooks.forEach((notebookRaw) => {
+      const notebook = notebookRaw && typeof notebookRaw === 'object' && !Array.isArray(notebookRaw)
+        ? notebookRaw as LayoutNotebookLike
+        : null;
+      const pages = Array.isArray(notebook?.pages) ? notebook.pages : [];
+      pages.forEach((pageRaw) => {
+        const page = pageRaw && typeof pageRaw === 'object' && !Array.isArray(pageRaw)
+          ? pageRaw as LayoutPageLike
+          : null;
+        const pageGroups = Array.isArray(page?.groups) ? page.groups : [];
+        pageGroups.forEach((group) => walkStructuredGroup(group));
+      });
+    });
+
+    if (!names.size) {
+      walkLegacyNode(layoutRaw);
+    }
     return names;
   };
 
@@ -2491,11 +2558,8 @@ function analyzeFormContractReadiness(
   }
   const layout = formView && typeof formView === 'object' && !Array.isArray(formView)
     ? (formView as Record<string, unknown>).layout
-    : [];
+    : {};
   const layoutFieldNames = collectLayoutFieldNames(layout);
-  if (!layoutFieldNames.size) {
-    issues.push('contract.views.form.layout has no field nodes');
-  }
 
   const head = row.head;
   const headViewType = head && typeof head === 'object' && !Array.isArray(head)
@@ -2522,6 +2586,9 @@ function analyzeFormContractReadiness(
       if (normalized) groupNames.add(normalized);
     });
   });
+  if (!layoutFieldNames.size && !groupNames.size && !visibleNameSet.size) {
+    issues.push('contract.views.form.layout has no field nodes');
+  }
   const visibleCandidates = fieldNames.filter((name) =>
     visibleNameSet.has(name) || groupNames.has(name) || layoutFieldNames.has(name),
   );
@@ -2761,6 +2828,7 @@ async function loadRecord() {
 }
 
 async function reload() {
+  renderErrorMessage.value = '';
   status.value = 'loading';
   errorMessage.value = '';
   validationErrors.value = [];
@@ -2787,6 +2855,13 @@ async function reload() {
     status.value = 'error';
   }
 }
+
+onErrorCaptured((err) => {
+  const message = err instanceof Error ? err.message : String(err || 'unknown render error');
+  renderErrorMessage.value = `ContractFormPage render error: ${message}`;
+  console.error('[ContractFormPage] render failed', err);
+  return false;
+});
 
 async function runAction(action: ContractAction) {
   if (!action.enabled) return;
@@ -2931,7 +3006,7 @@ async function openFilter(filterKey: string) {
 }
 
 async function cancelIntake() {
-  if (!isProjectCreatePage.value) return;
+  if (!isProjectIntakeCreateMode.value) return;
   const target = session.resolveLandingPath('/');
   await router.replace({ path: target, query: resolveWorkspaceContextQuery() });
 }

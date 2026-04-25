@@ -15,17 +15,39 @@ type KanbanProfile = {
   primaryFields: string[];
   secondaryFields: string[];
   statusFields: string[];
+  metricFields: string[];
+  quickActionCount: number;
+};
+
+type SortOption = {
+  label: string;
+  value: string;
 };
 
 export function useActionViewContractShapeRuntime(options: UseActionViewContractShapeRuntimeOptions) {
   const contractColumnLabels = computed<Record<string, string>>(() => {
-    const rows = options.actionContract.value?.fields || {};
-    return Object.entries(rows).reduce<Record<string, string>>((acc, [name, descriptor]) => {
+    const contract = options.actionContract.value || {};
+    const rows = contract.fields || {};
+    const labels = Object.entries(rows).reduce<Record<string, string>>((acc, [name, descriptor]) => {
       const descriptorRow = (descriptor || {}) as Dict;
       const label = String(descriptorRow.string || '').trim();
       if (label) acc[name] = label;
       return acc;
     }, {});
+    const listProfile = (contract.list_profile || {}) as Dict;
+    Object.entries((listProfile.column_labels || {}) as Dict).forEach(([name, labelRaw]) => {
+      const label = String(labelRaw || '').trim();
+      if (label) labels[name] = label;
+    });
+    const semanticPage = (contract.semantic_page || {}) as Dict;
+    const listSemantics = (semanticPage.list_semantics || {}) as Dict;
+    const semanticColumns = Array.isArray(listSemantics.columns) ? (listSemantics.columns as Array<Dict>) : [];
+    semanticColumns.forEach((row) => {
+      const name = String(row.name || '').trim();
+      const label = String(row.label || '').trim();
+      if (name && label) labels[name] = label;
+    });
+    return labels;
   });
 
   function extractColumnsFromContract(contract: unknown, sceneColumns: string[] = []) {
@@ -95,7 +117,50 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       primaryFields: normalize(profile.primary_fields),
       secondaryFields: normalize(profile.secondary_fields),
       statusFields: normalize(profile.status_fields),
+      metricFields: normalize(profile.metric_fields),
+      quickActionCount: Number(profile.quick_action_count || 0),
     };
+  }
+
+  function extractListOrderFromContract(contract: unknown): string {
+    const typed = (contract || {}) as Dict;
+    const uiContract = ((typed.ui_contract || {}) as Dict);
+    const directViews = (typed.views || uiContract.views) as Dict | undefined;
+    const treeBlock = (directViews?.tree || directViews?.list || {}) as Dict;
+    const searchDefaults = ((typed.search || {}) as Dict).defaults as Dict | undefined;
+    const candidates = [
+      treeBlock.order,
+      treeBlock.default_order,
+      searchDefaults?.order,
+      uiContract.order,
+      typed.order,
+    ];
+    for (const item of candidates) {
+      const value = String(item || '').trim();
+      if (value) return value;
+    }
+    return '';
+  }
+
+  function buildListSortOptions(contract: unknown, currentSort: string, fallbackLabel: string): SortOption[] {
+    const rows: SortOption[] = [];
+    const add = (valueRaw: unknown, labelRaw?: unknown) => {
+      const value = String(valueRaw || '').trim();
+      if (!value || rows.some((item) => item.value === value)) return;
+      const label = String(labelRaw || value || fallbackLabel).trim() || fallbackLabel;
+      rows.push({ label, value });
+    };
+    const typed = (contract || {}) as Dict;
+    const sortOptions = ((typed.search || {}) as Dict).sort_options;
+    if (Array.isArray(sortOptions)) {
+      sortOptions.forEach((row) => {
+        const raw = row as Dict;
+        add(raw.value || raw.order, raw.label);
+      });
+    }
+    add(extractListOrderFromContract(contract), fallbackLabel);
+    add(currentSort, fallbackLabel);
+    return rows;
   }
 
   function extractAdvancedViewFields(contract: unknown, mode: string) {
@@ -203,9 +268,48 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
     return '';
   }
 
+  function extractListProfile(contract: unknown) {
+    const typed = (contract || {}) as Dict;
+    const rawProfile = (typed.list_profile || {}) as Dict;
+    const semanticPage = (typed.semantic_page || {}) as Dict;
+    const listSemantics = (semanticPage.list_semantics || {}) as Dict;
+    const semanticColumns = Array.isArray(listSemantics.columns) ? (listSemantics.columns as Array<Dict>) : [];
+    const columns = Array.isArray(rawProfile.columns) && rawProfile.columns.length
+      ? rawProfile.columns.map((item) => String(item || '').trim()).filter(Boolean)
+      : semanticColumns.map((row) => String(row.name || '').trim()).filter(Boolean);
+    const hiddenColumns = Array.isArray(rawProfile.hidden_columns)
+      ? rawProfile.hidden_columns.map((item) => String(item || '').trim()).filter(Boolean)
+      : [];
+    const columnLabels: Record<string, string> = {};
+    Object.entries((rawProfile.column_labels || {}) as Dict).forEach(([name, labelRaw]) => {
+      const label = String(labelRaw || '').trim();
+      if (label) columnLabels[name] = label;
+    });
+    semanticColumns.forEach((row) => {
+      const name = String(row.name || '').trim();
+      const label = String(row.label || '').trim();
+      if (name && label && !columnLabels[name]) columnLabels[name] = label;
+    });
+    const rowPrimary = String(rawProfile.row_primary || listSemantics.row_primary || '').trim();
+    const rowSecondary = String(rawProfile.row_secondary || listSemantics.row_secondary || '').trim();
+    if (!columns.length && !Object.keys(columnLabels).length && !rowPrimary && !rowSecondary) {
+      return null;
+    }
+    return {
+      columns,
+      hidden_columns: hiddenColumns,
+      column_labels: columnLabels,
+      row_primary: rowPrimary,
+      row_secondary: rowSecondary,
+    };
+  }
+
   return {
     contractColumnLabels,
+    extractListProfile,
     extractColumnsFromContract,
+    extractListOrderFromContract,
+    buildListSortOptions,
     convergeColumnsForSurface,
     extractKanbanFields,
     extractKanbanProfile,

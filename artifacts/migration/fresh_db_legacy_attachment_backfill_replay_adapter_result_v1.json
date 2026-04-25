@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_legacy_attachment_backfill_replay_adapter",
+  "expected_rows": 18458,
+  "replay_payload_rows": 18458,
+  "payload_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/fresh_db_legacy_attachment_backfill_replay_payload_v1.csv"
+}

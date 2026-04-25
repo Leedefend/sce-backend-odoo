@@ -131,6 +131,7 @@ import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import { useSessionStore } from '../stores/session';
 import { getSceneByKey, getSceneRegistryDiagnostics, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
+import { resolveMenuAction } from '../app/resolvers/menuResolver';
 import { isDeliveryModeEnabled, isHudEnabled } from '../config/debug';
 import { normalizeLegacyWorkbenchPath, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { buildRuntimeNavigationRegistry } from '../app/navigationRegistry';
@@ -711,26 +712,6 @@ const activeMenuId = computed(() => {
   if (fromQuery) return fromQuery;
 
   const activeSceneKey = String(routeSceneKey.value || '').trim();
-  if (activeSceneKey) {
-    const contracts = session.pageContracts || {};
-    const contractEntries = Object.values(contracts) as Array<Record<string, unknown>>;
-    for (const entry of contractEntries) {
-      const sceneContract = asDict((entry as { scene_contract_v1?: unknown }).scene_contract_v1);
-      if (!sceneContract) continue;
-      const scene = asDict(sceneContract.scene);
-      const sceneKey = asText(scene?.scene_key) || asText(scene?.key) || asText(scene?.code);
-      if (sceneKey !== activeSceneKey) continue;
-      const navRef = asDict(sceneContract.nav_ref);
-      const navRefMenuId = asInteger(navRef?.active_menu_id);
-      if (navRefMenuId) return navRefMenuId;
-    }
-  }
-
-  const workspaceSceneContract = asDict((session.workspaceHome as { scene_contract_v1?: unknown } | null)?.scene_contract_v1);
-  const workspaceNavRef = asDict(workspaceSceneContract?.nav_ref);
-  const workspaceMenuId = asInteger(workspaceNavRef?.active_menu_id);
-  if (workspaceMenuId) return workspaceMenuId;
-
   const fromScene = findMenuIdBySceneKey(menuTree.value, activeSceneKey);
   if (fromScene) return fromScene;
 
@@ -787,17 +768,20 @@ function handleSelect(node: NavNode) {
   if (!node.menu_id && node.id) {
     node.menu_id = node.id as number;
   }
-  const sceneKey = resolveSceneKeyFromNode(node);
-  const scene = sceneKey ? getSceneByKey(sceneKey) : null;
-  if (sceneKey && scene) {
-    const rawPath = String(scene.target?.route || scene.route || `/s/${sceneKey}`).trim();
-    const resolvedPath = normalizeLegacyWorkbenchPath(rawPath) || `/s/${sceneKey}`;
-    router.push({ path: resolvedPath, query: { menu_id: node.menu_id || undefined } }).catch(() => {});
-    return;
+  const targetMenuId = Number(node.menu_id || node.id || 0);
+  if (targetMenuId <= 0) return;
+  const resolved = resolveMenuAction(menuTree.value, targetMenuId);
+  if (resolved.kind === 'redirect' && resolved.target?.scene_key) {
+    const sceneKey = String(resolved.target.scene_key || '').trim();
+    const scene = sceneKey ? getSceneByKey(sceneKey) : null;
+    if (sceneKey && scene) {
+      const rawPath = String(scene.target?.route || scene.route || `/s/${sceneKey}`).trim();
+      const resolvedPath = normalizeLegacyWorkbenchPath(rawPath) || `/s/${sceneKey}`;
+      router.push({ path: resolvedPath, query: { menu_id: targetMenuId } }).catch(() => {});
+      return;
+    }
   }
-  if (node.menu_id) {
-    router.push(`/m/${node.menu_id}`).catch(() => {});
-  }
+  router.push(`/m/${targetMenuId}`).catch(() => {});
 }
 
 function openRoleLanding() {
