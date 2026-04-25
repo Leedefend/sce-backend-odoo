@@ -265,6 +265,16 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
 
         return target
 
+    def _refresh_target_ids_from_xmlid_identity(target_payload: dict) -> dict:
+        target = dict(target_payload) if isinstance(target_payload, dict) else {}
+        if not target:
+            return target
+        if str(target.get("action_xmlid") or "").strip():
+            target.pop("action_id", None)
+        if str(target.get("menu_xmlid") or "").strip():
+            target.pop("menu_id", None)
+        return _hydrate_target(target)
+
     def _ensure_minimal_route_target(scene_payload: dict, scene_code: str) -> None:
         if not isinstance(scene_payload, dict):
             return
@@ -350,6 +360,10 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
         if not has_xmlid_identity:
             return dict(registry_target)
         next_target = dict(current_target)
+        if str(next_target.get("action_xmlid") or "").strip():
+            next_target.pop("action_id", None)
+        if str(next_target.get("menu_xmlid") or "").strip():
+            next_target.pop("menu_id", None)
         for key, value in registry_target.items():
             if key in ("action_id", "menu_id"):
                 continue
@@ -403,6 +417,7 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
 
         if isinstance(scene.get("target"), dict):
             scene["target"] = _hydrate_target(scene.get("target"))
+            scene["target"] = _refresh_target_ids_from_xmlid_identity(scene.get("target"))
         _ensure_minimal_route_target(scene, code)
 
         if code not in critical_target_overrides:
@@ -422,7 +437,7 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
             current_target = scene.get("target")
             merged_target = _merge_registry_target_without_overwriting_identity(current_target, registry_target)
             if current_target != merged_target:
-                scene["target"] = merged_target
+                scene["target"] = _hydrate_target(merged_target)
                 reconciled.append(code)
 
         capability_target = capability_map.get(code)
