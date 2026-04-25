@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-25T04:46:00+08:00
+- blocker_key: `history_continuity_promotion_a_payment_request_submit_activation_closed`
+- layer_target: `Domain Layer / Migration Replay-Promotion Layer`
+- module: `payment.request historical approval continuity`
+- reason: replay baseline was already user-visible, but all migrated `payment.request` rows still collapsed into `draft`; the batch had to close that single continuity gap without polluting live approval runtime
+- completed_step: `已完成 outflow_request_core 历史状态激活：对带 workflow audit 事实的 12247 条 payment.request 执行 draft->submit，且不写 tier.review、不写 validation_status；history.business.usable.probe 已转为 history_business_usable_ready，gap_count=0。`
+- active_commit: `5dbd2342`
+- next_step: `start the next bounded business-continuity batch instead of expanding replay or approval-runtime reconstruction`
+
+### 2026-04-25T04:58:00+08:00
+- blocker_key: `history_continuity_promotion_b_outflow_approved_recovery_closed`
+- layer_target: `Domain Layer / Migration Replay-Promotion Layer`
+- module: `payment.request historical approved-state recovery`
+- reason: after `draft -> submit` activation closed the visible continuity gap, the next user complaint remained valid: many historical outflow requests were already approved in the old business process and should not stay at mere submit state
+- completed_step: `已完成 submit->approved 恢复：复用既有 legacy_payment_approval_downstream_fact judgment，对 12201 条 outflow_request_core 执行 approved 恢复；当前 outflow_request_core 状态为 approved=12201, submit=46, draft=37，且仍未污染 tier.review / validation_status。`
+- active_commit: `5dbd2342`
+- next_step: `decide whether downstream-paid requests should remain approved or continue into a separate done-state recovery batch`
+
 ### 2026-04-24T10:30:00+08:00
 - blocker_key: `fe_nav_contract_consumer_fact_audit_batch_001_in_progress`
 - layer_target: `Frontend Layer`
@@ -29260,3 +29278,228 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - 服务器端正式入口冻结为：
     - `DB_NAME=<target_db> make history.continuity.replay`
   - 下一阶段应转入 promotion / business usable，而不是继续补资产 ingress
+
+## 2026-04-25 Batch-History-Continuity-Promotion-Start
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `5dbd2342`
+- Layer Target: `Migration Promotion Layer / Business Usability Layer`
+- Module: `history_business_usable_probe + promotion execution plan`
+- Reason: replay 主链已完成，但现有 continuity probe 只能证明事实在库里，不能证明用户进入工作台、我的工作、核心列表/表单后可继续业务；需要先冻结只读业务可用性判据，再决定 promotion 顺序。
+- 本批目标：
+  - 新增只读 `history.business.usable.probe`
+  - 将结果拆成 `runtime visible / actionable surface / ownership-link` 三类 gap
+  - 形成 `history_continuity_promotion_execution_plan_v1.md`
+- 不做：
+  - 不直接改业务运行态
+  - 不提升 carrier ownership
+  - 不改前端消费链
+- live 结果（`sc_demo`）：
+  - `DB_NAME=sc_demo make history.business.usable.probe`: `PASS`
+  - `decision = history_business_usable_visible_but_promotion_gaps`
+  - `gap_count = 1`
+  - 唯一 gap：
+    - `payment_request_no_pending_runtime_states = true`
+  - 关键事实：
+    - `project_runtime_records = 755`
+    - `project_records_with_owner_link = 755`
+    - `contract_runtime_records = 6793`
+    - `contract_records_with_partner_link = 6793`
+    - `payment_request_runtime_records = 27802`
+    - `payment_request_state_distribution = {"draft": 27802}`
+    - `mail_activity_total = 26`
+    - `legacy_workflow_audit_facts = 79702`
+- 结论：
+  - 用户可见 runtime surface 已成立
+  - 第一批 promotion 不应泛化，必须只打 `payment.request` 的 state activation / approval continuity
+
+## 2026-04-25 Batch-History-Continuity-Promotion-C
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `5dbd2342`
+- Layer Target: `Domain Layer / Migration Replay-Promotion Layer`
+- Module: `payment.request historical done-state continuity`
+- Reason: user accepted business-fact-first restoration; historical paid truth may be restored directly into new-system `done` without reconstructing old settlement runtime
+- 实施边界：
+  - 只处理 `outflow_request_core`
+  - 只消费已冻结 `old_state=done / old_validation_status=validated / old_ledger_count=1` 的事实快照
+  - 不写 `tier.review`
+  - 不写 `sc.settlement.order`
+  - 允许物化最小 `payment.ledger` 事实，避免 `done` 与 paid/unpaid 计算自相矛盾
+- live 结果（`sc_demo`）：
+  - done candidates: `12194`
+  - promoted rows: `12194`
+  - outflow runtime state distribution:
+    - `done = 12194`
+    - `approved = 7`
+    - `submit = 46`
+    - `draft = 37`
+
+## 2026-04-25 Batch-History-Capability-Promotion-Matrix
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `5dbd2342`
+- Layer Target: `Domain Layer / Page Orchestration Layer / Frontend Delivery Boundary`
+- Module: `legacy fact carriers -> formal capability promotion matrix`
+- Reason: historical carriers now support replay and runtime continuity, but user-facing delivery cannot simply expose raw `sc.legacy.*` models; matrix needed to freeze `carrier-only / ops-visible internal / formal user capability`.
+- Result:
+  - `carrier-only`: workflow audit, staging, migration recovery artifacts
+  - `ops-visible internal`: receipt income / expense deposit / invoice tax / financing loan / fund daily snapshot
+  - `formal user capability`: payment request / payment ledger / treasury ledger / runtime line facts
+
+## 2026-04-25 Batch-History-Capability-Promotion-A
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `5dbd2342`
+- Layer Target: `Page Orchestration Layer / Domain Layer`
+- Module: `legacy fact internal delivery entry`
+- Reason: make `ops-visible internal` historical finance facts visible to finance/internal users without exposing raw `sc.legacy.*` as end-user main capabilities
+- Changes:
+  - added internal finance history menu container
+  - added actions for:
+    - `sc.legacy.receipt.income.fact`
+    - `sc.legacy.financing.loan.fact`
+    - `sc.legacy.fund.daily.snapshot.fact`
+  - added internal menu entries for:
+    - receipt income
+    - expense/deposit
+    - invoice tax
+    - financing loan
+    - fund daily snapshot
+  - kept `sc.legacy.workflow.audit` out of user-facing menu
+- live validation (`sc_demo`):
+  - `smart_construction_core.menu_sc_finance_history_center` exists
+  - all 5 internal legacy finance entries exist under `财务账款 -> 历史财务事实（内部）`
+
+## 2026-04-25 Batch-History-Capability-Promotion-B
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `5dbd2342`
+- Layer Target: `Page Orchestration Layer / Domain Layer`
+- Module: `formal finance delivery pages`
+- Reason: strengthen daily user-facing finance capabilities around historical payment facts without exposing raw legacy carriers
+- Changes:
+  - `payment.ledger`
+    - user-facing title changed to `支付台账`
+    - added dedicated search view
+    - default grouped by project
+  - `sc.treasury.ledger`
+    - added dedicated search view
+    - moved menu parent from `结算中心` to `财务账款`
+    - default grouped by project
+- live validation (`sc_demo`):
+  - `smart_construction_core.action_payment_ledger = 支付台账`
+  - `smart_construction_core.action_payment_ledger.search_view_id = payment.ledger.search`
+  - `smart_construction_core.menu_payment_ledger.parent = 财务账款`
+  - `smart_construction_core.action_sc_treasury_ledger.search_view_id = sc.treasury.ledger.search`
+  - `smart_construction_core.menu_sc_treasury_ledger.parent = 财务账款`
+
+## 2026-04-25 Batch-History-Business-Fact-Capability-Map
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `5dbd2342`
+- Layer Target: `Domain Layer / Page Orchestration Layer / Frontend Delivery Boundary`
+- Module: `history business fact -> formal capability mapping`
+- Reason: freeze the product rule that user-facing capability must be decided by continued business use, not by whichever carrier models currently exist after replay
+- Result:
+  - formal daily finance capability converges on:
+    - `payment.request`
+    - `payment.ledger`
+    - `sc.treasury.ledger`
+  - legacy finance fact models remain transitional internal support layers
+  - workflow audit and staging remain internal-only
+
+## 2026-04-25 Batch-History-Capability-Promotion-C
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `5dbd2342`
+- Layer Target: `Domain Layer / Page Orchestration Layer`
+- Module: `receipt/income formal capability`
+- Reason: users continuing to work with receipt/income facts should enter strengthened formal runtime capability, not internal `sc.legacy.receipt.income.fact` carriers
+- Changes:
+  - added `payment.request.search`
+  - split finance request entry into:
+    - `付款申请` -> `payment.request(type=pay)`
+    - `收款申请` -> `payment.request(type=receive)`
+  - added `收款台账` -> `sc.treasury.ledger(direction=in)`
+  - kept `收款发票明细` as the detailed receipt invoice capability page under finance
+- live validation (`sc_demo`):
+  - `smart_construction_core.action_payment_request_pay = 付款申请`
+  - `smart_construction_core.action_payment_request_receive = 收款申请`
+  - `smart_construction_core.menu_payment_request = 付款申请`
+  - `smart_construction_core.menu_payment_request_receive = 收款申请`
+  - `smart_construction_core.action_sc_treasury_ledger_income = 收款台账`
+  - `smart_construction_core.menu_sc_treasury_ledger_income = 收款台账`
+
+## 2026-04-25 Batch-History-Capability-Promotion-D
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `5dbd2342`
+- Layer Target: `Domain Layer / Page Orchestration Layer`
+- Module: `invoice/tax formal capability`
+- Reason: users continue to work with invoice facts in receipt scenarios, so formal delivery should strengthen `sc.receipt.invoice.line` instead of exposing `sc.legacy.invoice.tax.fact` as a user-facing page
+- Changes:
+  - upgraded `sc.receipt.invoice.line` entry from `收款发票明细` to `收款发票台账`
+  - added issuer and invoice title search fields
+  - added partner grouping
+  - changed default grouping from request to project
+  - kept `sc.legacy.invoice.tax.fact` in internal finance history only
+
+## 2026-04-25 Batch-History-Capability-Promotion-E
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `5dbd2342`
+- Layer Target: `Domain Layer / Page Orchestration Layer`
+- Module: `financing formal capability`
+- Reason: financing business facts are already replayed and used in daily finance work, so new-system delivery needs a formal financing ledger entry instead of routing users to raw internal historical pages
+- Changes:
+  - added `融资台账` action and menu under `财务账款`
+  - delivered financing capability on top of replayed financing facts with dedicated search fields:
+    - 单号
+    - 项目
+    - 往来单位
+    - 来源类型
+    - 额外标签
+    - 到期日
+  - added common grouping:
+    - 项目
+    - 单位
+    - 来源
+    - 到期日
+  - kept `历史融资借款` internal menu for audit/operations
+
+## 2026-04-25 Batch-History-Capability-Promotion-F
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `5dbd2342`
+- Layer Target: `Domain Layer / Page Orchestration Layer`
+- Module: `fund daily / treasury analysis formal capability`
+- Reason: users continue to inspect daily fund balances and variances, so new-system delivery needs a formal `资金日报` page instead of routing users into internal historical snapshot carriers
+- Changes:
+  - added `资金日报` action and menu under `财务账款`
+  - delivered on top of replayed fund daily snapshot facts with dedicated search:
+    - 日期
+    - 项目
+    - 主题
+    - 单号
+  - added grouping:
+    - 项目
+    - 日期
+  - added quick filter:
+    - `有差异`
+  - kept `历史资金日报` internal menu for audit/operations
+
+## 2026-04-25 Batch-History-Continuity-Promotion-D
+
+- branch: `codex/sidebar-nav-de-scene-20260424`
+- short_sha: `5dbd2342`
+- Layer Target: `Domain Layer / Migration Replay-Promotion Layer`
+- Module: `project.project lifecycle continuity`
+- Reason: historical project anchors were replayed, but lifecycle continuity was not applied, leaving most projects at default `draft` even though frozen continuity evidence already approved 701 projects for execution-state restoration
+- Changes:
+  - added frozen-snapshot adapter for project lifecycle continuity
+  - added replay writer restoring approved historical projects to:
+    - `lifecycle_state = in_progress`
+    - `phase_key = execution`
+    - `stage_id = project_stage_in_progress`
+  - updates only current `draft` projects; non-draft projects are preserved as conflicts
