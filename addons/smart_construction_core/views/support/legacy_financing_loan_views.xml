@@ -3,7 +3,7 @@
     <record id="view_sc_legacy_financing_loan_fact_tree" model="ir.ui.view">
         <field name="name">sc.legacy.financing.loan.fact.tree</field>
         <field name="model">sc.legacy.financing.loan.fact</field>
-        <field name="arch" type="xml">
+            <field name="arch" type="xml">
             <tree string="历史融资借款事实" create="0" edit="0" delete="0">
                 <field name="document_date"/>
                 <field name="document_no"/>

@@ -1,6 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
+        <record id="view_sc_treasury_ledger_search" model="ir.ui.view">
+            <field name="name">sc.treasury.ledger.search</field>
+            <field name="model">sc.treasury.ledger</field>
+            <field name="arch" type="xml">
+                <search string="资金台账">
+                    <field name="name"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="payment_request_id"/>
+                    <field name="settlement_id"/>
+                    <filter string="支出" name="direction_out" domain="[('direction', '=', 'out')]"/>
+                    <filter string="收入" name="direction_in" domain="[('direction', '=', 'in')]"/>
+                    <filter string="已入账" name="state_posted" domain="[('state', '=', 'posted')]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="按日期" name="group_date" context="{'group_by': 'date'}"/>
+                </search>
+            </field>
+        </record>
 
         <record id="view_sc_treasury_ledger_tree" model="ir.ui.view">
             <field name="name">sc.treasury.ledger.tree</field>
@@ -59,7 +78,20 @@
             <field name="name">资金台账</field>
             <field name="res_model">sc.treasury.ledger</field>
             <field name="view_mode">tree,form</field>
-            <field name="context">{'create': False}</field>
+            <field name="search_view_id" ref="view_sc_treasury_ledger_search"/>
+            <field name="context">{'create': False, 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+
+        <record id="action_sc_treasury_ledger_income" model="ir.actions.act_window">
+            <field name="name">收款台账</field>
+            <field name="res_model">sc.treasury.ledger</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_treasury_ledger_search"/>
+            <field name="domain">[('direction', '=', 'in')]</field>
+            <field name="context">{'create': False, 'search_default_direction_in': 1, 'search_default_group_project': 1}</field>
             <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
                                            (4, ref('smart_construction_core.group_sc_cap_finance_user')),
                                            (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
@@ -67,9 +99,16 @@
 
         <menuitem id="menu_sc_treasury_ledger"
                   name="资金台账"
-                  parent="smart_construction_core.menu_sc_settlement_center"
+                  parent="smart_construction_core.menu_sc_finance_center"
                   action="action_sc_treasury_ledger"
-                  sequence="30"
+                  sequence="32"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+
+        <menuitem id="menu_sc_treasury_ledger_income"
+                  name="收款台账"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  action="action_sc_treasury_ledger_income"
+                  sequence="33"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
     </data>

@@ -144,11 +144,66 @@
             </field>
         </record>
 
+        <record id="view_payment_request_search" model="ir.ui.view">
+            <field name="name">payment.request.search</field>
+            <field name="model">payment.request</field>
+            <field name="arch" type="xml">
+                <search string="付款/收款申请">
+                    <field name="name"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="contract_id"/>
+                    <field name="settlement_id"/>
+                    <filter string="付款" name="type_pay" domain="[('type', '=', 'pay')]"/>
+                    <filter string="收款" name="type_receive" domain="[('type', '=', 'receive')]"/>
+                    <separator/>
+                    <filter string="草稿" name="state_draft" domain="[('state', '=', 'draft')]"/>
+                    <filter string="已提交" name="state_submit" domain="[('state', '=', 'submit')]"/>
+                    <filter string="已批准" name="state_approved" domain="[('state', '=', 'approved')]"/>
+                    <filter string="已完成" name="state_done" domain="[('state', '=', 'done')]"/>
+                    <separator/>
+                    <filter string="按项目" name="group_by_project_id" context="{'group_by': 'project_id'}"/>
+                    <filter string="按单位" name="group_by_partner_id" context="{'group_by': 'partner_id'}"/>
+                    <filter string="按类型" name="group_by_type" context="{'group_by': 'type'}"/>
+                    <filter string="按状态" name="group_by_state" context="{'group_by': 'state'}"/>
+                </search>
+            </field>
+        </record>
+
         <record id="action_payment_request" model="ir.actions.act_window">
             <field name="name">付款/收款申请</field>
             <field name="res_model">payment.request</field>
             <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_payment_request_search"/>
             <field name="context">{'search_default_group_by_project_id': 1}</field>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_finance_read'),
+                ref('smart_construction_core.group_sc_cap_finance_user'),
+                ref('smart_construction_core.group_sc_cap_finance_manager'),
+            ])]"/>
+        </record>
+
+        <record id="action_payment_request_pay" model="ir.actions.act_window">
+            <field name="name">付款申请</field>
+            <field name="res_model">payment.request</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_payment_request_search"/>
+            <field name="domain">[('type', '=', 'pay')]</field>
+            <field name="context">{'default_type': 'pay', 'search_default_type_pay': 1, 'search_default_group_by_project_id': 1}</field>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_finance_read'),
+                ref('smart_construction_core.group_sc_cap_finance_user'),
+                ref('smart_construction_core.group_sc_cap_finance_manager'),
+            ])]"/>
+        </record>
+
+        <record id="action_payment_request_receive" model="ir.actions.act_window">
+            <field name="name">收款申请</field>
+            <field name="res_model">payment.request</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_payment_request_search"/>
+            <field name="domain">[('type', '=', 'receive')]</field>
+            <field name="context">{'default_type': 'receive', 'search_default_type_receive': 1, 'search_default_group_by_project_id': 1}</field>
             <field name="groups_id" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_finance_read'),
                 ref('smart_construction_core.group_sc_cap_finance_user'),
@@ -161,6 +216,7 @@
             <field name="res_model">payment.request</field>
             <field name="view_mode">tree,form</field>
             <field name="domain">[('create_uid', '=', uid)]</field>
+            <field name="search_view_id" ref="view_payment_request_search"/>
             <field name="context">{'search_default_group_by_project_id': 1}</field>
             <field name="groups_id" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -170,10 +226,17 @@
         </record>
 
         <menuitem id="menu_payment_request"
-                  name="付款/收款申请"
+                  name="付款申请"
                   parent="smart_construction_core.menu_sc_finance_center"
-                  action="action_payment_request"
+                  action="action_payment_request_pay"
                   sequence="25"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+
+        <menuitem id="menu_payment_request_receive"
+                  name="收款申请"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  action="action_payment_request_receive"
+                  sequence="26"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
     </data>
