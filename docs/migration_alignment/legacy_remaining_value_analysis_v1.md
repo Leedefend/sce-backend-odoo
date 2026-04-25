@@ -24,6 +24,8 @@ semantics.
 | `sc.legacy.expense.deposit.fact` | 11167 |
 | `sc.legacy.financing.loan.fact` | 318 |
 | `sc.legacy.fund.daily.snapshot.fact` | 496 |
+| `sc.legacy.material.category` | 130624 |
+| `sc.legacy.material.detail` | 2279734 |
 | `ir.attachment` | 19546 |
 | `product.template` | 1 |
 | `product.product` | 1 |
@@ -32,7 +34,7 @@ semantics.
 
 | Priority | Lane | Source tables | Source scale | Current conclusion |
 | --- | --- | --- | ---: | --- |
-| P0 | material catalog search archive | `T_Base_MaterialDetail`, `C_Base_CBFL` | 2,279,734 material rows; 130,605 cost category rows | Largest uncovered business reference set. Do not load as products yet; preserve as searchable historical material/category archive first. |
+| P0 | material catalog search archive | `T_Base_MaterialDetail`, `T_Base_BuildMaterialClass`, `C_Base_CBFL` | 2,279,734 material rows; 16 global material categories; 3 orphan category keys; 130,605 cost category rows | Covered by neutral archive. Do not load as products; preserve as searchable historical material/category facts. |
 | P0 | attachment index expansion | `BASE_SYSTEM_FILE`, `T_BILL_FILE` | 126,967 + 51,964 rows; about 124.6 GB referenced size | Current Odoo attachment count only covers already-mapped objects. Build a neutral file index for unanchored files before binary transfer. |
 | P1 | task / todo evidence | `T_BASE_TASKDONE` | 78,822 rows | Useful for old to-do, read/done evidence, and user continuity. Keep as evidence, not new activities. |
 | P1 | user project scope evidence | `T_System_UserAndXXGL`, `T_System_UserAndXXGL_History` | 20,000 current + 70,871 history rows | Complements project member staging. Preserve as scope/audit evidence; do not grant visibility. |
@@ -50,6 +52,11 @@ Material archive:
 
 - `T_Base_MaterialDetail`: 2,279,734 rows, 2,279,732 active-like, 255
   distinct project refs, 2,279,708 named, 693,590 with unit, only 25 priced.
+- `T_Base_BuildMaterialClass`: 16 global category rows referenced by material
+  details.
+- `T_Base_MaterialDetail`: 3 category GUIDs are referenced by 1,512 detail
+  rows but missing from the category master; these are preserved as explicit
+  orphan-category carrier rows.
 - `C_Base_CBFL`: 130,605 rows, 130,584 active-like, 476 distinct project refs.
 
 Attachments:
@@ -71,13 +78,10 @@ Financial/detail candidates:
 
 ## Recommended Next Move
 
-1. Build `legacy_material_catalog` neutral models and replay only indexed
-   material/category facts first. Do not create `product.product` records from
-   2.27M legacy material rows.
-2. Build a neutral `legacy_file_index` lane for all remaining file references,
+1. Build a neutral `legacy_file_index` lane for all remaining file references,
    then separately decide binary transfer policy by file type and business
    object coverage.
-3. Add focused finance detail carriers for special invoice registration,
+2. Add focused finance detail carriers for special invoice registration,
    deduction/settlement adjustment, and fund confirmation.
-4. Treat attendance, personnel movement, and salary as opt-in privacy lanes,
+3. Treat attendance, personnel movement, and salary as opt-in privacy lanes,
    behind explicit authorization and restricted ACLs.

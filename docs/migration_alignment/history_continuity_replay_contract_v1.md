@@ -66,46 +66,13 @@ Rehearsal mode:
 Replay mode:
 
 1. historical users rebuild
-2. replay payload precheck
-3. partner anchor replay
-4. project anchor replay
-5. contract counterparty partner adapter
-6. contract counterparty partner replay
-7. receipt counterparty partner adapter
-8. receipt counterparty partner replay
-9. project-member neutral carrier replay
-10. contract header replay
-11. contract missing partner anchors replay
-12. special 12-row contract partner anchor supplement
-13. special 12-row contract replay
-14. contract retry-57 replay
-15. contract unreached-ready replay
-16. contract partner recovery
-17. partner/contract direction defer recovery
-18. receipt core replay
-19. receipt partner targeted replay
-20. receipt parent recovery
-21. receipt invoice line replay
-22. receipt invoice attachment replay
-23. project-member attachment targeted replay
-24. outflow partner targeted replay
-25. outflow request replay
-26. actual outflow replay
-27. outflow request line replay
-28. legacy attachment backfill replay
-29. receipt-income partner targeted replay
-30. legacy receipt income replay
-31. expense-deposit partner targeted replay
-32. legacy expense deposit replay
-33. legacy invoice tax replay
-34. legacy workflow audit replay
-35. outflow request state recovery
-36. outflow request approved recovery
-37. outflow request done recovery and ledger fact materialization
-38. project lifecycle continuity replay
-39. legacy financing loan replay
-40. legacy fund daily snapshot replay
-41. usability probe
+2. legacy user context replay
+3. replay payload precheck
+4. partner anchor replay
+5. project anchor replay
+6. legacy material catalog archive replay
+7. contract / receipt / project-member / payment / finance history replay
+8. usability probe
 
 Supported resume step names:
 
@@ -115,6 +82,8 @@ Supported resume step names:
 - `replay_payload_precheck`
 - `partner_l4_anchor_completed`
 - `project_anchor_completed`
+- `legacy_material_catalog_adapter`
+- `legacy_material_catalog_replay`
 - `contract_counterparty_partner_adapter`
 - `contract_counterparty_partner_completed`
 - `receipt_counterparty_partner_adapter`
@@ -202,6 +171,7 @@ Supported resume step names:
 - `legacy_user_context`
 - `partner_l4_anchor_completed`
 - `project_anchor_completed`
+- `legacy_material_catalog_sc_v1`
 - `contract_counterparty_partner_sc_v1`
 - `receipt_counterparty_partner_sc_v1`
 - `contract_counterparty_partner_completed`
@@ -231,6 +201,7 @@ Supported resume step names:
 - `actual_outflow_line`
 - `legacy_financing_loan_sc_v1`
 - `legacy_fund_daily_snapshot_sc_v1`
+- `legacy_material_catalog_sc_v1`
 
 ## Default-Excluded / Opt-In Lanes
 
@@ -246,6 +217,15 @@ HISTORY_CONTINUITY_INCLUDE_DETAIL_FACTS=0
 ```
 
 `HISTORY_CONTINUITY_INCLUDE_BLOCKED_GROUP_B` is deprecated.
+
+Material catalog archive is included by default because cutover needs old
+material names, units, specs, classifications, and project references to remain
+searchable without creating 2.27M new `product.product` records. To skip this
+large neutral archive in a limited rehearsal, set:
+
+```bash
+HISTORY_CONTINUITY_INCLUDE_MATERIAL_CATALOG=0
+```
 
 ## Guardrails
 

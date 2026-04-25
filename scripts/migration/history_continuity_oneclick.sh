@@ -39,6 +39,7 @@ SUPPLIER_CONTRACT_LINE_ADAPTER="$ROOT_DIR/scripts/migration/fresh_db_supplier_co
 INCLUDE_BLOCKED_GROUP_B="${HISTORY_CONTINUITY_INCLUDE_BLOCKED_GROUP_B:-0}"
 INCLUDE_DETAIL_FACTS="${HISTORY_CONTINUITY_INCLUDE_DETAIL_FACTS:-1}"
 INCLUDE_PAYMENT_STATE_RECOVERY="${HISTORY_CONTINUITY_INCLUDE_PAYMENT_STATE_RECOVERY:-1}"
+INCLUDE_MATERIAL_CATALOG="${HISTORY_CONTINUITY_INCLUDE_MATERIAL_CATALOG:-1}"
 MATERIALIZED_FILES=()
 
 cleanup_materialized_files() {
@@ -123,6 +124,12 @@ case "$MODE" in
     run_step replay_payload_precheck run_odoo_script "$PRECHECK_SCRIPT"
     run_step partner_l4_anchor_completed run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_partner_l4_replay_write.py"
     run_step project_anchor_completed run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_project_anchor_replay_write.py"
+    if [[ "$INCLUDE_MATERIAL_CATALOG" == "1" ]]; then
+      run_step legacy_material_catalog_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_material_catalog_replay_adapter.py"
+      run_step legacy_material_catalog_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_material_catalog_replay_write.py"
+    else
+      echo "[history.continuity] skip legacy material catalog by HISTORY_CONTINUITY_INCLUDE_MATERIAL_CATALOG=0"
+    fi
     run_step contract_counterparty_partner_adapter python3 "$CONTRACT_COUNTERPARTY_ADAPTER"
     run_step contract_counterparty_partner_completed run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_contract_counterparty_partner_replay_write.py"
     run_step receipt_counterparty_partner_adapter python3 "$RECEIPT_COUNTERPARTY_ADAPTER"

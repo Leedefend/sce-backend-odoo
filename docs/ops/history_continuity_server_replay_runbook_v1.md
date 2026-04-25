@@ -117,10 +117,23 @@ historical fact continuity over forcing old data to satisfy new workflow rules:
 - residual actual outflow parent carriers for line facts that strict core rules
   excluded; these carriers are marked as non-ledger/non-settlement history facts
 
+The default replay chain also includes the legacy material catalog archive:
+
+- 2,279,734 old material detail facts are preserved as searchable neutral facts
+- 130,624 category facts are preserved from cost categories, global material
+  categories, and orphan category keys referenced by details
+- no `product.product` records are created from the old catalog
+
 If a rehearsal needs to isolate only core headers, set:
 
 ```bash
 HISTORY_CONTINUITY_INCLUDE_DETAIL_FACTS=0
+```
+
+If a limited rehearsal must skip the large material archive, set:
+
+```bash
+HISTORY_CONTINUITY_INCLUDE_MATERIAL_CATALOG=0
 ```
 
 The old `HISTORY_CONTINUITY_INCLUDE_BLOCKED_GROUP_B` flag is deprecated for the
@@ -152,6 +165,7 @@ The one-click path now covers:
 - legacy invoice tax
 - legacy financing loan
 - legacy fund daily snapshot
+- legacy material catalog archive
 - legacy workflow audit
 
 ## Expected Validation

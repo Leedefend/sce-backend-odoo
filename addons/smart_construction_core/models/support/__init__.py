@@ -39,3 +39,4 @@ from . import legacy_receipt_income_fact
 from . import legacy_financing_loan_fact
 from . import legacy_fund_daily_snapshot_fact
 from . import legacy_user_context
+from . import legacy_material_catalog
