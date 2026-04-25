@@ -541,7 +541,7 @@ odoo.exec: check-compose-project check-compose-env
 # ======================================================
 # ==================== Diagnostics =====================
 # ======================================================
-.PHONY: diag.project odoo.shell.exec history.users.verify history.users.rebuild history.continuity.rehearse history.continuity.replay migration.assets.verify_all history.contract.core.gap.audit history.contract.partner.gap.audit history.contract.strong_evidence.backtrace.audit history.contract.direction_defer.audit history.partner.master.targeted.replay.adapter history.contract.partner.recovery.adapter history.contract.direction_defer.recovery.adapter history.partner.master.direction_defer.replay.adapter history.supplier.partner.targeted.replay.adapter history.outflow.partner.targeted.replay.adapter history.actual_outflow.partner.targeted.replay.adapter history.receipt.parent.recovery.adapter history.receipt.partner.targeted.replay.adapter history.receipt_income.partner.targeted.replay.adapter history.expense_deposit.partner.targeted.replay.adapter history.project_member.attachment.targeted.replay.adapter fresh_db.outflow_request.replay.adapter fresh_db.actual_outflow.replay.adapter fresh_db.outflow_request_line.replay.adapter fresh_db.receipt_invoice_line.replay.adapter fresh_db.receipt_invoice_attachment.replay.adapter fresh_db.legacy_attachment_backfill.replay.adapter fresh_db.legacy_fund_daily_snapshot.replay.adapter fresh_db.legacy_financing_loan.replay.adapter fresh_db.legacy_receipt_income.replay.adapter fresh_db.legacy_expense_deposit.replay.adapter fresh_db.legacy_invoice_tax.replay.adapter fresh_db.legacy_workflow_audit.replay.adapter
+.PHONY: diag.project odoo.shell.exec history.users.verify history.users.rebuild history.continuity.rehearse history.continuity.replay history.business.usable.probe history.project.lifecycle.continuity.adapter migration.assets.verify_all history.contract.core.gap.audit history.contract.partner.gap.audit history.contract.strong_evidence.backtrace.audit history.contract.direction_defer.audit history.partner.master.targeted.replay.adapter history.contract.partner.recovery.adapter history.contract.direction_defer.recovery.adapter history.partner.master.direction_defer.replay.adapter history.supplier.partner.targeted.replay.adapter history.outflow.partner.targeted.replay.adapter history.actual_outflow.partner.targeted.replay.adapter history.receipt.parent.recovery.adapter history.receipt.partner.targeted.replay.adapter history.receipt_income.partner.targeted.replay.adapter history.expense_deposit.partner.targeted.replay.adapter history.project_member.attachment.targeted.replay.adapter history.payment_request.outflow.state_activation.adapter history.payment_request.outflow.approved_recovery.adapter history.payment_request.outflow.done_recovery.adapter fresh_db.outflow_request.replay.adapter fresh_db.actual_outflow.replay.adapter fresh_db.outflow_request_line.replay.adapter fresh_db.receipt_invoice_line.replay.adapter fresh_db.receipt_invoice_attachment.replay.adapter fresh_db.legacy_attachment_backfill.replay.adapter fresh_db.legacy_fund_daily_snapshot.replay.adapter fresh_db.legacy_financing_loan.replay.adapter fresh_db.legacy_receipt_income.replay.adapter fresh_db.legacy_expense_deposit.replay.adapter fresh_db.legacy_invoice_tax.replay.adapter fresh_db.legacy_workflow_audit.replay.adapter
 diag.project: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/diag/project.sh
 
@@ -559,6 +559,12 @@ history.continuity.rehearse: guard.prod.forbid check-compose-project check-compo
 
 history.continuity.replay: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) HISTORY_CONTINUITY_MODE=replay RUN_ID="$(RUN_ID)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/migration/history_continuity_oneclick.sh
+
+history.business.usable.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_business_usable_probe.py
+
+history.project.lifecycle.continuity.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_project_lifecycle_continuity_adapter.py
 
 migration.assets.verify_all: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/migration_asset_bus.py --asset-root migration_assets --catalog migration_assets/manifest/migration_asset_catalog_v1.json --verify-only --check
@@ -610,6 +616,15 @@ history.expense_deposit.partner.targeted.replay.adapter: guard.prod.forbid check
 
 history.project_member.attachment.targeted.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/history_project_member_attachment_targeted_replay_adapter.py
+
+history.payment_request.outflow.state_activation.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_payment_request_outflow_state_activation_adapter.py
+
+history.payment_request.outflow.approved_recovery.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_payment_request_outflow_approved_recovery_adapter.py
+
+history.payment_request.outflow.done_recovery.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/history_payment_request_outflow_done_recovery_adapter.py
 
 fresh_db.outflow_request.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/fresh_db_outflow_request_replay_adapter.py
