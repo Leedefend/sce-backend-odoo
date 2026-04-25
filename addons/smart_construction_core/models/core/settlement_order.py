@@ -271,7 +271,9 @@ class ScSettlementOrder(models.Model):
             rec._check_line_contracts_or_raise()
             rec._check_contract_consistency_or_raise(strict=False)
             rec._check_purchase_orders_or_raise(strict=False)
-        self.env["sc.data.validator"].validate_or_raise()
+        self.env["sc.data.validator"].validate_or_raise(
+            scope={"res_model": self._name, "res_ids": self.ids}
+        )
         self.write({"state": "submit"})
 
     def action_approve(self):
@@ -279,7 +281,9 @@ class ScSettlementOrder(models.Model):
             rec._check_line_contracts_or_raise()
             rec._check_contract_consistency_or_raise(strict=True)
             rec._check_purchase_orders_or_raise(strict=True)
-        self.env["sc.data.validator"].validate_or_raise()
+        self.env["sc.data.validator"].validate_or_raise(
+            scope={"res_model": self._name, "res_ids": self.ids}
+        )
         self.write({"state": "approve"})
 
     def action_done(self):
