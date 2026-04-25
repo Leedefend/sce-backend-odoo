@@ -91,20 +91,21 @@ Replay mode:
 24. outflow partner targeted replay
 25. outflow request replay
 26. actual outflow replay
-27. legacy attachment backfill replay
-28. receipt-income partner targeted replay
-29. legacy receipt income replay
-30. expense-deposit partner targeted replay
-31. legacy expense deposit replay
-32. legacy invoice tax replay
-33. legacy workflow audit replay
-34. outflow request state recovery
-35. outflow request approved recovery
-36. outflow request done recovery and ledger fact materialization
-37. project lifecycle continuity replay
-38. legacy financing loan replay
-39. legacy fund daily snapshot replay
-40. usability probe
+27. outflow request line replay
+28. legacy attachment backfill replay
+29. receipt-income partner targeted replay
+30. legacy receipt income replay
+31. expense-deposit partner targeted replay
+32. legacy expense deposit replay
+33. legacy invoice tax replay
+34. legacy workflow audit replay
+35. outflow request state recovery
+36. outflow request approved recovery
+37. outflow request done recovery and ledger fact materialization
+38. project lifecycle continuity replay
+39. legacy financing loan replay
+40. legacy fund daily snapshot replay
+41. usability probe
 
 Supported resume step names:
 
@@ -122,6 +123,14 @@ Supported resume step names:
 - `contract_12_missing_partner_anchors`
 - `contract_header_special_12`
 - `contract_header_retry_57`
+- `contract_line_adapter`
+- `contract_line_completed`
+- `supplier_contract_adapter`
+- `supplier_partner_targeted_adapter`
+- `supplier_partner_targeted_replay`
+- `supplier_contract_completed`
+- `supplier_contract_line_adapter`
+- `supplier_contract_line_completed`
 - `contract_unreached_ready_adapter`
 - `contract_unreached_ready_replay`
 - `partner_master_targeted_adapter`
@@ -151,6 +160,8 @@ Supported resume step names:
 - `actual_outflow_partner_targeted_adapter`
 - `actual_outflow_partner_targeted_replay`
 - `actual_outflow_replay`
+- `outflow_request_line_adapter`
+- `outflow_request_line_replay`
 - `legacy_attachment_backfill_adapter`
 - `legacy_attachment_backfill_replay`
 - `receipt_income_partner_targeted_adapter`
@@ -206,6 +217,9 @@ Supported resume step names:
 - `outflow_request_state_recovery`
 - `outflow_request_ledger_fact`
 - `project_lifecycle_continuity`
+- `supplier_contract`
+- `supplier_contract_line`
+- `outflow_request_line`
 - `legacy_financing_loan_sc_v1`
 - `legacy_fund_daily_snapshot_sc_v1`
 
@@ -216,11 +230,13 @@ Supported resume step names:
 - only if future business promotion needs them:
   - `payment_settlement_accounting`
 
-To force blocked Group B lanes into the one-click path, set:
+To isolate core headers only and skip detail fact lanes, set:
 
 ```bash
-HISTORY_CONTINUITY_INCLUDE_BLOCKED_GROUP_B=1
+HISTORY_CONTINUITY_INCLUDE_DETAIL_FACTS=0
 ```
+
+`HISTORY_CONTINUITY_INCLUDE_BLOCKED_GROUP_B` is deprecated.
 
 ## Guardrails
 

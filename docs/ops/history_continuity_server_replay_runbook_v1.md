@@ -106,14 +106,22 @@ The chain now also includes historical done-state recovery:
 - one minimal `payment.ledger` fact is materialized per recovered request
 - settlement runtime is still not reconstructed
 
-High-risk line-level lanes remain opt-in:
+Detail fact lanes are included by default because production cutover prioritizes
+historical fact continuity over forcing old data to satisfy new workflow rules:
+
+- revenue contract lines
+- supplier contract headers
+- supplier contract summary lines
+- outflow request lines
+
+If a rehearsal needs to isolate only core headers, set:
 
 ```bash
-HISTORY_CONTINUITY_INCLUDE_BLOCKED_GROUP_B=1
+HISTORY_CONTINUITY_INCLUDE_DETAIL_FACTS=0
 ```
 
-Do not enable this flag for the production go-live run unless the supplier
-contract / outflow-request-line anchors have been separately reviewed.
+The old `HISTORY_CONTINUITY_INCLUDE_BLOCKED_GROUP_B` flag is deprecated for the
+production path.
 
 Resume from a failed step:
 

@@ -37,6 +37,7 @@ CONTRACT_LINE_ADAPTER="$ROOT_DIR/scripts/migration/fresh_db_contract_line_replay
 SUPPLIER_CONTRACT_ADAPTER="$ROOT_DIR/scripts/migration/fresh_db_supplier_contract_replay_adapter.py"
 SUPPLIER_CONTRACT_LINE_ADAPTER="$ROOT_DIR/scripts/migration/fresh_db_supplier_contract_line_replay_adapter.py"
 INCLUDE_BLOCKED_GROUP_B="${HISTORY_CONTINUITY_INCLUDE_BLOCKED_GROUP_B:-0}"
+INCLUDE_DETAIL_FACTS="${HISTORY_CONTINUITY_INCLUDE_DETAIL_FACTS:-1}"
 INCLUDE_PAYMENT_STATE_RECOVERY="${HISTORY_CONTINUITY_INCLUDE_PAYMENT_STATE_RECOVERY:-1}"
 MATERIALIZED_FILES=()
 
@@ -140,15 +141,20 @@ case "$MODE" in
     run_step partner_master_direction_defer_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_partner_master_direction_defer_replay_write.py"
     run_step contract_direction_defer_recovery_adapter python3 "$ROOT_DIR/scripts/migration/history_contract_direction_defer_recovery_adapter.py"
     run_step contract_direction_defer_recovery_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_contract_direction_defer_recovery_write.py"
-    if [[ "$INCLUDE_BLOCKED_GROUP_B" == "1" ]]; then
+    if [[ "$INCLUDE_DETAIL_FACTS" == "1" ]]; then
       run_step contract_line_adapter python3 "$CONTRACT_LINE_ADAPTER"
       run_step contract_line_completed run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_contract_line_replay_write.py"
       run_step supplier_contract_adapter python3 "$SUPPLIER_CONTRACT_ADAPTER"
+      run_step supplier_partner_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_supplier_partner_targeted_replay_adapter.py"
+      run_step supplier_partner_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_supplier_partner_targeted_replay_write.py"
       run_step supplier_contract_completed run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_supplier_contract_replay_write.py"
       run_step supplier_contract_line_adapter python3 "$SUPPLIER_CONTRACT_LINE_ADAPTER"
       run_step supplier_contract_line_completed run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_supplier_contract_line_replay_write.py"
     else
-      echo "[history.continuity] skip blocked Group B lanes by default"
+      echo "[history.continuity] skip detail fact lanes by HISTORY_CONTINUITY_INCLUDE_DETAIL_FACTS=0"
+      if [[ "$INCLUDE_BLOCKED_GROUP_B" == "1" ]]; then
+        echo "[history.continuity] HISTORY_CONTINUITY_INCLUDE_BLOCKED_GROUP_B is deprecated; use HISTORY_CONTINUITY_INCLUDE_DETAIL_FACTS=1"
+      fi
     fi
     run_step receipt_header_pending run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_core_write.py"
     run_step receipt_partner_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_receipt_partner_targeted_replay_adapter.py"
@@ -169,6 +175,12 @@ case "$MODE" in
     run_step actual_outflow_partner_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_actual_outflow_partner_targeted_replay_adapter.py"
     run_step actual_outflow_partner_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_actual_outflow_partner_targeted_replay_write.py"
     run_step actual_outflow_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_replay_write.py"
+    if [[ "$INCLUDE_DETAIL_FACTS" == "1" ]]; then
+      run_step outflow_request_line_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_outflow_request_line_replay_adapter.py"
+      run_step outflow_request_line_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_outflow_request_line_replay_write.py"
+    else
+      echo "[history.continuity] skip outflow request line facts by HISTORY_CONTINUITY_INCLUDE_DETAIL_FACTS=0"
+    fi
     run_step legacy_attachment_backfill_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_attachment_backfill_replay_adapter.py"
     run_step legacy_attachment_backfill_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_attachment_backfill_replay_write.py"
     run_step receipt_income_partner_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_receipt_income_partner_targeted_replay_adapter.py"
