@@ -110,6 +110,8 @@ Replay mode:
 Supported resume step names:
 
 - `user_rebuild`
+- `legacy_user_context_adapter`
+- `legacy_user_context_replay`
 - `replay_payload_precheck`
 - `partner_l4_anchor_completed`
 - `project_anchor_completed`
@@ -197,6 +199,7 @@ Supported resume step names:
 ## Included Lanes
 
 - users historical asset lane
+- `legacy_user_context`
 - `partner_l4_anchor_completed`
 - `project_anchor_completed`
 - `contract_counterparty_partner_sc_v1`

@@ -118,6 +118,8 @@ case "$MODE" in
     ;;
   replay)
     run_step user_rebuild bash -c "DB_NAME=\"$DB_NAME\" MIGRATION_REPO_ROOT=\"$MIGRATION_REPO_ROOT\" MIGRATION_ARTIFACT_ROOT=\"$MIGRATION_ARTIFACT_ROOT\" bash \"$USER_REBUILD\""
+    run_step legacy_user_context_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_user_context_replay_adapter.py"
+    run_step legacy_user_context_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_user_context_replay_write.py"
     run_step replay_payload_precheck run_odoo_script "$PRECHECK_SCRIPT"
     run_step partner_l4_anchor_completed run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_partner_l4_replay_write.py"
     run_step project_anchor_completed run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_project_anchor_replay_write.py"
