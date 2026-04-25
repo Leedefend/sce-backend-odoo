@@ -32,7 +32,7 @@ python3 addons/smart_core/tests/test_scene_provider_target_identity_merge.py
 Result:
 
 ```text
-Ran 2 tests in 0.001s
+Ran 3 tests in 0.001s
 OK
 ```
 
