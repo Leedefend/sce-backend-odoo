@@ -454,6 +454,25 @@ counts = {
     ),
     "legacy_fund_confirmation_lines": count("sc.legacy.fund.confirmation.line", []),
     "legacy_financing_loan_facts": count("sc.legacy.financing.loan.fact", []),
+    "legacy_financing_loan_project_amount": count(
+        "sc.legacy.financing.loan.fact",
+        [("project_id", "!=", False), ("source_amount", ">", 0)],
+        required_fields=["project_id", "source_amount"],
+        active_test=False,
+    ),
+    "financing_loan_runtime_records": count("sc.financing.loan", [], active_test=False),
+    "financing_loan_legacy_records": count(
+        "sc.financing.loan",
+        [("source_origin", "=", "legacy")],
+        required_fields=["source_origin"],
+        active_test=False,
+    ),
+    "financing_loan_legacy_with_project": count(
+        "sc.financing.loan",
+        [("source_origin", "=", "legacy"), ("project_id", "!=", False)],
+        required_fields=["source_origin", "project_id"],
+        active_test=False,
+    ),
     "legacy_fund_daily_snapshot_facts": count("sc.legacy.fund.daily.snapshot.fact", []),
     "legacy_fund_daily_line_facts": count("sc.legacy.fund.daily.line", [], active_test=False),
     "legacy_fund_daily_line_with_project": count(
@@ -580,6 +599,7 @@ sample_runtime_records = {
     "settlement_adjustment_id": sample_id("sc.settlement.adjustment", [], active_test=False),
     "legacy_fund_confirmation_line_id": sample_id("sc.legacy.fund.confirmation.line", [], active_test=False),
     "legacy_financing_loan_fact_id": sample_id("sc.legacy.financing.loan.fact", [], active_test=False),
+    "financing_loan_id": sample_id("sc.financing.loan", [], active_test=False),
     "legacy_fund_daily_snapshot_fact_id": sample_id("sc.legacy.fund.daily.snapshot.fact", [], active_test=False),
     "legacy_fund_daily_line_id": sample_id("sc.legacy.fund.daily.line", [], active_test=False),
     "treasury_reconciliation_id": sample_id("sc.treasury.reconciliation", [], active_test=False),
@@ -656,17 +676,19 @@ promotion_gaps = {
     ),
     "treasury_reconciliation_surface_gap": bool(
         (
-            (counts.get("legacy_financing_loan_facts") or 0)
-            + (counts.get("legacy_fund_daily_snapshot_facts") or 0)
+            (counts.get("legacy_fund_daily_snapshot_facts") or 0)
             + (counts.get("legacy_fund_daily_line_facts") or 0)
         ) > 0
         and (
             not sample_runtime_records.get("treasury_ledger_id")
-            or not sample_runtime_records.get("legacy_financing_loan_fact_id")
             or not sample_runtime_records.get("legacy_fund_daily_snapshot_fact_id")
             or not sample_runtime_records.get("legacy_fund_daily_line_id")
             or (counts.get("treasury_reconciliation_legacy_with_project") or 0) == 0
         )
+    ),
+    "financing_loan_runtime_surface_gap": bool(
+        (counts.get("legacy_financing_loan_project_amount") or 0) > 0
+        and (counts.get("financing_loan_legacy_with_project") or 0) == 0
     ),
     "expense_deposit_runtime_surface_gap": bool(
         ((counts.get("legacy_expense_deposit_facts") or 0) + (counts.get("legacy_expense_reimbursement_lines") or 0)) > 0

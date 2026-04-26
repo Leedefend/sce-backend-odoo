@@ -51,6 +51,9 @@ Latest `history_business_usable_probe` on `sc_prod_sim` after P0-A:
 - invoice registration runtime records: invoice registration lines and invoice
   tax facts with project/amount anchors are projected to
   `sc.invoice.registration`; old completed rows are kept as `legacy_confirmed`
+- financing loan runtime records: legacy loan registration and borrowing rows
+  with project/amount anchors are projected to `sc.financing.loan`; old
+  completed rows are kept as `legacy_confirmed`
 - construction diary runtime records: legacy construction diary/quality-note
   lines with project anchors are projected to `sc.construction.diary`; old
   completed rows are kept as `legacy_confirmed`
@@ -165,6 +168,12 @@ completed rows become `legacy_confirmed`, while new-system finance users can
 continue registering, confirming, and completing manual invoice registrations.
 The model intentionally does not create `account.move` records automatically.
 
+P1-K adds `sc.financing.loan` as the runtime carrier for project financing and
+borrowing work. Historical loan registration and borrowing rows with
+project/amount anchors are projected as legacy rows; old completed rows become
+`legacy_confirmed`, while new-system finance users can continue registering,
+confirming, and completing manual financing or borrowing records.
+
 ## Capability Matrix
 
 | Legacy business area | Current new-system state | Gap | Plan |
@@ -177,7 +186,7 @@ The model intentionally does not create `account.move` records automatically.
 | Receipts and income | Receipt requests plus neutral receipt facts exist; historical receipts are projected to `sc.treasury.ledger`; receipt income and residual receipt rows are projected to `sc.receipt.income` | Rows without project/amount anchors remain fact-only; accounting posting remains explicit | Use receipt income runtime for continuing income registration; link payment request, treasury ledger, contract, and partner anchors only when evidence is strong. |
 | Invoice and tax | Invoice/tax facts and invoice registration workbench are visible; project-anchored invoice registration and tax facts are projected to `sc.invoice.registration` | Accounting posting remains explicit, not automatic migration side effect | Use invoice registration runtime for continuing invoice handling; promote to accounting moves only through future controlled posting workflow. |
 | Settlement/deductions | New settlement order exists; historical deduction facts are projected to `sc.settlement.adjustment`; new manual adjustment registration and confirmation exists | Historical rows without project anchors remain fact-only; legacy rows are not auto-linked to settlement orders without stronger anchors | Use settlement adjustment runtime for continuing operations; link historical rows to settlement/contract/partner only when explicit anchors are recovered. |
-| Fund daily, fund confirmation, financing | Cash ledger, fund confirmation, financing, fund daily snapshot, and fund daily line workbenches are visible; project-anchored fund daily/confirmation facts are projected to `sc.treasury.reconciliation` | Financing/borrowing facts remain archive-first and historical rows without project anchors remain fact-only | Use treasury reconciliation runtime for continuing daily/confirmation operations; keep financing promotion separate until a repayment/borrowing workflow is explicitly designed. |
+| Fund daily, fund confirmation, financing | Cash ledger, fund confirmation, financing, fund daily snapshot, and fund daily line workbenches are visible; project-anchored fund daily/confirmation facts are projected to `sc.treasury.reconciliation`; project-anchored financing/borrowing facts are projected to `sc.financing.loan` | Historical rows without project anchors remain fact-only; repayment schedule automation remains explicit future work | Use treasury reconciliation runtime for daily/confirmation operations and financing loan runtime for continuing loan/borrowing registration. |
 | Expense reimbursement/deposit | Expense/deposit facts and reimbursement lines are projected to `sc.expense.claim`; new manual registration, approval, and completion exists | Legacy rows are not automatically linked to payment requests unless stronger payment anchors are recovered | Use runtime claims for continuing operations; supplement payment request links only through explicit anchor recovery. |
 | Material catalog | Search archive and controlled material-to-product promotion exist | Bulk promotion remains intentionally disabled | Keep archive-first catalog; material managers promote selected rows only when needed for new material plans/purchase flows. |
 | Attachments | URL/index facts exist; 19,537 URL attachments and 178,931 file index rows are visible | Binary custody is not complete | Keep URL/index custody available now; copy selected binaries only after repository and hash policy are approved. |
