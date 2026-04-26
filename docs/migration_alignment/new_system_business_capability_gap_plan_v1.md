@@ -32,6 +32,9 @@ Latest `history_business_usable_probe` on `sc_prod_sim` after P0-A:
 - historical invoice tax facts: `5920`
 - historical deduction adjustment lines: `13521`
 - historical fund confirmation lines: `13398`
+- historical financing loan facts: `318`
+- historical fund daily snapshots: `496`
+- historical fund daily lines: `7754`
 - `mail.activity`: `0`
 - `tier.review`: `0`
 
@@ -56,6 +59,12 @@ and fund-confirmation facts as searchable finance workbench surfaces. It does
 not create `account.move` records automatically; posting remains a controlled
 new-system operation.
 
+P1-B exposes treasury reconciliation evidence as searchable finance surfaces:
+`sc.treasury.ledger` keeps actual cash movements, `sc.legacy.fund.daily.*`
+keeps old daily account/bank balance facts, and
+`sc.legacy.financing.loan.fact` keeps financing/borrowing facts. The
+`history_treasury_reconciliation_probe` validates these surfaces together.
+
 ## Capability Matrix
 
 | Legacy business area | Current new-system state | Gap | Plan |
@@ -68,7 +77,7 @@ new-system operation.
 | Receipts and income | Receipt requests plus neutral receipt facts exist; historical receipts are projected to `sc.treasury.ledger` | Residual receipts and fund confirmations are not fully native receive/treasury actions | Add receipt workbench and controlled promotion for rows with project/partner/amount anchors. |
 | Invoice and tax | Invoice/tax facts and invoice registration workbench are visible | Accounting posting remains explicit, not automatic migration side effect | Keep searchable historical surfaces; promote to accounting moves only through future controlled posting workflow. |
 | Settlement/deductions | New settlement order exists; old deduction facts are neutral | Old deduction/settlement adjustments cannot be processed natively | Add settlement adjustment runtime model linked to contracts, receipts, and payments. |
-| Fund daily, fund confirmation, financing | Facts are preserved | No operational treasury daily entry/reconciliation workflow | Add treasury daily statement, bank/account balance reconciliation, and fund confirmation screens. |
+| Fund daily, fund confirmation, financing | Cash ledger, fund confirmation, financing, fund daily snapshot, and fund daily line workbenches are visible | Formal new-entry reconciliation workflow is still future work | Keep historical facts searchable now; add write-side treasury daily/reconciliation workflow only for new business operations. |
 | Expense reimbursement/deposit | Facts are preserved | No native reimbursement workflow for old-style expenses | Add expense reimbursement/deposit workflow or explicit archive-only policy per business owner. |
 | Material catalog | Search archive exists | Not a usable product/master-data workflow | Add archive search UI plus controlled material-to-product promotion. |
 | Attachments | URL/index facts exist; 19,537 URL attachments and 178,931 file index rows are visible | Binary custody is not complete | Keep URL/index custody available now; copy selected binaries only after repository and hash policy are approved. |
@@ -161,7 +170,7 @@ new-system operation.
 2. P0 payment/receipt execution separation.
 3. P0 attachment custody for contract/payment/receipt/invoice/project files.
 4. P1 invoice/tax runtime.
-5. P1 settlement adjustment and treasury reconciliation.
+5. P1 settlement adjustment and treasury reconciliation runtime visibility.
 6. P1 expense/deposit workflow or formal archive-only decision.
 7. P2 material/product promotion and weak contract promotion.
 8. P3 HR/platform audit only after explicit business decision.

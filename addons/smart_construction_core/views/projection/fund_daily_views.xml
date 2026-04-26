@@ -29,11 +29,135 @@
                                            (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
         </record>
 
+        <record id="view_sc_legacy_fund_daily_line_search" model="ir.ui.view">
+            <field name="name">sc.legacy.fund.daily.line.search</field>
+            <field name="model">sc.legacy.fund.daily.line</field>
+            <field name="arch" type="xml">
+                <search string="资金日报明细">
+                    <field name="document_no"/>
+                    <field name="document_date"/>
+                    <field name="project_id"/>
+                    <field name="project_name"/>
+                    <field name="account_name"/>
+                    <field name="bank_account_no"/>
+                    <filter string="有项目" name="with_project" domain="[('project_id', '!=', False)]"/>
+                    <filter string="有银行差异" name="has_difference" domain="[('bank_system_difference', '!=', 0)]"/>
+                    <filter string="有收入" name="has_income" domain="[('daily_income', '!=', 0)]"/>
+                    <filter string="有支出" name="has_expense" domain="[('daily_expense', '!=', 0)]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按日期" name="group_document_date" context="{'group_by': 'document_date'}"/>
+                    <filter string="按账户" name="group_account" context="{'group_by': 'account_name'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_fund_daily_line_tree" model="ir.ui.view">
+            <field name="name">sc.legacy.fund.daily.line.tree</field>
+            <field name="model">sc.legacy.fund.daily.line</field>
+            <field name="arch" type="xml">
+                <tree string="资金日报明细" create="0" edit="0" delete="0">
+                    <field name="document_date"/>
+                    <field name="document_no"/>
+                    <field name="project_id"/>
+                    <field name="account_name"/>
+                    <field name="bank_account_no"/>
+                    <field name="daily_income"/>
+                    <field name="daily_expense"/>
+                    <field name="current_account_balance"/>
+                    <field name="current_bank_balance"/>
+                    <field name="bank_system_difference"/>
+                    <field name="document_state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_fund_daily_line_form" model="ir.ui.view">
+            <field name="name">sc.legacy.fund.daily.line.form</field>
+            <field name="model">sc.legacy.fund.daily.line</field>
+            <field name="arch" type="xml">
+                <form string="资金日报明细" create="0" edit="0" delete="0">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="document_date"/>
+                                <field name="document_no"/>
+                                <field name="document_state"/>
+                                <field name="title"/>
+                                <field name="project_id"/>
+                                <field name="project_name"/>
+                            </group>
+                            <group>
+                                <field name="account_name"/>
+                                <field name="bank_account_no"/>
+                                <field name="period_start"/>
+                                <field name="period_end"/>
+                                <field name="creator_name"/>
+                                <field name="created_time"/>
+                            </group>
+                        </group>
+                        <group string="当日发生与余额">
+                            <group>
+                                <field name="daily_income"/>
+                                <field name="daily_expense"/>
+                                <field name="account_balance"/>
+                                <field name="current_account_balance"/>
+                            </group>
+                            <group>
+                                <field name="current_bank_balance"/>
+                                <field name="bank_system_difference"/>
+                                <field name="header_account_balance_total"/>
+                                <field name="header_bank_balance_total"/>
+                                <field name="header_bank_system_difference"/>
+                            </group>
+                        </group>
+                        <group string="旧系统来源">
+                            <group>
+                                <field name="legacy_line_id"/>
+                                <field name="legacy_header_id"/>
+                                <field name="legacy_pid"/>
+                                <field name="legacy_header_pid"/>
+                                <field name="source_table"/>
+                            </group>
+                            <group>
+                                <field name="project_legacy_id"/>
+                                <field name="account_legacy_id"/>
+                                <field name="attachment_ref"/>
+                                <field name="line_attachment_ref"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="note"/>
+                            <field name="header_note"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_fund_daily_line" model="ir.actions.act_window">
+            <field name="name">资金日报明细</field>
+            <field name="res_model">sc.legacy.fund.daily.line</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_sc_legacy_fund_daily_line_tree"/>
+            <field name="search_view_id" ref="view_sc_legacy_fund_daily_line_search"/>
+            <field name="context">{'create': False, 'search_default_group_document_date': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+
         <menuitem id="menu_sc_fund_daily"
                   name="资金日报"
                   parent="smart_construction_core.menu_sc_finance_center"
                   action="action_sc_fund_daily"
                   sequence="35"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+
+        <menuitem id="menu_sc_fund_daily_line"
+                  name="资金日报明细"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  action="action_sc_fund_daily_line"
+                  sequence="36"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     </data>
 </odoo>

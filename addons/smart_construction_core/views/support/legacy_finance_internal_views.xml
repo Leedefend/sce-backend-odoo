@@ -38,6 +38,18 @@
       ]"/>
     </record>
 
+    <record id="action_sc_legacy_fund_daily_line" model="ir.actions.act_window">
+      <field name="name">历史资金日报明细</field>
+      <field name="res_model">sc.legacy.fund.daily.line</field>
+      <field name="view_mode">tree,form</field>
+      <field name="context">{'create': False}</field>
+      <field name="groups_id" eval="[
+        (4, ref('smart_construction_core.group_sc_cap_finance_read')),
+        (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+        (4, ref('smart_construction_core.group_sc_cap_finance_manager'))
+      ]"/>
+    </record>
+
     <menuitem id="menu_sc_finance_history_center"
               name="历史财务事实（内部）"
               parent="smart_construction_core.menu_sc_finance_center"
@@ -77,6 +89,13 @@
               parent="menu_sc_finance_history_center"
               action="action_sc_legacy_fund_daily_snapshot_fact"
               sequence="50"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+
+    <menuitem id="menu_sc_legacy_fund_daily_line"
+              name="历史资金日报明细"
+              parent="menu_sc_finance_history_center"
+              action="action_sc_legacy_fund_daily_line"
+              sequence="55"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
   </data>
