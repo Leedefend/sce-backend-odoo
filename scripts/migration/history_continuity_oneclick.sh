@@ -281,6 +281,7 @@ case "$MODE" in
     run_step treasury_reconciliation_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_treasury_reconciliation_probe.py"
     run_step expense_deposit_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_expense_deposit_runtime_probe.py"
     run_step material_catalog_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_material_catalog_runtime_probe.py"
+    run_step purchase_contract_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_purchase_contract_runtime_probe.py"
     run_step usability_probe run_odoo_script "$PROBE_SCRIPT"
     ;;
   *)

@@ -108,6 +108,7 @@
         'views/core/workflow_views.xml',
         'views/menu.xml',
         'views/support/legacy_material_catalog_views.xml',
+        'views/support/legacy_purchase_contract_views.xml',
         'views/project_workbench_action.xml',
         'views/support/sc_dictionary_views.xml',
         'views/support/dictionary_views.xml',

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_legacy_purchase_contract_fact_search" model="ir.ui.view">
+        <field name="name">sc.legacy.purchase.contract.fact.search</field>
+        <field name="model">sc.legacy.purchase.contract.fact</field>
+        <field name="arch" type="xml">
+            <search string="历史采购/一般合同">
+                <field name="document_no"/>
+                <field name="contract_no"/>
+                <field name="contract_name"/>
+                <field name="project_id"/>
+                <field name="project_name"/>
+                <field name="partner_name"/>
+                <field name="credit_code"/>
+                <field name="contract_type"/>
+                <field name="applicant_name"/>
+                <filter string="有项目" name="with_project" domain="[('project_id', '!=', False)]"/>
+                <filter string="有对方名称" name="with_partner_text" domain="[('partner_name', '!=', False)]"/>
+                <filter string="有统一信用代码" name="with_credit_code" domain="[('credit_code', '!=', False)]"/>
+                <filter string="有金额" name="with_amount" domain="[('total_amount', '!=', 0)]"/>
+                <filter string="补充合同" name="supplement" domain="[('is_supplement_contract', 'not in', [False, '', '0'])]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按对方名称" name="group_partner_name" context="{'group_by': 'partner_name'}"/>
+                <filter string="按合同类型" name="group_contract_type" context="{'group_by': 'contract_type'}"/>
+                <filter string="按签署状态" name="group_sign_status" context="{'group_by': 'sign_status'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_purchase_contract_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.purchase.contract.fact.tree</field>
+        <field name="model">sc.legacy.purchase.contract.fact</field>
+        <field name="arch" type="xml">
+            <tree string="历史采购/一般合同" create="0" edit="0" delete="0">
+                <field name="submitted_time"/>
+                <field name="document_no"/>
+                <field name="contract_no"/>
+                <field name="contract_name"/>
+                <field name="project_id"/>
+                <field name="partner_name"/>
+                <field name="contract_type"/>
+                <field name="total_amount"/>
+                <field name="tax_rate"/>
+                <field name="document_state"/>
+                <field name="sign_status"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_purchase_contract_fact_form" model="ir.ui.view">
+        <field name="name">sc.legacy.purchase.contract.fact.form</field>
+        <field name="model">sc.legacy.purchase.contract.fact</field>
+        <field name="arch" type="xml">
+            <form string="历史采购/一般合同" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="document_no"/>
+                            <field name="document_state"/>
+                            <field name="submitted_time"/>
+                            <field name="applicant_name"/>
+                            <field name="applicant_department"/>
+                            <field name="purchase_engineer"/>
+                        </group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="project_name"/>
+                            <field name="project_legacy_id"/>
+                            <field name="contract_attribute"/>
+                            <field name="is_supplement_contract"/>
+                            <field name="related_contract_no"/>
+                        </group>
+                    </group>
+                    <group string="合同事实">
+                        <group>
+                            <field name="contract_name"/>
+                            <field name="contract_no"/>
+                            <field name="contract_type"/>
+                            <field name="signing_place"/>
+                            <field name="sign_status"/>
+                        </group>
+                        <group>
+                            <field name="expected_sign_date"/>
+                            <field name="completion_date"/>
+                            <field name="total_amount"/>
+                            <field name="tax_rate"/>
+                            <field name="currency_name"/>
+                        </group>
+                    </group>
+                    <group string="付款与保证">
+                        <group>
+                            <field name="prepayment_amount"/>
+                            <field name="install_debug_payment"/>
+                            <field name="warranty_deposit"/>
+                        </group>
+                        <group>
+                            <field name="payment_terms"/>
+                            <field name="special_condition"/>
+                        </group>
+                    </group>
+                    <group string="往来方">
+                        <group>
+                            <field name="partner_name"/>
+                            <field name="partner_legacy_id"/>
+                            <field name="credit_code"/>
+                            <field name="contact_name"/>
+                            <field name="contact_phone"/>
+                        </group>
+                        <group>
+                            <field name="bank_name"/>
+                            <field name="bank_account"/>
+                        </group>
+                    </group>
+                    <group string="旧系统来源">
+                        <group>
+                            <field name="legacy_record_id"/>
+                            <field name="legacy_pid"/>
+                            <field name="source_dataset"/>
+                            <field name="source_table"/>
+                            <field name="attachment_ref"/>
+                        </group>
+                        <group>
+                            <field name="creator_name"/>
+                            <field name="created_time"/>
+                            <field name="modifier_name"/>
+                            <field name="modified_time"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="note"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_legacy_purchase_contract_fact" model="ir.actions.act_window">
+        <field name="name">历史采购/一般合同</field>
+        <field name="res_model">sc.legacy.purchase.contract.fact</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_sc_legacy_purchase_contract_fact_search"/>
+        <field name="context">{'create': False, 'search_default_group_contract_type': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read')),
+                                       (4, ref('smart_construction_core.group_sc_cap_contract_user')),
+                                       (4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
+    </record>
+
+    <menuitem id="menu_sc_legacy_purchase_contract_fact"
+              name="历史采购/一般合同"
+              parent="smart_construction_core.menu_sc_contract_center"
+              action="action_sc_legacy_purchase_contract_fact"
+              sequence="60"
+              groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+</odoo>

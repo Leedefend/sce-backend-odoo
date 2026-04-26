@@ -296,6 +296,19 @@ counts = {
         required_fields=["legacy_material_detail_id"],
         active_test=False,
     ),
+    "legacy_purchase_contract_facts": count("sc.legacy.purchase.contract.fact", [], active_test=False),
+    "legacy_purchase_contract_with_project": count(
+        "sc.legacy.purchase.contract.fact",
+        [("project_id", "!=", False)],
+        required_fields=["project_id"],
+        active_test=False,
+    ),
+    "legacy_purchase_contract_with_partner_text": count(
+        "sc.legacy.purchase.contract.fact",
+        [("partner_name", "!=", False)],
+        required_fields=["partner_name"],
+        active_test=False,
+    ),
     "legacy_invoice_tax_facts": count("sc.legacy.invoice.tax.fact", []),
     "legacy_invoice_registration_lines": count("sc.legacy.invoice.registration.line", []),
     "legacy_deduction_adjustment_lines": count("sc.legacy.deduction.adjustment.line", []),
@@ -385,6 +398,7 @@ sample_runtime_records = {
     "legacy_expense_deposit_fact_id": sample_id("sc.legacy.expense.deposit.fact", [], active_test=False),
     "legacy_expense_reimbursement_line_id": sample_id("sc.legacy.expense.reimbursement.line", [], active_test=False),
     "legacy_material_detail_id": sample_id("sc.legacy.material.detail", [], active_test=False),
+    "legacy_purchase_contract_fact_id": sample_id("sc.legacy.purchase.contract.fact", [], active_test=False),
     "legacy_deduction_adjustment_line_id": sample_id("sc.legacy.deduction.adjustment.line", [], active_test=False),
     "legacy_fund_confirmation_line_id": sample_id("sc.legacy.fund.confirmation.line", [], active_test=False),
     "legacy_financing_loan_fact_id": sample_id("sc.legacy.financing.loan.fact", [], active_test=False),
@@ -475,6 +489,10 @@ promotion_gaps = {
             or counts.get("legacy_material_detail_promoted") is None
             or counts.get("product_templates_from_legacy_material") is None
         )
+    ),
+    "purchase_contract_runtime_surface_gap": bool(
+        (counts.get("legacy_purchase_contract_facts") or 0) > 0
+        and not sample_runtime_records.get("legacy_purchase_contract_fact_id")
     ),
 }
 

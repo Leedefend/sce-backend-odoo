@@ -38,6 +38,7 @@ Latest `history_business_usable_probe` on `sc_prod_sim` after P0-A:
 - historical fund daily snapshots: `496`
 - historical fund daily lines: `7754`
 - historical material categories/details: preserved as archive-first master data
+- historical purchase/general contracts: preserved as searchable contract facts
 - `mail.activity`: `0`
 - `tier.review`: `0`
 
@@ -80,6 +81,12 @@ rows into `product.template` / `product.product`. Promotion is opt-in and
 records the legacy material source on the product; the full historical catalog
 stays archive-first.
 
+P2-B exposes `T_CGHT_INFO` purchase/general contract residue as searchable
+contract facts. These rows are not auto-promoted to native contracts because
+the current carrier has partner text and credit-code evidence, not a verified
+`partner_id`. The runtime probe reports strong-anchor candidates for a future
+explicit promotion pass.
+
 ## Capability Matrix
 
 | Legacy business area | Current new-system state | Gap | Plan |
@@ -87,7 +94,7 @@ stays archive-first.
 | Projects, partners, members | Runtime records and anchors exist | Member scope is mostly evidence, not permission workflow | Keep current replay; add project member read/search surfaces and explicit promotion rules only when users need old scope as active permission. |
 | Construction contracts | Runtime `construction.contract` exists | Some old terms/attachments are still history-only | Add contract historical evidence smart tabs and attachment drill-through. |
 | Supplier contracts | Runtime supplier contracts and summary lines exist | Some blocked/weak partner contract residue remains neutral | Keep weak rows neutral; add partner recovery only for confirmed active counterparties. |
-| Purchase/general contracts | Neutral `sc.legacy.purchase.contract.fact` | Not native contract workflow | Add a purchase/general contract module or promotion wizard for active rows with recoverable partner anchors. |
+| Purchase/general contracts | Historical purchase/general contract workbench is visible | Native promotion requires verified `partner_id` anchors | Keep searchable contract facts now; promote only rows with confirmed project, partner, amount, tax, and attachment policy. |
 | Payment requests | Runtime `payment.request` exists with states; historical actual outflow is projected to `sc.treasury.ledger` | 153 nonpositive cash-like rows remain fact-only | Keep request/approval/cash ledger separated; improve residual handling only with stronger business anchors. |
 | Receipts and income | Receipt requests plus neutral receipt facts exist; historical receipts are projected to `sc.treasury.ledger` | Residual receipts and fund confirmations are not fully native receive/treasury actions | Add receipt workbench and controlled promotion for rows with project/partner/amount anchors. |
 | Invoice and tax | Invoice/tax facts and invoice registration workbench are visible | Accounting posting remains explicit, not automatic migration side effect | Keep searchable historical surfaces; promote to accounting moves only through future controlled posting workflow. |
@@ -165,6 +172,8 @@ stays archive-first.
      confirmed.
    - Promote to native contract only after project, partner, amount, tax, and
      attachment policies pass.
+   - Current iteration exposes the archive and reports strong-anchor candidate
+     counts; it does not invent partner links from text alone.
 
 3. Historical user scope review
    - Provide read-only scope evidence.
