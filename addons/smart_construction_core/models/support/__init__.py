@@ -48,5 +48,6 @@ from . import legacy_fund_confirmation_line
 from . import legacy_expense_reimbursement_line
 from . import legacy_construction_diary_line
 from . import legacy_payment_residual_fact
+from . import legacy_receipt_residual_fact
 from . import legacy_attendance_checkin
 from . import legacy_personnel_movement

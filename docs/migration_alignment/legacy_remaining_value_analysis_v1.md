@@ -30,6 +30,7 @@ semantics.
 | `sc.legacy.expense.reimbursement.line` | 3589 |
 | `sc.legacy.construction.diary.line` | 5687 |
 | `sc.legacy.payment.residual.fact` | 1846 |
+| `sc.legacy.receipt.residual.fact` | 4357 |
 | `sc.legacy.receipt.income.fact` | 7220 |
 | `sc.legacy.expense.deposit.fact` | 11167 |
 | `sc.legacy.financing.loan.fact` | 318 |
@@ -55,6 +56,7 @@ semantics.
 | P1 | expense reimbursement detail | `CWGL_FYBX`, `CWGL_FYBX_CB` | 1,866 headers; 3,589 lines; line total about 11.89M | Covered by neutral reimbursement line archive. Not promoted to native reimbursement approval, payment, or accounting state. |
 | P1 | construction diary / quality notes | `SGZL_RZRJ`, `SGZL_RZRJ_CB` | 4,340 headers; 5,687 lines | Covered by neutral construction diary archive. Keeps project field facts without changing new task, quality, or document workflow state. |
 | P1 | payment runtime residuals | `C_ZFSQGL`, `T_FK_Supplier` | 1,362 outflow request residuals; 484 actual outflow residuals | Covered by neutral payment residual archive. These rows are not promoted to `payment.request`, ledger, settlement, or accounting state. |
+| P1 | receipt runtime residuals | `C_JFHKLR` | 4,357 receipt residuals | Covered by neutral receipt residual archive. These rows are not promoted to receive requests, treasury ledger, settlement, or invoice state. |
 | P2 | attendance / check-in | `CheckInData` | 106,208 rows; 88 users; 13,932 active-like; 2019-2023 | Covered by privacy-restricted neutral archive. Not new attendance, approval, payroll, or permission state. |
 | P2 | personnel movement | `PM_RYYDGL` | 20,804 rows | Covered by privacy-restricted neutral archive. Not new employee, permission, payroll, or org state. |
 | P2 | salary lines | `BGGL_XZ_GZ_CB` | 3,458 rows; 111 people; total about 30.56M | Highly sensitive. Only migrate if explicitly required; encrypted/restricted neutral carrier. |
