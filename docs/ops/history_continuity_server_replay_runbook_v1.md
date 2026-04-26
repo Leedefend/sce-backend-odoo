@@ -192,6 +192,8 @@ The one-click path now covers:
 - legacy receipt income
 - legacy expense deposit
 - legacy invoice tax
+- legacy invoice registration lines from `C_JXXP_ZYFPJJD_CB`; this is a
+  neutral historical archive and does not create `account.move` invoices
 - legacy financing loan
 - legacy fund daily snapshot
 - legacy material catalog archive
