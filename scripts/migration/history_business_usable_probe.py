@@ -222,6 +222,27 @@ counts = {
         [("note", "ilike", "[migration:actual_outflow]")],
         required_fields=["note"],
     ),
+    "legacy_actual_outflow_cash_requests": count(
+        "payment.request",
+        [("note", "ilike", "[migration:actual_outflow_core]"), ("amount", ">", 0)],
+        required_fields=["note", "amount"],
+    ),
+    "legacy_receipt_cash_requests": count(
+        "payment.request",
+        [("note", "ilike", "[migration:receipt_core]"), ("amount", ">", 0)],
+        required_fields=["note", "amount"],
+    ),
+    "treasury_ledger_runtime_records": count("sc.treasury.ledger", []),
+    "treasury_ledger_legacy_actual_outflow": count(
+        "sc.treasury.ledger",
+        [("source_kind", "=", "legacy_actual_outflow")],
+        required_fields=["source_kind"],
+    ),
+    "treasury_ledger_legacy_receipt": count(
+        "sc.treasury.ledger",
+        [("source_kind", "=", "legacy_receipt")],
+        required_fields=["source_kind"],
+    ),
     "receipt_invoice_line_runtime_records": count("sc.receipt.invoice.line", []),
     "receipt_invoice_attachment_runtime_records": count(
         "ir.attachment",
@@ -303,6 +324,7 @@ sample_runtime_records = {
     "payment_request_id": sample_id("payment.request", migrated_payment_request_domain()),
     "payment_request_line_id": sample_id("payment.request.line", []),
     "receipt_invoice_line_id": sample_id("sc.receipt.invoice.line", []),
+    "treasury_ledger_id": sample_id("sc.treasury.ledger", [], active_test=False),
     "legacy_workflow_audit_id": sample_id("sc.legacy.workflow.audit", []),
     "history_todo_id": sample_id("sc.history.todo", [], active_test=False),
     "mail_activity_id": sample_id("mail.activity", [], active_test=False),
@@ -347,6 +369,10 @@ promotion_gaps = {
             int((counts.get("payment_request_state_distribution") or {}).get(state) or 0)
             for state in ("submit", "approve", "approved")
         ) == 0
+    ),
+    "payment_receipt_execution_surface_gap": bool(
+        ((counts.get("legacy_actual_outflow_cash_requests") or 0) + (counts.get("legacy_receipt_cash_requests") or 0)) > 0
+        and (counts.get("treasury_ledger_runtime_records") or 0) == 0
     ),
 }
 

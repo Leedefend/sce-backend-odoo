@@ -257,6 +257,7 @@ case "$MODE" in
     run_step legacy_workflow_audit_adapter run_legacy_workflow_audit_adapter
     run_step legacy_workflow_audit_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_workflow_audit_replay_write.py"
     run_step history_todo_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_history_todo_projection_write.py"
+    run_step treasury_ledger_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_treasury_ledger_projection_write.py"
     if [[ "$INCLUDE_PAYMENT_STATE_RECOVERY" == "1" ]]; then
       run_step payment_request_outflow_state_activation_adapter python3 "$ROOT_DIR/scripts/migration/history_payment_request_outflow_state_activation_adapter.py"
       run_step payment_request_outflow_state_activation_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_payment_request_outflow_state_activation_write.py"

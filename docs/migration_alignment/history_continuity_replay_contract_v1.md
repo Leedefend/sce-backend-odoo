@@ -180,6 +180,7 @@ Supported resume step names:
 - `legacy_workflow_audit_adapter`
 - `legacy_workflow_audit_replay`
 - `history_todo_projection`
+- `treasury_ledger_projection`
 - `payment_request_outflow_state_activation_adapter`
 - `payment_request_outflow_state_activation_replay`
 - `payment_request_outflow_approved_recovery_adapter`
@@ -234,6 +235,7 @@ Supported resume step names:
 - `legacy_receipt_residual_sc_v1`
 - `legacy_workflow_audit_sc_v1`
 - `history_todo_projection`
+- `treasury_ledger_projection`
 - `outflow_request_core`
 - `actual_outflow_core`
 - `actual_outflow_residual_parent`

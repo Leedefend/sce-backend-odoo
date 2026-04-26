@@ -23,6 +23,9 @@ Latest `history_business_usable_probe` on `sc_prod_sim` after P0-A:
 - `sc.history.todo`: `79702`
 - open history todos: `79702`
 - target-linked history todos: `77745`
+- historical cash requests projected to treasury ledger: `16047`
+- nonpositive historical cash requests retained outside ledger: `153`
+- `sc.treasury.ledger`: `16047`
 - `mail.activity`: `0`
 - `tier.review`: `0`
 
@@ -30,6 +33,12 @@ P0-A projects `sc.legacy.workflow.audit` into `sc.history.todo` as a dedicated
 historical workbench. This closes the immediate actionable surface gap without
 fabricating `tier.review` approvals or assigning old permissions as new runtime
 authority.
+
+P0-B projects positive historical actual outflow and receipt requests into
+`sc.treasury.ledger`: `12992` historical outflows and `3055` historical
+receipts. The ledger intentionally allows historical rows without a new-system
+settlement order because the legacy cash fact is still valid even when the old
+record cannot satisfy every new workflow rule.
 
 ## Capability Matrix
 
@@ -39,8 +48,8 @@ authority.
 | Construction contracts | Runtime `construction.contract` exists | Some old terms/attachments are still history-only | Add contract historical evidence smart tabs and attachment drill-through. |
 | Supplier contracts | Runtime supplier contracts and summary lines exist | Some blocked/weak partner contract residue remains neutral | Keep weak rows neutral; add partner recovery only for confirmed active counterparties. |
 | Purchase/general contracts | Neutral `sc.legacy.purchase.contract.fact` | Not native contract workflow | Add a purchase/general contract module or promotion wizard for active rows with recoverable partner anchors. |
-| Payment requests | Runtime `payment.request` exists with states | Old workflow has no actionable inbox; actual outflow is not a distinct execution surface | Build payment workbench with historical approval trail, pending-action projection, and payment execution/ledger separation. |
-| Receipts and income | Receipt requests plus neutral receipt facts exist | Residual receipts and fund confirmations are not runtime receive/treasury actions | Add receipt workbench and controlled promotion for rows with project/partner/amount anchors. |
+| Payment requests | Runtime `payment.request` exists with states; historical actual outflow is projected to `sc.treasury.ledger` | 153 nonpositive cash-like rows remain fact-only | Keep request/approval/cash ledger separated; improve residual handling only with stronger business anchors. |
+| Receipts and income | Receipt requests plus neutral receipt facts exist; historical receipts are projected to `sc.treasury.ledger` | Residual receipts and fund confirmations are not fully native receive/treasury actions | Add receipt workbench and controlled promotion for rows with project/partner/amount anchors. |
 | Invoice and tax | Invoice/tax facts are preserved | Invoice registration and deduction/tax adjustments are neutral-only | Add invoice registration and tax adjustment runtime models, keeping accounting posting explicit and separate. |
 | Settlement/deductions | New settlement order exists; old deduction facts are neutral | Old deduction/settlement adjustments cannot be processed natively | Add settlement adjustment runtime model linked to contracts, receipts, and payments. |
 | Fund daily, fund confirmation, financing | Facts are preserved | No operational treasury daily entry/reconciliation workflow | Add treasury daily statement, bank/account balance reconciliation, and fund confirmation screens. |
