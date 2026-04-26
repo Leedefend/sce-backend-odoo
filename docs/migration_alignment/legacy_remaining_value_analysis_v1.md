@@ -27,6 +27,8 @@ semantics.
 | `sc.legacy.invoice.registration.line` | 25393 |
 | `sc.legacy.deduction.adjustment.line` | 13521 |
 | `sc.legacy.fund.confirmation.line` | 13398 |
+| `sc.legacy.expense.reimbursement.line` | 3589 |
+| `sc.legacy.construction.diary.line` | 5687 |
 | `sc.legacy.receipt.income.fact` | 7220 |
 | `sc.legacy.expense.deposit.fact` | 11167 |
 | `sc.legacy.financing.loan.fact` | 318 |
@@ -49,6 +51,8 @@ semantics.
 | P1 | special invoice registration | `C_JXXP_ZYFPJJD`, `C_JXXP_ZYFPJJD_CB` | 16,616 headers; 25,393 lines; line total about 2.28B | Covered by neutral line-level invoice registration archive. Keeps old invoice facts separate from new-system invoice rules. |
 | P1 | deduction / settlement adjustment | `T_KK_SJDJB`, `T_KK_SJDJB_CB` | 2,636 headers; 13,521 lines; current line sum about 264.8M | Covered by neutral deduction/settlement adjustment archive. Not promoted to native settlement state. |
 | P1 | fund confirmation detail | `ZJGL_SZQR_DKQRB`, `ZJGL_SZQR_DKQRB_CB` | 2,655 headers; 13,398 lines; current line sum about 260.8M | Covered by neutral fund confirmation archive. Does not update native fund/receipt states. |
+| P1 | expense reimbursement detail | `CWGL_FYBX`, `CWGL_FYBX_CB` | 1,866 headers; 3,589 lines; line total about 11.89M | Covered by neutral reimbursement line archive. Not promoted to native reimbursement approval, payment, or accounting state. |
+| P1 | construction diary / quality notes | `SGZL_RZRJ`, `SGZL_RZRJ_CB` | 4,340 headers; 5,687 lines | Covered by neutral construction diary archive. Keeps project field facts without changing new task, quality, or document workflow state. |
 | P2 | attendance / check-in | `CheckInData` | 106,208 rows; 88 users; 13,932 active-like; 2019-2023 | Covered by privacy-restricted neutral archive. Not new attendance, approval, payroll, or permission state. |
 | P2 | personnel movement | `PM_RYYDGL` | 20,804 rows | Covered by privacy-restricted neutral archive. Not new employee, permission, payroll, or org state. |
 | P2 | salary lines | `BGGL_XZ_GZ_CB` | 3,458 rows; 111 people; total about 30.56M | Highly sensitive. Only migrate if explicitly required; encrypted/restricted neutral carrier. |
@@ -85,12 +89,16 @@ Financial/detail candidates:
   about 2,282,867,004.11, tax about 115,434,418.08.
 - `T_KK_SJDJB_CB`: 13,521 rows, current amount about 264,765,389.58.
 - `ZJGL_SZQR_DKQRB_CB`: 13,398 rows, current amount about 260,848,353.69.
+- `CWGL_FYBX_CB`: 3,589 rows, line amount about 11,888,847.96; header
+  approved amount about 11,869,461.66.
+- `SGZL_RZRJ_CB`: 5,687 rows under 4,340 construction diary headers; preserves
+  diary descriptions, quality/detail text, and attachment path references.
 
 ## Recommended Next Move
 
 1. Decide binary transfer policy by file type, legal retention, storage
    availability, and business object coverage.
-2. Add focused finance detail carriers for special invoice registration,
-   deduction/settlement adjustment, and fund confirmation.
+2. Review the remaining payment/outflow residual rows against current
+   `payment.request` runtime coverage.
 3. Treat attendance, personnel movement, and salary as opt-in privacy lanes,
    behind explicit authorization and restricted ACLs.

@@ -237,6 +237,10 @@ case "$MODE" in
     run_step legacy_deduction_adjustment_line_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_deduction_adjustment_line_replay_write.py"
     run_step legacy_fund_confirmation_line_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_confirmation_line_replay_adapter.py"
     run_step legacy_fund_confirmation_line_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_confirmation_line_replay_write.py"
+    run_step legacy_expense_reimbursement_line_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_reimbursement_line_replay_adapter.py"
+    run_step legacy_expense_reimbursement_line_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_reimbursement_line_replay_write.py"
+    run_step legacy_construction_diary_line_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_construction_diary_line_replay_adapter.py"
+    run_step legacy_construction_diary_line_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_construction_diary_line_replay_write.py"
     run_step legacy_workflow_audit_adapter run_legacy_workflow_audit_adapter
     run_step legacy_workflow_audit_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_workflow_audit_replay_write.py"
     if [[ "$INCLUDE_PAYMENT_STATE_RECOVERY" == "1" ]]; then
