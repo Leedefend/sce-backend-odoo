@@ -347,6 +347,25 @@ counts = {
     "legacy_invoice_tax_facts": count("sc.legacy.invoice.tax.fact", []),
     "legacy_invoice_registration_lines": count("sc.legacy.invoice.registration.line", []),
     "legacy_deduction_adjustment_lines": count("sc.legacy.deduction.adjustment.line", []),
+    "legacy_deduction_adjustment_lines_with_project": count(
+        "sc.legacy.deduction.adjustment.line",
+        [("project_id", "!=", False)],
+        required_fields=["project_id"],
+        active_test=False,
+    ),
+    "settlement_adjustment_runtime_records": count("sc.settlement.adjustment", [], active_test=False),
+    "settlement_adjustment_legacy_records": count(
+        "sc.settlement.adjustment",
+        [("source_origin", "=", "legacy")],
+        required_fields=["source_origin"],
+        active_test=False,
+    ),
+    "settlement_adjustment_legacy_with_project": count(
+        "sc.settlement.adjustment",
+        [("source_origin", "=", "legacy"), ("project_id", "!=", False)],
+        required_fields=["source_origin", "project_id"],
+        active_test=False,
+    ),
     "legacy_fund_confirmation_lines": count("sc.legacy.fund.confirmation.line", []),
     "legacy_financing_loan_facts": count("sc.legacy.financing.loan.fact", []),
     "legacy_fund_daily_snapshot_facts": count("sc.legacy.fund.daily.snapshot.fact", []),
@@ -435,6 +454,7 @@ sample_runtime_records = {
     "legacy_material_detail_id": sample_id("sc.legacy.material.detail", [], active_test=False),
     "legacy_purchase_contract_fact_id": sample_id("sc.legacy.purchase.contract.fact", [], active_test=False),
     "legacy_deduction_adjustment_line_id": sample_id("sc.legacy.deduction.adjustment.line", [], active_test=False),
+    "settlement_adjustment_id": sample_id("sc.settlement.adjustment", [], active_test=False),
     "legacy_fund_confirmation_line_id": sample_id("sc.legacy.fund.confirmation.line", [], active_test=False),
     "legacy_financing_loan_fact_id": sample_id("sc.legacy.financing.loan.fact", [], active_test=False),
     "legacy_fund_daily_snapshot_fact_id": sample_id("sc.legacy.fund.daily.snapshot.fact", [], active_test=False),
@@ -496,6 +516,10 @@ promotion_gaps = {
     "invoice_tax_runtime_surface_gap": bool(
         (counts.get("legacy_invoice_tax_facts") or 0) > 0
         and (counts.get("legacy_invoice_registration_lines") or 0) == 0
+    ),
+    "settlement_adjustment_runtime_surface_gap": bool(
+        (counts.get("legacy_deduction_adjustment_lines_with_project") or 0) > 0
+        and (counts.get("settlement_adjustment_legacy_with_project") or 0) == 0
     ),
     "treasury_reconciliation_surface_gap": bool(
         (

@@ -10,6 +10,7 @@ from . import project_budget
 from . import boq
 from . import material_plan
 from . import settlement_order
+from . import settlement_adjustment
 from . import settlement
 from . import funding_baseline
 from . import payment_request

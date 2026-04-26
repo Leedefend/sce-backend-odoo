@@ -31,6 +31,8 @@ Latest `history_business_usable_probe` on `sc_prod_sim` after P0-A:
 - historical invoice registration lines: `25393`
 - historical invoice tax facts: `5920`
 - historical deduction adjustment lines: `13521`
+- settlement adjustment runtime records: `12913` legacy rows projected,
+  `12528` legacy-confirmed rows
 - historical fund confirmation lines: `13398`
 - historical expense/deposit facts: preserved as searchable finance facts
 - historical expense reimbursement lines: preserved as searchable line facts
@@ -99,6 +101,12 @@ Current project scopes are resolved through project `legacy_parent_id` and
 applied as project follower access so existing project record rules allow
 continuity without using removed scope rows as new authority.
 
+P1-D adds `sc.settlement.adjustment` as the runtime carrier for settlement
+deductions and adjustments. Historical `T_KK_SJDJB_CB` rows with project anchors
+are projected into this model as legacy rows; old completed rows become
+`legacy_confirmed`, while new-system users can continue registering and
+confirming manual settlement adjustments from the settlement center.
+
 ## Capability Matrix
 
 | Legacy business area | Current new-system state | Gap | Plan |
@@ -110,7 +118,7 @@ continuity without using removed scope rows as new authority.
 | Payment requests | Runtime `payment.request` exists with states; historical actual outflow is projected to `sc.treasury.ledger` | 153 nonpositive cash-like rows remain fact-only | Keep request/approval/cash ledger separated; improve residual handling only with stronger business anchors. |
 | Receipts and income | Receipt requests plus neutral receipt facts exist; historical receipts are projected to `sc.treasury.ledger` | Residual receipts and fund confirmations are not fully native receive/treasury actions | Add receipt workbench and controlled promotion for rows with project/partner/amount anchors. |
 | Invoice and tax | Invoice/tax facts and invoice registration workbench are visible | Accounting posting remains explicit, not automatic migration side effect | Keep searchable historical surfaces; promote to accounting moves only through future controlled posting workflow. |
-| Settlement/deductions | New settlement order exists; old deduction facts are neutral | Old deduction/settlement adjustments cannot be processed natively | Add settlement adjustment runtime model linked to contracts, receipts, and payments. |
+| Settlement/deductions | New settlement order exists; historical deduction facts are projected to `sc.settlement.adjustment`; new manual adjustment registration and confirmation exists | Historical rows without project anchors remain fact-only; legacy rows are not auto-linked to settlement orders without stronger anchors | Use settlement adjustment runtime for continuing operations; link historical rows to settlement/contract/partner only when explicit anchors are recovered. |
 | Fund daily, fund confirmation, financing | Cash ledger, fund confirmation, financing, fund daily snapshot, and fund daily line workbenches are visible | Formal new-entry reconciliation workflow is still future work | Keep historical facts searchable now; add write-side treasury daily/reconciliation workflow only for new business operations. |
 | Expense reimbursement/deposit | Expense/deposit facts and reimbursement line workbench are visible | New editable reimbursement workflow is intentionally not backfilled from old facts | Use archive-first policy for historical rows; add write-side reimbursement/deposit workflow only for new business if required. |
 | Material catalog | Search archive and controlled material-to-product promotion exist | Bulk promotion remains intentionally disabled | Keep archive-first catalog; material managers promote selected rows only when needed for new material plans/purchase flows. |
@@ -156,10 +164,11 @@ continuity without using removed scope rows as new authority.
    - Accounting moves remain opt-in, not automatic migration side effects.
 
 2. Settlement adjustment runtime
-   - Promote deduction/settlement adjustment facts into a native adjustment
-     model.
-   - Link to contract/payment/receipt where anchors exist.
-   - Preserve old reason text and source state.
+   - `sc.settlement.adjustment` is available as a native adjustment model.
+   - Legacy project-anchored deduction/adjustment rows are projected as
+     historical runtime records.
+   - Contract/payment/receipt links remain explicit follow-up work where
+     anchors are strong enough.
 
 3. Treasury daily/reconciliation runtime
    - Turn fund daily snapshots and lines into operational views.

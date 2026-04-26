@@ -42,6 +42,8 @@
                     <sheet>
                         <group string="结算额度">
                             <field name="amount_total" readonly="1"/>
+                            <field name="adjustment_total" readonly="1"/>
+                            <field name="amount_after_adjustment" readonly="1"/>
                             <field name="amount_paid" readonly="1"/>
                             <field name="amount_payable" readonly="1"
                                    modifiers="{'invisible': [['amount_payable','&lt;',0.0]]}"/>
@@ -121,6 +123,21 @@
                                     </tree>
                                 </field>
                             </page>
+                            <page string="扣款调整">
+                                <field name="adjustment_ids"
+                                       context="{'default_project_id': project_id, 'default_settlement_id': id, 'default_contract_id': contract_id, 'default_partner_id': partner_id, 'default_currency_id': currency_id}">
+                                    <tree editable="bottom">
+                                        <field name="date_adjustment"/>
+                                        <field name="adjustment_type"/>
+                                        <field name="item_name"/>
+                                        <field name="account_name"/>
+                                        <field name="amount"/>
+                                        <field name="signed_amount" readonly="1"/>
+                                        <field name="state" readonly="1"/>
+                                        <field name="source_origin" readonly="1"/>
+                                    </tree>
+                                </field>
+                            </page>
                             <page string="采购订单">
                                 <group>
                                     <field name="purchase_order_ids"
@@ -141,6 +158,122 @@
                     </sheet>
                 </form>
             </field>
+        </record>
+
+        <record id="view_sc_settlement_adjustment_tree" model="ir.ui.view">
+            <field name="name">sc.settlement.adjustment.tree</field>
+            <field name="model">sc.settlement.adjustment</field>
+            <field name="arch" type="xml">
+                <tree string="结算调整" decoration-muted="state == 'cancel'">
+                    <field name="date_adjustment"/>
+                    <field name="name"/>
+                    <field name="project_id"/>
+                    <field name="settlement_id"/>
+                    <field name="adjustment_type"/>
+                    <field name="item_name"/>
+                    <field name="account_name"/>
+                    <field name="amount"/>
+                    <field name="signed_amount"/>
+                    <field name="state"/>
+                    <field name="source_origin"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_settlement_adjustment_form" model="ir.ui.view">
+            <field name="name">sc.settlement.adjustment.form</field>
+            <field name="model">sc.settlement.adjustment</field>
+            <field name="arch" type="xml">
+                <form string="结算调整">
+                    <header>
+                        <button name="action_confirm" type="object" string="确认" class="btn-primary"
+                                invisible="state != 'draft'"
+                                groups="smart_construction_core.group_sc_cap_settlement_user"/>
+                        <button name="action_cancel" type="object" string="取消"
+                                invisible="state != 'confirmed'"
+                                groups="smart_construction_core.group_sc_cap_settlement_manager"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,legacy_confirmed,cancel"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="source_origin" readonly="source_origin == 'legacy'"/>
+                                <field name="adjustment_type" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
+                                <field name="date_adjustment" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
+                            </group>
+                            <group>
+                                <field name="amount" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
+                                <field name="signed_amount" readonly="1"/>
+                                <field name="currency_id" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
+                                <field name="active"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="业务锚点">
+                                <field name="project_id" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
+                                <field name="settlement_id" readonly="source_origin == 'legacy'"/>
+                                <field name="contract_id"/>
+                                <field name="partner_id"/>
+                            </group>
+                            <group string="调整事项">
+                                <field name="item_name" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
+                                <field name="account_name" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
+                            </group>
+                        </group>
+                        <group string="历史来源" invisible="source_origin != 'legacy'">
+                            <field name="legacy_line_id"/>
+                            <field name="legacy_document_no"/>
+                            <field name="legacy_document_state"/>
+                            <field name="legacy_fund_confirmation_id"/>
+                            <field name="legacy_source_table"/>
+                        </group>
+                        <group>
+                            <field name="note"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_sc_settlement_adjustment_search" model="ir.ui.view">
+            <field name="name">sc.settlement.adjustment.search</field>
+            <field name="model">sc.settlement.adjustment</field>
+            <field name="arch" type="xml">
+                <search string="结算调整">
+                    <field name="name"/>
+                    <field name="project_id"/>
+                    <field name="settlement_id"/>
+                    <field name="item_name"/>
+                    <field name="account_name"/>
+                    <field name="legacy_document_no"/>
+                    <filter name="active_rows" string="有效" domain="[('active', '=', True)]"/>
+                    <filter name="legacy_rows" string="历史迁移" domain="[('source_origin', '=', 'legacy')]"/>
+                    <filter name="manual_rows" string="新系统登记" domain="[('source_origin', '=', 'manual')]"/>
+                    <filter name="confirmed" string="已确认" domain="[('state', 'in', ['confirmed', 'legacy_confirmed'])]"/>
+                    <group expand="0" string="分组">
+                        <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
+                        <filter name="group_settlement" string="结算单" context="{'group_by': 'settlement_id'}"/>
+                        <filter name="group_type" string="调整类型" context="{'group_by': 'adjustment_type'}"/>
+                        <filter name="group_state" string="状态" context="{'group_by': 'state'}"/>
+                        <filter name="group_source" string="来源" context="{'group_by': 'source_origin'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_sc_settlement_adjustment" model="ir.actions.act_window">
+            <field name="name">结算调整</field>
+            <field name="res_model">sc.settlement.adjustment</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_settlement_adjustment_search"/>
+            <field name="context">{'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[
+                (4, ref('smart_construction_core.group_sc_cap_settlement_read')),
+                (4, ref('smart_construction_core.group_sc_cap_project_read')),
+                (4, ref('smart_construction_core.group_sc_cap_cost_read')),
+                (4, ref('smart_construction_core.group_sc_cap_finance_read'))
+            ]"/>
         </record>
 
         <!-- 动作 -->
@@ -169,6 +302,13 @@
                   parent="menu_sc_settlement_center"
                   action="action_sc_settlement_order"
                   sequence="10"
+                  groups="smart_construction_core.group_sc_cap_settlement_read,smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
+
+        <menuitem id="menu_sc_settlement_adjustment"
+                  name="结算调整"
+                  parent="menu_sc_settlement_center"
+                  action="action_sc_settlement_adjustment"
+                  sequence="20"
                   groups="smart_construction_core.group_sc_cap_settlement_read,smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
 
     </data>
