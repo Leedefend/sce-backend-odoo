@@ -54,6 +54,10 @@ Latest `history_business_usable_probe` on `sc_prod_sim` after P0-A:
 - financing loan runtime records: legacy loan registration and borrowing rows
   with project/amount anchors are projected to `sc.financing.loan`; old
   completed rows are kept as `legacy_confirmed`
+- general contract runtime records: active historical purchase/general
+  contract rows with project, amount, and contract-name/document anchors are
+  projected to `sc.general.contract`; old completed rows are kept as
+  `legacy_confirmed`
 - construction diary runtime records: legacy construction diary/quality-note
   lines with project anchors are projected to `sc.construction.diary`; old
   completed rows are kept as `legacy_confirmed`
@@ -174,6 +178,14 @@ project/amount anchors are projected as legacy rows; old completed rows become
 `legacy_confirmed`, while new-system finance users can continue registering,
 confirming, and completing manual financing or borrowing records.
 
+P1-L adds `sc.general.contract` as the runtime carrier for headquarters,
+purchase, service, and other general contract registrations that do not safely
+fit the stricter `construction.contract` model. Historical `T_CGHT_INFO` rows
+with project, amount, and contract-name/document anchors are projected as
+legacy rows; old completed rows become `legacy_confirmed`. Partner text,
+credit-code, bank, applicant, tax, and attachment-reference facts are retained
+without fabricating a verified `partner_id`.
+
 ## Capability Matrix
 
 | Legacy business area | Current new-system state | Gap | Plan |
@@ -181,7 +193,7 @@ confirming, and completing manual financing or borrowing records.
 | Projects, partners, members | Runtime records and anchors exist; current legacy user-project scopes are projected to project follower access where anchors resolve | 2547 current scope rows still lack project anchors; removed scopes remain audit-only | Keep current replay; recover missing anchors only from stronger project evidence and never authorize from removed scope rows. |
 | Construction contracts | Runtime `construction.contract` exists | Some old terms/attachments are still history-only | Add contract historical evidence smart tabs and attachment drill-through. |
 | Supplier contracts | Runtime supplier contracts and summary lines exist | Some blocked/weak partner contract residue remains neutral | Keep weak rows neutral; add partner recovery only for confirmed active counterparties. |
-| Purchase/general contracts | Historical purchase/general contract workbench is visible | Native promotion requires verified `partner_id` anchors | Keep searchable contract facts now; promote only rows with confirmed project, partner, amount, tax, and attachment policy. |
+| Purchase/general contracts | Historical purchase/general contract facts are visible; rows with project/amount/contract-name anchors are projected to `sc.general.contract` | Rows without runtime anchors remain fact-only; native `construction.contract` promotion still requires verified `partner_id` anchors | Use general contract runtime for continuing non-construction contract registration; promote to `construction.contract` only where project, partner, amount, tax, and attachment policy are confirmed. |
 | Payment requests / execution | Runtime `payment.request` exists with states; historical actual outflow is projected to `sc.treasury.ledger`; payment residual rows with project and positive planned/paid amount anchors are projected to `sc.payment.execution` | Nonpositive or unanchored payment residual rows remain fact-only | Keep request/approval/cash ledger/execution separated; use payment execution runtime for continuing payment registration without fabricating old approvals. |
 | Receipts and income | Receipt requests plus neutral receipt facts exist; historical receipts are projected to `sc.treasury.ledger`; receipt income and residual receipt rows are projected to `sc.receipt.income` | Rows without project/amount anchors remain fact-only; accounting posting remains explicit | Use receipt income runtime for continuing income registration; link payment request, treasury ledger, contract, and partner anchors only when evidence is strong. |
 | Invoice and tax | Invoice/tax facts and invoice registration workbench are visible; project-anchored invoice registration and tax facts are projected to `sc.invoice.registration` | Accounting posting remains explicit, not automatic migration side effect | Use invoice registration runtime for continuing invoice handling; promote to accounting moves only through future controlled posting workflow. |
@@ -261,12 +273,15 @@ confirming, and completing manual financing or borrowing records.
      source on the product record.
 
 2. Purchase/general contract promotion
+   - `sc.general.contract` is available for continuing general, purchase,
+     service, and headquarters contract registration.
    - Recover partner anchors for `T_CGHT_INFO` rows only where counterparty is
      confirmed.
-   - Promote to native contract only after project, partner, amount, tax, and
-     attachment policies pass.
-   - Current iteration exposes the archive and reports strong-anchor candidate
-     counts; it does not invent partner links from text alone.
+   - Promote to `construction.contract` only after project, partner, amount,
+     tax, and attachment policies pass.
+   - Rows that lack these anchors remain searchable facts or general-contract
+     legacy records; the migration does not invent partner links from text
+     alone.
 
 3. Historical user scope review
    - Legacy roles are projected to runtime capability groups when the role name
@@ -296,7 +311,7 @@ confirming, and completing manual financing or borrowing records.
 4. P1 invoice/tax runtime.
 5. P1 settlement adjustment and treasury reconciliation runtime visibility.
 6. P1 expense/deposit searchable archive and formal archive-first decision.
-7. P2 material/product promotion and weak contract promotion.
+7. P2 material/product promotion and general-contract runtime completion.
 8. P2 historical user access projection and missing project-scope anchor
    review.
 9. P3 HR/platform audit only after explicit business decision.
@@ -309,8 +324,8 @@ confirming, and completing manual financing or borrowing records.
   records or neutral facts.
 - Payment and receipt records distinguish request, approval, actual cash
   movement, and ledger state.
-- Invoice/tax/deduction/fund confirmation facts have either native runtime
-  models or explicitly approved archive-only policies.
+- Invoice/tax/deduction/fund confirmation/general-contract facts have either
+  native runtime models or explicitly approved archive-only policies.
 - Attachment links needed for day-to-day business open successfully.
 - Migrated users with clear old role/scope facts can enter the corresponding
   new-system business centers and open linked projects.

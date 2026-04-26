@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_general_contract_search" model="ir.ui.view">
+            <field name="name">sc.general.contract.search</field>
+            <field name="model">sc.general.contract</field>
+            <field name="arch" type="xml">
+                <search string="综合合同">
+                    <field name="name"/>
+                    <field name="document_no"/>
+                    <field name="contract_no"/>
+                    <field name="contract_name"/>
+                    <field name="project_id"/>
+                    <field name="partner_name_text"/>
+                    <field name="credit_code"/>
+                    <field name="legacy_record_id"/>
+                    <filter string="历史迁移" name="source_origin_legacy" domain="[('source_origin', '=', 'legacy')]"/>
+                    <filter string="新系统登记" name="source_origin_manual" domain="[('source_origin', '=', 'manual')]"/>
+                    <filter string="已确认" name="state_confirmed" domain="[('state', 'in', ['confirmed', 'legacy_confirmed'])]"/>
+                    <filter string="已签署" name="state_signed" domain="[('state', '=', 'signed')]"/>
+                    <filter string="补充合同" name="supplement" domain="[('is_supplement_contract', 'not in', [False, '', '0'])]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按合同方" name="group_partner_text" context="{'group_by': 'partner_name_text'}"/>
+                    <filter string="按类型" name="group_type" context="{'group_by': 'contract_type'}"/>
+                    <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_general_contract_tree" model="ir.ui.view">
+            <field name="name">sc.general.contract.tree</field>
+            <field name="model">sc.general.contract</field>
+            <field name="arch" type="xml">
+                <tree string="综合合同">
+                    <field name="name"/>
+                    <field name="contract_date"/>
+                    <field name="document_no"/>
+                    <field name="contract_name"/>
+                    <field name="project_id"/>
+                    <field name="partner_name_text"/>
+                    <field name="contract_type"/>
+                    <field name="amount_total" sum="合同金额"/>
+                    <field name="tax_rate"/>
+                    <field name="source_origin"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_general_contract_form" model="ir.ui.view">
+            <field name="name">sc.general.contract.form</field>
+            <field name="model">sc.general.contract</field>
+            <field name="arch" type="xml">
+                <form string="综合合同">
+                    <header>
+                        <button name="action_confirm" string="确认" type="object" class="btn-primary"
+                                invisible="state != 'draft'"/>
+                        <button name="action_signed" string="已签署" type="object" class="btn-primary"
+                                invisible="state not in ('draft', 'confirmed')"/>
+                        <button name="action_cancel" string="取消" type="object"
+                                invisible="state in ('cancel', 'legacy_confirmed')"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,confirmed,signed,legacy_confirmed,cancel"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="source_origin" readonly="source_origin == 'legacy'"/>
+                                <field name="project_id" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                                <field name="document_no" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                                <field name="contract_no" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                                <field name="contract_name" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                                <field name="contract_type" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                                <field name="contract_attribute" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            </group>
+                            <group>
+                                <field name="contract_date" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                                <field name="expected_sign_date" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                                <field name="completion_date" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                                <field name="signing_place" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                                <field name="is_supplement_contract" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                                <field name="related_contract_no" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            </group>
+                        </group>
+                        <group string="金额与条款">
+                            <field name="amount_total" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="prepayment_amount" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="install_debug_payment" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="warranty_deposit" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="tax_rate" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="currency_id"/>
+                            <field name="payment_terms" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="special_condition" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                        </group>
+                        <group string="合同方">
+                            <field name="partner_id"/>
+                            <field name="partner_name_text" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="credit_code" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="contact_name" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="contact_phone" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="bank_name" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="bank_account" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                        </group>
+                        <group string="办理信息">
+                            <field name="applicant_name" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="applicant_department" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="purchase_engineer" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                        </group>
+                        <group string="历史来源" invisible="source_origin != 'legacy'">
+                            <field name="legacy_source_model" readonly="1"/>
+                            <field name="legacy_source_table" readonly="1"/>
+                            <field name="legacy_record_id" readonly="1"/>
+                            <field name="legacy_document_state" readonly="1"/>
+                            <field name="legacy_attachment_ref" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="note"/>
+                            <field name="active"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_general_contract" model="ir.actions.act_window">
+            <field name="name">综合合同</field>
+            <field name="res_model">sc.general.contract</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_general_contract_search"/>
+            <field name="context">{'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_contract_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
+        </record>
+
+        <menuitem id="menu_sc_general_contract"
+                  name="综合合同"
+                  parent="smart_construction_core.menu_sc_contract_center"
+                  action="action_sc_general_contract"
+                  sequence="15"
+                  groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+    </data>
+</odoo>

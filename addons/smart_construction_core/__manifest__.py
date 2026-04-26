@@ -104,6 +104,7 @@
         'views/core/payment_execution_views.xml',
         'views/core/invoice_registration_views.xml',
         'views/core/financing_loan_views.xml',
+        'views/core/general_contract_views.xml',
         'views/core/payment_request_views.xml',
         'views/core/project_overview_views.xml',
         'actions/project_actions_views.xml',

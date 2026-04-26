@@ -391,10 +391,29 @@ counts = {
         required_fields=["project_id"],
         active_test=False,
     ),
+    "legacy_purchase_contract_project_amount": count(
+        "sc.legacy.purchase.contract.fact",
+        [("active", "=", True), ("project_id", "!=", False), ("total_amount", ">", 0)],
+        required_fields=["active", "project_id", "total_amount"],
+        active_test=False,
+    ),
     "legacy_purchase_contract_with_partner_text": count(
         "sc.legacy.purchase.contract.fact",
         [("partner_name", "!=", False)],
         required_fields=["partner_name"],
+        active_test=False,
+    ),
+    "general_contract_runtime_records": count("sc.general.contract", [], active_test=False),
+    "general_contract_legacy_records": count(
+        "sc.general.contract",
+        [("source_origin", "=", "legacy")],
+        required_fields=["source_origin"],
+        active_test=False,
+    ),
+    "general_contract_legacy_with_project": count(
+        "sc.general.contract",
+        [("source_origin", "=", "legacy"), ("project_id", "!=", False)],
+        required_fields=["source_origin", "project_id"],
         active_test=False,
     ),
     "legacy_invoice_tax_facts": count("sc.legacy.invoice.tax.fact", []),
@@ -595,6 +614,7 @@ sample_runtime_records = {
     "expense_claim_id": sample_id("sc.expense.claim", [], active_test=False),
     "legacy_material_detail_id": sample_id("sc.legacy.material.detail", [], active_test=False),
     "legacy_purchase_contract_fact_id": sample_id("sc.legacy.purchase.contract.fact", [], active_test=False),
+    "general_contract_id": sample_id("sc.general.contract", [], active_test=False),
     "legacy_deduction_adjustment_line_id": sample_id("sc.legacy.deduction.adjustment.line", [], active_test=False),
     "settlement_adjustment_id": sample_id("sc.settlement.adjustment", [], active_test=False),
     "legacy_fund_confirmation_line_id": sample_id("sc.legacy.fund.confirmation.line", [], active_test=False),
@@ -719,6 +739,10 @@ promotion_gaps = {
     "purchase_contract_runtime_surface_gap": bool(
         (counts.get("legacy_purchase_contract_facts") or 0) > 0
         and not sample_runtime_records.get("legacy_purchase_contract_fact_id")
+    ),
+    "general_contract_runtime_surface_gap": bool(
+        (counts.get("legacy_purchase_contract_project_amount") or 0) > 0
+        and (counts.get("general_contract_legacy_with_project") or 0) == 0
     ),
     "legacy_user_access_runtime_gap": bool(
         (counts.get("legacy_user_roles") or 0) > 0
