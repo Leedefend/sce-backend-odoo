@@ -21,6 +21,8 @@ semantics.
 | `sc.legacy.task.evidence` | 78822 |
 | `sc.legacy.attendance.checkin` | 106208 |
 | `sc.legacy.personnel.movement` | 20804 |
+| `sc.legacy.salary.line` | 3458 |
+| `sc.legacy.purchase.contract.fact` | 49 |
 | `sc.project.member.staging` | 15155 |
 | `sc.legacy.workflow.audit` | 79702 |
 | `sc.legacy.invoice.tax.fact` | 5920 |
@@ -61,7 +63,8 @@ semantics.
 | P1 | fund daily account lines | `D_SCBSJS_ZJGL_ZJSZ_ZJRBB`, `D_SCBSJS_ZJGL_ZJSZ_ZJRBB_CB` | 511 headers; 7,754 account lines | Covered by neutral fund daily line archive. Keeps account, bank balance, daily income/expense, and difference facts under old document context without changing new treasury state. |
 | P2 | attendance / check-in | `CheckInData` | 106,208 rows; 88 users; 13,932 active-like; 2019-2023 | Covered by privacy-restricted neutral archive. Not new attendance, approval, payroll, or permission state. |
 | P2 | personnel movement | `PM_RYYDGL` | 20,804 rows | Covered by privacy-restricted neutral archive. Not new employee, permission, payroll, or org state. |
-| P2 | salary lines | `BGGL_XZ_GZ_CB` | 3,458 rows; 111 people; total about 30.56M | Highly sensitive. Only migrate if explicitly required; encrypted/restricted neutral carrier. |
+| P2 | salary lines | `BGGL_XZ_GZ`, `BGGL_XZ_GZ_CB` | 115 headers; 3,458 rows; 111 people; gross about 30.56M; net about 28.93M | Covered by config-admin-only neutral salary archive. Does not create new payroll, payment, accounting, or personnel state. |
+| P2 | purchase/general contract residuals | `T_CGHT_INFO` | 49 rows; amount about 12.33M | Covered by config-admin-only neutral contract archive. Kept out of native contract state because source partner anchors are weak or text-only. |
 | P3 | low-code edit history | `BASE_LOWCODE_HISTORYDATA` | 97,037 rows across 9 configs; most `CONFIGID` null | Mostly platform audit/config history. Lower business value unless needed for legal traceability. |
 
 ## Supporting Source Metrics
@@ -101,12 +104,16 @@ Financial/detail candidates:
   diary descriptions, quality/detail text, and attachment path references.
 - `D_SCBSJS_ZJGL_ZJSZ_ZJRBB_CB`: 7,754 account lines under 511 fund daily
   headers; current account balance sum about 5,693,334,440.58.
+- `BGGL_XZ_GZ_CB`: 3,458 salary lines under 115 salary headers, covering
+  111 people from 2019-12 to 2026-02; gross about 30,562,100.74 and net about
+  28,925,438.45. Access is restricted to config administrators only.
+- `T_CGHT_INFO`: 49 purchase/general contract rows, 46 active-like, total
+  amount about 12,334,556.92; preserved as neutral facts because the old source
+  often only has partner text.
 
 ## Recommended Next Move
 
 1. Decide binary transfer policy by file type, legal retention, storage
    availability, and business object coverage.
-2. Review the remaining payment/outflow residual rows against current
-   `payment.request` runtime coverage.
-3. Treat attendance, personnel movement, and salary as opt-in privacy lanes,
-   behind explicit authorization and restricted ACLs.
+2. Review only platform audit/config residue such as low-code history if legal
+   traceability requires it; it is not needed for ordinary business continuity.

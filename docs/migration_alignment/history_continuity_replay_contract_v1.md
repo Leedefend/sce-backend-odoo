@@ -87,6 +87,8 @@ Supported resume step names:
   `HISTORY_CONTINUITY_INCLUDE_ATTENDANCE_CHECKIN=1`)
 - `legacy_personnel_movement_adapter` (privacy-restricted, opt-in via
   `HISTORY_CONTINUITY_INCLUDE_PERSONNEL_MOVEMENT=1`)
+- `legacy_salary_line_adapter` (privacy-restricted, opt-in via
+  `HISTORY_CONTINUITY_INCLUDE_SALARY_LINE=1`)
 - `replay_payload_precheck`
 - `partner_l4_anchor_completed`
 - `project_anchor_completed`
@@ -118,6 +120,8 @@ Supported resume step names:
 - `partner_master_targeted_replay`
 - `contract_partner_recovery_adapter`
 - `contract_partner_recovery_replay`
+- `legacy_purchase_contract_adapter`
+- `legacy_purchase_contract_replay`
 - `partner_master_direction_defer_adapter`
 - `partner_master_direction_defer_replay`
 - `contract_direction_defer_recovery_adapter`
@@ -199,6 +203,7 @@ Supported resume step names:
 - `legacy_task_evidence_sc_v1`
 - `legacy_attendance_checkin_sc_v1`
 - `legacy_personnel_movement_sc_v1`
+- `legacy_salary_line_sc_v1`
 - `partner_l4_anchor_completed`
 - `project_anchor_completed`
 - `legacy_material_catalog_sc_v1`
@@ -235,6 +240,7 @@ Supported resume step names:
 - `project_lifecycle_continuity`
 - `supplier_contract`
 - `supplier_contract_line`
+- `legacy_purchase_contract_sc_v1`
 - `outflow_request_line`
 - `actual_outflow_line`
 - `legacy_financing_loan_sc_v1`
