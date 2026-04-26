@@ -276,6 +276,26 @@ counts = {
         required_fields=["project_id"],
         active_test=False,
     ),
+    "legacy_material_category_rows": count("sc.legacy.material.category", [], active_test=False),
+    "legacy_material_detail_rows": count("sc.legacy.material.detail", [], active_test=False),
+    "legacy_material_detail_with_category": count(
+        "sc.legacy.material.detail",
+        [("category_id", "!=", False)],
+        required_fields=["category_id"],
+        active_test=False,
+    ),
+    "legacy_material_detail_promoted": count(
+        "sc.legacy.material.detail",
+        [("promotion_state", "=", "promoted")],
+        required_fields=["promotion_state"],
+        active_test=False,
+    ),
+    "product_templates_from_legacy_material": count(
+        "product.template",
+        [("legacy_material_detail_id", "!=", False)],
+        required_fields=["legacy_material_detail_id"],
+        active_test=False,
+    ),
     "legacy_invoice_tax_facts": count("sc.legacy.invoice.tax.fact", []),
     "legacy_invoice_registration_lines": count("sc.legacy.invoice.registration.line", []),
     "legacy_deduction_adjustment_lines": count("sc.legacy.deduction.adjustment.line", []),
@@ -364,6 +384,7 @@ sample_runtime_records = {
     "legacy_invoice_registration_line_id": sample_id("sc.legacy.invoice.registration.line", [], active_test=False),
     "legacy_expense_deposit_fact_id": sample_id("sc.legacy.expense.deposit.fact", [], active_test=False),
     "legacy_expense_reimbursement_line_id": sample_id("sc.legacy.expense.reimbursement.line", [], active_test=False),
+    "legacy_material_detail_id": sample_id("sc.legacy.material.detail", [], active_test=False),
     "legacy_deduction_adjustment_line_id": sample_id("sc.legacy.deduction.adjustment.line", [], active_test=False),
     "legacy_fund_confirmation_line_id": sample_id("sc.legacy.fund.confirmation.line", [], active_test=False),
     "legacy_financing_loan_fact_id": sample_id("sc.legacy.financing.loan.fact", [], active_test=False),
@@ -445,6 +466,14 @@ promotion_gaps = {
         and (
             not sample_runtime_records.get("legacy_expense_deposit_fact_id")
             or not sample_runtime_records.get("legacy_expense_reimbursement_line_id")
+        )
+    ),
+    "material_catalog_runtime_surface_gap": bool(
+        (counts.get("legacy_material_detail_rows") or 0) > 0
+        and (
+            not sample_runtime_records.get("legacy_material_detail_id")
+            or counts.get("legacy_material_detail_promoted") is None
+            or counts.get("product_templates_from_legacy_material") is None
         )
     ),
 }

@@ -200,7 +200,7 @@
               name="物资管理"
               parent="menu_sc_root"
               sequence="30"
-              groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
+              groups="smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
     <menuitem id="menu_project_material_plan"
               name="物资计划"
               parent="menu_sc_material_center"

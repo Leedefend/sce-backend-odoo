@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models
+from odoo import _, fields, models
+from odoo.exceptions import UserError
 
 
 class ScLegacyMaterialCategory(models.Model):
@@ -50,8 +51,75 @@ class ScLegacyMaterialDetail(models.Model):
     import_time = fields.Datetime()
     remark = fields.Text()
     source_table = fields.Char(default="T_Base_MaterialDetail", required=True)
+    promoted_product_tmpl_id = fields.Many2one(
+        "product.template",
+        string="已提升产品模板",
+        index=True,
+        readonly=True,
+        ondelete="set null",
+    )
+    promoted_product_id = fields.Many2one(
+        "product.product",
+        string="已提升产品",
+        index=True,
+        readonly=True,
+        ondelete="set null",
+    )
+    promotion_state = fields.Selection(
+        [("archived", "仅历史归档"), ("promoted", "已提升为产品")],
+        string="提升状态",
+        default="archived",
+        index=True,
+        readonly=True,
+    )
     active = fields.Boolean(default=True, index=True)
 
     _sql_constraints = [
         ("legacy_material_id_unique", "unique(legacy_material_id)", "Legacy material id must be unique."),
     ]
+
+    def action_promote_to_product(self):
+        if not self.env.user.has_group("smart_construction_core.group_sc_cap_material_manager"):
+            raise UserError(_("只有物资经理可以将历史物料提升为产品。"))
+        unit_uom = self.env.ref("uom.product_uom_unit", raise_if_not_found=False)
+        ProductTemplate = self.env["product.template"].sudo()
+        for record in self:
+            if record.promoted_product_tmpl_id:
+                continue
+            template = False
+            if record.code:
+                template = ProductTemplate.search([("default_code", "=", record.code)], limit=1)
+            if not template:
+                template = ProductTemplate.create(
+                    {
+                        "name": record.name,
+                        "default_code": record.code or record.legacy_material_id,
+                        "list_price": record.planned_price or 0.0,
+                        "standard_price": record.internal_price or 0.0,
+                        "type": "consu",
+                        "uom_id": unit_uom.id if unit_uom else False,
+                        "uom_po_id": unit_uom.id if unit_uom else False,
+                        "legacy_material_detail_id": record.id,
+                        "legacy_material_id": record.legacy_material_id,
+                    }
+                )
+            else:
+                template.write(
+                    {
+                        "legacy_material_detail_id": record.id,
+                        "legacy_material_id": record.legacy_material_id,
+                    }
+                )
+            record.sudo().write(
+                {
+                    "promoted_product_tmpl_id": template.id,
+                    "promoted_product_id": template.product_variant_id.id,
+                    "promotion_state": "promoted",
+                }
+            )
+        action = self.env.ref("product.product_template_action", raise_if_not_found=False)
+        if action and len(self) == 1 and self.promoted_product_tmpl_id:
+            result = action.sudo().read()[0]
+            result.update({"res_id": self.promoted_product_tmpl_id.id, "views": [(False, "form")]})
+            return result
+        return True

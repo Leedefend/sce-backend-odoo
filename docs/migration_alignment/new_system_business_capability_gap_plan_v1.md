@@ -37,6 +37,7 @@ Latest `history_business_usable_probe` on `sc_prod_sim` after P0-A:
 - historical financing loan facts: `318`
 - historical fund daily snapshots: `496`
 - historical fund daily lines: `7754`
+- historical material categories/details: preserved as archive-first master data
 - `mail.activity`: `0`
 - `tier.review`: `0`
 
@@ -73,6 +74,12 @@ This preserves project, applicant, payee, amount, approval amount, and source
 document context while avoiding false new-system approvals. The
 `history_expense_deposit_runtime_probe` validates the searchable surfaces.
 
+P2-A exposes historical material categories and details to material roles and
+adds a controlled material-manager action to promote selected legacy material
+rows into `product.template` / `product.product`. Promotion is opt-in and
+records the legacy material source on the product; the full historical catalog
+stays archive-first.
+
 ## Capability Matrix
 
 | Legacy business area | Current new-system state | Gap | Plan |
@@ -87,7 +94,7 @@ document context while avoiding false new-system approvals. The
 | Settlement/deductions | New settlement order exists; old deduction facts are neutral | Old deduction/settlement adjustments cannot be processed natively | Add settlement adjustment runtime model linked to contracts, receipts, and payments. |
 | Fund daily, fund confirmation, financing | Cash ledger, fund confirmation, financing, fund daily snapshot, and fund daily line workbenches are visible | Formal new-entry reconciliation workflow is still future work | Keep historical facts searchable now; add write-side treasury daily/reconciliation workflow only for new business operations. |
 | Expense reimbursement/deposit | Expense/deposit facts and reimbursement line workbench are visible | New editable reimbursement workflow is intentionally not backfilled from old facts | Use archive-first policy for historical rows; add write-side reimbursement/deposit workflow only for new business if required. |
-| Material catalog | Search archive exists | Not a usable product/master-data workflow | Add archive search UI plus controlled material-to-product promotion. |
+| Material catalog | Search archive and controlled material-to-product promotion exist | Bulk promotion remains intentionally disabled | Keep archive-first catalog; material managers promote selected rows only when needed for new material plans/purchase flows. |
 | Attachments | URL/index facts exist; 19,537 URL attachments and 178,931 file index rows are visible | Binary custody is not complete | Keep URL/index custody available now; copy selected binaries only after repository and hash policy are approved. |
 | Attendance/personnel/salary | Privacy-restricted facts exist | Not a native HR workflow | Add HR-lite modules only if users still process these in the construction system; otherwise keep restricted archive. |
 | Workflow/todo | Audit facts and `sc.history.todo` workbench exist | Remaining weak rows open the source audit instead of a target runtime record | Keep P0 projection idempotent; improve target linking only when stronger anchors are recovered. |
@@ -149,7 +156,9 @@ document context while avoiding false new-system approvals. The
 
 1. Material archive to product promotion
    - Keep 2.27M material rows out of products by default.
-   - Add search, compare, and "promote selected material" action.
+   - Search/archive UI and "promote selected material" action are available.
+   - Promotion creates or links a product and preserves the legacy material
+     source on the product record.
 
 2. Purchase/general contract promotion
    - Recover partner anchors for `T_CGHT_INFO` rows only where counterparty is
