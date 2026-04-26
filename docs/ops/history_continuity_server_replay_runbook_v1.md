@@ -187,6 +187,8 @@ The one-click path now covers:
 - legacy task/todo evidence
 - legacy attendance/check-in evidence is privacy-restricted and skipped by
   default; include only with `HISTORY_CONTINUITY_INCLUDE_ATTENDANCE_CHECKIN=1`
+- legacy personnel movement evidence is privacy-restricted and skipped by
+  default; include only with `HISTORY_CONTINUITY_INCLUDE_PERSONNEL_MOVEMENT=1`
 - contract / contract line / supplier contract / supplier contract line
 - receipt / outflow request / actual outflow / outflow request line
 - receipt invoice line / receipt invoice attachment
