@@ -88,6 +88,14 @@
         <field name="company_id" eval="False"/>
     </record>
 
+    <record id="seq_sc_construction_diary" model="ir.sequence">
+        <field name="name">施工日志</field>
+        <field name="code">sc.construction.diary</field>
+        <field name="prefix">CD%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
     <record id="seq_sc_treasury_ledger" model="ir.sequence">
         <field name="name">资金台账</field>
         <field name="code">sc.treasury.ledger</field>

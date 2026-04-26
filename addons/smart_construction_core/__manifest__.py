@@ -110,6 +110,7 @@
         'views/projection/treasury_ledger_views.xml',
         'views/core/workflow_views.xml',
         'views/menu.xml',
+        'views/core/construction_diary_views.xml',
         'views/support/legacy_material_catalog_views.xml',
         'views/support/legacy_purchase_contract_views.xml',
         'views/support/legacy_user_context_views.xml',

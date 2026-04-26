@@ -422,6 +422,26 @@ counts = {
         required_fields=["source_origin", "project_id"],
         active_test=False,
     ),
+    "legacy_construction_diary_lines": count("sc.legacy.construction.diary.line", [], active_test=False),
+    "legacy_construction_diary_with_project": count(
+        "sc.legacy.construction.diary.line",
+        [("project_id", "!=", False)],
+        required_fields=["project_id"],
+        active_test=False,
+    ),
+    "construction_diary_runtime_records": count("sc.construction.diary", [], active_test=False),
+    "construction_diary_legacy_records": count(
+        "sc.construction.diary",
+        [("source_origin", "=", "legacy")],
+        required_fields=["source_origin"],
+        active_test=False,
+    ),
+    "construction_diary_legacy_with_project": count(
+        "sc.construction.diary",
+        [("source_origin", "=", "legacy"), ("project_id", "!=", False)],
+        required_fields=["source_origin", "project_id"],
+        active_test=False,
+    ),
     "legacy_workflow_audit_facts": count("sc.legacy.workflow.audit", []),
     "history_todo_total": count("sc.history.todo", [], active_test=False),
     "history_todo_open": count(
@@ -508,6 +528,7 @@ sample_runtime_records = {
     "legacy_fund_daily_snapshot_fact_id": sample_id("sc.legacy.fund.daily.snapshot.fact", [], active_test=False),
     "legacy_fund_daily_line_id": sample_id("sc.legacy.fund.daily.line", [], active_test=False),
     "treasury_reconciliation_id": sample_id("sc.treasury.reconciliation", [], active_test=False),
+    "construction_diary_id": sample_id("sc.construction.diary", [], active_test=False),
     "treasury_ledger_id": sample_id("sc.treasury.ledger", [], active_test=False),
     "legacy_workflow_audit_id": sample_id("sc.legacy.workflow.audit", []),
     "history_todo_id": sample_id("sc.history.todo", [], active_test=False),
@@ -609,6 +630,10 @@ promotion_gaps = {
             or counts.get("legacy_material_detail_promoted") is None
             or counts.get("product_templates_from_legacy_material") is None
         )
+    ),
+    "construction_diary_runtime_surface_gap": bool(
+        (counts.get("legacy_construction_diary_with_project") or 0) > 0
+        and (counts.get("construction_diary_legacy_with_project") or 0) == 0
     ),
     "purchase_contract_runtime_surface_gap": bool(
         (counts.get("legacy_purchase_contract_facts") or 0) > 0

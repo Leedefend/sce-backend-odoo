@@ -45,6 +45,9 @@ Latest `history_business_usable_probe` on `sc_prod_sim` after P0-A:
 - receipt/income runtime records: receipt income facts and residual receipt
   rows with project/amount anchors are projected to `sc.receipt.income`; old
   completed rows are kept as `legacy_confirmed`
+- construction diary runtime records: legacy construction diary/quality-note
+  lines with project anchors are projected to `sc.construction.diary`; old
+  completed rows are kept as `legacy_confirmed`
 - historical financing loan facts: `318`
 - historical fund daily snapshots: `496`
 - historical fund daily lines: `7754`
@@ -136,6 +139,12 @@ projected as legacy rows; old completed rows become `legacy_confirmed`, while
 new-system finance users can continue registering, confirming, and marking
 manual receipt income as received.
 
+P1-H adds `sc.construction.diary` as the runtime carrier for project-site
+construction diary and quality-note records. Historical construction diary
+lines with project anchors are projected as legacy rows; old completed rows
+become `legacy_confirmed`, while new-system project users can continue
+registering, confirming, and completing manual site diary records.
+
 ## Capability Matrix
 
 | Legacy business area | Current new-system state | Gap | Plan |
@@ -152,6 +161,7 @@ manual receipt income as received.
 | Expense reimbursement/deposit | Expense/deposit facts and reimbursement lines are projected to `sc.expense.claim`; new manual registration, approval, and completion exists | Legacy rows are not automatically linked to payment requests unless stronger payment anchors are recovered | Use runtime claims for continuing operations; supplement payment request links only through explicit anchor recovery. |
 | Material catalog | Search archive and controlled material-to-product promotion exist | Bulk promotion remains intentionally disabled | Keep archive-first catalog; material managers promote selected rows only when needed for new material plans/purchase flows. |
 | Attachments | URL/index facts exist; 19,537 URL attachments and 178,931 file index rows are visible | Binary custody is not complete | Keep URL/index custody available now; copy selected binaries only after repository and hash policy are approved. |
+| Construction diary / quality notes | Historical construction diary facts are projected to `sc.construction.diary`; project users can register new diary records | Binary attachments remain URL/path custody only | Use construction diary runtime for continuing site records; binary copy remains under attachment custody policy. |
 | Attendance/personnel/salary | Privacy-restricted facts exist | Not a native HR workflow | Add HR-lite modules only if users still process these in the construction system; otherwise keep restricted archive. |
 | Workflow/todo | Audit facts and `sc.history.todo` workbench exist | Remaining weak rows open the source audit instead of a target runtime record | Keep P0 projection idempotent; improve target linking only when stronger anchors are recovered. |
 
