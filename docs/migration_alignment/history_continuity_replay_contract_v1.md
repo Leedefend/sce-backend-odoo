@@ -169,6 +169,8 @@ Supported resume step names:
 - `legacy_expense_reimbursement_line_replay`
 - `legacy_construction_diary_line_adapter`
 - `legacy_construction_diary_line_replay`
+- `legacy_payment_residual_adapter`
+- `legacy_payment_residual_replay`
 - `legacy_workflow_audit_adapter`
 - `legacy_workflow_audit_replay`
 - `payment_request_outflow_state_activation_adapter`
@@ -218,6 +220,7 @@ Supported resume step names:
 - `legacy_fund_confirmation_line_sc_v1`
 - `legacy_expense_reimbursement_line_sc_v1`
 - `legacy_construction_diary_line_sc_v1`
+- `legacy_payment_residual_sc_v1`
 - `legacy_workflow_audit_sc_v1`
 - `outflow_request_core`
 - `actual_outflow_core`
