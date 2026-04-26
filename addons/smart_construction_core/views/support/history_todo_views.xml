@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+
+    <record id="view_sc_history_todo_tree" model="ir.ui.view">
+      <field name="name">sc.history.todo.tree</field>
+      <field name="model">sc.history.todo</field>
+      <field name="arch" type="xml">
+        <tree string="历史流程待办" create="false" delete="false">
+          <field name="state"/>
+          <field name="priority"/>
+          <field name="received_at"/>
+          <field name="approved_at"/>
+          <field name="target_lane"/>
+          <field name="target_model"/>
+          <field name="name"/>
+          <field name="actor_name"/>
+          <field name="legacy_step_name"/>
+          <field name="legacy_template_name"/>
+          <field name="action_classification"/>
+          <field name="legacy_status"/>
+          <field name="target_res_model"/>
+          <field name="target_res_id"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="view_sc_history_todo_form" model="ir.ui.view">
+      <field name="name">sc.history.todo.form</field>
+      <field name="model">sc.history.todo</field>
+      <field name="arch" type="xml">
+        <form string="历史流程待办" create="false" delete="false">
+          <header>
+            <button name="action_acknowledge" string="确认已读" type="object" class="btn-primary" invisible="state != 'todo'"/>
+            <button name="action_resolve" string="标记处理" type="object" class="btn-primary" invisible="state not in ('todo', 'acknowledged')"/>
+            <button name="action_archive" string="归档" type="object" invisible="state == 'archived'"/>
+            <button name="action_reset_todo" string="重新打开" type="object" groups="smart_construction_core.group_sc_cap_finance_manager" invisible="state == 'todo'"/>
+            <button name="action_open_target_record" string="打开目标记录" type="object" invisible="not target_res_id"/>
+            <button name="action_open_source_audit" string="打开审批审计" type="object"/>
+            <field name="state" widget="statusbar" statusbar_visible="todo,acknowledged,resolved,archived"/>
+          </header>
+          <sheet>
+            <group>
+              <group string="业务定位">
+                <field name="name"/>
+                <field name="priority"/>
+                <field name="target_lane"/>
+                <field name="target_model"/>
+                <field name="target_external_id"/>
+                <field name="target_res_model"/>
+                <field name="target_res_id"/>
+              </group>
+              <group string="旧系统流程">
+                <field name="legacy_workflow_id"/>
+                <field name="legacy_source_table"/>
+                <field name="legacy_step_name"/>
+                <field name="legacy_template_name"/>
+                <field name="action_classification"/>
+                <field name="legacy_status"/>
+                <field name="legacy_approval_type"/>
+              </group>
+            </group>
+            <group>
+              <group string="人员和时间">
+                <field name="actor_name"/>
+                <field name="actor_legacy_user_id"/>
+                <field name="received_at"/>
+                <field name="approved_at"/>
+              </group>
+              <group string="处理记录">
+                <field name="acknowledged_by_id"/>
+                <field name="acknowledged_at"/>
+                <field name="resolved_by_id"/>
+                <field name="resolved_at"/>
+              </group>
+            </group>
+            <group>
+              <field name="approval_note"/>
+              <field name="resolution_note"/>
+              <field name="workflow_audit_id"/>
+              <field name="source_table"/>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <record id="view_sc_history_todo_search" model="ir.ui.view">
+      <field name="name">sc.history.todo.search</field>
+      <field name="model">sc.history.todo</field>
+      <field name="arch" type="xml">
+        <search string="历史流程待办">
+          <field name="name"/>
+          <field name="actor_name"/>
+          <field name="target_lane"/>
+          <field name="target_model"/>
+          <field name="legacy_step_name"/>
+          <field name="legacy_template_name"/>
+          <filter name="state_todo" string="待处理" domain="[('state', '=', 'todo')]"/>
+          <filter name="state_acknowledged" string="已确认" domain="[('state', '=', 'acknowledged')]"/>
+          <filter name="state_resolved" string="已处理" domain="[('state', '=', 'resolved')]"/>
+          <filter name="state_archived" string="已归档" domain="[('state', '=', 'archived')]"/>
+          <separator/>
+          <filter name="has_target_record" string="已关联目标记录" domain="[('target_res_id', '!=', False)]"/>
+          <group expand="0" string="分组">
+            <filter name="group_state" string="状态" context="{'group_by': 'state'}"/>
+            <filter name="group_target_lane" string="业务泳道" context="{'group_by': 'target_lane'}"/>
+            <filter name="group_target_model" string="目标模型" context="{'group_by': 'target_model'}"/>
+            <filter name="group_actor_name" string="旧系统处理人" context="{'group_by': 'actor_name'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <record id="action_sc_history_todo" model="ir.actions.act_window">
+      <field name="name">历史流程待办</field>
+      <field name="res_model">sc.history.todo</field>
+      <field name="view_mode">tree,form</field>
+      <field name="domain">[('state', '=', 'todo')]</field>
+      <field name="context">{'search_default_state_todo': 1}</field>
+      <field name="groups_id" eval="[
+        (4, ref('smart_construction_core.group_sc_cap_finance_read')),
+        (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+        (4, ref('smart_construction_core.group_sc_cap_finance_manager'))
+      ]"/>
+    </record>
+
+    <record id="action_sc_history_todo_all" model="ir.actions.act_window">
+      <field name="name">历史流程工作台</field>
+      <field name="res_model">sc.history.todo</field>
+      <field name="view_mode">tree,form</field>
+      <field name="context">{'search_default_group_state': 1}</field>
+      <field name="groups_id" eval="[
+        (4, ref('smart_construction_core.group_sc_cap_finance_read')),
+        (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+        (4, ref('smart_construction_core.group_sc_cap_finance_manager'))
+      ]"/>
+    </record>
+
+    <menuitem id="menu_sc_history_todo"
+              name="历史流程待办"
+              parent="smart_construction_core.menu_sc_finance_center"
+              action="action_sc_history_todo"
+              sequence="46"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+
+    <menuitem id="menu_sc_history_todo_all"
+              name="历史流程工作台"
+              parent="smart_construction_core.menu_sc_finance_history_center"
+              action="action_sc_history_todo_all"
+              sequence="5"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+
+  </data>
+</odoo>

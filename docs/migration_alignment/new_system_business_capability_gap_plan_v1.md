@@ -8,11 +8,11 @@ business activity that users still need operable in the new system.
 
 ## Current Evidence
 
-Latest `history_business_usable_probe` on `sc_prod_sim`:
+Latest `history_business_usable_probe` on `sc_prod_sim` after P0-A:
 
 - status: `PASS`
-- decision: `history_business_usable_visible_but_promotion_gaps`
-- promotion gaps: `2`
+- decision: `history_business_usable_ready`
+- promotion gaps: `0`
 - runtime projects: `765`
 - runtime contracts: `6793`
 - supplier contracts: `5301`
@@ -20,12 +20,16 @@ Latest `history_business_usable_probe` on `sc_prod_sim`:
 - payment request lines: `31883`
 - receipt invoice lines: `4454`
 - workflow audit facts: `79702`
+- `sc.history.todo`: `79702`
+- open history todos: `79702`
+- target-linked history todos: `77745`
 - `mail.activity`: `0`
 - `tier.review`: `0`
 
-The missing runtime surface is not record visibility. The main gap is that old
-approval/workflow facts are visible as history, but do not yet become an
-actionable new-system workbench.
+P0-A projects `sc.legacy.workflow.audit` into `sc.history.todo` as a dedicated
+historical workbench. This closes the immediate actionable surface gap without
+fabricating `tier.review` approvals or assigning old permissions as new runtime
+authority.
 
 ## Capability Matrix
 
@@ -44,7 +48,7 @@ actionable new-system workbench.
 | Material catalog | Search archive exists | Not a usable product/master-data workflow | Add archive search UI plus controlled material-to-product promotion. |
 | Attachments | URL/index facts exist | Binary custody is not complete | Execute file custody policy: copy selected binaries, verify hashes/availability, attach to runtime or legacy records. |
 | Attendance/personnel/salary | Privacy-restricted facts exist | Not a native HR workflow | Add HR-lite modules only if users still process these in the construction system; otherwise keep restricted archive. |
-| Workflow/todo | Audit facts exist | `mail.activity=0`, `tier.review=0`; no actionable old workflow surface | P0: create unified history workbench and pending-action projection. |
+| Workflow/todo | Audit facts and `sc.history.todo` workbench exist | Remaining weak rows open the source audit instead of a target runtime record | Keep P0 projection idempotent; improve target linking only when stronger anchors are recovered. |
 
 ## P0 Must Do Before Claiming Full Replacement
 

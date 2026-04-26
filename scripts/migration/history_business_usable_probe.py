@@ -239,6 +239,13 @@ counts = {
     "legacy_financing_loan_facts": count("sc.legacy.financing.loan.fact", []),
     "legacy_fund_daily_snapshot_facts": count("sc.legacy.fund.daily.snapshot.fact", []),
     "legacy_workflow_audit_facts": count("sc.legacy.workflow.audit", []),
+    "history_todo_total": count("sc.history.todo", [], active_test=False),
+    "history_todo_open": count(
+        "sc.history.todo",
+        [("state", "in", ["todo", "acknowledged"])],
+        required_fields=["state"],
+        active_test=False,
+    ),
     "mail_activity_total": count("mail.activity", [], active_test=False),
     "mail_activity_for_history_models": count(
         "mail.activity",
@@ -297,6 +304,7 @@ sample_runtime_records = {
     "payment_request_line_id": sample_id("payment.request.line", []),
     "receipt_invoice_line_id": sample_id("sc.receipt.invoice.line", []),
     "legacy_workflow_audit_id": sample_id("sc.legacy.workflow.audit", []),
+    "history_todo_id": sample_id("sc.history.todo", [], active_test=False),
     "mail_activity_id": sample_id("mail.activity", [], active_test=False),
     "tier_review_id": sample_id("tier.review", [], active_test=False),
 }
@@ -324,11 +332,13 @@ promotion_gaps = {
     ),
     "workflow_audit_without_actionable_runtime": bool(
         (counts.get("legacy_workflow_audit_facts") or 0) > 0
+        and (counts.get("history_todo_total") or 0) == 0
         and (counts.get("mail_activity_total") or 0) == 0
         and (counts.get("tier_review_total") or 0) == 0
     ),
     "no_actionable_todo_surface": bool(
-        (counts.get("mail_activity_total") or 0) == 0
+        (counts.get("history_todo_total") or 0) == 0
+        and (counts.get("mail_activity_total") or 0) == 0
         and (counts.get("tier_review_total") or 0) == 0
     ),
     "payment_request_no_pending_runtime_states": bool(

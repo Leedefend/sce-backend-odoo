@@ -90,6 +90,7 @@
         'views/support/payment_request_tier_review_views.xml',
         'views/menu_finance_center.xml',
         'views/support/legacy_finance_internal_views.xml',
+        'views/support/history_todo_views.xml',
         'views/support/tier_review_views.xml',
         'views/core/project_extend_boq_views.xml',
         'views/core/payment_ledger_views.xml',
