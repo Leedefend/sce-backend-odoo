@@ -68,6 +68,25 @@ class ScLegacyUserRole(models.Model):
     role_name = fields.Char(index=True)
     role_source = fields.Char(required=True, index=True)
     company_legacy_id = fields.Char(index=True)
+    projected_group_ids = fields.Many2many(
+        "res.groups",
+        "sc_legacy_user_role_res_groups_rel",
+        "legacy_role_id",
+        "group_id",
+        string="Projected Capability Groups",
+        readonly=True,
+    )
+    projection_state = fields.Selection(
+        [
+            ("pending", "Pending"),
+            ("projected", "Projected"),
+            ("unmapped", "Unmapped"),
+        ],
+        default="pending",
+        index=True,
+        readonly=True,
+    )
+    projection_note = fields.Char(readonly=True)
     source_table = fields.Char(required=True, index=True)
     note = fields.Text()
     active = fields.Boolean(default=True, index=True)
@@ -87,6 +106,10 @@ class ScLegacyUserProjectScope(models.Model):
     company_legacy_id = fields.Char(index=True)
     project_legacy_id = fields.Char(index=True)
     project_id = fields.Many2one("project.project", index=True, ondelete="set null")
+    resolved_project_ref = fields.Char(index=True, readonly=True)
+    project_access_applied = fields.Boolean(default=False, index=True, readonly=True)
+    project_access_note = fields.Char(readonly=True)
+    project_access_applied_at = fields.Datetime(readonly=True)
     scope_state = fields.Char(required=True, index=True)
     created_by_legacy_user_id = fields.Char(index=True)
     created_by_name = fields.Char(index=True)

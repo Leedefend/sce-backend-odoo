@@ -39,6 +39,11 @@ Latest `history_business_usable_probe` on `sc_prod_sim` after P0-A:
 - historical fund daily lines: `7754`
 - historical material categories/details: preserved as archive-first master data
 - historical purchase/general contracts: preserved as searchable contract facts
+- historical users: `101`
+- historical user roles: `330`, projected to runtime capability groups: `253`
+- migrated users with runtime capability groups: `96`
+- current historical project scopes: `20000`, linked to runtime projects: `17453`
+- legacy projects with migrated user follower access: `480`
 - `mail.activity`: `0`
 - `tier.review`: `0`
 
@@ -87,11 +92,18 @@ the current carrier has partner text and credit-code evidence, not a verified
 `partner_id`. The runtime probe reports strong-anchor candidates for a future
 explicit promotion pass.
 
+P2-C projects legacy user roles and current project scopes into runtime access.
+Role names are conservatively mapped to SC capability groups by business
+domain; generic/admin-like legacy labels are retained as unmapped evidence.
+Current project scopes are resolved through project `legacy_parent_id` and
+applied as project follower access so existing project record rules allow
+continuity without using removed scope rows as new authority.
+
 ## Capability Matrix
 
 | Legacy business area | Current new-system state | Gap | Plan |
 | --- | --- | --- | --- |
-| Projects, partners, members | Runtime records and anchors exist | Member scope is mostly evidence, not permission workflow | Keep current replay; add project member read/search surfaces and explicit promotion rules only when users need old scope as active permission. |
+| Projects, partners, members | Runtime records and anchors exist; current legacy user-project scopes are projected to project follower access where anchors resolve | 2547 current scope rows still lack project anchors; removed scopes remain audit-only | Keep current replay; recover missing anchors only from stronger project evidence and never authorize from removed scope rows. |
 | Construction contracts | Runtime `construction.contract` exists | Some old terms/attachments are still history-only | Add contract historical evidence smart tabs and attachment drill-through. |
 | Supplier contracts | Runtime supplier contracts and summary lines exist | Some blocked/weak partner contract residue remains neutral | Keep weak rows neutral; add partner recovery only for confirmed active counterparties. |
 | Purchase/general contracts | Historical purchase/general contract workbench is visible | Native promotion requires verified `partner_id` anchors | Keep searchable contract facts now; promote only rows with confirmed project, partner, amount, tax, and attachment policy. |
@@ -176,8 +188,12 @@ explicit promotion pass.
      counts; it does not invent partner links from text alone.
 
 3. Historical user scope review
-   - Provide read-only scope evidence.
-   - Promote to active access only through explicit role approval.
+   - Legacy roles are projected to runtime capability groups when the role name
+     has a clear business-domain meaning.
+   - Current project scopes are linked to runtime projects by
+     `project_project.legacy_parent_id` and applied as follower access for
+     existing project record rules.
+   - Removed and ambiguous scope rows remain evidence only.
 
 ## P3 Optional / Policy Driven
 
@@ -200,7 +216,9 @@ explicit promotion pass.
 5. P1 settlement adjustment and treasury reconciliation runtime visibility.
 6. P1 expense/deposit searchable archive and formal archive-first decision.
 7. P2 material/product promotion and weak contract promotion.
-8. P3 HR/platform audit only after explicit business decision.
+8. P2 historical user access projection and missing project-scope anchor
+   review.
+9. P3 HR/platform audit only after explicit business decision.
 
 ## Acceptance Criteria
 
@@ -213,5 +231,7 @@ explicit promotion pass.
 - Invoice/tax/deduction/fund confirmation facts have either native runtime
   models or explicitly approved archive-only policies.
 - Attachment links needed for day-to-day business open successfully.
+- Migrated users with clear old role/scope facts can enter the corresponding
+  new-system business centers and open linked projects.
 - Privacy-restricted salary/personnel facts remain unavailable to ordinary
   finance/project users.

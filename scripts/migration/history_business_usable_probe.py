@@ -171,6 +171,41 @@ def project_task_assigned_domain() -> list[object] | None:
 counts = {
     "legacy_users": count("res.users", [("login", "like", "legacy_%")], active_test=False),
     "legacy_active_users": count("res.users", [("login", "like", "legacy_%"), ("active", "=", True)], active_test=False),
+    "legacy_user_roles": count("sc.legacy.user.role", [], active_test=False),
+    "legacy_user_roles_projected": count(
+        "sc.legacy.user.role",
+        [("projection_state", "=", "projected")],
+        required_fields=["projection_state"],
+        active_test=False,
+    ),
+    "legacy_user_project_scopes_current": count(
+        "sc.legacy.user.project.scope",
+        [("scope_state", "=", "current")],
+        active_test=False,
+    ),
+    "legacy_user_project_scopes_current_with_project": count(
+        "sc.legacy.user.project.scope",
+        [("scope_state", "=", "current"), ("project_id", "!=", False)],
+        required_fields=["project_id"],
+        active_test=False,
+    ),
+    "legacy_user_project_scopes_access_applied": count(
+        "sc.legacy.user.project.scope",
+        [("project_access_applied", "=", True)],
+        required_fields=["project_access_applied"],
+        active_test=False,
+    ),
+    "legacy_users_with_runtime_capability_groups": count(
+        "res.users",
+        [("login", "like", "legacy_%"), ("groups_id.name", "ilike", "SC 能力")],
+        active_test=False,
+    ),
+    "legacy_project_followers": count(
+        "project.project",
+        [("legacy_project_id", "!=", False), ("message_partner_ids.user_ids.login", "like", "legacy_%")],
+        required_fields=["legacy_project_id", "message_partner_ids"],
+        active_test=False,
+    ),
     "partner_anchors": count("res.partner", [("legacy_partner_id", "!=", False)]),
     "project_runtime_records": count("project.project", [("legacy_project_id", "!=", False)]),
     "project_records_with_owner_link": count(
@@ -493,6 +528,17 @@ promotion_gaps = {
     "purchase_contract_runtime_surface_gap": bool(
         (counts.get("legacy_purchase_contract_facts") or 0) > 0
         and not sample_runtime_records.get("legacy_purchase_contract_fact_id")
+    ),
+    "legacy_user_access_runtime_gap": bool(
+        (counts.get("legacy_user_roles") or 0) > 0
+        and (
+            (counts.get("legacy_user_roles_projected") or 0) == 0
+            or (counts.get("legacy_users_with_runtime_capability_groups") or 0) == 0
+            or (
+                (counts.get("legacy_user_project_scopes_current_with_project") or 0) > 0
+                and (counts.get("legacy_user_project_scopes_access_applied") or 0) == 0
+            )
+        )
     ),
 }
 
