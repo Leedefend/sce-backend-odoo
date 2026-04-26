@@ -263,6 +263,16 @@ exec_kw(uid, PWD, "sc.settlement.order", "write", [[settlement_id], {"state": "a
 
 step("ensure project funding ready + baseline")
 exec_kw(uid, PWD, "project.project", "write", [[project_id], {"funding_enabled": True}])
+existing_payments = exec_kw(
+    uid,
+    PWD,
+    "payment.request",
+    "search_read",
+    [[("project_id", "=", project_id), ("type", "=", "pay"), ("state", "in", ["submit", "approve", "approved", "done"])]],
+    {"fields": ["amount"]},
+)
+existing_submitted_amount = sum(float(row.get("amount") or 0.0) for row in existing_payments)
+baseline_amount = max(1000.0, existing_submitted_amount + 100.0)
 baseline_ids = exec_kw(
     uid,
     PWD,
@@ -279,10 +289,12 @@ if not baseline_ids:
         "create",
         [{
             "project_id": project_id,
-            "total_amount": 1000.0,
+            "total_amount": baseline_amount,
             "state": "active",
         }],
     )
+else:
+    exec_kw(uid, PWD, "project.funding.baseline", "write", [baseline_ids, {"total_amount": baseline_amount}])
 
 step("create payment request + submit")
 payment_id = exec_kw(
