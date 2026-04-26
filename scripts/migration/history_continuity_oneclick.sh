@@ -263,6 +263,8 @@ case "$MODE" in
     run_step legacy_financing_loan_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_financing_loan_replay_write.py"
     run_step legacy_fund_daily_snapshot_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_snapshot_replay_adapter.py"
     run_step legacy_fund_daily_snapshot_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_snapshot_replay_write.py"
+    run_step legacy_fund_daily_line_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_line_replay_adapter.py"
+    run_step legacy_fund_daily_line_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_line_replay_write.py"
     run_step usability_probe run_odoo_script "$PROBE_SCRIPT"
     ;;
   *)

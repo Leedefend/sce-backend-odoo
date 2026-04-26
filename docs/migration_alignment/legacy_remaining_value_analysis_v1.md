@@ -35,6 +35,7 @@ semantics.
 | `sc.legacy.expense.deposit.fact` | 11167 |
 | `sc.legacy.financing.loan.fact` | 318 |
 | `sc.legacy.fund.daily.snapshot.fact` | 496 |
+| `sc.legacy.fund.daily.line` | 7754 |
 | `sc.legacy.material.category` | 130624 |
 | `sc.legacy.material.detail` | 2279734 |
 | `sc.legacy.file.index` | 178931 |
@@ -57,6 +58,7 @@ semantics.
 | P1 | construction diary / quality notes | `SGZL_RZRJ`, `SGZL_RZRJ_CB` | 4,340 headers; 5,687 lines | Covered by neutral construction diary archive. Keeps project field facts without changing new task, quality, or document workflow state. |
 | P1 | payment runtime residuals | `C_ZFSQGL`, `T_FK_Supplier` | 1,362 outflow request residuals; 484 actual outflow residuals | Covered by neutral payment residual archive. These rows are not promoted to `payment.request`, ledger, settlement, or accounting state. |
 | P1 | receipt runtime residuals | `C_JFHKLR` | 4,357 receipt residuals | Covered by neutral receipt residual archive. These rows are not promoted to receive requests, treasury ledger, settlement, or invoice state. |
+| P1 | fund daily account lines | `D_SCBSJS_ZJGL_ZJSZ_ZJRBB`, `D_SCBSJS_ZJGL_ZJSZ_ZJRBB_CB` | 511 headers; 7,754 account lines | Covered by neutral fund daily line archive. Keeps account, bank balance, daily income/expense, and difference facts under old document context without changing new treasury state. |
 | P2 | attendance / check-in | `CheckInData` | 106,208 rows; 88 users; 13,932 active-like; 2019-2023 | Covered by privacy-restricted neutral archive. Not new attendance, approval, payroll, or permission state. |
 | P2 | personnel movement | `PM_RYYDGL` | 20,804 rows | Covered by privacy-restricted neutral archive. Not new employee, permission, payroll, or org state. |
 | P2 | salary lines | `BGGL_XZ_GZ_CB` | 3,458 rows; 111 people; total about 30.56M | Highly sensitive. Only migrate if explicitly required; encrypted/restricted neutral carrier. |
@@ -97,6 +99,8 @@ Financial/detail candidates:
   approved amount about 11,869,461.66.
 - `SGZL_RZRJ_CB`: 5,687 rows under 4,340 construction diary headers; preserves
   diary descriptions, quality/detail text, and attachment path references.
+- `D_SCBSJS_ZJGL_ZJSZ_ZJRBB_CB`: 7,754 account lines under 511 fund daily
+  headers; current account balance sum about 5,693,334,440.58.
 
 ## Recommended Next Move
 

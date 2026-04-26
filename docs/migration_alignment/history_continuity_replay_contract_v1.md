@@ -187,6 +187,8 @@ Supported resume step names:
 - `legacy_financing_loan_replay`
 - `legacy_fund_daily_snapshot_adapter`
 - `legacy_fund_daily_snapshot_replay`
+- `legacy_fund_daily_line_adapter`
+- `legacy_fund_daily_line_replay`
 - `usability_probe`
 
 ## Included Lanes
@@ -237,6 +239,7 @@ Supported resume step names:
 - `actual_outflow_line`
 - `legacy_financing_loan_sc_v1`
 - `legacy_fund_daily_snapshot_sc_v1`
+- `legacy_fund_daily_line_sc_v1`
 - `legacy_material_catalog_sc_v1`
 - `legacy_file_index_sc_v1`
 
