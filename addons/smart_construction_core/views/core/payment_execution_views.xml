@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_payment_execution_search" model="ir.ui.view">
+            <field name="name">sc.payment.execution.search</field>
+            <field name="model">sc.payment.execution</field>
+            <field name="arch" type="xml">
+                <search string="付款执行">
+                    <field name="name"/>
+                    <field name="document_no"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="contract_id"/>
+                    <field name="payment_family"/>
+                    <field name="payment_method"/>
+                    <field name="legacy_record_id"/>
+                    <filter string="付款申请残余" name="source_kind_outflow_request" domain="[('source_kind', '=', 'outflow_request')]"/>
+                    <filter string="实付残余" name="source_kind_actual_outflow" domain="[('source_kind', '=', 'actual_outflow')]"/>
+                    <filter string="历史迁移" name="source_origin_legacy" domain="[('source_origin', '=', 'legacy')]"/>
+                    <filter string="新系统登记" name="source_origin_manual" domain="[('source_origin', '=', 'manual')]"/>
+                    <filter string="已确认" name="state_confirmed" domain="[('state', 'in', ['confirmed', 'legacy_confirmed'])]"/>
+                    <filter string="已付款" name="state_paid" domain="[('state', '=', 'paid')]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="按类型" name="group_source_kind" context="{'group_by': 'source_kind'}"/>
+                    <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="按日期" name="group_date" context="{'group_by': 'date_payment'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_payment_execution_tree" model="ir.ui.view">
+            <field name="name">sc.payment.execution.tree</field>
+            <field name="model">sc.payment.execution</field>
+            <field name="arch" type="xml">
+                <tree string="付款执行">
+                    <field name="name"/>
+                    <field name="date_payment"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="contract_id"/>
+                    <field name="source_kind"/>
+                    <field name="document_no"/>
+                    <field name="payment_method"/>
+                    <field name="planned_amount" sum="申请/计划金额"/>
+                    <field name="paid_amount" sum="实付金额"/>
+                    <field name="source_origin"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_payment_execution_form" model="ir.ui.view">
+            <field name="name">sc.payment.execution.form</field>
+            <field name="model">sc.payment.execution</field>
+            <field name="arch" type="xml">
+                <form string="付款执行">
+                    <header>
+                        <button name="action_confirm" string="确认" type="object" class="btn-primary"
+                                invisible="state != 'draft'"/>
+                        <button name="action_paid" string="已付款" type="object" class="btn-primary"
+                                invisible="state not in ('draft', 'confirmed')"/>
+                        <button name="action_cancel" string="取消" type="object"
+                                invisible="state in ('cancel', 'legacy_confirmed')"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,confirmed,paid,legacy_confirmed,cancel"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="source_origin" readonly="source_origin == 'legacy'"/>
+                                <field name="source_kind" readonly="source_origin == 'legacy'"/>
+                                <field name="date_payment" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                                <field name="document_no" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            </group>
+                            <group>
+                                <field name="project_id" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                                <field name="partner_id"/>
+                                <field name="contract_id"/>
+                                <field name="payment_request_id"/>
+                            </group>
+                        </group>
+                        <group string="付款信息">
+                            <field name="payment_family" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="payment_method" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="bank_account" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="handler_name" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                        </group>
+                        <group string="金额">
+                            <field name="planned_amount" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="paid_amount" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="invoice_amount" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="currency_id"/>
+                        </group>
+                        <group string="历史来源" invisible="source_origin != 'legacy'">
+                            <field name="legacy_source_model" readonly="1"/>
+                            <field name="legacy_source_table" readonly="1"/>
+                            <field name="legacy_record_id" readonly="1"/>
+                            <field name="legacy_document_state" readonly="1"/>
+                            <field name="legacy_residual_reason" readonly="1"/>
+                            <field name="legacy_attachment_ref" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="note"/>
+                            <field name="active"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_payment_execution" model="ir.actions.act_window">
+            <field name="name">付款执行</field>
+            <field name="res_model">sc.payment.execution</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_payment_execution_search"/>
+            <field name="context">{'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+
+        <menuitem id="menu_sc_payment_execution"
+                  name="付款执行"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  action="action_sc_payment_execution"
+                  sequence="36"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    </data>
+</odoo>

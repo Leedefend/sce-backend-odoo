@@ -45,6 +45,9 @@ Latest `history_business_usable_probe` on `sc_prod_sim` after P0-A:
 - receipt/income runtime records: receipt income facts and residual receipt
   rows with project/amount anchors are projected to `sc.receipt.income`; old
   completed rows are kept as `legacy_confirmed`
+- payment execution runtime records: payment residual rows with project and
+  positive planned/paid amount anchors are projected to `sc.payment.execution`;
+  old completed rows are kept as `legacy_confirmed`
 - construction diary runtime records: legacy construction diary/quality-note
   lines with project anchors are projected to `sc.construction.diary`; old
   completed rows are kept as `legacy_confirmed`
@@ -145,6 +148,13 @@ lines with project anchors are projected as legacy rows; old completed rows
 become `legacy_confirmed`, while new-system project users can continue
 registering, confirming, and completing manual site diary records.
 
+P1-I adds `sc.payment.execution` as the runtime carrier for payment execution
+facts that do not satisfy the strict new `payment.request` approval and
+settlement rules. Historical payment residual rows with project and positive
+planned/paid amount anchors are projected as legacy rows; old completed rows
+become `legacy_confirmed`, while new-system finance users can continue
+registering, confirming, and marking manual payment execution as paid.
+
 ## Capability Matrix
 
 | Legacy business area | Current new-system state | Gap | Plan |
@@ -153,7 +163,7 @@ registering, confirming, and completing manual site diary records.
 | Construction contracts | Runtime `construction.contract` exists | Some old terms/attachments are still history-only | Add contract historical evidence smart tabs and attachment drill-through. |
 | Supplier contracts | Runtime supplier contracts and summary lines exist | Some blocked/weak partner contract residue remains neutral | Keep weak rows neutral; add partner recovery only for confirmed active counterparties. |
 | Purchase/general contracts | Historical purchase/general contract workbench is visible | Native promotion requires verified `partner_id` anchors | Keep searchable contract facts now; promote only rows with confirmed project, partner, amount, tax, and attachment policy. |
-| Payment requests | Runtime `payment.request` exists with states; historical actual outflow is projected to `sc.treasury.ledger` | 153 nonpositive cash-like rows remain fact-only | Keep request/approval/cash ledger separated; improve residual handling only with stronger business anchors. |
+| Payment requests / execution | Runtime `payment.request` exists with states; historical actual outflow is projected to `sc.treasury.ledger`; payment residual rows with project and positive planned/paid amount anchors are projected to `sc.payment.execution` | Nonpositive or unanchored payment residual rows remain fact-only | Keep request/approval/cash ledger/execution separated; use payment execution runtime for continuing payment registration without fabricating old approvals. |
 | Receipts and income | Receipt requests plus neutral receipt facts exist; historical receipts are projected to `sc.treasury.ledger`; receipt income and residual receipt rows are projected to `sc.receipt.income` | Rows without project/amount anchors remain fact-only; accounting posting remains explicit | Use receipt income runtime for continuing income registration; link payment request, treasury ledger, contract, and partner anchors only when evidence is strong. |
 | Invoice and tax | Invoice/tax facts and invoice registration workbench are visible | Accounting posting remains explicit, not automatic migration side effect | Keep searchable historical surfaces; promote to accounting moves only through future controlled posting workflow. |
 | Settlement/deductions | New settlement order exists; historical deduction facts are projected to `sc.settlement.adjustment`; new manual adjustment registration and confirmation exists | Historical rows without project anchors remain fact-only; legacy rows are not auto-linked to settlement orders without stronger anchors | Use settlement adjustment runtime for continuing operations; link historical rows to settlement/contract/partner only when explicit anchors are recovered. |
