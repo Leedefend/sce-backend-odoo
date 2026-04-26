@@ -102,6 +102,7 @@
         'views/core/treasury_reconciliation_views.xml',
         'views/core/receipt_income_views.xml',
         'views/core/payment_execution_views.xml',
+        'views/core/invoice_registration_views.xml',
         'views/core/payment_request_views.xml',
         'views/core/project_overview_views.xml',
         'actions/project_actions_views.xml',

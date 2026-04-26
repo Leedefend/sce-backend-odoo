@@ -17,6 +17,7 @@ from . import expense_claim
 from . import treasury_reconciliation
 from . import receipt_income
 from . import payment_execution
+from . import invoice_registration
 from . import construction_diary
 from . import payment_request
 from . import payment_request_line
