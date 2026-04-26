@@ -221,18 +221,25 @@
               sequence="80"
               groups="smart_construction_core.group_sc_cap_data_read"/>
 
-    <!-- 配置中心 -->
+    <!-- 业务配置：给业务系统管理员，不开放平台系统权限 -->
+    <menuitem id="menu_sc_business_config_center"
+              name="业务配置"
+              parent="menu_sc_root"
+              sequence="88"
+              groups="smart_construction_core.group_sc_cap_business_config_admin"/>
+
+    <!-- 系统配置：仅平台级系统管理员 -->
     <menuitem id="menu_sc_config_center"
-              name="基础资料"
+              name="系统配置"
               parent="menu_sc_root"
               sequence="90"
               groups="smart_construction_core.group_sc_cap_config_admin"/>
     <menuitem id="menu_sc_project_cost_code"
               name="成本科目"
-              parent="menu_sc_config_center"
+              parent="menu_sc_business_config_center"
               action="action_project_cost_code"
               sequence="40"
-              groups="smart_construction_core.group_sc_cap_config_admin"/>
+              groups="smart_construction_core.group_sc_cap_business_config_admin"/>
     <menuitem id="menu_sc_workflow_root"
               name="工作流"
               parent="menu_sc_config_center"

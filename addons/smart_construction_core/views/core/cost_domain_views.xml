@@ -161,7 +161,7 @@
         <field name="name">成本科目</field>
         <field name="res_model">project.cost.code</field>
         <field name="view_mode">tree,form</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
     </record>
 
     <!-- ===== 预算 vs 实际 报表 ===== -->

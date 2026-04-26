@@ -63,6 +63,16 @@ class ScSecurityPolicy(models.TransientModel):
                 role.write({"implied_ids": [(4, cap.id)]})
                 updated = True
 
+        executive = self.env.ref("smart_construction_custom.group_sc_role_executive", raise_if_not_found=False)
+        platform_admin = self.env.ref("smart_construction_core.group_sc_cap_config_admin", raise_if_not_found=False)
+        business_config = self.env.ref("smart_construction_core.group_sc_cap_business_config_admin", raise_if_not_found=False)
+        if executive and platform_admin and platform_admin in executive.implied_ids:
+            executive.write({"implied_ids": [(3, platform_admin.id)]})
+            updated = True
+        if executive and business_config and business_config not in executive.implied_ids:
+            executive.write({"implied_ids": [(4, business_config.id)]})
+            updated = True
+
         user_map = {
             "demo_role_project_read": [
                 "smart_construction_custom.group_sc_role_project_read",
@@ -104,11 +114,30 @@ class ScSecurityPolicy(models.TransientModel):
                 "smart_construction_custom.group_sc_role_executive",
             ],
         }
+        forbidden_by_login = {
+            "demo_role_executive": [
+                "base.group_erp_manager",
+                "base.group_system",
+                "base.group_no_one",
+                "project.group_project_manager",
+                "smart_construction_core.group_sc_cap_config_admin",
+                "smart_construction_core.group_sc_super_admin",
+                "smart_construction_core.group_sc_task_entry_access",
+            ],
+        }
         Users = self.env["res.users"].sudo()
         for login, groups in user_map.items():
             user = Users.search([("login", "=", login)], limit=1)
             if not user:
                 continue
+            to_remove = []
+            for xmlid in forbidden_by_login.get(login, []):
+                group = self.env.ref(xmlid, raise_if_not_found=False)
+                if group and group in user.groups_id:
+                    to_remove.append(group.id)
+            if to_remove:
+                user.write({"groups_id": [(3, gid) for gid in to_remove]})
+                updated = True
             to_add = []
             for xmlid in groups:
                 group = self.env.ref(xmlid, raise_if_not_found=False)
