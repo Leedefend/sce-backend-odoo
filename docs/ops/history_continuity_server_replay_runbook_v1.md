@@ -194,6 +194,8 @@ The one-click path now covers:
 - legacy invoice tax
 - legacy invoice registration lines from `C_JXXP_ZYFPJJD_CB`; this is a
   neutral historical archive and does not create `account.move` invoices
+- legacy deduction/settlement adjustment lines from `T_KK_SJDJB_CB`; this is a
+  neutral historical archive and does not update native settlement states
 - legacy financing loan
 - legacy fund daily snapshot
 - legacy material catalog archive

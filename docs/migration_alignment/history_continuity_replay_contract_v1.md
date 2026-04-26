@@ -157,6 +157,8 @@ Supported resume step names:
 - `legacy_invoice_tax_replay`
 - `legacy_invoice_registration_line_adapter`
 - `legacy_invoice_registration_line_replay`
+- `legacy_deduction_adjustment_line_adapter`
+- `legacy_deduction_adjustment_line_replay`
 - `legacy_workflow_audit_adapter`
 - `legacy_workflow_audit_replay`
 - `payment_request_outflow_state_activation_adapter`
@@ -200,6 +202,7 @@ Supported resume step names:
 - `legacy_expense_deposit_sc_v1`
 - `legacy_invoice_tax_sc_v1`
 - `legacy_invoice_registration_line_sc_v1`
+- `legacy_deduction_adjustment_line_sc_v1`
 - `legacy_workflow_audit_sc_v1`
 - `outflow_request_core`
 - `actual_outflow_core`
