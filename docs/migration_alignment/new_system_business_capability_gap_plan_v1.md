@@ -38,6 +38,10 @@ Latest `history_business_usable_probe` on `sc_prod_sim` after P0-A:
 - historical expense reimbursement lines: preserved as searchable line facts
 - expense/deposit runtime claims: `13314` legacy rows projected,
   `13279` legacy-confirmed rows
+- treasury reconciliation runtime records: fund daily and fund confirmation
+  rows with project/amount/balance anchors are projected to
+  `sc.treasury.reconciliation`; old completed rows are kept as
+  `legacy_confirmed`
 - historical financing loan facts: `318`
 - historical fund daily snapshots: `496`
 - historical fund daily lines: `7754`
@@ -116,6 +120,12 @@ completed rows become `legacy_confirmed`, while new-system finance users can
 continue registering, submitting, approving, and completing manual expense or
 deposit claims.
 
+P1-F adds `sc.treasury.reconciliation` as the runtime carrier for treasury
+daily reconciliation and fund confirmation. Historical fund daily lines and
+fund confirmation lines with project anchors are projected as legacy rows; old
+completed rows become `legacy_confirmed`, while new-system finance users can
+continue registering, confirming, and completing treasury reconciliation work.
+
 ## Capability Matrix
 
 | Legacy business area | Current new-system state | Gap | Plan |
@@ -128,7 +138,7 @@ deposit claims.
 | Receipts and income | Receipt requests plus neutral receipt facts exist; historical receipts are projected to `sc.treasury.ledger` | Residual receipts and fund confirmations are not fully native receive/treasury actions | Add receipt workbench and controlled promotion for rows with project/partner/amount anchors. |
 | Invoice and tax | Invoice/tax facts and invoice registration workbench are visible | Accounting posting remains explicit, not automatic migration side effect | Keep searchable historical surfaces; promote to accounting moves only through future controlled posting workflow. |
 | Settlement/deductions | New settlement order exists; historical deduction facts are projected to `sc.settlement.adjustment`; new manual adjustment registration and confirmation exists | Historical rows without project anchors remain fact-only; legacy rows are not auto-linked to settlement orders without stronger anchors | Use settlement adjustment runtime for continuing operations; link historical rows to settlement/contract/partner only when explicit anchors are recovered. |
-| Fund daily, fund confirmation, financing | Cash ledger, fund confirmation, financing, fund daily snapshot, and fund daily line workbenches are visible | Formal new-entry reconciliation workflow is still future work | Keep historical facts searchable now; add write-side treasury daily/reconciliation workflow only for new business operations. |
+| Fund daily, fund confirmation, financing | Cash ledger, fund confirmation, financing, fund daily snapshot, and fund daily line workbenches are visible; project-anchored fund daily/confirmation facts are projected to `sc.treasury.reconciliation` | Financing/borrowing facts remain archive-first and historical rows without project anchors remain fact-only | Use treasury reconciliation runtime for continuing daily/confirmation operations; keep financing promotion separate until a repayment/borrowing workflow is explicitly designed. |
 | Expense reimbursement/deposit | Expense/deposit facts and reimbursement lines are projected to `sc.expense.claim`; new manual registration, approval, and completion exists | Legacy rows are not automatically linked to payment requests unless stronger payment anchors are recovered | Use runtime claims for continuing operations; supplement payment request links only through explicit anchor recovery. |
 | Material catalog | Search archive and controlled material-to-product promotion exist | Bulk promotion remains intentionally disabled | Keep archive-first catalog; material managers promote selected rows only when needed for new material plans/purchase flows. |
 | Attachments | URL/index facts exist; 19,537 URL attachments and 178,931 file index rows are visible | Binary custody is not complete | Keep URL/index custody available now; copy selected binaries only after repository and hash policy are approved. |
@@ -180,9 +190,11 @@ deposit claims.
      anchors are strong enough.
 
 3. Treasury daily/reconciliation runtime
-   - Turn fund daily snapshots and lines into operational views.
-   - Add account balance, bank balance, system difference, daily income,
-     daily expense, and confirmation/reconciliation workflow.
+   - `sc.treasury.reconciliation` is available as the native daily and fund
+     confirmation document.
+   - Historical project-anchored fund daily lines and fund confirmation rows
+     are projected as historical runtime records.
+   - New operations can be confirmed and reconciled in the finance center.
 
 4. Expense reimbursement and deposit workflow
    - `sc.expense.claim` is available as the native expense/deposit document.

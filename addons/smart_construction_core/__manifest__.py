@@ -99,6 +99,7 @@
         'views/core/payment_request_line_views.xml',
         'views/core/receipt_invoice_line_views.xml',
         'views/core/expense_claim_views.xml',
+        'views/core/treasury_reconciliation_views.xml',
         'views/core/payment_request_views.xml',
         'views/core/project_overview_views.xml',
         'actions/project_actions_views.xml',
