@@ -28,6 +28,10 @@ Latest `history_business_usable_probe` on `sc_prod_sim` after P0-A:
 - `sc.treasury.ledger`: `16047`
 - legacy file index rows: `178931`
 - legacy URL attachments: `19537`
+- historical invoice registration lines: `25393`
+- historical invoice tax facts: `5920`
+- historical deduction adjustment lines: `13521`
+- historical fund confirmation lines: `13398`
 - `mail.activity`: `0`
 - `tier.review`: `0`
 
@@ -47,6 +51,11 @@ adds operational entry points for receipt invoice lines, payment request lines,
 and the legacy file index. Binary bytes remain outside Odoo until a separate
 file repository copy-and-hash policy is approved.
 
+P1-A exposes historical invoice registration, invoice tax, deduction adjustment,
+and fund-confirmation facts as searchable finance workbench surfaces. It does
+not create `account.move` records automatically; posting remains a controlled
+new-system operation.
+
 ## Capability Matrix
 
 | Legacy business area | Current new-system state | Gap | Plan |
@@ -57,7 +66,7 @@ file repository copy-and-hash policy is approved.
 | Purchase/general contracts | Neutral `sc.legacy.purchase.contract.fact` | Not native contract workflow | Add a purchase/general contract module or promotion wizard for active rows with recoverable partner anchors. |
 | Payment requests | Runtime `payment.request` exists with states; historical actual outflow is projected to `sc.treasury.ledger` | 153 nonpositive cash-like rows remain fact-only | Keep request/approval/cash ledger separated; improve residual handling only with stronger business anchors. |
 | Receipts and income | Receipt requests plus neutral receipt facts exist; historical receipts are projected to `sc.treasury.ledger` | Residual receipts and fund confirmations are not fully native receive/treasury actions | Add receipt workbench and controlled promotion for rows with project/partner/amount anchors. |
-| Invoice and tax | Invoice/tax facts are preserved | Invoice registration and deduction/tax adjustments are neutral-only | Add invoice registration and tax adjustment runtime models, keeping accounting posting explicit and separate. |
+| Invoice and tax | Invoice/tax facts and invoice registration workbench are visible | Accounting posting remains explicit, not automatic migration side effect | Keep searchable historical surfaces; promote to accounting moves only through future controlled posting workflow. |
 | Settlement/deductions | New settlement order exists; old deduction facts are neutral | Old deduction/settlement adjustments cannot be processed natively | Add settlement adjustment runtime model linked to contracts, receipts, and payments. |
 | Fund daily, fund confirmation, financing | Facts are preserved | No operational treasury daily entry/reconciliation workflow | Add treasury daily statement, bank/account balance reconciliation, and fund confirmation screens. |
 | Expense reimbursement/deposit | Facts are preserved | No native reimbursement workflow for old-style expenses | Add expense reimbursement/deposit workflow or explicit archive-only policy per business owner. |

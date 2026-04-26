@@ -277,6 +277,7 @@ case "$MODE" in
     run_step legacy_fund_daily_line_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_line_replay_adapter.py"
     run_step legacy_fund_daily_line_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_line_replay_write.py"
     run_step attachment_custody_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_attachment_custody_probe.py"
+    run_step invoice_tax_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_invoice_tax_runtime_probe.py"
     run_step usability_probe run_odoo_script "$PROBE_SCRIPT"
     ;;
   *)

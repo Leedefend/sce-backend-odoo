@@ -196,6 +196,7 @@ Supported resume step names:
 - `legacy_fund_daily_line_adapter`
 - `legacy_fund_daily_line_replay`
 - `attachment_custody_probe`
+- `invoice_tax_runtime_probe`
 - `usability_probe`
 
 ## Included Lanes

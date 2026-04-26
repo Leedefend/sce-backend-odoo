@@ -92,6 +92,7 @@
         'views/support/legacy_finance_internal_views.xml',
         'views/support/history_todo_views.xml',
         'views/support/legacy_file_index_views.xml',
+        'views/support/legacy_invoice_runtime_views.xml',
         'views/support/tier_review_views.xml',
         'views/core/project_extend_boq_views.xml',
         'views/core/payment_ledger_views.xml',

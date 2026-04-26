@@ -270,6 +270,9 @@ counts = {
     "legacy_receipt_income_facts": count("sc.legacy.receipt.income.fact", []),
     "legacy_expense_deposit_facts": count("sc.legacy.expense.deposit.fact", []),
     "legacy_invoice_tax_facts": count("sc.legacy.invoice.tax.fact", []),
+    "legacy_invoice_registration_lines": count("sc.legacy.invoice.registration.line", []),
+    "legacy_deduction_adjustment_lines": count("sc.legacy.deduction.adjustment.line", []),
+    "legacy_fund_confirmation_lines": count("sc.legacy.fund.confirmation.line", []),
     "legacy_financing_loan_facts": count("sc.legacy.financing.loan.fact", []),
     "legacy_fund_daily_snapshot_facts": count("sc.legacy.fund.daily.snapshot.fact", []),
     "legacy_workflow_audit_facts": count("sc.legacy.workflow.audit", []),
@@ -344,6 +347,9 @@ sample_runtime_records = {
         active_test=False,
     ),
     "legacy_file_index_id": sample_id("sc.legacy.file.index", [], active_test=False),
+    "legacy_invoice_registration_line_id": sample_id("sc.legacy.invoice.registration.line", [], active_test=False),
+    "legacy_deduction_adjustment_line_id": sample_id("sc.legacy.deduction.adjustment.line", [], active_test=False),
+    "legacy_fund_confirmation_line_id": sample_id("sc.legacy.fund.confirmation.line", [], active_test=False),
     "treasury_ledger_id": sample_id("sc.treasury.ledger", [], active_test=False),
     "legacy_workflow_audit_id": sample_id("sc.legacy.workflow.audit", []),
     "history_todo_id": sample_id("sc.history.todo", [], active_test=False),
@@ -397,6 +403,10 @@ promotion_gaps = {
     "attachment_custody_surface_gap": bool(
         (counts.get("legacy_file_index_rows") or 0) > 0
         and (counts.get("legacy_url_attachments") or 0) == 0
+    ),
+    "invoice_tax_runtime_surface_gap": bool(
+        (counts.get("legacy_invoice_tax_facts") or 0) > 0
+        and (counts.get("legacy_invoice_registration_lines") or 0) == 0
     ),
 }
 
