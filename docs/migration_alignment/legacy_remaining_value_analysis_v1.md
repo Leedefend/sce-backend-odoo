@@ -24,6 +24,7 @@ semantics.
 | `sc.legacy.invoice.tax.fact` | 5920 |
 | `sc.legacy.invoice.registration.line` | 25393 |
 | `sc.legacy.deduction.adjustment.line` | 13521 |
+| `sc.legacy.fund.confirmation.line` | 13398 |
 | `sc.legacy.receipt.income.fact` | 7220 |
 | `sc.legacy.expense.deposit.fact` | 11167 |
 | `sc.legacy.financing.loan.fact` | 318 |
@@ -45,7 +46,7 @@ semantics.
 | P1 | user project scope evidence | `T_System_UserAndXXGL`, `T_System_UserAndXXGL_History` | 20,000 current + 70,871 history rows | Covered by neutral scope evidence. Does not grant new-system visibility. |
 | P1 | special invoice registration | `C_JXXP_ZYFPJJD`, `C_JXXP_ZYFPJJD_CB` | 16,616 headers; 25,393 lines; line total about 2.28B | Covered by neutral line-level invoice registration archive. Keeps old invoice facts separate from new-system invoice rules. |
 | P1 | deduction / settlement adjustment | `T_KK_SJDJB`, `T_KK_SJDJB_CB` | 2,636 headers; 13,521 lines; current line sum about 264.8M | Covered by neutral deduction/settlement adjustment archive. Not promoted to native settlement state. |
-| P1 | fund confirmation detail | `ZJGL_SZQR_DKQRB`, `ZJGL_SZQR_DKQRB_CB` | 2,655 headers; 13,398 lines; current line sum about 260.8M | Strong project-fund fact. Candidate for neutral fund confirmation carrier. |
+| P1 | fund confirmation detail | `ZJGL_SZQR_DKQRB`, `ZJGL_SZQR_DKQRB_CB` | 2,655 headers; 13,398 lines; current line sum about 260.8M | Covered by neutral fund confirmation archive. Does not update native fund/receipt states. |
 | P2 | attendance / check-in | `CheckInData` | 106,208 rows; 88 users; 13,932 active-like; 2019-2023 | Valuable for historical audit, but not central construction finance. Privacy-sensitive. Opt-in neutral carrier. |
 | P2 | personnel movement | `PM_RYYDGL` | 20,804 rows | Useful HR history; keep separate from operational project facts. |
 | P2 | salary lines | `BGGL_XZ_GZ_CB` | 3,458 rows; 111 people; total about 30.56M | Highly sensitive. Only migrate if explicitly required; encrypted/restricted neutral carrier. |
