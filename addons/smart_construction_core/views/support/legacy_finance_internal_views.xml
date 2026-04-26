@@ -70,6 +70,13 @@
               sequence="20"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
+    <menuitem id="menu_sc_legacy_expense_reimbursement_line"
+              name="历史费用报销明细"
+              parent="menu_sc_finance_history_center"
+              action="smart_construction_core.action_sc_legacy_expense_reimbursement_line"
+              sequence="25"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+
     <menuitem id="menu_sc_legacy_invoice_tax_fact"
               name="历史发票税额"
               parent="menu_sc_finance_history_center"

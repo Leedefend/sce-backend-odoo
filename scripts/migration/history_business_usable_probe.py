@@ -269,6 +269,13 @@ counts = {
     ),
     "legacy_receipt_income_facts": count("sc.legacy.receipt.income.fact", []),
     "legacy_expense_deposit_facts": count("sc.legacy.expense.deposit.fact", []),
+    "legacy_expense_reimbursement_lines": count("sc.legacy.expense.reimbursement.line", [], active_test=False),
+    "legacy_expense_reimbursement_lines_with_project": count(
+        "sc.legacy.expense.reimbursement.line",
+        [("project_id", "!=", False)],
+        required_fields=["project_id"],
+        active_test=False,
+    ),
     "legacy_invoice_tax_facts": count("sc.legacy.invoice.tax.fact", []),
     "legacy_invoice_registration_lines": count("sc.legacy.invoice.registration.line", []),
     "legacy_deduction_adjustment_lines": count("sc.legacy.deduction.adjustment.line", []),
@@ -355,6 +362,8 @@ sample_runtime_records = {
     ),
     "legacy_file_index_id": sample_id("sc.legacy.file.index", [], active_test=False),
     "legacy_invoice_registration_line_id": sample_id("sc.legacy.invoice.registration.line", [], active_test=False),
+    "legacy_expense_deposit_fact_id": sample_id("sc.legacy.expense.deposit.fact", [], active_test=False),
+    "legacy_expense_reimbursement_line_id": sample_id("sc.legacy.expense.reimbursement.line", [], active_test=False),
     "legacy_deduction_adjustment_line_id": sample_id("sc.legacy.deduction.adjustment.line", [], active_test=False),
     "legacy_fund_confirmation_line_id": sample_id("sc.legacy.fund.confirmation.line", [], active_test=False),
     "legacy_financing_loan_fact_id": sample_id("sc.legacy.financing.loan.fact", [], active_test=False),
@@ -429,6 +438,13 @@ promotion_gaps = {
             or not sample_runtime_records.get("legacy_financing_loan_fact_id")
             or not sample_runtime_records.get("legacy_fund_daily_snapshot_fact_id")
             or not sample_runtime_records.get("legacy_fund_daily_line_id")
+        )
+    ),
+    "expense_deposit_runtime_surface_gap": bool(
+        ((counts.get("legacy_expense_deposit_facts") or 0) + (counts.get("legacy_expense_reimbursement_lines") or 0)) > 0
+        and (
+            not sample_runtime_records.get("legacy_expense_deposit_fact_id")
+            or not sample_runtime_records.get("legacy_expense_reimbursement_line_id")
         )
     ),
 }

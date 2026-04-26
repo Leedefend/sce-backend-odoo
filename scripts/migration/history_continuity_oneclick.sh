@@ -279,6 +279,7 @@ case "$MODE" in
     run_step attachment_custody_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_attachment_custody_probe.py"
     run_step invoice_tax_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_invoice_tax_runtime_probe.py"
     run_step treasury_reconciliation_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_treasury_reconciliation_probe.py"
+    run_step expense_deposit_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_expense_deposit_runtime_probe.py"
     run_step usability_probe run_odoo_script "$PROBE_SCRIPT"
     ;;
   *)

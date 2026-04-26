@@ -32,6 +32,8 @@ Latest `history_business_usable_probe` on `sc_prod_sim` after P0-A:
 - historical invoice tax facts: `5920`
 - historical deduction adjustment lines: `13521`
 - historical fund confirmation lines: `13398`
+- historical expense/deposit facts: preserved as searchable finance facts
+- historical expense reimbursement lines: preserved as searchable line facts
 - historical financing loan facts: `318`
 - historical fund daily snapshots: `496`
 - historical fund daily lines: `7754`
@@ -65,6 +67,12 @@ keeps old daily account/bank balance facts, and
 `sc.legacy.financing.loan.fact` keeps financing/borrowing facts. The
 `history_treasury_reconciliation_probe` validates these surfaces together.
 
+P1-C keeps old expense/deposit and expense reimbursement rows as historical
+finance facts instead of forcing them into new editable reimbursement workflow.
+This preserves project, applicant, payee, amount, approval amount, and source
+document context while avoiding false new-system approvals. The
+`history_expense_deposit_runtime_probe` validates the searchable surfaces.
+
 ## Capability Matrix
 
 | Legacy business area | Current new-system state | Gap | Plan |
@@ -78,7 +86,7 @@ keeps old daily account/bank balance facts, and
 | Invoice and tax | Invoice/tax facts and invoice registration workbench are visible | Accounting posting remains explicit, not automatic migration side effect | Keep searchable historical surfaces; promote to accounting moves only through future controlled posting workflow. |
 | Settlement/deductions | New settlement order exists; old deduction facts are neutral | Old deduction/settlement adjustments cannot be processed natively | Add settlement adjustment runtime model linked to contracts, receipts, and payments. |
 | Fund daily, fund confirmation, financing | Cash ledger, fund confirmation, financing, fund daily snapshot, and fund daily line workbenches are visible | Formal new-entry reconciliation workflow is still future work | Keep historical facts searchable now; add write-side treasury daily/reconciliation workflow only for new business operations. |
-| Expense reimbursement/deposit | Facts are preserved | No native reimbursement workflow for old-style expenses | Add expense reimbursement/deposit workflow or explicit archive-only policy per business owner. |
+| Expense reimbursement/deposit | Expense/deposit facts and reimbursement line workbench are visible | New editable reimbursement workflow is intentionally not backfilled from old facts | Use archive-first policy for historical rows; add write-side reimbursement/deposit workflow only for new business if required. |
 | Material catalog | Search archive exists | Not a usable product/master-data workflow | Add archive search UI plus controlled material-to-product promotion. |
 | Attachments | URL/index facts exist; 19,537 URL attachments and 178,931 file index rows are visible | Binary custody is not complete | Keep URL/index custody available now; copy selected binaries only after repository and hash policy are approved. |
 | Attendance/personnel/salary | Privacy-restricted facts exist | Not a native HR workflow | Add HR-lite modules only if users still process these in the construction system; otherwise keep restricted archive. |
@@ -133,8 +141,9 @@ keeps old daily account/bank balance facts, and
      daily expense, and confirmation/reconciliation workflow.
 
 4. Expense reimbursement and deposit workflow
-   - Add reimbursement/deposit document models if users still process these.
-   - Otherwise expose existing facts through searchable archive menus.
+   - Historical rows stay archive-first and searchable.
+   - Add reimbursement/deposit document models only for new operations if
+     users still process these in the construction system.
 
 ## P2 Controlled Promotion and Search
 
@@ -171,7 +180,7 @@ keeps old daily account/bank balance facts, and
 3. P0 attachment custody for contract/payment/receipt/invoice/project files.
 4. P1 invoice/tax runtime.
 5. P1 settlement adjustment and treasury reconciliation runtime visibility.
-6. P1 expense/deposit workflow or formal archive-only decision.
+6. P1 expense/deposit searchable archive and formal archive-first decision.
 7. P2 material/product promotion and weak contract promotion.
 8. P3 HR/platform audit only after explicit business decision.
 
