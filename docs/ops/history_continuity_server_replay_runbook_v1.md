@@ -185,6 +185,8 @@ The one-click path now covers:
 - users / partner / project / project-member carrier
 - legacy user project scope evidence
 - legacy task/todo evidence
+- legacy attendance/check-in evidence is privacy-restricted and skipped by
+  default; include only with `HISTORY_CONTINUITY_INCLUDE_ATTENDANCE_CHECKIN=1`
 - contract / contract line / supplier contract / supplier contract line
 - receipt / outflow request / actual outflow / outflow request line
 - receipt invoice line / receipt invoice attachment

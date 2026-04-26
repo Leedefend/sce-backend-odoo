@@ -41,6 +41,7 @@ INCLUDE_DETAIL_FACTS="${HISTORY_CONTINUITY_INCLUDE_DETAIL_FACTS:-1}"
 INCLUDE_PAYMENT_STATE_RECOVERY="${HISTORY_CONTINUITY_INCLUDE_PAYMENT_STATE_RECOVERY:-1}"
 INCLUDE_MATERIAL_CATALOG="${HISTORY_CONTINUITY_INCLUDE_MATERIAL_CATALOG:-1}"
 INCLUDE_FILE_INDEX="${HISTORY_CONTINUITY_INCLUDE_FILE_INDEX:-1}"
+INCLUDE_ATTENDANCE_CHECKIN="${HISTORY_CONTINUITY_INCLUDE_ATTENDANCE_CHECKIN:-0}"
 MATERIALIZED_FILES=()
 
 cleanup_materialized_files() {
@@ -126,6 +127,12 @@ case "$MODE" in
     run_step legacy_user_project_scope_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_user_project_scope_replay_write.py"
     run_step legacy_task_evidence_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_task_evidence_replay_adapter.py"
     run_step legacy_task_evidence_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_task_evidence_replay_write.py"
+    if [[ "$INCLUDE_ATTENDANCE_CHECKIN" == "1" ]]; then
+      run_step legacy_attendance_checkin_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_attendance_checkin_replay_adapter.py"
+      run_step legacy_attendance_checkin_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_attendance_checkin_replay_write.py"
+    else
+      echo "[history.continuity] skip privacy-restricted attendance check-in by HISTORY_CONTINUITY_INCLUDE_ATTENDANCE_CHECKIN=0"
+    fi
     run_step replay_payload_precheck run_odoo_script "$PRECHECK_SCRIPT"
     run_step partner_l4_anchor_completed run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_partner_l4_replay_write.py"
     run_step project_anchor_completed run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_project_anchor_replay_write.py"

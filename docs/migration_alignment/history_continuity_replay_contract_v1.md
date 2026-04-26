@@ -83,6 +83,8 @@ Supported resume step names:
 - `legacy_user_project_scope_replay`
 - `legacy_task_evidence_adapter`
 - `legacy_task_evidence_replay`
+- `legacy_attendance_checkin_adapter` (privacy-restricted, opt-in via
+  `HISTORY_CONTINUITY_INCLUDE_ATTENDANCE_CHECKIN=1`)
 - `replay_payload_precheck`
 - `partner_l4_anchor_completed`
 - `project_anchor_completed`
@@ -183,6 +185,7 @@ Supported resume step names:
 - `legacy_user_context`
 - `legacy_user_project_scope_sc_v1`
 - `legacy_task_evidence_sc_v1`
+- `legacy_attendance_checkin_sc_v1`
 - `partner_l4_anchor_completed`
 - `project_anchor_completed`
 - `legacy_material_catalog_sc_v1`

@@ -19,6 +19,7 @@ semantics.
 | `sc.legacy.user.role` | 330 |
 | `sc.legacy.user.project.scope` | 90871 |
 | `sc.legacy.task.evidence` | 78822 |
+| `sc.legacy.attendance.checkin` | 106208 |
 | `sc.project.member.staging` | 15155 |
 | `sc.legacy.workflow.audit` | 79702 |
 | `sc.legacy.invoice.tax.fact` | 5920 |
@@ -47,7 +48,7 @@ semantics.
 | P1 | special invoice registration | `C_JXXP_ZYFPJJD`, `C_JXXP_ZYFPJJD_CB` | 16,616 headers; 25,393 lines; line total about 2.28B | Covered by neutral line-level invoice registration archive. Keeps old invoice facts separate from new-system invoice rules. |
 | P1 | deduction / settlement adjustment | `T_KK_SJDJB`, `T_KK_SJDJB_CB` | 2,636 headers; 13,521 lines; current line sum about 264.8M | Covered by neutral deduction/settlement adjustment archive. Not promoted to native settlement state. |
 | P1 | fund confirmation detail | `ZJGL_SZQR_DKQRB`, `ZJGL_SZQR_DKQRB_CB` | 2,655 headers; 13,398 lines; current line sum about 260.8M | Covered by neutral fund confirmation archive. Does not update native fund/receipt states. |
-| P2 | attendance / check-in | `CheckInData` | 106,208 rows; 88 users; 13,932 active-like; 2019-2023 | Valuable for historical audit, but not central construction finance. Privacy-sensitive. Opt-in neutral carrier. |
+| P2 | attendance / check-in | `CheckInData` | 106,208 rows; 88 users; 13,932 active-like; 2019-2023 | Covered by privacy-restricted neutral archive. Not new attendance, approval, payroll, or permission state. |
 | P2 | personnel movement | `PM_RYYDGL` | 20,804 rows | Useful HR history; keep separate from operational project facts. |
 | P2 | salary lines | `BGGL_XZ_GZ_CB` | 3,458 rows; 111 people; total about 30.56M | Highly sensitive. Only migrate if explicitly required; encrypted/restricted neutral carrier. |
 | P3 | low-code edit history | `BASE_LOWCODE_HISTORYDATA` | 97,037 rows across 9 configs; most `CONFIGID` null | Mostly platform audit/config history. Lower business value unless needed for legal traceability. |

@@ -218,3 +218,4 @@ access_sc_legacy_file_index_admin,sc.legacy.file.index.admin,model_sc_legacy_fil
 access_sc_legacy_file_index_read,sc.legacy.file.index.read,model_sc_legacy_file_index,smart_construction_core.group_sc_internal_user,1,0,0,0
 access_sc_legacy_task_evidence_admin,sc.legacy.task.evidence.admin,model_sc_legacy_task_evidence,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
 access_sc_legacy_task_evidence_read,sc.legacy.task.evidence.read,model_sc_legacy_task_evidence,smart_construction_core.group_sc_internal_user,1,0,0,0
+access_sc_legacy_attendance_checkin_admin,sc.legacy.attendance.checkin.admin,model_sc_legacy_attendance_checkin,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
