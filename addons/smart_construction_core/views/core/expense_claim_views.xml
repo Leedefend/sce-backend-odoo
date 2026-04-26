@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_expense_claim_tree" model="ir.ui.view">
+            <field name="name">sc.expense.claim.tree</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <tree string="费用/保证金" decoration-muted="state == 'cancel'">
+                    <field name="date_claim"/>
+                    <field name="name"/>
+                    <field name="claim_type"/>
+                    <field name="direction"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="applicant_name"/>
+                    <field name="expense_type"/>
+                    <field name="amount"/>
+                    <field name="approved_amount"/>
+                    <field name="state"/>
+                    <field name="source_origin"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_expense_claim_form" model="ir.ui.view">
+            <field name="name">sc.expense.claim.form</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <form string="费用/保证金">
+                    <header>
+                        <button name="action_submit" type="object" string="提交" class="btn-primary"
+                                invisible="state != 'draft'"
+                                groups="smart_construction_core.group_sc_cap_finance_user"/>
+                        <button name="action_approve" type="object" string="批准"
+                                invisible="state != 'submit'"
+                                groups="smart_construction_core.group_sc_cap_finance_manager"/>
+                        <button name="action_done" type="object" string="完成"
+                                invisible="state != 'approved'"
+                                groups="smart_construction_core.group_sc_cap_finance_manager"/>
+                        <button name="action_cancel" type="object" string="取消"
+                                invisible="state in ['done', 'legacy_confirmed', 'cancel']"
+                                groups="smart_construction_core.group_sc_cap_finance_manager"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,submit,approved,done,legacy_confirmed,cancel"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="source_origin" readonly="source_origin == 'legacy'"/>
+                                <field name="claim_type" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                                <field name="direction" readonly="1"/>
+                                <field name="date_claim" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                            </group>
+                            <group>
+                                <field name="amount" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                                <field name="approved_amount" readonly="state in ['done', 'legacy_confirmed', 'cancel']"/>
+                                <field name="currency_id" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                                <field name="active"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="业务锚点">
+                                <field name="project_id" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                                <field name="partner_id"/>
+                                <field name="payment_request_id"/>
+                            </group>
+                            <group string="申请与收款">
+                                <field name="applicant_name" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                                <field name="payee" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                                <field name="payee_account" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                                <field name="payee_bank" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                            </group>
+                        </group>
+                        <group string="费用说明">
+                            <field name="expense_type" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                            <field name="summary" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                        </group>
+                        <group string="历史来源" invisible="source_origin != 'legacy'">
+                            <field name="legacy_source_model"/>
+                            <field name="legacy_source_table"/>
+                            <field name="legacy_record_id"/>
+                            <field name="legacy_document_no"/>
+                            <field name="legacy_document_state"/>
+                        </group>
+                        <group>
+                            <field name="note"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_sc_expense_claim_search" model="ir.ui.view">
+            <field name="name">sc.expense.claim.search</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <search string="费用/保证金">
+                    <field name="name"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="applicant_name"/>
+                    <field name="payee"/>
+                    <field name="expense_type"/>
+                    <field name="legacy_document_no"/>
+                    <filter name="active_rows" string="有效" domain="[('active', '=', True)]"/>
+                    <filter name="legacy_rows" string="历史迁移" domain="[('source_origin', '=', 'legacy')]"/>
+                    <filter name="manual_rows" string="新系统登记" domain="[('source_origin', '=', 'manual')]"/>
+                    <filter name="outflow" string="流出" domain="[('direction', '=', 'outflow')]"/>
+                    <filter name="inflow" string="流入" domain="[('direction', '=', 'inflow')]"/>
+                    <filter name="confirmed" string="已确认/完成" domain="[('state', 'in', ['approved', 'done', 'legacy_confirmed'])]"/>
+                    <group expand="0" string="分组">
+                        <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
+                        <filter name="group_type" string="业务类型" context="{'group_by': 'claim_type'}"/>
+                        <filter name="group_state" string="状态" context="{'group_by': 'state'}"/>
+                        <filter name="group_source" string="来源" context="{'group_by': 'source_origin'}"/>
+                        <filter name="group_month" string="月份" context="{'group_by': 'date_claim:month'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_sc_expense_claim" model="ir.actions.act_window">
+            <field name="name">费用/保证金</field>
+            <field name="res_model">sc.expense.claim</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_expense_claim_search"/>
+            <field name="context">{'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[
+                (4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                (4, ref('smart_construction_core.group_sc_cap_finance_manager'))
+            ]"/>
+        </record>
+
+        <menuitem id="menu_sc_expense_claim"
+                  name="费用/保证金"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  action="action_sc_expense_claim"
+                  sequence="28"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    </data>
+</odoo>

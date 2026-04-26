@@ -36,6 +36,8 @@ Latest `history_business_usable_probe` on `sc_prod_sim` after P0-A:
 - historical fund confirmation lines: `13398`
 - historical expense/deposit facts: preserved as searchable finance facts
 - historical expense reimbursement lines: preserved as searchable line facts
+- expense/deposit runtime claims: `13314` legacy rows projected,
+  `13279` legacy-confirmed rows
 - historical financing loan facts: `318`
 - historical fund daily snapshots: `496`
 - historical fund daily lines: `7754`
@@ -107,6 +109,13 @@ are projected into this model as legacy rows; old completed rows become
 `legacy_confirmed`, while new-system users can continue registering and
 confirming manual settlement adjustments from the settlement center.
 
+P1-E adds `sc.expense.claim` as the runtime carrier for expense reimbursement
+and deposit/guarantee money operations. Historical expense reimbursement and
+expense/deposit facts with project anchors are projected as legacy rows; old
+completed rows become `legacy_confirmed`, while new-system finance users can
+continue registering, submitting, approving, and completing manual expense or
+deposit claims.
+
 ## Capability Matrix
 
 | Legacy business area | Current new-system state | Gap | Plan |
@@ -120,7 +129,7 @@ confirming manual settlement adjustments from the settlement center.
 | Invoice and tax | Invoice/tax facts and invoice registration workbench are visible | Accounting posting remains explicit, not automatic migration side effect | Keep searchable historical surfaces; promote to accounting moves only through future controlled posting workflow. |
 | Settlement/deductions | New settlement order exists; historical deduction facts are projected to `sc.settlement.adjustment`; new manual adjustment registration and confirmation exists | Historical rows without project anchors remain fact-only; legacy rows are not auto-linked to settlement orders without stronger anchors | Use settlement adjustment runtime for continuing operations; link historical rows to settlement/contract/partner only when explicit anchors are recovered. |
 | Fund daily, fund confirmation, financing | Cash ledger, fund confirmation, financing, fund daily snapshot, and fund daily line workbenches are visible | Formal new-entry reconciliation workflow is still future work | Keep historical facts searchable now; add write-side treasury daily/reconciliation workflow only for new business operations. |
-| Expense reimbursement/deposit | Expense/deposit facts and reimbursement line workbench are visible | New editable reimbursement workflow is intentionally not backfilled from old facts | Use archive-first policy for historical rows; add write-side reimbursement/deposit workflow only for new business if required. |
+| Expense reimbursement/deposit | Expense/deposit facts and reimbursement lines are projected to `sc.expense.claim`; new manual registration, approval, and completion exists | Legacy rows are not automatically linked to payment requests unless stronger payment anchors are recovered | Use runtime claims for continuing operations; supplement payment request links only through explicit anchor recovery. |
 | Material catalog | Search archive and controlled material-to-product promotion exist | Bulk promotion remains intentionally disabled | Keep archive-first catalog; material managers promote selected rows only when needed for new material plans/purchase flows. |
 | Attachments | URL/index facts exist; 19,537 URL attachments and 178,931 file index rows are visible | Binary custody is not complete | Keep URL/index custody available now; copy selected binaries only after repository and hash policy are approved. |
 | Attendance/personnel/salary | Privacy-restricted facts exist | Not a native HR workflow | Add HR-lite modules only if users still process these in the construction system; otherwise keep restricted archive. |
@@ -176,9 +185,11 @@ confirming manual settlement adjustments from the settlement center.
      daily expense, and confirmation/reconciliation workflow.
 
 4. Expense reimbursement and deposit workflow
-   - Historical rows stay archive-first and searchable.
-   - Add reimbursement/deposit document models only for new operations if
-     users still process these in the construction system.
+   - `sc.expense.claim` is available as the native expense/deposit document.
+   - Historical project-anchored expense/deposit rows are projected as
+     historical runtime records.
+   - New operations can be submitted, approved, and completed in the finance
+     center.
 
 ## P2 Controlled Promotion and Search
 

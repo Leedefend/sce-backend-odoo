@@ -13,6 +13,7 @@ from . import settlement_order
 from . import settlement_adjustment
 from . import settlement
 from . import funding_baseline
+from . import expense_claim
 from . import payment_request
 from . import payment_request_line
 from . import receipt_invoice_line

@@ -311,6 +311,19 @@ counts = {
         required_fields=["project_id"],
         active_test=False,
     ),
+    "expense_claim_runtime_records": count("sc.expense.claim", [], active_test=False),
+    "expense_claim_legacy_records": count(
+        "sc.expense.claim",
+        [("source_origin", "=", "legacy")],
+        required_fields=["source_origin"],
+        active_test=False,
+    ),
+    "expense_claim_legacy_with_project": count(
+        "sc.expense.claim",
+        [("source_origin", "=", "legacy"), ("project_id", "!=", False)],
+        required_fields=["source_origin", "project_id"],
+        active_test=False,
+    ),
     "legacy_material_category_rows": count("sc.legacy.material.category", [], active_test=False),
     "legacy_material_detail_rows": count("sc.legacy.material.detail", [], active_test=False),
     "legacy_material_detail_with_category": count(
@@ -451,6 +464,7 @@ sample_runtime_records = {
     "legacy_invoice_registration_line_id": sample_id("sc.legacy.invoice.registration.line", [], active_test=False),
     "legacy_expense_deposit_fact_id": sample_id("sc.legacy.expense.deposit.fact", [], active_test=False),
     "legacy_expense_reimbursement_line_id": sample_id("sc.legacy.expense.reimbursement.line", [], active_test=False),
+    "expense_claim_id": sample_id("sc.expense.claim", [], active_test=False),
     "legacy_material_detail_id": sample_id("sc.legacy.material.detail", [], active_test=False),
     "legacy_purchase_contract_fact_id": sample_id("sc.legacy.purchase.contract.fact", [], active_test=False),
     "legacy_deduction_adjustment_line_id": sample_id("sc.legacy.deduction.adjustment.line", [], active_test=False),
@@ -540,6 +554,13 @@ promotion_gaps = {
             not sample_runtime_records.get("legacy_expense_deposit_fact_id")
             or not sample_runtime_records.get("legacy_expense_reimbursement_line_id")
         )
+    ),
+    "expense_claim_runtime_surface_gap": bool(
+        (
+            (counts.get("legacy_expense_deposit_facts") or 0)
+            + (counts.get("legacy_expense_reimbursement_lines_with_project") or 0)
+        ) > 0
+        and (counts.get("expense_claim_legacy_with_project") or 0) == 0
     ),
     "material_catalog_runtime_surface_gap": bool(
         (counts.get("legacy_material_detail_rows") or 0) > 0
