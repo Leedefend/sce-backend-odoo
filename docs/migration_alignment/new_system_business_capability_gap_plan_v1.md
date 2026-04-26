@@ -26,6 +26,8 @@ Latest `history_business_usable_probe` on `sc_prod_sim` after P0-A:
 - historical cash requests projected to treasury ledger: `16047`
 - nonpositive historical cash requests retained outside ledger: `153`
 - `sc.treasury.ledger`: `16047`
+- legacy file index rows: `178931`
+- legacy URL attachments: `19537`
 - `mail.activity`: `0`
 - `tier.review`: `0`
 
@@ -39,6 +41,11 @@ P0-B projects positive historical actual outflow and receipt requests into
 receipts. The ledger intentionally allows historical rows without a new-system
 settlement order because the legacy cash fact is still valid even when the old
 record cannot satisfy every new workflow rule.
+
+P0-C exposes legacy attachment custody as URL-type `ir.attachment` records and
+adds operational entry points for receipt invoice lines, payment request lines,
+and the legacy file index. Binary bytes remain outside Odoo until a separate
+file repository copy-and-hash policy is approved.
 
 ## Capability Matrix
 
@@ -55,7 +62,7 @@ record cannot satisfy every new workflow rule.
 | Fund daily, fund confirmation, financing | Facts are preserved | No operational treasury daily entry/reconciliation workflow | Add treasury daily statement, bank/account balance reconciliation, and fund confirmation screens. |
 | Expense reimbursement/deposit | Facts are preserved | No native reimbursement workflow for old-style expenses | Add expense reimbursement/deposit workflow or explicit archive-only policy per business owner. |
 | Material catalog | Search archive exists | Not a usable product/master-data workflow | Add archive search UI plus controlled material-to-product promotion. |
-| Attachments | URL/index facts exist | Binary custody is not complete | Execute file custody policy: copy selected binaries, verify hashes/availability, attach to runtime or legacy records. |
+| Attachments | URL/index facts exist; 19,537 URL attachments and 178,931 file index rows are visible | Binary custody is not complete | Keep URL/index custody available now; copy selected binaries only after repository and hash policy are approved. |
 | Attendance/personnel/salary | Privacy-restricted facts exist | Not a native HR workflow | Add HR-lite modules only if users still process these in the construction system; otherwise keep restricted archive. |
 | Workflow/todo | Audit facts and `sc.history.todo` workbench exist | Remaining weak rows open the source audit instead of a target runtime record | Keep P0 projection idempotent; improve target linking only when stronger anchors are recovered. |
 

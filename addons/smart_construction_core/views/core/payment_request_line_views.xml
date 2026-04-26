@@ -18,6 +18,7 @@
                     <field name="paid_before_amount"/>
                     <field name="remaining_amount"/>
                     <field name="current_pay_amount"/>
+                    <field name="attachment_count"/>
                 </tree>
             </field>
         </record>
@@ -28,6 +29,15 @@
             <field name="arch" type="xml">
                 <form string="付款申请明细" create="false" delete="false">
                     <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_open_attachments"
+                                    string="附件"
+                                    type="object"
+                                    class="oe_stat_button"
+                                    icon="fa-paperclip">
+                                <field name="attachment_count" widget="statinfo"/>
+                            </button>
+                        </div>
                         <group>
                             <group>
                                 <field name="request_id" readonly="1"/>

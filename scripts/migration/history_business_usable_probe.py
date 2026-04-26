@@ -254,6 +254,19 @@ counts = {
         [("description", "ilike", "[migration:legacy_attachment_backfill]")],
         required_fields=["description"],
     ),
+    "legacy_file_index_rows": count("sc.legacy.file.index", [], active_test=False),
+    "legacy_file_index_with_path": count(
+        "sc.legacy.file.index",
+        [("file_path", "!=", False)],
+        required_fields=["file_path"],
+        active_test=False,
+    ),
+    "legacy_url_attachments": count(
+        "ir.attachment",
+        ["&", ("type", "=", "url"), "|", ("url", "like", "legacy-file://%"), ("url", "like", "legacy-file-id://%")],
+        required_fields=["type", "url"],
+        active_test=False,
+    ),
     "legacy_receipt_income_facts": count("sc.legacy.receipt.income.fact", []),
     "legacy_expense_deposit_facts": count("sc.legacy.expense.deposit.fact", []),
     "legacy_invoice_tax_facts": count("sc.legacy.invoice.tax.fact", []),
@@ -324,6 +337,13 @@ sample_runtime_records = {
     "payment_request_id": sample_id("payment.request", migrated_payment_request_domain()),
     "payment_request_line_id": sample_id("payment.request.line", []),
     "receipt_invoice_line_id": sample_id("sc.receipt.invoice.line", []),
+    "receipt_invoice_attachment_id": sample_id(
+        "ir.attachment",
+        [("res_model", "=", "sc.receipt.invoice.line"), ("type", "=", "url")],
+        required_fields=["res_model", "type"],
+        active_test=False,
+    ),
+    "legacy_file_index_id": sample_id("sc.legacy.file.index", [], active_test=False),
     "treasury_ledger_id": sample_id("sc.treasury.ledger", [], active_test=False),
     "legacy_workflow_audit_id": sample_id("sc.legacy.workflow.audit", []),
     "history_todo_id": sample_id("sc.history.todo", [], active_test=False),
@@ -373,6 +393,10 @@ promotion_gaps = {
     "payment_receipt_execution_surface_gap": bool(
         ((counts.get("legacy_actual_outflow_cash_requests") or 0) + (counts.get("legacy_receipt_cash_requests") or 0)) > 0
         and (counts.get("treasury_ledger_runtime_records") or 0) == 0
+    ),
+    "attachment_custody_surface_gap": bool(
+        (counts.get("legacy_file_index_rows") or 0) > 0
+        and (counts.get("legacy_url_attachments") or 0) == 0
     ),
 }
 
