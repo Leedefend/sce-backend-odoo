@@ -303,6 +303,26 @@ counts = {
         active_test=False,
     ),
     "legacy_receipt_income_facts": count("sc.legacy.receipt.income.fact", []),
+    "legacy_receipt_residual_facts": count("sc.legacy.receipt.residual.fact", [], active_test=False),
+    "legacy_receipt_residual_with_project": count(
+        "sc.legacy.receipt.residual.fact",
+        [("project_id", "!=", False)],
+        required_fields=["project_id"],
+        active_test=False,
+    ),
+    "receipt_income_runtime_records": count("sc.receipt.income", [], active_test=False),
+    "receipt_income_legacy_records": count(
+        "sc.receipt.income",
+        [("source_origin", "=", "legacy")],
+        required_fields=["source_origin"],
+        active_test=False,
+    ),
+    "receipt_income_legacy_with_project": count(
+        "sc.receipt.income",
+        [("source_origin", "=", "legacy"), ("project_id", "!=", False)],
+        required_fields=["source_origin", "project_id"],
+        active_test=False,
+    ),
     "legacy_expense_deposit_facts": count("sc.legacy.expense.deposit.fact", []),
     "legacy_expense_reimbursement_lines": count("sc.legacy.expense.reimbursement.line", [], active_test=False),
     "legacy_expense_reimbursement_lines_with_project": count(
@@ -475,6 +495,7 @@ sample_runtime_records = {
     ),
     "legacy_file_index_id": sample_id("sc.legacy.file.index", [], active_test=False),
     "legacy_invoice_registration_line_id": sample_id("sc.legacy.invoice.registration.line", [], active_test=False),
+    "receipt_income_id": sample_id("sc.receipt.income", [], active_test=False),
     "legacy_expense_deposit_fact_id": sample_id("sc.legacy.expense.deposit.fact", [], active_test=False),
     "legacy_expense_reimbursement_line_id": sample_id("sc.legacy.expense.reimbursement.line", [], active_test=False),
     "expense_claim_id": sample_id("sc.expense.claim", [], active_test=False),
@@ -544,6 +565,10 @@ promotion_gaps = {
     "invoice_tax_runtime_surface_gap": bool(
         (counts.get("legacy_invoice_tax_facts") or 0) > 0
         and (counts.get("legacy_invoice_registration_lines") or 0) == 0
+    ),
+    "receipt_income_runtime_surface_gap": bool(
+        ((counts.get("legacy_receipt_income_facts") or 0) + (counts.get("legacy_receipt_residual_with_project") or 0)) > 0
+        and (counts.get("receipt_income_legacy_with_project") or 0) == 0
     ),
     "settlement_adjustment_runtime_surface_gap": bool(
         (counts.get("legacy_deduction_adjustment_lines_with_project") or 0) > 0

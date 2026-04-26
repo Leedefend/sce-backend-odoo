@@ -42,6 +42,9 @@ Latest `history_business_usable_probe` on `sc_prod_sim` after P0-A:
   rows with project/amount/balance anchors are projected to
   `sc.treasury.reconciliation`; old completed rows are kept as
   `legacy_confirmed`
+- receipt/income runtime records: receipt income facts and residual receipt
+  rows with project/amount anchors are projected to `sc.receipt.income`; old
+  completed rows are kept as `legacy_confirmed`
 - historical financing loan facts: `318`
 - historical fund daily snapshots: `496`
 - historical fund daily lines: `7754`
@@ -126,6 +129,13 @@ fund confirmation lines with project anchors are projected as legacy rows; old
 completed rows become `legacy_confirmed`, while new-system finance users can
 continue registering, confirming, and completing treasury reconciliation work.
 
+P1-G adds `sc.receipt.income` as the runtime carrier for receipt and income
+registration outside strict `payment.request` approval rules. Historical
+receipt income facts and residual receipt rows with project/amount anchors are
+projected as legacy rows; old completed rows become `legacy_confirmed`, while
+new-system finance users can continue registering, confirming, and marking
+manual receipt income as received.
+
 ## Capability Matrix
 
 | Legacy business area | Current new-system state | Gap | Plan |
@@ -135,7 +145,7 @@ continue registering, confirming, and completing treasury reconciliation work.
 | Supplier contracts | Runtime supplier contracts and summary lines exist | Some blocked/weak partner contract residue remains neutral | Keep weak rows neutral; add partner recovery only for confirmed active counterparties. |
 | Purchase/general contracts | Historical purchase/general contract workbench is visible | Native promotion requires verified `partner_id` anchors | Keep searchable contract facts now; promote only rows with confirmed project, partner, amount, tax, and attachment policy. |
 | Payment requests | Runtime `payment.request` exists with states; historical actual outflow is projected to `sc.treasury.ledger` | 153 nonpositive cash-like rows remain fact-only | Keep request/approval/cash ledger separated; improve residual handling only with stronger business anchors. |
-| Receipts and income | Receipt requests plus neutral receipt facts exist; historical receipts are projected to `sc.treasury.ledger` | Residual receipts and fund confirmations are not fully native receive/treasury actions | Add receipt workbench and controlled promotion for rows with project/partner/amount anchors. |
+| Receipts and income | Receipt requests plus neutral receipt facts exist; historical receipts are projected to `sc.treasury.ledger`; receipt income and residual receipt rows are projected to `sc.receipt.income` | Rows without project/amount anchors remain fact-only; accounting posting remains explicit | Use receipt income runtime for continuing income registration; link payment request, treasury ledger, contract, and partner anchors only when evidence is strong. |
 | Invoice and tax | Invoice/tax facts and invoice registration workbench are visible | Accounting posting remains explicit, not automatic migration side effect | Keep searchable historical surfaces; promote to accounting moves only through future controlled posting workflow. |
 | Settlement/deductions | New settlement order exists; historical deduction facts are projected to `sc.settlement.adjustment`; new manual adjustment registration and confirmation exists | Historical rows without project anchors remain fact-only; legacy rows are not auto-linked to settlement orders without stronger anchors | Use settlement adjustment runtime for continuing operations; link historical rows to settlement/contract/partner only when explicit anchors are recovered. |
 | Fund daily, fund confirmation, financing | Cash ledger, fund confirmation, financing, fund daily snapshot, and fund daily line workbenches are visible; project-anchored fund daily/confirmation facts are projected to `sc.treasury.reconciliation` | Financing/borrowing facts remain archive-first and historical rows without project anchors remain fact-only | Use treasury reconciliation runtime for continuing daily/confirmation operations; keep financing promotion separate until a repayment/borrowing workflow is explicitly designed. |
