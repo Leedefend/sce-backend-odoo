@@ -288,7 +288,12 @@ const activeLayout = computed(() => {
   const scene = sceneKey ? getSceneByKey(sceneKey) : null;
   return resolveSceneLayout(scene);
 });
-const useMinimalTopbar = computed(() => route.name === 'workbench' || route.name === 'home');
+const businessRouteUsesCompactTopbar = computed(() => route.name === 'action' || route.name === 'record');
+const useMinimalTopbar = computed(() =>
+  route.name === 'workbench'
+  || route.name === 'home'
+  || businessRouteUsesCompactTopbar.value,
+);
 const sidebarClass = computed(() =>
   activeLayout.value.sidebar === 'scroll' ? 'sidebar--scroll' : 'sidebar--fixed'
 );

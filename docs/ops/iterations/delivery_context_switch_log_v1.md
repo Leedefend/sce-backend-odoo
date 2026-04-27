@@ -30679,3 +30679,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 当后续页面存在大量 header actions/筛选条时仍可能形成多行工具区，需要按业务场景继续合并筛选与操作。`
 - rollback: `回退本批次提交并重建前端静态包，即恢复视图切换与新建分区显示。`
 - next_step: `继续检查快速筛选、分组查看、快捷操作在有数据页面是否需要同样收敛为统一业务工具条。`
+
+## 2026-04-28 Batch-Frontend-Global-Header-Compact
+
+- branch: `codex/dev-env-run`
+- short_sha: `f7f64805`
+- Layer Target: `Frontend layout`
+- Module: `frontend/apps/web`
+- Reason: `看板工具头和 ActionView 工具条收敛后，全局页面头仍显示眉标、面包屑和大标题三层结构，且“项目台账（试点）”与页面内业务标题重复，首屏体量偏大。`
+- completed_step: `AppShell 将 action/record 业务页切换为 minimal topbar：只保留面包屑导航，不再显示全局眉标和大标题；业务标题继续由页面内工具头承载。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `docker compose -f docker-compose.yml -f docker-compose.prod-sim.yml -p sc-backend-odoo-prod-sim restart nginx`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509?menu_id=293，topbar 高度从 122.5px 收敛为 23px，headline 不再渲染，首张卡片 y=206.1875，无 console error。`
+- result: `PASS; 业务页全局页面头已收敛为轻量面包屑，项目台账首屏内容密度显著提升。`
+- risk: `P2; record 页同样使用紧凑页头，如业务详情页后续需要显式大标题，应由详情页自身标题区承载。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复 action/record 页全局大标题页头。`
+- next_step: `继续检查详情页和其他业务 action 页在 minimal topbar 下是否仍有清晰标题和操作入口。`
