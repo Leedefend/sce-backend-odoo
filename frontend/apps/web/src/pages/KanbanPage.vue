@@ -1,6 +1,7 @@
 <template>
   <section class="page">
     <PageHeader
+      v-if="status !== 'ok'"
       :title="title"
       :subtitle="subtitle"
       :status="status"
@@ -36,9 +37,12 @@
     />
 
     <template v-else>
-      <section v-if="showPagination" class="pagination-bar pagination-bar--top">
-        <span>{{ paginationSummary }}</span>
-        <div class="pagination-actions">
+      <section class="kanban-toolbar">
+        <div class="kanban-title">
+          <h2>{{ title }}</h2>
+          <p>{{ compactSubtitle }}</p>
+        </div>
+        <div v-if="showPagination" class="pagination-actions pagination-actions--top">
           <button
             type="button"
             class="pagination-btn"
@@ -74,6 +78,7 @@
             跳转
           </button>
         </div>
+        <span v-else class="kanban-count">{{ records.length }} 条记录</span>
       </section>
 
       <section class="grid">
@@ -263,6 +268,13 @@ const paginationSummary = computed(() => {
   if (!total) return '共 0 条';
   return `共 ${total} 条，当前 ${rangeStart.value}-${rangeEnd.value} 条`;
 });
+const compactSubtitle = computed(() => {
+  const summary = showPagination.value ? paginationSummary.value : `${props.records.length} 条记录`;
+  const source = String(props.subtitle || '').trim();
+  if (!source) return summary;
+  const normalized = source.replace(/^\d+\s*条记录\s*·?\s*/, '').trim();
+  return normalized ? `${summary} · ${normalized}` : summary;
+});
 
 function semanticCell(field: string, value: unknown) {
   return semanticValueByField(field, value);
@@ -371,6 +383,43 @@ function formatValue(value: unknown) {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
+.kanban-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px 12px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.kanban-title {
+  min-width: 0;
+}
+
+.kanban-title h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.kanban-title p {
+  margin: 3px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.kanban-count {
+  color: #475569;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
 .card {
   background: white;
   border-radius: 16px;
@@ -459,6 +508,10 @@ function formatValue(value: unknown) {
   gap: 8px;
 }
 
+.pagination-actions--top {
+  flex: 0 0 auto;
+}
+
 .pagination-btn {
   border: 1px solid #bfdbfe;
   border-radius: 8px;
@@ -484,10 +537,15 @@ function formatValue(value: unknown) {
 }
 
 @media (max-width: 720px) {
+  .kanban-toolbar,
   .pagination-bar,
   .pagination-actions {
     align-items: flex-start;
     flex-wrap: wrap;
+  }
+
+  .pagination-actions--top {
+    flex: 1 1 100%;
   }
 }
 </style>

@@ -30641,3 +30641,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 浏览器如果仍停留在旧 SPA 会话，需要普通刷新或强制刷新以加载新 hash 静态资源 index-DgGXvm-e.js。`
 - rollback: `回退本批次提交并重建前端静态包，即恢复仅底部分页栏。`
 - next_step: `继续按用户真实入口检查项目台账分页与详情返回是否保留当前页。`
+
+## 2026-04-28 Batch-Frontend-Kanban-Top-Compact
+
+- branch: `codex/dev-env-run`
+- short_sha: `0bde85bb`
+- Layer Target: `Frontend layout`
+- Module: `frontend/apps/web`
+- Reason: `项目台账（试点）看板页分页已可见，但顶部存在“大标题卡片 + 独立顶部分页栏”的重复结构，首屏纵向空间占用过大。`
+- completed_step: `KanbanPage 在 ok 状态下将标题、总数范围、排序提示和分页操作合并为一个紧凑看板工具头；非 ok 状态保留 PageHeader 与状态面板，底部分页栏继续保留。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `docker compose -f docker-compose.yml -f docker-compose.prod-sim.yml -p sc-backend-odoo-prod-sim restart nginx`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509?menu_id=293，kanban-toolbar 高度 61.1875px，首张卡片 y=356.6875；调整前首张卡片 y=435.5，顶部区域减少约 79px。`
+- result: `PASS; 看板页顶部结构已更紧凑，分页仍在首屏可见且底部分页保留。`
+- risk: `P2; ActionView 外层“视图切换/新建”仍各自占一行，后续如需进一步压缩，需要收口外层 action 工具区。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复 PageHeader + 顶部分页栏的结构。`
+- next_step: `继续评估 ActionView 外层视图切换与新建按钮是否可整合为单行业务工具条。`
