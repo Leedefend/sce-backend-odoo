@@ -29675,3 +29675,20 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_business_usable_probe.py`
 - result: `PASS; organization_carrying_ready, gap_count=0, hr_department_total=831, branch_company_carrying_status=carried_as_organization_unit; wutao 可见业务配置/组织架构并具备 hr.department 配置权限；history_business_usable_ready`
 - next_step: `基于真实用户矩阵继续核对发起/审核类业务是否存在角色能力组缺口，避免再扩张平台公司配置面`
+
+## 2026-04-27 Batch-Wutao-Business-Config-Role-Surface
+
+- branch: `codex/dev-env-run`
+- short_sha: `48474701`
+- Layer Target: `Identity role surface / frontend navigation contract`
+- Module: `smart_construction_core`, `smart_construction_scene`
+- Reason: `wutao 已具备业务配置能力组和原生菜单权限，但 system.init 仍按 pm role_surface 剪枝，导致自定义前端业务配置菜单组不可见。`
+- completed_step: `新增 business_config_admin role surface，显式绑定 group_sc_cap_business_config_admin，并将其优先级置于 executive/pm/finance 前；业务配置管理员 role_surface 保留智能施工根与业务配置中心菜单。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/core_extension.py addons/smart_construction_scene/core_extension.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `node system.init probe for wutao/123456: role_code=business_config_admin, business_count=20, role_surface_pruned=false, trace=0e25fc2a9d3b`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.menu.navigation_snapshot.container`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_wutao_business_config_probe.py`
+- result: `PASS; custom frontend system.init now exposes 智能施工 2.0/业务配置 with 20 business config nodes for wutao; navigation snapshot trace=f36447c53a96`
+- next_step: `继续验证真实用户矩阵中发起/审核业务入口是否因单一 role_surface 剪枝产生缺口，必要时让 role_surface 合并能力组可见菜单而不是单角色覆盖。`
