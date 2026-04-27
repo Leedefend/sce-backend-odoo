@@ -30086,3 +30086,18 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.oca_runtime_smoke`
 - result: `PASS; BUSINESS_OCA_RUNTIME_SMOKE=PASS; BUSINESS_OCA_RUNTIME_ROLLBACK=OK`
 - next_step: `审计采购订单、结算单、费用/保证金等 document_state 审批业务是否需要迁移到 OCA tier 执行层，明确业务配置规则与 OCA 执行层边界。`
+
+## 2026-04-27 Batch-Business-Document-State-Policy-Switch
+
+- branch: `codex/dev-env-run`
+- short_sha: `6709907d`
+- Layer Target: `Business approval runtime verification`
+- Module: `scripts/verify + Makefile`
+- Reason: `用户明确要求系统达到“配置需要审批就走审批，取消审批就不走审批”的状态；本批固化 document_state 代表业务的开关语义验证。`
+- completed_step: `新增 scripts/verify/business_document_state_policy_switch_smoke.py；新增 make verify.business.document_state_policy_switch；覆盖费用/保证金、结算单、采购订单三类代表业务的审批开关行为，验证结果事务回滚。`
+- verification:
+  - `python3 -m py_compile scripts/verify/business_document_state_policy_switch_smoke.py`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.document_state_policy_switch`
+- result: `PASS; expense enabled=submit disabled=approved; settlement enabled=submit disabled=approve; purchase enabled non-approver blocked disabled non-approver purchase; rollback OK`
+- next_step: `补齐项目合同、一般合同、采购/一般合同 document_state 开关 smoke，并审计哪些 document_state 业务需要进一步迁移到 OCA tier 执行层。`
