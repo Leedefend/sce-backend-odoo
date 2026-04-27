@@ -17,7 +17,6 @@
                     <field name="amount"/>
                     <field name="approved_amount"/>
                     <field name="state"/>
-                    <field name="source_origin"/>
                 </tree>
             </field>
         </record>
@@ -46,7 +45,6 @@
                         <group>
                             <group>
                                 <field name="name" readonly="1"/>
-                                <field name="source_origin" readonly="source_origin == 'legacy'"/>
                                 <field name="claim_type" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="direction" readonly="1"/>
                                 <field name="date_claim" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
@@ -75,13 +73,6 @@
                             <field name="expense_type" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             <field name="summary" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                         </group>
-                        <group string="历史来源" invisible="source_origin != 'legacy'">
-                            <field name="legacy_source_model"/>
-                            <field name="legacy_source_table"/>
-                            <field name="legacy_record_id"/>
-                            <field name="legacy_document_no"/>
-                            <field name="legacy_document_state"/>
-                        </group>
                         <group>
                             <field name="note"/>
                         </group>
@@ -101,10 +92,7 @@
                     <field name="applicant_name"/>
                     <field name="payee"/>
                     <field name="expense_type"/>
-                    <field name="legacy_document_no"/>
                     <filter name="active_rows" string="有效" domain="[('active', '=', True)]"/>
-                    <filter name="legacy_rows" string="历史迁移" domain="[('source_origin', '=', 'legacy')]"/>
-                    <filter name="manual_rows" string="新系统登记" domain="[('source_origin', '=', 'manual')]"/>
                     <filter name="outflow" string="流出" domain="[('direction', '=', 'outflow')]"/>
                     <filter name="inflow" string="流入" domain="[('direction', '=', 'inflow')]"/>
                     <filter name="confirmed" string="已确认/完成" domain="[('state', 'in', ['approved', 'done', 'legacy_confirmed'])]"/>
@@ -112,7 +100,6 @@
                         <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
                         <filter name="group_type" string="业务类型" context="{'group_by': 'claim_type'}"/>
                         <filter name="group_state" string="状态" context="{'group_by': 'state'}"/>
-                        <filter name="group_source" string="来源" context="{'group_by': 'source_origin'}"/>
                         <filter name="group_month" string="月份" context="{'group_by': 'date_claim:month'}"/>
                     </group>
                 </search>

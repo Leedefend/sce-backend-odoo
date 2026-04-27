@@ -134,7 +134,6 @@
                                         <field name="amount"/>
                                         <field name="signed_amount" readonly="1"/>
                                         <field name="state" readonly="1"/>
-                                        <field name="source_origin" readonly="1"/>
                                     </tree>
                                 </field>
                             </page>
@@ -175,7 +174,6 @@
                     <field name="amount"/>
                     <field name="signed_amount"/>
                     <field name="state"/>
-                    <field name="source_origin"/>
                 </tree>
             </field>
         </record>
@@ -198,7 +196,6 @@
                         <group>
                             <group>
                                 <field name="name" readonly="1"/>
-                                <field name="source_origin" readonly="source_origin == 'legacy'"/>
                                 <field name="adjustment_type" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
                                 <field name="date_adjustment" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
                             </group>
@@ -212,7 +209,7 @@
                         <group>
                             <group string="业务锚点">
                                 <field name="project_id" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
-                                <field name="settlement_id" readonly="source_origin == 'legacy'"/>
+                                <field name="settlement_id" readonly="state == 'legacy_confirmed'"/>
                                 <field name="contract_id"/>
                                 <field name="partner_id"/>
                             </group>
@@ -220,13 +217,6 @@
                                 <field name="item_name" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
                                 <field name="account_name" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
                             </group>
-                        </group>
-                        <group string="历史来源" invisible="source_origin != 'legacy'">
-                            <field name="legacy_line_id"/>
-                            <field name="legacy_document_no"/>
-                            <field name="legacy_document_state"/>
-                            <field name="legacy_fund_confirmation_id"/>
-                            <field name="legacy_source_table"/>
                         </group>
                         <group>
                             <field name="note"/>
@@ -246,17 +236,13 @@
                     <field name="settlement_id"/>
                     <field name="item_name"/>
                     <field name="account_name"/>
-                    <field name="legacy_document_no"/>
                     <filter name="active_rows" string="有效" domain="[('active', '=', True)]"/>
-                    <filter name="legacy_rows" string="历史迁移" domain="[('source_origin', '=', 'legacy')]"/>
-                    <filter name="manual_rows" string="新系统登记" domain="[('source_origin', '=', 'manual')]"/>
                     <filter name="confirmed" string="已确认" domain="[('state', 'in', ['confirmed', 'legacy_confirmed'])]"/>
                     <group expand="0" string="分组">
                         <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
                         <filter name="group_settlement" string="结算单" context="{'group_by': 'settlement_id'}"/>
                         <filter name="group_type" string="调整类型" context="{'group_by': 'adjustment_type'}"/>
                         <filter name="group_state" string="状态" context="{'group_by': 'state'}"/>
-                        <filter name="group_source" string="来源" context="{'group_by': 'source_origin'}"/>
                     </group>
                 </search>
             </field>

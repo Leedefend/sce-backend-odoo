@@ -29709,3 +29709,20 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.menu.navigation_snapshot.container`
 - result: `PASS; 定额页面第一批清理完成；全量业务根审计仍提示 business_page_surface_gap_present，集中在历史财务事实、流程待办、合同/财务账款核心单据 legacy/source 字段及英文模型描述`
 - next_step: `下一批优先收口财务账款业务页面，判断内部历史事实菜单是否应从真实业务用户可见面隐藏。`
+
+## 2026-04-27 Batch-Business-Fact-Finance-Page-Clean
+
+- branch: `codex/dev-env-run`
+- short_sha: `f443025c`
+- Layer Target: `Domain/UI business fact page surface`
+- Module: `smart_construction_core`
+- Reason: `继续清理真实用户可见业务页面，先收口财务账款核心办理页中的历史迁移、旧系统、source/legacy 技术字段。`
+- completed_step: `费用/保证金、收款收入、收款发票台账、付款申请明细、结算单/结算调整、资金对账、融资借款、资金台账页面移除历史来源/历史锚点/旧系统来源分组及 legacy/source 字段展示`
+- verification:
+  - `XML_PARSE_OK for 8 changed XML files`
+  - `rg static scan: no visible legacy/source_origin/source_* fields or 历史/旧系统 labels in changed finance views`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/business_fact_page_surface_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.menu.navigation_snapshot.container`
+- result: `PASS; business_fact_page_surface_audit issue_count 1213 -> 1104, technical_field_visible 236 -> 181; menu navigation snapshot trace=7115e4dfb958`
+- next_step: `下一批收口 历史财务事实（内部）/流程待办 的真实用户可见性，并继续处理项目/成本页面英文与来源字段。`

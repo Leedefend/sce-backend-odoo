@@ -13,11 +13,8 @@
                     <field name="contract_id"/>
                     <field name="income_category"/>
                     <field name="receipt_type"/>
-                    <field name="legacy_record_id"/>
                     <filter string="收款收入" name="source_kind_receipt_income" domain="[('source_kind', '=', 'receipt_income')]"/>
                     <filter string="残余收款" name="source_kind_residual_receipt" domain="[('source_kind', '=', 'residual_receipt')]"/>
-                    <filter string="历史迁移" name="source_origin_legacy" domain="[('source_origin', '=', 'legacy')]"/>
-                    <filter string="新系统登记" name="source_origin_manual" domain="[('source_origin', '=', 'manual')]"/>
                     <filter string="已确认" name="state_confirmed" domain="[('state', 'in', ['confirmed', 'legacy_confirmed'])]"/>
                     <filter string="已收款" name="state_received" domain="[('state', '=', 'received')]"/>
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
@@ -39,12 +36,10 @@
                     <field name="project_id"/>
                     <field name="partner_id"/>
                     <field name="contract_id"/>
-                    <field name="source_kind"/>
                     <field name="document_no"/>
                     <field name="income_category"/>
                     <field name="receipt_type"/>
                     <field name="amount" sum="收款金额"/>
-                    <field name="source_origin"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -69,13 +64,11 @@
                         <group>
                             <group>
                                 <field name="name" readonly="1"/>
-                                <field name="source_origin" readonly="source_origin == 'legacy'"/>
-                                <field name="source_kind" readonly="source_origin == 'legacy'"/>
-                                <field name="date_receipt" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                                <field name="document_no" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                                <field name="date_receipt" readonly="state == 'legacy_confirmed'"/>
+                                <field name="document_no" readonly="state == 'legacy_confirmed'"/>
                             </group>
                             <group>
-                                <field name="project_id" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                                <field name="project_id" readonly="state == 'legacy_confirmed'"/>
                                 <field name="partner_id"/>
                                 <field name="contract_id"/>
                                 <field name="payment_request_id"/>
@@ -83,27 +76,19 @@
                             </group>
                         </group>
                         <group string="收款信息">
-                            <field name="receipt_type" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="income_category" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="payment_method" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="receiving_account" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="bill_no" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="invoice_ref" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="receipt_type" readonly="state == 'legacy_confirmed'"/>
+                            <field name="income_category" readonly="state == 'legacy_confirmed'"/>
+                            <field name="payment_method" readonly="state == 'legacy_confirmed'"/>
+                            <field name="receiving_account" readonly="state == 'legacy_confirmed'"/>
+                            <field name="bill_no" readonly="state == 'legacy_confirmed'"/>
+                            <field name="invoice_ref" readonly="state == 'legacy_confirmed'"/>
                         </group>
                         <group string="金额">
-                            <field name="amount" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="deducted_invoice_amount" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="deducted_tax_amount" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="settlement_amount" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="amount" readonly="state == 'legacy_confirmed'"/>
+                            <field name="deducted_invoice_amount" readonly="state == 'legacy_confirmed'"/>
+                            <field name="deducted_tax_amount" readonly="state == 'legacy_confirmed'"/>
+                            <field name="settlement_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="currency_id"/>
-                        </group>
-                        <group string="历史来源" invisible="source_origin != 'legacy'">
-                            <field name="legacy_source_model" readonly="1"/>
-                            <field name="legacy_source_table" readonly="1"/>
-                            <field name="legacy_record_id" readonly="1"/>
-                            <field name="legacy_document_state" readonly="1"/>
-                            <field name="legacy_residual_reason" readonly="1"/>
-                            <field name="legacy_attachment_ref" readonly="1"/>
                         </group>
                         <group>
                             <field name="note"/>

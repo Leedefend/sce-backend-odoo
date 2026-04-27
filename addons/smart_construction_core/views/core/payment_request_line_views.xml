@@ -12,8 +12,6 @@
                     <field name="project_id"/>
                     <field name="partner_id"/>
                     <field name="contract_id"/>
-                    <field name="source_line_type"/>
-                    <field name="source_document_no"/>
                     <field name="amount"/>
                     <field name="paid_before_amount"/>
                     <field name="remaining_amount"/>
@@ -46,16 +44,6 @@
                                 <field name="partner_id" readonly="1"/>
                                 <field name="contract_id"/>
                             </group>
-                            <group string="历史锚点">
-                                <field name="legacy_line_id" readonly="1"/>
-                                <field name="legacy_parent_id" readonly="1"/>
-                                <field name="legacy_supplier_contract_id" readonly="1"/>
-                                <field name="source_document_no" readonly="1"/>
-                                <field name="source_line_type" readonly="1"/>
-                                <field name="source_counterparty_text" readonly="1"/>
-                                <field name="source_contract_no" readonly="1"/>
-                                <field name="import_batch" readonly="1"/>
-                            </group>
                         </group>
                         <group>
                             <field name="amount"/>
@@ -80,7 +68,6 @@
                     <field name="project_id"/>
                     <field name="partner_id"/>
                     <field name="contract_id"/>
-                    <field name="legacy_line_id"/>
                     <group expand="0" string="分组">
                         <filter string="付款申请" name="group_by_request_id" context="{'group_by': 'request_id'}"/>
                         <filter string="项目" name="group_by_project_id" context="{'group_by': 'project_id'}"/>
