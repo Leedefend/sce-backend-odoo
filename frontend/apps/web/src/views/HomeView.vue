@@ -552,7 +552,10 @@ const lastTrackedEmptySignature = ref('');
 const showEmptyHelp = ref(false);
 const isHudEnabled = computed(() => resolveHudEnabled(route));
 const isDeliveryMode = computed(() => isDeliveryModeEnabled());
-const isAdmin = computed(() => String(roleSurface.value?.role_code || '').trim() === 'executive');
+const isAdmin = computed(() => {
+  const groups = session.user?.groups_xmlids || [];
+  return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
+});
 const heroQuickActions = computed(() => {
   const supported = new Set(['open_my_work', 'open_usage_analytics']);
   const actions = pageGlobalActions.value.filter((item) => {
