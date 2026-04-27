@@ -29627,3 +29627,19 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_wutao_business_config_probe.py`
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make history.business.usable.probe`
 - next_step: `继续用模拟生产库验证真实用户矩阵中是否还存在角色/业务数据缺口`
+
+## 2026-04-27 Batch-Real-User-Admin-Semantics-Close
+
+- branch: `codex/dev-env-run`
+- short_sha: `e6a91a85`
+- Layer Target: `Data migration / real-user semantics boundary`
+- Module: `scripts/migration`
+- Reason: `admin 必须保留为 Odoo 技术/平台账号，历史迁移 admin-like 用户不能继续混入真实业务可用用户矩阵。`
+- completed_step: `history_real_user_normalize_write 将 legacy_user_sc_10000000 规范为 inactive history_system_user_10000000；company probe 排除 inactive 与 fixture 账号；新增 history_admin_semantics_probe`
+- verification:
+  - `python3 -m py_compile scripts/migration/history_real_user_normalize_write.py scripts/migration/history_real_user_company_probe.py scripts/migration/history_admin_semantics_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make history.real_users.normalize.write`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_admin_semantics_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_real_user_company_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make history.business.usable.probe`
+- next_step: `输出真实用户业务矩阵时以 active migrated real users 为准，不纳入 admin / history_system_user_10000000 / fixture users`

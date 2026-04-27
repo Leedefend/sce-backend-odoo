@@ -15,6 +15,14 @@ BUSINESS_CONFIG_ADMIN_LOGINS = {
     for item in os.getenv("REAL_USER_BUSINESS_CONFIG_ADMIN_LOGINS", "wutao").split(",")
     if item.strip()
 }
+EXCLUDED_LEGACY_USER_IDS = {
+    item.strip()
+    for item in os.getenv("REAL_USER_EXCLUDED_LEGACY_IDS", "10000000").split(",")
+    if item.strip()
+}
+EXCLUDED_USER_NAME_BY_LEGACY_ID = {
+    "10000000": "历史系统账号（不启用）",
+}
 ALLOWED_DBS = {
     item.strip()
     for item in os.getenv("MIGRATION_REPLAY_DB_ALLOWLIST", "sc_prod_sim").split(",")
@@ -140,7 +148,37 @@ real_user_ids = env["ir.model.data"].sudo().search(  # noqa: F821
         ("name", "like", "legacy_user_sc_%"),
     ]
 ).mapped("res_id")
-real_users = Users.browse(real_user_ids).exists().filtered(lambda u: bool(u.active and u.has_group("base.group_user")))
+all_real_users = Users.browse(real_user_ids).exists()
+excluded = []
+for user in all_real_users.sorted("id"):
+    legacy_id = legacy_id_for(user)
+    if legacy_id not in EXCLUDED_LEGACY_USER_IDS:
+        continue
+    target_name = EXCLUDED_USER_NAME_BY_LEGACY_ID.get(legacy_id, f"历史系统账号（{legacy_id}，不启用）")
+    vals = {
+        "active": False,
+        "name": target_name,
+        "login": f"history_system_user_{legacy_id}",
+    }
+    before = {"login": user.login, "name": user.name, "active": bool(user.active)}
+    user.write(vals)
+    excluded.append(
+        {
+            "id": user.id,
+            "legacy_id": legacy_id,
+            "old_login": before["login"],
+            "login": vals["login"],
+            "old_name": before["name"],
+            "name": vals["name"],
+            "old_active": before["active"],
+            "active": False,
+            "decision": "excluded_from_real_business_user_matrix",
+        }
+    )
+
+real_users = all_real_users.filtered(
+    lambda u: bool(u.active and u.has_group("base.group_user") and legacy_id_for(u) not in EXCLUDED_LEGACY_USER_IDS)
+)
 internal_group = env.ref("smart_construction_core.group_sc_internal_user", raise_if_not_found=False)  # noqa: F821
 business_config_group = env.ref(  # noqa: F821
     "smart_construction_core.group_sc_cap_business_config_admin",
@@ -225,6 +263,9 @@ else:
         "mode": "history_real_user_normalize_write",
         "decision": "real_users_normalized_for_login",
         "initial_password": INITIAL_PASSWORD,
+        "excluded_legacy_user_ids": sorted(EXCLUDED_LEGACY_USER_IDS),
+        "excluded_count": len(excluded),
+        "excluded": excluded,
         "updated_count": len(updated),
         "suffix_count": sum(1 for row in updated if row["suffix_used"]),
         "business_config_admin_logins": sorted(BUSINESS_CONFIG_ADMIN_LOGINS),

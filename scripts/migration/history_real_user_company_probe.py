@@ -10,9 +10,13 @@ def _text(value):
 
 def _is_runtime_user(user):
     login = _text(user.login)
+    if not user.active:
+        return False
     if not login or login in {"admin", "default"}:
         return False
-    if login.startswith(("demo_", "svc_", "sc_test")):
+    if login in {"admin_10000000", "history_system_user_10000000"}:
+        return False
+    if login.startswith(("demo_", "svc_", "sc_test", "sc_fx_")):
         return False
     return True
 
