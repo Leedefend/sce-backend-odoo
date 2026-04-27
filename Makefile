@@ -930,7 +930,7 @@ audit.scene.config: guard.prod.forbid check-compose-project check-compose-env
 verify.portal.bridge.e2e: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) node /mnt/scripts/verify/portal_bridge_e2e_smoke.js"
 
-.PHONY: verify.portal.payment_request_approval.prepare.container verify.portal.payment_request_approval_smoke.container verify.portal.payment_request_approval_handoff_smoke.container verify.portal.payment_request_approval_all_smoke.container verify.portal.payment_request_approval_field_consumer_audit
+.PHONY: verify.portal.payment_request_approval.prepare.container verify.portal.payment_request_approval_smoke.container verify.portal.payment_request_approval_handoff_smoke.container verify.portal.payment_request_approval_all_smoke.container verify.portal.payment_request_approval_field_consumer_audit verify.portal.business_real_user_browser_closure
 verify.portal.payment_request_approval.prepare.container: guard.prod.forbid check-compose-project check-compose-env
 	@if [ "$(PAYMENT_APPROVAL_NEED_UPGRADE)" = "1" ]; then \
 	  CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=$(DB_NAME) $(MAKE) --no-print-directory mod.upgrade; \
@@ -940,6 +940,10 @@ verify.portal.payment_request_approval.prepare.container: guard.prod.forbid chec
 	@$(MAKE) --no-print-directory restart
 	@sleep 5
 	@AUTO_FIX_EXTENSION_MODULES=1 $(MAKE) --no-print-directory policy.ensure.extension_modules DB_NAME=$(DB_NAME)
+
+.PHONY: verify.portal.business_real_user_browser_closure
+verify.portal.business_real_user_browser_closure: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) FRONTEND_URL=$(or $(FRONTEND_URL),http://127.0.0.1:5174) bash scripts/verify/business_real_user_browser_closure.sh
 
 .PHONY: verify.portal.payment_request_approval_smoke.container
 verify.portal.payment_request_approval_smoke.container: guard.prod.forbid check-compose-project check-compose-env

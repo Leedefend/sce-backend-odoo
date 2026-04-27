@@ -30417,3 +30417,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `odoo.shell.exec FORM_CLOSURE`: 14 approval-capable business forms all have submit/confirm plus 审批通过/审批驳回 buttons
 - result: `PASS; 模拟生产库业务办理闭环从 8 类 OCA 单据扩展到登记/调整类可配置审批，且所有审批相关表单具备浏览器可见审批入口。matrix=artifacts/business-full-closure/20260428T0137`
 - next_step: `用真实用户浏览器抽样所有业务域：发起一类登记/调整单据并从个人工作台完成审批，确认自定义前端动作刷新与待办消失一致。`
+
+## 2026-04-28 Batch-Business-Real-Browser-Closure-Sampling
+
+- branch: `codex/dev-env-run`
+- short_sha: `1d239461`
+- Layer Target: `Business fact validation + frontend contract consumer/browser closure`
+- Module: `smart_construction_core`, `frontend/apps/web`
+- Reason: `登记/调整类业务已补齐统一审批能力后，必须使用模拟生产库真实用户在自定义前端完成“我的工作”待办审批闭环，不能只依赖后端烟测。`
+- completed_step: `新增 verify.portal.business_real_user_browser_closure 入口；脚本在 sc_prod_sim 临时启用收款登记/结算调整审批、创建真实待审单据，使用 chenshuai/123456 与 wutao/123456 浏览器登录，从“我的工作”确认待办可见，进入业务记录点击“审批通过”，复查待办消失，后端断言 validated/approved，并清理临时记录、审批记录、项目和策略开关。`
+- verification:
+  - `node --check scripts/verify/business_real_user_browser_closure.js`
+  - `bash -n scripts/verify/business_real_user_browser_closure.sh`
+  - `python3 -m py_compile scripts/verify/business_real_user_browser_setup.py scripts/verify/business_real_user_browser_cleanup.py scripts/verify/business_real_user_browser_assert.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_closure`
+  - `browser_summary.json: sc.receipt.income RI2600016 by chenshuai -> approved_and_removed_from_todo; sc.settlement.adjustment SA2600012 by wutao -> approved_and_removed_from_todo`
+  - `backend_assert.json: sc.receipt.income state=confirmed validation_status=validated review=approved; sc.settlement.adjustment state=confirmed validation_status=validated review=approved`
+  - `cleanup: 临时 sc.receipt.income 9559、sc.settlement.adjustment 12925、project 1075/1076、tier.review 224/225 已删除；可选审批策略恢复 approval_required=False mode=none`
+- result: `PASS; 真实用户浏览器已验证登记/调整类业务从个人工作台待办到审批通过、待办消失、后端状态闭环。artifact=artifacts/browser-real-user-business-closure/current`
+- next_step: `继续按同一脚本化口径扩展更多业务类型和驳回链路；另行处理统一渲染版“我的工作”待办卡片中业务单号文本本身不可点击的问题。`
