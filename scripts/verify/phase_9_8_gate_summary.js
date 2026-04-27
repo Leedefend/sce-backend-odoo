@@ -54,19 +54,39 @@ function summarizeMenuResolve(menuData) {
   };
 }
 
+function summarizeMenuNavigation(navData) {
+  const summary = navData || {};
+  return {
+    ok: summary.ok ?? false,
+    status: summary.status ?? 'n/a',
+    trace_id: summary.trace_id || '',
+    checked_node_count: summary.checked_node_count ?? 'n/a',
+    scene_node_count: summary.scene_node_count ?? 'n/a',
+    missing_count: summary.missing_count ?? 'n/a',
+    invalid_count: summary.invalid_count ?? 'n/a',
+    compatibility_used_counts: summary.compatibility_used_counts || {},
+    confidence_counts: summary.confidence_counts || {},
+  };
+}
+
 function main() {
   const warningsDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-scene-warnings');
   const menuDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-menu-scene-resolve');
+  const menuNavigationDir = path.join(ARTIFACTS_DIR, 'codex', 'menu-navigation-field-snapshot');
 
   const warningsPath = findLatest(warningsDir, 'warnings.json');
   const menuPath = findLatest(menuDir, 'menu_scene_resolve.json');
+  const menuNavigationPath = findLatest(menuNavigationDir, 'summary.json');
 
   const out = {
     warnings: warningsPath ? readJson(warningsPath) : null,
     menu_scene_resolve: menuPath ? readJson(menuPath) : null,
+    menu_navigation_field_snapshot: menuNavigationPath ? readJson(menuNavigationPath) : null,
   };
   const menuQuick = summarizeMenuResolve(out.menu_scene_resolve);
+  const menuNavigationQuick = summarizeMenuNavigation(out.menu_navigation_field_snapshot);
   out.menu_scene_resolve_quick = menuQuick;
+  out.menu_navigation_field_snapshot_quick = menuNavigationQuick;
 
   const outDir = path.join(ARTIFACTS_DIR, 'codex', 'phase-9-8');
   fs.mkdirSync(outDir, { recursive: true });
@@ -76,6 +96,7 @@ function main() {
   const summaryLines = [
     `phase_9_8_gate_summary: ${outFile}`,
     `phase_9_8_menu_resolve: ${menuPath || 'n/a'}`,
+    `phase_9_8_menu_navigation_field_snapshot: ${menuNavigationPath || 'n/a'}`,
     `phase_9_8_warnings: ${warningsPath || 'n/a'}`,
     `phase_9_8_menu_resolve_effective_total: ${menuQuick.effective_total}`,
     `phase_9_8_menu_resolve_coverage: ${menuQuick.coverage}%`,
@@ -83,6 +104,11 @@ function main() {
     `phase_9_8_menu_resolve_exempt_manual: ${menuQuick.exempt_manual}`,
     `phase_9_8_menu_resolve_exempt_auto: ${menuQuick.exempt_auto}`,
     `phase_9_8_menu_resolve_enforce_prefixes: ${menuQuick.enforce_prefixes.join(',') || '-'}`,
+    `phase_9_8_menu_navigation_ok: ${menuNavigationQuick.ok}`,
+    `phase_9_8_menu_navigation_checked_node_count: ${menuNavigationQuick.checked_node_count}`,
+    `phase_9_8_menu_navigation_missing_count: ${menuNavigationQuick.missing_count}`,
+    `phase_9_8_menu_navigation_invalid_count: ${menuNavigationQuick.invalid_count}`,
+    `phase_9_8_menu_navigation_trace_id: ${menuNavigationQuick.trace_id || '-'}`,
   ];
   appendSummary(summaryLines);
 }

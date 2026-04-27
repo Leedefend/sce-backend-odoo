@@ -29585,3 +29585,17 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `git diff --check -- docs/ops/verify/README.md docs/ops/iterations/menu_navigation_verify_docs_batch_20260427.md docs/ops/iterations/delivery_context_switch_log_v1.md`
   - `rg -n "verify.menu.navigation_snapshot|menu-navigation-field-snapshot|native_action_id|compatibility_used" docs/ops/verify/README.md`
 - next_step: `check whether phase gate summaries should include menu_navigation_field_snapshot artifacts alongside menu_scene_resolve`
+
+## 2026-04-27 Batch-Menu-Navigation-Phase-Gate-Summary
+
+- branch: `codex/dev-env-run`
+- short_sha: `58afb7ea`
+- Layer Target: `Verification summary / Phase 9.8 menu gate`
+- Module: `scripts/verify/phase_9_8_gate_summary.js`
+- Reason: phase gate summary aggregated menu scene resolve but not the newer menu navigation field snapshot, so the field contract evidence was invisible in gate summaries.
+- completed_step: `added latest menu-navigation-field-snapshot summary ingestion and phase_9_8_menu_navigation_* summary lines`
+- verification:
+  - `node --check scripts/verify/phase_9_8_gate_summary.js`
+  - `make verify.phase_9_8.gate_summary`
+  - `git diff --check -- scripts/verify/phase_9_8_gate_summary.js docs/ops/verify/README.md docs/ops/iterations/menu_navigation_phase_gate_summary_batch_20260427.md docs/ops/iterations/delivery_context_switch_log_v1.md`
+- next_step: `decide whether the aggregate gate target should remain summary-only or explicitly depend on verify.menu.navigation_snapshot.container`

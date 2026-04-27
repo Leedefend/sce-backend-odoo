@@ -563,6 +563,10 @@
 - `make verify.portal.scene_warnings_limit.container`
 - `make verify.portal.act_url_missing_scene_report.container`
 - `make verify.phase_9_8.gate_summary`
+  - Aggregates latest menu/scene artifacts:
+    - `portal-menu-scene-resolve/*/menu_scene_resolve.json`
+    - `menu-navigation-field-snapshot/*/summary.json`
+    - `portal-scene-warnings/*/warnings.json`
 
 ## Phase D/E Cross-Stack Envelope Coverage
 - `make verify.portal.envelope_smoke.container`
