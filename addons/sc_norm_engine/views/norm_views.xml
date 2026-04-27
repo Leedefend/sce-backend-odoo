@@ -58,6 +58,7 @@
         <field name="name">专业</field>
         <field name="res_model">sc.norm.specialty</field>
         <field name="view_mode">tree,form</field>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
     </record>
 
     <!-- Chapter -->
@@ -99,6 +100,7 @@
         <field name="name">章节</field>
         <field name="res_model">sc.norm.chapter</field>
         <field name="view_mode">tree,form</field>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
     </record>
 
     <!-- Item -->
@@ -167,5 +169,6 @@
         <field name="name">定额子目</field>
         <field name="res_model">sc.norm.item</field>
         <field name="view_mode">tree,form</field>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
     </record>
 </odoo>

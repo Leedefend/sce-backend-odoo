@@ -101,6 +101,7 @@ system_forbidden_fragments = [
     "场景与能力",
     "Scene Governance",
     "工作流",
+    "项目管理（后台）",
     "订阅",
     "授权快照",
     "用量统计",
@@ -110,7 +111,10 @@ system_forbidden_fragments = [
 business_config_fragments = [
     "业务配置",
     "数据字典",
+    "业务字典",
     "定额库",
+    "定额引擎",
+    "四川定额导入",
     "成本科目",
     "阶段要求配置",
 ]
@@ -126,6 +130,13 @@ business_config_group = env.ref(  # noqa: F821
     raise_if_not_found=False,
 )
 system_group = env.ref("base.group_system", raise_if_not_found=False)  # noqa: F821
+
+
+def group_xmlids(record) -> set[str]:
+    if not record or not hasattr(record, "groups_id"):
+        return set()
+    xmlid_map = record.groups_id.get_external_id()
+    return {xmlid for xmlid in xmlid_map.values() if xmlid}
 
 group_boundary = {}
 for xmlid, group in [
@@ -194,6 +205,83 @@ for login in platform_logins:
     if not any("业务配置" in path for path in paths):
         errors.append(f"{login}: platform role cannot see business config root")
 
+exact_group_boundaries = {
+    "smart_construction_core.menu_sc_project_manage": {
+        "only": {"smart_construction_core.group_sc_cap_config_admin"},
+        "label": "platform-only backend project menu",
+    },
+    "smart_construction_core.action_sc_project_manage": {
+        "only": {"smart_construction_core.group_sc_cap_config_admin"},
+        "label": "platform-only backend project action",
+    },
+    "smart_construction_core.menu_sc_project_cost_code": {
+        "only": {"smart_construction_core.group_sc_cap_business_config_admin"},
+        "label": "business config cost code menu",
+    },
+    "smart_construction_core.menu_sc_dictionary": {
+        "only": {"smart_construction_core.group_sc_cap_business_config_admin"},
+        "label": "business config dictionary data-center shortcut",
+    },
+    "smart_construction_core.menu_sc_dictionary_root": {
+        "only": {"smart_construction_core.group_sc_cap_business_config_admin"},
+        "label": "business config dictionary root",
+    },
+    "smart_construction_core.menu_project_quota_root": {
+        "only": {"smart_construction_core.group_sc_cap_business_config_admin"},
+        "label": "business config quota root",
+    },
+    "smart_construction_core.menu_quota_import_wizard": {
+        "only": {"smart_construction_core.group_sc_cap_business_config_admin"},
+        "label": "business config quota import menu",
+    },
+    "smart_construction_core.action_project_cost_code": {
+        "only": {"smart_construction_core.group_sc_cap_business_config_admin"},
+        "label": "business config cost code action",
+    },
+    "smart_construction_core.action_project_dictionary": {
+        "only": {"smart_construction_core.group_sc_cap_business_config_admin"},
+        "label": "business config dictionary action",
+    },
+    "smart_construction_core.action_quota_import_wizard": {
+        "only": {"smart_construction_core.group_sc_cap_business_config_admin"},
+        "label": "business config quota import action",
+    },
+}
+for optional_xmlid, label in {
+    "sc_norm_engine.menu_sc_norm_root": "business config norm engine root",
+    "sc_norm_engine.menu_sc_norm_specialty": "business config norm specialty menu",
+    "sc_norm_engine.menu_sc_norm_chapter": "business config norm chapter menu",
+    "sc_norm_engine.menu_sc_norm_item": "business config norm item menu",
+    "sc_norm_engine.menu_sc_norm_import": "business config norm import menu",
+    "sc_norm_engine.action_sc_norm_specialty": "business config norm specialty action",
+    "sc_norm_engine.action_sc_norm_chapter": "business config norm chapter action",
+    "sc_norm_engine.action_sc_norm_item": "business config norm item action",
+    "sc_norm_engine.action_sc_norm_import_wizard": "business config norm import action",
+}.items():
+    if env.ref(optional_xmlid, raise_if_not_found=False):  # noqa: F821
+        exact_group_boundaries[optional_xmlid] = {
+            "only": {"smart_construction_core.group_sc_cap_business_config_admin"},
+            "label": label,
+        }
+exact_group_boundary_results = {}
+for xmlid, expectation in exact_group_boundaries.items():
+    record = env.ref(xmlid, raise_if_not_found=False)  # noqa: F821
+    actual = group_xmlids(record)
+    expected = set(expectation["only"])
+    exact_group_boundary_results[xmlid] = {
+        "missing": not bool(record),
+        "label": expectation["label"],
+        "expected_only": sorted(expected),
+        "actual": sorted(actual),
+        "ok": bool(record) and actual == expected,
+    }
+    if not record:
+        errors.append(f"{xmlid}: missing {expectation['label']}")
+    elif actual != expected:
+        errors.append(
+            f"{xmlid}: {expectation['label']} groups mismatch expected={sorted(expected)} actual={sorted(actual)}"
+        )
+
 payload = {
     "status": "PASS" if not errors else "FAIL",
     "mode": "menu_role_visibility_governance_probe",
@@ -202,6 +290,7 @@ payload = {
     "errors": errors,
     "error_count": len(errors),
     "group_boundary": group_boundary,
+    "exact_group_boundary": exact_group_boundary_results,
     "users": users,
 }
 output_json = resolve_artifact_root() / "menu_role_visibility_governance_probe_result_v1.json"

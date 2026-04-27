@@ -4,7 +4,7 @@
     "summary": "Sichuan 2015 construction norm engine with import wizard",
     "category": "Construction",
     "author": "lidefend",
-    "depends": ["base", "uom"],
+    "depends": ["smart_construction_core", "uom"],
     "data": [
         "security/ir.model.access.csv",
         "views/norm_views.xml",         # 定义视图和 actions

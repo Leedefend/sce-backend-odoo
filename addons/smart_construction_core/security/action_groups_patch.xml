@@ -119,6 +119,9 @@
 
     <!-- Batch-4：字典 / 工作流 / 运营指标 / 文档 / 驾驶舱 / 资金报表 -->
     <!-- 字典/定额属于业务配置，不向普通业务角色开放配置入口 -->
+    <record id="action_sc_project_manage" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
     <record id="action_project_dictionary" model="ir.actions.act_window">
         <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
     </record>
@@ -141,6 +144,49 @@
         <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
     </record>
     <record id="action_quota_import_wizard" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+    <!-- 菜单记录显式清组：Odoo 升级时 menuitem 的 groups 可能保留历史 M2M。 -->
+    <record id="menu_sc_project_manage" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_project_cost_code" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_dictionary" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_dictionary_root" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_dictionary_all" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_dictionary_discipline" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_dictionary_chapter" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_dictionary_quota_item" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_dictionary_sub_item" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+    <record id="menu_project_quota_root" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+    <record id="menu_project_quota_subitem" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+    <record id="menu_project_quota_tree" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+    <record id="menu_project_quota_center" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+    <record id="menu_quota_import_wizard" model="ir.ui.menu">
         <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
     </record>
 
