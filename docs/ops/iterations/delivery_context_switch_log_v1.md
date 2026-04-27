@@ -30568,3 +30568,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 当前页码不写入 URL，详情返回后的页码保持后续可作为独立增强项处理。`
 - rollback: `回退本批次提交即可移除普通列表分页控件并恢复原单页列表行为。`
 - next_step: `继续用真实业务用户验证高频列表页，确认列表分页、详情进入/返回和办理入口组合路径没有使用级缺口。`
+
+## 2026-04-28 Batch-Identity-Company-Name-Contract
+
+- branch: `codex/dev-env-run`
+- short_sha: `eb076610`
+- Layer Target: `Backend identity contract + frontend schema`
+- Module: `addons/smart_core + frontend/packages/schema`
+- Reason: `模拟生产库中用户主公司已正确落库为四川保盛建设集团有限公司，但 login/system.init 身份契约只返回 company_id，不返回 company_name/company，导致自定义前端页头只能兜底显示“默认企业”。`
+- completed_step: `login 用户画像与 system.init identity payload 均补充 company_name 和 company{id,name,display_name}；前端 schema 同步声明该字段，AppShell 既有企业名消费逻辑可直接显示真实企业。`
+- verification:
+  - `python3 -m py_compile addons/smart_core/handlers/login.py addons/smart_core/core/system_init_identity_payload.py`
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec`：确认 `base.main_company`、`wutao.company_id` 均为 `四川保盛建设集团有限公司`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make restart`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，login/system.init 均返回 company_name=四川保盛建设集团有限公司，页头显示 当前企业：四川保盛建设集团有限公司。`
+- result: `PASS; 当前企业展示已从“默认企业”收口为真实主公司名称。`
+- rollback: `回退本批次提交并重启 Odoo worker 即恢复仅返回 company_id 的旧身份契约。`
+- next_step: `继续验证其他真实用户是否均显示所属真实企业，并排查组织架构/部门承载是否需要显示到页头或用户资料区。`

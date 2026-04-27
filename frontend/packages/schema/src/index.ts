@@ -37,6 +37,12 @@ export interface LoginResponse {
     lang?: string;
     tz?: string;
     company_id?: number | null;
+    company_name?: string;
+    company?: {
+      id?: number | null;
+      name?: string;
+      display_name?: string;
+    } | null;
     allowed_company_ids?: number[];
   };
   entitlement?: {
@@ -167,6 +173,12 @@ export interface AppInitResponse {
     lang?: string;
     tz?: string;
     company_id?: number | null;
+    company_name?: string;
+    company?: {
+      id?: number | null;
+      name?: string;
+      display_name?: string;
+    } | null;
   };
   nav: NavNode[];
   default_route?: {
