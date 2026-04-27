@@ -29599,3 +29599,16 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `make verify.phase_9_8.gate_summary`
   - `git diff --check -- scripts/verify/phase_9_8_gate_summary.js docs/ops/verify/README.md docs/ops/iterations/menu_navigation_phase_gate_summary_batch_20260427.md docs/ops/iterations/delivery_context_switch_log_v1.md`
 - next_step: `decide whether the aggregate gate target should remain summary-only or explicitly depend on verify.menu.navigation_snapshot.container`
+
+## 2026-04-27 Batch-Menu-Navigation-Gate-Wiring
+
+- branch: `codex/dev-env-run`
+- short_sha: `7c89fcb8`
+- Layer Target: `Gate wiring / menu navigation verification`
+- Module: `Makefile`
+- Reason: phase summary now consumes menu navigation field snapshot, but strict `gate.full` did not guarantee that the snapshot was generated before summary aggregation.
+- completed_step: `wired verify.menu.navigation_snapshot.container into gate.full strict branch before phase_9_8.gate_summary`
+- verification:
+  - `make -n gate.full DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+  - `git diff --check -- Makefile docs/ops/verify/README.md docs/ops/iterations/menu_navigation_gate_wiring_batch_20260427.md docs/ops/iterations/delivery_context_switch_log_v1.md`
+- next_step: `scan current menu normalization perimeter for remaining actionable verification or documentation gaps`

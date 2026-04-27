@@ -567,6 +567,7 @@
     - `portal-menu-scene-resolve/*/menu_scene_resolve.json`
     - `menu-navigation-field-snapshot/*/summary.json`
     - `portal-scene-warnings/*/warnings.json`
+  - `gate.full` strict mode runs `verify.menu.navigation_snapshot.container` before this summary so the navigation field evidence is fresh.
 
 ## Phase D/E Cross-Stack Envelope Coverage
 - `make verify.portal.envelope_smoke.container`

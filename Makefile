@@ -1391,6 +1391,7 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 	@if [ "$(SC_GATE_STRICT)" != "0" ]; then \
 	  $(MAKE) verify.menu.scene_resolve.container DB_NAME=$(DB_NAME); \
 	  $(MAKE) verify.menu.scene_resolve.summary; \
+	  $(MAKE) verify.menu.navigation_snapshot.container DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD); \
 	  $(MAKE) verify.portal.scene_warnings_guard.container DB_NAME=$(DB_NAME); \
 	  $(MAKE) verify.portal.scene_warnings_limit.container DB_NAME=$(DB_NAME); \
 	  $(MAKE) verify.portal.act_url_missing_scene_report.container DB_NAME=$(DB_NAME); \
