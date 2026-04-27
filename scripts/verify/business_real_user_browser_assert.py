@@ -29,14 +29,27 @@ def main():
         state = getattr(record, "state", "")
         validation_status = getattr(record, "validation_status", "")
         review_statuses = reviews.mapped("status")
-        expected_state = row["expected_state"] if action != "reject" else "draft"
-        expected_validation = "validated" if action != "reject" else "rejected"
-        expected_review = "approved" if action != "reject" else "rejected"
-        if state != expected_state:
+        if action == "reject":
+            expected_states = row.get("reject_state_in") or []
+            expected_state = row.get("reject_state") or "draft"
+            expected_validation = row.get("reject_validation") or "rejected"
+            expected_review = row.get("reject_review") or "rejected"
+        else:
+            expected_states = row.get("expected_state_in") or []
+            expected_state = row["expected_state"]
+            expected_validation = "validated"
+            expected_review = "approved"
+        if expected_states:
+            if state not in expected_states:
+                raise AssertionError("%s expected state in %s, got %s" % (record._name, expected_states, state))
+        elif state != expected_state:
             raise AssertionError("%s expected state %s, got %s" % (record._name, expected_state, state))
         if validation_status != expected_validation:
             raise AssertionError("%s expected %s, got %s" % (record._name, expected_validation, validation_status))
-        if not review_statuses or any(status != expected_review for status in review_statuses):
+        if expected_review == "none":
+            if review_statuses:
+                raise AssertionError("%s expected no active reviews, got %s" % (record._name, review_statuses))
+        elif not review_statuses or any(status != expected_review for status in review_statuses):
             raise AssertionError("%s review not %s: %s" % (record._name, expected_review, review_statuses))
         rows.append(
             {

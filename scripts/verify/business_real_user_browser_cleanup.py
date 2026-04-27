@@ -19,6 +19,13 @@ def _unlink_if_exists(model_name, ids):
         return
     records = _env()[model_name].sudo().browse(ids).exists()
     if records:
+        if model_name == "product.product":
+            records.write({"active": False})
+            return
+        if model_name == "purchase.order":
+            active_orders = records.filtered(lambda rec: rec.state != "cancel")
+            if active_orders:
+                active_orders.button_cancel()
         records.unlink()
 
 
@@ -34,6 +41,14 @@ def main():
         if model_name and record_id:
             env["tier.review"].sudo().search([("model", "=", model_name), ("res_id", "=", record_id)]).unlink()
             _unlink_if_exists(model_name, [record_id])
+        cleanup_rows = row.get("cleanup") if isinstance(row.get("cleanup"), list) else []
+        for item in cleanup_rows:
+            if not isinstance(item, dict):
+                continue
+            cleanup_model = str(item.get("model") or "").strip()
+            cleanup_id = int(item.get("id") or 0)
+            if cleanup_model and cleanup_id:
+                _unlink_if_exists(cleanup_model, [cleanup_id])
 
     project_ids = [int(row.get("project_id") or 0) for row in case_rows if int(row.get("project_id") or 0)]
     _unlink_if_exists("project.project", project_ids)
@@ -45,6 +60,11 @@ def main():
                 "in",
                 [
                     "sc.receipt.income",
+                    "payment.request",
+                    "sc.expense.claim",
+                    "project.material.plan",
+                    "sc.settlement.order",
+                    "purchase.order",
                     "sc.payment.execution",
                     "sc.invoice.registration",
                     "sc.financing.loan",

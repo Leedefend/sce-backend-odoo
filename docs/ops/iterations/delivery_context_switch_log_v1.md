@@ -30492,3 +30492,24 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `reject path: RI2600021/PE2600010/IR2600008/FL2600008/TR2600009/SA2600017 均从 my-work 点击进入记录，审批驳回后待办消失；backend state=draft validation_status=rejected review=rejected；cleanup rows=6`
 - result: `PASS; 6 个登记/调整类业务模型真实用户浏览器 approve/reject 双路径全部闭环。`
 - next_step: `继续回到业务办理全口径：扩展真实浏览器闭环到既有 OCA 单据类业务，如付款申请、费用/保证金、物资计划、结算单、采购单、合同类。`
+
+## 2026-04-28 Batch-Business-Real-Browser-OCA-Document-Sampling
+
+- branch: `codex/dev-env-run`
+- short_sha: `19726d21`
+- Layer Target: `Business fact validation + frontend contract consumer/browser closure`
+- Module: `scripts/verify`
+- Reason: `全业务可用矩阵仍缺少付款申请、费用/保证金、物资计划、结算单、采购单这类高频 OCA/业务单据的真实用户浏览器闭环，必须验证真实待办入口、审批通过、审批驳回和清理均可用。`
+- completed_step: `business_real_user_browser_setup 扩展到 11 个模型：付款申请、费用/保证金、物资计划、结算单、采购单，以及既有收款登记、付款执行、发票登记、融资借款、资金对账、结算调整；补齐付款申请资金承载测试数据、物资计划/采购/结算依赖数据、按模型记录 approve/reject 预期状态；assert 支持模型级状态集合、驳回后无活动 review 的语义；cleanup 支持关联数据清理、采购单先取消再删除、受采购/库存外键保护的临时商品归档。`
+- verification:
+  - `node --check scripts/verify/business_real_user_browser_closure.js`
+  - `bash -n scripts/verify/business_real_user_browser_closure.sh`
+  - `python3 -m py_compile scripts/verify/business_real_user_browser_setup.py scripts/verify/business_real_user_browser_cleanup.py scripts/verify/business_real_user_browser_assert.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_closure`
+  - `approve path: payment.request/sc.expense.claim/project.material.plan/sc.settlement.order/purchase.order/sc.receipt.income/sc.payment.execution/sc.invoice.registration/sc.financing.loan/sc.treasury.reconciliation/sc.settlement.adjustment 均从 my-work 点击进入记录，审批通过后待办消失；backend validation_status=validated review=approved；cleanup rows=11`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_reject_closure`
+  - `reject path: 11 个模型均从 my-work 点击进入记录，审批驳回后待办消失；payment.request/purchase.order/登记调整类保留 rejected review；sc.expense.claim/project.material.plan/sc.settlement.order 回到 draft 且 validation_status=no、无活动 review；cleanup rows=11`
+- result: `PASS; 高频 OCA/业务单据与登记/调整单据共 11 个模型的真实用户浏览器 approve/reject 双路径全部闭环。artifact=artifacts/browser-real-user-business-closure/current`
+- risk: `P2; 临时商品因采购/库存外键按归档处理，不硬删；验证主单据、项目、合同、往来单位、资金基准、采购单和 review 均清理。`
+- rollback: `回退本批次提交后继续使用上一版 6 模型真实浏览器闭环脚本；必要时重新运行 cleanup 脚本清理当前 setup.json 中的临时单据。`
+- next_step: `继续补合同类与项目主数据类浏览器闭环，尤其一般合同/业务合同的提交审批、驳回重提和可选合同明细场景。`
