@@ -29878,3 +29878,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
 - result: `PASS; 报表中心挂载台账/报表入口; 旧业务字典入口隐藏; navigation snapshot trace=25962173cc4e`
 - next_step: `继续真实用户连续办理业务链路验证，检查办理入口、角色能力组和业务数据是否仍有缺口。`
+
+## 2026-04-27 Batch-Business-Fact-Dictionary-Menu-Correction
+
+- branch: `codex/dev-env-run`
+- short_sha: `75fac41a`
+- Layer Target: `Domain/UI business fact navigation`
+- Module: `smart_construction_core`
+- Reason: `用户指出业务字典是业务配置管理员需要的能力，上一轮将旧业务字典入口隐藏可能导致全局业务字典无法维护；需区分 sc.dictionary 全局业务字典与 project.dictionary 定额字典。`
+- completed_step: `恢复业务配置/业务字典菜单并绑定 action_sc_dictionary_manage(sc.dictionary)；将原数据字典改名为定额字典，全部字典改名为全部定额字典，action_project_dictionary 标题改为定额字典（全部）；保持 project.dictionary 专用于定额体系相关配置入口。`
+- verification:
+  - `python3 -m xml.etree.ElementTree changed smart_construction_core XML files`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `DICTIONARY_MENU_FACTS: 业务字典 -> sc.dictionary; 定额字典 -> project.dictionary`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 业务配置管理员保留业务字典入口; 定额字典语义独立; navigation snapshot trace=090e9d4984b1`
+- next_step: `继续真实用户连续办理业务链路验证，重点检查业务配置管理员基础配置能力是否完整。`

@@ -3,7 +3,7 @@
 
     <!-- ========== 通用动作（全部字典） ========== -->
     <record id="action_project_dictionary" model="ir.actions.act_window">
-        <field name="name">数据字典（全部）</field>
+        <field name="name">定额字典（全部）</field>
         <field name="res_model">project.dictionary</field>
         <field name="view_mode">tree,form</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_data_read'))]"/>
@@ -31,7 +31,7 @@
         <field name="name">project.dictionary.form</field>
         <field name="model">project.dictionary</field>
         <field name="arch" type="xml">
-            <form string="数据字典">
+            <form string="定额字典">
                 <sheet>
                     <group>
                         <field name="type"/>
@@ -275,7 +275,7 @@
         <field name="tag">project_quota_center</field>
     </record>
 
-    <!-- ========== 菜单结构：智能施工 2.0 → 业务配置 → 数据字典 / 定额库 ========== -->
+    <!-- ========== 菜单结构：智能施工 2.0 → 业务配置 → 业务字典 / 定额字典 / 定额库 ========== -->
 
     <menuitem id="menu_project_quota_root"
               name="定额库"
@@ -305,13 +305,13 @@
               groups="smart_construction_core.group_sc_cap_business_config_admin"/>
 
     <menuitem id="menu_sc_dictionary_root"
-              name="数据字典"
+              name="定额字典"
               parent="menu_sc_business_config_center"
-              sequence="10"
+              sequence="20"
               groups="smart_construction_core.group_sc_cap_business_config_admin"/>
 
     <menuitem id="menu_sc_dictionary_all"
-              name="全部字典"
+              name="全部定额字典"
               parent="menu_sc_dictionary_root"
               action="action_project_dictionary"
               sequence="5"
@@ -345,15 +345,15 @@
               sequence="40"
               groups="smart_construction_core.group_sc_cap_business_config_admin"/>
 
-    <!-- 字典属于业务配置，不再挂到报表中心，避免和报表/台账入口混淆。 -->
+    <!-- 全局业务字典：项目类型、资料分类、合同类别等业务基础配置。 -->
     <menuitem id="menu_sc_dictionary"
               name="业务字典"
-              parent="menu_sc_dictionary_root"
-              action="action_project_dictionary"
-              sequence="90"
-              groups="base.group_no_one"/>
+              parent="menu_sc_business_config_center"
+              action="action_sc_dictionary_manage"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_business_config_admin"/>
     <record id="menu_sc_dictionary" model="ir.ui.menu">
-        <field name="groups_id" eval="[(6, 0, [ref('base.group_no_one')])]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
     </record>
 
 </odoo>
