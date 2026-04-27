@@ -30266,3 +30266,18 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `Browser caisiqi/123456 sc_prod_sim: /f/construction.contract/new H1=项目合同, /f/sc.construction.diary/new H1=施工日志; forbidden model/access_policy/test terms absent; consoleErrors=0; httpFailures=0`
 - result: `PASS; 业务新建表单标题不再向用户暴露模型技术名。artifact=artifacts/browser-real-user-usability/2026-04-27T15-21-59-990Z`
 - next_step: `继续收口关联弹层/后台技术模型标题英文残留，并抽样真实保存与审批链路。`
+
+## 2026-04-27 Batch-Frontend-Visible-Relation-Contract-Scope
+
+- branch: `codex/dev-env-run`
+- short_sha: `5bb87d2f`
+- Layer Target: `Frontend contract consumer`
+- Module: `frontend/apps/web`
+- Reason: `业务表单页面虽然已不展示英文技术标题，但前端仍为不可见 chatter/审批等技术关联字段拉取 mail/rating/tier.review 契约，导致后台英文技术模型进入业务页面链路。`
+- completed_step: `ContractFormPage.loadRelationOptions 先计算可见/已有值关联字段，再仅为这些字段加载 one2many 子契约；不可见技术关联字段不再触发 loadModelContractRaw。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck:strict`
+  - `git diff --check`
+  - `Browser caisiqi/123456 sc_prod_sim: 项目合同、施工日志新建页 H1 中文；technical ui.contract calls for mail.followers/mail.activity/rating.rating/mail.message/tier.review = 0；consoleErrors=0；httpFailures=0`
+- result: `PASS; 业务新建页契约请求链路只保留业务主契约，不再预加载不可见后台技术模型契约。artifact=artifacts/browser-real-user-usability/2026-04-27T15-24-30-322Z`
+- next_step: `进入真实保存与审批链路抽样：项目合同/施工日志创建保存，已启用审批业务再验证提交、待审、审批通过/驳回。`

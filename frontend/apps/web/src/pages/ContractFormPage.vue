@@ -1455,10 +1455,6 @@ async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescr
 
 async function loadRelationOptions() {
   const fields = contract.value?.fields || {};
-  const one2manyNames = Object.entries(fields)
-    .filter(([, descriptor]) => fieldType(descriptor) === 'one2many')
-    .map(([name]) => name);
-  await Promise.all(one2manyNames.map((name) => ensureRelationFieldDescriptors(name)));
   const visibleRelationFields = new Set(
     layoutNodes.value
       .filter((node) => node.kind === 'field' && isFieldVisible(node.name))
@@ -1469,6 +1465,10 @@ async function loadRelationOptions() {
     if (visibleRelationFields.has(name)) return true;
     return relationIds(name).length > 0;
   });
+  const one2manyNames = entries
+    .filter(([, descriptor]) => fieldType(descriptor) === 'one2many')
+    .map(([name]) => name);
+  await Promise.all(one2manyNames.map((name) => ensureRelationFieldDescriptors(name)));
   const next: Record<string, RelationOption[]> = {};
   await Promise.all(entries.map(async ([name, descriptor]) => {
     if (!descriptor || typeof descriptor !== 'object') return;
