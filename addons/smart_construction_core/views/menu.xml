@@ -214,12 +214,49 @@
               sequence="35"
               groups="smart_construction_core.group_sc_cap_material_manager"/>
 
-    <!-- 数据中心 -->
+    <!-- 报表中心：承载台账、报表和只读分析入口，不承载配置字典 -->
     <menuitem id="menu_sc_data_center"
-              name="数据分析"
+              name="报表中心"
               parent="menu_sc_root"
-              sequence="80"
-              groups="smart_construction_core.group_sc_cap_data_read"/>
+              sequence="60"
+              groups="smart_construction_core.group_sc_cap_data_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+
+    <record id="menu_sc_project_cost_ledger" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_data_center"/>
+        <field name="sequence">20</field>
+    </record>
+    <record id="menu_sc_cost_reports" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_data_center"/>
+        <field name="sequence">21</field>
+    </record>
+    <record id="menu_sc_profit_reports" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_data_center"/>
+        <field name="sequence">22</field>
+    </record>
+    <record id="menu_payment_ledger" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_data_center"/>
+        <field name="sequence">30</field>
+    </record>
+    <record id="menu_sc_treasury_ledger" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_data_center"/>
+        <field name="sequence">31</field>
+    </record>
+    <record id="menu_sc_treasury_ledger_income" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_data_center"/>
+        <field name="sequence">32</field>
+    </record>
+    <record id="menu_sc_financing_ledger" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_data_center"/>
+        <field name="sequence">33</field>
+    </record>
+    <record id="menu_sc_fund_daily" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_data_center"/>
+        <field name="sequence">34</field>
+    </record>
+    <record id="menu_sc_fund_daily_line" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_data_center"/>
+        <field name="sequence">35</field>
+    </record>
 
     <!-- 业务配置：给业务系统管理员，不开放平台系统权限 -->
     <menuitem id="menu_sc_business_config_center"

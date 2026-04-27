@@ -29859,3 +29859,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
 - result: `PASS; business_fact_page_surface_audit issue_count 36 -> 0; decision=business_page_surface_ready; navigation snapshot trace=4d257fd37a66`
 - next_step: `转入真实用户连续办理业务链路验证，输出真实可用用户矩阵、角色/能力组覆盖和业务数据缺口。`
+
+## 2026-04-27 Batch-Business-Fact-Report-Center-Menu
+
+- branch: `codex/dev-env-run`
+- short_sha: `a649de62`
+- Layer Target: `Domain/UI business fact navigation`
+- Module: `smart_construction_core`
+- Reason: `真实用户反馈“数据分析”下只挂数据字典，且业务配置中已有字典类入口，台账/报表类入口应集中到报表中心而不是混在办理中心或配置字典。`
+- completed_step: `menu_sc_data_center 重命名为报表中心；扩展报表中心父菜单能力组；成本台账/成本报表/经营利润以及支付台账/资金台账/收款台账/融资台账/资金日报/资金日报明细迁入报表中心；旧业务字典入口从报表中心移除并收口为 base.group_no_one；前端兜底导航标签同步为报表中心。`
+- verification:
+  - `python3 -m xml.etree.ElementTree changed smart_construction_core XML files`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `REPORT_CENTER_MENU_FACTS: report center parent/name/groups verified in sc_prod_sim`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast FRONTEND_PROFILE=prod-sim COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make frontend.restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 报表中心挂载台账/报表入口; 旧业务字典入口隐藏; navigation snapshot trace=25962173cc4e`
+- next_step: `继续真实用户连续办理业务链路验证，检查办理入口、角色能力组和业务数据是否仍有缺口。`

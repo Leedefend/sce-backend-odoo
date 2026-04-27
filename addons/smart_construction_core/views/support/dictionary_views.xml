@@ -345,12 +345,15 @@
               sequence="40"
               groups="smart_construction_core.group_sc_cap_business_config_admin"/>
 
-    <!-- 数据中心入口 -->
+    <!-- 字典属于业务配置，不再挂到报表中心，避免和报表/台账入口混淆。 -->
     <menuitem id="menu_sc_dictionary"
               name="业务字典"
-              parent="menu_sc_data_center"
+              parent="menu_sc_dictionary_root"
               action="action_project_dictionary"
-              sequence="10"
-              groups="smart_construction_core.group_sc_cap_business_config_admin"/>
+              sequence="90"
+              groups="base.group_no_one"/>
+    <record id="menu_sc_dictionary" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('base.group_no_one')])]"/>
+    </record>
 
 </odoo>
