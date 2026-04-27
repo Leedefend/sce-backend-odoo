@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError, UserError
 from odoo.tools.float_utils import float_compare
@@ -6,6 +8,8 @@ from odoo.tools.float_utils import float_compare
 from ..support import operating_metrics as opm
 from ..support.state_guard import raise_guard
 from ..support.state_machine import ScStateMachine
+
+_logger = logging.getLogger(__name__)
 
 
 class PaymentRequest(models.Model):
@@ -187,8 +191,19 @@ class PaymentRequest(models.Model):
         tracking=True,
     )
 
+    def _message_post_non_blocking(self, body):
+        for rec in self:
+            try:
+                rec.message_post(body=body)
+            except Exception as exc:
+                _logger.warning(
+                    "Skip payment.request chatter message for %s: %s",
+                    rec.display_name,
+                    exc,
+                )
+
     def _get_active_funding_baseline(self, project):
-        baseline = self.env["project.funding.baseline"].search(
+        baseline = self.env["project.funding.baseline"].sudo().search(
             [
                 ("project_id", "=", project.id),
                 ("state", "=", "active"),
@@ -207,7 +222,7 @@ class PaymentRequest(models.Model):
         ]
         if exclude_ids:
             domain.append(("id", "not in", exclude_ids))
-        data = self.read_group(domain, ["amount:sum"], [])
+        data = self.sudo().read_group(domain, ["amount:sum"], [])
         return data[0].get("amount_sum", data[0].get("amount", 0.0)) if data else 0.0
 
     def _check_project_funding_gate(self, project, amount, exclude_ids=None):
@@ -559,7 +574,7 @@ class PaymentRequest(models.Model):
             rec.with_company(company).with_context(
                 allowed_company_ids=[company.id],
             ).request_validation()
-        self.message_post(body=_("付款/收款申请已提交，进入审批流程。"))
+        self._message_post_non_blocking(_("付款/收款申请已提交，进入审批流程。"))
 
     def action_approve(self):
         for rec in self:
@@ -682,7 +697,7 @@ class PaymentRequest(models.Model):
             rec.with_context(allow_transition=True).write({"state": "approved"})
             after = rec._snapshot_audit_payload()
             rec._audit_transition("payment_approved", before, after, action_name="action_on_tier_approved")
-            rec.message_post(body=_("付款/收款申请审批通过。"))
+            rec._message_post_non_blocking(_("付款/收款申请审批通过。"))
 
     def action_on_tier_rejected(self, reason=None):
         for rec in self:
@@ -706,4 +721,4 @@ class PaymentRequest(models.Model):
                 require_reason=True,
                 action_name="action_on_tier_rejected",
             )
-            rec.message_post(body=_("付款/收款申请审批驳回：%s") % (reason or _("未填写原因")))
+            rec._message_post_non_blocking(_("付款/收款申请审批驳回：%s") % (reason or _("未填写原因")))

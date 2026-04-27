@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from odoo import _, api, fields, models
 from odoo.tools.safe_eval import safe_eval
 from odoo.exceptions import UserError, ValidationError
+
+_logger = logging.getLogger(__name__)
 
 
 class ProjectMaterialPlan(models.Model):
@@ -44,6 +48,17 @@ class ProjectMaterialPlan(models.Model):
 
     purchase_order_count = fields.Integer("采购单", compute="_compute_po_counts")
     purchase_line_count = fields.Integer("采购明细", compute="_compute_po_counts")
+
+    def _message_post_non_blocking(self, body):
+        for rec in self:
+            try:
+                rec.message_post(body=body)
+            except Exception as exc:
+                _logger.warning(
+                    "Skip project.material.plan chatter message for %s: %s",
+                    rec.display_name,
+                    exc,
+                )
 
     def _get_material_approver(self):
         self.ensure_one()
@@ -96,7 +111,7 @@ class ProjectMaterialPlan(models.Model):
                 allowed_company_ids=[company.id],
                 force_company=company.id,
             ).request_validation()
-            rec.message_post(body=_("物资计划已提交，进入审批流程。"))
+            rec._message_post_non_blocking(_("物资计划已提交，进入审批流程。"))
 
     def action_approve(self):
         for rec in self:
@@ -112,7 +127,7 @@ class ProjectMaterialPlan(models.Model):
                 }
             )
             rec.activity_unlink(["mail.mail_activity_data_todo"])
-            rec.message_post(body=_("物资计划已批准。"))
+            rec._message_post_non_blocking(_("物资计划已批准。"))
 
     def action_reject(self, reason=None):
         for rec in self:
@@ -127,7 +142,7 @@ class ProjectMaterialPlan(models.Model):
                     "reject_reason": reason or _("未填写原因"),
                 }
             )
-            rec.message_post(body=_("物资计划被驳回：%s") % rec.reject_reason)
+            rec._message_post_non_blocking(_("物资计划被驳回：%s") % rec.reject_reason)
 
     # ==== Tier 回调 ====
     def action_on_tier_approved(self):
@@ -141,7 +156,7 @@ class ProjectMaterialPlan(models.Model):
                     "approved_at": fields.Datetime.now(),
                 }
             )
-            rec.message_post(body=_("物资计划审批通过。"))
+            rec._message_post_non_blocking(_("物资计划审批通过。"))
 
     def action_on_tier_rejected(self, reason=None):
         for rec in self:
@@ -153,7 +168,7 @@ class ProjectMaterialPlan(models.Model):
                     "reject_reason": reason or _("未填写原因"),
                 }
             )
-            rec.message_post(body=_("物资计划审批驳回：%s") % rec.reject_reason)
+            rec._message_post_non_blocking(_("物资计划审批驳回：%s") % rec.reject_reason)
 
     def action_done(self):
         for rec in self:

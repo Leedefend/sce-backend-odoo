@@ -30034,3 +30034,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
 - result: `PASS; 业务审批规则已同步生成 OCA tier.definition；业务配置管理员修改规则可回写 OCA 执行层；物资计划提交可创建 OCA 待审记录; navigation snapshot trace=f57b4d342459 checked=143`
 - next_step: `继续验证付款/收款申请带附件提交后创建 OCA 待审，并完成财务审核通过/驳回链路；再评估更多 document_state 单据是否迁移到 tier.validation 执行。`
+
+## 2026-04-27 Batch-Business-Payment-Request-OCA-Runtime
+
+- branch: `codex/dev-env-run`
+- short_sha: `d0470854`
+- Layer Target: `Domain approval OCA execution validation`
+- Module: `smart_construction_core`
+- Reason: `上一批已完成审批规则到 OCA tier.definition 同步，本批验证真实用户付款/收款申请提交、待审生成、财务审批和业务状态推进是否具备连续办理条件。`
+- completed_step: `修复付款申请与物资计划 OCA server action 在 records 为空时的 active_model/active_id 回退；付款申请资金基线与已占用金额改为服务端受控读取；付款申请/物资计划 chatter 提示改为非阻断，真实用户未配置邮箱不再阻断业务办理；新增付款申请发起人无资金基线 ACL 的回归用例。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/core/payment_request.py addons/smart_construction_core/models/core/material_plan.py addons/smart_construction_core/tests/test_payment_request_permission.py`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `REAL_PAYMENT_REQUEST_OCA_TIER_SMOKE=PASS; REAL_ACTORS=caisiqi/蔡思琪 -> chenshuai/陈帅; REAL_AFTER_SUBMIT=submit/waiting; REAL_AFTER_VALIDATE=approved/validated`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=caisiqi E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 真实用户付款申请提交到 OCA 财务审批通过可连续办理；navigation snapshot trace=aa27292c384f checked=53`
+- next_step: `继续补齐付款/收款申请 OCA 驳回链路真实用户验证，并扩展物资计划审批通过/驳回真实办理探针。`
