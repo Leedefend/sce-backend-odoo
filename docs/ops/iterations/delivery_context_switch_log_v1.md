@@ -29657,3 +29657,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_organization_carrying_audit_probe.py`
 - result: `PASS with decision=organization_carrying_gap_present; gaps=P0 legacy departments not formally materialized, P0 active user department link gap, P1 legacy department parent link gap, P1 branch-company facts not formally classified`
 - next_step: `先制定分公司/部门承载策略：分公司作为组织单元还是 res.company，部门是否启用 hr.department 或自有组织模型，然后再执行写入规范化`
+
+## 2026-04-27 Batch-History-Organization-Department-Materialize
+
+- branch: `codex/dev-env-run`
+- short_sha: `df6507f7`
+- Layer Target: `Domain data migration / organization carrying`
+- Module: `smart_construction_core`, `scripts/migration`
+- Reason: `分公司不是独立公司，必须作为用户可配置组织单元承载；独立公司仍保留平台级配置，部门使用 hr.department 承载历史组织事实。`
+- completed_step: `smart_construction_core 显式依赖 hr，新增业务配置/组织架构菜单与 hr.department 权限；history_organization_department_materialize_write 将 830 条历史部门事实和缺失父级/用户画像派生部门物化为 hr.department，并回填用户画像部门关联`
+- verification:
+  - `python3 -m py_compile scripts/migration/history_organization_department_materialize_write.py scripts/migration/history_organization_carrying_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_organization_department_materialize_write.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_organization_carrying_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_wutao_business_config_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_business_usable_probe.py`
+- result: `PASS; organization_carrying_ready, gap_count=0, hr_department_total=831, branch_company_carrying_status=carried_as_organization_unit; wutao 可见业务配置/组织架构并具备 hr.department 配置权限；history_business_usable_ready`
+- next_step: `基于真实用户矩阵继续核对发起/审核类业务是否存在角色能力组缺口，避免再扩张平台公司配置面`

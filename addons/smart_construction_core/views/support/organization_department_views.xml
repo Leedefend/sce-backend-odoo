@@ -1,0 +1,17 @@
+<odoo>
+    <record id="action_sc_organization_department" model="ir.actions.act_window">
+        <field name="name">组织架构</field>
+        <field name="res_model">hr.department</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('company_id', '=', allowed_company_ids[0])]</field>
+        <field name="context">{'default_company_id': allowed_company_ids[0]}</field>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+
+    <menuitem id="menu_sc_organization_department"
+              name="组织架构"
+              parent="menu_sc_business_config_center"
+              action="action_sc_organization_department"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_business_config_admin"/>
+</odoo>

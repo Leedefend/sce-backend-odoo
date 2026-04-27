@@ -45,6 +45,10 @@ def text_domain(field_name: str) -> list[tuple[str, str, object]]:
     return [(field_name, "not in", [False, ""])]
 
 
+def parent_text_domain() -> list[tuple[str, str, object]]:
+    return [("parent_legacy_department_id", "not in", [False, "", "-1", "0"])]
+
+
 def distinct_values(model_name: str, field_name: str, *, limit: int = 20) -> dict[str, object]:
     if not field_exists(model_name, field_name):
         return {"model": model_name, "field": field_name, "available": False}
@@ -84,8 +88,12 @@ def legacy_department_summary() -> dict[str, object]:
     if not model_exists(model):
         return {"model": model, "exists": False}
     total = count(model) or 0
-    with_parent_ref = count(model, text_domain("parent_legacy_department_id")) if field_exists(model, "parent_legacy_department_id") else None
-    with_parent_link = count(model, [("parent_id", "!=", False)]) if field_exists(model, "parent_id") else None
+    with_parent_ref = count(model, parent_text_domain()) if field_exists(model, "parent_legacy_department_id") else None
+    with_parent_link = (
+        count(model, parent_text_domain() + [("parent_id", "!=", False)])
+        if field_exists(model, "parent_legacy_department_id") and field_exists(model, "parent_id")
+        else None
+    )
     is_company = distinct_values(model, "is_company")
     is_child_company = distinct_values(model, "is_child_company")
     state = distinct_values(model, "state")
@@ -202,6 +210,7 @@ def business_org_field_summary() -> list[dict[str, object]]:
     return rows
 
 
+BRANCH_COMPANY_POLICY = "legacy_branch_company_as_hr_department_org_unit"
 legacy_department = legacy_department_summary()
 user_department = user_department_summary()
 formal_org = formal_org_summary()
@@ -253,14 +262,32 @@ for row in business_fields:
                 }
             )
 if branch_candidate_fields and len((formal_org.get("res_company") or {}).get("companies") or []) == 1:
-    gap_items.append(
-        {
-            "code": "branch_company_facts_not_formally_classified",
-            "severity": "P1",
-            "detail": "Multiple legacy company ids/names are present while only one res.company exists; classify as branch/unit vs legal company before materialization.",
+    if hr_department_total:
+        branch_company_carrying = {
+            "policy": BRANCH_COMPANY_POLICY,
+            "status": "carried_as_organization_unit",
             "evidence": branch_candidate_fields[:8],
         }
-    )
+    else:
+        branch_company_carrying = {
+            "policy": BRANCH_COMPANY_POLICY,
+            "status": "gap_no_formal_org_unit_carrier",
+            "evidence": branch_candidate_fields[:8],
+        }
+        gap_items.append(
+            {
+                "code": "branch_company_facts_not_formally_carried_as_org_unit",
+                "severity": "P1",
+                "detail": "Multiple legacy branch-company ids/names are present; policy forbids creating res.company for branches, but no formal department/org-unit carrier is available yet.",
+                "evidence": branch_candidate_fields[:8],
+            }
+        )
+else:
+    branch_company_carrying = {
+        "policy": BRANCH_COMPANY_POLICY,
+        "status": "no_branch_company_field_gap_detected",
+        "evidence": branch_candidate_fields[:8],
+    }
 
 payload = {
     "status": "PASS",
@@ -271,6 +298,7 @@ payload = {
     "gap_count": len(gap_items),
     "gaps": gap_items,
     "formal_organization": formal_org,
+    "branch_company_carrying": branch_company_carrying,
     "legacy_department": legacy_department,
     "user_department": user_department,
     "business_org_fields": business_fields,
@@ -324,6 +352,7 @@ print(
             "legacy_department_total": legacy_department.get("total"),
             "hr_department_total": (formal_org.get("hr_department") or {}).get("total"),
             "active_user_with_legacy_department": user_department.get("active_user_with_legacy_department"),
+            "branch_company_carrying_status": branch_company_carrying.get("status"),
         },
         ensure_ascii=False,
         sort_keys=True,
