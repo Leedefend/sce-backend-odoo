@@ -38,12 +38,12 @@ def _active_internal_users(group_xmlid):
 def _user_from_env(env_name, group_xmlid, *, prefer_login=None, exclude_user=False):
     login = str(os.getenv(env_name) or prefer_login or "").strip()
     users = _active_internal_users(group_xmlid)
+    if exclude_user:
+        users = users.filtered(lambda item: item.id != exclude_user.id)
     if login:
         user = users.filtered(lambda item: item.login == login)[:1]
         if user:
             return user[0]
-    if exclude_user:
-        users = users.filtered(lambda item: item.id != exclude_user.id)
     if not users:
         raise UserError("No active real user in %s" % group_xmlid)
     return users[0]
@@ -310,7 +310,7 @@ def _check_expense_flows():
     env = _env()
     submitter = _user_from_env(
         "SC_OCA_EXPENSE_SUBMITTER",
-        "smart_construction_core.group_sc_cap_finance_user",
+        "smart_construction_core.group_sc_cap_business_initiator",
         prefer_login="caisiqi",
     )
     reviewer = _user_from_env(
@@ -443,8 +443,8 @@ def _check_settlement_flows():
     env = _env()
     submitter = _user_from_env(
         "SC_OCA_SETTLEMENT_SUBMITTER",
-        "smart_construction_core.group_sc_cap_settlement_user",
-        prefer_login="yangdesheng",
+        "smart_construction_core.group_sc_cap_business_initiator",
+        prefer_login="caisiqi",
     )
     reviewer = _user_from_env(
         "SC_OCA_SETTLEMENT_REVIEWER",

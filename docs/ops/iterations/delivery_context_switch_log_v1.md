@@ -30119,4 +30119,20 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.document_state_policy_switch`
   - `APPROVAL_POLICY_RUNTIME expense/settlement/payment/material all runtime=tier_validation tier_defs=1 active=1`
 - result: `PASS; expense submit->OCA->approved / reject->draft; settlement submit->OCA->approve / reject->draft; disabled policy still bypasses approval to approved/approve。`
-- next_step: `继续迁移或审计剩余 document_state 业务，采购订单需单独处理原生 button_confirm 语义；同时补真实用户能力组职责分离，避免费用/结算 submitter 与 reviewer 落到同一人。`
+- correction: `验证脚本最初误用 finance_user/settlement_user 作为费用/结算发起人，并且 prefer_login 先于 exclude_user 造成同人发起审核；已修正为 business_initiator 发起、manager 审核，复测输出 expense=caisiqi->chenshuai，settlement=caisiqi->chenshuai。`
+- next_step: `继续迁移或审计剩余 document_state 业务，采购订单需单独处理原生 button_confirm 语义；发起权限保持业务发起人开放，审核权限继续由对应 manager 能力组限制。`
+
+## 2026-04-27 Batch-Business-OCA-Smoke-Submitter-Correction
+
+- branch: `codex/dev-env-run`
+- short_sha: `f7649cf7`
+- Layer Target: `Business approval runtime verification`
+- Module: `scripts/verify`
+- Reason: `发起业务已对业务发起人开放，上一批 smoke 取人条件误导为专业用户发起，需要修正验证口径。`
+- completed_step: `business_oca_runtime_smoke 的 _user_from_env 先排除审核人再匹配 prefer_login；费用/保证金、结算单发起人统一从 group_sc_cap_business_initiator 取真实用户，审核人仍按财务/结算 manager 取。`
+- verification:
+  - `python3 -m py_compile scripts/verify/business_oca_runtime_smoke.py`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.oca_runtime_smoke`
+- result: `PASS; EXPENSE_OCA_ACTORS=caisiqi->chenshuai; SETTLEMENT_OCA_ACTORS=caisiqi->chenshuai; BUSINESS_OCA_RUNTIME_SMOKE=PASS; rollback OK。`
+- next_step: `继续推进剩余审批统一对象，采购订单需单独处理 Odoo 原生确认动作与 OCA 审批的衔接。`

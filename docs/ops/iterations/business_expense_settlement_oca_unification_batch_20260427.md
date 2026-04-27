@@ -29,7 +29,7 @@
 - PASS.
 - 费用/保证金：启用审批时 `submit -> OCA -> approved`，驳回回到 `draft` 并保留驳回原因；取消审批时提交直达 `approved`。
 - 结算单：启用审批时 `submit -> OCA -> approve`，驳回回到 `draft` 并保留驳回原因；取消审批时提交直达 `approve`。
-- 当前模拟生产库中费用/结算 submitter 与 reviewer 均选到 `chenshuai`，说明真实可用用户能力组还需要后续按职责分离补齐，但执行链路已统一。
+- 复核修正后，费用/保证金与结算单 smoke 均按 `业务发起人 -> 审批能力组` 验证，输出为 `caisiqi -> chenshuai`；发起权限已放开，审核仍由财务/结算 manager 能力组限制。
 
 ## Rollback
 
