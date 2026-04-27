@@ -544,6 +544,21 @@
 ## Phase 9.8 Menu/Scene Coverage
 - `make verify.menu.scene_resolve.container`
 - `make verify.menu.scene_resolve.summary`
+- `make verify.menu.navigation_snapshot.container`
+  - Calls `/api/menu/navigation` and validates required `nav_explained.flat/tree` fields:
+    - `scene_key`
+    - `native_action_id`
+    - `native_model`
+    - `native_view_mode`
+    - `confidence`
+    - `compatibility_used`
+  - Writes:
+    - `artifacts/codex/menu-navigation-field-snapshot/<timestamp>/summary.json`
+    - `artifacts/codex/menu-navigation-field-snapshot/<timestamp>/nav_explained.json`
+- `make verify.menu.navigation_snapshot`
+  - Host-mode equivalent.
+  - Use `BASE_URL=http://127.0.0.1:8070` for the standard host Odoo port.
+  - If container-owned artifact directories block host writes, set a separate `ARTIFACTS_DIR`, for example `ARTIFACTS_DIR=artifacts/codex-host`.
 - `make verify.portal.scene_warnings_guard.container`
 - `make verify.portal.scene_warnings_limit.container`
 - `make verify.portal.act_url_missing_scene_report.container`
@@ -707,6 +722,9 @@
 - Menu scene resolve enforcement scope (default business namespace only):
   - `MENU_SCENE_ENFORCE_PREFIXES=smart_construction_core.,smart_construction_demo.,smart_construction_portal.`
   - Set `MENU_SCENE_ENFORCE_PREFIXES=` (empty) to enforce all namespaces (including Odoo technical menus).
+- Menu navigation field snapshot defaults:
+  - container mode uses `API_BASE=http://localhost:8069` and writes to `/mnt/artifacts/codex/menu-navigation-field-snapshot/<timestamp>`.
+  - host mode uses `BASE_URL`/`API_BASE` and defaults to `http://localhost:8070`.
 - Strict failure guide: `docs/ops/verify/scene_observability_troubleshooting.md`.
 - Baseline freeze guard:
   - `make verify.baseline.freeze_guard`

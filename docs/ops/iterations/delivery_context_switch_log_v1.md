@@ -29572,3 +29572,16 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `rg -n "smart_construction_demo\\.(menu_sc_project_list_showcase|action_sc_project_list_showcase).*projects\\.list|projects\\.list.*smart_construction_demo\\.(menu_sc_project_list_showcase|action_sc_project_list_showcase)|menu_sc_project_list_showcase,.*projects\\.list|action_sc_project_list_showcase,projects\\.list" docs/architecture/scene-governance/assets -S`
   - `git diff --check -- docs/architecture/scene-governance/assets/menu_scene_mapping_baseline_v1.csv docs/architecture/scene-governance/assets/generated/menu_scene_mapping_current_v1.csv docs/ops/iterations/menu_scene_governance_asset_cleanup_batch_20260427.md docs/ops/iterations/delivery_context_switch_log_v1.md`
 - next_step: `scan contract snapshots and archived docs; only update current regenerated assets, not historical audit records`
+
+## 2026-04-27 Batch-Menu-Navigation-Verify-Docs
+
+- branch: `codex/dev-env-run`
+- short_sha: `a73bf73c`
+- Layer Target: `Verification documentation / menu navigation contract`
+- Module: `docs/ops/verify`
+- Reason: `verify.menu.navigation_snapshot(.container)` exists and has live evidence, but the operations verify README did not document how to rerun it or where its artifacts land.
+- completed_step: `documented menu navigation field snapshot host/container targets, required fields, artifact paths, and host artifact permission workaround`
+- verification:
+  - `git diff --check -- docs/ops/verify/README.md docs/ops/iterations/menu_navigation_verify_docs_batch_20260427.md docs/ops/iterations/delivery_context_switch_log_v1.md`
+  - `rg -n "verify.menu.navigation_snapshot|menu-navigation-field-snapshot|native_action_id|compatibility_used" docs/ops/verify/README.md`
+- next_step: `check whether phase gate summaries should include menu_navigation_field_snapshot artifacts alongside menu_scene_resolve`
