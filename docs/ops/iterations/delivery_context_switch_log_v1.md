@@ -16,6 +16,33 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-27T11:19:23+08:00
+- blocker_key: `menu_navigation_verify_target_20260427_pass`
+- layer_target: `Verification infrastructure`
+- module: `scripts/verify/menu_navigation_field_snapshot.js + Makefile`
+- reason: 上一批 `/api/menu/navigation` live snapshot 已证明字段正确，但仍是一次性 node 片段；需要固化为可重复 Make target，避免后续菜单规范化回归只能靠临时命令。
+- completed_step: `已新增 verify.menu.navigation_snapshot 与 verify.menu.navigation_snapshot.container；脚本校验 nav_explained.flat/tree 中 scene_key/native_action_id/native_model/native_view_mode/confidence/compatibility_used，并断言 scene 节点不走 compatibility、action/native/url 节点走 compatibility。container target PASS trace=bab73e1b7f68；host target 使用 ARTIFACTS_DIR=artifacts/codex-host PASS trace=561faa29014c。`
+- active_commit: `3cd82878`
+- next_step: `open one bounded owner-signal cleanup screen for smart_construction_core.menu_sc_project_quick_create and smart_construction_demo.menu_sc_project_list_showcase, deciding whether each should be downgraded, exempted, or supplied with a real scene owner signal`
+
+### 2026-04-27T11:13:33+08:00
+- blocker_key: `menu_navigation_live_snapshot_20260427_pass`
+- layer_target: `Navigation interpretation layer verification`
+- module: `/api/menu/navigation live output`
+- reason: 上一批已完成 `MenuTargetInterpreterService` 加性字段实现，需要确认真实 HTTP route 的 `nav_explained.flat/tree` 已加载新字段，而不是仅单测通过。
+- completed_step: `已完成 live snapshot：重启前 HTTP route missing=55，确认运行时未加载新 Python；make restart 后重跑 /api/menu/navigation，checked_node_count=55、scene_node_count=11、compatibility_used true=44/false=11、confidence high=11/medium=44、missing_count=0、invalid_count=0，trace_id=d0e2b34814d8。辅助 verify.menu.scene_resolve 仍有 2 个 unresolved 菜单，归为后续菜单语义残余，不阻断本批字段验证。`
+- active_commit: `3cd82878`
+- next_step: `open one bounded verification-infra batch to codify /api/menu/navigation field snapshot as a Make target, or open a separate owner-signal cleanup batch for the two unresolved menu_scene_resolve residuals`
+
+### 2026-04-27T10:59:35+08:00
+- blocker_key: `menu_normalization_interpreter_authority_fields_20260427_pass`
+- layer_target: `Navigation interpretation layer`
+- module: `addons/smart_core/delivery/MenuTargetInterpreterService`
+- reason: 菜单规范化进入解释器输出稳定性补强阶段，需要让 `nav_explained` 直接暴露 scene 命中、原生 action 事实、兼容降级与置信度，避免前端继续反推菜单身份。
+- completed_step: `已完成菜单解释器加性字段补强：新增 scene_key/native_action_id/native_model/native_view_mode/confidence/compatibility_used；保持 target_type/delivery_mode/route/entry_target 兼容；解释器直接单测 6 条 PASS，make verify.smart_core PASS，make verify.contract.snapshot PASS。`
+- active_commit: `3cd82878`
+- next_step: `open one bounded live navigation snapshot batch for /api/menu/navigation to verify the new fields across nav_explained.flat/tree in the target runtime`
+
 ### 2026-04-25T04:46:00+08:00
 - blocker_key: `history_continuity_promotion_a_payment_request_submit_activation_closed`
 - layer_target: `Domain Layer / Migration Replay-Promotion Layer`
