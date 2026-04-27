@@ -393,6 +393,7 @@ import { config } from '../config';
 import { useSessionStore } from '../stores/session';
 import ListPage from '../pages/ListPage.vue';
 import KanbanPage from '../pages/KanbanPage.vue';
+import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import GroupSummaryBar from '../components/GroupSummaryBar.vue';
 import { deriveListStatus } from '../app/view_state';
