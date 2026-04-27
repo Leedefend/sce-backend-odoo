@@ -45,6 +45,7 @@
         'data/material_plan_tier_actions.xml',
         'data/payment_request_tier_actions.xml',
         'data/approval_policy_seed.xml',
+        'data/approval_policy_tier_sync.xml',
 
         # 顶级菜单基础
         'actions/project_list_actions.xml',

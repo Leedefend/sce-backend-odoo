@@ -133,6 +133,94 @@ class ScApprovalPolicy(models.Model):
             if not allowed:
                 raise ValidationError(_("你不具备 %s 的审核能力。") % policy.display_name)
 
+    def _tier_sync_supported(self):
+        self.ensure_one()
+        return self.target_model in {"project.material.plan", "payment.request"}
+
+    def _tier_server_actions(self):
+        self.ensure_one()
+        mapping = {
+            "project.material.plan": (
+                "smart_construction_core.server_action_material_plan_tier_approved",
+                "smart_construction_core.server_action_material_plan_tier_rejected",
+            ),
+            "payment.request": (
+                "smart_construction_core.server_action_payment_request_on_approved",
+                "smart_construction_core.server_action_payment_request_on_rejected",
+            ),
+        }
+        approve_xmlid, reject_xmlid = mapping.get(self.target_model, (None, None))
+        approve_action = self.env.ref(approve_xmlid, raise_if_not_found=False) if approve_xmlid else False
+        reject_action = self.env.ref(reject_xmlid, raise_if_not_found=False) if reject_xmlid else False
+        return approve_action, reject_action
+
+    def _tier_definition_domain(self, step):
+        domain = []
+        amount_field = "amount" if self.target_model == "payment.request" else False
+        if amount_field and step.amount_min:
+            domain.append((amount_field, ">=", step.amount_min))
+        if amount_field and step.amount_max:
+            domain.append((amount_field, "<=", step.amount_max))
+        return repr(domain)
+
+    def _tier_definition_vals(self, step):
+        self.ensure_one()
+        model = self.env["ir.model"].sudo()._get(self.target_model)
+        approve_action, reject_action = self._tier_server_actions()
+        return {
+            "name": "%s - %s" % (self.name, step.name),
+            "model_id": model.id,
+            "model": self.target_model,
+            "company_id": self.company_id.id or self.env.company.id,
+            "active": bool(self.active and self.approval_required and self.mode != "none" and step.active),
+            "sequence": step.sequence or self.sequence or 10,
+            "review_type": "group",
+            "reviewer_group_id": step.approve_group_id.id,
+            "definition_type": "domain",
+            "definition_domain": self._tier_definition_domain(step),
+            "approve_sequence": self.mode == "linear",
+            "server_action_id": approve_action.id if approve_action else False,
+            "rejected_server_action_id": reject_action.id if reject_action else False,
+        }
+
+    def sync_tier_definitions(self):
+        TierDefinition = self.env["tier.definition"].sudo()
+        synced = TierDefinition.browse()
+        for policy in self.sudo():
+            if not policy._tier_sync_supported():
+                for step in policy.step_ids.filtered("tier_definition_id"):
+                    step.tier_definition_id.sudo().write({"active": False})
+                continue
+            for step in policy.step_ids:
+                if not step.approve_group_id:
+                    continue
+                vals = policy._tier_definition_vals(step)
+                if step.tier_definition_id:
+                    step.tier_definition_id.sudo().write(vals)
+                    tier_def = step.tier_definition_id
+                else:
+                    tier_def = TierDefinition.create(vals)
+                    step.sudo().with_context(skip_tier_sync=True).write({"tier_definition_id": tier_def.id})
+                synced |= tier_def
+        return synced
+
+    @api.model
+    def sync_all_tier_definitions(self):
+        return self.search([]).sync_tier_definitions()
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        if not self.env.context.get("skip_tier_sync"):
+            records.sync_tier_definitions()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        if not self.env.context.get("skip_tier_sync"):
+            self.sync_tier_definitions()
+        return res
+
 
 class ScApprovalStep(models.Model):
     _name = "sc.approval.step"
@@ -144,6 +232,7 @@ class ScApprovalStep(models.Model):
     sequence = fields.Integer(default=10, index=True, string="顺序")
     name = fields.Char(required=True, string="步骤名称")
     approve_group_id = fields.Many2one("res.groups", required=True, string="审核能力组")
+    tier_definition_id = fields.Many2one("tier.definition", readonly=True, copy=False, string="OCA审批定义")
     amount_min = fields.Monetary(string="金额下限")
     amount_max = fields.Monetary(string="金额上限")
     currency_id = fields.Many2one(
@@ -161,3 +250,23 @@ class ScApprovalStep(models.Model):
         for rec in self:
             if rec.amount_min and rec.amount_max and rec.amount_min > rec.amount_max:
                 raise ValidationError(_("审核步骤的金额下限不能大于金额上限。"))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        if not self.env.context.get("skip_tier_sync"):
+            records.mapped("policy_id").sync_tier_definitions()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        if not self.env.context.get("skip_tier_sync"):
+            self.mapped("policy_id").sync_tier_definitions()
+        return res
+
+    def unlink(self):
+        tier_definitions = self.mapped("tier_definition_id").sudo()
+        res = super().unlink()
+        if tier_definitions:
+            tier_definitions.write({"active": False})
+        return res

@@ -30013,3 +30013,24 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
 - result: `PASS; 审批规则已参与结算、费用、合同、采购订单、采购/一般合同运行时动作; navigation snapshot trace=e1de37c6f779 checked=143`
 - next_step: `继续用真实用户逐单据验证按钮可见性、提交状态、审批阻断文案和审批后连续办理路径；tier_validation 单据仍按现有分级审批执行。`
+
+## 2026-04-27 Batch-Business-Approval-Policy-OCA-Tier-Sync
+
+- branch: `codex/dev-env-run`
+- short_sha: `e4f6ed62`
+- Layer Target: `Domain approval configuration sync`
+- Module: `smart_construction_core`
+- Reason: `用户同意下一步打通业务审批配置入口与 OCA tier 执行层；sc.approval.policy 应成为业务配置源，OCA tier.definition 作为执行层配置。`
+- completed_step: `为 sc.approval.step 增加 tier_definition_id；新增 sc.approval.policy -> OCA tier.definition 同步方法；策略/步骤创建、修改、删除时同步 OCA；模块升级时通过 approval_policy_tier_sync.xml 执行全量同步；先覆盖 project.material.plan 与 payment.request。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/approval_policy.py addons/smart_construction_core/__manifest__.py`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/data/approval_policy_seed.xml addons/smart_construction_core/data/approval_policy_tier_sync.xml`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `POLICY_OCA_SYNC_COUNT=2; TIER_DEFINITION_TOTAL=2; POLICY_OCA_SYNC_SMOKE=PASS`
+  - `BUSINESS_ADMIN_POLICY_WRITE=PASS; BUSINESS_ADMIN_TIER_DOMAIN=[('amount', '>=', 321.0)]`
+  - `MATERIAL_PLAN_TIER_SUBMIT_STATE=submit; MATERIAL_PLAN_TIER_REVIEW_COUNT=1; MATERIAL_PLAN_TIER_REVIEW_GROUPS=Smart Construction / SC 能力 - 物资中心审批; MATERIAL_PLAN_TIER_SMOKE=PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 业务审批规则已同步生成 OCA tier.definition；业务配置管理员修改规则可回写 OCA 执行层；物资计划提交可创建 OCA 待审记录; navigation snapshot trace=f57b4d342459 checked=143`
+- next_step: `继续验证付款/收款申请带附件提交后创建 OCA 待审，并完成财务审核通过/驳回链路；再评估更多 document_state 单据是否迁移到 tier.validation 执行。`

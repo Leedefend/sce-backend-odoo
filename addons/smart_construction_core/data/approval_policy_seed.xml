@@ -165,5 +165,6 @@
             <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
             <field name="note">默认作为登记类业务，不强制审核；业务需要时可启用审核并配置步骤。</field>
         </record>
+
     </data>
 </odoo>
