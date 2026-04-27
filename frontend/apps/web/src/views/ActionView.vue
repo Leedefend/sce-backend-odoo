@@ -50,6 +50,13 @@
         </button>
       </div>
     </section>
+    <section v-if="canCreateRecord" class="contract-block">
+      <div class="contract-chips">
+        <button class="contract-chip primary" type="button" @click="openCreateRecord">
+          {{ t('action_create_record', '新建') }}
+        </button>
+      </div>
+    </section>
     <section v-if="vm.sections.strictAlert && vm.strictAlert" class="contract-missing-alert">
       <p class="contract-missing-title">{{ vm.strictAlert.title }}</p>
       <p class="contract-missing-summary">{{ vm.strictAlert.summary }}</p>
@@ -944,6 +951,29 @@ const {
   showMoreGroupBy,
   showMoreContractActions,
 });
+
+function resolveCreateRight(contract: ActionContractLoose | null): boolean {
+  const effective = contract?.permissions?.effective?.rights?.create;
+  if (typeof effective === 'boolean') return effective;
+  return false;
+}
+
+const canCreateRecord = computed(() => {
+  const targetModel = (resolvedModelRef.value || model.value || '').trim();
+  if (!targetModel || !actionId.value) return false;
+  if (status.value === 'loading') return false;
+  return resolveCreateRight(actionContract.value);
+});
+
+async function openCreateRecord() {
+  const targetModel = (resolvedModelRef.value || model.value || '').trim();
+  if (!targetModel || !canCreateRecord.value) return;
+  await router.push(buildModelFormRouteTarget({
+    model: targetModel,
+    id: 'new',
+    query: resolveCarryQuery(),
+  }) as never);
+}
 const availableViewModes = computed(() =>
   resolveActionViewAvailableModes({
     contractViewTypeRaw: contractViewType.value,

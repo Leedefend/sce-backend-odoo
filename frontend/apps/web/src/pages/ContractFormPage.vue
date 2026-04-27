@@ -23,7 +23,7 @@
           {{ action.label }}
         </button>
         <button
-          v-if="!isProjectIntakeCreateMode && !hasPrimaryHeaderAction"
+          v-if="!isProjectIntakeCreateMode"
           class="primary"
           :disabled="isQuickSubmitDisabled"
           @click="() => saveRecord()"
@@ -557,8 +557,6 @@ const headerActionsVisible = computed(() => {
   if (isProjectIntakeCreateMode.value) return [];
   return headerActions.value;
 });
-
-const hasPrimaryHeaderAction = computed(() => headerActionsVisible.value.some((item) => item.semantic === 'primary_action'));
 
 const isQuickSubmitDisabled = computed(() => {
   if (busy.value) return true;
