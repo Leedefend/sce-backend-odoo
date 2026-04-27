@@ -119,7 +119,8 @@
             <field name="view_mode">tree,form</field>
             <field name="search_view_id" ref="view_sc_invoice_registration_search"/>
             <field name="context">{'search_default_group_project': 1}</field>
-            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_read')),
                                            (4, ref('smart_construction_core.group_sc_cap_finance_user')),
                                            (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
         </record>
@@ -129,6 +130,6 @@
                   parent="smart_construction_core.menu_sc_finance_center"
                   action="action_sc_invoice_registration"
                   sequence="37"
-                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+                  groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     </data>
 </odoo>

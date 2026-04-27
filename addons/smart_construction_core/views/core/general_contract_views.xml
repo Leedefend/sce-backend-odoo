@@ -112,21 +112,22 @@
         </record>
 
         <record id="action_sc_general_contract" model="ir.actions.act_window">
-            <field name="name">综合合同</field>
+            <field name="name">一般合同</field>
             <field name="res_model">sc.general.contract</field>
             <field name="view_mode">tree,form</field>
             <field name="search_view_id" ref="view_sc_general_contract_search"/>
             <field name="context">{'search_default_group_project': 1}</field>
-            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read')),
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')),
+                                           (4, ref('smart_construction_core.group_sc_cap_contract_read')),
                                            (4, ref('smart_construction_core.group_sc_cap_contract_user')),
                                            (4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
         </record>
 
         <menuitem id="menu_sc_general_contract"
-                  name="综合合同"
+                  name="一般合同"
                   parent="smart_construction_core.menu_sc_contract_center"
                   action="action_sc_general_contract"
                   sequence="15"
-                  groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+                  groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
     </data>
 </odoo>

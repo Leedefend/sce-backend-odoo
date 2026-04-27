@@ -255,6 +255,7 @@
             <field name="search_view_id" ref="view_sc_settlement_adjustment_search"/>
             <field name="context">{'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
             <field name="groups_id" eval="[
+                (4, ref('smart_construction_core.group_sc_cap_business_initiator')),
                 (4, ref('smart_construction_core.group_sc_cap_settlement_read')),
                 (4, ref('smart_construction_core.group_sc_cap_project_read')),
                 (4, ref('smart_construction_core.group_sc_cap_cost_read')),
@@ -281,21 +282,21 @@
                   name="结算中心"
                   parent="smart_construction_core.menu_sc_finance_center"
                   sequence="30"
-                  groups="smart_construction_core.group_sc_cap_settlement_read,smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
+                  groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_settlement_read,smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
 
         <menuitem id="menu_sc_settlement_order"
                   name="结算单"
                   parent="menu_sc_settlement_center"
                   action="action_sc_settlement_order"
                   sequence="10"
-                  groups="smart_construction_core.group_sc_cap_settlement_read,smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
+                  groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_settlement_read,smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
 
         <menuitem id="menu_sc_settlement_adjustment"
                   name="结算调整"
                   parent="menu_sc_settlement_center"
                   action="action_sc_settlement_adjustment"
                   sequence="20"
-                  groups="smart_construction_core.group_sc_cap_settlement_read,smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
+                  groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_settlement_read,smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
 
     </data>
 </odoo>

@@ -29954,3 +29954,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
 - result: `PASS; 真实内部用户语言全部收敛为 zh_CN; navigation snapshot trace=64f0c94b146a`
 - next_step: `用户重新登录验证原生项目创建按钮；若仍有英文，则进入 Web 翻译资源加载/缓存层审计。`
+
+## 2026-04-27 Batch-Business-Operability-Initiation-Gap
+
+- branch: `codex/dev-env-run`
+- short_sha: `3ae427d0`
+- Layer Target: `Domain/business operability`
+- Module: `smart_construction_core`
+- Reason: `用户发现采购/一般合同没有新建办理能力；业务规则是内部用户可以发起业务，审核/确认继续由角色限制。`
+- completed_step: `系统审计真实用户的模型 create/write、action/menu 可见性、view create/edit 和必填技术字段默认值；将采购/一般合同从只读承载升级为可创建/可编辑办理入口；新增物资管理/采购单入口；对采购、合同、结算、费用、资金、发票、融资等 13 类业务模型补齐业务发起 ACL 和菜单/action 可见性。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/legacy_purchase_contract_fact.py`
+  - `python3 -m xml.etree.ElementTree changed smart_construction_core XML files`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `OPERABILITY_MISSING_CREATE_COUNT=0`
+  - `OPERABILITY_CREATE_SMOKE: sc.legacy.purchase.contract.fact/sc.general.contract/purchase.order/sc.settlement.order ok under denghongying with rollback`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 业务发起模型 create/write 缺口清零; navigation snapshot trace=a480bf86854d checked=141`
+- next_step: `用真实用户逐页验证新建表单的必填字段和默认值是否足够顺畅；若还有阻塞，继续按“可见入口 -> action -> view -> ACL -> required defaults”链路审计。`

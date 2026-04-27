@@ -31,7 +31,7 @@
         <field name="name">sc.legacy.purchase.contract.fact.tree</field>
         <field name="model">sc.legacy.purchase.contract.fact</field>
         <field name="arch" type="xml">
-            <tree string="采购/一般合同" create="0" edit="0" delete="0">
+            <tree string="采购/一般合同" delete="0">
                 <field name="submitted_time"/>
                 <field name="document_no"/>
                 <field name="contract_no"/>
@@ -51,7 +51,7 @@
         <field name="name">sc.legacy.purchase.contract.fact.form</field>
         <field name="model">sc.legacy.purchase.contract.fact</field>
         <field name="arch" type="xml">
-            <form string="采购/一般合同" create="0" edit="0" delete="0">
+            <form string="采购/一般合同" delete="0">
                 <sheet>
                     <group>
                         <group>
@@ -122,8 +122,9 @@
         <field name="res_model">sc.legacy.purchase.contract.fact</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_sc_legacy_purchase_contract_fact_search"/>
-        <field name="context">{'create': False, 'search_default_group_contract_type': 1}</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read')),
+        <field name="context">{'search_default_group_contract_type': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')),
+                                       (4, ref('smart_construction_core.group_sc_cap_contract_read')),
                                        (4, ref('smart_construction_core.group_sc_cap_contract_user')),
                                        (4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
     </record>
@@ -133,5 +134,5 @@
               parent="smart_construction_core.menu_sc_contract_center"
               action="action_sc_legacy_purchase_contract_fact"
               sequence="60"
-              groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
 </odoo>

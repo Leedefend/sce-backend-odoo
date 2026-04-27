@@ -7,7 +7,7 @@ class ScLegacyPurchaseContractFact(models.Model):
     _description = "采购/一般合同"
     _order = "submitted_time desc, legacy_record_id"
 
-    legacy_record_id = fields.Char(string="记录编号", required=True, index=True)
+    legacy_record_id = fields.Char(string="记录编号", required=True, index=True, default=lambda self: self._default_record_id())
     legacy_pid = fields.Char(string="附件编号", index=True)
     source_dataset = fields.Char(string="数据来源", index=True)
     document_no = fields.Char(string="单号", index=True)
@@ -69,3 +69,14 @@ class ScLegacyPurchaseContractFact(models.Model):
     def _compute_business_aliases(self):
         for record in self:
             record.install_commissioning_payment = record.install_debug_payment
+
+    @api.model
+    def _default_record_id(self):
+        return self.env["ir.sequence"].next_by_code("sc.legacy.purchase.contract.fact") or "新系统采购一般合同"
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get("legacy_record_id"):
+                vals["legacy_record_id"] = self._default_record_id()
+        return super().create(vals_list)

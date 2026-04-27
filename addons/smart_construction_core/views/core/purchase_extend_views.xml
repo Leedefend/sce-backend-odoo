@@ -1,4 +1,15 @@
 <odoo>
+    <record id="action_sc_purchase_order" model="ir.actions.act_window">
+        <field name="name">采购单</field>
+        <field name="res_model">purchase.order</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{'quotation_only': True}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')),
+                                      (4, ref('smart_construction_core.group_sc_cap_purchase_user')),
+                                      (4, ref('smart_construction_core.group_sc_cap_purchase_manager'))]"/>
+    </record>
+
     <record id="view_purchase_order_form_sc_settlement" model="ir.ui.view">
         <field name="name">purchase.order.form.sc.settlement</field>
         <field name="model">purchase.order</field>

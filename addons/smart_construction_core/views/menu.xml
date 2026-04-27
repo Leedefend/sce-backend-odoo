@@ -107,7 +107,7 @@
               name="合同管理"
               parent="menu_sc_root"
               sequence="20"
-              groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
     <menuitem id="menu_sc_contract_income"
               name="收入合同"
               parent="menu_sc_contract_center"
@@ -123,7 +123,7 @@
 
     <!-- 强制覆盖合同中心菜单的 groups（移除只读组，避免财务看到） -->
     <record id="menu_sc_contract_center" model="ir.ui.menu">
-        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_contract_user'), ref('smart_construction_core.group_sc_cap_contract_manager')])]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_initiator'), ref('smart_construction_core.group_sc_cap_contract_user'), ref('smart_construction_core.group_sc_cap_contract_manager')])]"/>
     </record>
     <record id="menu_sc_contract_income" model="ir.ui.menu">
         <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_contract_user'), ref('smart_construction_core.group_sc_cap_contract_manager')])]"/>
@@ -207,6 +207,12 @@
               action="action_project_material_plan"
               sequence="10"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
+    <menuitem id="menu_sc_purchase_order"
+              name="采购单"
+              parent="menu_sc_material_center"
+              action="action_sc_purchase_order"
+              sequence="20"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_purchase_user,smart_construction_core.group_sc_cap_purchase_manager"/>
     <menuitem id="menu_sc_tier_review_my_material_plan"
               name="待我审批（物资计划）"
               parent="menu_sc_material_center"
