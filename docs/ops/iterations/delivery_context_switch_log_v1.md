@@ -30249,3 +30249,20 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `Browser caisiqi/123456 sc_prod_sim: /f/construction.contract/new and /f/sc.construction.diary/new inputCount=7/9, hasSave=true, foundBadTerms=[], hasUuid=false, consoleErrors=0, httpFailures=0`
 - result: `PASS; 真实用户新建项目合同/施工日志表单不再暴露 Smoke/Fixture/Unknown/UUID 占位关联数据，也不再展示 access_policy 技术标记。artifact=artifacts/browser-real-user-usability/2026-04-27T15-04-58-813Z`
 - next_step: `继续业务事实层可用性审计：收口表单标题/字段标签中的模型英文残留，并进一步抽样真实保存与审批链路。`
+
+## 2026-04-27 Batch-Business-Form-Title-Contract
+
+- branch: `codex/dev-env-run`
+- short_sha: `09b7c8d8`
+- Layer Target: `Platform contract assembly`
+- Module: `smart_core`
+- Reason: `真实用户业务表单标题仍回退显示 construction.contract/sc.construction.diary 等模型技术名；标题应由后端契约提供业务名称，前端只消费契约。`
+- completed_step: `PageAssembler 在 model 契约路径解析 action_id 对应窗口动作并写入 head.title/head.model；无动作时以 ir.model 业务名称兜底；项目合同、施工日志 action_open/model 契约均返回中文业务标题。`
+- verification:
+  - `python3 -m py_compile addons/smart_core/app_config_engine/services/assemblers/page_assembler.py`
+  - `git diff --check`
+  - `odoo.shell.exec: caisiqi ui.contract model construction.contract action_id=489 head.title=项目合同 head.model=construction.contract; sc.construction.diary action_id=573 head.title=施工日志 head.model=sc.construction.diary`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `Browser caisiqi/123456 sc_prod_sim: /f/construction.contract/new H1=项目合同, /f/sc.construction.diary/new H1=施工日志; forbidden model/access_policy/test terms absent; consoleErrors=0; httpFailures=0`
+- result: `PASS; 业务新建表单标题不再向用户暴露模型技术名。artifact=artifacts/browser-real-user-usability/2026-04-27T15-21-59-990Z`
+- next_step: `继续收口关联弹层/后台技术模型标题英文残留，并抽样真实保存与审批链路。`

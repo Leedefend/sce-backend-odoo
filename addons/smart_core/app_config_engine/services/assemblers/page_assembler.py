@@ -71,6 +71,7 @@ class PageAssembler:
         view_types = p["view_types"]
         env = self.env
         su = self.su_env
+        action = action or self._resolve_action_from_payload(p, model)
 
         required_models = {
             "app.model.config": True,
@@ -257,20 +258,19 @@ class PageAssembler:
 
         # 8) head（标题/ACL 概览/上下文）
         #    - ACL 概览继续用 check_access_rights（仅四权），与 permissions.effective.rights 一致
-        if action:
-            data["head"] = {
-                "title": action.get('name'),
-                "model": model,
-                "view_type": ",".join(view_types),
-                "action_id": action.get('id'),
-                "context": safe_eval(action.get('context')),
-                "permissions": {
-                    "read": env[model].check_access_rights('read', raise_exception=False),
-                    "write": env[model].check_access_rights('write', raise_exception=False),
-                    "create": env[model].check_access_rights('create', raise_exception=False),
-                    "unlink": env[model].check_access_rights('unlink', raise_exception=False),
-                }
+        data["head"] = {
+            "title": self._resolve_page_title(model, action),
+            "model": model,
+            "view_type": ",".join(view_types),
+            "action_id": action.get('id') if isinstance(action, dict) else None,
+            "context": safe_eval(action.get('context')) if isinstance(action, dict) else {},
+            "permissions": {
+                "read": env[model].check_access_rights('read', raise_exception=False),
+                "write": env[model].check_access_rights('write', raise_exception=False),
+                "create": env[model].check_access_rights('create', raise_exception=False),
+                "unlink": env[model].check_access_rights('unlink', raise_exception=False),
             }
+        }
 
         # 8.x) 访问策略（后端唯一决策点）：allow/degrade/block
         self._apply_access_policy(data, model_name=model)
@@ -287,6 +287,32 @@ class PageAssembler:
         if warnings:
             data["warnings"] = warnings
         return data, versions
+
+    def _resolve_action_from_payload(self, p, model):
+        raw_action_id = p.get("action_id") or p.get("actionId")
+        try:
+            action_id = int(raw_action_id or 0)
+        except Exception:
+            action_id = 0
+        if action_id <= 0:
+            return None
+        action = self.su_env["ir.actions.act_window"].browse(action_id)
+        if not action.exists() or action.res_model != model:
+            return None
+        return {
+            "id": action.id,
+            "name": action.name or "",
+            "context": action.context or "{}",
+        }
+
+    def _resolve_page_title(self, model, action=None):
+        if isinstance(action, dict):
+            title = str(action.get("name") or "").strip()
+            if title:
+                return title
+        model_row = self.su_env["ir.model"].search([("model", "=", model)], limit=1)
+        title = str(getattr(model_row, "name", "") or "").strip()
+        return title or model
 
     def _safe_model_can_read(self, model_name):
         name = str(model_name or "").strip()
