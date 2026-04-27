@@ -29544,3 +29544,18 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `make verify.menu.scene_resolve.container DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo ARTIFACTS_DIR=/mnt/artifacts`
   - `git diff --check -- docs/ops/verify/menu_scene_exemptions.yml docs/ops/iterations/menu_owner_signal_residual_exemption_batch_20260427.md docs/ops/iterations/delivery_context_switch_log_v1.md`
 - next_step: `clean up stale verification scripts that still bind smart_construction_demo.menu_sc_project_list_showcase / action_sc_project_list_showcase to canonical projects.list`
+
+## 2026-04-27 Batch-Menu-Dual-Track-Verify-Guard-Cleanup
+
+- branch: `codex/dev-env-run`
+- short_sha: `40c07a65`
+- Layer Target: `Navigation verification / dual-track contract guards`
+- Module: `scripts/verify`
+- Reason: legacy guards still treated `smart_construction_demo.menu_sc_project_list_showcase` / `action_sc_project_list_showcase` as canonical `projects.list`; dual-track contract requires canonical `projects.list` to be guarded by core menu/action instead.
+- completed_step: `updated scene_key smoke and scene openable guard to use smart_construction_core.menu_sc_root / smart_construction_core.action_sc_project_list for projects.list; moved the static openable guard source to scene_registry_content.py`
+- verification:
+  - `node --check scripts/verify/fe_menu_scene_key_smoke.js scripts/verify/fe_scene_core_openable_guard.js`
+  - `node scripts/verify/fe_scene_core_openable_guard.js`
+  - `make verify.portal.menu_scene_key_smoke.container DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo ARTIFACTS_DIR=/mnt/artifacts`
+  - `git diff --check -- scripts/verify/fe_menu_scene_key_smoke.js scripts/verify/fe_scene_core_openable_guard.js docs/ops/iterations/menu_dual_track_verify_guard_cleanup_batch_20260427.md docs/ops/iterations/delivery_context_switch_log_v1.md`
+- next_step: `scan remaining menu normalization verification scripts for scene_key-as-owner-signal assumptions`
