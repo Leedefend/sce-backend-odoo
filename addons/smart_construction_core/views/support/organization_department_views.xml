@@ -1,8 +1,66 @@
 <odoo>
+    <record id="view_sc_organization_department_tree" model="ir.ui.view">
+        <field name="name">hr.department.tree.sc.organization</field>
+        <field name="model">hr.department</field>
+        <field name="priority">1</field>
+        <field name="arch" type="xml">
+            <tree string="组织架构">
+                <field name="name"/>
+                <field name="parent_id"/>
+                <field name="manager_id"/>
+                <field name="company_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_organization_department_form" model="ir.ui.view">
+        <field name="name">hr.department.form.sc.organization</field>
+        <field name="model">hr.department</field>
+        <field name="priority">1</field>
+        <field name="arch" type="xml">
+            <form string="组织架构">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="parent_id"/>
+                        <field name="manager_id"/>
+                        <field name="company_id"/>
+                        <field name="active"/>
+                    </group>
+                    <group string="下级部门">
+                        <field name="child_ids" nolabel="1" readonly="1">
+                            <tree string="下级部门">
+                                <field name="name"/>
+                                <field name="manager_id"/>
+                            </tree>
+                        </field>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_organization_department_search" model="ir.ui.view">
+        <field name="name">hr.department.search.sc.organization</field>
+        <field name="model">hr.department</field>
+        <field name="priority">1</field>
+        <field name="arch" type="xml">
+            <search string="组织架构">
+                <field name="name"/>
+                <field name="manager_id"/>
+                <field name="parent_id"/>
+                <filter string="按上级部门" name="group_parent" context="{'group_by': 'parent_id'}"/>
+                <filter string="按负责人" name="group_manager" context="{'group_by': 'manager_id'}"/>
+            </search>
+        </field>
+    </record>
+
     <record id="action_sc_organization_department" model="ir.actions.act_window">
         <field name="name">组织架构</field>
         <field name="res_model">hr.department</field>
         <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_sc_organization_department_tree"/>
+        <field name="search_view_id" ref="view_sc_organization_department_search"/>
         <field name="domain">[('company_id', '=', allowed_company_ids[0])]</field>
         <field name="context">{'default_company_id': allowed_company_ids[0]}</field>
         <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>

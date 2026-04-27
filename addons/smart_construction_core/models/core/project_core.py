@@ -251,6 +251,7 @@ class ProjectProjectStage(models.Model):
 # =========================
 class ProjectProject(models.Model):
     _inherit = 'project.project'
+    _description = '项目'
 
     _STAGE_XMLID_BY_KEY = {
         "planning": "smart_construction_core.project_stage_planning",
@@ -270,6 +271,22 @@ class ProjectProject(models.Model):
         "warranty": "smart_construction_core.project_stage_warranty",
         "closed": "smart_construction_core.project_stage_archived",
     }
+
+    def _setup_complete(self):
+        super()._setup_complete()
+        labels = {
+            "sequence": "序号",
+            "name": "项目名称",
+            "message_needaction": "待处理消息",
+            "active": "有效",
+            "company_id": "公司",
+            "date": "截止日期",
+            "last_update_color": "状态颜色",
+            "tag_ids": "标签",
+        }
+        for field_name, label in labels.items():
+            if field_name in self._fields:
+                self._fields[field_name].string = label
 
     def _exec_structure_action(self, view_key):
         ctx = dict(self.env.context or {})

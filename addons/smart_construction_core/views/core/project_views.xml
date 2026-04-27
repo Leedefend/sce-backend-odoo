@@ -124,7 +124,7 @@
                         <field name="last_update_color" invisible="1"/>
                         <div class="o_stat_info">
                             <field name="last_update_status" readonly="1" widget="status_with_color"
-                                   status_label="Project Status"/>
+                                   status_label="项目状态"/>
                         </div>
                     </button>
                     <button name="action_open_wbs" string="执行结构" type="object" class="oe_stat_button"

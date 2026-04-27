@@ -32,6 +32,7 @@ from . import partner_legacy
 from . import project_legacy
 from . import contract_legacy
 from . import project_member_staging
+from . import organization_department
 from . import legacy_expense_deposit_fact
 from . import legacy_invoice_tax_fact
 from . import legacy_workflow_audit
