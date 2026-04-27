@@ -30358,3 +30358,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `odoo.shell.exec cleanup: 清理历史验证残留合同 6944/6945 及审批记录 112/113，cleanup_remaining=0`
 - result: `PASS; 提交审批语义覆盖 action_confirm/action_submit 主入口，合同审批人可从业务单据入口处理待审合同并完成统一审批闭环。`
 - next_step: `继续审批链路用户侧收口：抽样自定义前端真实点击审批通过/驳回按钮，并检查审批后发起人列表状态与按钮反馈。`
+
+## 2026-04-28 Batch-Business-Approval-Workbench-Convergence
+
+- branch: `codex/dev-env-run`
+- short_sha: `2e8a067d`
+- Layer Target: `Business navigation + my-work todo aggregation`
+- Module: `smart_construction_core`
+- Reason: `审批事项不应按业务类型散落为菜单级“待我审批”入口，应统一汇总至个人工作台待办；合同提交后 tier.review 可能处于 waiting 状态，个人待办必须覆盖。`
+- completed_step: `将付款申请、物资计划、项目合同、一般合同、采购/一般合同的菜单级待审入口显式 active=False；保留底层 action/XMLID 兼容；个人工作台审批聚合从 pending 扩展为 waiting/pending。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/handlers/my_work_summary.py`
+  - `python3 xml.etree.ElementTree parse: menu.xml/menu_finance_center.xml/legacy_purchase_contract_views.xml PASS`
+  - `git diff --check`
+  - `CODEX_MODE=fast CODEX_NEED_UPGRADE=1 DB_NAME=sc_prod_sim make mod.upgrade MODULE=smart_construction_core ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml"`
+  - `make prod.restart.safe ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml"`
+  - `odoo.shell.exec: wutao/caisiqi 均不可见五类菜单级待审入口；caisiqi 创建并提交合同 6948 后，wutao 的 my.work.summary(section=todo, source=tier.review) 命中该审批待办；验证记录 6948/116 已清理`
+  - `E2E_LOGIN=wutao E2E_PASSWORD=123456 DB_NAME=sc_prod_sim make verify.portal.my_work_smoke.container ... PASS artifact=artifacts/codex/my-work-smoke-v10_2/20260427T163940`
+- result: `PASS; 审批入口从业务菜单收敛到个人工作台待办，菜单层不再暴露按业务拆分的“待我审批”入口。`
+- next_step: `继续个人工作台办理体验：从待办点击进入业务单据后，验证审批通过/驳回按钮与返回后的待办刷新。`

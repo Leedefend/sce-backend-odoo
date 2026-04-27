@@ -160,5 +160,8 @@
               parent="smart_construction_core.menu_sc_contract_center"
               action="smart_construction_core.action_sc_tier_review_my_legacy_purchase_contract"
               sequence="65"
-              groups="smart_construction_core.group_sc_cap_purchase_manager"/>
+              groups="base.group_no_one"/>
+    <record id="menu_sc_tier_review_my_legacy_purchase_contract" model="ir.ui.menu">
+        <field name="active">0</field>
+    </record>
 </odoo>
