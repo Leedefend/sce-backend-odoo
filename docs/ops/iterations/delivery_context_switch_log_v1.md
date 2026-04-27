@@ -29643,3 +29643,17 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_real_user_company_probe.py`
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make history.business.usable.probe`
 - next_step: `输出真实用户业务矩阵时以 active migrated real users 为准，不纳入 admin / history_system_user_10000000 / fixture users`
+
+## 2026-04-27 Batch-History-Organization-Carrying-Audit
+
+- branch: `codex/dev-env-run`
+- short_sha: `7ae80942`
+- Layer Target: `History organization facts / carrying audit`
+- Module: `scripts/migration`
+- Reason: `主公司已落库后，需要判断原系统分公司、部门、用户部门关系和业务单据组织字段是否已完整承载。`
+- completed_step: `新增 history_organization_carrying_audit_probe，只读审计 sc.legacy.department、用户画像部门、项目/报销/薪资/考勤/合同组织字段和当前正式组织承载面`
+- verification:
+  - `python3 -m py_compile scripts/migration/history_organization_carrying_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_organization_carrying_audit_probe.py`
+- result: `PASS with decision=organization_carrying_gap_present; gaps=P0 legacy departments not formally materialized, P0 active user department link gap, P1 legacy department parent link gap, P1 branch-company facts not formally classified`
+- next_step: `先制定分公司/部门承载策略：分公司作为组织单元还是 res.company，部门是否启用 hr.department 或自有组织模型，然后再执行写入规范化`
