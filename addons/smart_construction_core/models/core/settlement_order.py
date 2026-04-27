@@ -9,7 +9,7 @@ from ..support.state_machine import ScStateMachine
 
 class ScSettlementOrder(models.Model):
     _name = "sc.settlement.order"
-    _description = "Settlement Order"
+    _description = "结算单"
     _order = "id desc"
 
     name = fields.Char(string="结算单号", required=True, default="新建", copy=False)
@@ -403,7 +403,7 @@ class ScSettlementOrder(models.Model):
 
 class ScSettlementOrderLine(models.Model):
     _name = "sc.settlement.order.line"
-    _description = "Settlement Order Line"
+    _description = "结算单明细"
     _order = "id"
 
     settlement_id = fields.Many2one(

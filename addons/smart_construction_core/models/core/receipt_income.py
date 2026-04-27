@@ -5,7 +5,7 @@ from odoo.exceptions import UserError
 
 class ScReceiptIncome(models.Model):
     _name = "sc.receipt.income"
-    _description = "Receipt and Income Registration"
+    _description = "收款与收入登记"
     _order = "date_receipt desc, id desc"
 
     name = fields.Char(string="单据号", required=True, default="新建", copy=False)
@@ -69,7 +69,7 @@ class ScReceiptIncome(models.Model):
     legacy_residual_reason = fields.Char(string="残余原因", index=True, readonly=True)
     legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
     note = fields.Text(string="备注")
-    active = fields.Boolean(default=True, index=True)
+    active = fields.Boolean("有效", default=True, index=True)
 
     _sql_constraints = [
         (

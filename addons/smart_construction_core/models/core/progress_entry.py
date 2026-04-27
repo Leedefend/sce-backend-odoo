@@ -28,7 +28,7 @@ class ProjectProgressEntry(models.Model):
     )
     wbs_id = fields.Many2one(
         "construction.work.breakdown",
-        string="工程结构(WBS)",
+        string="工程结构",
         required=True,
         index=True,
     )

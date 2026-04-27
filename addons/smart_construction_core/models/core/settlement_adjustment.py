@@ -5,7 +5,7 @@ from odoo.exceptions import UserError
 
 class ScSettlementAdjustment(models.Model):
     _name = "sc.settlement.adjustment"
-    _description = "Settlement Adjustment"
+    _description = "结算调整"
     _order = "date_adjustment desc, id desc"
 
     name = fields.Char(string="调整单号", required=True, default="新建", copy=False)
@@ -61,7 +61,7 @@ class ScSettlementAdjustment(models.Model):
     legacy_fund_confirmation_id = fields.Char(string="历史资金确认ID", index=True, readonly=True)
     legacy_source_table = fields.Char(string="历史来源表", readonly=True)
     note = fields.Text(string="备注")
-    active = fields.Boolean(default=True, index=True)
+    active = fields.Boolean("有效", default=True, index=True)
 
     _sql_constraints = [
         ("legacy_line_unique", "unique(legacy_line_id)", "Legacy settlement adjustment line id must be unique."),
@@ -79,7 +79,7 @@ class ScSettlementAdjustment(models.Model):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
             if vals.get("name", "新建") == "新建":
-                vals["name"] = seq.next_by_code("sc.settlement.adjustment") or _("Settlement Adjustment")
+                vals["name"] = seq.next_by_code("sc.settlement.adjustment") or _("结算调整")
             if vals.get("settlement_id"):
                 settlement = self.env["sc.settlement.order"].browse(vals["settlement_id"])
                 vals.setdefault("project_id", settlement.project_id.id)

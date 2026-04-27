@@ -5,7 +5,7 @@ from odoo.exceptions import UserError
 
 class ScTreasuryReconciliation(models.Model):
     _name = "sc.treasury.reconciliation"
-    _description = "Treasury Daily Reconciliation"
+    _description = "资金对账"
     _order = "date_document desc, id desc"
 
     name = fields.Char(string="单据号", required=True, default="新建", copy=False)
@@ -63,7 +63,7 @@ class ScTreasuryReconciliation(models.Model):
     legacy_record_id = fields.Char(string="历史记录ID", index=True, readonly=True)
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
     note = fields.Text(string="备注")
-    active = fields.Boolean(default=True, index=True)
+    active = fields.Boolean("有效", default=True, index=True)
 
     _sql_constraints = [
         (

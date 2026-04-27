@@ -12,7 +12,7 @@ class ConstructionWorkBreakdown(models.Model):
     """
 
     _name = "construction.work.breakdown"
-    _description = "工程结构(WBS)"
+    _description = "工程结构"
     _parent_name = "parent_id"
     _parent_store = True
     _order = "project_id, parent_path, sequence, id"
@@ -273,6 +273,6 @@ class ProjectWbs(models.Model):
     """
 
     _name = "project.wbs"
-    _description = "工程结构(WBS)兼容层"
+    _description = "工程结构兼容层"
     _inherit = "construction.work.breakdown"
     _table = "construction_work_breakdown"

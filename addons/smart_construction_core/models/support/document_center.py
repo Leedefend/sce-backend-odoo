@@ -5,7 +5,7 @@ from odoo import models, fields
 class ScProjectDocument(models.Model):
     """F. 工程资料中心"""
     _name = 'sc.project.document'
-    _description = 'Project Engineering Document'
+    _description = '工程资料'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'project_id, doc_type_id, create_date desc'
 
@@ -16,7 +16,7 @@ class ScProjectDocument(models.Model):
         required=True, index=True, tracking=True
     )
     wbs_id = fields.Many2one(
-        'construction.work.breakdown', string='工程结构(WBS)',
+        'construction.work.breakdown', string='工程结构',
         index=True
     )
     task_id = fields.Many2one(

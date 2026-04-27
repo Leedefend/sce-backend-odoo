@@ -287,7 +287,7 @@ class ProjectCostCode(models.Model):
     )
 
     level = fields.Integer("层级", compute="_compute_hierarchy", store=True, recursive=True)
-    active = fields.Boolean(default=True)
+    active = fields.Boolean("有效", default=True)
     path_display = fields.Char("路径", compute="_compute_hierarchy", store=True, recursive=True)
 
     note = fields.Char("说明")
@@ -323,7 +323,7 @@ class ProjectCostLedger(models.Model):
 
     wbs_id = fields.Many2one(
         "construction.work.breakdown",
-        string="工程结构(WBS)",
+        string="工程结构",
         index=True,
     )
 
@@ -335,7 +335,7 @@ class ProjectCostLedger(models.Model):
     )
 
     date = fields.Date("发生日期", index=True, default=fields.Date.context_today)
-    period = fields.Char("期间(YYYY-MM)", index=True)
+    period = fields.Char("期间", index=True)
     period_id = fields.Many2one(
         "project.cost.period",
         string="期间",

@@ -5,7 +5,7 @@ from odoo.exceptions import UserError
 
 class ScExpenseClaim(models.Model):
     _name = "sc.expense.claim"
-    _description = "Expense and Deposit Claim"
+    _description = "费用与保证金单据"
     _order = "date_claim desc, id desc"
 
     name = fields.Char(string="单据号", required=True, default="新建", copy=False)
@@ -73,7 +73,7 @@ class ScExpenseClaim(models.Model):
     legacy_document_no = fields.Char(string="历史单据号", index=True, readonly=True)
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
     note = fields.Text(string="备注")
-    active = fields.Boolean(default=True, index=True)
+    active = fields.Boolean("有效", default=True, index=True)
 
     _sql_constraints = [
         (

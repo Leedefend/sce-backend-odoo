@@ -5,7 +5,7 @@ from odoo.exceptions import UserError
 
 class ScFinancingLoan(models.Model):
     _name = "sc.financing.loan"
-    _description = "Financing and Borrowing Registration"
+    _description = "融资与借款登记"
     _order = "document_date desc, id desc"
 
     name = fields.Char(string="单据号", required=True, default="新建", copy=False)
@@ -70,7 +70,7 @@ class ScFinancingLoan(models.Model):
     legacy_counterparty_name = fields.Char(string="历史往来方", index=True, readonly=True)
     legacy_amount_field = fields.Char(string="历史金额字段", index=True, readonly=True)
     note = fields.Text(string="备注")
-    active = fields.Boolean(default=True, index=True)
+    active = fields.Boolean("有效", default=True, index=True)
 
     _sql_constraints = [
         (

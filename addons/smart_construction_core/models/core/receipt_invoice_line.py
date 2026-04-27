@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ReceiptInvoiceLine(models.Model):
     _name = "sc.receipt.invoice.line"
-    _description = "Receipt Invoice Line"
+    _description = "收款发票明细"
     _order = "request_id desc, sequence asc, id asc"
 
     request_id = fields.Many2one(
@@ -63,7 +63,7 @@ class ReceiptInvoiceLine(models.Model):
     invoiced_before_amount = fields.Monetary(string="历史已开票", currency_field="currency_id")
     note = fields.Text(string="备注")
     import_batch = fields.Char(string="导入批次", copy=False)
-    active = fields.Boolean(default=True)
+    active = fields.Boolean("有效", default=True)
     attachment_count = fields.Integer(string="附件数量", compute="_compute_attachment_count")
 
     def _compute_attachment_count(self):

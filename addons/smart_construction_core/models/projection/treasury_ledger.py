@@ -5,7 +5,7 @@ from odoo.exceptions import UserError, ValidationError
 
 class TreasuryLedger(models.Model):
     _name = "sc.treasury.ledger"
-    _description = "Treasury Ledger"
+    _description = "资金台账"
     _order = "id desc"
 
     name = fields.Char(string="流水号", required=True, default="新建", copy=False)
