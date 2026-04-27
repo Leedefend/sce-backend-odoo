@@ -29559,3 +29559,16 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `make verify.portal.menu_scene_key_smoke.container DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo ARTIFACTS_DIR=/mnt/artifacts`
   - `git diff --check -- scripts/verify/fe_menu_scene_key_smoke.js scripts/verify/fe_scene_core_openable_guard.js docs/ops/iterations/menu_dual_track_verify_guard_cleanup_batch_20260427.md docs/ops/iterations/delivery_context_switch_log_v1.md`
 - next_step: `scan remaining menu normalization verification scripts for scene_key-as-owner-signal assumptions`
+
+## 2026-04-27 Batch-Menu-Scene-Governance-Asset-Cleanup
+
+- branch: `codex/dev-env-run`
+- short_sha: `41c60f68`
+- Layer Target: `Scene governance documentation assets / dual-track mapping`
+- Module: `docs/architecture/scene-governance/assets`
+- Reason: baseline/current menu-scene mapping assets still declared demo showcase menu/action as canonical `projects.list`, conflicting with dual-track contract.
+- completed_step: `removed smart_construction_demo.menu_sc_project_list_showcase and smart_construction_demo.action_sc_project_list_showcase projects.list mappings from baseline/current CSV assets`
+- verification:
+  - `rg -n "smart_construction_demo\\.(menu_sc_project_list_showcase|action_sc_project_list_showcase).*projects\\.list|projects\\.list.*smart_construction_demo\\.(menu_sc_project_list_showcase|action_sc_project_list_showcase)|menu_sc_project_list_showcase,.*projects\\.list|action_sc_project_list_showcase,projects\\.list" docs/architecture/scene-governance/assets -S`
+  - `git diff --check -- docs/architecture/scene-governance/assets/menu_scene_mapping_baseline_v1.csv docs/architecture/scene-governance/assets/generated/menu_scene_mapping_current_v1.csv docs/ops/iterations/menu_scene_governance_asset_cleanup_batch_20260427.md docs/ops/iterations/delivery_context_switch_log_v1.md`
+- next_step: `scan contract snapshots and archived docs; only update current regenerated assets, not historical audit records`
