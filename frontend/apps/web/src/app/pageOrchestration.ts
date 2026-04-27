@@ -49,6 +49,7 @@ export interface PageOrchestrationPage {
 }
 
 export interface PageOrchestrationContract {
+  schema_version?: string;
   contract_version?: string;
   scene_key?: string;
   page?: PageOrchestrationPage;

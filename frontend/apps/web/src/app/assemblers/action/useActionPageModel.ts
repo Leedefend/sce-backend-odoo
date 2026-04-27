@@ -50,7 +50,7 @@ type UseActionPageModelOptions = {
     groupByOverflow: MaybeRef<unknown[]>;
   };
   focus: {
-    surfaceIntent: MaybeRef<SurfaceIntentInput>;
+    surfaceIntent: MaybeRef<Partial<SurfaceIntentInput> | Record<string, unknown> | null | undefined>;
   };
   strict: {
     missingSummary: MaybeRef<string>;
@@ -123,9 +123,10 @@ export function useActionPageModel(options: UseActionPageModelOptions) {
     const strictSummary = asText(unref(options.strict.missingSummary));
     const strictDefaults = asText(unref(options.strict.defaultsSummary));
     const focusIntent = unref(options.focus.surfaceIntent);
-    const focusTitle = asText(focusIntent.title);
-    const focusSummary = asText(focusIntent.summary);
-    const focusActions = Array.isArray(focusIntent.actions) ? focusIntent.actions : [];
+    const focusPayload = focusIntent && typeof focusIntent === 'object' ? focusIntent as Partial<SurfaceIntentInput> : {};
+    const focusTitle = asText(focusPayload.title);
+    const focusSummary = asText(focusPayload.summary);
+    const focusActions = Array.isArray(focusPayload.actions) ? focusPayload.actions : [];
     const hasFocusIntent = Boolean(focusTitle || focusSummary || focusActions.length);
 
     const sectionVisibility = resolveActionPageSections({
@@ -239,11 +240,11 @@ export function useActionPageModel(options: UseActionPageModelOptions) {
       },
       empty: unref(options.page.status) === 'empty'
         ? {
-            title: asText(focusIntent.emptyTitle),
-            hint: asText(focusIntent.emptyHint),
+            title: asText(focusPayload.emptyTitle),
+            hint: asText(focusPayload.emptyHint),
             reason: asText(unref(options.empty.reasonText)) || undefined,
-            primaryAction: focusIntent.primaryAction,
-            secondaryAction: focusIntent.secondaryAction,
+            primaryAction: focusPayload.primaryAction || { label: '', to: '' },
+            secondaryAction: focusPayload.secondaryAction,
           }
         : undefined,
       hud: {

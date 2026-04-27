@@ -87,6 +87,7 @@ export interface NavNode {
 }
 
 export interface NavMeta {
+  [key: string]: unknown;
   name?: string;
   scene_key?: string;
   menu_id?: number;

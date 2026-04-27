@@ -9,6 +9,7 @@ export type FocusActionVM = {
 export type ChipVM = {
   key: string;
   label: string;
+  field?: string;
 };
 
 export type ChipGroupVM = {
@@ -22,6 +23,18 @@ export type ActionButtonVM = {
   label: string;
   enabled?: boolean;
   hint?: string;
+  kind?: string;
+  selection?: 'none' | 'single' | 'multi';
+  actionId?: number | null;
+  methodName?: string;
+  model?: string;
+  target?: string;
+  url?: string;
+  visibleProfiles?: string[];
+  context?: Record<string, unknown>;
+  domainRaw?: string;
+  mutation?: Record<string, unknown>;
+  refreshPolicy?: Record<string, unknown>;
 };
 
 export type ActionGroupVM = {

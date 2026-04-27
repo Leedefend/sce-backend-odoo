@@ -52,7 +52,7 @@ type GroupSummaryItem = {
 
 const props = withDefaults(
   defineProps<{
-    items: GroupSummaryItem[];
+    items: Array<GroupSummaryItem | Record<string, unknown>>;
     groupByLabel?: string;
     activeKey?: string;
     windowOffset?: number;
@@ -62,7 +62,7 @@ const props = withDefaults(
     windowEnd?: number;
     canPrevWindow?: boolean;
     canNextWindow?: boolean;
-    onPick?: (item: GroupSummaryItem) => void;
+    onPick?: (item: GroupSummaryItem | Record<string, unknown>) => void;
     onClear?: () => void;
     onPrevWindow?: () => void;
     onNextWindow?: () => void;

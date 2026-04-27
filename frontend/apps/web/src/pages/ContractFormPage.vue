@@ -26,7 +26,7 @@
           v-if="!isProjectIntakeCreateMode && !hasPrimaryHeaderAction"
           class="primary"
           :disabled="isQuickSubmitDisabled"
-          @click="saveRecord"
+          @click="() => saveRecord()"
         >
           {{ submitButtonLabel }}
         </button>
@@ -144,7 +144,7 @@
       <PageFooterTemplate v-if="isProjectIntakeCreateMode" hint="填写完成后点击“创建项目”">
         <template #default>
           <button class="ghost" :disabled="busy" @click="cancelIntake">取消</button>
-          <button class="primary" :disabled="isIntakeCreateDisabled" @click="saveRecord">
+          <button class="primary" :disabled="isIntakeCreateDisabled" @click="() => saveRecord()">
             {{ intakeCreateButtonLabel }}
           </button>
         </template>
@@ -1717,7 +1717,7 @@ const semanticFieldGroups = computed<Record<string, SemanticFieldGroup>>(() => {
 
 const contractFieldSemantics = computed<Record<string, { semantic_type?: string; surface_role?: string; technical?: boolean }>>(() => {
   const out: Record<string, { semantic_type?: string; surface_role?: string; technical?: boolean }> = {};
-  const raw = contract.value?.field_semantics;
+  const raw = (contract.value as Record<string, unknown> | null)?.field_semantics;
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
     Object.entries(raw as Record<string, unknown>).forEach(([name, value]) => {
       if (!value || typeof value !== 'object' || Array.isArray(value)) return;

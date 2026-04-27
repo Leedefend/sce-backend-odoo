@@ -9,18 +9,10 @@ type UseActionViewHeaderRuntimeOptions = {
   resolveFocusActionPushState: (input: { action: unknown; workspaceContextQuery: Record<string, unknown> }) => { target: unknown };
   resolveWorkspaceContextQuery: () => Record<string, unknown>;
   routerPush: (target: unknown) => Promise<unknown>;
-  executePageContractAction: (input: {
-    actionKey: string;
-    router: unknown;
-    actionIntent: unknown;
-    actionTarget: unknown;
-    query: Record<string, unknown>;
-    onRefresh: () => void;
-    onFallback: (key: string) => Promise<boolean>;
-  }) => Promise<boolean>;
+  executePageContractAction: (input: any) => Promise<boolean>;
   router: unknown;
-  pageActionIntent: Ref<unknown>;
-  pageActionTarget: Ref<unknown>;
+  pageActionIntent: unknown;
+  pageActionTarget: unknown;
 };
 
 export function useActionViewHeaderRuntime(options: UseActionViewHeaderRuntimeOptions) {
@@ -42,8 +34,8 @@ export function useActionViewHeaderRuntime(options: UseActionViewHeaderRuntimeOp
     const handled = await options.executePageContractAction({
       actionKey,
       router: options.router,
-      actionIntent: options.pageActionIntent.value,
-      actionTarget: options.pageActionTarget.value,
+      actionIntent: options.pageActionIntent,
+      actionTarget: options.pageActionTarget,
       query: options.resolveWorkspaceContextQuery(),
       onRefresh: reload,
       onFallback: async (key) => {

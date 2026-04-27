@@ -208,7 +208,7 @@ const pageSectionTagIs = pageContract.sectionTagIs;
 
 const workbenchOrchestrationContract = computed<PageOrchestrationContract>(() => {
   const contract = pageContract.contract.value?.page_orchestration_v1;
-  return (contract && typeof contract === 'object') ? contract as PageOrchestrationContract : {};
+  return (contract && typeof contract === 'object') ? contract as unknown as PageOrchestrationContract : {};
 });
 const useUnifiedWorkbenchRenderer = computed(() => {
   if (asText(route.query.legacy_workbench) === '1') return false;

@@ -209,7 +209,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
   }
 
   function advancedFieldLabel(field: string) {
-    return String(options.contractColumnLabels.value[field] || field).trim();
+    return String(contractColumnLabels.value[field] || field).trim();
   }
 
   function advancedRowMeta(row: Record<string, unknown>) {

@@ -92,7 +92,7 @@
         v-if="productDeliverySurface.actionLabel"
         class="ghost scene-delivery__cta"
         type="button"
-        :disabled="productDeliverySurface.actionDisabled || status === 'loading'"
+            :disabled="productDeliverySurface.actionDisabled || isLoading"
         @click="openProductDeliveryTarget()"
       >
         {{ productDeliverySurface.actionLabel }}
@@ -111,7 +111,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
 import ActionView from './ActionViewShell.vue';
 import ProjectManagementDashboardView from './ProjectManagementDashboardView.vue';
 import ContractFormPage from '../pages/ContractFormPage.vue';
@@ -146,6 +146,7 @@ const currentSceneKey = computed(() => String(route.params.sceneKey || route.met
 const findActionNodeByModelRef = findActionNodeByModel;
 const scene = ref<Scene | null>(null);
 const status = ref<'loading' | 'error' | 'forbidden' | 'idle'>('loading');
+const isLoading = computed(() => status.value === 'loading');
 const { error, clearError, setError } = useStatus();
 const errorCopy = ref(resolveErrorCopy(null, pageText('error_fallback', '场景加载失败')));
 const forbiddenCopy = ref({
@@ -280,12 +281,16 @@ function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
 }
 
+function asRouteQuery(query: Record<string, unknown>): LocationQueryRaw {
+  return query as LocationQueryRaw;
+}
+
 function resolveTargetRecordEntry(target: SceneTarget) {
   const entryTarget = (target.entry_target && typeof target.entry_target === 'object')
-    ? target.entry_target
+    ? target.entry_target as Record<string, unknown>
     : undefined;
   const recordEntry = (entryTarget?.record_entry && typeof entryTarget.record_entry === 'object')
-    ? entryTarget.record_entry
+    ? entryTarget.record_entry as Record<string, unknown>
     : undefined;
   const model = String(recordEntry?.model || target.model || route.query.model || '').trim();
   const rawRecordId = recordEntry?.record_id ?? target.record_id ?? route.query.record_id;
@@ -342,12 +347,12 @@ const sceneViewSwitchOptions = computed(() => {
       return {
         key,
         label: String(item.label || scene?.label || key).trim(),
-        route,
-        active: Boolean(item.active),
-        menuId: Number(scene?.target?.menu_id || 0) || undefined,
-      };
-    })
-    .filter((item): item is { key: string; label: string; route: string; active: boolean; menuId?: number } => Boolean(item))
+      route,
+      active: Boolean(item.active),
+      menuId: Number(scene?.target?.menu_id || 0) || undefined,
+    };
+  })
+    .filter((item): item is { key: string; label: string; route: string; active: boolean; menuId: number | undefined } => Boolean(item))
     .filter((item) => Boolean(item.key && item.route));
 });
 
@@ -413,7 +418,7 @@ function openSiblingScene(sceneKey: string) {
   const target = getSceneByKey(sceneKey);
   router.replace({
     path: target?.route || `/s/${sceneKey}`,
-    query: target ? resolveSceneSwitchQuery(target) : resolveSceneSwitchFallbackQuery(),
+    query: asRouteQuery(target ? resolveSceneSwitchQuery(target) : resolveSceneSwitchFallbackQuery()),
   }).catch(() => {});
 }
 
@@ -425,7 +430,7 @@ function openProductDeliveryTarget() {
   const target = getSceneByKey(targetSceneKey);
   router.replace({
     path: target?.route || `/s/${targetSceneKey}`,
-    query: target ? resolveSceneSwitchQuery(target) : resolveSceneSwitchFallbackQuery(),
+    query: asRouteQuery(target ? resolveSceneSwitchQuery(target) : resolveSceneSwitchFallbackQuery()),
   }).catch(() => {});
 }
 function sanitizeWorkspaceContextForLayout(
@@ -757,7 +762,7 @@ async function resolveScene() {
       || route.query.scene_label
     );
     if (hasForeignSceneQuery && isCanonicalSceneOwnerTarget(target, sceneKey)) {
-      await router.replace({ path: route.path, query: canonicalOwnerQuery });
+      await router.replace({ path: route.path, query: asRouteQuery(canonicalOwnerQuery) });
       return;
     }
     if (layout.kind === 'workspace') {
@@ -770,7 +775,7 @@ async function resolveScene() {
         }
         const normalizedPathOnly = resolveRoutePathOnly(normalizedRoute);
         if (normalizedPathOnly && normalizedPathOnly !== route.path) {
-          await router.replace({ path: normalizedRoute, query: workspaceContextQuery });
+          await router.replace({ path: normalizedRoute, query: asRouteQuery(workspaceContextQuery) });
           return;
         }
         // Keep evaluating action/menu/model targets for self-routed scene entries
@@ -800,7 +805,7 @@ async function resolveScene() {
           && currentMenuId === Number(resolvedAction.menuId || 0)
           && String(route.query.scene_key || '') === sceneKey;
         if (!sameEmbeddedRouteState) {
-          await router.replace({ path: route.path, query: nextQuery });
+          await router.replace({ path: route.path, query: asRouteQuery(nextQuery) });
           return;
         }
         embeddedActionId.value = resolvedAction.actionId;
@@ -826,7 +831,7 @@ async function resolveScene() {
             && String(route.query.model || '').trim() === String(recordEntry.model || '').trim()
             && String(route.query.scene_key || '') === sceneKey;
           if (!sameEmbeddedRouteState) {
-            await router.replace({ path: route.path, query: nextQuery });
+            await router.replace({ path: route.path, query: asRouteQuery(nextQuery) });
             return;
           }
           embeddedRecordActionId.value = recordEntry.actionId;
@@ -853,7 +858,7 @@ async function resolveScene() {
           && currentMenuId === Number(resolvedAction.menuId || 0)
           && String(route.query.scene_key || '') === sceneKey;
         if (!sameEmbeddedRouteState) {
-          await router.replace({ path: route.path, query: nextQuery });
+          await router.replace({ path: route.path, query: asRouteQuery(nextQuery) });
           return;
         }
         embeddedRecordActionId.value = resolvedAction.actionId;
@@ -879,7 +884,7 @@ async function resolveScene() {
             && String(route.query.model || '').trim() === recordEntry.model
             && String(route.query.scene_key || '') === sceneKey;
           if (!sameEmbeddedRouteState) {
-            await router.replace({ path: route.path, query: nextQuery });
+            await router.replace({ path: route.path, query: asRouteQuery(nextQuery) });
             return;
           }
           embeddedRecordActionId.value = recordEntry.actionId;
@@ -892,7 +897,7 @@ async function resolveScene() {
         if (menuNode?.menu_id || menuNode?.id) {
           await router.replace({
             path: `/m/${menuNode.menu_id || menuNode.id}`,
-            query: workspaceContextQuery,
+            query: asRouteQuery(workspaceContextQuery),
           });
           return;
         }
@@ -910,7 +915,7 @@ async function resolveScene() {
           && Number(route.query.menu_id || 0) === Number(target.menu_id || 0)
           && String(route.query.scene_key || '') === sceneKey;
         if (!sameEmbeddedRouteState) {
-          await router.replace({ path: route.path, query: nextQuery });
+          await router.replace({ path: route.path, query: asRouteQuery(nextQuery) });
           return;
         }
         embeddedRecordActionId.value = Number(target.action_id || 0);
@@ -936,7 +941,7 @@ async function resolveScene() {
           && currentMenuId === Number(resolvedAction.menuId || 0)
           && String(route.query.scene_key || '') === sceneKey;
         if (!sameEmbeddedRouteState) {
-          await router.replace({ path: route.path, query: nextQuery });
+          await router.replace({ path: route.path, query: asRouteQuery(nextQuery) });
           return;
         }
         embeddedActionId.value = resolvedAction.actionId;
@@ -962,7 +967,7 @@ async function resolveScene() {
             && String(route.query.model || '').trim() === String(recordEntry.model || '').trim()
             && String(route.query.scene_key || '') === sceneKey;
           if (!sameEmbeddedRouteState) {
-            await router.replace({ path: route.path, query: nextQuery });
+            await router.replace({ path: route.path, query: asRouteQuery(nextQuery) });
             return;
           }
           embeddedRecordActionId.value = recordEntry.actionId;
@@ -978,7 +983,7 @@ async function resolveScene() {
         return;
       }
       if (!isSameRouteTarget(target.route, workspaceContextQuery)) {
-        await router.replace({ path: target.route, query: workspaceContextQuery });
+        await router.replace({ path: target.route, query: asRouteQuery(workspaceContextQuery) });
         return;
       }
       if (hasConsumableDeliveryRoot(resolvedScene)) {

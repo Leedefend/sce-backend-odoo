@@ -7,15 +7,15 @@ type ApplyLoadRequestBlockedStateFn = (input: {
   message: string;
   statusInput: StatusInput;
   setError: (error: Error, fallbackMessage?: string) => void;
-  deriveListStatus: (input: StatusInput) => 'loading' | 'ok' | 'empty' | 'error';
-  statusRef: Ref<'loading' | 'ok' | 'empty' | 'error'>;
+  deriveListStatus: (input: StatusInput) => string;
+  statusRef: Ref<string>;
 }) => boolean;
 
 type UseActionViewLoadRequestBlockedApplyRuntimeOptions = {
   applyLoadRequestBlockedState: ApplyLoadRequestBlockedStateFn;
   setError: (error: Error, fallbackMessage?: string) => void;
-  deriveListStatus: (input: StatusInput) => 'loading' | 'ok' | 'empty' | 'error';
-  statusRef: Ref<'loading' | 'ok' | 'empty' | 'error'>;
+  deriveListStatus: (input: StatusInput) => string;
+  statusRef: Ref<string>;
 };
 
 export function useActionViewLoadRequestBlockedApplyRuntime(options: UseActionViewLoadRequestBlockedApplyRuntimeOptions) {

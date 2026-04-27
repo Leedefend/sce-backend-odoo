@@ -275,7 +275,7 @@
       :loading="isUiBusy"
       :error-message="vm.page.errorMessage"
       :trace-id="vm.page.traceId"
-      :error="error"
+      :error="pageError"
       :records="records"
       :fields="kanbanFields"
       :primary-fields="kanbanPrimaryFields"
@@ -298,7 +298,7 @@
       :loading="isUiBusy"
       :error-message="vm.page.errorMessage"
       :trace-id="vm.page.traceId"
-      :error="error"
+      :error="pageError"
       :columns="columns"
       :records="records"
       :column-labels="contractColumnLabels"
@@ -306,6 +306,7 @@
       :sort-options="sortOptions"
       :sort-value="sortValue"
       :filter-value="filterValue"
+      :status-label="vm.page.statusLabel"
       :search-term="searchTerm"
       :subtitle="vm.page.subtitle"
       :scene-key="vm.page.sceneKey"
@@ -328,6 +329,7 @@
       :on-reload="reload"
       :on-search="handleSearch"
       :on-sort="handleSort"
+      :on-filter="handleFilter"
       :on-toggle-selection="handleToggleSelection"
       :on-toggle-selection-all="handleToggleSelectionAll"
       :on-run-selection-action="handleSelectionAction"
@@ -380,7 +382,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onErrorCaptured, onMounted, ref, watch } from 'vue';
+import { computed, inject, onErrorCaptured, onMounted, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { listRecordsRaw } from '../api/data';
 import { executeButton } from '../api/executeButton';
@@ -757,6 +759,7 @@ const lastTrackedPreset = ref('');
 const statusApi = useStatus?.();
 type StatusErrorLike = { code?: unknown; message?: string };
 const error = statusApi?.error ?? ref<StatusErrorLike | null>(null);
+const pageError = error as unknown as ReturnType<typeof useStatus>['error'];
 const clearError = statusApi?.clearError ?? (() => {});
 const setError = statusApi?.setError ?? (() => {});
 type ContractColumnSchema = { name?: string };
@@ -1277,7 +1280,7 @@ const {
   actionId,
   resolvedModelRef,
   modelRef: model,
-  routerPush: (target) => router.push(target),
+  routerPush: (target) => router.push(target as never),
 });
 
 const {
@@ -1315,7 +1318,7 @@ const {
   resolveWorkspaceContextQuery,
   replaceCurrentRouteQuery: (query) => {
     const routeState = resolveReplaceCurrentRouteState({ routePath: route.path, query });
-    router.replace(routeState.target).catch(() => {});
+    router.replace(routeState.target as never).catch(() => {});
   },
   trackUsageEvent,
   load: requestLoadPage,
@@ -1428,7 +1431,10 @@ const {
   routeQueryMap,
   resolvedModelRef,
   modelRef: model,
-  actionMetaContext: () => actionMeta.value?.context,
+  actionMetaContext: () => {
+    const context = actionMeta.value?.context;
+    return context && typeof context === 'object' ? context as Record<string, unknown> : {};
+  },
   resolveEffectiveRequestContext,
   resolveEffectiveRequestContextRaw,
   mergeContext,
@@ -1448,7 +1454,7 @@ const {
   resolveReloadTriggerPlan,
   resolveFocusActionPushState,
   resolveWorkspaceContextQuery,
-  routerPush: (target) => router.push(target),
+  routerPush: (target) => router.push(target as never),
   executePageContractAction,
   router,
   pageActionIntent,
@@ -1529,7 +1535,7 @@ const { runContractAction } = useActionViewActionRuntime({
   resolveSelectionBlockMessage: resolveContractActionSelectionBlockMessage,
   resolveMissingModelMessage: resolveContractActionMissingModelMessage,
   executeProjectionRefresh: async (payload) => {
-    await executeProjectionRefresh(payload as {
+    await executeProjectionRefresh(payload as unknown as {
       policy: ProjectionRefreshPolicy;
       refreshScene: () => Promise<void>;
       refreshWorkbench: () => Promise<void>;
@@ -1537,8 +1543,8 @@ const { runContractAction } = useActionViewActionRuntime({
       recordTrace: (input: { intent: string; writeMode: string; latencyMs?: number }) => void;
     });
   },
-  executeSceneMutation,
-  executeButton,
+  executeSceneMutation: executeSceneMutation as (options: any) => Promise<unknown>,
+  executeButton: executeButton as (payload: any) => Promise<unknown>,
   buildButtonRequest: buildContractActionButtonRequest,
   resolveResponseActionId: resolveContractActionResponseActionId,
   shouldNavigate: shouldNavigateContractAction,
@@ -1693,7 +1699,7 @@ const {
   staticInput: {
     setError,
     errorMessage: () => error.value?.message || '',
-    errorTraceId: () => error.value?.traceId || '',
+    errorTraceId: () => (error.value as { traceId?: string } | null)?.traceId || '',
     resolveLoadCatchState,
     resolveLoadCatchListTotalState,
     resolveLoadCatchProjectScopeState,
@@ -1804,8 +1810,8 @@ const {
     session.setActionMeta(payload);
   },
   setError,
-  deriveListStatus,
-  statusRef: status,
+  deriveListStatus: deriveListStatus as (input: string) => 'loading' | 'ok' | 'empty' | 'error',
+  statusRef: status as unknown as Ref<'loading' | 'ok' | 'empty' | 'error'>,
 });
 
 const {
