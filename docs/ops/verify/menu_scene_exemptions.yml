@@ -15,3 +15,8 @@ exemptions:
     reason: spreadsheet dashboard entry (act_client)
   - xmlid: spreadsheet_dashboard.spreadsheet_dashboard_menu_configuration_dashboards
     reason: spreadsheet dashboard config
+  # dual-track action/menu compatibility entries; scene_key alone is not owner signal
+  - xmlid: smart_construction_core.menu_sc_project_quick_create
+    reason: project quick-create action/menu entry, not a scene owner
+  - xmlid: smart_construction_demo.menu_sc_project_list_showcase
+    reason: demo showcase action/menu entry, not canonical projects.list scene owner

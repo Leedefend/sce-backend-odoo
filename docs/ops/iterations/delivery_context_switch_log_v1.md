@@ -29530,3 +29530,17 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
     - `phase_key = execution`
     - `stage_id = project_stage_in_progress`
   - updates only current `draft` projects; non-draft projects are preserved as conflicts
+
+## 2026-04-27 Batch-Menu-Owner-Signal-Residual-Exemption
+
+- branch: `codex/dev-env-run`
+- short_sha: `df747458`
+- Layer Target: `Navigation interpretation / owner-signal governance`
+- Module: `docs/ops/verify/menu_scene_exemptions.yml`
+- Reason: `smart_construction_core.menu_sc_project_quick_create` and `smart_construction_demo.menu_sc_project_list_showcase` are dual-track action/menu compatibility entries; `scene_key` alone must not promote them to scene owner entries.
+- completed_step: `added explicit menu_scene_resolve exemptions for the quick-create action/menu entry and demo showcase action/menu entry`
+- verification:
+  - `node --check scripts/verify/fe_menu_scene_resolve_smoke.js`
+  - `make verify.menu.scene_resolve.container DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo ARTIFACTS_DIR=/mnt/artifacts`
+  - `git diff --check -- docs/ops/verify/menu_scene_exemptions.yml docs/ops/iterations/menu_owner_signal_residual_exemption_batch_20260427.md docs/ops/iterations/delivery_context_switch_log_v1.md`
+- next_step: `clean up stale verification scripts that still bind smart_construction_demo.menu_sc_project_list_showcase / action_sc_project_list_showcase to canonical projects.list`
