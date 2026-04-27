@@ -30101,3 +30101,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.document_state_policy_switch`
 - result: `PASS; expense enabled=submit disabled=approved; settlement enabled=submit disabled=approve; purchase enabled non-approver blocked disabled non-approver purchase; rollback OK`
 - next_step: `补齐项目合同、一般合同、采购/一般合同 document_state 开关 smoke，并审计哪些 document_state 业务需要进一步迁移到 OCA tier 执行层。`
+
+## 2026-04-27 Batch-Business-Expense-Settlement-OCA-Unification
+
+- branch: `codex/dev-env-run`
+- short_sha: `be826f7c`
+- Layer Target: `Business approval OCA execution unification`
+- Module: `smart_construction_core`
+- Reason: `用户确认审批必须统一；业务配置只决定是否需要审核，审核执行层统一交给 OCA tier.validation。`
+- completed_step: `sc.expense.claim 与 sc.settlement.order 接入 tier.validation；新增两类单据 OCA 审批通过/驳回 server action；审批规则同步支持两类模型并在升级时收口 runtime_state=tier_validation；business_oca_runtime_smoke 扩展覆盖费用/保证金和结算单审批通过/驳回链路。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/core/expense_claim.py addons/smart_construction_core/models/core/settlement_order.py addons/smart_construction_core/models/support/approval_policy.py scripts/verify/business_oca_runtime_smoke.py scripts/verify/business_document_state_policy_switch_smoke.py`
+  - `python3 xml.etree.ElementTree parse for expense_claim_tier_actions.xml, settlement_order_tier_actions.xml, approval_policy_seed.xml`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.oca_runtime_smoke`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.document_state_policy_switch`
+  - `APPROVAL_POLICY_RUNTIME expense/settlement/payment/material all runtime=tier_validation tier_defs=1 active=1`
+- result: `PASS; expense submit->OCA->approved / reject->draft; settlement submit->OCA->approve / reject->draft; disabled policy still bypasses approval to approved/approve。`
+- next_step: `继续迁移或审计剩余 document_state 业务，采购订单需单独处理原生 button_confirm 语义；同时补真实用户能力组职责分离，避免费用/结算 submitter 与 reviewer 落到同一人。`

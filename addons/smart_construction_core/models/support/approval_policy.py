@@ -135,7 +135,12 @@ class ScApprovalPolicy(models.Model):
 
     def _tier_sync_supported(self):
         self.ensure_one()
-        return self.target_model in {"project.material.plan", "payment.request"}
+        return self.target_model in {
+            "project.material.plan",
+            "payment.request",
+            "sc.expense.claim",
+            "sc.settlement.order",
+        }
 
     def _tier_server_actions(self):
         self.ensure_one()
@@ -148,6 +153,14 @@ class ScApprovalPolicy(models.Model):
                 "smart_construction_core.server_action_payment_request_on_approved",
                 "smart_construction_core.server_action_payment_request_on_rejected",
             ),
+            "sc.expense.claim": (
+                "smart_construction_core.server_action_expense_claim_on_approved",
+                "smart_construction_core.server_action_expense_claim_on_rejected",
+            ),
+            "sc.settlement.order": (
+                "smart_construction_core.server_action_settlement_order_on_approved",
+                "smart_construction_core.server_action_settlement_order_on_rejected",
+            ),
         }
         approve_xmlid, reject_xmlid = mapping.get(self.target_model, (None, None))
         approve_action = self.env.ref(approve_xmlid, raise_if_not_found=False) if approve_xmlid else False
@@ -156,7 +169,12 @@ class ScApprovalPolicy(models.Model):
 
     def _tier_definition_domain(self, step):
         domain = []
-        amount_field = "amount" if self.target_model == "payment.request" else False
+        amount_field_by_model = {
+            "payment.request": "amount",
+            "sc.expense.claim": "amount",
+            "sc.settlement.order": "amount_total",
+        }
+        amount_field = amount_field_by_model.get(self.target_model)
         if amount_field and step.amount_min:
             domain.append((amount_field, ">=", step.amount_min))
         if amount_field and step.amount_max:
@@ -191,6 +209,8 @@ class ScApprovalPolicy(models.Model):
                 for step in policy.step_ids.filtered("tier_definition_id"):
                     step.tier_definition_id.sudo().write({"active": False})
                 continue
+            if policy.runtime_state != "tier_validation":
+                policy.with_context(skip_tier_sync=True).write({"runtime_state": "tier_validation"})
             for step in policy.step_ids:
                 if not step.approve_group_id:
                     continue

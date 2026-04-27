@@ -44,6 +44,8 @@
         'views/res_groups_menu_views.xml',
         'data/material_plan_tier_actions.xml',
         'data/payment_request_tier_actions.xml',
+        'data/settlement_order_tier_actions.xml',
+        'data/expense_claim_tier_actions.xml',
         'data/approval_policy_seed.xml',
         'data/approval_policy_tier_sync.xml',
 
