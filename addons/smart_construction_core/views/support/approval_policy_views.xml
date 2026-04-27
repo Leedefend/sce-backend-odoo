@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_sc_approval_policy_search" model="ir.ui.view">
+        <field name="name">sc.approval.policy.search</field>
+        <field name="model">sc.approval.policy</field>
+        <field name="arch" type="xml">
+            <search string="审批规则">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="target_model"/>
+                <filter name="filter_required" string="需要审核" domain="[('approval_required', '=', True)]"/>
+                <filter name="filter_configurable" string="业务可配置" domain="[('runtime_state', 'in', ['tier_validation', 'document_state', 'policy_only'])]"/>
+                <filter name="filter_active" string="启用" domain="[('active', '=', True)]"/>
+                <group expand="0" string="分组">
+                    <filter name="group_by_model" string="业务单据" context="{'group_by': 'target_model'}"/>
+                    <filter name="group_by_runtime" string="执行状态" context="{'group_by': 'runtime_state'}"/>
+                    <filter name="group_by_group" string="审核能力组" context="{'group_by': 'manager_group_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_approval_policy_tree" model="ir.ui.view">
+        <field name="name">sc.approval.policy.tree</field>
+        <field name="model">sc.approval.policy</field>
+        <field name="arch" type="xml">
+            <tree string="审批规则" decoration-muted="not active">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="target_model"/>
+                <field name="approval_required"/>
+                <field name="trigger"/>
+                <field name="mode"/>
+                <field name="runtime_state"/>
+                <field name="manager_group_id"/>
+                <field name="step_count"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_approval_policy_form" model="ir.ui.view">
+        <field name="name">sc.approval.policy.form</field>
+        <field name="model">sc.approval.policy</field>
+        <field name="arch" type="xml">
+            <form string="审批规则">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="target_model"/>
+                            <field name="model_name" readonly="1"/>
+                            <field name="approval_required"/>
+                            <field name="trigger"/>
+                            <field name="mode"/>
+                            <field name="runtime_state"/>
+                            <field name="manager_group_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="审核流程">
+                            <field name="step_ids">
+                                <tree editable="bottom" decoration-muted="not active">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="active"/>
+                                    <field name="name"/>
+                                    <field name="approve_group_id"/>
+                                    <field name="amount_min"/>
+                                    <field name="amount_max"/>
+                                    <field name="condition_note"/>
+                                </tree>
+                                <form string="审核步骤">
+                                    <group>
+                                        <group>
+                                            <field name="name"/>
+                                            <field name="sequence"/>
+                                            <field name="active"/>
+                                            <field name="approve_group_id"/>
+                                        </group>
+                                        <group>
+                                            <field name="amount_min"/>
+                                            <field name="amount_max"/>
+                                            <field name="condition_note"/>
+                                        </group>
+                                    </group>
+                                    <field name="note"/>
+                                </form>
+                            </field>
+                        </page>
+                        <page string="说明">
+                            <field name="note" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_approval_policy" model="ir.actions.act_window">
+        <field name="name">审批规则</field>
+        <field name="res_model">sc.approval.policy</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_sc_approval_policy_search"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+    </record>
+
+    <menuitem id="menu_sc_approval_policy"
+              name="审批规则"
+              parent="smart_construction_core.menu_sc_business_config_center"
+              action="action_sc_approval_policy"
+              sequence="30"
+              groups="smart_construction_core.group_sc_cap_business_config_admin"/>
+</odoo>

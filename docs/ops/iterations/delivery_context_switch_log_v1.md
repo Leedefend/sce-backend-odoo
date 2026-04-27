@@ -29974,3 +29974,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
 - result: `PASS; 业务发起模型 create/write 缺口清零; navigation snapshot trace=a480bf86854d checked=141`
 - next_step: `用真实用户逐页验证新建表单的必填字段和默认值是否足够顺畅；若还有阻塞，继续按“可见入口 -> action -> view -> ACL -> required defaults”链路审计。`
+
+## 2026-04-27 Batch-Business-Approval-Policy-Config
+
+- branch: `codex/dev-env-run`
+- short_sha: `505a6d0e`
+- Layer Target: `Domain/business approval configuration facts`
+- Module: `smart_construction_core`
+- Reason: `用户指出系统没有回答哪些业务需要审核、审核流程如何配置；审批规则应交给业务配置管理员按业务需要维护，同时保持内部用户业务发起能力开放。`
+- completed_step: `新增 sc.approval.policy/sc.approval.step 审批规则矩阵；在业务配置下新增审批规则菜单；为项目合同、一般合同、采购/一般合同、物资计划、采购订单、结算单、付款/收款申请、费用/保证金、发票登记初始化默认审批事实。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/approval_policy.py addons/smart_construction_core/__manifest__.py`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/data/approval_policy_seed.xml addons/smart_construction_core/views/support/approval_policy_views.xml`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `APPROVAL_POLICY_COUNT=9; APPROVAL_POLICY_SYNCED=8; APPROVAL_POLICY_MENU=True ACTION=True; WUTAO_BUSINESS_CONFIG=True`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 业务配置管理员可维护审批规则矩阵; 8 类业务默认需要审核; 发票登记默认不强制审核; navigation snapshot trace=f90582b57d44 checked=143`
+- next_step: `继续把 document_state/policy_only 业务动作接入审批规则运行时判断，使单据提交/确认按业务管理员配置动态决定是否进入审核。`

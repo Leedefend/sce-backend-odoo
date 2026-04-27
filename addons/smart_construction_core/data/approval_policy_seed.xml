@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="approval_policy_project_contract" model="sc.approval.policy">
+            <field name="name">项目合同</field>
+            <field name="code">project_contract_approval</field>
+            <field name="sequence">10</field>
+            <field name="target_model">construction.contract</field>
+            <field name="approval_required">1</field>
+            <field name="trigger">confirm</field>
+            <field name="mode">single</field>
+            <field name="runtime_state">document_state</field>
+            <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_contract_manager"/>
+            <field name="note">合同确认前由合同中心审批能力组审核，业务配置管理员可按金额或管理要求增减步骤。</field>
+        </record>
+        <record id="approval_step_project_contract_10" model="sc.approval.step">
+            <field name="policy_id" ref="approval_policy_project_contract"/>
+            <field name="sequence">10</field>
+            <field name="name">合同中心审核</field>
+            <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_contract_manager"/>
+        </record>
+
+        <record id="approval_policy_general_contract" model="sc.approval.policy">
+            <field name="name">一般合同</field>
+            <field name="code">general_contract_approval</field>
+            <field name="sequence">20</field>
+            <field name="target_model">sc.general.contract</field>
+            <field name="approval_required">1</field>
+            <field name="trigger">confirm</field>
+            <field name="mode">single</field>
+            <field name="runtime_state">document_state</field>
+            <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_contract_manager"/>
+            <field name="note">一般合同当前按单据状态按钮执行审核，规则入口用于明确审核能力组与流程步骤。</field>
+        </record>
+        <record id="approval_step_general_contract_10" model="sc.approval.step">
+            <field name="policy_id" ref="approval_policy_general_contract"/>
+            <field name="sequence">10</field>
+            <field name="name">合同中心审核</field>
+            <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_contract_manager"/>
+        </record>
+
+        <record id="approval_policy_legacy_purchase_contract" model="sc.approval.policy">
+            <field name="name">采购/一般合同</field>
+            <field name="code">legacy_purchase_contract_approval</field>
+            <field name="sequence">30</field>
+            <field name="target_model">sc.legacy.purchase.contract.fact</field>
+            <field name="approval_required">1</field>
+            <field name="trigger">confirm</field>
+            <field name="mode">single</field>
+            <field name="runtime_state">policy_only</field>
+            <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_purchase_manager"/>
+            <field name="note">历史采购/一般合同事实台账已开放办理入口；审批运行时尚需后续接入此规则。</field>
+        </record>
+        <record id="approval_step_legacy_purchase_contract_10" model="sc.approval.step">
+            <field name="policy_id" ref="approval_policy_legacy_purchase_contract"/>
+            <field name="sequence">10</field>
+            <field name="name">采购中心审核</field>
+            <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_purchase_manager"/>
+        </record>
+
+        <record id="approval_policy_material_plan" model="sc.approval.policy">
+            <field name="name">物资计划</field>
+            <field name="code">material_plan_approval</field>
+            <field name="sequence">40</field>
+            <field name="target_model">project.material.plan</field>
+            <field name="approval_required">1</field>
+            <field name="trigger">submit</field>
+            <field name="mode">single</field>
+            <field name="runtime_state">tier_validation</field>
+            <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_material_manager"/>
+            <field name="note">已接入分级审批；提交后进入审核，驳回后可修改再提交。</field>
+        </record>
+        <record id="approval_step_material_plan_10" model="sc.approval.step">
+            <field name="policy_id" ref="approval_policy_material_plan"/>
+            <field name="sequence">10</field>
+            <field name="name">物资中心审核</field>
+            <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_material_manager"/>
+        </record>
+
+        <record id="approval_policy_purchase_order" model="sc.approval.policy">
+            <field name="name">采购订单</field>
+            <field name="code">purchase_order_approval</field>
+            <field name="sequence">50</field>
+            <field name="target_model">purchase.order</field>
+            <field name="approval_required">1</field>
+            <field name="trigger">confirm</field>
+            <field name="mode">single</field>
+            <field name="runtime_state">document_state</field>
+            <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_purchase_manager"/>
+            <field name="note">采购订单确认由采购中心审批能力组控制，可按业务需要补充多级步骤。</field>
+        </record>
+        <record id="approval_step_purchase_order_10" model="sc.approval.step">
+            <field name="policy_id" ref="approval_policy_purchase_order"/>
+            <field name="sequence">10</field>
+            <field name="name">采购中心审核</field>
+            <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_purchase_manager"/>
+        </record>
+
+        <record id="approval_policy_settlement_order" model="sc.approval.policy">
+            <field name="name">结算单</field>
+            <field name="code">settlement_order_approval</field>
+            <field name="sequence">60</field>
+            <field name="target_model">sc.settlement.order</field>
+            <field name="approval_required">1</field>
+            <field name="trigger">submit</field>
+            <field name="mode">single</field>
+            <field name="runtime_state">document_state</field>
+            <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_settlement_manager"/>
+            <field name="note">结算单提交后由结算中心审批能力组审核。</field>
+        </record>
+        <record id="approval_step_settlement_order_10" model="sc.approval.step">
+            <field name="policy_id" ref="approval_policy_settlement_order"/>
+            <field name="sequence">10</field>
+            <field name="name">结算中心审核</field>
+            <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_settlement_manager"/>
+        </record>
+
+        <record id="approval_policy_payment_request" model="sc.approval.policy">
+            <field name="name">付款/收款申请</field>
+            <field name="code">payment_request_approval</field>
+            <field name="sequence">70</field>
+            <field name="target_model">payment.request</field>
+            <field name="approval_required">1</field>
+            <field name="trigger">submit</field>
+            <field name="mode">single</field>
+            <field name="runtime_state">tier_validation</field>
+            <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+            <field name="note">已接入分级审批；提交前校验合同、结算与资金基准，提交后进入财务审核。</field>
+        </record>
+        <record id="approval_step_payment_request_10" model="sc.approval.step">
+            <field name="policy_id" ref="approval_policy_payment_request"/>
+            <field name="sequence">10</field>
+            <field name="name">财务中心审核</field>
+            <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+        </record>
+
+        <record id="approval_policy_expense_claim" model="sc.approval.policy">
+            <field name="name">费用/保证金</field>
+            <field name="code">expense_claim_approval</field>
+            <field name="sequence">80</field>
+            <field name="target_model">sc.expense.claim</field>
+            <field name="approval_required">1</field>
+            <field name="trigger">submit</field>
+            <field name="mode">single</field>
+            <field name="runtime_state">document_state</field>
+            <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+            <field name="note">费用与保证金提交后由财务中心审批能力组审核。</field>
+        </record>
+        <record id="approval_step_expense_claim_10" model="sc.approval.step">
+            <field name="policy_id" ref="approval_policy_expense_claim"/>
+            <field name="sequence">10</field>
+            <field name="name">财务中心审核</field>
+            <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+        </record>
+
+        <record id="approval_policy_invoice_registration" model="sc.approval.policy">
+            <field name="name">发票登记</field>
+            <field name="code">invoice_registration_no_approval</field>
+            <field name="sequence">90</field>
+            <field name="target_model">sc.invoice.registration</field>
+            <field name="approval_required">0</field>
+            <field name="trigger">manual</field>
+            <field name="mode">none</field>
+            <field name="runtime_state">document_state</field>
+            <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+            <field name="note">默认作为登记类业务，不强制审核；业务需要时可启用审核并配置步骤。</field>
+        </record>
+    </data>
+</odoo>

@@ -44,6 +44,7 @@
         'views/res_groups_menu_views.xml',
         'data/material_plan_tier_actions.xml',
         'data/payment_request_tier_actions.xml',
+        'data/approval_policy_seed.xml',
 
         # 顶级菜单基础
         'actions/project_list_actions.xml',
@@ -115,6 +116,7 @@
         'views/projection/treasury_ledger_views.xml',
         'views/core/workflow_views.xml',
         'views/menu.xml',
+        'views/support/approval_policy_views.xml',
         'views/core/construction_diary_views.xml',
         'views/support/organization_department_views.xml',
         'views/support/legacy_material_catalog_views.xml',
