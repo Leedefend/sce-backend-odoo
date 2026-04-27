@@ -50,8 +50,12 @@
                 <form string="综合合同">
                     <header>
                         <button name="action_confirm" string="提交审批" type="object" class="btn-primary"
-                                invisible="state != 'draft'"
+                                invisible="state != 'draft' or validation_status in ['waiting', 'pending']"
                                 groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+                        <button name="validate_tier" string="审批通过" type="object" class="btn-primary"
+                                invisible="not can_review"/>
+                        <button name="reject_tier" string="审批驳回" type="object"
+                                invisible="not can_review"/>
                         <button name="action_signed" string="已签署" type="object" class="btn-primary"
                                 invisible="state not in ('draft', 'confirmed')"
                                 groups="smart_construction_core.group_sc_cap_contract_manager"/>
@@ -60,6 +64,8 @@
                                 groups="smart_construction_core.group_sc_cap_contract_manager"/>
                         <field name="state" widget="statusbar"
                                statusbar_visible="draft,confirmed,signed,legacy_confirmed,cancel"/>
+                        <field name="validation_status" invisible="1"/>
+                        <field name="can_review" invisible="1"/>
                     </header>
                     <sheet>
                         <group>

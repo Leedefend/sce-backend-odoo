@@ -34,8 +34,17 @@
                             type="object"
                             class="oe_highlight"
                             string="提交审批"
-                            modifiers='{"invisible":[["state","!=","draft"]]}'
+                            modifiers='{"invisible":["|",["state","!=","draft"],["validation_status","in",["waiting","pending"]]]}'
                             groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+                    <button name="validate_tier"
+                            type="object"
+                            class="oe_highlight"
+                            string="审批通过"
+                            modifiers='{"invisible":[["can_review","=",false]]}'/>
+                    <button name="reject_tier"
+                            type="object"
+                            string="审批驳回"
+                            modifiers='{"invisible":[["can_review","=",false]]}'/>
                     <button name="action_set_running"
                             type="object"
                             string="开始执行"
@@ -58,6 +67,8 @@
                     <field name="state"
                            widget="statusbar"
                            statusbar_visible="draft,confirmed,running,closed,cancel"/>
+                    <field name="validation_status" invisible="1"/>
+                    <field name="can_review" invisible="1"/>
                 </header>
                 <sheet>
                     <group>

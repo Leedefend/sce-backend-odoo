@@ -1667,6 +1667,7 @@ const contractActions = computed<ContractAction[]>(() => {
     const level = String(row.level || 'body').trim().toLowerCase();
     const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref);
     const methodName = detectMethodName(key, String(payload.method || '').trim());
+    if (isTierValidationActionHidden(methodName)) continue;
     const targetModel = String(row.target_model || row.model || model.value || '').trim();
     const context = parseMaybeJsonRecord(payload.context_raw);
     const domainRaw = String(payload.domain_raw || '').trim();
@@ -3013,7 +3014,10 @@ async function runAction(action: ContractAction) {
       }
       if (action.refreshPolicy) {
         await applyProjectionRefreshPolicy(action.refreshPolicy);
+      } else {
+        await reload();
       }
+      return;
     } catch (err) {
       errorMessage.value = err instanceof Error ? err.message : 'action execute failed';
       status.value = 'error';
@@ -3021,6 +3025,21 @@ async function runAction(action: ContractAction) {
       busyKind.value = null;
     }
   }
+}
+
+function isTierValidationActionHidden(methodName: string): boolean {
+  const method = String(methodName || '').trim();
+  const validationStatus = String(formData.validation_status || '').trim();
+  if ((method === 'validate_tier' || method === 'reject_tier') && !Boolean(formData.can_review)) {
+    return true;
+  }
+  if (
+    (method === 'action_confirm' || method === 'action_submit' || method === 'button_confirm')
+    && ['waiting', 'pending', 'validated'].includes(validationStatus)
+  ) {
+    return true;
+  }
+  return false;
 }
 
 async function applyProjectionRefreshPolicy(policy?: ContractAction['refreshPolicy']) {

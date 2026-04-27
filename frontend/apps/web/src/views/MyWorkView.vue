@@ -1168,7 +1168,7 @@ function openRecord(item: MyWorkRecordItem) {
 
 function openPrimaryEntry(item: MyWorkRecordItem) {
   if (!item) return;
-  openScene(item.scene_key, item.target);
+  openRecord(item);
 }
 
 function isCompletableTodo(item: MyWorkRecordItem) {

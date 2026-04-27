@@ -30377,3 +30377,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `E2E_LOGIN=wutao E2E_PASSWORD=123456 DB_NAME=sc_prod_sim make verify.portal.my_work_smoke.container ... PASS artifact=artifacts/codex/my-work-smoke-v10_2/20260427T163940`
 - result: `PASS; 审批入口从业务菜单收敛到个人工作台待办，菜单层不再暴露按业务拆分的“待我审批”入口。`
 - next_step: `继续个人工作台办理体验：从待办点击进入业务单据后，验证审批通过/驳回按钮与返回后的待办刷新。`
+
+## 2026-04-28 Batch-Business-Approval-Browser-Closure
+
+- branch: `codex/dev-env-run`
+- short_sha: `fffe8232`
+- Layer Target: `Frontend contract consumer + business form view semantics`
+- Module: `frontend/apps/web`, `smart_construction_core`
+- Reason: `核心业务闭环环境下，自定义前端烟测不足；必须以真实用户浏览器从发起、待办、审批到待办消失完成业务闭环。`
+- completed_step: `个人工作台待办点击改为优先进入业务记录而非 action 列表；合同类表单补齐 OCA 统一审批的“审批通过/审批驳回”按钮；前端表单动作执行后自动刷新记录，待审批/已审批状态不再显示“提交审批”。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `Browser caisiqi/123456 sc_prod_sim: 新建项目合同 6950/CONIN2601495，无合同明细保存后提交审批；提交后 hasSubmitButton=false`
+  - `Browser wutao/123456 sc_prod_sim: 我的工作命中 CONIN2601495，点击待办进入 /r/construction.contract/6950，显示审批通过/审批驳回；点击审批通过后 hasApproveButton=false hasSubmitButton=false`
+  - `odoo.shell.exec: CONIN2601495 state=confirmed validation_status=validated review=approved pending_todos=0`
+  - `Browser wutao/123456 sc_prod_sim: 我的工作复查 CONIN2601495 contains=false`
+  - `odoo.shell.exec cleanup: 清理本轮浏览器验证合同 6949/6950 与审批记录 117/118，remaining_contracts=0 remaining_reviews=0`
+- result: `PASS; 真实用户浏览器已跑通项目合同发起、提交审批、工作台待办、审批通过、待办消失的业务闭环。artifact=artifacts/browser-real-user-closure/2026-04-27T17-04-13-214Z`
+- next_step: `继续同样口径扩展到驳回链路及一般合同/采购一般合同抽样，确认统一审批按钮和工作台直达能力跨合同类型一致。`
