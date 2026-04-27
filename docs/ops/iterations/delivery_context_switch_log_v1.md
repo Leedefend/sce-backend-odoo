@@ -29914,3 +29914,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
 - result: `PASS; 项目任务统计按钮中文化; navigation snapshot trace=dc92cd99f7fb`
 - next_step: `继续真实用户连续办理业务链路验证，遇到页面标签遗漏按按钮/字段/statinfo 三类一起审计。`
+
+## 2026-04-27 Batch-Business-Fact-Systematic-Button-Label-Audit
+
+- branch: `codex/dev-env-run`
+- short_sha: `e5a35f77`
+- Layer Target: `Domain/UI business fact page surface`
+- Module: `smart_construction_core`, `smart_construction_scene`
+- Reason: `用户指出按钮存在多种显示来源，单点修复 project.project 任务统计按钮不彻底；需系统扫描 button.string、statinfo/子节点 string、按钮内字段元数据和无标签按钮。`
+- completed_step: `对 sc_prod_sim 数据库内所有 smart_construction* form/tree/kanban 视图执行按钮可见文案审计；补齐 material plan 采购统计字段标签、project.project inherited 统计字段标签；将场景治理向导 Execute/Cancel 按钮中文化为执行/取消。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/core/material_plan.py addons/smart_construction_core/models/core/project_core.py`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_scene`
+  - `SC_ALL_BUTTON_VISIBLE_ENGLISH_COUNT=0`
+  - `SC_ALL_BUTTON_MISSING_LABEL_COUNT=0`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; smart_construction* 按钮可见英文 6 -> 0; 缺失标签 0; navigation snapshot trace=6cb9f7518046`
+- next_step: `回到真实用户连续办理业务链路验证；后续页面文案问题按视图属性、字段元数据、控件内部渲染三层一起审计。`

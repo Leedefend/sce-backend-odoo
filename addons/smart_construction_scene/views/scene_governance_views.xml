@@ -75,8 +75,8 @@
           <field name="reason"/>
         </group>
         <footer>
-          <button string="Execute" type="object" name="action_execute" class="btn-primary"/>
-          <button string="Cancel" class="btn-secondary" special="cancel"/>
+          <button string="执行" type="object" name="action_execute" class="btn-primary"/>
+          <button string="取消" class="btn-secondary" special="cancel"/>
         </footer>
       </form>
     </field>

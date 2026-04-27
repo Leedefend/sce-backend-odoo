@@ -42,8 +42,8 @@ class ProjectMaterialPlan(models.Model):
     approved_at = fields.Datetime(string="批准时间", readonly=True, tracking=True)
     reject_reason = fields.Char(string="驳回原因", readonly=True, tracking=True)
 
-    purchase_order_count = fields.Integer(compute="_compute_po_counts")
-    purchase_line_count = fields.Integer(compute="_compute_po_counts")
+    purchase_order_count = fields.Integer("采购单", compute="_compute_po_counts")
+    purchase_line_count = fields.Integer("采购明细", compute="_compute_po_counts")
 
     def _get_material_approver(self):
         self.ensure_one()

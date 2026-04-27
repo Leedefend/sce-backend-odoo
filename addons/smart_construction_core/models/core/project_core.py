@@ -282,6 +282,8 @@ class ProjectProject(models.Model):
             "company_id": "公司",
             "date": "截止日期",
             "last_update_color": "状态颜色",
+            "last_update_status": "项目状态",
+            "open_task_count": "任务",
             "tag_ids": "标签",
         }
         for field_name, label in labels.items():
