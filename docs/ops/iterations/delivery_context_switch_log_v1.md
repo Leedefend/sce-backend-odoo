@@ -29934,3 +29934,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
 - result: `PASS; smart_construction* 按钮可见英文 6 -> 0; 缺失标签 0; navigation snapshot trace=6cb9f7518046`
 - next_step: `回到真实用户连续办理业务链路验证；后续页面文案问题按视图属性、字段元数据、控件内部渲染三层一起审计。`
+
+## 2026-04-27 Batch-Prod-Sim-Default-Language-Baseline
+
+- branch: `codex/dev-env-run`
+- short_sha: `958dc465`
+- Layer Target: `Deployment initialization / UI language baseline`
+- Module: `smart_construction_custom`
+- Reason: `用户指出项目创建原生 New 未解决；排查确认不是业务按钮 string，而是模拟生产库真实内部用户仍为 en_US，导致原生 Web 控件按英文渲染。`
+- completed_step: `在 sc.platform.initialization.apply_baseline 中激活 zh_CN，并将 share=False 的内部用户统一为 lang=zh_CN、tz=Asia/Shanghai；记录 sc.platform.default_lang/default_tz/internal_user_preferences_count 参数。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_custom/models/platform_initialization.py`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_custom`
+  - `INTERNAL_USER_PREF_COUNT=112`
+  - `INTERNAL_USER_PREF_BAD_COUNT=0`
+  - `SAMPLE_USER_PREFS: admin/wutao/duanyijun/denghongying/chenshuai all lang=zh_CN tz=Asia/Shanghai`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 真实内部用户语言全部收敛为 zh_CN; navigation snapshot trace=64f0c94b146a`
+- next_step: `用户重新登录验证原生项目创建按钮；若仍有英文，则进入 Web 翻译资源加载/缓存层审计。`

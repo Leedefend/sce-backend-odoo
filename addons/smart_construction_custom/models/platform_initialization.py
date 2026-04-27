@@ -6,6 +6,8 @@ REQUIRED_TAXES = [
     ("销项VAT 9%", 9.0, "sale"),
     ("进项VAT 13%", 13.0, "purchase"),
 ]
+DEFAULT_LANG = "zh_CN"
+DEFAULT_TZ = "Asia/Shanghai"
 
 
 class ScPlatformInitialization(models.TransientModel):
@@ -16,9 +18,43 @@ class ScPlatformInitialization(models.TransientModel):
     def apply_baseline(self):
         from odoo.addons.smart_construction_core.hooks import ensure_core_taxes
 
+        self._ensure_default_language()
+        self._normalize_internal_user_preferences()
         ensure_core_taxes(self.env)
         self._ensure_core_taxes_for_all_companies()
         self.env["ir.config_parameter"].sudo().set_param("sc.platform.core_taxes_ready", "1")
+        self.env["ir.config_parameter"].sudo().set_param("sc.platform.default_lang", DEFAULT_LANG)
+        self.env["ir.config_parameter"].sudo().set_param("sc.platform.default_tz", DEFAULT_TZ)
+        return True
+
+    @api.model
+    def _ensure_default_language(self):
+        Lang = self.env["res.lang"].sudo().with_context(active_test=False)
+        lang = Lang.search([("code", "=", DEFAULT_LANG)], limit=1)
+        if lang and not lang.active:
+            lang.write({"active": True})
+        return lang
+
+    @api.model
+    def _normalize_internal_user_preferences(self):
+        lang = self._ensure_default_language()
+        if not lang:
+            return False
+
+        Users = self.env["res.users"].sudo().with_context(active_test=False)
+        internal_users = Users.search([("share", "=", False)])
+        for user in internal_users:
+            write_vals = {}
+            if user.lang != DEFAULT_LANG:
+                write_vals["lang"] = DEFAULT_LANG
+            if user.tz != DEFAULT_TZ:
+                write_vals["tz"] = DEFAULT_TZ
+            if write_vals:
+                user.write(write_vals)
+        self.env["ir.config_parameter"].sudo().set_param(
+            "sc.platform.internal_user_preferences_count",
+            str(len(internal_users)),
+        )
         return True
 
     @api.model
