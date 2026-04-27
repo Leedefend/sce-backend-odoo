@@ -879,6 +879,61 @@ function one2manyRelationFieldDescriptor(fieldName: string, column: string) {
   return descriptor || null;
 }
 
+function one2manyFallbackColumns(name: string): One2ManyColumn[] {
+  const model = one2manyRelationModel(name);
+  const descriptors = model ? relationFieldDescriptors.value[model] || {} : {};
+  const preferred = [
+    'qty_contract',
+    'price_contract',
+    'note',
+    'boq_line_id',
+    'boq_code',
+    'boq_name',
+    'qty',
+    'price_unit',
+    'amount',
+  ];
+  const blocked = new Set([
+    'id',
+    'display_name',
+    'contract_id',
+    'project_id',
+    'currency_id',
+    'company_id',
+    'create_uid',
+    'create_date',
+    'write_uid',
+    'write_date',
+  ]);
+  const technicalPrefixes = ['message_', 'activity_', 'website_', 'rating_'];
+  const names = [
+    ...preferred,
+    ...Object.keys(descriptors),
+  ].filter((fieldName, index, rows) => {
+    const normalized = String(fieldName || '').trim();
+    if (!normalized || rows.indexOf(normalized) !== index) return false;
+    if (blocked.has(normalized)) return false;
+    if (technicalPrefixes.some((prefix) => normalized.startsWith(prefix))) return false;
+    const descriptor = descriptors[normalized];
+    if (!descriptor) return false;
+    if (Boolean(descriptor.readonly)) return false;
+    const ttype = fieldType(descriptor);
+    if (['one2many', 'many2many', 'binary', 'html'].includes(ttype)) return false;
+    return true;
+  });
+
+  return names.slice(0, 4).map((fieldName) => {
+    const descriptor = descriptors[fieldName];
+    return {
+      name: fieldName,
+      label: String(descriptor?.string || fieldName),
+      ttype: fieldType(descriptor) || 'char',
+      required: Boolean(descriptor?.required),
+      selection: Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined,
+    };
+  });
+}
+
 function one2manyColumns(name: string): One2ManyColumn[] {
   const subviews = (contract.value?.views?.form as Record<string, unknown> | undefined)?.subviews;
   const fieldSubview = subviews && typeof subviews === 'object'
@@ -921,6 +976,8 @@ function one2manyColumns(name: string): One2ManyColumn[] {
     });
   }
   if (!out.length) {
+    const fallbackColumns = one2manyFallbackColumns(name);
+    if (fallbackColumns.length) return fallbackColumns;
     const descriptor = one2manyRelationFieldDescriptor(name, 'name');
     return [{
       name: 'name',

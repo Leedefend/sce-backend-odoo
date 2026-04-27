@@ -30299,3 +30299,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `odoo.shell.exec: 项目合同 6942 请求 tax_id=6 但落库 tax_id=5 Seed-销项VAT 9% type_tax_use=sale；验证草稿合同已删除，施工日志验证记录保持 inactive`
 - result: `PASS; 真实用户自定义前端项目合同、施工日志均可保存；项目合同税率不一致缺口已由业务模型创建链路自愈。artifact=artifacts/browser-real-user-usability/2026-04-27T15-31-20-830Z`
 - next_step: `继续审批链路抽样：项目合同保存后确认进入待审，审批岗位人员通过/驳回；同时检查施工日志是否需要审批或仅办理保存。`
+
+## 2026-04-27 Batch-Business-Contract-Line-Approval-Entry
+
+- branch: `codex/dev-env-run`
+- short_sha: `d403f1ce`
+- Layer Target: `Platform contract governance + frontend contract consumer`
+- Module: `smart_core`, `frontend/apps/web`
+- Reason: `真实用户项目合同保存后点击确认被“请先录入合同行后再确认”阻断；后端契约虽包含 line_ids，但被标记为 technical 并被业务前端隐藏，导致用户无法补齐合同行继续发起统一审批。`
+- completed_step: `将 line_ids/boq_line_ids/ledger_line_ids 等业务明细关系字段从技术字段分类中排除，并在表单核心字段中保留业务明细入口；前端 one2many 在后端未提供子视图列时按关系模型字段生成可编辑明细列。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck:strict`
+  - `python3 -m unittest addons.smart_core.tests.test_contract_governance_project_form.TestProjectFormGovernance.test_business_detail_relation_fields_remain_visible` (blocked on host: `ModuleNotFoundError: No module named 'odoo'`)
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make prod.restart.safe`
+  - `ui.contract probe: construction.contract line_ids semantic_type=relation surface_role=core technical=false`
+  - `Browser caisiqi/123456 sc_prod_sim: 新建项目合同 6944，录入合同行 6601，确认后 state=draft validation_status=pending review_ids=[112] line_amount_total=1`
+  - `odoo.shell.exec cleanup: 删除本轮验证合同 6943/6944、合同行 6601、审批记录 112，cleanup_remaining=0`
+- result: `PASS; 项目合同业务明细入口已在自定义前端可见，真实用户可录入合同行并发起统一审批。artifact=artifacts/browser-real-user-usability/2026-04-27T15-57-16-177Z`
+- next_step: `继续审批人侧真实用户浏览器验证：待审记录入口、审批通过/驳回按钮、审批后合同状态与发起人页面反馈。`
