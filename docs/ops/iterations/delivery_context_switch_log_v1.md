@@ -30071,3 +30071,18 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=caisiqi E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
 - result: `PASS; 付款申请 OCA 驳回可落 rejected；物资计划 OCA 通过/驳回可连续办理；navigation snapshot trace=cd254c6634d2 checked=53`
 - next_step: `将付款申请、物资计划 OCA 真实用户办理探针沉淀为 scripts/verify 可重复执行入口，并继续审计采购订单/结算单是否需要迁移到 OCA tier 执行层。`
+
+## 2026-04-27 Batch-Business-OCA-Runtime-Smoke-Guard
+
+- branch: `codex/dev-env-run`
+- short_sha: `fce480eb`
+- Layer Target: `Business approval runtime verification`
+- Module: `scripts/verify + Makefile`
+- Reason: `上一批已手工验证付款申请、物资计划 OCA 通过/驳回链路，本批把真实用户办理链路固化为可重复执行的 smoke。`
+- completed_step: `新增 scripts/verify/business_oca_runtime_smoke.py；新增 make verify.business.oca_runtime_smoke；脚本使用真实用户 caisiqi->chenshuai、zhaowei->chenshuai 覆盖付款申请审批通过/驳回、物资计划审批通过/驳回，并在 finally rollback。`
+- verification:
+  - `python3 -m py_compile scripts/verify/business_oca_runtime_smoke.py`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.oca_runtime_smoke`
+- result: `PASS; BUSINESS_OCA_RUNTIME_SMOKE=PASS; BUSINESS_OCA_RUNTIME_ROLLBACK=OK`
+- next_step: `审计采购订单、结算单、费用/保证金等 document_state 审批业务是否需要迁移到 OCA tier 执行层，明确业务配置规则与 OCA 执行层边界。`
