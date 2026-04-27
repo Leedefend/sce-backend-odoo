@@ -81,7 +81,7 @@ class LoadContractHandler(BaseIntentHandler):
         model_name = code
 
         # 模型存在性
-        if not self.env.get(model_name):
+        if model_name not in self.env:
             # 在 return 404 前追加：
             try:
                 mod = self.env["ir.module.module"].sudo().search([("name","=","project")], limit=1)
@@ -151,17 +151,26 @@ class LoadContractHandler(BaseIntentHandler):
             except Exception: pass
 
         # ---------- 6) 生成契约（按当前用户权限，不 sudo） ----------
-        svc = self.env["app.contract.service"].with_context(ctx_user)
-        result = svc.generate_contract(
-            model_name=model_name,
-            view_type=view_type_final,
-            include_parts=include_parts,
-            force_refresh=force_refresh,
-            client_version=client_version,
-            # 可选：把 menu_id/action_id 也传入，便于服务侧做面包屑/默认动作
-            menu_id=menu_id,
-            action_id=action_id,
-        ) or {}
+        if "app.contract.service" in self.env:
+            svc = self.env["app.contract.service"].with_context(ctx_user)
+            result = svc.generate_contract(
+                model_name=model_name,
+                view_type=view_type_final,
+                include_parts=include_parts,
+                force_refresh=force_refresh,
+                client_version=client_version,
+                # 可选：把 menu_id/action_id 也传入，便于服务侧做面包屑/默认动作
+                menu_id=menu_id,
+                action_id=action_id,
+            ) or {}
+        else:
+            result = self._generate_with_ui_contract(
+                model_name=model_name,
+                view_type=view_type_final,
+                menu_id=menu_id,
+                action_id=action_id,
+                ctx_user=ctx_user,
+            )
 
         status = result.get("status","success")
         data   = result.get("data",{}) or {}
@@ -190,6 +199,44 @@ class LoadContractHandler(BaseIntentHandler):
 
         meta_out = dict(meta); meta_out["etag"] = etag
         return {"status": status, "code": 200, "data": data, "meta": meta_out}
+
+    def _generate_with_ui_contract(self, *, model_name, view_type, menu_id, action_id, ctx_user):
+        """Compatibility bridge for legacy load_contract/load_view callers."""
+        from .ui_contract import UiContractHandler
+
+        params = {
+            "op": "model",
+            "model": model_name,
+            "view_type": view_type,
+            "source_mode": "backend_internal",
+        }
+        if menu_id:
+            params["menu_id"] = menu_id
+        if action_id:
+            params["action_id"] = action_id
+
+        runtime_env = api.Environment(self.env.cr, self.env.user.id, ctx_user)
+        contract = UiContractHandler(runtime_env).handle(params)
+        if isinstance(contract, dict) and contract.get("ok") is False:
+            return {
+                "status": "error",
+                "code": contract.get("code") or 500,
+                "data": contract.get("data") or {},
+                "meta": contract.get("meta") or {},
+                "message": ((contract.get("error") or {}).get("message") or "ui.contract failed"),
+            }
+
+        data = getattr(contract, "data", None)
+        meta = getattr(contract, "meta", None)
+        if isinstance(contract, dict):
+            data = contract.get("data")
+            meta = contract.get("meta")
+        return {
+            "status": "success",
+            "code": 200,
+            "data": data or {},
+            "meta": meta or {},
+        }
 
     def _inject_semantic_contract(self, data: dict):
         if not isinstance(data, dict):

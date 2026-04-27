@@ -30210,3 +30210,24 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.oca_runtime_smoke`
 - result: `PASS; wutao 非系统管理员也可通过受控业务入口维护审批岗位人员和新增内部审批人员；现有 8 类 OCA 审批链路未回归。`
 - next_step: `继续真实用户业务办理矩阵与连续办理缺口判断；后续增加平台级“是否允许业务配置管理员新增人员”参数。`
+
+## 2026-04-27 Batch-Frontend-Business-Usability-Closeout
+
+- branch: `codex/dev-env-run`
+- short_sha: `e95478d4`
+- Layer Target: `Business frontend usability closeout`
+- Module: `smart_core`, `smart_construction_core`
+- Reason: `业务事实层已具备办理能力，但自定义前端仍存在项目合同/施工日志入口缺口，旧 load_view 兼容入口也会误判模型不可用。`
+- completed_step: `新增合同管理/项目合同菜单；收入合同、支出合同菜单开放给业务发起人；load_contract/load_view 兼容链在旧 app.contract.service 不存在时桥接到当前 ui.contract；施工日志菜单升级落库后按真实用户可见。`
+- verification:
+  - `python3 -m py_compile addons/smart_core/handlers/load_contract.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" MODULE=smart_core,smart_construction_core WITHOUT_DEMO=--without-demo=all make mod.upgrade`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `E2E_LOGIN=caisiqi E2E_PASSWORD=123456 make verify.portal.load_view_smoke.container MVP_MODEL=project.project`
+  - `E2E_LOGIN=caisiqi E2E_PASSWORD=123456 make verify.portal.load_view_smoke.container MVP_MODEL=construction.contract`
+  - `E2E_LOGIN=caisiqi E2E_PASSWORD=123456 make verify.portal.load_view_smoke.container MVP_MODEL=sc.construction.diary`
+  - `odoo.shell.exec: caisiqi/wutao 可见 项目合同/收入合同/支出合同；施工日志 XMLID 对两人均在 _visible_menu_ids 中`
+  - `odoo.shell.exec: 14 类业务 api.data create rollback fail_count=0`
+  - `odoo.shell.exec: ui.contract action_open construction.contract/sc.construction.diary for caisiqi,wutao PASS`
+- result: `PASS; 自定义前端主路径 ui.contract 与旧兼容 load_view 均可承载项目合同、施工日志；真实用户可见入口并可用业务必填字段办理创建。`
+- next_step: `继续用浏览器真实点击方式抽样验证项目合同、施工日志从菜单进入、创建页字段填写、保存与按钮动作。`
