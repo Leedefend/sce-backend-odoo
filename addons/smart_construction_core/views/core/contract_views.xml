@@ -35,7 +35,7 @@
                             class="oe_highlight"
                             string="确认合同"
                             modifiers='{"invisible":[["state","!=","draft"]]}'
-                            groups="smart_construction_core.group_sc_cap_contract_manager"/>
+                            groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
                     <button name="action_set_running"
                             type="object"
                             string="开始执行"
@@ -72,6 +72,7 @@
                         </group>
                         <group>
                             <field name="company_id" readonly="1"/>
+                            <field name="reject_reason" readonly="1" modifiers='{"invisible": [["reject_reason","=",false]]}'/>
                             <field name="currency_id"/>
                             <field name="date_contract"/>
                             <field name="date_start"/>

@@ -24,8 +24,10 @@ def _set_policy(model_name, enabled):
         "active": True,
         "approval_required": bool(enabled),
         "mode": "single" if enabled else "none",
+        "runtime_state": "tier_validation",
     }
     policy.write(values)
+    policy.sync_tier_definitions()
     return policy
 
 
@@ -111,6 +113,45 @@ def _purchase_order(project, partner, product):
     )
 
 
+def _construction_contract(project, partner):
+    contract = _env()["construction.contract"].sudo().create(
+        {
+            "subject": "Policy Switch Construction Contract",
+            "type": "in",
+            "project_id": project.id,
+            "partner_id": partner.id,
+        }
+    )
+    _env()["construction.contract.line"].sudo().create(
+        {
+            "contract_id": contract.id,
+            "qty_contract": 1.0,
+            "price_contract": 100.0,
+        }
+    )
+    return contract
+
+
+def _general_contract(project, _partner):
+    return _env()["sc.general.contract"].sudo().create(
+        {
+            "project_id": project.id,
+            "contract_name": "Policy Switch General Contract",
+            "amount_total": 100.0,
+        }
+    )
+
+
+def _legacy_purchase_contract(project, _partner):
+    return _env()["sc.legacy.purchase.contract.fact"].sudo().create(
+        {
+            "project_id": project.id,
+            "contract_name": "Policy Switch Legacy Purchase Contract",
+            "total_amount": 100.0,
+        }
+    )
+
+
 def _create_purchase_user():
     group = _env().ref("smart_construction_core.group_sc_cap_purchase_user")
     return _env()["res.users"].with_context(no_reset_password=True).sudo().create(
@@ -169,6 +210,31 @@ def _check_purchase_confirm_switch():
     assert order.state in ("purchase", "done"), order.state
 
 
+def _check_confirm_switch(model_name, factory, confirmed_state):
+    env = _env()
+    project = _project("Policy Switch %s" % model_name.replace(".", " "))
+    partner = _partner("Policy Switch Partner %s" % model_name)
+
+    _set_policy(model_name, True)
+    record = factory(project, partner)
+    record.action_confirm()
+    record.invalidate_recordset()
+    reviews = env["tier.review"].sudo().search(
+        [("model", "=", model_name), ("res_id", "=", record.id)]
+    )
+    print("%s_ENABLED_CONFIRM_STATE=%s/%s/reviews=%s" % (model_name, record.state, record.validation_status, len(reviews)))
+    assert record.state == "draft", record.state
+    assert record.validation_status in ("pending", "waiting"), record.validation_status
+    assert len(reviews) == 1, len(reviews)
+
+    _set_policy(model_name, False)
+    record = factory(project, partner)
+    record.action_confirm()
+    record.invalidate_recordset()
+    print("%s_DISABLED_CONFIRM_STATE=%s" % (model_name, record.state))
+    assert record.state == confirmed_state, record.state
+
+
 def main():
     try:
         _check_submit_switch(
@@ -182,6 +248,21 @@ def main():
             approved_state="approve",
         )
         _check_purchase_confirm_switch()
+        _check_confirm_switch(
+            "construction.contract",
+            _construction_contract,
+            confirmed_state="confirmed",
+        )
+        _check_confirm_switch(
+            "sc.general.contract",
+            _general_contract,
+            confirmed_state="confirmed",
+        )
+        _check_submit_switch(
+            "sc.legacy.purchase.contract.fact",
+            _legacy_purchase_contract,
+            approved_state="approved",
+        )
         print("BUSINESS_DOCUMENT_STATE_POLICY_SWITCH_SMOKE=PASS")
     finally:
         _env().cr.rollback()

@@ -6,6 +6,10 @@ from odoo.exceptions import UserError
 class ScGeneralContract(models.Model):
     _name = "sc.general.contract"
     _description = "综合合同"
+    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation"]
+    _state_from = ["draft"]
+    _state_to = ["confirmed"]
+    _cancel_state = "cancel"
     _order = "contract_date desc, id desc"
 
     name = fields.Char(string="登记单号", required=True, default="新建", copy=False)
@@ -30,6 +34,14 @@ class ScGeneralContract(models.Model):
         index=True,
     )
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True)
+    company_id = fields.Many2one(
+        "res.company",
+        string="公司",
+        related="project_id.company_id",
+        store=True,
+        readonly=True,
+        index=True,
+    )
     partner_id = fields.Many2one("res.partner", string="往来单位", index=True)
     partner_name_text = fields.Char(string="合同方文本", index=True)
     credit_code = fields.Char(string="统一信用代码", index=True)
@@ -74,6 +86,7 @@ class ScGeneralContract(models.Model):
     legacy_record_id = fields.Char(string="历史记录ID", index=True, readonly=True)
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
     legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
+    reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
     note = fields.Text(string="备注")
     active = fields.Boolean(string="有效", default=True, index=True)
 
@@ -107,21 +120,67 @@ class ScGeneralContract(models.Model):
             rec.install_commissioning_payment = rec.install_debug_payment
 
     def action_confirm(self):
+        policy_model = self.env["sc.approval.policy"]
         for rec in self:
             if rec.state == "draft":
-                policy = self.env["sc.approval.policy"].get_active_policy(rec._name)
-                if policy:
+                if policy_model.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
+                    rec._request_general_contract_validation()
+                    continue
+                policy = policy_model.get_active_policy(rec._name, company=rec.company_id)
+                if policy and not policy_model.is_approval_required(rec._name, company=rec.company_id):
                     policy.assert_user_can_approve()
-                rec.state = "confirmed"
+                rec.with_context(skip_validation_check=True).write({"state": "confirmed", "reject_reason": False})
 
     def action_signed(self):
         for rec in self:
             if rec.state in ("draft", "confirmed"):
                 if rec.state == "draft":
-                    policy = self.env["sc.approval.policy"].get_active_policy(rec._name)
-                    if policy:
-                        policy.assert_user_can_approve()
+                    rec.action_confirm()
+                    if rec.state != "confirmed":
+                        continue
                 rec.state = "signed"
+
+    def _request_general_contract_validation(self):
+        self.ensure_one()
+        if self.review_ids and self.validation_status == "rejected":
+            self.restart_validation()
+        elif not self.review_ids or self.validation_status == "no":
+            reviews = self.request_validation()
+            if not reviews:
+                raise UserError(_("一般合同已启用审批，但没有匹配的统一审批规则，请检查业务审批配置。"))
+        else:
+            raise UserError(_("一般合同已经在统一审批流程中，请等待审批完成。"))
+        self.with_context(skip_validation_check=True).write({"reject_reason": False})
+
+    def _check_state_from_condition(self):
+        self.ensure_one()
+        parent = getattr(super(), "_check_state_from_condition", None)
+        base_ok = parent() if parent else False
+        return base_ok or self.state == "draft"
+
+    def _get_tier_reject_reason(self):
+        self.ensure_one()
+        reviews = self.review_ids.filtered(lambda review: review.status == "rejected" and review.comment)
+        if reviews:
+            return reviews.sorted(lambda review: review.write_date or review.create_date, reverse=True)[0].comment
+        return _("OCA审批驳回（未填写原因）")
+
+    def action_on_tier_approved(self):
+        for rec in self:
+            if rec.state != "draft":
+                continue
+            if rec.validation_status != "validated":
+                raise UserError(_("一般合同尚未完成统一审批流程。"))
+            rec.with_context(skip_validation_check=True).write({"reject_reason": False})
+        return self.action_confirm()
+
+    def action_on_tier_rejected(self, reason=None):
+        for rec in self:
+            if rec.state != "draft":
+                continue
+            rec.with_context(skip_validation_check=True).write(
+                {"reject_reason": reason or rec._get_tier_reject_reason()}
+            )
 
     def action_cancel(self):
         for rec in self:

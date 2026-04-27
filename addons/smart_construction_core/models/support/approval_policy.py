@@ -141,6 +141,9 @@ class ScApprovalPolicy(models.Model):
             "sc.expense.claim",
             "sc.settlement.order",
             "purchase.order",
+            "construction.contract",
+            "sc.general.contract",
+            "sc.legacy.purchase.contract.fact",
         }
 
     def _tier_server_actions(self):
@@ -166,6 +169,18 @@ class ScApprovalPolicy(models.Model):
                 "smart_construction_core.server_action_purchase_order_on_approved",
                 "smart_construction_core.server_action_purchase_order_on_rejected",
             ),
+            "construction.contract": (
+                "smart_construction_core.server_action_construction_contract_on_approved",
+                "smart_construction_core.server_action_construction_contract_on_rejected",
+            ),
+            "sc.general.contract": (
+                "smart_construction_core.server_action_general_contract_on_approved",
+                "smart_construction_core.server_action_general_contract_on_rejected",
+            ),
+            "sc.legacy.purchase.contract.fact": (
+                "smart_construction_core.server_action_legacy_purchase_contract_on_approved",
+                "smart_construction_core.server_action_legacy_purchase_contract_on_rejected",
+            ),
         }
         approve_xmlid, reject_xmlid = mapping.get(self.target_model, (None, None))
         approve_action = self.env.ref(approve_xmlid, raise_if_not_found=False) if approve_xmlid else False
@@ -179,6 +194,9 @@ class ScApprovalPolicy(models.Model):
             "sc.expense.claim": "amount",
             "sc.settlement.order": "amount_total",
             "purchase.order": "amount_total",
+            "construction.contract": "amount_total",
+            "sc.general.contract": "amount_total",
+            "sc.legacy.purchase.contract.fact": "total_amount",
         }
         amount_field = amount_field_by_model.get(self.target_model)
         if amount_field and step.amount_min:

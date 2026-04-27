@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import config
 
@@ -19,7 +19,10 @@ class ConstructionContract(models.Model):
 
     _name = "construction.contract"
     _description = "项目合同"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation"]
+    _state_from = ["draft"]
+    _state_to = ["confirmed"]
+    _cancel_state = "cancel"
     _order = "project_id, type, id desc"
 
     def _register_hook(self):
@@ -155,6 +158,7 @@ class ConstructionContract(models.Model):
     is_locked = fields.Boolean(string="被引用锁定", compute="_compute_ref_stats")
 
     note = fields.Text(string="备注")
+    reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False, tracking=True)
 
     @api.model
     def _tax_use_from_contract_type(self, contract_type: str) -> str:
@@ -400,11 +404,62 @@ class ConstructionContract(models.Model):
             if not contract.line_ids:
                 raise UserError("请先录入合同行后再确认。")
             if contract.state == "draft":
+                if contract._requires_contract_approval() and contract.validation_status != "validated":
+                    contract._request_contract_validation()
+                    continue
                 policy = self.env["sc.approval.policy"].get_active_policy(contract._name, company=contract.company_id)
-                if policy:
+                if policy and not contract._requires_contract_approval():
                     policy.assert_user_can_approve()
-                contract.state = "confirmed"
+                contract.with_context(skip_validation_check=True).write(
+                    {"state": "confirmed", "reject_reason": False}
+                )
                 contract.message_post(body="合同状态：草稿 → 已生效")
+
+    def _requires_contract_approval(self):
+        self.ensure_one()
+        return self.env["sc.approval.policy"].is_approval_required(self._name, company=self.company_id)
+
+    def _request_contract_validation(self):
+        self.ensure_one()
+        if self.review_ids and self.validation_status == "rejected":
+            self.restart_validation()
+        elif not self.review_ids or self.validation_status == "no":
+            reviews = self.request_validation()
+            if not reviews:
+                raise UserError(_("项目合同已启用审批，但没有匹配的统一审批规则，请检查业务审批配置。"))
+        else:
+            raise UserError(_("项目合同已经在统一审批流程中，请等待审批完成。"))
+        self.with_context(skip_validation_check=True).write({"reject_reason": False})
+
+    def _check_state_from_condition(self):
+        self.ensure_one()
+        parent = getattr(super(), "_check_state_from_condition", None)
+        base_ok = parent() if parent else False
+        return base_ok or self.state == "draft"
+
+    def _get_tier_reject_reason(self):
+        self.ensure_one()
+        reviews = self.review_ids.filtered(lambda review: review.status == "rejected" and review.comment)
+        if reviews:
+            return reviews.sorted(lambda review: review.write_date or review.create_date, reverse=True)[0].comment
+        return _("OCA审批驳回（未填写原因）")
+
+    def action_on_tier_approved(self):
+        for contract in self:
+            if contract.state != "draft":
+                continue
+            if contract.validation_status != "validated":
+                raise UserError(_("项目合同尚未完成统一审批流程。"))
+            contract.with_context(skip_validation_check=True).write({"reject_reason": False})
+        return self.action_confirm()
+
+    def action_on_tier_rejected(self, reason=None):
+        for contract in self:
+            if contract.state != "draft":
+                continue
+            contract.with_context(skip_validation_check=True).write(
+                {"reject_reason": reason or contract._get_tier_reject_reason()}
+            )
 
     def action_set_running(self):
         for contract in self:

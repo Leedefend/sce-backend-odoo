@@ -423,6 +423,278 @@ def _create_settlement_order(submitter):
     return order, project, company
 
 
+def _create_construction_contract(submitter):
+    env = _env()
+    company = submitter.company_id or env.company
+    partner = env["res.partner"].sudo().create({"name": "OCA Runtime Construction Contract Partner"})
+    project = env["project.project"].sudo().create(
+        {
+            "name": "OCA Runtime Construction Contract Project",
+            "code": "OCA-RUNTIME-CON",
+            "company_id": company.id,
+            "user_id": submitter.id,
+        }
+    )
+    contract = env["construction.contract"].sudo().create(
+        {
+            "subject": "OCA Runtime Construction Contract",
+            "type": "in",
+            "project_id": project.id,
+            "partner_id": partner.id,
+        }
+    )
+    env["construction.contract.line"].sudo().create(
+        {
+            "contract_id": contract.id,
+            "qty_contract": 1.0,
+            "price_contract": 100.0,
+        }
+    )
+    return contract, project, company
+
+
+def _submit_construction_contract(submitter):
+    env = _env()
+    _ensure_policy_enabled("construction.contract")
+    contract, project, company = _create_construction_contract(submitter)
+    project.sudo().message_subscribe(partner_ids=[submitter.partner_id.id])
+    contract.with_user(submitter).with_company(company).action_confirm()
+    contract.invalidate_recordset()
+    reviews = env["tier.review"].sudo().search(
+        [("model", "=", "construction.contract"), ("res_id", "=", contract.id)]
+    )
+    assert contract.state == "draft", contract.state
+    assert contract.validation_status in ("pending", "waiting"), contract.validation_status
+    assert len(reviews) == 1, len(reviews)
+    return contract, reviews, company
+
+
+def _check_construction_contract_flows():
+    env = _env()
+    submitter = _user_from_env(
+        "SC_OCA_CONTRACT_SUBMITTER",
+        "smart_construction_core.group_sc_cap_business_initiator",
+        prefer_login="caisiqi",
+    )
+    reviewer = _user_from_env(
+        "SC_OCA_CONTRACT_REVIEWER",
+        "smart_construction_core.group_sc_cap_contract_manager",
+        prefer_login="chenshuai",
+        exclude_user=submitter,
+    )
+    print("CONSTRUCTION_CONTRACT_OCA_ACTORS=%s->%s" % (submitter.login, reviewer.login))
+
+    contract, reviews, company = _submit_construction_contract(submitter)
+    contract.project_id.sudo().message_subscribe(partner_ids=[reviewer.partner_id.id])
+    print(
+        "CONSTRUCTION_CONTRACT_APPROVE_BEFORE=%s/%s/%s"
+        % (contract.state, contract.validation_status, reviews.mapped("status"))
+    )
+    contract.with_user(reviewer).with_company(company).validate_tier()
+    contract.invalidate_recordset()
+    reviews = env["tier.review"].sudo().search(
+        [("model", "=", "construction.contract"), ("res_id", "=", contract.id)]
+    )
+    print(
+        "CONSTRUCTION_CONTRACT_APPROVE_AFTER=%s/%s/%s"
+        % (contract.state, contract.validation_status, reviews.mapped("status"))
+    )
+    assert contract.state == "confirmed", contract.state
+    assert contract.validation_status == "validated", contract.validation_status
+    assert reviews and all(status == "approved" for status in reviews.mapped("status"))
+
+    contract, reviews, company = _submit_construction_contract(submitter)
+    contract.project_id.sudo().message_subscribe(partner_ids=[reviewer.partner_id.id])
+    print(
+        "CONSTRUCTION_CONTRACT_REJECT_BEFORE=%s/%s/%s"
+        % (contract.state, contract.validation_status, reviews.mapped("status"))
+    )
+    contract.with_user(reviewer).with_company(company).reject_tier()
+    contract.invalidate_recordset()
+    reviews = env["tier.review"].sudo().search(
+        [("model", "=", "construction.contract"), ("res_id", "=", contract.id)]
+    )
+    print(
+        "CONSTRUCTION_CONTRACT_REJECT_AFTER=%s/%s/reviews=%s/reason=%s"
+        % (contract.state, contract.validation_status, len(reviews), contract.reject_reason)
+    )
+    assert contract.state == "draft", contract.state
+    assert contract.validation_status == "rejected", contract.validation_status
+    assert contract.reject_reason, "construction contract reject reason missing"
+
+
+def _create_general_contract(submitter):
+    env = _env()
+    company = submitter.company_id or env.company
+    project = env["project.project"].sudo().create(
+        {
+            "name": "OCA Runtime General Contract Project",
+            "code": "OCA-RUNTIME-GEN",
+            "company_id": company.id,
+            "user_id": submitter.id,
+        }
+    )
+    contract = env["sc.general.contract"].sudo().create(
+        {
+            "project_id": project.id,
+            "contract_name": "OCA Runtime General Contract",
+            "amount_total": 100.0,
+        }
+    )
+    return contract, project, company
+
+
+def _submit_general_contract(submitter):
+    env = _env()
+    _ensure_policy_enabled("sc.general.contract")
+    contract, project, company = _create_general_contract(submitter)
+    project.sudo().message_subscribe(partner_ids=[submitter.partner_id.id])
+    contract.with_user(submitter).with_company(company).action_confirm()
+    contract.invalidate_recordset()
+    reviews = env["tier.review"].sudo().search(
+        [("model", "=", "sc.general.contract"), ("res_id", "=", contract.id)]
+    )
+    assert contract.state == "draft", contract.state
+    assert contract.validation_status in ("pending", "waiting"), contract.validation_status
+    assert len(reviews) == 1, len(reviews)
+    return contract, reviews, company
+
+
+def _check_general_contract_flows():
+    env = _env()
+    submitter = _user_from_env(
+        "SC_OCA_GENERAL_CONTRACT_SUBMITTER",
+        "smart_construction_core.group_sc_cap_business_initiator",
+        prefer_login="caisiqi",
+    )
+    reviewer = _user_from_env(
+        "SC_OCA_GENERAL_CONTRACT_REVIEWER",
+        "smart_construction_core.group_sc_cap_contract_manager",
+        prefer_login="chenshuai",
+        exclude_user=submitter,
+    )
+    print("GENERAL_CONTRACT_OCA_ACTORS=%s->%s" % (submitter.login, reviewer.login))
+
+    contract, reviews, company = _submit_general_contract(submitter)
+    contract.project_id.sudo().message_subscribe(partner_ids=[reviewer.partner_id.id])
+    print("GENERAL_CONTRACT_APPROVE_BEFORE=%s/%s/%s" % (contract.state, contract.validation_status, reviews.mapped("status")))
+    contract.with_user(reviewer).with_company(company).validate_tier()
+    contract.invalidate_recordset()
+    reviews = env["tier.review"].sudo().search(
+        [("model", "=", "sc.general.contract"), ("res_id", "=", contract.id)]
+    )
+    print("GENERAL_CONTRACT_APPROVE_AFTER=%s/%s/%s" % (contract.state, contract.validation_status, reviews.mapped("status")))
+    assert contract.state == "confirmed", contract.state
+    assert contract.validation_status == "validated", contract.validation_status
+    assert reviews and all(status == "approved" for status in reviews.mapped("status"))
+
+    contract, reviews, company = _submit_general_contract(submitter)
+    contract.project_id.sudo().message_subscribe(partner_ids=[reviewer.partner_id.id])
+    print("GENERAL_CONTRACT_REJECT_BEFORE=%s/%s/%s" % (contract.state, contract.validation_status, reviews.mapped("status")))
+    contract.with_user(reviewer).with_company(company).reject_tier()
+    contract.invalidate_recordset()
+    reviews = env["tier.review"].sudo().search(
+        [("model", "=", "sc.general.contract"), ("res_id", "=", contract.id)]
+    )
+    print(
+        "GENERAL_CONTRACT_REJECT_AFTER=%s/%s/reviews=%s/reason=%s"
+        % (contract.state, contract.validation_status, len(reviews), contract.reject_reason)
+    )
+    assert contract.state == "draft", contract.state
+    assert contract.validation_status == "rejected", contract.validation_status
+    assert contract.reject_reason, "general contract reject reason missing"
+
+
+def _create_legacy_purchase_contract(submitter):
+    env = _env()
+    company = submitter.company_id or env.company
+    project = env["project.project"].sudo().create(
+        {
+            "name": "OCA Runtime Legacy Purchase Contract Project",
+            "code": "OCA-RUNTIME-LPC",
+            "company_id": company.id,
+            "user_id": submitter.id,
+        }
+    )
+    contract = env["sc.legacy.purchase.contract.fact"].sudo().create(
+        {
+            "project_id": project.id,
+            "contract_name": "OCA Runtime Legacy Purchase Contract",
+            "total_amount": 100.0,
+        }
+    )
+    return contract, project, company
+
+
+def _submit_legacy_purchase_contract(submitter):
+    env = _env()
+    _ensure_policy_enabled("sc.legacy.purchase.contract.fact")
+    contract, project, company = _create_legacy_purchase_contract(submitter)
+    project.sudo().message_subscribe(partner_ids=[submitter.partner_id.id])
+    contract.with_user(submitter).with_company(company).action_submit()
+    contract.invalidate_recordset()
+    reviews = env["tier.review"].sudo().search(
+        [("model", "=", "sc.legacy.purchase.contract.fact"), ("res_id", "=", contract.id)]
+    )
+    assert contract.state == "submit", contract.state
+    assert contract.validation_status in ("pending", "waiting"), contract.validation_status
+    assert len(reviews) == 1, len(reviews)
+    return contract, reviews, company
+
+
+def _check_legacy_purchase_contract_flows():
+    env = _env()
+    submitter = _user_from_env(
+        "SC_OCA_LEGACY_PURCHASE_CONTRACT_SUBMITTER",
+        "smart_construction_core.group_sc_cap_business_initiator",
+        prefer_login="caisiqi",
+    )
+    reviewer = _user_from_env(
+        "SC_OCA_LEGACY_PURCHASE_CONTRACT_REVIEWER",
+        "smart_construction_core.group_sc_cap_purchase_manager",
+        prefer_login="chenshuai",
+        exclude_user=submitter,
+    )
+    print("LEGACY_PURCHASE_CONTRACT_OCA_ACTORS=%s->%s" % (submitter.login, reviewer.login))
+
+    contract, reviews, company = _submit_legacy_purchase_contract(submitter)
+    contract.project_id.sudo().message_subscribe(partner_ids=[reviewer.partner_id.id])
+    print(
+        "LEGACY_PURCHASE_CONTRACT_APPROVE_BEFORE=%s/%s/%s"
+        % (contract.state, contract.validation_status, reviews.mapped("status"))
+    )
+    contract.with_user(reviewer).with_company(company).validate_tier()
+    contract.invalidate_recordset()
+    reviews = env["tier.review"].sudo().search(
+        [("model", "=", "sc.legacy.purchase.contract.fact"), ("res_id", "=", contract.id)]
+    )
+    print(
+        "LEGACY_PURCHASE_CONTRACT_APPROVE_AFTER=%s/%s/%s"
+        % (contract.state, contract.validation_status, reviews.mapped("status"))
+    )
+    assert contract.state == "approved", contract.state
+    assert contract.validation_status == "validated", contract.validation_status
+    assert reviews and all(status == "approved" for status in reviews.mapped("status"))
+
+    contract, reviews, company = _submit_legacy_purchase_contract(submitter)
+    contract.project_id.sudo().message_subscribe(partner_ids=[reviewer.partner_id.id])
+    print(
+        "LEGACY_PURCHASE_CONTRACT_REJECT_BEFORE=%s/%s/%s"
+        % (contract.state, contract.validation_status, reviews.mapped("status"))
+    )
+    contract.with_user(reviewer).with_company(company).reject_tier()
+    contract.invalidate_recordset()
+    reviews = env["tier.review"].sudo().search(
+        [("model", "=", "sc.legacy.purchase.contract.fact"), ("res_id", "=", contract.id)]
+    )
+    print(
+        "LEGACY_PURCHASE_CONTRACT_REJECT_AFTER=%s/%s/reviews=%s/reason=%s"
+        % (contract.state, contract.validation_status, len(reviews), contract.reject_reason)
+    )
+    assert contract.state == "draft", contract.state
+    assert contract.reject_reason, "legacy purchase contract reject reason missing"
+
+
 def _create_purchase_order(submitter):
     env = _env()
     company = submitter.company_id or env.company
@@ -595,6 +867,9 @@ def main():
         _check_expense_flows()
         _check_settlement_flows()
         _check_purchase_flows()
+        _check_construction_contract_flows()
+        _check_general_contract_flows()
+        _check_legacy_purchase_contract_flows()
         print("BUSINESS_OCA_RUNTIME_SMOKE=PASS")
     finally:
         _env().cr.rollback()

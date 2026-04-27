@@ -30155,3 +30155,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `APPROVAL_POLICY_RUNTIME=purchase.order required=True mode=single runtime=tier_validation tier_defs=1 active=1`
 - result: `PASS; PURCHASE_OCA_ACTORS=caisiqi->chenshuai; enabled confirm creates OCA review and stays draft/waiting; approve moves purchase/validated; reject stays draft/rejected with reason; disabled policy confirms to purchase。`
 - next_step: `继续审计项目合同、一般合同、采购/一般合同等剩余 document_state 业务是否具备统一 OCA 执行迁移条件。`
+
+## 2026-04-27 Batch-Business-Contract-OCA-Unification
+
+- branch: `codex/dev-env-run`
+- short_sha: `a8f6480b`
+- Layer Target: `Business approval OCA execution unification`
+- Module: `smart_construction_core`
+- Reason: `用户要求审批必须统一，且发起业务对内部用户开放、审核由能力组限制；本批补齐剩余合同类 document_state 审批业务。`
+- completed_step: `construction.contract、sc.general.contract、sc.legacy.purchase.contract.fact 接入 tier.validation；新增三类合同 OCA 审批通过/驳回 server action；审批策略同步与种子策略支持三类合同 runtime_state=tier_validation；合同表单显示驳回原因，确认/提交入口开放给业务发起人/业务用户。`
+- verification:
+  - `python3 -m py_compile contract/general/legacy purchase contract models + approval policy + tier definition + business smoke scripts`
+  - `python3 xml.etree.ElementTree parse for contract_tier_actions.xml, approval_policy_seed.xml, contract/general/legacy purchase views`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.oca_runtime_smoke`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.document_state_policy_switch`
+  - `APPROVAL_COVERAGE material/payment/expense/settlement/purchase/construction contract/general contract/legacy purchase contract all required=True mode=single runtime=tier_validation tier_defs=1 active=1; invoice registration required=False mode=none tier_defs=0`
+- result: `PASS; construction.contract and sc.general.contract enabled confirm -> draft/waiting review, approve -> confirmed/validated, reject -> draft/rejected with reason, disabled -> confirmed; sc.legacy.purchase.contract.fact enabled submit -> submit/waiting review, approve -> approved/validated, reject -> draft/rejected with reason, disabled -> approved。`
+- next_step: `回到真实用户业务办理矩阵：基于当前八类 OCA 可审批业务，核对真实用户登录名、角色、可办理业务、业务数据缺口，判断是否具备新系统启用后连续办理条件。`

@@ -9,7 +9,7 @@
             <field name="approval_required">1</field>
             <field name="trigger">confirm</field>
             <field name="mode">single</field>
-            <field name="runtime_state">document_state</field>
+            <field name="runtime_state">tier_validation</field>
             <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_contract_manager"/>
             <field name="note">合同确认前由合同中心审批能力组审核，业务配置管理员可按金额或管理要求增减步骤。</field>
         </record>
@@ -28,7 +28,7 @@
             <field name="approval_required">1</field>
             <field name="trigger">confirm</field>
             <field name="mode">single</field>
-            <field name="runtime_state">document_state</field>
+            <field name="runtime_state">tier_validation</field>
             <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_contract_manager"/>
             <field name="note">一般合同当前按单据状态按钮执行审核，规则入口用于明确审核能力组与流程步骤。</field>
         </record>
@@ -47,7 +47,7 @@
             <field name="approval_required">1</field>
             <field name="trigger">confirm</field>
             <field name="mode">single</field>
-            <field name="runtime_state">document_state</field>
+            <field name="runtime_state">tier_validation</field>
             <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_purchase_manager"/>
             <field name="note">采购/一般合同提交后由采购中心审批能力组审核，批准后可登记签署状态。</field>
         </record>

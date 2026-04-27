@@ -18,6 +18,9 @@ class TierDefinition(models.Model):
             "sc.expense.claim",
             "sc.settlement.order",
             "purchase.order",
+            "construction.contract",
+            "sc.general.contract",
+            "sc.legacy.purchase.contract.fact",
         ]:
             if model_name not in names:
                 names.append(model_name)
