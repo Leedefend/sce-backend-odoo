@@ -30513,3 +30513,24 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 临时商品因采购/库存外键按归档处理，不硬删；验证主单据、项目、合同、往来单位、资金基准、采购单和 review 均清理。`
 - rollback: `回退本批次提交后继续使用上一版 6 模型真实浏览器闭环脚本；必要时重新运行 cleanup 脚本清理当前 setup.json 中的临时单据。`
 - next_step: `继续补合同类与项目主数据类浏览器闭环，尤其一般合同/业务合同的提交审批、驳回重提和可选合同明细场景。`
+
+## 2026-04-28 Batch-Business-Real-Browser-Contract-Document-Sampling
+
+- branch: `codex/dev-env-run`
+- short_sha: `44d7f44a`
+- Layer Target: `Business fact validation + frontend contract consumer/browser closure`
+- Module: `scripts/verify`
+- Reason: `合同类是业务启用后连续办理的核心入口，上一轮真实浏览器闭环尚未覆盖项目合同、一般合同、采购/一般合同，必须验证真实用户从个人工作台待办进入合同记录后可审批通过/驳回。`
+- completed_step: `business_real_user_browser_setup 增加 construction.contract、sc.general.contract、sc.legacy.purchase.contract.fact 三类合同；复用现有审批策略开关与真实审核人，项目合同/一般合同由 wutao 审核，采购/一般合同由 chenshuai 审核；cleanup 同步恢复三类合同审批策略并清理临时合同、往来单位、项目和 review。`
+- verification:
+  - `node --check scripts/verify/business_real_user_browser_closure.js`
+  - `bash -n scripts/verify/business_real_user_browser_closure.sh`
+  - `python3 -m py_compile scripts/verify/business_real_user_browser_setup.py scripts/verify/business_real_user_browser_cleanup.py scripts/verify/business_real_user_browser_assert.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_closure`
+  - `approve path: construction.contract/sc.general.contract/sc.legacy.purchase.contract.fact 以及既有 11 个模型均从 my-work 点击进入记录，审批通过后待办消失；合同后端状态分别为 confirmed/confirmed/approved，validation_status=validated review=approved；cleanup rows=14`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_reject_closure`
+  - `reject path: 14 个模型均从 my-work 点击进入记录，审批驳回后待办消失；三类合同均回到 draft，validation_status=rejected，review=rejected；cleanup rows=14`
+- result: `PASS; 合同类与既有业务单据共 14 个模型的真实用户浏览器 approve/reject 双路径全部闭环。artifact=artifacts/browser-real-user-business-closure/current`
+- risk: `P2; 采购/一般合同 display_name 当前回退为模型名+id，功能闭环通过但显示可读性后续可单独优化。`
+- rollback: `回退本批次提交后继续使用上一版 11 模型真实浏览器闭环脚本；必要时重新运行 cleanup 脚本清理当前 setup.json 中的临时单据。`
+- next_step: `继续判断项目主数据类是否应纳入“审批闭环”还是“创建/编辑/业务引用闭环”，并补齐项目新建后可被合同、采购、付款、结算连续引用的真实浏览器证据。`

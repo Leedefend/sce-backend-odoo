@@ -245,6 +245,39 @@ def _create_record(spec, submitter):
             }
         )
         cleanup = [("product.product", product.id), ("res.partner", partner.id)]
+    elif model_name == "construction.contract":
+        partner = _partner("Project Contract Partner")
+        record = env[model_name].sudo().create(
+            {
+                "subject": "%s Project Contract %s" % (PREFIX, code),
+                "type": "in",
+                "project_id": project.id,
+                "partner_id": partner.id,
+            }
+        )
+        cleanup = [("res.partner", partner.id)]
+    elif model_name == "sc.general.contract":
+        partner = _partner("General Contract Partner")
+        record = env[model_name].sudo().create(
+            {
+                "project_id": project.id,
+                "partner_id": partner.id,
+                "contract_name": "%s General Contract %s" % (PREFIX, code),
+                "amount_total": 100.0,
+            }
+        )
+        cleanup = [("res.partner", partner.id)]
+    elif model_name == "sc.legacy.purchase.contract.fact":
+        partner = _partner("Legacy Purchase Contract Partner")
+        record = env[model_name].sudo().create(
+            {
+                "project_id": project.id,
+                "partner_name": partner.name,
+                "contract_name": "%s Legacy Purchase Contract %s" % (PREFIX, code),
+                "total_amount": 100.0,
+            }
+        )
+        cleanup = [("res.partner", partner.id)]
     elif model_name == "sc.receipt.income":
         vals.update({"amount": 120.0})
         record = env[model_name].sudo().create(vals)
@@ -282,6 +315,31 @@ def main():
         login="caisiqi",
     )
     specs = [
+        {
+            "model": "construction.contract",
+            "label": "项目合同",
+            "code": "PROJECTCONTRACT",
+            "review_group": "smart_construction_core.group_sc_cap_contract_manager",
+            "reviewer_login": "wutao",
+            "final_state": "confirmed",
+        },
+        {
+            "model": "sc.general.contract",
+            "label": "一般合同",
+            "code": "GENERALCONTRACT",
+            "review_group": "smart_construction_core.group_sc_cap_contract_manager",
+            "reviewer_login": "wutao",
+            "final_state": "confirmed",
+        },
+        {
+            "model": "sc.legacy.purchase.contract.fact",
+            "label": "采购/一般合同",
+            "code": "LEGACYPURCHASECONTRACT",
+            "review_group": "smart_construction_core.group_sc_cap_purchase_manager",
+            "reviewer_login": "chenshuai",
+            "submit_method": "action_submit",
+            "final_state": "approved",
+        },
         {
             "model": "payment.request",
             "label": "付款申请",

@@ -59,6 +59,9 @@ def main():
                 "target_model",
                 "in",
                 [
+                    "construction.contract",
+                    "sc.general.contract",
+                    "sc.legacy.purchase.contract.fact",
                     "sc.receipt.income",
                     "payment.request",
                     "sc.expense.claim",
