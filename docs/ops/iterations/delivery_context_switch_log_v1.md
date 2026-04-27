@@ -30281,3 +30281,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `Browser caisiqi/123456 sc_prod_sim: 项目合同、施工日志新建页 H1 中文；technical ui.contract calls for mail.followers/mail.activity/rating.rating/mail.message/tier.review = 0；consoleErrors=0；httpFailures=0`
 - result: `PASS; 业务新建页契约请求链路只保留业务主契约，不再预加载不可见后台技术模型契约。artifact=artifacts/browser-real-user-usability/2026-04-27T15-24-30-322Z`
 - next_step: `进入真实保存与审批链路抽样：项目合同/施工日志创建保存，已启用审批业务再验证提交、待审、审批通过/驳回。`
+
+## 2026-04-27 Batch-Business-Create-Save-Smoke
+
+- branch: `codex/dev-env-run`
+- short_sha: `845841eb`
+- Layer Target: `Business model write path`
+- Module: `smart_construction_core`
+- Reason: `真实用户浏览器保存项目合同时，表单可能提交与合同类型不兼容的税率，导致创建被“合同类型与税率类型不一致”阻断；新系统启用后应允许真实用户连续办理。`
+- completed_step: `construction.contract 创建时校验提交税率与合同类型是否兼容；若不兼容，则按合同类型自愈为默认销项/进项税率；原有约束仍保证落库税率类型、百分比、不含税规则一致。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/contract_center.py`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `Browser caisiqi/123456 sc_prod_sim: 项目合同 createdId=6942, 施工日志 createdId=5671, consoleErrors=0, httpFailures=0`
+  - `odoo.shell.exec: 项目合同 6942 请求 tax_id=6 但落库 tax_id=5 Seed-销项VAT 9% type_tax_use=sale；验证草稿合同已删除，施工日志验证记录保持 inactive`
+- result: `PASS; 真实用户自定义前端项目合同、施工日志均可保存；项目合同税率不一致缺口已由业务模型创建链路自愈。artifact=artifacts/browser-real-user-usability/2026-04-27T15-31-20-830Z`
+- next_step: `继续审批链路抽样：项目合同保存后确认进入待审，审批岗位人员通过/驳回；同时检查施工日志是否需要审批或仅办理保存。`

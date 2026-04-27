@@ -249,6 +249,17 @@ class ConstructionContract(models.Model):
             return tax
 
     @api.model
+    def _is_contract_tax_compatible(self, tax, contract_type):
+        if not tax:
+            return False
+        expected_use = self._tax_use_from_contract_type(contract_type or "out")
+        return (
+            tax.type_tax_use in (expected_use, "all")
+            and tax.amount_type == "percent"
+            and not tax.price_include
+        )
+
+    @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
         contract_type = res.get("type") or "out"
@@ -385,7 +396,8 @@ class ConstructionContract(models.Model):
         for vals in vals_list:
             if not vals.get("type"):
                 vals["type"] = "out"
-            if not vals.get("tax_id"):
+            tax = self.env["account.tax"].browse(vals.get("tax_id")).exists() if vals.get("tax_id") else False
+            if not self._is_contract_tax_compatible(tax, vals.get("type")):
                 default_tax = self._get_default_tax(vals["type"])
                 vals["tax_id"] = default_tax.id
             if not vals.get("name") or vals["name"] == "新建":
