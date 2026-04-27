@@ -30317,3 +30317,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `odoo.shell.exec cleanup: 删除本轮验证合同 6943/6944、合同行 6601、审批记录 112，cleanup_remaining=0`
 - result: `PASS; 项目合同业务明细入口已在自定义前端可见，真实用户可录入合同行并发起统一审批。artifact=artifacts/browser-real-user-usability/2026-04-27T15-57-16-177Z`
 - next_step: `继续审批人侧真实用户浏览器验证：待审记录入口、审批通过/驳回按钮、审批后合同状态与发起人页面反馈。`
+
+## 2026-04-28 Batch-Business-Contract-Approval-Semantics
+
+- branch: `codex/dev-env-run`
+- short_sha: `8c27550d`
+- Layer Target: `Business model rule + ui.contract/view semantics + frontend contract consumer`
+- Module: `smart_construction_core`, `smart_core`, `frontend/apps/web`
+- Reason: `合同明细是否录入应由用户决定，系统不应以“合同行”技术口径阻断提交；用户可见审批动作需统一为“提交审批”。`
+- completed_step: `合同 line_ids 用户可见语义改为“合同明细”；项目合同 action_confirm 移除明细行必填阻断；smart_construction_core 业务表单 action_confirm 统一显示“提交审批”；前端 action_confirm fallback 同步为“提交审批”。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/contract_center.py addons/smart_construction_core/models/core/cost_domain.py addons/smart_core/utils/contract_governance.py`
+  - `npm --prefix frontend/apps/web run typecheck:strict`
+  - `git diff --check`
+  - `CODEX_MODE=fast CODEX_NEED_UPGRADE=1 DB_NAME=sc_prod_sim make mod.upgrade MODULE=smart_construction_core ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml"`
+  - `make prod.restart.safe ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml"`
+  - `Browser caisiqi/123456 sc_prod_sim: 新建项目合同页面 hasContractDetail=true, hasSubmitApproval=true, hasOldConfirm=false`
+  - `Browser caisiqi/123456 sc_prod_sim: 不录入合同明细保存合同 6945，提交审批后 state=draft validation_status=pending line_ids=[] review_ids=[113]`
+  - `odoo.shell.exec cleanup: 删除本轮验证合同 6945、审批记录 113，cleanup_remaining=0`
+- result: `PASS; 合同明细变为业务语义且可选，真实用户无合同明细也可提交审批进入统一审批流。artifact=artifacts/browser-real-user-usability/2026-04-27T16-09-54-268Z`
+- next_step: `继续审批人侧真实用户浏览器验证：待审入口、审批通过/驳回按钮、审批完成后发起人页面反馈。`

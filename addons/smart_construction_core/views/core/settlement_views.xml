@@ -184,7 +184,7 @@
             <field name="arch" type="xml">
                 <form string="结算调整">
                     <header>
-                        <button name="action_confirm" type="object" string="确认" class="btn-primary"
+                        <button name="action_confirm" type="object" string="提交审批" class="btn-primary"
                                 invisible="state != 'draft'"
                                 groups="smart_construction_core.group_sc_cap_settlement_user"/>
                         <button name="action_cancel" type="object" string="取消"

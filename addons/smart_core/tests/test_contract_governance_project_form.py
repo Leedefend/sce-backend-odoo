@@ -359,7 +359,7 @@ class TestProjectFormGovernance(unittest.TestCase):
             "fields": {
                 "name": {"string": "合同编号", "type": "char", "required": False, "readonly": True},
                 "line_ids": {
-                    "string": "合同行",
+                    "string": "合同明细",
                     "type": "one2many",
                     "required": False,
                     "readonly": False,

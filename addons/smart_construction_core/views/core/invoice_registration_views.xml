@@ -57,7 +57,7 @@
             <field name="arch" type="xml">
                 <form string="发票登记">
                     <header>
-                        <button name="action_confirm" string="确认" type="object" class="btn-primary"
+                        <button name="action_confirm" string="提交审批" type="object" class="btn-primary"
                                 invisible="state != 'draft'"/>
                         <button name="action_register" string="已登记" type="object" class="btn-primary"
                                 invisible="state not in ('draft', 'confirmed')"/>

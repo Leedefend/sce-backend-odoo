@@ -51,7 +51,7 @@
             <field name="arch" type="xml">
                 <form string="收款收入">
                     <header>
-                        <button name="action_confirm" string="确认" type="object" class="btn-primary"
+                        <button name="action_confirm" string="提交审批" type="object" class="btn-primary"
                                 invisible="state != 'draft'"/>
                         <button name="action_received" string="已收款" type="object" class="btn-primary"
                                 invisible="state not in ('draft', 'confirmed')"/>

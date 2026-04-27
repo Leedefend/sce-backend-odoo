@@ -2,7 +2,7 @@ import type { ExecuteButtonResponse, ViewButton } from '@sc/schema';
 
 const EXACT_LABELS: Record<string, string> = {
   action_submit: '提交',
-  action_confirm: '确认',
+  action_confirm: '提交审批',
   action_approve: '审批',
   action_reject: '退回',
   action_cancel: '取消',

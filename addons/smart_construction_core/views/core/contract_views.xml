@@ -33,7 +33,7 @@
                     <button name="action_confirm"
                             type="object"
                             class="oe_highlight"
-                            string="确认合同"
+                            string="提交审批"
                             modifiers='{"invisible":[["state","!=","draft"]]}'
                             groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
                     <button name="action_set_running"
@@ -93,7 +93,7 @@
                     </group>
 
                     <notebook>
-                        <page string="合同行">
+                        <page string="合同明细">
                             <field name="line_ids" context="{'default_contract_id': context.get('active_id')}">
                                 <tree editable="bottom"
                                       decoration-danger="delta_amount &gt; 0"

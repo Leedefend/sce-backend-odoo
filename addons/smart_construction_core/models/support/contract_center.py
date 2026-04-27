@@ -115,7 +115,7 @@ class ConstructionContract(models.Model):
         tracking=True,
     )
     line_amount_total = fields.Monetary(
-        string="合同行金额",
+        string="合同明细金额",
         compute="_compute_line_amount_total",
         currency_field="currency_id",
         store=True,
@@ -151,7 +151,7 @@ class ConstructionContract(models.Model):
     line_ids = fields.One2many(
         "construction.contract.line",
         "contract_id",
-        string="合同行",
+        string="合同明细",
     )
     payment_request_count = fields.Integer(string="付款申请数", compute="_compute_ref_stats")
     settlement_count = fields.Integer(string="结算单数", compute="_compute_ref_stats")
@@ -319,7 +319,7 @@ class ConstructionContract(models.Model):
             if not budget.line_ids:
                 raise UserError("预算版本中没有预算清单行。")
 
-            # 清理孤儿合同行（对应预算行已被删除），否则后续写入会触发外键错误
+            # 清理孤儿合同明细（对应预算行已被删除），否则后续写入会触发外键错误
             orphans = contract.line_ids.filtered(lambda l: not l.boq_line_id)
             if orphans:
                 orphans.sudo().unlink()
@@ -413,8 +413,6 @@ class ConstructionContract(models.Model):
     def action_confirm(self):
         for contract in self:
             old = contract.state
-            if not contract.line_ids:
-                raise UserError("请先录入合同行后再确认。")
             if contract.state == "draft":
                 if contract._requires_contract_approval() and contract.validation_status != "validated":
                     contract._request_contract_validation()
@@ -488,7 +486,7 @@ class ConstructionContract(models.Model):
             if contract.state not in ("confirmed", "running"):
                 raise UserError("仅已生效/执行中的合同可关闭。")
             if not contract.line_ids:
-                raise UserError("无合同行的合同不可关闭，请补充清单。")
+                raise UserError("无合同明细的合同不可关闭，请补充明细。")
             contract.state = "closed"
             if old != contract.state:
                 contract.message_post(body="合同状态：%s → 已关闭" % ("已生效" if old == "confirmed" else "执行中"))
@@ -532,10 +530,10 @@ class ConstructionContract(models.Model):
 
 
 class ConstructionContractLine(models.Model):
-    """Structured BoQ lines derived from budget master with contract-specific quantities/prices."""
+    """Business contract details with optional BoQ linkage."""
 
     _name = "construction.contract.line"
-    _description = "合同清单行"
+    _description = "合同明细"
     _order = "sequence, id"
 
     @api.model
@@ -626,7 +624,7 @@ class ConstructionContractLine(models.Model):
         compute="_compute_amount_contract_leaf",
         store=True,
         group_operator="sum",
-        help="仅实际合同行计入汇总，章节/父项不计入，用于分组/透视/看板统计。",
+        help="仅实际合同明细计入汇总，章节/父项不计入，用于分组/透视/看板统计。",
     )
     boq_amount_leaf = fields.Monetary(
         string="清单合价(基准)",
