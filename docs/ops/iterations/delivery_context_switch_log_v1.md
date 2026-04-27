@@ -29782,3 +29782,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.menu.navigation_snapshot.container`
 - result: `PASS; business_fact_page_surface_audit issue_count 233 -> 136; navigation snapshot trace=1d9f8e8752f6`
 - next_step: `优先判定历史用户权限是否应继续对真实业务用户可见，并处理组织架构原生视图英文标签或替换为业务配置专用视图。`
+
+## 2026-04-27 Batch-Business-Fact-Legacy-User-Context-Visibility
+
+- branch: `codex/dev-env-run`
+- short_sha: `571609b1`
+- Layer Target: `Domain/UI business fact page surface`
+- Module: `smart_construction_core`
+- Reason: `历史用户权限属于迁移权限投影和项目授权追溯面，不是业务办理页面；真实业务用户不应看到历史用户/历史角色投影/项目授权范围内部页面。`
+- completed_step: `将历史用户权限父菜单、历史用户、历史角色投影、项目授权范围的 action/menu 从 group_sc_cap_data_read 收口到 group_sc_cap_config_admin，并显式替换 ir.ui.menu.groups_id 防止升级残留。`
+- verification:
+  - `XML_PARSE_OK for addons/smart_construction_core/views/support/legacy_user_context_views.xml`
+  - `rg group_sc_cap_data_read/group_sc_internal_user in legacy_user_context_views.xml`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `LEGACY_USER_CONTEXT_FACTS.visible_for_wutao=[]`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/business_fact_page_surface_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.menu.navigation_snapshot.container`
+- result: `PASS; business_fact_page_surface_audit issue_count 136 -> 85; wutao 历史用户权限可见菜单为空; navigation snapshot trace=42ecdeb09325`
+- next_step: `处理组织架构/项目原生视图英文标签，并继续收口成本台账 source_model/source_id。`

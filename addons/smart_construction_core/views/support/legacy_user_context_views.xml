@@ -104,6 +104,7 @@
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_sc_legacy_user_profile_search"/>
         <field name="context">{'search_default_with_user': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
 
     <record id="action_sc_legacy_user_role" model="ir.actions.act_window">
@@ -111,6 +112,7 @@
         <field name="res_model">sc.legacy.user.role</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_sc_legacy_user_role_search"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
 
     <record id="action_sc_legacy_user_project_scope" model="ir.actions.act_window">
@@ -119,29 +121,43 @@
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_sc_legacy_user_project_scope_search"/>
         <field name="context">{'search_default_current': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
 
     <menuitem id="menu_sc_legacy_user_context"
               name="历史用户权限"
               parent="smart_construction_core.menu_sc_data_center"
               sequence="70"
-              groups="smart_construction_core.group_sc_cap_data_read"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
     <menuitem id="menu_sc_legacy_user_profile"
               name="历史用户"
               parent="menu_sc_legacy_user_context"
               action="action_sc_legacy_user_profile"
               sequence="10"
-              groups="smart_construction_core.group_sc_cap_data_read"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
     <menuitem id="menu_sc_legacy_user_role"
               name="历史角色投影"
               parent="menu_sc_legacy_user_context"
               action="action_sc_legacy_user_role"
               sequence="20"
-              groups="smart_construction_core.group_sc_cap_data_read"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
     <menuitem id="menu_sc_legacy_user_project_scope"
               name="项目授权范围"
               parent="menu_sc_legacy_user_context"
               action="action_sc_legacy_user_project_scope"
               sequence="30"
-              groups="smart_construction_core.group_sc_cap_data_read"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+
+    <record id="menu_sc_legacy_user_context" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_user_profile" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_user_role" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_user_project_scope" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
 </odoo>
