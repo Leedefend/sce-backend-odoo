@@ -5,7 +5,7 @@ from odoo.exceptions import UserError
 
 class ScGeneralContract(models.Model):
     _name = "sc.general.contract"
-    _description = "General and Purchase Contract Registration"
+    _description = "综合合同"
     _order = "contract_date desc, id desc"
 
     name = fields.Char(string="登记单号", required=True, default="新建", copy=False)
@@ -49,6 +49,11 @@ class ScGeneralContract(models.Model):
     amount_total = fields.Monetary(string="合同金额", currency_field="currency_id", required=True)
     prepayment_amount = fields.Monetary(string="预付款", currency_field="currency_id")
     install_debug_payment = fields.Monetary(string="安装调试款", currency_field="currency_id")
+    install_commissioning_payment = fields.Monetary(
+        string="安装调试款",
+        currency_field="currency_id",
+        compute="_compute_business_aliases",
+    )
     warranty_deposit = fields.Monetary(string="质保金", currency_field="currency_id")
     tax_rate = fields.Float(string="税率", digits=(16, 4))
     currency_id = fields.Many2one(
@@ -70,7 +75,7 @@ class ScGeneralContract(models.Model):
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
     legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
     note = fields.Text(string="备注")
-    active = fields.Boolean(default=True, index=True)
+    active = fields.Boolean(string="有效", default=True, index=True)
 
     _sql_constraints = [
         (
@@ -95,6 +100,11 @@ class ScGeneralContract(models.Model):
             if set(vals) - allowed:
                 raise UserError(_("历史迁移综合合同已确认，只允许补充往来单位和备注。"))
         return super().write(vals)
+
+    @api.depends("install_debug_payment")
+    def _compute_business_aliases(self):
+        for rec in self:
+            rec.install_commissioning_payment = rec.install_debug_payment
 
     def action_confirm(self):
         for rec in self:

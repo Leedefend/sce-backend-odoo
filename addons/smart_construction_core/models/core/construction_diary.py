@@ -5,7 +5,7 @@ from odoo.exceptions import UserError
 
 class ScConstructionDiary(models.Model):
     _name = "sc.construction.diary"
-    _description = "Construction Diary"
+    _description = "施工日志"
     _order = "date_diary desc, id desc"
 
     name = fields.Char(string="日志编号", required=True, default="新建", copy=False)
@@ -55,7 +55,7 @@ class ScConstructionDiary(models.Model):
     legacy_line_attachment_ref = fields.Char(string="历史明细附件引用", readonly=True)
     legacy_attachment_name = fields.Char(string="历史附件名", readonly=True)
     legacy_attachment_path = fields.Char(string="历史附件路径", readonly=True)
-    active = fields.Boolean(default=True, index=True)
+    active = fields.Boolean(string="有效", default=True, index=True)
 
     _sql_constraints = [
         (

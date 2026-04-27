@@ -13,9 +13,6 @@
                     <field name="project_id"/>
                     <field name="partner_name_text"/>
                     <field name="credit_code"/>
-                    <field name="legacy_record_id"/>
-                    <filter string="历史迁移" name="source_origin_legacy" domain="[('source_origin', '=', 'legacy')]"/>
-                    <filter string="新系统登记" name="source_origin_manual" domain="[('source_origin', '=', 'manual')]"/>
                     <filter string="已确认" name="state_confirmed" domain="[('state', 'in', ['confirmed', 'legacy_confirmed'])]"/>
                     <filter string="已签署" name="state_signed" domain="[('state', '=', 'signed')]"/>
                     <filter string="补充合同" name="supplement" domain="[('is_supplement_contract', 'not in', [False, '', '0'])]"/>
@@ -41,7 +38,6 @@
                     <field name="contract_type"/>
                     <field name="amount_total" sum="合同金额"/>
                     <field name="tax_rate"/>
-                    <field name="source_origin"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -66,53 +62,45 @@
                         <group>
                             <group>
                                 <field name="name" readonly="1"/>
-                                <field name="source_origin" readonly="source_origin == 'legacy'"/>
-                                <field name="project_id" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                                <field name="document_no" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                                <field name="contract_no" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                                <field name="contract_name" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                                <field name="contract_type" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                                <field name="contract_attribute" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                                <field name="project_id" readonly="state == 'legacy_confirmed'"/>
+                                <field name="document_no" readonly="state == 'legacy_confirmed'"/>
+                                <field name="contract_no" readonly="state == 'legacy_confirmed'"/>
+                                <field name="contract_name" readonly="state == 'legacy_confirmed'"/>
+                                <field name="contract_type" readonly="state == 'legacy_confirmed'"/>
+                                <field name="contract_attribute" readonly="state == 'legacy_confirmed'"/>
                             </group>
                             <group>
-                                <field name="contract_date" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                                <field name="expected_sign_date" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                                <field name="completion_date" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                                <field name="signing_place" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                                <field name="is_supplement_contract" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                                <field name="related_contract_no" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                                <field name="contract_date" readonly="state == 'legacy_confirmed'"/>
+                                <field name="expected_sign_date" readonly="state == 'legacy_confirmed'"/>
+                                <field name="completion_date" readonly="state == 'legacy_confirmed'"/>
+                                <field name="signing_place" readonly="state == 'legacy_confirmed'"/>
+                                <field name="is_supplement_contract" readonly="state == 'legacy_confirmed'"/>
+                                <field name="related_contract_no" readonly="state == 'legacy_confirmed'"/>
                             </group>
                         </group>
                         <group string="金额与条款">
-                            <field name="amount_total" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="prepayment_amount" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="install_debug_payment" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="warranty_deposit" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="tax_rate" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="amount_total" readonly="state == 'legacy_confirmed'"/>
+                            <field name="prepayment_amount" readonly="state == 'legacy_confirmed'"/>
+                            <field name="install_commissioning_payment" readonly="state == 'legacy_confirmed'"/>
+                            <field name="warranty_deposit" readonly="state == 'legacy_confirmed'"/>
+                            <field name="tax_rate" readonly="state == 'legacy_confirmed'"/>
                             <field name="currency_id"/>
-                            <field name="payment_terms" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="special_condition" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="payment_terms" readonly="state == 'legacy_confirmed'"/>
+                            <field name="special_condition" readonly="state == 'legacy_confirmed'"/>
                         </group>
                         <group string="合同方">
                             <field name="partner_id"/>
-                            <field name="partner_name_text" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="credit_code" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="contact_name" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="contact_phone" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="bank_name" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="bank_account" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
+                            <field name="partner_name_text" readonly="state == 'legacy_confirmed'"/>
+                            <field name="credit_code" readonly="state == 'legacy_confirmed'"/>
+                            <field name="contact_name" readonly="state == 'legacy_confirmed'"/>
+                            <field name="contact_phone" readonly="state == 'legacy_confirmed'"/>
+                            <field name="bank_name" readonly="state == 'legacy_confirmed'"/>
+                            <field name="bank_account" readonly="state == 'legacy_confirmed'"/>
                         </group>
                         <group string="办理信息">
-                            <field name="applicant_name" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="applicant_department" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                            <field name="purchase_engineer" readonly="source_origin == 'legacy' and state == 'legacy_confirmed'"/>
-                        </group>
-                        <group string="历史来源" invisible="source_origin != 'legacy'">
-                            <field name="legacy_source_model" readonly="1"/>
-                            <field name="legacy_source_table" readonly="1"/>
-                            <field name="legacy_record_id" readonly="1"/>
-                            <field name="legacy_document_state" readonly="1"/>
-                            <field name="legacy_attachment_ref" readonly="1"/>
+                            <field name="applicant_name" readonly="state == 'legacy_confirmed'"/>
+                            <field name="applicant_department" readonly="state == 'legacy_confirmed'"/>
+                            <field name="purchase_engineer" readonly="state == 'legacy_confirmed'"/>
                         </group>
                         <group>
                             <field name="note"/>

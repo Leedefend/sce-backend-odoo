@@ -5,7 +5,7 @@ from odoo.exceptions import UserError
 
 class ScPaymentExecution(models.Model):
     _name = "sc.payment.execution"
-    _description = "Payment Execution Registration"
+    _description = "付款执行"
     _order = "date_payment desc, id desc"
 
     name = fields.Char(string="单据号", required=True, default="新建", copy=False)
@@ -65,7 +65,7 @@ class ScPaymentExecution(models.Model):
     legacy_residual_reason = fields.Char(string="残余原因", index=True, readonly=True)
     legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
     note = fields.Text(string="备注")
-    active = fields.Boolean(default=True, index=True)
+    active = fields.Boolean(string="有效", default=True, index=True)
 
     _sql_constraints = [
         (

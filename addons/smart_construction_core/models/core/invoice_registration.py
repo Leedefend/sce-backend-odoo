@@ -5,7 +5,7 @@ from odoo.exceptions import UserError
 
 class ScInvoiceRegistration(models.Model):
     _name = "sc.invoice.registration"
-    _description = "Invoice Registration"
+    _description = "发票登记"
     _order = "invoice_date desc, id desc"
 
     name = fields.Char(string="登记单号", required=True, default="新建", copy=False)
@@ -89,7 +89,7 @@ class ScInvoiceRegistration(models.Model):
     legacy_partner_tax_no = fields.Char(string="历史税号", index=True, readonly=True)
     legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
     note = fields.Text(string="备注")
-    active = fields.Boolean(default=True, index=True)
+    active = fields.Boolean(string="有效", default=True, index=True)
 
     _sql_constraints = [
         (
