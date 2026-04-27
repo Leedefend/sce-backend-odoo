@@ -284,7 +284,7 @@
     <menuitem id="menu_project_quota_root"
               name="定额库"
               parent="menu_sc_business_config_center"
-              sequence="20"
+              sequence="30"
               groups="smart_construction_core.group_sc_cap_business_config_admin"/>
 
     <menuitem id="menu_project_quota_subitem"
@@ -355,6 +355,6 @@
               parent="menu_sc_data_center"
               action="action_project_dictionary"
               sequence="10"
-              groups="smart_construction_core.group_sc_cap_data_read"/>
+              groups="smart_construction_core.group_sc_cap_business_config_admin"/>
 
 </odoo>

@@ -100,7 +100,7 @@
               parent="menu_sc_project_center"
               action="action_sc_project_manage"
               sequence="90"
-              groups="smart_construction_core.group_sc_cap_project_manager,smart_construction_core.group_sc_super_admin"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
 
     <!-- 合同中心 -->
     <menuitem id="menu_sc_contract_center"
@@ -225,20 +225,20 @@
     <menuitem id="menu_sc_business_config_center"
               name="业务配置"
               parent="menu_sc_root"
-              sequence="88"
+              sequence="85"
               groups="smart_construction_core.group_sc_cap_business_config_admin"/>
 
     <!-- 系统配置：仅平台级系统管理员 -->
     <menuitem id="menu_sc_config_center"
               name="系统配置"
               parent="menu_sc_root"
-              sequence="90"
+              sequence="95"
               groups="smart_construction_core.group_sc_cap_config_admin"/>
     <menuitem id="menu_sc_project_cost_code"
               name="成本科目"
               parent="menu_sc_business_config_center"
               action="action_project_cost_code"
-              sequence="40"
+              sequence="20"
               groups="smart_construction_core.group_sc_cap_business_config_admin"/>
     <menuitem id="menu_sc_workflow_root"
               name="工作流"
