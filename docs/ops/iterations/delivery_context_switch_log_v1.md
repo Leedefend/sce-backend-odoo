@@ -30587,3 +30587,20 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - result: `PASS; 当前企业展示已从“默认企业”收口为真实主公司名称。`
 - rollback: `回退本批次提交并重启 Odoo worker 即恢复仅返回 company_id 的旧身份契约。`
 - next_step: `继续验证其他真实用户是否均显示所属真实企业，并排查组织架构/部门承载是否需要显示到页头或用户资料区。`
+
+## 2026-04-28 Batch-Frontend-Root-Menu-Container-Navigation
+
+- branch: `codex/dev-env-run`
+- short_sha: `598fe190`
+- Layer Target: `Frontend navigation contract consumer`
+- Module: `frontend/apps/web`
+- Reason: `模拟生产库中“智能施工 2.0”是单根产品菜单容器，但菜单契约仍带历史 action_id=452/project.project；前端把它当业务入口打开项目列表，和“项目台账（试点）”形成两套项目列表入口。`
+- completed_step: `AppShell 将单根产品菜单识别为导航容器：角色快捷入口点击“智能施工 2.0”回到工作台，面包屑中的根产品菜单不再可点击；MenuView 直接访问根菜单 `/m/<root>` 时也回到工作台，不再解析历史 action。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm ... node:20-bookworm ... VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，点击“智能施工 2.0”后仍停留工作台且未出现“40 条记录”；访问 /m/265 自动回工作台；/a/509?menu_id=293 仍进入“项目台账（试点）”并发起 project.project api.data。`
+- result: `PASS; 产品根菜单不再形成第二套项目列表入口，项目台账保留为唯一项目台账业务入口。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复根菜单按历史 action 解析的行为。`
+- next_step: `继续排查其他角色快捷菜单是否也存在“容器菜单带历史 action”导致的重复业务入口。`

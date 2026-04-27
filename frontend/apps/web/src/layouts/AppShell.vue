@@ -673,6 +673,13 @@ function findMenuIdBySceneKey(nodes: NavNode[], sceneKey?: string): number | und
   return walk(nodes);
 }
 
+function isRootContainerMenuId(menuId?: number): boolean {
+  const root = rootNode.value;
+  if (!root || !menuId) return false;
+  const rootId = Number(root.menu_id || root.id || 0);
+  return rootId > 0 && rootId === Number(menuId);
+}
+
 const breadcrumb = computed(() => {
   const crumbs: Array<{ label: string; to?: string }> = [];
   const menuId = activeMenuId.value;
@@ -682,7 +689,7 @@ const breadcrumb = computed(() => {
       const label = node.title || node.name || node.label || '菜单';
       const id = node.menu_id ?? node.id;
       if (id) {
-        crumbs.push({ label, to: `/m/${id}` });
+        crumbs.push({ label, to: isRootContainerMenuId(Number(id)) ? undefined : `/m/${id}` });
       }
     });
   }
@@ -789,6 +796,10 @@ function openRoleLanding() {
 }
 
 function openRoleMenu(menuId: number) {
+  if (isRootContainerMenuId(menuId)) {
+    openRoleLanding();
+    return;
+  }
   router.push(`/m/${menuId}`).catch(() => {});
 }
 
