@@ -26,11 +26,12 @@
         <field name="inherit_id" ref="purchase.purchase_order_form"/>
         <field name="arch" type="xml">
             <xpath expr="//button[@name='button_confirm']" position="attributes">
-                <attribute name="groups">smart_construction_core.group_sc_cap_purchase_manager</attribute>
+                <attribute name="groups">smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_purchase_user,smart_construction_core.group_sc_cap_purchase_manager</attribute>
             </xpath>
 
             <xpath expr="//sheet/group/group" position="inside">
                 <field name="project_id"/>
+                <field name="reject_reason" readonly="1" modifiers='{"invisible": [["reject_reason","=",false]]}'/>
             </xpath>
 
             <xpath expr="//field[@name='order_line']/tree/field[@name='name']" position="after">

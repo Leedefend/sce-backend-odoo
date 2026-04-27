@@ -30136,3 +30136,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.oca_runtime_smoke`
 - result: `PASS; EXPENSE_OCA_ACTORS=caisiqi->chenshuai; SETTLEMENT_OCA_ACTORS=caisiqi->chenshuai; BUSINESS_OCA_RUNTIME_SMOKE=PASS; rollback OK。`
 - next_step: `继续推进剩余审批统一对象，采购订单需单独处理 Odoo 原生确认动作与 OCA 审批的衔接。`
+
+## 2026-04-27 Batch-Business-Purchase-Order-OCA-Unification
+
+- branch: `codex/dev-env-run`
+- short_sha: `a4900f8d`
+- Layer Target: `Business approval OCA execution unification`
+- Module: `smart_construction_core`
+- Reason: `采购订单确认仍是原生 button_confirm + 能力组直拦，需与其他业务一致收口为业务发起人提交、OCA 审批通过后确认。`
+- completed_step: `purchase.order 接入 tier.validation；button_confirm 在启用审批时只发起 OCA 审批，不直接确认；新增采购订单 OCA 通过/驳回 server action；审批通过回调调用原生采购确认，驳回保留草稿并记录原因；采购订单按钮开放给业务发起人/采购办理/采购审核，审核仍由 OCA review 控制。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/core/purchase_extend.py addons/smart_construction_core/models/support/approval_policy.py addons/smart_construction_core/models/support/tier_definition_ext.py scripts/verify/business_oca_runtime_smoke.py scripts/verify/business_document_state_policy_switch_smoke.py`
+  - `python3 xml.etree.ElementTree parse for purchase_order_tier_actions.xml, approval_policy_seed.xml, purchase_extend_views.xml`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.oca_runtime_smoke`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.document_state_policy_switch`
+  - `APPROVAL_POLICY_RUNTIME=purchase.order required=True mode=single runtime=tier_validation tier_defs=1 active=1`
+- result: `PASS; PURCHASE_OCA_ACTORS=caisiqi->chenshuai; enabled confirm creates OCA review and stays draft/waiting; approve moves purchase/validated; reject stays draft/rejected with reason; disabled policy confirms to purchase。`
+- next_step: `继续审计项目合同、一般合同、采购/一般合同等剩余 document_state 业务是否具备统一 OCA 执行迁移条件。`

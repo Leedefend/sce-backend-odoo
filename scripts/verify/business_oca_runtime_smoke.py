@@ -423,6 +423,110 @@ def _create_settlement_order(submitter):
     return order, project, company
 
 
+def _create_purchase_order(submitter):
+    env = _env()
+    company = submitter.company_id or env.company
+    partner = env["res.partner"].sudo().create({"name": "OCA Runtime Purchase Vendor"})
+    project = env["project.project"].sudo().create(
+        {
+            "name": "OCA Runtime Purchase Project",
+            "code": "OCA-RUNTIME-PO",
+            "company_id": company.id,
+            "user_id": submitter.id,
+        }
+    )
+    uom = env.ref("uom.product_uom_unit")
+    product = env["product.product"].sudo().create(
+        {
+            "name": "OCA Runtime Purchase Product",
+            "type": "product",
+            "uom_id": uom.id,
+            "uom_po_id": uom.id,
+        }
+    )
+    order = env["purchase.order"].sudo().create(
+        {
+            "partner_id": partner.id,
+            "project_id": project.id,
+            "order_line": [
+                (
+                    0,
+                    0,
+                    {
+                        "name": "OCA Runtime Purchase Item",
+                        "product_id": product.id,
+                        "product_qty": 1.0,
+                        "product_uom": uom.id,
+                        "price_unit": 100.0,
+                    },
+                )
+            ],
+        }
+    )
+    return order, project, company
+
+
+def _submit_purchase(submitter):
+    env = _env()
+    _ensure_policy_enabled("purchase.order")
+    order, project, company = _create_purchase_order(submitter)
+    project.sudo().message_subscribe(partner_ids=[submitter.partner_id.id])
+    order.with_user(submitter).with_company(company).button_confirm()
+    order.invalidate_recordset()
+    reviews = env["tier.review"].sudo().search(
+        [("model", "=", "purchase.order"), ("res_id", "=", order.id)]
+    )
+    assert order.state in ("draft", "sent"), order.state
+    assert order.validation_status in ("pending", "waiting"), order.validation_status
+    assert len(reviews) == 1, len(reviews)
+    return order, reviews, company
+
+
+def _check_purchase_flows():
+    env = _env()
+    submitter = _user_from_env(
+        "SC_OCA_PURCHASE_SUBMITTER",
+        "smart_construction_core.group_sc_cap_business_initiator",
+        prefer_login="caisiqi",
+    )
+    reviewer = _user_from_env(
+        "SC_OCA_PURCHASE_REVIEWER",
+        "smart_construction_core.group_sc_cap_purchase_manager",
+        prefer_login="chenshuai",
+        exclude_user=submitter,
+    )
+    print("PURCHASE_OCA_ACTORS=%s->%s" % (submitter.login, reviewer.login))
+
+    order, reviews, company = _submit_purchase(submitter)
+    order.project_id.sudo().message_subscribe(partner_ids=[reviewer.partner_id.id])
+    print("PURCHASE_APPROVE_BEFORE=%s/%s/%s" % (order.state, order.validation_status, reviews.mapped("status")))
+    order.with_user(reviewer).with_company(company).validate_tier()
+    order.invalidate_recordset()
+    reviews = env["tier.review"].sudo().search(
+        [("model", "=", "purchase.order"), ("res_id", "=", order.id)]
+    )
+    print("PURCHASE_APPROVE_AFTER=%s/%s/%s" % (order.state, order.validation_status, reviews.mapped("status")))
+    assert order.state in ("purchase", "done"), order.state
+    assert order.validation_status == "validated", order.validation_status
+    assert reviews and all(status == "approved" for status in reviews.mapped("status"))
+
+    order, reviews, company = _submit_purchase(submitter)
+    order.project_id.sudo().message_subscribe(partner_ids=[reviewer.partner_id.id])
+    print("PURCHASE_REJECT_BEFORE=%s/%s/%s" % (order.state, order.validation_status, reviews.mapped("status")))
+    order.with_user(reviewer).with_company(company).reject_tier()
+    order.invalidate_recordset()
+    reviews = env["tier.review"].sudo().search(
+        [("model", "=", "purchase.order"), ("res_id", "=", order.id)]
+    )
+    print(
+        "PURCHASE_REJECT_AFTER=%s/%s/reviews=%s/reason=%s"
+        % (order.state, order.validation_status, len(reviews), order.reject_reason)
+    )
+    assert order.state in ("draft", "sent"), order.state
+    assert order.validation_status == "rejected", order.validation_status
+    assert order.reject_reason, "purchase reject reason missing"
+
+
 def _submit_settlement(submitter):
     env = _env()
     _ensure_policy_enabled("sc.settlement.order")
@@ -490,6 +594,7 @@ def main():
         _check_material_flows()
         _check_expense_flows()
         _check_settlement_flows()
+        _check_purchase_flows()
         print("BUSINESS_OCA_RUNTIME_SMOKE=PASS")
     finally:
         _env().cr.rollback()

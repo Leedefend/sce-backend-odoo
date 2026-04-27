@@ -7,9 +7,6 @@ The expected business semantics:
 - approval disabled: submit/confirm proceeds without approver restriction.
 """
 
-from odoo.exceptions import ValidationError
-
-
 def _env():
     return globals()["env"]
 
@@ -146,6 +143,7 @@ def _check_submit_switch(model_name, factory, approved_state):
 
 
 def _check_purchase_confirm_switch():
+    env = _env()
     project = _project("Policy Switch Purchase")
     partner = _partner("Policy Switch Purchase Partner")
     product = _product()
@@ -153,12 +151,15 @@ def _check_purchase_confirm_switch():
 
     _set_policy("purchase.order", True)
     order = _purchase_order(project, partner, product)
-    try:
-        order.with_user(user).button_confirm()
-    except ValidationError:
-        print("purchase.order_ENABLED_NON_APPROVER=BLOCKED")
-    else:
-        raise AssertionError("purchase.order enabled policy did not block non-approver")
+    order.with_user(user).button_confirm()
+    order.invalidate_recordset()
+    reviews = env["tier.review"].sudo().search(
+        [("model", "=", "purchase.order"), ("res_id", "=", order.id)]
+    )
+    print("purchase.order_ENABLED_SUBMIT_STATE=%s/%s/reviews=%s" % (order.state, order.validation_status, len(reviews)))
+    assert order.state in ("draft", "sent"), order.state
+    assert order.validation_status in ("pending", "waiting"), order.validation_status
+    assert len(reviews) == 1, len(reviews)
 
     _set_policy("purchase.order", False)
     order = _purchase_order(project, partner, product)

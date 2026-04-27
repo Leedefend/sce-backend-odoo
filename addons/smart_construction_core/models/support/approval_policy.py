@@ -140,6 +140,7 @@ class ScApprovalPolicy(models.Model):
             "payment.request",
             "sc.expense.claim",
             "sc.settlement.order",
+            "purchase.order",
         }
 
     def _tier_server_actions(self):
@@ -161,6 +162,10 @@ class ScApprovalPolicy(models.Model):
                 "smart_construction_core.server_action_settlement_order_on_approved",
                 "smart_construction_core.server_action_settlement_order_on_rejected",
             ),
+            "purchase.order": (
+                "smart_construction_core.server_action_purchase_order_on_approved",
+                "smart_construction_core.server_action_purchase_order_on_rejected",
+            ),
         }
         approve_xmlid, reject_xmlid = mapping.get(self.target_model, (None, None))
         approve_action = self.env.ref(approve_xmlid, raise_if_not_found=False) if approve_xmlid else False
@@ -173,6 +178,7 @@ class ScApprovalPolicy(models.Model):
             "payment.request": "amount",
             "sc.expense.claim": "amount",
             "sc.settlement.order": "amount_total",
+            "purchase.order": "amount_total",
         }
         amount_field = amount_field_by_model.get(self.target_model)
         if amount_field and step.amount_min:

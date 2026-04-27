@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 
 class PurchaseOrder(models.Model):
-    _inherit = "purchase.order"
+    _name = "purchase.order"
+    _inherit = ["purchase.order", "tier.validation"]
+
+    _state_from = ["draft", "sent"]
+    _state_to = ["purchase"]
+    _cancel_state = "cancel"
 
     project_id = fields.Many2one(
         "project.project",
@@ -15,6 +21,7 @@ class PurchaseOrder(models.Model):
         string="物资计划",
         help="来源物资计划，便于追溯生成关系。",
     )
+    reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False, tracking=True)
 
     def button_confirm(self):
         for order in self:
@@ -23,13 +30,78 @@ class PurchaseOrder(models.Model):
                     operation_label="确认采购订单",
                     blocked_states=("paused", "closed"),
                 )
+            if order._requires_purchase_approval() and order.validation_status != "validated":
+                order._request_purchase_validation()
+                continue
             policy = self.env["sc.approval.policy"].get_active_policy(order._name, company=order.company_id)
-            if policy:
+            if policy and not order._requires_purchase_approval():
                 policy.assert_user_can_approve()
-        res = super().button_confirm()
+        to_confirm = self.filtered(
+            lambda order: not order._requires_purchase_approval() or order.validation_status == "validated"
+        )
+        if not to_confirm:
+            return {
+                "type": "ir.actions.client",
+                "tag": "display_notification",
+                "params": {
+                    "title": _("采购订单已提交审批"),
+                    "message": _("请等待采购审批能力组完成统一审批。"),
+                    "type": "success",
+                    "sticky": False,
+                },
+            }
+        res = super(PurchaseOrder, to_confirm).button_confirm()
         if self._is_cost_enabled("smart_construction_core.sc_cost_from_purchase"):
-            self._create_cost_ledger_entries()
+            to_confirm._create_cost_ledger_entries()
         return res
+
+    def _requires_purchase_approval(self):
+        self.ensure_one()
+        return self.env["sc.approval.policy"].is_approval_required(self._name, company=self.company_id)
+
+    def _request_purchase_validation(self):
+        self.ensure_one()
+        if self.state not in ("draft", "sent"):
+            raise UserError(_("仅询价单/报价单可以提交采购审批。"))
+        if self.review_ids and self.validation_status == "rejected":
+            self.restart_validation()
+        elif not self.review_ids or self.validation_status == "no":
+            reviews = self.request_validation()
+            if not reviews:
+                raise UserError(_("采购订单已启用审批，但没有匹配的统一审批规则，请检查业务审批配置。"))
+        else:
+            raise UserError(_("采购订单已经在统一审批流程中，请等待审批完成。"))
+        self.with_context(skip_validation_check=True).write({"reject_reason": False})
+
+    def _check_state_from_condition(self):
+        self.ensure_one()
+        parent = getattr(super(), "_check_state_from_condition", None)
+        base_ok = parent() if parent else False
+        return base_ok or self.state in ("draft", "sent")
+
+    def _get_tier_reject_reason(self):
+        self.ensure_one()
+        reviews = self.review_ids.filtered(lambda review: review.status == "rejected" and review.comment)
+        if reviews:
+            return reviews.sorted(lambda review: review.write_date or review.create_date, reverse=True)[0].comment
+        return _("OCA审批驳回（未填写原因）")
+
+    def action_on_tier_approved(self):
+        for order in self:
+            if order.state not in ("draft", "sent"):
+                continue
+            if order.validation_status != "validated":
+                raise UserError(_("采购订单尚未完成统一审批流程。"))
+            order.with_context(skip_validation_check=True).write({"reject_reason": False})
+        return self.button_confirm()
+
+    def action_on_tier_rejected(self, reason=None):
+        for order in self:
+            if order.state not in ("draft", "sent"):
+                continue
+            order.with_context(skip_validation_check=True).write(
+                {"reject_reason": reason or order._get_tier_reject_reason()}
+            )
 
     def _is_cost_enabled(self, param_key):
         icp = self.env["ir.config_parameter"].sudo().with_company(self.env.company)
