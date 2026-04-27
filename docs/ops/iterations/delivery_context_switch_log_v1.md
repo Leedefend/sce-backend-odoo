@@ -30436,3 +30436,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `cleanup: 临时 sc.receipt.income 9559、sc.settlement.adjustment 12925、project 1075/1076、tier.review 224/225 已删除；可选审批策略恢复 approval_required=False mode=none`
 - result: `PASS; 真实用户浏览器已验证登记/调整类业务从个人工作台待办到审批通过、待办消失、后端状态闭环。artifact=artifacts/browser-real-user-business-closure/current`
 - next_step: `继续按同一脚本化口径扩展更多业务类型和驳回链路；另行处理统一渲染版“我的工作”待办卡片中业务单号文本本身不可点击的问题。`
+
+## 2026-04-28 Batch-MyWork-Card-Click-Closure
+
+- branch: `codex/dev-env-run`
+- short_sha: `ce5520c8`
+- Layer Target: `Frontend contract consumer + page orchestration block interaction`
+- Module: `frontend/apps/web`, `scripts/verify`
+- Reason: `真实用户浏览器验证发现统一渲染版“我的工作”待办单号可见但文本/卡片本身不可点击，用户必须能从待办项直接进入业务记录。`
+- completed_step: `BlockActivityFeed 与 BlockTodoList 统一消费数据集中的 action_key，并将待办卡片/动态项本身变为可点击、可键盘触发的通用区块动作；真实浏览器验证脚本恢复为点击待办单号进入记录页，不再直接 goto 业务记录 URL。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `node --check scripts/verify/business_real_user_browser_closure.js`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_closure`
+  - `browser_summary.json: 点击 my-work 待办 RI2600017/SA2600013 进入业务记录并审批通过，browser_status=approved_and_removed_from_todo`
+  - `backend_assert.json: sc.receipt.income state=confirmed validation_status=validated review=approved; sc.settlement.adjustment state=confirmed validation_status=validated review=approved`
+  - `cleanup: 临时 sc.receipt.income 9560、sc.settlement.adjustment 12926、project 1077/1078、tier.review 226/227 已删除；可选审批策略恢复`
+- result: `PASS; 统一渲染版“我的工作”待办项已支持点击卡片/单号进入业务记录，真实用户浏览器闭环继续通过。artifact=artifacts/browser-real-user-business-closure/current`
+- next_step: `继续扩展真实用户浏览器覆盖面：补驳回链路，以及付款执行/发票登记/融资借款/资金对账等登记类抽样。`

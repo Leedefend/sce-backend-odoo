@@ -41,7 +41,8 @@ async function approveCase(browser, row, index) {
     const todoEntry = page.getByText(title, { exact: false }).first();
     await todoEntry.waitFor({ timeout: 20000 });
     await page.screenshot({ path: path.join(artifactDir, `${screenshotBase}_todo.png`), fullPage: true });
-    await page.goto(`${frontendUrl}/r/${row.model}/${row.record_id}`, { waitUntil: 'networkidle' });
+    await todoEntry.click();
+    await page.waitForURL((url) => url.pathname.includes(`/r/${row.model}/${row.record_id}`), { timeout: 20000 });
     await page.getByRole('button', { name: '审批通过' }).waitFor({ timeout: 20000 });
     await page.screenshot({ path: path.join(artifactDir, `${screenshotBase}_record_before.png`), fullPage: true });
     await page.getByRole('button', { name: '审批通过' }).click();
