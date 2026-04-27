@@ -30192,3 +30192,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.oca_runtime_smoke`
 - result: `PASS; 审批配置页面可按审批岗位配置，底层 OCA 仍按执行组运行；8 类已接入审批业务 smoke 未回归。`
 - next_step: `继续真实用户业务办理矩阵与连续办理缺口判断；后续如需要再扩展“指定人员/代理人”配置。`
+
+## 2026-04-27 Batch-Business-Approval-Scope-People
+
+- branch: `codex/dev-env-run`
+- short_sha: `2a568fdb`
+- Layer Target: `Business approval configuration usability`
+- Module: `smart_construction_core`
+- Reason: `用户确认业务配置管理员需要受控维护审批岗位人员，并暂时允许新增内部用户；后续再通过平台参数控制是否允许新增人员。`
+- completed_step: `新增 sc.approval.scope 审批岗位人员模型与 7 个岗位种子；新增 sc.approval.scope.user.wizard 新增人员向导；新增业务配置菜单“审批岗位人员”；授权业务配置管理员读取用户、维护岗位人员、通过向导创建内部用户并加入指定审批岗位；底层仍只写入白名单审批岗位执行组。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/approval_scope.py`
+  - `python3 xml.etree.ElementTree parse for approval_scope_seed.xml, approval_scope_views.xml`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `make odoo.shell.exec rollback probe as wutao: read 7 approval scopes; assign zhaowei to finance scope; create approval_scope_tmp_user as internal user in finance scope and business initiator`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.oca_runtime_smoke`
+- result: `PASS; wutao 非系统管理员也可通过受控业务入口维护审批岗位人员和新增内部审批人员；现有 8 类 OCA 审批链路未回归。`
+- next_step: `继续真实用户业务办理矩阵与连续办理缺口判断；后续增加平台级“是否允许业务配置管理员新增人员”参数。`

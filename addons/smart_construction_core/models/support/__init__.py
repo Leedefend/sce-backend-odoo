@@ -17,6 +17,7 @@ from . import res_config_settings
 from . import tier_definition_ext
 from . import sc_workflow
 from . import approval_policy
+from . import approval_scope
 from . import sc_data_validator
 from . import operating_metrics
 from . import operating_metrics_project

@@ -49,6 +49,7 @@
         'data/purchase_order_tier_actions.xml',
         'data/contract_tier_actions.xml',
         'data/approval_policy_seed.xml',
+        'data/approval_scope_seed.xml',
         'data/approval_policy_tier_sync.xml',
 
         # 顶级菜单基础
@@ -122,6 +123,7 @@
         'views/core/workflow_views.xml',
         'views/menu.xml',
         'views/support/approval_policy_views.xml',
+        'views/support/approval_scope_views.xml',
         'views/core/construction_diary_views.xml',
         'views/support/organization_department_views.xml',
         'views/support/legacy_material_catalog_views.xml',
