@@ -696,7 +696,7 @@ const warnings = computed(() => {
       return '';
     })
     .map((x) => x.trim())
-    .filter(Boolean);
+    .filter((item) => Boolean(item) && !item.startsWith('access_policy:'));
 });
 
 const contractAccessPolicy = computed<ContractAccessPolicy>(() => {

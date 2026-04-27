@@ -30231,3 +30231,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `odoo.shell.exec: ui.contract action_open construction.contract/sc.construction.diary for caisiqi,wutao PASS`
 - result: `PASS; 自定义前端主路径 ui.contract 与旧兼容 load_view 均可承载项目合同、施工日志；真实用户可见入口并可用业务必填字段办理创建。`
 - next_step: `继续用浏览器真实点击方式抽样验证项目合同、施工日志从菜单进入、创建页字段填写、保存与按钮动作。`
+
+## 2026-04-27 Batch-ProdSim-Business-Surface-Relation-Active
+
+- branch: `codex/dev-env-run`
+- short_sha: `772ef172`
+- Layer Target: `Platform data service + simulated production data surface + frontend presentation`
+- Module: `smart_core`, `frontend/apps/web`, `prod_sim migration scripts`
+- Reason: `真实用户表单关联下拉仍暴露测试/迁移占位数据；通用数据读取缺省不应把归档记录返回给业务办理页面。`
+- completed_step: `新增模拟生产业务表面数据规范脚本，归档 Fixture/Smoke/Unknown legacy 占位伙伴、用户、项目；api.data 缺省 active_test 调整为 True，保留调用方显式 active_test=False 的后台兼容能力；表单页不再向业务用户展示 access_policy 内部标记。`
+- verification:
+  - `python3 -m py_compile addons/smart_core/handlers/api_data.py scripts/migration/prod_sim_business_surface_data_normalize_write.py`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `odoo.shell.exec: api.data default active_test returns default_bad=[] for project.project/res.partner; explicit context active_test=False can still see archived records`
+  - `npm --prefix frontend/apps/web run typecheck:strict`
+  - `Browser caisiqi/123456 sc_prod_sim: /f/construction.contract/new and /f/sc.construction.diary/new inputCount=7/9, hasSave=true, foundBadTerms=[], hasUuid=false, consoleErrors=0, httpFailures=0`
+- result: `PASS; 真实用户新建项目合同/施工日志表单不再暴露 Smoke/Fixture/Unknown/UUID 占位关联数据，也不再展示 access_policy 技术标记。artifact=artifacts/browser-real-user-usability/2026-04-27T15-04-58-813Z`
+- next_step: `继续业务事实层可用性审计：收口表单标题/字段标签中的模型英文残留，并进一步抽样真实保存与审批链路。`
