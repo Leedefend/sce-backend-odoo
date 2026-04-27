@@ -12,6 +12,7 @@
     ],
     "data": [
         "data/company_currency.xml",
+        "data/company_identity.xml",
         "data/password_policy.xml",
         "data/platform_initialization.xml",
         "security/role_matrix_groups.xml",
