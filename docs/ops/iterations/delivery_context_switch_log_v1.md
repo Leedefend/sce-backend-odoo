@@ -29745,3 +29745,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.menu.navigation_snapshot.container`
 - result: `PASS; wutao 内部历史菜单 count=0; business_fact_page_surface_audit issue_count 1104 -> 508; navigation snapshot trace=8b3ac9f5461e`
 - next_step: `继续真实业务页面字段清理，优先处理资金日报、资金日报明细、融资台账、历史物料、历史采购合同等剩余高集中度页面。`
+
+## 2026-04-27 Batch-Business-Fact-Projection-Page-Surface
+
+- branch: `codex/dev-env-run`
+- short_sha: `4a89eee3`
+- Layer Target: `Domain/UI business fact page surface`
+- Module: `smart_construction_core`
+- Reason: `真实用户可见页面审计剩余 508 项缺口，高集中在资金日报、资金日报明细、融资台账、历史物料、历史采购合同等页面，需要继续去掉历史/迁移/英文/技术字段暴露。`
+- completed_step: `资金日报与融资台账新增只读业务别名字段并改视图使用业务字段；资金日报明细、物料档案/分类、采购/一般合同移除旧系统来源分组和历史编号字段；物料与采购页面菜单/动作/视图去掉“历史”字样；相关模型补中文描述和字段标签。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/legacy_fund_daily_snapshot_fact.py addons/smart_construction_core/models/support/legacy_fund_daily_line.py addons/smart_construction_core/models/support/legacy_financing_loan_fact.py addons/smart_construction_core/models/support/legacy_material_catalog.py addons/smart_construction_core/models/support/legacy_purchase_contract_fact.py`
+  - `XML_PARSE_OK for 5 changed XML files`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/business_fact_page_surface_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.menu.navigation_snapshot.container`
+- result: `PASS; business_fact_page_surface_audit issue_count 508 -> 233; navigation snapshot trace=40b81db321c3`
+- next_step: `继续处理施工日志、发票登记、付款执行、综合合同、历史用户权限和组织架构原生视图英文标签。`

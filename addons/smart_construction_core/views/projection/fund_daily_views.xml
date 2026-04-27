@@ -110,21 +110,6 @@
                                 <field name="header_bank_system_difference"/>
                             </group>
                         </group>
-                        <group string="旧系统来源">
-                            <group>
-                                <field name="legacy_line_id"/>
-                                <field name="legacy_header_id"/>
-                                <field name="legacy_pid"/>
-                                <field name="legacy_header_pid"/>
-                                <field name="source_table"/>
-                            </group>
-                            <group>
-                                <field name="project_legacy_id"/>
-                                <field name="account_legacy_id"/>
-                                <field name="attachment_ref"/>
-                                <field name="line_attachment_ref"/>
-                            </group>
-                        </group>
                         <group>
                             <field name="note"/>
                             <field name="header_note"/>

@@ -5,22 +5,22 @@ from odoo.exceptions import UserError
 
 class ScLegacyMaterialCategory(models.Model):
     _name = "sc.legacy.material.category"
-    _description = "Legacy Material Category Fact"
+    _description = "物料分类"
     _order = "legacy_category_id"
 
-    legacy_category_id = fields.Char(required=True, index=True)
-    legacy_guid = fields.Char(index=True)
-    code = fields.Char(index=True)
-    name = fields.Char(required=True, index=True)
-    parent_legacy_category_id = fields.Char(index=True)
-    parent_id = fields.Many2one("sc.legacy.material.category", index=True, ondelete="set null")
-    legacy_project_id = fields.Char(index=True)
-    project_id = fields.Many2one("project.project", index=True, ondelete="set null")
-    depth = fields.Char(index=True)
-    uom_text = fields.Char()
-    source_table = fields.Char(default="C_Base_CBFL", required=True)
-    note = fields.Text()
-    active = fields.Boolean(default=True, index=True)
+    legacy_category_id = fields.Char(string="分类编号", required=True, index=True)
+    legacy_guid = fields.Char(string="分类标识", index=True)
+    code = fields.Char(string="编码", index=True)
+    name = fields.Char(string="名称", required=True, index=True)
+    parent_legacy_category_id = fields.Char(string="上级分类编号", index=True)
+    parent_id = fields.Many2one("sc.legacy.material.category", string="上级分类", index=True, ondelete="set null")
+    legacy_project_id = fields.Char(string="项目原编号", index=True)
+    project_id = fields.Many2one("project.project", string="项目", index=True, ondelete="set null")
+    depth = fields.Char(string="层级", index=True)
+    uom_text = fields.Char(string="单位")
+    source_table = fields.Char(string="来源表", default="C_Base_CBFL", required=True)
+    note = fields.Text(string="备注")
+    active = fields.Boolean(string="有效", default=True, index=True)
 
     _sql_constraints = [
         ("legacy_category_id_unique", "unique(legacy_category_id)", "Legacy material category id must be unique."),
@@ -29,28 +29,28 @@ class ScLegacyMaterialCategory(models.Model):
 
 class ScLegacyMaterialDetail(models.Model):
     _name = "sc.legacy.material.detail"
-    _description = "Legacy Material Detail Fact"
+    _description = "物料档案"
     _order = "legacy_material_id"
 
-    legacy_material_id = fields.Char(required=True, index=True)
-    code = fields.Char(index=True)
-    name = fields.Char(required=True, index=True)
-    category_legacy_id = fields.Char(index=True)
-    category_id = fields.Many2one("sc.legacy.material.category", index=True, ondelete="set null")
-    parent_legacy_material_id = fields.Char(index=True)
-    uom_text = fields.Char(index=True)
-    aux_uom_text = fields.Char()
-    planned_price = fields.Float()
-    internal_price = fields.Float()
-    legacy_project_id = fields.Char(index=True)
-    project_id = fields.Many2one("project.project", index=True, ondelete="set null")
-    depth = fields.Char(index=True)
-    spec_model = fields.Char(index=True)
-    pinyin = fields.Char(index=True)
-    short_pinyin = fields.Char(index=True)
-    import_time = fields.Datetime()
-    remark = fields.Text()
-    source_table = fields.Char(default="T_Base_MaterialDetail", required=True)
+    legacy_material_id = fields.Char(string="物料编号", required=True, index=True)
+    code = fields.Char(string="编码", index=True)
+    name = fields.Char(string="名称", required=True, index=True)
+    category_legacy_id = fields.Char(string="分类原编号", index=True)
+    category_id = fields.Many2one("sc.legacy.material.category", string="分类", index=True, ondelete="set null")
+    parent_legacy_material_id = fields.Char(string="上级物料编号", index=True)
+    uom_text = fields.Char(string="单位", index=True)
+    aux_uom_text = fields.Char(string="辅助单位")
+    planned_price = fields.Float(string="计划价")
+    internal_price = fields.Float(string="内部价")
+    legacy_project_id = fields.Char(string="项目原编号", index=True)
+    project_id = fields.Many2one("project.project", string="项目", index=True, ondelete="set null")
+    depth = fields.Char(string="层级", index=True)
+    spec_model = fields.Char(string="规格型号", index=True)
+    pinyin = fields.Char(string="拼音")
+    short_pinyin = fields.Char(string="拼音简码")
+    import_time = fields.Datetime(string="导入时间")
+    remark = fields.Text(string="备注")
+    source_table = fields.Char(string="来源表", default="T_Base_MaterialDetail", required=True)
     promoted_product_tmpl_id = fields.Many2one(
         "product.template",
         string="已提升产品模板",
@@ -66,13 +66,13 @@ class ScLegacyMaterialDetail(models.Model):
         ondelete="set null",
     )
     promotion_state = fields.Selection(
-        [("archived", "仅历史归档"), ("promoted", "已提升为产品")],
+        [("archived", "档案"), ("promoted", "已生成产品")],
         string="提升状态",
         default="archived",
         index=True,
         readonly=True,
     )
-    active = fields.Boolean(default=True, index=True)
+    active = fields.Boolean(string="有效", default=True, index=True)
 
     _sql_constraints = [
         ("legacy_material_id_unique", "unique(legacy_material_id)", "Legacy material id must be unique."),

@@ -4,8 +4,7 @@
         <field name="name">sc.legacy.material.detail.search</field>
         <field name="model">sc.legacy.material.detail</field>
         <field name="arch" type="xml">
-            <search string="历史物料档案">
-                <field name="legacy_material_id"/>
+            <search string="物料档案">
                 <field name="code"/>
                 <field name="name"/>
                 <field name="spec_model"/>
@@ -28,8 +27,7 @@
         <field name="name">sc.legacy.material.detail.tree</field>
         <field name="model">sc.legacy.material.detail</field>
         <field name="arch" type="xml">
-            <tree string="历史物料档案" create="0" edit="0" delete="0">
-                <field name="legacy_material_id"/>
+            <tree string="物料档案" create="0" edit="0" delete="0">
                 <field name="code"/>
                 <field name="name"/>
                 <field name="spec_model"/>
@@ -48,7 +46,7 @@
         <field name="name">sc.legacy.material.detail.form</field>
         <field name="model">sc.legacy.material.detail</field>
         <field name="arch" type="xml">
-            <form string="历史物料档案" create="0" edit="0" delete="0">
+            <form string="物料档案" create="0" edit="0" delete="0">
                 <header>
                     <button name="action_promote_to_product"
                             type="object"
@@ -61,18 +59,13 @@
                 <sheet>
                     <group>
                         <group>
-                            <field name="legacy_material_id"/>
                             <field name="code"/>
                             <field name="name"/>
                             <field name="spec_model"/>
-                            <field name="pinyin"/>
-                            <field name="short_pinyin"/>
                         </group>
                         <group>
                             <field name="category_id"/>
-                            <field name="parent_legacy_material_id"/>
                             <field name="project_id"/>
-                            <field name="legacy_project_id"/>
                             <field name="depth"/>
                             <field name="active"/>
                         </group>
@@ -91,9 +84,7 @@
                         <field name="promoted_product_tmpl_id"/>
                         <field name="promoted_product_id"/>
                     </group>
-                    <group string="旧系统来源">
-                        <field name="source_table"/>
-                        <field name="import_time"/>
+                    <group>
                         <field name="remark"/>
                     </group>
                 </sheet>
@@ -105,8 +96,7 @@
         <field name="name">sc.legacy.material.category.tree</field>
         <field name="model">sc.legacy.material.category</field>
         <field name="arch" type="xml">
-            <tree string="历史物料分类" create="0" edit="0" delete="0">
-                <field name="legacy_category_id"/>
+            <tree string="物料分类" create="0" edit="0" delete="0">
                 <field name="code"/>
                 <field name="name"/>
                 <field name="parent_id"/>
@@ -121,8 +111,7 @@
         <field name="name">sc.legacy.material.category.search</field>
         <field name="model">sc.legacy.material.category</field>
         <field name="arch" type="xml">
-            <search string="历史物料分类">
-                <field name="legacy_category_id"/>
+            <search string="物料分类">
                 <field name="code"/>
                 <field name="name"/>
                 <field name="parent_id"/>
@@ -135,7 +124,7 @@
     </record>
 
     <record id="action_sc_legacy_material_detail" model="ir.actions.act_window">
-        <field name="name">历史物料档案</field>
+        <field name="name">物料档案</field>
         <field name="res_model">sc.legacy.material.detail</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_sc_legacy_material_detail_search"/>
@@ -146,7 +135,7 @@
     </record>
 
     <record id="action_sc_legacy_material_category" model="ir.actions.act_window">
-        <field name="name">历史物料分类</field>
+        <field name="name">物料分类</field>
         <field name="res_model">sc.legacy.material.category</field>
         <field name="view_mode">tree</field>
         <field name="search_view_id" ref="view_sc_legacy_material_category_search"/>
@@ -157,14 +146,14 @@
     </record>
 
     <menuitem id="menu_sc_legacy_material_detail"
-              name="历史物料档案"
+              name="物料档案"
               parent="smart_construction_core.menu_sc_material_center"
               action="action_sc_legacy_material_detail"
               sequence="50"
               groups="smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
 
     <menuitem id="menu_sc_legacy_material_category"
-              name="历史物料分类"
+              name="物料分类"
               parent="smart_construction_core.menu_sc_material_center"
               action="action_sc_legacy_material_category"
               sequence="55"
