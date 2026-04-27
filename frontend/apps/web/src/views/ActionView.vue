@@ -294,8 +294,12 @@
       :status-label="vm.page.statusLabel"
       :scene-key="vm.page.sceneKey"
       :page-mode="vm.page.pageMode"
+      :list-total-count="listTotalCount"
+      :list-offset="listOffset"
+      :list-limit="contractLimit"
       :on-reload="reload"
       :on-card-click="handleRowClick"
+      :on-page-change="handleListPageChange"
     />
     <ListPage
       v-else-if="vm.content.kind === 'list'"

@@ -35,39 +35,81 @@
       :on-retry="onReload"
     />
 
-    <section v-else class="grid">
-      <article
-        v-for="(row, index) in records"
-        :key="String(row.id ?? index)"
-        class="card"
-        :class="`tone-${rowTone(row)}`"
-        @click="handleCard(row)"
-      >
-        <h3 class="card-title">{{ formatValue(row[titleField]) || formatValue(row.name) || formatValue(row.display_name) || row.id }}</h3>
-        <div v-if="statusMetaFields.length" class="status-chips">
-          <span v-for="field in statusMetaFields" :key="`status-${field}`" class="status-chip">
-            {{ fieldLabel(field) }}: {{ semanticCell(field, row[field]).text }}
-          </span>
+    <template v-else>
+      <section class="grid">
+        <article
+          v-for="(row, index) in records"
+          :key="String(row.id ?? index)"
+          class="card"
+          :class="`tone-${rowTone(row)}`"
+          @click="handleCard(row)"
+        >
+          <h3 class="card-title">{{ formatValue(row[titleField]) || formatValue(row.name) || formatValue(row.display_name) || row.id }}</h3>
+          <div v-if="statusMetaFields.length" class="status-chips">
+            <span v-for="field in statusMetaFields" :key="`status-${field}`" class="status-chip">
+              {{ fieldLabel(field) }}: {{ semanticCell(field, row[field]).text }}
+            </span>
+          </div>
+          <dl v-if="primaryMetaFields.length" class="card-meta primary">
+            <div v-for="field in primaryMetaFields" :key="`primary-${field}`" class="meta-row">
+              <dt>{{ fieldLabel(field) }}</dt>
+              <dd>{{ semanticCell(field, row[field]).text }}</dd>
+            </div>
+          </dl>
+          <dl class="card-meta">
+            <div v-for="field in secondaryMetaFields" :key="field" class="meta-row">
+              <dt>{{ fieldLabel(field) }}</dt>
+              <dd>{{ semanticCell(field, row[field]).text }}</dd>
+            </div>
+          </dl>
+        </article>
+      </section>
+
+      <section v-if="showPagination" class="pagination-bar">
+        <span>{{ paginationSummary }}</span>
+        <div class="pagination-actions">
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || !canPagePrev"
+            @click="pagePrev"
+          >
+            上一页
+          </button>
+          <span>第 {{ currentPage }} / {{ totalPages }} 页</span>
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || !canPageNext"
+            @click="pageNext"
+          >
+            下一页
+          </button>
+          <input
+            class="pagination-input"
+            :value="pageJumpInput"
+            :disabled="loading || totalPages <= 1"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            @input="onPageJumpInput"
+            @keyup.enter="jumpPage"
+          />
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || totalPages <= 1"
+            @click="jumpPage"
+          >
+            跳转
+          </button>
         </div>
-        <dl v-if="primaryMetaFields.length" class="card-meta primary">
-          <div v-for="field in primaryMetaFields" :key="`primary-${field}`" class="meta-row">
-            <dt>{{ fieldLabel(field) }}</dt>
-            <dd>{{ semanticCell(field, row[field]).text }}</dd>
-          </div>
-        </dl>
-        <dl class="card-meta">
-          <div v-for="field in secondaryMetaFields" :key="field" class="meta-row">
-            <dt>{{ fieldLabel(field) }}</dt>
-            <dd>{{ semanticCell(field, row[field]).text }}</dd>
-          </div>
-        </dl>
-      </article>
-    </section>
+      </section>
+    </template>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
@@ -96,6 +138,10 @@ const props = defineProps<{
   statusLabel: string;
   pageMode?: string;
   sceneKey?: string;
+  listTotalCount?: number | null;
+  listOffset?: number;
+  listLimit?: number;
+  onPageChange?: (offset: number) => void;
 }>();
 const errorCopy = computed(() =>
   resolveErrorCopy(
@@ -133,6 +179,50 @@ const secondaryMetaFields = computed(() => {
 });
 
 const modeLabelText = computed(() => pageModeLabel(props.pageMode || 'workspace'));
+const pageJumpInput = ref('');
+const observedListLimit = ref(0);
+const listLimit = computed(() => {
+  if (observedListLimit.value > 0) return observedListLimit.value;
+  const limit = Number(props.listLimit || 40);
+  return Number.isFinite(limit) && limit > 0 ? Math.trunc(limit) : 40;
+});
+const listTotal = computed(() => {
+  if (props.listTotalCount === null || typeof props.listTotalCount === 'undefined') return null;
+  const raw = Number(props.listTotalCount);
+  if (!Number.isFinite(raw) || raw < 0) return null;
+  return Math.trunc(raw);
+});
+const listOffset = computed(() => {
+  const offset = Number(props.listOffset || 0);
+  if (!Number.isFinite(offset) || offset <= 0) return 0;
+  return Math.trunc(offset);
+});
+const totalPages = computed(() => {
+  const total = listTotal.value || 0;
+  return Math.max(1, Math.ceil(total / listLimit.value));
+});
+const currentPage = computed(() => Math.min(totalPages.value, Math.floor(listOffset.value / listLimit.value) + 1));
+const rangeStart = computed(() => {
+  const total = listTotal.value || 0;
+  if (!total) return 0;
+  return Math.min(total, listOffset.value + 1);
+});
+const rangeEnd = computed(() => {
+  const total = listTotal.value || 0;
+  if (!total) return 0;
+  return Math.min(total, listOffset.value + props.records.length);
+});
+const showPagination = computed(() => listTotal.value !== null && props.status === 'ok');
+const canPagePrev = computed(() => listOffset.value > 0);
+const canPageNext = computed(() => {
+  const total = listTotal.value || 0;
+  return listOffset.value + listLimit.value < total;
+});
+const paginationSummary = computed(() => {
+  const total = listTotal.value || 0;
+  if (!total) return '共 0 条';
+  return `共 ${total} 条，当前 ${rangeStart.value}-${rangeEnd.value} 条`;
+});
 
 function semanticCell(field: string, value: unknown) {
   return semanticValueByField(field, value);
@@ -151,6 +241,58 @@ function fieldLabel(name: string) {
 function handleCard(row: Record<string, unknown>) {
   props.onCardClick(row);
 }
+
+function emitPageOffset(offset: number) {
+  if (!props.onPageChange) return;
+  const total = listTotal.value || 0;
+  const maxOffset = total > 0 ? Math.floor((total - 1) / listLimit.value) * listLimit.value : 0;
+  const normalized = Math.min(Math.max(Math.trunc(offset || 0), 0), maxOffset);
+  props.onPageChange(normalized);
+}
+
+function pagePrev() {
+  emitPageOffset(listOffset.value - listLimit.value);
+}
+
+function pageNext() {
+  emitPageOffset(listOffset.value + listLimit.value);
+}
+
+function onPageJumpInput(event: Event) {
+  pageJumpInput.value = String((event.target as HTMLInputElement | null)?.value || '');
+}
+
+function jumpPage() {
+  const page = Number(pageJumpInput.value || currentPage.value);
+  if (!Number.isFinite(page)) return;
+  const normalizedPage = Math.min(Math.max(Math.trunc(page), 1), totalPages.value);
+  pageJumpInput.value = String(normalizedPage);
+  emitPageOffset((normalizedPage - 1) * listLimit.value);
+}
+
+watch(
+  currentPage,
+  (page) => {
+    pageJumpInput.value = String(page);
+  },
+  { immediate: true },
+);
+
+watch(
+  [() => props.records.length, listTotal],
+  ([length, totalRaw]) => {
+    const total = totalRaw || 0;
+    if (length <= 0 || total <= 0) return;
+    if (length > observedListLimit.value) {
+      observedListLimit.value = length;
+      return;
+    }
+    if (listOffset.value === 0) {
+      observedListLimit.value = length;
+    }
+  },
+  { immediate: true },
+);
 
 function formatValue(value: unknown) {
   if (Array.isArray(value)) {
@@ -256,5 +398,56 @@ function formatValue(value: unknown) {
 .meta-row dd {
   margin: 0;
   color: #64748b;
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px 12px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.pagination-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-btn {
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #fff;
+  color: #1d4ed8;
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pagination-input {
+  width: 60px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 4px 8px;
+  color: #0f172a;
+  font-size: 13px;
+}
+
+@media (max-width: 720px) {
+  .pagination-bar,
+  .pagination-actions {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
 }
 </style>

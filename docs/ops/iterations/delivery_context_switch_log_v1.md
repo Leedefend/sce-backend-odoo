@@ -30604,3 +30604,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - result: `PASS; 产品根菜单不再形成第二套项目列表入口，项目台账保留为唯一项目台账业务入口。`
 - rollback: `回退本批次提交并重建前端静态包，即恢复根菜单按历史 action 解析的行为。`
 - next_step: `继续排查其他角色快捷菜单是否也存在“容器菜单带历史 action”导致的重复业务入口。`
+
+## 2026-04-28 Batch-Frontend-Kanban-Pagination
+
+- branch: `codex/dev-env-run`
+- short_sha: `9269787c`
+- Layer Target: `Frontend contract consumer`
+- Module: `frontend/apps/web`
+- Reason: `用户从“项目试点/项目台账（试点）”进入的是卡片式项目列表；后端已经返回 total/offset/limit，但 KanbanPage 未消费分页契约，导致页面仍看不到总条数与翻页能力。`
+- completed_step: `KanbanPage 接入 listTotalCount/listOffset/listLimit/onPageChange，补齐总条数、当前范围、页码、上一页/下一页和跳转控件；ActionView 将既有普通列表分页状态同步传给卡片页，卡片页翻页复用同一条 api.data offset/limit 请求链。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509?menu_id=293，卡片页显示 共 779 条，当前 1-40 条，第 1 / 20 页；点击 下一页 后显示 当前 41-80 条，第 2 / 20 页，api.data 请求从 offset=0 切换为 offset=40，limit=40，need_total=true。`
+- result: `PASS; 项目台账（试点）默认卡片列表已具备真实总数展示和分页能力。`
+- risk: `P2; PageHeader 仍显示当前页记录数，分页栏显示全量总数，语义清晰但后续可统一页头文案为“当前页记录”。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复卡片页无分页控件的旧行为。`
+- next_step: `继续用真实用户从工作台/菜单进入项目台账，验证分页、搜索、详情进入和详情返回组合路径是否保持一致。`
