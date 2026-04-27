@@ -7,11 +7,7 @@
       <field name="res_model">sc.legacy.receipt.income.fact</field>
       <field name="view_mode">tree,form</field>
       <field name="context">{'create': False}</field>
-      <field name="groups_id" eval="[
-        (4, ref('smart_construction_core.group_sc_cap_finance_read')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_user')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_manager'))
-      ]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
 
     <record id="action_sc_legacy_financing_loan_fact" model="ir.actions.act_window">
@@ -19,11 +15,7 @@
       <field name="res_model">sc.legacy.financing.loan.fact</field>
       <field name="view_mode">tree,form</field>
       <field name="context">{'create': False}</field>
-      <field name="groups_id" eval="[
-        (4, ref('smart_construction_core.group_sc_cap_finance_read')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_user')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_manager'))
-      ]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
 
     <record id="action_sc_legacy_fund_daily_snapshot_fact" model="ir.actions.act_window">
@@ -31,11 +23,7 @@
       <field name="res_model">sc.legacy.fund.daily.snapshot.fact</field>
       <field name="view_mode">tree,form</field>
       <field name="context">{'create': False}</field>
-      <field name="groups_id" eval="[
-        (4, ref('smart_construction_core.group_sc_cap_finance_read')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_user')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_manager'))
-      ]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
 
     <record id="action_sc_legacy_fund_daily_line" model="ir.actions.act_window">
@@ -43,67 +31,89 @@
       <field name="res_model">sc.legacy.fund.daily.line</field>
       <field name="view_mode">tree,form</field>
       <field name="context">{'create': False}</field>
-      <field name="groups_id" eval="[
-        (4, ref('smart_construction_core.group_sc_cap_finance_read')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_user')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_manager'))
-      ]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
 
     <menuitem id="menu_sc_finance_history_center"
               name="历史财务事实（内部）"
               parent="smart_construction_core.menu_sc_finance_center"
               sequence="80"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
 
     <menuitem id="menu_sc_legacy_receipt_income_fact"
               name="历史收款收入"
               parent="menu_sc_finance_history_center"
               action="action_sc_legacy_receipt_income_fact"
               sequence="10"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
 
     <menuitem id="menu_sc_legacy_expense_deposit_fact"
               name="历史费用/保证金"
               parent="menu_sc_finance_history_center"
               action="smart_construction_core.action_sc_legacy_expense_deposit_fact"
               sequence="20"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
 
     <menuitem id="menu_sc_legacy_expense_reimbursement_line"
               name="历史费用报销明细"
               parent="menu_sc_finance_history_center"
               action="smart_construction_core.action_sc_legacy_expense_reimbursement_line"
               sequence="25"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
 
     <menuitem id="menu_sc_legacy_invoice_tax_fact"
               name="历史发票税额"
               parent="menu_sc_finance_history_center"
               action="smart_construction_core.action_sc_legacy_invoice_tax_fact"
               sequence="30"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
 
     <menuitem id="menu_sc_legacy_financing_loan_fact"
               name="历史融资借款"
               parent="menu_sc_finance_history_center"
               action="action_sc_legacy_financing_loan_fact"
               sequence="40"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
 
     <menuitem id="menu_sc_legacy_fund_daily_snapshot_fact"
               name="历史资金日报"
               parent="menu_sc_finance_history_center"
               action="action_sc_legacy_fund_daily_snapshot_fact"
               sequence="50"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
 
     <menuitem id="menu_sc_legacy_fund_daily_line"
               name="历史资金日报明细"
               parent="menu_sc_finance_history_center"
               action="action_sc_legacy_fund_daily_line"
               sequence="55"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+
+    <!-- menuitem groups are additive on upgrade; force replacement for internal history menus. -->
+    <record id="menu_sc_finance_history_center" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_receipt_income_fact" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_expense_deposit_fact" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_expense_reimbursement_line" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_invoice_tax_fact" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_financing_loan_fact" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_fund_daily_snapshot_fact" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_fund_daily_line" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
 
   </data>
 </odoo>

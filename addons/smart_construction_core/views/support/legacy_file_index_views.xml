@@ -103,12 +103,7 @@
       <field name="view_mode">tree,form</field>
       <field name="search_view_id" ref="view_sc_legacy_file_index_search"/>
       <field name="context">{'search_default_active_files': 1}</field>
-      <field name="groups_id" eval="[
-        (4, ref('smart_construction_core.group_sc_cap_finance_read')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_user')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_manager')),
-        (4, ref('smart_construction_core.group_sc_cap_config_admin'))
-      ]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
 
     <menuitem id="menu_sc_legacy_file_index"
@@ -116,7 +111,11 @@
               parent="smart_construction_core.menu_sc_finance_history_center"
               action="action_sc_legacy_file_index"
               sequence="90"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_cap_config_admin"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+
+    <record id="menu_sc_legacy_file_index" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
 
   </data>
 </odoo>

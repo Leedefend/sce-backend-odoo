@@ -118,11 +118,7 @@
       <field name="view_mode">tree,form</field>
       <field name="search_view_id" ref="view_sc_legacy_invoice_registration_line_search"/>
       <field name="context">{'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
-      <field name="groups_id" eval="[
-        (4, ref('smart_construction_core.group_sc_cap_finance_read')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_user')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_manager'))
-      ]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
 
     <record id="view_sc_legacy_deduction_adjustment_line_tree" model="ir.ui.view">
@@ -219,11 +215,7 @@
       <field name="view_mode">tree,form</field>
       <field name="search_view_id" ref="view_sc_legacy_deduction_adjustment_line_search"/>
       <field name="context">{'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
-      <field name="groups_id" eval="[
-        (4, ref('smart_construction_core.group_sc_cap_finance_read')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_user')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_manager'))
-      ]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
 
     <record id="view_sc_legacy_fund_confirmation_line_tree" model="ir.ui.view">
@@ -329,11 +321,7 @@
       <field name="view_mode">tree,form</field>
       <field name="search_view_id" ref="view_sc_legacy_fund_confirmation_line_search"/>
       <field name="context">{'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
-      <field name="groups_id" eval="[
-        (4, ref('smart_construction_core.group_sc_cap_finance_read')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_user')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_manager'))
-      ]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
 
     <menuitem id="menu_sc_legacy_invoice_registration_line"
@@ -341,21 +329,31 @@
               parent="smart_construction_core.menu_sc_finance_history_center"
               action="action_sc_legacy_invoice_registration_line"
               sequence="32"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
 
     <menuitem id="menu_sc_legacy_deduction_adjustment_line"
               name="历史扣款调整"
               parent="smart_construction_core.menu_sc_finance_history_center"
               action="action_sc_legacy_deduction_adjustment_line"
               sequence="34"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
 
     <menuitem id="menu_sc_legacy_fund_confirmation_line"
               name="历史资金确认"
               parent="smart_construction_core.menu_sc_finance_history_center"
               action="action_sc_legacy_fund_confirmation_line"
               sequence="36"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+
+    <record id="menu_sc_legacy_invoice_registration_line" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_deduction_adjustment_line" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_fund_confirmation_line" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
 
   </data>
 </odoo>

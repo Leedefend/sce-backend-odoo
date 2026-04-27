@@ -34,7 +34,7 @@
             <button name="action_acknowledge" string="确认已读" type="object" class="btn-primary" invisible="state != 'todo'"/>
             <button name="action_resolve" string="标记处理" type="object" class="btn-primary" invisible="state not in ('todo', 'acknowledged')"/>
             <button name="action_archive" string="归档" type="object" invisible="state == 'archived'"/>
-            <button name="action_reset_todo" string="重新打开" type="object" groups="smart_construction_core.group_sc_cap_finance_manager" invisible="state == 'todo'"/>
+            <button name="action_reset_todo" string="重新打开" type="object" groups="smart_construction_core.group_sc_cap_config_admin" invisible="state == 'todo'"/>
             <button name="action_open_target_record" string="打开目标记录" type="object" invisible="not target_res_id"/>
             <button name="action_open_source_audit" string="打开审批审计" type="object"/>
             <field name="state" widget="statusbar" statusbar_visible="todo,acknowledged,resolved,archived"/>
@@ -118,12 +118,7 @@
       <field name="view_mode">tree,form</field>
       <field name="domain">[('state', '=', 'todo')]</field>
       <field name="context">{'search_default_state_todo': 1}</field>
-      <field name="groups_id" eval="[
-        (4, ref('smart_construction_core.group_sc_internal_user')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_read')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_user')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_manager'))
-      ]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
 
     <record id="action_sc_history_todo_all" model="ir.actions.act_window">
@@ -131,12 +126,7 @@
       <field name="res_model">sc.history.todo</field>
       <field name="view_mode">tree,form</field>
       <field name="context">{'search_default_group_state': 1}</field>
-      <field name="groups_id" eval="[
-        (4, ref('smart_construction_core.group_sc_internal_user')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_read')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_user')),
-        (4, ref('smart_construction_core.group_sc_cap_finance_manager'))
-      ]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
 
     <menuitem id="menu_sc_history_todo"
@@ -144,14 +134,21 @@
               parent="smart_construction_core.menu_sc_finance_center"
               action="action_sc_history_todo"
               sequence="46"
-              groups="smart_construction_core.group_sc_internal_user,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
 
     <menuitem id="menu_sc_history_todo_all"
               name="流程工作台"
               parent="smart_construction_core.menu_sc_finance_history_center"
               action="action_sc_history_todo_all"
               sequence="5"
-              groups="smart_construction_core.group_sc_internal_user,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+
+    <record id="menu_sc_history_todo" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_history_todo_all" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
 
   </data>
 </odoo>

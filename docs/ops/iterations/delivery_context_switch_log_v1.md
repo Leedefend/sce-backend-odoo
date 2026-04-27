@@ -29726,3 +29726,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.menu.navigation_snapshot.container`
 - result: `PASS; business_fact_page_surface_audit issue_count 1213 -> 1104, technical_field_visible 236 -> 181; menu navigation snapshot trace=7115e4dfb958`
 - next_step: `下一批收口 历史财务事实（内部）/流程待办 的真实用户可见性，并继续处理项目/成本页面英文与来源字段。`
+
+## 2026-04-27 Batch-Business-Fact-Internal-History-Visibility
+
+- branch: `codex/dev-env-run`
+- short_sha: `263618b4`
+- Layer Target: `Domain/UI business fact page availability`
+- Module: `smart_construction_core`
+- Reason: `真实业务用户不应看到内部历史迁移页面和流程迁移工作台；发起业务应尽量开放给内部用户，审核再由能力组限制，内部迁移追溯页面应只归平台配置管理员。`
+- completed_step: `将历史财务事实（内部）及其子菜单、流程待办、流程工作台、历史发票登记/扣款调整/资金确认/文件索引等动作与菜单收口到 group_sc_cap_config_admin，并用 ir.ui.menu.groups_id 显式替换避免升级残留旧财务组。`
+- verification:
+  - `XML_PARSE_OK for 6 changed XML files`
+  - `rg group_sc_cap_finance_*/group_sc_internal_user in changed internal history XML files`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `WUTAO_INTERNAL_HISTORY_MENUS={"count": 0, "login": "wutao", "menus": []}`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/business_fact_page_surface_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.menu.navigation_snapshot.container`
+- result: `PASS; wutao 内部历史菜单 count=0; business_fact_page_surface_audit issue_count 1104 -> 508; navigation snapshot trace=8b3ac9f5461e`
+- next_step: `继续真实业务页面字段清理，优先处理资金日报、资金日报明细、融资台账、历史物料、历史采购合同等剩余高集中度页面。`
