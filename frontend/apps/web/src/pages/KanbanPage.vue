@@ -36,6 +36,46 @@
     />
 
     <template v-else>
+      <section v-if="showPagination" class="pagination-bar pagination-bar--top">
+        <span>{{ paginationSummary }}</span>
+        <div class="pagination-actions">
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || !canPagePrev"
+            @click="pagePrev"
+          >
+            上一页
+          </button>
+          <span>第 {{ currentPage }} / {{ totalPages }} 页</span>
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || !canPageNext"
+            @click="pageNext"
+          >
+            下一页
+          </button>
+          <input
+            class="pagination-input"
+            :value="pageJumpInput"
+            :disabled="loading || totalPages <= 1"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            @input="onPageJumpInput"
+            @keyup.enter="jumpPage"
+          />
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || totalPages <= 1"
+            @click="jumpPage"
+          >
+            跳转
+          </button>
+        </div>
+      </section>
+
       <section class="grid">
         <article
           v-for="(row, index) in records"

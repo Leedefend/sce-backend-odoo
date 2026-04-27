@@ -30622,3 +30622,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; PageHeader 仍显示当前页记录数，分页栏显示全量总数，语义清晰但后续可统一页头文案为“当前页记录”。`
 - rollback: `回退本批次提交并重建前端静态包，即恢复卡片页无分页控件的旧行为。`
 - next_step: `继续用真实用户从工作台/菜单进入项目台账，验证分页、搜索、详情进入和详情返回组合路径是否保持一致。`
+
+## 2026-04-28 Batch-Frontend-Kanban-Pagination-Visibility
+
+- branch: `codex/dev-env-run`
+- short_sha: `56ee86a1`
+- Layer Target: `Frontend contract consumer`
+- Module: `frontend/apps/web`
+- Reason: `用户反馈项目试点进入项目列表页仍看不到变化；复核发现分页栏虽已存在，但位于 40 张项目卡片之后，首屏感知仍像没有分页能力。`
+- completed_step: `KanbanPage 将分页栏前置到卡片列表上方，同时保留底部分页栏，保证进入项目台账首屏即可看到总条数、当前范围和翻页按钮。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `docker compose -f docker-compose.yml -f docker-compose.prod-sim.yml -p sc-backend-odoo-prod-sim restart nginx`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509?menu_id=293，首个 .pagination-bar 位于 viewport y=372.5，文本为 共 779 条，当前 1-40 条，第 1 / 20 页，页面共 2 个分页栏。`
+- result: `PASS; 项目台账（试点）分页能力已前置到首屏可见区域。`
+- risk: `P2; 浏览器如果仍停留在旧 SPA 会话，需要普通刷新或强制刷新以加载新 hash 静态资源 index-DgGXvm-e.js。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复仅底部分页栏。`
+- next_step: `继续按用户真实入口检查项目台账分页与详情返回是否保留当前页。`
