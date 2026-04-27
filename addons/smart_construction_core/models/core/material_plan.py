@@ -107,9 +107,8 @@ class ProjectMaterialPlan(models.Model):
             )
             rec.invalidate_recordset()
             company = rec.company_id or self.env.company
-            rec.with_context(
+            rec.with_company(company).with_context(
                 allowed_company_ids=[company.id],
-                force_company=company.id,
             ).request_validation()
             rec._message_post_non_blocking(_("物资计划已提交，进入审批流程。"))
 

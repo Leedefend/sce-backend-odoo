@@ -30052,3 +30052,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=caisiqi E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
 - result: `PASS; 真实用户付款申请提交到 OCA 财务审批通过可连续办理；navigation snapshot trace=aa27292c384f checked=53`
 - next_step: `继续补齐付款/收款申请 OCA 驳回链路真实用户验证，并扩展物资计划审批通过/驳回真实办理探针。`
+
+## 2026-04-27 Batch-Business-OCA-Reject-Material-Runtime
+
+- branch: `codex/dev-env-run`
+- short_sha: `b5253977`
+- Layer Target: `Domain approval OCA execution validation`
+- Module: `smart_construction_core`
+- Reason: `上一批付款申请 OCA 审批通过链路已通，本批补齐付款申请驳回链路，并验证物资计划 OCA 审批通过/驳回真实办理。`
+- completed_step: `payment.request 驳回回调从 OCA review 评论提取审计原因，无评论时落默认原因以避免技术参数阻断；project.material.plan 提交审批改为 with_company，去掉 Odoo 17 force_company warning；真实用户验证付款申请驳回、物资计划审批通过和驳回路径。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/core/payment_request.py addons/smart_construction_core/models/core/material_plan.py`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `PAYMENT_REQUEST_OCA_REJECT_SMOKE=PASS; BEFORE_REJECT=submit/waiting; AFTER_REJECT=rejected/rejected`
+  - `MATERIAL_PLAN_OCA_APPROVE_REJECT_SMOKE=PASS; MATERIAL_AFTER_APPROVE=approved/validated; MATERIAL_AFTER_REJECT=draft/no/reason`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=caisiqi E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 付款申请 OCA 驳回可落 rejected；物资计划 OCA 通过/驳回可连续办理；navigation snapshot trace=cd254c6634d2 checked=53`
+- next_step: `将付款申请、物资计划 OCA 真实用户办理探针沉淀为 scripts/verify 可重复执行入口，并继续审计采购订单/结算单是否需要迁移到 OCA tier 执行层。`

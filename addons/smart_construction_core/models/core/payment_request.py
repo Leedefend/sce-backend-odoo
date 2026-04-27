@@ -699,10 +699,18 @@ class PaymentRequest(models.Model):
             rec._audit_transition("payment_approved", before, after, action_name="action_on_tier_approved")
             rec._message_post_non_blocking(_("付款/收款申请审批通过。"))
 
+    def _get_tier_reject_reason(self):
+        self.ensure_one()
+        reviews = self.review_ids.filtered(lambda review: review.status == "rejected" and review.comment)
+        if reviews:
+            return reviews.sorted(lambda review: review.write_date or review.create_date, reverse=True)[0].comment
+        return _("OCA审批驳回（未填写原因）")
+
     def action_on_tier_rejected(self, reason=None):
         for rec in self:
             if rec.state != "submit":
                 continue
+            reason = reason or rec._get_tier_reject_reason()
             if not reason:
                 raise_guard(
                     "AUDIT_REASON_REQUIRED",
