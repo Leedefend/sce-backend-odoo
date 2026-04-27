@@ -2044,9 +2044,8 @@ watch(
   () => route.fullPath,
   () => {
     renderErrorMessage.value = '';
-    if (applyRoutePreset()) {
-      void requestLoadPage();
-    }
+    applyRoutePreset();
+    void requestLoadPage();
   },
 );
 </script>

@@ -30534,3 +30534,19 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 采购/一般合同 display_name 当前回退为模型名+id，功能闭环通过但显示可读性后续可单独优化。`
 - rollback: `回退本批次提交后继续使用上一版 11 模型真实浏览器闭环脚本；必要时重新运行 cleanup 脚本清理当前 setup.json 中的临时单据。`
 - next_step: `继续判断项目主数据类是否应纳入“审批闭环”还是“创建/编辑/业务引用闭环”，并补齐项目新建后可被合同、采购、付款、结算连续引用的真实浏览器证据。`
+
+## 2026-04-28 Batch-Frontend-ActionView-Route-Reload-Fix
+
+- branch: `codex/dev-env-run`
+- short_sha: `85cf640f`
+- Layer Target: `Frontend contract consumer`
+- Module: `frontend/apps/web`
+- Reason: `用户反馈自定义前端列表首次进入时数据不全，进入详情页再返回列表后数据恢复；排查发现 ActionView 在同组件路由复用时只在筛选/分组状态变化时重新加载，actionId 变化但 route preset 未变化时不会请求新列表数据。`
+- completed_step: `ActionView 的 route.fullPath watcher 调整为：路由变化时先同步 route preset，再始终触发 requestLoadPage；避免从一个列表 action 切换到另一个列表 action 时复用旧列表数据或缺失数据。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" FRONTEND_PROFILE=daily make frontend.restart`
+- result: `PASS; 前端已重启，ActionView 路由变化会重新加载当前 action 列表数据。`
+- risk: `P2; 某些筛选交互可能触发一次额外列表请求，但可换取列表数据正确性；后续可引入请求序号/去重机制进一步优化。`
+- rollback: `回退本批次提交即可恢复原 watcher 行为。`
+- next_step: `用浏览器在多个业务列表之间直接切换，确认首次进入列表、详情返回列表、菜单切换列表三种路径的数据一致。`
