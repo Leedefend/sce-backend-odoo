@@ -50,11 +50,17 @@
                 <form string="资金对账">
                     <header>
                         <button name="action_confirm" string="提交审批" type="object" class="btn-primary"
-                                invisible="state != 'draft'"/>
+                                invisible="state != 'draft' or validation_status in ('waiting', 'pending', 'validated')"/>
+                        <button name="validate_tier" string="审批通过" type="object" class="btn-primary"
+                                invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
+                        <button name="reject_tier" string="审批驳回" type="object"
+                                invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
                         <button name="action_reconcile" string="对账完成" type="object" class="btn-primary"
                                 invisible="state not in ('draft', 'confirmed')"/>
                         <button name="action_cancel" string="取消" type="object"
                                 invisible="state in ('cancel', 'legacy_confirmed')"/>
+                        <field name="validation_status" invisible="1"/>
+                        <field name="can_review" invisible="1"/>
                         <field name="state" widget="statusbar"
                                statusbar_visible="draft,confirmed,reconciled,legacy_confirmed,cancel"/>
                     </header>

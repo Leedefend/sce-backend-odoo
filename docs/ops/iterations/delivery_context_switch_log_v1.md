@@ -30397,3 +30397,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `odoo.shell.exec cleanup: 清理本轮浏览器验证合同 6949/6950 与审批记录 117/118，remaining_contracts=0 remaining_reviews=0`
 - result: `PASS; 真实用户浏览器已跑通项目合同发起、提交审批、工作台待办、审批通过、待办消失的业务闭环。artifact=artifacts/browser-real-user-closure/2026-04-27T17-04-13-214Z`
 - next_step: `继续同样口径扩展到驳回链路及一般合同/采购一般合同抽样，确认统一审批按钮和工作台直达能力跨合同类型一致。`
+
+## 2026-04-28 Batch-Business-Full-Closure-Audit
+
+- branch: `codex/dev-env-run`
+- short_sha: `cec227ae`
+- Layer Target: `Business fact validation + business model rule + native form view semantics`
+- Module: `smart_construction_core`
+- Reason: `核心业务闭环环境下，所有菜单暴露的可办理业务必须具备提交/确认、统一审批待办、审批通过/驳回和后续完成入口，不能只停留在后端烟测。`
+- completed_step: `基于模拟生产库生成 15 个可创建业务模型矩阵；将收款收入、付款执行、发票登记、融资借款、资金对账、结算调整接入 tier.validation 可配置审批；补充审批规则种子、server action 回调、表单审批按钮；为付款申请、结算单、物资计划、费用/保证金、采购单补齐表单“审批通过/审批驳回”入口；新增登记/调整类回滚门禁。`
+- verification:
+  - `python3 -m py_compile` for changed business models, approval policy, and `scripts/verify/business_finance_document_tier_runtime_smoke.py`
+  - `python3 xml.etree.ElementTree parse` for changed XML views/data
+  - `ENV=test ENV_FILE=.env.prod.sim ... CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make restart`
+  - `make verify.business.finance_document_tier_runtime_smoke`: receipt/payment execution/invoice/financing/treasury/settlement adjustment submit -> waiting, approve -> validated, reject -> rejected, rollback OK
+  - `make verify.business.oca_runtime_smoke`: existing payment/material/expense/settlement/purchase/contract/general/legacy purchase flows PASS, rollback OK
+  - `make verify.business.document_state_policy_switch`: approval enabled/disabled policy behavior PASS, rollback OK
+  - `odoo.shell.exec FORM_CLOSURE`: 14 approval-capable business forms all have submit/confirm plus 审批通过/审批驳回 buttons
+- result: `PASS; 模拟生产库业务办理闭环从 8 类 OCA 单据扩展到登记/调整类可配置审批，且所有审批相关表单具备浏览器可见审批入口。matrix=artifacts/business-full-closure/20260428T0137`
+- next_step: `用真实用户浏览器抽样所有业务域：发起一类登记/调整单据并从个人工作台完成审批，确认自定义前端动作刷新与待办消失一致。`

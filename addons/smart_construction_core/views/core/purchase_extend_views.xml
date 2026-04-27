@@ -25,6 +25,15 @@
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.purchase_order_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="validate_tier" type="object" string="审批通过" class="btn-primary"
+                        invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
+                <button name="reject_tier" type="object" string="审批驳回"
+                        invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
+                <field name="validation_status" invisible="1"/>
+                <field name="can_review" invisible="1"/>
+            </xpath>
+
             <xpath expr="//button[@name='button_confirm']" position="attributes">
                 <attribute name="groups">smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_purchase_user,smart_construction_core.group_sc_cap_purchase_manager</attribute>
             </xpath>

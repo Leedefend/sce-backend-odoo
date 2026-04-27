@@ -169,6 +169,48 @@
             <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
         </record>
 
+        <record id="approval_policy_receipt_income" model="sc.approval.policy">
+            <field name="name">收款收入</field>
+            <field name="code">receipt_income_optional_approval</field>
+            <field name="sequence">85</field>
+            <field name="target_model">sc.receipt.income</field>
+            <field name="approval_required">0</field>
+            <field name="trigger">submit</field>
+            <field name="mode">none</field>
+            <field name="runtime_state">tier_validation</field>
+            <field name="manager_scope_key">finance_manager</field>
+            <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+            <field name="note">默认作为收款登记类业务不强制审核；业务配置管理员启用后进入统一待办审批。</field>
+        </record>
+        <record id="approval_step_receipt_income_10" model="sc.approval.step">
+            <field name="policy_id" ref="approval_policy_receipt_income"/>
+            <field name="sequence">10</field>
+            <field name="name">财务中心审核</field>
+            <field name="approval_scope_key">finance_manager</field>
+            <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+        </record>
+
+        <record id="approval_policy_payment_execution" model="sc.approval.policy">
+            <field name="name">付款执行</field>
+            <field name="code">payment_execution_optional_approval</field>
+            <field name="sequence">88</field>
+            <field name="target_model">sc.payment.execution</field>
+            <field name="approval_required">0</field>
+            <field name="trigger">submit</field>
+            <field name="mode">none</field>
+            <field name="runtime_state">tier_validation</field>
+            <field name="manager_scope_key">finance_manager</field>
+            <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+            <field name="note">默认作为付款执行登记不强制审核；启用后提交进入统一待办审批，审批完成后才可标记已付款。</field>
+        </record>
+        <record id="approval_step_payment_execution_10" model="sc.approval.step">
+            <field name="policy_id" ref="approval_policy_payment_execution"/>
+            <field name="sequence">10</field>
+            <field name="name">财务中心审核</field>
+            <field name="approval_scope_key">finance_manager</field>
+            <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+        </record>
+
         <record id="approval_policy_invoice_registration" model="sc.approval.policy">
             <field name="name">发票登记</field>
             <field name="code">invoice_registration_no_approval</field>
@@ -181,6 +223,76 @@
             <field name="manager_scope_key">finance_manager</field>
             <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
             <field name="note">默认作为登记类业务，不强制审核；业务需要时可启用审核并配置步骤。</field>
+        </record>
+        <record id="approval_step_invoice_registration_10" model="sc.approval.step">
+            <field name="policy_id" ref="approval_policy_invoice_registration"/>
+            <field name="sequence">10</field>
+            <field name="name">财务中心审核</field>
+            <field name="approval_scope_key">finance_manager</field>
+            <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+        </record>
+
+        <record id="approval_policy_financing_loan" model="sc.approval.policy">
+            <field name="name">融资借款</field>
+            <field name="code">financing_loan_optional_approval</field>
+            <field name="sequence">100</field>
+            <field name="target_model">sc.financing.loan</field>
+            <field name="approval_required">0</field>
+            <field name="trigger">submit</field>
+            <field name="mode">none</field>
+            <field name="runtime_state">tier_validation</field>
+            <field name="manager_scope_key">finance_manager</field>
+            <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+            <field name="note">默认作为融资借款登记不强制审核；启用后提交进入统一待办审批。</field>
+        </record>
+        <record id="approval_step_financing_loan_10" model="sc.approval.step">
+            <field name="policy_id" ref="approval_policy_financing_loan"/>
+            <field name="sequence">10</field>
+            <field name="name">财务中心审核</field>
+            <field name="approval_scope_key">finance_manager</field>
+            <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+        </record>
+
+        <record id="approval_policy_treasury_reconciliation" model="sc.approval.policy">
+            <field name="name">资金对账</field>
+            <field name="code">treasury_reconciliation_optional_approval</field>
+            <field name="sequence">110</field>
+            <field name="target_model">sc.treasury.reconciliation</field>
+            <field name="approval_required">0</field>
+            <field name="trigger">submit</field>
+            <field name="mode">none</field>
+            <field name="runtime_state">tier_validation</field>
+            <field name="manager_scope_key">finance_manager</field>
+            <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+            <field name="note">默认作为资金对账业务不强制审核；启用后提交进入统一待办审批。</field>
+        </record>
+        <record id="approval_step_treasury_reconciliation_10" model="sc.approval.step">
+            <field name="policy_id" ref="approval_policy_treasury_reconciliation"/>
+            <field name="sequence">10</field>
+            <field name="name">财务中心审核</field>
+            <field name="approval_scope_key">finance_manager</field>
+            <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+        </record>
+
+        <record id="approval_policy_settlement_adjustment" model="sc.approval.policy">
+            <field name="name">结算调整</field>
+            <field name="code">settlement_adjustment_optional_approval</field>
+            <field name="sequence">120</field>
+            <field name="target_model">sc.settlement.adjustment</field>
+            <field name="approval_required">0</field>
+            <field name="trigger">submit</field>
+            <field name="mode">none</field>
+            <field name="runtime_state">tier_validation</field>
+            <field name="manager_scope_key">settlement_manager</field>
+            <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_settlement_manager"/>
+            <field name="note">默认作为结算调整登记不强制审核；启用后提交进入统一待办审批，审批通过后确认调整。</field>
+        </record>
+        <record id="approval_step_settlement_adjustment_10" model="sc.approval.step">
+            <field name="policy_id" ref="approval_policy_settlement_adjustment"/>
+            <field name="sequence">10</field>
+            <field name="name">结算中心审核</field>
+            <field name="approval_scope_key">settlement_manager</field>
+            <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_settlement_manager"/>
         </record>
 
     </data>

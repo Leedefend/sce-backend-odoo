@@ -25,6 +25,7 @@ class ScApprovalPolicy(models.Model):
         ("sc.invoice.registration", "发票登记"),
         ("sc.financing.loan", "融资借款"),
         ("sc.treasury.reconciliation", "资金对账"),
+        ("sc.settlement.adjustment", "结算调整"),
     ]
     APPROVAL_SCOPE_GROUP_XMLIDS = {
         "project_manager": "smart_construction_core.group_sc_cap_project_manager",
@@ -201,6 +202,12 @@ class ScApprovalPolicy(models.Model):
             "construction.contract",
             "sc.general.contract",
             "sc.legacy.purchase.contract.fact",
+            "sc.receipt.income",
+            "sc.payment.execution",
+            "sc.invoice.registration",
+            "sc.financing.loan",
+            "sc.treasury.reconciliation",
+            "sc.settlement.adjustment",
         }
 
     def _tier_server_actions(self):
@@ -238,6 +245,30 @@ class ScApprovalPolicy(models.Model):
                 "smart_construction_core.server_action_legacy_purchase_contract_on_approved",
                 "smart_construction_core.server_action_legacy_purchase_contract_on_rejected",
             ),
+            "sc.receipt.income": (
+                "smart_construction_core.server_action_receipt_income_on_approved",
+                "smart_construction_core.server_action_receipt_income_on_rejected",
+            ),
+            "sc.payment.execution": (
+                "smart_construction_core.server_action_payment_execution_on_approved",
+                "smart_construction_core.server_action_payment_execution_on_rejected",
+            ),
+            "sc.invoice.registration": (
+                "smart_construction_core.server_action_invoice_registration_on_approved",
+                "smart_construction_core.server_action_invoice_registration_on_rejected",
+            ),
+            "sc.financing.loan": (
+                "smart_construction_core.server_action_financing_loan_on_approved",
+                "smart_construction_core.server_action_financing_loan_on_rejected",
+            ),
+            "sc.treasury.reconciliation": (
+                "smart_construction_core.server_action_treasury_reconciliation_on_approved",
+                "smart_construction_core.server_action_treasury_reconciliation_on_rejected",
+            ),
+            "sc.settlement.adjustment": (
+                "smart_construction_core.server_action_settlement_adjustment_on_approved",
+                "smart_construction_core.server_action_settlement_adjustment_on_rejected",
+            ),
         }
         approve_xmlid, reject_xmlid = mapping.get(self.target_model, (None, None))
         approve_action = self.env.ref(approve_xmlid, raise_if_not_found=False) if approve_xmlid else False
@@ -254,6 +285,12 @@ class ScApprovalPolicy(models.Model):
             "construction.contract": "amount_total",
             "sc.general.contract": "amount_total",
             "sc.legacy.purchase.contract.fact": "total_amount",
+            "sc.receipt.income": "amount",
+            "sc.payment.execution": "paid_amount",
+            "sc.invoice.registration": "amount_total",
+            "sc.financing.loan": "amount",
+            "sc.treasury.reconciliation": "confirmation_amount",
+            "sc.settlement.adjustment": "amount",
         }
         amount_field = amount_field_by_model.get(self.target_model)
         if amount_field and step.amount_min:

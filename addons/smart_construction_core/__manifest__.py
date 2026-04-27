@@ -48,6 +48,7 @@
         'data/expense_claim_tier_actions.xml',
         'data/purchase_order_tier_actions.xml',
         'data/contract_tier_actions.xml',
+        'data/finance_document_tier_actions.xml',
         'data/approval_policy_seed.xml',
         'data/approval_scope_seed.xml',
         'data/approval_policy_tier_sync.xml',
