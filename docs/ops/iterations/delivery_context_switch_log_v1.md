@@ -30337,3 +30337,24 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `odoo.shell.exec cleanup: 删除本轮验证合同 6945、审批记录 113，cleanup_remaining=0`
 - result: `PASS; 合同明细变为业务语义且可选，真实用户无合同明细也可提交审批进入统一审批流。artifact=artifacts/browser-real-user-usability/2026-04-27T16-09-54-268Z`
 - next_step: `继续审批人侧真实用户浏览器验证：待审入口、审批通过/驳回按钮、审批完成后发起人页面反馈。`
+
+## 2026-04-28 Batch-Business-Approval-Submit-And-Reviewer-Entry
+
+- branch: `codex/dev-env-run`
+- short_sha: `0d890331`
+- Layer Target: `Approval action semantics + business reviewer entry + frontend contract consumer`
+- Module: `smart_construction_core`, `frontend/apps/web`
+- Reason: `业务发起动作仍有 action_submit 显示为“提交/提交审核”，且合同类统一审批已生成待审记录但审批人缺少直接进入业务单据的待审入口。`
+- completed_step: `action_submit 后端业务按钮与前端兜底统一显示“提交审批”；合同管理补充“待我审批（项目合同）/（一般合同）/（采购/一般合同）”，入口打开对应业务单据并按当前审批人过滤；采购/一般合同入口补充采购审批岗位可见性。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck:strict`
+  - `python3 xml.etree.ElementTree parse: tier_review_views.xml/menu.xml/legacy_purchase_contract_views.xml and submit button views PASS`
+  - `git diff --check`
+  - `CODEX_MODE=fast CODEX_NEED_UPGRADE=1 DB_NAME=sc_prod_sim make mod.upgrade MODULE=smart_construction_core ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml"`
+  - `make prod.restart.safe ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml"`
+  - `odoo.shell.exec: wutao 可见三类合同待审入口，caisiqi 不可见；新增 action 均指向业务模型并按 review_ids/reviewer 过滤`
+  - `odoo.shell.exec: caisiqi 创建项目合同 6946 并提交审批；wutao 通过“待我审批（项目合同）”业务 action 可检索到记录，validate_tier 后 state=confirmed validation_status=validated review=approved；验证记录 6946 已清理`
+  - `E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.portal.load_view_smoke.container MVP_MODEL=construction.contract DB_NAME=sc_prod_sim ... PASS artifact=artifacts/codex/portal-shell-v0_8-1/20260427T162449`
+  - `odoo.shell.exec cleanup: 清理历史验证残留合同 6944/6945 及审批记录 112/113，cleanup_remaining=0`
+- result: `PASS; 提交审批语义覆盖 action_confirm/action_submit 主入口，合同审批人可从业务单据入口处理待审合同并完成统一审批闭环。`
+- next_step: `继续审批链路用户侧收口：抽样自定义前端真实点击审批通过/驳回按钮，并检查审批后发起人列表状态与按钮反馈。`

@@ -107,7 +107,7 @@
               name="合同管理"
               parent="menu_sc_root"
               sequence="20"
-              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager,smart_construction_core.group_sc_cap_purchase_manager"/>
     <menuitem id="menu_sc_construction_contract"
               name="项目合同"
               parent="menu_sc_contract_center"
@@ -126,10 +126,22 @@
               action="action_construction_contract_expense"
               sequence="10"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+    <menuitem id="menu_sc_tier_review_my_construction_contract"
+              name="待我审批（项目合同）"
+              parent="menu_sc_contract_center"
+              action="smart_construction_core.action_sc_tier_review_my_construction_contract"
+              sequence="30"
+              groups="smart_construction_core.group_sc_cap_contract_manager"/>
+    <menuitem id="menu_sc_tier_review_my_general_contract"
+              name="待我审批（一般合同）"
+              parent="menu_sc_contract_center"
+              action="smart_construction_core.action_sc_tier_review_my_general_contract"
+              sequence="35"
+              groups="smart_construction_core.group_sc_cap_contract_manager"/>
 
     <!-- 强制覆盖合同中心菜单的 groups（移除只读组，避免财务看到） -->
     <record id="menu_sc_contract_center" model="ir.ui.menu">
-        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_initiator'), ref('smart_construction_core.group_sc_cap_contract_user'), ref('smart_construction_core.group_sc_cap_contract_manager')])]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_initiator'), ref('smart_construction_core.group_sc_cap_contract_user'), ref('smart_construction_core.group_sc_cap_contract_manager'), ref('smart_construction_core.group_sc_cap_purchase_manager')])]"/>
     </record>
     <record id="menu_sc_construction_contract" model="ir.ui.menu">
         <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_initiator'), ref('smart_construction_core.group_sc_cap_contract_user'), ref('smart_construction_core.group_sc_cap_contract_manager')])]"/>

@@ -23,7 +23,7 @@
                 <header>
                     <button name="action_submit"
                             type="object"
-                            string="提交"
+                            string="提交审批"
                             class="oe_highlight"
                             groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_material_user"
                             invisible="state != 'draft'"/>

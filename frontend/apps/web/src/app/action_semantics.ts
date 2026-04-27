@@ -1,7 +1,7 @@
 import type { ExecuteButtonResponse, ViewButton } from '@sc/schema';
 
 const EXACT_LABELS: Record<string, string> = {
-  action_submit: '提交',
+  action_submit: '提交审批',
   action_confirm: '提交审批',
   action_approve: '审批',
   action_reject: '退回',
@@ -29,7 +29,7 @@ function inferLabelFromName(name: string) {
   if (!name) return '';
   const key = String(name).trim();
   if (EXACT_LABELS[key]) return EXACT_LABELS[key];
-  if (key.includes('submit')) return '提交';
+  if (key.includes('submit')) return '提交审批';
   if (key.includes('approve')) return '审批';
   if (key.includes('reject')) return '退回';
   if (key.includes('confirm')) return '确认';

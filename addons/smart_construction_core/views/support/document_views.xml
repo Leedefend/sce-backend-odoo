@@ -28,7 +28,7 @@
 
                 <header>
                     <!-- 提交审核：仅 draft 显示 -->
-                    <button name="action_submit" type="object" string="提交审核"
+                    <button name="action_submit" type="object" string="提交审批"
                         class="oe_highlight"
                         modifiers='{"invisible":[["state","!=","draft"]]}'/>
 

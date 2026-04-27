@@ -7,5 +7,23 @@
             <field name="view_mode">tree,form</field>
             <field name="domain">[('reviewer_id','=',uid), ('status','in',('waiting','pending')), ('model','=','project.material.plan')]</field>
         </record>
+        <record id="action_sc_tier_review_my_construction_contract" model="ir.actions.act_window">
+            <field name="name">待我审批（项目合同）</field>
+            <field name="res_model">construction.contract</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('review_ids.reviewer_ids','=',uid), ('review_ids.status','in',('waiting','pending')), ('validation_status','in',('waiting','pending'))]</field>
+        </record>
+        <record id="action_sc_tier_review_my_general_contract" model="ir.actions.act_window">
+            <field name="name">待我审批（一般合同）</field>
+            <field name="res_model">sc.general.contract</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('review_ids.reviewer_ids','=',uid), ('review_ids.status','in',('waiting','pending')), ('validation_status','in',('waiting','pending'))]</field>
+        </record>
+        <record id="action_sc_tier_review_my_legacy_purchase_contract" model="ir.actions.act_window">
+            <field name="name">待我审批（采购/一般合同）</field>
+            <field name="res_model">sc.legacy.purchase.contract.fact</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('review_ids.reviewer_ids','=',uid), ('review_ids.status','in',('waiting','pending')), ('validation_status','in',('waiting','pending'))]</field>
+        </record>
     </data>
 </odoo>
