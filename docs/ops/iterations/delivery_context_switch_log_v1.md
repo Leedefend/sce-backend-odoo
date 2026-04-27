@@ -29896,3 +29896,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
 - result: `PASS; 业务配置管理员保留业务字典入口; 定额字典语义独立; navigation snapshot trace=090e9d4984b1`
 - next_step: `继续真实用户连续办理业务链路验证，重点检查业务配置管理员基础配置能力是否完整。`
+
+## 2026-04-27 Batch-Business-Fact-Button-Label-Correction
+
+- branch: `codex/dev-env-run`
+- short_sha: `3093084d`
+- Layer Target: `Domain/UI business fact page surface`
+- Module: `smart_construction_core`
+- Reason: `用户发现仍有按钮标签未完整中文化；审计确认项目表单任务统计按钮内部 statinfo 字段显示为 Tasks。`
+- completed_step: `将 project.project 表单 action_view_tasks 按钮内 open_task_count statinfo string 从 Tasks 改为 任务，按钮 action/权限/业务逻辑不变。`
+- verification:
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/views/core/project_views.xml`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `PROJECT_TASK_BUTTON_LABELS: button=任务; statinfo=任务`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 项目任务统计按钮中文化; navigation snapshot trace=dc92cd99f7fb`
+- next_step: `继续真实用户连续办理业务链路验证，遇到页面标签遗漏按按钮/字段/statinfo 三类一起审计。`

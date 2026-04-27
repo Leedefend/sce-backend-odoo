@@ -117,7 +117,7 @@
                 <div class="oe_button_box" name="button_box">
                     <button name="action_view_tasks" string="任务" type="object" class="oe_stat_button"
                             groups="base.group_system,smart_construction_core.group_sc_task_entry_access,smart_construction_core.group_sc_super_admin">
-                        <field string="Tasks" name="open_task_count" widget="statinfo"/>
+                        <field string="任务" name="open_task_count" widget="statinfo"/>
                     </button>
                     <button name="project_update_all_action" type="object" class="oe_stat_button"
                             groups="base.group_system,smart_construction_core.group_sc_task_entry_access,smart_construction_core.group_sc_super_admin">
