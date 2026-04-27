@@ -14,7 +14,7 @@
                 <group expand="0" string="分组">
                     <filter name="group_by_model" string="业务单据" context="{'group_by': 'target_model'}"/>
                     <filter name="group_by_runtime" string="执行状态" context="{'group_by': 'runtime_state'}"/>
-                    <filter name="group_by_group" string="审核能力组" context="{'group_by': 'manager_group_id'}"/>
+                    <filter name="group_by_group" string="默认审批岗位" context="{'group_by': 'manager_scope_key'}"/>
                 </group>
             </search>
         </field>
@@ -32,7 +32,7 @@
                 <field name="trigger"/>
                 <field name="mode"/>
                 <field name="runtime_state"/>
-                <field name="manager_group_id"/>
+                <field name="manager_scope_key"/>
                 <field name="step_count"/>
                 <field name="active"/>
             </tree>
@@ -59,7 +59,8 @@
                             <field name="trigger"/>
                             <field name="mode"/>
                             <field name="runtime_state"/>
-                            <field name="manager_group_id"/>
+                            <field name="manager_scope_key"/>
+                            <field name="manager_group_id" invisible="1"/>
                         </group>
                     </group>
                     <notebook>
@@ -69,7 +70,8 @@
                                     <field name="sequence" widget="handle"/>
                                     <field name="active"/>
                                     <field name="name"/>
-                                    <field name="approve_group_id"/>
+                                    <field name="approval_scope_key"/>
+                                    <field name="approve_group_id" column_invisible="1"/>
                                     <field name="amount_min"/>
                                     <field name="amount_max"/>
                                     <field name="condition_note"/>
@@ -80,7 +82,8 @@
                                             <field name="name"/>
                                             <field name="sequence"/>
                                             <field name="active"/>
-                                            <field name="approve_group_id"/>
+                                            <field name="approval_scope_key"/>
+                                            <field name="approve_group_id" invisible="1"/>
                                         </group>
                                         <group>
                                             <field name="amount_min"/>

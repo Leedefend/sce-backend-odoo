@@ -26,6 +26,24 @@ class ScApprovalPolicy(models.Model):
         ("sc.financing.loan", "融资借款"),
         ("sc.treasury.reconciliation", "资金对账"),
     ]
+    APPROVAL_SCOPE_GROUP_XMLIDS = {
+        "project_manager": "smart_construction_core.group_sc_cap_project_manager",
+        "material_manager": "smart_construction_core.group_sc_cap_material_manager",
+        "purchase_manager": "smart_construction_core.group_sc_cap_purchase_manager",
+        "finance_manager": "smart_construction_core.group_sc_cap_finance_manager",
+        "contract_manager": "smart_construction_core.group_sc_cap_contract_manager",
+        "cost_manager": "smart_construction_core.group_sc_cap_cost_manager",
+        "settlement_manager": "smart_construction_core.group_sc_cap_settlement_manager",
+    }
+    APPROVAL_SCOPE_LABELS = {
+        "project_manager": "项目负责人",
+        "material_manager": "物资审核人",
+        "purchase_manager": "采购审核人",
+        "finance_manager": "财务审核人",
+        "contract_manager": "合同审核人",
+        "cost_manager": "成控审核人",
+        "settlement_manager": "结算审核人",
+    }
 
     name = fields.Char(required=True, tracking=True, string="业务名称")
     code = fields.Char(required=True, index=True, tracking=True, string="规则编码")
@@ -67,7 +85,16 @@ class ScApprovalPolicy(models.Model):
         tracking=True,
         string="执行状态",
     )
-    manager_group_id = fields.Many2one("res.groups", tracking=True, string="默认审核能力组")
+    manager_scope_key = fields.Selection(
+        selection="_selection_approval_scope",
+        compute="_compute_manager_scope_key",
+        inverse="_inverse_manager_scope_key",
+        store=True,
+        readonly=False,
+        tracking=True,
+        string="默认审批岗位",
+    )
+    manager_group_id = fields.Many2one("res.groups", tracking=True, string="默认审批执行组")
     step_ids = fields.One2many("sc.approval.step", "policy_id", string="审核步骤")
     step_count = fields.Integer(compute="_compute_step_count", string="步骤数")
     note = fields.Text(string="业务说明")
@@ -86,6 +113,36 @@ class ScApprovalPolicy(models.Model):
     def _compute_step_count(self):
         for rec in self:
             rec.step_count = len(rec.step_ids)
+
+    @api.model
+    def _selection_approval_scope(self):
+        return [(key, self.APPROVAL_SCOPE_LABELS[key]) for key in self.APPROVAL_SCOPE_GROUP_XMLIDS]
+
+    @api.model
+    def _group_for_approval_scope(self, scope_key):
+        xmlid = self.APPROVAL_SCOPE_GROUP_XMLIDS.get(scope_key)
+        return self.env.ref(xmlid, raise_if_not_found=False) if xmlid else False
+
+    @api.model
+    def _approval_scope_for_group(self, group):
+        if not group:
+            return False
+        xmlids = group.get_external_id()
+        group_xmlid = xmlids.get(group.id)
+        for scope_key, xmlid in self.APPROVAL_SCOPE_GROUP_XMLIDS.items():
+            if group_xmlid == xmlid:
+                return scope_key
+        return False
+
+    @api.depends("manager_group_id")
+    def _compute_manager_scope_key(self):
+        for rec in self:
+            rec.manager_scope_key = rec._approval_scope_for_group(rec.manager_group_id)
+
+    def _inverse_manager_scope_key(self):
+        for rec in self:
+            group = rec._group_for_approval_scope(rec.manager_scope_key)
+            rec.manager_group_id = group.id if group else False
 
     @api.constrains("approval_required", "mode")
     def _check_approval_mode(self):
@@ -123,7 +180,7 @@ class ScApprovalPolicy(models.Model):
             if not groups and policy.manager_group_id:
                 groups = policy.manager_group_id
             if not groups:
-                raise ValidationError(_("审批规则 %s 已启用审核，但未配置审核能力组。") % policy.display_name)
+                raise ValidationError(_("审批规则 %s 已启用审核，但未配置审批岗位。") % policy.display_name)
             allowed = False
             for group in groups:
                 xmlid = group.get_external_id().get(group.id)
@@ -254,12 +311,20 @@ class ScApprovalPolicy(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        for vals in vals_list:
+            scope_key = vals.get("manager_scope_key")
+            if scope_key and not vals.get("manager_group_id"):
+                group = self._group_for_approval_scope(scope_key)
+                vals["manager_group_id"] = group.id if group else False
         records = super().create(vals_list)
         if not self.env.context.get("skip_tier_sync"):
             records.sync_tier_definitions()
         return records
 
     def write(self, vals):
+        if "manager_scope_key" in vals and "manager_group_id" not in vals:
+            group = self._group_for_approval_scope(vals.get("manager_scope_key"))
+            vals = dict(vals, manager_group_id=group.id if group else False)
         res = super().write(vals)
         if not self.env.context.get("skip_tier_sync"):
             self.sync_tier_definitions()
@@ -275,7 +340,16 @@ class ScApprovalStep(models.Model):
     active = fields.Boolean(default=True, string="启用")
     sequence = fields.Integer(default=10, index=True, string="顺序")
     name = fields.Char(required=True, string="步骤名称")
-    approve_group_id = fields.Many2one("res.groups", required=True, string="审核能力组")
+    approval_scope_key = fields.Selection(
+        selection="_selection_approval_scope",
+        compute="_compute_approval_scope_key",
+        inverse="_inverse_approval_scope_key",
+        store=True,
+        readonly=False,
+        required=True,
+        string="审批岗位",
+    )
+    approve_group_id = fields.Many2one("res.groups", required=True, string="审批执行组")
     tier_definition_id = fields.Many2one("tier.definition", readonly=True, copy=False, string="OCA审批定义")
     amount_min = fields.Monetary(string="金额下限")
     amount_max = fields.Monetary(string="金额上限")
@@ -295,14 +369,44 @@ class ScApprovalStep(models.Model):
             if rec.amount_min and rec.amount_max and rec.amount_min > rec.amount_max:
                 raise ValidationError(_("审核步骤的金额下限不能大于金额上限。"))
 
+    @api.model
+    def _selection_approval_scope(self):
+        return self.env["sc.approval.policy"]._selection_approval_scope()
+
+    @api.model
+    def _group_for_approval_scope(self, scope_key):
+        return self.env["sc.approval.policy"]._group_for_approval_scope(scope_key)
+
+    @api.model
+    def _approval_scope_for_group(self, group):
+        return self.env["sc.approval.policy"]._approval_scope_for_group(group)
+
+    @api.depends("approve_group_id")
+    def _compute_approval_scope_key(self):
+        for rec in self:
+            rec.approval_scope_key = rec._approval_scope_for_group(rec.approve_group_id)
+
+    def _inverse_approval_scope_key(self):
+        for rec in self:
+            group = rec._group_for_approval_scope(rec.approval_scope_key)
+            rec.approve_group_id = group.id if group else False
+
     @api.model_create_multi
     def create(self, vals_list):
+        for vals in vals_list:
+            scope_key = vals.get("approval_scope_key")
+            if scope_key and not vals.get("approve_group_id"):
+                group = self._group_for_approval_scope(scope_key)
+                vals["approve_group_id"] = group.id if group else False
         records = super().create(vals_list)
         if not self.env.context.get("skip_tier_sync"):
             records.mapped("policy_id").sync_tier_definitions()
         return records
 
     def write(self, vals):
+        if "approval_scope_key" in vals and "approve_group_id" not in vals:
+            group = self._group_for_approval_scope(vals.get("approval_scope_key"))
+            vals = dict(vals, approve_group_id=group.id if group else False)
         res = super().write(vals)
         if not self.env.context.get("skip_tier_sync"):
             self.mapped("policy_id").sync_tier_definitions()
