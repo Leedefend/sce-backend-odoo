@@ -48,7 +48,7 @@ def _to_float(val):
 
 class ScNormImportWizard(models.TransientModel):
     _name = "sc.norm.import.wizard"
-    _description = "Import Sichuan 2015 Norm XLSX"
+    _description = "四川2015定额导入"
 
     data_file = fields.Binary("定额 Excel 文件", required=True)
     filename = fields.Char("文件名")

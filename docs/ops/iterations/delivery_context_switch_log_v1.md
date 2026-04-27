@@ -29692,3 +29692,20 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_wutao_business_config_probe.py`
 - result: `PASS; custom frontend system.init now exposes 智能施工 2.0/业务配置 with 20 business config nodes for wutao; navigation snapshot trace=f36447c53a96`
 - next_step: `继续验证真实用户矩阵中发起/审核业务入口是否因单一 role_surface 剪枝产生缺口，必要时让 role_surface 合并能力组可见菜单而不是单角色覆盖。`
+
+## 2026-04-27 Batch-Business-Fact-Page-Surface-Clean
+
+- branch: `codex/dev-env-run`
+- short_sha: `01233030`
+- Layer Target: `Domain/UI business fact page surface`
+- Module: `sc_norm_engine`, `scripts/migration`
+- Reason: `菜单已经出现后，需要先统一业务事实页面显示，避免英文页面、技术字段、迁移字段继续暴露给真实用户。`
+- completed_step: `定额专业/章节/子目/导入向导描述中文化；定额页面移除 sheet_name/unit_raw/line_no 来源字段展示；新增 business_fact_page_surface_audit_probe 按真实用户可见菜单扫描英文与 legacy/source/raw/迁移字段`
+- verification:
+  - `python3 -m py_compile addons/sc_norm_engine/models/norm_specialty.py addons/sc_norm_engine/wizard/norm_import_wizard.py scripts/migration/business_fact_page_surface_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=sc_norm_engine`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/business_fact_page_surface_audit_probe.py`
+  - `SC_NORM_SURFACE_ROWS=[]`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.menu.navigation_snapshot.container`
+- result: `PASS; 定额页面第一批清理完成；全量业务根审计仍提示 business_page_surface_gap_present，集中在历史财务事实、流程待办、合同/财务账款核心单据 legacy/source 字段及英文模型描述`
+- next_step: `下一批优先收口财务账款业务页面，判断内部历史事实菜单是否应从真实业务用户可见面隐藏。`

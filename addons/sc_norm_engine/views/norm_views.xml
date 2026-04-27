@@ -7,7 +7,6 @@
             <tree string="专业">
                 <field name="code"/>
                 <field name="name"/>
-                <field name="sheet_name"/>
                 <field name="sequence"/>
                 <field name="active"/>
             </tree>
@@ -23,7 +22,6 @@
                     <group>
                         <field name="code"/>
                         <field name="name"/>
-                        <field name="sheet_name"/>
                         <field name="sequence"/>
                         <field name="active"/>
                     </group>
@@ -43,7 +41,7 @@
                                     <field name="code"/>
                                     <field name="name"/>
                                     <field name="chapter_id"/>
-                                    <field name="unit_raw"/>
+                                    <field name="uom_id"/>
                                     <field name="price_total"/>
                                 </tree>
                             </field>
@@ -113,7 +111,6 @@
                 <field name="chapter_id"/>
                 <field name="code"/>
                 <field name="name"/>
-                <field name="unit_raw"/>
                 <field name="uom_id"/>
                 <field name="price_total"/>
                 <field name="cost_direct"/>
@@ -122,7 +119,6 @@
                 <field name="cost_machine"/>
                 <field name="fee_rate"/>
                 <field name="cost_misc"/>
-                <field name="line_no"/>
             </tree>
         </field>
     </record>
@@ -140,7 +136,6 @@
                     <group>
                         <field name="code"/>
                         <field name="name"/>
-                        <field name="unit_raw"/>
                         <field name="uom_id"/>
                     </group>
                     <group string="费用">
@@ -154,7 +149,6 @@
                         <group>
                             <field name="fee_rate"/>
                             <field name="cost_misc"/>
-                            <field name="line_no"/>
                         </group>
                     </group>
                     <group string="工作内容">
