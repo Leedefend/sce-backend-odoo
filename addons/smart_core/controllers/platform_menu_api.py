@@ -176,6 +176,13 @@ def _is_admin_user(env) -> bool:
         return False
 
 
+def _is_business_config_user(env) -> bool:
+    try:
+        return bool(env.user.has_group('smart_construction_core.group_sc_cap_business_config_admin'))
+    except Exception:
+        return False
+
+
 class PlatformMenuAPI(http.Controller):
     @http.route('/api/menu/tree', type='http', auth='public', csrf=False, cors='*', methods=['POST'])
     def api_menu_tree(self, **kwargs):
@@ -204,6 +211,7 @@ class PlatformMenuAPI(http.Controller):
             nav_fact,
             nav_explained,
             is_admin=_is_admin_user(env),
+            is_business_config_admin=_is_business_config_user(env),
         )
         return _json_response({'ok': True, 'nav_fact': nav_fact_filtered, 'meta': {**_meta(trace_id), 'delivery_convergence': convergence}})
 
@@ -247,6 +255,7 @@ class PlatformMenuAPI(http.Controller):
             nav_fact,
             nav_explained,
             is_admin=_is_admin_user(env),
+            is_business_config_admin=_is_business_config_user(env),
         )
         return _json_response(
             {

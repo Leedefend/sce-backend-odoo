@@ -45,9 +45,6 @@ ROLE_SURFACE_OVERRIDES = {
 ROLE_GROUPS_EXPLICIT = {
     "executive": {
         "smart_construction_custom.group_sc_role_executive",
-        "smart_construction_core.group_sc_super_admin",
-        "smart_construction_core.group_sc_cap_config_admin",
-        "base.group_system",
     },
     "pm": {
         "smart_construction_custom.group_sc_role_pm",
