@@ -308,6 +308,9 @@
       :error="pageError"
       :columns="columns"
       :records="records"
+      :list-total-count="listTotalCount"
+      :list-offset="listOffset"
+      :list-limit="contractLimit"
       :column-labels="contractColumnLabels"
       :sort-label="sortLabel"
       :sort-options="sortOptions"
@@ -342,6 +345,7 @@
       :on-run-selection-action="handleSelectionAction"
       :on-clear-selection="clearSelection"
       :on-row-click="handleRowClick"
+      :on-page-change="handleListPageChange"
     />
     <section v-else-if="isSectionVisible('advanced_view', { defaultEnabled: pageSectionEnabled('advanced_view', true), tag: 'section' })" class="advanced-view" :style="getSectionStyle('advanced_view')">
       <header class="advanced-view-head">
@@ -704,6 +708,7 @@ const traceId = ref('');
 const lastTraceId = ref('');
 const records = ref<Array<Record<string, unknown>>>([]);
 const listTotalCount = ref<number | null>(null);
+const listOffset = ref(0);
 const projectScopeTotals = ref<{ all: number; active: number; archived: number } | null>(null);
 const projectScopeMetrics = ref<{ warning: number; done: number; amount: number } | null>(null);
 const searchTerm = ref('');
@@ -1133,6 +1138,7 @@ const { buildHudEntriesInput } = useActionViewHudEntriesInputRuntime({
     activeContractFilterKey: activeContractFilterKey.value,
     activeSavedFilterKey: activeSavedFilterKey.value,
     activeGroupByField: activeGroupByField.value,
+    listOffset: listOffset.value,
     groupWindowOffset: groupWindowOffset.value,
     groupWindowId: groupWindowId.value,
     groupQueryFingerprint: groupQueryFingerprint.value,
@@ -1893,6 +1899,7 @@ const {
     searchTerm: searchTerm.value,
     sortLabel: sortLabel.value,
     activeGroupByField: activeGroupByField.value,
+    listOffset: listOffset.value,
     groupWindowOffset: groupWindowOffset.value,
     groupSampleLimit: groupSampleLimit.value,
     contractLimit: contractLimit.value,
@@ -2007,11 +2014,18 @@ const {
   searchTerm,
   sortValue,
   filterValue,
+  listOffset,
   groupWindowOffset,
   syncRouteListState,
   load: requestLoadPage,
   clearSelection,
 });
+
+function handleListPageChange(offset: number): void {
+  listOffset.value = Math.max(0, Math.trunc(Number(offset || 0)));
+  clearSelection();
+  void requestLoadPage();
+}
 
 const {
   clearSelection: selectionRuntimeClearSelection,
@@ -2044,6 +2058,8 @@ watch(
   () => route.fullPath,
   () => {
     renderErrorMessage.value = '';
+    listOffset.value = 0;
+    clearSelection();
     applyRoutePreset();
     void requestLoadPage();
   },

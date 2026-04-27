@@ -214,6 +214,46 @@
         </tbody>
       </table>
     </section>
+
+    <section v-if="showPagination" class="pagination-bar">
+      <span>{{ paginationSummary }}</span>
+      <div class="pagination-actions">
+        <button
+          type="button"
+          class="pagination-btn"
+          :disabled="loading || !canPagePrev"
+          @click="pagePrev"
+        >
+          上一页
+        </button>
+        <span>第 {{ currentPage }} / {{ totalPages }} 页</span>
+        <button
+          type="button"
+          class="pagination-btn"
+          :disabled="loading || !canPageNext"
+          @click="pageNext"
+        >
+          下一页
+        </button>
+        <input
+          class="pagination-input"
+          :value="pageJumpInput"
+          :disabled="loading || totalPages <= 1"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          @input="onPageJumpInput"
+          @keyup.enter="jumpPage"
+        />
+        <button
+          type="button"
+          class="pagination-btn"
+          :disabled="loading || totalPages <= 1"
+          @click="jumpPage"
+        >
+          跳转
+        </button>
+      </div>
+    </section>
   </section>
 </template>
 
@@ -259,6 +299,9 @@ const props = defineProps<{
   pageMode?: string;
   sceneKey?: string;
   recordCount?: number;
+  listTotalCount?: number | null;
+  listOffset?: number;
+  listLimit?: number;
   enableSummaryStrip?: boolean;
   enableGroupedRows?: boolean;
   listProfile?: SceneListProfile | null;
@@ -309,6 +352,7 @@ const props = defineProps<{
   onGroupSortChange?: (next: 'asc' | 'desc') => void;
   collapsedGroupKeys?: string[];
   onGroupCollapsedChange?: (keys: string[]) => void;
+  onPageChange?: (offset: number) => void;
 }>();
 const errorCopy = computed(() =>
   resolveErrorCopy(
@@ -321,6 +365,8 @@ const groupedRows = computed(() =>
   Array.isArray(props.groupedRows) ? props.groupedRows : [],
 );
 const groupJumpPageInput = ref<Record<string, string>>({});
+const pageJumpInput = ref('');
+const observedListLimit = ref(0);
 const groupSortDesc = computed(() => (props.groupSort || 'desc') === 'desc');
 const sortedGroupedRows = computed(() => {
   const rows = [...groupedRows.value];
@@ -553,6 +599,48 @@ const allSelected = computed(() => {
   if (!rows.length) return false;
   return rows.every((id) => selectedIdSet.value.has(id));
 });
+const listLimit = computed(() => {
+  if (observedListLimit.value > 0) return observedListLimit.value;
+  const limit = Number(props.listLimit || 40);
+  return Number.isFinite(limit) && limit > 0 ? Math.trunc(limit) : 40;
+});
+const listTotal = computed(() => {
+  if (props.listTotalCount === null || typeof props.listTotalCount === 'undefined') return null;
+  const raw = Number(props.listTotalCount);
+  if (!Number.isFinite(raw) || raw < 0) return null;
+  return Math.trunc(raw);
+});
+const listOffset = computed(() => {
+  const offset = Number(props.listOffset || 0);
+  if (!Number.isFinite(offset) || offset <= 0) return 0;
+  return Math.trunc(offset);
+});
+const totalPages = computed(() => {
+  const total = listTotal.value || 0;
+  return Math.max(1, Math.ceil(total / listLimit.value));
+});
+const currentPage = computed(() => Math.min(totalPages.value, Math.floor(listOffset.value / listLimit.value) + 1));
+const rangeStart = computed(() => {
+  const total = listTotal.value || 0;
+  if (!total) return 0;
+  return Math.min(total, listOffset.value + 1);
+});
+const rangeEnd = computed(() => {
+  const total = listTotal.value || 0;
+  if (!total) return 0;
+  return Math.min(total, listOffset.value + props.records.length);
+});
+const showPagination = computed(() => listTotal.value !== null && props.status === 'ok');
+const canPagePrev = computed(() => listOffset.value > 0);
+const canPageNext = computed(() => {
+  const total = listTotal.value || 0;
+  return listOffset.value + listLimit.value < total;
+});
+const paginationSummary = computed(() => {
+  const total = listTotal.value || 0;
+  if (!total) return '共 0 条';
+  return `共 ${total} 条，当前 ${rangeStart.value}-${rangeEnd.value} 条`;
+});
 
 function isSelected(row: Record<string, unknown>) {
   const id = rowId(row);
@@ -579,6 +667,58 @@ function runSelectionAction(key: string) {
   if (!key || selectedCount.value <= 0) return;
   props.onRunSelectionAction?.(key);
 }
+
+function emitPageOffset(offset: number) {
+  if (!props.onPageChange) return;
+  const total = listTotal.value || 0;
+  const maxOffset = total > 0 ? Math.floor((total - 1) / listLimit.value) * listLimit.value : 0;
+  const normalized = Math.min(Math.max(Math.trunc(offset || 0), 0), maxOffset);
+  props.onPageChange(normalized);
+}
+
+function pagePrev() {
+  emitPageOffset(listOffset.value - listLimit.value);
+}
+
+function pageNext() {
+  emitPageOffset(listOffset.value + listLimit.value);
+}
+
+function onPageJumpInput(event: Event) {
+  pageJumpInput.value = String((event.target as HTMLInputElement | null)?.value || '');
+}
+
+function jumpPage() {
+  const page = Number(pageJumpInput.value || currentPage.value);
+  if (!Number.isFinite(page)) return;
+  const normalizedPage = Math.min(Math.max(Math.trunc(page), 1), totalPages.value);
+  pageJumpInput.value = String(normalizedPage);
+  emitPageOffset((normalizedPage - 1) * listLimit.value);
+}
+
+watch(
+  currentPage,
+  (page) => {
+    pageJumpInput.value = String(page);
+  },
+  { immediate: true },
+);
+
+watch(
+  [() => props.records.length, listTotal],
+  ([length, totalRaw]) => {
+    const total = totalRaw || 0;
+    if (length <= 0 || total <= 0) return;
+    if (length > observedListLimit.value) {
+      observedListLimit.value = length;
+      return;
+    }
+    if (listOffset.value === 0) {
+      observedListLimit.value = length;
+    }
+  },
+  { immediate: true },
+);
 
 function onSelectAllChange(event: Event) {
   const checked = Boolean((event.target as HTMLInputElement | null)?.checked);
@@ -849,6 +989,49 @@ function columnLabel(col: string) {
   color: #1d4ed8;
   padding: 6px 10px;
   cursor: pointer;
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px 12px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.pagination-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-btn {
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #fff;
+  color: #1d4ed8;
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pagination-input {
+  width: 60px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 4px 8px;
+  color: #0f172a;
+  font-size: 13px;
 }
 
 table {

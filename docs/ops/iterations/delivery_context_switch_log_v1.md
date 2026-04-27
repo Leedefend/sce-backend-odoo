@@ -30550,3 +30550,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 某些筛选交互可能触发一次额外列表请求，但可换取列表数据正确性；后续可引入请求序号/去重机制进一步优化。`
 - rollback: `回退本批次提交即可恢复原 watcher 行为。`
 - next_step: `用浏览器在多个业务列表之间直接切换，确认首次进入列表、详情返回列表、菜单切换列表三种路径的数据一致。`
+
+## 2026-04-28 Batch-Frontend-List-Total-Pagination
+
+- branch: `codex/dev-env-run`
+- short_sha: `83721618`
+- Layer Target: `Frontend contract consumer`
+- Module: `frontend/apps/web`
+- Reason: `自定义前端普通列表已经通过后端契约请求 need_total/limit/offset，但页面没有展示总条数，也没有提供普通列表分页交互，用户无法判断列表完整性和继续翻页。`
+- completed_step: `ActionView 增加普通列表 offset 状态并接入 api.data list 请求；搜索、排序、筛选和 action 路由切换时重置普通列表页码；ListPage 增加总条数、当前范围、页码、上一页/下一页和跳转控件，并按实际返回记录数校准分页步长，避免契约默认 limit 与后端实际返回条数不一致时跳页。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `make frontend.restart`
+  - `Playwright browser: admin/admin 登录 sc_demo，进入 /a/546?menu_id=352，切换列表视图，确认显示 共 771 条/当前 1-40 条/第 1 / 20 页；点击 下一页 后 api.data 请求 offset=40、limit=40、need_total=true，页面显示 当前 41-80 条/第 2 / 20 页。`
+- result: `PASS; 自定义普通列表页已具备总条数展示和分页办理能力，翻页请求与后端 offset/limit 契约一致。`
+- risk: `P2; 当前页码不写入 URL，详情返回后的页码保持后续可作为独立增强项处理。`
+- rollback: `回退本批次提交即可移除普通列表分页控件并恢复原单页列表行为。`
+- next_step: `继续用真实业务用户验证高频列表页，确认列表分页、详情进入/返回和办理入口组合路径没有使用级缺口。`

@@ -8,6 +8,7 @@ type BuildLoadRequestDynamicInputOptions = {
   searchTerm: string;
   sortLabel: string;
   activeGroupByField: string;
+  listOffset: number;
   groupWindowOffset: number;
   groupSampleLimit: number;
   contractLimit: number;
@@ -27,6 +28,7 @@ export function useActionViewLoadRequestDynamicInputRuntime() {
       searchTerm: input.searchTerm,
       sortLabel: input.sortLabel,
       activeGroupByField: input.activeGroupByField,
+      listOffset: input.listOffset,
       groupWindowOffset: input.groupWindowOffset,
       groupSampleLimit: input.groupSampleLimit,
       contractLimit: input.contractLimit,
@@ -41,4 +43,3 @@ export function useActionViewLoadRequestDynamicInputRuntime() {
     buildLoadRequestDynamicInput,
   };
 }
-
