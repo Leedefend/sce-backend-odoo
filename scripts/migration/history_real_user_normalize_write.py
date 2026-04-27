@@ -10,6 +10,11 @@ from pathlib import Path
 
 
 INITIAL_PASSWORD = os.getenv("REAL_USER_INITIAL_PASSWORD", "123456")
+BUSINESS_CONFIG_ADMIN_LOGINS = {
+    item.strip().lower()
+    for item in os.getenv("REAL_USER_BUSINESS_CONFIG_ADMIN_LOGINS", "wutao").split(",")
+    if item.strip()
+}
 ALLOWED_DBS = {
     item.strip()
     for item in os.getenv("MIGRATION_REPLAY_DB_ALLOWLIST", "sc_prod_sim").split(",")
@@ -137,6 +142,10 @@ real_user_ids = env["ir.model.data"].sudo().search(  # noqa: F821
 ).mapped("res_id")
 real_users = Users.browse(real_user_ids).exists().filtered(lambda u: bool(u.active and u.has_group("base.group_user")))
 internal_group = env.ref("smart_construction_core.group_sc_internal_user", raise_if_not_found=False)  # noqa: F821
+business_config_group = env.ref(  # noqa: F821
+    "smart_construction_core.group_sc_cap_business_config_admin",
+    raise_if_not_found=False,
+)
 occupied_logins = set(all_users.mapped("login")) - set(real_users.mapped("login"))
 assigned_logins: set[str] = set()
 updated = []
@@ -156,8 +165,18 @@ for user in real_users.sorted("id"):
         "password": INITIAL_PASSWORD,
     }
     internal_group_applied = bool(internal_group and internal_group not in user.groups_id)
+    business_config_group_applied = bool(
+        login.lower() in BUSINESS_CONFIG_ADMIN_LOGINS
+        and business_config_group
+        and business_config_group not in user.groups_id
+    )
+    group_commands = []
     if internal_group_applied:
-        vals["groups_id"] = [(4, internal_group.id)]
+        group_commands.append((4, internal_group.id))
+    if business_config_group_applied:
+        group_commands.append((4, business_config_group.id))
+    if group_commands:
+        vals["groups_id"] = group_commands
     if profile:
         if profile.display_name and profile.display_name != user.name:
             vals["name"] = profile.display_name
@@ -180,6 +199,8 @@ for user in real_users.sorted("id"):
             "password_initialized": True,
             "profile_used": bool(profile),
             "internal_group_applied": internal_group_applied,
+            "business_config_admin_target": login.lower() in BUSINESS_CONFIG_ADMIN_LOGINS,
+            "business_config_group_applied": business_config_group_applied,
             "email_before": before["email"],
             "email_after": vals.get("email", before["email"]),
             "phone_before": before["phone"],
@@ -206,6 +227,8 @@ else:
         "initial_password": INITIAL_PASSWORD,
         "updated_count": len(updated),
         "suffix_count": sum(1 for row in updated if row["suffix_used"]),
+        "business_config_admin_logins": sorted(BUSINESS_CONFIG_ADMIN_LOGINS),
+        "business_config_admin_count": sum(1 for row in updated if row["business_config_admin_target"]),
         "updated": updated,
         "db_writes": len(updated),
     }

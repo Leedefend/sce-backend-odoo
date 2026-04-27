@@ -29612,3 +29612,18 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `make -n gate.full DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
   - `git diff --check -- Makefile docs/ops/verify/README.md docs/ops/iterations/menu_navigation_gate_wiring_batch_20260427.md docs/ops/iterations/delivery_context_switch_log_v1.md`
 - next_step: `scan current menu normalization perimeter for remaining actionable verification or documentation gaps`
+
+## 2026-04-27 Batch-Real-User-Wutao-Business-Config
+
+- branch: `codex/dev-env-run`
+- short_sha: `1ec6db6a`
+- Layer Target: `Data migration / real-user capability assignment`
+- Module: `scripts/migration`
+- Reason: `真实用户 wutao 需要作为业务配置管理员办理业务主数据、字典、定额和阶段要求配置，但不能提升为 Odoo system 或平台系统管理员。`
+- completed_step: `history_real_user_normalize_write 固化 REAL_USER_BUSINESS_CONFIG_ADMIN_LOGINS 默认 wutao，并新增 history_wutao_business_config_probe 只读校验`
+- verification:
+  - `python3 -m py_compile scripts/migration/history_real_user_normalize_write.py scripts/migration/history_wutao_business_config_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make history.real_users.normalize.write`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_wutao_business_config_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make history.business.usable.probe`
+- next_step: `继续用模拟生产库验证真实用户矩阵中是否还存在角色/业务数据缺口`
