@@ -7,9 +7,12 @@ const { chromium } = require('playwright');
 
 const frontendUrl = process.env.FRONTEND_URL || 'http://127.0.0.1:5174';
 const dbName = process.env.DB_NAME || 'sc_prod_sim';
+const closureAction = String(process.env.BROWSER_CLOSURE_ACTION || 'approve').trim().toLowerCase();
 const artifactDir = process.env.BUSINESS_BROWSER_ARTIFACT_DIR
   || path.resolve('artifacts/browser-real-user-business-closure/current');
 const setupPath = path.join(artifactDir, 'setup.json');
+const actionButtonLabel = closureAction === 'reject' ? '审批驳回' : '审批通过';
+const browserStatus = closureAction === 'reject' ? 'rejected_and_removed_from_todo' : 'approved_and_removed_from_todo';
 
 function writeJson(name, data) {
   fs.mkdirSync(artifactDir, { recursive: true });
@@ -26,7 +29,7 @@ async function login(page, user) {
   await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 20000 });
 }
 
-async function approveCase(browser, row, index) {
+async function runCase(browser, row, index) {
   const context = await browser.newContext({ locale: 'zh-CN' });
   const page = await context.newPage();
   const user = { login: row.reviewer_login, password: row.reviewer_password };
@@ -43,10 +46,10 @@ async function approveCase(browser, row, index) {
     await page.screenshot({ path: path.join(artifactDir, `${screenshotBase}_todo.png`), fullPage: true });
     await todoEntry.click();
     await page.waitForURL((url) => url.pathname.includes(`/r/${row.model}/${row.record_id}`), { timeout: 20000 });
-    await page.getByRole('button', { name: '审批通过' }).waitFor({ timeout: 20000 });
+    await page.getByRole('button', { name: actionButtonLabel }).waitFor({ timeout: 20000 });
     await page.screenshot({ path: path.join(artifactDir, `${screenshotBase}_record_before.png`), fullPage: true });
-    await page.getByRole('button', { name: '审批通过' }).click();
-    await page.getByText(/操作成功|审批通过|执行成功|validated|已完成/, { exact: false }).first().waitFor({ timeout: 20000 }).catch(() => {});
+    await page.getByRole('button', { name: actionButtonLabel }).click();
+    await page.getByText(/操作成功|审批通过|审批驳回|执行成功|validated|rejected|已完成/, { exact: false }).first().waitFor({ timeout: 20000 }).catch(() => {});
     await page.waitForTimeout(1500);
     await page.screenshot({ path: path.join(artifactDir, `${screenshotBase}_record_after.png`), fullPage: true });
     await page.goto(`${frontendUrl}/my-work?section=todo&search=${encodeURIComponent(title)}`, {
@@ -63,7 +66,7 @@ async function approveCase(browser, row, index) {
       record_id: row.record_id,
       reviewer_login: row.reviewer_login,
       title,
-      browser_status: 'approved_and_removed_from_todo',
+      browser_status: browserStatus,
     };
   } finally {
     await context.close();
@@ -76,7 +79,7 @@ async function main() {
   const results = [];
   try {
     for (const [index, row] of setup.cases.entries()) {
-      results.push(await approveCase(browser, row, index));
+      results.push(await runCase(browser, row, index));
     }
   } finally {
     await browser.close();
@@ -84,6 +87,7 @@ async function main() {
   writeJson('browser_summary.json', {
     frontend_url: frontendUrl,
     db_name: dbName,
+    action: closureAction,
     results,
   });
   console.log('[business_real_user_browser_closure] PASS');

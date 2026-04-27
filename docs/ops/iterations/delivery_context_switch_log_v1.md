@@ -30454,3 +30454,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `cleanup: 临时 sc.receipt.income 9560、sc.settlement.adjustment 12926、project 1077/1078、tier.review 226/227 已删除；可选审批策略恢复`
 - result: `PASS; 统一渲染版“我的工作”待办项已支持点击卡片/单号进入业务记录，真实用户浏览器闭环继续通过。artifact=artifacts/browser-real-user-business-closure/current`
 - next_step: `继续扩展真实用户浏览器覆盖面：补驳回链路，以及付款执行/发票登记/融资借款/资金对账等登记类抽样。`
+
+## 2026-04-28 Batch-Business-Real-Browser-Reject-Closure
+
+- branch: `codex/dev-env-run`
+- short_sha: `67db94f4`
+- Layer Target: `Business fact validation + frontend contract consumer/browser closure`
+- Module: `scripts/verify`, `Makefile`
+- Reason: `真实用户浏览器已验证审批通过路径，但上线可用性还必须覆盖审批驳回：待办进入业务记录、点击审批驳回、待办消失、后端状态回到 rejected。`
+- completed_step: `将 business_real_user_browser_closure 脚本参数化为 approve/reject；新增 verify.portal.business_real_user_browser_reject_closure；后端断言按 browser_summary.action 区分 validated/approved 与 rejected/rejected。`
+- verification:
+  - `node --check scripts/verify/business_real_user_browser_closure.js`
+  - `bash -n scripts/verify/business_real_user_browser_closure.sh`
+  - `python3 -m py_compile scripts/verify/business_real_user_browser_assert.py scripts/verify/business_real_user_browser_setup.py scripts/verify/business_real_user_browser_cleanup.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_reject_closure`
+  - `reject path: RI2600018 by chenshuai -> rejected_and_removed_from_todo; SA2600014 by wutao -> rejected_and_removed_from_todo; backend state=draft validation_status=rejected review=rejected; cleanup rows=2`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_closure`
+  - `approve regression: RI2600019 by chenshuai -> approved_and_removed_from_todo; SA2600015 by wutao -> approved_and_removed_from_todo; backend state=confirmed validation_status=validated review=approved; cleanup rows=2`
+- result: `PASS; 收款登记与结算调整的真实用户浏览器审批通过/审批驳回双路径均已闭环，待办进入、按钮执行、待办消失、后端状态断言和清理均通过。`
+- next_step: `继续扩展登记类业务模型覆盖：付款执行、发票登记、融资借款、资金对账的真实用户浏览器 approve/reject 抽样。`

@@ -16,9 +16,9 @@ trap cleanup EXIT
 DB_NAME="${DB_NAME:?}" bash "$ROOT_DIR/scripts/ops/odoo_shell_exec.sh" < "$ROOT_DIR/scripts/verify/business_real_user_browser_setup.py"
 (
   cd "$ROOT_DIR/frontend/apps/web"
-  BUSINESS_BROWSER_ARTIFACT_DIR="$ARTIFACT_DIR" FRONTEND_URL="${FRONTEND_URL:-http://127.0.0.1:5174}" DB_NAME="${DB_NAME:?}" node "$ROOT_DIR/scripts/verify/business_real_user_browser_closure.js"
+  BUSINESS_BROWSER_ARTIFACT_DIR="$ARTIFACT_DIR" FRONTEND_URL="${FRONTEND_URL:-http://127.0.0.1:5174}" DB_NAME="${DB_NAME:?}" BROWSER_CLOSURE_ACTION="${BROWSER_CLOSURE_ACTION:-approve}" node "$ROOT_DIR/scripts/verify/business_real_user_browser_closure.js"
 )
 DB_NAME="${DB_NAME:?}" bash "$ROOT_DIR/scripts/ops/odoo_shell_exec.sh" < "$ROOT_DIR/scripts/verify/business_real_user_browser_assert.py"
 
-echo "BUSINESS_REAL_USER_BROWSER_CLOSURE=PASS"
+echo "BUSINESS_REAL_USER_BROWSER_CLOSURE=PASS action=${BROWSER_CLOSURE_ACTION:-approve}"
 echo "ARTIFACT_DIR=$ARTIFACT_DIR"
