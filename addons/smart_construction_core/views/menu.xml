@@ -200,13 +200,13 @@
               name="物资管理"
               parent="menu_sc_root"
               sequence="30"
-              groups="smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
     <menuitem id="menu_project_material_plan"
               name="物资计划"
               parent="menu_sc_material_center"
               action="action_project_material_plan"
               sequence="10"
-              groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
     <menuitem id="menu_sc_tier_review_my_material_plan"
               name="待我审批（物资计划）"
               parent="menu_sc_material_center"

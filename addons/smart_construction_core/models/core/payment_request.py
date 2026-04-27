@@ -336,6 +336,13 @@ class PaymentRequest(models.Model):
             project_id=self.project_id,
         )
 
+    def _has_submit_access(self):
+        return (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_business_initiator")
+            or self.env.user.has_group("smart_construction_core.group_sc_cap_finance_user")
+            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
+        )
+
     @api.depends("settlement_id", "settlement_remaining_amount", "amount")
     def _compute_settlement_amount_insufficient(self):
         for rec in self:
@@ -511,11 +518,7 @@ class PaymentRequest(models.Model):
             rec.is_overpay_risk = float_compare(rec.amount or 0.0, payable, precision_rounding=precision) == 1
 
     def action_submit(self):
-        has_finance_submit_access = (
-            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_user")
-            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
-        )
-        if not has_finance_submit_access:
+        if not self._has_submit_access():
             raise ValidationError(_("你没有提交付款/收款申请的权限。"))
         for rec in self:
             if rec._get_attachment_count() <= 0:

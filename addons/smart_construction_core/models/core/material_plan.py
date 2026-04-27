@@ -71,7 +71,10 @@ class ProjectMaterialPlan(models.Model):
         for rec in self:
             if rec.state != "draft":
                 continue
-            if not self.env.user.has_group("smart_construction_core.group_sc_cap_material_user"):
+            if not (
+                self.env.user.has_group("smart_construction_core.group_sc_cap_business_initiator")
+                or self.env.user.has_group("smart_construction_core.group_sc_cap_material_user")
+            ):
                 raise UserError(_("你没有提交物资计划的权限。"))
             if not rec.line_ids:
                 raise UserError(_("请先填写物资计划明细再提交。"))

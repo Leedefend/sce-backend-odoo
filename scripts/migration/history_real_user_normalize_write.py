@@ -136,6 +136,7 @@ real_user_ids = env["ir.model.data"].sudo().search(  # noqa: F821
     ]
 ).mapped("res_id")
 real_users = Users.browse(real_user_ids).exists().filtered(lambda u: bool(u.active and u.has_group("base.group_user")))
+internal_group = env.ref("smart_construction_core.group_sc_internal_user", raise_if_not_found=False)  # noqa: F821
 occupied_logins = set(all_users.mapped("login")) - set(real_users.mapped("login"))
 assigned_logins: set[str] = set()
 updated = []
@@ -154,6 +155,9 @@ for user in real_users.sorted("id"):
         "login": login,
         "password": INITIAL_PASSWORD,
     }
+    internal_group_applied = bool(internal_group and internal_group not in user.groups_id)
+    if internal_group_applied:
+        vals["groups_id"] = [(4, internal_group.id)]
     if profile:
         if profile.display_name and profile.display_name != user.name:
             vals["name"] = profile.display_name
@@ -175,6 +179,7 @@ for user in real_users.sorted("id"):
             "suffix_used": suffix_used,
             "password_initialized": True,
             "profile_used": bool(profile),
+            "internal_group_applied": internal_group_applied,
             "email_before": before["email"],
             "email_after": vals.get("email", before["email"]),
             "phone_before": before["phone"],

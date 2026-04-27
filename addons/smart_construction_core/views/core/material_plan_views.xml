@@ -25,12 +25,13 @@
                             type="object"
                             string="提交"
                             class="oe_highlight"
-                            groups="smart_construction_core.group_sc_cap_material_user"
+                            groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_material_user"
                             invisible="state != 'draft'"/>
                     <button name="%(action_material_plan_to_rfq_wizard)d"
                             type="action"
                             string="生成采购单"
                             class="btn-secondary"
+                            groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"
                             invisible="state != 'approved'"/>
                     <button name="action_done"
                             type="object"
@@ -104,6 +105,7 @@
         <field name="name">物资计划</field>
         <field name="res_model">project.material.plan</field>
         <field name="view_mode">tree,form</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
     </record>
 
     <record id="action_project_material_plan_my" model="ir.actions.act_window">
@@ -111,7 +113,7 @@
         <field name="res_model">project.material.plan</field>
         <field name="view_mode">tree,form</field>
         <field name="domain">['|', ('create_uid', '=', uid), ('submitted_by', '=', uid)]</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
     </record>
 
 </odoo>
