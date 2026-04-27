@@ -30660,3 +30660,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; ActionView 外层“视图切换/新建”仍各自占一行，后续如需进一步压缩，需要收口外层 action 工具区。`
 - rollback: `回退本批次提交并重建前端静态包，即恢复 PageHeader + 顶部分页栏的结构。`
 - next_step: `继续评估 ActionView 外层视图切换与新建按钮是否可整合为单行业务工具条。`
+
+## 2026-04-28 Batch-Frontend-Action-Toolbar-Compact
+
+- branch: `codex/dev-env-run`
+- short_sha: `7f4b1c51`
+- Layer Target: `Frontend layout`
+- Module: `frontend/apps/web`
+- Reason: `看板页头已收敛后，ActionView 外层“视图切换”和“新建”仍分成两个连续区块，导致项目台账首屏顶部工具区不够紧凑。`
+- completed_step: `ActionView 将视图切换与新建入口合并为一条 action-toolbar：左侧保留视图模式切换，右侧保留新建办理入口；移动端允许换行，不改变 view_switch 契约消费、创建权限判断或路由行为。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `docker compose -f docker-compose.yml -f docker-compose.prod-sim.yml -p sc-backend-odoo-prod-sim restart nginx`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509?menu_id=293，action-toolbar 高度 44px，文本为 视图/看板/列表/新建；首张卡片 y=305.6875，无 console error。`
+- result: `PASS; 视图切换区域已收敛为单行工具栏，新建办理入口保留，项目台账首屏更紧凑。`
+- risk: `P2; 当后续页面存在大量 header actions/筛选条时仍可能形成多行工具区，需要按业务场景继续合并筛选与操作。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复视图切换与新建分区显示。`
+- next_step: `继续检查快速筛选、分组查看、快捷操作在有数据页面是否需要同样收敛为统一业务工具条。`

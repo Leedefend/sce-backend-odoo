@@ -13,22 +13,29 @@
         {{ action.label || action.key }}
       </button>
     </section>
-    <section
-      v-if="isSectionVisible('view_switch', { defaultEnabled: true, tag: 'section', vmVisible: vm.page.availableViewModes.length > 1 })"
-      class="view-switch"
-      :style="getSectionStyle('view_switch')"
-    >
-      <p class="contract-label">{{ t('label.view_switch', '视图切换') }}</p>
-      <div class="contract-chips">
-        <button
-          v-for="mode in vm.page.availableViewModes"
-          :key="`view-mode-${mode}`"
-          class="contract-chip"
-          :class="{ active: vm.page.viewMode === mode }"
-          :disabled="isViewModeDisabled({ mode, currentViewMode: vm.page.viewMode })"
-          @click="switchViewMode(mode)"
-        >
-          {{ viewModeLabel(mode) }}
+    <section v-if="showTopActionToolbar" class="action-toolbar">
+      <div
+        v-if="showViewSwitch"
+        class="view-switch"
+        :style="getSectionStyle('view_switch')"
+      >
+        <p class="contract-label">{{ t('label.view_switch', '视图') }}</p>
+        <div class="contract-chips">
+          <button
+            v-for="mode in vm.page.availableViewModes"
+            :key="`view-mode-${mode}`"
+            class="contract-chip"
+            :class="{ active: vm.page.viewMode === mode }"
+            :disabled="isViewModeDisabled({ mode, currentViewMode: vm.page.viewMode })"
+            @click="switchViewMode(mode)"
+          >
+            {{ viewModeLabel(mode) }}
+          </button>
+        </div>
+      </div>
+      <div v-if="canCreateRecord" class="toolbar-actions">
+        <button class="contract-chip primary" type="button" @click="openCreateRecord">
+          {{ t('action_create_record', '新建') }}
         </button>
       </div>
     </section>
@@ -47,13 +54,6 @@
       <div class="focus-actions">
         <button v-for="item in vm.focus.actions" :key="`focus-${item.label}`" class="contract-chip ghost" @click="openFocusAction(item)">
           {{ item.label }}
-        </button>
-      </div>
-    </section>
-    <section v-if="canCreateRecord" class="contract-block">
-      <div class="contract-chips">
-        <button class="contract-chip primary" type="button" @click="openCreateRecord">
-          {{ t('action_create_record', '新建') }}
         </button>
       </div>
     </section>
@@ -973,6 +973,14 @@ const canCreateRecord = computed(() => {
   if (status.value === 'loading') return false;
   return resolveCreateRight(actionContract.value);
 });
+const showViewSwitch = computed(() =>
+  isSectionVisible('view_switch', {
+    defaultEnabled: true,
+    tag: 'section',
+    vmVisible: vm.value.page.availableViewModes.length > 1,
+  }),
+);
+const showTopActionToolbar = computed(() => showViewSwitch.value || canCreateRecord.value);
 
 async function openCreateRecord() {
   const targetModel = (resolvedModelRef.value || model.value || '').trim();
@@ -2082,8 +2090,28 @@ watch(
   gap: 8px;
 }
 
+.action-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px 10px;
+}
+
 .view-switch {
-  display: grid;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.toolbar-actions {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: flex-end;
   gap: 8px;
 }
 
@@ -2202,6 +2230,7 @@ watch(
   margin: 0;
   font-size: 13px;
   color: #334155;
+  white-space: nowrap;
 }
 
 .contract-chips {
@@ -2231,7 +2260,7 @@ watch(
   border-radius: 999px;
   background: #fff;
   color: #0f172a;
-  padding: 6px 12px;
+  padding: 5px 11px;
   font-size: 12px;
   cursor: pointer;
 }
@@ -2345,9 +2374,18 @@ watch(
 .ledger-overview-card.tone-neutral { background: #f9fafb; border-color: #d1d5db; color: #374151; }
 
 @media (max-width: 760px) {
+  .action-toolbar,
   .focus-strip {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .view-switch {
+    flex-wrap: wrap;
+  }
+
+  .toolbar-actions {
+    justify-content: flex-start;
   }
 }
 </style>
