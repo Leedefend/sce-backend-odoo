@@ -29820,3 +29820,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
 - result: `PASS; business_fact_page_surface_audit issue_count 85 -> 52; navigation snapshot trace=31bd218c4955`
 - next_step: `处理 project.project/hr.department 原生页面英文字段与定额子目、阶段要求配置中的技术字段。`
+
+## 2026-04-27 Batch-Business-Fact-Custom-Config-Page-Surface
+
+- branch: `codex/dev-env-run`
+- short_sha: `d1776c89`
+- Layer Target: `Domain/UI business fact page surface`
+- Module: `smart_construction_core`, `sc_norm_engine`
+- Reason: `真实业务用户可见页面审计剩余 52 项缺口，其中自定义业务配置页仍有工程结构 WBS 命名、物资计划 State、定额子目 raw_line、阶段要求 action_xmlid、定额导入 Excel/Sheet 等页面噪音。`
+- completed_step: `工程结构动作/菜单/视图/模型描述去 WBS；物资计划状态字段补中文标签；工程量清单隐藏来源表字段；定额子目移除导入原始数据调试页；阶段要求配置隐藏动作标识；定额导入向导文案中文业务化。`
+- verification:
+  - `python3 -m py_compile changed smart_construction_core/sc_norm_engine python files`
+  - `python3 -m xml.etree.ElementTree changed smart_construction_core XML files`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=sc_norm_engine`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/business_fact_page_surface_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; business_fact_page_surface_audit issue_count 52 -> 36; navigation snapshot trace=a273cef735b5`
+- next_step: `剩余缺口集中在 project.project 与 hr.department 原生页面，下一批评估业务专用视图覆盖或翻译/字段描述覆盖。`

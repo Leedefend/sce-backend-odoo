@@ -50,7 +50,7 @@ class ScNormImportWizard(models.TransientModel):
     _name = "sc.norm.import.wizard"
     _description = "四川2015定额导入"
 
-    data_file = fields.Binary("定额 Excel 文件", required=True)
+    data_file = fields.Binary("定额文件", required=True)
     filename = fields.Char("文件名")
     clear_before = fields.Boolean("导入前清空已有定额数据", default=False)
     log = fields.Text("导入日志", readonly=True)
@@ -58,7 +58,7 @@ class ScNormImportWizard(models.TransientModel):
     def action_import(self):
         self.ensure_one()
         if not self.data_file:
-            raise UserError(_("请先上传 Excel 文件！"))
+            raise UserError(_("请先上传定额文件！"))
 
         try:
             data = base64.b64decode(self.data_file)
@@ -162,7 +162,7 @@ class ScNormImportWizard(models.TransientModel):
             col_work = col("工作内容")
 
             if not col_code or not col_name:
-                log_lines.append(f"- Sheet {sheet_name}: 找不到定额编号/项目名称列，跳过")
+                log_lines.append(f"- 工作表 {sheet_name}: 找不到定额编号/项目名称列，跳过")
                 continue
 
             for r in range(2, max_row + 1):
@@ -215,7 +215,7 @@ class ScNormImportWizard(models.TransientModel):
                     Item.sudo().create(vals)
                 imported_count += 1
 
-            log_lines.append(f"- Sheet {sheet_name} ({spec.code}) 导入完成")
+            log_lines.append(f"- 工作表 {sheet_name} ({spec.code}) 导入完成")
 
         log_lines.append(f"总共导入/更新定额子目：{imported_count} 条")
         self.log = "\n".join(log_lines)

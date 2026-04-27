@@ -13,7 +13,7 @@
                         <field name="header_row"/>
                     </group>
                     <div class="o_form_label">
-                        不填 Sheet 名则导入配置中定义的全部 Sheet；header_row 默认第 1 行为表头。
+                        不填工作表名称则导入配置中定义的全部工作表；表头行号默认第 1 行。
                     </div>
                     <footer>
                         <button string="导入" type="object" name="action_import" class="btn-primary"/>

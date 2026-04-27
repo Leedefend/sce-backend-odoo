@@ -29,6 +29,7 @@ class ProjectMaterialPlan(models.Model):
             ("cancel", "已取消"),
         ],
         default="draft",
+        string="状态",
         tracking=True,
         index=True,
     )

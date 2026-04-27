@@ -89,7 +89,7 @@
               sequence="50"
               groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
     <menuitem id="menu_sc_project_structure_wbs"
-              name="工程结构（清单WBS）"
+              name="工程结构"
               parent="menu_sc_project_center"
               action="smart_construction_core.action_sc_project_structure"
               sequence="52"

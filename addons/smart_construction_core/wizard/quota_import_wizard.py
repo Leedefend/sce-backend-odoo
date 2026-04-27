@@ -37,23 +37,23 @@ class QuotaImportWizard(models.TransientModel):
     _name = "quota.import.wizard"
     _description = "四川定额导入向导"
 
-    file_data = fields.Binary("Excel 文件", required=True)
+    file_data = fields.Binary("定额文件", required=True)
     filename = fields.Char("文件名")
-    sheet_name = fields.Char("仅导入指定 Sheet（可选）")
+    sheet_name = fields.Char("仅导入指定工作表（可选）")
     header_row = fields.Integer("表头行号", default=1)
     log = fields.Text("导入日志", readonly=True)
 
     # ========== 基础工具 ==========
     def _load_workbook(self):
         if not self.file_data:
-            raise UserError("请先上传 Excel 文件。")
+            raise UserError("请先上传定额文件。")
         if not openpyxl:
             raise UserError("服务器缺少 openpyxl 依赖，请先安装。")
         data = base64.b64decode(self.file_data)
         try:
             return openpyxl.load_workbook(io.BytesIO(data), data_only=True)
         except Exception as exc:
-            raise UserError(f"无法读取 Excel：{exc}")
+            raise UserError(f"无法读取定额文件：{exc}")
 
     @staticmethod
     def _val(sheet, row, col):
@@ -105,13 +105,13 @@ class QuotaImportWizard(models.TransientModel):
         if self.sheet_name:
             if self.sheet_name not in wb.sheetnames:
                 raise UserError(
-                    "工作簿中不存在名为“%s”的 Sheet。\n\n当前工作簿包含：\n- %s"
+                    "工作簿中不存在名为“%s”的工作表。\n\n当前工作簿包含：\n- %s"
                     % (self.sheet_name, "\n- ".join(wb.sheetnames))
                 )
             spec_key = _match_key(self.sheet_name)
             if not spec_key:
                 raise UserError(
-                    "Sheet “%s” 未在 QUOTA_SPEC 中找到匹配项。\n\nQUOTA_SPEC 键列表：\n- %s"
+                    "工作表“%s”未在定额配置中找到匹配项。\n\n定额配置键列表：\n- %s"
                     % (self.sheet_name, "\n- ".join(QUOTA_SPEC.keys()))
                 )
             pairs.append((wb[self.sheet_name], QUOTA_SPEC[spec_key]))
@@ -123,8 +123,8 @@ class QuotaImportWizard(models.TransientModel):
 
         if not pairs:
             raise UserError(
-                "当前工作簿没有任何 Sheet 能与 QUOTA_SPEC 匹配。\n\n"
-                "工作簿 Sheet 列表：\n- %s\n\nQUOTA_SPEC 键列表：\n- %s"
+                "当前工作簿没有任何工作表能与定额配置匹配。\n\n"
+                "工作簿工作表列表：\n- %s\n\n定额配置键列表：\n- %s"
                 % ("\n- ".join(wb.sheetnames), "\n- ".join(QUOTA_SPEC.keys()))
             )
         return pairs
@@ -189,7 +189,7 @@ class QuotaImportWizard(models.TransientModel):
             c_work = col("工作内容")
 
             if not (c_code and c_name and c_unit):
-                raise UserError(f"Sheet “{sheet.title}” 缺少必需列（定额编号/项目名称/单位）。")
+                raise UserError(f"工作表“{sheet.title}”缺少必需列（定额编号/项目名称/单位）。")
 
             created = updated = 0
             for r in range(header_row + 1, sheet.max_row + 1):
@@ -278,7 +278,7 @@ class QuotaImportWizard(models.TransientModel):
             total_created += created
             total_updated += updated
             log_lines.append(
-                f"- Sheet {sheet.title}: 创建 {created} 条，更新 {updated} 条"
+                f"- 工作表 {sheet.title}: 创建 {created} 条，更新 {updated} 条"
             )
 
         self.log = "\n".join(log_lines)

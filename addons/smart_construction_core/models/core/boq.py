@@ -232,8 +232,8 @@ class ProjectBoqLine(models.Model):
         index=True,
     )
     version = fields.Char("版本号/批次", help="预留给多次导入或版本管理使用", index=True)
-    sheet_index = fields.Integer("来源Sheet序号")
-    sheet_name = fields.Char("来源Sheet名称")
+    sheet_index = fields.Integer("来源表序号")
+    sheet_name = fields.Char("来源表名称")
 
     @api.depends("line_type", "quantity", "price", "child_ids.amount", "child_ids.amount_leaf")
     def _compute_amount(self):

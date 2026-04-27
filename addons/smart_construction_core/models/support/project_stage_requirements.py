@@ -21,8 +21,8 @@ class ScProjectStageRequirementItem(models.Model):
     )
     required = fields.Boolean("必做", default=True)
     action_xmlid = fields.Char(
-        "执行动作(XMLID)",
-        help="可选：点击去完成时跳转的动作 XMLID",
+        "办理入口",
+        help="可选：点击去完成时跳转的系统动作。",
     )
     target_field = fields.Char(
         "关联字段",

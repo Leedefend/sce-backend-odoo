@@ -116,9 +116,6 @@
                         <page string="工作内容">
                             <field name="work_content" nolabel="1"/>
                         </page>
-                        <page string="原始行（调试用）">
-                            <field name="raw_line" nolabel="1"/>
-                        </page>
                     </notebook>
                 </sheet>
             </form>
@@ -177,7 +174,6 @@
                     </group>
                     <group string="说明">
                         <field name="work_content"/>
-                        <field name="raw_line" readonly="1"/>
                     </group>
                 </sheet>
             </form>

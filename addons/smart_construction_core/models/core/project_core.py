@@ -18,7 +18,7 @@ _logger = logging.getLogger(__name__)
 # =========================
 class ScProjectStructure(models.Model):
     _name = 'sc.project.structure'
-    _description = '项目工程结构（WBS）'
+    _description = '项目工程结构'
     _parent_name = 'parent_id'
     _parent_store = True
     _order = 'project_id, parent_path, sequence, id'
@@ -103,6 +103,7 @@ class ScProjectStructure(models.Model):
     )
     currency_id = fields.Many2one(
         'res.currency',
+        string='币种',
         related='project_id.company_id.currency_id',
         readonly=True,
         store=True,
