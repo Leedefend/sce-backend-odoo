@@ -39,7 +39,20 @@ def main():
     _unlink_if_exists("project.project", project_ids)
 
     env["sc.approval.policy"].sudo().search(
-        [("target_model", "in", ["sc.receipt.income", "sc.settlement.adjustment"])]
+        [
+            (
+                "target_model",
+                "in",
+                [
+                    "sc.receipt.income",
+                    "sc.payment.execution",
+                    "sc.invoice.registration",
+                    "sc.financing.loan",
+                    "sc.treasury.reconciliation",
+                    "sc.settlement.adjustment",
+                ],
+            )
+        ]
     ).write({"approval_required": False, "mode": "none"})
 
     env.cr.commit()

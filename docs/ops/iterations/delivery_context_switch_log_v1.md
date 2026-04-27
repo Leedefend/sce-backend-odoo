@@ -30473,3 +30473,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `approve regression: RI2600019 by chenshuai -> approved_and_removed_from_todo; SA2600015 by wutao -> approved_and_removed_from_todo; backend state=confirmed validation_status=validated review=approved; cleanup rows=2`
 - result: `PASS; 收款登记与结算调整的真实用户浏览器审批通过/审批驳回双路径均已闭环，待办进入、按钮执行、待办消失、后端状态断言和清理均通过。`
 - next_step: `继续扩展登记类业务模型覆盖：付款执行、发票登记、融资借款、资金对账的真实用户浏览器 approve/reject 抽样。`
+
+## 2026-04-28 Batch-Business-Real-Browser-Finance-Document-Full-Sampling
+
+- branch: `codex/dev-env-run`
+- short_sha: `11ab5689`
+- Layer Target: `Business fact validation + frontend contract consumer/browser closure`
+- Module: `scripts/verify`
+- Reason: `真实用户浏览器闭环不能只覆盖收款登记/结算调整；付款执行、发票登记、融资借款、资金对账也属于登记类可配置审批业务，必须用同一口径验证 approve/reject 双路径。`
+- completed_step: `business_real_user_browser_setup 扩展到 6 个登记/调整模型：收款登记、付款执行、发票登记、融资借款、资金对账、结算调整；cleanup 同步恢复 6 个模型的可选审批策略并清理临时数据。`
+- verification:
+  - `node --check scripts/verify/business_real_user_browser_closure.js`
+  - `bash -n scripts/verify/business_real_user_browser_closure.sh`
+  - `python3 -m py_compile scripts/verify/business_real_user_browser_setup.py scripts/verify/business_real_user_browser_cleanup.py scripts/verify/business_real_user_browser_assert.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_closure`
+  - `approve path: RI2600020/PE2600009/IR2600007/FL2600007/TR2600008/SA2600016 均从 my-work 点击进入记录，审批通过后待办消失；backend state=confirmed validation_status=validated review=approved；cleanup rows=6`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_reject_closure`
+  - `reject path: RI2600021/PE2600010/IR2600008/FL2600008/TR2600009/SA2600017 均从 my-work 点击进入记录，审批驳回后待办消失；backend state=draft validation_status=rejected review=rejected；cleanup rows=6`
+- result: `PASS; 6 个登记/调整类业务模型真实用户浏览器 approve/reject 双路径全部闭环。`
+- next_step: `继续回到业务办理全口径：扩展真实浏览器闭环到既有 OCA 单据类业务，如付款申请、费用/保证金、物资计划、结算单、采购单、合同类。`

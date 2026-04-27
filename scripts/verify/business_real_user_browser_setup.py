@@ -90,6 +90,14 @@ def _create_record(spec, submitter):
     }
     if model_name == "sc.receipt.income":
         vals.update({"amount": 120.0})
+    elif model_name == "sc.payment.execution":
+        vals.update({"paid_amount": 120.0, "planned_amount": 120.0})
+    elif model_name == "sc.invoice.registration":
+        vals.update({"amount_no_tax": 100.0, "tax_amount": 20.0, "amount_total": 120.0})
+    elif model_name == "sc.financing.loan":
+        vals.update({"amount": 120.0})
+    elif model_name == "sc.treasury.reconciliation":
+        vals.update({"confirmation_amount": 120.0})
     elif model_name == "sc.settlement.adjustment":
         vals.pop("document_no", None)
         vals.update({"amount": 120.0, "item_name": "%s 合同明细调整" % PREFIX})
@@ -115,6 +123,38 @@ def main():
             "model": "sc.receipt.income",
             "label": "收款登记",
             "code": "RECEIPT",
+            "review_group": "smart_construction_core.group_sc_cap_finance_manager",
+            "reviewer_login": "chenshuai",
+            "final_state": "confirmed",
+        },
+        {
+            "model": "sc.payment.execution",
+            "label": "付款执行",
+            "code": "PAYEXEC",
+            "review_group": "smart_construction_core.group_sc_cap_finance_manager",
+            "reviewer_login": "chenshuai",
+            "final_state": "confirmed",
+        },
+        {
+            "model": "sc.invoice.registration",
+            "label": "发票登记",
+            "code": "INVOICE",
+            "review_group": "smart_construction_core.group_sc_cap_finance_manager",
+            "reviewer_login": "chenshuai",
+            "final_state": "confirmed",
+        },
+        {
+            "model": "sc.financing.loan",
+            "label": "融资借款",
+            "code": "LOAN",
+            "review_group": "smart_construction_core.group_sc_cap_finance_manager",
+            "reviewer_login": "chenshuai",
+            "final_state": "confirmed",
+        },
+        {
+            "model": "sc.treasury.reconciliation",
+            "label": "资金对账",
+            "code": "TREASURY",
             "review_group": "smart_construction_core.group_sc_cap_finance_manager",
             "reviewer_login": "chenshuai",
             "final_state": "confirmed",
