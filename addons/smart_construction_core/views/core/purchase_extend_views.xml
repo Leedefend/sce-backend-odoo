@@ -25,6 +25,10 @@
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.purchase_order_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//button[@name='button_confirm']" position="attributes">
+                <attribute name="groups">smart_construction_core.group_sc_cap_purchase_manager</attribute>
+            </xpath>
+
             <xpath expr="//sheet/group/group" position="inside">
                 <field name="project_id"/>
             </xpath>

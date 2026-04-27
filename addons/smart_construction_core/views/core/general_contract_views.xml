@@ -50,11 +50,14 @@
                 <form string="综合合同">
                     <header>
                         <button name="action_confirm" string="确认" type="object" class="btn-primary"
-                                invisible="state != 'draft'"/>
+                                invisible="state != 'draft'"
+                                groups="smart_construction_core.group_sc_cap_contract_manager"/>
                         <button name="action_signed" string="已签署" type="object" class="btn-primary"
-                                invisible="state not in ('draft', 'confirmed')"/>
+                                invisible="state not in ('draft', 'confirmed')"
+                                groups="smart_construction_core.group_sc_cap_contract_manager"/>
                         <button name="action_cancel" string="取消" type="object"
-                                invisible="state in ('cancel', 'legacy_confirmed')"/>
+                                invisible="state in ('cancel', 'legacy_confirmed')"
+                                groups="smart_construction_core.group_sc_cap_contract_manager"/>
                         <field name="state" widget="statusbar"
                                statusbar_visible="draft,confirmed,signed,legacy_confirmed,cancel"/>
                     </header>

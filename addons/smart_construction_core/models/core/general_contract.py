@@ -109,11 +109,18 @@ class ScGeneralContract(models.Model):
     def action_confirm(self):
         for rec in self:
             if rec.state == "draft":
+                policy = self.env["sc.approval.policy"].get_active_policy(rec._name)
+                if policy:
+                    policy.assert_user_can_approve()
                 rec.state = "confirmed"
 
     def action_signed(self):
         for rec in self:
             if rec.state in ("draft", "confirmed"):
+                if rec.state == "draft":
+                    policy = self.env["sc.approval.policy"].get_active_policy(rec._name)
+                    if policy:
+                        policy.assert_user_can_approve()
                 rec.state = "signed"
 
     def action_cancel(self):

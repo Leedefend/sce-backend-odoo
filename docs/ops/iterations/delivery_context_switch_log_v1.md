@@ -29993,3 +29993,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
 - result: `PASS; 业务配置管理员可维护审批规则矩阵; 8 类业务默认需要审核; 发票登记默认不强制审核; navigation snapshot trace=f90582b57d44 checked=143`
 - next_step: `继续把 document_state/policy_only 业务动作接入审批规则运行时判断，使单据提交/确认按业务管理员配置动态决定是否进入审核。`
+
+## 2026-04-27 Batch-Business-Approval-Runtime-Gap
+
+- branch: `codex/dev-env-run`
+- short_sha: `f56441ea`
+- Layer Target: `Domain/business approval runtime`
+- Module: `smart_construction_core`
+- Reason: `用户要求先补齐审批配置缺口；上一批已有审批规则矩阵，本批将 document_state/policy_only 业务动作接入规则判断和审核能力组校验。`
+- completed_step: `新增 sc.approval.policy 运行时服务方法；结算单/费用保证金提交按规则进入待审或直接通过，批准校验规则能力组；一般合同/项目合同/采购订单确认校验规则能力组；采购/一般合同新增办理状态和提交/批准/签署动作，并初始化历史记录状态。`
+- verification:
+  - `python3 -m py_compile changed smart_construction_core Python files`
+  - `python3 -m xml.etree.ElementTree changed smart_construction_core XML files`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `APPROVAL_RUNTIME_SMOKE=PASS; EXPENSE_AFTER_SUBMIT=submit; EXPENSE_NON_FINANCE_APPROVE=BLOCKED; EXPENSE_AFTER_FINANCE_APPROVE=approved; LEGACY_PURCHASE_AFTER_SUBMIT=submit; LEGACY_PURCHASE_AFTER_APPROVE=approved; GENERAL_CONTRACT_NON_MANAGER_CONFIRM=BLOCKED; GENERAL_CONTRACT_AFTER_MANAGER_CONFIRM=confirmed`
+  - `APPROVAL_RUNTIME_DB_SYNC=PASS legacy_policy_runtime=document_state null_state_count=0`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 审批规则已参与结算、费用、合同、采购订单、采购/一般合同运行时动作; navigation snapshot trace=e1de37c6f779 checked=143`
+- next_step: `继续用真实用户逐单据验证按钮可见性、提交状态、审批阻断文案和审批后连续办理路径；tier_validation 单据仍按现有分级审批执行。`

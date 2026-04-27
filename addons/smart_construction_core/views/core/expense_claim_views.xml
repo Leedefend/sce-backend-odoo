@@ -29,7 +29,7 @@
                     <header>
                         <button name="action_submit" type="object" string="提交" class="btn-primary"
                                 invisible="state != 'draft'"
-                                groups="smart_construction_core.group_sc_cap_finance_user"/>
+                                groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_user"/>
                         <button name="action_approve" type="object" string="批准"
                                 invisible="state != 'submit'"
                                 groups="smart_construction_core.group_sc_cap_finance_manager"/>

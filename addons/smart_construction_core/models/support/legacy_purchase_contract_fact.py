@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 
 class ScLegacyPurchaseContractFact(models.Model):
@@ -12,6 +13,20 @@ class ScLegacyPurchaseContractFact(models.Model):
     source_dataset = fields.Char(string="数据来源", index=True)
     document_no = fields.Char(string="单号", index=True)
     document_state = fields.Char(string="单据状态", index=True)
+    state = fields.Selection(
+        [
+            ("draft", "草稿"),
+            ("submit", "已提交"),
+            ("approved", "已批准"),
+            ("signed", "已签署"),
+            ("legacy_confirmed", "历史已确认"),
+            ("cancel", "已取消"),
+        ],
+        string="办理状态",
+        default="draft",
+        required=True,
+        index=True,
+    )
     submitted_time = fields.Datetime(string="提交时间", index=True)
     applicant_name = fields.Char(string="申请人", index=True)
     applicant_department_legacy_id = fields.Char(string="申请部门原编号", index=True)
@@ -74,9 +89,59 @@ class ScLegacyPurchaseContractFact(models.Model):
     def _default_record_id(self):
         return self.env["ir.sequence"].next_by_code("sc.legacy.purchase.contract.fact") or "新系统采购一般合同"
 
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_legacy_purchase_contract_fact
+               SET state = CASE
+                   WHEN source_dataset IS NOT NULL
+                     OR submitted_time IS NOT NULL
+                     OR created_time IS NOT NULL
+                     OR document_state IS NOT NULL
+                   THEN 'legacy_confirmed'
+                   ELSE 'draft'
+               END
+             WHERE state IS NULL
+            """
+        )
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             if not vals.get("legacy_record_id"):
                 vals["legacy_record_id"] = self._default_record_id()
+            if vals.get("source_dataset") and not vals.get("state"):
+                vals["state"] = "legacy_confirmed"
         return super().create(vals_list)
+
+    def action_submit(self):
+        policy = self.env["sc.approval.policy"]
+        for rec in self:
+            if rec.state == "draft":
+                rec.state = policy.next_state_after_submit(
+                    rec._name,
+                    submitted_state="submit",
+                    approved_state="approved",
+                )
+
+    def action_approve(self):
+        for rec in self:
+            if rec.state == "submit":
+                policy = self.env["sc.approval.policy"].get_active_policy(rec._name)
+                if policy:
+                    policy.assert_user_can_approve()
+                rec.state = "approved"
+
+    def action_signed(self):
+        for rec in self:
+            if rec.state in ("draft", "submit"):
+                raise UserError("采购/一般合同需先批准后再签署。")
+            if rec.state == "approved":
+                rec.state = "signed"
+
+    def action_cancel(self):
+        for rec in self:
+            if rec.state == "legacy_confirmed":
+                raise UserError("历史迁移采购/一般合同不能在新系统取消。")
+            if rec.state not in ("signed", "cancel"):
+                rec.state = "cancel"

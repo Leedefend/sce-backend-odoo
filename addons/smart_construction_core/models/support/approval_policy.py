@@ -105,6 +105,34 @@ class ScApprovalPolicy(models.Model):
         ]
         return self.search(domain, order="company_id desc, sequence, id", limit=1)
 
+    @api.model
+    def is_approval_required(self, model_name, company=None):
+        policy = self.get_active_policy(model_name, company=company)
+        return bool(policy and policy.approval_required and policy.mode != "none")
+
+    @api.model
+    def next_state_after_submit(self, model_name, submitted_state, approved_state, company=None):
+        return submitted_state if self.is_approval_required(model_name, company=company) else approved_state
+
+    def assert_user_can_approve(self):
+        current_user = self.env.user
+        for policy in self:
+            if not policy.approval_required or policy.mode == "none":
+                continue
+            groups = policy.step_ids.filtered("active").mapped("approve_group_id")
+            if not groups and policy.manager_group_id:
+                groups = policy.manager_group_id
+            if not groups:
+                raise ValidationError(_("审批规则 %s 已启用审核，但未配置审核能力组。") % policy.display_name)
+            allowed = False
+            for group in groups:
+                xmlid = group.get_external_id().get(group.id)
+                if xmlid and current_user.has_group(xmlid):
+                    allowed = True
+                    break
+            if not allowed:
+                raise ValidationError(_("你不具备 %s 的审核能力。") % policy.display_name)
+
 
 class ScApprovalStep(models.Model):
     _name = "sc.approval.step"

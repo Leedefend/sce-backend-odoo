@@ -47,9 +47,9 @@
             <field name="approval_required">1</field>
             <field name="trigger">confirm</field>
             <field name="mode">single</field>
-            <field name="runtime_state">policy_only</field>
+            <field name="runtime_state">document_state</field>
             <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_purchase_manager"/>
-            <field name="note">历史采购/一般合同事实台账已开放办理入口；审批运行时尚需后续接入此规则。</field>
+            <field name="note">采购/一般合同提交后由采购中心审批能力组审核，批准后可登记签署状态。</field>
         </record>
         <record id="approval_step_legacy_purchase_contract_10" model="sc.approval.step">
             <field name="policy_id" ref="approval_policy_legacy_purchase_contract"/>

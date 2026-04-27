@@ -274,13 +274,23 @@ class ScSettlementOrder(models.Model):
         self.env["sc.data.validator"].validate_or_raise(
             scope={"res_model": self._name, "res_ids": self.ids}
         )
-        self.write({"state": "submit"})
+        policy = self.env["sc.approval.policy"]
+        for rec in self:
+            rec.state = policy.next_state_after_submit(
+                rec._name,
+                submitted_state="submit",
+                approved_state="approve",
+                company=rec.company_id,
+            )
 
     def action_approve(self):
         for rec in self:
             rec._check_line_contracts_or_raise()
             rec._check_contract_consistency_or_raise(strict=True)
             rec._check_purchase_orders_or_raise(strict=True)
+            policy = self.env["sc.approval.policy"].get_active_policy(rec._name, company=rec.company_id)
+            if policy:
+                policy.assert_user_can_approve()
         self.env["sc.data.validator"].validate_or_raise(
             scope={"res_model": self._name, "res_ids": self.ids}
         )

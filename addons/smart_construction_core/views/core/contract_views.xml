@@ -34,19 +34,23 @@
                             type="object"
                             class="oe_highlight"
                             string="确认合同"
-                            modifiers='{"invisible":[["state","!=","draft"]]}'/>
+                            modifiers='{"invisible":[["state","!=","draft"]]}'
+                            groups="smart_construction_core.group_sc_cap_contract_manager"/>
                     <button name="action_set_running"
                             type="object"
                             string="开始执行"
-                            modifiers='{"invisible":[["state","not in",["draft","confirmed"]]]}'/>
+                            modifiers='{"invisible":[["state","not in",["draft","confirmed"]]]}'
+                            groups="smart_construction_core.group_sc_cap_contract_manager"/>
                     <button name="action_close"
                             type="object"
                             string="完成"
-                            modifiers='{"invisible":[["state","not in",["running","confirmed"]]]}'/>
+                            modifiers='{"invisible":[["state","not in",["running","confirmed"]]]}'
+                            groups="smart_construction_core.group_sc_cap_contract_manager"/>
                     <button name="action_cancel"
                             type="object"
                             string="作废"
-                            modifiers='{"invisible":[["state","=","cancel"]]}'/>
+                            modifiers='{"invisible":[["state","=","cancel"]]}'
+                            groups="smart_construction_core.group_sc_cap_contract_manager"/>
                     <button name="action_reset_draft"
                             type="object"
                             string="重置为草稿"

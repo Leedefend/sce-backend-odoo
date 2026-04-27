@@ -23,6 +23,9 @@ class PurchaseOrder(models.Model):
                     operation_label="确认采购订单",
                     blocked_states=("paused", "closed"),
                 )
+            policy = self.env["sc.approval.policy"].get_active_policy(order._name, company=order.company_id)
+            if policy:
+                policy.assert_user_can_approve()
         res = super().button_confirm()
         if self._is_cost_enabled("smart_construction_core.sc_cost_from_purchase"):
             self._create_cost_ledger_entries()

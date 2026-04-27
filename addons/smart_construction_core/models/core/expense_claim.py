@@ -112,13 +112,21 @@ class ScExpenseClaim(models.Model):
         return super().write(vals)
 
     def action_submit(self):
+        policy = self.env["sc.approval.policy"]
         for rec in self:
             if rec.state == "draft":
-                rec.state = "submit"
+                rec.state = policy.next_state_after_submit(
+                    rec._name,
+                    submitted_state="submit",
+                    approved_state="approved",
+                )
 
     def action_approve(self):
         for rec in self:
             if rec.state == "submit":
+                policy = self.env["sc.approval.policy"].get_active_policy(rec._name)
+                if policy:
+                    policy.assert_user_can_approve()
                 rec.state = "approved"
 
     def action_done(self):

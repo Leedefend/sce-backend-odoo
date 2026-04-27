@@ -400,6 +400,9 @@ class ConstructionContract(models.Model):
             if not contract.line_ids:
                 raise UserError("请先录入合同行后再确认。")
             if contract.state == "draft":
+                policy = self.env["sc.approval.policy"].get_active_policy(contract._name, company=contract.company_id)
+                if policy:
+                    policy.assert_user_can_approve()
                 contract.state = "confirmed"
                 contract.message_post(body="合同状态：草稿 → 已生效")
 
