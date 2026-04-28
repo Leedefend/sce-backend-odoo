@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="0">
+    <record id="legacy_report_inventory_ar_ap_project" model="sc.legacy.report.inventory">
+        <field name="priority">p0</field>
+        <field name="name">应收应付报表（项目）</field>
+        <field name="legacy_function_id">66bb391e31df448ca2249bfbc6f8c3fa</field>
+        <field name="legacy_config_id">a547011c5d9541b286e45d2cbe2123a1</field>
+        <field name="legacy_url">LowCode/Report/ReportForm?ConfigId=a547011c5d9541b286e45d2cbe2123a1</field>
+        <field name="source_kind">lowcode_proc</field>
+        <field name="domain_group">ar_ap</field>
+        <field name="click_count">8243</field>
+        <field name="user_count">18</field>
+        <field name="last_click_date">2026-04-10</field>
+        <field name="procedure_name">UP_USP_SELECT_YSYFHZB_XM</field>
+        <field name="parameter_summary">项目、单位名称。</field>
+        <field name="metric_summary">合同金额、已开票、应收款、未收款、应付款、已付款、未付款、税额、抵扣、实际可用余额。</field>
+        <field name="source_tables">BASE_SYSTEM_PROJECT, T_ProjectContract_Out, T_GYSHT_INFO, C_JFHKLR, C_JFHKLR_TH_ZCDF, C_JXXP_DKDJ_New, C_JXXP_DKDJ_CB, C_JXXP_XXKPDJ, C_JXXP_XXKPDJ_CB, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB。</field>
+        <field name="target_model">待建聚合报表；依赖 construction.contract、sc.receipt.income、sc.payment.execution、sc.invoice.registration、legacy invoice/payment facts。</field>
+        <field name="carrier_status">partial</field>
+        <field name="next_action">先按旧过程字段定义新报表契约，再校验新系统付款、收款、开票、进项事实是否覆盖全部口径。</field>
+        <field name="evidence">ts_function_RecordUserClick: 8243 clicks, 18 users, last 2026-04-10。</field>
+    </record>
+
+    <record id="legacy_report_inventory_account_income_expense" model="sc.legacy.report.inventory">
+        <field name="priority">p0</field>
+        <field name="name">账户收支统计表</field>
+        <field name="legacy_function_id">e1844233f092496ca62e775515187f5c</field>
+        <field name="legacy_config_id">868e20eb104b4847854d458a0232268e</field>
+        <field name="legacy_url">LowCode/Report/ReportForm?ConfigId=868e20eb104b4847854d458a0232268e</field>
+        <field name="source_kind">lowcode_proc</field>
+        <field name="domain_group">treasury</field>
+        <field name="click_count">1549</field>
+        <field name="user_count">10</field>
+        <field name="last_click_date">2026-04-10</field>
+        <field name="procedure_name">Report_SP_USP_Select_ZHSZTJB_GS_Tree</field>
+        <field name="parameter_summary">开始日期、结束日期、账户、项目、账户类型。</field>
+        <field name="metric_summary">账户余额、收入、支出、累计收款、累计支出、账户往来、当前账户余额，支持树形汇总。</field>
+        <field name="source_tables">C_Base_ZHSZ, BASE_SYSTEM_PROJECT, C_CWSFK_GSCWSR, C_CWSFK_GSCWZC, C_JFHKLR, C_ZFSQGL_FKZH_CB, C_FKGL_ZHJZJWL, BGGL_JHK_HKDJ, T_KK_SJTHB, ZJGL_BZJGL_*, ZJGL_ZJSZ_DKGL_*。</field>
+        <field name="target_model">sc.treasury.ledger + 账户维度聚合；需补账户主数据承载。</field>
+        <field name="carrier_status">partial</field>
+        <field name="next_action">补账户维度事实映射后，建立账户收支统计只读聚合。</field>
+        <field name="evidence">ts_function_RecordUserClick: 1549 clicks, 10 users, last 2026-04-10；另有旧页面同名入口 517 clicks。</field>
+    </record>
+
+    <record id="legacy_report_inventory_fund_daily" model="sc.legacy.report.inventory">
+        <field name="priority">p0</field>
+        <field name="name">资金日报表</field>
+        <field name="legacy_function_id">d38d2436825744e0a925e60abfb20c9f</field>
+        <field name="legacy_config_id">8c70515f098e4728aeb743b47418518d</field>
+        <field name="legacy_url">LowCode/Form/FormList?ConfigId=8c70515f098e4728aeb743b47418518d</field>
+        <field name="source_kind">lowcode_list</field>
+        <field name="domain_group">treasury</field>
+        <field name="click_count">926</field>
+        <field name="user_count">8</field>
+        <field name="last_click_date">2026-04-10</field>
+        <field name="parameter_summary">账号名称、项目、日期、状态。</field>
+        <field name="metric_summary">日报主表与明细，包含当日收入、当日支出、账面余额、银行余额、账实差异。</field>
+        <field name="source_tables">D_SCBSJS_ZJGL_ZJSZ_ZJRBB, D_SCBSJS_ZJGL_ZJSZ_ZJRBB_CB。</field>
+        <field name="target_model">sc.legacy.fund.daily.snapshot.fact, sc.legacy.fund.daily.line。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">在报表中心保留现有资金日报与资金日报明细，并补统计汇总视图。</field>
+        <field name="evidence">旧库主表 511 rows，明细 7754 rows；ts_function_RecordUserClick: 926 clicks, 8 users, last 2026-04-10。</field>
+    </record>
+
+    <record id="legacy_report_inventory_project_operation" model="sc.legacy.report.inventory">
+        <field name="priority">p0</field>
+        <field name="name">项目经营统计表</field>
+        <field name="legacy_function_id">1c005b19170f4385b838ce292be5a4ff</field>
+        <field name="legacy_config_id">c901291a239649bf8e93e91255fc86b4</field>
+        <field name="legacy_url">LowCode/Report/ReportForm?ConfigId=c901291a239649bf8e93e91255fc86b4</field>
+        <field name="source_kind">lowcode_proc</field>
+        <field name="domain_group">operation</field>
+        <field name="click_count">866</field>
+        <field name="user_count">8</field>
+        <field name="last_click_date">2026-04-10</field>
+        <field name="procedure_name">SELECT_XMJYTJB</field>
+        <field name="parameter_summary">项目。</field>
+        <field name="metric_summary">本期收款、抵扣、税费、管理费、销项、进项、可抵扣金额、经手人等项目经营指标。</field>
+        <field name="source_tables">BASE_SYSTEM_PROJECT, C_JXXP_DKDJ_New, C_JXXP_DKDJ_CB, C_JXXP_XXKPDJ, C_JXXP_XXKPDJ_CB, C_JXXP_YJSKDJ, C_JXXP_YJSKDJ_CB, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB, T_KK_SJDJB, T_KK_SJDJB_CB, ZJGL_SZQR_DKQRB, ZJGL_SZQR_DKQRB_CB。</field>
+        <field name="target_model">待建项目经营统计聚合；现有 sc.operating.metrics.project 可作为承载候选。</field>
+        <field name="carrier_status">partial</field>
+        <field name="next_action">比对 sc.operating.metrics.project 字段与旧过程输出，缺口字段优先补聚合，不直接复用空成本报表。</field>
+        <field name="evidence">ts_function_RecordUserClick: 866 clicks, 8 users, last 2026-04-10。</field>
+    </record>
+
+    <record id="legacy_report_inventory_ar_ap_company" model="sc.legacy.report.inventory">
+        <field name="priority">p0</field>
+        <field name="name">应收应付报表</field>
+        <field name="legacy_function_id">1ccc7d0c430a4e049cf9ae16f2291821</field>
+        <field name="legacy_config_id">87f061c0258145239daa5bb639a4cfb3</field>
+        <field name="legacy_url">LowCode/Report/ReportForm?ConfigId=87f061c0258145239daa5bb639a4cfb3</field>
+        <field name="source_kind">lowcode_sql</field>
+        <field name="domain_group">ar_ap</field>
+        <field name="click_count">752</field>
+        <field name="user_count">10</field>
+        <field name="last_click_date">2026-04-08</field>
+        <field name="procedure_name">UP_USP_SELECT_YSYFHZB_XM_ZJ</field>
+        <field name="parameter_summary">项目名称、开始日期、截止日期。</field>
+        <field name="metric_summary">公司/全局项目维度应收应付、开票、收付款、税额、差额。</field>
+        <field name="source_tables">BASE_SYSTEM_PROJECT, T_ProjectContract_Out, T_GYSHT_INFO, C_JFHKLR, C_JFHKLR_TH_ZCDF, C_JXXP_DKDJ_New, C_JXXP_DKDJ_CB, C_JXXP_XXKPDJ, C_JXXP_XXKPDJ_CB, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB。</field>
+        <field name="target_model">待建全局应收应付聚合。</field>
+        <field name="carrier_status">partial</field>
+        <field name="next_action">与项目口径应收应付共用指标定义，区分筛选维度和汇总层级。</field>
+        <field name="evidence">ts_function_RecordUserClick: 752 clicks, 10 users, last 2026-04-08。</field>
+    </record>
+
+    <record id="legacy_report_inventory_company_operation" model="sc.legacy.report.inventory">
+        <field name="priority">p0</field>
+        <field name="name">公司经营情况表</field>
+        <field name="legacy_function_id">76a0d8cab7b146858791413e46565e13</field>
+        <field name="legacy_config_id">7499e1fc0bd04f01be8284a94a0d0846</field>
+        <field name="legacy_url">LowCode/Report/ReportForm?ConfigId=7499e1fc0bd04f01be8284a94a0d0846</field>
+        <field name="source_kind">lowcode_proc</field>
+        <field name="domain_group">operation</field>
+        <field name="click_count">726</field>
+        <field name="user_count">7</field>
+        <field name="last_click_date">2026-04-08</field>
+        <field name="procedure_name">Report_GSJYQKB_BSJZ</field>
+        <field name="parameter_summary">年份、开始日期、结束日期。</field>
+        <field name="metric_summary">营收、支出、管理费、企业所得税、增值税附加、工资、手续费、各类公司经营收入/支出。</field>
+        <field name="source_tables">C_CWSFK_GSCWSR, C_CWSFK_GSCWZC, C_JFHKLR, C_JFHKLR_CB, CWGL_FYBX, CWGL_FYBX_CB, BGGL_XZ_GZ, BGGL_XZ_GZ_CB, T_ProjectContract_Out, T_ProjectContract_Out_CB, ZJGL_SZQR_DKQRB, ZJGL_SZQR_DKQRB_CB。</field>
+        <field name="target_model">待建公司经营统计聚合。</field>
+        <field name="carrier_status">gap</field>
+        <field name="next_action">先确认工资、公司财务收支、费用报销事实是否已迁移；未迁移前不能承诺完整报表。</field>
+        <field name="evidence">ts_function_RecordUserClick: 726 clicks, 7 users, last 2026-04-08。</field>
+    </record>
+
+    <record id="legacy_report_inventory_cost_composite" model="sc.legacy.report.inventory">
+        <field name="priority">p1</field>
+        <field name="name">成本统计表（综合）</field>
+        <field name="legacy_config_id">ad8b30d6c2f145598232d835c631540f</field>
+        <field name="legacy_url">LowCode/Report/ReportForm?ConfigId=ad8b30d6c2f145598232d835c631540f</field>
+        <field name="source_kind">lowcode_proc</field>
+        <field name="domain_group">cost</field>
+        <field name="click_count">51</field>
+        <field name="user_count">5</field>
+        <field name="last_click_date">2026-04-08</field>
+        <field name="procedure_name">Report_SP_USP_Select_CBTJB_ZH_SCBS</field>
+        <field name="parameter_summary">项目、项目名称。</field>
+        <field name="metric_summary">收入、收款、开票、未收款、物资/劳务/租赁/机械/分包/费用成本、应付款、利润额、利润率。</field>
+        <field name="source_tables">BASE_SYSTEM_PROJECT, T_ProjectContract_Out, C_JFHKLR, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB, T_RK_RKD, T_RK_RKDCB, T_FK_Supplier, SGGL_FBGL_*, LW_Base_*, T_ZL_*, GLFY_*。</field>
+        <field name="target_model">project.cost.compare / project.profit.compare 需重新评估。</field>
+        <field name="carrier_status">gap</field>
+        <field name="next_action">当前新系统成本/利润承载表存在空表风险，先补事实再启用报表。</field>
+        <field name="evidence">ts_function_RecordUserClick: 51 clicks, 5 users, last 2026-04-08。</field>
+    </record>
+
+    <record id="legacy_report_inventory_inventory_new" model="sc.legacy.report.inventory">
+        <field name="priority">p1</field>
+        <field name="name">库存统计表（新）</field>
+        <field name="legacy_config_id">b6977b9743334b6cb8f35dc5768e1a5e</field>
+        <field name="legacy_url">LowCode/Report/ReportForm?ConfigId=b6977b9743334b6cb8f35dc5768e1a5e</field>
+        <field name="source_kind">lowcode_sql</field>
+        <field name="domain_group">material</field>
+        <field name="click_count">42</field>
+        <field name="user_count">5</field>
+        <field name="last_click_date">2026-04-08</field>
+        <field name="parameter_summary">项目、材料名称、开始日期、截止日期。</field>
+        <field name="metric_summary">入库数量、入库单价、出库数量、出库单价、库存数量、库存金额、利润/价差。</field>
+        <field name="source_tables">T_RK_RKD, T_RK_RKDCB, T_CK_CKD, T_CK_CKDCB。</field>
+        <field name="target_model">stock.move / 旧库材料库存事实待确认。</field>
+        <field name="carrier_status">gap</field>
+        <field name="next_action">旧库库存样本量较小但有近期使用，需确认是否需要补材料出入库事实。</field>
+        <field name="evidence">旧库 T_RK_RKD 37 rows, T_RK_RKDCB 62 rows, T_CK_CKD 4 rows, T_CK_CKDCB 5 rows。</field>
+    </record>
+</odoo>

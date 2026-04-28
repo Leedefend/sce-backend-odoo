@@ -30,6 +30,7 @@
         'data/sc_extension_params.xml',
         'data/sc_subscription_default.xml',
         'data/sc_capability_group_seed.xml',
+        'data/legacy_report_inventory_seed.xml',
 
         # 安全
         'security/sc_groups.xml',
@@ -123,6 +124,7 @@
         'views/projection/treasury_ledger_views.xml',
         'views/core/workflow_views.xml',
         'views/menu.xml',
+        'views/support/legacy_report_inventory_views.xml',
         'views/support/approval_policy_views.xml',
         'views/support/approval_scope_views.xml',
         'views/core/construction_diary_views.xml',

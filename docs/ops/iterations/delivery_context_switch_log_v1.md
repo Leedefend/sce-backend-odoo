@@ -31127,3 +31127,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P3; 当前仍使用文本星标，后续如统一图标体系，可替换为共享 icon 组件。`
 - rollback: `回退本批次提交并重启前端，即恢复上一版收藏按钮形态。`
 - next_step: `继续按业务事实层排查其他用户态按钮的视觉一致性。`
+
+## 2026-04-28 Batch-Legacy-Report-Inventory-Baseline
+
+- branch: `codex/dev-env-run`
+- short_sha: `49c907b9`
+- Layer Target: `业务事实分析层 / Domain Layer`
+- Module: `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `用户要求直接连接旧库分析原报表真实情况后开始计划并实施；本批次先将真实高频报表、旧库证据、依赖数据和新系统承载状态落为可审计基线。`
+- completed_step: `新增 sc.legacy.report.inventory 只读模型、报表中心菜单、P0/P1 种子数据与迁移分析文档；记录应收应付、账户收支、资金日报、项目经营、公司经营、成本与库存等旧库报表的点击证据、实现方式、依赖旧表、承载状态和下一步动作。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/legacy_report_inventory.py` -> `PASS`
+  - `python3 stdlib XML parse legacy_report_inventory_views.xml / legacy_report_inventory_seed.xml` -> `PASS`
+  - `CSV ir.model.access duplicate id check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_prod_sim make mod.upgrade` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `legacy_report_inventory_count=8, p0_count=6, ready_count=1, menu=True, action=True`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make verify.restricted` -> `SKIP; Makefile 无 verify.restricted target`
+- result: `PASS; 旧库高频报表承载清单已在模拟生产库落库并挂入报表中心。`
+- risk: `P2; 本批仅是承载清单，不包含最终报表聚合算法；P0 报表仍需逐张拆旧过程和比对新事实覆盖率。`
+- rollback: `回退本批次提交并升级 smart_construction_core，即移除旧库报表清单模型、菜单、数据与文档。`
+- next_step: `Batch-B 优先实现资金日报汇总报表闭环，因为新系统已有资金日报主表和明细事实。`
