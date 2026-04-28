@@ -31048,3 +31048,26 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 列显隐偏好当前保存在自定义前端 localStorage，尚未与 Odoo 原生 web client 的浏览器本地偏好或 ir.ui.view.custom 做跨端同步；后续若要求多端同步，需要新增后端用户偏好契约。P3; 本轮验证创建了模拟生产库验证收藏“列显隐收藏验证”。`
 - rollback: `回退本批次提交，重启后端并重建前端静态包，即恢复固定列显示和旧收藏保存语义。`
 - next_step: `如用户认可交互形态，后续可继续补“列顺序拖拽/多端同步/默认筛选自动应用”的原生增强能力。`
+
+## 2026-04-28 Batch-Frontend-List-Column-Preference-Backend-Contract
+
+- branch: `codex/dev-env-run`
+- short_sha: `2669271e`
+- Layer Target: `user view preference contract + frontend list renderer`
+- Module: `addons/smart_core`, `frontend/apps/web`, `frontend/packages/schema`
+- Reason: `用户指出列按钮应放到表格头部最后，且列显隐属于用户态设置；若不后端落库，无法实现跨端同步，不能继续停留在 localStorage 或搜索收藏验证。`
+- completed_step: `新增 sc.user.view.preference 模型、ACL 与本人 record rule，提供 user.view.preference.get/set intent；前端新增 UserViewPreferenceContract 与 preferences API，ActionView 改为读取/保存后端列偏好，ListPage 移除 localStorage 并把“列”按钮放到表格表头最后一列；清理模拟生产库上轮验证收藏“列显隐收藏验证”。`
+- verification:
+  - `python3 -m py_compile addons/smart_core/models/user_view_preference.py addons/smart_core/handlers/user_view_preference.py` -> `PASS`
+  - `corepack pnpm -C frontend/apps/web typecheck` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim ... CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make odoo.shell.exec` -> `deleted_column_visibility_test_filters=1`
+  - `corepack pnpm -C frontend/apps/web build` -> `PASS; dist 输出 index-CX2RTNlP.js / index-D3rvXZZQ.css`
+  - `FRONTEND_PROFILE=prod-sim make frontend.restart` -> `frontend ready http://127.0.0.1:5174/，db=sc_prod_sim，proxy=http://localhost:18069`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make restart` -> `PASS; prod-sim odoo healthy，确保新 handler 进入长驻服务`
+  - `Playwright browser: wutao/123456 登录 sc_prod_sim；/a/452 表格工具栏无“列”按钮，thead 最后一列有且仅有 1 个“列”按钮；隐藏“项目经理”触发 user.view.preference.set，清空 localStorage 并刷新后 user.view.preference.get 恢复后端偏好，表头仍不显示“项目经理”；恢复默认后后端 value={'hidden_columns': [], 'visible_columns': []}`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make odoo.shell.exec` -> `pref_count=1 user=wutao scope=list_columns:list:action:452 value={'hidden_columns': [], 'visible_columns': []}; test_filter_remaining=0`
+- result: `PASS; 列显隐已从本地状态升级为后端用户视图偏好契约，具备跨端同步基础；测试收藏已清除。`
+- risk: `P2; 当前只契约化保存 visible_columns/hidden_columns，尚未实现原生式列顺序拖拽、按设备差异策略或多端实时状态广播。`
+- rollback: `回退本批次提交后执行 make mod.upgrade MODULE=smart_core 并重启前后端；必要时删除 sc.user.view.preference 中本批新增记录。`
+- next_step: `基于 sc.user.view.preference 继续研究列偏好的消费方式：默认列、列顺序、跨端同步与原生视图偏好之间的映射。`

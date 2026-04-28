@@ -36,23 +36,6 @@
           <h2>{{ title }}</h2>
           <p>{{ subtitle }}</p>
         </div>
-        <div v-if="columnChoices.length" ref="columnPickerRoot" class="column-picker">
-          <button type="button" class="pagination-btn" :disabled="loading" @click="columnPickerOpen = !columnPickerOpen">
-            列
-          </button>
-          <div v-if="columnPickerOpen" class="column-picker-menu">
-            <label v-for="column in columnChoices" :key="`column-choice-${column.name}`" class="column-choice">
-              <input
-                type="checkbox"
-                :checked="isColumnVisible(column.name)"
-                :disabled="loading || isLastVisibleColumn(column.name)"
-                @change="onColumnVisibilityChange(column.name, $event)"
-              />
-              <span>{{ column.label }}</span>
-            </label>
-            <button type="button" class="column-reset" :disabled="loading" @click="resetColumnVisibility">恢复默认</button>
-          </div>
-        </div>
         <div v-if="showPagination" class="pagination-actions pagination-actions--top">
           <button
             type="button"
@@ -239,6 +222,23 @@
               />
             </th>
             <th v-for="col in displayedColumns" :key="col">{{ columnLabel(col) }}</th>
+            <th v-if="columnChoices.length" ref="columnPickerRoot" class="cell-column-picker">
+              <button type="button" class="column-picker-btn" :disabled="loading" @click.stop="columnPickerOpen = !columnPickerOpen">
+                列
+              </button>
+              <div v-if="columnPickerOpen" class="column-picker-menu">
+                <label v-for="column in columnChoices" :key="`column-choice-${column.name}`" class="column-choice">
+                  <input
+                    type="checkbox"
+                    :checked="isColumnVisible(column.name)"
+                    :disabled="loading || isLastVisibleColumn(column.name)"
+                    @change="onColumnVisibilityChange(column.name, $event)"
+                  />
+                  <span>{{ column.label }}</span>
+                </label>
+                <button type="button" class="column-reset" :disabled="loading" @click="resetColumnVisibility">恢复默认</button>
+              </div>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -266,6 +266,7 @@
                 {{ semanticCell(col, row[col]).text }}
               </div>
             </td>
+            <td v-if="columnChoices.length" class="cell-column-picker"></td>
           </tr>
         </tbody>
       </table>
@@ -366,7 +367,7 @@ const props = defineProps<{
   listOffset?: number;
   listLimit?: number;
   columnOptions?: ColumnOption[];
-  columnStorageKey?: string;
+  columnVisibility?: Record<string, boolean>;
   enableSummaryStrip?: boolean;
   enableGroupedRows?: boolean;
   listProfile?: SceneListProfile | null;
@@ -419,6 +420,9 @@ const props = defineProps<{
   onGroupCollapsedChange?: (keys: string[]) => void;
   onPageChange?: (offset: number) => void;
 }>();
+const emit = defineEmits<{
+  'column-visibility-change': [payload: { visibility: Record<string, boolean> }];
+}>();
 const errorCopy = computed(() =>
   resolveErrorCopy(
     props.error || null,
@@ -434,7 +438,6 @@ const pageJumpInput = ref('');
 const observedListLimit = ref(0);
 const columnPickerRoot = ref<HTMLElement | null>(null);
 const columnPickerOpen = ref(false);
-const columnVisibilityOverrides = ref<Record<string, boolean>>({});
 const groupSortDesc = computed(() => (props.groupSort || 'desc') === 'desc');
 const sortedGroupedRows = computed(() => {
   const rows = [...groupedRows.value];
@@ -829,8 +832,9 @@ const displayedColumns = computed(() => {
     ? columnChoices.value.map((column) => column.name)
     : (preferredColumns.value.length ? preferredColumns.value : props.columns);
   const filtered = source.filter((col) => {
-    if (Object.prototype.hasOwnProperty.call(columnVisibilityOverrides.value, col)) {
-      return columnVisibilityOverrides.value[col] === true;
+    const visibility = props.columnVisibility || {};
+    if (Object.prototype.hasOwnProperty.call(visibility, col)) {
+      return visibility[col] === true;
     }
     return defaultVisibleColumnMap.value[col] !== false;
   });
@@ -841,32 +845,10 @@ function columnLabel(col: string) {
   return columnLabels.value[col] || contractColumnLabels.value[col] || col;
 }
 
-function loadColumnVisibilityOverrides() {
-  const key = String(props.columnStorageKey || '').trim();
-  if (!key || typeof window === 'undefined') {
-    columnVisibilityOverrides.value = {};
-    return;
-  }
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(key) || '{}') as Record<string, unknown>;
-    columnVisibilityOverrides.value = Object.entries(parsed).reduce<Record<string, boolean>>((acc, [name, value]) => {
-      if (typeof value === 'boolean') acc[name] = value;
-      return acc;
-    }, {});
-  } catch {
-    columnVisibilityOverrides.value = {};
-  }
-}
-
-function persistColumnVisibilityOverrides() {
-  const key = String(props.columnStorageKey || '').trim();
-  if (!key || typeof window === 'undefined') return;
-  window.localStorage.setItem(key, JSON.stringify(columnVisibilityOverrides.value));
-}
-
 function isColumnVisible(name: string) {
-  if (Object.prototype.hasOwnProperty.call(columnVisibilityOverrides.value, name)) {
-    return columnVisibilityOverrides.value[name] === true;
+  const visibility = props.columnVisibility || {};
+  if (Object.prototype.hasOwnProperty.call(visibility, name)) {
+    return visibility[name] === true;
   }
   return defaultVisibleColumnMap.value[name] !== false;
 }
@@ -878,23 +860,17 @@ function isLastVisibleColumn(name: string) {
 function onColumnVisibilityChange(name: string, event: Event) {
   const checked = Boolean((event.target as HTMLInputElement | null)?.checked);
   if (!checked && isLastVisibleColumn(name)) return;
-  columnVisibilityOverrides.value = {
-    ...columnVisibilityOverrides.value,
-    [name]: checked,
-  };
-  persistColumnVisibilityOverrides();
+  emit('column-visibility-change', {
+    visibility: {
+      ...(props.columnVisibility || {}),
+      [name]: checked,
+    },
+  });
 }
 
 function resetColumnVisibility() {
-  columnVisibilityOverrides.value = {};
-  persistColumnVisibilityOverrides();
+  emit('column-visibility-change', { visibility: {} });
 }
-
-watch(
-  () => props.columnStorageKey,
-  () => loadColumnVisibilityOverrides(),
-  { immediate: true },
-);
 
 function handleColumnPickerPointerDown(event: PointerEvent) {
   const root = columnPickerRoot.value;
@@ -1211,9 +1187,29 @@ onBeforeUnmount(() => {
   flex: 0 0 auto;
 }
 
-.column-picker {
+.cell-column-picker {
   position: relative;
-  flex: 0 0 auto;
+  width: 1%;
+  min-width: 56px;
+  text-align: right;
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+.column-picker-btn {
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  background: #fff;
+  color: #1d4ed8;
+  padding: 3px 8px;
+  font-size: 12px;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.column-picker-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .column-picker-menu {

@@ -308,6 +308,15 @@ export interface ApiDataListResult {
   }>;
 }
 
+export interface UserViewPreferenceContract {
+  scope_key?: string;
+  preference?: {
+    visible_columns?: string[];
+    hidden_columns?: string[];
+    [key: string]: unknown;
+  };
+}
+
 export interface ApiDataListRequest {
   op: 'list';
   model: string;

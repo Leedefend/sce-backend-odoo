@@ -353,7 +353,7 @@
       :list-limit="contractLimit"
       :column-labels="contractColumnLabels"
       :column-options="listColumnOptions"
-      :column-storage-key="listColumnStorageKey"
+      :column-visibility="listColumnVisibility"
       :sort-label="sortLabel"
       :sort-options="displaySortOptions"
       :sort-value="sortValue"
@@ -388,6 +388,7 @@
       :on-clear-selection="clearSelection"
       :on-row-click="handleRowClick"
       :on-page-change="handleListPageChange"
+      @column-visibility-change="handleListColumnVisibilityChange"
     >
       <template v-if="showTopActionToolbar" #toolbar>
         <ActionSurfaceToolbar
@@ -500,6 +501,7 @@
 import { computed, inject, onErrorCaptured, onMounted, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { listRecordsRaw, saveSearchFavorite } from '../api/data';
+import { getUserViewPreference, setUserViewPreference } from '../api/preferences';
 import { executeButton } from '../api/executeButton';
 import { trackUsageEvent } from '../api/usage';
 import { resolveAction } from '../app/resolvers/actionResolver';
@@ -1018,11 +1020,16 @@ const listProfile = computed<SceneListProfile | null>(() => {
   return extractListProfile(actionContract.value);
 });
 const listColumnOptions = computed(() => resolveListColumnOptions(actionContract.value, listProfile.value));
-const listColumnStorageKey = computed(() => {
-  const uid = Number(session.user?.id || 0);
+const listColumnVisibility = ref<Record<string, boolean>>({});
+const listColumnPreferenceScope = computed(() => {
   const aid = Number(actionId.value || 0);
   const targetModel = String(resolvedModelRef.value || model.value || '').trim();
-  return ['sc:list-columns', uid || 'u', aid || targetModel || 'action'].join(':');
+  return {
+    action_id: aid || undefined,
+    model: targetModel,
+    view_type: 'list',
+    preference_key: 'list_columns',
+  };
 });
 const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
   if (!sceneContextEnabled.value || !sceneKey.value) return null;
@@ -2313,6 +2320,61 @@ function handleListPageChange(offset: number): void {
   clearSelection();
   void requestLoadPage();
 }
+
+let listColumnPreferenceLoadSeq = 0;
+async function loadListColumnPreference(): Promise<void> {
+  const seq = ++listColumnPreferenceLoadSeq;
+  const scope = listColumnPreferenceScope.value;
+  if (!scope.action_id && !scope.model) {
+    listColumnVisibility.value = {};
+    return;
+  }
+  try {
+    const result = await getUserViewPreference(scope);
+    if (seq !== listColumnPreferenceLoadSeq) return;
+    const preference = result.preference || {};
+    const visible = Array.isArray(preference.visible_columns) ? preference.visible_columns.map((item) => String(item || '').trim()).filter(Boolean) : [];
+    const hidden = Array.isArray(preference.hidden_columns) ? preference.hidden_columns.map((item) => String(item || '').trim()).filter(Boolean) : [];
+    const next: Record<string, boolean> = {};
+    visible.forEach((name) => { next[name] = true; });
+    hidden.forEach((name) => { next[name] = false; });
+    listColumnVisibility.value = next;
+  } catch (err) {
+    if (seq === listColumnPreferenceLoadSeq) listColumnVisibility.value = {};
+    console.warn('[list-columns] failed to load preference', err);
+  }
+}
+
+async function handleListColumnVisibilityChange(payload: { visibility: Record<string, boolean> }): Promise<void> {
+  const next = payload.visibility || {};
+  listColumnVisibility.value = { ...next };
+  const visibleColumns = listColumnOptions.value
+    .map((column) => column.name)
+    .filter((name) => next[name] === true);
+  const hiddenColumns = listColumnOptions.value
+    .map((column) => column.name)
+    .filter((name) => next[name] === false);
+  try {
+    await setUserViewPreference(listColumnPreferenceScope.value, {
+      visible_columns: visibleColumns,
+      hidden_columns: hiddenColumns,
+    });
+  } catch (err) {
+    console.warn('[list-columns] failed to save preference', err);
+  }
+}
+
+watch(
+  () => [
+    listColumnPreferenceScope.value.action_id || 0,
+    listColumnPreferenceScope.value.model || '',
+    listColumnOptions.value.map((column) => column.name).join(','),
+  ].join('|'),
+  () => {
+    void loadListColumnPreference();
+  },
+  { immediate: true },
+);
 
 const {
   clearSelection: selectionRuntimeClearSelection,
