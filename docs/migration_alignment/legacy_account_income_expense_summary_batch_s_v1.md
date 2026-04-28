@@ -56,12 +56,12 @@ Batch-Z 已接入 `ZJGL_BZJGL_Pay_FBZJ`、`ZJGL_BZJGL_Pay_FBZJTH`、`ZJGL_BZJGL_
 Batch-AA 已接入 `ZJGL_ZJSZ_DKGL_DKDJ` 和 `ZJGL_ZJSZ_DKGL_HKDJ`，对应旧过程累计收款/累计支出中的贷款登记和贷款还款部分。
 Batch-AB 已接入 `T_KK_SJDJB_CB` 和 `T_KK_SJTHB_CB`，对应旧过程和旧资金明细中的扣款实缴登记/退回来源；登记进入累计支出，退回进入累计收款。
 Batch-AC 完成旧过程来源覆盖审计：有效账户金额来源均已接入或当前旧库为 0 行；后续重点从“找来源表”切换为账户绑定和旧报表样本对账。
+Batch-AD 完成未绑定账户治理：账户收支回放脚本会为历史单据真实引用但不存在于 `C_Base_ZHSZ` 的账户创建 `legacy_account_transaction_source` 历史来源账户，模拟生产库账户收支明细未绑定数已降为 0。
 
 ## 尚未完全覆盖
 
 旧过程有效账户金额来源已经完成覆盖审计。当前仍需后续逐步对账的是：
 
-- 未绑定账户来源明细。
 - 按旧报表常用查询条件进行区间、项目、账户类型样本对账。
 
 因此 `账户收支统计表` 仍标记为 `partial`，不能标记为 ready。

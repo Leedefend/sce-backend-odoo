@@ -36,6 +36,19 @@ def as_float(value: object) -> float:
     return float(text) if text else 0.0
 
 
+def split_account_label(value: object) -> tuple[str, str]:
+    text = clean(value)
+    left, sep, right = text.partition("/")
+    if sep:
+        name = clean(left) or clean(right)
+        account_no = clean(right).replace(" ", "")
+        return name, account_no
+    normalized = text.replace(" ", "")
+    if normalized and normalized.replace("-", "").isdigit():
+        return text, normalized
+    return text, ""
+
+
 def read_csv(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         return [dict(row) for row in csv.DictReader(handle)]
@@ -86,6 +99,33 @@ account_map = {
     for rec in Account.search_read([("legacy_account_id", "in", account_legacy_ids)], ["legacy_account_id"], limit=False)
     if rec.get("legacy_account_id")
 }
+supplemental_accounts: dict[str, dict[str, object]] = {}
+for row in rows:
+    legacy_id = clean(row.get("account_legacy_id"))
+    if not legacy_id or legacy_id in account_map or legacy_id in supplemental_accounts:
+        continue
+    name, account_no = split_account_label(row.get("account_name"))
+    project_legacy_id = clean(row.get("project_legacy_id"))
+    supplemental_accounts[legacy_id] = {
+        "legacy_account_id": legacy_id,
+        "project_legacy_id": project_legacy_id,
+        "project_name": clean(row.get("project_name")),
+        "project_id": project_map.get(project_legacy_id) or False,
+        "name": name or legacy_id,
+        "account_no": account_no or False,
+        "account_type": "历史来源账户",
+        "opening_balance": 0.0,
+        "source_table": "legacy_account_transaction_source",
+        "note": "source=legacy account transaction replay; missing from C_Base_ZHSZ",
+        "active": True,
+    }
+if supplemental_accounts:
+    Account.create(list(supplemental_accounts.values()))
+    account_map = {
+        rec["legacy_account_id"]: rec["id"]
+        for rec in Account.search_read([("legacy_account_id", "in", account_legacy_ids)], ["legacy_account_id"], limit=False)
+        if rec.get("legacy_account_id")
+    }
 account_records = Account.search_read([], ["legacy_account_id", "name", "account_no", "active"], limit=False)
 account_no_map: dict[str, int] = {}
 account_name_map: dict[str, int] = {}
@@ -210,6 +250,7 @@ payload = {
     "skipped_existing": skipped,
     "updated_existing": updated_existing,
     "missing_account": missing_account,
+    "supplemental_accounts_created": len(supplemental_accounts),
     "decision": "legacy_account_transaction_replay_complete" if created + skipped == len(rows) else "STOP_REVIEW_REQUIRED",
 }
 write_json(OUTPUT_JSON, payload)

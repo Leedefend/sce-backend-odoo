@@ -31762,3 +31762,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 当前结论限定在 Report_SP_USP_Select_ZHSZTJB_GS_Tree 账户收支统计表；若其他旧报表引用投标退款，需要另开报表来源审计。`
 - rollback: `回退本批文档和 legacy_report_inventory_seed.xml 的 next_action 文案。`
 - next_step: `治理未绑定账户来源，或抽取旧报表常用条件做新旧统计结果对账。`
+
+## 2026-04-28 Batch-Legacy-Account-Unbound-Governance
+
+- branch: `codex/dev-env-run`
+- short_sha: `eebdc0e9`
+- Layer Target: `Domain Carrier / Migration Data Quality`
+- Module: `scripts/migration`, `docs/migration_alignment`
+- Reason: `账户收支来源覆盖后仍有 548 条明细未绑定账户，影响账户维度统计连续性。`
+- completed_step: `扩展 fresh_db_legacy_account_transaction_replay_write，在写明细前根据真实历史明细补 legacy_account_transaction_source 历史来源账户，并回填既有明细 account_id。`
+- verification:
+  - `python3 -m py_compile scripts/migration/fresh_db_legacy_account_transaction_replay_write.py scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_transaction.replay.adapter` -> `PASS; rows=39707`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS; supplemental_accounts_created=48, updated_existing=906, missing_account=0`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; missing_total=0, supplemental_accounts=48, summary_rows=120, cumulative_receipt_amount=5677528462.76, cumulative_expense_amount=5574757978.40`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 账户收支来源明细未绑定账户已从 548 降为 0，账户统计表可以按历史来源账户连续展示。`
+- risk: `P1; 历史来源账户来自真实单据引用，不等同于平台正式账户主数据；后续旧报表样本对账时需解释这类账户的来源。`
+- rollback: `回退本批 write 脚本和文档；如需清理模拟生产数据，可删除 sc_legacy_account_master 中 source_table='legacy_account_transaction_source' 并重放上一版账户收支明细。`
+- next_step: `抽取旧报表常用查询条件，做旧过程与新系统账户收支统计表的样本对账。`
