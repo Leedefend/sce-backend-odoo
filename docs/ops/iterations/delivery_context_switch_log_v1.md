@@ -30970,3 +30970,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; URL 中 group_wid 能记录分组窗口身份，但当前不从 URL 恢复执行 group_by，因为现有 grouped load 链在直接恢复 group_by 时会持续加载；该能力需后续单独治理。P3; 默认 build 仍受 dist root:root 历史产物权限影响，本轮使用临时 outDir 完成构建验证。`
 - rollback: `回退本批次提交并重启前端，即恢复自定义分组不展示 facet 的状态。`
 - next_step: `单独治理 grouped route 恢复链路，使 group_by 可安全进入 URL 状态同步。`
+
+## 2026-04-28 Batch-Search-Custom-Group-Visible-Facet
+
+- branch: `codex/dev-env-run`
+- short_sha: `pending`
+- Layer Target: `frontend shared search state`
+- Module: `frontend/apps/web`
+- Reason: `用户反馈前端看不到变化；复核发现自定义分组 partner_id 最终显示为已有快捷分组“按合同方”，视觉上无法区分是否走了自定义分组。`
+- completed_step: `ActionSurfaceToolbar 将自定义分组选择改为独立 custom-group 事件并传递业务标签；ActionView 对 custom-group 使用传入标签作为当前 facet 展示，普通 group 仍走原快捷分组标签。`
+- verification:
+  - `corepack pnpm -C frontend/apps/web typecheck` -> `PASS`
+  - `rm -rf /tmp/sc-web-build-check && corepack pnpm -C frontend/apps/web exec vite build --outDir /tmp/sc-web-build-check --emptyOutDir true` -> `PASS`
+  - `FRONTEND_PROFILE=prod-sim make frontend.restart` -> `frontend ready http://127.0.0.1:5174/`
+  - `Playwright browser: wutao/123456 登录 sc_prod_sim；/a/489 打开搜索菜单，选择自定义分组 partner_id 后，搜索框 facet=合同相对方 ×，api.data request 包含 group_by=partner_id，页面未停留“正在加载列表”。`
+- result: `PASS; 自定义分组的可见变化已明确显示为所选业务字段标签。`
+- risk: `P2; URL 恢复 group_by 的执行链仍未纳入本批次，避免影响当前列表可用性。`
+- rollback: `回退本批次提交并重启前端，即恢复自定义分组显示为快捷分组标签或无明显变化。`
+- next_step: `如用户确认显示达标，再进入 grouped route 恢复链路治理。`

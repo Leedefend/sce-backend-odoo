@@ -328,6 +328,7 @@
           @clear-saved-filter="clearSavedFilter"
           @sort="handleSort"
           @group="applyGroupBy"
+          @custom-group="applyCustomGroupBy"
           @clear-group="clearGroupBy"
           @custom-filter="applyCustomFilter"
           @clear-custom-filter="clearCustomFilter"
@@ -439,6 +440,7 @@
           @clear-saved-filter="clearSavedFilter"
           @sort="handleSort"
           @group="applyGroupBy"
+          @custom-group="applyCustomGroupBy"
           @clear-group="clearGroupBy"
           @custom-filter="applyCustomFilter"
           @clear-custom-filter="clearCustomFilter"
@@ -1606,6 +1608,13 @@ function applyGroupBy(field: string) {
   const found = routeGroupByChips.value.find((chip) => String((chip as Record<string, unknown>).field || '') === normalized) as Record<string, unknown> | undefined;
   activeGroupByDisplayLabel.value = String(found?.label || normalized);
   applyGroupByRuntime(field);
+}
+
+function applyCustomGroupBy(payload: { key: string; label: string }) {
+  const key = String(payload.key || '').trim();
+  if (!key) return;
+  activeGroupByDisplayLabel.value = String(payload.label || key);
+  applyGroupByRuntime(key);
 }
 
 function clearGroupBy() {

@@ -298,6 +298,7 @@ const emit = defineEmits<{
   sort: [value: string];
   group: [key: string];
   'clear-group': [];
+  'custom-group': [payload: { key: string; label: string }];
   'custom-filter': [payload: { field: string; label: string; operator: string; value: unknown; domain: unknown[] }];
   'clear-custom-filter': [];
   'save-favorite': [payload: { name: string }];
@@ -429,8 +430,9 @@ function resetCustomFilter() {
 function applyCustomGroup() {
   const key = String(customGroupField.value || '').trim();
   if (!key) return;
+  const found = props.customGroupFields.find((chip) => chip.key === key);
   searchMenuOpen.value = false;
-  emit('group', key);
+  emit('custom-group', { key, label: found?.label || key });
 }
 
 function saveFavorite() {
