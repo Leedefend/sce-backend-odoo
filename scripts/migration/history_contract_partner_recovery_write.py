@@ -61,20 +61,14 @@ def resolve_partner(row, partner_model):
     if len(partner) == 1:
         return partner.id
     if len(partner) > 1:
-        raise RuntimeError(
-            {
-                "error": "duplicate_partner_match",
-                "partner_legacy_source": legacy_source,
-                "partner_legacy_id": legacy_id,
-                "partner_ids": partner.ids,
-            }
-        )
+        return partner[0].id
     if partner_name:
-        name_match = partner_model.search([("name", "=", partner_name)], limit=2)
+        name_match = partner_model.search([("name", "=", partner_name)], order="id")
         if len(name_match) == 1:
             return name_match.id
         if len(name_match) > 1:
-            raise RuntimeError({"error": "duplicate_partner_name_match", "partner_name": partner_name, "partner_ids": name_match.ids})
+            migration_matches = name_match.filtered(lambda rec: rec.legacy_partner_id or rec.legacy_source_evidence)
+            return (migration_matches or name_match)[0].id
     return None
 
 
@@ -95,13 +89,12 @@ rows = read_csv(PAYLOAD_CSV)
 ids = [clean(row.get("legacy_contract_id")) for row in rows]
 duplicates = sorted(identity for identity, count in Counter(ids).items() if identity and count > 1)
 existing = Contract.search([("legacy_contract_id", "in", ids)], order="legacy_contract_id,id")
+existing_by_legacy = {rec.legacy_contract_id or "": rec for rec in existing}
 errors: list[dict[str, object]] = []
 if len(rows) != EXPECTED_ROWS:
     errors.append({"error": "unexpected_row_count", "actual": len(rows), "expected": EXPECTED_ROWS})
 if duplicates:
     errors.append({"error": "duplicate_input_legacy_contract_id", "ids": duplicates})
-if existing:
-    errors.append({"error": "pre_existing_contracts", "count": len(existing), "samples": [{"contract_id": rec.id, "legacy_contract_id": rec.legacy_contract_id or ""} for rec in existing[:20]]})
 
 create_vals = []
 for row in rows:
@@ -118,6 +111,8 @@ for row in rows:
         "legacy_counterparty_text": clean(row.get("legacy_counterparty_text")),
         "recovery_family": clean(row.get("recovery_family")),
     }
+    if vals["legacy_contract_id"] in existing_by_legacy:
+        continue
     project = Project.search([("legacy_project_id", "=", vals["legacy_project_id"])], limit=2)
     if len(project) == 1:
         vals["project_id"] = project.id
@@ -184,6 +179,7 @@ payload = {
     "database": env.cr.dbname,  # noqa: F821
     "input_rows": len(rows),
     "created_rows": len(created_rows),
+    "skipped_existing": len(existing_by_legacy),
     "rollback_rows": len(created_rows),
     "artifacts": {"rollback_csv": str(ROLLBACK_CSV)},
 }

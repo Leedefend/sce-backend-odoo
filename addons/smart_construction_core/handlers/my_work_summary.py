@@ -341,9 +341,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         fields_map = TierReview._fields
         if "status" not in fields_map:
             return None
-        domain = [("status", "=", "pending")]
-        if "can_review" in fields_map:
-            domain.append(("can_review", "=", True))
+        domain = [("status", "in", ("waiting", "pending"))]
         if "reviewer_ids" in fields_map:
             domain.append(("reviewer_ids", "in", user.id))
         elif "reviewer_id" in fields_map:

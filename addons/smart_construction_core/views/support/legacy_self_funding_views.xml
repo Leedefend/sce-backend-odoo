@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_legacy_self_funding_fact_search" model="ir.ui.view">
+            <field name="name">sc.legacy.self.funding.fact.search</field>
+            <field name="model">sc.legacy.self.funding.fact</field>
+            <field name="arch" type="xml">
+                <search string="历史自筹资金事实">
+                    <field name="document_no"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="partner_name"/>
+                    <filter string="自筹收入" name="line_type_income" domain="[('line_type', '=', 'income')]"/>
+                    <filter string="自筹退回" name="line_type_refund" domain="[('line_type', '=', 'refund')]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按往来单位" name="group_partner" context="{'group_by': 'partner_name'}"/>
+                    <filter string="按类型" name="group_line_type" context="{'group_by': 'line_type'}"/>
+                    <filter string="按日期" name="group_date" context="{'group_by': 'document_date'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_self_funding_fact_tree" model="ir.ui.view">
+            <field name="name">sc.legacy.self.funding.fact.tree</field>
+            <field name="model">sc.legacy.self.funding.fact</field>
+            <field name="arch" type="xml">
+                <tree string="历史自筹资金事实" create="false" edit="false" delete="false">
+                    <field name="document_date"/>
+                    <field name="document_no"/>
+                    <field name="line_type"/>
+                    <field name="project_id"/>
+                    <field name="partner_name"/>
+                    <field name="income_category"/>
+                    <field name="self_funding_amount" sum="自筹收入合计"/>
+                    <field name="refund_amount" sum="自筹退回合计"/>
+                    <field name="unreturned_amount" sum="自筹未退合计"/>
+                    <field name="document_state"/>
+                    <field name="deleted_flag"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_sc_legacy_self_funding_fact" model="ir.actions.act_window">
+            <field name="name">历史自筹资金事实</field>
+            <field name="res_model">sc.legacy.self.funding.fact</field>
+            <field name="view_mode">tree</field>
+            <field name="search_view_id" ref="view_sc_legacy_self_funding_fact_search"/>
+            <field name="context">{'create': False, 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+    </data>
+</odoo>

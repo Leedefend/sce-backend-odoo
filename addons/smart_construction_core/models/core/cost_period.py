@@ -15,7 +15,7 @@ class ProjectCostPeriod(models.Model):
         required=True,
         index=True,
     )
-    period = fields.Char("期间(YYYY-MM)", required=True, index=True)
+    period = fields.Char("期间", required=True, index=True)
 
     locked = fields.Boolean("已锁定", default=False, index=True)
     locked_by = fields.Many2one("res.users", string="锁定人", index=True)

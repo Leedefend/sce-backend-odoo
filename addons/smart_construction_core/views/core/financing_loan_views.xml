@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_financing_loan_search" model="ir.ui.view">
+            <field name="name">sc.financing.loan.search</field>
+            <field name="model">sc.financing.loan</field>
+            <field name="arch" type="xml">
+                <search string="融资借款">
+                    <field name="name"/>
+                    <field name="document_no"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="purpose"/>
+                    <filter string="贷款登记" name="loan_registration" domain="[('loan_type', '=', 'loan_registration')]"/>
+                    <filter string="借款申请" name="borrowing_request" domain="[('loan_type', '=', 'borrowing_request')]"/>
+                    <filter string="已确认" name="state_confirmed" domain="[('state', 'in', ['confirmed', 'legacy_confirmed'])]"/>
+                    <filter string="已完成" name="state_done" domain="[('state', '=', 'done')]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="按类型" name="group_type" context="{'group_by': 'loan_type'}"/>
+                    <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="按日期" name="group_date" context="{'group_by': 'document_date'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_financing_loan_tree" model="ir.ui.view">
+            <field name="name">sc.financing.loan.tree</field>
+            <field name="model">sc.financing.loan</field>
+            <field name="arch" type="xml">
+                <tree string="融资借款">
+                    <field name="name"/>
+                    <field name="document_date"/>
+                    <field name="document_no"/>
+                    <field name="loan_type"/>
+                    <field name="direction"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="amount" sum="金额"/>
+                    <field name="due_date"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_financing_loan_form" model="ir.ui.view">
+            <field name="name">sc.financing.loan.form</field>
+            <field name="model">sc.financing.loan</field>
+            <field name="arch" type="xml">
+                <form string="融资借款">
+                    <header>
+                        <button name="action_confirm" string="提交审批" type="object" class="btn-primary"
+                                invisible="state != 'draft' or validation_status in ('waiting', 'pending', 'validated')"/>
+                        <button name="validate_tier" string="审批通过" type="object" class="btn-primary"
+                                invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
+                        <button name="reject_tier" string="审批驳回" type="object"
+                                invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
+                        <button name="action_done" string="完成" type="object" class="btn-primary"
+                                invisible="state not in ('draft', 'confirmed')"/>
+                        <button name="action_cancel" string="取消" type="object"
+                                invisible="state in ('cancel', 'legacy_confirmed')"/>
+                        <field name="validation_status" invisible="1"/>
+                        <field name="can_review" invisible="1"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,confirmed,done,legacy_confirmed,cancel"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="loan_type" readonly="state == 'legacy_confirmed'"/>
+                                <field name="direction" readonly="state == 'legacy_confirmed'"/>
+                                <field name="document_no" readonly="state == 'legacy_confirmed'"/>
+                                <field name="document_date" readonly="state == 'legacy_confirmed'"/>
+                                <field name="due_date" readonly="state == 'legacy_confirmed'"/>
+                            </group>
+                            <group>
+                                <field name="project_id" readonly="state == 'legacy_confirmed'"/>
+                                <field name="partner_id"/>
+                                <field name="amount" readonly="state == 'legacy_confirmed'"/>
+                                <field name="currency_id"/>
+                            </group>
+                        </group>
+                        <group string="说明">
+                            <field name="purpose" readonly="state == 'legacy_confirmed'"/>
+                            <field name="rate_label" readonly="state == 'legacy_confirmed'"/>
+                            <field name="extra_ref" readonly="state == 'legacy_confirmed'"/>
+                            <field name="extra_label" readonly="state == 'legacy_confirmed'"/>
+                        </group>
+                        <group>
+                            <field name="note"/>
+                            <field name="active"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_financing_loan" model="ir.actions.act_window">
+            <field name="name">融资借款</field>
+            <field name="res_model">sc.financing.loan</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_financing_loan_search"/>
+            <field name="context">{'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+
+        <menuitem id="menu_sc_financing_loan"
+                  name="融资借款"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  action="action_sc_financing_loan"
+                  sequence="38"
+                  groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    </data>
+</odoo>

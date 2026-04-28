@@ -144,11 +144,13 @@ if len(design_rows) != EXPECTED_ROWS:
     errors.append({"error": "unexpected_row_count", "actual": len(design_rows), "expected": EXPECTED_ROWS})
 if duplicate_ids:
     errors.append({"error": "duplicate_input_legacy_contract_id", "ids": duplicate_ids[:20]})
-if pre_records:
-    errors.append({"error": "pre_existing_contracts", "count": len(pre_records), "samples": pre_records[:20].mapped("id")})
+pre_existing_by_legacy = {rec.legacy_contract_id or "": rec for rec in pre_records}
 
 create_vals = []
 for index, row in enumerate(design_rows, start=2):
+    legacy_contract_id = clean(row.get("legacy_contract_id"))
+    if legacy_contract_id in pre_existing_by_legacy:
+        continue
     legacy_project_id = clean(row.get("legacy_project_id"))
     counterparty = clean(row.get("counterparty_text"))
     project = Project.search([("legacy_project_id", "=", legacy_project_id)], limit=2)
@@ -220,8 +222,9 @@ for rec in post_records:
 write_csv(ROLLBACK_CSV, SNAPSHOT_FIELDS, rollback_rows)
 
 post_errors = []
-if len(created) != EXPECTED_ROWS:
-    post_errors.append({"error": "created_count_not_57", "created": len(created)})
+skipped_existing = len(pre_existing_by_legacy)
+if len(created) + skipped_existing != EXPECTED_ROWS:
+    post_errors.append({"error": "resolved_count_not_57", "created": len(created), "skipped_existing": skipped_existing})
 if len(post_records) != EXPECTED_ROWS:
     post_errors.append({"error": "post_write_match_count_not_57", "matched": len(post_records)})
 if any(len(records) > 1 for records in grouped.values()):
@@ -235,6 +238,7 @@ result = {
     "target_model": "construction.contract",
     "input_rows": len(design_rows),
     "created_rows": len(created),
+    "skipped_existing": skipped_existing,
     "post_write_match_count": len(post_records),
     "rollback_target_rows": len(rollback_rows),
     "updated_rows": 0,
@@ -260,6 +264,7 @@ print(
             "status": status,
             "input_rows": len(design_rows),
             "created_rows": len(created),
+            "skipped_existing": skipped_existing,
             "post_write_match_count": len(post_records),
             "db_writes": len(created),
         },

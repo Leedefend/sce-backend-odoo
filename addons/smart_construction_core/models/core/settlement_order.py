@@ -9,7 +9,8 @@ from ..support.state_machine import ScStateMachine
 
 class ScSettlementOrder(models.Model):
     _name = "sc.settlement.order"
-    _description = "Settlement Order"
+    _description = "结算单"
+    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation"]
     _order = "id desc"
 
     name = fields.Char(string="结算单号", required=True, default="新建", copy=False)
@@ -103,6 +104,7 @@ class ScSettlementOrder(models.Model):
     invoice_ref = fields.Char(string="发票号/票据号")
     invoice_amount = fields.Monetary(string="发票金额", currency_field="currency_id")
     invoice_date = fields.Date(string="发票日期")
+    reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
 
     compliance_contract_ok = fields.Boolean(string="合同一致", compute="_compute_compliance_summary", store=False)
     compliance_state = fields.Selection(
@@ -271,16 +273,82 @@ class ScSettlementOrder(models.Model):
             rec._check_line_contracts_or_raise()
             rec._check_contract_consistency_or_raise(strict=False)
             rec._check_purchase_orders_or_raise(strict=False)
-        self.env["sc.data.validator"].validate_or_raise()
-        self.write({"state": "submit"})
+        self.env["sc.data.validator"].validate_or_raise(
+            scope={"res_model": self._name, "res_ids": self.ids}
+        )
+        policy = self.env["sc.approval.policy"]
+        for rec in self:
+            if policy.is_approval_required(rec._name, company=rec.company_id):
+                rec.write({"state": "submit", "reject_reason": False})
+                company = rec.company_id or self.env.company
+                rec.with_company(company).with_context(
+                    allowed_company_ids=[company.id],
+                ).request_validation()
+            else:
+                rec.write({"state": "approve", "reject_reason": False})
 
     def action_approve(self):
+        policy_model = self.env["sc.approval.policy"]
         for rec in self:
             rec._check_line_contracts_or_raise()
             rec._check_contract_consistency_or_raise(strict=True)
             rec._check_purchase_orders_or_raise(strict=True)
-        self.env["sc.data.validator"].validate_or_raise()
+            if policy_model.is_approval_required(rec._name, company=rec.company_id):
+                if rec.validation_status != "validated":
+                    raise_guard(
+                        "SETTLEMENT_TIER_INCOMPLETE",
+                        f"结算单[{rec.display_name}]",
+                        _("审批结算单"),
+                        reasons=[_("统一审批流程尚未完成")],
+                    )
+            else:
+                policy = policy_model.get_active_policy(rec._name, company=rec.company_id)
+                if policy:
+                    policy.assert_user_can_approve()
+        self.env["sc.data.validator"].validate_or_raise(
+            scope={"res_model": self._name, "res_ids": self.ids}
+        )
         self.write({"state": "approve"})
+
+    def _check_state_from_condition(self):
+        self.ensure_one()
+        parent = getattr(super(), "_check_state_from_condition", None)
+        base_ok = parent() if parent else False
+        return base_ok or self.state == "submit"
+
+    def _get_tier_reject_reason(self):
+        self.ensure_one()
+        reviews = self.review_ids.filtered(lambda review: review.status == "rejected" and review.comment)
+        if reviews:
+            return reviews.sorted(lambda review: review.write_date or review.create_date, reverse=True)[0].comment
+        return _("OCA审批驳回（未填写原因）")
+
+    def action_on_tier_approved(self):
+        for rec in self:
+            if rec.state != "submit":
+                continue
+            rec._check_line_contracts_or_raise()
+            rec._check_contract_consistency_or_raise(strict=True)
+            rec._check_purchase_orders_or_raise(strict=True)
+            if rec.validation_status != "validated":
+                raise_guard(
+                    "SETTLEMENT_TIER_INCOMPLETE",
+                    f"结算单[{rec.display_name}]",
+                    _("审批结算单"),
+                    reasons=[_("统一审批流程尚未完成")],
+                )
+            rec.write({"state": "approve", "reject_reason": False})
+
+    def action_on_tier_rejected(self, reason=None):
+        for rec in self:
+            if rec.state != "submit":
+                continue
+            rec.write(
+                {
+                    "state": "draft",
+                    "reject_reason": reason or rec._get_tier_reject_reason(),
+                }
+            )
 
     def action_done(self):
         self.write({"state": "done"})
@@ -399,7 +467,7 @@ class ScSettlementOrder(models.Model):
 
 class ScSettlementOrderLine(models.Model):
     _name = "sc.settlement.order.line"
-    _description = "Settlement Order Line"
+    _description = "结算单明细"
     _order = "id"
 
     settlement_id = fields.Many2one(

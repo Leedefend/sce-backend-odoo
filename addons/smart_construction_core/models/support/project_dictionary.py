@@ -173,7 +173,7 @@ class ProjectDictionary(models.Model):
     amount_misc = fields.Float("综合费/附加费")
     rate_misc = fields.Float("费率")
     work_content = fields.Text("工作内容")
-    raw_line = fields.Text("原始行数据(JSON)")
+    raw_line = fields.Text("导入原始数据")
 
     # ========= 前端定额中心辅助 =========
     def action_open_quota_center(self):

@@ -7,7 +7,10 @@
     "license": "LGPL-3",
     "author": "SCE",
     "depends": ["base"],
-    "data": [],
+    "data": [
+        "data/baseline_currency.xml",
+        "data/baseline_preferences.xml",
+    ],
     "post_init_hook": "post_init_hook",
     "installable": True,
     "application": False,

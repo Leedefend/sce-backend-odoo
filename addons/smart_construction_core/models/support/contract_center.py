@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import config
 
@@ -19,7 +19,10 @@ class ConstructionContract(models.Model):
 
     _name = "construction.contract"
     _description = "项目合同"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation"]
+    _state_from = ["draft"]
+    _state_to = ["confirmed"]
+    _cancel_state = "cancel"
     _order = "project_id, type, id desc"
 
     def _register_hook(self):
@@ -112,7 +115,7 @@ class ConstructionContract(models.Model):
         tracking=True,
     )
     line_amount_total = fields.Monetary(
-        string="合同行金额",
+        string="合同明细金额",
         compute="_compute_line_amount_total",
         currency_field="currency_id",
         store=True,
@@ -148,13 +151,14 @@ class ConstructionContract(models.Model):
     line_ids = fields.One2many(
         "construction.contract.line",
         "contract_id",
-        string="合同行",
+        string="合同明细",
     )
     payment_request_count = fields.Integer(string="付款申请数", compute="_compute_ref_stats")
     settlement_count = fields.Integer(string="结算单数", compute="_compute_ref_stats")
     is_locked = fields.Boolean(string="被引用锁定", compute="_compute_ref_stats")
 
     note = fields.Text(string="备注")
+    reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False, tracking=True)
 
     @api.model
     def _tax_use_from_contract_type(self, contract_type: str) -> str:
@@ -245,6 +249,17 @@ class ConstructionContract(models.Model):
             return tax
 
     @api.model
+    def _is_contract_tax_compatible(self, tax, contract_type):
+        if not tax:
+            return False
+        expected_use = self._tax_use_from_contract_type(contract_type or "out")
+        return (
+            tax.type_tax_use in (expected_use, "all")
+            and tax.amount_type == "percent"
+            and not tax.price_include
+        )
+
+    @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
         contract_type = res.get("type") or "out"
@@ -304,7 +319,7 @@ class ConstructionContract(models.Model):
             if not budget.line_ids:
                 raise UserError("预算版本中没有预算清单行。")
 
-            # 清理孤儿合同行（对应预算行已被删除），否则后续写入会触发外键错误
+            # 清理孤儿合同明细（对应预算行已被删除），否则后续写入会触发外键错误
             orphans = contract.line_ids.filtered(lambda l: not l.boq_line_id)
             if orphans:
                 orphans.sudo().unlink()
@@ -381,7 +396,8 @@ class ConstructionContract(models.Model):
         for vals in vals_list:
             if not vals.get("type"):
                 vals["type"] = "out"
-            if not vals.get("tax_id"):
+            tax = self.env["account.tax"].browse(vals.get("tax_id")).exists() if vals.get("tax_id") else False
+            if not self._is_contract_tax_compatible(tax, vals.get("type")):
                 default_tax = self._get_default_tax(vals["type"])
                 vals["tax_id"] = default_tax.id
             if not vals.get("name") or vals["name"] == "新建":
@@ -397,11 +413,63 @@ class ConstructionContract(models.Model):
     def action_confirm(self):
         for contract in self:
             old = contract.state
-            if not contract.line_ids:
-                raise UserError("请先录入合同行后再确认。")
             if contract.state == "draft":
-                contract.state = "confirmed"
+                if contract._requires_contract_approval() and contract.validation_status != "validated":
+                    contract._request_contract_validation()
+                    continue
+                policy = self.env["sc.approval.policy"].get_active_policy(contract._name, company=contract.company_id)
+                if policy and not contract._requires_contract_approval():
+                    policy.assert_user_can_approve()
+                contract.with_context(skip_validation_check=True).write(
+                    {"state": "confirmed", "reject_reason": False}
+                )
                 contract.message_post(body="合同状态：草稿 → 已生效")
+
+    def _requires_contract_approval(self):
+        self.ensure_one()
+        return self.env["sc.approval.policy"].is_approval_required(self._name, company=self.company_id)
+
+    def _request_contract_validation(self):
+        self.ensure_one()
+        if self.review_ids and self.validation_status == "rejected":
+            self.restart_validation()
+        elif not self.review_ids or self.validation_status == "no":
+            reviews = self.request_validation()
+            if not reviews:
+                raise UserError(_("项目合同已启用审批，但没有匹配的统一审批规则，请检查业务审批配置。"))
+        else:
+            raise UserError(_("项目合同已经在统一审批流程中，请等待审批完成。"))
+        self.with_context(skip_validation_check=True).write({"reject_reason": False})
+
+    def _check_state_from_condition(self):
+        self.ensure_one()
+        parent = getattr(super(), "_check_state_from_condition", None)
+        base_ok = parent() if parent else False
+        return base_ok or self.state == "draft"
+
+    def _get_tier_reject_reason(self):
+        self.ensure_one()
+        reviews = self.review_ids.filtered(lambda review: review.status == "rejected" and review.comment)
+        if reviews:
+            return reviews.sorted(lambda review: review.write_date or review.create_date, reverse=True)[0].comment
+        return _("OCA审批驳回（未填写原因）")
+
+    def action_on_tier_approved(self):
+        for contract in self:
+            if contract.state != "draft":
+                continue
+            if contract.validation_status != "validated":
+                raise UserError(_("项目合同尚未完成统一审批流程。"))
+            contract.with_context(skip_validation_check=True).write({"reject_reason": False})
+        return self.action_confirm()
+
+    def action_on_tier_rejected(self, reason=None):
+        for contract in self:
+            if contract.state != "draft":
+                continue
+            contract.with_context(skip_validation_check=True).write(
+                {"reject_reason": reason or contract._get_tier_reject_reason()}
+            )
 
     def action_set_running(self):
         for contract in self:
@@ -418,7 +486,7 @@ class ConstructionContract(models.Model):
             if contract.state not in ("confirmed", "running"):
                 raise UserError("仅已生效/执行中的合同可关闭。")
             if not contract.line_ids:
-                raise UserError("无合同行的合同不可关闭，请补充清单。")
+                raise UserError("无合同明细的合同不可关闭，请补充明细。")
             contract.state = "closed"
             if old != contract.state:
                 contract.message_post(body="合同状态：%s → 已关闭" % ("已生效" if old == "confirmed" else "执行中"))
@@ -462,10 +530,10 @@ class ConstructionContract(models.Model):
 
 
 class ConstructionContractLine(models.Model):
-    """Structured BoQ lines derived from budget master with contract-specific quantities/prices."""
+    """Business contract details with optional BoQ linkage."""
 
     _name = "construction.contract.line"
-    _description = "合同清单行"
+    _description = "合同明细"
     _order = "sequence, id"
 
     @api.model
@@ -556,7 +624,7 @@ class ConstructionContractLine(models.Model):
         compute="_compute_amount_contract_leaf",
         store=True,
         group_operator="sum",
-        help="仅实际合同行计入汇总，章节/父项不计入，用于分组/透视/看板统计。",
+        help="仅实际合同明细计入汇总，章节/父项不计入，用于分组/透视/看板统计。",
     )
     boq_amount_leaf = fields.Monetary(
         string="清单合价(基准)",

@@ -93,6 +93,7 @@ export function normalizeActionViewMode(raw: unknown): string {
 export function resolveActionViewAvailableModes(options: {
   contractViewTypeRaw: unknown;
   metaViewModesRaw: unknown;
+  metaViewsRaw?: unknown;
   contract: Dict | null;
 }): string[] {
   const out: string[] = [];
@@ -108,6 +109,7 @@ export function resolveActionViewAvailableModes(options: {
   };
   addModes(options.contractViewTypeRaw);
   addModes(options.metaViewModesRaw);
+  addModes(options.metaViewsRaw);
   collectContractViewModes(options.contract).forEach((mode) => addMode(mode));
   return out;
 }

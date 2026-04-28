@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_construction_diary_search" model="ir.ui.view">
+            <field name="name">sc.construction.diary.search</field>
+            <field name="model">sc.construction.diary</field>
+            <field name="arch" type="xml">
+                <search string="施工日志">
+                    <field name="name"/>
+                    <field name="document_no"/>
+                    <field name="title"/>
+                    <field name="project_id"/>
+                    <field name="quality_name"/>
+                    <field name="handler_name"/>
+                    <filter string="已确认" name="state_confirmed" domain="[('state', 'in', ['confirmed', 'legacy_confirmed'])]"/>
+                    <filter string="已完成" name="state_done" domain="[('state', '=', 'done')]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="按经办人" name="group_handler" context="{'group_by': 'handler_name'}"/>
+                    <filter string="按日期" name="group_date" context="{'group_by': 'date_diary'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_construction_diary_tree" model="ir.ui.view">
+            <field name="name">sc.construction.diary.tree</field>
+            <field name="model">sc.construction.diary</field>
+            <field name="arch" type="xml">
+                <tree string="施工日志">
+                    <field name="name"/>
+                    <field name="date_diary"/>
+                    <field name="project_id"/>
+                    <field name="document_no"/>
+                    <field name="quality_name"/>
+                    <field name="handler_name"/>
+                    <field name="state"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_construction_diary_form" model="ir.ui.view">
+            <field name="name">sc.construction.diary.form</field>
+            <field name="model">sc.construction.diary</field>
+            <field name="arch" type="xml">
+                <form string="施工日志">
+                    <header>
+                        <button name="action_confirm" string="提交审批" type="object" class="btn-primary"
+                                invisible="state != 'draft'"/>
+                        <button name="action_done" string="完成" type="object" class="btn-primary"
+                                invisible="state not in ('draft', 'confirmed')"/>
+                        <button name="action_cancel" string="取消" type="object"
+                                invisible="state in ('cancel', 'legacy_confirmed')"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,confirmed,done,legacy_confirmed,cancel"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="date_diary" readonly="state == 'legacy_confirmed'"/>
+                                <field name="document_no" readonly="state == 'legacy_confirmed'"/>
+                                <field name="title" readonly="state == 'legacy_confirmed'"/>
+                            </group>
+                            <group>
+                                <field name="project_id" readonly="state == 'legacy_confirmed'"/>
+                                <field name="diary_type" readonly="state == 'legacy_confirmed'"/>
+                                <field name="category" readonly="state == 'legacy_confirmed'"/>
+                                <field name="handler_name" readonly="state == 'legacy_confirmed'"/>
+                            </group>
+                        </group>
+                        <group string="现场信息">
+                            <field name="construction_unit" readonly="state == 'legacy_confirmed'"/>
+                            <field name="project_manager" readonly="state == 'legacy_confirmed'"/>
+                            <field name="quality_name" readonly="state == 'legacy_confirmed'"/>
+                        </group>
+                        <group string="日志内容">
+                            <field name="description" readonly="state == 'legacy_confirmed'"/>
+                            <field name="header_description" readonly="state == 'legacy_confirmed'"/>
+                        </group>
+                        <group>
+                            <field name="note"/>
+                            <field name="active"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_construction_diary" model="ir.actions.act_window">
+            <field name="name">施工日志</field>
+            <field name="res_model">sc.construction.diary</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_construction_diary_search"/>
+            <field name="context">{'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_project_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+        </record>
+
+        <menuitem id="menu_sc_construction_diary"
+                  name="施工日志"
+                  parent="smart_construction_core.menu_sc_project_center"
+                  action="action_sc_construction_diary"
+                  sequence="58"
+                  groups="smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_project_user,smart_construction_core.group_sc_cap_project_manager"/>
+    </data>
+</odoo>

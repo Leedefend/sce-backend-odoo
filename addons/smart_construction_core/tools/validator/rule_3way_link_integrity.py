@@ -22,6 +22,7 @@ class ThreeWayLinkIntegrityRule(BaseRule):
         pr_states_need_settle = ("approve", "approved", "done")
         settle_states_need_po = ("approve", "done")
         targeted_payment_scope = scoped_model == "payment.request" and bool(scoped_res_ids)
+        targeted_settlement_scope = scoped_model == "sc.settlement.order" and bool(scoped_res_ids)
 
         def _suggest_settlements(rec):
             """给出同项目+同供应商的候选结算单（最近3条批准态优先）。"""
@@ -49,7 +50,11 @@ class ThreeWayLinkIntegrityRule(BaseRule):
                 for s in candidates
             ]
 
-        for pr in Payment.search(self._scope_domain("payment.request")):
+        payment_domain = self._scope_domain("payment.request")
+        if targeted_settlement_scope:
+            payment_domain.append(("settlement_id", "in", scoped_res_ids))
+
+        for pr in Payment.search(payment_domain):
             checked += 1
             # 仅对支出付款单执行三单匹配校验
             if pr.type != "pay" or pr.state not in pr_states_need_settle:

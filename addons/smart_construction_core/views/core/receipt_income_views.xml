@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_receipt_income_search" model="ir.ui.view">
+            <field name="name">sc.receipt.income.search</field>
+            <field name="model">sc.receipt.income</field>
+            <field name="arch" type="xml">
+                <search string="收款收入">
+                    <field name="name"/>
+                    <field name="document_no"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="contract_id"/>
+                    <field name="income_category"/>
+                    <field name="receipt_type"/>
+                    <filter string="收款收入" name="source_kind_receipt_income" domain="[('source_kind', '=', 'receipt_income')]"/>
+                    <filter string="残余收款" name="source_kind_residual_receipt" domain="[('source_kind', '=', 'residual_receipt')]"/>
+                    <filter string="已确认" name="state_confirmed" domain="[('state', 'in', ['confirmed', 'legacy_confirmed'])]"/>
+                    <filter string="已收款" name="state_received" domain="[('state', '=', 'received')]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="按类别" name="group_income_category" context="{'group_by': 'income_category'}"/>
+                    <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="按日期" name="group_date" context="{'group_by': 'date_receipt'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_receipt_income_tree" model="ir.ui.view">
+            <field name="name">sc.receipt.income.tree</field>
+            <field name="model">sc.receipt.income</field>
+            <field name="arch" type="xml">
+                <tree string="收款收入">
+                    <field name="name"/>
+                    <field name="date_receipt"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="contract_id"/>
+                    <field name="document_no"/>
+                    <field name="income_category"/>
+                    <field name="receipt_type"/>
+                    <field name="amount" sum="收款金额"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_receipt_income_form" model="ir.ui.view">
+            <field name="name">sc.receipt.income.form</field>
+            <field name="model">sc.receipt.income</field>
+            <field name="arch" type="xml">
+                <form string="收款收入">
+                    <header>
+                        <button name="action_confirm" string="提交审批" type="object" class="btn-primary"
+                                invisible="state != 'draft' or validation_status in ('waiting', 'pending', 'validated')"/>
+                        <button name="validate_tier" string="审批通过" type="object" class="btn-primary"
+                                invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
+                        <button name="reject_tier" string="审批驳回" type="object"
+                                invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
+                        <button name="action_received" string="已收款" type="object" class="btn-primary"
+                                invisible="state not in ('draft', 'confirmed')"/>
+                        <button name="action_cancel" string="取消" type="object"
+                                invisible="state in ('cancel', 'legacy_confirmed')"/>
+                        <field name="validation_status" invisible="1"/>
+                        <field name="can_review" invisible="1"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,confirmed,received,legacy_confirmed,cancel"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="date_receipt" readonly="state == 'legacy_confirmed'"/>
+                                <field name="document_no" readonly="state == 'legacy_confirmed'"/>
+                            </group>
+                            <group>
+                                <field name="project_id" readonly="state == 'legacy_confirmed'"/>
+                                <field name="partner_id"/>
+                                <field name="contract_id"/>
+                                <field name="payment_request_id"/>
+                                <field name="treasury_ledger_id"/>
+                            </group>
+                        </group>
+                        <group string="收款信息">
+                            <field name="receipt_type" readonly="state == 'legacy_confirmed'"/>
+                            <field name="income_category" readonly="state == 'legacy_confirmed'"/>
+                            <field name="payment_method" readonly="state == 'legacy_confirmed'"/>
+                            <field name="receiving_account" readonly="state == 'legacy_confirmed'"/>
+                            <field name="bill_no" readonly="state == 'legacy_confirmed'"/>
+                            <field name="invoice_ref" readonly="state == 'legacy_confirmed'"/>
+                        </group>
+                        <group string="金额">
+                            <field name="amount" readonly="state == 'legacy_confirmed'"/>
+                            <field name="deducted_invoice_amount" readonly="state == 'legacy_confirmed'"/>
+                            <field name="deducted_tax_amount" readonly="state == 'legacy_confirmed'"/>
+                            <field name="settlement_amount" readonly="state == 'legacy_confirmed'"/>
+                            <field name="currency_id"/>
+                        </group>
+                        <group>
+                            <field name="note"/>
+                            <field name="active"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_receipt_income" model="ir.actions.act_window">
+            <field name="name">收款收入</field>
+            <field name="res_model">sc.receipt.income</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_receipt_income_search"/>
+            <field name="context">{'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+
+        <menuitem id="menu_sc_receipt_income"
+                  name="收款收入"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  action="action_sc_receipt_income"
+                  sequence="35"
+                  groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    </data>
+</odoo>

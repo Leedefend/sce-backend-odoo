@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+
+    <record id="view_sc_legacy_invoice_registration_line_tree" model="ir.ui.view">
+      <field name="name">sc.legacy.invoice.registration.line.tree</field>
+      <field name="model">sc.legacy.invoice.registration.line</field>
+      <field name="arch" type="xml">
+        <tree string="历史发票登记" create="false" edit="false" delete="false">
+          <field name="invoice_date"/>
+          <field name="document_no"/>
+          <field name="invoice_no"/>
+          <field name="invoice_type"/>
+          <field name="project_id"/>
+          <field name="supplier_name"/>
+          <field name="partner_id"/>
+          <field name="amount_no_tax"/>
+          <field name="tax_amount"/>
+          <field name="amount_total"/>
+          <field name="tax_rate"/>
+          <field name="accounting_state"/>
+          <field name="voucher_no"/>
+          <field name="active"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="view_sc_legacy_invoice_registration_line_form" model="ir.ui.view">
+      <field name="name">sc.legacy.invoice.registration.line.form</field>
+      <field name="model">sc.legacy.invoice.registration.line</field>
+      <field name="arch" type="xml">
+        <form string="历史发票登记" create="false" edit="false" delete="false">
+          <sheet>
+            <group>
+              <group string="发票">
+                <field name="invoice_no"/>
+                <field name="invoice_code"/>
+                <field name="invoice_type"/>
+                <field name="invoice_date"/>
+                <field name="recognition_date"/>
+                <field name="invoice_content"/>
+                <field name="invoice_holder"/>
+              </group>
+              <group string="金额税额">
+                <field name="amount_no_tax"/>
+                <field name="tax_amount"/>
+                <field name="amount_total"/>
+                <field name="tax_rate"/>
+                <field name="quantity"/>
+                <field name="project_cost_amount"/>
+              </group>
+            </group>
+            <group>
+              <group string="业务锚点">
+                <field name="project_id"/>
+                <field name="project_legacy_id"/>
+                <field name="project_name"/>
+                <field name="partner_id"/>
+                <field name="supplier_legacy_id"/>
+                <field name="supplier_name"/>
+                <field name="supplier_tax_no"/>
+              </group>
+              <group string="单据">
+                <field name="document_no"/>
+                <field name="document_date"/>
+                <field name="header_state"/>
+                <field name="accounting_state"/>
+                <field name="voucher_no"/>
+                <field name="invoice_source"/>
+              </group>
+            </group>
+            <group string="旧系统来源">
+              <field name="legacy_line_id"/>
+              <field name="legacy_header_id"/>
+              <field name="legacy_pid"/>
+              <field name="legacy_header_pid"/>
+              <field name="source_table"/>
+              <field name="attachment_name"/>
+              <field name="attachment_path"/>
+            </group>
+            <group>
+              <field name="note"/>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <record id="view_sc_legacy_invoice_registration_line_search" model="ir.ui.view">
+      <field name="name">sc.legacy.invoice.registration.line.search</field>
+      <field name="model">sc.legacy.invoice.registration.line</field>
+      <field name="arch" type="xml">
+        <search string="历史发票登记">
+          <field name="invoice_no"/>
+          <field name="document_no"/>
+          <field name="project_id"/>
+          <field name="supplier_name"/>
+          <field name="partner_id"/>
+          <field name="supplier_tax_no"/>
+          <field name="legacy_line_id"/>
+          <filter name="active_rows" string="有效" domain="[('active', '=', True)]"/>
+          <filter name="has_project" string="已关联项目" domain="[('project_id', '!=', False)]"/>
+          <filter name="has_partner" string="已关联往来单位" domain="[('partner_id', '!=', False)]"/>
+          <group expand="0" string="分组">
+            <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
+            <filter name="group_partner" string="往来单位" context="{'group_by': 'partner_id'}"/>
+            <filter name="group_invoice_type" string="发票类型" context="{'group_by': 'invoice_type'}"/>
+            <filter name="group_accounting_state" string="入账状态" context="{'group_by': 'accounting_state'}"/>
+            <filter name="group_invoice_date" string="发票日期" context="{'group_by': 'invoice_date:month'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <record id="action_sc_legacy_invoice_registration_line" model="ir.actions.act_window">
+      <field name="name">历史发票登记</field>
+      <field name="res_model">sc.legacy.invoice.registration.line</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="view_sc_legacy_invoice_registration_line_search"/>
+      <field name="context">{'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+
+    <record id="view_sc_legacy_deduction_adjustment_line_tree" model="ir.ui.view">
+      <field name="name">sc.legacy.deduction.adjustment.line.tree</field>
+      <field name="model">sc.legacy.deduction.adjustment.line</field>
+      <field name="arch" type="xml">
+        <tree string="历史扣款调整" create="false" edit="false" delete="false">
+          <field name="document_date"/>
+          <field name="document_no"/>
+          <field name="title"/>
+          <field name="project_id"/>
+          <field name="deduction_account"/>
+          <field name="adjustment_item_name"/>
+          <field name="current_planned_amount"/>
+          <field name="current_actual_amount"/>
+          <field name="document_state"/>
+          <field name="returned_flag"/>
+          <field name="active"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="view_sc_legacy_deduction_adjustment_line_form" model="ir.ui.view">
+      <field name="name">sc.legacy.deduction.adjustment.line.form</field>
+      <field name="model">sc.legacy.deduction.adjustment.line</field>
+      <field name="arch" type="xml">
+        <form string="历史扣款调整" create="false" edit="false" delete="false">
+          <sheet>
+            <group>
+              <group string="单据">
+                <field name="document_no"/>
+                <field name="document_date"/>
+                <field name="document_state"/>
+                <field name="title"/>
+                <field name="returned_flag"/>
+              </group>
+              <group string="项目与扣款">
+                <field name="project_id"/>
+                <field name="project_name"/>
+                <field name="deduction_account"/>
+                <field name="adjustment_item_name"/>
+                <field name="fund_plan_no"/>
+                <field name="fund_plan_name"/>
+              </group>
+            </group>
+            <group string="金额">
+              <field name="accumulated_planned_amount"/>
+              <field name="accumulated_actual_amount"/>
+              <field name="current_planned_amount"/>
+              <field name="current_actual_amount"/>
+            </group>
+            <group string="旧系统来源">
+              <field name="legacy_line_id"/>
+              <field name="legacy_header_id"/>
+              <field name="legacy_pid"/>
+              <field name="fund_confirmation_legacy_id"/>
+              <field name="source_table"/>
+              <field name="attachment_ref"/>
+            </group>
+            <group>
+              <field name="note"/>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <record id="view_sc_legacy_deduction_adjustment_line_search" model="ir.ui.view">
+      <field name="name">sc.legacy.deduction.adjustment.line.search</field>
+      <field name="model">sc.legacy.deduction.adjustment.line</field>
+      <field name="arch" type="xml">
+        <search string="历史扣款调整">
+          <field name="document_no"/>
+          <field name="title"/>
+          <field name="project_id"/>
+          <field name="deduction_account"/>
+          <field name="adjustment_item_name"/>
+          <field name="legacy_line_id"/>
+          <filter name="active_rows" string="有效" domain="[('active', '=', True)]"/>
+          <filter name="has_project" string="已关联项目" domain="[('project_id', '!=', False)]"/>
+          <group expand="0" string="分组">
+            <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
+            <filter name="group_account" string="扣款账户" context="{'group_by': 'deduction_account'}"/>
+            <filter name="group_item" string="调整项" context="{'group_by': 'adjustment_item_name'}"/>
+            <filter name="group_document_state" string="单据状态" context="{'group_by': 'document_state'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <record id="action_sc_legacy_deduction_adjustment_line" model="ir.actions.act_window">
+      <field name="name">历史扣款调整</field>
+      <field name="res_model">sc.legacy.deduction.adjustment.line</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="view_sc_legacy_deduction_adjustment_line_search"/>
+      <field name="context">{'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+
+    <record id="view_sc_legacy_fund_confirmation_line_tree" model="ir.ui.view">
+      <field name="name">sc.legacy.fund.confirmation.line.tree</field>
+      <field name="model">sc.legacy.fund.confirmation.line</field>
+      <field name="arch" type="xml">
+        <tree string="历史资金确认" create="false" edit="false" delete="false">
+          <field name="receipt_time"/>
+          <field name="document_no"/>
+          <field name="period_no"/>
+          <field name="project_id"/>
+          <field name="contract_name"/>
+          <field name="confirmation_item_name"/>
+          <field name="actual_fund_amount"/>
+          <field name="current_actual_amount"/>
+          <field name="accumulated_actual_amount"/>
+          <field name="document_state"/>
+          <field name="active"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="view_sc_legacy_fund_confirmation_line_form" model="ir.ui.view">
+      <field name="name">sc.legacy.fund.confirmation.line.form</field>
+      <field name="model">sc.legacy.fund.confirmation.line</field>
+      <field name="arch" type="xml">
+        <form string="历史资金确认" create="false" edit="false" delete="false">
+          <sheet>
+            <group>
+              <group string="单据">
+                <field name="document_no"/>
+                <field name="period_no"/>
+                <field name="receipt_time"/>
+                <field name="document_state"/>
+                <field name="settlement_basis_text"/>
+                <field name="returned_flag"/>
+              </group>
+              <group string="项目合同">
+                <field name="project_id"/>
+                <field name="project_name"/>
+                <field name="contract_name"/>
+                <field name="contract_amount"/>
+                <field name="current_project_stage"/>
+              </group>
+            </group>
+            <group string="金额">
+              <field name="actual_fund_amount"/>
+              <field name="current_actual_amount"/>
+              <field name="accumulated_actual_amount"/>
+              <field name="accumulated_invoice_amount"/>
+              <field name="ratio"/>
+            </group>
+            <group string="说明">
+              <field name="related_receipt_ids"/>
+              <field name="application_balance_note"/>
+              <field name="invoice_receipt_note"/>
+              <field name="quality_return_note"/>
+              <field name="available_balance_note"/>
+              <field name="construction_deduction_note"/>
+              <field name="payable_construction_deduction_note"/>
+            </group>
+            <group string="旧系统来源">
+              <field name="legacy_line_id"/>
+              <field name="legacy_header_id"/>
+              <field name="legacy_pid"/>
+              <field name="source_table"/>
+              <field name="attachment_ref"/>
+            </group>
+            <group>
+              <field name="note"/>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <record id="view_sc_legacy_fund_confirmation_line_search" model="ir.ui.view">
+      <field name="name">sc.legacy.fund.confirmation.line.search</field>
+      <field name="model">sc.legacy.fund.confirmation.line</field>
+      <field name="arch" type="xml">
+        <search string="历史资金确认">
+          <field name="document_no"/>
+          <field name="period_no"/>
+          <field name="project_id"/>
+          <field name="contract_name"/>
+          <field name="confirmation_item_name"/>
+          <field name="legacy_line_id"/>
+          <filter name="active_rows" string="有效" domain="[('active', '=', True)]"/>
+          <filter name="has_project" string="已关联项目" domain="[('project_id', '!=', False)]"/>
+          <group expand="0" string="分组">
+            <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
+            <filter name="group_contract" string="合同" context="{'group_by': 'contract_name'}"/>
+            <filter name="group_item" string="确认项" context="{'group_by': 'confirmation_item_name'}"/>
+            <filter name="group_document_state" string="单据状态" context="{'group_by': 'document_state'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <record id="action_sc_legacy_fund_confirmation_line" model="ir.actions.act_window">
+      <field name="name">历史资金确认</field>
+      <field name="res_model">sc.legacy.fund.confirmation.line</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="view_sc_legacy_fund_confirmation_line_search"/>
+      <field name="context">{'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+
+    <menuitem id="menu_sc_legacy_invoice_registration_line"
+              name="历史发票登记"
+              parent="smart_construction_core.menu_sc_finance_history_center"
+              action="action_sc_legacy_invoice_registration_line"
+              sequence="32"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+
+    <menuitem id="menu_sc_legacy_deduction_adjustment_line"
+              name="历史扣款调整"
+              parent="smart_construction_core.menu_sc_finance_history_center"
+              action="action_sc_legacy_deduction_adjustment_line"
+              sequence="34"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+
+    <menuitem id="menu_sc_legacy_fund_confirmation_line"
+              name="历史资金确认"
+              parent="smart_construction_core.menu_sc_finance_history_center"
+              action="action_sc_legacy_fund_confirmation_line"
+              sequence="36"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+
+    <record id="menu_sc_legacy_invoice_registration_line" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_deduction_adjustment_line" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_fund_confirmation_line" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+
+  </data>
+</odoo>

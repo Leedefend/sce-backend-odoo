@@ -66,6 +66,14 @@ function resolveCarryQuery(extra?: Record<string, unknown>) {
   return pickContractNavQuery(route.query as Record<string, unknown>, extra);
 }
 
+function isRootContainerMenu(menuId: number): boolean {
+  const tree = session.menuTree || [];
+  if (tree.length !== 1) return false;
+  const root = tree[0];
+  const rootId = Number(root?.menu_id || root?.id || 0);
+  return rootId > 0 && rootId === menuId && Boolean(root?.children?.length);
+}
+
 async function resolve() {
   loading.value = true;
   error.value = '';
@@ -74,6 +82,10 @@ async function resolve() {
     const menuId = Number(route.params.menuId);
     if (!menuId) {
       throw new Error(pageText('error_invalid_menu_id', 'invalid menu id'));
+    }
+    if (isRootContainerMenu(menuId)) {
+      await router.replace('/');
+      return;
     }
     const result = resolveMenuAction(session.menuTree, menuId);
     if (result.kind === 'leaf') {

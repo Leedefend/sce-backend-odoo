@@ -129,6 +129,22 @@ _PROJECT_FORM_PAGE_PRESERVE_FIELDS = {
     "task_ids",
     "collaborator_ids",
 }
+_BUSINESS_DETAIL_RELATION_FIELDS = {
+    "line_ids",
+    "boq_line_ids",
+    "ledger_line_ids",
+    "outflow_line_ids",
+    "receipt_invoice_line_ids",
+}
+_TECHNICAL_RELATION_FIELD_PREFIXES = (
+    "message_",
+    "activity_",
+    "rating_",
+    "website_",
+    "review",
+    "rejected",
+    "validated",
+)
 _PROJECT_FORM_CREATE_HIDDEN_FIELDS = {
     "project_code",
     "code",
@@ -1157,6 +1173,13 @@ def _is_technical_field(name: str, descriptor: dict) -> bool:
         return True
     if low in _PROJECT_FORM_PAGE_PRESERVE_FIELDS:
         return False
+    ttype = _safe_lower(descriptor.get("type") or descriptor.get("ttype"))
+    if (
+        ttype in {"one2many", "many2many"}
+        and low in _BUSINESS_DETAIL_RELATION_FIELDS
+        and not low.startswith(_TECHNICAL_RELATION_FIELD_PREFIXES)
+    ):
+        return False
     if low in {"id", "__last_update", "display_name"}:
         return True
     if low.startswith(("create_", "write_", "message_", "activity_", "access_", "alias_", "website_")):
@@ -1171,7 +1194,6 @@ def _is_technical_field(name: str, descriptor: dict) -> bool:
         "company_id",
     }:
         return True
-    ttype = _safe_lower(descriptor.get("type") or descriptor.get("ttype"))
     if ttype in {"one2many", "many2many", "properties_definition"}:
         return True
     return False
@@ -2280,6 +2302,17 @@ def _derive_form_core_fields(data: dict) -> list[str]:
             _push(name)
             if len(core) >= _FORM_CORE_FIELD_MAX:
                 break
+    for name in ordered:
+        descriptor = _as_dict(fields_map.get(name))
+        if not descriptor:
+            continue
+        ttype = _safe_lower(descriptor.get("type") or descriptor.get("ttype"))
+        if ttype in {"one2many", "many2many"} and name in _BUSINESS_DETAIL_RELATION_FIELDS and name not in core:
+            if len(core) >= _FORM_CORE_FIELD_MAX:
+                core[-1] = name
+            else:
+                core.append(name)
+            break
     return core[:_FORM_CORE_FIELD_MAX]
 
 

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_legacy_tax_deduction_fact_search" model="ir.ui.view">
+            <field name="name">sc.legacy.tax.deduction.fact.search</field>
+            <field name="model">sc.legacy.tax.deduction.fact</field>
+            <field name="arch" type="xml">
+                <search string="历史抵扣税额事实">
+                    <field name="document_no"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="partner_name"/>
+                    <field name="invoice_no"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按往来单位" name="group_partner" context="{'group_by': 'partner_name'}"/>
+                    <filter string="按日期" name="group_date" context="{'group_by': 'document_date'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_tax_deduction_fact_tree" model="ir.ui.view">
+            <field name="name">sc.legacy.tax.deduction.fact.tree</field>
+            <field name="model">sc.legacy.tax.deduction.fact</field>
+            <field name="arch" type="xml">
+                <tree string="历史抵扣税额事实" create="false" edit="false" delete="false">
+                    <field name="document_date"/>
+                    <field name="document_no"/>
+                    <field name="project_id"/>
+                    <field name="partner_name"/>
+                    <field name="invoice_no"/>
+                    <field name="invoice_amount_total" sum="发票价税合计"/>
+                    <field name="deduction_amount" sum="抵扣金额"/>
+                    <field name="deduction_tax_amount" sum="抵扣税额"/>
+                    <field name="deduction_surcharge_amount" sum="抵扣附加税"/>
+                    <field name="document_state"/>
+                    <field name="deleted_flag"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_sc_legacy_tax_deduction_fact" model="ir.actions.act_window">
+            <field name="name">历史抵扣税额事实</field>
+            <field name="res_model">sc.legacy.tax.deduction.fact</field>
+            <field name="view_mode">tree</field>
+            <field name="search_view_id" ref="view_sc_legacy_tax_deduction_fact_search"/>
+            <field name="context">{'create': False, 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+    </data>
+</odoo>

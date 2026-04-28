@@ -228,17 +228,17 @@ class ProjectBudgetBoqLine(models.Model):
     )
 
     def unlink(self):
-        """防御：若已有合同清单行引用该预算清单行，禁止删除并给出友好提示。
+        """防御：若已有合同明细引用该预算清单行，禁止删除并给出友好提示。
 
         之前用户在界面操作时直接触发数据库外键报错（construction_contract_line_boq_line_id_fkey），
-        这里提前拦截，避免出现难以理解的错误弹窗，并明确提示需要先处理合同行或取消关联。
+        这里提前拦截，避免出现难以理解的错误弹窗，并明确提示需要先处理合同明细或取消关联。
         """
         ContractLine = self.env["construction.contract.line"]
         for rec in self:
             ref_lines = ContractLine.search([("boq_line_id", "=", rec.id)], limit=1)
             if ref_lines:
                 raise UserError(
-                    "清单行已被合同清单引用，不能删除。\n"
+                    "清单行已被合同明细引用，不能删除。\n"
                     "清单：%s\n"
                     "请先在合同中调整或解除关联，再删除清单。"
                     % (rec.display_name or rec.id)
@@ -287,7 +287,7 @@ class ProjectCostCode(models.Model):
     )
 
     level = fields.Integer("层级", compute="_compute_hierarchy", store=True, recursive=True)
-    active = fields.Boolean(default=True)
+    active = fields.Boolean("有效", default=True)
     path_display = fields.Char("路径", compute="_compute_hierarchy", store=True, recursive=True)
 
     note = fields.Char("说明")
@@ -323,7 +323,7 @@ class ProjectCostLedger(models.Model):
 
     wbs_id = fields.Many2one(
         "construction.work.breakdown",
-        string="工程结构(WBS)",
+        string="工程结构",
         index=True,
     )
 
@@ -335,7 +335,7 @@ class ProjectCostLedger(models.Model):
     )
 
     date = fields.Date("发生日期", index=True, default=fields.Date.context_today)
-    period = fields.Char("期间(YYYY-MM)", index=True)
+    period = fields.Char("期间", index=True)
     period_id = fields.Many2one(
         "project.cost.period",
         string="期间",

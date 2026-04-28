@@ -25,7 +25,7 @@
 <script setup lang="ts">
 defineProps<{
   title?: string;
-  entries: Array<{ label: string; value?: string | number | boolean | null }>;
+  entries: Array<{ label: string; value?: unknown }>;
   actions?: Array<{ key: string; label: string; onClick: () => void }>;
   message?: string;
   visible: boolean;

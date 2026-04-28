@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class ScLegacyFinancingLoanFact(models.Model):
     _name = "sc.legacy.financing.loan.fact"
-    _description = "Legacy Financing Loan Fact"
+    _description = "融资台账"
     _order = "document_date desc, id desc"
 
     legacy_source_table = fields.Char(string="历史来源表", required=True, index=True)
@@ -15,6 +15,7 @@ class ScLegacyFinancingLoanFact(models.Model):
     document_no = fields.Char(string="单号", index=True)
     document_date = fields.Date(string="业务日期", index=True)
     legacy_state = fields.Char(string="历史状态", index=True)
+    state_text = fields.Char(string="状态", compute="_compute_business_aliases")
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True, ondelete="cascade")
     legacy_project_id = fields.Char(string="历史项目ID", index=True)
     legacy_project_name = fields.Char(string="历史项目名称")
@@ -22,6 +23,7 @@ class ScLegacyFinancingLoanFact(models.Model):
     legacy_counterparty_id = fields.Char(string="历史往来方ID", index=True)
     legacy_counterparty_name = fields.Char(string="历史往来方名称")
     source_amount = fields.Float(string="金额")
+    amount = fields.Float(string="金额", compute="_compute_business_aliases")
     source_amount_field = fields.Char(string="金额来源字段")
     purpose = fields.Text(string="用途说明")
     source_type_label = fields.Char(string="来源类型")
@@ -30,3 +32,9 @@ class ScLegacyFinancingLoanFact(models.Model):
     due_date = fields.Date(string="到期日", index=True)
     note = fields.Text(string="备注")
     import_batch = fields.Char(string="导入批次", required=True, index=True)
+
+    @api.depends("legacy_state", "source_amount")
+    def _compute_business_aliases(self):
+        for record in self:
+            record.state_text = record.legacy_state
+            record.amount = record.source_amount

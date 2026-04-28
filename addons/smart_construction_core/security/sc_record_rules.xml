@@ -186,10 +186,81 @@
         </record>
 
         <!-- =========================================================
+             合同中心：付款申请发起所需合同读取
+             - initiator: 仅限自建或负责/关注项目
+             - contract/finance roles: 保持专业域合同读取范围
+        ========================================================== -->
+        <record id="rule_sc_business_initiator_construction_contract" model="ir.rule">
+            <field name="name">SC Business Initiator - construction.contract own or project member</field>
+            <field name="model_id" ref="model_construction_contract"/>
+            <field name="domain_force">['|','|', ('create_uid', '=', user.id), ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator'))]"/>
+        </record>
+
+        <record id="rule_sc_contract_read_construction_contract" model="ir.rule">
+            <field name="name">SC Contract Read - construction.contract ALL</field>
+            <field name="model_id" ref="model_construction_contract"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+        </record>
+
+        <record id="rule_sc_contract_user_construction_contract" model="ir.rule">
+            <field name="name">SC Contract User - construction.contract ALL</field>
+            <field name="model_id" ref="model_construction_contract"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_user'))]"/>
+        </record>
+
+        <record id="rule_sc_contract_manager_construction_contract" model="ir.rule">
+            <field name="name">SC Contract Manager - construction.contract ALL</field>
+            <field name="model_id" ref="model_construction_contract"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
+        </record>
+
+        <record id="rule_sc_finance_read_construction_contract" model="ir.rule">
+            <field name="name">SC Finance Read - construction.contract ALL</field>
+            <field name="model_id" ref="model_construction_contract"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+        </record>
+
+        <!-- =========================================================
              财务中心：付款申请 record rules
              - read/user: 仅限负责或关注的项目
              - manager: 放行全部
         ========================================================== -->
+        <record id="rule_sc_business_initiator_payment_request" model="ir.rule">
+            <field name="name">SC Business Initiator - payment.request own or project member</field>
+            <field name="model_id" ref="model_payment_request"/>
+            <field name="domain_force">['|','|', ('create_uid', '=', user.id), ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator'))]"/>
+        </record>
+
         <record id="rule_sc_finance_read_payment_request" model="ir.rule">
             <field name="name">SC Finance Read - payment.request by project member</field>
             <field name="model_id" ref="model_payment_request"/>
@@ -221,6 +292,17 @@
             <field name="perm_create" eval="True"/>
             <field name="perm_unlink" eval="True"/>
             <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+
+        <record id="rule_sc_business_initiator_payment_request_line" model="ir.rule">
+            <field name="name">SC Business Initiator - payment.request.line own or project member</field>
+            <field name="model_id" ref="model_payment_request_line"/>
+            <field name="domain_force">['|','|', ('request_id.create_uid', '=', user.id), ('request_id.project_id.user_id', '=', user.id), ('request_id.project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator'))]"/>
         </record>
 
         <!-- =========================================================
@@ -297,6 +379,77 @@
             <field name="perm_create" eval="True"/>
             <field name="perm_unlink" eval="True"/>
             <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+
+        <!-- =========================================================
+             物资中心：物资计划 record rules
+             - initiator/user: 仅限自建或负责/关注项目
+             - manager: 放行全部
+        ========================================================== -->
+        <record id="rule_sc_business_initiator_material_plan" model="ir.rule">
+            <field name="name">SC Business Initiator - project.material.plan own or project member</field>
+            <field name="model_id" ref="model_project_material_plan"/>
+            <field name="domain_force">['|','|', ('create_uid', '=', user.id), ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator'))]"/>
+        </record>
+
+        <record id="rule_sc_material_user_plan" model="ir.rule">
+            <field name="name">SC Material User - project.material.plan by project member</field>
+            <field name="model_id" ref="model_project_material_plan"/>
+            <field name="domain_force">['|','|', ('create_uid', '=', user.id), ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_material_user'))]"/>
+        </record>
+
+        <record id="rule_sc_material_manager_plan" model="ir.rule">
+            <field name="name">SC Material Manager - project.material.plan ALL</field>
+            <field name="model_id" ref="model_project_material_plan"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
+        </record>
+
+        <record id="rule_sc_business_initiator_material_plan_line" model="ir.rule">
+            <field name="name">SC Business Initiator - project.material.plan.line own or project member</field>
+            <field name="model_id" ref="model_project_material_plan_line"/>
+            <field name="domain_force">['|','|', ('plan_id.create_uid', '=', user.id), ('plan_id.project_id.user_id', '=', user.id), ('plan_id.project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator'))]"/>
+        </record>
+
+        <record id="rule_sc_material_user_plan_line" model="ir.rule">
+            <field name="name">SC Material User - project.material.plan.line by project member</field>
+            <field name="model_id" ref="model_project_material_plan_line"/>
+            <field name="domain_force">['|','|', ('plan_id.create_uid', '=', user.id), ('plan_id.project_id.user_id', '=', user.id), ('plan_id.project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_material_user'))]"/>
+        </record>
+
+        <record id="rule_sc_material_manager_plan_line" model="ir.rule">
+            <field name="name">SC Material Manager - project.material.plan.line ALL</field>
+            <field name="model_id" ref="model_project_material_plan_line"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
         </record>
 
         <!-- =========================================================

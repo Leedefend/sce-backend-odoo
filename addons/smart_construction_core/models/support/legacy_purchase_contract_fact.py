@@ -1,0 +1,206 @@
+# -*- coding: utf-8 -*-
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
+
+
+class ScLegacyPurchaseContractFact(models.Model):
+    _name = "sc.legacy.purchase.contract.fact"
+    _description = "采购/一般合同"
+    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation"]
+    _state_from = ["submit"]
+    _state_to = ["approved"]
+    _cancel_state = "cancel"
+    _order = "submitted_time desc, legacy_record_id"
+
+    legacy_record_id = fields.Char(string="记录编号", required=True, index=True, default=lambda self: self._default_record_id())
+    legacy_pid = fields.Char(string="附件编号", index=True)
+    source_dataset = fields.Char(string="数据来源", index=True)
+    document_no = fields.Char(string="单号", index=True)
+    document_state = fields.Char(string="单据状态", index=True)
+    state = fields.Selection(
+        [
+            ("draft", "草稿"),
+            ("submit", "已提交"),
+            ("approved", "已批准"),
+            ("signed", "已签署"),
+            ("legacy_confirmed", "历史已确认"),
+            ("cancel", "已取消"),
+        ],
+        string="办理状态",
+        default="draft",
+        required=True,
+        index=True,
+    )
+    submitted_time = fields.Datetime(string="提交时间", index=True)
+    applicant_name = fields.Char(string="申请人", index=True)
+    applicant_department_legacy_id = fields.Char(string="申请部门原编号", index=True)
+    applicant_department = fields.Char(string="申请部门", index=True)
+    project_legacy_id = fields.Char(string="项目原编号", index=True)
+    project_name = fields.Char(string="项目名称", index=True)
+    project_id = fields.Many2one("project.project", string="项目", index=True, ondelete="set null")
+    company_id = fields.Many2one(
+        "res.company",
+        string="公司",
+        related="project_id.company_id",
+        store=True,
+        readonly=True,
+        index=True,
+    )
+    contract_name = fields.Char(string="合同名称", index=True)
+    contract_no = fields.Char(string="合同编号", index=True)
+    signing_place = fields.Char(string="签署地点", index=True)
+    contract_type_legacy_id = fields.Char(string="合同类型原编号", index=True)
+    contract_type = fields.Char(string="合同类型", index=True)
+    completion_date = fields.Datetime(string="完成时间", index=True)
+    expected_sign_date = fields.Datetime(string="预计签署时间", index=True)
+    total_amount = fields.Float(string="合同金额")
+    currency_legacy_id = fields.Char(string="币种原编号", index=True)
+    currency_name = fields.Char(string="币种", index=True)
+    prepayment_amount = fields.Float(string="预付款")
+    install_debug_payment = fields.Float(string="安装调试款")
+    install_commissioning_payment = fields.Float(string="安装调试款", compute="_compute_business_aliases")
+    warranty_deposit = fields.Float(string="质保金")
+    payment_terms = fields.Text(string="付款条件")
+    partner_legacy_id = fields.Char(string="往来方原编号", index=True)
+    partner_name = fields.Char(string="往来方", index=True)
+    contact_name = fields.Char(string="联系人", index=True)
+    contact_phone = fields.Char(string="联系电话", index=True)
+    bank_name = fields.Char(string="开户行", index=True)
+    bank_account = fields.Char(string="银行账号", index=True)
+    sign_status = fields.Char(string="签署状态", index=True)
+    purchase_engineer = fields.Char(string="采购工程师", index=True)
+    special_condition = fields.Text(string="特殊条款")
+    attachment_ref = fields.Char(string="附件")
+    person_legacy_id = fields.Char(string="人员原编号", index=True)
+    creator_legacy_user_id = fields.Char(string="创建人原编号", index=True)
+    creator_name = fields.Char(string="创建人", index=True)
+    created_time = fields.Datetime(string="创建时间", index=True)
+    modifier_legacy_user_id = fields.Char(string="修改人原编号", index=True)
+    modifier_name = fields.Char(string="修改人", index=True)
+    modified_time = fields.Datetime(string="修改时间", index=True)
+    is_supplement_contract = fields.Char(string="是否补充合同", index=True)
+    related_contract_legacy_id = fields.Char(string="关联合同原编号", index=True)
+    related_contract_no = fields.Char(string="关联合同编号", index=True)
+    contract_attribute = fields.Char(string="合同属性", index=True)
+    credit_code = fields.Char(string="统一信用代码", index=True)
+    tax_rate = fields.Float(string="税率")
+    note = fields.Text(string="备注")
+    reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
+    source_table = fields.Char(string="来源表", default="T_CGHT_INFO", required=True, index=True)
+    active = fields.Boolean(string="有效", default=True, index=True)
+
+    _sql_constraints = [
+        ("legacy_purchase_contract_unique", "unique(legacy_record_id)", "Legacy purchase contract id must be unique."),
+    ]
+
+    @api.depends("install_debug_payment")
+    def _compute_business_aliases(self):
+        for record in self:
+            record.install_commissioning_payment = record.install_debug_payment
+
+    @api.model
+    def _default_record_id(self):
+        return self.env["ir.sequence"].next_by_code("sc.legacy.purchase.contract.fact") or "新系统采购一般合同"
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_legacy_purchase_contract_fact
+               SET state = CASE
+                   WHEN source_dataset IS NOT NULL
+                     OR submitted_time IS NOT NULL
+                     OR created_time IS NOT NULL
+                     OR document_state IS NOT NULL
+                   THEN 'legacy_confirmed'
+                   ELSE 'draft'
+               END
+             WHERE state IS NULL
+            """
+        )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get("legacy_record_id"):
+                vals["legacy_record_id"] = self._default_record_id()
+            if vals.get("source_dataset") and not vals.get("state"):
+                vals["state"] = "legacy_confirmed"
+        return super().create(vals_list)
+
+    def action_submit(self):
+        policy_model = self.env["sc.approval.policy"]
+        for rec in self:
+            if rec.state == "draft":
+                if policy_model.is_approval_required(rec._name, company=rec.company_id):
+                    rec.with_context(skip_validation_check=True).write({"state": "submit", "reject_reason": False})
+                    rec._request_legacy_purchase_contract_validation()
+                else:
+                    rec.with_context(skip_validation_check=True).write({"state": "approved", "reject_reason": False})
+
+    def action_approve(self):
+        policy_model = self.env["sc.approval.policy"]
+        for rec in self:
+            if rec.state == "submit":
+                if policy_model.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
+                    raise UserError(_("采购/一般合同尚未完成统一审批流程。"))
+                policy = policy_model.get_active_policy(rec._name, company=rec.company_id)
+                if policy and not policy_model.is_approval_required(rec._name, company=rec.company_id):
+                    policy.assert_user_can_approve()
+                rec.with_context(skip_validation_check=True).write({"state": "approved", "reject_reason": False})
+
+    def _request_legacy_purchase_contract_validation(self):
+        self.ensure_one()
+        if self.review_ids and self.validation_status == "rejected":
+            self.restart_validation()
+        elif not self.review_ids or self.validation_status == "no":
+            reviews = self.request_validation()
+            if not reviews:
+                raise UserError(_("采购/一般合同已启用审批，但没有匹配的统一审批规则，请检查业务审批配置。"))
+        else:
+            raise UserError(_("采购/一般合同已经在统一审批流程中，请等待审批完成。"))
+
+    def _check_state_from_condition(self):
+        self.ensure_one()
+        parent = getattr(super(), "_check_state_from_condition", None)
+        base_ok = parent() if parent else False
+        return base_ok or self.state == "submit"
+
+    def _get_tier_reject_reason(self):
+        self.ensure_one()
+        reviews = self.review_ids.filtered(lambda review: review.status == "rejected" and review.comment)
+        if reviews:
+            return reviews.sorted(lambda review: review.write_date or review.create_date, reverse=True)[0].comment
+        return _("OCA审批驳回（未填写原因）")
+
+    def action_on_tier_approved(self):
+        for rec in self:
+            if rec.state != "submit":
+                continue
+            if rec.validation_status != "validated":
+                raise UserError(_("采购/一般合同尚未完成统一审批流程。"))
+            rec.with_context(skip_validation_check=True).write({"state": "approved", "reject_reason": False})
+
+    def action_on_tier_rejected(self, reason=None):
+        for rec in self:
+            if rec.state != "submit":
+                continue
+            rec.with_context(skip_validation_check=True).write(
+                {
+                    "state": "draft",
+                    "reject_reason": reason or rec._get_tier_reject_reason(),
+                }
+            )
+
+    def action_signed(self):
+        for rec in self:
+            if rec.state in ("draft", "submit"):
+                raise UserError("采购/一般合同需先批准后再签署。")
+            if rec.state == "approved":
+                rec.state = "signed"
+
+    def action_cancel(self):
+        for rec in self:
+            if rec.state == "legacy_confirmed":
+                raise UserError("历史迁移采购/一般合同不能在新系统取消。")
+            if rec.state not in ("signed", "cancel"):
+                rec.state = "cancel"

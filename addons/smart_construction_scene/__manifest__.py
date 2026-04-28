@@ -5,6 +5,7 @@
     "summary": "Scene orchestration source for portal shell",
     "author": "Leedefend",
     "depends": [
+        "smart_scene",
         "smart_construction_core",
     ],
     "data": [

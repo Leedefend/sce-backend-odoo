@@ -541,12 +541,23 @@ odoo.exec: check-compose-project check-compose-env
 # ======================================================
 # ==================== Diagnostics =====================
 # ======================================================
-.PHONY: diag.project odoo.shell.exec history.users.verify history.users.rebuild history.continuity.rehearse history.continuity.replay history.business.usable.probe history.project.lifecycle.continuity.adapter migration.assets.verify_all history.contract.core.gap.audit history.contract.partner.gap.audit history.contract.strong_evidence.backtrace.audit history.contract.direction_defer.audit history.partner.master.targeted.replay.adapter history.contract.partner.recovery.adapter history.contract.direction_defer.recovery.adapter history.partner.master.direction_defer.replay.adapter history.supplier.partner.targeted.replay.adapter history.outflow.partner.targeted.replay.adapter history.actual_outflow.partner.targeted.replay.adapter history.receipt.parent.recovery.adapter history.receipt.partner.targeted.replay.adapter history.receipt_income.partner.targeted.replay.adapter history.expense_deposit.partner.targeted.replay.adapter history.project_member.attachment.targeted.replay.adapter history.payment_request.outflow.state_activation.adapter history.payment_request.outflow.approved_recovery.adapter history.payment_request.outflow.done_recovery.adapter fresh_db.outflow_request.replay.adapter fresh_db.actual_outflow.replay.adapter fresh_db.outflow_request_line.replay.adapter fresh_db.receipt_invoice_line.replay.adapter fresh_db.receipt_invoice_attachment.replay.adapter fresh_db.legacy_attachment_backfill.replay.adapter fresh_db.legacy_fund_daily_snapshot.replay.adapter fresh_db.legacy_financing_loan.replay.adapter fresh_db.legacy_receipt_income.replay.adapter fresh_db.legacy_expense_deposit.replay.adapter fresh_db.legacy_invoice_tax.replay.adapter fresh_db.legacy_workflow_audit.replay.adapter
+.PHONY: diag.project odoo.shell.exec verify.business.oca_runtime_smoke verify.business.document_state_policy_switch history.users.verify history.users.rebuild history.real_users.normalize.write history.continuity.rehearse history.continuity.replay history.production.fresh_init history.business.usable.probe history.legacy_user_access.projection.write history.settlement_adjustment.runtime.probe history.expense_claim.runtime.probe history.treasury_reconciliation.runtime.probe history.receipt_income.runtime.probe history.payment_execution.runtime.probe history.construction_diary.runtime.probe history.attachment.custody.probe history.invoice_tax.runtime.probe history.treasury.reconciliation.probe history.expense_deposit.runtime.probe history.material_catalog.runtime.probe history.purchase_contract.runtime.probe history.project.lifecycle.continuity.adapter migration.assets.verify_all history.contract.core.gap.audit history.contract.partner.gap.audit history.contract.strong_evidence.backtrace.audit history.contract.direction_defer.audit history.partner.master.targeted.replay.adapter history.contract.partner.recovery.adapter history.contract.direction_defer.recovery.adapter history.partner.master.direction_defer.replay.adapter history.supplier.partner.targeted.replay.adapter history.outflow.partner.targeted.replay.adapter history.actual_outflow.partner.targeted.replay.adapter history.receipt.parent.recovery.adapter history.receipt.partner.targeted.replay.adapter history.receipt_income.partner.targeted.replay.adapter history.expense_deposit.partner.targeted.replay.adapter history.project_member.attachment.targeted.replay.adapter history.payment_request.outflow.state_activation.adapter history.payment_request.outflow.approved_recovery.adapter history.payment_request.outflow.done_recovery.adapter fresh_db.legacy_user_context.replay.adapter fresh_db.legacy_user_project_scope.replay.adapter fresh_db.legacy_task_evidence.replay.adapter fresh_db.legacy_attendance_checkin.replay.adapter fresh_db.legacy_personnel_movement.replay.adapter fresh_db.legacy_salary_line.replay.adapter fresh_db.legacy_purchase_contract.replay.adapter fresh_db.legacy_account_master.replay.adapter fresh_db.legacy_account_master.replay.write fresh_db.legacy_account_transaction.replay.adapter fresh_db.legacy_account_transaction.replay.write fresh_db.legacy_material_catalog.replay.adapter fresh_db.legacy_file_index.replay.adapter fresh_db.outflow_request.replay.adapter fresh_db.actual_outflow.replay.adapter fresh_db.actual_outflow_residual.replay.adapter fresh_db.actual_outflow_line.replay.adapter fresh_db.outflow_request_line.replay.adapter fresh_db.receipt_invoice_line.replay.adapter fresh_db.receipt_invoice_attachment.replay.adapter fresh_db.legacy_attachment_backfill.replay.adapter fresh_db.legacy_fund_daily_snapshot.replay.adapter fresh_db.legacy_fund_daily_line.replay.adapter fresh_db.legacy_financing_loan.replay.adapter fresh_db.legacy_receipt_income.replay.adapter fresh_db.legacy_expense_deposit.replay.adapter fresh_db.legacy_invoice_tax.replay.adapter fresh_db.legacy_tax_deduction.replay.adapter fresh_db.legacy_self_funding.replay.adapter fresh_db.legacy_invoice_registration_line.replay.adapter fresh_db.legacy_deduction_adjustment_line.replay.adapter fresh_db.legacy_fund_confirmation_line.replay.adapter fresh_db.legacy_expense_reimbursement_line.replay.adapter fresh_db.legacy_construction_diary_line.replay.adapter fresh_db.legacy_payment_residual.replay.adapter fresh_db.legacy_receipt_residual.replay.adapter fresh_db.legacy_workflow_audit.replay.adapter fresh_db.legacy_tax_deduction.replay.write fresh_db.legacy_self_funding.replay.write fresh_db.history_todo.projection.write fresh_db.treasury_ledger.projection.write fresh_db.settlement_adjustment.projection.write fresh_db.expense_claim.projection.write fresh_db.treasury_reconciliation.projection.write fresh_db.receipt_income.projection.write fresh_db.payment_execution.projection.write fresh_db.construction_diary.projection.write
+.PHONY: verify.business.finance_document_tier_runtime_smoke
+.PHONY: fresh_db.legacy_project_fund_balance.replay.adapter fresh_db.legacy_project_fund_balance.replay.write fresh_db.legacy_invoice_surcharge.replay.adapter fresh_db.legacy_invoice_surcharge.replay.write fresh_db.legacy_supplier_contract_pricing.replay.adapter fresh_db.legacy_supplier_contract_pricing.replay.write
 diag.project: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/diag/project.sh
 
 odoo.shell.exec: check-compose-project check-compose-env
 	@DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh
+
+verify.business.oca_runtime_smoke: check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/business_oca_runtime_smoke.py
+
+verify.business.finance_document_tier_runtime_smoke: check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/business_finance_document_tier_runtime_smoke.py
+
+verify.business.document_state_policy_switch: check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/business_document_state_policy_switch_smoke.py
 
 history.users.verify: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/user_asset_verify.py --asset-root migration_assets --lane user --check
@@ -554,14 +565,165 @@ history.users.verify: guard.prod.forbid check-compose-project check-compose-env
 history.users.rebuild: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/migration/user_history_rebuild.sh
 
+history.real_users.normalize.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_real_user_normalize_write.py
+
+fresh_db.legacy_user_context.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_user_context_replay_adapter.py
+
+fresh_db.legacy_user_project_scope.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_user_project_scope_replay_adapter.py
+
+fresh_db.legacy_task_evidence.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_task_evidence_replay_adapter.py
+
+fresh_db.legacy_attendance_checkin.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_attendance_checkin_replay_adapter.py
+
+fresh_db.legacy_personnel_movement.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_personnel_movement_replay_adapter.py
+
+fresh_db.legacy_salary_line.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_salary_line_replay_adapter.py
+
+fresh_db.legacy_purchase_contract.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_purchase_contract_replay_adapter.py
+
+fresh_db.legacy_invoice_registration_line.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_invoice_registration_line_replay_adapter.py
+
+fresh_db.legacy_deduction_adjustment_line.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_deduction_adjustment_line_replay_adapter.py
+
+fresh_db.legacy_fund_confirmation_line.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_fund_confirmation_line_replay_adapter.py
+
+fresh_db.legacy_expense_reimbursement_line.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_expense_reimbursement_line_replay_adapter.py
+
+fresh_db.legacy_construction_diary_line.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_construction_diary_line_replay_adapter.py
+
+fresh_db.legacy_payment_residual.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_payment_residual_replay_adapter.py
+
+fresh_db.legacy_receipt_residual.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_receipt_residual_replay_adapter.py
+
+fresh_db.legacy_material_catalog.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_material_catalog_replay_adapter.py
+
+fresh_db.legacy_account_master.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_account_master_replay_adapter.py
+
+fresh_db.legacy_account_master.replay.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_legacy_account_master_replay_write.py
+
+fresh_db.legacy_account_transaction.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py
+
+fresh_db.legacy_account_transaction.replay.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_legacy_account_transaction_replay_write.py
+
+fresh_db.legacy_file_index.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_file_index_replay_adapter.py
+
 history.continuity.rehearse: guard.prod.forbid check-compose-project check-compose-env
-	@$(RUN_ENV) DB_NAME=$(DB_NAME) HISTORY_CONTINUITY_MODE=rehearse RUN_ID="$(RUN_ID)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/migration/history_continuity_oneclick.sh
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) HISTORY_CONTINUITY_MODE=rehearse RUN_ID="$(RUN_ID)" HISTORY_CONTINUITY_START_AT="$(HISTORY_CONTINUITY_START_AT)" HISTORY_CONTINUITY_STOP_AFTER="$(HISTORY_CONTINUITY_STOP_AFTER)" MIGRATION_REPLAY_DB_ALLOWLIST="$(or $(MIGRATION_REPLAY_DB_ALLOWLIST),$(DB_NAME))" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/migration/history_continuity_oneclick.sh
 
 history.continuity.replay: guard.prod.forbid check-compose-project check-compose-env
-	@$(RUN_ENV) DB_NAME=$(DB_NAME) HISTORY_CONTINUITY_MODE=replay RUN_ID="$(RUN_ID)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/migration/history_continuity_oneclick.sh
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) HISTORY_CONTINUITY_MODE=replay RUN_ID="$(RUN_ID)" HISTORY_CONTINUITY_START_AT="$(HISTORY_CONTINUITY_START_AT)" HISTORY_CONTINUITY_STOP_AFTER="$(HISTORY_CONTINUITY_STOP_AFTER)" MIGRATION_REPLAY_DB_ALLOWLIST="$(or $(MIGRATION_REPLAY_DB_ALLOWLIST),$(DB_NAME))" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/migration/history_continuity_oneclick.sh
+
+history.production.fresh_init: guard.prod.danger check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) RUN_ID="$(RUN_ID)" HISTORY_CONTINUITY_START_AT="$(HISTORY_CONTINUITY_START_AT)" HISTORY_CONTINUITY_STOP_AFTER="$(HISTORY_CONTINUITY_STOP_AFTER)" MIGRATION_REPLAY_DB_ALLOWLIST="$(or $(MIGRATION_REPLAY_DB_ALLOWLIST),$(DB_NAME))" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/deploy/fresh_production_history_init.sh
 
 history.business.usable.probe: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_business_usable_probe.py
+
+history.legacy_user_access.projection.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_legacy_user_access_projection_write.py
+
+history.settlement_adjustment.runtime.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_settlement_adjustment_runtime_probe.py
+
+history.expense_claim.runtime.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_expense_claim_runtime_probe.py
+
+history.treasury_reconciliation.runtime.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_treasury_reconciliation_runtime_probe.py
+
+history.receipt_income.runtime.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_receipt_income_runtime_probe.py
+
+history.payment_execution.runtime.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_payment_execution_runtime_probe.py
+
+history.construction_diary.runtime.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_construction_diary_runtime_probe.py
+
+history.attachment.custody.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_attachment_custody_probe.py
+
+history.invoice_tax.runtime.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_invoice_tax_runtime_probe.py
+
+history.invoice_registration.runtime.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_invoice_registration_runtime_probe.py
+
+history.financing_loan.runtime.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_financing_loan_runtime_probe.py
+
+history.treasury.reconciliation.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_treasury_reconciliation_probe.py
+
+history.expense_deposit.runtime.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_expense_deposit_runtime_probe.py
+
+history.material_catalog.runtime.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_material_catalog_runtime_probe.py
+
+history.purchase_contract.runtime.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_purchase_contract_runtime_probe.py
+
+history.general_contract.runtime.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_general_contract_runtime_probe.py
+
+.PHONY: menu.role_visibility.governance.probe
+menu.role_visibility.governance.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/menu_role_visibility_governance_probe.py
+
+fresh_db.history_todo.projection.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_history_todo_projection_write.py
+
+fresh_db.treasury_ledger.projection.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_treasury_ledger_projection_write.py
+
+fresh_db.settlement_adjustment.projection.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_settlement_adjustment_projection_write.py
+
+fresh_db.expense_claim.projection.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_expense_claim_projection_write.py
+
+fresh_db.treasury_reconciliation.projection.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_treasury_reconciliation_projection_write.py
+
+fresh_db.receipt_income.projection.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_receipt_income_projection_write.py
+
+fresh_db.payment_execution.projection.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_payment_execution_projection_write.py
+
+fresh_db.invoice_registration.projection.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_invoice_registration_projection_write.py
+
+fresh_db.financing_loan.projection.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_financing_loan_projection_write.py
+
+fresh_db.general_contract.projection.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_general_contract_projection_write.py
+
+fresh_db.construction_diary.projection.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_construction_diary_projection_write.py
 
 history.project.lifecycle.continuity.adapter: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/history_project_lifecycle_continuity_adapter.py
@@ -632,6 +794,12 @@ fresh_db.outflow_request.replay.adapter: guard.prod.forbid check-compose-project
 fresh_db.actual_outflow.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/fresh_db_actual_outflow_replay_adapter.py
 
+fresh_db.actual_outflow_residual.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_actual_outflow_residual_replay_adapter.py
+
+fresh_db.actual_outflow_line.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_actual_outflow_line_replay_adapter.py
+
 fresh_db.outflow_request_line.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/fresh_db_outflow_request_line_replay_adapter.py
 
@@ -647,6 +815,9 @@ fresh_db.legacy_attachment_backfill.replay.adapter: guard.prod.forbid check-comp
 fresh_db.legacy_fund_daily_snapshot.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/fresh_db_legacy_fund_daily_snapshot_replay_adapter.py
 
+fresh_db.legacy_fund_daily_line.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_fund_daily_line_replay_adapter.py
+
 fresh_db.legacy_financing_loan.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/fresh_db_legacy_financing_loan_replay_adapter.py
 
@@ -659,8 +830,38 @@ fresh_db.legacy_expense_deposit.replay.adapter: guard.prod.forbid check-compose-
 fresh_db.legacy_invoice_tax.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/fresh_db_legacy_invoice_tax_replay_adapter.py
 
+fresh_db.legacy_tax_deduction.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_tax_deduction_replay_adapter.py
+
+fresh_db.legacy_self_funding.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_self_funding_replay_adapter.py
+
+fresh_db.legacy_project_fund_balance.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_project_fund_balance_replay_adapter.py
+
+fresh_db.legacy_invoice_surcharge.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_invoice_surcharge_replay_adapter.py
+
+fresh_db.legacy_supplier_contract_pricing.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_supplier_contract_pricing_replay_adapter.py
+
 fresh_db.legacy_workflow_audit.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/fresh_db_legacy_workflow_audit_replay_adapter.py
+
+fresh_db.legacy_tax_deduction.replay.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_legacy_tax_deduction_replay_write.py
+
+fresh_db.legacy_self_funding.replay.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_legacy_self_funding_replay_write.py
+
+fresh_db.legacy_project_fund_balance.replay.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_legacy_project_fund_balance_replay_write.py
+
+fresh_db.legacy_invoice_surcharge.replay.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_legacy_invoice_surcharge_replay_write.py
+
+fresh_db.legacy_supplier_contract_pricing.replay.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_legacy_supplier_contract_pricing_replay_write.py
 
 .PHONY: bsi.create bsi.verify
 bsi.create: ## Create/update Business Service Identity user (system-bound)
@@ -701,7 +902,7 @@ db.reset.manual: guard.prod.forbid check-compose-env
 # ======================================================
 # ==================== Verify / Gate ===================
 # ======================================================
-.PHONY: obs.coverage.report scene.export scene.snapshot.update scene.contract.export scene.package.export scene.pin.stable scene.rollback.stable audit.scene.config verify.baseline verify.demo verify.p0 verify.p0.flow verify.overview verify.overview.entry verify.overview.logic verify.portal.dashboard verify.portal.execute_button verify.portal.execute_button_smoke.container verify.portal.envelope_smoke.container verify.portal.fe_smoke.host verify.portal.fe_smoke.container verify.portal.view_state verify.portal.guard_groups verify.portal.menu_no_action verify.menu.scene_resolve verify.menu.scene_resolve.container verify.menu.scene_resolve.summary verify.portal.scene_registry verify.portal.capability_guard verify.portal.capability_policy_smoke verify.portal.semantic_route verify.portal.bridge.e2e verify.portal.scene_contract_smoke.container verify.portal.cross_stack_contract_smoke.container verify.portal.scene_layout_contract_smoke.container verify.portal.layout_stability_smoke.container verify.portal.workbench_tiles_smoke.container verify.portal.workspace_tiles_smoke.container verify.portal.workspace_tile_navigate_smoke.container verify.portal.menu_scene_key_smoke.container verify.portal.search_mvp_smoke.container verify.portal.sort_mvp_smoke.container verify.portal.tree_view_smoke.container verify.portal.kanban_view_smoke.container verify.portal.load_view_smoke.container verify.portal.view_contract_shape.container verify.portal.view_render_mode_smoke.container verify.portal.view_contract_coverage_smoke.container verify.portal.bootstrap_guard_smoke.container verify.portal.recordview_hud_smoke.container verify.portal.one2many_read_smoke.container verify.portal.one2many_edit_smoke.container verify.portal.attachment_list_smoke.container verify.portal.file_upload_smoke.container verify.portal.file_guard_smoke.container verify.portal.edit_tx_smoke.container verify.portal.write_conflict_smoke.container verify.portal.list_shell_title_smoke.container verify.portal.list_shell_no_meta_smoke.container verify.portal.scene_list_profile_smoke.container verify.portal.scene_default_sort_smoke.container verify.portal.scene_schema_smoke.container verify.portal.scene_semantic_smoke.container verify.portal.scene_tiles_semantic_smoke.container verify.portal.scene_targets_resolve_smoke.container verify.portal.scene_filters_semantic_smoke.container verify.portal.scene_versioning_smoke.container verify.portal.scene_target_smoke.container verify.portal.scene_diagnostics_smoke.container verify.portal.scene_warnings_guard.container verify.portal.scene_warnings_limit.container verify.portal.act_url_missing_scene_report.container verify.portal.scene_resolve_errors_debt_guard.container verify.portal.scene_contract_export_smoke.container verify.portal.scene_drift_guard.container verify.portal.scene_channel_smoke.container verify.portal.scene_rollback_smoke.container verify.portal.scene_snapshot_guard.container verify.portal.scene_package_dry_run_smoke.container verify.portal.scene_package_import_smoke.container verify.portal.scene_package_ui_smoke.container verify.portal.my_work_smoke.container verify.portal.payment_request_approval_smoke.container verify.portal.payment_request_approval_handoff_smoke.container verify.portal.v0_5.host verify.portal.v0_5.all verify.portal.v0_5.container verify.portal.v0_6.container verify.portal.ui.v0_7.container verify.portal.ui.v0_8.semantic.container verify.smart_core verify.e2e.contract verify.prod.guard prod.guard.mail_from prod.fix.mail_from gate.baseline gate.demo gate.full
+.PHONY: obs.coverage.report scene.export scene.snapshot.update scene.contract.export scene.package.export scene.pin.stable scene.rollback.stable audit.scene.config verify.baseline verify.demo verify.p0 verify.p0.flow verify.overview verify.overview.entry verify.overview.logic verify.portal.dashboard verify.portal.execute_button verify.portal.execute_button_smoke.container verify.portal.envelope_smoke.container verify.portal.fe_smoke.host verify.portal.fe_smoke.container verify.portal.view_state verify.portal.guard_groups verify.portal.menu_no_action verify.menu.scene_resolve verify.menu.scene_resolve.container verify.menu.scene_resolve.summary verify.menu.navigation_snapshot verify.menu.navigation_snapshot.container verify.portal.scene_registry verify.portal.capability_guard verify.portal.capability_policy_smoke verify.portal.semantic_route verify.portal.bridge.e2e verify.portal.scene_contract_smoke.container verify.portal.cross_stack_contract_smoke.container verify.portal.scene_layout_contract_smoke.container verify.portal.layout_stability_smoke.container verify.portal.workbench_tiles_smoke.container verify.portal.workspace_tiles_smoke.container verify.portal.workspace_tile_navigate_smoke.container verify.portal.menu_scene_key_smoke.container verify.portal.search_mvp_smoke.container verify.portal.sort_mvp_smoke.container verify.portal.tree_view_smoke.container verify.portal.kanban_view_smoke.container verify.portal.load_view_smoke.container verify.portal.view_contract_shape.container verify.portal.view_render_mode_smoke.container verify.portal.view_contract_coverage_smoke.container verify.portal.bootstrap_guard_smoke.container verify.portal.recordview_hud_smoke.container verify.portal.one2many_read_smoke.container verify.portal.one2many_edit_smoke.container verify.portal.attachment_list_smoke.container verify.portal.file_upload_smoke.container verify.portal.file_guard_smoke.container verify.portal.edit_tx_smoke.container verify.portal.write_conflict_smoke.container verify.portal.list_shell_title_smoke.container verify.portal.list_shell_no_meta_smoke.container verify.portal.scene_list_profile_smoke.container verify.portal.scene_default_sort_smoke.container verify.portal.scene_schema_smoke.container verify.portal.scene_semantic_smoke.container verify.portal.scene_tiles_semantic_smoke.container verify.portal.scene_targets_resolve_smoke.container verify.portal.scene_filters_semantic_smoke.container verify.portal.scene_versioning_smoke.container verify.portal.scene_target_smoke.container verify.portal.scene_diagnostics_smoke.container verify.portal.scene_warnings_guard.container verify.portal.scene_warnings_limit.container verify.portal.act_url_missing_scene_report.container verify.portal.scene_resolve_errors_debt_guard.container verify.portal.scene_contract_export_smoke.container verify.portal.scene_drift_guard.container verify.portal.scene_channel_smoke.container verify.portal.scene_rollback_smoke.container verify.portal.scene_snapshot_guard.container verify.portal.scene_package_dry_run_smoke.container verify.portal.scene_package_import_smoke.container verify.portal.scene_package_ui_smoke.container verify.portal.my_work_smoke.container verify.portal.payment_request_approval_smoke.container verify.portal.payment_request_approval_handoff_smoke.container verify.portal.v0_5.host verify.portal.v0_5.all verify.portal.v0_5.container verify.portal.v0_6.container verify.portal.ui.v0_7.container verify.portal.ui.v0_8.semantic.container verify.smart_core verify.e2e.contract verify.prod.guard prod.guard.mail_from prod.fix.mail_from gate.baseline gate.demo gate.full
 .PHONY: verify.portal.scene_health_contract_smoke.container verify.portal.scene_auto_degrade_smoke.container
 .PHONY: verify.portal.scene_health_pagination_smoke.container verify.portal.scene_governance_action_smoke.container verify.portal.scene_auto_degrade_notify_smoke.container
 .PHONY: verify.portal.scene_governance_action_strict.container verify.portal.scene_auto_degrade_strict.container verify.portal.scene_auto_degrade_notify_strict.container verify.portal.scene_package_import_strict.container verify.portal.scene_observability_preflight.container verify.portal.scene_observability_preflight_smoke.container verify.portal.scene_observability_preflight.refresh.container verify.portal.scene_observability_preflight.latest verify.portal.scene_observability_preflight.report verify.portal.scene_observability_preflight.report.strict verify.portal.scene_observability_preflight.brief verify.portal.scene_observability_smoke.container verify.portal.scene_observability_gate_smoke.container verify.portal.scene_observability_strict.container
@@ -753,6 +954,10 @@ verify.menu.scene_resolve.container: guard.prod.forbid check-compose-project che
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "API_BASE=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) $(if $(MENU_SCENE_ENFORCE_PREFIXES),MENU_SCENE_ENFORCE_PREFIXES='$(MENU_SCENE_ENFORCE_PREFIXES)') $(if $(MENU_SCENE_EXEMPTIONS),MENU_SCENE_EXEMPTIONS='$(MENU_SCENE_EXEMPTIONS)') node /mnt/scripts/verify/fe_menu_scene_resolve_smoke.js"
 verify.menu.scene_resolve.summary: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) SUMMARY_PATH=artifacts/codex/summary.md ARTIFACTS_DIR=artifacts node scripts/verify/menu_scene_resolve_summary.js
+verify.menu.navigation_snapshot: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) BASE_URL=$(BASE_URL) DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) node scripts/verify/menu_navigation_field_snapshot.js
+verify.menu.navigation_snapshot.container: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "API_BASE=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) node /mnt/scripts/verify/menu_navigation_field_snapshot.js"
 verify.phase_9_8.gate_summary: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) SUMMARY_PATH=artifacts/codex/summary.md ARTIFACTS_DIR=artifacts node scripts/verify/phase_9_8_gate_summary.js
 verify.portal.scene_registry: guard.prod.forbid check-compose-project check-compose-env
@@ -768,7 +973,7 @@ audit.scene.config: guard.prod.forbid check-compose-project check-compose-env
 verify.portal.bridge.e2e: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) node /mnt/scripts/verify/portal_bridge_e2e_smoke.js"
 
-.PHONY: verify.portal.payment_request_approval.prepare.container verify.portal.payment_request_approval_smoke.container verify.portal.payment_request_approval_handoff_smoke.container verify.portal.payment_request_approval_all_smoke.container verify.portal.payment_request_approval_field_consumer_audit
+.PHONY: verify.portal.payment_request_approval.prepare.container verify.portal.payment_request_approval_smoke.container verify.portal.payment_request_approval_handoff_smoke.container verify.portal.payment_request_approval_all_smoke.container verify.portal.payment_request_approval_field_consumer_audit verify.portal.business_real_user_browser_closure verify.portal.business_real_user_browser_reject_closure
 verify.portal.payment_request_approval.prepare.container: guard.prod.forbid check-compose-project check-compose-env
 	@if [ "$(PAYMENT_APPROVAL_NEED_UPGRADE)" = "1" ]; then \
 	  CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=$(DB_NAME) $(MAKE) --no-print-directory mod.upgrade; \
@@ -778,6 +983,14 @@ verify.portal.payment_request_approval.prepare.container: guard.prod.forbid chec
 	@$(MAKE) --no-print-directory restart
 	@sleep 5
 	@AUTO_FIX_EXTENSION_MODULES=1 $(MAKE) --no-print-directory policy.ensure.extension_modules DB_NAME=$(DB_NAME)
+
+.PHONY: verify.portal.business_real_user_browser_closure
+verify.portal.business_real_user_browser_closure: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) FRONTEND_URL=$(or $(FRONTEND_URL),http://127.0.0.1:5174) bash scripts/verify/business_real_user_browser_closure.sh
+
+.PHONY: verify.portal.business_real_user_browser_reject_closure
+verify.portal.business_real_user_browser_reject_closure: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) FRONTEND_URL=$(or $(FRONTEND_URL),http://127.0.0.1:5174) BROWSER_CLOSURE_ACTION=reject bash scripts/verify/business_real_user_browser_closure.sh
 
 .PHONY: verify.portal.payment_request_approval_smoke.container
 verify.portal.payment_request_approval_smoke.container: guard.prod.forbid check-compose-project check-compose-env
@@ -849,6 +1062,12 @@ verify.portal.sort_mvp_smoke.container: guard.prod.forbid check-compose-project 
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) MVP_MODEL=$(MVP_MODEL) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) AUTH_TOKEN=$(AUTH_TOKEN) BOOTSTRAP_SECRET=$(BOOTSTRAP_SECRET) BOOTSTRAP_LOGIN=$(BOOTSTRAP_LOGIN) node /mnt/scripts/verify/fe_sort_mvp_smoke.js"
 verify.portal.tree_view_smoke.container: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) MVP_MODEL=$(MVP_MODEL) TREE_GROUPED_SNAPSHOT_UPDATE=$(TREE_GROUPED_SNAPSHOT_UPDATE) TREE_GROUPED_BASELINE=$(TREE_GROUPED_BASELINE) REQUIRE_GROUPED_ROWS=$(REQUIRE_GROUPED_ROWS) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) AUTH_TOKEN=$(AUTH_TOKEN) BOOTSTRAP_SECRET=$(BOOTSTRAP_SECRET) BOOTSTRAP_LOGIN=$(BOOTSTRAP_LOGIN) node /mnt/scripts/verify/fe_tree_view_smoke.js"
+.PHONY: verify.portal.ar_ap_project_summary_smoke.container
+verify.portal.ar_ap_project_summary_smoke.container: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) AUTH_TOKEN=$(AUTH_TOKEN) node /mnt/scripts/verify/fe_ar_ap_project_summary_smoke.js"
+.PHONY: verify.portal.ar_ap_company_summary_smoke.container
+verify.portal.ar_ap_company_summary_smoke.container: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) AUTH_TOKEN=$(AUTH_TOKEN) node /mnt/scripts/verify/fe_ar_ap_company_summary_smoke.js"
 verify.portal.kanban_view_smoke.container: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) MVP_MODEL=$(MVP_MODEL) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) AUTH_TOKEN=$(AUTH_TOKEN) BOOTSTRAP_SECRET=$(BOOTSTRAP_SECRET) BOOTSTRAP_LOGIN=$(BOOTSTRAP_LOGIN) node /mnt/scripts/verify/fe_kanban_view_smoke.js"
 verify.portal.scene_contract_smoke.container: guard.prod.forbid check-compose-project check-compose-env
@@ -1242,6 +1461,7 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 	@if [ "$(SC_GATE_STRICT)" != "0" ]; then \
 	  $(MAKE) verify.menu.scene_resolve.container DB_NAME=$(DB_NAME); \
 	  $(MAKE) verify.menu.scene_resolve.summary; \
+	  $(MAKE) verify.menu.navigation_snapshot.container DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD); \
 	  $(MAKE) verify.portal.scene_warnings_guard.container DB_NAME=$(DB_NAME); \
 	  $(MAKE) verify.portal.scene_warnings_limit.container DB_NAME=$(DB_NAME); \
 	  $(MAKE) verify.portal.act_url_missing_scene_report.container DB_NAME=$(DB_NAME); \

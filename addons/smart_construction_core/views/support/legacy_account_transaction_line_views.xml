@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_legacy_account_transaction_line_search" model="ir.ui.view">
+        <field name="name">sc.legacy.account.transaction.line.search</field>
+        <field name="model">sc.legacy.account.transaction.line</field>
+        <field name="arch" type="xml">
+            <search string="账户收支来源明细">
+                <field name="transaction_date"/>
+                <field name="account_id"/>
+                <field name="account_name"/>
+                <field name="project_id"/>
+                <field name="source_table"/>
+                <field name="document_no"/>
+                <filter string="收入" name="direction_income" domain="[('direction', '=', 'income')]"/>
+                <filter string="支出" name="direction_expense" domain="[('direction', '=', 'expense')]"/>
+                <filter string="账户往来" name="bucket_account_transfer" domain="[('metric_bucket', '=', 'account_transfer')]"/>
+                <filter string="按账户" name="group_account" context="{'group_by': 'account_id'}"/>
+                <filter string="按方向" name="group_direction" context="{'group_by': 'direction'}"/>
+                <filter string="按来源表" name="group_source_table" context="{'group_by': 'source_table'}"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_account_transaction_line_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.account.transaction.line.tree</field>
+        <field name="model">sc.legacy.account.transaction.line</field>
+        <field name="arch" type="xml">
+            <tree string="账户收支来源明细" create="0" edit="0" delete="0" default_order="transaction_date desc, source_table, legacy_record_id">
+                <field name="transaction_date"/>
+                <field name="source_table"/>
+                <field name="document_no"/>
+                <field name="metric_bucket"/>
+                <field name="direction"/>
+                <field name="account_id"/>
+                <field name="account_name"/>
+                <field name="counterparty_account_name"/>
+                <field name="project_id"/>
+                <field name="amount" sum="金额合计"/>
+                <field name="document_state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_account_transaction_line_form" model="ir.ui.view">
+        <field name="name">sc.legacy.account.transaction.line.form</field>
+        <field name="model">sc.legacy.account.transaction.line</field>
+        <field name="arch" type="xml">
+            <form string="账户收支来源明细" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="transaction_date"/>
+                            <field name="document_no"/>
+                            <field name="document_state"/>
+                            <field name="metric_bucket"/>
+                            <field name="direction"/>
+                            <field name="amount"/>
+                        </group>
+                        <group>
+                            <field name="account_id"/>
+                            <field name="account_name"/>
+                            <field name="counterparty_account_legacy_id"/>
+                            <field name="counterparty_account_name"/>
+                            <field name="project_id"/>
+                            <field name="project_name"/>
+                        </group>
+                    </group>
+                    <group string="来源">
+                        <group>
+                            <field name="source_key"/>
+                            <field name="source_table"/>
+                            <field name="legacy_record_id"/>
+                            <field name="account_legacy_id"/>
+                        </group>
+                        <group>
+                            <field name="category"/>
+                            <field name="source_summary"/>
+                            <field name="deleted_flag"/>
+                            <field name="import_batch"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="note"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_legacy_account_transaction_line" model="ir.actions.act_window">
+        <field name="name">账户收支来源明细</field>
+        <field name="res_model">sc.legacy.account.transaction.line</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_sc_legacy_account_transaction_line_search"/>
+        <field name="context">{'create': False, 'search_default_group_source_table': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                       (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                       (4, ref('smart_construction_core.group_sc_cap_finance_manager')),
+                                       (4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
+    </record>
+
+    <menuitem id="menu_sc_legacy_account_transaction_line"
+              name="账户收支来源明细"
+              parent="smart_construction_core.menu_sc_finance_center"
+              action="action_sc_legacy_account_transaction_line"
+              sequence="37"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_cap_config_admin"/>
+</odoo>

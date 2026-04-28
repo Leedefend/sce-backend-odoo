@@ -4,72 +4,72 @@ from odoo import api, fields, models
 
 class ScContractReconSummary(models.Model):
     _name = "sc.contract.recon.summary"
-    _description = "Contract Reconciliation Summary"
+    _description = "合同对账汇总"
 
     contract_id = fields.Many2one(
         "construction.contract",
-        string="Contract",
+        string="合同",
         required=True,
         index=True,
     )
     project_id = fields.Many2one(
         "project.project",
-        string="Project",
+        string="项目",
         related="contract_id.project_id",
         store=True,
         readonly=True,
     )
     partner_id = fields.Many2one(
         "res.partner",
-        string="Partner",
+        string="往来单位",
         related="contract_id.partner_id",
         store=True,
         readonly=True,
     )
     currency_id = fields.Many2one(
         "res.currency",
-        string="Currency",
+        string="币种",
         related="contract_id.currency_id",
         store=True,
         readonly=True,
     )
     contract_amount_total = fields.Monetary(
-        string="Contract Amount",
+        string="合同金额",
         currency_field="currency_id",
         related="contract_id.amount_total",
         store=False,
         readonly=True,
     )
     settlement_total = fields.Monetary(
-        string="Settlement Total",
+        string="结算金额",
         currency_field="currency_id",
         compute="_compute_totals",
         store=False,
     )
     settlement_ids_count = fields.Integer(
-        string="Settlement Count",
+        string="结算单数",
         compute="_compute_totals",
         store=False,
     )
     payment_total = fields.Monetary(
-        string="Payment Total",
+        string="付款金额",
         currency_field="currency_id",
         compute="_compute_totals",
         store=False,
     )
     payment_ids_count = fields.Integer(
-        string="Payment Count",
+        string="付款单数",
         compute="_compute_totals",
         store=False,
     )
     delta = fields.Monetary(
-        string="Delta",
+        string="差额",
         currency_field="currency_id",
         compute="_compute_totals",
         store=False,
     )
     as_of_date = fields.Date(
-        string="As Of",
+        string="截至日期",
         default=fields.Date.context_today,
     )
 

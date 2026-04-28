@@ -646,7 +646,7 @@ class ApiDataHandler(BaseIntentHandler):
         if not isinstance(context, dict):
             context = {}
         if "active_test" not in context:
-            context["active_test"] = self._get_bool(p, "active_test", False)
+            context["active_test"] = self._get_bool(p, "active_test", True)
         if_none_match = self._read_if_none_match(p)
 
         use_sudo = self._get_bool(p, "sudo", False)

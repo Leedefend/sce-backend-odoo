@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from odoo import _, api, fields, models
 from odoo.tools.safe_eval import safe_eval
 from odoo.exceptions import UserError, ValidationError
+
+_logger = logging.getLogger(__name__)
 
 
 class ProjectMaterialPlan(models.Model):
@@ -29,6 +33,7 @@ class ProjectMaterialPlan(models.Model):
             ("cancel", "已取消"),
         ],
         default="draft",
+        string="状态",
         tracking=True,
         index=True,
     )
@@ -41,8 +46,19 @@ class ProjectMaterialPlan(models.Model):
     approved_at = fields.Datetime(string="批准时间", readonly=True, tracking=True)
     reject_reason = fields.Char(string="驳回原因", readonly=True, tracking=True)
 
-    purchase_order_count = fields.Integer(compute="_compute_po_counts")
-    purchase_line_count = fields.Integer(compute="_compute_po_counts")
+    purchase_order_count = fields.Integer("采购单", compute="_compute_po_counts")
+    purchase_line_count = fields.Integer("采购明细", compute="_compute_po_counts")
+
+    def _message_post_non_blocking(self, body):
+        for rec in self:
+            try:
+                rec.message_post(body=body)
+            except Exception as exc:
+                _logger.warning(
+                    "Skip project.material.plan chatter message for %s: %s",
+                    rec.display_name,
+                    exc,
+                )
 
     def _get_material_approver(self):
         self.ensure_one()
@@ -71,7 +87,10 @@ class ProjectMaterialPlan(models.Model):
         for rec in self:
             if rec.state != "draft":
                 continue
-            if not self.env.user.has_group("smart_construction_core.group_sc_cap_material_user"):
+            if not (
+                self.env.user.has_group("smart_construction_core.group_sc_cap_business_initiator")
+                or self.env.user.has_group("smart_construction_core.group_sc_cap_material_user")
+            ):
                 raise UserError(_("你没有提交物资计划的权限。"))
             if not rec.line_ids:
                 raise UserError(_("请先填写物资计划明细再提交。"))
@@ -88,11 +107,10 @@ class ProjectMaterialPlan(models.Model):
             )
             rec.invalidate_recordset()
             company = rec.company_id or self.env.company
-            rec.with_context(
+            rec.with_company(company).with_context(
                 allowed_company_ids=[company.id],
-                force_company=company.id,
             ).request_validation()
-            rec.message_post(body=_("物资计划已提交，进入审批流程。"))
+            rec._message_post_non_blocking(_("物资计划已提交，进入审批流程。"))
 
     def action_approve(self):
         for rec in self:
@@ -108,7 +126,7 @@ class ProjectMaterialPlan(models.Model):
                 }
             )
             rec.activity_unlink(["mail.mail_activity_data_todo"])
-            rec.message_post(body=_("物资计划已批准。"))
+            rec._message_post_non_blocking(_("物资计划已批准。"))
 
     def action_reject(self, reason=None):
         for rec in self:
@@ -123,7 +141,7 @@ class ProjectMaterialPlan(models.Model):
                     "reject_reason": reason or _("未填写原因"),
                 }
             )
-            rec.message_post(body=_("物资计划被驳回：%s") % rec.reject_reason)
+            rec._message_post_non_blocking(_("物资计划被驳回：%s") % rec.reject_reason)
 
     # ==== Tier 回调 ====
     def action_on_tier_approved(self):
@@ -137,7 +155,7 @@ class ProjectMaterialPlan(models.Model):
                     "approved_at": fields.Datetime.now(),
                 }
             )
-            rec.message_post(body=_("物资计划审批通过。"))
+            rec._message_post_non_blocking(_("物资计划审批通过。"))
 
     def action_on_tier_rejected(self, reason=None):
         for rec in self:
@@ -149,7 +167,7 @@ class ProjectMaterialPlan(models.Model):
                     "reject_reason": reason or _("未填写原因"),
                 }
             )
-            rec.message_post(body=_("物资计划审批驳回：%s") % rec.reject_reason)
+            rec._message_post_non_blocking(_("物资计划审批驳回：%s") % rec.reject_reason)
 
     def action_done(self):
         for rec in self:

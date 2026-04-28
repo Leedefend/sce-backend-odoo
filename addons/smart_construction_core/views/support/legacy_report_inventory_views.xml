@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_legacy_report_inventory_search" model="ir.ui.view">
+            <field name="name">sc.legacy.report.inventory.search</field>
+            <field name="model">sc.legacy.report.inventory</field>
+            <field name="arch" type="xml">
+                <search string="旧库报表承载清单">
+                    <field name="name"/>
+                    <field name="legacy_function_id"/>
+                    <field name="legacy_config_id"/>
+                    <field name="procedure_name"/>
+                    <field name="target_model"/>
+                    <filter string="P0" name="priority_p0" domain="[('priority', '=', 'p0')]"/>
+                    <filter string="P1" name="priority_p1" domain="[('priority', '=', 'p1')]"/>
+                    <filter string="已有事实基础" name="carrier_ready" domain="[('carrier_status', '=', 'ready')]"/>
+                    <filter string="部分具备" name="carrier_partial" domain="[('carrier_status', '=', 'partial')]"/>
+                    <filter string="存在缺口" name="carrier_gap" domain="[('carrier_status', '=', 'gap')]"/>
+                    <filter string="按优先级" name="group_priority" context="{'group_by': 'priority'}"/>
+                    <filter string="按业务域" name="group_domain" context="{'group_by': 'domain_group'}"/>
+                    <filter string="按承载状态" name="group_carrier_status" context="{'group_by': 'carrier_status'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_report_inventory_tree" model="ir.ui.view">
+            <field name="name">sc.legacy.report.inventory.tree</field>
+            <field name="model">sc.legacy.report.inventory</field>
+            <field name="arch" type="xml">
+                <tree string="旧库报表承载清单" create="0" edit="0" delete="0">
+                    <field name="priority"/>
+                    <field name="name"/>
+                    <field name="domain_group"/>
+                    <field name="click_count"/>
+                    <field name="user_count"/>
+                    <field name="last_click_date"/>
+                    <field name="source_kind"/>
+                    <field name="procedure_name"/>
+                    <field name="carrier_status"/>
+                    <field name="target_model"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_report_inventory_form" model="ir.ui.view">
+            <field name="name">sc.legacy.report.inventory.form</field>
+            <field name="model">sc.legacy.report.inventory</field>
+            <field name="arch" type="xml">
+                <form string="旧库报表承载清单" create="0" edit="0" delete="0">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="priority" readonly="1"/>
+                                <field name="name" readonly="1"/>
+                                <field name="domain_group" readonly="1"/>
+                                <field name="carrier_status" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="click_count" readonly="1"/>
+                                <field name="user_count" readonly="1"/>
+                                <field name="last_click_date" readonly="1"/>
+                                <field name="target_model" readonly="1"/>
+                            </group>
+                        </group>
+                        <group string="旧系统来源">
+                            <group>
+                                <field name="legacy_function_id" readonly="1"/>
+                                <field name="legacy_config_id" readonly="1"/>
+                                <field name="source_kind" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="procedure_name" readonly="1"/>
+                                <field name="sql_id" readonly="1"/>
+                                <field name="legacy_url" readonly="1"/>
+                            </group>
+                        </group>
+                        <group string="口径与承载">
+                            <field name="parameter_summary" readonly="1"/>
+                            <field name="metric_summary" readonly="1"/>
+                            <field name="source_tables" readonly="1"/>
+                            <field name="next_action" readonly="1"/>
+                            <field name="evidence" readonly="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_legacy_report_inventory" model="ir.actions.act_window">
+            <field name="name">旧库报表承载清单</field>
+            <field name="res_model">sc.legacy.report.inventory</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_legacy_report_inventory_search"/>
+            <field name="context">{'search_default_priority_p0': 1, 'search_default_group_priority': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_data_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager')),
+                                           (4, ref('smart_construction_core.group_sc_cap_cost_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_cost_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_cost_manager')),
+                                           (4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
+        </record>
+
+        <menuitem id="menu_sc_legacy_report_inventory"
+                  name="旧库报表承载清单"
+                  parent="smart_construction_core.menu_sc_data_center"
+                  action="action_sc_legacy_report_inventory"
+                  sequence="10"
+                  groups="smart_construction_core.group_sc_cap_data_read,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager,smart_construction_core.group_sc_cap_config_admin"/>
+    </data>
+</odoo>

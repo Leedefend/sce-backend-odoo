@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_legacy_material_detail_search" model="ir.ui.view">
+        <field name="name">sc.legacy.material.detail.search</field>
+        <field name="model">sc.legacy.material.detail</field>
+        <field name="arch" type="xml">
+            <search string="物料档案">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="spec_model"/>
+                <field name="uom_text"/>
+                <field name="category_id"/>
+                <field name="project_id"/>
+                <filter string="有分类" name="with_category" domain="[('category_id', '!=', False)]"/>
+                <filter string="项目物料" name="with_project" domain="[('project_id', '!=', False)]"/>
+                <filter string="已提升产品" name="promoted" domain="[('promotion_state', '=', 'promoted')]"/>
+                <filter string="未提升" name="archived" domain="[('promotion_state', '=', 'archived')]"/>
+                <filter string="按分类" name="group_category" context="{'group_by': 'category_id'}"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按单位" name="group_uom" context="{'group_by': 'uom_text'}"/>
+                <filter string="按提升状态" name="group_promotion_state" context="{'group_by': 'promotion_state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_material_detail_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.material.detail.tree</field>
+        <field name="model">sc.legacy.material.detail</field>
+        <field name="arch" type="xml">
+            <tree string="物料档案" create="0" edit="0" delete="0">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="spec_model"/>
+                <field name="uom_text"/>
+                <field name="planned_price"/>
+                <field name="internal_price"/>
+                <field name="category_id"/>
+                <field name="project_id"/>
+                <field name="promotion_state"/>
+                <field name="promoted_product_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_material_detail_form" model="ir.ui.view">
+        <field name="name">sc.legacy.material.detail.form</field>
+        <field name="model">sc.legacy.material.detail</field>
+        <field name="arch" type="xml">
+            <form string="物料档案" create="0" edit="0" delete="0">
+                <header>
+                    <button name="action_promote_to_product"
+                            type="object"
+                            string="提升为产品"
+                            class="oe_highlight"
+                            invisible="promotion_state == 'promoted'"
+                            groups="smart_construction_core.group_sc_cap_material_manager"/>
+                    <field name="promotion_state" widget="statusbar" statusbar_visible="archived,promoted"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="name"/>
+                            <field name="spec_model"/>
+                        </group>
+                        <group>
+                            <field name="category_id"/>
+                            <field name="project_id"/>
+                            <field name="depth"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group string="单位与价格">
+                        <group>
+                            <field name="uom_text"/>
+                            <field name="aux_uom_text"/>
+                        </group>
+                        <group>
+                            <field name="planned_price"/>
+                            <field name="internal_price"/>
+                        </group>
+                    </group>
+                    <group string="产品提升">
+                        <field name="promoted_product_tmpl_id"/>
+                        <field name="promoted_product_id"/>
+                    </group>
+                    <group>
+                        <field name="remark"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_material_category_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.material.category.tree</field>
+        <field name="model">sc.legacy.material.category</field>
+        <field name="arch" type="xml">
+            <tree string="物料分类" create="0" edit="0" delete="0">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="parent_id"/>
+                <field name="project_id"/>
+                <field name="depth"/>
+                <field name="uom_text"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_material_category_search" model="ir.ui.view">
+        <field name="name">sc.legacy.material.category.search</field>
+        <field name="model">sc.legacy.material.category</field>
+        <field name="arch" type="xml">
+            <search string="物料分类">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="parent_id"/>
+                <field name="project_id"/>
+                <filter string="有父级" name="with_parent" domain="[('parent_id', '!=', False)]"/>
+                <filter string="按父级" name="group_parent" context="{'group_by': 'parent_id'}"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sc_legacy_material_detail" model="ir.actions.act_window">
+        <field name="name">物料档案</field>
+        <field name="res_model">sc.legacy.material.detail</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_sc_legacy_material_detail_search"/>
+        <field name="context">{'create': False, 'search_default_group_promotion_state': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')),
+                                       (4, ref('smart_construction_core.group_sc_cap_material_user')),
+                                       (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
+    </record>
+
+    <record id="action_sc_legacy_material_category" model="ir.actions.act_window">
+        <field name="name">物料分类</field>
+        <field name="res_model">sc.legacy.material.category</field>
+        <field name="view_mode">tree</field>
+        <field name="search_view_id" ref="view_sc_legacy_material_category_search"/>
+        <field name="context">{'create': False}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')),
+                                       (4, ref('smart_construction_core.group_sc_cap_material_user')),
+                                       (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
+    </record>
+
+    <menuitem id="menu_sc_legacy_material_detail"
+              name="物料档案"
+              parent="smart_construction_core.menu_sc_material_center"
+              action="action_sc_legacy_material_detail"
+              sequence="50"
+              groups="smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
+
+    <menuitem id="menu_sc_legacy_material_category"
+              name="物料分类"
+              parent="smart_construction_core.menu_sc_material_center"
+              action="action_sc_legacy_material_category"
+              sequence="55"
+              groups="smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
+</odoo>

@@ -16,6 +16,51 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-28T15:06:24+08:00
+- blocker_key: `legacy_ar_ap_project_surcharge_batch_i_closed`
+- layer_target: `业务事实分析层 / Domain Projection`
+- module: `addons/smart_construction_core + scripts/migration + docs/migration_alignment`
+- reason: `旧库应收应付报表（项目）剩余字段 KPDJFJS/JXSBFJS/DKDJFJS 尚未承载；这三项是发票/抵扣附加税事实，不能由前端或普通税额字段推导。`
+- completed_step: `新增 sc.legacy.invoice.surcharge.fact、旧库 adapter/write、内部菜单和重建 step；报表新增销项附加税、进项附加税、抵扣附加税，并将抵扣税额投影过滤修正为 DJZT=2 && DEL=0；模拟生产写入 27053 行，报表金额与事实表一致：销项附加税 20595859.4964，进项附加税 13328329.2112，抵扣附加税 1759613.9436。`
+- active_commit: `6b02ad54`
+- next_step: `核对应收应付报表（项目）27 个旧字段是否全部进入新系统投影或已明确由其他报表承载；若闭环，进入报表交叉核对和用户口径说明。`
+
+### 2026-04-28T14:52:27+08:00
+- blocker_key: `legacy_ar_ap_project_fund_balance_batch_h_closed`
+- layer_target: `业务事实分析层 / Domain Projection`
+- module: `addons/smart_construction_core + scripts/migration + docs/migration_alignment`
+- reason: `旧库应收应付报表（项目）中的 SJKYYE 实际可用余额来自 View_Select_XMCKXX_BS 项目资金汇总，不是新系统 project.project.funding_remaining_amount，必须作为项目级历史资金余额事实承载并进入可重建链路。`
+- completed_step: `新增 sc.legacy.project.fund.balance.fact、旧库 adapter/write、报表投影字段 actual_available_balance、报表中心内部菜单与一键重建 step；模拟生产写入 755 行，缺项目 0，事实合计 -2586337.86；AR/AP 项目报表共同项目金额一致，另有 1 个项目仅有资金余额事实但没有应收应付往来单位明细行。`
+- active_commit: `e938299f`
+- next_step: `继续拆应收应付报表（项目）剩余字段，按字段维度判断应进入往来单位明细、项目资金报表，还是后续经营分析报表。`
+
+### 2026-04-27T11:19:23+08:00
+- blocker_key: `menu_navigation_verify_target_20260427_pass`
+- layer_target: `Verification infrastructure`
+- module: `scripts/verify/menu_navigation_field_snapshot.js + Makefile`
+- reason: 上一批 `/api/menu/navigation` live snapshot 已证明字段正确，但仍是一次性 node 片段；需要固化为可重复 Make target，避免后续菜单规范化回归只能靠临时命令。
+- completed_step: `已新增 verify.menu.navigation_snapshot 与 verify.menu.navigation_snapshot.container；脚本校验 nav_explained.flat/tree 中 scene_key/native_action_id/native_model/native_view_mode/confidence/compatibility_used，并断言 scene 节点不走 compatibility、action/native/url 节点走 compatibility。container target PASS trace=bab73e1b7f68；host target 使用 ARTIFACTS_DIR=artifacts/codex-host PASS trace=561faa29014c。`
+- active_commit: `3cd82878`
+- next_step: `open one bounded owner-signal cleanup screen for smart_construction_core.menu_sc_project_quick_create and smart_construction_demo.menu_sc_project_list_showcase, deciding whether each should be downgraded, exempted, or supplied with a real scene owner signal`
+
+### 2026-04-27T11:13:33+08:00
+- blocker_key: `menu_navigation_live_snapshot_20260427_pass`
+- layer_target: `Navigation interpretation layer verification`
+- module: `/api/menu/navigation live output`
+- reason: 上一批已完成 `MenuTargetInterpreterService` 加性字段实现，需要确认真实 HTTP route 的 `nav_explained.flat/tree` 已加载新字段，而不是仅单测通过。
+- completed_step: `已完成 live snapshot：重启前 HTTP route missing=55，确认运行时未加载新 Python；make restart 后重跑 /api/menu/navigation，checked_node_count=55、scene_node_count=11、compatibility_used true=44/false=11、confidence high=11/medium=44、missing_count=0、invalid_count=0，trace_id=d0e2b34814d8。辅助 verify.menu.scene_resolve 仍有 2 个 unresolved 菜单，归为后续菜单语义残余，不阻断本批字段验证。`
+- active_commit: `3cd82878`
+- next_step: `open one bounded verification-infra batch to codify /api/menu/navigation field snapshot as a Make target, or open a separate owner-signal cleanup batch for the two unresolved menu_scene_resolve residuals`
+
+### 2026-04-27T10:59:35+08:00
+- blocker_key: `menu_normalization_interpreter_authority_fields_20260427_pass`
+- layer_target: `Navigation interpretation layer`
+- module: `addons/smart_core/delivery/MenuTargetInterpreterService`
+- reason: 菜单规范化进入解释器输出稳定性补强阶段，需要让 `nav_explained` 直接暴露 scene 命中、原生 action 事实、兼容降级与置信度，避免前端继续反推菜单身份。
+- completed_step: `已完成菜单解释器加性字段补强：新增 scene_key/native_action_id/native_model/native_view_mode/confidence/compatibility_used；保持 target_type/delivery_mode/route/entry_target 兼容；解释器直接单测 6 条 PASS，make verify.smart_core PASS，make verify.contract.snapshot PASS。`
+- active_commit: `3cd82878`
+- next_step: `open one bounded live navigation snapshot batch for /api/menu/navigation to verify the new fields across nav_explained.flat/tree in the target runtime`
+
 ### 2026-04-25T04:46:00+08:00
 - blocker_key: `history_continuity_promotion_a_payment_request_submit_activation_closed`
 - layer_target: `Domain Layer / Migration Replay-Promotion Layer`
@@ -29503,3 +29548,2425 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
     - `phase_key = execution`
     - `stage_id = project_stage_in_progress`
   - updates only current `draft` projects; non-draft projects are preserved as conflicts
+
+## 2026-04-27 Batch-Menu-Owner-Signal-Residual-Exemption
+
+- branch: `codex/dev-env-run`
+- short_sha: `df747458`
+- Layer Target: `Navigation interpretation / owner-signal governance`
+- Module: `docs/ops/verify/menu_scene_exemptions.yml`
+- Reason: `smart_construction_core.menu_sc_project_quick_create` and `smart_construction_demo.menu_sc_project_list_showcase` are dual-track action/menu compatibility entries; `scene_key` alone must not promote them to scene owner entries.
+- completed_step: `added explicit menu_scene_resolve exemptions for the quick-create action/menu entry and demo showcase action/menu entry`
+- verification:
+  - `node --check scripts/verify/fe_menu_scene_resolve_smoke.js`
+  - `make verify.menu.scene_resolve.container DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo ARTIFACTS_DIR=/mnt/artifacts`
+  - `git diff --check -- docs/ops/verify/menu_scene_exemptions.yml docs/ops/iterations/menu_owner_signal_residual_exemption_batch_20260427.md docs/ops/iterations/delivery_context_switch_log_v1.md`
+- next_step: `clean up stale verification scripts that still bind smart_construction_demo.menu_sc_project_list_showcase / action_sc_project_list_showcase to canonical projects.list`
+
+## 2026-04-27 Batch-Menu-Dual-Track-Verify-Guard-Cleanup
+
+- branch: `codex/dev-env-run`
+- short_sha: `40c07a65`
+- Layer Target: `Navigation verification / dual-track contract guards`
+- Module: `scripts/verify`
+- Reason: legacy guards still treated `smart_construction_demo.menu_sc_project_list_showcase` / `action_sc_project_list_showcase` as canonical `projects.list`; dual-track contract requires canonical `projects.list` to be guarded by core menu/action instead.
+- completed_step: `updated scene_key smoke and scene openable guard to use smart_construction_core.menu_sc_root / smart_construction_core.action_sc_project_list for projects.list; moved the static openable guard source to scene_registry_content.py`
+- verification:
+  - `node --check scripts/verify/fe_menu_scene_key_smoke.js scripts/verify/fe_scene_core_openable_guard.js`
+  - `node scripts/verify/fe_scene_core_openable_guard.js`
+  - `make verify.portal.menu_scene_key_smoke.container DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo ARTIFACTS_DIR=/mnt/artifacts`
+  - `git diff --check -- scripts/verify/fe_menu_scene_key_smoke.js scripts/verify/fe_scene_core_openable_guard.js docs/ops/iterations/menu_dual_track_verify_guard_cleanup_batch_20260427.md docs/ops/iterations/delivery_context_switch_log_v1.md`
+- next_step: `scan remaining menu normalization verification scripts for scene_key-as-owner-signal assumptions`
+
+## 2026-04-27 Batch-Menu-Scene-Governance-Asset-Cleanup
+
+- branch: `codex/dev-env-run`
+- short_sha: `41c60f68`
+- Layer Target: `Scene governance documentation assets / dual-track mapping`
+- Module: `docs/architecture/scene-governance/assets`
+- Reason: baseline/current menu-scene mapping assets still declared demo showcase menu/action as canonical `projects.list`, conflicting with dual-track contract.
+- completed_step: `removed smart_construction_demo.menu_sc_project_list_showcase and smart_construction_demo.action_sc_project_list_showcase projects.list mappings from baseline/current CSV assets`
+- verification:
+  - `rg -n "smart_construction_demo\\.(menu_sc_project_list_showcase|action_sc_project_list_showcase).*projects\\.list|projects\\.list.*smart_construction_demo\\.(menu_sc_project_list_showcase|action_sc_project_list_showcase)|menu_sc_project_list_showcase,.*projects\\.list|action_sc_project_list_showcase,projects\\.list" docs/architecture/scene-governance/assets -S`
+  - `git diff --check -- docs/architecture/scene-governance/assets/menu_scene_mapping_baseline_v1.csv docs/architecture/scene-governance/assets/generated/menu_scene_mapping_current_v1.csv docs/ops/iterations/menu_scene_governance_asset_cleanup_batch_20260427.md docs/ops/iterations/delivery_context_switch_log_v1.md`
+- next_step: `scan contract snapshots and archived docs; only update current regenerated assets, not historical audit records`
+
+## 2026-04-27 Batch-Menu-Navigation-Verify-Docs
+
+- branch: `codex/dev-env-run`
+- short_sha: `a73bf73c`
+- Layer Target: `Verification documentation / menu navigation contract`
+- Module: `docs/ops/verify`
+- Reason: `verify.menu.navigation_snapshot(.container)` exists and has live evidence, but the operations verify README did not document how to rerun it or where its artifacts land.
+- completed_step: `documented menu navigation field snapshot host/container targets, required fields, artifact paths, and host artifact permission workaround`
+- verification:
+  - `git diff --check -- docs/ops/verify/README.md docs/ops/iterations/menu_navigation_verify_docs_batch_20260427.md docs/ops/iterations/delivery_context_switch_log_v1.md`
+  - `rg -n "verify.menu.navigation_snapshot|menu-navigation-field-snapshot|native_action_id|compatibility_used" docs/ops/verify/README.md`
+- next_step: `check whether phase gate summaries should include menu_navigation_field_snapshot artifacts alongside menu_scene_resolve`
+
+## 2026-04-27 Batch-Menu-Navigation-Phase-Gate-Summary
+
+- branch: `codex/dev-env-run`
+- short_sha: `58afb7ea`
+- Layer Target: `Verification summary / Phase 9.8 menu gate`
+- Module: `scripts/verify/phase_9_8_gate_summary.js`
+- Reason: phase gate summary aggregated menu scene resolve but not the newer menu navigation field snapshot, so the field contract evidence was invisible in gate summaries.
+- completed_step: `added latest menu-navigation-field-snapshot summary ingestion and phase_9_8_menu_navigation_* summary lines`
+- verification:
+  - `node --check scripts/verify/phase_9_8_gate_summary.js`
+  - `make verify.phase_9_8.gate_summary`
+  - `git diff --check -- scripts/verify/phase_9_8_gate_summary.js docs/ops/verify/README.md docs/ops/iterations/menu_navigation_phase_gate_summary_batch_20260427.md docs/ops/iterations/delivery_context_switch_log_v1.md`
+- next_step: `decide whether the aggregate gate target should remain summary-only or explicitly depend on verify.menu.navigation_snapshot.container`
+
+## 2026-04-27 Batch-Menu-Navigation-Gate-Wiring
+
+- branch: `codex/dev-env-run`
+- short_sha: `7c89fcb8`
+- Layer Target: `Gate wiring / menu navigation verification`
+- Module: `Makefile`
+- Reason: phase summary now consumes menu navigation field snapshot, but strict `gate.full` did not guarantee that the snapshot was generated before summary aggregation.
+- completed_step: `wired verify.menu.navigation_snapshot.container into gate.full strict branch before phase_9_8.gate_summary`
+- verification:
+  - `make -n gate.full DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+  - `git diff --check -- Makefile docs/ops/verify/README.md docs/ops/iterations/menu_navigation_gate_wiring_batch_20260427.md docs/ops/iterations/delivery_context_switch_log_v1.md`
+- next_step: `scan current menu normalization perimeter for remaining actionable verification or documentation gaps`
+
+## 2026-04-27 Batch-Real-User-Wutao-Business-Config
+
+- branch: `codex/dev-env-run`
+- short_sha: `1ec6db6a`
+- Layer Target: `Data migration / real-user capability assignment`
+- Module: `scripts/migration`
+- Reason: `真实用户 wutao 需要作为业务配置管理员办理业务主数据、字典、定额和阶段要求配置，但不能提升为 Odoo system 或平台系统管理员。`
+- completed_step: `history_real_user_normalize_write 固化 REAL_USER_BUSINESS_CONFIG_ADMIN_LOGINS 默认 wutao，并新增 history_wutao_business_config_probe 只读校验`
+- verification:
+  - `python3 -m py_compile scripts/migration/history_real_user_normalize_write.py scripts/migration/history_wutao_business_config_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make history.real_users.normalize.write`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_wutao_business_config_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make history.business.usable.probe`
+- next_step: `继续用模拟生产库验证真实用户矩阵中是否还存在角色/业务数据缺口`
+
+## 2026-04-27 Batch-Real-User-Admin-Semantics-Close
+
+- branch: `codex/dev-env-run`
+- short_sha: `e6a91a85`
+- Layer Target: `Data migration / real-user semantics boundary`
+- Module: `scripts/migration`
+- Reason: `admin 必须保留为 Odoo 技术/平台账号，历史迁移 admin-like 用户不能继续混入真实业务可用用户矩阵。`
+- completed_step: `history_real_user_normalize_write 将 legacy_user_sc_10000000 规范为 inactive history_system_user_10000000；company probe 排除 inactive 与 fixture 账号；新增 history_admin_semantics_probe`
+- verification:
+  - `python3 -m py_compile scripts/migration/history_real_user_normalize_write.py scripts/migration/history_real_user_company_probe.py scripts/migration/history_admin_semantics_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make history.real_users.normalize.write`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_admin_semantics_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_real_user_company_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make history.business.usable.probe`
+- next_step: `输出真实用户业务矩阵时以 active migrated real users 为准，不纳入 admin / history_system_user_10000000 / fixture users`
+
+## 2026-04-27 Batch-History-Organization-Carrying-Audit
+
+- branch: `codex/dev-env-run`
+- short_sha: `7ae80942`
+- Layer Target: `History organization facts / carrying audit`
+- Module: `scripts/migration`
+- Reason: `主公司已落库后，需要判断原系统分公司、部门、用户部门关系和业务单据组织字段是否已完整承载。`
+- completed_step: `新增 history_organization_carrying_audit_probe，只读审计 sc.legacy.department、用户画像部门、项目/报销/薪资/考勤/合同组织字段和当前正式组织承载面`
+- verification:
+  - `python3 -m py_compile scripts/migration/history_organization_carrying_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_organization_carrying_audit_probe.py`
+- result: `PASS with decision=organization_carrying_gap_present; gaps=P0 legacy departments not formally materialized, P0 active user department link gap, P1 legacy department parent link gap, P1 branch-company facts not formally classified`
+- next_step: `先制定分公司/部门承载策略：分公司作为组织单元还是 res.company，部门是否启用 hr.department 或自有组织模型，然后再执行写入规范化`
+
+## 2026-04-27 Batch-History-Organization-Department-Materialize
+
+- branch: `codex/dev-env-run`
+- short_sha: `df6507f7`
+- Layer Target: `Domain data migration / organization carrying`
+- Module: `smart_construction_core`, `scripts/migration`
+- Reason: `分公司不是独立公司，必须作为用户可配置组织单元承载；独立公司仍保留平台级配置，部门使用 hr.department 承载历史组织事实。`
+- completed_step: `smart_construction_core 显式依赖 hr，新增业务配置/组织架构菜单与 hr.department 权限；history_organization_department_materialize_write 将 830 条历史部门事实和缺失父级/用户画像派生部门物化为 hr.department，并回填用户画像部门关联`
+- verification:
+  - `python3 -m py_compile scripts/migration/history_organization_department_materialize_write.py scripts/migration/history_organization_carrying_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_organization_department_materialize_write.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_organization_carrying_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_wutao_business_config_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_business_usable_probe.py`
+- result: `PASS; organization_carrying_ready, gap_count=0, hr_department_total=831, branch_company_carrying_status=carried_as_organization_unit; wutao 可见业务配置/组织架构并具备 hr.department 配置权限；history_business_usable_ready`
+- next_step: `基于真实用户矩阵继续核对发起/审核类业务是否存在角色能力组缺口，避免再扩张平台公司配置面`
+
+## 2026-04-27 Batch-Wutao-Business-Config-Role-Surface
+
+- branch: `codex/dev-env-run`
+- short_sha: `48474701`
+- Layer Target: `Identity role surface / frontend navigation contract`
+- Module: `smart_construction_core`, `smart_construction_scene`
+- Reason: `wutao 已具备业务配置能力组和原生菜单权限，但 system.init 仍按 pm role_surface 剪枝，导致自定义前端业务配置菜单组不可见。`
+- completed_step: `新增 business_config_admin role surface，显式绑定 group_sc_cap_business_config_admin，并将其优先级置于 executive/pm/finance 前；业务配置管理员 role_surface 保留智能施工根与业务配置中心菜单。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/core_extension.py addons/smart_construction_scene/core_extension.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `node system.init probe for wutao/123456: role_code=business_config_admin, business_count=20, role_surface_pruned=false, trace=0e25fc2a9d3b`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.menu.navigation_snapshot.container`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/history_wutao_business_config_probe.py`
+- result: `PASS; custom frontend system.init now exposes 智能施工 2.0/业务配置 with 20 business config nodes for wutao; navigation snapshot trace=f36447c53a96`
+- next_step: `继续验证真实用户矩阵中发起/审核业务入口是否因单一 role_surface 剪枝产生缺口，必要时让 role_surface 合并能力组可见菜单而不是单角色覆盖。`
+
+## 2026-04-27 Batch-Business-Fact-Page-Surface-Clean
+
+- branch: `codex/dev-env-run`
+- short_sha: `01233030`
+- Layer Target: `Domain/UI business fact page surface`
+- Module: `sc_norm_engine`, `scripts/migration`
+- Reason: `菜单已经出现后，需要先统一业务事实页面显示，避免英文页面、技术字段、迁移字段继续暴露给真实用户。`
+- completed_step: `定额专业/章节/子目/导入向导描述中文化；定额页面移除 sheet_name/unit_raw/line_no 来源字段展示；新增 business_fact_page_surface_audit_probe 按真实用户可见菜单扫描英文与 legacy/source/raw/迁移字段`
+- verification:
+  - `python3 -m py_compile addons/sc_norm_engine/models/norm_specialty.py addons/sc_norm_engine/wizard/norm_import_wizard.py scripts/migration/business_fact_page_surface_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=sc_norm_engine`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/business_fact_page_surface_audit_probe.py`
+  - `SC_NORM_SURFACE_ROWS=[]`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.menu.navigation_snapshot.container`
+- result: `PASS; 定额页面第一批清理完成；全量业务根审计仍提示 business_page_surface_gap_present，集中在历史财务事实、流程待办、合同/财务账款核心单据 legacy/source 字段及英文模型描述`
+- next_step: `下一批优先收口财务账款业务页面，判断内部历史事实菜单是否应从真实业务用户可见面隐藏。`
+
+## 2026-04-27 Batch-Business-Fact-Finance-Page-Clean
+
+- branch: `codex/dev-env-run`
+- short_sha: `f443025c`
+- Layer Target: `Domain/UI business fact page surface`
+- Module: `smart_construction_core`
+- Reason: `继续清理真实用户可见业务页面，先收口财务账款核心办理页中的历史迁移、旧系统、source/legacy 技术字段。`
+- completed_step: `费用/保证金、收款收入、收款发票台账、付款申请明细、结算单/结算调整、资金对账、融资借款、资金台账页面移除历史来源/历史锚点/旧系统来源分组及 legacy/source 字段展示`
+- verification:
+  - `XML_PARSE_OK for 8 changed XML files`
+  - `rg static scan: no visible legacy/source_origin/source_* fields or 历史/旧系统 labels in changed finance views`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/business_fact_page_surface_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.menu.navigation_snapshot.container`
+- result: `PASS; business_fact_page_surface_audit issue_count 1213 -> 1104, technical_field_visible 236 -> 181; menu navigation snapshot trace=7115e4dfb958`
+- next_step: `下一批收口 历史财务事实（内部）/流程待办 的真实用户可见性，并继续处理项目/成本页面英文与来源字段。`
+
+## 2026-04-27 Batch-Business-Fact-Internal-History-Visibility
+
+- branch: `codex/dev-env-run`
+- short_sha: `263618b4`
+- Layer Target: `Domain/UI business fact page availability`
+- Module: `smart_construction_core`
+- Reason: `真实业务用户不应看到内部历史迁移页面和流程迁移工作台；发起业务应尽量开放给内部用户，审核再由能力组限制，内部迁移追溯页面应只归平台配置管理员。`
+- completed_step: `将历史财务事实（内部）及其子菜单、流程待办、流程工作台、历史发票登记/扣款调整/资金确认/文件索引等动作与菜单收口到 group_sc_cap_config_admin，并用 ir.ui.menu.groups_id 显式替换避免升级残留旧财务组。`
+- verification:
+  - `XML_PARSE_OK for 6 changed XML files`
+  - `rg group_sc_cap_finance_*/group_sc_internal_user in changed internal history XML files`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `WUTAO_INTERNAL_HISTORY_MENUS={"count": 0, "login": "wutao", "menus": []}`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/business_fact_page_surface_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.menu.navigation_snapshot.container`
+- result: `PASS; wutao 内部历史菜单 count=0; business_fact_page_surface_audit issue_count 1104 -> 508; navigation snapshot trace=8b3ac9f5461e`
+- next_step: `继续真实业务页面字段清理，优先处理资金日报、资金日报明细、融资台账、历史物料、历史采购合同等剩余高集中度页面。`
+
+## 2026-04-27 Batch-Business-Fact-Projection-Page-Surface
+
+- branch: `codex/dev-env-run`
+- short_sha: `4a89eee3`
+- Layer Target: `Domain/UI business fact page surface`
+- Module: `smart_construction_core`
+- Reason: `真实用户可见页面审计剩余 508 项缺口，高集中在资金日报、资金日报明细、融资台账、历史物料、历史采购合同等页面，需要继续去掉历史/迁移/英文/技术字段暴露。`
+- completed_step: `资金日报与融资台账新增只读业务别名字段并改视图使用业务字段；资金日报明细、物料档案/分类、采购/一般合同移除旧系统来源分组和历史编号字段；物料与采购页面菜单/动作/视图去掉“历史”字样；相关模型补中文描述和字段标签。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/legacy_fund_daily_snapshot_fact.py addons/smart_construction_core/models/support/legacy_fund_daily_line.py addons/smart_construction_core/models/support/legacy_financing_loan_fact.py addons/smart_construction_core/models/support/legacy_material_catalog.py addons/smart_construction_core/models/support/legacy_purchase_contract_fact.py`
+  - `XML_PARSE_OK for 5 changed XML files`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/business_fact_page_surface_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.menu.navigation_snapshot.container`
+- result: `PASS; business_fact_page_surface_audit issue_count 508 -> 233; navigation snapshot trace=40b81db321c3`
+- next_step: `继续处理施工日志、发票登记、付款执行、综合合同、历史用户权限和组织架构原生视图英文标签。`
+
+## 2026-04-27 Batch-Business-Fact-Core-Execution-Page-Surface
+
+- branch: `codex/dev-env-run`
+- short_sha: `c3adc841`
+- Layer Target: `Domain/UI business fact page surface`
+- Module: `smart_construction_core`
+- Reason: `真实业务用户可见页面审计剩余 233 项缺口，核心办理页中施工日志、付款执行、发票登记、综合合同仍暴露迁移来源字段和英文模型描述。`
+- completed_step: `施工日志、付款执行、发票登记、综合合同模型描述中文化；四个办理页移除 source_origin/legacy_* 可见字段、历史迁移/新系统登记搜索入口和历史来源分组；综合合同新增安装调试款业务别名规避 debug 字段名暴露；active 字段补中文标签。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/core/construction_diary.py addons/smart_construction_core/models/core/payment_execution.py addons/smart_construction_core/models/core/invoice_registration.py addons/smart_construction_core/models/core/general_contract.py`
+  - `XML_PARSE_OK for 4 changed XML files`
+  - `rg visible legacy/source/debug fields in changed views`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/business_fact_page_surface_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.menu.navigation_snapshot.container`
+- result: `PASS; business_fact_page_surface_audit issue_count 233 -> 136; navigation snapshot trace=1d9f8e8752f6`
+- next_step: `优先判定历史用户权限是否应继续对真实业务用户可见，并处理组织架构原生视图英文标签或替换为业务配置专用视图。`
+
+## 2026-04-27 Batch-Business-Fact-Legacy-User-Context-Visibility
+
+- branch: `codex/dev-env-run`
+- short_sha: `571609b1`
+- Layer Target: `Domain/UI business fact page surface`
+- Module: `smart_construction_core`
+- Reason: `历史用户权限属于迁移权限投影和项目授权追溯面，不是业务办理页面；真实业务用户不应看到历史用户/历史角色投影/项目授权范围内部页面。`
+- completed_step: `将历史用户权限父菜单、历史用户、历史角色投影、项目授权范围的 action/menu 从 group_sc_cap_data_read 收口到 group_sc_cap_config_admin，并显式替换 ir.ui.menu.groups_id 防止升级残留。`
+- verification:
+  - `XML_PARSE_OK for addons/smart_construction_core/views/support/legacy_user_context_views.xml`
+  - `rg group_sc_cap_data_read/group_sc_internal_user in legacy_user_context_views.xml`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `LEGACY_USER_CONTEXT_FACTS.visible_for_wutao=[]`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/business_fact_page_surface_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.menu.navigation_snapshot.container`
+- result: `PASS; business_fact_page_surface_audit issue_count 136 -> 85; wutao 历史用户权限可见菜单为空; navigation snapshot trace=42ecdeb09325`
+- next_step: `处理组织架构/项目原生视图英文标签，并继续收口成本台账 source_model/source_id。`
+
+## 2026-04-27 Batch-Business-Fact-Cost-Misc-Page-Surface
+
+- branch: `codex/dev-env-run`
+- short_sha: `69b3f825`
+- Layer Target: `Domain/UI business fact page surface`
+- Module: `smart_construction_core`
+- Reason: `真实业务用户可见页面审计剩余 85 项缺口，成本台账仍暴露 source_model/source_id，成本/进度/资料和若干财务模型仍有 WBS、YYYY-MM、英文模型描述或英文字段标签。`
+- completed_step: `成本台账移除系统来源只读块；成本预算与实际、成本台账、经营利润、进度计量、工程资料、工程结构字段去除 WBS/YYYY-MM 页面噪音；结算、费用、资金、收款、融资、合同对账等模型描述与 active/currency/amount/count 字段标签中文化。`
+- verification:
+  - `python3 -m py_compile changed smart_construction_core python files`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/views/core/cost_domain_views.xml`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/business_fact_page_surface_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; business_fact_page_surface_audit issue_count 85 -> 52; navigation snapshot trace=31bd218c4955`
+- next_step: `处理 project.project/hr.department 原生页面英文字段与定额子目、阶段要求配置中的技术字段。`
+
+## 2026-04-27 Batch-Business-Fact-Custom-Config-Page-Surface
+
+- branch: `codex/dev-env-run`
+- short_sha: `d1776c89`
+- Layer Target: `Domain/UI business fact page surface`
+- Module: `smart_construction_core`, `sc_norm_engine`
+- Reason: `真实业务用户可见页面审计剩余 52 项缺口，其中自定义业务配置页仍有工程结构 WBS 命名、物资计划 State、定额子目 raw_line、阶段要求 action_xmlid、定额导入 Excel/Sheet 等页面噪音。`
+- completed_step: `工程结构动作/菜单/视图/模型描述去 WBS；物资计划状态字段补中文标签；工程量清单隐藏来源表字段；定额子目移除导入原始数据调试页；阶段要求配置隐藏动作标识；定额导入向导文案中文业务化。`
+- verification:
+  - `python3 -m py_compile changed smart_construction_core/sc_norm_engine python files`
+  - `python3 -m xml.etree.ElementTree changed smart_construction_core XML files`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=sc_norm_engine`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/business_fact_page_surface_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; business_fact_page_surface_audit issue_count 52 -> 36; navigation snapshot trace=a273cef735b5`
+- next_step: `剩余缺口集中在 project.project 与 hr.department 原生页面，下一批评估业务专用视图覆盖或翻译/字段描述覆盖。`
+
+## 2026-04-27 Batch-Business-Fact-Native-Project-Org-Page-Surface
+
+- branch: `codex/dev-env-run`
+- short_sha: `f970d795`
+- Layer Target: `Domain/UI business fact page surface`
+- Module: `smart_construction_core`
+- Reason: `真实业务用户可见页面审计剩余 36 项缺口，集中在 project.project 与 hr.department 原生页面英文模型描述、英文字段标签和默认原生视图。`
+- completed_step: `项目模型描述与项目原生字段中文化；项目概览/项目管理/项目清单绑定业务化项目视图和搜索视图；组织架构新增业务专用 tree/form/search 视图并绑定菜单动作；部门模型描述与部门原生字段中文化；项目状态和更新时间残留标签完成中文化。`
+- verification:
+  - `python3 -m py_compile changed smart_construction_core python files`
+  - `python3 -m xml.etree.ElementTree changed smart_construction_core XML files`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec < scripts/migration/business_fact_page_surface_audit_probe.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; business_fact_page_surface_audit issue_count 36 -> 0; decision=business_page_surface_ready; navigation snapshot trace=4d257fd37a66`
+- next_step: `转入真实用户连续办理业务链路验证，输出真实可用用户矩阵、角色/能力组覆盖和业务数据缺口。`
+
+## 2026-04-27 Batch-Business-Fact-Report-Center-Menu
+
+- branch: `codex/dev-env-run`
+- short_sha: `a649de62`
+- Layer Target: `Domain/UI business fact navigation`
+- Module: `smart_construction_core`
+- Reason: `真实用户反馈“数据分析”下只挂数据字典，且业务配置中已有字典类入口，台账/报表类入口应集中到报表中心而不是混在办理中心或配置字典。`
+- completed_step: `menu_sc_data_center 重命名为报表中心；扩展报表中心父菜单能力组；成本台账/成本报表/经营利润以及支付台账/资金台账/收款台账/融资台账/资金日报/资金日报明细迁入报表中心；旧业务字典入口从报表中心移除并收口为 base.group_no_one；前端兜底导航标签同步为报表中心。`
+- verification:
+  - `python3 -m xml.etree.ElementTree changed smart_construction_core XML files`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `REPORT_CENTER_MENU_FACTS: report center parent/name/groups verified in sc_prod_sim`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast FRONTEND_PROFILE=prod-sim COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make frontend.restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 报表中心挂载台账/报表入口; 旧业务字典入口隐藏; navigation snapshot trace=25962173cc4e`
+- next_step: `继续真实用户连续办理业务链路验证，检查办理入口、角色能力组和业务数据是否仍有缺口。`
+
+## 2026-04-27 Batch-Business-Fact-Dictionary-Menu-Correction
+
+- branch: `codex/dev-env-run`
+- short_sha: `75fac41a`
+- Layer Target: `Domain/UI business fact navigation`
+- Module: `smart_construction_core`
+- Reason: `用户指出业务字典是业务配置管理员需要的能力，上一轮将旧业务字典入口隐藏可能导致全局业务字典无法维护；需区分 sc.dictionary 全局业务字典与 project.dictionary 定额字典。`
+- completed_step: `恢复业务配置/业务字典菜单并绑定 action_sc_dictionary_manage(sc.dictionary)；将原数据字典改名为定额字典，全部字典改名为全部定额字典，action_project_dictionary 标题改为定额字典（全部）；保持 project.dictionary 专用于定额体系相关配置入口。`
+- verification:
+  - `python3 -m xml.etree.ElementTree changed smart_construction_core XML files`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `DICTIONARY_MENU_FACTS: 业务字典 -> sc.dictionary; 定额字典 -> project.dictionary`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 业务配置管理员保留业务字典入口; 定额字典语义独立; navigation snapshot trace=090e9d4984b1`
+- next_step: `继续真实用户连续办理业务链路验证，重点检查业务配置管理员基础配置能力是否完整。`
+
+## 2026-04-27 Batch-Business-Fact-Button-Label-Correction
+
+- branch: `codex/dev-env-run`
+- short_sha: `3093084d`
+- Layer Target: `Domain/UI business fact page surface`
+- Module: `smart_construction_core`
+- Reason: `用户发现仍有按钮标签未完整中文化；审计确认项目表单任务统计按钮内部 statinfo 字段显示为 Tasks。`
+- completed_step: `将 project.project 表单 action_view_tasks 按钮内 open_task_count statinfo string 从 Tasks 改为 任务，按钮 action/权限/业务逻辑不变。`
+- verification:
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/views/core/project_views.xml`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `PROJECT_TASK_BUTTON_LABELS: button=任务; statinfo=任务`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 项目任务统计按钮中文化; navigation snapshot trace=dc92cd99f7fb`
+- next_step: `继续真实用户连续办理业务链路验证，遇到页面标签遗漏按按钮/字段/statinfo 三类一起审计。`
+
+## 2026-04-27 Batch-Business-Fact-Systematic-Button-Label-Audit
+
+- branch: `codex/dev-env-run`
+- short_sha: `e5a35f77`
+- Layer Target: `Domain/UI business fact page surface`
+- Module: `smart_construction_core`, `smart_construction_scene`
+- Reason: `用户指出按钮存在多种显示来源，单点修复 project.project 任务统计按钮不彻底；需系统扫描 button.string、statinfo/子节点 string、按钮内字段元数据和无标签按钮。`
+- completed_step: `对 sc_prod_sim 数据库内所有 smart_construction* form/tree/kanban 视图执行按钮可见文案审计；补齐 material plan 采购统计字段标签、project.project inherited 统计字段标签；将场景治理向导 Execute/Cancel 按钮中文化为执行/取消。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/core/material_plan.py addons/smart_construction_core/models/core/project_core.py`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_scene`
+  - `SC_ALL_BUTTON_VISIBLE_ENGLISH_COUNT=0`
+  - `SC_ALL_BUTTON_MISSING_LABEL_COUNT=0`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; smart_construction* 按钮可见英文 6 -> 0; 缺失标签 0; navigation snapshot trace=6cb9f7518046`
+- next_step: `回到真实用户连续办理业务链路验证；后续页面文案问题按视图属性、字段元数据、控件内部渲染三层一起审计。`
+
+## 2026-04-27 Batch-Prod-Sim-Default-Language-Baseline
+
+- branch: `codex/dev-env-run`
+- short_sha: `958dc465`
+- Layer Target: `Deployment initialization / UI language baseline`
+- Module: `smart_construction_custom`
+- Reason: `用户指出项目创建原生 New 未解决；排查确认不是业务按钮 string，而是模拟生产库真实内部用户仍为 en_US，导致原生 Web 控件按英文渲染。`
+- completed_step: `在 sc.platform.initialization.apply_baseline 中激活 zh_CN，并将 share=False 的内部用户统一为 lang=zh_CN、tz=Asia/Shanghai；记录 sc.platform.default_lang/default_tz/internal_user_preferences_count 参数。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_custom/models/platform_initialization.py`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_custom`
+  - `INTERNAL_USER_PREF_COUNT=112`
+  - `INTERNAL_USER_PREF_BAD_COUNT=0`
+  - `SAMPLE_USER_PREFS: admin/wutao/duanyijun/denghongying/chenshuai all lang=zh_CN tz=Asia/Shanghai`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 真实内部用户语言全部收敛为 zh_CN; navigation snapshot trace=64f0c94b146a`
+- next_step: `用户重新登录验证原生项目创建按钮；若仍有英文，则进入 Web 翻译资源加载/缓存层审计。`
+
+## 2026-04-27 Batch-Business-Operability-Initiation-Gap
+
+- branch: `codex/dev-env-run`
+- short_sha: `3ae427d0`
+- Layer Target: `Domain/business operability`
+- Module: `smart_construction_core`
+- Reason: `用户发现采购/一般合同没有新建办理能力；业务规则是内部用户可以发起业务，审核/确认继续由角色限制。`
+- completed_step: `系统审计真实用户的模型 create/write、action/menu 可见性、view create/edit 和必填技术字段默认值；将采购/一般合同从只读承载升级为可创建/可编辑办理入口；新增物资管理/采购单入口；对采购、合同、结算、费用、资金、发票、融资等 13 类业务模型补齐业务发起 ACL 和菜单/action 可见性。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/legacy_purchase_contract_fact.py`
+  - `python3 -m xml.etree.ElementTree changed smart_construction_core XML files`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `OPERABILITY_MISSING_CREATE_COUNT=0`
+  - `OPERABILITY_CREATE_SMOKE: sc.legacy.purchase.contract.fact/sc.general.contract/purchase.order/sc.settlement.order ok under denghongying with rollback`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 业务发起模型 create/write 缺口清零; navigation snapshot trace=a480bf86854d checked=141`
+- next_step: `用真实用户逐页验证新建表单的必填字段和默认值是否足够顺畅；若还有阻塞，继续按“可见入口 -> action -> view -> ACL -> required defaults”链路审计。`
+
+## 2026-04-27 Batch-Business-Approval-Policy-Config
+
+- branch: `codex/dev-env-run`
+- short_sha: `505a6d0e`
+- Layer Target: `Domain/business approval configuration facts`
+- Module: `smart_construction_core`
+- Reason: `用户指出系统没有回答哪些业务需要审核、审核流程如何配置；审批规则应交给业务配置管理员按业务需要维护，同时保持内部用户业务发起能力开放。`
+- completed_step: `新增 sc.approval.policy/sc.approval.step 审批规则矩阵；在业务配置下新增审批规则菜单；为项目合同、一般合同、采购/一般合同、物资计划、采购订单、结算单、付款/收款申请、费用/保证金、发票登记初始化默认审批事实。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/approval_policy.py addons/smart_construction_core/__manifest__.py`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/data/approval_policy_seed.xml addons/smart_construction_core/views/support/approval_policy_views.xml`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `APPROVAL_POLICY_COUNT=9; APPROVAL_POLICY_SYNCED=8; APPROVAL_POLICY_MENU=True ACTION=True; WUTAO_BUSINESS_CONFIG=True`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 业务配置管理员可维护审批规则矩阵; 8 类业务默认需要审核; 发票登记默认不强制审核; navigation snapshot trace=f90582b57d44 checked=143`
+- next_step: `继续把 document_state/policy_only 业务动作接入审批规则运行时判断，使单据提交/确认按业务管理员配置动态决定是否进入审核。`
+
+## 2026-04-27 Batch-Business-Approval-Runtime-Gap
+
+- branch: `codex/dev-env-run`
+- short_sha: `f56441ea`
+- Layer Target: `Domain/business approval runtime`
+- Module: `smart_construction_core`
+- Reason: `用户要求先补齐审批配置缺口；上一批已有审批规则矩阵，本批将 document_state/policy_only 业务动作接入规则判断和审核能力组校验。`
+- completed_step: `新增 sc.approval.policy 运行时服务方法；结算单/费用保证金提交按规则进入待审或直接通过，批准校验规则能力组；一般合同/项目合同/采购订单确认校验规则能力组；采购/一般合同新增办理状态和提交/批准/签署动作，并初始化历史记录状态。`
+- verification:
+  - `python3 -m py_compile changed smart_construction_core Python files`
+  - `python3 -m xml.etree.ElementTree changed smart_construction_core XML files`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `APPROVAL_RUNTIME_SMOKE=PASS; EXPENSE_AFTER_SUBMIT=submit; EXPENSE_NON_FINANCE_APPROVE=BLOCKED; EXPENSE_AFTER_FINANCE_APPROVE=approved; LEGACY_PURCHASE_AFTER_SUBMIT=submit; LEGACY_PURCHASE_AFTER_APPROVE=approved; GENERAL_CONTRACT_NON_MANAGER_CONFIRM=BLOCKED; GENERAL_CONTRACT_AFTER_MANAGER_CONFIRM=confirmed`
+  - `APPROVAL_RUNTIME_DB_SYNC=PASS legacy_policy_runtime=document_state null_state_count=0`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 审批规则已参与结算、费用、合同、采购订单、采购/一般合同运行时动作; navigation snapshot trace=e1de37c6f779 checked=143`
+- next_step: `继续用真实用户逐单据验证按钮可见性、提交状态、审批阻断文案和审批后连续办理路径；tier_validation 单据仍按现有分级审批执行。`
+
+## 2026-04-27 Batch-Business-Approval-Policy-OCA-Tier-Sync
+
+- branch: `codex/dev-env-run`
+- short_sha: `e4f6ed62`
+- Layer Target: `Domain approval configuration sync`
+- Module: `smart_construction_core`
+- Reason: `用户同意下一步打通业务审批配置入口与 OCA tier 执行层；sc.approval.policy 应成为业务配置源，OCA tier.definition 作为执行层配置。`
+- completed_step: `为 sc.approval.step 增加 tier_definition_id；新增 sc.approval.policy -> OCA tier.definition 同步方法；策略/步骤创建、修改、删除时同步 OCA；模块升级时通过 approval_policy_tier_sync.xml 执行全量同步；先覆盖 project.material.plan 与 payment.request。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/approval_policy.py addons/smart_construction_core/__manifest__.py`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/data/approval_policy_seed.xml addons/smart_construction_core/data/approval_policy_tier_sync.xml`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `POLICY_OCA_SYNC_COUNT=2; TIER_DEFINITION_TOTAL=2; POLICY_OCA_SYNC_SMOKE=PASS`
+  - `BUSINESS_ADMIN_POLICY_WRITE=PASS; BUSINESS_ADMIN_TIER_DOMAIN=[('amount', '>=', 321.0)]`
+  - `MATERIAL_PLAN_TIER_SUBMIT_STATE=submit; MATERIAL_PLAN_TIER_REVIEW_COUNT=1; MATERIAL_PLAN_TIER_REVIEW_GROUPS=Smart Construction / SC 能力 - 物资中心审批; MATERIAL_PLAN_TIER_SMOKE=PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=wutao E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 业务审批规则已同步生成 OCA tier.definition；业务配置管理员修改规则可回写 OCA 执行层；物资计划提交可创建 OCA 待审记录; navigation snapshot trace=f57b4d342459 checked=143`
+- next_step: `继续验证付款/收款申请带附件提交后创建 OCA 待审，并完成财务审核通过/驳回链路；再评估更多 document_state 单据是否迁移到 tier.validation 执行。`
+
+## 2026-04-27 Batch-Business-Payment-Request-OCA-Runtime
+
+- branch: `codex/dev-env-run`
+- short_sha: `d0470854`
+- Layer Target: `Domain approval OCA execution validation`
+- Module: `smart_construction_core`
+- Reason: `上一批已完成审批规则到 OCA tier.definition 同步，本批验证真实用户付款/收款申请提交、待审生成、财务审批和业务状态推进是否具备连续办理条件。`
+- completed_step: `修复付款申请与物资计划 OCA server action 在 records 为空时的 active_model/active_id 回退；付款申请资金基线与已占用金额改为服务端受控读取；付款申请/物资计划 chatter 提示改为非阻断，真实用户未配置邮箱不再阻断业务办理；新增付款申请发起人无资金基线 ACL 的回归用例。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/core/payment_request.py addons/smart_construction_core/models/core/material_plan.py addons/smart_construction_core/tests/test_payment_request_permission.py`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `REAL_PAYMENT_REQUEST_OCA_TIER_SMOKE=PASS; REAL_ACTORS=caisiqi/蔡思琪 -> chenshuai/陈帅; REAL_AFTER_SUBMIT=submit/waiting; REAL_AFTER_VALIDATE=approved/validated`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=caisiqi E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 真实用户付款申请提交到 OCA 财务审批通过可连续办理；navigation snapshot trace=aa27292c384f checked=53`
+- next_step: `继续补齐付款/收款申请 OCA 驳回链路真实用户验证，并扩展物资计划审批通过/驳回真实办理探针。`
+
+## 2026-04-27 Batch-Business-OCA-Reject-Material-Runtime
+
+- branch: `codex/dev-env-run`
+- short_sha: `b5253977`
+- Layer Target: `Domain approval OCA execution validation`
+- Module: `smart_construction_core`
+- Reason: `上一批付款申请 OCA 审批通过链路已通，本批补齐付款申请驳回链路，并验证物资计划 OCA 审批通过/驳回真实办理。`
+- completed_step: `payment.request 驳回回调从 OCA review 评论提取审计原因，无评论时落默认原因以避免技术参数阻断；project.material.plan 提交审批改为 with_company，去掉 Odoo 17 force_company warning；真实用户验证付款申请驳回、物资计划审批通过和驳回路径。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/core/payment_request.py addons/smart_construction_core/models/core/material_plan.py`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `PAYMENT_REQUEST_OCA_REJECT_SMOKE=PASS; BEFORE_REJECT=submit/waiting; AFTER_REJECT=rejected/rejected`
+  - `MATERIAL_PLAN_OCA_APPROVE_REJECT_SMOKE=PASS; MATERIAL_AFTER_APPROVE=approved/validated; MATERIAL_AFTER_REJECT=draft/no/reason`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast E2E_LOGIN=caisiqi E2E_PASSWORD=123456 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.menu.navigation_snapshot.container`
+- result: `PASS; 付款申请 OCA 驳回可落 rejected；物资计划 OCA 通过/驳回可连续办理；navigation snapshot trace=cd254c6634d2 checked=53`
+- next_step: `将付款申请、物资计划 OCA 真实用户办理探针沉淀为 scripts/verify 可重复执行入口，并继续审计采购订单/结算单是否需要迁移到 OCA tier 执行层。`
+
+## 2026-04-27 Batch-Business-OCA-Runtime-Smoke-Guard
+
+- branch: `codex/dev-env-run`
+- short_sha: `fce480eb`
+- Layer Target: `Business approval runtime verification`
+- Module: `scripts/verify + Makefile`
+- Reason: `上一批已手工验证付款申请、物资计划 OCA 通过/驳回链路，本批把真实用户办理链路固化为可重复执行的 smoke。`
+- completed_step: `新增 scripts/verify/business_oca_runtime_smoke.py；新增 make verify.business.oca_runtime_smoke；脚本使用真实用户 caisiqi->chenshuai、zhaowei->chenshuai 覆盖付款申请审批通过/驳回、物资计划审批通过/驳回，并在 finally rollback。`
+- verification:
+  - `python3 -m py_compile scripts/verify/business_oca_runtime_smoke.py`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.oca_runtime_smoke`
+- result: `PASS; BUSINESS_OCA_RUNTIME_SMOKE=PASS; BUSINESS_OCA_RUNTIME_ROLLBACK=OK`
+- next_step: `审计采购订单、结算单、费用/保证金等 document_state 审批业务是否需要迁移到 OCA tier 执行层，明确业务配置规则与 OCA 执行层边界。`
+
+## 2026-04-27 Batch-Business-Document-State-Policy-Switch
+
+- branch: `codex/dev-env-run`
+- short_sha: `6709907d`
+- Layer Target: `Business approval runtime verification`
+- Module: `scripts/verify + Makefile`
+- Reason: `用户明确要求系统达到“配置需要审批就走审批，取消审批就不走审批”的状态；本批固化 document_state 代表业务的开关语义验证。`
+- completed_step: `新增 scripts/verify/business_document_state_policy_switch_smoke.py；新增 make verify.business.document_state_policy_switch；覆盖费用/保证金、结算单、采购订单三类代表业务的审批开关行为，验证结果事务回滚。`
+- verification:
+  - `python3 -m py_compile scripts/verify/business_document_state_policy_switch_smoke.py`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.document_state_policy_switch`
+- result: `PASS; expense enabled=submit disabled=approved; settlement enabled=submit disabled=approve; purchase enabled non-approver blocked disabled non-approver purchase; rollback OK`
+- next_step: `补齐项目合同、一般合同、采购/一般合同 document_state 开关 smoke，并审计哪些 document_state 业务需要进一步迁移到 OCA tier 执行层。`
+
+## 2026-04-27 Batch-Business-Expense-Settlement-OCA-Unification
+
+- branch: `codex/dev-env-run`
+- short_sha: `be826f7c`
+- Layer Target: `Business approval OCA execution unification`
+- Module: `smart_construction_core`
+- Reason: `用户确认审批必须统一；业务配置只决定是否需要审核，审核执行层统一交给 OCA tier.validation。`
+- completed_step: `sc.expense.claim 与 sc.settlement.order 接入 tier.validation；新增两类单据 OCA 审批通过/驳回 server action；审批规则同步支持两类模型并在升级时收口 runtime_state=tier_validation；business_oca_runtime_smoke 扩展覆盖费用/保证金和结算单审批通过/驳回链路。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/core/expense_claim.py addons/smart_construction_core/models/core/settlement_order.py addons/smart_construction_core/models/support/approval_policy.py scripts/verify/business_oca_runtime_smoke.py scripts/verify/business_document_state_policy_switch_smoke.py`
+  - `python3 xml.etree.ElementTree parse for expense_claim_tier_actions.xml, settlement_order_tier_actions.xml, approval_policy_seed.xml`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.oca_runtime_smoke`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.document_state_policy_switch`
+  - `APPROVAL_POLICY_RUNTIME expense/settlement/payment/material all runtime=tier_validation tier_defs=1 active=1`
+- result: `PASS; expense submit->OCA->approved / reject->draft; settlement submit->OCA->approve / reject->draft; disabled policy still bypasses approval to approved/approve。`
+- correction: `验证脚本最初误用 finance_user/settlement_user 作为费用/结算发起人，并且 prefer_login 先于 exclude_user 造成同人发起审核；已修正为 business_initiator 发起、manager 审核，复测输出 expense=caisiqi->chenshuai，settlement=caisiqi->chenshuai。`
+- next_step: `继续迁移或审计剩余 document_state 业务，采购订单需单独处理原生 button_confirm 语义；发起权限保持业务发起人开放，审核权限继续由对应 manager 能力组限制。`
+
+## 2026-04-27 Batch-Business-OCA-Smoke-Submitter-Correction
+
+- branch: `codex/dev-env-run`
+- short_sha: `f7649cf7`
+- Layer Target: `Business approval runtime verification`
+- Module: `scripts/verify`
+- Reason: `发起业务已对业务发起人开放，上一批 smoke 取人条件误导为专业用户发起，需要修正验证口径。`
+- completed_step: `business_oca_runtime_smoke 的 _user_from_env 先排除审核人再匹配 prefer_login；费用/保证金、结算单发起人统一从 group_sc_cap_business_initiator 取真实用户，审核人仍按财务/结算 manager 取。`
+- verification:
+  - `python3 -m py_compile scripts/verify/business_oca_runtime_smoke.py`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.oca_runtime_smoke`
+- result: `PASS; EXPENSE_OCA_ACTORS=caisiqi->chenshuai; SETTLEMENT_OCA_ACTORS=caisiqi->chenshuai; BUSINESS_OCA_RUNTIME_SMOKE=PASS; rollback OK。`
+- next_step: `继续推进剩余审批统一对象，采购订单需单独处理 Odoo 原生确认动作与 OCA 审批的衔接。`
+
+## 2026-04-27 Batch-Business-Purchase-Order-OCA-Unification
+
+- branch: `codex/dev-env-run`
+- short_sha: `a4900f8d`
+- Layer Target: `Business approval OCA execution unification`
+- Module: `smart_construction_core`
+- Reason: `采购订单确认仍是原生 button_confirm + 能力组直拦，需与其他业务一致收口为业务发起人提交、OCA 审批通过后确认。`
+- completed_step: `purchase.order 接入 tier.validation；button_confirm 在启用审批时只发起 OCA 审批，不直接确认；新增采购订单 OCA 通过/驳回 server action；审批通过回调调用原生采购确认，驳回保留草稿并记录原因；采购订单按钮开放给业务发起人/采购办理/采购审核，审核仍由 OCA review 控制。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/core/purchase_extend.py addons/smart_construction_core/models/support/approval_policy.py addons/smart_construction_core/models/support/tier_definition_ext.py scripts/verify/business_oca_runtime_smoke.py scripts/verify/business_document_state_policy_switch_smoke.py`
+  - `python3 xml.etree.ElementTree parse for purchase_order_tier_actions.xml, approval_policy_seed.xml, purchase_extend_views.xml`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.oca_runtime_smoke`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.document_state_policy_switch`
+  - `APPROVAL_POLICY_RUNTIME=purchase.order required=True mode=single runtime=tier_validation tier_defs=1 active=1`
+- result: `PASS; PURCHASE_OCA_ACTORS=caisiqi->chenshuai; enabled confirm creates OCA review and stays draft/waiting; approve moves purchase/validated; reject stays draft/rejected with reason; disabled policy confirms to purchase。`
+- next_step: `继续审计项目合同、一般合同、采购/一般合同等剩余 document_state 业务是否具备统一 OCA 执行迁移条件。`
+
+## 2026-04-27 Batch-Business-Contract-OCA-Unification
+
+- branch: `codex/dev-env-run`
+- short_sha: `a8f6480b`
+- Layer Target: `Business approval OCA execution unification`
+- Module: `smart_construction_core`
+- Reason: `用户要求审批必须统一，且发起业务对内部用户开放、审核由能力组限制；本批补齐剩余合同类 document_state 审批业务。`
+- completed_step: `construction.contract、sc.general.contract、sc.legacy.purchase.contract.fact 接入 tier.validation；新增三类合同 OCA 审批通过/驳回 server action；审批策略同步与种子策略支持三类合同 runtime_state=tier_validation；合同表单显示驳回原因，确认/提交入口开放给业务发起人/业务用户。`
+- verification:
+  - `python3 -m py_compile contract/general/legacy purchase contract models + approval policy + tier definition + business smoke scripts`
+  - `python3 xml.etree.ElementTree parse for contract_tier_actions.xml, approval_policy_seed.xml, contract/general/legacy purchase views`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.oca_runtime_smoke`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.document_state_policy_switch`
+  - `APPROVAL_COVERAGE material/payment/expense/settlement/purchase/construction contract/general contract/legacy purchase contract all required=True mode=single runtime=tier_validation tier_defs=1 active=1; invoice registration required=False mode=none tier_defs=0`
+- result: `PASS; construction.contract and sc.general.contract enabled confirm -> draft/waiting review, approve -> confirmed/validated, reject -> draft/rejected with reason, disabled -> confirmed; sc.legacy.purchase.contract.fact enabled submit -> submit/waiting review, approve -> approved/validated, reject -> draft/rejected with reason, disabled -> approved。`
+- next_step: `回到真实用户业务办理矩阵：基于当前八类 OCA 可审批业务，核对真实用户登录名、角色、可办理业务、业务数据缺口，判断是否具备新系统启用后连续办理条件。`
+
+## 2026-04-27 Batch-Business-Approval-Scope-Config
+
+- branch: `codex/dev-env-run`
+- short_sha: `c2d62083`
+- Layer Target: `Business approval configuration usability`
+- Module: `smart_construction_core`
+- Reason: `用户确认底层按能力组执行是正确方向，但业务系统管理员不应在配置页面理解“能力组”；本批把审批规则配置表达收口为业务可理解的审批岗位。`
+- completed_step: `sc.approval.policy 新增默认审批岗位并映射 manager_group_id；sc.approval.step 新增审批岗位并映射 approve_group_id；审批规则页面隐藏底层执行组字段，只展示项目负责人、物资审核人、采购审核人、财务审核人、合同审核人、成控审核人、结算审核人；种子规则补齐审批岗位键。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/approval_policy.py`
+  - `python3 xml.etree.ElementTree parse for approval_policy_views.xml, approval_policy_seed.xml`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `make odoo.shell.exec rollback probe: existing 8 policies missing=0; create step approval_scope_key=finance_manager -> approve_group_id=smart_construction_core.group_sc_cap_finance_manager -> tier reviewer group finance_manager`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.oca_runtime_smoke`
+- result: `PASS; 审批配置页面可按审批岗位配置，底层 OCA 仍按执行组运行；8 类已接入审批业务 smoke 未回归。`
+- next_step: `继续真实用户业务办理矩阵与连续办理缺口判断；后续如需要再扩展“指定人员/代理人”配置。`
+
+## 2026-04-27 Batch-Business-Approval-Scope-People
+
+- branch: `codex/dev-env-run`
+- short_sha: `2a568fdb`
+- Layer Target: `Business approval configuration usability`
+- Module: `smart_construction_core`
+- Reason: `用户确认业务配置管理员需要受控维护审批岗位人员，并暂时允许新增内部用户；后续再通过平台参数控制是否允许新增人员。`
+- completed_step: `新增 sc.approval.scope 审批岗位人员模型与 7 个岗位种子；新增 sc.approval.scope.user.wizard 新增人员向导；新增业务配置菜单“审批岗位人员”；授权业务配置管理员读取用户、维护岗位人员、通过向导创建内部用户并加入指定审批岗位；底层仍只写入白名单审批岗位执行组。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/approval_scope.py`
+  - `python3 xml.etree.ElementTree parse for approval_scope_seed.xml, approval_scope_views.xml`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `make odoo.shell.exec rollback probe as wutao: read 7 approval scopes; assign zhaowei to finance scope; create approval_scope_tmp_user as internal user in finance scope and business initiator`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.business.oca_runtime_smoke`
+- result: `PASS; wutao 非系统管理员也可通过受控业务入口维护审批岗位人员和新增内部审批人员；现有 8 类 OCA 审批链路未回归。`
+- next_step: `继续真实用户业务办理矩阵与连续办理缺口判断；后续增加平台级“是否允许业务配置管理员新增人员”参数。`
+
+## 2026-04-27 Batch-Frontend-Business-Usability-Closeout
+
+- branch: `codex/dev-env-run`
+- short_sha: `e95478d4`
+- Layer Target: `Business frontend usability closeout`
+- Module: `smart_core`, `smart_construction_core`
+- Reason: `业务事实层已具备办理能力，但自定义前端仍存在项目合同/施工日志入口缺口，旧 load_view 兼容入口也会误判模型不可用。`
+- completed_step: `新增合同管理/项目合同菜单；收入合同、支出合同菜单开放给业务发起人；load_contract/load_view 兼容链在旧 app.contract.service 不存在时桥接到当前 ui.contract；施工日志菜单升级落库后按真实用户可见。`
+- verification:
+  - `python3 -m py_compile addons/smart_core/handlers/load_contract.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" MODULE=smart_core,smart_construction_core WITHOUT_DEMO=--without-demo=all make mod.upgrade`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `E2E_LOGIN=caisiqi E2E_PASSWORD=123456 make verify.portal.load_view_smoke.container MVP_MODEL=project.project`
+  - `E2E_LOGIN=caisiqi E2E_PASSWORD=123456 make verify.portal.load_view_smoke.container MVP_MODEL=construction.contract`
+  - `E2E_LOGIN=caisiqi E2E_PASSWORD=123456 make verify.portal.load_view_smoke.container MVP_MODEL=sc.construction.diary`
+  - `odoo.shell.exec: caisiqi/wutao 可见 项目合同/收入合同/支出合同；施工日志 XMLID 对两人均在 _visible_menu_ids 中`
+  - `odoo.shell.exec: 14 类业务 api.data create rollback fail_count=0`
+  - `odoo.shell.exec: ui.contract action_open construction.contract/sc.construction.diary for caisiqi,wutao PASS`
+- result: `PASS; 自定义前端主路径 ui.contract 与旧兼容 load_view 均可承载项目合同、施工日志；真实用户可见入口并可用业务必填字段办理创建。`
+- next_step: `继续用浏览器真实点击方式抽样验证项目合同、施工日志从菜单进入、创建页字段填写、保存与按钮动作。`
+
+## 2026-04-27 Batch-ProdSim-Business-Surface-Relation-Active
+
+- branch: `codex/dev-env-run`
+- short_sha: `772ef172`
+- Layer Target: `Platform data service + simulated production data surface + frontend presentation`
+- Module: `smart_core`, `frontend/apps/web`, `prod_sim migration scripts`
+- Reason: `真实用户表单关联下拉仍暴露测试/迁移占位数据；通用数据读取缺省不应把归档记录返回给业务办理页面。`
+- completed_step: `新增模拟生产业务表面数据规范脚本，归档 Fixture/Smoke/Unknown legacy 占位伙伴、用户、项目；api.data 缺省 active_test 调整为 True，保留调用方显式 active_test=False 的后台兼容能力；表单页不再向业务用户展示 access_policy 内部标记。`
+- verification:
+  - `python3 -m py_compile addons/smart_core/handlers/api_data.py scripts/migration/prod_sim_business_surface_data_normalize_write.py`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `odoo.shell.exec: api.data default active_test returns default_bad=[] for project.project/res.partner; explicit context active_test=False can still see archived records`
+  - `npm --prefix frontend/apps/web run typecheck:strict`
+  - `Browser caisiqi/123456 sc_prod_sim: /f/construction.contract/new and /f/sc.construction.diary/new inputCount=7/9, hasSave=true, foundBadTerms=[], hasUuid=false, consoleErrors=0, httpFailures=0`
+- result: `PASS; 真实用户新建项目合同/施工日志表单不再暴露 Smoke/Fixture/Unknown/UUID 占位关联数据，也不再展示 access_policy 技术标记。artifact=artifacts/browser-real-user-usability/2026-04-27T15-04-58-813Z`
+- next_step: `继续业务事实层可用性审计：收口表单标题/字段标签中的模型英文残留，并进一步抽样真实保存与审批链路。`
+
+## 2026-04-27 Batch-Business-Form-Title-Contract
+
+- branch: `codex/dev-env-run`
+- short_sha: `09b7c8d8`
+- Layer Target: `Platform contract assembly`
+- Module: `smart_core`
+- Reason: `真实用户业务表单标题仍回退显示 construction.contract/sc.construction.diary 等模型技术名；标题应由后端契约提供业务名称，前端只消费契约。`
+- completed_step: `PageAssembler 在 model 契约路径解析 action_id 对应窗口动作并写入 head.title/head.model；无动作时以 ir.model 业务名称兜底；项目合同、施工日志 action_open/model 契约均返回中文业务标题。`
+- verification:
+  - `python3 -m py_compile addons/smart_core/app_config_engine/services/assemblers/page_assembler.py`
+  - `git diff --check`
+  - `odoo.shell.exec: caisiqi ui.contract model construction.contract action_id=489 head.title=项目合同 head.model=construction.contract; sc.construction.diary action_id=573 head.title=施工日志 head.model=sc.construction.diary`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `Browser caisiqi/123456 sc_prod_sim: /f/construction.contract/new H1=项目合同, /f/sc.construction.diary/new H1=施工日志; forbidden model/access_policy/test terms absent; consoleErrors=0; httpFailures=0`
+- result: `PASS; 业务新建表单标题不再向用户暴露模型技术名。artifact=artifacts/browser-real-user-usability/2026-04-27T15-21-59-990Z`
+- next_step: `继续收口关联弹层/后台技术模型标题英文残留，并抽样真实保存与审批链路。`
+
+## 2026-04-27 Batch-Frontend-Visible-Relation-Contract-Scope
+
+- branch: `codex/dev-env-run`
+- short_sha: `5bb87d2f`
+- Layer Target: `Frontend contract consumer`
+- Module: `frontend/apps/web`
+- Reason: `业务表单页面虽然已不展示英文技术标题，但前端仍为不可见 chatter/审批等技术关联字段拉取 mail/rating/tier.review 契约，导致后台英文技术模型进入业务页面链路。`
+- completed_step: `ContractFormPage.loadRelationOptions 先计算可见/已有值关联字段，再仅为这些字段加载 one2many 子契约；不可见技术关联字段不再触发 loadModelContractRaw。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck:strict`
+  - `git diff --check`
+  - `Browser caisiqi/123456 sc_prod_sim: 项目合同、施工日志新建页 H1 中文；technical ui.contract calls for mail.followers/mail.activity/rating.rating/mail.message/tier.review = 0；consoleErrors=0；httpFailures=0`
+- result: `PASS; 业务新建页契约请求链路只保留业务主契约，不再预加载不可见后台技术模型契约。artifact=artifacts/browser-real-user-usability/2026-04-27T15-24-30-322Z`
+- next_step: `进入真实保存与审批链路抽样：项目合同/施工日志创建保存，已启用审批业务再验证提交、待审、审批通过/驳回。`
+
+## 2026-04-27 Batch-Business-Create-Save-Smoke
+
+- branch: `codex/dev-env-run`
+- short_sha: `845841eb`
+- Layer Target: `Business model write path`
+- Module: `smart_construction_core`
+- Reason: `真实用户浏览器保存项目合同时，表单可能提交与合同类型不兼容的税率，导致创建被“合同类型与税率类型不一致”阻断；新系统启用后应允许真实用户连续办理。`
+- completed_step: `construction.contract 创建时校验提交税率与合同类型是否兼容；若不兼容，则按合同类型自愈为默认销项/进项税率；原有约束仍保证落库税率类型、百分比、不含税规则一致。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/contract_center.py`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_BIN="docker compose" COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `Browser caisiqi/123456 sc_prod_sim: 项目合同 createdId=6942, 施工日志 createdId=5671, consoleErrors=0, httpFailures=0`
+  - `odoo.shell.exec: 项目合同 6942 请求 tax_id=6 但落库 tax_id=5 Seed-销项VAT 9% type_tax_use=sale；验证草稿合同已删除，施工日志验证记录保持 inactive`
+- result: `PASS; 真实用户自定义前端项目合同、施工日志均可保存；项目合同税率不一致缺口已由业务模型创建链路自愈。artifact=artifacts/browser-real-user-usability/2026-04-27T15-31-20-830Z`
+- next_step: `继续审批链路抽样：项目合同保存后确认进入待审，审批岗位人员通过/驳回；同时检查施工日志是否需要审批或仅办理保存。`
+
+## 2026-04-27 Batch-Business-Contract-Line-Approval-Entry
+
+- branch: `codex/dev-env-run`
+- short_sha: `d403f1ce`
+- Layer Target: `Platform contract governance + frontend contract consumer`
+- Module: `smart_core`, `frontend/apps/web`
+- Reason: `真实用户项目合同保存后点击确认被“请先录入合同行后再确认”阻断；后端契约虽包含 line_ids，但被标记为 technical 并被业务前端隐藏，导致用户无法补齐合同行继续发起统一审批。`
+- completed_step: `将 line_ids/boq_line_ids/ledger_line_ids 等业务明细关系字段从技术字段分类中排除，并在表单核心字段中保留业务明细入口；前端 one2many 在后端未提供子视图列时按关系模型字段生成可编辑明细列。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck:strict`
+  - `python3 -m unittest addons.smart_core.tests.test_contract_governance_project_form.TestProjectFormGovernance.test_business_detail_relation_fields_remain_visible` (blocked on host: `ModuleNotFoundError: No module named 'odoo'`)
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make prod.restart.safe`
+  - `ui.contract probe: construction.contract line_ids semantic_type=relation surface_role=core technical=false`
+  - `Browser caisiqi/123456 sc_prod_sim: 新建项目合同 6944，录入合同行 6601，确认后 state=draft validation_status=pending review_ids=[112] line_amount_total=1`
+  - `odoo.shell.exec cleanup: 删除本轮验证合同 6943/6944、合同行 6601、审批记录 112，cleanup_remaining=0`
+- result: `PASS; 项目合同业务明细入口已在自定义前端可见，真实用户可录入合同行并发起统一审批。artifact=artifacts/browser-real-user-usability/2026-04-27T15-57-16-177Z`
+- next_step: `继续审批人侧真实用户浏览器验证：待审记录入口、审批通过/驳回按钮、审批后合同状态与发起人页面反馈。`
+
+## 2026-04-28 Batch-Business-Contract-Approval-Semantics
+
+- branch: `codex/dev-env-run`
+- short_sha: `8c27550d`
+- Layer Target: `Business model rule + ui.contract/view semantics + frontend contract consumer`
+- Module: `smart_construction_core`, `smart_core`, `frontend/apps/web`
+- Reason: `合同明细是否录入应由用户决定，系统不应以“合同行”技术口径阻断提交；用户可见审批动作需统一为“提交审批”。`
+- completed_step: `合同 line_ids 用户可见语义改为“合同明细”；项目合同 action_confirm 移除明细行必填阻断；smart_construction_core 业务表单 action_confirm 统一显示“提交审批”；前端 action_confirm fallback 同步为“提交审批”。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/contract_center.py addons/smart_construction_core/models/core/cost_domain.py addons/smart_core/utils/contract_governance.py`
+  - `npm --prefix frontend/apps/web run typecheck:strict`
+  - `git diff --check`
+  - `CODEX_MODE=fast CODEX_NEED_UPGRADE=1 DB_NAME=sc_prod_sim make mod.upgrade MODULE=smart_construction_core ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml"`
+  - `make prod.restart.safe ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml"`
+  - `Browser caisiqi/123456 sc_prod_sim: 新建项目合同页面 hasContractDetail=true, hasSubmitApproval=true, hasOldConfirm=false`
+  - `Browser caisiqi/123456 sc_prod_sim: 不录入合同明细保存合同 6945，提交审批后 state=draft validation_status=pending line_ids=[] review_ids=[113]`
+  - `odoo.shell.exec cleanup: 删除本轮验证合同 6945、审批记录 113，cleanup_remaining=0`
+- result: `PASS; 合同明细变为业务语义且可选，真实用户无合同明细也可提交审批进入统一审批流。artifact=artifacts/browser-real-user-usability/2026-04-27T16-09-54-268Z`
+- next_step: `继续审批人侧真实用户浏览器验证：待审入口、审批通过/驳回按钮、审批完成后发起人页面反馈。`
+
+## 2026-04-28 Batch-Business-Approval-Submit-And-Reviewer-Entry
+
+- branch: `codex/dev-env-run`
+- short_sha: `0d890331`
+- Layer Target: `Approval action semantics + business reviewer entry + frontend contract consumer`
+- Module: `smart_construction_core`, `frontend/apps/web`
+- Reason: `业务发起动作仍有 action_submit 显示为“提交/提交审核”，且合同类统一审批已生成待审记录但审批人缺少直接进入业务单据的待审入口。`
+- completed_step: `action_submit 后端业务按钮与前端兜底统一显示“提交审批”；合同管理补充“待我审批（项目合同）/（一般合同）/（采购/一般合同）”，入口打开对应业务单据并按当前审批人过滤；采购/一般合同入口补充采购审批岗位可见性。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck:strict`
+  - `python3 xml.etree.ElementTree parse: tier_review_views.xml/menu.xml/legacy_purchase_contract_views.xml and submit button views PASS`
+  - `git diff --check`
+  - `CODEX_MODE=fast CODEX_NEED_UPGRADE=1 DB_NAME=sc_prod_sim make mod.upgrade MODULE=smart_construction_core ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml"`
+  - `make prod.restart.safe ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml"`
+  - `odoo.shell.exec: wutao 可见三类合同待审入口，caisiqi 不可见；新增 action 均指向业务模型并按 review_ids/reviewer 过滤`
+  - `odoo.shell.exec: caisiqi 创建项目合同 6946 并提交审批；wutao 通过“待我审批（项目合同）”业务 action 可检索到记录，validate_tier 后 state=confirmed validation_status=validated review=approved；验证记录 6946 已清理`
+  - `E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.portal.load_view_smoke.container MVP_MODEL=construction.contract DB_NAME=sc_prod_sim ... PASS artifact=artifacts/codex/portal-shell-v0_8-1/20260427T162449`
+  - `odoo.shell.exec cleanup: 清理历史验证残留合同 6944/6945 及审批记录 112/113，cleanup_remaining=0`
+- result: `PASS; 提交审批语义覆盖 action_confirm/action_submit 主入口，合同审批人可从业务单据入口处理待审合同并完成统一审批闭环。`
+- next_step: `继续审批链路用户侧收口：抽样自定义前端真实点击审批通过/驳回按钮，并检查审批后发起人列表状态与按钮反馈。`
+
+## 2026-04-28 Batch-Business-Approval-Workbench-Convergence
+
+- branch: `codex/dev-env-run`
+- short_sha: `2e8a067d`
+- Layer Target: `Business navigation + my-work todo aggregation`
+- Module: `smart_construction_core`
+- Reason: `审批事项不应按业务类型散落为菜单级“待我审批”入口，应统一汇总至个人工作台待办；合同提交后 tier.review 可能处于 waiting 状态，个人待办必须覆盖。`
+- completed_step: `将付款申请、物资计划、项目合同、一般合同、采购/一般合同的菜单级待审入口显式 active=False；保留底层 action/XMLID 兼容；个人工作台审批聚合从 pending 扩展为 waiting/pending。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/handlers/my_work_summary.py`
+  - `python3 xml.etree.ElementTree parse: menu.xml/menu_finance_center.xml/legacy_purchase_contract_views.xml PASS`
+  - `git diff --check`
+  - `CODEX_MODE=fast CODEX_NEED_UPGRADE=1 DB_NAME=sc_prod_sim make mod.upgrade MODULE=smart_construction_core ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml"`
+  - `make prod.restart.safe ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml"`
+  - `odoo.shell.exec: wutao/caisiqi 均不可见五类菜单级待审入口；caisiqi 创建并提交合同 6948 后，wutao 的 my.work.summary(section=todo, source=tier.review) 命中该审批待办；验证记录 6948/116 已清理`
+  - `E2E_LOGIN=wutao E2E_PASSWORD=123456 DB_NAME=sc_prod_sim make verify.portal.my_work_smoke.container ... PASS artifact=artifacts/codex/my-work-smoke-v10_2/20260427T163940`
+- result: `PASS; 审批入口从业务菜单收敛到个人工作台待办，菜单层不再暴露按业务拆分的“待我审批”入口。`
+- next_step: `继续个人工作台办理体验：从待办点击进入业务单据后，验证审批通过/驳回按钮与返回后的待办刷新。`
+
+## 2026-04-28 Batch-Business-Approval-Browser-Closure
+
+- branch: `codex/dev-env-run`
+- short_sha: `fffe8232`
+- Layer Target: `Frontend contract consumer + business form view semantics`
+- Module: `frontend/apps/web`, `smart_construction_core`
+- Reason: `核心业务闭环环境下，自定义前端烟测不足；必须以真实用户浏览器从发起、待办、审批到待办消失完成业务闭环。`
+- completed_step: `个人工作台待办点击改为优先进入业务记录而非 action 列表；合同类表单补齐 OCA 统一审批的“审批通过/审批驳回”按钮；前端表单动作执行后自动刷新记录，待审批/已审批状态不再显示“提交审批”。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast CODEX_NEED_UPGRADE=1 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make restart`
+  - `Browser caisiqi/123456 sc_prod_sim: 新建项目合同 6950/CONIN2601495，无合同明细保存后提交审批；提交后 hasSubmitButton=false`
+  - `Browser wutao/123456 sc_prod_sim: 我的工作命中 CONIN2601495，点击待办进入 /r/construction.contract/6950，显示审批通过/审批驳回；点击审批通过后 hasApproveButton=false hasSubmitButton=false`
+  - `odoo.shell.exec: CONIN2601495 state=confirmed validation_status=validated review=approved pending_todos=0`
+  - `Browser wutao/123456 sc_prod_sim: 我的工作复查 CONIN2601495 contains=false`
+  - `odoo.shell.exec cleanup: 清理本轮浏览器验证合同 6949/6950 与审批记录 117/118，remaining_contracts=0 remaining_reviews=0`
+- result: `PASS; 真实用户浏览器已跑通项目合同发起、提交审批、工作台待办、审批通过、待办消失的业务闭环。artifact=artifacts/browser-real-user-closure/2026-04-27T17-04-13-214Z`
+- next_step: `继续同样口径扩展到驳回链路及一般合同/采购一般合同抽样，确认统一审批按钮和工作台直达能力跨合同类型一致。`
+
+## 2026-04-28 Batch-Business-Full-Closure-Audit
+
+- branch: `codex/dev-env-run`
+- short_sha: `cec227ae`
+- Layer Target: `Business fact validation + business model rule + native form view semantics`
+- Module: `smart_construction_core`
+- Reason: `核心业务闭环环境下，所有菜单暴露的可办理业务必须具备提交/确认、统一审批待办、审批通过/驳回和后续完成入口，不能只停留在后端烟测。`
+- completed_step: `基于模拟生产库生成 15 个可创建业务模型矩阵；将收款收入、付款执行、发票登记、融资借款、资金对账、结算调整接入 tier.validation 可配置审批；补充审批规则种子、server action 回调、表单审批按钮；为付款申请、结算单、物资计划、费用/保证金、采购单补齐表单“审批通过/审批驳回”入口；新增登记/调整类回滚门禁。`
+- verification:
+  - `python3 -m py_compile` for changed business models, approval policy, and `scripts/verify/business_finance_document_tier_runtime_smoke.py`
+  - `python3 xml.etree.ElementTree parse` for changed XML views/data
+  - `ENV=test ENV_FILE=.env.prod.sim ... CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make restart`
+  - `make verify.business.finance_document_tier_runtime_smoke`: receipt/payment execution/invoice/financing/treasury/settlement adjustment submit -> waiting, approve -> validated, reject -> rejected, rollback OK
+  - `make verify.business.oca_runtime_smoke`: existing payment/material/expense/settlement/purchase/contract/general/legacy purchase flows PASS, rollback OK
+  - `make verify.business.document_state_policy_switch`: approval enabled/disabled policy behavior PASS, rollback OK
+  - `odoo.shell.exec FORM_CLOSURE`: 14 approval-capable business forms all have submit/confirm plus 审批通过/审批驳回 buttons
+- result: `PASS; 模拟生产库业务办理闭环从 8 类 OCA 单据扩展到登记/调整类可配置审批，且所有审批相关表单具备浏览器可见审批入口。matrix=artifacts/business-full-closure/20260428T0137`
+- next_step: `用真实用户浏览器抽样所有业务域：发起一类登记/调整单据并从个人工作台完成审批，确认自定义前端动作刷新与待办消失一致。`
+
+## 2026-04-28 Batch-Business-Real-Browser-Closure-Sampling
+
+- branch: `codex/dev-env-run`
+- short_sha: `1d239461`
+- Layer Target: `Business fact validation + frontend contract consumer/browser closure`
+- Module: `smart_construction_core`, `frontend/apps/web`
+- Reason: `登记/调整类业务已补齐统一审批能力后，必须使用模拟生产库真实用户在自定义前端完成“我的工作”待办审批闭环，不能只依赖后端烟测。`
+- completed_step: `新增 verify.portal.business_real_user_browser_closure 入口；脚本在 sc_prod_sim 临时启用收款登记/结算调整审批、创建真实待审单据，使用 chenshuai/123456 与 wutao/123456 浏览器登录，从“我的工作”确认待办可见，进入业务记录点击“审批通过”，复查待办消失，后端断言 validated/approved，并清理临时记录、审批记录、项目和策略开关。`
+- verification:
+  - `node --check scripts/verify/business_real_user_browser_closure.js`
+  - `bash -n scripts/verify/business_real_user_browser_closure.sh`
+  - `python3 -m py_compile scripts/verify/business_real_user_browser_setup.py scripts/verify/business_real_user_browser_cleanup.py scripts/verify/business_real_user_browser_assert.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_closure`
+  - `browser_summary.json: sc.receipt.income RI2600016 by chenshuai -> approved_and_removed_from_todo; sc.settlement.adjustment SA2600012 by wutao -> approved_and_removed_from_todo`
+  - `backend_assert.json: sc.receipt.income state=confirmed validation_status=validated review=approved; sc.settlement.adjustment state=confirmed validation_status=validated review=approved`
+  - `cleanup: 临时 sc.receipt.income 9559、sc.settlement.adjustment 12925、project 1075/1076、tier.review 224/225 已删除；可选审批策略恢复 approval_required=False mode=none`
+- result: `PASS; 真实用户浏览器已验证登记/调整类业务从个人工作台待办到审批通过、待办消失、后端状态闭环。artifact=artifacts/browser-real-user-business-closure/current`
+- next_step: `继续按同一脚本化口径扩展更多业务类型和驳回链路；另行处理统一渲染版“我的工作”待办卡片中业务单号文本本身不可点击的问题。`
+
+## 2026-04-28 Batch-MyWork-Card-Click-Closure
+
+- branch: `codex/dev-env-run`
+- short_sha: `ce5520c8`
+- Layer Target: `Frontend contract consumer + page orchestration block interaction`
+- Module: `frontend/apps/web`, `scripts/verify`
+- Reason: `真实用户浏览器验证发现统一渲染版“我的工作”待办单号可见但文本/卡片本身不可点击，用户必须能从待办项直接进入业务记录。`
+- completed_step: `BlockActivityFeed 与 BlockTodoList 统一消费数据集中的 action_key，并将待办卡片/动态项本身变为可点击、可键盘触发的通用区块动作；真实浏览器验证脚本恢复为点击待办单号进入记录页，不再直接 goto 业务记录 URL。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `node --check scripts/verify/business_real_user_browser_closure.js`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_closure`
+  - `browser_summary.json: 点击 my-work 待办 RI2600017/SA2600013 进入业务记录并审批通过，browser_status=approved_and_removed_from_todo`
+  - `backend_assert.json: sc.receipt.income state=confirmed validation_status=validated review=approved; sc.settlement.adjustment state=confirmed validation_status=validated review=approved`
+  - `cleanup: 临时 sc.receipt.income 9560、sc.settlement.adjustment 12926、project 1077/1078、tier.review 226/227 已删除；可选审批策略恢复`
+- result: `PASS; 统一渲染版“我的工作”待办项已支持点击卡片/单号进入业务记录，真实用户浏览器闭环继续通过。artifact=artifacts/browser-real-user-business-closure/current`
+- next_step: `继续扩展真实用户浏览器覆盖面：补驳回链路，以及付款执行/发票登记/融资借款/资金对账等登记类抽样。`
+
+## 2026-04-28 Batch-Business-Real-Browser-Reject-Closure
+
+- branch: `codex/dev-env-run`
+- short_sha: `67db94f4`
+- Layer Target: `Business fact validation + frontend contract consumer/browser closure`
+- Module: `scripts/verify`, `Makefile`
+- Reason: `真实用户浏览器已验证审批通过路径，但上线可用性还必须覆盖审批驳回：待办进入业务记录、点击审批驳回、待办消失、后端状态回到 rejected。`
+- completed_step: `将 business_real_user_browser_closure 脚本参数化为 approve/reject；新增 verify.portal.business_real_user_browser_reject_closure；后端断言按 browser_summary.action 区分 validated/approved 与 rejected/rejected。`
+- verification:
+  - `node --check scripts/verify/business_real_user_browser_closure.js`
+  - `bash -n scripts/verify/business_real_user_browser_closure.sh`
+  - `python3 -m py_compile scripts/verify/business_real_user_browser_assert.py scripts/verify/business_real_user_browser_setup.py scripts/verify/business_real_user_browser_cleanup.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_reject_closure`
+  - `reject path: RI2600018 by chenshuai -> rejected_and_removed_from_todo; SA2600014 by wutao -> rejected_and_removed_from_todo; backend state=draft validation_status=rejected review=rejected; cleanup rows=2`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_closure`
+  - `approve regression: RI2600019 by chenshuai -> approved_and_removed_from_todo; SA2600015 by wutao -> approved_and_removed_from_todo; backend state=confirmed validation_status=validated review=approved; cleanup rows=2`
+- result: `PASS; 收款登记与结算调整的真实用户浏览器审批通过/审批驳回双路径均已闭环，待办进入、按钮执行、待办消失、后端状态断言和清理均通过。`
+- next_step: `继续扩展登记类业务模型覆盖：付款执行、发票登记、融资借款、资金对账的真实用户浏览器 approve/reject 抽样。`
+
+## 2026-04-28 Batch-Business-Real-Browser-Finance-Document-Full-Sampling
+
+- branch: `codex/dev-env-run`
+- short_sha: `11ab5689`
+- Layer Target: `Business fact validation + frontend contract consumer/browser closure`
+- Module: `scripts/verify`
+- Reason: `真实用户浏览器闭环不能只覆盖收款登记/结算调整；付款执行、发票登记、融资借款、资金对账也属于登记类可配置审批业务，必须用同一口径验证 approve/reject 双路径。`
+- completed_step: `business_real_user_browser_setup 扩展到 6 个登记/调整模型：收款登记、付款执行、发票登记、融资借款、资金对账、结算调整；cleanup 同步恢复 6 个模型的可选审批策略并清理临时数据。`
+- verification:
+  - `node --check scripts/verify/business_real_user_browser_closure.js`
+  - `bash -n scripts/verify/business_real_user_browser_closure.sh`
+  - `python3 -m py_compile scripts/verify/business_real_user_browser_setup.py scripts/verify/business_real_user_browser_cleanup.py scripts/verify/business_real_user_browser_assert.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_closure`
+  - `approve path: RI2600020/PE2600009/IR2600007/FL2600007/TR2600008/SA2600016 均从 my-work 点击进入记录，审批通过后待办消失；backend state=confirmed validation_status=validated review=approved；cleanup rows=6`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_reject_closure`
+  - `reject path: RI2600021/PE2600010/IR2600008/FL2600008/TR2600009/SA2600017 均从 my-work 点击进入记录，审批驳回后待办消失；backend state=draft validation_status=rejected review=rejected；cleanup rows=6`
+- result: `PASS; 6 个登记/调整类业务模型真实用户浏览器 approve/reject 双路径全部闭环。`
+- next_step: `继续回到业务办理全口径：扩展真实浏览器闭环到既有 OCA 单据类业务，如付款申请、费用/保证金、物资计划、结算单、采购单、合同类。`
+
+## 2026-04-28 Batch-Business-Real-Browser-OCA-Document-Sampling
+
+- branch: `codex/dev-env-run`
+- short_sha: `19726d21`
+- Layer Target: `Business fact validation + frontend contract consumer/browser closure`
+- Module: `scripts/verify`
+- Reason: `全业务可用矩阵仍缺少付款申请、费用/保证金、物资计划、结算单、采购单这类高频 OCA/业务单据的真实用户浏览器闭环，必须验证真实待办入口、审批通过、审批驳回和清理均可用。`
+- completed_step: `business_real_user_browser_setup 扩展到 11 个模型：付款申请、费用/保证金、物资计划、结算单、采购单，以及既有收款登记、付款执行、发票登记、融资借款、资金对账、结算调整；补齐付款申请资金承载测试数据、物资计划/采购/结算依赖数据、按模型记录 approve/reject 预期状态；assert 支持模型级状态集合、驳回后无活动 review 的语义；cleanup 支持关联数据清理、采购单先取消再删除、受采购/库存外键保护的临时商品归档。`
+- verification:
+  - `node --check scripts/verify/business_real_user_browser_closure.js`
+  - `bash -n scripts/verify/business_real_user_browser_closure.sh`
+  - `python3 -m py_compile scripts/verify/business_real_user_browser_setup.py scripts/verify/business_real_user_browser_cleanup.py scripts/verify/business_real_user_browser_assert.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_closure`
+  - `approve path: payment.request/sc.expense.claim/project.material.plan/sc.settlement.order/purchase.order/sc.receipt.income/sc.payment.execution/sc.invoice.registration/sc.financing.loan/sc.treasury.reconciliation/sc.settlement.adjustment 均从 my-work 点击进入记录，审批通过后待办消失；backend validation_status=validated review=approved；cleanup rows=11`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_reject_closure`
+  - `reject path: 11 个模型均从 my-work 点击进入记录，审批驳回后待办消失；payment.request/purchase.order/登记调整类保留 rejected review；sc.expense.claim/project.material.plan/sc.settlement.order 回到 draft 且 validation_status=no、无活动 review；cleanup rows=11`
+- result: `PASS; 高频 OCA/业务单据与登记/调整单据共 11 个模型的真实用户浏览器 approve/reject 双路径全部闭环。artifact=artifacts/browser-real-user-business-closure/current`
+- risk: `P2; 临时商品因采购/库存外键按归档处理，不硬删；验证主单据、项目、合同、往来单位、资金基准、采购单和 review 均清理。`
+- rollback: `回退本批次提交后继续使用上一版 6 模型真实浏览器闭环脚本；必要时重新运行 cleanup 脚本清理当前 setup.json 中的临时单据。`
+- next_step: `继续补合同类与项目主数据类浏览器闭环，尤其一般合同/业务合同的提交审批、驳回重提和可选合同明细场景。`
+
+## 2026-04-28 Batch-Business-Real-Browser-Contract-Document-Sampling
+
+- branch: `codex/dev-env-run`
+- short_sha: `44d7f44a`
+- Layer Target: `Business fact validation + frontend contract consumer/browser closure`
+- Module: `scripts/verify`
+- Reason: `合同类是业务启用后连续办理的核心入口，上一轮真实浏览器闭环尚未覆盖项目合同、一般合同、采购/一般合同，必须验证真实用户从个人工作台待办进入合同记录后可审批通过/驳回。`
+- completed_step: `business_real_user_browser_setup 增加 construction.contract、sc.general.contract、sc.legacy.purchase.contract.fact 三类合同；复用现有审批策略开关与真实审核人，项目合同/一般合同由 wutao 审核，采购/一般合同由 chenshuai 审核；cleanup 同步恢复三类合同审批策略并清理临时合同、往来单位、项目和 review。`
+- verification:
+  - `node --check scripts/verify/business_real_user_browser_closure.js`
+  - `bash -n scripts/verify/business_real_user_browser_closure.sh`
+  - `python3 -m py_compile scripts/verify/business_real_user_browser_setup.py scripts/verify/business_real_user_browser_cleanup.py scripts/verify/business_real_user_browser_assert.py`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_closure`
+  - `approve path: construction.contract/sc.general.contract/sc.legacy.purchase.contract.fact 以及既有 11 个模型均从 my-work 点击进入记录，审批通过后待办消失；合同后端状态分别为 confirmed/confirmed/approved，validation_status=validated review=approved；cleanup rows=14`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make verify.portal.business_real_user_browser_reject_closure`
+  - `reject path: 14 个模型均从 my-work 点击进入记录，审批驳回后待办消失；三类合同均回到 draft，validation_status=rejected，review=rejected；cleanup rows=14`
+- result: `PASS; 合同类与既有业务单据共 14 个模型的真实用户浏览器 approve/reject 双路径全部闭环。artifact=artifacts/browser-real-user-business-closure/current`
+- risk: `P2; 采购/一般合同 display_name 当前回退为模型名+id，功能闭环通过但显示可读性后续可单独优化。`
+- rollback: `回退本批次提交后继续使用上一版 11 模型真实浏览器闭环脚本；必要时重新运行 cleanup 脚本清理当前 setup.json 中的临时单据。`
+- next_step: `继续判断项目主数据类是否应纳入“审批闭环”还是“创建/编辑/业务引用闭环”，并补齐项目新建后可被合同、采购、付款、结算连续引用的真实浏览器证据。`
+
+## 2026-04-28 Batch-Frontend-ActionView-Route-Reload-Fix
+
+- branch: `codex/dev-env-run`
+- short_sha: `85cf640f`
+- Layer Target: `Frontend contract consumer`
+- Module: `frontend/apps/web`
+- Reason: `用户反馈自定义前端列表首次进入时数据不全，进入详情页再返回列表后数据恢复；排查发现 ActionView 在同组件路由复用时只在筛选/分组状态变化时重新加载，actionId 变化但 route preset 未变化时不会请求新列表数据。`
+- completed_step: `ActionView 的 route.fullPath watcher 调整为：路由变化时先同步 route preset，再始终触发 requestLoadPage；避免从一个列表 action 切换到另一个列表 action 时复用旧列表数据或缺失数据。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" FRONTEND_PROFILE=daily make frontend.restart`
+- result: `PASS; 前端已重启，ActionView 路由变化会重新加载当前 action 列表数据。`
+- risk: `P2; 某些筛选交互可能触发一次额外列表请求，但可换取列表数据正确性；后续可引入请求序号/去重机制进一步优化。`
+- rollback: `回退本批次提交即可恢复原 watcher 行为。`
+- next_step: `用浏览器在多个业务列表之间直接切换，确认首次进入列表、详情返回列表、菜单切换列表三种路径的数据一致。`
+
+## 2026-04-28 Batch-Frontend-List-Total-Pagination
+
+- branch: `codex/dev-env-run`
+- short_sha: `83721618`
+- Layer Target: `Frontend contract consumer`
+- Module: `frontend/apps/web`
+- Reason: `自定义前端普通列表已经通过后端契约请求 need_total/limit/offset，但页面没有展示总条数，也没有提供普通列表分页交互，用户无法判断列表完整性和继续翻页。`
+- completed_step: `ActionView 增加普通列表 offset 状态并接入 api.data list 请求；搜索、排序、筛选和 action 路由切换时重置普通列表页码；ListPage 增加总条数、当前范围、页码、上一页/下一页和跳转控件，并按实际返回记录数校准分页步长，避免契约默认 limit 与后端实际返回条数不一致时跳页。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `make frontend.restart`
+  - `Playwright browser: admin/admin 登录 sc_demo，进入 /a/546?menu_id=352，切换列表视图，确认显示 共 771 条/当前 1-40 条/第 1 / 20 页；点击 下一页 后 api.data 请求 offset=40、limit=40、need_total=true，页面显示 当前 41-80 条/第 2 / 20 页。`
+- result: `PASS; 自定义普通列表页已具备总条数展示和分页办理能力，翻页请求与后端 offset/limit 契约一致。`
+- risk: `P2; 当前页码不写入 URL，详情返回后的页码保持后续可作为独立增强项处理。`
+- rollback: `回退本批次提交即可移除普通列表分页控件并恢复原单页列表行为。`
+- next_step: `继续用真实业务用户验证高频列表页，确认列表分页、详情进入/返回和办理入口组合路径没有使用级缺口。`
+
+## 2026-04-28 Batch-Identity-Company-Name-Contract
+
+- branch: `codex/dev-env-run`
+- short_sha: `eb076610`
+- Layer Target: `Backend identity contract + frontend schema`
+- Module: `addons/smart_core + frontend/packages/schema`
+- Reason: `模拟生产库中用户主公司已正确落库为四川保盛建设集团有限公司，但 login/system.init 身份契约只返回 company_id，不返回 company_name/company，导致自定义前端页头只能兜底显示“默认企业”。`
+- completed_step: `login 用户画像与 system.init identity payload 均补充 company_name 和 company{id,name,display_name}；前端 schema 同步声明该字段，AppShell 既有企业名消费逻辑可直接显示真实企业。`
+- verification:
+  - `python3 -m py_compile addons/smart_core/handlers/login.py addons/smart_core/core/system_init_identity_payload.py`
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=fast COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod-sim.yml" make odoo.shell.exec`：确认 `base.main_company`、`wutao.company_id` 均为 `四川保盛建设集团有限公司`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make restart`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，login/system.init 均返回 company_name=四川保盛建设集团有限公司，页头显示 当前企业：四川保盛建设集团有限公司。`
+- result: `PASS; 当前企业展示已从“默认企业”收口为真实主公司名称。`
+- rollback: `回退本批次提交并重启 Odoo worker 即恢复仅返回 company_id 的旧身份契约。`
+- next_step: `继续验证其他真实用户是否均显示所属真实企业，并排查组织架构/部门承载是否需要显示到页头或用户资料区。`
+
+## 2026-04-28 Batch-Frontend-Root-Menu-Container-Navigation
+
+- branch: `codex/dev-env-run`
+- short_sha: `598fe190`
+- Layer Target: `Frontend navigation contract consumer`
+- Module: `frontend/apps/web`
+- Reason: `模拟生产库中“智能施工 2.0”是单根产品菜单容器，但菜单契约仍带历史 action_id=452/project.project；前端把它当业务入口打开项目列表，和“项目台账（试点）”形成两套项目列表入口。`
+- completed_step: `AppShell 将单根产品菜单识别为导航容器：角色快捷入口点击“智能施工 2.0”回到工作台，面包屑中的根产品菜单不再可点击；MenuView 直接访问根菜单 `/m/<root>` 时也回到工作台，不再解析历史 action。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm ... node:20-bookworm ... VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，点击“智能施工 2.0”后仍停留工作台且未出现“40 条记录”；访问 /m/265 自动回工作台；/a/509?menu_id=293 仍进入“项目台账（试点）”并发起 project.project api.data。`
+- result: `PASS; 产品根菜单不再形成第二套项目列表入口，项目台账保留为唯一项目台账业务入口。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复根菜单按历史 action 解析的行为。`
+- next_step: `继续排查其他角色快捷菜单是否也存在“容器菜单带历史 action”导致的重复业务入口。`
+
+## 2026-04-28 Batch-Frontend-Kanban-Pagination
+
+- branch: `codex/dev-env-run`
+- short_sha: `9269787c`
+- Layer Target: `Frontend contract consumer`
+- Module: `frontend/apps/web`
+- Reason: `用户从“项目试点/项目台账（试点）”进入的是卡片式项目列表；后端已经返回 total/offset/limit，但 KanbanPage 未消费分页契约，导致页面仍看不到总条数与翻页能力。`
+- completed_step: `KanbanPage 接入 listTotalCount/listOffset/listLimit/onPageChange，补齐总条数、当前范围、页码、上一页/下一页和跳转控件；ActionView 将既有普通列表分页状态同步传给卡片页，卡片页翻页复用同一条 api.data offset/limit 请求链。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509?menu_id=293，卡片页显示 共 779 条，当前 1-40 条，第 1 / 20 页；点击 下一页 后显示 当前 41-80 条，第 2 / 20 页，api.data 请求从 offset=0 切换为 offset=40，limit=40，need_total=true。`
+- result: `PASS; 项目台账（试点）默认卡片列表已具备真实总数展示和分页能力。`
+- risk: `P2; PageHeader 仍显示当前页记录数，分页栏显示全量总数，语义清晰但后续可统一页头文案为“当前页记录”。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复卡片页无分页控件的旧行为。`
+- next_step: `继续用真实用户从工作台/菜单进入项目台账，验证分页、搜索、详情进入和详情返回组合路径是否保持一致。`
+
+## 2026-04-28 Batch-Frontend-Kanban-Pagination-Visibility
+
+- branch: `codex/dev-env-run`
+- short_sha: `56ee86a1`
+- Layer Target: `Frontend contract consumer`
+- Module: `frontend/apps/web`
+- Reason: `用户反馈项目试点进入项目列表页仍看不到变化；复核发现分页栏虽已存在，但位于 40 张项目卡片之后，首屏感知仍像没有分页能力。`
+- completed_step: `KanbanPage 将分页栏前置到卡片列表上方，同时保留底部分页栏，保证进入项目台账首屏即可看到总条数、当前范围和翻页按钮。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `docker compose -f docker-compose.yml -f docker-compose.prod-sim.yml -p sc-backend-odoo-prod-sim restart nginx`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509?menu_id=293，首个 .pagination-bar 位于 viewport y=372.5，文本为 共 779 条，当前 1-40 条，第 1 / 20 页，页面共 2 个分页栏。`
+- result: `PASS; 项目台账（试点）分页能力已前置到首屏可见区域。`
+- risk: `P2; 浏览器如果仍停留在旧 SPA 会话，需要普通刷新或强制刷新以加载新 hash 静态资源 index-DgGXvm-e.js。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复仅底部分页栏。`
+- next_step: `继续按用户真实入口检查项目台账分页与详情返回是否保留当前页。`
+
+## 2026-04-28 Batch-Frontend-Kanban-Top-Compact
+
+- branch: `codex/dev-env-run`
+- short_sha: `0bde85bb`
+- Layer Target: `Frontend layout`
+- Module: `frontend/apps/web`
+- Reason: `项目台账（试点）看板页分页已可见，但顶部存在“大标题卡片 + 独立顶部分页栏”的重复结构，首屏纵向空间占用过大。`
+- completed_step: `KanbanPage 在 ok 状态下将标题、总数范围、排序提示和分页操作合并为一个紧凑看板工具头；非 ok 状态保留 PageHeader 与状态面板，底部分页栏继续保留。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `docker compose -f docker-compose.yml -f docker-compose.prod-sim.yml -p sc-backend-odoo-prod-sim restart nginx`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509?menu_id=293，kanban-toolbar 高度 61.1875px，首张卡片 y=356.6875；调整前首张卡片 y=435.5，顶部区域减少约 79px。`
+- result: `PASS; 看板页顶部结构已更紧凑，分页仍在首屏可见且底部分页保留。`
+- risk: `P2; ActionView 外层“视图切换/新建”仍各自占一行，后续如需进一步压缩，需要收口外层 action 工具区。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复 PageHeader + 顶部分页栏的结构。`
+- next_step: `继续评估 ActionView 外层视图切换与新建按钮是否可整合为单行业务工具条。`
+
+## 2026-04-28 Batch-Frontend-Action-Toolbar-Compact
+
+- branch: `codex/dev-env-run`
+- short_sha: `7f4b1c51`
+- Layer Target: `Frontend layout`
+- Module: `frontend/apps/web`
+- Reason: `看板页头已收敛后，ActionView 外层“视图切换”和“新建”仍分成两个连续区块，导致项目台账首屏顶部工具区不够紧凑。`
+- completed_step: `ActionView 将视图切换与新建入口合并为一条 action-toolbar：左侧保留视图模式切换，右侧保留新建办理入口；移动端允许换行，不改变 view_switch 契约消费、创建权限判断或路由行为。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `docker compose -f docker-compose.yml -f docker-compose.prod-sim.yml -p sc-backend-odoo-prod-sim restart nginx`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509?menu_id=293，action-toolbar 高度 44px，文本为 视图/看板/列表/新建；首张卡片 y=305.6875，无 console error。`
+- result: `PASS; 视图切换区域已收敛为单行工具栏，新建办理入口保留，项目台账首屏更紧凑。`
+- risk: `P2; 当后续页面存在大量 header actions/筛选条时仍可能形成多行工具区，需要按业务场景继续合并筛选与操作。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复视图切换与新建分区显示。`
+- next_step: `继续检查快速筛选、分组查看、快捷操作在有数据页面是否需要同样收敛为统一业务工具条。`
+
+## 2026-04-28 Batch-Frontend-Global-Header-Compact
+
+- branch: `codex/dev-env-run`
+- short_sha: `f7f64805`
+- Layer Target: `Frontend layout`
+- Module: `frontend/apps/web`
+- Reason: `看板工具头和 ActionView 工具条收敛后，全局页面头仍显示眉标、面包屑和大标题三层结构，且“项目台账（试点）”与页面内业务标题重复，首屏体量偏大。`
+- completed_step: `AppShell 将 action/record 业务页切换为 minimal topbar：只保留面包屑导航，不再显示全局眉标和大标题；业务标题继续由页面内工具头承载。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `docker compose -f docker-compose.yml -f docker-compose.prod-sim.yml -p sc-backend-odoo-prod-sim restart nginx`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509?menu_id=293，topbar 高度从 122.5px 收敛为 23px，headline 不再渲染，首张卡片 y=206.1875，无 console error。`
+- result: `PASS; 业务页全局页面头已收敛为轻量面包屑，项目台账首屏内容密度显著提升。`
+- risk: `P2; record 页同样使用紧凑页头，如业务详情页后续需要显式大标题，应由详情页自身标题区承载。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复 action/record 页全局大标题页头。`
+- next_step: `继续检查详情页和其他业务 action 页在 minimal topbar 下是否仍有清晰标题和操作入口。`
+
+## 2026-04-28 Batch-Frontend-Kanban-Toolbar-Search
+
+- branch: `codex/dev-env-run`
+- short_sha: `84fbe448`
+- Layer Target: `Frontend layout + existing list request consumer`
+- Module: `frontend/apps/web`
+- Reason: `项目台账（试点）看板工具栏已收敛，但搜索能力仍只存在于普通列表页；用户需要在看板视图工具按钮区域中部直接搜索项目。`
+- completed_step: `ActionView 在看板视图 action-toolbar 中部嵌入搜索框，复用既有 handleSearch/searchTerm/requestLoadPage 链路；列表视图不显示该工具栏搜索，避免与 ListPage 搜索重复。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `docker compose -f docker-compose.yml -f docker-compose.prod-sim.yml -p sc-backend-odoo-prod-sim restart nginx`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509?menu_id=293，在工具栏搜索 德阳市，请求包含 search_term=德阳市、offset=0、limit=40，页头总数变为 58；action-toolbar 高度 46px，无 console error。`
+  - `Playwright browser: 切换列表视图后 action-toolbar .toolbar-search 数量为 0，ListPage 自有搜索框数量为 1。`
+- result: `PASS; 看板视图已在工具栏中部具备搜索能力，并复用既有数据请求契约。`
+- risk: `P2; 搜索仍沿用既有即时输入触发策略，后续如大数据量下请求频率过高，可单独加入防抖。`
+- rollback: `回退本批次提交并重建前端静态包，即移除看板工具栏中部搜索框。`
+- next_step: `继续检查看板搜索后的分页、清除搜索、进入详情返回是否保持上下文一致。`
+
+## 2026-04-28 Batch-Frontend-Kanban-Search-IME
+
+- branch: `codex/dev-env-run`
+- short_sha: `c48d47bb`
+- Layer Target: `Frontend interaction`
+- Module: `frontend/apps/web`
+- Reason: `看板工具栏搜索在中文输入法组合输入期间直接触发 input 搜索，导致拼音/未确认中文也进入搜索链，中文输入体验异常。`
+- completed_step: `ActionView 看板工具栏搜索增加本地草稿值与 compositionstart/compositionend 保护：组合期间只更新输入草稿，不触发搜索；中文确认后再以最终值调用既有 handleSearch。清除操作同步清空草稿和搜索状态。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `docker compose -f docker-compose.yml -f docker-compose.prod-sim.yml -p sc-backend-odoo-prod-sim restart nginx`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509?menu_id=293，模拟 compositionstart + composing input=de 阶段 api.data 请求数为 0；compositionend=德阳市 后请求包含 search_term=德阳市、offset=0、limit=40，输入框值为 德阳市，看板总数为 58，无 console error。`
+- result: `PASS; 看板工具栏搜索已支持中文输入法组合输入。`
+- risk: `P2; handleSearch 既有路由同步机制在确认搜索后仍可能产生一次刷新请求，后续如需优化请求次数可单独收敛。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复原始 input 即时触发搜索。`
+- next_step: `继续验证真实键盘中文输入、清除搜索、分页和详情返回组合路径。`
+
+## 2026-04-28 Batch-Frontend-Kanban-Header-Tool-Order
+
+- branch: `codex/dev-env-run`
+- short_sha: `18529e67`
+- Layer Target: `Frontend layout`
+- Module: `frontend/apps/web`
+- Reason: `看板页当前顺序为工具栏在前、看板头在后；用户希望头部操作最少，先展示看板业务状态，再展示视图/搜索/新建工具。`
+- completed_step: `KanbanPage 增加 toolbar slot；ActionView 在看板内容中将 action-toolbar 嵌入 KanbanPage，看板页顺序调整为：全局面包屑 -> 看板头 -> 工具栏 -> 卡片网格。列表页仍保留原外层工具栏结构。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `docker compose -f docker-compose.yml -f docker-compose.prod-sim.yml -p sc-backend-odoo-prod-sim restart nginx`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509?menu_id=293，kanban-toolbar y=69，action-toolbar y=146.1875，grid/card y=208.1875，顺序为看板头在工具栏前，无 console error。`
+- result: `PASS; 看板头与工具位置已互换，顶部先呈现业务状态，操作区退到看板头下方。`
+- risk: `P2; 看板工具栏通过 slot 嵌入，后续若其他看板页需要不同工具布局，可继续扩展 slot 内容而不改 KanbanPage 主结构。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复 ActionView 顶层工具栏在看板头之前的顺序。`
+- next_step: `继续检查搜索、清除、新建和视图切换在新顺序下的真实操作路径。`
+
+## 2026-04-28 Batch-Frontend-Shared-Action-Toolbar
+
+- branch: `codex/dev-env-run`
+- short_sha: `4aae0a3f`
+- Layer Target: `Frontend layout + shared interaction renderer`
+- Module: `frontend/apps/web`
+- Reason: `看板页结构已稳定，但看板和列表仍分别承载搜索/排序/分组/视图切换，页面结构不统一；用户要求按当前看板结构逻辑统一所有看板与列表，并将搜索、分组做成与原生逻辑一致的共享控件。`
+- completed_step: `新增 ActionSurfaceToolbar 共享控件，统一承载视图切换、搜索、排序、分组、新建；ActionView 对看板和列表均使用该共享控件。看板通过 KanbanPage toolbar slot 将工具条放在看板头下方；列表通过 ListPage toolbar slot 将工具条放在列表头下方；ActionView 顶层不再渲染工具条，避免工具区回到页面头上方。列表页在 ActionView 调用时关闭内部 PageToolbar，避免重复搜索。原独立 group_view 区在共享工具条可用时并入工具条展示。排序选项展示按标签去重，避免同名排序重复。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `docker compose -f docker-compose.yml -f docker-compose.prod-sim.yml -p sc-backend-odoo-prod-sim restart nginx`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509?menu_id=293，看板页顺序保持 kanban-toolbar y=69 -> action-toolbar y=146.1875 -> grid y=208.1875；切换列表后列表头 y=69 -> action-toolbar y=162 -> table y=224，actionToolbar=1、legacyPageToolbar=0、tableRows=40，无 console error。`
+  - `Playwright browser: 共享工具条排序展示仅保留 1 个“契约默认排序”，避免重复按钮。`
+- result: `PASS; 看板与列表已统一使用共享 ActionSurfaceToolbar，搜索/排序/分组/新建入口结构收口。`
+- risk: `P2; 当前项目台账未展示分组入口，分组并入工具条的视觉效果还需在启用 group_view 的业务页继续做真实浏览器验证。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复看板工具栏内联模板、列表页内部 PageToolbar 和独立分组区。`
+- next_step: `选择存在 group_view 契约的业务列表页，验证共享分组控件的展开、清除、分组结果分页路径。`
+
+## 2026-04-28 Batch-Frontend-Native-Search-Group-Alignment
+
+- branch: `codex/dev-env-run`
+- short_sha: `e7c00fd1`
+- Layer Target: `Frontend contract consumer + shared action toolbar`
+- Module: `frontend/apps/web`
+- Reason: `用户要求搜索分组能力与原生对齐；事实排查发现 ui.contract 已返回原生 search.filters/search.group_by，但前端共享工具栏未承载快速筛选/已保存筛选，且原生 context={'group_by': ...} 的 Python 风格字符串未被归一为真实分组字段。`
+- completed_step: `ActionSurfaceToolbar 增加筛选、已保存筛选、分组统一区域；ActionView 在列表/看板 toolbar slot 中消费同一套筛选/保存筛选/分组事件，旧独立筛选区在共享工具栏可用时不再渲染。useActionViewFilterComputedRuntime 将原生 search filter 中 context_raw 的 group_by 归入分组，普通 domain 筛选保留在筛选区，分组请求使用真实字段而不是 filter name。`
+- verification:
+  - `ENV=test ENV_FILE=.env.prod.sim ... make verify.frontend.typecheck.strict` -> `blocked: local pnpm not found`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend/apps/web node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile --dir /workspace/frontend && pnpm typecheck"`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/577（一般合同），工具栏位于列表头下方 headerY=69、toolbarY=162；工具栏展示筛选=已确认/已签署/补充合同，分组=按合同方/按状态/按类型/按项目，无旧 quick_filters/saved_filters/group_view 独立块，无 console error。`
+  - `Playwright browser: 点击“按状态”后 URL 为 /a/577?group_by=state，api.data 请求 group_by=state、need_group_total=true。`
+  - `Playwright browser: 点击“已签署”后 URL 为 /a/577?preset_filter=state_signed，api.data 请求 domain=[['state','=','signed']]、domain_raw=[('state', '=', 'signed')]。`
+- result: `PASS; 原生 search view 的筛选与分组已进入共享工具栏，并按原生 context.group_by 真实字段请求数据。`
+- risk: `P2; context_raw 兼容当前仅提取 group_by 字段，不扩大为通用 Python literal 解析；如后续需要更多原生 context 键，应优先后端归一契约。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复筛选/已保存筛选独立展示和原 group_by 消费逻辑。`
+- next_step: `继续抽查含 saved_filters/search_panel 的业务 action，确认已保存筛选与更多筛选展开路径。`
+
+## 2026-04-28 Batch-Frontend-Native-Search-Dropdown
+
+- branch: `codex/dev-env-run`
+- short_sha: `a3c59420`
+- Layer Target: `Frontend contract consumer + shared search renderer`
+- Module: `frontend/apps/web`
+- Reason: `上一轮只把原生 search.filters/search.group_by 平铺为工具栏按钮，未对齐 Odoo 原生 SearchBar 的“搜索框 facet + 下拉分类菜单 + 点击即响应”交互模型。`
+- completed_step: `ActionSurfaceToolbar 将平铺筛选/分组改为原生式搜索区：搜索框内展示已选筛选/已保存筛选/分组 facet，右侧“搜索”下拉按“筛选 / 分组 / 已保存”分类展示契约项，点击菜单项沿用现有 applyContractFilter/applySavedFilter/applyGroupBy 刷新链路，点击 facet 可移除对应条件。`
+- verification:
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend/apps/web node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile --dir /workspace/frontend && pnpm typecheck"`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `Playwright browser: 先在 Odoo 原生 http://127.0.0.1:18069/web#action=577 观察搜索栏，确认下拉包含“筛选：已确认/已签署/补充合同；分组方式：按项目/按合同方/按类型/按状态；收藏夹：保存当前搜索”，选中项以搜索框 facet 呈现。`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/577，搜索下拉展示“筛选”和“分组”分类；旧 .filter-switch/.group-switch/.saved-filter-switch 可见数量为 0。`
+  - `Playwright browser: 点击“已签署”后 URL 为 /a/577?preset_filter=state_signed，搜索框 facet 为 已签署，api.data domain=[['state','=','signed']]。`
+  - `Playwright browser: 再点击“按状态”后 URL 为 /a/577?preset_filter=state_signed&group_by=state，搜索框 facet 为 已签署 + 按状态，api.data group_by=state、need_group_total=true；点击“按状态”facet 后 URL 回到 /a/577?preset_filter=state_signed，分组请求清除。`
+- result: `PASS; 搜索分组已从平铺按钮升级为原生式下拉分类与 facet 交互，点击后页面直接响应。`
+- risk: `P2; 当前仍是单筛选/单分组状态模型，Odoo 原生支持更复杂的多 facet 组合；如业务需要多选筛选/多级分组，应扩展路由与请求状态承载。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复上一轮平铺筛选/分组工具栏。`
+- next_step: `继续补齐已保存筛选的“保存当前搜索”写入能力，或先抽查其他业务 action 的原生搜索菜单覆盖率。`
+
+## 2026-04-28 Batch-Frontend-Native-Search-Full-Verification
+
+- branch: `codex/dev-env-run`
+- short_sha: `130accbf`
+- Layer Target: `Frontend shared search renderer`
+- Module: `frontend/apps/web`
+- Reason: `用户确认原生式搜索下拉基本形态已成立，要求继续完整验证该能力是否全部实现；验证中需要覆盖列表/看板、筛选/分组、facet 清除、中文输入、外部关闭和已保存筛选样本。`
+- completed_step: `补齐 ActionSurfaceToolbar 的外部点击关闭行为；完成一般合同列表 /a/577 与项目看板 /a/509 的真实浏览器验证矩阵。`
+- verification:
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend/apps/web node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile --dir /workspace/frontend && pnpm typecheck"`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `Playwright browser: /a/577 下拉分类展示筛选=已确认/已签署/补充合同，分组=按合同方/按状态/按类型/按项目；点击已签署后 facet=已签署，api.data domain=[['state','=','signed']]；点击按状态后 facet=已签署+按状态，api.data group_by=state；依次点击分组 facet 和筛选 facet 后 URL 与请求恢复无分组/无筛选。`
+  - `Playwright browser: /a/577 打开下拉后点击页面空白，search-dropdown 从 1 变为 0。`
+  - `Playwright browser: /a/509 看板顺序为 headerY=69、toolbarY=146.1875、gridY=218.1875；下拉展示筛选与分组分类；旧平铺 .filter-switch/.group-switch/.saved-filter-switch 可见数量为 0。`
+  - `Playwright browser: /a/509 中文输入 composition 期间 duringComposeRequests=0；compositionend 后 api.data search_term=德阳市；点击清除后输入值为空且 URL 移除 search。`
+  - `Odoo shell: sc_prod_sim 中 app.search.config saved_filters 全部为 0，当前无真实已保存筛选样本可点击验证；空态下“已保存”分类不展示。`
+- result: `PASS; 当前模拟生产库可验证范围内，原生式搜索下拉、筛选、分组、facet、中文输入和看板承载均通过。`
+- risk: `P2; 已保存筛选缺少真实数据样本，仅验证了空态；“保存当前搜索”写入能力仍未实现，属于下一轮功能缺口。`
+- rollback: `回退本批次提交并重建前端静态包，即移除外部点击关闭补强，回到 130accbf。`
+- next_step: `补齐已保存筛选/保存当前搜索能力，或先由业务配置管理员创建真实 saved filter 样本后验证选择路径。`
+
+## 2026-04-28 Batch-Native-Search-Business-Fact-Views
+
+- branch: `codex/dev-env-run`
+- short_sha: `current batch commit`
+- Layer Target: `Native View Layer + ui.contract search normalization`
+- Module: `addons/smart_construction_core`, `addons/smart_core/app_config_engine`
+- Reason: `用户判断根因在业务事实层自定义视图没有像原生视图一样定义 search 结构；前端应消费原生/业务事实层 search view，而不是用前端特判补筛选分组。`
+- completed_step: `为项目合同 construction.contract、结算单 sc.settlement.order 补齐独立 search view 并绑定对应 action；为项目台账 project.project 补齐业务事实层独立中文 search view，并将项目列表、驾驶舱、概览、管理、我的项目动作绑定到该 search view；app.search.config 改为按 XML 顺序输出筛选，分组 filter 与普通筛选分离，显式分组存在时不再追加字段推断分组，避免暴露 Action Needed/Alias 等技术字段。`
+- verification:
+  - `python3 -m py_compile addons/smart_core/app_config_engine/models/app_search_config.py`
+  - `ENV=test ENV_FILE=.env.prod.sim ... CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core make mod.upgrade`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make odoo.shell.exec` -> `construction.contract filters=9 groups=6; sc.settlement.order filters=8 groups=6; sc.general.contract filters=3 groups=4; project.project filters=8 groups=9。`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make restart` -> `odoo healthy on :18069`
+  - `FRONTEND_PROFILE=prod-sim make frontend.restart` -> `frontend ready on http://127.0.0.1:5174/ proxy=http://localhost:18069 db=sc_prod_sim`
+  - `Playwright browser: wutao/123456 登录 sc_prod_sim；/a/489、/a/510、/a/577、/a/452 搜索下拉均为“筛选 / 分组方式 / 收藏夹”三栏；筛选/分组全部为中文业务项，无 Action Needed/Activity/Alias/Project Manager/Archived 等英文技术项。`
+- result: `PASS; 自定义前端列表页的搜索分类结构已由业务事实层 search view 驱动，项目合同、结算单、一般合同、项目台账验证通过。`
+- risk: `P2; 本轮覆盖用户当前指出的项目/合同/结算类核心列表，尚未全量审计所有业务 action 是否都已绑定独立业务 search view。`
+- rollback: `回退本批次提交，执行 smart_construction_core 模块升级并重启模拟生产后端；前端保持 prod-sim 配置即可。`
+- next_step: `继续全量扫描剩余业务 action 的 search_view_id，找出仍继承原生英文 search 或未绑定业务 search view 的页面。`
+
+## 2026-04-28 Batch-Frontend-Native-Search-SavedFilter-Columns
+
+- branch: `codex/dev-env-run`
+- short_sha: `d8dae7b9`
+- Layer Target: `ui.contract search contract + frontend shared search renderer`
+- Module: `addons/smart_core/app_config_engine`, `frontend/apps/web`
+- Reason: `用户要求搜索框像原生一样在框内放下拉箭头，并且下拉弹层分栏结构对齐原生；开发状态允许直接创建验证数据，需要用真实 saved filter 验证收藏夹点击后页面响应。`
+- completed_step: `ActionSurfaceToolbar 将下拉触发器移入搜索框右侧，改为框内箭头；搜索下拉改为三栏 grid，分类标题对齐“筛选 / 分组方式 / 收藏夹”。ActionView 的共享工具条标签统一为“收藏夹”“分组方式”。app.search.config 对 ir.filters 收藏项补齐结构化 domain/context，前端前置加载改为优先用本次 ui.contract 的 search.saved_filters/search.group_by 校验路由选择，避免刚清空 actionContract 后把 saved_filter 清掉。模拟生产库创建共享收藏筛选“收藏：已签署一般合同”，domain=[('state','=','signed')]。`
+- verification:
+  - `ENV=test ENV_FILE=.env.prod.sim ... make odoo.shell.exec` -> `IR_FILTER 8 收藏：已签署一般合同 sc.general.contract shared; app.search.config sc.general.contract version=4 saved=1 domain=[['state','=','signed']]`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make restart`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend/apps/web node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile --dir /workspace/frontend && pnpm typecheck && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/577；.native-searchbox .search-menu-toggle=1，.native-search > .search-menu-toggle=0，箭头 button x=558/right=586 位于 searchbox x=271/right=591 内。`
+  - `Playwright browser: 搜索下拉为三栏，section x=272/525/779，文本包含“筛选”“分组方式”“收藏夹”“收藏：已签署一般合同”。`
+  - `Playwright browser: 点击“收藏：已签署一般合同”后 URL=/a/577?saved_filter=...，搜索框 facet=收藏：已签署一般合同×，api.data domain=[['state','=','signed']]、domain_raw=[('state', '=', 'signed')]、dataLen=1。`
+- result: `PASS; 原生式框内箭头、三栏搜索弹层和真实收藏筛选点击响应均通过。`
+- risk: `P2; 当前仅补齐选择已有 ir.filters 的消费路径，尚未实现“保存当前搜索”的前端写入入口。`
+- rollback: `回退本批次提交，重启 Odoo 并重建前端静态包；如需清理验证数据，可删除 sc_prod_sim 中 ir.filters id=8。`
+- next_step: `继续评估是否需要实现“保存当前搜索”写入能力，并抽查更多业务 action 的收藏筛选与 search_panel 覆盖情况。`
+
+## 2026-04-28 Batch-Frontend-Native-Search-Favorites-Empty-Column
+
+- branch: `codex/dev-env-run`
+- short_sha: `e43095ca`
+- Layer Target: `Frontend shared search renderer`
+- Module: `frontend/apps/web`
+- Reason: `用户反馈收藏夹还没有单独分栏；事实排查发现收藏夹列的展示条件依赖当前页面存在 saved_filters，导致无收藏数据的业务页不会保留原生式收藏夹独立列。`
+- completed_step: `ActionSurfaceToolbar 将收藏夹列改为搜索菜单固定第三列：只要筛选/分组/收藏任一搜索菜单存在，就显示“收藏夹”分栏；有收藏项时展示收藏项，无收藏项时展示“暂无收藏”。`
+- verification:
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend/apps/web node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile --dir /workspace/frontend && pnpm typecheck && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509；搜索下拉 sectionCount=3，三栏 x=390/643/896，第三栏文本=收藏夹暂无收藏。`
+- result: `PASS; 无收藏数据的页面也固定展示“收藏夹”独立分栏。`
+- risk: `P3; 空态当前只展示“暂无收藏”，尚未提供“保存当前搜索”写入按钮。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复收藏夹列按 saved_filters 数据条件显示。`
+- next_step: `继续评估“保存当前搜索”写入入口是否进入下一轮。`
+
+## 2026-04-28 Batch-Frontend-Action-List-Kanban-Structure-Unification
+
+- branch: `codex/dev-env-run`
+- short_sha: `7e8a29b9`
+- Layer Target: `Frontend shared page renderer`
+- Module: `frontend/apps/web`
+- Reason: `用户确认当前看板页结构达标，要求以该看板页为标准页面结构，统一前端所有通用看板页和列表页，并全部复用搜索分类控件。`
+- completed_step: `事实排查确认产品路由中的通用看板/列表均由 ActionView 渲染，搜索分类控件唯一入口为 ActionSurfaceToolbar。将 ListPage 的 OK 态页面结构调整为看板同款“紧凑页头 -> ActionSurfaceToolbar 插槽 -> 内容”，移除旧 PageToolbar 引用和 showPageToolbar 兜底参数；ActionView 列表页不再传递 show-page-toolbar。`
+- verification:
+  - `rg "PageToolbar|showPageToolbar|<ListPage|<KanbanPage|native-searchbox|action-toolbar" frontend/apps/web/src -n` -> `PageToolbar 无消费引用；产品通用页面仅 ActionView 使用 ListPage/KanbanPage；ActionSurfaceToolbar 是唯一 native-searchbox/action-toolbar 来源。`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend/apps/web node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile --dir /workspace/frontend && pnpm typecheck && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim；/a/509 看板 compactY=69、actionToolbarY=146、contentY=218，pageHeaderCount=0、legacyToolbarCount=0、actionToolbarCount=1、nativeSearchCount=1、search sections=3。`
+  - `Playwright browser: /a/577 列表 compactY=69、actionToolbarY=146、contentY=218，pageHeaderCount=0、legacyToolbarCount=0、actionToolbarCount=1、nativeSearchCount=1、search sections=3。`
+- result: `PASS; 通用 ActionView 看板与列表页面结构已统一复用同一搜索分类控件。`
+- risk: `P2; 表单页、工作台、场景页不属于本轮看板/列表结构范围，未纳入该统一控件。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复 ListPage 的 PageHeader + 旧 PageToolbar 兜底结构。`
+- next_step: `继续抽查更多 action_id 的 list/kanban 业务页面，确认无业务特例样式需要迁移。`
+
+## 2026-04-28 Batch-Frontend-List-Format-Systemic-Unification
+
+- branch: `codex/dev-env-run`
+- short_sha: `23b55292`
+- Layer Target: `Frontend shared action toolbar + list renderer`
+- Module: `frontend/apps/web`
+- Reason: `用户发现项目合同列表与项目列表格式仍不一致；事实排查确认项目列表 action=452、项目合同 action=489，二者都走 ActionView/ListPage，但项目合同缺少多视图按钮且无筛选项，导致视图切换区和搜索下拉列宽/列数不一致。`
+- completed_step: `ActionSurfaceToolbar 单视图页面也显示当前“列表”视图按钮；视图切换区固定为 120px，保证搜索框起点一致；搜索下拉固定“筛选 / 分组方式 / 收藏夹”三栏，筛选/分组/收藏无数据时分别显示“暂无筛选 / 暂无分组 / 暂无收藏”；删除已无引用的旧 PageToolbar 组件，避免列表页回退旧格式。`
+- verification:
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend/apps/web node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile --dir /workspace/frontend && pnpm typecheck && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `Playwright browser: /a/452 项目列表 与 /a/489 项目合同 sameStructure=true；compactY=69、actionToolbarY=146、contentY=218、viewSwitchW=120、nativeSearchX=401、dropdown section x=402/655/909；pageHeaderCount=0、legacyToolbarCount=0、actionToolbarCount=1、nativeSearchCount=1。`
+  - `Playwright browser systemic matrix: action_id=452,489,491,492,565,577,486 全部 ok；均为紧凑页头 -> ActionSurfaceToolbar -> 内容，legacyToolbarCount=0、actionToolbarCount=1、nativeSearchCount=1、可打开搜索菜单时 sectionCount=3。`
+- result: `PASS; 项目合同列表、项目列表及合同/结算类列表已统一页面结构和搜索分类格式。`
+- risk: `P2; 当前系统性验证覆盖 ActionView 的主要业务列表，未覆盖非 ActionView 的后台管理/场景健康类管理页。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复单视图不显示视图区、按数据条件展示搜索列和旧 PageToolbar 文件。`
+- next_step: `继续根据用户实测反馈抽查剩余业务菜单入口，若出现非 ActionView 列表页，优先迁移到 ActionView/ListPage 标准结构。`
+
+## 2026-04-28 Batch-Search-Custom-State-Contract
+
+- branch: `codex/dev-env-run`
+- short_sha: `759dd01a`
+- Layer Target: `ui.contract search contract + frontend shared search renderer + api.data request state`
+- Module: `addons/smart_core/app_config_engine`, `addons/smart_core/handlers`, `frontend/packages/schema`, `frontend/apps/web`
+- Reason: `用户确认自定义搜索/自定义分组必须完整契约化，为未来多端状态同步提供统一状态来源；原生 Odoo 行为已验证，但原生 custom group 会暴露技术字段，因此需要由后端输出业务字段白名单，前端通用消费。`
+- completed_step: `app.search.config 在 search.custom 下输出 filters/group_by/favorites 三类契约能力，字段候选来自 fields_get 但过滤 message/activity/alias/legacy/create/write 等技术字段；新增 search.favorite.set 意图，保存当前用户自己的 ir.filters 并刷新搜索配置；schema 补齐 search.custom 类型；ActionSurfaceToolbar 增加“添加自定义筛选 / 添加自定义分组 / 保存当前搜索”，ActionView 将自定义筛选并入 api.data domain，将自定义分组并入 route 可校验 group_by 候选，将保存当前搜索写入 ir.filters。`
+- verification:
+  - `python3 -m py_compile addons/smart_core/app_config_engine/models/app_search_config.py addons/smart_core/handlers/search_favorite_set.py` -> `PASS`
+  - `corepack pnpm -C frontend/apps/web typecheck` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make odoo.shell.exec` -> `construction.contract 添加自定义筛选/添加自定义分组/保存当前搜索; sc.settlement.order 同步; sc.general.contract 同步; project.project 同步。`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make odoo.recreate` + `FRONTEND_PROFILE=prod-sim make frontend.restart` -> `backend/frontend restarted; frontend ready http://127.0.0.1:5174/`
+  - `Playwright browser: wutao/123456 登录 sc_prod_sim；/a/489 搜索菜单包含中文“添加自定义筛选 / 添加自定义分组 / 保存当前搜索”，无 Add Custom/Save Current 英文残留。`
+  - `Playwright browser: /a/489 自定义筛选选择“合同名称 包含 合同”后 api.data domain 生效，搜索框 facet=合同名称 合同。`
+  - `Playwright browser: /a/489 保存当前搜索“验证收藏-ui-click”调用 search.favorite.set 返回 ok id=9 search_version=10，重新打开搜索菜单可见该收藏。`
+  - `Playwright browser: /a/489 自定义分组选择 partner_id 后 api.data request group_by=partner_id/context group_by=partner_id；当前工具条 facet 文案未展示该自定义分组名，需后续收口 route/toolbar 显示同步。`
+  - `corepack pnpm -C frontend/apps/web build` -> `BLOCKED: dist/assets/index-CLIAgAPW.css 为 root:root，当前用户无权限 unlink；非代码编译错误。`
+- result: `PASS_WITH_NOTE; 契约化自定义筛选、分组请求和保存当前搜索写入已打通，保存收藏真实落库；自定义分组的数据请求已生效，但工具条当前未显示自定义分组 facet，下一轮应收口显示同步。`
+- risk: `P2; 自定义筛选本轮支持单条件；复杂 domain builder 尚未实现原生 DomainSelector 的多条件编辑。P2; 构建产物 dist 存在 root 权限残留，阻塞本地 build 门禁。`
+- rollback: `回退本批次提交，重启 Odoo 与前端；如需清理验证数据，可删除 sc_prod_sim 中 construction.contract 的 ir.filters “验证收藏-ui-click”。`
+- next_step: `优先修复自定义分组 facet/route 显示同步，再评估是否扩展多条件自定义筛选编辑器。`
+
+## 2026-04-28 Batch-Search-Custom-Group-Facet-Closeout
+
+- branch: `codex/dev-env-run`
+- short_sha: `pending`
+- Layer Target: `frontend shared search state`
+- Module: `frontend/apps/web`
+- Reason: `继续完整收口上轮自定义分组：自定义分组请求已经生效，但工具条未展示当前分组 facet；同时验证发现直接从 URL 恢复 group_by 会触发现有 grouped load 链持续加载，因此本轮只收口当前交互态显示，不扩大到 URL 恢复执行层。`
+- completed_step: `ActionSurfaceToolbar 增加 activeGroupLabel 兜底显示；ActionView 在执行分组时从契约候选中记录业务显示名，并在 route 同步清掉 activeGroupByField 后继续展示当前分组 facet；保持 group_by 不写入常规 route sync，避免触发 grouped load 持续加载。`
+- verification:
+  - `corepack pnpm -C frontend/apps/web typecheck` -> `PASS`
+  - `rm -rf /tmp/sc-web-build-check && corepack pnpm -C frontend/apps/web exec vite build --outDir /tmp/sc-web-build-check --emptyOutDir true` -> `PASS`
+  - `FRONTEND_PROFILE=prod-sim make frontend.restart` -> `frontend ready http://127.0.0.1:5174/`
+  - `Playwright browser: wutao/123456 登录 sc_prod_sim；/a/489 选择自定义分组 partner_id 后 api.data request 包含 group_by=partner_id，页面退出加载态，搜索框 facet=按合同方 ×。`
+- result: `PASS; 自定义分组当前交互态已可见且不破坏列表可用性。`
+- risk: `P2; URL 中 group_wid 能记录分组窗口身份，但当前不从 URL 恢复执行 group_by，因为现有 grouped load 链在直接恢复 group_by 时会持续加载；该能力需后续单独治理。P3; 默认 build 仍受 dist root:root 历史产物权限影响，本轮使用临时 outDir 完成构建验证。`
+- rollback: `回退本批次提交并重启前端，即恢复自定义分组不展示 facet 的状态。`
+- next_step: `单独治理 grouped route 恢复链路，使 group_by 可安全进入 URL 状态同步。`
+
+## 2026-04-28 Batch-Search-Custom-Group-Visible-Facet
+
+- branch: `codex/dev-env-run`
+- short_sha: `pending`
+- Layer Target: `frontend shared search state`
+- Module: `frontend/apps/web`
+- Reason: `用户反馈前端看不到变化；复核发现自定义分组 partner_id 最终显示为已有快捷分组“按合同方”，视觉上无法区分是否走了自定义分组。`
+- completed_step: `ActionSurfaceToolbar 将自定义分组选择改为独立 custom-group 事件并传递业务标签；ActionView 对 custom-group 使用传入标签作为当前 facet 展示，普通 group 仍走原快捷分组标签。`
+- verification:
+  - `corepack pnpm -C frontend/apps/web typecheck` -> `PASS`
+  - `rm -rf /tmp/sc-web-build-check && corepack pnpm -C frontend/apps/web exec vite build --outDir /tmp/sc-web-build-check --emptyOutDir true` -> `PASS`
+  - `FRONTEND_PROFILE=prod-sim make frontend.restart` -> `frontend ready http://127.0.0.1:5174/`
+  - `Playwright browser: wutao/123456 登录 sc_prod_sim；/a/489 打开搜索菜单，选择自定义分组 partner_id 后，搜索框 facet=合同相对方 ×，api.data request 包含 group_by=partner_id，页面未停留“正在加载列表”。`
+- result: `PASS; 自定义分组的可见变化已明确显示为所选业务字段标签。`
+- risk: `P2; URL 恢复 group_by 的执行链仍未纳入本批次，避免影响当前列表可用性。`
+- rollback: `回退本批次提交并重启前端，即恢复自定义分组显示为快捷分组标签或无明显变化。`
+- next_step: `如用户确认显示达标，再进入 grouped route 恢复链路治理。`
+
+## 2026-04-28 Batch-ProdSim-Static-Proxy-Refresh
+
+- branch: `codex/dev-env-run`
+- short_sha: `9c15b2f1`
+- Layer Target: `prod-sim nginx static frontend delivery`
+- Module: `config/nginx/conf.d`, `frontend/apps/web/dist`
+- Reason: `用户指出反代访问的静态资源可能不对；事实确认 Vite dev server 已是最新代码，但反代 nginx 仍服务旧 dist 资产，导致用户入口看不到最新自定义搜索/分组变化。`
+- completed_step: `将旧 root 权限 dist 移出静态目录后重新构建 frontend/apps/web/dist；使用 prod-sim overlay 重建 nginx，使 /usr/share/nginx/html 挂载到最新 dist；default.prod-sim.conf 增加 /assets/ 精确资产目录、HTML no-store 响应头和旧资产 404 规则，避免旧 JS/CSS 请求回退到 index.html。`
+- verification:
+  - `corepack pnpm -C frontend/apps/web build` -> `PASS; dist 输出 index-C5suOtAz.js / index-CdA_xJlO.css，属主恢复为 odoo:odoo。`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim COMPOSE_FILE_BASE="docker-compose.yml -f docker-compose.prod-sim.yml" ODOO_SERVICE=nginx make odoo.recreate` -> `PASS; nginx 使用 prod-sim 静态前端挂载。`
+  - `urllib http://127.0.0.1/` -> `200; HTML 指向 /assets/index-C5suOtAz.js，Cache-Control=no-cache, no-store, must-revalidate。`
+  - `urllib http://127.0.0.1/assets/index-C5suOtAz.js` -> `200 application/javascript; 旧 /assets/index-DXEPFTh8.js -> 404。`
+  - `Playwright browser via http://127.0.0.1: wutao/123456 登录 sc_prod_sim；/a/489 选择自定义分组 partner_id 后 facet=合同相对方 ×，api.data group_by 请求生效，页面退出加载态。`
+- result: `PASS; 反代入口已服务最新静态包，并能看到本轮自定义分组可见变化。`
+- risk: `P2; Makefile 的 odoo.recreate 默认 COMPOSE_FILE_BASE 不会自动读取 COMPOSE_FILES，prod-sim nginx 强制重建时需显式传入 overlay，后续可单独规范 Makefile。P3; 旧 root 权限 dist 已保留在未提交备份目录 frontend/apps/web/dist.root-backup-20260428114205/，未纳入版本控制。`
+- rollback: `回退 nginx 配置并重建 nginx；如需恢复旧静态包，可从备份目录人工恢复后重新挂载，但不建议回退到旧资产。`
+- next_step: `用户使用反代入口重新验证；若仍无变化，优先检查浏览器缓存、访问域名是否落到当前 nginx 容器，以及上游反向代理是否缓存 index.html。`
+
+## 2026-04-28 Batch-Frontend-Initial-List-Field-Hydration
+
+- branch: `codex/dev-env-run`
+- short_sha: `18b18b2a`
+- Layer Target: `frontend action list data lifecycle`
+- Module: `frontend/apps/web`
+- Reason: `用户反馈首次进入列表页数据不全，点击详情再返回列表后才正常；事实排查确认首屏数据请求发生在 preflight 写入当前 action 契约之前，导致项目列表首次按旧/空 viewMode 请求 name/display_name/id 兜底字段，而页面表头已经按当前 list_profile 展示业务字段。`
+- completed_step: `useActionViewLoadMainPhaseRuntime 在 preflight 成功后重新读取当前 viewMode/search/sort/group/limit/offset 状态，再构造 api.data 请求；ActionView 注入 resolveLoadDynamicState，使首屏请求使用刚写入的 actionContract/preferredViewMode/sortValue/contractLimit。`
+- verification:
+  - `corepack pnpm -C frontend/apps/web typecheck` -> `PASS`
+  - `corepack pnpm -C frontend/apps/web build` -> `PASS; 反代 HTML 指向 /assets/index-BWOzFTDK.js。`
+  - `urllib http://127.0.0.1/` -> `200; index.html 命中新构建资产 index-BWOzFTDK.js。`
+  - `Playwright browser via http://127.0.0.1: wutao/123456 登录 sc_prod_sim；/a/452 首屏 api.data fields=name,user_id,partner_id,stage_id,lifecycle_state,date_start,date，limit=80，order=sequence,name,id，records=80,total=779；页面首行字段非空。`
+  - `Playwright matrix: /a/452,/a/489,/a/491,/a/492,/a/565,/a/577,/a/486 首屏 api.data 均按列表表头字段请求，rowCount 与 records 对齐，分页总数可见。`
+  - `Playwright detail roundtrip: /a/452 首屏 80 行 -> 打开 project.project/72 -> 浏览器返回列表仍 80 行，首行内容一致。`
+- result: `PASS; 首次进入列表页的数据字段、记录数、分页总数已与当前 action 契约对齐，不再依赖详情返回后的二次状态修正。`
+- risk: `P2; 本轮修复 ActionView 通用列表/看板加载链路，未治理 RecordView 详情页读取过宽字段的问题；详情页仍会为关系字段加载较多候选数据，属于后续性能与字段暴露治理。`
+- rollback: `回退本批次提交并重新构建 frontend/apps/web/dist，即恢复首屏请求使用 preflight 前状态的旧行为。`
+- next_step: `用户继续通过反代入口验证首次进入列表页；若发现非 ActionView 页面仍有数据不全，需要单独按对应页面加载链路排查。`
+
+## 2026-04-28 Batch-Frontend-List-Column-Favorite-Native-Alignment
+
+- branch: `codex/dev-env-run`
+- short_sha: `08bf8167`
+- Layer Target: `ui.contract search/list personalization + frontend list renderer`
+- Module: `addons/smart_core`, `frontend/apps/web`, `frontend/packages/schema`
+- Reason: `用户指出列表页还缺少原生式列显隐设置，且“显示在仪表板”类文案与原生加入收藏语义不一致。事实排查确认后端 tree parser 已输出 optional/columns_schema，但前端 ListPage 未消费；收藏保存只写入 ir.filters 基础字段，未承载 is_default/action_id/is_shared。`
+- completed_step: `ListPage 增加“列”设置入口，按契约 columns/list_profile/hidden_columns/optional 生成列选择项，并用用户+action 维度 localStorage 保存显隐偏好；列表数据请求纳入 hidden_columns，避免用户打开隐藏列后无数据。app.search.config 将收藏入口文案统一为“加入收藏”，saved_filters 输出 is_default/action_id；search.favorite.set 支持 is_default/is_shared/action_id 并写入 ir.filters 原生字段；ActionSurfaceToolbar 收藏保存弹层增加“设为默认筛选/共享给所有用户”，收藏项显示“默认/共享”标记。`
+- verification:
+  - `corepack pnpm -C frontend/apps/web typecheck` -> `PASS`
+  - `python3 -m py_compile addons/smart_core/app_config_engine/models/app_search_config.py addons/smart_core/handlers/search_favorite_set.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make restart` -> `PASS; odoo healthy`
+  - `corepack pnpm -C frontend/apps/web build` -> `PASS; 反代 HTML 命中 /assets/index-D-LLm9FH.js。`
+  - `Playwright browser via http://127.0.0.1: wutao/123456 /a/452；列菜单显示 项目名称/项目经理/业主单位/当前阶段/项目执行阶段/开始日期/结束日期；隐藏“项目经理”后表头移除，刷新后仍隐藏，恢复默认后表头恢复。`
+  - `Playwright browser: 搜索菜单包含“加入收藏”，不包含“显示在仪表板”；保存“列显隐收藏验证”时请求 search.favorite.set 携带 action_id=452,is_default=true,is_shared=true，响应 id=10,is_default=true,is_shared=true。`
+  - `ENV=test ... make odoo.shell.exec` -> `app.search.config project.project custom.favorites.label=加入收藏；saved_filters 中“列显隐收藏验证”包含 is_shared=True,is_default=True,action_id=452。`
+- result: `PASS; 列显隐已进入通用列表页，收藏保存语义已向原生 ir.filters 默认/共享/action 口径收口。`
+- risk: `P2; 列显隐偏好当前保存在自定义前端 localStorage，尚未与 Odoo 原生 web client 的浏览器本地偏好或 ir.ui.view.custom 做跨端同步；后续若要求多端同步，需要新增后端用户偏好契约。P3; 本轮验证创建了模拟生产库验证收藏“列显隐收藏验证”。`
+- rollback: `回退本批次提交，重启后端并重建前端静态包，即恢复固定列显示和旧收藏保存语义。`
+- next_step: `如用户认可交互形态，后续可继续补“列顺序拖拽/多端同步/默认筛选自动应用”的原生增强能力。`
+
+## 2026-04-28 Batch-Frontend-List-Column-Preference-Backend-Contract
+
+- branch: `codex/dev-env-run`
+- short_sha: `2669271e`
+- Layer Target: `user view preference contract + frontend list renderer`
+- Module: `addons/smart_core`, `frontend/apps/web`, `frontend/packages/schema`
+- Reason: `用户指出列按钮应放到表格头部最后，且列显隐属于用户态设置；若不后端落库，无法实现跨端同步，不能继续停留在 localStorage 或搜索收藏验证。`
+- completed_step: `新增 sc.user.view.preference 模型、ACL 与本人 record rule，提供 user.view.preference.get/set intent；前端新增 UserViewPreferenceContract 与 preferences API，ActionView 改为读取/保存后端列偏好，ListPage 移除 localStorage 并把“列”按钮放到表格表头最后一列；清理模拟生产库上轮验证收藏“列显隐收藏验证”。`
+- verification:
+  - `python3 -m py_compile addons/smart_core/models/user_view_preference.py addons/smart_core/handlers/user_view_preference.py` -> `PASS`
+  - `corepack pnpm -C frontend/apps/web typecheck` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim ... CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make odoo.shell.exec` -> `deleted_column_visibility_test_filters=1`
+  - `corepack pnpm -C frontend/apps/web build` -> `PASS; dist 输出 index-CX2RTNlP.js / index-D3rvXZZQ.css`
+  - `FRONTEND_PROFILE=prod-sim make frontend.restart` -> `frontend ready http://127.0.0.1:5174/，db=sc_prod_sim，proxy=http://localhost:18069`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make restart` -> `PASS; prod-sim odoo healthy，确保新 handler 进入长驻服务`
+  - `Playwright browser: wutao/123456 登录 sc_prod_sim；/a/452 表格工具栏无“列”按钮，thead 最后一列有且仅有 1 个“列”按钮；隐藏“项目经理”触发 user.view.preference.set，清空 localStorage 并刷新后 user.view.preference.get 恢复后端偏好，表头仍不显示“项目经理”；恢复默认后后端 value={'hidden_columns': [], 'visible_columns': []}`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make odoo.shell.exec` -> `pref_count=1 user=wutao scope=list_columns:list:action:452 value={'hidden_columns': [], 'visible_columns': []}; test_filter_remaining=0`
+- result: `PASS; 列显隐已从本地状态升级为后端用户视图偏好契约，具备跨端同步基础；测试收藏已清除。`
+- risk: `P2; 当前只契约化保存 visible_columns/hidden_columns，尚未实现原生式列顺序拖拽、按设备差异策略或多端实时状态广播。`
+- rollback: `回退本批次提交后执行 make mod.upgrade MODULE=smart_core 并重启前后端；必要时删除 sc.user.view.preference 中本批新增记录。`
+- next_step: `基于 sc.user.view.preference 继续研究列偏好的消费方式：默认列、列顺序、跨端同步与原生视图偏好之间的映射。`
+
+## 2026-04-28 Batch-Frontend-List-Column-Save-Feedback
+
+- branch: `codex/dev-env-run`
+- short_sha: `51172d7d`
+- Layer Target: `frontend list preference feedback`
+- Module: `frontend/apps/web`
+- Reason: `用户指出列显隐保存语义过于隐晦，勾选后无法确认是否已经后端落库。`
+- completed_step: `ListPage 在列按钮旁和列下拉菜单内展示保存状态；ActionView 为列偏好保存增加 saving/saved/error 状态，保存成功显示“已保存”，保存失败显示“保存失败，请重试”并回滚到上一次状态。`
+- verification:
+  - `corepack pnpm -C frontend/apps/web typecheck` -> `PASS`
+  - `corepack pnpm -C frontend/apps/web build` -> `PASS; dist 输出 index-D0kFGufC.js / index-B9vlolx1.css`
+  - `FRONTEND_PROFILE=prod-sim make frontend.restart` -> `frontend ready http://127.0.0.1:5174/，db=sc_prod_sim，proxy=http://localhost:18069`
+  - `Playwright browser: wutao/123456 登录 sc_prod_sim；/a/452 打开列菜单，恢复默认和隐藏“项目经理”均触发 user.view.preference.set；列菜单与表头旁显示“已保存”。`
+- result: `PASS; 列显隐仍为即时生效，同时用户可明确看到保存结果。`
+- risk: `P3; 当前反馈为轻量状态提示，未加入全局 toast 或保存历史审计；如后续统一交互反馈体系，可迁入共享通知组件。`
+- rollback: `回退本批次提交并重启前端，即恢复无保存状态提示的列菜单。`
+- next_step: `继续推进列偏好消费设计：列顺序、默认列与多端状态同步策略。`
+
+## 2026-04-28 Batch-Frontend-Project-Favorite-Semantic-Column
+
+- branch: `codex/dev-env-run`
+- short_sha: `df6019fa`
+- Layer Target: `frontend list semantic rendering`
+- Module: `frontend/apps/web`
+- Reason: `用户确认 project.project.is_favorite 的业务语义不是“在仪表板上显示项目”技术文案，而是用户把项目加入个人收藏；要求不改原生模型，仅在自定义前端按业务语义改造。`
+- completed_step: `ListPage 将 is_favorite 列名和列选择菜单统一显示为“我的收藏”，单元格使用星标按钮展示“已收藏/未收藏”；ActionView 点击星标后通过现有 api.data 写入 project.project.is_favorite，失败则回滚；列选项生成器在契约字段存在 is_favorite 时纳入可选列。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/core_extension.py` -> `PASS; 未改原生模型，且最终未改变写入白名单。`
+  - `corepack pnpm -C frontend/apps/web typecheck` -> `PASS`
+  - `corepack pnpm -C frontend/apps/web build` -> `PASS; dist 输出 index-BOJ0wINk.js 后补构建 index-CV27F_NU.js / index-CUJPZSdX.css`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make restart` -> `PASS; prod-sim odoo healthy`
+  - `FRONTEND_PROFILE=prod-sim make frontend.restart` -> `frontend ready http://127.0.0.1:5174/，db=sc_prod_sim，proxy=http://localhost:18069`
+  - `Playwright browser: wutao/123456 登录 sc_prod_sim；/a/452 列选择菜单包含“我的收藏”且不暴露“在仪表板上显示项目”；启用列后表头显示“我的收藏”；首行星标从“未收藏”点击变为“已收藏”，api.data write project.project id=72 ok，再次点击恢复现场。`
+- result: `PASS; 项目收藏语义已前端业务化，原生模型和字段定义未改动。`
+- risk: `P2; 当前收藏写入复用既有 api.data 写入口，按 Odoo 写权限执行；后续如需要更强审计，可单独收口为 project.favorite.toggle 专用 intent。`
+- rollback: `回退本批次提交并重启前端，即恢复 is_favorite 的普通布尔展示和原始字段文案。`
+- next_step: `继续排查其他原生布尔/技术字段是否需要业务语义映射，避免用户看到 Odoo 内部文案。`
+
+## 2026-04-28 Batch-Frontend-Project-Favorite-Button-Visual-Refine
+
+- branch: `codex/dev-env-run`
+- short_sha: `91f5bc07`
+- Layer Target: `frontend list favorite button visual`
+- Module: `frontend/apps/web`
+- Reason: `用户反馈项目收藏功能已实现，但按钮形态粗糙、视觉过重，需要收敛为更接近原生星标心智的轻量控件。`
+- completed_step: `ListPage 将项目收藏按钮由胶囊按钮收敛为轻量星标；未收藏仅显示空星，已收藏显示实星和轻量“已收藏”；补齐 title 与 aria-label，保留现有 api.data 写入逻辑。`
+- verification:
+  - `corepack pnpm -C frontend/apps/web typecheck` -> `PASS`
+  - `corepack pnpm -C frontend/apps/web build` -> `PASS; dist 输出 index-ai2uBvXX.js / index-BgJwajXs.css`
+  - `FRONTEND_PROFILE=prod-sim make frontend.restart` -> `frontend ready http://127.0.0.1:5174/，db=sc_prod_sim，proxy=http://localhost:18069`
+  - `Playwright browser: wutao/123456 登录 sc_prod_sim 后进入 /a/452；表头包含“我的收藏”；首行未收藏按钮文本为“☆”，title/aria-label=加入我的项目收藏；点击后文本为“★ 已收藏”，class=active，title/aria-label=取消项目收藏；再次点击恢复现场。`
+- result: `PASS; 收藏按钮视觉更轻量，业务写入能力未回退。`
+- risk: `P3; 当前仍使用文本星标，后续如统一图标体系，可替换为共享 icon 组件。`
+- rollback: `回退本批次提交并重启前端，即恢复上一版收藏按钮形态。`
+- next_step: `继续按业务事实层排查其他用户态按钮的视觉一致性。`
+
+## 2026-04-28 Batch-Legacy-Report-Inventory-Baseline
+
+- branch: `codex/dev-env-run`
+- short_sha: `49c907b9`
+- Layer Target: `业务事实分析层 / Domain Layer`
+- Module: `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `用户要求直接连接旧库分析原报表真实情况后开始计划并实施；本批次先将真实高频报表、旧库证据、依赖数据和新系统承载状态落为可审计基线。`
+- completed_step: `新增 sc.legacy.report.inventory 只读模型、报表中心菜单、P0/P1 种子数据与迁移分析文档；记录应收应付、账户收支、资金日报、项目经营、公司经营、成本与库存等旧库报表的点击证据、实现方式、依赖旧表、承载状态和下一步动作。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/legacy_report_inventory.py` -> `PASS`
+  - `python3 stdlib XML parse legacy_report_inventory_views.xml / legacy_report_inventory_seed.xml` -> `PASS`
+  - `CSV ir.model.access duplicate id check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_prod_sim make mod.upgrade` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `legacy_report_inventory_count=8, p0_count=6, ready_count=1, menu=True, action=True`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make verify.restricted` -> `SKIP; Makefile 无 verify.restricted target`
+- result: `PASS; 旧库高频报表承载清单已在模拟生产库落库并挂入报表中心。`
+- risk: `P2; 本批仅是承载清单，不包含最终报表聚合算法；P0 报表仍需逐张拆旧过程和比对新事实覆盖率。`
+- rollback: `回退本批次提交并升级 smart_construction_core，即移除旧库报表清单模型、菜单、数据与文档。`
+- next_step: `Batch-B 优先实现资金日报汇总报表闭环，因为新系统已有资金日报主表和明细事实。`
+
+## 2026-04-28 Batch-Legacy-Fund-Daily-Summary-Report
+
+- branch: `codex/dev-env-run`
+- short_sha: `a99252f8`
+- Layer Target: `Domain Projection`
+- Module: `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `旧库 P0 高频报表“资金日报表”已有主表和明细事实，需要优先形成报表中心可直接查看的汇总报表闭环。`
+- completed_step: `新增 sc.fund.daily.summary SQL 只读聚合模型，按日期/项目/账户/银行账号汇总资金日报明细；新增 tree/pivot/graph/search/action/menu，挂入报表中心；补充资金日报汇总 Batch-B 文档。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/projection/fund_daily_summary.py` -> `PASS`
+  - `python3 stdlib XML parse addons/smart_construction_core/views/projection/fund_daily_views.xml` -> `PASS`
+  - `CSV ir.model.access duplicate id check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_prod_sim make mod.upgrade` -> `PASS` after fixing Odoo translated project name JSON extraction in SQL view
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `summary_count=7454, line_count=7454, menu=True, action=True, totals daily_income=988599827.36 daily_expense=858439221.38 net_amount=130160605.98`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make verify.restricted` -> `SKIP; Makefile 无 verify.restricted target`
+- result: `PASS; 资金日报汇总已在模拟生产库创建 SQL view，并挂入报表中心。`
+- risk: `P2; 当前余额类字段采用同维度明细求和，能满足旧库明细汇总查看；如后续发现旧系统按账户日末余额取末值，需要单独调整口径。`
+- rollback: `回退本批次提交并升级 smart_construction_core，即移除 sc.fund.daily.summary SQL view、菜单与文档。`
+- next_step: `拆解应收应付报表（项目）的旧存储过程字段输出和新系统事实覆盖率。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Report-Design
+
+- branch: `codex/dev-env-run`
+- short_sha: `3755ec35`
+- Layer Target: `业务事实分析层`
+- Module: `docs/migration_alignment`
+- Reason: `旧库 P0 高频报表“应收应付报表（项目）”点击量最高，旧过程依赖收入合同、供应商合同、收款、付款、销项、进项、抵扣、自筹和资金余额等多类事实；直接实现完整 SQL view 风险过高。`
+- completed_step: `抽取 UP_USP_SELECT_YSYFHZB_XM 参数、27 个输出字段、依赖表和旧库行数；核验模拟生产库 construction.contract、sc.receipt.income、sc.payment.execution、payment.ledger、sc.invoice.registration、sc.legacy.invoice.tax.fact 等新模型覆盖率；形成 Batch-D 可实现字段范围和暂缓字段清单。`
+- verification:
+  - `docker exec legacy-mssql-restore sqlcmd sys.parameters/sys.sql_expression_dependencies/OBJECT_DEFINITION` -> `PASS`
+  - `docker exec legacy-mssql-restore sqlcmd source table row counts` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; construction.contract=6889, sc.receipt.income=9543, sc.payment.execution=1192, sc.invoice.registration=27947`
+- result: `PASS; 已明确应收应付项目报表第一阶段可实现字段和关键缺口。`
+- risk: `P1; 旧报表中的已付款、自筹退回、实际可用余额等字段目前没有完整新事实覆盖，下一批不能直接承诺完整口径。`
+- rollback: `回退本批次提交即可移除分析文档和迭代记录。`
+- next_step: `Batch-D 建立 sc.ar.ap.project.summary 第一阶段只读聚合报表，仅覆盖已确认有事实支撑的字段。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Summary-Stage1
+
+- branch: `codex/dev-env-run`
+- short_sha: `859670b8`
+- Layer Target: `Domain Projection`
+- Module: `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `基于 Batch-C 已确认的新系统事实覆盖率，先承载旧库“应收应付报表（项目）”中可可靠计算的第一阶段字段。`
+- completed_step: `新增 sc.ar.ap.project.summary SQL 只读聚合模型，按项目和往来单位汇总收入合同金额、已开票、已收款、未收款、已开票未收款、已收款未开票、应付合同金额、供应商发票、销项税额和进项税额；新增 tree/pivot/graph/search/action/menu 并挂入报表中心。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/projection/ar_ap_project_summary.py` -> `PASS`
+  - `python3 stdlib XML parse addons/smart_construction_core/views/projection/ar_ap_project_summary_views.xml` -> `PASS`
+  - `CSV ir.model.access duplicate id check` -> `PASS; rows=332 duplicate_ids=[]`
+  - `ENV=test ENV_FILE=.env.prod.sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_prod_sim make mod.upgrade` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `summary_count=10834, partner_bound=10381, partner_unbound=453, menu=True, action=True, totals income_contract_amount=3142399070.99 output_invoice_amount=47602317362.22 receipt_amount=480379794.04 receivable_unpaid_amount=2662019276.95 invoiced_unreceived_amount=47472912552.33 received_uninvoiced_amount=350974984.15 payable_contract_amount=2402859650.36 input_invoice_amount=2642430113.21 output_tax_amount=177414371.67 input_tax_amount=114112494.93`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make verify.restricted` -> `SKIP; Makefile 无 verify.restricted target`
+- result: `PASS; 应收应付报表（项目）第一阶段已在模拟生产库创建 SQL view，并挂入报表中心。`
+- risk: `P1; 已付款、未付款、抵扣、自筹退回、实际可用余额仍未纳入，避免因事实缺口输出错误数字。`
+- rollback: `回退本批次提交并升级 smart_construction_core，即移除 sc.ar.ap.project.summary SQL view、菜单和文档。`
+- next_step: `继续补旧供应商付款、自筹退回、抵扣登记和项目实际可用余额事实后，再扩展剩余字段。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Payment-Stage
+
+- branch: `codex/dev-env-run`
+- short_sha: `c7394575`
+- Layer Target: `Domain Projection`
+- Module: `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `继续补齐旧库“应收应付报表（项目）”的付款侧字段；经事实比对，sc.treasury.ledger 支出流水具备项目和往来单位维度，且金额最接近旧库 T_FK_Supplier 非删除付款口径。`
+- completed_step: `sc.ar.ap.project.summary 新增已付款、未付款、付款超票三项指标；付款事实取 sc.treasury.ledger direction=out/state=posted，列表、透视、图表和搜索筛选同步开放；补充 Batch-E 付款字段文档。`
+- verification:
+  - `docker exec legacy-mssql-restore sqlcmd T_FK_Supplier count/sum` -> `PASS; total rows=13629 sum=2152297118.18, non-deleted rows=13573 sum=2148050360.23`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; sc.treasury.ledger out rows=12992 sum=2147431936.05, project/partner coverage=12992`
+  - `python3 -m py_compile addons/smart_construction_core/models/projection/ar_ap_project_summary.py` -> `PASS`
+  - `python3 stdlib XML parse addons/smart_construction_core/views/projection/ar_ap_project_summary_views.xml` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_prod_sim make mod.upgrade` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `summary_count=11076, menu=True, action=True, paid_amount=2147431936.05, payable_unpaid_amount=623379540.51, paid_uninvoiced_amount=128381363.35`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make verify.restricted` -> `SKIP; Makefile 无 verify.restricted target`
+- result: `PASS; 应收应付报表（项目）已补齐付款侧三项可用指标。`
+- risk: `P1; 新系统资金台账支出口径与旧库 T_FK_Supplier 非删除口径仍有约 618424.18 差额，需后续解释特殊付款、删除标记、退款或迁移过滤差异。`
+- rollback: `回退本批次提交并升级 smart_construction_core，即恢复 Batch-D 第一阶段字段。`
+- next_step: `继续分析抵扣税额、自筹退回、实际可用余额三类字段的数据条件，优先补事实来源最清晰的一项。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Tax-Deduction
+
+- branch: `codex/dev-env-run`
+- short_sha: `50990e3b`
+- Layer Target: `Domain Projection`
+- Module: `addons/smart_construction_core`, `scripts/migration`, `docs/migration_alignment`
+- Reason: `旧库“应收应付报表（项目）”抵扣税额来源明确为 C_JXXP_DKDJ_CB.DKSE；新系统现有 sc.legacy.invoice.tax.fact 未承载抵扣登记，sc.receipt.income.deducted_tax_amount 当前为 0，需要先补专门事实载体再进入报表。`
+- completed_step: `新增 sc.legacy.tax.deduction.fact 历史抵扣税额事实模型、内部菜单、ACL、旧库 payload 生成/写入脚本；sc.ar.ap.project.summary 新增抵扣税额和抵扣比例，列表/透视/图表/搜索同步开放。`
+- verification:
+  - `docker exec legacy-mssql-restore sqlcmd C_JXXP_DKDJ_CB/C_JXXP_DKDJ_New count/sum` -> `PASS; all rows=4990 DKSE=59386493.57, effective ISNULL(DEL,0)=0 rows=4915 DKSE=56236311.34`
+  - `python3 -m py_compile legacy_tax_deduction_fact.py ar_ap_project_summary.py fresh_db_legacy_tax_deduction_replay_*.py` -> `PASS`
+  - `python3 stdlib XML parse legacy_tax_deduction_views.xml / legacy_finance_internal_views.xml / ar_ap_project_summary_views.xml` -> `PASS`
+  - `CSV ir.model.access duplicate id check` -> `PASS; rows=336 duplicate_ids=[]`
+  - `ENV=test ENV_FILE=.env.prod.sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_prod_sim make mod.upgrade` -> `PASS` after fixing SQL group alias ambiguity in tax_deduction CTE
+  - `python3 scripts/migration/fresh_db_legacy_tax_deduction_replay_adapter.py` -> `PASS; expected_rows=4915`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_tax_deduction_replay_write.py` -> `PASS; final skipped_existing=4915, missing_project=0`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `fact_count=4915, fact_project_count=4915, fact_partner_bound_count=4872, fact_deduction_tax_amount=56236311.34, summary_count=11167, summary_deduction_rows=1874, summary_deduction_tax_amount=56236311.34`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make verify.restricted` -> `SKIP; Makefile 无 verify.restricted target`
+- result: `PASS; 应收应付报表（项目）已补齐抵扣税额和抵扣比例。`
+- risk: `P1; 抵扣附加税已资产化但尚未挂入汇总报表；43 行抵扣事实未匹配 res.partner，当前按历史往来单位名称兜底汇总。`
+- rollback: `回退本批次提交并升级 smart_construction_core；如需回滚模拟生产数据，可按 import_batch=legacy_tax_deduction_v1 删除 sc.legacy.tax.deduction.fact 行后升级模块。`
+- next_step: `继续处理自筹收入/退回/未退，或拆项目实际可用余额到项目资金汇总能力。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Self-Funding
+
+- branch: `codex/dev-env-run`
+- short_sha: `151a4971`
+- Layer Target: `Domain Projection`
+- Module: `addons/smart_construction_core`, `scripts/migration`, `docs/migration_alignment`
+- Reason: `旧库“应收应付报表（项目）”自筹收入、退回、未退字段来自专门收退事实，现有收款事实无法完整承载，需要专用历史事实模型进入报表投影。`
+- completed_step: `新增 sc.legacy.self.funding.fact 历史自筹事实模型、内部菜单、ACL、旧库 payload 生成/写入脚本；sc.ar.ap.project.summary 新增自筹收入金额、自筹退回金额、自筹未退金额，列表/透视/图表/搜索同步开放。`
+- verification:
+  - `python3 -m py_compile legacy_self_funding_fact.py ar_ap_project_summary.py fresh_db_legacy_self_funding_replay_*.py` -> `PASS`
+  - `python3 stdlib XML parse legacy_self_funding_views.xml / legacy_finance_internal_views.xml / ar_ap_project_summary_views.xml` -> `PASS`
+  - `CSV ir.model.access duplicate id check` -> `PASS; rows=340 duplicate_ids=[]`
+  - `ENV=test ENV_FILE=.env.prod.sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_prod_sim make mod.upgrade` -> `PASS`
+  - `python3 scripts/migration/fresh_db_legacy_self_funding_replay_adapter.py` -> `PASS; expected_rows=3728`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim MIGRATION_ARTIFACT_ROOT=/mnt/artifacts/migration make odoo.shell.exec < scripts/migration/fresh_db_legacy_self_funding_replay_write.py` -> `PASS; created_rows=3673, missing_project=55`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `fact_rows=3673, fact_missing_partner_rows=14, fact_self_funding_amount=219525590.83, fact_refund_amount=143229174.39, fact_unreturned_amount=76296416.44, summary_rows=11187, summary_self_funding_rows=595, summary_self_funding_income_amount=219525590.83, summary_self_funding_refund_amount=143229174.39, summary_self_funding_unreturned_amount=76296416.44`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make verify.restricted` -> `SKIP; Makefile 无 verify.restricted target`
+- result: `PASS; 应收应付报表（项目）已补齐自筹收入、退回和未退三项指标。`
+- risk: `P1; 55 条旧库自筹明细存在旧项目 ID 但当前模拟生产项目主数据未匹配，未进入项目报表，涉及净未退 1936367.08；实际可用余额仍未纳入。`
+- rollback: `回退本批次提交并升级 smart_construction_core；如需回滚模拟生产数据，可按 import_batch=legacy_self_funding_v1 删除 sc.legacy.self.funding.fact 行后升级模块。`
+- next_step: `继续拆解旧库实际可用余额字段，判断进入项目资金汇总能力还是应收应付项目报表专属指标。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Rebuild-Chain
+
+- branch: `codex/dev-env-run`
+- short_sha: `abb1087a`
+- Layer Target: `Migration Orchestration`
+- Module: `Makefile`, `scripts/migration`, `docs/migration_alignment`
+- Reason: `新增旧库报表事实不能只通过手工脚本落库，必须进入 history.production.fresh_init / history.continuity.replay 完整重建链路。`
+- completed_step: `将 legacy_self_funding_adapter/replay 与 legacy_tax_deduction_adapter/replay 接入 history_continuity_oneclick.sh；新增 Makefile 单独 adapter/write target；同步重建契约文档。`
+- verification:
+  - `bash -n scripts/migration/history_continuity_oneclick.sh` -> `PASS`
+  - `python3 -m py_compile fresh_db_legacy_tax_deduction_replay_*.py fresh_db_legacy_self_funding_replay_*.py` -> `PASS`
+  - `make -n history.continuity.replay ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim HISTORY_CONTINUITY_START_AT=legacy_self_funding_adapter HISTORY_CONTINUITY_STOP_AFTER=legacy_self_funding_replay MIGRATION_ARTIFACT_ROOT=/tmp/history_continuity/sc_prod_sim/codex_rebuild_chain_self_funding` -> `PASS; allowlist/start/stop 参数进入脚本`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim RUN_ID=codex_rebuild_chain_self_funding HISTORY_CONTINUITY_START_AT=legacy_self_funding_adapter HISTORY_CONTINUITY_STOP_AFTER=legacy_self_funding_replay MIGRATION_ARTIFACT_ROOT=/tmp/history_continuity/sc_prod_sim/codex_rebuild_chain_self_funding make history.continuity.replay` -> `PASS; input_rows=3728, skipped_existing=3673, missing_project=55`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim RUN_ID=codex_rebuild_chain_tax_deduction HISTORY_CONTINUITY_START_AT=legacy_tax_deduction_adapter HISTORY_CONTINUITY_STOP_AFTER=legacy_tax_deduction_replay MIGRATION_ARTIFACT_ROOT=/tmp/history_continuity/sc_prod_sim/codex_rebuild_chain_tax_deduction make history.continuity.replay` -> `PASS; input_rows=4915, skipped_existing=4915, missing_project=0`
+- result: `PASS; 抵扣税额与自筹资金事实已纳入完整重建链路，并支持从新增步骤局部续跑和停止。`
+- risk: `P1; 本批验证使用 START_AT 局部续跑避免全量历史重建耗时，未重置数据库重新执行 full fresh init。`
+- rollback: `回退本批次提交即可移除新增重建编排；已有事实表数据不受影响。`
+- next_step: `继续拆解旧库实际可用余额字段，并同步纳入完整重建链路。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Pricing-Method
+
+- branch: `codex/dev-env-run`
+- short_sha: `8ab78a6b`
+- Layer Target: `Domain Projection`
+- Module: `addons/smart_construction_core`, `scripts/migration`, `docs/migration_alignment`
+- Reason: `旧库“应收应付报表（项目）”字段 JJFS_YF/计价方式来源于供应商合同 T_GYSHT_INFO.JJFSTEXT，新系统应以历史供应商合同计价方式事实承载，并进入 sc.ar.ap.project.summary。`
+- completed_step: `新增 sc.legacy.supplier.contract.pricing.fact、内部菜单、ACL、旧库 adapter/write 脚本；sc.ar.ap.project.summary 新增 计价方式 字段并按项目+往来单位聚合去重显示；接入 history_continuity_oneclick.sh 支持完整重建。`
+- verification:
+  - `python3 -m py_compile legacy_supplier_contract_pricing_fact.py ar_ap_project_summary.py fresh_db_legacy_supplier_contract_pricing_replay_*.py` -> `PASS`
+  - `python3 stdlib XML parse legacy_supplier_contract_pricing_views.xml / legacy_finance_internal_views.xml / ar_ap_project_summary_views.xml` -> `PASS`
+  - `CSV ir.model.access duplicate id check` -> `PASS; rows=352 duplicate_ids=[]`
+  - `bash -n scripts/migration/history_continuity_oneclick.sh` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_prod_sim make mod.upgrade` -> `PASS`
+  - `python3 scripts/migration/fresh_db_legacy_supplier_contract_pricing_replay_adapter.py` -> `PASS; expected_rows=5345, pricing_method_rows=4677, distinct_pricing_methods=17`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_supplier_contract_pricing_replay_write.py` -> `PASS; created_rows=5345, missing_project=11, missing_partner=32`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim HISTORY_CONTINUITY_START_AT=legacy_supplier_contract_pricing_adapter HISTORY_CONTINUITY_STOP_AFTER=legacy_supplier_contract_pricing_replay MIGRATION_ARTIFACT_ROOT=/tmp/history_continuity/sc_prod_sim/codex_rebuild_chain_supplier_contract_pricing make history.continuity.replay` -> `PASS; updated_rows=5345, created_rows=0, missing_project=11, missing_partner=32`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `fact_rows=5345, non_empty_rows=4677, empty_rows=668, distinct_non_empty_trimmed=17, summary_rows=11640, summary_rows_with_pricing=3412`
+- result: `PASS; 应收应付报表（项目）已补齐供应商合同计价方式文本维度，并具备完整重建能力。`
+- risk: `P1; 11 条旧供应商合同项目未匹配，32 条旧供应商合同往来单位未匹配，当前保留历史名称进入事实表。`
+- rollback: `回退本批次提交并升级 smart_construction_core；如需回滚模拟生产数据，可按 import_batch=legacy_supplier_contract_pricing_v1 删除 sc.legacy.supplier.contract.pricing.fact 行后升级模块。`
+- next_step: `执行旧报表 27 字段全口径可用矩阵审计，确认剩余字段是已承载、待承载、异常事实还是明确不迁移。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Field-Matrix
+
+- branch: `codex/dev-env-run`
+- short_sha: `36aa5ebf`
+- Layer Target: `Domain Projection Audit`
+- Module: `docs/migration_alignment`
+- Reason: `旧库“应收应付报表（项目）”已连续补齐合同、收付款、税额、附加税、自筹、实际可用余额和计价方式，需要形成 27 字段全口径可用矩阵，避免仅以字段存在判断业务可用。`
+- completed_step: `新增 Batch-K 字段全口径可用矩阵文档，逐项映射旧过程 UP_USP_SELECT_YSYFHZB_XM 的 27 个输出字段到 sc.ar.ap.project.summary，并基于 sc_prod_sim 运行库输出字段覆盖统计。`
+- verification:
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `summary_rows=11640, projects=758, partners=7202`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `project_fund_fact_rows=755, summary_projects_with_balance=512, rate_rows_with_both=2`
+  - `git diff --check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make verify.restricted` -> `SKIP; Makefile 无 verify.restricted target`
+- result: `PASS; 旧报表 27 字段均已有承载路径，但 SJKYYE 存在报表行覆盖缺口，SF 抵扣比例需要复核旧过程维度。`
+- risk: `P0; 项目级实际可用余额事实 755 条，当前应收应付项目报表只覆盖 512 个项目，说明仅有资金余额且无往来单位事实的项目不会显示。P1; 抵扣比例只有 2 行非零，可能需要按项目级口径重算。`
+- rollback: `本批仅新增审计文档和迭代日志，回退提交即可。`
+- next_step: `下一轮先修复 SJKYYE 覆盖缺口，再回查旧库 SF 最终 SELECT 口径。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Balance-Coverage
+
+- branch: `codex/dev-env-run`
+- short_sha: `1bf73c3f`
+- Layer Target: `Domain Projection`
+- Module: `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `Batch-K 发现 SJKYYE 实际可用余额事实有 755 个项目，但 sc.ar.ap.project.summary 只覆盖 512 个有余额项目；根因是报表 key 只来自项目+往来单位业务事实。`
+- completed_step: `将 sc.ar.ap.project.summary 的 key 拆成 business_keys 与 keys，并为没有任何业务 key 的 project_fund_balance 项目补充 partner_key=project_balance:<project_id>、partner_name=项目级余额 的项目级余额行。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/projection/ar_ap_project_summary.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_prod_sim make mod.upgrade` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `summary_rows=11696, summary_projects=814, project_balance_rows=56, fact_projects=755, missing_fact_projects=0`
+- result: `PASS; SJKYYE 项目级余额事实已全部进入应收应付项目报表可见范围。`
+- risk: `P2; 项目级余额行使用系统显示名“项目级余额”，不是旧库往来单位。P2; actual_available_balance 是项目级指标，列表行重复展示时仍不能直接按行求和。`
+- rollback: `回退本批提交并升级 smart_construction_core。`
+- next_step: `回查旧库 SF 抵扣比例最终 SELECT 口径，决定是否改为项目级税负比例。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Tax-Rate
+
+- branch: `codex/dev-env-run`
+- short_sha: `8998adee`
+- Layer Target: `Domain Projection`
+- Module: `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `Batch-K 发现 SF 抵扣比例只有 2 行非零；回查旧库 UP_USP_SELECT_YSYFHZB_XM 确认 SF 分子分母均只按 XMID 汇总，不按往来单位过滤。`
+- completed_step: `新增 project_tax_rate CTE，按项目汇总 output_invoice.output_tax_amount 与 tax_deduction.deduction_tax_amount 后计算 tax_deduction_rate，并按 project_id 关联到所有报表行。`
+- verification:
+  - `docker exec legacy-mssql-restore sqlcmd OBJECT_DEFINITION(UP_USP_SELECT_YSYFHZB_XM)` -> `PASS; SF 使用 XMID 项目级汇总口径`
+  - `python3 -m py_compile addons/smart_construction_core/models/projection/ar_ap_project_summary.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_prod_sim make mod.upgrade` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `summary_rows=11696, rows_with_rate=7471, projects_with_rate=315, projects_with_output_tax=579, projects_with_output_and_deduction=315`
+- result: `PASS; SF 抵扣比例已从行级误算修正为旧库一致的项目级比例。`
+- risk: `P2; tax_deduction_rate 是项目级比例，在项目下多个往来单位行会重复显示，不应在透视中按行求和。`
+- rollback: `回退本批提交并升级 smart_construction_core。`
+- next_step: `做最终模拟生产全字段覆盖复核，并检查原生/自定义前端对项目级余额行和项目级比例的显示是否容易被用户理解。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Final-Readiness
+
+- branch: `codex/dev-env-run`
+- short_sha: `2952c820`
+- Layer Target: `Domain Projection / Frontend Contract Audit`
+- Module: `addons/smart_construction_core`, `frontend/apps/web`, `docs/migration_alignment`
+- Reason: `应收应付报表（项目）已修复 SJKYYE 与 SF 两个可用性缺口，需要对模拟生产运行库和自定义前端契约消费链做最终复核。`
+- completed_step: `新增 Batch-N 最终可用性复核文档；确认 27 字段运行库覆盖、项目级余额补漏行、项目级抵扣比例、load_view tree 契约列、api.data 项目级余额/抵扣比例读取均可用。`
+- verification:
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; rows=11696, projects=814, partner_keys=7258, missing_balance_projects=0, project_balance_rows=56, tax_deduction_rate_nonzero_rows=7471`
+  - `load_view(model=sc.ar.ap.project.summary, view_type=tree) as wutao` -> `PASS; columns=25, required columns present, read=true/write=false/create=false/unlink=false`
+  - `api.data list project_balance rows as wutao` -> `PASS; total=56`
+  - `api.data list tax_deduction_rate!=0 as wutao` -> `PASS; total=7471`
+  - `corepack pnpm -C frontend/apps/web typecheck:strict` -> `PASS`
+  - `corepack pnpm -C frontend/apps/web build` -> `PASS; Vite chunk size warning only`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MVP_MODEL=sc.ar.ap.project.summary E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.portal.tree_view_smoke.container` -> `PARTIAL; ui.contract/api.data 主链通过，blocked by project.project grouped signature baseline mismatch`
+- result: `PASS; 应收应付报表（项目）27 字段业务事实层和自定义前端契约消费链达到可用状态。`
+- risk: `P2; actual_available_balance 和 tax_deduction_rate 是项目级指标，在多往来单位行重复展示，不应按行求和。P2; 通用 tree/form smoke 需要按模型拆基线，否则会误报。`
+- rollback: `本批仅文档与审计记录，回退提交即可。`
+- next_step: `为项目级指标补用户可读提示或专用说明，并为 sc.ar.ap.project.summary 增加专用前端契约 smoke。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Frontend-Smoke
+
+- branch: `codex/dev-env-run`
+- short_sha: `bf1a4cbf`
+- Layer Target: `Frontend Contract Gate`
+- Module: `scripts/verify`, `Makefile`, `docs/migration_alignment`
+- Reason: `通用 tree_view_smoke 使用 project.project grouped signature baseline，应用到 sc.ar.ap.project.summary 会误报；需要为应收应付项目报表固化专用前端契约 smoke。`
+- completed_step: `新增 scripts/verify/fe_ar_ap_project_summary_smoke.js 与 make verify.portal.ar_ap_project_summary_smoke.container，验证 load_view tree 列、关键字段中文标签、只读权限、项目级余额行和非零抵扣比例行。`
+- verification:
+  - `node --check scripts/verify/fe_ar_ap_project_summary_smoke.js` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.portal.ar_ap_project_summary_smoke.container` -> `PASS`
+  - `corepack pnpm -C frontend/apps/web typecheck:strict` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 应收应付报表（项目）已有专用前端契约 smoke，后续可稳定验证列、标签、权限和关键业务行。`
+- risk: `P2; 该 smoke 固定当前模拟生产库统计数 project_balance_rows=56、tax_rate_rows=7471，后续重建数据范围变化时需要同步更新预期或参数化。`
+- rollback: `回退本批提交即可移除专用 smoke 和 Make target。`
+- next_step: `为项目级指标补用户可读提示，避免导出/透视后按行求和误解。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Metric-Hint
+
+- branch: `codex/dev-env-run`
+- short_sha: `14f3fb7a`
+- Layer Target: `Domain Contract / Platform Contract`
+- Module: `addons/smart_construction_core`, `addons/smart_core/app_config_engine`, `scripts/verify`, `docs/migration_alignment`
+- Reason: `actual_available_balance 与 tax_deduction_rate 是项目级指标，但按项目+往来单位行重复展示；需要在后端字段契约中提供用户可读说明，避免前端推导或用户按行求和误解。`
+- completed_step: `为 sc.ar.ap.project.summary 的实际可用余额、抵扣比例补字段 help；补齐 smart_core app_config_engine 对 fields_get().help 的透传；增强应收应付项目专用 smoke，断言 load_view 字段元数据包含项目级指标说明。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/projection/ar_ap_project_summary.py addons/smart_core/app_config_engine/models/app_model_config.py addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` -> `PASS`
+  - `node --check scripts/verify/fe_ar_ap_project_summary_smoke.js` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_core,smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.portal.ar_ap_project_summary_smoke.container` -> `PASS; artifacts/codex/ar-ap-project-summary/20260428T074636`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 项目级指标说明已由业务模型字段进入 load_view 契约，自定义前端可消费同一后端语义。`
+- risk: `P2; 当前仅契约透出字段说明，前端是否以 tooltip/help 文案展示取决于后续统一字段说明渲染策略。`
+- rollback: `回退本批提交后升级 smart_core,smart_construction_core，并重启模拟生产后端。`
+- next_step: `继续迁移旧库常用统计分析报表，优先审计下一张报表的数据源、字段口径和可重建脚本。`
+
+## 2026-04-28 Batch-Legacy-Account-Income-Expense-Audit
+
+- branch: `codex/dev-env-run`
+- short_sha: `39ba1f19`
+- Layer Target: `Domain Projection Audit`
+- Module: `docs/migration_alignment`
+- Reason: `旧库“账户收支统计表”是 P0 第二高频报表，当前承载状态 partial；需要先拆清旧过程字段、账户维度和新库事实条件，避免直接生成空报表。`
+- completed_step: `审计 Report_SP_USP_Select_ZHSZTJB_GS_Tree：确认其是账户类型+账户二级树形报表，指标包含支出、收入、期初余额、累计收款、累计支出、账户往来、当前账户余额；确认 C_Base_ZHSZ 117 个账户尚未作为独立主数据承载。`
+- verification:
+  - `docker exec legacy-mssql-restore sqlcmd OBJECT_DEFINITION(Report_SP_USP_Select_ZHSZTJB_GS_Tree)` -> `PASS`
+  - `docker exec legacy-mssql-restore sqlcmd table counts` -> `PASS; C_Base_ZHSZ=117, C_CWSFK_GSCWSR=4702, C_CWSFK_GSCWZC=2726, C_JFHKLR=7412, C_FKGL_ZHJZJWL=431`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; sc_treasury_ledger=16047, fund_daily_line table rows=7754, active rows=7454, account_names=38, account_legacy_ids=39`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 账户收支统计表当前仍是 partial，已有资金台账和资金日报明细基础，但缺账户主数据与多来源账户收支聚合。`
+- risk: `P1; 旧过程直接执行在还原库触发 collation conflict，本批采用过程定义和表事实审计；建模前仍需用等价 SQL 或修正 collation 方式复核样本数。`
+- rollback: `本批仅新增审计文档和上下文日志，回退提交即可。`
+- next_step: `为 C_Base_ZHSZ 建账户主数据承载，并建立账户收支统计只读聚合的第一版。`
+
+## 2026-04-28 Batch-Legacy-Account-Master-Carrier
+
+- branch: `codex/dev-env-run`
+- short_sha: `63774523`
+- Layer Target: `Domain Carrier`
+- Module: `addons/smart_construction_core`, `scripts/migration`, `Makefile`, `docs/migration_alignment`
+- Reason: `账户收支统计表依赖 C_Base_ZHSZ 账户主数据；需要先承载账户类型、账户名称、账号、期初余额和旧账户状态，才能建立账户维度统计聚合。`
+- completed_step: `新增 sc.legacy.account.master 模型、历史账户菜单/动作、ACL、旧库 adapter、重放写入脚本、Make target，并接入 history_continuity_oneclick.sh；更新旧库报表清单 target_model。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/legacy_account_master.py scripts/migration/fresh_db_legacy_account_master_replay_adapter.py scripts/migration/fresh_db_legacy_account_master_replay_write.py` -> `PASS`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/views/support/legacy_account_master_views.xml` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_master.replay.adapter` -> `PASS; account_rows=117`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_master_replay_write.py` -> `PASS; after=117, active_rows=63, account_types=12, account_nos=112`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; model_count=117, active=63, action=True, menu=True parent=财务账款`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; C_Base_ZHSZ 117 个历史账户已具备模型、菜单和可重建写入链路。`
+- risk: `P2; 写入结果 JSON 在 /mnt/artifacts/migration 权限不足时回落到 /tmp；后续可统一容器 artifact 权限。`
+- rollback: `回退本批提交，升级 smart_construction_core；如需清理模拟生产数据，可删除 sc_legacy_account_master 中 source_table=C_Base_ZHSZ 的记录。`
+- next_step: `建立账户收支统计只读聚合第一版，先复用 sc.legacy.account.master、sc.treasury.ledger 与 sc.legacy.fund.daily.line。`
+
+## 2026-04-28 Batch-Legacy-Account-Income-Expense-Summary
+
+- branch: `codex/dev-env-run`
+- short_sha: `10de18f1`
+- Layer Target: `Domain Projection`
+- Module: `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `旧库“账户收支统计表”已具备账户主数据，需要先形成新系统第一版只读账户收支统计入口，支撑用户判断报表是否可用。`
+- completed_step: `新增 sc.account.income.expense.summary SQL view，只读聚合有效账户主数据和资金日报明细；补账户类型汇总行、账户明细行、财务账款菜单、ACL、旧报表清单 target_model 与批次说明文档。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/projection/account_income_expense_summary.py` -> `PASS`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/views/projection/account_income_expense_summary_views.xml` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; summary_count=71, type_rows=8, account_rows=63, with_lines=29, without_lines=34, line_count=7452`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis healthy`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS after restart; post_restart_summary_count=71`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 账户收支统计表具备第一版只读承载入口，但仍保持 partial，因为旧过程多来源资金往来、借还款、保证金等口径尚未完全对账。`
+- risk: `P1; 当前累计收款/累计支出先使用资金日报已承载口径，7454 条 active 资金日报中 7452 条匹配到账户，剩余未匹配和旧过程多来源表需要下一批继续补齐。`
+- rollback: `回退本批提交，升级 smart_construction_core 并重启模拟生产服务即可移除菜单、视图和 SQL view。`
+- next_step: `继续拆旧过程多来源收入/支出来源，优先把未匹配资金日报行和公司财务收支、借还款、账户往来补成可重建事实或投影。`
+
+## 2026-04-28 Batch-Legacy-Account-Transaction
+
+- branch: `codex/dev-env-run`
+- short_sha: `dc7873ba`
+- Layer Target: `Domain Carrier / Domain Projection`
+- Module: `addons/smart_construction_core`, `scripts/migration`, `docs/migration_alignment`
+- Reason: `账户收支统计表旧过程中的 SRJE/ZCJE 来自 C_FKGL_ZHJZJWL 账户间往来，需要先补来源明细载体并接入汇总表，减少 partial 口径缺口。`
+- completed_step: `新增 sc.legacy.account.transaction.line 模型、视图、菜单、ACL、旧库 adapter/write 脚本和 Make target；将 C_FKGL_ZHJZJWL 拆成收入/支出两侧 860 条来源明细；更新 sc.account.income.expense.summary 由来源明细承载收入金额/支出金额/账户往来。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/legacy_account_transaction_line.py addons/smart_construction_core/models/projection/account_income_expense_summary.py scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/views/support/legacy_account_transaction_line_views.xml` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_transaction.replay.adapter` -> `PASS; rows=860`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS; created_rows=860; rerun updated_existing=6`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; transaction_lines=860, matched=837, missing=23, income_amount=305580740.97, expense_amount=304633612.53`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis healthy`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 账户收支统计表已承载旧过程账户往来 SRJE/ZCJE 的主要来源，并保持可重建链路。`
+- risk: `P1; 仍有 23 条账户往来来源明细因旧账户 ID/账号存在歧义未绑定到账户主数据；LJSK/LJZC 的借还款、保证金、公司财务收支等累计来源仍未完全接入。`
+- rollback: `回退本批提交，升级 smart_construction_core 并重启；如需清理模拟生产数据，可删除 sc_legacy_account_transaction_line 中 import_batch=legacy_account_transaction_v1 的记录。`
+- next_step: `继续接入旧过程 LJSK/LJZC 累计收支来源，优先处理 C_CWSFK_GSCWSR/C_CWSFK_GSCWZC 或 C_JFHKLR。`
+
+## 2026-04-28 Batch-Legacy-Company-Finance-Cumulative
+
+- branch: `codex/dev-env-run`
+- short_sha: `917d7dec`
+- Layer Target: `Domain Carrier / Domain Projection`
+- Module: `scripts/migration`, `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `账户收支统计表旧过程 LJSK/LJZC 包含公司财务收入/支出，需要接入 C_CWSFK_GSCWSR/C_CWSFK_GSCWZC 作为累计收支来源。`
+- completed_step: `扩展 fresh_db_legacy_account_transaction_replay_adapter，将 C_CWSFK_GSCWSR 映射为 cumulative/income，将 C_CWSFK_GSCWZC 映射为 cumulative/expense；更新报表清单和迁移说明。`
+- verification:
+  - `python3 -m py_compile scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_transaction.replay.adapter` -> `PASS; rows=5508`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS; created_rows=4648, skipped_existing=860`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis healthy`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; total=5508, matched=4000, missing=1508, cumulative_receipt_amount=4797371.51, cumulative_expense_amount=37802713.64`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 公司财务收入/支出已进入账户收支来源明细，并由账户收支统计表吸收已绑定账户部分。`
+- risk: `P1; 公司财务来源中 1508 条暂未绑定到账户主数据，主要原因是旧表账户字段与 C_Base_ZHSZ 主数据不完全一致；未绑定金额保留在来源明细，不进入账户汇总，避免误归集。`
+- rollback: `回退本批提交后重新生成 adapter；如需清理模拟生产新增数据，可删除 sc_legacy_account_transaction_line 中 source_table in ('C_CWSFK_GSCWSR','C_CWSFK_GSCWZC')。`
+- next_step: `继续接入 C_JFHKLR 收款登记或先补账户主数据别名/账号匹配策略，降低公司财务来源未绑定比例。`
+
+## 2026-04-28 Batch-Legacy-Account-Binding-Quality
+
+- branch: `codex/dev-env-run`
+- short_sha: `af377dbb`
+- Layer Target: `Domain Migration Quality`
+- Module: `scripts/migration`, `docs/migration_alignment`
+- Reason: `公司财务累计来源已写入，但 1508 条未绑定到账户主数据，需要先提升绑定质量，避免报表累计金额长期不可归集。`
+- completed_step: `修复 fresh_db_legacy_account_transaction_replay_write.py 中 search_read 默认 limit=100 导致的账户映射截断；账号/名称匹配改为重复账号下唯一有效账户优先；对已绑定无效账户的来源明细允许修正到有效账户。`
+- verification:
+  - `python3 -m py_compile scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_transaction.replay.adapter` -> `PASS; rows=5508`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS; updated_existing=1918`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; total=5508, matched=5467, missing=41, cumulative_receipt_amount=19389792.15, cumulative_expense_amount=56214413.08`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis healthy`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 账户收支来源明细绑定率从 4000/5508 提升到 5467/5508，账户收支统计表累计收款/累计支出已吸收更多真实来源。`
+- risk: `P2; 仍有 41 条来源明细未绑定，需继续审计是否为真实缺失账户、虚拟账户或需要业务合并的账户别名。`
+- rollback: `回退本批脚本改动；如需回滚模拟生产绑定结果，可按 source_key 重新写入旧脚本匹配结果或清空重放 sc_legacy_account_transaction_line。`
+- next_step: `继续处理剩余 41 条未绑定来源，或接入 C_JFHKLR 收款登记来源。`
+
+## 2026-04-28 Batch-Legacy-Receipt-Income-Cumulative
+
+- branch: `codex/dev-env-run`
+- short_sha: `5587d829`
+- Layer Target: `Domain Carrier / Domain Projection`
+- Module: `scripts/migration`, `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `账户收支统计表旧过程 LJSK 包含 C_JFHKLR 收款登记，需要接入同一账户收支来源明细载体。`
+- completed_step: `扩展 fresh_db_legacy_account_transaction_replay_adapter，将 C_JFHKLR 映射为 cumulative/income，字段使用 SKZHID/SKZH/f_JE/f_RQ；更新报表清单和迁移说明。`
+- verification:
+  - `python3 -m py_compile scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_transaction.replay.adapter` -> `PASS; rows=10856`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS; created_rows=5348, skipped_existing=5508`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis healthy`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; total=10856, matched=10752, missing=104, cumulative_receipt_amount=2315201535.13`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; C_JFHKLR 收款登记已进入账户收支统计累计收款口径，来源明细与汇总表同步可用。`
+- risk: `P1; C_JFHKLR 仍有 63 条未绑定账户，整体来源明细未绑定 104 条；旧过程中的付款退回、收入退回、保证金、借还款等来源仍未接入。`
+- rollback: `回退本批 adapter 和文档；如需清理模拟生产新增数据，可删除 sc_legacy_account_transaction_line 中 source_table='C_JFHKLR'。`
+- next_step: `继续接入收入退回/付款退回或保证金、借还款来源，并继续追踪剩余未绑定账户。`
+
+## 2026-04-28 Batch-Legacy-Receipt-Refund-Cumulative
+
+- branch: `codex/dev-env-run`
+- short_sha: `57731ea6`
+- Layer Target: `Domain Carrier / Domain Projection`
+- Module: `scripts/migration`, `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `账户收支统计表旧过程 LJZC 包含收入退回，需要接入同一账户收支来源明细载体。`
+- completed_step: `扩展 fresh_db_legacy_account_transaction_replay_adapter，将 C_JFHKLR_TH 和 C_JFHKLR_TH_ZCDF_CB 映射为 cumulative/expense；其中模拟生产库实际新增自筹收入退回明细 1509 行。`
+- verification:
+  - `python3 -m py_compile scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_transaction.replay.adapter` -> `PASS; rows=12365`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS; created_rows=1509, skipped_existing=10856, missing_account=8`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; total=12365, matched=12253, missing=112, cumulative_expense_amount=179677741.63`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/data/legacy_report_inventory_seed.xml` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis/nginx healthy`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 收入退回来源已进入账户收支统计累计支出口径，来源明细与汇总表同步可用。`
+- risk: `P1; 整体仍有 112 条来源明细未绑定账户；普通 C_JFHKLR_TH 当前无有效行，后续若旧库补录可由本批 SQL 自动承载。`
+- rollback: `回退本批 adapter 和文档；如需清理模拟生产新增数据，可删除 sc_legacy_account_transaction_line 中 source_table in ('C_JFHKLR_TH','C_JFHKLR_TH_ZCDF_CB')。`
+- next_step: `继续接入付款退回、保证金、借还款等累计收支来源，并继续追踪剩余未绑定账户。`
+
+## 2026-04-28 Batch-Legacy-Supplier-Payment-Cumulative
+
+- branch: `codex/dev-env-run`
+- short_sha: `2b1a27dc`
+- Layer Target: `Domain Carrier / Domain Projection`
+- Module: `scripts/migration`, `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `账户收支统计表旧过程 LJZC 包含供应商付款，需要接入同一账户收支来源明细载体。`
+- completed_step: `扩展 fresh_db_legacy_account_transaction_replay_adapter，将 T_FK_Supplier 正常付款映射为 cumulative/expense，并保留 SFZFTK='是' 的付款退回 cumulative/income 分支；账户字段改为 FKZHMC/FKZH 以支持账号兜底绑定。`
+- verification:
+  - `python3 -m py_compile scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_transaction.replay.adapter` -> `PASS; rows=25647`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS; created_rows=13282; rerun updated_existing=5566`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; total=25647, matched=25378, missing=269, T_FK_Supplier missing=157, cumulative_expense_amount=2174506535.61`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/data/legacy_report_inventory_seed.xml` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis/nginx healthy`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 供应商付款已进入账户收支统计累计支出口径，且旧账户 ID 差异通过账号兜底显著降低未绑定量。`
+- risk: `P1; 整体仍有 269 条来源明细未绑定账户，其中 T_FK_Supplier 157 条、金额 36,913,102.92；付款退回当前旧库无有效行，分支仅作为未来可重建能力保留。`
+- rollback: `回退本批 adapter 和文档；如需清理模拟生产新增数据，可删除 sc_legacy_account_transaction_line 中 source_table='T_FK_Supplier'。`
+- next_step: `继续接入借还款、保证金、投标退款等累计收支来源，并继续追踪剩余未绑定账户。`
+
+## 2026-04-28 Batch-Legacy-Risk-Loan-Cumulative
+
+- branch: `codex/dev-env-run`
+- short_sha: `c117e212`
+- Layer Target: `Domain Carrier / Domain Projection`
+- Module: `scripts/migration`, `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `账户收支统计表旧过程 LJSK/LJZC 包含借还款，需要接入同一账户收支来源明细载体。`
+- completed_step: `扩展 fresh_db_legacy_account_transaction_replay_adapter，将 ZJGL_ZCDFSZ_FXJK_HK 映射为 cumulative/income，将 ZJGL_ZCDFSZ_FXJK_JK 映射为 cumulative/expense；同时保留 BGGL_JHK_HKDJ/BGGL_JHK_JKSQ 员工借还款分支。`
+- verification:
+  - `python3 -m py_compile scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_transaction.replay.adapter` -> `PASS; rows=25826`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS; created_rows=179, skipped_existing=25647, missing_account=0`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; total=25826, matched=25557, missing=269, risk_loan_repayment=55223063.02, risk_loan_request=96586522.16, cumulative_receipt_amount=2370424598.15, cumulative_expense_amount=2271093057.77`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/data/legacy_report_inventory_seed.xml` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis/nginx healthy`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 风险借还款已进入账户收支统计累计收款/累计支出口径，且本批新增来源全部绑定到账户。`
+- risk: `P1; 整体仍有 269 条历史来源明细未绑定账户；员工借还款表当前无有效账户行，只保留未来可重建分支。`
+- rollback: `回退本批 adapter 和文档；如需清理模拟生产新增数据，可删除 sc_legacy_account_transaction_line 中 source_table in ('ZJGL_ZCDFSZ_FXJK_HK','ZJGL_ZCDFSZ_FXJK_JK','BGGL_JHK_HKDJ','BGGL_JHK_JKSQ')。`
+- next_step: `继续接入保证金、贷款、投标退款等累计收支来源，并继续追踪剩余未绑定账户。`
+
+## 2026-04-28 Batch-Legacy-Guarantee-Deposit-Cumulative
+
+- branch: `codex/dev-env-run`
+- short_sha: `ff1a964a`
+- Layer Target: `Domain Carrier / Domain Projection`
+- Module: `scripts/migration`, `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `账户收支统计表旧过程 LJSK/LJZC 包含保证金收付和退回，需要接入同一账户收支来源明细载体。`
+- completed_step: `扩展 fresh_db_legacy_account_transaction_replay_adapter，将付保证金/退收保证金映射为 cumulative/expense，将退付保证金/收保证金映射为 cumulative/income；退付保证金账户名补 Y_ZFZHao/Y_ZFZH 账号兜底。`
+- verification:
+  - `python3 -m py_compile scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_transaction.replay.adapter` -> `PASS; rows=33004`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS; created_rows=7178; rerun updated_existing=511`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; total=33004, matched=32473, missing=531, deposit_missing=262, cumulative_receipt_amount=2664417380.65, cumulative_expense_amount=2563246311.67`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/data/legacy_report_inventory_seed.xml` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis/nginx healthy`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 保证金收付和退回已进入账户收支统计累计收款/累计支出口径。`
+- risk: `P1; 整体仍有 531 条历史来源明细未绑定账户，其中保证金来源 262 条、金额 48,318,603.97；主要是虚拟账户、个人临时账户或旧账户未进入账户主数据。`
+- rollback: `回退本批 adapter 和文档；如需清理模拟生产新增数据，可删除 sc_legacy_account_transaction_line 中 source_table in ('ZJGL_BZJGL_Pay_FBZJ','ZJGL_BZJGL_Pay_FBZJTH','ZJGL_BZJGL_Branch_SBZJDJ','ZJGL_BZJGL_Branch_SBZJTH')。`
+- next_step: `继续接入贷款、投标退款等累计收支来源，并继续追踪剩余未绑定账户。`
+
+## 2026-04-28 Batch-Legacy-Loan-Cumulative
+
+- branch: `codex/dev-env-run`
+- short_sha: `e0591c15`
+- Layer Target: `Domain Carrier / Domain Projection`
+- Module: `scripts/migration`, `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `账户收支统计表旧过程 LJSK/LJZC 包含贷款登记和贷款还款，需要接入同一账户收支来源明细载体。`
+- completed_step: `扩展 fresh_db_legacy_account_transaction_replay_adapter，将 ZJGL_ZJSZ_DKGL_DKDJ 映射为 cumulative/income，将 ZJGL_ZJSZ_DKGL_HKDJ 映射为 cumulative/expense。`
+- verification:
+  - `python3 -m py_compile scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_transaction.replay.adapter` -> `PASS; rows=33252`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS; created_rows=248, missing_account=13`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; total=33252, matched=32708, missing=544, loan_registration=52926662.18, loan_repayment=31859781.01, cumulative_receipt_amount=2706269042.83, cumulative_expense_amount=2594581092.68`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/data/legacy_report_inventory_seed.xml` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis/nginx healthy`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 贷款登记和贷款还款已进入账户收支统计累计收款/累计支出口径。`
+- risk: `P1; 整体仍有 544 条历史来源明细未绑定账户，其中贷款来源 13 条、金额 1,225,000.00；主要为利龙旧账户和虚拟账户。`
+- rollback: `回退本批 adapter 和文档；如需清理模拟生产新增数据，可删除 sc_legacy_account_transaction_line 中 source_table in ('ZJGL_ZJSZ_DKGL_DKDJ','ZJGL_ZJSZ_DKGL_HKDJ')。`
+- next_step: `继续接入投标退款、实退回扣等累计收支来源，并继续追踪剩余未绑定账户。`
+
+## 2026-04-28 Batch-Legacy-Deduction-Cumulative
+
+- branch: `codex/dev-env-run`
+- short_sha: `36f3b085`
+- Layer Target: `Domain Carrier / Domain Projection`
+- Module: `scripts/migration`, `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `账户收支统计表旧过程和资金明细包含扣款实缴登记/退回，需要按旧事实方向接入累计支出/累计收款。`
+- completed_step: `扩展 fresh_db_legacy_account_transaction_replay_adapter，将 T_KK_SJDJB_CB 映射为 cumulative/expense，将 T_KK_SJTHB_CB 映射为 cumulative/income；T_KK_SJTHB 表头无金额字段，不直接作为事实。`
+- verification:
+  - `python3 -m py_compile scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/data/legacy_report_inventory_seed.xml` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_transaction.replay.adapter` -> `PASS; rows=39707`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS; created_rows=6455, missing_account=4`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; total=39707, matched=39159, missing=548, deduction_payment=88141282.74, deduction_refund=4842508.14, cumulative_receipt_amount=5421662645.58, cumulative_expense_amount=5363489461.66`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis/nginx healthy`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 扣款实缴登记和扣款实缴退回已进入账户收支统计累计支出/累计收款口径。`
+- risk: `P1; 整体仍有 548 条历史来源明细未绑定账户，其中扣款退回来源 4 条、金额 280,228.18。`
+- rollback: `回退本批 adapter 和文档；如需清理模拟生产新增数据，可删除 sc_legacy_account_transaction_line 中 source_table in ('T_KK_SJDJB_CB','T_KK_SJTHB_CB')。`
+- next_step: `继续接入投标退款等剩余累计收支来源，并继续追踪剩余未绑定账户。`
+
+## 2026-04-28 Batch-Legacy-Account-Source-Coverage
+
+- branch: `codex/dev-env-run`
+- short_sha: `fa21c037`
+- Layer Target: `Domain Projection / Migration Evidence`
+- Module: `docs/migration_alignment`, `addons/smart_construction_core`
+- Reason: `旧过程剩余来源名称存在误导，需要逐项核实有效账户金额来源，避免继续按表名猜测接入。`
+- completed_step: `新增账户收支统计表来源覆盖审计文档，确认旧过程有效账户金额来源均已接入或当前旧库为 0 行；报表清单下一步切换到账户绑定和样本对账。`
+- verification:
+  - `docker exec legacy-mssql-restore ... Report_SP_USP_Select_ZHSZTJB_GS_Tree source coverage query` -> `PASS; effective source matrix produced`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/data/legacy_report_inventory_seed.xml` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis/nginx healthy`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 不再把投标退款候选表作为当前账户收支统计未承载缺口，后续转入 548 条未绑定账户治理和旧报表样本对账。`
+- risk: `P1; 当前结论限定在 Report_SP_USP_Select_ZHSZTJB_GS_Tree 账户收支统计表；若其他旧报表引用投标退款，需要另开报表来源审计。`
+- rollback: `回退本批文档和 legacy_report_inventory_seed.xml 的 next_action 文案。`
+- next_step: `治理未绑定账户来源，或抽取旧报表常用条件做新旧统计结果对账。`
+
+## 2026-04-28 Batch-Legacy-Account-Unbound-Governance
+
+- branch: `codex/dev-env-run`
+- short_sha: `eebdc0e9`
+- Layer Target: `Domain Carrier / Migration Data Quality`
+- Module: `scripts/migration`, `docs/migration_alignment`
+- Reason: `账户收支来源覆盖后仍有 548 条明细未绑定账户，影响账户维度统计连续性。`
+- completed_step: `扩展 fresh_db_legacy_account_transaction_replay_write，在写明细前根据真实历史明细补 legacy_account_transaction_source 历史来源账户，并回填既有明细 account_id。`
+- verification:
+  - `python3 -m py_compile scripts/migration/fresh_db_legacy_account_transaction_replay_write.py scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_transaction.replay.adapter` -> `PASS; rows=39707`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS; supplemental_accounts_created=48, updated_existing=906, missing_account=0`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; missing_total=0, supplemental_accounts=48, summary_rows=120, cumulative_receipt_amount=5677528462.76, cumulative_expense_amount=5574757978.40`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 账户收支来源明细未绑定账户已从 548 降为 0，账户统计表可以按历史来源账户连续展示。`
+- risk: `P1; 历史来源账户来自真实单据引用，不等同于平台正式账户主数据；后续旧报表样本对账时需解释这类账户的来源。`
+- rollback: `回退本批 write 脚本和文档；如需清理模拟生产数据，可删除 sc_legacy_account_master 中 source_table='legacy_account_transaction_source' 并重放上一版账户收支明细。`
+- next_step: `抽取旧报表常用查询条件，做旧过程与新系统账户收支统计表的样本对账。`
+
+## 2026-04-28 Batch-Legacy-Account-Reconciliation-Precheck
+
+- branch: `codex/dev-env-run`
+- short_sha: `c8981528`
+- Layer Target: `Domain Projection / Migration Evidence`
+- Module: `docs/migration_alignment`
+- Reason: `账户收支统计表进入新旧对账前，需要明确旧过程恢复环境限制和新系统连续经营口径差异。`
+- completed_step: `新增对账预检文档，确认旧过程在当前恢复容器中因 tempdb/旧库排序规则冲突无法直接执行，并定义 legacy_exact/new_official/new_continuity 三层对账口径。`
+- verification:
+  - `docker exec legacy-mssql-restore ... EXEC dbo.Report_SP_USP_Select_ZHSZTJB_GS_Tree ...` -> `FAIL_EXPECTED; collation conflict SQL_Latin1_General_CP1_CI_AS vs Chinese_PRC_CI_AS`
+  - `docker exec legacy-mssql-restore ... manual active account source baseline` -> `PASS; active_accounts=63`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; all_summary_rows=120, official_rows=63, supplemental_rows=48`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 对账不能以旧过程总额机械一致为验收，必须拆 legacy_exact/new_official/new_continuity 三层解释。`
+- risk: `P1; 如果必须直接执行旧存储过程，需要先处理恢复容器 tempdb 排序规则或改造临时表 COLLATE。`
+- rollback: `回退本批对账预检文档。`
+- next_step: `实现三层对账脚本，输出 legacy_exact、new_official、new_continuity 的账户类型和账户明细差异矩阵。`
+
+## 2026-04-28 Batch-Legacy-Account-Reconciliation-Matrix
+
+- branch: `codex/dev-env-run`
+- short_sha: `22caf588`
+- Layer Target: `Migration Evidence / Domain Projection Validation`
+- Module: `scripts/migration`, `docs/migration_alignment`
+- Reason: `将账户收支统计表三层对账口径落成可重复执行脚本，避免只停留在人工解释。`
+- completed_step: `新增 legacy_account_income_expense_reconciliation_matrix.py，输出 legacy_exact/new_official/new_continuity 总览、账户类型矩阵、样本账户和差异。`
+- verification:
+  - `python3 -m py_compile scripts/migration/legacy_account_income_expense_reconciliation_matrix.py` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec < scripts/migration/legacy_account_income_expense_reconciliation_matrix.py` -> `PASS; legacy_exact_accounts=63, new_official_accounts=63, new_continuity_accounts=111`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 三层对账矩阵已可重复执行。new_official 比 legacy_exact 多累计收款 1,361,201,053.70、累计支出 1,248,258,421.37；new_continuity 比 new_official 多 48 个历史来源账户、累计收款 127,932,908.59、累计支出 105,634,258.37。`
+- risk: `P1; 当前脚本输出总览和账户类型矩阵，用户可读差异原因 Top 账户列表仍需下一批整理。`
+- rollback: `删除本批脚本和 Batch-AF 文档。`
+- next_step: `输出账户类型差异矩阵和金额差异最大的账户 Top 列表，并按 strict_match/fallback_match/supplemental_account 分类。`
+
+## 2026-04-28 Batch-Legacy-Account-Reconciliation-Top
+
+- branch: `codex/dev-env-run`
+- short_sha: `5ed8b597`
+- Layer Target: `Migration Evidence / Domain Projection Validation`
+- Module: `scripts/migration`, `docs/migration_alignment`
+- Reason: `三层对账总览仍不够业务可读，需要输出账户级 Top 差异和原因分类。`
+- completed_step: `扩展 legacy_account_income_expense_reconciliation_matrix.py，新增 top_account_differences；新增 Batch-AG 差异 Top 文档。`
+- verification:
+  - `python3 -m py_compile scripts/migration/legacy_account_income_expense_reconciliation_matrix.py` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec < scripts/migration/legacy_account_income_expense_reconciliation_matrix.py` -> `PASS; top fallback/supplemental account differences emitted`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 差异已可按 fallback_match 和 supplemental_account 解释，最大正式账户差异为保盛长城华西，最大历史来源账户差异为 1701150000002736。`
+- risk: `P1; 当前仍是迁移证据文档，尚未做成用户界面中的可筛选差异报表。`
+- rollback: `回退脚本 top_account_differences 扩展和 Batch-AG 文档。`
+- next_step: `如继续推进报表验收，应将差异 Top 清单转为可下载/可筛选的迁移对账报表，或进入下一个旧库常用统计报表承载。`
+
+## 2026-04-28 Batch-Legacy-Account-Reconciliation-CSV-Export
+
+- branch: `codex/dev-env-run`
+- short_sha: `e6c2dcf6`
+- Layer Target: `Migration Evidence / Report Export`
+- Module: `scripts/migration`, `docs/migration_alignment`
+- Reason: `账户收支统计三层对账已经具备总览和 Top 差异，需要转成可筛选 CSV，方便业务验收和后续报表页面承载。`
+- completed_step: `扩展 legacy_account_income_expense_reconciliation_matrix.py，新增总览 CSV、账户类型 CSV、Top 差异 CSV 导出，并记录容器内 fallback 路径；新增 Batch-AH 导出说明。`
+- verification:
+  - `python3 -m py_compile scripts/migration/legacy_account_income_expense_reconciliation_matrix.py` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec < scripts/migration/legacy_account_income_expense_reconciliation_matrix.py` -> `PASS; totals/account_type/top_difference CSV artifacts emitted`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; container /tmp fallback artifacts exist and have content`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 账户收支统计三层对账已形成 JSON、Markdown、总览 CSV、账户类型 CSV、Top 差异 CSV 五类证据。`
+- risk: `P2; 当前 fallback 导出路径在 Odoo 容器 /tmp 内，若要给用户下载，需要配置宿主机可取的 MIGRATION_ARTIFACT_ROOT 或接入报表接口。`
+- rollback: `回退本批脚本 CSV 导出扩展和 Batch-AH 文档。`
+- next_step: `继续旧库常用统计分析报表承载，或将本对账 CSV 字段契约化为新系统报表接口。`
+
+## 2026-04-28 Batch-Legacy-AR-AP-Company-Summary
+
+- branch: `codex/dev-env-run`
+- short_sha: `f264f8a8`
+- Layer Target: `Domain Projection / Report View`
+- Module: `addons/smart_construction_core`
+- Reason: `旧库 P0 应收应付报表仍为 partial，需要复用已验证项目应收应付事实，补齐公司/全局项目级汇总入口。`
+- completed_step: `新增 sc.ar.ap.company.summary 只读 SQL view、树/透视/图表视图、菜单、ACL，并更新旧报表清单。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/projection/ar_ap_company_summary.py addons/smart_construction_core/models/projection/ar_ap_project_summary.py` -> `PASS`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/views/projection/ar_ap_company_summary_views.xml addons/smart_construction_core/views/menu.xml addons/smart_construction_core/data/legacy_report_inventory_seed.xml` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis/nginx healthy`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; rows=815, project_rows=11696, wutao can read rows, menu=报表中心/应收应付报表`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 旧库 P0 应收应付报表已有新系统全局项目级只读入口，复用项目口径 27 字段事实。`
+- risk: `P2; 当前按项目汇总项目口径底表，尚未直接执行旧过程 UP_USP_SELECT_YSYFHZB_XM_ZJ 做样本条件对账。`
+- rollback: `回退本批模型、视图、ACL、manifest 和报表清单变更，升级 smart_construction_core 并重启。`
+- next_step: `为全局应收应付报表补专用契约 smoke，或按旧库常用查询条件做新旧项目级汇总对账。`
+
+## 2026-04-28 Batch-Legacy-AR-AP-Company-Smoke
+
+- branch: `codex/dev-env-run`
+- short_sha: `307b4860`
+- Layer Target: `Frontend Contract Gate / Report Verification`
+- Module: `scripts/verify`, `Makefile`, `docs/migration_alignment`
+- Reason: `全局应收应付报表已新增入口，需要固化真实用户前端契约验证，确认自定义前端和 intent 链路能消费该报表。`
+- completed_step: `新增 fe_ar_ap_company_summary_smoke.js 和 make verify.portal.ar_ap_company_summary_smoke.container，验证 load_view、字段中文标签、字段 help、只读权限和 api.data 关键数据。`
+- verification:
+  - `node --check scripts/verify/fe_ar_ap_company_summary_smoke.js` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.portal.ar_ap_company_summary_smoke.container` -> `PASS; rows=815, receivable_rows=658, negative_balance_rows=37`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- artifacts: `artifacts/codex/ar-ap-company-summary/20260428T094217/`
+- result: `PASS; 全局应收应付报表已被真实用户前端契约 smoke 覆盖。`
+- risk: `P2; api.data 查询全局聚合响应偏慢，当前可用但后续高频使用应考虑独立 SQL 聚合或物化快照。`
+- rollback: `回退本批 smoke 脚本、Make target 和文档更新。`
+- next_step: `进入 UP_USP_SELECT_YSYFHZB_XM_ZJ 旧过程样本条件对账，或继续补下一个旧库 P0 报表。`
+
+## 2026-04-28 Batch-Legacy-AR-AP-Company-Proc-Precheck
+
+- branch: `codex/dev-env-run`
+- short_sha: `d9b35027`
+- Layer Target: `Migration Evidence / Legacy Procedure Precheck`
+- Module: `scripts/migration`, `docs/migration_alignment`
+- Reason: `全局应收应付报表进入新旧对账前，需要确认旧过程 UP_USP_SELECT_YSYFHZB_XM_ZJ 的参数、结果集元数据和当前恢复容器执行限制。`
+- completed_step: `新增 legacy_ar_ap_company_proc_precheck.py，读取旧过程参数、结果集元数据、定义样本，并尝试空参数执行；新增 Batch-AK 预检文档。`
+- verification:
+  - `python3 -m py_compile scripts/migration/legacy_ar_ap_company_proc_precheck.py` -> `PASS`
+  - `python3 scripts/migration/legacy_ar_ap_company_proc_precheck.py` -> `PASS; decision=legacy_proc_direct_execution_blocked, params=@XMMC/@KSRQ/@JZRQ, error=Msg 468 collation conflict`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 旧过程参数已确认，但恢复容器中空参数直接执行被 Chinese_PRC_CI_AS vs SQL_Latin1_General_CP1_CI_AS 排序规则冲突阻断。`
+- risk: `P1; 不能直接拿旧过程执行结果做样本对账，下一步需要基于过程定义改造 COLLATE 执行副本或手工 SQL 重建关键聚合。`
+- rollback: `回退本批预检脚本和 Batch-AK 文档。`
+- next_step: `拆解 UP_USP_SELECT_YSYFHZB_XM_ZJ line 149 附近的排序规则冲突来源，生成可执行的只读对账 SQL。`
+
+## 2026-04-28 Batch-Legacy-AR-AP-Company-Collation-Probe
+
+- branch: `codex/dev-env-run`
+- short_sha: `baf24110`
+- Layer Target: `Migration Evidence / Legacy SQL Reconciliation`
+- Module: `scripts/migration`, `docs/migration_alignment`
+- Reason: `旧过程 UP_USP_SELECT_YSYFHZB_XM_ZJ 被 tempdb 与旧库排序规则冲突阻断，需要形成不修改旧库对象的只读 COLLATE 对账入口。`
+- completed_step: `新增 legacy_ar_ap_company_collation_probe.py，从旧过程定义生成 ad-hoc SQL，仅给 #TEMP_RESULT_ZJ/#TEMP_RESULT_ZZJG 字符字段补 COLLATE DATABASE_DEFAULT，并导出旧库结果 CSV/JSON。`
+- verification:
+  - `python3 -m py_compile scripts/migration/legacy_ar_ap_company_collation_probe.py` -> `PASS`
+  - `python3 scripts/migration/legacy_ar_ap_company_collation_probe.py` -> `PASS; row_count=195, income_contract_amount=569590088.6600, output_invoice_amount=496732725.6700, receipt_amount=490319045.6100`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 旧库全局应收应付报表可通过只读 COLLATE 修正版导出 195 行项目级汇总，排序规则冲突来源确认是临时表字符字段继承 tempdb 默认排序规则。`
+- risk: `P1; 本批只建立旧库可执行基线，尚未与 sc.ar.ap.company.summary 做字段级差异矩阵。`
+- rollback: `回退本批 COLLATE 探针脚本和 Batch-AL 文档。`
+- next_step: `读取旧库 CSV 与新系统 sc.ar.ap.company.summary，按 legacy_project_id 输出字段级差异矩阵。`
+
+## 2026-04-28 Batch-Legacy-AR-AP-Company-Reconciliation-Matrix
+
+- branch: `codex/dev-env-run`
+- short_sha: `0234eb9f`
+- Layer Target: `Migration Evidence / Reconciliation Matrix`
+- Module: `scripts/migration`, `docs/migration_alignment`
+- Reason: `旧库全局应收应付报表已有 COLLATE 可执行基线，需要按 legacy_project_id 与新系统 sc.ar.ap.company.summary 做字段级对账矩阵，判断报表承载缺口。`
+- completed_step: `新增 legacy_ar_ap_company_reconciliation_matrix.py，读取旧库 CSV 与新系统报表视图，输出行覆盖、字段汇总差异、Top 项目差异和 Batch-AM 文档。`
+- verification:
+  - `python3 -m py_compile scripts/migration/legacy_ar_ap_company_reconciliation_matrix.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec < scripts/migration/legacy_ar_ap_company_reconciliation_matrix.py` -> `PASS; legacy_rows=195, new_rows=765, matched_rows=195, legacy_only_rows=0, new_only_rows=570`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 旧库 195 行均能在新系统找到对应项目，但新系统额外覆盖 570 个项目，差异主要来自旧常用过程范围收敛与新系统全量经营事实口径不一致。`
+- risk: `P1; 若用户要求完全复刻旧报表口径，需要新增旧口径筛选/视图；若保持新系统全量口径，需要继续解释 570 个 new_only 项目的事实来源。`
+- rollback: `回退本批对账矩阵脚本和 Batch-AM 文档。`
+- next_step: `分类 570 个 new_only 项目来源，并对 Top matched 项目追踪字段级差异来源。`
+
+## 2026-04-28 Batch-Legacy-AR-AP-Company-New-Only-Classifier
+
+- branch: `codex/dev-env-run`
+- short_sha: `10d8b061`
+- Layer Target: `Migration Evidence / Source Classification`
+- Module: `scripts/migration`, `docs/migration_alignment`
+- Reason: `字段级对账发现新系统比旧过程多 570 个带 legacy_project_id 项目，需要解释这些项目是否来自真实业务事实。`
+- completed_step: `新增 legacy_ar_ap_company_new_only_classifier.py，按收入合同、销项发票、收款、支出合同、供应商计价方式、进项发票、付款、抵扣税费、自筹资金、项目余额分类 New Only 项目。`
+- verification:
+  - `python3 -m py_compile scripts/migration/legacy_ar_ap_company_new_only_classifier.py` -> `PASS`
+  - `python3 scripts/migration/legacy_ar_ap_company_collation_probe.py` -> `PASS; legacy_rows=195`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec < scripts/migration/legacy_ar_ap_company_new_only_classifier.py` -> `PASS; new_project_count=815, with_legacy_id=765, without_legacy_id=50, new_only=570, classified=509, unclassified=61`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; New Only 项目多数来自真实经营事实，不能为复刻旧过程而直接裁剪；仍需追踪 61 个零金额边界项和 50 个无旧库项目 ID 报表项目。`
+- risk: `P1; 未分类零金额项目可能来自视图 business_keys 的零金额事实或迁移残留，需要继续追踪以避免报表噪声。`
+- rollback: `回退本批分类脚本和 Batch-AN 文档。`
+- next_step: `输出 61 个未分类项目和 50 个无旧库项目 ID 项目的来源追踪矩阵。`

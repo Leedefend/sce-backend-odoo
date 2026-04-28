@@ -432,7 +432,7 @@ import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { buildSectionLayoutMap, sectionEnabled, sectionOpenDefault, sectionTagIs, type SectionTag } from '../app/sectionLayout';
 import { deriveHomeSectionMaps, flattenHomeOrchestrationBlocks } from '../app/homeOrchestration';
-import { findEntryForHomeActionItem, resolveHomeActionIntent, resolveHomeActionTarget } from '../app/homeActionResolver';
+import { findEntryForHomeActionItemTyped, resolveHomeActionIntent, resolveHomeActionTarget } from '../app/homeActionResolver';
 import { findSceneReadyEntry } from '../app/resolvers/sceneReadyResolver';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
 import PageRenderer from '../components/page/PageRenderer.vue';
@@ -552,7 +552,10 @@ const lastTrackedEmptySignature = ref('');
 const showEmptyHelp = ref(false);
 const isHudEnabled = computed(() => resolveHudEnabled(route));
 const isDeliveryMode = computed(() => isDeliveryModeEnabled());
-const isAdmin = computed(() => String(roleSurface.value?.role_code || '').trim() === 'executive');
+const isAdmin = computed(() => {
+  const groups = session.user?.groups_xmlids || [];
+  return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
+});
 const heroQuickActions = computed(() => {
   const supported = new Set(['open_my_work', 'open_usage_analytics']);
   const actions = pageGlobalActions.value.filter((item) => {
@@ -1716,7 +1719,7 @@ function orchestrationActionTarget(key: string) {
 }
 
 function findEntryForActionItem(item: Record<string, unknown>) {
-  return findEntryForHomeActionItem(item, entries.value);
+  return findEntryForHomeActionItemTyped(item, entries.value);
 }
 
 async function handleHomeBlockAction(event: PageBlockActionEvent) {
@@ -1741,7 +1744,7 @@ async function handleHomeBlockAction(event: PageBlockActionEvent) {
     actionTarget: orchestrationActionTarget,
     query: workspaceContextQuery.value,
     onRefresh: async () => {
-      await session.bootstrap();
+      await session.loadAppInit();
     },
     onFallback: async (key) => {
       if (key === 'open_my_work') {
@@ -1768,7 +1771,7 @@ async function handleHomeBlockAction(event: PageBlockActionEvent) {
   });
 
   if (!handled && actionKey === 'refresh') {
-    await session.bootstrap();
+    await session.loadAppInit();
   }
 }
 

@@ -115,6 +115,23 @@ class TestConstructionContract(TransactionCase):
         self.assertEqual(contract.state, "closed")
 
     @tagged("post_install", "-at_install", "sc_regression", "contract")
+    def test_submit_approval_does_not_require_contract_details(self):
+        contract = self.env["construction.contract"].create(
+            {
+                "type": "out",
+                "subject": "无明细合同",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "tax_id": self.tax_sale_9.id,
+            }
+        )
+
+        contract.action_confirm()
+
+        self.assertEqual(contract.state, "confirmed")
+        self.assertFalse(contract.line_ids)
+
+    @tagged("post_install", "-at_install", "sc_regression", "contract")
     def test_generate_lines_from_budget(self):
         contract = self.env["construction.contract"].create(
             {

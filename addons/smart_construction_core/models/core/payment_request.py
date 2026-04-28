@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError, UserError
 from odoo.tools.float_utils import float_compare
@@ -6,6 +8,8 @@ from odoo.tools.float_utils import float_compare
 from ..support import operating_metrics as opm
 from ..support.state_guard import raise_guard
 from ..support.state_machine import ScStateMachine
+
+_logger = logging.getLogger(__name__)
 
 
 class PaymentRequest(models.Model):
@@ -187,8 +191,19 @@ class PaymentRequest(models.Model):
         tracking=True,
     )
 
+    def _message_post_non_blocking(self, body):
+        for rec in self:
+            try:
+                rec.message_post(body=body)
+            except Exception as exc:
+                _logger.warning(
+                    "Skip payment.request chatter message for %s: %s",
+                    rec.display_name,
+                    exc,
+                )
+
     def _get_active_funding_baseline(self, project):
-        baseline = self.env["project.funding.baseline"].search(
+        baseline = self.env["project.funding.baseline"].sudo().search(
             [
                 ("project_id", "=", project.id),
                 ("state", "=", "active"),
@@ -207,7 +222,7 @@ class PaymentRequest(models.Model):
         ]
         if exclude_ids:
             domain.append(("id", "not in", exclude_ids))
-        data = self.read_group(domain, ["amount:sum"], [])
+        data = self.sudo().read_group(domain, ["amount:sum"], [])
         return data[0].get("amount_sum", data[0].get("amount", 0.0)) if data else 0.0
 
     def _check_project_funding_gate(self, project, amount, exclude_ids=None):
@@ -334,6 +349,13 @@ class PaymentRequest(models.Model):
             require_reason=require_reason,
             company_id=self.company_id,
             project_id=self.project_id,
+        )
+
+    def _has_submit_access(self):
+        return (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_business_initiator")
+            or self.env.user.has_group("smart_construction_core.group_sc_cap_finance_user")
+            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
         )
 
     @api.depends("settlement_id", "settlement_remaining_amount", "amount")
@@ -511,11 +533,7 @@ class PaymentRequest(models.Model):
             rec.is_overpay_risk = float_compare(rec.amount or 0.0, payable, precision_rounding=precision) == 1
 
     def action_submit(self):
-        has_finance_submit_access = (
-            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_user")
-            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
-        )
-        if not has_finance_submit_access:
+        if not self._has_submit_access():
             raise ValidationError(_("你没有提交付款/收款申请的权限。"))
         for rec in self:
             if rec._get_attachment_count() <= 0:
@@ -556,7 +574,7 @@ class PaymentRequest(models.Model):
             rec.with_company(company).with_context(
                 allowed_company_ids=[company.id],
             ).request_validation()
-        self.message_post(body=_("付款/收款申请已提交，进入审批流程。"))
+        self._message_post_non_blocking(_("付款/收款申请已提交，进入审批流程。"))
 
     def action_approve(self):
         for rec in self:
@@ -679,12 +697,20 @@ class PaymentRequest(models.Model):
             rec.with_context(allow_transition=True).write({"state": "approved"})
             after = rec._snapshot_audit_payload()
             rec._audit_transition("payment_approved", before, after, action_name="action_on_tier_approved")
-            rec.message_post(body=_("付款/收款申请审批通过。"))
+            rec._message_post_non_blocking(_("付款/收款申请审批通过。"))
+
+    def _get_tier_reject_reason(self):
+        self.ensure_one()
+        reviews = self.review_ids.filtered(lambda review: review.status == "rejected" and review.comment)
+        if reviews:
+            return reviews.sorted(lambda review: review.write_date or review.create_date, reverse=True)[0].comment
+        return _("OCA审批驳回（未填写原因）")
 
     def action_on_tier_rejected(self, reason=None):
         for rec in self:
             if rec.state != "submit":
                 continue
+            reason = reason or rec._get_tier_reject_reason()
             if not reason:
                 raise_guard(
                     "AUDIT_REASON_REQUIRED",
@@ -703,4 +729,4 @@ class PaymentRequest(models.Model):
                 require_reason=True,
                 action_name="action_on_tier_rejected",
             )
-            rec.message_post(body=_("付款/收款申请审批驳回：%s") % (reason or _("未填写原因")))
+            rec._message_post_non_blocking(_("付款/收款申请审批驳回：%s") % (reason or _("未填写原因")))

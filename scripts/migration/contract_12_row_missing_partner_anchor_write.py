@@ -69,6 +69,7 @@ missing_names: list[str] = []
 resolution_rows: list[dict[str, object]] = []
 created_rows: list[dict[str, object]] = []
 rollback_rows: list[dict[str, object]] = []
+ambiguous_existing_names: list[str] = []
 
 for name in names:
     matches = Partner.search([("name", "=", name)], order="id")
@@ -77,7 +78,13 @@ for name in names:
         resolution_rows.append({"anchor_name": name, "partner_id": rec.id, "resolution": "reuse_existing"})
         continue
     if len(matches) > 1:
-        raise RuntimeError({"ambiguous_existing_partner_anchor": name, "candidate_partner_ids": matches.ids[:20]})
+        migration_matches = matches.filtered(
+            lambda rec: "contract_12_row_missing_partner_anchor_write" in (rec.legacy_source_evidence or "")
+        )
+        rec = (migration_matches or matches)[0]
+        ambiguous_existing_names.append(name)
+        resolution_rows.append({"anchor_name": name, "partner_id": rec.id, "resolution": "reuse_existing_ambiguous_name"})
+        continue
     missing_names.append(name)
 
 try:
@@ -108,6 +115,7 @@ payload = {
     "missing_names": len(missing_names),
     "created_rows": len(created_rows),
     "rollback_rows": len(rollback_rows),
+    "ambiguous_existing_names": len(ambiguous_existing_names),
     "artifacts": {
         "rollback_csv": str(ROLLBACK_CSV),
         "resolution_csv": str(RESOLUTION_CSV),

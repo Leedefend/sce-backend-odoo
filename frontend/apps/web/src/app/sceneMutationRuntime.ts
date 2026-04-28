@@ -2,7 +2,7 @@ import { intentRequestRaw } from '../api/intents';
 import type { MutationContract } from './sceneActionProtocol';
 
 export interface SceneMutationExecuteInput {
-  mutation: MutationContract;
+  mutation: Partial<MutationContract> & Record<string, unknown>;
   actionKey: string;
   recordId?: number | null;
   model?: string;
@@ -24,7 +24,7 @@ function asInt(value: unknown): number {
   return Number.isFinite(num) && num > 0 ? Math.trunc(num) : 0;
 }
 
-function resolveIntentByMutation(mutation: MutationContract): string {
+function resolveIntentByMutation(mutation: Partial<MutationContract> & Record<string, unknown>): string {
   const model = asText(mutation.model).toLowerCase();
   if (model === 'finance.payment.request' || model === 'payment.request') {
     return 'payment.request.execute';

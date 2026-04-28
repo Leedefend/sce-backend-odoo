@@ -8,14 +8,17 @@ type MutationPayload = {
   payload_schema?: {
     required?: string[];
   };
+  type?: string;
   model?: string;
+  operation?: string;
+  [key: string]: unknown;
 };
 
 type ContractActionButtonLike = {
   key: string;
   label?: string;
-  enabled: boolean;
-  kind: string;
+  enabled?: boolean;
+  kind?: string;
   actionId?: number;
   url?: string;
   target?: string;
@@ -23,7 +26,7 @@ type ContractActionButtonLike = {
   model?: string;
   context?: Dict;
   methodName?: string;
-  selection: ContractActionSelection;
+  selection?: ContractActionSelection;
   refreshPolicy?: Dict;
 };
 
@@ -49,21 +52,9 @@ type UseActionViewActionRuntimeOptions = {
   resolveRequiresRecordContextMessage: (text: (key: string, fallback: string) => string) => string;
   resolveSelectionBlockMessage: (input: { selection: ContractActionSelection; selectedCount: number; text: (key: string, fallback: string) => string }) => string;
   resolveMissingModelMessage: (text: (key: string, fallback: string) => string) => string;
-  executeProjectionRefresh: (options: {
-    policy: Dict;
-    refreshScene: () => Promise<void>;
-    refreshWorkbench: () => Promise<void>;
-    refreshRoleSurface: () => Promise<void>;
-    recordTrace: (payload: { intent: string; writeMode: string; latencyMs?: number }) => void;
-  }) => Promise<void>;
-  executeSceneMutation: (options: {
-    mutation: MutationPayload;
-    actionKey: string;
-    recordId: number | null;
-    model?: string;
-    context: Dict;
-  }) => Promise<unknown>;
-  executeButton: (payload: Dict) => Promise<unknown>;
+  executeProjectionRefresh: (options: any) => Promise<void>;
+  executeSceneMutation: (options: any) => Promise<unknown>;
+  executeButton: (payload: any) => Promise<unknown>;
   buildButtonRequest: (input: {
     model: string;
     recordId: number;
@@ -130,8 +121,10 @@ export function useActionViewActionRuntime(options: UseActionViewActionRuntimeOp
   }
 
   async function runContractAction(action: ContractActionButtonLike) {
-    if (!action.enabled) return;
-    if (action.kind === 'open') {
+    if (action.enabled === false) return;
+    const kind = String(action.kind || '').trim();
+    const selection = action.selection || 'none';
+    if (kind === 'open') {
       const openNavigation = options.resolveOpenNavigation({ actionId: action.actionId, url: action.url });
       if (openNavigation.kind === 'action' && openNavigation.actionId) {
         await options.routerPush(options.buildRouteTarget(openNavigation.actionId));
@@ -147,7 +140,7 @@ export function useActionViewActionRuntime(options: UseActionViewActionRuntimeOp
     }
 
     if (action.mutation) {
-      const ids = resolveSelectedIdsForAction(action.selection, options.selectedIds.value);
+      const ids = resolveSelectedIdsForAction(selection, options.selectedIds.value);
       const contextRecordId = options.resolveActionContextRecordId();
       const execIds = options.resolveExecIds({ selectedIds: ids, contextRecordId });
       if (!execIds.length && mutationRequiresRecordContext(action)) {
@@ -192,9 +185,9 @@ export function useActionViewActionRuntime(options: UseActionViewActionRuntimeOp
       return;
     }
 
-    const ids = resolveSelectedIdsForAction(action.selection, options.selectedIds.value);
+    const ids = resolveSelectedIdsForAction(selection, options.selectedIds.value);
     const selectionMessage = options.resolveSelectionBlockMessage({
-      selection: action.selection,
+      selection,
       selectedCount: ids.length,
       text: options.pageText,
     });
@@ -224,7 +217,7 @@ export function useActionViewActionRuntime(options: UseActionViewActionRuntimeOp
             recordId: id,
             methodName: action.methodName,
             actionKey: action.key,
-            kind: action.kind,
+            kind,
             context: action.context,
           }));
           const nextActionId = options.resolveResponseActionId(response);
@@ -259,4 +252,3 @@ export function useActionViewActionRuntime(options: UseActionViewActionRuntimeOp
     runContractAction,
   };
 }
-

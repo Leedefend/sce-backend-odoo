@@ -323,6 +323,8 @@ class SystemInitPayloadBuilder:
             "intents": intents,
             "feature_flags": feature_flags,
             "role_surface": role_surface,
+            "role_surface_map": row.get("role_surface_map") if isinstance(row.get("role_surface_map"), dict) else {},
+            "role_surface_provider_meta": row.get("role_surface_provider_meta") if isinstance(row.get("role_surface_provider_meta"), dict) else {},
             "scene_channel": str(row.get("scene_channel") or ""),
             "scene_channel_selector": str(row.get("scene_channel_selector") or ""),
             "scene_channel_source_ref": str(row.get("scene_channel_source_ref") or ""),

@@ -8,6 +8,14 @@ _logger = logging.getLogger(__name__)
 
 
 ROLE_SURFACE_OVERRIDES = {
+    "business_config_admin": {
+        "label": "业务配置管理员",
+        "landing_scene_candidates": ["projects.list", "projects.ledger", "projects.intake"],
+        "menu_xmlids": [
+            "smart_construction_core.menu_sc_root",
+            "smart_construction_core.menu_sc_business_config_center",
+        ],
+    },
     "owner": {
         "landing_scene_candidates": ["projects.list", "projects.intake"],
         "menu_xmlids": [
@@ -43,11 +51,11 @@ ROLE_SURFACE_OVERRIDES = {
 }
 
 ROLE_GROUPS_EXPLICIT = {
+    "business_config_admin": {
+        "smart_construction_core.group_sc_cap_business_config_admin",
+    },
     "executive": {
         "smart_construction_custom.group_sc_role_executive",
-        "smart_construction_core.group_sc_super_admin",
-        "smart_construction_core.group_sc_cap_config_admin",
-        "base.group_system",
     },
     "pm": {
         "smart_construction_custom.group_sc_role_pm",
@@ -76,7 +84,7 @@ ROLE_GROUPS_CAPABILITY_FALLBACK = {
     },
 }
 
-ROLE_PRECEDENCE = ("executive", "pm", "finance")
+ROLE_PRECEDENCE = ("business_config_admin", "executive", "pm", "finance")
 
 NAV_MENU_SCENE_MAP = {
     "smart_construction_core.menu_sc_project_initiation": "projects.intake",

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_legacy_account_master_search" model="ir.ui.view">
+        <field name="name">sc.legacy.account.master.search</field>
+        <field name="model">sc.legacy.account.master</field>
+        <field name="arch" type="xml">
+            <search string="历史账户">
+                <field name="name"/>
+                <field name="account_no"/>
+                <field name="account_type"/>
+                <field name="project_id"/>
+                <field name="project_name"/>
+                <filter string="有效账户" name="active_accounts" domain="[('active', '=', True)]"/>
+                <filter string="固定账户" name="fixed_account" domain="[('fixed_account', '=', True)]"/>
+                <filter string="默认账户" name="default_account" domain="[('is_default', '=', True)]"/>
+                <filter string="按账户类型" name="group_account_type" context="{'group_by': 'account_type'}"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_account_master_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.account.master.tree</field>
+        <field name="model">sc.legacy.account.master</field>
+        <field name="arch" type="xml">
+            <tree string="历史账户" create="0" edit="0" delete="0" default_order="account_type, name">
+                <field name="account_type"/>
+                <field name="name"/>
+                <field name="account_no"/>
+                <field name="bank_name"/>
+                <field name="opening_balance" sum="期初余额合计"/>
+                <field name="project_id"/>
+                <field name="fixed_account"/>
+                <field name="is_default"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_account_master_form" model="ir.ui.view">
+        <field name="name">sc.legacy.account.master.form</field>
+        <field name="model">sc.legacy.account.master</field>
+        <field name="arch" type="xml">
+            <form string="历史账户" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="account_no"/>
+                            <field name="account_type"/>
+                            <field name="bank_name"/>
+                        </group>
+                        <group>
+                            <field name="opening_balance"/>
+                            <field name="project_id"/>
+                            <field name="project_name"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group string="旧库信息">
+                        <group>
+                            <field name="legacy_account_id"/>
+                            <field name="project_legacy_id"/>
+                            <field name="legacy_state"/>
+                        </group>
+                        <group>
+                            <field name="fixed_account"/>
+                            <field name="is_default"/>
+                            <field name="sort_no"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="note"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_legacy_account_master" model="ir.actions.act_window">
+        <field name="name">历史账户</field>
+        <field name="res_model">sc.legacy.account.master</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_sc_legacy_account_master_search"/>
+        <field name="context">{'create': False, 'search_default_group_account_type': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                       (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                       (4, ref('smart_construction_core.group_sc_cap_finance_manager')),
+                                       (4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
+    </record>
+
+    <menuitem id="menu_sc_legacy_account_master"
+              name="历史账户"
+              parent="smart_construction_core.menu_sc_finance_center"
+              action="action_sc_legacy_account_master"
+              sequence="36"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_cap_config_admin"/>
+</odoo>

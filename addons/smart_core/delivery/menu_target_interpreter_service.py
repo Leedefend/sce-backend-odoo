@@ -62,6 +62,34 @@ def _build_entry_target(
     return entry_target
 
 
+def _native_model_from_action_meta(action_meta: dict) -> str | None:
+    model = _text(action_meta.get("res_model"))
+    return model or None
+
+
+def _native_view_mode_from_action_meta(action_meta: dict) -> str | None:
+    view_mode = _text(action_meta.get("view_mode"))
+    return view_mode or None
+
+
+def _build_confidence(*, target_type: str, reason_code: str) -> str:
+    if target_type == "scene":
+        return "high"
+    if target_type in {"action", "native", "url", "directory"}:
+        return "medium"
+    if reason_code:
+        return "low"
+    return "unknown"
+
+
+def _uses_compatibility(*, target_type: str, entry_target: dict) -> bool:
+    if target_type == "scene":
+        return False
+    if isinstance(entry_target, dict) and _text(entry_target.get("type")) == "compatibility":
+        return True
+    return target_type in {"action", "native", "url"}
+
+
 TARGET_TYPES = {
     "directory",
     "scene",
@@ -441,6 +469,7 @@ class MenuTargetInterpreterService:
         action_raw = str(node.get("action_raw") or "").strip()
         action_type = str(node.get("action_type") or "").strip()
         action_id = node.get("action_id")
+        action_meta = node.get("action_meta") if isinstance(node.get("action_meta"), dict) else {}
         is_clickable = bool(action_raw)
 
         target_type = "unavailable"
@@ -523,6 +552,12 @@ class MenuTargetInterpreterService:
             route=route,
             target=target,
         )
+        scene_key = _text(target.get("scene_key")) if isinstance(target, dict) else ""
+        native_action_id = _to_int(action_id)
+        native_model = _native_model_from_action_meta(action_meta)
+        native_view_mode = _native_view_mode_from_action_meta(action_meta)
+        confidence = _build_confidence(target_type=target_type, reason_code=reason_code)
+        compatibility_used = _uses_compatibility(target_type=target_type, entry_target=entry_target)
 
         if target_type not in TARGET_TYPES:
             target_type = "unavailable"
@@ -537,6 +572,12 @@ class MenuTargetInterpreterService:
             "is_clickable": bool(is_clickable),
             "target_type": target_type,
             "delivery_mode": delivery_mode,
+            "scene_key": scene_key or None,
+            "native_action_id": native_action_id,
+            "native_model": native_model,
+            "native_view_mode": native_view_mode,
+            "confidence": confidence,
+            "compatibility_used": compatibility_used,
             "route": route,
             "target": target,
             "entry_target": entry_target,

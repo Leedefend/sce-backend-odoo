@@ -16,13 +16,22 @@ class MenuService:
         normalized = str(role_code or "").strip().lower()
         return normalized in {"admin", "platform_admin", "system_admin", "administrator"}
 
+    def _is_business_config_role(self, role_code: str) -> bool:
+        normalized = str(role_code or "").strip().lower()
+        return normalized in {"executive", "business_config_admin", "business_admin", "implementation_admin"}
+
     def _converged_menu(self, *, menu: dict, group_label: str, role_code: str):
         row = dict(menu or {})
         label = str(row.get("label") or "").strip()
         if not label:
             return None
         service = MenuDeliveryConvergenceService()
-        category = service._classify_leaf(label, [group_label, label], is_admin=self._is_admin_role(role_code))
+        category = service._classify_leaf(
+            label,
+            [group_label, label],
+            is_admin=self._is_admin_role(role_code),
+            is_business_config_admin=self._is_business_config_role(role_code),
+        )
         if category.startswith("hidden_"):
             return None
         renamed = service.RENAME_LABELS.get(label)

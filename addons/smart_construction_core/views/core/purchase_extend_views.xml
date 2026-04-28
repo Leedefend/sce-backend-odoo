@@ -1,4 +1,15 @@
 <odoo>
+    <record id="action_sc_purchase_order" model="ir.actions.act_window">
+        <field name="name">采购单</field>
+        <field name="res_model">purchase.order</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{'quotation_only': True}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')),
+                                      (4, ref('smart_construction_core.group_sc_cap_purchase_user')),
+                                      (4, ref('smart_construction_core.group_sc_cap_purchase_manager'))]"/>
+    </record>
+
     <record id="view_purchase_order_form_sc_settlement" model="ir.ui.view">
         <field name="name">purchase.order.form.sc.settlement</field>
         <field name="model">purchase.order</field>
@@ -14,8 +25,22 @@
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.purchase_order_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="validate_tier" type="object" string="审批通过" class="btn-primary"
+                        invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
+                <button name="reject_tier" type="object" string="审批驳回"
+                        invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
+                <field name="validation_status" invisible="1"/>
+                <field name="can_review" invisible="1"/>
+            </xpath>
+
+            <xpath expr="//button[@name='button_confirm']" position="attributes">
+                <attribute name="groups">smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_purchase_user,smart_construction_core.group_sc_cap_purchase_manager</attribute>
+            </xpath>
+
             <xpath expr="//sheet/group/group" position="inside">
                 <field name="project_id"/>
+                <field name="reject_reason" readonly="1" modifiers='{"invisible": [["reject_reason","=",false]]}'/>
             </xpath>
 
             <xpath expr="//field[@name='order_line']/tree/field[@name='name']" position="after">

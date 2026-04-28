@@ -41,6 +41,7 @@ type UseActionViewRequestContextRuntimeOptions = {
   activeContractFilterKey: Ref<string>;
   contractSavedFilterChips: Ref<FilterChip[]>;
   activeSavedFilterKey: Ref<string>;
+  activeCustomFilterDomain: Ref<unknown[]>;
   activeGroupSummaryDomain: Ref<unknown[]>;
   contractGroupByChips: Ref<GroupByChip[]>;
   activeGroupByField: Ref<string>;
@@ -100,6 +101,7 @@ export function useActionViewRequestContextRuntime(options: UseActionViewRequest
     return resolveEffectiveFilterDomainRuntime(
       resolveContractFilterDomain(),
       resolveSavedFilterDomain(),
+      Array.isArray(options.activeCustomFilterDomain.value) ? options.activeCustomFilterDomain.value : [],
       Array.isArray(options.activeGroupSummaryDomain.value) ? options.activeGroupSummaryDomain.value : [],
     );
   }

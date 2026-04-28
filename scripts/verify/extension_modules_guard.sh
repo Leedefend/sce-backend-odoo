@@ -24,6 +24,12 @@ normalized="${raw_value// /}"
 required_modules=(
   "smart_construction_core"
   "smart_construction_portal"
+  "smart_scene"
+  "smart_construction_scene"
+  "smart_license_core"
+  "smart_owner_core"
+  "smart_owner_bundle"
+  "smart_construction_bundle"
 )
 missing_modules=()
 for mod in "${required_modules[@]}"; do
