@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_legacy_supplier_contract_pricing_fact_search" model="ir.ui.view">
+            <field name="name">sc.legacy.supplier.contract.pricing.fact.search</field>
+            <field name="model">sc.legacy.supplier.contract.pricing.fact</field>
+            <field name="arch" type="xml">
+                <search string="历史供应商合同计价方式">
+                    <field name="project_id"/>
+                    <field name="project_name"/>
+                    <field name="partner_id"/>
+                    <field name="partner_name"/>
+                    <field name="pricing_method_text"/>
+                    <filter string="未匹配项目" name="missing_project" domain="[('project_id', '=', False)]"/>
+                    <filter string="未匹配供应商" name="missing_partner" domain="[('partner_id', '=', False)]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按供应商" name="group_partner" context="{'group_by': 'partner_name'}"/>
+                    <filter string="按计价方式" name="group_pricing" context="{'group_by': 'pricing_method_text'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_supplier_contract_pricing_fact_tree" model="ir.ui.view">
+            <field name="name">sc.legacy.supplier.contract.pricing.fact.tree</field>
+            <field name="model">sc.legacy.supplier.contract.pricing.fact</field>
+            <field name="arch" type="xml">
+                <tree string="历史供应商合同计价方式" create="false" edit="false" delete="false">
+                    <field name="project_id"/>
+                    <field name="partner_name"/>
+                    <field name="pricing_method_text"/>
+                    <field name="amount_total" sum="合同金额合计"/>
+                    <field name="document_state"/>
+                    <field name="legacy_contract_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_sc_legacy_supplier_contract_pricing_fact" model="ir.actions.act_window">
+            <field name="name">历史供应商合同计价方式</field>
+            <field name="res_model">sc.legacy.supplier.contract.pricing.fact</field>
+            <field name="view_mode">tree</field>
+            <field name="search_view_id" ref="view_sc_legacy_supplier_contract_pricing_fact_search"/>
+            <field name="context">{'create': False}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin')),
+                                           (4, ref('smart_construction_core.group_sc_cap_contract_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_contract_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
+        </record>
+    </data>
+</odoo>

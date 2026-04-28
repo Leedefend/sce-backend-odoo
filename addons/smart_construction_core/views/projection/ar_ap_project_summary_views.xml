@@ -10,6 +10,7 @@
                     <field name="project_name"/>
                     <field name="partner_id"/>
                     <field name="partner_name"/>
+                    <field name="payable_pricing_method_text"/>
                     <filter string="有未收款" name="has_receivable_unpaid" domain="[('receivable_unpaid_amount', '!=', 0)]"/>
                     <filter string="有已开票未收款" name="has_invoiced_unreceived" domain="[('invoiced_unreceived_amount', '!=', 0)]"/>
                     <filter string="有应付合同" name="has_payable_contract" domain="[('payable_contract_amount', '!=', 0)]"/>
@@ -40,6 +41,7 @@
                     <field name="invoiced_unreceived_amount" sum="已开票未收款合计"/>
                     <field name="received_uninvoiced_amount" sum="已收款未开票合计"/>
                     <field name="payable_contract_amount" sum="应付合同金额合计"/>
+                    <field name="payable_pricing_method_text"/>
                     <field name="input_invoice_amount" sum="供应商发票合计"/>
                     <field name="paid_amount" sum="已付款合计"/>
                     <field name="payable_unpaid_amount" sum="未付款合计"/>

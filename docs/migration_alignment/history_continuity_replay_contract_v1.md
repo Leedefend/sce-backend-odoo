@@ -163,6 +163,8 @@ Supported resume step names:
 - `legacy_project_fund_balance_replay`
 - `legacy_invoice_surcharge_adapter`
 - `legacy_invoice_surcharge_replay`
+- `legacy_supplier_contract_pricing_adapter`
+- `legacy_supplier_contract_pricing_replay`
 - `expense_deposit_partner_targeted_adapter`
 - `expense_deposit_partner_targeted_replay`
 - `legacy_expense_deposit_adapter`
@@ -237,6 +239,7 @@ Supported resume step names:
 - `legacy_self_funding_sc_v1`
 - `legacy_project_fund_balance_sc_v1`
 - `legacy_invoice_surcharge_sc_v1`
+- `legacy_supplier_contract_pricing_sc_v1`
 - `legacy_expense_deposit_sc_v1`
 - `legacy_invoice_tax_sc_v1`
 - `legacy_tax_deduction_sc_v1`

@@ -22,6 +22,7 @@ class ScArApProjectSummary(models.Model):
     invoiced_unreceived_amount = fields.Float(string="已开票未收款", readonly=True)
     received_uninvoiced_amount = fields.Float(string="已收款未开票", readonly=True)
     payable_contract_amount = fields.Float(string="应付合同金额", readonly=True)
+    payable_pricing_method_text = fields.Char(string="计价方式", readonly=True)
     input_invoice_amount = fields.Float(string="已收供应商发票", readonly=True)
     paid_amount = fields.Float(string="已付款", readonly=True)
     payable_unpaid_amount = fields.Float(string="未付款", readonly=True)
@@ -49,6 +50,7 @@ class ScArApProjectSummary(models.Model):
                 to_regclass('sc_legacy_invoice_surcharge_fact'),
                 to_regclass('sc_legacy_tax_deduction_fact'),
                 to_regclass('sc_legacy_self_funding_fact'),
+                to_regclass('sc_legacy_supplier_contract_pricing_fact'),
                 to_regclass('sc_legacy_project_fund_balance_fact')
             """
         )
@@ -229,6 +231,38 @@ class ScArApProjectSummary(models.Model):
                     FROM invoice_surcharge_norm
                     GROUP BY project_id, partner_id, partner_key, partner_name
                 ),
+                supplier_contract_pricing_norm AS (
+                    SELECT
+                        f.project_id,
+                        COALESCE(f.partner_id, pnm.partner_id) AS partner_id,
+                        CASE
+                            WHEN COALESCE(f.partner_id, pnm.partner_id) IS NOT NULL
+                                THEN 'partner:' || COALESCE(f.partner_id, pnm.partner_id)::varchar
+                            ELSE 'name:' || lower(trim(COALESCE(NULLIF(f.partner_name, ''), '未填往来单位')))
+                        END AS partner_key,
+                        COALESCE(rp.name, pnm.partner_name, NULLIF(f.partner_name, ''), '未填往来单位')
+                            AS partner_name,
+                        NULLIF(trim(f.pricing_method_text), '') AS pricing_method_text
+                    FROM sc_legacy_supplier_contract_pricing_fact f
+                    LEFT JOIN res_partner rp ON rp.id = f.partner_id
+                    LEFT JOIN partner_name_map pnm
+                        ON pnm.partner_name_key = lower(trim(f.partner_name))
+                    WHERE f.active IS TRUE
+                      AND COALESCE(f.deleted_flag, '0') IN ('0', '')
+                      AND COALESCE(f.document_state, '0') = '2'
+                      AND NULLIF(trim(f.pricing_method_text), '') IS NOT NULL
+                ),
+                supplier_contract_pricing AS (
+                    SELECT
+                        project_id,
+                        partner_id,
+                        partner_key,
+                        partner_name,
+                        string_agg(DISTINCT pricing_method_text, ', ' ORDER BY pricing_method_text)
+                            AS payable_pricing_method_text
+                    FROM supplier_contract_pricing_norm
+                    GROUP BY project_id, partner_id, partner_key, partner_name
+                ),
                 self_funding_norm AS (
                     SELECT
                         s.project_id,
@@ -286,6 +320,8 @@ class ScArApProjectSummary(models.Model):
                     UNION
                     SELECT project_id, partner_id, partner_key, partner_name FROM invoice_surcharge
                     UNION
+                    SELECT project_id, partner_id, partner_key, partner_name FROM supplier_contract_pricing
+                    UNION
                     SELECT project_id, partner_id, partner_key, partner_name FROM self_funding
                 )
                 SELECT
@@ -307,6 +343,7 @@ class ScArApProjectSummary(models.Model):
                     GREATEST(COALESCE(r.receipt_amount, 0.0) - COALESCE(oi.output_invoice_amount, 0.0), 0.0)
                         AS received_uninvoiced_amount,
                     COALESCE(pc.payable_contract_amount, 0.0) AS payable_contract_amount,
+                    COALESCE(scp.payable_pricing_method_text, '') AS payable_pricing_method_text,
                     COALESCE(ii.input_invoice_amount, 0.0) AS input_invoice_amount,
                     COALESCE(po.paid_amount, 0.0) AS paid_amount,
                     GREATEST(COALESCE(ii.input_invoice_amount, 0.0) - COALESCE(po.paid_amount, 0.0), 0.0)
@@ -347,6 +384,8 @@ class ScArApProjectSummary(models.Model):
                     ON td.project_id IS NOT DISTINCT FROM k.project_id AND td.partner_key = k.partner_key
                 LEFT JOIN invoice_surcharge ins
                     ON ins.project_id IS NOT DISTINCT FROM k.project_id AND ins.partner_key = k.partner_key
+                LEFT JOIN supplier_contract_pricing scp
+                    ON scp.project_id IS NOT DISTINCT FROM k.project_id AND scp.partner_key = k.partner_key
                 LEFT JOIN self_funding sf
                     ON sf.project_id IS NOT DISTINCT FROM k.project_id AND sf.partner_key = k.partner_key
                 LEFT JOIN project_fund_balance pfb

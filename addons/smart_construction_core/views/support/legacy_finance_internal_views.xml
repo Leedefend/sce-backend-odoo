@@ -96,6 +96,13 @@
               sequence="38"
               groups="smart_construction_core.group_sc_cap_config_admin"/>
 
+    <menuitem id="menu_sc_legacy_supplier_contract_pricing_fact"
+              name="历史供应商合同计价方式"
+              parent="menu_sc_finance_history_center"
+              action="smart_construction_core.action_sc_legacy_supplier_contract_pricing_fact"
+              sequence="39"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+
     <menuitem id="menu_sc_legacy_financing_loan_fact"
               name="历史融资借款"
               parent="menu_sc_finance_history_center"
@@ -143,6 +150,9 @@
       <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
     <record id="menu_sc_legacy_project_fund_balance_fact" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_supplier_contract_pricing_fact" model="ir.ui.menu">
       <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
     <record id="menu_sc_legacy_financing_loan_fact" model="ir.ui.menu">

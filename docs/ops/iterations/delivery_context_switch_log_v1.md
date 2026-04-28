@@ -31307,3 +31307,26 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 本批验证使用 START_AT 局部续跑避免全量历史重建耗时，未重置数据库重新执行 full fresh init。`
 - rollback: `回退本批次提交即可移除新增重建编排；已有事实表数据不受影响。`
 - next_step: `继续拆解旧库实际可用余额字段，并同步纳入完整重建链路。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Pricing-Method
+
+- branch: `codex/dev-env-run`
+- short_sha: `8ab78a6b`
+- Layer Target: `Domain Projection`
+- Module: `addons/smart_construction_core`, `scripts/migration`, `docs/migration_alignment`
+- Reason: `旧库“应收应付报表（项目）”字段 JJFS_YF/计价方式来源于供应商合同 T_GYSHT_INFO.JJFSTEXT，新系统应以历史供应商合同计价方式事实承载，并进入 sc.ar.ap.project.summary。`
+- completed_step: `新增 sc.legacy.supplier.contract.pricing.fact、内部菜单、ACL、旧库 adapter/write 脚本；sc.ar.ap.project.summary 新增 计价方式 字段并按项目+往来单位聚合去重显示；接入 history_continuity_oneclick.sh 支持完整重建。`
+- verification:
+  - `python3 -m py_compile legacy_supplier_contract_pricing_fact.py ar_ap_project_summary.py fresh_db_legacy_supplier_contract_pricing_replay_*.py` -> `PASS`
+  - `python3 stdlib XML parse legacy_supplier_contract_pricing_views.xml / legacy_finance_internal_views.xml / ar_ap_project_summary_views.xml` -> `PASS`
+  - `CSV ir.model.access duplicate id check` -> `PASS; rows=352 duplicate_ids=[]`
+  - `bash -n scripts/migration/history_continuity_oneclick.sh` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_prod_sim make mod.upgrade` -> `PASS`
+  - `python3 scripts/migration/fresh_db_legacy_supplier_contract_pricing_replay_adapter.py` -> `PASS; expected_rows=5345, pricing_method_rows=4677, distinct_pricing_methods=17`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_supplier_contract_pricing_replay_write.py` -> `PASS; created_rows=5345, missing_project=11, missing_partner=32`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim HISTORY_CONTINUITY_START_AT=legacy_supplier_contract_pricing_adapter HISTORY_CONTINUITY_STOP_AFTER=legacy_supplier_contract_pricing_replay MIGRATION_ARTIFACT_ROOT=/tmp/history_continuity/sc_prod_sim/codex_rebuild_chain_supplier_contract_pricing make history.continuity.replay` -> `PASS; updated_rows=5345, created_rows=0, missing_project=11, missing_partner=32`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `fact_rows=5345, non_empty_rows=4677, empty_rows=668, distinct_non_empty_trimmed=17, summary_rows=11640, summary_rows_with_pricing=3412`
+- result: `PASS; 应收应付报表（项目）已补齐供应商合同计价方式文本维度，并具备完整重建能力。`
+- risk: `P1; 11 条旧供应商合同项目未匹配，32 条旧供应商合同往来单位未匹配，当前保留历史名称进入事实表。`
+- rollback: `回退本批次提交并升级 smart_construction_core；如需回滚模拟生产数据，可按 import_batch=legacy_supplier_contract_pricing_v1 删除 sc.legacy.supplier.contract.pricing.fact 行后升级模块。`
+- next_step: `执行旧报表 27 字段全口径可用矩阵审计，确认剩余字段是已承载、待承载、异常事实还是明确不迁移。`
