@@ -127,6 +127,7 @@
         'views/core/settlement_views.xml',
         'views/projection/ar_ap_project_summary_views.xml',
         'views/projection/fund_daily_views.xml',
+        'views/projection/account_income_expense_summary_views.xml',
         'views/projection/financing_ledger_views.xml',
         'views/projection/treasury_ledger_views.xml',
         'views/core/workflow_views.xml',

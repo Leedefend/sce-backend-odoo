@@ -31483,3 +31483,26 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 写入结果 JSON 在 /mnt/artifacts/migration 权限不足时回落到 /tmp；后续可统一容器 artifact 权限。`
 - rollback: `回退本批提交，升级 smart_construction_core；如需清理模拟生产数据，可删除 sc_legacy_account_master 中 source_table=C_Base_ZHSZ 的记录。`
 - next_step: `建立账户收支统计只读聚合第一版，先复用 sc.legacy.account.master、sc.treasury.ledger 与 sc.legacy.fund.daily.line。`
+
+## 2026-04-28 Batch-Legacy-Account-Income-Expense-Summary
+
+- branch: `codex/dev-env-run`
+- short_sha: `10de18f1`
+- Layer Target: `Domain Projection`
+- Module: `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `旧库“账户收支统计表”已具备账户主数据，需要先形成新系统第一版只读账户收支统计入口，支撑用户判断报表是否可用。`
+- completed_step: `新增 sc.account.income.expense.summary SQL view，只读聚合有效账户主数据和资金日报明细；补账户类型汇总行、账户明细行、财务账款菜单、ACL、旧报表清单 target_model 与批次说明文档。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/projection/account_income_expense_summary.py` -> `PASS`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/views/projection/account_income_expense_summary_views.xml` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; summary_count=71, type_rows=8, account_rows=63, with_lines=29, without_lines=34, line_count=7452`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis healthy`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS after restart; post_restart_summary_count=71`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 账户收支统计表具备第一版只读承载入口，但仍保持 partial，因为旧过程多来源资金往来、借还款、保证金等口径尚未完全对账。`
+- risk: `P1; 当前累计收款/累计支出先使用资金日报已承载口径，7454 条 active 资金日报中 7452 条匹配到账户，剩余未匹配和旧过程多来源表需要下一批继续补齐。`
+- rollback: `回退本批提交，升级 smart_construction_core 并重启模拟生产服务即可移除菜单、视图和 SQL view。`
+- next_step: `继续拆旧过程多来源收入/支出来源，优先把未匹配资金日报行和公司财务收支、借还款、账户往来补成可重建事实或投影。`
