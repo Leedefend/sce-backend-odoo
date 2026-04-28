@@ -31167,3 +31167,20 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 当前余额类字段采用同维度明细求和，能满足旧库明细汇总查看；如后续发现旧系统按账户日末余额取末值，需要单独调整口径。`
 - rollback: `回退本批次提交并升级 smart_construction_core，即移除 sc.fund.daily.summary SQL view、菜单与文档。`
 - next_step: `拆解应收应付报表（项目）的旧存储过程字段输出和新系统事实覆盖率。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Report-Design
+
+- branch: `codex/dev-env-run`
+- short_sha: `3755ec35`
+- Layer Target: `业务事实分析层`
+- Module: `docs/migration_alignment`
+- Reason: `旧库 P0 高频报表“应收应付报表（项目）”点击量最高，旧过程依赖收入合同、供应商合同、收款、付款、销项、进项、抵扣、自筹和资金余额等多类事实；直接实现完整 SQL view 风险过高。`
+- completed_step: `抽取 UP_USP_SELECT_YSYFHZB_XM 参数、27 个输出字段、依赖表和旧库行数；核验模拟生产库 construction.contract、sc.receipt.income、sc.payment.execution、payment.ledger、sc.invoice.registration、sc.legacy.invoice.tax.fact 等新模型覆盖率；形成 Batch-D 可实现字段范围和暂缓字段清单。`
+- verification:
+  - `docker exec legacy-mssql-restore sqlcmd sys.parameters/sys.sql_expression_dependencies/OBJECT_DEFINITION` -> `PASS`
+  - `docker exec legacy-mssql-restore sqlcmd source table row counts` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; construction.contract=6889, sc.receipt.income=9543, sc.payment.execution=1192, sc.invoice.registration=27947`
+- result: `PASS; 已明确应收应付项目报表第一阶段可实现字段和关键缺口。`
+- risk: `P1; 旧报表中的已付款、自筹退回、实际可用余额等字段目前没有完整新事实覆盖，下一批不能直接承诺完整口径。`
+- rollback: `回退本批次提交即可移除分析文档和迭代记录。`
+- next_step: `Batch-D 建立 sc.ar.ap.project.summary 第一阶段只读聚合报表，仅覆盖已确认有事实支撑的字段。`
