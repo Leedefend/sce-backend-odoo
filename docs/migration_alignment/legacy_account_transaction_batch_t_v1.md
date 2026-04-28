@@ -59,6 +59,12 @@ Batch-V 在同一载体继续接入收款登记：
 - 发生日期使用 `f_RQ`，账户使用 `SKZHID/SKZH`，金额使用 `f_JE`。
 - 项目优先使用 `XMID/XMMC`，缺失时回退到来源项目和特殊项目字段。
 
+Batch-W 在同一载体继续接入收入退回：
+
+- `C_JFHKLR_TH`：普通收入退回，写入 `direction='expense'`、`metric_bucket='cumulative'`，对应旧过程 `LJZC` 的收入退回部分；当前旧库未发现符合已审核、未删除、有退回账户且金额非零的有效行。
+- `C_JFHKLR_TH_ZCDF_CB`：自筹收入退回明细，关联 `C_JFHKLR_TH_ZCDF` 表头，写入 `direction='expense'`、`metric_bucket='cumulative'`；金额使用 `BCTK`，账户使用 `THZHID/THZH`，日期优先 `THSJ`，再回退 `JNSJ/DJRQ`。
+- 模拟生产库本批新增 `C_JFHKLR_TH_ZCDF_CB` 1509 行，金额 128,341,610.12；其中 1501 行已绑定账户，8 行未绑定账户，未绑定金额 70,118.23。
+
 ## 尚未覆盖
 
 旧过程中的 `LJSK/LJZC` 仍包含多来源：

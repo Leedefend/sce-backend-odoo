@@ -244,12 +244,69 @@ WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
   AND ISNULL(DEL, 0) = 0
   AND ISNULL(DJZT, '0') = '2'
   AND ISNULL(f_JE, 0) <> 0
+UNION ALL
+SELECT
+  {clean_sql("Id + ':receipt_refund'")} AS source_key,
+  'C_JFHKLR_TH' AS source_table,
+  {clean_sql("Id")} AS legacy_record_id,
+  {clean_sql("DJBH")} AS document_no,
+  {clean_sql("CONVERT(varchar(10), THSJ, 23)")} AS transaction_date,
+  {clean_sql("DJZT")} AS document_state,
+  {clean_sql("DEL")} AS deleted_flag,
+  {clean_sql("XMID")} AS project_legacy_id,
+  {clean_sql("XMMC")} AS project_name,
+  {clean_sql("THZHID")} AS account_legacy_id,
+  {clean_sql("THZH")} AS account_name,
+  {clean_sql("WLDWID")} AS counterparty_account_legacy_id,
+  {clean_sql("WLDW")} AS counterparty_account_name,
+  'expense' AS direction,
+  'cumulative' AS metric_bucket,
+  {clean_sql("THJE")} AS amount,
+  {clean_sql("ZJLB")} AS category,
+  {clean_sql("THBZ")} AS source_summary,
+  {clean_sql("BZ")} AS note,
+  '1' AS active
+FROM dbo.C_JFHKLR_TH
+WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
+  AND NULLIF(LTRIM(RTRIM(THZHID)), '') IS NOT NULL
+  AND ISNULL(DEL, 0) = 0
+  AND ISNULL(DJZT, '0') = '2'
+  AND ISNULL(THJE, 0) <> 0
+UNION ALL
+SELECT
+  {clean_sql("cb.Id + ':self_funding_refund'")} AS source_key,
+  'C_JFHKLR_TH_ZCDF_CB' AS source_table,
+  {clean_sql("cb.Id")} AS legacy_record_id,
+  {clean_sql("zb.DJBH")} AS document_no,
+  {clean_sql("CONVERT(varchar(10), COALESCE(cb.THSJ, cb.JNSJ, zb.DJRQ), 23)")} AS transaction_date,
+  {clean_sql("zb.DJZT")} AS document_state,
+  {clean_sql("zb.DEL")} AS deleted_flag,
+  {clean_sql("zb.XMID")} AS project_legacy_id,
+  {clean_sql("zb.XMMC")} AS project_name,
+  {clean_sql("cb.THZHID")} AS account_legacy_id,
+  {clean_sql("cb.THZH")} AS account_name,
+  {clean_sql("cb.JNDWID")} AS counterparty_account_legacy_id,
+  {clean_sql("cb.JNDW")} AS counterparty_account_name,
+  'expense' AS direction,
+  'cumulative' AS metric_bucket,
+  {clean_sql("cb.BCTK")} AS amount,
+  {clean_sql("cb.ZJLB")} AS category,
+  {clean_sql("zb.WLDWFKDW")} AS source_summary,
+  {clean_sql("cb.BZ")} AS note,
+  '1' AS active
+FROM dbo.C_JFHKLR_TH_ZCDF zb
+JOIN dbo.C_JFHKLR_TH_ZCDF_CB cb ON zb.Id = cb.ZBID
+WHERE NULLIF(LTRIM(RTRIM(cb.Id)), '') IS NOT NULL
+  AND NULLIF(LTRIM(RTRIM(cb.THZHID)), '') IS NOT NULL
+  AND ISNULL(zb.DEL, 0) = 0
+  AND ISNULL(zb.DJZT, '0') = '2'
+  AND ISNULL(cb.BCTK, 0) <> 0
 ORDER BY transaction_date, legacy_record_id, direction;
 """
     rows = write_sql_csv(PAYLOAD_CSV, FIELDS, sql)
     payload = {
         "mode": "fresh_db_legacy_account_transaction_replay_adapter",
-        "source_table": "C_FKGL_ZHJZJWL,C_CWSFK_GSCWSR,C_CWSFK_GSCWZC,C_JFHKLR",
+        "source_table": "C_FKGL_ZHJZJWL,C_CWSFK_GSCWSR,C_CWSFK_GSCWZC,C_JFHKLR,C_JFHKLR_TH,C_JFHKLR_TH_ZCDF_CB",
         "rows": rows,
         "csv": str(PAYLOAD_CSV),
         "decision": "legacy_account_transaction_payload_ready" if rows else "STOP_REVIEW_REQUIRED",
