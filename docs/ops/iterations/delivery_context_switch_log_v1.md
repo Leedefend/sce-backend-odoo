@@ -30776,3 +30776,24 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 当前项目台账未展示分组入口，分组并入工具条的视觉效果还需在启用 group_view 的业务页继续做真实浏览器验证。`
 - rollback: `回退本批次提交并重建前端静态包，即恢复看板工具栏内联模板、列表页内部 PageToolbar 和独立分组区。`
 - next_step: `选择存在 group_view 契约的业务列表页，验证共享分组控件的展开、清除、分组结果分页路径。`
+
+## 2026-04-28 Batch-Frontend-Native-Search-Group-Alignment
+
+- branch: `codex/dev-env-run`
+- short_sha: `e7c00fd1`
+- Layer Target: `Frontend contract consumer + shared action toolbar`
+- Module: `frontend/apps/web`
+- Reason: `用户要求搜索分组能力与原生对齐；事实排查发现 ui.contract 已返回原生 search.filters/search.group_by，但前端共享工具栏未承载快速筛选/已保存筛选，且原生 context={'group_by': ...} 的 Python 风格字符串未被归一为真实分组字段。`
+- completed_step: `ActionSurfaceToolbar 增加筛选、已保存筛选、分组统一区域；ActionView 在列表/看板 toolbar slot 中消费同一套筛选/保存筛选/分组事件，旧独立筛选区在共享工具栏可用时不再渲染。useActionViewFilterComputedRuntime 将原生 search filter 中 context_raw 的 group_by 归入分组，普通 domain 筛选保留在筛选区，分组请求使用真实字段而不是 filter name。`
+- verification:
+  - `ENV=test ENV_FILE=.env.prod.sim ... make verify.frontend.typecheck.strict` -> `blocked: local pnpm not found`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend/apps/web node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile --dir /workspace/frontend && pnpm typecheck"`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/577（一般合同），工具栏位于列表头下方 headerY=69、toolbarY=162；工具栏展示筛选=已确认/已签署/补充合同，分组=按合同方/按状态/按类型/按项目，无旧 quick_filters/saved_filters/group_view 独立块，无 console error。`
+  - `Playwright browser: 点击“按状态”后 URL 为 /a/577?group_by=state，api.data 请求 group_by=state、need_group_total=true。`
+  - `Playwright browser: 点击“已签署”后 URL 为 /a/577?preset_filter=state_signed，api.data 请求 domain=[['state','=','signed']]、domain_raw=[('state', '=', 'signed')]。`
+- result: `PASS; 原生 search view 的筛选与分组已进入共享工具栏，并按原生 context.group_by 真实字段请求数据。`
+- risk: `P2; context_raw 兼容当前仅提取 group_by 字段，不扩大为通用 Python literal 解析；如后续需要更多原生 context 键，应优先后端归一契约。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复筛选/已保存筛选独立展示和原 group_by 消费逻辑。`
+- next_step: `继续抽查含 saved_filters/search_panel 的业务 action，确认已保存筛选与更多筛选展开路径。`

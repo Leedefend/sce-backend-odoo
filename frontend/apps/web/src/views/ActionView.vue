@@ -36,7 +36,7 @@
       <p class="contract-missing-summary">{{ vm.strictAlert.summary }}</p>
       <p v-if="vm.strictAlert.defaultsSummary" class="contract-missing-defaults">{{ vm.strictAlert.defaultsSummary }}</p>
     </section>
-    <section v-if="isSectionVisible('quick_filters', { defaultEnabled: pageSectionEnabled('quick_filters', false), tag: 'section', vmVisible: vm.sections.quickFilters && vm.filters.quickFilters.visible })" class="contract-block" :style="getSectionStyle('quick_filters')">
+    <section v-if="showStandaloneQuickFilters" class="contract-block" :style="getSectionStyle('quick_filters')">
       <p class="contract-label">{{ t('label.quick_filters', '快速筛选') }}</p>
       <div class="contract-chips">
         <button
@@ -83,7 +83,7 @@
         </button>
       </div>
     </section>
-    <section v-if="isSectionVisible('saved_filters', { defaultEnabled: pageSectionEnabled('saved_filters', false), tag: 'section', vmVisible: vm.sections.savedFilters && vm.filters.savedFilters.visible })" class="contract-block" :style="getSectionStyle('saved_filters')">
+    <section v-if="showStandaloneSavedFilters" class="contract-block" :style="getSectionStyle('saved_filters')">
       <p class="contract-label">{{ t('label.saved_filters', '已保存筛选') }}</p>
       <div class="contract-chips">
         <button
@@ -286,6 +286,22 @@
           :search-value="toolbarSearchDraft"
           :search-placeholder="t('placeholder.search_keyword', '搜索关键字')"
           :clear-label="t('chip_action_clear', '清除')"
+          :show-filter="showToolbarFilter"
+          :filter-label="t('label.quick_filters', '筛选')"
+          :filter-primary="vm.filters.quickFilters.primary"
+          :filter-overflow="vm.filters.quickFilters.overflow"
+          :active-filter-key="activeContractFilterKey"
+          :show-more-filter="showMoreContractFilters"
+          :more-filter-label="toolbarMoreFilterLabel"
+          :collapse-filter-label="t('chip_more_filters_collapse', '收起更多筛选')"
+          :show-saved-filter="showToolbarSavedFilter"
+          :saved-filter-label="t('label.saved_filters', '已保存')"
+          :saved-filter-primary="vm.filters.savedFilters.primary"
+          :saved-filter-overflow="vm.filters.savedFilters.overflow"
+          :active-saved-filter-key="activeSavedFilterKey"
+          :show-more-saved-filter="showMoreSavedFilters"
+          :more-saved-filter-label="toolbarMoreSavedFilterLabel"
+          :collapse-saved-filter-label="t('chip_more_filters_collapse', '收起更多筛选')"
           :sort-label="t('label.sort', '排序')"
           :sort-options="displaySortOptions"
           :sort-value="sortValue"
@@ -305,6 +321,12 @@
           @search-input="onToolbarSearchInput"
           @search-submit="submitToolbarSearch"
           @clear-search="clearToolbarSearch"
+          @filter="applyContractFilter"
+          @clear-filter="clearContractFilter"
+          @toggle-more-filter="toggleMoreContractFilters"
+          @saved-filter="applySavedFilter"
+          @clear-saved-filter="clearSavedFilter"
+          @toggle-more-saved-filter="toggleMoreSavedFilters"
           @sort="handleSort"
           @group="applyGroupBy"
           @clear-group="clearGroupBy"
@@ -375,6 +397,22 @@
           :search-value="toolbarSearchDraft"
           :search-placeholder="t('placeholder.search_keyword', '搜索关键字')"
           :clear-label="t('chip_action_clear', '清除')"
+          :show-filter="showToolbarFilter"
+          :filter-label="t('label.quick_filters', '筛选')"
+          :filter-primary="vm.filters.quickFilters.primary"
+          :filter-overflow="vm.filters.quickFilters.overflow"
+          :active-filter-key="activeContractFilterKey"
+          :show-more-filter="showMoreContractFilters"
+          :more-filter-label="toolbarMoreFilterLabel"
+          :collapse-filter-label="t('chip_more_filters_collapse', '收起更多筛选')"
+          :show-saved-filter="showToolbarSavedFilter"
+          :saved-filter-label="t('label.saved_filters', '已保存')"
+          :saved-filter-primary="vm.filters.savedFilters.primary"
+          :saved-filter-overflow="vm.filters.savedFilters.overflow"
+          :active-saved-filter-key="activeSavedFilterKey"
+          :show-more-saved-filter="showMoreSavedFilters"
+          :more-saved-filter-label="toolbarMoreSavedFilterLabel"
+          :collapse-saved-filter-label="t('chip_more_filters_collapse', '收起更多筛选')"
           :sort-label="t('label.sort', '排序')"
           :sort-options="displaySortOptions"
           :sort-value="sortValue"
@@ -394,6 +432,12 @@
           @search-input="onToolbarSearchInput"
           @search-submit="submitToolbarSearch"
           @clear-search="clearToolbarSearch"
+          @filter="applyContractFilter"
+          @clear-filter="clearContractFilter"
+          @toggle-more-filter="toggleMoreContractFilters"
+          @saved-filter="applySavedFilter"
+          @clear-saved-filter="clearSavedFilter"
+          @toggle-more-saved-filter="toggleMoreSavedFilters"
           @sort="handleSort"
           @group="applyGroupBy"
           @clear-group="clearGroupBy"
@@ -1027,6 +1071,7 @@ const canCreateRecord = computed(() => {
   return resolveCreateRight(actionContract.value);
 });
 const isKanbanContent = computed(() => vm.value.content.kind === 'kanban');
+const canRenderActionSurfaceToolbar = computed(() => isKanbanContent.value || vm.value.content.kind === 'list');
 const showViewSwitch = computed(() =>
   isSectionVisible('view_switch', {
     defaultEnabled: true,
@@ -1040,21 +1085,48 @@ const toolbarViewModeLabels = computed(() =>
     return acc;
   }, {}),
 );
-const showToolbarSearch = computed(() => isKanbanContent.value || vm.value.content.kind === 'list');
-const showToolbarGroup = computed(() =>
+const showToolbarSearch = computed(() => canRenderActionSurfaceToolbar.value);
+const quickFiltersVisible = computed(() =>
+  isSectionVisible('quick_filters', {
+    defaultEnabled: pageSectionEnabled('quick_filters', true),
+    tag: 'section',
+    vmVisible: vm.value.sections.quickFilters && vm.value.filters.quickFilters.visible,
+  }),
+);
+const savedFiltersVisible = computed(() =>
+  isSectionVisible('saved_filters', {
+    defaultEnabled: pageSectionEnabled('saved_filters', true),
+    tag: 'section',
+    vmVisible: vm.value.sections.savedFilters && vm.value.filters.savedFilters.visible,
+  }),
+);
+const groupViewVisible = computed(() =>
   isSectionVisible('group_view', {
-    defaultEnabled: pageSectionEnabled('group_view', false),
+    defaultEnabled: pageSectionEnabled('group_view', true),
     tag: 'section',
     vmVisible: vm.value.sections.groupBy && vm.value.filters.groupBy.visible,
   }),
 );
-const showStandaloneGroupView = computed(() => showToolbarGroup.value && !showTopActionToolbar.value);
+const showToolbarFilter = computed(() => canRenderActionSurfaceToolbar.value && quickFiltersVisible.value);
+const showToolbarSavedFilter = computed(() => canRenderActionSurfaceToolbar.value && savedFiltersVisible.value);
+const showToolbarGroup = computed(() => canRenderActionSurfaceToolbar.value && groupViewVisible.value);
+const showStandaloneQuickFilters = computed(() => quickFiltersVisible.value && !showToolbarFilter.value);
+const showStandaloneSavedFilters = computed(() => savedFiltersVisible.value && !showToolbarSavedFilter.value);
+const showStandaloneGroupView = computed(() => groupViewVisible.value && !showToolbarGroup.value);
+const toolbarMoreFilterLabel = computed(() =>
+  `${t('chip_more_filters_expand', '更多筛选')} (${vm.value.filters.quickFilters.overflow.length})`,
+);
+const toolbarMoreSavedFilterLabel = computed(() =>
+  `${t('chip_more_filters_expand', '更多筛选')} (${vm.value.filters.savedFilters.overflow.length})`,
+);
 const toolbarMoreGroupLabel = computed(() =>
   `${t('chip_more_group_expand', '更多分组')} (${vm.value.filters.groupBy.overflow.length})`,
 );
 const showTopActionToolbar = computed(() =>
   showViewSwitch.value
   || showToolbarSearch.value
+  || showToolbarFilter.value
+  || showToolbarSavedFilter.value
   || showToolbarGroup.value
   || canCreateRecord.value,
 );

@@ -38,6 +38,94 @@
       </button>
     </div>
 
+    <div v-if="showFilter" class="toolbar-section filter-switch">
+      <p class="contract-label">{{ filterLabel }}</p>
+      <div class="contract-chips">
+        <button
+          v-for="chip in filterPrimary"
+          :key="`filter-${chip.key}`"
+          class="contract-chip"
+          :class="{ active: activeFilterKey === chip.key }"
+          :disabled="loading"
+          @click="$emit('filter', chip.key)"
+        >
+          {{ chip.label }}
+        </button>
+        <button
+          v-if="activeFilterKey"
+          class="contract-chip ghost"
+          :disabled="loading"
+          @click="$emit('clear-filter')"
+        >
+          {{ clearLabel }}
+        </button>
+        <button
+          v-if="filterOverflow.length"
+          class="contract-chip ghost"
+          :disabled="loading"
+          @click="$emit('toggle-more-filter')"
+        >
+          {{ showMoreFilter ? collapseFilterLabel : moreFilterLabel }}
+        </button>
+      </div>
+      <div v-if="showMoreFilter && filterOverflow.length" class="contract-chips overflow-row">
+        <button
+          v-for="chip in filterOverflow"
+          :key="`filter-overflow-${chip.key}`"
+          class="contract-chip"
+          :class="{ active: activeFilterKey === chip.key }"
+          :disabled="loading"
+          @click="$emit('filter', chip.key)"
+        >
+          {{ chip.label }}
+        </button>
+      </div>
+    </div>
+
+    <div v-if="showSavedFilter" class="toolbar-section saved-filter-switch">
+      <p class="contract-label">{{ savedFilterLabel }}</p>
+      <div class="contract-chips">
+        <button
+          v-for="chip in savedFilterPrimary"
+          :key="`saved-filter-${chip.key}`"
+          class="contract-chip"
+          :class="{ active: activeSavedFilterKey === chip.key }"
+          :disabled="loading"
+          @click="$emit('saved-filter', chip.key)"
+        >
+          {{ chip.label }}
+        </button>
+        <button
+          v-if="activeSavedFilterKey"
+          class="contract-chip ghost"
+          :disabled="loading"
+          @click="$emit('clear-saved-filter')"
+        >
+          {{ clearLabel }}
+        </button>
+        <button
+          v-if="savedFilterOverflow.length"
+          class="contract-chip ghost"
+          :disabled="loading"
+          @click="$emit('toggle-more-saved-filter')"
+        >
+          {{ showMoreSavedFilter ? collapseSavedFilterLabel : moreSavedFilterLabel }}
+        </button>
+      </div>
+      <div v-if="showMoreSavedFilter && savedFilterOverflow.length" class="contract-chips overflow-row">
+        <button
+          v-for="chip in savedFilterOverflow"
+          :key="`saved-filter-overflow-${chip.key}`"
+          class="contract-chip"
+          :class="{ active: activeSavedFilterKey === chip.key }"
+          :disabled="loading"
+          @click="$emit('saved-filter', chip.key)"
+        >
+          {{ chip.label }}
+        </button>
+      </div>
+    </div>
+
     <div v-if="sortOptions.length" class="toolbar-section sort-switch">
       <p class="contract-label">{{ sortLabel }}</p>
       <div class="contract-chips">
@@ -117,6 +205,22 @@ defineProps<{
   searchValue: string;
   searchPlaceholder: string;
   clearLabel: string;
+  showFilter: boolean;
+  filterLabel: string;
+  filterPrimary: Array<{ key: string; label: string }>;
+  filterOverflow: Array<{ key: string; label: string }>;
+  activeFilterKey: string;
+  showMoreFilter: boolean;
+  moreFilterLabel: string;
+  collapseFilterLabel: string;
+  showSavedFilter: boolean;
+  savedFilterLabel: string;
+  savedFilterPrimary: Array<{ key: string; label: string }>;
+  savedFilterOverflow: Array<{ key: string; label: string }>;
+  activeSavedFilterKey: string;
+  showMoreSavedFilter: boolean;
+  moreSavedFilterLabel: string;
+  collapseSavedFilterLabel: string;
   sortLabel: string;
   sortOptions: Array<{ label: string; value: string }>;
   sortValue: string;
@@ -139,6 +243,12 @@ defineEmits<{
   'search-composition-end': [event: CompositionEvent];
   'search-submit': [];
   'clear-search': [];
+  filter: [key: string];
+  'clear-filter': [];
+  'toggle-more-filter': [];
+  'saved-filter': [key: string];
+  'clear-saved-filter': [];
+  'toggle-more-saved-filter': [];
   sort: [value: string];
   group: [key: string];
   'clear-group': [];
@@ -161,6 +271,8 @@ defineEmits<{
 
 .toolbar-section,
 .view-switch,
+.filter-switch,
+.saved-filter-switch,
 .sort-switch,
 .group-switch {
   display: flex;
@@ -170,6 +282,11 @@ defineEmits<{
 }
 
 .group-switch {
+  flex-wrap: wrap;
+}
+
+.filter-switch,
+.saved-filter-switch {
   flex-wrap: wrap;
 }
 
@@ -273,6 +390,8 @@ defineEmits<{
 
   .toolbar-section,
   .view-switch,
+  .filter-switch,
+  .saved-filter-switch,
   .sort-switch,
   .group-switch,
   .toolbar-actions {

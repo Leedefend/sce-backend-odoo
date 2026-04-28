@@ -19,6 +19,40 @@ type UseActionViewFilterComputedRuntimeOptions = {
   hasActionViewNoiseMarker: (key: unknown, label: unknown, domainRaw: unknown, contextRaw: unknown) => boolean;
 };
 
+function resolveGroupByFromContextRaw(value: unknown): string {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  const scalarMatch = text.match(/['"]group_by['"]\s*:\s*['"]([^'"]+)['"]/);
+  if (scalarMatch?.[1]) return scalarMatch[1].trim();
+  const listMatch = text.match(/['"]group_by['"]\s*:\s*\[\s*['"]([^'"]+)['"]/);
+  return listMatch?.[1]?.trim() || '';
+}
+
+function resolveGroupByField(
+  row: Record<string, unknown>,
+  context: Dict,
+  contextRaw: unknown,
+  options?: { allowKeyFallback?: boolean },
+): string {
+  const direct = String(row.field || row.group_by || row.groupBy || row.group || '').trim();
+  if (direct) return direct;
+  const fromContext = context.group_by;
+  if (typeof fromContext === 'string') return fromContext.trim();
+  if (Array.isArray(fromContext)) return String(fromContext[0] || '').trim();
+  const fromContextRaw = resolveGroupByFromContextRaw(contextRaw);
+  if (fromContextRaw) return fromContextRaw;
+  if (options?.allowKeyFallback) return String(row.key || row.name || '').trim();
+  return '';
+}
+
+function isGroupByFilter(row: Record<string, unknown>, context: Dict): boolean {
+  const hasGroupBy = Boolean(resolveGroupByField(row, context, row.context_raw));
+  if (!hasGroupBy) return false;
+  const domain = Array.isArray(row.domain) ? row.domain : [];
+  const domainRaw = String(row.domain_raw || '').trim();
+  return !domain.length && !domainRaw;
+}
+
 export function useActionViewFilterComputedRuntime(options: UseActionViewFilterComputedRuntimeOptions) {
   const contractFilterChips = computed(() => {
     const rows = options.actionContract.value?.search?.filters;
@@ -34,6 +68,7 @@ export function useActionViewFilterComputedRuntime(options: UseActionViewFilterC
         const domainRaw = String(row?.domain_raw || '').trim();
         const contextRaw = String(row?.context_raw || '').trim();
         const context = options.parseContractContextRaw(row?.context_raw);
+        if (isGroupByFilter(row, context)) return null;
         return { key, label, domain, domainRaw, context, contextRaw };
       })
       .filter(Boolean)
@@ -85,19 +120,26 @@ export function useActionViewFilterComputedRuntime(options: UseActionViewFilterC
   );
 
   const contractGroupByChips = computed(() => {
-    const rows = options.actionContract.value?.search?.group_by;
-    if (!Array.isArray(rows)) return [];
+    const explicitRows = options.actionContract.value?.search?.group_by;
+    const filterRows = options.actionContract.value?.search?.filters;
+    const rows = [
+      ...(Array.isArray(filterRows) ? filterRows.map((row) => ({ row, source: 'filter' as const })) : []),
+      ...(Array.isArray(explicitRows) ? explicitRows.map((row) => ({ row, source: 'group' as const })) : []),
+    ];
+    const seen = new Set<string>();
     return rows
-      .map((row) => {
-        const raw = row as Record<string, unknown>;
-        const field = String(raw.field || '').trim();
-        const label = String(raw.label || field).trim();
-        if (!field || !label) return null;
-        if (options.isActionViewNumericToken(field) || options.isActionViewNumericToken(label)) return null;
+      .map((entry) => {
+        const raw = entry.row as Record<string, unknown>;
         const contextRaw = String(raw.context_raw || '').trim();
         const context = options.parseContractContextRaw(contextRaw);
+        const field = resolveGroupByField(raw, context, contextRaw, { allowKeyFallback: entry.source === 'group' });
+        const label = String(raw.label || raw.string || raw.name || field).trim();
+        if (!field || !label) return null;
+        if (seen.has(field)) return null;
+        seen.add(field);
+        if (options.isActionViewNumericToken(field) || options.isActionViewNumericToken(label)) return null;
         const isDefault = raw.default === true || raw.is_default === true;
-        return { field, label, context, contextRaw, isDefault };
+        return { key: field, field, label, context, contextRaw, isDefault };
       })
       .filter(Boolean)
       .slice(0, 12);
