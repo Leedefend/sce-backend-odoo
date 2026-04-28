@@ -92,6 +92,7 @@
         'views/support/legacy_receipt_income_views.xml',
         'views/support/legacy_expense_deposit_views.xml',
         'views/support/legacy_invoice_tax_views.xml',
+        'views/support/legacy_invoice_surcharge_views.xml',
         'views/support/legacy_tax_deduction_views.xml',
         'views/support/legacy_self_funding_views.xml',
         'views/support/legacy_project_fund_balance_views.xml',

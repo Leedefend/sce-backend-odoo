@@ -17,6 +17,7 @@
                     <filter string="有未付款" name="has_payable_unpaid" domain="[('payable_unpaid_amount', '!=', 0)]"/>
                     <filter string="有付款超票" name="has_paid_uninvoiced" domain="[('paid_uninvoiced_amount', '!=', 0)]"/>
                     <filter string="有抵扣税额" name="has_deduction_tax" domain="[('deduction_tax_amount', '!=', 0)]"/>
+                    <filter string="有附加税" name="has_surcharge" domain="['|', '|', ('output_surcharge_amount', '!=', 0), ('input_surcharge_amount', '!=', 0), ('deduction_surcharge_amount', '!=', 0)]"/>
                     <filter string="有自筹未退" name="has_self_funding_unreturned" domain="[('self_funding_unreturned_amount', '!=', 0)]"/>
                     <filter string="实际可用余额为负" name="negative_actual_available" domain="[('actual_available_balance', '&lt;', 0)]"/>
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
@@ -47,6 +48,9 @@
                     <field name="input_tax_amount" sum="进项税额合计"/>
                     <field name="deduction_tax_amount" sum="抵扣税额合计"/>
                     <field name="tax_deduction_rate"/>
+                    <field name="output_surcharge_amount" sum="销项附加税合计"/>
+                    <field name="input_surcharge_amount" sum="进项附加税合计"/>
+                    <field name="deduction_surcharge_amount" sum="抵扣附加税合计"/>
                     <field name="self_funding_income_amount" sum="自筹收入合计"/>
                     <field name="self_funding_refund_amount" sum="自筹退回合计"/>
                     <field name="self_funding_unreturned_amount" sum="自筹未退合计"/>
@@ -76,6 +80,9 @@
                     <field name="output_tax_amount" type="measure"/>
                     <field name="input_tax_amount" type="measure"/>
                     <field name="deduction_tax_amount" type="measure"/>
+                    <field name="output_surcharge_amount" type="measure"/>
+                    <field name="input_surcharge_amount" type="measure"/>
+                    <field name="deduction_surcharge_amount" type="measure"/>
                     <field name="self_funding_income_amount" type="measure"/>
                     <field name="self_funding_refund_amount" type="measure"/>
                     <field name="self_funding_unreturned_amount" type="measure"/>
@@ -95,6 +102,9 @@
                     <field name="input_invoice_amount" type="measure"/>
                     <field name="paid_amount" type="measure"/>
                     <field name="deduction_tax_amount" type="measure"/>
+                    <field name="output_surcharge_amount" type="measure"/>
+                    <field name="input_surcharge_amount" type="measure"/>
+                    <field name="deduction_surcharge_amount" type="measure"/>
                     <field name="self_funding_income_amount" type="measure"/>
                     <field name="self_funding_refund_amount" type="measure"/>
                 </graph>

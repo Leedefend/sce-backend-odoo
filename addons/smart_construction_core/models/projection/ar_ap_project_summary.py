@@ -30,6 +30,9 @@ class ScArApProjectSummary(models.Model):
     input_tax_amount = fields.Float(string="进项税额", readonly=True)
     deduction_tax_amount = fields.Float(string="抵扣税额", readonly=True)
     tax_deduction_rate = fields.Float(string="抵扣比例", readonly=True)
+    output_surcharge_amount = fields.Float(string="销项附加税", readonly=True)
+    input_surcharge_amount = fields.Float(string="进项附加税", readonly=True)
+    deduction_surcharge_amount = fields.Float(string="抵扣附加税", readonly=True)
     self_funding_income_amount = fields.Float(string="自筹收入金额", readonly=True)
     self_funding_refund_amount = fields.Float(string="自筹退回金额", readonly=True)
     self_funding_unreturned_amount = fields.Float(string="自筹未退金额", readonly=True)
@@ -43,6 +46,7 @@ class ScArApProjectSummary(models.Model):
                 to_regclass('sc_receipt_income'),
                 to_regclass('sc_invoice_registration'),
                 to_regclass('sc_treasury_ledger'),
+                to_regclass('sc_legacy_invoice_surcharge_fact'),
                 to_regclass('sc_legacy_tax_deduction_fact'),
                 to_regclass('sc_legacy_self_funding_fact'),
                 to_regclass('sc_legacy_project_fund_balance_fact')
@@ -170,13 +174,15 @@ class ScArApProjectSummary(models.Model):
                         END AS partner_key,
                         COALESCE(rp.name, pnm.partner_name, NULLIF(d.partner_name, ''), '未填往来单位')
                             AS partner_name,
-                        COALESCE(d.deduction_tax_amount, 0.0) AS deduction_tax_amount
+                        COALESCE(d.deduction_tax_amount, 0.0) AS deduction_tax_amount,
+                        COALESCE(d.deduction_surcharge_amount, 0.0) AS deduction_surcharge_amount
                     FROM sc_legacy_tax_deduction_fact d
                     LEFT JOIN res_partner rp ON rp.id = d.partner_id
                     LEFT JOIN partner_name_map pnm
                         ON pnm.partner_name_key = lower(trim(d.partner_name))
                     WHERE d.active IS TRUE
                       AND COALESCE(d.deleted_flag, '0') IN ('0', '')
+                      AND COALESCE(d.document_state, '0') = '2'
                 ),
                 tax_deduction AS (
                     SELECT
@@ -184,8 +190,43 @@ class ScArApProjectSummary(models.Model):
                         partner_id,
                         partner_key,
                         partner_name,
-                        SUM(deduction_tax_amount) AS deduction_tax_amount
+                        SUM(deduction_tax_amount) AS deduction_tax_amount,
+                        SUM(deduction_surcharge_amount) AS deduction_surcharge_amount
                     FROM tax_deduction_norm
+                    GROUP BY project_id, partner_id, partner_key, partner_name
+                ),
+                invoice_surcharge_norm AS (
+                    SELECT
+                        s.project_id,
+                        COALESCE(s.partner_id, pnm.partner_id) AS partner_id,
+                        CASE
+                            WHEN COALESCE(s.partner_id, pnm.partner_id) IS NOT NULL
+                                THEN 'partner:' || COALESCE(s.partner_id, pnm.partner_id)::varchar
+                            ELSE 'name:' || lower(trim(COALESCE(NULLIF(s.partner_name, ''), '未填往来单位')))
+                        END AS partner_key,
+                        COALESCE(rp.name, pnm.partner_name, NULLIF(s.partner_name, ''), '未填往来单位')
+                            AS partner_name,
+                        s.direction,
+                        COALESCE(s.surcharge_amount, 0.0) AS surcharge_amount
+                    FROM sc_legacy_invoice_surcharge_fact s
+                    LEFT JOIN res_partner rp ON rp.id = s.partner_id
+                    LEFT JOIN partner_name_map pnm
+                        ON pnm.partner_name_key = lower(trim(s.partner_name))
+                    WHERE s.active IS TRUE
+                      AND COALESCE(s.deleted_flag, '0') IN ('0', '')
+                      AND COALESCE(s.document_state, '0') = '2'
+                ),
+                invoice_surcharge AS (
+                    SELECT
+                        project_id,
+                        partner_id,
+                        partner_key,
+                        partner_name,
+                        SUM(CASE WHEN direction = 'output' THEN surcharge_amount ELSE 0.0 END)
+                            AS output_surcharge_amount,
+                        SUM(CASE WHEN direction = 'input' THEN surcharge_amount ELSE 0.0 END)
+                            AS input_surcharge_amount
+                    FROM invoice_surcharge_norm
                     GROUP BY project_id, partner_id, partner_key, partner_name
                 ),
                 self_funding_norm AS (
@@ -243,6 +284,8 @@ class ScArApProjectSummary(models.Model):
                     UNION
                     SELECT project_id, partner_id, partner_key, partner_name FROM tax_deduction
                     UNION
+                    SELECT project_id, partner_id, partner_key, partner_name FROM invoice_surcharge
+                    UNION
                     SELECT project_id, partner_id, partner_key, partner_name FROM self_funding
                 )
                 SELECT
@@ -278,6 +321,9 @@ class ScArApProjectSummary(models.Model):
                             THEN COALESCE(td.deduction_tax_amount, 0.0) / COALESCE(oi.output_tax_amount, 0.0)
                         ELSE 0.0
                     END AS tax_deduction_rate,
+                    COALESCE(ins.output_surcharge_amount, 0.0) AS output_surcharge_amount,
+                    COALESCE(ins.input_surcharge_amount, 0.0) AS input_surcharge_amount,
+                    COALESCE(td.deduction_surcharge_amount, 0.0) AS deduction_surcharge_amount,
                     COALESCE(sf.self_funding_income_amount, 0.0) AS self_funding_income_amount,
                     COALESCE(sf.self_funding_refund_amount, 0.0) AS self_funding_refund_amount,
                     COALESCE(sf.self_funding_income_amount, 0.0) - COALESCE(sf.self_funding_refund_amount, 0.0)
@@ -286,21 +332,23 @@ class ScArApProjectSummary(models.Model):
                 FROM keys k
                 LEFT JOIN project_project p ON p.id = k.project_id
                 LEFT JOIN income_contract ic
-                    ON ic.project_id = k.project_id AND ic.partner_key = k.partner_key
+                    ON ic.project_id IS NOT DISTINCT FROM k.project_id AND ic.partner_key = k.partner_key
                 LEFT JOIN payable_contract pc
-                    ON pc.project_id = k.project_id AND pc.partner_key = k.partner_key
+                    ON pc.project_id IS NOT DISTINCT FROM k.project_id AND pc.partner_key = k.partner_key
                 LEFT JOIN receipt r
-                    ON r.project_id = k.project_id AND r.partner_key = k.partner_key
+                    ON r.project_id IS NOT DISTINCT FROM k.project_id AND r.partner_key = k.partner_key
                 LEFT JOIN paid_out po
-                    ON po.project_id = k.project_id AND po.partner_key = k.partner_key
+                    ON po.project_id IS NOT DISTINCT FROM k.project_id AND po.partner_key = k.partner_key
                 LEFT JOIN output_invoice oi
-                    ON oi.project_id = k.project_id AND oi.partner_key = k.partner_key
+                    ON oi.project_id IS NOT DISTINCT FROM k.project_id AND oi.partner_key = k.partner_key
                 LEFT JOIN input_invoice ii
-                    ON ii.project_id = k.project_id AND ii.partner_key = k.partner_key
+                    ON ii.project_id IS NOT DISTINCT FROM k.project_id AND ii.partner_key = k.partner_key
                 LEFT JOIN tax_deduction td
-                    ON td.project_id = k.project_id AND td.partner_key = k.partner_key
+                    ON td.project_id IS NOT DISTINCT FROM k.project_id AND td.partner_key = k.partner_key
+                LEFT JOIN invoice_surcharge ins
+                    ON ins.project_id IS NOT DISTINCT FROM k.project_id AND ins.partner_key = k.partner_key
                 LEFT JOIN self_funding sf
-                    ON sf.project_id = k.project_id AND sf.partner_key = k.partner_key
+                    ON sf.project_id IS NOT DISTINCT FROM k.project_id AND sf.partner_key = k.partner_key
                 LEFT JOIN project_fund_balance pfb
                     ON pfb.project_id = k.project_id
             )

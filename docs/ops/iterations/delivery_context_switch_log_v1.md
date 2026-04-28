@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-28T15:06:24+08:00
+- blocker_key: `legacy_ar_ap_project_surcharge_batch_i_closed`
+- layer_target: `业务事实分析层 / Domain Projection`
+- module: `addons/smart_construction_core + scripts/migration + docs/migration_alignment`
+- reason: `旧库应收应付报表（项目）剩余字段 KPDJFJS/JXSBFJS/DKDJFJS 尚未承载；这三项是发票/抵扣附加税事实，不能由前端或普通税额字段推导。`
+- completed_step: `新增 sc.legacy.invoice.surcharge.fact、旧库 adapter/write、内部菜单和重建 step；报表新增销项附加税、进项附加税、抵扣附加税，并将抵扣税额投影过滤修正为 DJZT=2 && DEL=0；模拟生产写入 27053 行，报表金额与事实表一致：销项附加税 20595859.4964，进项附加税 13328329.2112，抵扣附加税 1759613.9436。`
+- active_commit: `6b02ad54`
+- next_step: `核对应收应付报表（项目）27 个旧字段是否全部进入新系统投影或已明确由其他报表承载；若闭环，进入报表交叉核对和用户口径说明。`
+
 ### 2026-04-28T14:52:27+08:00
 - blocker_key: `legacy_ar_ap_project_fund_balance_batch_h_closed`
 - layer_target: `业务事实分析层 / Domain Projection`

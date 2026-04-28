@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_legacy_invoice_surcharge_fact_search" model="ir.ui.view">
+            <field name="name">sc.legacy.invoice.surcharge.fact.search</field>
+            <field name="model">sc.legacy.invoice.surcharge.fact</field>
+            <field name="arch" type="xml">
+                <search string="历史发票附加税">
+                    <field name="project_id"/>
+                    <field name="project_name"/>
+                    <field name="partner_id"/>
+                    <field name="partner_name"/>
+                    <field name="document_no"/>
+                    <filter string="销项" name="direction_output" domain="[('direction', '=', 'output')]"/>
+                    <filter string="进项" name="direction_input" domain="[('direction', '=', 'input')]"/>
+                    <filter string="未匹配项目" name="missing_project" domain="[('project_id', '=', False)]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按往来单位" name="group_partner" context="{'group_by': 'partner_name'}"/>
+                    <filter string="按方向" name="group_direction" context="{'group_by': 'direction'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_invoice_surcharge_fact_tree" model="ir.ui.view">
+            <field name="name">sc.legacy.invoice.surcharge.fact.tree</field>
+            <field name="model">sc.legacy.invoice.surcharge.fact</field>
+            <field name="arch" type="xml">
+                <tree string="历史发票附加税" create="false" edit="false" delete="false">
+                    <field name="direction"/>
+                    <field name="project_id"/>
+                    <field name="partner_name"/>
+                    <field name="document_no"/>
+                    <field name="invoice_no"/>
+                    <field name="document_date"/>
+                    <field name="surcharge_amount" sum="附加税合计"/>
+                    <field name="source_table"/>
+                    <field name="legacy_line_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_sc_legacy_invoice_surcharge_fact" model="ir.actions.act_window">
+            <field name="name">历史发票附加税</field>
+            <field name="res_model">sc.legacy.invoice.surcharge.fact</field>
+            <field name="view_mode">tree</field>
+            <field name="search_view_id" ref="view_sc_legacy_invoice_surcharge_fact_search"/>
+            <field name="context">{'create': False}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+    </data>
+</odoo>
