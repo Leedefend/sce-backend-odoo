@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_ar_ap_project_summary_search" model="ir.ui.view">
+            <field name="name">sc.ar.ap.project.summary.search</field>
+            <field name="model">sc.ar.ap.project.summary</field>
+            <field name="arch" type="xml">
+                <search string="应收应付报表（项目）">
+                    <field name="project_id"/>
+                    <field name="project_name"/>
+                    <field name="partner_id"/>
+                    <field name="partner_name"/>
+                    <filter string="有未收款" name="has_receivable_unpaid" domain="[('receivable_unpaid_amount', '!=', 0)]"/>
+                    <filter string="有已开票未收款" name="has_invoiced_unreceived" domain="[('invoiced_unreceived_amount', '!=', 0)]"/>
+                    <filter string="有应付合同" name="has_payable_contract" domain="[('payable_contract_amount', '!=', 0)]"/>
+                    <filter string="有供应商发票" name="has_input_invoice" domain="[('input_invoice_amount', '!=', 0)]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按往来单位" name="group_partner" context="{'group_by': 'partner_name'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_ar_ap_project_summary_tree" model="ir.ui.view">
+            <field name="name">sc.ar.ap.project.summary.tree</field>
+            <field name="model">sc.ar.ap.project.summary</field>
+            <field name="arch" type="xml">
+                <tree string="应收应付报表（项目）" create="0" edit="0" delete="0" default_order="project_id, partner_name">
+                    <field name="project_id"/>
+                    <field name="partner_name"/>
+                    <field name="income_contract_amount" sum="收入合同金额合计"/>
+                    <field name="output_invoice_amount" sum="已开票合计"/>
+                    <field name="receipt_amount" sum="已收款合计"/>
+                    <field name="receivable_unpaid_amount" sum="未收款合计"/>
+                    <field name="invoiced_unreceived_amount" sum="已开票未收款合计"/>
+                    <field name="received_uninvoiced_amount" sum="已收款未开票合计"/>
+                    <field name="payable_contract_amount" sum="应付合同金额合计"/>
+                    <field name="input_invoice_amount" sum="供应商发票合计"/>
+                    <field name="output_tax_amount" sum="销项税额合计"/>
+                    <field name="input_tax_amount" sum="进项税额合计"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_ar_ap_project_summary_pivot" model="ir.ui.view">
+            <field name="name">sc.ar.ap.project.summary.pivot</field>
+            <field name="model">sc.ar.ap.project.summary</field>
+            <field name="arch" type="xml">
+                <pivot string="应收应付报表（项目）">
+                    <field name="project_id" type="row"/>
+                    <field name="partner_name" type="row"/>
+                    <field name="income_contract_amount" type="measure"/>
+                    <field name="output_invoice_amount" type="measure"/>
+                    <field name="receipt_amount" type="measure"/>
+                    <field name="receivable_unpaid_amount" type="measure"/>
+                    <field name="invoiced_unreceived_amount" type="measure"/>
+                    <field name="received_uninvoiced_amount" type="measure"/>
+                    <field name="payable_contract_amount" type="measure"/>
+                    <field name="input_invoice_amount" type="measure"/>
+                    <field name="output_tax_amount" type="measure"/>
+                    <field name="input_tax_amount" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <record id="view_sc_ar_ap_project_summary_graph" model="ir.ui.view">
+            <field name="name">sc.ar.ap.project.summary.graph</field>
+            <field name="model">sc.ar.ap.project.summary</field>
+            <field name="arch" type="xml">
+                <graph string="应收应付对比" type="bar" stacked="True">
+                    <field name="project_id" type="row"/>
+                    <field name="income_contract_amount" type="measure"/>
+                    <field name="receipt_amount" type="measure"/>
+                    <field name="payable_contract_amount" type="measure"/>
+                    <field name="input_invoice_amount" type="measure"/>
+                </graph>
+            </field>
+        </record>
+
+        <record id="action_sc_ar_ap_project_summary" model="ir.actions.act_window">
+            <field name="name">应收应付报表（项目）</field>
+            <field name="res_model">sc.ar.ap.project.summary</field>
+            <field name="view_mode">tree,pivot,graph</field>
+            <field name="search_view_id" ref="view_sc_ar_ap_project_summary_search"/>
+            <field name="context">{'create': False, 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager')),
+                                           (4, ref('smart_construction_core.group_sc_cap_contract_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_contract_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
+        </record>
+
+        <menuitem id="menu_sc_ar_ap_project_summary"
+                  name="应收应付报表（项目）"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  action="action_sc_ar_ap_project_summary"
+                  sequence="34"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+    </data>
+</odoo>

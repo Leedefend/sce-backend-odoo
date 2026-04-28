@@ -31184,3 +31184,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 旧报表中的已付款、自筹退回、实际可用余额等字段目前没有完整新事实覆盖，下一批不能直接承诺完整口径。`
 - rollback: `回退本批次提交即可移除分析文档和迭代记录。`
 - next_step: `Batch-D 建立 sc.ar.ap.project.summary 第一阶段只读聚合报表，仅覆盖已确认有事实支撑的字段。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Summary-Stage1
+
+- branch: `codex/dev-env-run`
+- short_sha: `859670b8`
+- Layer Target: `Domain Projection`
+- Module: `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `基于 Batch-C 已确认的新系统事实覆盖率，先承载旧库“应收应付报表（项目）”中可可靠计算的第一阶段字段。`
+- completed_step: `新增 sc.ar.ap.project.summary SQL 只读聚合模型，按项目和往来单位汇总收入合同金额、已开票、已收款、未收款、已开票未收款、已收款未开票、应付合同金额、供应商发票、销项税额和进项税额；新增 tree/pivot/graph/search/action/menu 并挂入报表中心。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/projection/ar_ap_project_summary.py` -> `PASS`
+  - `python3 stdlib XML parse addons/smart_construction_core/views/projection/ar_ap_project_summary_views.xml` -> `PASS`
+  - `CSV ir.model.access duplicate id check` -> `PASS; rows=332 duplicate_ids=[]`
+  - `ENV=test ENV_FILE=.env.prod.sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_prod_sim make mod.upgrade` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `summary_count=10834, partner_bound=10381, partner_unbound=453, menu=True, action=True, totals income_contract_amount=3142399070.99 output_invoice_amount=47602317362.22 receipt_amount=480379794.04 receivable_unpaid_amount=2662019276.95 invoiced_unreceived_amount=47472912552.33 received_uninvoiced_amount=350974984.15 payable_contract_amount=2402859650.36 input_invoice_amount=2642430113.21 output_tax_amount=177414371.67 input_tax_amount=114112494.93`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make verify.restricted` -> `SKIP; Makefile 无 verify.restricted target`
+- result: `PASS; 应收应付报表（项目）第一阶段已在模拟生产库创建 SQL view，并挂入报表中心。`
+- risk: `P1; 已付款、未付款、抵扣、自筹退回、实际可用余额仍未纳入，避免因事实缺口输出错误数字。`
+- rollback: `回退本批次提交并升级 smart_construction_core，即移除 sc.ar.ap.project.summary SQL view、菜单和文档。`
+- next_step: `继续补旧供应商付款、自筹退回、抵扣登记和项目实际可用余额事实后，再扩展剩余字段。`

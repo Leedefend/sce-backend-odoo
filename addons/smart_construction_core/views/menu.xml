@@ -285,17 +285,21 @@
         <field name="parent_id" ref="smart_construction_core.menu_sc_data_center"/>
         <field name="sequence">33</field>
     </record>
-    <record id="menu_sc_fund_daily" model="ir.ui.menu">
+    <record id="menu_sc_ar_ap_project_summary" model="ir.ui.menu">
         <field name="parent_id" ref="smart_construction_core.menu_sc_data_center"/>
         <field name="sequence">34</field>
     </record>
-    <record id="menu_sc_fund_daily_summary" model="ir.ui.menu">
+    <record id="menu_sc_fund_daily" model="ir.ui.menu">
         <field name="parent_id" ref="smart_construction_core.menu_sc_data_center"/>
         <field name="sequence">35</field>
     </record>
-    <record id="menu_sc_fund_daily_line" model="ir.ui.menu">
+    <record id="menu_sc_fund_daily_summary" model="ir.ui.menu">
         <field name="parent_id" ref="smart_construction_core.menu_sc_data_center"/>
         <field name="sequence">36</field>
+    </record>
+    <record id="menu_sc_fund_daily_line" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_data_center"/>
+        <field name="sequence">37</field>
     </record>
 
     <!-- 业务配置：给业务系统管理员，不开放平台系统权限 -->

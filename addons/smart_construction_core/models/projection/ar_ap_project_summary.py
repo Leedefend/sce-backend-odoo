@@ -1,0 +1,183 @@
+# -*- coding: utf-8 -*-
+from odoo import fields, models, tools
+
+
+class ScArApProjectSummary(models.Model):
+    _name = "sc.ar.ap.project.summary"
+    _description = "应收应付报表（项目）"
+    _auto = False
+    _rec_name = "display_name"
+    _order = "project_id, partner_name"
+
+    display_name = fields.Char(string="汇总项", readonly=True)
+    project_id = fields.Many2one("project.project", string="项目", readonly=True, index=True)
+    project_name = fields.Char(string="项目名称", readonly=True)
+    partner_id = fields.Many2one("res.partner", string="往来单位记录", readonly=True, index=True)
+    partner_key = fields.Char(string="往来单位键", readonly=True, index=True)
+    partner_name = fields.Char(string="往来单位", readonly=True, index=True)
+    income_contract_amount = fields.Float(string="收入合同金额", readonly=True)
+    output_invoice_amount = fields.Float(string="已开票", readonly=True)
+    receipt_amount = fields.Float(string="已收款", readonly=True)
+    receivable_unpaid_amount = fields.Float(string="未收款", readonly=True)
+    invoiced_unreceived_amount = fields.Float(string="已开票未收款", readonly=True)
+    received_uninvoiced_amount = fields.Float(string="已收款未开票", readonly=True)
+    payable_contract_amount = fields.Float(string="应付合同金额", readonly=True)
+    input_invoice_amount = fields.Float(string="已收供应商发票", readonly=True)
+    output_tax_amount = fields.Float(string="销项税额", readonly=True)
+    input_tax_amount = fields.Float(string="进项税额", readonly=True)
+
+    def init(self):
+        self._cr.execute(
+            """
+            SELECT
+                to_regclass('construction_contract'),
+                to_regclass('sc_receipt_income'),
+                to_regclass('sc_invoice_registration')
+            """
+        )
+        if not all(self._cr.fetchone()):
+            return
+        tools.drop_view_if_exists(self._cr, self._table)
+        self._cr.execute(
+            f"""
+            CREATE OR REPLACE VIEW {self._table} AS (
+                WITH income_contract AS (
+                    SELECT
+                        c.project_id,
+                        c.partner_id,
+                        'partner:' || c.partner_id::varchar AS partner_key,
+                        rp.name AS partner_name,
+                        SUM(COALESCE(c.amount_total, 0.0)) AS income_contract_amount
+                    FROM construction_contract c
+                    JOIN res_partner rp ON rp.id = c.partner_id
+                    WHERE c.type = 'out'
+                    GROUP BY c.project_id, c.partner_id, rp.name
+                ),
+                payable_contract AS (
+                    SELECT
+                        c.project_id,
+                        c.partner_id,
+                        'partner:' || c.partner_id::varchar AS partner_key,
+                        rp.name AS partner_name,
+                        SUM(COALESCE(c.amount_total, 0.0)) AS payable_contract_amount
+                    FROM construction_contract c
+                    JOIN res_partner rp ON rp.id = c.partner_id
+                    WHERE c.type = 'in'
+                    GROUP BY c.project_id, c.partner_id, rp.name
+                ),
+                receipt AS (
+                    SELECT
+                        r.project_id,
+                        r.partner_id,
+                        'partner:' || r.partner_id::varchar AS partner_key,
+                        rp.name AS partner_name,
+                        SUM(COALESCE(r.amount, 0.0)) AS receipt_amount
+                    FROM sc_receipt_income r
+                    JOIN res_partner rp ON rp.id = r.partner_id
+                    WHERE r.active IS TRUE
+                      AND r.partner_id IS NOT NULL
+                    GROUP BY r.project_id, r.partner_id, rp.name
+                ),
+                partner_name_map AS (
+                    SELECT
+                        lower(trim(name)) AS partner_name_key,
+                        MIN(id) AS partner_id,
+                        MIN(name) AS partner_name
+                    FROM res_partner
+                    WHERE name IS NOT NULL
+                      AND trim(name) != ''
+                    GROUP BY lower(trim(name))
+                ),
+                invoice_norm AS (
+                    SELECT
+                        i.project_id,
+                        COALESCE(i.partner_id, pnm.partner_id) AS partner_id,
+                        CASE
+                            WHEN COALESCE(i.partner_id, pnm.partner_id) IS NOT NULL
+                                THEN 'partner:' || COALESCE(i.partner_id, pnm.partner_id)::varchar
+                            ELSE 'name:' || lower(trim(COALESCE(NULLIF(i.legacy_partner_name, ''), '未填往来单位')))
+                        END AS partner_key,
+                        COALESCE(rp.name, pnm.partner_name, NULLIF(i.legacy_partner_name, ''), '未填往来单位')
+                            AS partner_name,
+                        i.direction,
+                        COALESCE(i.amount_total, 0.0) AS amount_total,
+                        COALESCE(i.tax_amount, 0.0) AS tax_amount
+                    FROM sc_invoice_registration i
+                    LEFT JOIN res_partner rp ON rp.id = i.partner_id
+                    LEFT JOIN partner_name_map pnm
+                        ON pnm.partner_name_key = lower(trim(i.legacy_partner_name))
+                    WHERE i.active IS TRUE
+                      AND i.direction IN ('input', 'output')
+                ),
+                output_invoice AS (
+                    SELECT
+                        project_id,
+                        CASE WHEN partner_id IS NULL THEN NULL ELSE partner_id END AS partner_id,
+                        partner_key,
+                        partner_name,
+                        SUM(amount_total) AS output_invoice_amount,
+                        SUM(tax_amount) AS output_tax_amount
+                    FROM invoice_norm
+                    WHERE direction = 'output'
+                    GROUP BY project_id, partner_id, partner_key, partner_name
+                ),
+                input_invoice AS (
+                    SELECT
+                        project_id,
+                        CASE WHEN partner_id IS NULL THEN NULL ELSE partner_id END AS partner_id,
+                        partner_key,
+                        partner_name,
+                        SUM(amount_total) AS input_invoice_amount,
+                        SUM(tax_amount) AS input_tax_amount
+                    FROM invoice_norm
+                    WHERE direction = 'input'
+                    GROUP BY project_id, partner_id, partner_key, partner_name
+                ),
+                keys AS (
+                    SELECT project_id, partner_id, partner_key, partner_name FROM income_contract
+                    UNION
+                    SELECT project_id, partner_id, partner_key, partner_name FROM payable_contract
+                    UNION
+                    SELECT project_id, partner_id, partner_key, partner_name FROM receipt
+                    UNION
+                    SELECT project_id, partner_id, partner_key, partner_name FROM output_invoice
+                    UNION
+                    SELECT project_id, partner_id, partner_key, partner_name FROM input_invoice
+                )
+                SELECT
+                    row_number() OVER (ORDER BY k.project_id, k.partner_name, k.partner_key) AS id,
+                    COALESCE(p.name->>'zh_CN', p.name->>'en_US', '未匹配项目') || ' / ' ||
+                        COALESCE(k.partner_name, '未填往来单位') AS display_name,
+                    k.project_id,
+                    COALESCE(p.name->>'zh_CN', p.name->>'en_US') AS project_name,
+                    k.partner_id,
+                    k.partner_key,
+                    k.partner_name,
+                    COALESCE(ic.income_contract_amount, 0.0) AS income_contract_amount,
+                    COALESCE(oi.output_invoice_amount, 0.0) AS output_invoice_amount,
+                    COALESCE(r.receipt_amount, 0.0) AS receipt_amount,
+                    COALESCE(ic.income_contract_amount, 0.0) - COALESCE(r.receipt_amount, 0.0)
+                        AS receivable_unpaid_amount,
+                    GREATEST(COALESCE(oi.output_invoice_amount, 0.0) - COALESCE(r.receipt_amount, 0.0), 0.0)
+                        AS invoiced_unreceived_amount,
+                    GREATEST(COALESCE(r.receipt_amount, 0.0) - COALESCE(oi.output_invoice_amount, 0.0), 0.0)
+                        AS received_uninvoiced_amount,
+                    COALESCE(pc.payable_contract_amount, 0.0) AS payable_contract_amount,
+                    COALESCE(ii.input_invoice_amount, 0.0) AS input_invoice_amount,
+                    COALESCE(oi.output_tax_amount, 0.0) AS output_tax_amount,
+                    COALESCE(ii.input_tax_amount, 0.0) AS input_tax_amount
+                FROM keys k
+                LEFT JOIN project_project p ON p.id = k.project_id
+                LEFT JOIN income_contract ic
+                    ON ic.project_id = k.project_id AND ic.partner_key = k.partner_key
+                LEFT JOIN payable_contract pc
+                    ON pc.project_id = k.project_id AND pc.partner_key = k.partner_key
+                LEFT JOIN receipt r
+                    ON r.project_id = k.project_id AND r.partner_key = k.partner_key
+                LEFT JOIN output_invoice oi
+                    ON oi.project_id = k.project_id AND oi.partner_key = k.partner_key
+                LEFT JOIN input_invoice ii
+                    ON ii.project_id = k.project_id AND ii.partner_key = k.partner_key
+            )
+            """
+        )
