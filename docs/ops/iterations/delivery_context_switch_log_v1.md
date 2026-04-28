@@ -31443,3 +31443,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 当前仅契约透出字段说明，前端是否以 tooltip/help 文案展示取决于后续统一字段说明渲染策略。`
 - rollback: `回退本批提交后升级 smart_core,smart_construction_core，并重启模拟生产后端。`
 - next_step: `继续迁移旧库常用统计分析报表，优先审计下一张报表的数据源、字段口径和可重建脚本。`
+
+## 2026-04-28 Batch-Legacy-Account-Income-Expense-Audit
+
+- branch: `codex/dev-env-run`
+- short_sha: `39ba1f19`
+- Layer Target: `Domain Projection Audit`
+- Module: `docs/migration_alignment`
+- Reason: `旧库“账户收支统计表”是 P0 第二高频报表，当前承载状态 partial；需要先拆清旧过程字段、账户维度和新库事实条件，避免直接生成空报表。`
+- completed_step: `审计 Report_SP_USP_Select_ZHSZTJB_GS_Tree：确认其是账户类型+账户二级树形报表，指标包含支出、收入、期初余额、累计收款、累计支出、账户往来、当前账户余额；确认 C_Base_ZHSZ 117 个账户尚未作为独立主数据承载。`
+- verification:
+  - `docker exec legacy-mssql-restore sqlcmd OBJECT_DEFINITION(Report_SP_USP_Select_ZHSZTJB_GS_Tree)` -> `PASS`
+  - `docker exec legacy-mssql-restore sqlcmd table counts` -> `PASS; C_Base_ZHSZ=117, C_CWSFK_GSCWSR=4702, C_CWSFK_GSCWZC=2726, C_JFHKLR=7412, C_FKGL_ZHJZJWL=431`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; sc_treasury_ledger=16047, fund_daily_line table rows=7754, active rows=7454, account_names=38, account_legacy_ids=39`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 账户收支统计表当前仍是 partial，已有资金台账和资金日报明细基础，但缺账户主数据与多来源账户收支聚合。`
+- risk: `P1; 旧过程直接执行在还原库触发 collation conflict，本批采用过程定义和表事实审计；建模前仍需用等价 SQL 或修正 collation 方式复核样本数。`
+- rollback: `本批仅新增审计文档和上下文日志，回退提交即可。`
+- next_step: `为 C_Base_ZHSZ 建账户主数据承载，并建立账户收支统计只读聚合的第一版。`
