@@ -31837,3 +31837,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 当前仍是迁移证据文档，尚未做成用户界面中的可筛选差异报表。`
 - rollback: `回退脚本 top_account_differences 扩展和 Batch-AG 文档。`
 - next_step: `如继续推进报表验收，应将差异 Top 清单转为可下载/可筛选的迁移对账报表，或进入下一个旧库常用统计报表承载。`
+
+## 2026-04-28 Batch-Legacy-Account-Reconciliation-CSV-Export
+
+- branch: `codex/dev-env-run`
+- short_sha: `e6c2dcf6`
+- Layer Target: `Migration Evidence / Report Export`
+- Module: `scripts/migration`, `docs/migration_alignment`
+- Reason: `账户收支统计三层对账已经具备总览和 Top 差异，需要转成可筛选 CSV，方便业务验收和后续报表页面承载。`
+- completed_step: `扩展 legacy_account_income_expense_reconciliation_matrix.py，新增总览 CSV、账户类型 CSV、Top 差异 CSV 导出，并记录容器内 fallback 路径；新增 Batch-AH 导出说明。`
+- verification:
+  - `python3 -m py_compile scripts/migration/legacy_account_income_expense_reconciliation_matrix.py` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec < scripts/migration/legacy_account_income_expense_reconciliation_matrix.py` -> `PASS; totals/account_type/top_difference CSV artifacts emitted`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; container /tmp fallback artifacts exist and have content`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 账户收支统计三层对账已形成 JSON、Markdown、总览 CSV、账户类型 CSV、Top 差异 CSV 五类证据。`
+- risk: `P2; 当前 fallback 导出路径在 Odoo 容器 /tmp 内，若要给用户下载，需要配置宿主机可取的 MIGRATION_ARTIFACT_ROOT 或接入报表接口。`
+- rollback: `回退本批脚本 CSV 导出扩展和 Batch-AH 文档。`
+- next_step: `继续旧库常用统计分析报表承载，或将本对账 CSV 字段契约化为新系统报表接口。`

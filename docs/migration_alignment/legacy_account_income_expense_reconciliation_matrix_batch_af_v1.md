@@ -53,3 +53,5 @@ ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim \
 ## 下一步
 
 Batch-AG 已把三层对账矩阵进一步收敛为用户可读的账户级 Top 差异清单，并将差异原因分类为 `fallback_match` 和 `supplemental_account`。
+
+Batch-AH 已继续把总览、账户类型、Top 差异三类结果输出为 CSV，便于业务人员用表格筛选和复核。

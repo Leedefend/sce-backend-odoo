@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import csv
 import json
 import os
 from collections import defaultdict
@@ -114,6 +115,30 @@ def write_json(path: Path, payload: dict[str, object]) -> None:
         fallback = Path("/tmp") / path.name
         payload["artifact_fallback"] = str(fallback)
         fallback.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def writable_path(path: Path, payload: dict[str, object], artifact_key: str) -> Path:
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        return path
+    except PermissionError:
+        fallback = Path("/tmp") / path.name
+        payload["artifacts"][f"{artifact_key}_fallback"] = str(fallback)
+        return fallback
+
+
+def write_csv(
+    path: Path,
+    payload: dict[str, object],
+    artifact_key: str,
+    fieldnames: list[str],
+    rows: list[dict[str, object]],
+) -> None:
+    target = writable_path(path, payload, artifact_key)
+    with target.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 def format_money(value: object) -> str:
@@ -228,10 +253,74 @@ def write_report(path: Path, payload: dict[str, object]) -> None:
         fallback.write_text(data, encoding="utf-8")
 
 
+def totals_csv_rows(payload: dict[str, object]) -> list[dict[str, object]]:
+    rows = []
+    for layer, values in payload["totals"].items():
+        rows.append({"layer": layer, **values})
+    for delta_key, values in payload["deltas"].items():
+        rows.append({"layer": delta_key, **values})
+    return rows
+
+
+def account_type_csv_rows(payload: dict[str, object]) -> list[dict[str, object]]:
+    rows = []
+    for layer, by_type in payload["by_account_type"].items():
+        for account_type, values in by_type.items():
+            rows.append({"layer": layer, "account_type": account_type, **values})
+    return rows
+
+
+def top_difference_csv_rows(payload: dict[str, object]) -> list[dict[str, object]]:
+    rows = []
+    for delta_key, items in payload["top_account_differences"].items():
+        for item in items:
+            rows.append({"delta": delta_key, **item})
+    return rows
+
+
+def write_csv_exports(payload: dict[str, object]) -> None:
+    base_fields = ["layer", "account_rows", *METRICS]
+    type_fields = ["layer", "account_type", *METRICS]
+    top_fields = [
+        "delta",
+        "reason",
+        "legacy_account_id",
+        "account_type",
+        "account_name",
+        "account_no",
+        *METRICS,
+        "impact_score",
+    ]
+    write_csv(
+        Path(payload["artifacts"]["totals_csv"]),
+        payload,
+        "totals_csv",
+        base_fields,
+        totals_csv_rows(payload),
+    )
+    write_csv(
+        Path(payload["artifacts"]["account_type_csv"]),
+        payload,
+        "account_type_csv",
+        type_fields,
+        account_type_csv_rows(payload),
+    )
+    write_csv(
+        Path(payload["artifacts"]["top_difference_csv"]),
+        payload,
+        "top_difference_csv",
+        top_fields,
+        top_difference_csv_rows(payload),
+    )
+
+
 REPO_ROOT = repo_root()
 ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(REPO_ROOT / "artifacts/migration")))
 OUTPUT_JSON = ARTIFACT_ROOT / "legacy_account_income_expense_reconciliation_matrix_v1.json"
 OUTPUT_REPORT = ARTIFACT_ROOT / "legacy_account_income_expense_reconciliation_matrix_v1.md"
+OUTPUT_TOTALS_CSV = ARTIFACT_ROOT / "legacy_account_income_expense_reconciliation_totals_v1.csv"
+OUTPUT_ACCOUNT_TYPE_CSV = ARTIFACT_ROOT / "legacy_account_income_expense_reconciliation_account_type_v1.csv"
+OUTPUT_TOP_DIFF_CSV = ARTIFACT_ROOT / "legacy_account_income_expense_reconciliation_top_diff_v1.csv"
 
 Account = env["sc.legacy.account.master"].sudo().with_context(active_test=False)  # noqa: F821
 Line = env["sc.legacy.account.transaction.line"].sudo().with_context(active_test=False)  # noqa: F821
@@ -396,10 +485,14 @@ payload = {
     "artifacts": {
         "json": str(OUTPUT_JSON),
         "report": str(OUTPUT_REPORT),
+        "totals_csv": str(OUTPUT_TOTALS_CSV),
+        "account_type_csv": str(OUTPUT_ACCOUNT_TYPE_CSV),
+        "top_difference_csv": str(OUTPUT_TOP_DIFF_CSV),
     },
     "decision": "account_income_expense_reconciliation_matrix_ready",
 }
 
-write_json(OUTPUT_JSON, payload)
+write_csv_exports(payload)
 write_report(OUTPUT_REPORT, payload)
+write_json(OUTPUT_JSON, payload)
 print("LEGACY_ACCOUNT_INCOME_EXPENSE_RECONCILIATION_MATRIX=" + json.dumps(payload, ensure_ascii=False, sort_keys=True))
