@@ -226,6 +226,9 @@
               <button type="button" class="column-picker-btn" :disabled="loading" @click.stop="columnPickerOpen = !columnPickerOpen">
                 列
               </button>
+              <span v-if="columnSaveStatusText" class="column-save-badge" :class="`is-${columnSaveStatus}`">
+                {{ columnSaveStatusText }}
+              </span>
               <div v-if="columnPickerOpen" class="column-picker-menu">
                 <label v-for="column in columnChoices" :key="`column-choice-${column.name}`" class="column-choice">
                   <input
@@ -237,6 +240,9 @@
                   <span>{{ column.label }}</span>
                 </label>
                 <button type="button" class="column-reset" :disabled="loading" @click="resetColumnVisibility">恢复默认</button>
+                <p v-if="columnSaveStatusText" class="column-save-message" :class="`is-${columnSaveStatus}`">
+                  {{ columnSaveStatusText }}
+                </p>
               </div>
             </th>
           </tr>
@@ -368,6 +374,7 @@ const props = defineProps<{
   listLimit?: number;
   columnOptions?: ColumnOption[];
   columnVisibility?: Record<string, boolean>;
+  columnSaveStatus?: 'idle' | 'saving' | 'saved' | 'error';
   enableSummaryStrip?: boolean;
   enableGroupedRows?: boolean;
   listProfile?: SceneListProfile | null;
@@ -438,6 +445,13 @@ const pageJumpInput = ref('');
 const observedListLimit = ref(0);
 const columnPickerRoot = ref<HTMLElement | null>(null);
 const columnPickerOpen = ref(false);
+const columnSaveStatus = computed(() => props.columnSaveStatus || 'idle');
+const columnSaveStatusText = computed(() => {
+  if (columnSaveStatus.value === 'saving') return '保存中';
+  if (columnSaveStatus.value === 'saved') return '已保存';
+  if (columnSaveStatus.value === 'error') return '保存失败，请重试';
+  return '';
+});
 const groupSortDesc = computed(() => (props.groupSort || 'desc') === 'desc');
 const sortedGroupedRows = computed(() => {
   const rows = [...groupedRows.value];
@@ -1212,6 +1226,36 @@ onBeforeUnmount(() => {
   cursor: not-allowed;
 }
 
+.column-save-badge {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 10;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  background: #f0fdf4;
+  color: #15803d;
+  padding: 2px 6px;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+}
+
+.column-save-badge.is-saving,
+.column-save-message.is-saving {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.column-save-badge.is-error,
+.column-save-message.is-error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
 .column-picker-menu {
   position: absolute;
   z-index: 20;
@@ -1247,6 +1291,17 @@ onBeforeUnmount(() => {
   color: #1d4ed8;
   padding: 5px 8px;
   cursor: pointer;
+}
+
+.column-save-message {
+  margin: 2px 0 0;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  background: #f0fdf4;
+  color: #15803d;
+  padding: 5px 8px;
+  font-size: 12px;
+  text-align: left;
 }
 
 .pagination-btn {

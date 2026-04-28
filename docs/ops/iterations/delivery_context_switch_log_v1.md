@@ -31071,3 +31071,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 当前只契约化保存 visible_columns/hidden_columns，尚未实现原生式列顺序拖拽、按设备差异策略或多端实时状态广播。`
 - rollback: `回退本批次提交后执行 make mod.upgrade MODULE=smart_core 并重启前后端；必要时删除 sc.user.view.preference 中本批新增记录。`
 - next_step: `基于 sc.user.view.preference 继续研究列偏好的消费方式：默认列、列顺序、跨端同步与原生视图偏好之间的映射。`
+
+## 2026-04-28 Batch-Frontend-List-Column-Save-Feedback
+
+- branch: `codex/dev-env-run`
+- short_sha: `51172d7d`
+- Layer Target: `frontend list preference feedback`
+- Module: `frontend/apps/web`
+- Reason: `用户指出列显隐保存语义过于隐晦，勾选后无法确认是否已经后端落库。`
+- completed_step: `ListPage 在列按钮旁和列下拉菜单内展示保存状态；ActionView 为列偏好保存增加 saving/saved/error 状态，保存成功显示“已保存”，保存失败显示“保存失败，请重试”并回滚到上一次状态。`
+- verification:
+  - `corepack pnpm -C frontend/apps/web typecheck` -> `PASS`
+  - `corepack pnpm -C frontend/apps/web build` -> `PASS; dist 输出 index-D0kFGufC.js / index-B9vlolx1.css`
+  - `FRONTEND_PROFILE=prod-sim make frontend.restart` -> `frontend ready http://127.0.0.1:5174/，db=sc_prod_sim，proxy=http://localhost:18069`
+  - `Playwright browser: wutao/123456 登录 sc_prod_sim；/a/452 打开列菜单，恢复默认和隐藏“项目经理”均触发 user.view.preference.set；列菜单与表头旁显示“已保存”。`
+- result: `PASS; 列显隐仍为即时生效，同时用户可明确看到保存结果。`
+- risk: `P3; 当前反馈为轻量状态提示，未加入全局 toast 或保存历史审计；如后续统一交互反馈体系，可迁入共享通知组件。`
+- rollback: `回退本批次提交并重启前端，即恢复无保存状态提示的列菜单。`
+- next_step: `继续推进列偏好消费设计：列顺序、默认列与多端状态同步策略。`

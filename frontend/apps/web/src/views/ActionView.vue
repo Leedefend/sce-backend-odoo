@@ -354,6 +354,7 @@
       :column-labels="contractColumnLabels"
       :column-options="listColumnOptions"
       :column-visibility="listColumnVisibility"
+      :column-save-status="listColumnSaveStatus"
       :sort-label="sortLabel"
       :sort-options="displaySortOptions"
       :sort-value="sortValue"
@@ -498,7 +499,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onErrorCaptured, onMounted, ref, watch, type Ref } from 'vue';
+import { computed, inject, onBeforeUnmount, onErrorCaptured, onMounted, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { listRecordsRaw, saveSearchFavorite } from '../api/data';
 import { getUserViewPreference, setUserViewPreference } from '../api/preferences';
@@ -1021,6 +1022,7 @@ const listProfile = computed<SceneListProfile | null>(() => {
 });
 const listColumnOptions = computed(() => resolveListColumnOptions(actionContract.value, listProfile.value));
 const listColumnVisibility = ref<Record<string, boolean>>({});
+const listColumnSaveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
 const listColumnPreferenceScope = computed(() => {
   const aid = Number(actionId.value || 0);
   const targetModel = String(resolvedModelRef.value || model.value || '').trim();
@@ -2322,6 +2324,25 @@ function handleListPageChange(offset: number): void {
 }
 
 let listColumnPreferenceLoadSeq = 0;
+let listColumnSaveSeq = 0;
+let listColumnSaveStatusTimer: number | null = null;
+
+function setListColumnSaveStatus(status: 'idle' | 'saving' | 'saved' | 'error') {
+  listColumnSaveStatus.value = status;
+  if (listColumnSaveStatusTimer) {
+    window.clearTimeout(listColumnSaveStatusTimer);
+    listColumnSaveStatusTimer = null;
+  }
+  if (status === 'saved') {
+    listColumnSaveStatusTimer = window.setTimeout(() => {
+      if (listColumnSaveStatus.value === 'saved') {
+        listColumnSaveStatus.value = 'idle';
+      }
+      listColumnSaveStatusTimer = null;
+    }, 2500);
+  }
+}
+
 async function loadListColumnPreference(): Promise<void> {
   const seq = ++listColumnPreferenceLoadSeq;
   const scope = listColumnPreferenceScope.value;
@@ -2346,8 +2367,11 @@ async function loadListColumnPreference(): Promise<void> {
 }
 
 async function handleListColumnVisibilityChange(payload: { visibility: Record<string, boolean> }): Promise<void> {
+  const saveSeq = ++listColumnSaveSeq;
+  const previous = { ...listColumnVisibility.value };
   const next = payload.visibility || {};
   listColumnVisibility.value = { ...next };
+  setListColumnSaveStatus('saving');
   const visibleColumns = listColumnOptions.value
     .map((column) => column.name)
     .filter((name) => next[name] === true);
@@ -2359,7 +2383,14 @@ async function handleListColumnVisibilityChange(payload: { visibility: Record<st
       visible_columns: visibleColumns,
       hidden_columns: hiddenColumns,
     });
+    if (saveSeq === listColumnSaveSeq) {
+      setListColumnSaveStatus('saved');
+    }
   } catch (err) {
+    if (saveSeq === listColumnSaveSeq) {
+      listColumnVisibility.value = previous;
+      setListColumnSaveStatus('error');
+    }
     console.warn('[list-columns] failed to save preference', err);
   }
 }
@@ -2394,6 +2425,13 @@ onMounted(async () => {
   renderErrorMessage.value = '';
   applyRoutePreset();
   await requestLoadPage();
+});
+
+onBeforeUnmount(() => {
+  if (listColumnSaveStatusTimer) {
+    window.clearTimeout(listColumnSaveStatusTimer);
+    listColumnSaveStatusTimer = null;
+  }
 });
 
 onErrorCaptured((err) => {
