@@ -31741,3 +31741,24 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 整体仍有 548 条历史来源明细未绑定账户，其中扣款退回来源 4 条、金额 280,228.18。`
 - rollback: `回退本批 adapter 和文档；如需清理模拟生产新增数据，可删除 sc_legacy_account_transaction_line 中 source_table in ('T_KK_SJDJB_CB','T_KK_SJTHB_CB')。`
 - next_step: `继续接入投标退款等剩余累计收支来源，并继续追踪剩余未绑定账户。`
+
+## 2026-04-28 Batch-Legacy-Account-Source-Coverage
+
+- branch: `codex/dev-env-run`
+- short_sha: `fa21c037`
+- Layer Target: `Domain Projection / Migration Evidence`
+- Module: `docs/migration_alignment`, `addons/smart_construction_core`
+- Reason: `旧过程剩余来源名称存在误导，需要逐项核实有效账户金额来源，避免继续按表名猜测接入。`
+- completed_step: `新增账户收支统计表来源覆盖审计文档，确认旧过程有效账户金额来源均已接入或当前旧库为 0 行；报表清单下一步切换到账户绑定和样本对账。`
+- verification:
+  - `docker exec legacy-mssql-restore ... Report_SP_USP_Select_ZHSZTJB_GS_Tree source coverage query` -> `PASS; effective source matrix produced`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/data/legacy_report_inventory_seed.xml` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis/nginx healthy`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 不再把投标退款候选表作为当前账户收支统计未承载缺口，后续转入 548 条未绑定账户治理和旧报表样本对账。`
+- risk: `P1; 当前结论限定在 Report_SP_USP_Select_ZHSZTJB_GS_Tree 账户收支统计表；若其他旧报表引用投标退款，需要另开报表来源审计。`
+- rollback: `回退本批文档和 legacy_report_inventory_seed.xml 的 next_action 文案。`
+- next_step: `治理未绑定账户来源，或抽取旧报表常用条件做新旧统计结果对账。`

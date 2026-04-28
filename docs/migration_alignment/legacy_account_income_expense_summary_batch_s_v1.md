@@ -55,13 +55,14 @@ Batch-Y 已接入 `ZJGL_ZCDFSZ_FXJK_HK` 和 `ZJGL_ZCDFSZ_FXJK_JK`，对应旧过
 Batch-Z 已接入 `ZJGL_BZJGL_Pay_FBZJ`、`ZJGL_BZJGL_Pay_FBZJTH`、`ZJGL_BZJGL_Branch_SBZJDJ`、`ZJGL_BZJGL_Branch_SBZJTH`，对应旧过程累计收款/累计支出中的保证金收付和退回部分。
 Batch-AA 已接入 `ZJGL_ZJSZ_DKGL_DKDJ` 和 `ZJGL_ZJSZ_DKGL_HKDJ`，对应旧过程累计收款/累计支出中的贷款登记和贷款还款部分。
 Batch-AB 已接入 `T_KK_SJDJB_CB` 和 `T_KK_SJTHB_CB`，对应旧过程和旧资金明细中的扣款实缴登记/退回来源；登记进入累计支出，退回进入累计收款。
+Batch-AC 完成旧过程来源覆盖审计：有效账户金额来源均已接入或当前旧库为 0 行；后续重点从“找来源表”切换为账户绑定和旧报表样本对账。
 
 ## 尚未完全覆盖
 
-旧过程还引用以下来源，仍需后续逐步对账：
+旧过程有效账户金额来源已经完成覆盖审计。当前仍需后续逐步对账的是：
 
-- 账户间资金往来。
-- 投标退款。
+- 未绑定账户来源明细。
+- 按旧报表常用查询条件进行区间、项目、账户类型样本对账。
 
 因此 `账户收支统计表` 仍标记为 `partial`，不能标记为 ready。
 
