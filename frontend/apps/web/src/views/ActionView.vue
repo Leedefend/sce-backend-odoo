@@ -13,42 +13,6 @@
         {{ action.label || action.key }}
       </button>
     </section>
-    <ActionSurfaceToolbar
-      v-if="showTopActionToolbar && !isKanbanContent"
-      :loading="isUiBusy"
-      :show-view-switch="showViewSwitch"
-      :view-label="t('label.view_switch', '视图')"
-      :view-modes="vm.page.availableViewModes"
-      :current-view-mode="vm.page.viewMode"
-      :view-mode-labels="toolbarViewModeLabels"
-      :search-value="toolbarSearchDraft"
-      :search-placeholder="t('placeholder.search_keyword', '搜索关键字')"
-      :clear-label="t('chip_action_clear', '清除')"
-      :sort-label="t('label.sort', '排序')"
-      :sort-options="displaySortOptions"
-      :sort-value="sortValue"
-      :show-group="showToolbarGroup"
-      :group-label="t('label.group_view', '分组')"
-      :group-primary="vm.filters.groupBy.primary"
-      :group-overflow="vm.filters.groupBy.overflow"
-      :active-group-key="activeGroupByField"
-      :show-more-group="showMoreGroupBy"
-      :more-group-label="toolbarMoreGroupLabel"
-      :collapse-group-label="t('chip_more_group_collapse', '收起更多分组')"
-      :can-create-record="canCreateRecord"
-      :create-label="t('action_create_record', '新建')"
-      @switch-view="switchViewMode"
-      @search-composition-start="onToolbarSearchCompositionStart"
-      @search-composition-end="onToolbarSearchCompositionEnd"
-      @search-input="onToolbarSearchInput"
-      @search-submit="submitToolbarSearch"
-      @clear-search="clearToolbarSearch"
-      @sort="handleSort"
-      @group="applyGroupBy"
-      @clear-group="clearGroupBy"
-      @toggle-more-group="toggleMoreGroupBy"
-      @create="openCreateRecord"
-    />
     <section v-if="isSectionVisible('route_preset', { defaultEnabled: pageSectionEnabled('route_preset', false), tag: 'section', vmVisible: Boolean(vm.filters.routePreset) })" class="route-preset" :style="getSectionStyle('route_preset')">
       <p>
         {{ t('route_preset_applied_prefix', '已应用推荐筛选：') }}{{ vm.filters.routePreset?.label }}
@@ -399,7 +363,45 @@
       :on-row-click="handleRowClick"
       :on-page-change="handleListPageChange"
       :show-page-toolbar="false"
-    />
+    >
+      <template v-if="showTopActionToolbar" #toolbar>
+        <ActionSurfaceToolbar
+          :loading="isUiBusy"
+          :show-view-switch="showViewSwitch"
+          :view-label="t('label.view_switch', '视图')"
+          :view-modes="vm.page.availableViewModes"
+          :current-view-mode="vm.page.viewMode"
+          :view-mode-labels="toolbarViewModeLabels"
+          :search-value="toolbarSearchDraft"
+          :search-placeholder="t('placeholder.search_keyword', '搜索关键字')"
+          :clear-label="t('chip_action_clear', '清除')"
+          :sort-label="t('label.sort', '排序')"
+          :sort-options="displaySortOptions"
+          :sort-value="sortValue"
+          :show-group="showToolbarGroup"
+          :group-label="t('label.group_view', '分组')"
+          :group-primary="vm.filters.groupBy.primary"
+          :group-overflow="vm.filters.groupBy.overflow"
+          :active-group-key="activeGroupByField"
+          :show-more-group="showMoreGroupBy"
+          :more-group-label="toolbarMoreGroupLabel"
+          :collapse-group-label="t('chip_more_group_collapse', '收起更多分组')"
+          :can-create-record="canCreateRecord"
+          :create-label="t('action_create_record', '新建')"
+          @switch-view="switchViewMode"
+          @search-composition-start="onToolbarSearchCompositionStart"
+          @search-composition-end="onToolbarSearchCompositionEnd"
+          @search-input="onToolbarSearchInput"
+          @search-submit="submitToolbarSearch"
+          @clear-search="clearToolbarSearch"
+          @sort="handleSort"
+          @group="applyGroupBy"
+          @clear-group="clearGroupBy"
+          @toggle-more-group="toggleMoreGroupBy"
+          @create="openCreateRecord"
+        />
+      </template>
+    </ListPage>
     <section v-else-if="isSectionVisible('advanced_view', { defaultEnabled: pageSectionEnabled('advanced_view', true), tag: 'section' })" class="advanced-view" :style="getSectionStyle('advanced_view')">
       <header class="advanced-view-head">
         <h3>{{ vm.content.advanced?.title }}</h3>

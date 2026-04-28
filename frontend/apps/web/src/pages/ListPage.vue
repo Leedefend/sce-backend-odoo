@@ -5,6 +5,8 @@
       :subtitle="subtitle"
     />
 
+    <slot name="toolbar"></slot>
+
     <PageToolbar
       v-if="showPageToolbar"
       :loading="loading"
