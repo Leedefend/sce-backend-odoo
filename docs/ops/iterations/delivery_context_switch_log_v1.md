@@ -31951,3 +31951,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 若用户要求完全复刻旧报表口径，需要新增旧口径筛选/视图；若保持新系统全量口径，需要继续解释 570 个 new_only 项目的事实来源。`
 - rollback: `回退本批对账矩阵脚本和 Batch-AM 文档。`
 - next_step: `分类 570 个 new_only 项目来源，并对 Top matched 项目追踪字段级差异来源。`
+
+## 2026-04-28 Batch-Legacy-AR-AP-Company-New-Only-Classifier
+
+- branch: `codex/dev-env-run`
+- short_sha: `10d8b061`
+- Layer Target: `Migration Evidence / Source Classification`
+- Module: `scripts/migration`, `docs/migration_alignment`
+- Reason: `字段级对账发现新系统比旧过程多 570 个带 legacy_project_id 项目，需要解释这些项目是否来自真实业务事实。`
+- completed_step: `新增 legacy_ar_ap_company_new_only_classifier.py，按收入合同、销项发票、收款、支出合同、供应商计价方式、进项发票、付款、抵扣税费、自筹资金、项目余额分类 New Only 项目。`
+- verification:
+  - `python3 -m py_compile scripts/migration/legacy_ar_ap_company_new_only_classifier.py` -> `PASS`
+  - `python3 scripts/migration/legacy_ar_ap_company_collation_probe.py` -> `PASS; legacy_rows=195`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec < scripts/migration/legacy_ar_ap_company_new_only_classifier.py` -> `PASS; new_project_count=815, with_legacy_id=765, without_legacy_id=50, new_only=570, classified=509, unclassified=61`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; New Only 项目多数来自真实经营事实，不能为复刻旧过程而直接裁剪；仍需追踪 61 个零金额边界项和 50 个无旧库项目 ID 报表项目。`
+- risk: `P1; 未分类零金额项目可能来自视图 business_keys 的零金额事实或迁移残留，需要继续追踪以避免报表噪声。`
+- rollback: `回退本批分类脚本和 Batch-AN 文档。`
+- next_step: `输出 61 个未分类项目和 50 个无旧库项目 ID 项目的来源追踪矩阵。`
