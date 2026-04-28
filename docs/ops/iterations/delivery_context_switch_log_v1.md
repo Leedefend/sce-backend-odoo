@@ -30874,3 +30874,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P3; 空态当前只展示“暂无收藏”，尚未提供“保存当前搜索”写入按钮。`
 - rollback: `回退本批次提交并重建前端静态包，即恢复收藏夹列按 saved_filters 数据条件显示。`
 - next_step: `继续评估“保存当前搜索”写入入口是否进入下一轮。`
+
+## 2026-04-28 Batch-Frontend-Action-List-Kanban-Structure-Unification
+
+- branch: `codex/dev-env-run`
+- short_sha: `7e8a29b9`
+- Layer Target: `Frontend shared page renderer`
+- Module: `frontend/apps/web`
+- Reason: `用户确认当前看板页结构达标，要求以该看板页为标准页面结构，统一前端所有通用看板页和列表页，并全部复用搜索分类控件。`
+- completed_step: `事实排查确认产品路由中的通用看板/列表均由 ActionView 渲染，搜索分类控件唯一入口为 ActionSurfaceToolbar。将 ListPage 的 OK 态页面结构调整为看板同款“紧凑页头 -> ActionSurfaceToolbar 插槽 -> 内容”，移除旧 PageToolbar 引用和 showPageToolbar 兜底参数；ActionView 列表页不再传递 show-page-toolbar。`
+- verification:
+  - `rg "PageToolbar|showPageToolbar|<ListPage|<KanbanPage|native-searchbox|action-toolbar" frontend/apps/web/src -n` -> `PageToolbar 无消费引用；产品通用页面仅 ActionView 使用 ListPage/KanbanPage；ActionSurfaceToolbar 是唯一 native-searchbox/action-toolbar 来源。`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend/apps/web node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile --dir /workspace/frontend && pnpm typecheck && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim；/a/509 看板 compactY=69、actionToolbarY=146、contentY=218，pageHeaderCount=0、legacyToolbarCount=0、actionToolbarCount=1、nativeSearchCount=1、search sections=3。`
+  - `Playwright browser: /a/577 列表 compactY=69、actionToolbarY=146、contentY=218，pageHeaderCount=0、legacyToolbarCount=0、actionToolbarCount=1、nativeSearchCount=1、search sections=3。`
+- result: `PASS; 通用 ActionView 看板与列表页面结构已统一复用同一搜索分类控件。`
+- risk: `P2; 表单页、工作台、场景页不属于本轮看板/列表结构范围，未纳入该统一控件。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复 ListPage 的 PageHeader + 旧 PageToolbar 兜底结构。`
+- next_step: `继续抽查更多 action_id 的 list/kanban 业务页面，确认无业务特例样式需要迁移。`

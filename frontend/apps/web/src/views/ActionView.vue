@@ -372,7 +372,6 @@
       :on-clear-selection="clearSelection"
       :on-row-click="handleRowClick"
       :on-page-change="handleListPageChange"
-      :show-page-toolbar="false"
     >
       <template v-if="showTopActionToolbar" #toolbar>
         <ActionSurfaceToolbar

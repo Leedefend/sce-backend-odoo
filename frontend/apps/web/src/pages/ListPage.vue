@@ -1,28 +1,10 @@
 <template>
   <section class="page">
     <PageHeader
+      v-if="status !== 'ok'"
       :title="title"
       :subtitle="subtitle"
     />
-
-    <slot name="toolbar"></slot>
-
-    <PageToolbar
-      v-if="showPageToolbar"
-      :loading="loading"
-      :search-term="searchTerm || ''"
-      :sort-options="sortOptions || []"
-      :sort-value="sortValue || ''"
-      :on-search="onSearch"
-      :on-sort="onSort"
-    />
-
-    <section v-if="enableSummaryStrip && summaryItems.length" class="summary-strip">
-      <article v-for="item in summaryItems" :key="item.key" class="summary-card" :class="`tone-${item.tone || 'neutral'}`">
-        <p class="summary-label">{{ item.label }}</p>
-        <p class="summary-value">{{ item.value }}</p>
-      </article>
-    </section>
 
     <StatusPanel v-if="loading" title="正在加载列表..." variant="info" />
     <StatusPanel
@@ -48,24 +30,78 @@
       :on-retry="onReload"
     />
 
-    <section v-if="status === 'ok' && showBatchBar" class="batch-bar">
-      <span>已选 {{ selectedCount }} 条</span>
-      <button
-        v-for="action in selectionActions"
-        :key="`selection-action-${action.key}`"
-        type="button"
-        :disabled="loading || !selectedCount || !action.enabled"
-        :title="action.hint || ''"
-        @click="runSelectionAction(action.key)"
-      >
-        {{ action.label }}
-      </button>
-      <button type="button" class="ghost" :disabled="loading" @click="clearSelection">清空</button>
-      <span v-if="batchMessage" class="batch-message">{{ batchMessage }}</span>
-    </section>
+    <template v-else>
+      <section class="list-toolbar">
+        <div class="list-title">
+          <h2>{{ title }}</h2>
+          <p>{{ subtitle }}</p>
+        </div>
+        <div v-if="showPagination" class="pagination-actions pagination-actions--top">
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || !canPagePrev"
+            @click="pagePrev"
+          >
+            上一页
+          </button>
+          <span>第 {{ currentPage }} / {{ totalPages }} 页</span>
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || !canPageNext"
+            @click="pageNext"
+          >
+            下一页
+          </button>
+          <input
+            class="pagination-input"
+            :value="pageJumpInput"
+            :disabled="loading || totalPages <= 1"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            @input="onPageJumpInput"
+            @keyup.enter="jumpPage"
+          />
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || totalPages <= 1"
+            @click="jumpPage"
+          >
+            跳转
+          </button>
+        </div>
+        <span v-else class="list-count">{{ records.length }} 条记录</span>
+      </section>
 
-    <section v-if="status === 'ok'" class="table">
-      <section v-if="enableGroupedRows && groupedRows.length" class="grouped-table">
+      <slot name="toolbar"></slot>
+
+      <section v-if="enableSummaryStrip && summaryItems.length" class="summary-strip">
+        <article v-for="item in summaryItems" :key="item.key" class="summary-card" :class="`tone-${item.tone || 'neutral'}`">
+          <p class="summary-label">{{ item.label }}</p>
+          <p class="summary-value">{{ item.value }}</p>
+        </article>
+      </section>
+
+      <section v-if="showBatchBar" class="batch-bar">
+        <span>已选 {{ selectedCount }} 条</span>
+        <button
+          v-for="action in selectionActions"
+          :key="`selection-action-${action.key}`"
+          type="button"
+          :disabled="loading || !selectedCount || !action.enabled"
+          :title="action.hint || ''"
+          @click="runSelectionAction(action.key)"
+        >
+          {{ action.label }}
+        </button>
+        <button type="button" class="ghost" :disabled="loading" @click="clearSelection">清空</button>
+        <span v-if="batchMessage" class="batch-message">{{ batchMessage }}</span>
+      </section>
+
+      <section class="table">
+        <section v-if="enableGroupedRows && groupedRows.length" class="grouped-table">
         <header class="grouped-toolbar">
           <span>分组结果</span>
           <div class="grouped-toolbar-actions">
@@ -218,45 +254,46 @@
       </table>
     </section>
 
-    <section v-if="showPagination" class="pagination-bar">
-      <span>{{ paginationSummary }}</span>
-      <div class="pagination-actions">
-        <button
-          type="button"
-          class="pagination-btn"
-          :disabled="loading || !canPagePrev"
-          @click="pagePrev"
-        >
-          上一页
-        </button>
-        <span>第 {{ currentPage }} / {{ totalPages }} 页</span>
-        <button
-          type="button"
-          class="pagination-btn"
-          :disabled="loading || !canPageNext"
-          @click="pageNext"
-        >
-          下一页
-        </button>
-        <input
-          class="pagination-input"
-          :value="pageJumpInput"
-          :disabled="loading || totalPages <= 1"
-          inputmode="numeric"
-          pattern="[0-9]*"
-          @input="onPageJumpInput"
-          @keyup.enter="jumpPage"
-        />
-        <button
-          type="button"
-          class="pagination-btn"
-          :disabled="loading || totalPages <= 1"
-          @click="jumpPage"
-        >
-          跳转
-        </button>
-      </div>
-    </section>
+      <section v-if="showPagination" class="pagination-bar">
+        <span>{{ paginationSummary }}</span>
+        <div class="pagination-actions">
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || !canPagePrev"
+            @click="pagePrev"
+          >
+            上一页
+          </button>
+          <span>第 {{ currentPage }} / {{ totalPages }} 页</span>
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || !canPageNext"
+            @click="pageNext"
+          >
+            下一页
+          </button>
+          <input
+            class="pagination-input"
+            :value="pageJumpInput"
+            :disabled="loading || totalPages <= 1"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            @input="onPageJumpInput"
+            @keyup.enter="jumpPage"
+          />
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || totalPages <= 1"
+            @click="jumpPage"
+          >
+            跳转
+          </button>
+        </div>
+      </section>
+    </template>
   </section>
 </template>
 
@@ -264,7 +301,6 @@
 import { computed, ref, watch } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
-import PageToolbar from '../components/page/PageToolbar.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import type { SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { semanticValueByField } from '../utils/semantic';
@@ -305,7 +341,6 @@ const props = defineProps<{
   listTotalCount?: number | null;
   listOffset?: number;
   listLimit?: number;
-  showPageToolbar?: boolean;
   enableSummaryStrip?: boolean;
   enableGroupedRows?: boolean;
   listProfile?: SceneListProfile | null;
@@ -365,7 +400,6 @@ const errorCopy = computed(() =>
   ),
 );
 const emptyCopy = computed(() => resolveEmptyCopy('list'));
-const showPageToolbar = computed(() => props.showPageToolbar !== false);
 const groupedRows = computed(() =>
   Array.isArray(props.groupedRows) ? props.groupedRows : [],
 );
@@ -763,6 +797,42 @@ function columnLabel(col: string) {
   gap: 16px;
 }
 
+.list-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px 12px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.list-title {
+  min-width: 0;
+}
+
+.list-title h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.list-title p {
+  margin: 3px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.list-count {
+  color: #475569;
+  font-size: 13px;
+  white-space: nowrap;
+}
 
 .table {
   overflow: auto;
@@ -1015,6 +1085,10 @@ function columnLabel(col: string) {
   gap: 8px;
 }
 
+.pagination-actions--top {
+  flex: 0 0 auto;
+}
+
 .pagination-btn {
   border: 1px solid #bfdbfe;
   border-radius: 8px;
@@ -1037,6 +1111,18 @@ function columnLabel(col: string) {
   padding: 4px 8px;
   color: #0f172a;
   font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .list-toolbar,
+  .pagination-bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pagination-actions {
+    flex-wrap: wrap;
+  }
 }
 
 table {
