@@ -68,59 +68,73 @@ Account = env["sc.legacy.account.master"].sudo().with_context(active_test=False)
 
 existing_keys = {
     clean(rec["source_key"])
-    for rec in Model.search_read([("source_key", "!=", False)], ["source_key"])
+    for rec in Model.search_read([("source_key", "!=", False)], ["source_key"], limit=False)
 }
 existing_by_key = {
     clean(rec["source_key"]): rec
-    for rec in Model.search_read([("source_key", "!=", False)], ["source_key", "account_id"])
+    for rec in Model.search_read([("source_key", "!=", False)], ["source_key", "account_id"], limit=False)
 }
 project_legacy_ids = sorted({clean(row.get("project_legacy_id")) for row in rows if clean(row.get("project_legacy_id"))})
 project_map = {
     rec["legacy_project_id"]: rec["id"]
-    for rec in Project.search_read([("legacy_project_id", "in", project_legacy_ids)], ["legacy_project_id"])
+    for rec in Project.search_read([("legacy_project_id", "in", project_legacy_ids)], ["legacy_project_id"], limit=False)
     if rec.get("legacy_project_id")
 }
 account_legacy_ids = sorted({clean(row.get("account_legacy_id")) for row in rows if clean(row.get("account_legacy_id"))})
 account_map = {
     rec["legacy_account_id"]: rec["id"]
-    for rec in Account.search_read([("legacy_account_id", "in", account_legacy_ids)], ["legacy_account_id"])
+    for rec in Account.search_read([("legacy_account_id", "in", account_legacy_ids)], ["legacy_account_id"], limit=False)
     if rec.get("legacy_account_id")
 }
-account_records = Account.search_read([], ["legacy_account_id", "name", "account_no"])
+account_records = Account.search_read([], ["legacy_account_id", "name", "account_no", "active"], limit=False)
 account_no_map: dict[str, int] = {}
 account_name_map: dict[str, int] = {}
-ambiguous_account_nos: set[str] = set()
-ambiguous_account_names: set[str] = set()
+account_active_by_id: dict[int, bool] = {}
+account_no_candidates: dict[str, list[dict[str, object]]] = {}
+account_name_candidates: dict[str, list[dict[str, object]]] = {}
 for rec in account_records:
+    account_active_by_id[rec["id"]] = bool(rec.get("active"))
     account_no = clean(rec.get("account_no")).replace(" ", "")
     if account_no:
-        if account_no in account_no_map:
-            ambiguous_account_nos.add(account_no)
-        else:
-            account_no_map[account_no] = rec["id"]
+        account_no_candidates.setdefault(account_no, []).append(rec)
     name = clean(rec.get("name")).lower()
     if name:
-        if name in account_name_map:
-            ambiguous_account_names.add(name)
-        else:
-            account_name_map[name] = rec["id"]
-for key in ambiguous_account_nos:
-    account_no_map.pop(key, None)
-for key in ambiguous_account_names:
-    account_name_map.pop(key, None)
+        account_name_candidates.setdefault(name, []).append(rec)
+
+
+def choose_unique_or_active(candidates: list[dict[str, object]]) -> int | None:
+    if len(candidates) == 1:
+        return int(candidates[0]["id"])
+    active_candidates = [item for item in candidates if item.get("active")]
+    if len(active_candidates) == 1:
+        return int(active_candidates[0]["id"])
+    return None
+
+
+for key, candidates in account_no_candidates.items():
+    account_id = choose_unique_or_active(candidates)
+    if account_id:
+        account_no_map[key] = account_id
+for key, candidates in account_name_candidates.items():
+    account_id = choose_unique_or_active(candidates)
+    if account_id:
+        account_name_map[key] = account_id
 
 
 def resolve_account_id(row: dict[str, str]) -> int | None:
-    legacy_id = clean(row.get("account_legacy_id"))
-    if legacy_id in account_map:
-        return account_map[legacy_id]
     account_text = clean(row.get("account_name"))
     name_part, _, no_part = account_text.partition("/")
+    normalized_full = account_text.replace(" ", "")
+    if normalized_full and normalized_full in account_no_map:
+        return account_no_map[normalized_full]
     normalized_no = clean(no_part).replace(" ", "")
     if normalized_no and normalized_no in account_no_map:
         return account_no_map[normalized_no]
     normalized_name = clean(name_part or account_text).lower()
-    return account_name_map.get(normalized_name)
+    if normalized_name and normalized_name in account_name_map:
+        return account_name_map[normalized_name]
+    legacy_id = clean(row.get("account_legacy_id"))
+    return account_map.get(legacy_id)
 
 created = 0
 skipped = 0
@@ -137,7 +151,12 @@ for row in rows:
     account_id = resolve_account_id(row)
     if source_key in existing_keys:
         existing = existing_by_key.get(source_key) or {}
-        if account_id and not existing.get("account_id"):
+        existing_account = existing.get("account_id")
+        existing_account_id = existing_account[0] if existing_account else None
+        should_update_account = bool(account_id and not existing_account_id)
+        if account_id and existing_account_id and existing_account_id != account_id:
+            should_update_account = not account_active_by_id.get(existing_account_id, False)
+        if should_update_account:
             Model.browse(existing["id"]).write({"account_id": account_id})
             updated_existing += 1
         skipped += 1

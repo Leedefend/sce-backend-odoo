@@ -31553,3 +31553,24 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 公司财务来源中 1508 条暂未绑定到账户主数据，主要原因是旧表账户字段与 C_Base_ZHSZ 主数据不完全一致；未绑定金额保留在来源明细，不进入账户汇总，避免误归集。`
 - rollback: `回退本批提交后重新生成 adapter；如需清理模拟生产新增数据，可删除 sc_legacy_account_transaction_line 中 source_table in ('C_CWSFK_GSCWSR','C_CWSFK_GSCWZC')。`
 - next_step: `继续接入 C_JFHKLR 收款登记或先补账户主数据别名/账号匹配策略，降低公司财务来源未绑定比例。`
+
+## 2026-04-28 Batch-Legacy-Account-Binding-Quality
+
+- branch: `codex/dev-env-run`
+- short_sha: `af377dbb`
+- Layer Target: `Domain Migration Quality`
+- Module: `scripts/migration`, `docs/migration_alignment`
+- Reason: `公司财务累计来源已写入，但 1508 条未绑定到账户主数据，需要先提升绑定质量，避免报表累计金额长期不可归集。`
+- completed_step: `修复 fresh_db_legacy_account_transaction_replay_write.py 中 search_read 默认 limit=100 导致的账户映射截断；账号/名称匹配改为重复账号下唯一有效账户优先；对已绑定无效账户的来源明细允许修正到有效账户。`
+- verification:
+  - `python3 -m py_compile scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_transaction.replay.adapter` -> `PASS; rows=5508`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS; updated_existing=1918`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; total=5508, matched=5467, missing=41, cumulative_receipt_amount=19389792.15, cumulative_expense_amount=56214413.08`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis healthy`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 账户收支来源明细绑定率从 4000/5508 提升到 5467/5508，账户收支统计表累计收款/累计支出已吸收更多真实来源。`
+- risk: `P2; 仍有 41 条来源明细未绑定，需继续审计是否为真实缺失账户、虚拟账户或需要业务合并的账户别名。`
+- rollback: `回退本批脚本改动；如需回滚模拟生产绑定结果，可按 source_key 重新写入旧脚本匹配结果或清空重放 sc_legacy_account_transaction_line。`
+- next_step: `继续处理剩余 41 条未绑定来源，或接入 C_JFHKLR 收款登记来源。`
