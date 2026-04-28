@@ -30858,3 +30858,19 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 当前仅补齐选择已有 ir.filters 的消费路径，尚未实现“保存当前搜索”的前端写入入口。`
 - rollback: `回退本批次提交，重启 Odoo 并重建前端静态包；如需清理验证数据，可删除 sc_prod_sim 中 ir.filters id=8。`
 - next_step: `继续评估是否需要实现“保存当前搜索”写入能力，并抽查更多业务 action 的收藏筛选与 search_panel 覆盖情况。`
+
+## 2026-04-28 Batch-Frontend-Native-Search-Favorites-Empty-Column
+
+- branch: `codex/dev-env-run`
+- short_sha: `e43095ca`
+- Layer Target: `Frontend shared search renderer`
+- Module: `frontend/apps/web`
+- Reason: `用户反馈收藏夹还没有单独分栏；事实排查发现收藏夹列的展示条件依赖当前页面存在 saved_filters，导致无收藏数据的业务页不会保留原生式收藏夹独立列。`
+- completed_step: `ActionSurfaceToolbar 将收藏夹列改为搜索菜单固定第三列：只要筛选/分组/收藏任一搜索菜单存在，就显示“收藏夹”分栏；有收藏项时展示收藏项，无收藏项时展示“暂无收藏”。`
+- verification:
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend/apps/web node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile --dir /workspace/frontend && pnpm typecheck && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509；搜索下拉 sectionCount=3，三栏 x=390/643/896，第三栏文本=收藏夹暂无收藏。`
+- result: `PASS; 无收藏数据的页面也固定展示“收藏夹”独立分栏。`
+- risk: `P3; 空态当前只展示“暂无收藏”，尚未提供“保存当前搜索”写入按钮。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复收藏夹列按 saved_filters 数据条件显示。`
+- next_step: `继续评估“保存当前搜索”写入入口是否进入下一轮。`

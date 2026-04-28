@@ -80,7 +80,7 @@
         </button>
       </div>
       <div v-if="searchMenuOpen && hasSearchMenu" class="search-dropdown">
-        <section v-if="showFilter" class="search-dropdown-section">
+        <section v-if="showFilterColumn" class="search-dropdown-section">
           <p class="search-dropdown-title">{{ filterLabel }}</p>
           <div class="search-dropdown-items">
             <button
@@ -97,7 +97,7 @@
           </div>
         </section>
 
-        <section v-if="showGroup" class="search-dropdown-section">
+        <section v-if="showGroupColumn" class="search-dropdown-section">
           <p class="search-dropdown-title">{{ groupLabel }}</p>
           <div class="search-dropdown-items">
             <button
@@ -114,7 +114,7 @@
           </div>
         </section>
 
-        <section v-if="showSavedFilter" class="search-dropdown-section">
+        <section v-if="showSavedFilterColumn" class="search-dropdown-section">
           <p class="search-dropdown-title">{{ savedFilterLabel }}</p>
           <div class="search-dropdown-items">
             <button
@@ -128,6 +128,7 @@
               <span class="menu-check">{{ activeSavedFilterKey === chip.key ? selectedSymbol : '' }}</span>
               <span>{{ chip.label }}</span>
             </button>
+            <p v-if="!allSavedFilterChips.length" class="search-menu-empty">暂无收藏</p>
           </div>
         </section>
       </div>
@@ -228,10 +229,18 @@ const activeSavedFilterChip = computed<SearchChip | null>(() =>
 const activeGroupChip = computed<SearchChip | null>(() =>
   allGroupChips.value.find((chip) => chip.key === props.activeGroupKey) || null,
 );
+const showFilterColumn = computed(() => props.showFilter && allFilterChips.value.length > 0);
+const showGroupColumn = computed(() => props.showGroup && allGroupChips.value.length > 0);
+const showSavedFilterColumn = computed(() =>
+  props.showSavedFilter
+  || showFilterColumn.value
+  || showGroupColumn.value
+  || allSavedFilterChips.value.length > 0,
+);
 const hasSearchMenu = computed(() =>
-  (props.showFilter && allFilterChips.value.length > 0)
-  || (props.showGroup && allGroupChips.value.length > 0)
-  || (props.showSavedFilter && allSavedFilterChips.value.length > 0),
+  showFilterColumn.value
+  || showGroupColumn.value
+  || showSavedFilterColumn.value,
 );
 
 function selectFilter(key: string) {
@@ -440,6 +449,13 @@ onBeforeUnmount(() => {
 .search-menu-item.selected {
   background: #eff6ff;
   color: #1d4ed8;
+}
+
+.search-menu-empty {
+  margin: 0;
+  padding: 7px 12px 7px 36px;
+  color: #94a3b8;
+  font-size: 13px;
 }
 
 .menu-check {
