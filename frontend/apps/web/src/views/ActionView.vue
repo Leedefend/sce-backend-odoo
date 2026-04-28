@@ -33,6 +33,25 @@
           </button>
         </div>
       </div>
+      <div v-if="showToolbarSearch" class="toolbar-search">
+        <input
+          type="search"
+          :value="searchTerm"
+          :disabled="isUiBusy"
+          :placeholder="t('placeholder.search_keyword', '搜索关键字')"
+          @input="onToolbarSearchInput"
+          @keydown.enter.prevent="submitToolbarSearch"
+        />
+        <button
+          v-if="searchTerm"
+          class="toolbar-search-clear"
+          type="button"
+          :disabled="isUiBusy"
+          @click="clearToolbarSearch"
+        >
+          {{ t('chip_action_clear', '清除') }}
+        </button>
+      </div>
       <div v-if="canCreateRecord" class="toolbar-actions">
         <button class="contract-chip primary" type="button" @click="openCreateRecord">
           {{ t('action_create_record', '新建') }}
@@ -980,7 +999,8 @@ const showViewSwitch = computed(() =>
     vmVisible: vm.value.page.availableViewModes.length > 1,
   }),
 );
-const showTopActionToolbar = computed(() => showViewSwitch.value || canCreateRecord.value);
+const showToolbarSearch = computed(() => vm.value.content.kind === 'kanban');
+const showTopActionToolbar = computed(() => showViewSwitch.value || showToolbarSearch.value || canCreateRecord.value);
 
 async function openCreateRecord() {
   const targetModel = (resolvedModelRef.value || model.value || '').trim();
@@ -2033,6 +2053,19 @@ const {
   clearSelection,
 });
 
+function onToolbarSearchInput(event: Event): void {
+  const value = String((event.target as HTMLInputElement | null)?.value || '');
+  handleSearch(value);
+}
+
+function submitToolbarSearch(): void {
+  handleSearch(searchTerm.value || '');
+}
+
+function clearToolbarSearch(): void {
+  handleSearch('');
+}
+
 function handleListPageChange(offset: number): void {
   listOffset.value = Math.max(0, Math.trunc(Number(offset || 0)));
   clearSelection();
@@ -2091,9 +2124,9 @@ watch(
 }
 
 .action-toolbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(260px, 520px) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -2113,6 +2146,49 @@ watch(
   flex: 0 0 auto;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.toolbar-search {
+  display: flex;
+  align-items: center;
+  justify-self: center;
+  width: min(100%, 520px);
+  min-width: 260px;
+  gap: 6px;
+}
+
+.toolbar-search input {
+  width: 100%;
+  height: 28px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 12px;
+  padding: 5px 9px;
+}
+
+.toolbar-search input:focus {
+  border-color: #2563eb;
+  background: #fff;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}
+
+.toolbar-search-clear {
+  flex: 0 0 auto;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #475569;
+  padding: 5px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.toolbar-search-clear:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .route-preset {
@@ -2374,7 +2450,12 @@ watch(
 .ledger-overview-card.tone-neutral { background: #f9fafb; border-color: #d1d5db; color: #374151; }
 
 @media (max-width: 760px) {
-  .action-toolbar,
+  .action-toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .focus-strip {
     flex-direction: column;
     align-items: flex-start;
@@ -2386,6 +2467,11 @@ watch(
 
   .toolbar-actions {
     justify-content: flex-start;
+  }
+
+  .toolbar-search {
+    width: 100%;
+    min-width: 0;
   }
 }
 </style>

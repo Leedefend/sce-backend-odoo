@@ -30698,3 +30698,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; record 页同样使用紧凑页头，如业务详情页后续需要显式大标题，应由详情页自身标题区承载。`
 - rollback: `回退本批次提交并重建前端静态包，即恢复 action/record 页全局大标题页头。`
 - next_step: `继续检查详情页和其他业务 action 页在 minimal topbar 下是否仍有清晰标题和操作入口。`
+
+## 2026-04-28 Batch-Frontend-Kanban-Toolbar-Search
+
+- branch: `codex/dev-env-run`
+- short_sha: `84fbe448`
+- Layer Target: `Frontend layout + existing list request consumer`
+- Module: `frontend/apps/web`
+- Reason: `项目台账（试点）看板工具栏已收敛，但搜索能力仍只存在于普通列表页；用户需要在看板视图工具按钮区域中部直接搜索项目。`
+- completed_step: `ActionView 在看板视图 action-toolbar 中部嵌入搜索框，复用既有 handleSearch/searchTerm/requestLoadPage 链路；列表视图不显示该工具栏搜索，避免与 ListPage 搜索重复。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `docker compose -f docker-compose.yml -f docker-compose.prod-sim.yml -p sc-backend-odoo-prod-sim restart nginx`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509?menu_id=293，在工具栏搜索 德阳市，请求包含 search_term=德阳市、offset=0、limit=40，页头总数变为 58；action-toolbar 高度 46px，无 console error。`
+  - `Playwright browser: 切换列表视图后 action-toolbar .toolbar-search 数量为 0，ListPage 自有搜索框数量为 1。`
+- result: `PASS; 看板视图已在工具栏中部具备搜索能力，并复用既有数据请求契约。`
+- risk: `P2; 搜索仍沿用既有即时输入触发策略，后续如大数据量下请求频率过高，可单独加入防抖。`
+- rollback: `回退本批次提交并重建前端静态包，即移除看板工具栏中部搜索框。`
+- next_step: `继续检查看板搜索后的分页、清除搜索、进入详情返回是否保持上下文一致。`
