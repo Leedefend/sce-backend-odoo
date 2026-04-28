@@ -42,6 +42,17 @@ type ExecuteLoadMainPhaseOptions = {
   executeLoadDataRequest: (payload: Dict) => Promise<RequestResult>;
   buildLoadRequestInput: (input: Dict) => Dict;
   buildLoadRequestDynamicInput: (input: Dict) => Dict;
+  resolveLoadDynamicState?: () => Partial<{
+    viewMode: string;
+    searchTerm: string;
+    sortLabel: string;
+    activeGroupByField: string;
+    listOffset: number;
+    groupWindowOffset: number;
+    groupSampleLimit: number;
+    contractLimit: number;
+    groupPageOffsets: Record<string, number>;
+  }>;
   applyLoadRequestBlocked: (input: { blocked: boolean; message: string; statusInput: StatusInput }) => boolean;
   executeLoadSuccessPhase: (input: { input: Dict }) => Promise<void>;
   executeLoadCatchPhase: (input: { input: Dict }) => void;
@@ -63,22 +74,33 @@ export function useActionViewLoadMainPhaseRuntime() {
         return { stopped: true };
       }
 
+      const currentState = options.resolveLoadDynamicState?.() || {};
+      const requestViewMode = currentState.viewMode ?? options.viewMode;
+      const requestSearchTerm = currentState.searchTerm ?? options.searchTerm;
+      const requestSortLabel = currentState.sortLabel ?? options.sortLabel;
+      const requestActiveGroupByField = currentState.activeGroupByField ?? options.activeGroupByField;
+      const requestListOffset = currentState.listOffset ?? options.listOffset;
+      const requestGroupWindowOffset = currentState.groupWindowOffset ?? options.groupWindowOffset;
+      const requestGroupSampleLimit = currentState.groupSampleLimit ?? options.groupSampleLimit;
+      const requestContractLimit = currentState.contractLimit ?? options.contractLimit;
+      const requestGroupPageOffsets = currentState.groupPageOffsets ?? options.groupPageOffsets;
+
       const loadRequestPhaseResult = await options.executeLoadRequestPhase({
         executeLoadDataRequest: options.executeLoadDataRequest,
         input: options.buildLoadRequestInput({
           ...options.buildLoadRequestDynamicInput({
             contract: preflightPhaseResult.contract,
             typedContract: preflightPhaseResult.typedContract,
-            viewMode: options.viewMode,
+            viewMode: requestViewMode,
             resolvedModel: preflightPhaseResult.resolvedModel,
-            searchTerm: options.searchTerm,
-            sortLabel: options.sortLabel,
-            activeGroupByField: options.activeGroupByField,
-            listOffset: options.listOffset,
-            groupWindowOffset: options.groupWindowOffset,
-            groupSampleLimit: options.groupSampleLimit,
-            contractLimit: options.contractLimit,
-            groupPageOffsets: options.groupPageOffsets,
+            searchTerm: requestSearchTerm,
+            sortLabel: requestSortLabel,
+            activeGroupByField: requestActiveGroupByField,
+            listOffset: requestListOffset,
+            groupWindowOffset: requestGroupWindowOffset,
+            groupSampleLimit: requestGroupSampleLimit,
+            contractLimit: requestContractLimit,
+            groupPageOffsets: requestGroupPageOffsets,
             metaDomainRaw: (preflightPhaseResult.meta || {}).domain,
             sceneFiltersRaw: options.sceneFiltersRaw,
             metaContextRaw: (preflightPhaseResult.meta || {}).context,

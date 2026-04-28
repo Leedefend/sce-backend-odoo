@@ -31007,3 +31007,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; Makefile 的 odoo.recreate 默认 COMPOSE_FILE_BASE 不会自动读取 COMPOSE_FILES，prod-sim nginx 强制重建时需显式传入 overlay，后续可单独规范 Makefile。P3; 旧 root 权限 dist 已保留在未提交备份目录 frontend/apps/web/dist.root-backup-20260428114205/，未纳入版本控制。`
 - rollback: `回退 nginx 配置并重建 nginx；如需恢复旧静态包，可从备份目录人工恢复后重新挂载，但不建议回退到旧资产。`
 - next_step: `用户使用反代入口重新验证；若仍无变化，优先检查浏览器缓存、访问域名是否落到当前 nginx 容器，以及上游反向代理是否缓存 index.html。`
+
+## 2026-04-28 Batch-Frontend-Initial-List-Field-Hydration
+
+- branch: `codex/dev-env-run`
+- short_sha: `18b18b2a`
+- Layer Target: `frontend action list data lifecycle`
+- Module: `frontend/apps/web`
+- Reason: `用户反馈首次进入列表页数据不全，点击详情再返回列表后才正常；事实排查确认首屏数据请求发生在 preflight 写入当前 action 契约之前，导致项目列表首次按旧/空 viewMode 请求 name/display_name/id 兜底字段，而页面表头已经按当前 list_profile 展示业务字段。`
+- completed_step: `useActionViewLoadMainPhaseRuntime 在 preflight 成功后重新读取当前 viewMode/search/sort/group/limit/offset 状态，再构造 api.data 请求；ActionView 注入 resolveLoadDynamicState，使首屏请求使用刚写入的 actionContract/preferredViewMode/sortValue/contractLimit。`
+- verification:
+  - `corepack pnpm -C frontend/apps/web typecheck` -> `PASS`
+  - `corepack pnpm -C frontend/apps/web build` -> `PASS; 反代 HTML 指向 /assets/index-BWOzFTDK.js。`
+  - `urllib http://127.0.0.1/` -> `200; index.html 命中新构建资产 index-BWOzFTDK.js。`
+  - `Playwright browser via http://127.0.0.1: wutao/123456 登录 sc_prod_sim；/a/452 首屏 api.data fields=name,user_id,partner_id,stage_id,lifecycle_state,date_start,date，limit=80，order=sequence,name,id，records=80,total=779；页面首行字段非空。`
+  - `Playwright matrix: /a/452,/a/489,/a/491,/a/492,/a/565,/a/577,/a/486 首屏 api.data 均按列表表头字段请求，rowCount 与 records 对齐，分页总数可见。`
+  - `Playwright detail roundtrip: /a/452 首屏 80 行 -> 打开 project.project/72 -> 浏览器返回列表仍 80 行，首行内容一致。`
+- result: `PASS; 首次进入列表页的数据字段、记录数、分页总数已与当前 action 契约对齐，不再依赖详情返回后的二次状态修正。`
+- risk: `P2; 本轮修复 ActionView 通用列表/看板加载链路，未治理 RecordView 详情页读取过宽字段的问题；详情页仍会为关系字段加载较多候选数据，属于后续性能与字段暴露治理。`
+- rollback: `回退本批次提交并重新构建 frontend/apps/web/dist，即恢复首屏请求使用 preflight 前状态的旧行为。`
+- next_step: `用户继续通过反代入口验证首次进入列表页；若发现非 ActionView 页面仍有数据不全，需要单独按对应页面加载链路排查。`
