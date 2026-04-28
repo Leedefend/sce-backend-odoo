@@ -14,6 +14,8 @@
                     <filter string="有已开票未收款" name="has_invoiced_unreceived" domain="[('invoiced_unreceived_amount', '!=', 0)]"/>
                     <filter string="有应付合同" name="has_payable_contract" domain="[('payable_contract_amount', '!=', 0)]"/>
                     <filter string="有供应商发票" name="has_input_invoice" domain="[('input_invoice_amount', '!=', 0)]"/>
+                    <filter string="有未付款" name="has_payable_unpaid" domain="[('payable_unpaid_amount', '!=', 0)]"/>
+                    <filter string="有付款超票" name="has_paid_uninvoiced" domain="[('paid_uninvoiced_amount', '!=', 0)]"/>
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                     <filter string="按往来单位" name="group_partner" context="{'group_by': 'partner_name'}"/>
                 </search>
@@ -35,6 +37,9 @@
                     <field name="received_uninvoiced_amount" sum="已收款未开票合计"/>
                     <field name="payable_contract_amount" sum="应付合同金额合计"/>
                     <field name="input_invoice_amount" sum="供应商发票合计"/>
+                    <field name="paid_amount" sum="已付款合计"/>
+                    <field name="payable_unpaid_amount" sum="未付款合计"/>
+                    <field name="paid_uninvoiced_amount" sum="付款超票合计"/>
                     <field name="output_tax_amount" sum="销项税额合计"/>
                     <field name="input_tax_amount" sum="进项税额合计"/>
                 </tree>
@@ -56,6 +61,9 @@
                     <field name="received_uninvoiced_amount" type="measure"/>
                     <field name="payable_contract_amount" type="measure"/>
                     <field name="input_invoice_amount" type="measure"/>
+                    <field name="paid_amount" type="measure"/>
+                    <field name="payable_unpaid_amount" type="measure"/>
+                    <field name="paid_uninvoiced_amount" type="measure"/>
                     <field name="output_tax_amount" type="measure"/>
                     <field name="input_tax_amount" type="measure"/>
                 </pivot>
@@ -72,6 +80,7 @@
                     <field name="receipt_amount" type="measure"/>
                     <field name="payable_contract_amount" type="measure"/>
                     <field name="input_invoice_amount" type="measure"/>
+                    <field name="paid_amount" type="measure"/>
                 </graph>
             </field>
         </record>

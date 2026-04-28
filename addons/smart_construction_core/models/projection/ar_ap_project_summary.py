@@ -23,6 +23,9 @@ class ScArApProjectSummary(models.Model):
     received_uninvoiced_amount = fields.Float(string="已收款未开票", readonly=True)
     payable_contract_amount = fields.Float(string="应付合同金额", readonly=True)
     input_invoice_amount = fields.Float(string="已收供应商发票", readonly=True)
+    paid_amount = fields.Float(string="已付款", readonly=True)
+    payable_unpaid_amount = fields.Float(string="未付款", readonly=True)
+    paid_uninvoiced_amount = fields.Float(string="付款超票", readonly=True)
     output_tax_amount = fields.Float(string="销项税额", readonly=True)
     input_tax_amount = fields.Float(string="进项税额", readonly=True)
 
@@ -32,7 +35,8 @@ class ScArApProjectSummary(models.Model):
             SELECT
                 to_regclass('construction_contract'),
                 to_regclass('sc_receipt_income'),
-                to_regclass('sc_invoice_registration')
+                to_regclass('sc_invoice_registration'),
+                to_regclass('sc_treasury_ledger')
             """
         )
         if not all(self._cr.fetchone()):
@@ -77,6 +81,19 @@ class ScArApProjectSummary(models.Model):
                     WHERE r.active IS TRUE
                       AND r.partner_id IS NOT NULL
                     GROUP BY r.project_id, r.partner_id, rp.name
+                ),
+                paid_out AS (
+                    SELECT
+                        l.project_id,
+                        l.partner_id,
+                        'partner:' || l.partner_id::varchar AS partner_key,
+                        rp.name AS partner_name,
+                        SUM(COALESCE(l.amount, 0.0)) AS paid_amount
+                    FROM sc_treasury_ledger l
+                    JOIN res_partner rp ON rp.id = l.partner_id
+                    WHERE l.direction = 'out'
+                      AND l.state = 'posted'
+                    GROUP BY l.project_id, l.partner_id, rp.name
                 ),
                 partner_name_map AS (
                     SELECT
@@ -140,6 +157,8 @@ class ScArApProjectSummary(models.Model):
                     UNION
                     SELECT project_id, partner_id, partner_key, partner_name FROM receipt
                     UNION
+                    SELECT project_id, partner_id, partner_key, partner_name FROM paid_out
+                    UNION
                     SELECT project_id, partner_id, partner_key, partner_name FROM output_invoice
                     UNION
                     SELECT project_id, partner_id, partner_key, partner_name FROM input_invoice
@@ -164,6 +183,11 @@ class ScArApProjectSummary(models.Model):
                         AS received_uninvoiced_amount,
                     COALESCE(pc.payable_contract_amount, 0.0) AS payable_contract_amount,
                     COALESCE(ii.input_invoice_amount, 0.0) AS input_invoice_amount,
+                    COALESCE(po.paid_amount, 0.0) AS paid_amount,
+                    GREATEST(COALESCE(ii.input_invoice_amount, 0.0) - COALESCE(po.paid_amount, 0.0), 0.0)
+                        AS payable_unpaid_amount,
+                    GREATEST(COALESCE(po.paid_amount, 0.0) - COALESCE(ii.input_invoice_amount, 0.0), 0.0)
+                        AS paid_uninvoiced_amount,
                     COALESCE(oi.output_tax_amount, 0.0) AS output_tax_amount,
                     COALESCE(ii.input_tax_amount, 0.0) AS input_tax_amount
                 FROM keys k
@@ -174,6 +198,8 @@ class ScArApProjectSummary(models.Model):
                     ON pc.project_id = k.project_id AND pc.partner_key = k.partner_key
                 LEFT JOIN receipt r
                     ON r.project_id = k.project_id AND r.partner_key = k.partner_key
+                LEFT JOIN paid_out po
+                    ON po.project_id = k.project_id AND po.partner_key = k.partner_key
                 LEFT JOIN output_invoice oi
                     ON oi.project_id = k.project_id AND oi.partner_key = k.partner_key
                 LEFT JOIN input_invoice ii

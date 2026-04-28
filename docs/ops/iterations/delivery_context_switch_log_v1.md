@@ -31204,3 +31204,24 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 已付款、未付款、抵扣、自筹退回、实际可用余额仍未纳入，避免因事实缺口输出错误数字。`
 - rollback: `回退本批次提交并升级 smart_construction_core，即移除 sc.ar.ap.project.summary SQL view、菜单和文档。`
 - next_step: `继续补旧供应商付款、自筹退回、抵扣登记和项目实际可用余额事实后，再扩展剩余字段。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Payment-Stage
+
+- branch: `codex/dev-env-run`
+- short_sha: `c7394575`
+- Layer Target: `Domain Projection`
+- Module: `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `继续补齐旧库“应收应付报表（项目）”的付款侧字段；经事实比对，sc.treasury.ledger 支出流水具备项目和往来单位维度，且金额最接近旧库 T_FK_Supplier 非删除付款口径。`
+- completed_step: `sc.ar.ap.project.summary 新增已付款、未付款、付款超票三项指标；付款事实取 sc.treasury.ledger direction=out/state=posted，列表、透视、图表和搜索筛选同步开放；补充 Batch-E 付款字段文档。`
+- verification:
+  - `docker exec legacy-mssql-restore sqlcmd T_FK_Supplier count/sum` -> `PASS; total rows=13629 sum=2152297118.18, non-deleted rows=13573 sum=2148050360.23`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; sc.treasury.ledger out rows=12992 sum=2147431936.05, project/partner coverage=12992`
+  - `python3 -m py_compile addons/smart_construction_core/models/projection/ar_ap_project_summary.py` -> `PASS`
+  - `python3 stdlib XML parse addons/smart_construction_core/views/projection/ar_ap_project_summary_views.xml` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_prod_sim make mod.upgrade` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `summary_count=11076, menu=True, action=True, paid_amount=2147431936.05, payable_unpaid_amount=623379540.51, paid_uninvoiced_amount=128381363.35`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make verify.restricted` -> `SKIP; Makefile 无 verify.restricted target`
+- result: `PASS; 应收应付报表（项目）已补齐付款侧三项可用指标。`
+- risk: `P1; 新系统资金台账支出口径与旧库 T_FK_Supplier 非删除口径仍有约 618424.18 差额，需后续解释特殊付款、删除标记、退款或迁移过滤差异。`
+- rollback: `回退本批次提交并升级 smart_construction_core，即恢复 Batch-D 第一阶段字段。`
+- next_step: `继续分析抵扣税额、自筹退回、实际可用余额三类字段的数据条件，优先补事实来源最清晰的一项。`
