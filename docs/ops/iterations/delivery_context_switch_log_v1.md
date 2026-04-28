@@ -30952,3 +30952,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 自定义筛选本轮支持单条件；复杂 domain builder 尚未实现原生 DomainSelector 的多条件编辑。P2; 构建产物 dist 存在 root 权限残留，阻塞本地 build 门禁。`
 - rollback: `回退本批次提交，重启 Odoo 与前端；如需清理验证数据，可删除 sc_prod_sim 中 construction.contract 的 ir.filters “验证收藏-ui-click”。`
 - next_step: `优先修复自定义分组 facet/route 显示同步，再评估是否扩展多条件自定义筛选编辑器。`
+
+## 2026-04-28 Batch-Search-Custom-Group-Facet-Closeout
+
+- branch: `codex/dev-env-run`
+- short_sha: `pending`
+- Layer Target: `frontend shared search state`
+- Module: `frontend/apps/web`
+- Reason: `继续完整收口上轮自定义分组：自定义分组请求已经生效，但工具条未展示当前分组 facet；同时验证发现直接从 URL 恢复 group_by 会触发现有 grouped load 链持续加载，因此本轮只收口当前交互态显示，不扩大到 URL 恢复执行层。`
+- completed_step: `ActionSurfaceToolbar 增加 activeGroupLabel 兜底显示；ActionView 在执行分组时从契约候选中记录业务显示名，并在 route 同步清掉 activeGroupByField 后继续展示当前分组 facet；保持 group_by 不写入常规 route sync，避免触发 grouped load 持续加载。`
+- verification:
+  - `corepack pnpm -C frontend/apps/web typecheck` -> `PASS`
+  - `rm -rf /tmp/sc-web-build-check && corepack pnpm -C frontend/apps/web exec vite build --outDir /tmp/sc-web-build-check --emptyOutDir true` -> `PASS`
+  - `FRONTEND_PROFILE=prod-sim make frontend.restart` -> `frontend ready http://127.0.0.1:5174/`
+  - `Playwright browser: wutao/123456 登录 sc_prod_sim；/a/489 选择自定义分组 partner_id 后 api.data request 包含 group_by=partner_id，页面退出加载态，搜索框 facet=按合同方 ×。`
+- result: `PASS; 自定义分组当前交互态已可见且不破坏列表可用性。`
+- risk: `P2; URL 中 group_wid 能记录分组窗口身份，但当前不从 URL 恢复执行 group_by，因为现有 grouped load 链在直接恢复 group_by 时会持续加载；该能力需后续单独治理。P3; 默认 build 仍受 dist root:root 历史产物权限影响，本轮使用临时 outDir 完成构建验证。`
+- rollback: `回退本批次提交并重启前端，即恢复自定义分组不展示 facet 的状态。`
+- next_step: `单独治理 grouped route 恢复链路，使 group_by 可安全进入 URL 状态同步。`

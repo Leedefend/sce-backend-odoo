@@ -312,6 +312,7 @@
           :favorite-save-enabled="customSearchCapabilities.favoriteSaveEnabled"
           :favorite-save-label="customSearchCapabilities.favoriteLabel"
           :active-custom-filter-label="activeCustomFilterLabel"
+          :active-group-label="activeGroupByDisplayLabel || activeGroupByLabel"
           :active-group-key="toolbarActiveGroupKey"
           :can-create-record="canCreateRecord"
           :create-label="t('action_create_record', '新建')"
@@ -422,6 +423,7 @@
           :favorite-save-enabled="customSearchCapabilities.favoriteSaveEnabled"
           :favorite-save-label="customSearchCapabilities.favoriteLabel"
           :active-custom-filter-label="activeCustomFilterLabel"
+          :active-group-label="activeGroupByDisplayLabel || activeGroupByLabel"
           :active-group-key="toolbarActiveGroupKey"
           :can-create-record="canCreateRecord"
           :create-label="t('action_create_record', '新建')"
@@ -816,6 +818,7 @@ const toolbarSearchComposing = ref(false);
 const activeCustomFilter = ref<{ label: string; domain: unknown[] } | null>(null);
 const activeCustomFilterDomain = computed(() => activeCustomFilter.value?.domain || []);
 const activeCustomFilterLabel = computed(() => activeCustomFilter.value?.label || '');
+const activeGroupByDisplayLabel = ref('');
 const sortValue = ref('');
 const filterValue = ref<'all' | 'active' | 'archived'>('all');
 const columns = ref<string[]>([]);
@@ -1116,7 +1119,7 @@ const showStandaloneQuickFilters = computed(() => quickFiltersVisible.value && !
 const showStandaloneSavedFilters = computed(() => savedFiltersVisible.value && !showToolbarSavedFilter.value);
 const showStandaloneGroupView = computed(() => groupViewVisible.value && !showToolbarGroup.value);
 const toolbarActiveGroupKey = computed(() =>
-  activeGroupByField.value || String(route.query.group_by || '').trim(),
+  activeGroupByField.value || (activeGroupByDisplayLabel.value ? '__active_custom_group__' : String(route.query.group_by || '').trim()),
 );
 const showTopActionToolbar = computed(() =>
   showViewSwitch.value
@@ -1583,8 +1586,8 @@ const {
   applySavedFilter,
   clearContractFilter,
   clearSavedFilter,
-  applyGroupBy,
-  clearGroupBy,
+  applyGroupBy: applyGroupByRuntime,
+  clearGroupBy: clearGroupByRuntime,
 } = useActionViewFilterGroupRuntime({
   activeContractFilterKey,
   showMoreContractFilters,
@@ -1597,6 +1600,18 @@ const {
     groupRuntimeCapsule.applySharedState(state);
   },
 });
+
+function applyGroupBy(field: string) {
+  const normalized = String(field || '').trim();
+  const found = routeGroupByChips.value.find((chip) => String((chip as Record<string, unknown>).field || '') === normalized) as Record<string, unknown> | undefined;
+  activeGroupByDisplayLabel.value = String(found?.label || normalized);
+  applyGroupByRuntime(field);
+}
+
+function clearGroupBy() {
+  activeGroupByDisplayLabel.value = '';
+  clearGroupByRuntime();
+}
 
 function applyCustomFilter(payload: { label: string; domain: unknown[] }) {
   activeCustomFilter.value = {

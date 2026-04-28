@@ -278,6 +278,7 @@ const props = defineProps<{
   favoriteSaveEnabled: boolean;
   favoriteSaveLabel: string;
   activeCustomFilterLabel: string;
+  activeGroupLabel: string;
   activeGroupKey: string;
   canCreateRecord: boolean;
   createLabel: string;
@@ -345,7 +346,8 @@ const activeSavedFilterChip = computed<SearchChip | null>(() =>
   allSavedFilterChips.value.find((chip) => chip.key === props.activeSavedFilterKey) || null,
 );
 const activeGroupChip = computed<SearchChip | null>(() =>
-  allGroupChips.value.find((chip) => chip.key === props.activeGroupKey) || null,
+  allGroupChips.value.find((chip) => chip.key === props.activeGroupKey)
+  || (props.activeGroupKey && props.activeGroupLabel ? { key: props.activeGroupKey, label: props.activeGroupLabel } : null),
 );
 const showFilterColumn = computed(() =>
   props.showFilter
