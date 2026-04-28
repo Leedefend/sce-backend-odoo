@@ -6,6 +6,7 @@
     />
 
     <PageToolbar
+      v-if="showPageToolbar"
       :loading="loading"
       :search-term="searchTerm || ''"
       :sort-options="sortOptions || []"
@@ -302,6 +303,7 @@ const props = defineProps<{
   listTotalCount?: number | null;
   listOffset?: number;
   listLimit?: number;
+  showPageToolbar?: boolean;
   enableSummaryStrip?: boolean;
   enableGroupedRows?: boolean;
   listProfile?: SceneListProfile | null;
@@ -361,6 +363,7 @@ const errorCopy = computed(() =>
   ),
 );
 const emptyCopy = computed(() => resolveEmptyCopy('list'));
+const showPageToolbar = computed(() => props.showPageToolbar !== false);
 const groupedRows = computed(() =>
   Array.isArray(props.groupedRows) ? props.groupedRows : [],
 );

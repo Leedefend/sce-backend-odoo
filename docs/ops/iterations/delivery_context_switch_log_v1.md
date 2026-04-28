@@ -30756,3 +30756,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 看板工具栏通过 slot 嵌入，后续若其他看板页需要不同工具布局，可继续扩展 slot 内容而不改 KanbanPage 主结构。`
 - rollback: `回退本批次提交并重建前端静态包，即恢复 ActionView 顶层工具栏在看板头之前的顺序。`
 - next_step: `继续检查搜索、清除、新建和视图切换在新顺序下的真实操作路径。`
+
+## 2026-04-28 Batch-Frontend-Shared-Action-Toolbar
+
+- branch: `codex/dev-env-run`
+- short_sha: `4aae0a3f`
+- Layer Target: `Frontend layout + shared interaction renderer`
+- Module: `frontend/apps/web`
+- Reason: `看板页结构已稳定，但看板和列表仍分别承载搜索/排序/分组/视图切换，页面结构不统一；用户要求按当前看板结构逻辑统一所有看板与列表，并将搜索、分组做成与原生逻辑一致的共享控件。`
+- completed_step: `新增 ActionSurfaceToolbar 共享控件，统一承载视图切换、搜索、排序、分组、新建；ActionView 对看板和列表均使用该共享控件。看板通过 KanbanPage toolbar slot 将工具条放在看板头下方；列表页在 ActionView 调用时关闭内部 PageToolbar，避免重复搜索。原独立 group_view 区在共享工具条可用时并入工具条展示。排序选项展示按标签去重，避免同名排序重复。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `docker compose -f docker-compose.yml -f docker-compose.prod-sim.yml -p sc-backend-odoo-prod-sim restart nginx`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509?menu_id=293，看板页顺序保持 kanban-toolbar -> action-toolbar -> grid；切换列表后 actionToolbar=1、sharedSearch=1、legacyPageToolbar=0、tableRows=40，无 console error。`
+  - `Playwright browser: 共享工具条排序展示仅保留 1 个“契约默认排序”，避免重复按钮。`
+- result: `PASS; 看板与列表已统一使用共享 ActionSurfaceToolbar，搜索/排序/分组/新建入口结构收口。`
+- risk: `P2; 当前项目台账未展示分组入口，分组并入工具条的视觉效果还需在启用 group_view 的业务页继续做真实浏览器验证。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复看板工具栏内联模板、列表页内部 PageToolbar 和独立分组区。`
+- next_step: `选择存在 group_view 契约的业务列表页，验证共享分组控件的展开、清除、分组结果分页路径。`
