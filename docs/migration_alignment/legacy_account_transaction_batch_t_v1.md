@@ -87,6 +87,12 @@ Batch-Z 在同一载体继续接入保证金：
 - `ZJGL_BZJGL_Branch_SBZJTH`：退收保证金，写入 `direction='expense'`、`metric_bucket='cumulative'`；模拟生产库新增 884 行，金额 108,850,591.28。
 - 退付保证金账户名称补 `Y_ZFZHao/Y_ZFZH` 兜底后，重放修正 511 条账户绑定；本批保证金最终未绑定 262 条，未绑定金额 48,318,603.97。
 
+Batch-AA 在同一载体继续接入贷款：
+
+- `ZJGL_ZJSZ_DKGL_DKDJ`：贷款登记，写入 `direction='income'`、`metric_bucket='cumulative'`；模拟生产库新增 150 行，金额 52,926,662.18。
+- `ZJGL_ZJSZ_DKGL_HKDJ`：贷款还款，写入 `direction='expense'`、`metric_bucket='cumulative'`；模拟生产库新增 98 行，金额 31,859,781.01。
+- 本批贷款来源未绑定 13 条，金额 1,225,000.00，主要为利龙旧账户和虚拟账户。
+
 ## 尚未覆盖
 
 旧过程中的 `LJSK/LJZC` 仍包含多来源：

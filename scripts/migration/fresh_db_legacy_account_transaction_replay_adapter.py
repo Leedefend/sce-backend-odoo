@@ -583,12 +583,68 @@ WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
   AND ISNULL(DEL, 0) = 0
   AND ISNULL(DJZT, '0') = '2'
   AND ISNULL(THJE, 0) <> 0
+UNION ALL
+SELECT
+  {clean_sql("Id + ':loan_registration'")} AS source_key,
+  'ZJGL_ZJSZ_DKGL_DKDJ' AS source_table,
+  {clean_sql("Id")} AS legacy_record_id,
+  {clean_sql("DJBH")} AS document_no,
+  {clean_sql("CONVERT(varchar(10), DKRQ, 23)")} AS transaction_date,
+  {clean_sql("DJZT")} AS document_state,
+  {clean_sql("DEL")} AS deleted_flag,
+  {clean_sql("XMID")} AS project_legacy_id,
+  {clean_sql("XMMC")} AS project_name,
+  {clean_sql("DKZHID")} AS account_legacy_id,
+  {clean_sql("COALESCE(NULLIF(DKYH, ''), NULLIF(DKZH, ''))")} AS account_name,
+  {clean_sql("LXID")} AS counterparty_account_legacy_id,
+  {clean_sql("COALESCE(NULLIF(LX, ''), NULLIF(DKLL, ''), NULLIF(DKSJ, ''))")} AS counterparty_account_name,
+  'income' AS direction,
+  'cumulative' AS metric_bucket,
+  {clean_sql("DKJE")} AS amount,
+  {clean_sql("D_SCBSJS_DQLX")} AS category,
+  {clean_sql("CONVERT(varchar(10), HKRQ, 23)")} AS source_summary,
+  {clean_sql("BZ")} AS note,
+  '1' AS active
+FROM dbo.ZJGL_ZJSZ_DKGL_DKDJ
+WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
+  AND NULLIF(LTRIM(RTRIM(DKZHID)), '') IS NOT NULL
+  AND ISNULL(DEL, 0) = 0
+  AND ISNULL(DJZT, '0') = '2'
+  AND ISNULL(DKJE, 0) <> 0
+UNION ALL
+SELECT
+  {clean_sql("Id + ':loan_repayment'")} AS source_key,
+  'ZJGL_ZJSZ_DKGL_HKDJ' AS source_table,
+  {clean_sql("Id")} AS legacy_record_id,
+  {clean_sql("DJBH")} AS document_no,
+  {clean_sql("CONVERT(varchar(10), HKRQ, 23)")} AS transaction_date,
+  {clean_sql("DJZT")} AS document_state,
+  {clean_sql("DEL")} AS deleted_flag,
+  {clean_sql("XMID")} AS project_legacy_id,
+  {clean_sql("XMMC")} AS project_name,
+  {clean_sql("HKZHID")} AS account_legacy_id,
+  {clean_sql("COALESCE(NULLIF(HKZH, ''), NULLIF(DKZH, ''))")} AS account_name,
+  {clean_sql("DKDJID")} AS counterparty_account_legacy_id,
+  {clean_sql("COALESCE(NULLIF(DKDBH, ''), NULLIF(DKYH, ''), NULLIF(DKZH, ''))")} AS counterparty_account_name,
+  'expense' AS direction,
+  'cumulative' AS metric_bucket,
+  {clean_sql("HKJE")} AS amount,
+  {clean_sql("DKLX")} AS category,
+  {clean_sql("COALESCE(NULLIF(BM, ''), NULLIF(TXR, ''))")} AS source_summary,
+  {clean_sql("BZ")} AS note,
+  '1' AS active
+FROM dbo.ZJGL_ZJSZ_DKGL_HKDJ
+WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
+  AND NULLIF(LTRIM(RTRIM(HKZHID)), '') IS NOT NULL
+  AND ISNULL(DEL, 0) = 0
+  AND ISNULL(DJZT, '0') = '2'
+  AND ISNULL(HKJE, 0) <> 0
 ORDER BY transaction_date, legacy_record_id, direction;
 """
     rows = write_sql_csv(PAYLOAD_CSV, FIELDS, sql)
     payload = {
         "mode": "fresh_db_legacy_account_transaction_replay_adapter",
-        "source_table": "C_FKGL_ZHJZJWL,C_CWSFK_GSCWSR,C_CWSFK_GSCWZC,C_JFHKLR,C_JFHKLR_TH,C_JFHKLR_TH_ZCDF_CB,T_FK_Supplier,BGGL_JHK_HKDJ,BGGL_JHK_JKSQ,ZJGL_ZCDFSZ_FXJK_HK,ZJGL_ZCDFSZ_FXJK_JK,ZJGL_BZJGL_Pay_FBZJ,ZJGL_BZJGL_Pay_FBZJTH,ZJGL_BZJGL_Branch_SBZJDJ,ZJGL_BZJGL_Branch_SBZJTH",
+        "source_table": "C_FKGL_ZHJZJWL,C_CWSFK_GSCWSR,C_CWSFK_GSCWZC,C_JFHKLR,C_JFHKLR_TH,C_JFHKLR_TH_ZCDF_CB,T_FK_Supplier,BGGL_JHK_HKDJ,BGGL_JHK_JKSQ,ZJGL_ZCDFSZ_FXJK_HK,ZJGL_ZCDFSZ_FXJK_JK,ZJGL_BZJGL_Pay_FBZJ,ZJGL_BZJGL_Pay_FBZJTH,ZJGL_BZJGL_Branch_SBZJDJ,ZJGL_BZJGL_Branch_SBZJTH,ZJGL_ZJSZ_DKGL_DKDJ,ZJGL_ZJSZ_DKGL_HKDJ",
         "rows": rows,
         "csv": str(PAYLOAD_CSV),
         "decision": "legacy_account_transaction_payload_ready" if rows else "STOP_REVIEW_REQUIRED",
