@@ -60,6 +60,51 @@ def serialize_rows(rows: list[dict[str, object]], limit: int | None = None) -> l
     return result
 
 
+def row_delta(left: dict[str, object], right: dict[str, object], reason: str) -> dict[str, object]:
+    item = {
+        "legacy_account_id": left.get("legacy_account_id") or right.get("legacy_account_id") or "",
+        "account_name": left.get("account_name") or right.get("account_name") or "",
+        "account_no": left.get("account_no") or right.get("account_no") or "",
+        "account_type": left.get("account_type") or right.get("account_type") or "未分类账户",
+        "reason": reason,
+    }
+    for metric in MONEY_METRICS:
+        item[metric] = rounded(float(left.get(metric, 0.0) or 0.0) - float(right.get(metric, 0.0) or 0.0))
+    item["line_count"] = int(left.get("line_count", 0) or 0) - int(right.get("line_count", 0) or 0)
+    item["impact_score"] = rounded(
+        abs(float(item["income_amount"]))
+        + abs(float(item["expense_amount"]))
+        + abs(float(item["cumulative_receipt_amount"]))
+        + abs(float(item["cumulative_expense_amount"]))
+    )
+    return item
+
+
+def top_official_differences(
+    official_rows: list[dict[str, object]], legacy_rows: list[dict[str, object]], limit: int = 20
+) -> list[dict[str, object]]:
+    legacy_by_id = {str(row.get("legacy_account_id") or ""): row for row in legacy_rows}
+    differences = []
+    for row in official_rows:
+        legacy_id = str(row.get("legacy_account_id") or "")
+        base = legacy_by_id.get(legacy_id, {})
+        item = row_delta(row, base, "fallback_match")
+        if item["impact_score"]:
+            differences.append(item)
+    return sorted(differences, key=lambda item: (-float(item["impact_score"]), str(item["account_type"]), str(item["account_name"])))[:limit]
+
+
+def top_supplemental_accounts(rows: list[dict[str, object]], limit: int = 20) -> list[dict[str, object]]:
+    items = []
+    for row in rows:
+        if row.get("account_type") != "历史来源账户":
+            continue
+        item = row_delta(row, {}, "supplemental_account")
+        if item["impact_score"]:
+            items.append(item)
+    return sorted(items, key=lambda item: (-float(item["impact_score"]), str(item["account_name"])))[:limit]
+
+
 def write_json(path: Path, payload: dict[str, object]) -> None:
     data = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
     try:
@@ -125,6 +170,41 @@ def write_report(path: Path, payload: dict[str, object]) -> None:
                 cum_expense=format_money(item["cumulative_expense_amount"]),
                 transfer=format_money(item["account_transfer_amount"]),
                 balance=format_money(item["current_account_balance"]),
+            )
+        )
+    lines.extend(
+        [
+            "",
+            "## Top 差异账户",
+            "",
+            "| 原因 | 账户类型 | 账户 | 收入金额 | 支出金额 | 累计收款 | 累计支出 | 影响分 |",
+            "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |",
+        ]
+    )
+    for item in payload["top_account_differences"]["new_official_minus_legacy_exact"][:10]:
+        lines.append(
+            "| {reason} | {account_type} | {account_name} | {income} | {expense} | {receipt} | {cum_expense} | {score} |".format(
+                reason=item["reason"],
+                account_type=item["account_type"],
+                account_name=item["account_name"] or item["legacy_account_id"],
+                income=format_money(item["income_amount"]),
+                expense=format_money(item["expense_amount"]),
+                receipt=format_money(item["cumulative_receipt_amount"]),
+                cum_expense=format_money(item["cumulative_expense_amount"]),
+                score=format_money(item["impact_score"]),
+            )
+        )
+    for item in payload["top_account_differences"]["new_continuity_minus_new_official"][:10]:
+        lines.append(
+            "| {reason} | {account_type} | {account_name} | {income} | {expense} | {receipt} | {cum_expense} | {score} |".format(
+                reason=item["reason"],
+                account_type=item["account_type"],
+                account_name=item["account_name"] or item["legacy_account_id"],
+                income=format_money(item["income_amount"]),
+                expense=format_money(item["expense_amount"]),
+                receipt=format_money(item["cumulative_receipt_amount"]),
+                cum_expense=format_money(item["cumulative_expense_amount"]),
+                score=format_money(item["impact_score"]),
             )
         )
     lines.extend(
@@ -303,6 +383,10 @@ payload = {
         "legacy_exact": legacy_by_type,
         "new_official": official_by_type,
         "new_continuity": continuity_by_type,
+    },
+    "top_account_differences": {
+        "new_official_minus_legacy_exact": top_official_differences(official_rows, legacy_rows),
+        "new_continuity_minus_new_official": top_supplemental_accounts(continuity_rows),
     },
     "sample_accounts": {
         "legacy_exact": serialize_rows(legacy_rows, 30),

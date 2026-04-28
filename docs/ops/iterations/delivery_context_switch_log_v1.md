@@ -31819,3 +31819,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 当前脚本输出总览和账户类型矩阵，用户可读差异原因 Top 账户列表仍需下一批整理。`
 - rollback: `删除本批脚本和 Batch-AF 文档。`
 - next_step: `输出账户类型差异矩阵和金额差异最大的账户 Top 列表，并按 strict_match/fallback_match/supplemental_account 分类。`
+
+## 2026-04-28 Batch-Legacy-Account-Reconciliation-Top
+
+- branch: `codex/dev-env-run`
+- short_sha: `5ed8b597`
+- Layer Target: `Migration Evidence / Domain Projection Validation`
+- Module: `scripts/migration`, `docs/migration_alignment`
+- Reason: `三层对账总览仍不够业务可读，需要输出账户级 Top 差异和原因分类。`
+- completed_step: `扩展 legacy_account_income_expense_reconciliation_matrix.py，新增 top_account_differences；新增 Batch-AG 差异 Top 文档。`
+- verification:
+  - `python3 -m py_compile scripts/migration/legacy_account_income_expense_reconciliation_matrix.py` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec < scripts/migration/legacy_account_income_expense_reconciliation_matrix.py` -> `PASS; top fallback/supplemental account differences emitted`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 差异已可按 fallback_match 和 supplemental_account 解释，最大正式账户差异为保盛长城华西，最大历史来源账户差异为 1701150000002736。`
+- risk: `P1; 当前仍是迁移证据文档，尚未做成用户界面中的可筛选差异报表。`
+- rollback: `回退脚本 top_account_differences 扩展和 Batch-AG 文档。`
+- next_step: `如继续推进报表验收，应将差异 Top 清单转为可下载/可筛选的迁移对账报表，或进入下一个旧库常用统计报表承载。`

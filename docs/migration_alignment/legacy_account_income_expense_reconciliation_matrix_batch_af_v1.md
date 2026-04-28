@@ -52,8 +52,4 @@ ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim \
 
 ## 下一步
 
-下一轮应把三层对账矩阵进一步收敛为用户可读报表：
-
-- 输出账户类型差异矩阵。
-- 输出金额差异最大的账户 Top 列表。
-- 将差异原因分类为 `strict_match`、`fallback_match`、`supplemental_account`。
+Batch-AG 已把三层对账矩阵进一步收敛为用户可读的账户级 Top 差异清单，并将差异原因分类为 `fallback_match` 和 `supplemental_account`。
