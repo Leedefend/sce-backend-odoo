@@ -30988,3 +30988,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; URL 恢复 group_by 的执行链仍未纳入本批次，避免影响当前列表可用性。`
 - rollback: `回退本批次提交并重启前端，即恢复自定义分组显示为快捷分组标签或无明显变化。`
 - next_step: `如用户确认显示达标，再进入 grouped route 恢复链路治理。`
+
+## 2026-04-28 Batch-ProdSim-Static-Proxy-Refresh
+
+- branch: `codex/dev-env-run`
+- short_sha: `9c15b2f1`
+- Layer Target: `prod-sim nginx static frontend delivery`
+- Module: `config/nginx/conf.d`, `frontend/apps/web/dist`
+- Reason: `用户指出反代访问的静态资源可能不对；事实确认 Vite dev server 已是最新代码，但反代 nginx 仍服务旧 dist 资产，导致用户入口看不到最新自定义搜索/分组变化。`
+- completed_step: `将旧 root 权限 dist 移出静态目录后重新构建 frontend/apps/web/dist；使用 prod-sim overlay 重建 nginx，使 /usr/share/nginx/html 挂载到最新 dist；default.prod-sim.conf 增加 /assets/ 精确资产目录、HTML no-store 响应头和旧资产 404 规则，避免旧 JS/CSS 请求回退到 index.html。`
+- verification:
+  - `corepack pnpm -C frontend/apps/web build` -> `PASS; dist 输出 index-C5suOtAz.js / index-CdA_xJlO.css，属主恢复为 odoo:odoo。`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim COMPOSE_FILE_BASE="docker-compose.yml -f docker-compose.prod-sim.yml" ODOO_SERVICE=nginx make odoo.recreate` -> `PASS; nginx 使用 prod-sim 静态前端挂载。`
+  - `urllib http://127.0.0.1/` -> `200; HTML 指向 /assets/index-C5suOtAz.js，Cache-Control=no-cache, no-store, must-revalidate。`
+  - `urllib http://127.0.0.1/assets/index-C5suOtAz.js` -> `200 application/javascript; 旧 /assets/index-DXEPFTh8.js -> 404。`
+  - `Playwright browser via http://127.0.0.1: wutao/123456 登录 sc_prod_sim；/a/489 选择自定义分组 partner_id 后 facet=合同相对方 ×，api.data group_by 请求生效，页面退出加载态。`
+- result: `PASS; 反代入口已服务最新静态包，并能看到本轮自定义分组可见变化。`
+- risk: `P2; Makefile 的 odoo.recreate 默认 COMPOSE_FILE_BASE 不会自动读取 COMPOSE_FILES，prod-sim nginx 强制重建时需显式传入 overlay，后续可单独规范 Makefile。P3; 旧 root 权限 dist 已保留在未提交备份目录 frontend/apps/web/dist.root-backup-20260428114205/，未纳入版本控制。`
+- rollback: `回退 nginx 配置并重建 nginx；如需恢复旧静态包，可从备份目录人工恢复后重新挂载，但不建议回退到旧资产。`
+- next_step: `用户使用反代入口重新验证；若仍无变化，优先检查浏览器缓存、访问域名是否落到当前 nginx 容器，以及上游反向代理是否缓存 index.html。`
