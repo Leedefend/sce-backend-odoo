@@ -31897,3 +31897,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; api.data 查询全局聚合响应偏慢，当前可用但后续高频使用应考虑独立 SQL 聚合或物化快照。`
 - rollback: `回退本批 smoke 脚本、Make target 和文档更新。`
 - next_step: `进入 UP_USP_SELECT_YSYFHZB_XM_ZJ 旧过程样本条件对账，或继续补下一个旧库 P0 报表。`
+
+## 2026-04-28 Batch-Legacy-AR-AP-Company-Proc-Precheck
+
+- branch: `codex/dev-env-run`
+- short_sha: `d9b35027`
+- Layer Target: `Migration Evidence / Legacy Procedure Precheck`
+- Module: `scripts/migration`, `docs/migration_alignment`
+- Reason: `全局应收应付报表进入新旧对账前，需要确认旧过程 UP_USP_SELECT_YSYFHZB_XM_ZJ 的参数、结果集元数据和当前恢复容器执行限制。`
+- completed_step: `新增 legacy_ar_ap_company_proc_precheck.py，读取旧过程参数、结果集元数据、定义样本，并尝试空参数执行；新增 Batch-AK 预检文档。`
+- verification:
+  - `python3 -m py_compile scripts/migration/legacy_ar_ap_company_proc_precheck.py` -> `PASS`
+  - `python3 scripts/migration/legacy_ar_ap_company_proc_precheck.py` -> `PASS; decision=legacy_proc_direct_execution_blocked, params=@XMMC/@KSRQ/@JZRQ, error=Msg 468 collation conflict`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 旧过程参数已确认，但恢复容器中空参数直接执行被 Chinese_PRC_CI_AS vs SQL_Latin1_General_CP1_CI_AS 排序规则冲突阻断。`
+- risk: `P1; 不能直接拿旧过程执行结果做样本对账，下一步需要基于过程定义改造 COLLATE 执行副本或手工 SQL 重建关键聚合。`
+- rollback: `回退本批预检脚本和 Batch-AK 文档。`
+- next_step: `拆解 UP_USP_SELECT_YSYFHZB_XM_ZJ line 149 附近的排序规则冲突来源，生成可执行的只读对账 SQL。`
