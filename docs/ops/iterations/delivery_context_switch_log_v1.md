@@ -31530,3 +31530,26 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 仍有 23 条账户往来来源明细因旧账户 ID/账号存在歧义未绑定到账户主数据；LJSK/LJZC 的借还款、保证金、公司财务收支等累计来源仍未完全接入。`
 - rollback: `回退本批提交，升级 smart_construction_core 并重启；如需清理模拟生产数据，可删除 sc_legacy_account_transaction_line 中 import_batch=legacy_account_transaction_v1 的记录。`
 - next_step: `继续接入旧过程 LJSK/LJZC 累计收支来源，优先处理 C_CWSFK_GSCWSR/C_CWSFK_GSCWZC 或 C_JFHKLR。`
+
+## 2026-04-28 Batch-Legacy-Company-Finance-Cumulative
+
+- branch: `codex/dev-env-run`
+- short_sha: `917d7dec`
+- Layer Target: `Domain Carrier / Domain Projection`
+- Module: `scripts/migration`, `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `账户收支统计表旧过程 LJSK/LJZC 包含公司财务收入/支出，需要接入 C_CWSFK_GSCWSR/C_CWSFK_GSCWZC 作为累计收支来源。`
+- completed_step: `扩展 fresh_db_legacy_account_transaction_replay_adapter，将 C_CWSFK_GSCWSR 映射为 cumulative/income，将 C_CWSFK_GSCWZC 映射为 cumulative/expense；更新报表清单和迁移说明。`
+- verification:
+  - `python3 -m py_compile scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_transaction.replay.adapter` -> `PASS; rows=5508`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS; created_rows=4648, skipped_existing=860`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis healthy`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; total=5508, matched=4000, missing=1508, cumulative_receipt_amount=4797371.51, cumulative_expense_amount=37802713.64`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 公司财务收入/支出已进入账户收支来源明细，并由账户收支统计表吸收已绑定账户部分。`
+- risk: `P1; 公司财务来源中 1508 条暂未绑定到账户主数据，主要原因是旧表账户字段与 C_Base_ZHSZ 主数据不完全一致；未绑定金额保留在来源明细，不进入账户汇总，避免误归集。`
+- rollback: `回退本批提交后重新生成 adapter；如需清理模拟生产新增数据，可删除 sc_legacy_account_transaction_line 中 source_table in ('C_CWSFK_GSCWSR','C_CWSFK_GSCWZC')。`
+- next_step: `继续接入 C_JFHKLR 收款登记或先补账户主数据别名/账号匹配策略，降低公司财务来源未绑定比例。`

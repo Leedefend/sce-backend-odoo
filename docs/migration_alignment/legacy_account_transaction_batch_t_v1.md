@@ -44,6 +44,15 @@
 
 并已接入 `history_continuity_oneclick.sh`，完整部署重放时会在账户主数据之后写入账户收支来源明细。
 
+## Batch-U 补充
+
+Batch-U 在同一载体继续接入公司财务收支：
+
+- `C_CWSFK_GSCWSR`：公司财务收入，写入 `direction='income'`、`metric_bucket='cumulative'`，对应旧过程 `LJSK` 的公司财务收入部分。
+- `C_CWSFK_GSCWZC`：公司财务支出，写入 `direction='expense'`、`metric_bucket='cumulative'`，对应旧过程 `LJZC` 的公司财务支出部分。
+
+`sc.account.income.expense.summary` 已经按 `metric_bucket='cumulative'` 优先读取累计收款和累计支出，因此本批无需调整报表结构。
+
 ## 尚未覆盖
 
 旧过程中的 `LJSK/LJZC` 仍包含多来源：
@@ -53,8 +62,6 @@
 - `ZJGL_ZCDFSZ_FXJK_*`
 - `ZJGL_BZJGL_*`
 - `T_FK_Supplier`
-- `C_CWSFK_GSCWSR`
-- `C_CWSFK_GSCWZC`
 - `T_KK_SJTHB`
 
 下一轮应继续按同一载体补累计收款、累计支出来源。
