@@ -30718,3 +30718,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 搜索仍沿用既有即时输入触发策略，后续如大数据量下请求频率过高，可单独加入防抖。`
 - rollback: `回退本批次提交并重建前端静态包，即移除看板工具栏中部搜索框。`
 - next_step: `继续检查看板搜索后的分页、清除搜索、进入详情返回是否保持上下文一致。`
+
+## 2026-04-28 Batch-Frontend-Kanban-Search-IME
+
+- branch: `codex/dev-env-run`
+- short_sha: `c48d47bb`
+- Layer Target: `Frontend interaction`
+- Module: `frontend/apps/web`
+- Reason: `看板工具栏搜索在中文输入法组合输入期间直接触发 input 搜索，导致拼音/未确认中文也进入搜索链，中文输入体验异常。`
+- completed_step: `ActionView 看板工具栏搜索增加本地草稿值与 compositionstart/compositionend 保护：组合期间只更新输入草稿，不触发搜索；中文确认后再以最终值调用既有 handleSearch。清除操作同步清空草稿和搜索状态。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `docker compose -f docker-compose.yml -f docker-compose.prod-sim.yml -p sc-backend-odoo-prod-sim restart nginx`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509?menu_id=293，模拟 compositionstart + composing input=de 阶段 api.data 请求数为 0；compositionend=德阳市 后请求包含 search_term=德阳市、offset=0、limit=40，输入框值为 德阳市，看板总数为 58，无 console error。`
+- result: `PASS; 看板工具栏搜索已支持中文输入法组合输入。`
+- risk: `P2; handleSearch 既有路由同步机制在确认搜索后仍可能产生一次刷新请求，后续如需优化请求次数可单独收敛。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复原始 input 即时触发搜索。`
+- next_step: `继续验证真实键盘中文输入、清除搜索、分页和详情返回组合路径。`

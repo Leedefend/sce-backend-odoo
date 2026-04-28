@@ -36,9 +36,11 @@
       <div v-if="showToolbarSearch" class="toolbar-search">
         <input
           type="search"
-          :value="searchTerm"
+          :value="toolbarSearchDraft"
           :disabled="isUiBusy"
           :placeholder="t('placeholder.search_keyword', '搜索关键字')"
+          @compositionstart="onToolbarSearchCompositionStart"
+          @compositionend="onToolbarSearchCompositionEnd"
           @input="onToolbarSearchInput"
           @keydown.enter.prevent="submitToolbarSearch"
         />
@@ -735,6 +737,8 @@ const listOffset = ref(0);
 const projectScopeTotals = ref<{ all: number; active: number; archived: number } | null>(null);
 const projectScopeMetrics = ref<{ warning: number; done: number; amount: number } | null>(null);
 const searchTerm = ref('');
+const toolbarSearchDraft = ref('');
+const toolbarSearchComposing = ref(false);
 const sortValue = ref('');
 const filterValue = ref<'all' | 'active' | 'archived'>('all');
 const columns = ref<string[]>([]);
@@ -2055,16 +2059,41 @@ const {
 
 function onToolbarSearchInput(event: Event): void {
   const value = String((event.target as HTMLInputElement | null)?.value || '');
+  toolbarSearchDraft.value = value;
+  if (toolbarSearchComposing.value || (event as InputEvent).isComposing) return;
+  handleSearch(value);
+}
+
+function onToolbarSearchCompositionStart(): void {
+  toolbarSearchComposing.value = true;
+}
+
+function onToolbarSearchCompositionEnd(event: CompositionEvent): void {
+  toolbarSearchComposing.value = false;
+  const value = String((event.target as HTMLInputElement | null)?.value || '');
+  toolbarSearchDraft.value = value;
   handleSearch(value);
 }
 
 function submitToolbarSearch(): void {
-  handleSearch(searchTerm.value || '');
+  if (toolbarSearchComposing.value) return;
+  handleSearch(toolbarSearchDraft.value || '');
 }
 
 function clearToolbarSearch(): void {
+  toolbarSearchComposing.value = false;
+  toolbarSearchDraft.value = '';
   handleSearch('');
 }
+
+watch(
+  searchTerm,
+  (value) => {
+    if (toolbarSearchComposing.value) return;
+    toolbarSearchDraft.value = value || '';
+  },
+  { immediate: true },
+);
 
 function handleListPageChange(offset: number): void {
   listOffset.value = Math.max(0, Math.trunc(Number(offset || 0)));
