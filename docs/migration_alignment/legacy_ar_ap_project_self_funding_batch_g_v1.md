@@ -86,6 +86,19 @@
   - `summary_self_funding_unreturned_amount=76296416.44`
 - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make verify.restricted`：SKIP，当前 Makefile 无该 target
 
+## 重建链路
+
+- `history.production.fresh_init` 调用 `scripts/migration/history_continuity_oneclick.sh`。
+- 本批新增事实已接入完整 replay 链路：
+  - `legacy_self_funding_adapter`
+  - `legacy_self_funding_replay`
+- 支持局部续跑：
+  - `HISTORY_CONTINUITY_START_AT=legacy_self_funding_adapter`
+  - `HISTORY_CONTINUITY_STOP_AFTER=legacy_self_funding_replay`
+- 支持 Makefile 单独执行：
+  - `make fresh_db.legacy_self_funding.replay.adapter`
+  - `make fresh_db.legacy_self_funding.replay.write`
+
 ## 风险
 
 - 55 条旧库自筹明细存在旧项目 ID，但当前模拟生产项目主数据未匹配，未进入项目汇总报表；涉及自筹收入 3784392.78、退回 1848025.70、净未退 1936367.08。

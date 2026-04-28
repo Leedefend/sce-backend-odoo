@@ -22,6 +22,7 @@ RUN_ID="${RUN_ID:-$(date +%Y%m%dT%H%M%S)}"
 ALLOWED_DBS="${MIGRATION_REPLAY_DB_ALLOWLIST:-sc_migration_fresh,sc_demo}"
 ARTIFACT_ROOT="${MIGRATION_ARTIFACT_ROOT:-/tmp/history_continuity/${DB_NAME}/${RUN_ID}}"
 START_AT="${HISTORY_CONTINUITY_START_AT:-}"
+STOP_AFTER="${HISTORY_CONTINUITY_STOP_AFTER:-}"
 export MIGRATION_REPO_ROOT="${MIGRATION_REPO_ROOT:-$ROOT_DIR}"
 MIGRATION_REPO_ROOT_ODOO="${MIGRATION_REPO_ROOT_ODOO:-/mnt}"
 export MIGRATION_REPLAY_DB_ALLOWLIST="$ALLOWED_DBS"
@@ -110,6 +111,10 @@ run_step() {
   fi
   echo "[history.continuity] step=$step_name"
   "$@"
+  if [[ -n "$STOP_AFTER" && "$step_name" == "$STOP_AFTER" ]]; then
+    echo "[history.continuity] stop after step=$step_name"
+    exit 0
+  fi
 }
 
 echo "[history.continuity] mode=$MODE db=$DB_NAME artifact_root=$ARTIFACT_ROOT"
@@ -234,12 +239,16 @@ case "$MODE" in
     run_step receipt_income_partner_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_receipt_income_partner_targeted_replay_write.py"
     run_step legacy_receipt_income_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_receipt_income_replay_adapter.py"
     run_step legacy_receipt_income_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_receipt_income_replay_write.py"
+    run_step legacy_self_funding_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_self_funding_replay_adapter.py"
+    run_step legacy_self_funding_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_self_funding_replay_write.py"
     run_step expense_deposit_partner_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_expense_deposit_partner_targeted_replay_adapter.py"
     run_step expense_deposit_partner_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_expense_deposit_partner_targeted_replay_write.py"
     run_step legacy_expense_deposit_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_deposit_replay_adapter.py"
     run_step legacy_expense_deposit_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_deposit_replay_write.py"
     run_step legacy_invoice_tax_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_tax_replay_adapter.py"
     run_step legacy_invoice_tax_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_tax_replay_write.py"
+    run_step legacy_tax_deduction_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_tax_deduction_replay_adapter.py"
+    run_step legacy_tax_deduction_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_tax_deduction_replay_write.py"
     run_step legacy_invoice_registration_line_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_registration_line_replay_adapter.py"
     run_step legacy_invoice_registration_line_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_registration_line_replay_write.py"
     run_step legacy_deduction_adjustment_line_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_deduction_adjustment_line_replay_adapter.py"

@@ -31270,3 +31270,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 55 条旧库自筹明细存在旧项目 ID 但当前模拟生产项目主数据未匹配，未进入项目报表，涉及净未退 1936367.08；实际可用余额仍未纳入。`
 - rollback: `回退本批次提交并升级 smart_construction_core；如需回滚模拟生产数据，可按 import_batch=legacy_self_funding_v1 删除 sc.legacy.self.funding.fact 行后升级模块。`
 - next_step: `继续拆解旧库实际可用余额字段，判断进入项目资金汇总能力还是应收应付项目报表专属指标。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Rebuild-Chain
+
+- branch: `codex/dev-env-run`
+- short_sha: `abb1087a`
+- Layer Target: `Migration Orchestration`
+- Module: `Makefile`, `scripts/migration`, `docs/migration_alignment`
+- Reason: `新增旧库报表事实不能只通过手工脚本落库，必须进入 history.production.fresh_init / history.continuity.replay 完整重建链路。`
+- completed_step: `将 legacy_self_funding_adapter/replay 与 legacy_tax_deduction_adapter/replay 接入 history_continuity_oneclick.sh；新增 Makefile 单独 adapter/write target；同步重建契约文档。`
+- verification:
+  - `bash -n scripts/migration/history_continuity_oneclick.sh` -> `PASS`
+  - `python3 -m py_compile fresh_db_legacy_tax_deduction_replay_*.py fresh_db_legacy_self_funding_replay_*.py` -> `PASS`
+  - `make -n history.continuity.replay ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim HISTORY_CONTINUITY_START_AT=legacy_self_funding_adapter HISTORY_CONTINUITY_STOP_AFTER=legacy_self_funding_replay MIGRATION_ARTIFACT_ROOT=/tmp/history_continuity/sc_prod_sim/codex_rebuild_chain_self_funding` -> `PASS; allowlist/start/stop 参数进入脚本`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim RUN_ID=codex_rebuild_chain_self_funding HISTORY_CONTINUITY_START_AT=legacy_self_funding_adapter HISTORY_CONTINUITY_STOP_AFTER=legacy_self_funding_replay MIGRATION_ARTIFACT_ROOT=/tmp/history_continuity/sc_prod_sim/codex_rebuild_chain_self_funding make history.continuity.replay` -> `PASS; input_rows=3728, skipped_existing=3673, missing_project=55`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim RUN_ID=codex_rebuild_chain_tax_deduction HISTORY_CONTINUITY_START_AT=legacy_tax_deduction_adapter HISTORY_CONTINUITY_STOP_AFTER=legacy_tax_deduction_replay MIGRATION_ARTIFACT_ROOT=/tmp/history_continuity/sc_prod_sim/codex_rebuild_chain_tax_deduction make history.continuity.replay` -> `PASS; input_rows=4915, skipped_existing=4915, missing_project=0`
+- result: `PASS; 抵扣税额与自筹资金事实已纳入完整重建链路，并支持从新增步骤局部续跑和停止。`
+- risk: `P1; 本批验证使用 START_AT 局部续跑避免全量历史重建耗时，未重置数据库重新执行 full fresh init。`
+- rollback: `回退本批次提交即可移除新增重建编排；已有事实表数据不受影响。`
+- next_step: `继续拆解旧库实际可用余额字段，并同步纳入完整重建链路。`
