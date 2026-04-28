@@ -30737,3 +30737,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; handleSearch 既有路由同步机制在确认搜索后仍可能产生一次刷新请求，后续如需优化请求次数可单独收敛。`
 - rollback: `回退本批次提交并重建前端静态包，即恢复原始 input 即时触发搜索。`
 - next_step: `继续验证真实键盘中文输入、清除搜索、分页和详情返回组合路径。`
+
+## 2026-04-28 Batch-Frontend-Kanban-Header-Tool-Order
+
+- branch: `codex/dev-env-run`
+- short_sha: `18529e67`
+- Layer Target: `Frontend layout`
+- Module: `frontend/apps/web`
+- Reason: `看板页当前顺序为工具栏在前、看板头在后；用户希望头部操作最少，先展示看板业务状态，再展示视图/搜索/新建工具。`
+- completed_step: `KanbanPage 增加 toolbar slot；ActionView 在看板内容中将 action-toolbar 嵌入 KanbanPage，看板页顺序调整为：全局面包屑 -> 看板头 -> 工具栏 -> 卡片网格。列表页仍保留原外层工具栏结构。`
+- verification:
+  - `npm --prefix frontend/apps/web run typecheck`
+  - `git diff --check`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `docker compose -f docker-compose.yml -f docker-compose.prod-sim.yml -p sc-backend-odoo-prod-sim restart nginx`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/509?menu_id=293，kanban-toolbar y=69，action-toolbar y=146.1875，grid/card y=208.1875，顺序为看板头在工具栏前，无 console error。`
+- result: `PASS; 看板头与工具位置已互换，顶部先呈现业务状态，操作区退到看板头下方。`
+- risk: `P2; 看板工具栏通过 slot 嵌入，后续若其他看板页需要不同工具布局，可继续扩展 slot 内容而不改 KanbanPage 主结构。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复 ActionView 顶层工具栏在看板头之前的顺序。`
+- next_step: `继续检查搜索、清除、新建和视图切换在新顺序下的真实操作路径。`

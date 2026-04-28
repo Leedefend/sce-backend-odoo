@@ -81,6 +81,8 @@
         <span v-else class="kanban-count">{{ records.length }} 条记录</span>
       </section>
 
+      <slot name="toolbar"></slot>
+
       <section class="grid">
         <article
           v-for="(row, index) in records"

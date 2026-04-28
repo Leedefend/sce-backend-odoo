@@ -13,7 +13,7 @@
         {{ action.label || action.key }}
       </button>
     </section>
-    <section v-if="showTopActionToolbar" class="action-toolbar">
+    <section v-if="showTopActionToolbar && !isKanbanContent" class="action-toolbar">
       <div
         v-if="showViewSwitch"
         class="view-switch"
@@ -321,7 +321,57 @@
       :on-reload="reload"
       :on-card-click="handleRowClick"
       :on-page-change="handleListPageChange"
-    />
+    >
+      <template v-if="showTopActionToolbar" #toolbar>
+        <section class="action-toolbar action-toolbar--embedded">
+          <div
+            v-if="showViewSwitch"
+            class="view-switch"
+            :style="getSectionStyle('view_switch')"
+          >
+            <p class="contract-label">{{ t('label.view_switch', '视图') }}</p>
+            <div class="contract-chips">
+              <button
+                v-for="mode in vm.page.availableViewModes"
+                :key="`embedded-view-mode-${mode}`"
+                class="contract-chip"
+                :class="{ active: vm.page.viewMode === mode }"
+                :disabled="isViewModeDisabled({ mode, currentViewMode: vm.page.viewMode })"
+                @click="switchViewMode(mode)"
+              >
+                {{ viewModeLabel(mode) }}
+              </button>
+            </div>
+          </div>
+          <div v-if="showToolbarSearch" class="toolbar-search">
+            <input
+              type="search"
+              :value="toolbarSearchDraft"
+              :disabled="isUiBusy"
+              :placeholder="t('placeholder.search_keyword', '搜索关键字')"
+              @compositionstart="onToolbarSearchCompositionStart"
+              @compositionend="onToolbarSearchCompositionEnd"
+              @input="onToolbarSearchInput"
+              @keydown.enter.prevent="submitToolbarSearch"
+            />
+            <button
+              v-if="searchTerm"
+              class="toolbar-search-clear"
+              type="button"
+              :disabled="isUiBusy"
+              @click="clearToolbarSearch"
+            >
+              {{ t('chip_action_clear', '清除') }}
+            </button>
+          </div>
+          <div v-if="canCreateRecord" class="toolbar-actions">
+            <button class="contract-chip primary" type="button" @click="openCreateRecord">
+              {{ t('action_create_record', '新建') }}
+            </button>
+          </div>
+        </section>
+      </template>
+    </KanbanPage>
     <ListPage
       v-else-if="vm.content.kind === 'list'"
       :title="vm.page.title"
@@ -996,6 +1046,7 @@ const canCreateRecord = computed(() => {
   if (status.value === 'loading') return false;
   return resolveCreateRight(actionContract.value);
 });
+const isKanbanContent = computed(() => vm.value.content.kind === 'kanban');
 const showViewSwitch = computed(() =>
   isSectionVisible('view_switch', {
     defaultEnabled: true,
@@ -1003,7 +1054,7 @@ const showViewSwitch = computed(() =>
     vmVisible: vm.value.page.availableViewModes.length > 1,
   }),
 );
-const showToolbarSearch = computed(() => vm.value.content.kind === 'kanban');
+const showToolbarSearch = computed(() => isKanbanContent.value);
 const showTopActionToolbar = computed(() => showViewSwitch.value || showToolbarSearch.value || canCreateRecord.value);
 
 async function openCreateRecord() {
