@@ -31782,3 +31782,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 历史来源账户来自真实单据引用，不等同于平台正式账户主数据；后续旧报表样本对账时需解释这类账户的来源。`
 - rollback: `回退本批 write 脚本和文档；如需清理模拟生产数据，可删除 sc_legacy_account_master 中 source_table='legacy_account_transaction_source' 并重放上一版账户收支明细。`
 - next_step: `抽取旧报表常用查询条件，做旧过程与新系统账户收支统计表的样本对账。`
+
+## 2026-04-28 Batch-Legacy-Account-Reconciliation-Precheck
+
+- branch: `codex/dev-env-run`
+- short_sha: `c8981528`
+- Layer Target: `Domain Projection / Migration Evidence`
+- Module: `docs/migration_alignment`
+- Reason: `账户收支统计表进入新旧对账前，需要明确旧过程恢复环境限制和新系统连续经营口径差异。`
+- completed_step: `新增对账预检文档，确认旧过程在当前恢复容器中因 tempdb/旧库排序规则冲突无法直接执行，并定义 legacy_exact/new_official/new_continuity 三层对账口径。`
+- verification:
+  - `docker exec legacy-mssql-restore ... EXEC dbo.Report_SP_USP_Select_ZHSZTJB_GS_Tree ...` -> `FAIL_EXPECTED; collation conflict SQL_Latin1_General_CP1_CI_AS vs Chinese_PRC_CI_AS`
+  - `docker exec legacy-mssql-restore ... manual active account source baseline` -> `PASS; active_accounts=63`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; all_summary_rows=120, official_rows=63, supplemental_rows=48`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 对账不能以旧过程总额机械一致为验收，必须拆 legacy_exact/new_official/new_continuity 三层解释。`
+- risk: `P1; 如果必须直接执行旧存储过程，需要先处理恢复容器 tempdb 排序规则或改造临时表 COLLATE。`
+- rollback: `回退本批对账预检文档。`
+- next_step: `实现三层对账脚本，输出 legacy_exact、new_official、new_continuity 的账户类型和账户明细差异矩阵。`
