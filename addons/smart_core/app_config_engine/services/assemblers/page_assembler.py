@@ -839,6 +839,7 @@ class PageAssembler:
                         "relation": getattr(f, "comodel_name", None),
                         "readonly": bool(getattr(f, "readonly", False)),
                         "required": bool(getattr(f, "required", False)),
+                        "help": getattr(f, "help", None) or "",
                         "domain": _resolve_domain(f),
                         "selection": _resolve_selection(f),
                     }
@@ -857,6 +858,8 @@ class PageAssembler:
                 "readonly": bool((meta.get(name, {}) or {}).get("readonly", False)),
                 "required": bool((meta.get(name, {}) or {}).get("required", False)),
             }
+            if (meta.get(name, {}) or {}).get("help"):
+                info["help"] = meta[name]["help"]
             if meta.get(name, {}).get("relation"):
                 info["relation"] = meta[name]["relation"]
             domain = (meta.get(name, {}) or {}).get("domain")

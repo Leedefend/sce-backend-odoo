@@ -31423,3 +31423,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 该 smoke 固定当前模拟生产库统计数 project_balance_rows=56、tax_rate_rows=7471，后续重建数据范围变化时需要同步更新预期或参数化。`
 - rollback: `回退本批提交即可移除专用 smoke 和 Make target。`
 - next_step: `为项目级指标补用户可读提示，避免导出/透视后按行求和误解。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Metric-Hint
+
+- branch: `codex/dev-env-run`
+- short_sha: `14f3fb7a`
+- Layer Target: `Domain Contract / Platform Contract`
+- Module: `addons/smart_construction_core`, `addons/smart_core/app_config_engine`, `scripts/verify`, `docs/migration_alignment`
+- Reason: `actual_available_balance 与 tax_deduction_rate 是项目级指标，但按项目+往来单位行重复展示；需要在后端字段契约中提供用户可读说明，避免前端推导或用户按行求和误解。`
+- completed_step: `为 sc.ar.ap.project.summary 的实际可用余额、抵扣比例补字段 help；补齐 smart_core app_config_engine 对 fields_get().help 的透传；增强应收应付项目专用 smoke，断言 load_view 字段元数据包含项目级指标说明。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/projection/ar_ap_project_summary.py addons/smart_core/app_config_engine/models/app_model_config.py addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` -> `PASS`
+  - `node --check scripts/verify/fe_ar_ap_project_summary_smoke.js` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_core,smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.portal.ar_ap_project_summary_smoke.container` -> `PASS; artifacts/codex/ar-ap-project-summary/20260428T074636`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 项目级指标说明已由业务模型字段进入 load_view 契约，自定义前端可消费同一后端语义。`
+- risk: `P2; 当前仅契约透出字段说明，前端是否以 tooltip/help 文案展示取决于后续统一字段说明渲染策略。`
+- rollback: `回退本批提交后升级 smart_core,smart_construction_core，并重启模拟生产后端。`
+- next_step: `继续迁移旧库常用统计分析报表，优先审计下一张报表的数据源、字段口径和可重建脚本。`

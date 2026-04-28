@@ -34,6 +34,11 @@ const REQUIRED_LABELS = {
   actual_available_balance: '实际可用余额',
 };
 
+const REQUIRED_HELP_SUBSTRINGS = {
+  tax_deduction_rate: ['项目级指标', '不应按行求和'],
+  actual_available_balance: ['项目级指标', '不应按行求和'],
+};
+
 function log(message) {
   console.log(`[fe_ar_ap_project_summary_smoke] ${message}`);
 }
@@ -144,10 +149,15 @@ async function main() {
   const badLabels = Object.entries(REQUIRED_LABELS).filter(([name, expected]) => {
     return String((fields[name] || {}).string || '') !== expected;
   });
+  const badHelp = Object.entries(REQUIRED_HELP_SUBSTRINGS).filter(([name, expectedParts]) => {
+    const help = String((fields[name] || {}).help || '');
+    return expectedParts.some((part) => !help.includes(part));
+  });
 
   if (missingColumns.length) throw new Error(`missing columns: ${missingColumns.join(',')}`);
   if (missingFields.length) throw new Error(`missing field definitions: ${missingFields.join(',')}`);
   if (badLabels.length) throw new Error(`bad labels: ${badLabels.map(([name]) => name).join(',')}`);
+  if (badHelp.length) throw new Error(`bad field help: ${badHelp.map(([name]) => name).join(',')}`);
   if (permissions.read !== true || permissions.write !== false || permissions.create !== false || permissions.unlink !== false) {
     throw new Error(`unexpected permissions: ${JSON.stringify(permissions)}`);
   }
@@ -220,6 +230,7 @@ async function main() {
     `model: ${MODEL}`,
     `columns: ${columns.length}`,
     `required_columns: ${REQUIRED_COLUMNS.join(',')}`,
+    `required_help: ${Object.keys(REQUIRED_HELP_SUBSTRINGS).join(',')}`,
     `project_balance_rows: ${balanceTotal}`,
     `tax_rate_rows: ${rateTotal}`,
     `permissions: ${JSON.stringify(permissions)}`,

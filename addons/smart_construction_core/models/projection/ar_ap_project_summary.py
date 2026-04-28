@@ -30,14 +30,24 @@ class ScArApProjectSummary(models.Model):
     output_tax_amount = fields.Float(string="销项税额", readonly=True)
     input_tax_amount = fields.Float(string="进项税额", readonly=True)
     deduction_tax_amount = fields.Float(string="抵扣税额", readonly=True)
-    tax_deduction_rate = fields.Float(string="抵扣比例", readonly=True)
+    tax_deduction_rate = fields.Float(
+        string="抵扣比例",
+        readonly=True,
+        help="项目级指标：按项目抵扣税额合计 / 项目销项税额合计计算。"
+        "同一项目下多往来单位行会重复展示该比例，导出或透视时不应按行求和。",
+    )
     output_surcharge_amount = fields.Float(string="销项附加税", readonly=True)
     input_surcharge_amount = fields.Float(string="进项附加税", readonly=True)
     deduction_surcharge_amount = fields.Float(string="抵扣附加税", readonly=True)
     self_funding_income_amount = fields.Float(string="自筹收入金额", readonly=True)
     self_funding_refund_amount = fields.Float(string="自筹退回金额", readonly=True)
     self_funding_unreturned_amount = fields.Float(string="自筹未退金额", readonly=True)
-    actual_available_balance = fields.Float(string="实际可用余额", readonly=True)
+    actual_available_balance = fields.Float(
+        string="实际可用余额",
+        readonly=True,
+        help="项目级指标：来自旧库项目资金余额。"
+        "同一项目下多往来单位行会重复展示该余额，导出或透视时不应按行求和。",
+    )
 
     def init(self):
         self._cr.execute(
