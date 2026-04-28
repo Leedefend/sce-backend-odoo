@@ -303,6 +303,29 @@ class ScArApProjectSummary(models.Model):
                       AND project_id IS NOT NULL
                     GROUP BY project_id
                 ),
+                project_tax_rate AS (
+                    SELECT
+                        p.project_id,
+                        CASE
+                            WHEN SUM(COALESCE(p.output_tax_amount, 0.0)) > 0.0
+                                THEN SUM(COALESCE(t.deduction_tax_amount, 0.0))
+                                    / SUM(COALESCE(p.output_tax_amount, 0.0))
+                            ELSE 0.0
+                        END AS tax_deduction_rate
+                    FROM (
+                        SELECT project_id, SUM(output_tax_amount) AS output_tax_amount
+                        FROM output_invoice
+                        WHERE project_id IS NOT NULL
+                        GROUP BY project_id
+                    ) p
+                    LEFT JOIN (
+                        SELECT project_id, SUM(deduction_tax_amount) AS deduction_tax_amount
+                        FROM tax_deduction
+                        WHERE project_id IS NOT NULL
+                        GROUP BY project_id
+                    ) t ON t.project_id = p.project_id
+                    GROUP BY p.project_id
+                ),
                 business_keys AS (
                     SELECT project_id, partner_id, partner_key, partner_name FROM income_contract
                     UNION
@@ -368,11 +391,7 @@ class ScArApProjectSummary(models.Model):
                     COALESCE(oi.output_tax_amount, 0.0) AS output_tax_amount,
                     COALESCE(ii.input_tax_amount, 0.0) AS input_tax_amount,
                     COALESCE(td.deduction_tax_amount, 0.0) AS deduction_tax_amount,
-                    CASE
-                        WHEN COALESCE(oi.output_tax_amount, 0.0) > 0.0
-                            THEN COALESCE(td.deduction_tax_amount, 0.0) / COALESCE(oi.output_tax_amount, 0.0)
-                        ELSE 0.0
-                    END AS tax_deduction_rate,
+                    COALESCE(ptr.tax_deduction_rate, 0.0) AS tax_deduction_rate,
                     COALESCE(ins.output_surcharge_amount, 0.0) AS output_surcharge_amount,
                     COALESCE(ins.input_surcharge_amount, 0.0) AS input_surcharge_amount,
                     COALESCE(td.deduction_surcharge_amount, 0.0) AS deduction_surcharge_amount,
@@ -405,6 +424,8 @@ class ScArApProjectSummary(models.Model):
                     ON sf.project_id IS NOT DISTINCT FROM k.project_id AND sf.partner_key = k.partner_key
                 LEFT JOIN project_fund_balance pfb
                     ON pfb.project_id = k.project_id
+                LEFT JOIN project_tax_rate ptr
+                    ON ptr.project_id = k.project_id
             )
             """
         )

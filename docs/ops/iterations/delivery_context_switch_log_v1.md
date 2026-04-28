@@ -31365,3 +31365,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 项目级余额行使用系统显示名“项目级余额”，不是旧库往来单位。P2; actual_available_balance 是项目级指标，列表行重复展示时仍不能直接按行求和。`
 - rollback: `回退本批提交并升级 smart_construction_core。`
 - next_step: `回查旧库 SF 抵扣比例最终 SELECT 口径，决定是否改为项目级税负比例。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Tax-Rate
+
+- branch: `codex/dev-env-run`
+- short_sha: `8998adee`
+- Layer Target: `Domain Projection`
+- Module: `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `Batch-K 发现 SF 抵扣比例只有 2 行非零；回查旧库 UP_USP_SELECT_YSYFHZB_XM 确认 SF 分子分母均只按 XMID 汇总，不按往来单位过滤。`
+- completed_step: `新增 project_tax_rate CTE，按项目汇总 output_invoice.output_tax_amount 与 tax_deduction.deduction_tax_amount 后计算 tax_deduction_rate，并按 project_id 关联到所有报表行。`
+- verification:
+  - `docker exec legacy-mssql-restore sqlcmd OBJECT_DEFINITION(UP_USP_SELECT_YSYFHZB_XM)` -> `PASS; SF 使用 XMID 项目级汇总口径`
+  - `python3 -m py_compile addons/smart_construction_core/models/projection/ar_ap_project_summary.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_prod_sim make mod.upgrade` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `summary_rows=11696, rows_with_rate=7471, projects_with_rate=315, projects_with_output_tax=579, projects_with_output_and_deduction=315`
+- result: `PASS; SF 抵扣比例已从行级误算修正为旧库一致的项目级比例。`
+- risk: `P2; tax_deduction_rate 是项目级比例，在项目下多个往来单位行会重复显示，不应在透视中按行求和。`
+- rollback: `回退本批提交并升级 smart_construction_core。`
+- next_step: `做最终模拟生产全字段覆盖复核，并检查原生/自定义前端对项目级余额行和项目级比例的显示是否容易被用户理解。`
