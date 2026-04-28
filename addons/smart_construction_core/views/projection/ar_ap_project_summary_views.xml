@@ -16,6 +16,7 @@
                     <filter string="有供应商发票" name="has_input_invoice" domain="[('input_invoice_amount', '!=', 0)]"/>
                     <filter string="有未付款" name="has_payable_unpaid" domain="[('payable_unpaid_amount', '!=', 0)]"/>
                     <filter string="有付款超票" name="has_paid_uninvoiced" domain="[('paid_uninvoiced_amount', '!=', 0)]"/>
+                    <filter string="有抵扣税额" name="has_deduction_tax" domain="[('deduction_tax_amount', '!=', 0)]"/>
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                     <filter string="按往来单位" name="group_partner" context="{'group_by': 'partner_name'}"/>
                 </search>
@@ -42,6 +43,8 @@
                     <field name="paid_uninvoiced_amount" sum="付款超票合计"/>
                     <field name="output_tax_amount" sum="销项税额合计"/>
                     <field name="input_tax_amount" sum="进项税额合计"/>
+                    <field name="deduction_tax_amount" sum="抵扣税额合计"/>
+                    <field name="tax_deduction_rate"/>
                 </tree>
             </field>
         </record>
@@ -66,6 +69,7 @@
                     <field name="paid_uninvoiced_amount" type="measure"/>
                     <field name="output_tax_amount" type="measure"/>
                     <field name="input_tax_amount" type="measure"/>
+                    <field name="deduction_tax_amount" type="measure"/>
                 </pivot>
             </field>
         </record>
@@ -81,6 +85,7 @@
                     <field name="payable_contract_amount" type="measure"/>
                     <field name="input_invoice_amount" type="measure"/>
                     <field name="paid_amount" type="measure"/>
+                    <field name="deduction_tax_amount" type="measure"/>
                 </graph>
             </field>
         </record>

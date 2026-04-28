@@ -68,6 +68,13 @@
               sequence="30"
               groups="smart_construction_core.group_sc_cap_config_admin"/>
 
+    <menuitem id="menu_sc_legacy_tax_deduction_fact"
+              name="历史抵扣税额"
+              parent="menu_sc_finance_history_center"
+              action="smart_construction_core.action_sc_legacy_tax_deduction_fact"
+              sequence="35"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+
     <menuitem id="menu_sc_legacy_financing_loan_fact"
               name="历史融资借款"
               parent="menu_sc_finance_history_center"
@@ -103,6 +110,9 @@
       <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
     <record id="menu_sc_legacy_invoice_tax_fact" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_tax_deduction_fact" model="ir.ui.menu">
       <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
     <record id="menu_sc_legacy_financing_loan_fact" model="ir.ui.menu">

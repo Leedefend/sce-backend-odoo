@@ -31225,3 +31225,26 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 新系统资金台账支出口径与旧库 T_FK_Supplier 非删除口径仍有约 618424.18 差额，需后续解释特殊付款、删除标记、退款或迁移过滤差异。`
 - rollback: `回退本批次提交并升级 smart_construction_core，即恢复 Batch-D 第一阶段字段。`
 - next_step: `继续分析抵扣税额、自筹退回、实际可用余额三类字段的数据条件，优先补事实来源最清晰的一项。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Tax-Deduction
+
+- branch: `codex/dev-env-run`
+- short_sha: `50990e3b`
+- Layer Target: `Domain Projection`
+- Module: `addons/smart_construction_core`, `scripts/migration`, `docs/migration_alignment`
+- Reason: `旧库“应收应付报表（项目）”抵扣税额来源明确为 C_JXXP_DKDJ_CB.DKSE；新系统现有 sc.legacy.invoice.tax.fact 未承载抵扣登记，sc.receipt.income.deducted_tax_amount 当前为 0，需要先补专门事实载体再进入报表。`
+- completed_step: `新增 sc.legacy.tax.deduction.fact 历史抵扣税额事实模型、内部菜单、ACL、旧库 payload 生成/写入脚本；sc.ar.ap.project.summary 新增抵扣税额和抵扣比例，列表/透视/图表/搜索同步开放。`
+- verification:
+  - `docker exec legacy-mssql-restore sqlcmd C_JXXP_DKDJ_CB/C_JXXP_DKDJ_New count/sum` -> `PASS; all rows=4990 DKSE=59386493.57, effective ISNULL(DEL,0)=0 rows=4915 DKSE=56236311.34`
+  - `python3 -m py_compile legacy_tax_deduction_fact.py ar_ap_project_summary.py fresh_db_legacy_tax_deduction_replay_*.py` -> `PASS`
+  - `python3 stdlib XML parse legacy_tax_deduction_views.xml / legacy_finance_internal_views.xml / ar_ap_project_summary_views.xml` -> `PASS`
+  - `CSV ir.model.access duplicate id check` -> `PASS; rows=336 duplicate_ids=[]`
+  - `ENV=test ENV_FILE=.env.prod.sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_prod_sim make mod.upgrade` -> `PASS` after fixing SQL group alias ambiguity in tax_deduction CTE
+  - `python3 scripts/migration/fresh_db_legacy_tax_deduction_replay_adapter.py` -> `PASS; expected_rows=4915`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_tax_deduction_replay_write.py` -> `PASS; final skipped_existing=4915, missing_project=0`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `fact_count=4915, fact_project_count=4915, fact_partner_bound_count=4872, fact_deduction_tax_amount=56236311.34, summary_count=11167, summary_deduction_rows=1874, summary_deduction_tax_amount=56236311.34`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make verify.restricted` -> `SKIP; Makefile 无 verify.restricted target`
+- result: `PASS; 应收应付报表（项目）已补齐抵扣税额和抵扣比例。`
+- risk: `P1; 抵扣附加税已资产化但尚未挂入汇总报表；43 行抵扣事实未匹配 res.partner，当前按历史往来单位名称兜底汇总。`
+- rollback: `回退本批次提交并升级 smart_construction_core；如需回滚模拟生产数据，可按 import_batch=legacy_tax_deduction_v1 删除 sc.legacy.tax.deduction.fact 行后升级模块。`
+- next_step: `继续处理自筹收入/退回/未退，或拆项目实际可用余额到项目资金汇总能力。`

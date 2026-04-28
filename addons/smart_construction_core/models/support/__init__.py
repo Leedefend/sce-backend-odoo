@@ -37,6 +37,7 @@ from . import project_member_staging
 from . import organization_department
 from . import legacy_expense_deposit_fact
 from . import legacy_invoice_tax_fact
+from . import legacy_tax_deduction_fact
 from . import legacy_workflow_audit
 from . import history_todo
 from . import legacy_receipt_income_fact

@@ -28,6 +28,8 @@ class ScArApProjectSummary(models.Model):
     paid_uninvoiced_amount = fields.Float(string="付款超票", readonly=True)
     output_tax_amount = fields.Float(string="销项税额", readonly=True)
     input_tax_amount = fields.Float(string="进项税额", readonly=True)
+    deduction_tax_amount = fields.Float(string="抵扣税额", readonly=True)
+    tax_deduction_rate = fields.Float(string="抵扣比例", readonly=True)
 
     def init(self):
         self._cr.execute(
@@ -36,7 +38,8 @@ class ScArApProjectSummary(models.Model):
                 to_regclass('construction_contract'),
                 to_regclass('sc_receipt_income'),
                 to_regclass('sc_invoice_registration'),
-                to_regclass('sc_treasury_ledger')
+                to_regclass('sc_treasury_ledger'),
+                to_regclass('sc_legacy_tax_deduction_fact')
             """
         )
         if not all(self._cr.fetchone()):
@@ -150,6 +153,35 @@ class ScArApProjectSummary(models.Model):
                     WHERE direction = 'input'
                     GROUP BY project_id, partner_id, partner_key, partner_name
                 ),
+                tax_deduction_norm AS (
+                    SELECT
+                        d.project_id,
+                        COALESCE(d.partner_id, pnm.partner_id) AS partner_id,
+                        CASE
+                            WHEN COALESCE(d.partner_id, pnm.partner_id) IS NOT NULL
+                                THEN 'partner:' || COALESCE(d.partner_id, pnm.partner_id)::varchar
+                            ELSE 'name:' || lower(trim(COALESCE(NULLIF(d.partner_name, ''), '未填往来单位')))
+                        END AS partner_key,
+                        COALESCE(rp.name, pnm.partner_name, NULLIF(d.partner_name, ''), '未填往来单位')
+                            AS partner_name,
+                        COALESCE(d.deduction_tax_amount, 0.0) AS deduction_tax_amount
+                    FROM sc_legacy_tax_deduction_fact d
+                    LEFT JOIN res_partner rp ON rp.id = d.partner_id
+                    LEFT JOIN partner_name_map pnm
+                        ON pnm.partner_name_key = lower(trim(d.partner_name))
+                    WHERE d.active IS TRUE
+                      AND COALESCE(d.deleted_flag, '0') IN ('0', '')
+                ),
+                tax_deduction AS (
+                    SELECT
+                        project_id,
+                        partner_id,
+                        partner_key,
+                        partner_name,
+                        SUM(deduction_tax_amount) AS deduction_tax_amount
+                    FROM tax_deduction_norm
+                    GROUP BY project_id, partner_id, partner_key, partner_name
+                ),
                 keys AS (
                     SELECT project_id, partner_id, partner_key, partner_name FROM income_contract
                     UNION
@@ -162,6 +194,8 @@ class ScArApProjectSummary(models.Model):
                     SELECT project_id, partner_id, partner_key, partner_name FROM output_invoice
                     UNION
                     SELECT project_id, partner_id, partner_key, partner_name FROM input_invoice
+                    UNION
+                    SELECT project_id, partner_id, partner_key, partner_name FROM tax_deduction
                 )
                 SELECT
                     row_number() OVER (ORDER BY k.project_id, k.partner_name, k.partner_key) AS id,
@@ -189,7 +223,13 @@ class ScArApProjectSummary(models.Model):
                     GREATEST(COALESCE(po.paid_amount, 0.0) - COALESCE(ii.input_invoice_amount, 0.0), 0.0)
                         AS paid_uninvoiced_amount,
                     COALESCE(oi.output_tax_amount, 0.0) AS output_tax_amount,
-                    COALESCE(ii.input_tax_amount, 0.0) AS input_tax_amount
+                    COALESCE(ii.input_tax_amount, 0.0) AS input_tax_amount,
+                    COALESCE(td.deduction_tax_amount, 0.0) AS deduction_tax_amount,
+                    CASE
+                        WHEN COALESCE(oi.output_tax_amount, 0.0) > 0.0
+                            THEN COALESCE(td.deduction_tax_amount, 0.0) / COALESCE(oi.output_tax_amount, 0.0)
+                        ELSE 0.0
+                    END AS tax_deduction_rate
                 FROM keys k
                 LEFT JOIN project_project p ON p.id = k.project_id
                 LEFT JOIN income_contract ic
@@ -204,6 +244,8 @@ class ScArApProjectSummary(models.Model):
                     ON oi.project_id = k.project_id AND oi.partner_key = k.partner_key
                 LEFT JOIN input_invoice ii
                     ON ii.project_id = k.project_id AND ii.partner_key = k.partner_key
+                LEFT JOIN tax_deduction td
+                    ON td.project_id = k.project_id AND td.partner_key = k.partner_key
             )
             """
         )
