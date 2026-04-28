@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_legacy_task_evidence_replay_adapter",
+  "total_rows": 78822,
+  "active_rows": 74028,
+  "done_rows": 709,
+  "read_rows": 45438,
+  "payload_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_task_evidence_replay_payload_v1.csv",
+  "decision": "legacy_task_evidence_payload_ready"
+}

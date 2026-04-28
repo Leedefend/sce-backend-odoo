@@ -199,9 +199,16 @@ ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 make smoke.role_matrix
 
 - `sc_prod` 是新库或已经确认可以整体替换的空库
 - 历史迁移资产已随部署包上线
+- `artifacts/migration` 离线 replay payload 已随资产包上线
 - filestore 已初始化或为空
 - 已完成旧系统写入冻结
 - 已完成旧库导出校验和资产 hash 校验
+
+生产服务器不安装旧库，也不依赖 `legacy-mssql-restore`。生产入口默认
+`HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1`，会跳过所有旧库 adapter step，
+直接使用资产包内的 `artifacts/migration` payload 重放。只有在非生产环境需要
+重新从旧库生成 payload 时，才允许显式设置
+`HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=0`。
 
 生产一键入口：
 
@@ -220,7 +227,7 @@ ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
 3. 应用 extension module registry。
 4. 重启 Odoo。
 5. 执行平台初始化 preflight。
-6. 执行历史连续性 replay。
+6. 使用离线 payload 执行历史连续性 replay。
 7. 执行业务可用性 probe。
 8. 执行 full business smoke。
 9. 执行 role matrix smoke。
@@ -244,10 +251,12 @@ ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
 ```bash
 ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim \
   RUN_ID=rehearsal_$(date +%Y%m%dT%H%M%S) \
+  HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1 \
   make history.continuity.rehearse
 
 ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim \
   RUN_ID=rehearsal_$(date +%Y%m%dT%H%M%S) \
+  HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1 \
   make history.continuity.replay
 
 ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim \

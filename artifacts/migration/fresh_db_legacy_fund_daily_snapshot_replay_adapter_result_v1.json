@@ -3,5 +3,5 @@
   "mode": "fresh_db_legacy_fund_daily_snapshot_replay_adapter",
   "expected_rows": 496,
   "replay_payload_rows": 496,
-  "payload_csv": "/home/lidefend/sce-backend-odoo/artifacts/migration/fresh_db_legacy_fund_daily_snapshot_replay_payload_v1.csv"
+  "payload_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_fund_daily_snapshot_replay_payload_v1.csv"
 }

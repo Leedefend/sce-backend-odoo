@@ -2,13 +2,14 @@
 
 Status: `PASS`
 
-- package_id: `migration_assets_release_20260428T152543Z`
-- package_path: `/tmp/sce_migration_asset_release/migration_assets_release_20260428T152543Z.tar.gz`
-- sha256_path: `/tmp/sce_migration_asset_release/migration_assets_release_20260428T152543Z.tar.gz.sha256`
-- sha256: `6b3aa232f6bfa8f0659c1c57703628f63e561f0df3ac2861532abe3a88ff02e8`
-- package_size_mb: `37.51`
-- included_file_count: `95`
+- package_id: `migration_assets_release_20260428T170353Z`
+- package_path: `/tmp/sce_migration_asset_release/migration_assets_release_20260428T170353Z.tar.gz`
+- sha256_path: `/tmp/sce_migration_asset_release/migration_assets_release_20260428T170353Z.tar.gz.sha256`
+- sha256: `1c4e51320990ed6847aa6d8bea21d39de594806776944bd3d32800496bf57813`
+- package_size_mb: `237.62`
+- included_file_count: `776`
 - excluded_file_count: `3`
+- payload_mode: `packaged_artifacts`
 
 ## Excluded Paths
 
@@ -19,3 +20,4 @@ Status: `PASS`
 ## Verification
 
 - Excluded `.xml.parts` files are not packaged.
+- `artifacts/migration` replay payloads are packaged for old-DB-free production replay.

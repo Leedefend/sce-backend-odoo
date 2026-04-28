@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_legacy_expense_reimbursement_line_replay_adapter",
+  "total_rows": 3589,
+  "header_rows": 1866,
+  "active_header_rows": 1845,
+  "orphan_line_rows": 2,
+  "line_amount": "11888847.9600",
+  "header_approved_amount": "11869461.6600",
+  "min_document_date": "2019-05-07",
+  "max_document_date": "2026-04-10",
+  "payload_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_expense_reimbursement_line_replay_payload_v1.csv",
+  "decision": "legacy_expense_reimbursement_line_payload_ready"
+}

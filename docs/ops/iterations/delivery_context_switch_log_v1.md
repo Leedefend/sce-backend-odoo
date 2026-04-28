@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-29T00:52:00+08:00
+- blocker_key: `production_packaged_payload_replay_delivery_v1`
+- layer_target: `Ops Deploy / Migration Artifact Delivery / Verification`
+- module: `history_continuity_oneclick + fresh_production_history_init + migration_assets + smart_construction_core + audit smoke`
+- reason: `生产服务器不会安装旧库，历史重建必须只依赖随仓库交付的 artifacts/migration payload；同时生产 smoke 需要匹配“内部用户可业务发起、审核/批准严格控权”的权限口径。`
+- completed_step: `已先备份 sc_prod_sim 到 /tmp/sce_db_backups/sc_prod_sim_20260428T154612Z.dump，然后清空重建；补齐 artifacts/migration packaged payload，生产入口默认 HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1 并跳过 adapter；修复 fresh install 菜单加载顺序、采购合同 state 写入、业务/角色 smoke 的 OCA 审批路径；旧库容器停止后执行 history.production.fresh_init 后半段，payload replay、business smoke、role matrix smoke、frontend smoke 均 PASS，RUN_ID=rehearsal_packaged_final_20260429T0040。`
+- active_commit: `c58d3af4`
+- next_step: `重新生成 migration assets release package，执行交付审计与基础语法/文档门禁后提交本批生产交付资产改动。`
+
 ### 2026-04-28T23:05:00+08:00
 - blocker_key: `migration_asset_delivery_packaging_audit_v1`
 - layer_target: `Migration Delivery Ops`

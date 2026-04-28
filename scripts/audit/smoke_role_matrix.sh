@@ -168,6 +168,7 @@ FIXTURE_SPECS = {
             "smart_construction_custom.group_sc_role_contract_manager",
             "smart_construction_custom.group_sc_role_settlement_manager",
             "smart_construction_custom.group_sc_role_payment_manager",
+            "smart_construction_core.group_sc_cap_purchase_manager",
         ],
     },
     "demo_role_owner": {
@@ -218,6 +219,69 @@ def login(user, pwd):
 
 def exec_kw(uid, pwd, model, method, args, kwargs=None):
     return jsonrpc("object", "execute_kw", [DB, uid, pwd, model, method, args, kwargs or {}])
+
+def confirm_with_tier_approval(uid, pwd, model, record_id, expected_state="confirmed"):
+    exec_kw(uid, pwd, model, "action_confirm", [[record_id]])
+    row = exec_kw(
+        uid,
+        pwd,
+        model,
+        "read",
+        [[record_id]],
+        {"fields": ["state", "validation_status"]},
+    )[0]
+    if row.get("state") == expected_state:
+        return row
+    if row.get("validation_status") in ("waiting", "pending"):
+        exec_kw(uid, pwd, model, "validate_tier", [[record_id]])
+        exec_kw(uid, pwd, model, "action_confirm", [[record_id]])
+        row = exec_kw(
+            uid,
+            pwd,
+            model,
+            "read",
+            [[record_id]],
+            {"fields": ["state", "validation_status"]},
+        )[0]
+    return row
+
+def call_with_tier_approval(uid, pwd, model, method, record_id, expected_states):
+    try:
+        exec_kw(uid, pwd, model, method, [[record_id]])
+    except RuntimeError as exc:
+        if "已经在统一审批流程中" not in str(exc):
+            raise
+    row = exec_kw(
+        uid,
+        pwd,
+        model,
+        "read",
+        [[record_id]],
+        {"fields": ["state", "validation_status"]},
+    )[0]
+    if row.get("state") in expected_states:
+        return row
+    if row.get("validation_status") in ("waiting", "pending"):
+        exec_kw(uid, pwd, model, "validate_tier", [[record_id]])
+        try:
+            exec_kw(uid, pwd, model, "action_on_tier_approved", [[record_id]])
+        except RuntimeError as exc:
+            if "has no attribute 'action_on_tier_approved'" not in str(exc):
+                raise
+        try:
+            exec_kw(uid, pwd, model, method, [[record_id]])
+        except RuntimeError as exc:
+            if "已经在统一审批流程中" not in str(exc):
+                raise
+        row = exec_kw(
+            uid,
+            pwd,
+            model,
+            "read",
+            [[record_id]],
+            {"fields": ["state", "validation_status"]},
+        )[0]
+    return row
 
 
 def _xmlid_to_group_id(uid, xmlid):
@@ -339,25 +403,35 @@ if partner_ids:
 else:
     partner_id = exec_kw(admin_uid, ADMIN_PWD, "res.partner", "create", [{"name": "Role Smoke Partner"}])
 
-step("read role: contract create should fail")
+step("read role: contract draft create follows business initiator baseline")
+read_contract_id = exec_kw(
+    uid_read,
+    READ_PWD,
+    "construction.contract",
+    "create",
+    [{
+        "subject": "Role Smoke Contract (read draft)",
+        "type": "in",
+        "project_id": project_user_id,
+        "partner_id": partner_id,
+    }],
+)
 failed = False
 try:
-    exec_kw(
-        uid_read,
-        READ_PWD,
-        "construction.contract",
-        "create",
-        [{
-            "subject": "Role Smoke Contract (read)",
-            "type": "in",
-            "project_id": project_user_id,
-            "partner_id": partner_id,
-        }],
-    )
+    exec_kw(uid_read, READ_PWD, "construction.contract", "action_confirm", [[read_contract_id]])
 except Exception:
     failed = True
 if not failed:
-    raise RuntimeError("read role can create contract unexpectedly")
+    read_state = exec_kw(
+        uid_read,
+        READ_PWD,
+        "construction.contract",
+        "read",
+        [[read_contract_id]],
+        {"fields": ["state"]},
+    )[0]["state"]
+    if read_state != "draft":
+        raise RuntimeError("read role can progress contract unexpectedly")
 
 step("user role: create contract + line")
 contract_id = exec_kw(
@@ -385,8 +459,7 @@ exec_kw(
 )
 
 step("manager role: confirm contract")
-exec_kw(uid_manager, MANAGER_PWD, "construction.contract", "action_confirm", [[contract_id]])
-state = exec_kw(uid_manager, MANAGER_PWD, "construction.contract", "read", [[contract_id]], {"fields": ["state"]})[0]["state"]
+state = confirm_with_tier_approval(uid_manager, MANAGER_PWD, "construction.contract", contract_id).get("state")
 if state != "confirmed":
     raise RuntimeError("manager role failed to confirm contract")
 
@@ -400,7 +473,16 @@ purchase_order_id = exec_kw(
         "partner_id": partner_id,
     }],
 )
-exec_kw(admin_uid, ADMIN_PWD, "purchase.order", "write", [[purchase_order_id], {"state": "purchase"}])
+purchase_state = call_with_tier_approval(
+    uid_manager,
+    MANAGER_PWD,
+    "purchase.order",
+    "button_confirm",
+    purchase_order_id,
+    {"purchase", "done"},
+).get("state")
+if purchase_state not in ("purchase", "done"):
+    raise RuntimeError("manager role failed to confirm purchase order")
 settlement_id = exec_kw(
     uid_user,
     USER_PWD,
@@ -458,14 +540,23 @@ payment_request_id = exec_kw(
     }],
 )
 
-step("read role: payment write access should fail")
+step("read role: payment approval should fail")
 failed = False
 try:
-    exec_kw(uid_read, READ_PWD, "payment.request", "check_access_rights", ["write"], {"raise_exception": True})
+    exec_kw(uid_read, READ_PWD, "payment.request", "action_approve", [[payment_request_id]])
 except Exception:
     failed = True
 if not failed:
-    raise RuntimeError("read role has payment write access unexpectedly")
+    payment_state = exec_kw(
+        uid_read,
+        READ_PWD,
+        "payment.request",
+        "read",
+        [[payment_request_id]],
+        {"fields": ["state"]},
+    )[0]["state"]
+    if payment_state in ("approve", "approved", "done"):
+        raise RuntimeError("read role can approve payment unexpectedly")
 
 step("user role: payment write access")
 if not exec_kw(uid_user, USER_PWD, "payment.request", "check_access_rights", ["write"], {"raise_exception": False}):

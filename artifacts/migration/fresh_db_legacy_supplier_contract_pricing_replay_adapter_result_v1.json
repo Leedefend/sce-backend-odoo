@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_legacy_supplier_contract_pricing_replay_adapter",
+  "expected_rows": 5345,
+  "pricing_method_rows": 4677,
+  "distinct_pricing_methods": 17,
+  "payload_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_supplier_contract_pricing_replay_payload_v1.csv"
+}

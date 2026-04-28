@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import gzip
 from pathlib import Path
 
 
@@ -31,10 +32,21 @@ def write_json(path: Path, payload: dict[str, object]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def resolve_payload_path(path: Path) -> Path:
+    if path.exists():
+        return path
+    gz_path = path.with_suffix(path.suffix + ".gz")
+    if gz_path.exists():
+        return gz_path
+    raise FileNotFoundError(path)
+
+
 def bulk_load(csv_path: Path, temp_table: str, columns: list[str]) -> None:
+    payload_path = resolve_payload_path(csv_path)
     env.cr.execute(f"DROP TABLE IF EXISTS {temp_table}")  # noqa: F821
     env.cr.execute(f"CREATE TEMP TABLE {temp_table} ({', '.join(f'{col} text' for col in columns)}) ON COMMIT DROP")  # noqa: F821
-    with csv_path.open("r", encoding="utf-8-sig", newline="") as handle:
+    opener = gzip.open if payload_path.suffix == ".gz" else Path.open
+    with opener(payload_path, "rt", encoding="utf-8-sig", newline="") as handle:
         env.cr.copy_expert(  # noqa: F821
             f"COPY {temp_table} ({', '.join(columns)}) FROM STDIN WITH CSV HEADER",
             handle,

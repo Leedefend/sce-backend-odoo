@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_legacy_fund_confirmation_line_replay_adapter",
+  "total_rows": 13398,
+  "header_rows": 2655,
+  "active_header_rows": 2595,
+  "orphan_line_rows": 0,
+  "current_actual_amount": "260848353.6900",
+  "accumulated_actual_amount": "52447133.2600",
+  "payload_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_fund_confirmation_line_replay_payload_v1.csv",
+  "decision": "legacy_fund_confirmation_line_payload_ready"
+}

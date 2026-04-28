@@ -57,6 +57,7 @@
         # 顶级菜单基础
         'actions/project_list_actions.xml',
         'views/menu_root.xml',
+        'views/menu_centers.xml',
 
         # 视图
         'views/core/cost_domain_views.xml',
@@ -72,6 +73,8 @@
         'wizard/material_plan_to_rfq_views.xml',
         'views/core/material_plan_views.xml',
         'actions/finance_actions.xml',
+        'views/support/payment_request_tier_review_views.xml',
+        'views/menu_finance_center.xml',
         'actions/project_actions.xml',
         'views/core/project_list_views.xml',
         'views/core/project_search_views.xml',
@@ -104,8 +107,6 @@
         'views/support/legacy_account_transaction_line_views.xml',
         'views/core/project_project_financial_views.xml',
         'views/core/project_budget_views.xml',
-        'views/support/payment_request_tier_review_views.xml',
-        'views/menu_finance_center.xml',
         'views/support/legacy_finance_internal_views.xml',
         'views/support/history_todo_views.xml',
         'views/support/legacy_file_index_views.xml',

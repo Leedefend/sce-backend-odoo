@@ -1,0 +1,7 @@
+{
+  "mode": "fresh_db_legacy_account_master_replay_adapter",
+  "account_rows": 117,
+  "csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_account_master_replay_payload_v1.csv",
+  "source_table": "C_Base_ZHSZ",
+  "decision": "legacy_account_master_payload_ready"
+}

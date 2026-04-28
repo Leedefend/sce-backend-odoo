@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_actual_outflow_line_replay_adapter",
+  "source_table": "T_FK_Supplier_CB",
+  "expected_rows": 15966,
+  "replay_payload_rows": 15966,
+  "distinct_parent_actual_outflow_ids": 10662,
+  "payload_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_actual_outflow_line_replay_payload_v1.csv"
+}

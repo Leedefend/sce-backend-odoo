@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_legacy_construction_diary_line_replay_adapter",
+  "total_rows": 5687,
+  "header_rows": 4340,
+  "active_header_rows": 4339,
+  "orphan_line_rows": 18,
+  "with_attachment_path_rows": 6,
+  "min_diary_date": "1900-01-01 00:00:00.000",
+  "max_diary_date": "2026-04-10 15:41:54.310",
+  "payload_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_construction_diary_line_replay_payload_v1.csv",
+  "decision": "legacy_construction_diary_line_payload_ready"
+}

@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_legacy_fund_daily_line_replay_adapter",
+  "total_rows": 7754,
+  "header_rows": 511,
+  "active_header_rows": 496,
+  "line_rows": 7754,
+  "orphan_line_rows": 0,
+  "daily_income_sum": "1524275095.6800",
+  "daily_expense_sum": "1317155332.1900",
+  "current_account_balance_sum": "5693334440.5800",
+  "payload_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_fund_daily_line_replay_payload_v1.csv",
+  "decision": "legacy_fund_daily_line_payload_ready"
+}

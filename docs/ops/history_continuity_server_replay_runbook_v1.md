@@ -20,7 +20,16 @@ For a brand-new production database, the goal is historical fact continuity:
 - target DB already exists
 - target production DB is brand-new when using the production initialization path
 - migration assets are present in the deployed repo
+- frozen replay payloads from `artifacts/migration` are present in the deployed
+  repo or extracted release package
 - platform baseline initialization has not been bypassed
+
+Production servers do not require the old legacy database. The production
+entry defaults to `HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1`, skips all
+`*_adapter` steps, and replays from the packaged `artifacts/migration` payloads.
+Only set `HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=0` in a controlled
+non-production environment that intentionally regenerates payloads from the old
+database.
 
 ## One-Click Commands
 
@@ -65,7 +74,7 @@ This production entry runs:
 3. apply extension module registry
 4. restart Odoo
 5. platform initialization preflight
-6. history continuity replay
+6. history continuity replay from packaged payloads
 7. business usable probe
 8. full business smoke
 9. role matrix smoke

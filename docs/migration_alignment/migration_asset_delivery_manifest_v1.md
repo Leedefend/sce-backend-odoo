@@ -7,11 +7,12 @@ Status: `DELIVERY_READY_WITH_PACKAGING_ACTIONS`
 面向上线交付冻结迁移资产包边界，明确：
 
 - 哪些文件属于生产加载资产。
-- 哪些文件属于交付证据，不参与加载。
+- 哪些文件属于离线 replay payload，生产服务器不再依赖旧库生成。
 - 哪些文件不应进入最终发布压缩包。
 - 上线前必须通过哪些只读门禁。
 
 本文不改变迁移资产内容，不改变 `history_continuity_oneclick.sh` 重放顺序。
+生产重放默认跳过旧库 adapter，直接使用资产包内的离线 payload。
 
 ## 2. 当前事实
 
@@ -40,6 +41,7 @@ Status: `DELIVERY_READY_WITH_PACKAGING_ACTIONS`
 - `migration_assets/manifest/migration_asset_catalog_v1.json`
 - catalog 中 23 个 `asset_manifest_path`
 - 每个 asset manifest 内声明的 `assets[].path`
+- `artifacts/migration/**` 中冻结的 replay payload、adapter result 和门禁证据
 - 生产重放入口：
   - `scripts/deploy/fresh_production_history_init.sh`
   - `scripts/migration/history_continuity_oneclick.sh`
@@ -52,9 +54,21 @@ make migration.assets.verify_all
 make migration.assets.delivery_audit
 ```
 
-## 4. 交付证据文件
+## 4. 离线 Payload 与交付证据
 
-以下文件是资产治理证据，不是加载入口：
+生产服务器不安装旧库，不要求 `legacy-mssql-restore` 存在。最终发布包必须携带
+`artifacts/migration` 下的冻结 payload；`history.production.fresh_init` 默认
+设置 `HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1`，所有 `*_adapter` step 会跳过，
+后续 replay/write step 直接读取这些 payload。
+
+如需在非生产环境重新从旧库生成 payload，必须显式设置：
+
+```bash
+HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=0
+```
+
+以下文件是资产治理证据，不是 catalog 加载入口：
+
 
 - `migration_assets/manifest/migration_asset_coverage_snapshot_v1.json`
 - `migration_assets/manifest/receipt_blocker_policy_snapshot_v1.json`
@@ -88,7 +102,7 @@ make migration.assets.delivery_audit
 
 ```bash
 DB_NAME=<target_db> make history.continuity.rehearse
-DB_NAME=<target_db> make history.continuity.replay
+DB_NAME=<target_db> HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1 make history.continuity.replay
 ```
 
 生产新库初始化：
@@ -125,10 +139,12 @@ prod-sim / UAT 必须完成：
 ```bash
 ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim \
   RUN_ID=rehearsal_YYYYMMDDTHHMMSS \
+  HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1 \
   make history.continuity.rehearse
 
 ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim \
   RUN_ID=rehearsal_YYYYMMDDTHHMMSS \
+  HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1 \
   make history.continuity.replay
 
 ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim \
@@ -164,6 +180,7 @@ make migration.assets.release_package
 
 - 包内包含 `migration_assets/manifest/migration_asset_catalog_v1.json`。
 - 包内包含 catalog 与 asset manifest 声明的加载资产。
+- 包内包含 `artifacts/migration/**` 离线 replay payload 与重放证据。
 - 包内包含两个治理证据文件。
 - 包内包含完整 `legacy_workflow_audit_v1.xml`。
 - 包内排除 `legacy_workflow_audit_v1.xml.parts/**`。

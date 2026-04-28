@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_legacy_project_fund_balance_replay_adapter",
+  "expected_rows": 755,
+  "actual_available_balance": -2586337.86,
+  "payload_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_project_fund_balance_replay_payload_v1.csv"
+}

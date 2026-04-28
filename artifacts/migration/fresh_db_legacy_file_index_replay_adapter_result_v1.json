@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_legacy_file_index_replay_adapter",
+  "base_system_file_rows": 126967,
+  "bill_file_rows": 51964,
+  "total_rows": 178931,
+  "base_system_file_active_rows": 125213,
+  "bill_file_active_rows": 49148,
+  "payload_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_file_index_replay_payload_v1.csv",
+  "decision": "legacy_file_index_payload_ready"
+}

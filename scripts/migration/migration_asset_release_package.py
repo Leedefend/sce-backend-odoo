@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Build the migration asset release package.
 
-The package contains production loadable migration assets plus governance
-evidence files. It intentionally excludes materialized XML parts because the
-delivery decision is to ship the complete XML file for legacy workflow audit.
+The package contains production-loadable migration assets, frozen replay
+payloads, and governance evidence files. It intentionally excludes materialized
+XML parts because the delivery decision is to ship the complete XML file for
+legacy workflow audit.
 """
 
 from __future__ import annotations
@@ -20,6 +21,7 @@ from typing import Any
 
 REPO_ROOT = Path.cwd()
 ASSET_ROOT = REPO_ROOT / "migration_assets"
+MIGRATION_ARTIFACT_ROOT = REPO_ROOT / "artifacts/migration"
 CATALOG = ASSET_ROOT / "manifest/migration_asset_catalog_v1.json"
 OUTPUT_JSON = REPO_ROOT / "artifacts/migration/migration_asset_release_package_v1.json"
 OUTPUT_MD = REPO_ROOT / "docs/migration_alignment/migration_asset_release_package_v1.md"
@@ -59,6 +61,10 @@ def should_exclude(path: str) -> bool:
     return EXCLUDED_TOKEN in path
 
 
+def should_exclude_artifact(path: Path) -> bool:
+    return path == OUTPUT_JSON
+
+
 def collect_files() -> tuple[list[dict[str, Any]], list[str]]:
     catalog = load_json(CATALOG)
     files: dict[str, dict[str, Any]] = {}
@@ -92,6 +98,11 @@ def collect_files() -> tuple[list[dict[str, Any]], list[str]]:
             add(path, "delivery_evidence")
         else:
             warnings.append(f"missing_optional_evidence={evidence}")
+
+    for path in sorted(MIGRATION_ARTIFACT_ROOT.rglob("*")):
+        if not path.is_file() or should_exclude_artifact(path):
+            continue
+        add(path, "migration_artifact")
 
     return [files[key] for key in sorted(files)], warnings
 
@@ -136,6 +147,7 @@ def build_package(out_dir: Path, package_id: str) -> dict[str, Any]:
         "package_id": package_id,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "catalog": rel(CATALOG),
+        "payload_mode": "packaged_artifacts",
         "file_count": len(files),
         "excluded_paths": excluded_paths,
         "files": files,
@@ -164,6 +176,7 @@ def build_package(out_dir: Path, package_id: str) -> dict[str, Any]:
         "excluded_file_count": len(excluded_paths),
         "excluded_paths": excluded_paths,
         "warnings": warnings,
+        "payload_mode": "packaged_artifacts",
         "release_manifest_sha256": sha256_bytes(manifest_bytes),
     }
     OUTPUT_JSON.parent.mkdir(parents=True, exist_ok=True)
@@ -181,6 +194,7 @@ def build_package(out_dir: Path, package_id: str) -> dict[str, Any]:
         f"- package_size_mb: `{payload['package_size_mb']}`",
         f"- included_file_count: `{len(files)}`",
         f"- excluded_file_count: `{len(excluded_paths)}`",
+        "- payload_mode: `packaged_artifacts`",
         "",
         "## Excluded Paths",
         "",
@@ -189,7 +203,15 @@ def build_package(out_dir: Path, package_id: str) -> dict[str, Any]:
         lines.extend(f"- `{item}`" for item in excluded_paths)
     else:
         lines.append("- none")
-    lines.extend(["", "## Verification", "", "- Excluded `.xml.parts` files are not packaged."])
+    lines.extend(
+        [
+            "",
+            "## Verification",
+            "",
+            "- Excluded `.xml.parts` files are not packaged.",
+            "- `artifacts/migration` replay payloads are packaged for old-DB-free production replay.",
+        ]
+    )
     OUTPUT_MD.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return payload
@@ -212,6 +234,7 @@ def main() -> int:
                 "package_size_mb": payload["package_size_mb"],
                 "included_file_count": payload["included_file_count"],
                 "excluded_file_count": payload["excluded_file_count"],
+                "payload_mode": payload["payload_mode"],
                 "db_writes": 0,
             },
             ensure_ascii=False,

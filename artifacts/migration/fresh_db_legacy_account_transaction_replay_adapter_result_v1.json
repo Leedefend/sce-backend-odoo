@@ -1,0 +1,7 @@
+{
+  "mode": "fresh_db_legacy_account_transaction_replay_adapter",
+  "source_table": "C_FKGL_ZHJZJWL,C_CWSFK_GSCWSR,C_CWSFK_GSCWZC,C_JFHKLR,C_JFHKLR_TH,C_JFHKLR_TH_ZCDF_CB,T_FK_Supplier,BGGL_JHK_HKDJ,BGGL_JHK_JKSQ,ZJGL_ZCDFSZ_FXJK_HK,ZJGL_ZCDFSZ_FXJK_JK,ZJGL_BZJGL_Pay_FBZJ,ZJGL_BZJGL_Pay_FBZJTH,ZJGL_BZJGL_Branch_SBZJDJ,ZJGL_BZJGL_Branch_SBZJTH,ZJGL_ZJSZ_DKGL_DKDJ,ZJGL_ZJSZ_DKGL_HKDJ,T_KK_SJDJB_CB,T_KK_SJTHB_CB",
+  "rows": 39707,
+  "csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_account_transaction_replay_payload_v1.csv",
+  "decision": "legacy_account_transaction_payload_ready"
+}
