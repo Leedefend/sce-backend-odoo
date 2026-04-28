@@ -31147,3 +31147,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 本批仅是承载清单，不包含最终报表聚合算法；P0 报表仍需逐张拆旧过程和比对新事实覆盖率。`
 - rollback: `回退本批次提交并升级 smart_construction_core，即移除旧库报表清单模型、菜单、数据与文档。`
 - next_step: `Batch-B 优先实现资金日报汇总报表闭环，因为新系统已有资金日报主表和明细事实。`
+
+## 2026-04-28 Batch-Legacy-Fund-Daily-Summary-Report
+
+- branch: `codex/dev-env-run`
+- short_sha: `a99252f8`
+- Layer Target: `Domain Projection`
+- Module: `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `旧库 P0 高频报表“资金日报表”已有主表和明细事实，需要优先形成报表中心可直接查看的汇总报表闭环。`
+- completed_step: `新增 sc.fund.daily.summary SQL 只读聚合模型，按日期/项目/账户/银行账号汇总资金日报明细；新增 tree/pivot/graph/search/action/menu，挂入报表中心；补充资金日报汇总 Batch-B 文档。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/projection/fund_daily_summary.py` -> `PASS`
+  - `python3 stdlib XML parse addons/smart_construction_core/views/projection/fund_daily_views.xml` -> `PASS`
+  - `CSV ir.model.access duplicate id check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_prod_sim make mod.upgrade` -> `PASS` after fixing Odoo translated project name JSON extraction in SQL view
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `summary_count=7454, line_count=7454, menu=True, action=True, totals daily_income=988599827.36 daily_expense=858439221.38 net_amount=130160605.98`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make verify.restricted` -> `SKIP; Makefile 无 verify.restricted target`
+- result: `PASS; 资金日报汇总已在模拟生产库创建 SQL view，并挂入报表中心。`
+- risk: `P2; 当前余额类字段采用同维度明细求和，能满足旧库明细汇总查看；如后续发现旧系统按账户日末余额取末值，需要单独调整口径。`
+- rollback: `回退本批次提交并升级 smart_construction_core，即移除 sc.fund.daily.summary SQL view、菜单与文档。`
+- next_step: `拆解应收应付报表（项目）的旧存储过程字段输出和新系统事实覆盖率。`
