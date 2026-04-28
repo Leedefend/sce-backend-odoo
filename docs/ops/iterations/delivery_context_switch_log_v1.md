@@ -31330,3 +31330,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 11 条旧供应商合同项目未匹配，32 条旧供应商合同往来单位未匹配，当前保留历史名称进入事实表。`
 - rollback: `回退本批次提交并升级 smart_construction_core；如需回滚模拟生产数据，可按 import_batch=legacy_supplier_contract_pricing_v1 删除 sc.legacy.supplier.contract.pricing.fact 行后升级模块。`
 - next_step: `执行旧报表 27 字段全口径可用矩阵审计，确认剩余字段是已承载、待承载、异常事实还是明确不迁移。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Field-Matrix
+
+- branch: `codex/dev-env-run`
+- short_sha: `36aa5ebf`
+- Layer Target: `Domain Projection Audit`
+- Module: `docs/migration_alignment`
+- Reason: `旧库“应收应付报表（项目）”已连续补齐合同、收付款、税额、附加税、自筹、实际可用余额和计价方式，需要形成 27 字段全口径可用矩阵，避免仅以字段存在判断业务可用。`
+- completed_step: `新增 Batch-K 字段全口径可用矩阵文档，逐项映射旧过程 UP_USP_SELECT_YSYFHZB_XM 的 27 个输出字段到 sc.ar.ap.project.summary，并基于 sc_prod_sim 运行库输出字段覆盖统计。`
+- verification:
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `summary_rows=11640, projects=758, partners=7202`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `project_fund_fact_rows=755, summary_projects_with_balance=512, rate_rows_with_both=2`
+  - `git diff --check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make verify.restricted` -> `SKIP; Makefile 无 verify.restricted target`
+- result: `PASS; 旧报表 27 字段均已有承载路径，但 SJKYYE 存在报表行覆盖缺口，SF 抵扣比例需要复核旧过程维度。`
+- risk: `P0; 项目级实际可用余额事实 755 条，当前应收应付项目报表只覆盖 512 个项目，说明仅有资金余额且无往来单位事实的项目不会显示。P1; 抵扣比例只有 2 行非零，可能需要按项目级口径重算。`
+- rollback: `本批仅新增审计文档和迭代日志，回退提交即可。`
+- next_step: `下一轮先修复 SJKYYE 覆盖缺口，再回查旧库 SF 最终 SELECT 口径。`
