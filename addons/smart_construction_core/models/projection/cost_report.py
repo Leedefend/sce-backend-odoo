@@ -6,16 +6,16 @@ class ProjectCostCompare(models.Model):
     """Readonly SQL view aggregating project budget vs actual cost."""
 
     _name = "project.cost.compare"
-    _description = "项目成本预算 vs 实际"
+    _description = "项目成本预算与实际"
     _auto = False
     _rec_name = "project_id"
     _order = "project_id, period, wbs_id, cost_code_id"
 
     project_id = fields.Many2one("project.project", string="项目", readonly=True)
     cost_code_id = fields.Many2one("project.cost.code", string="成本科目", readonly=True)
-    wbs_id = fields.Many2one("construction.work.breakdown", string="工程结构(WBS)", readonly=True)
+    wbs_id = fields.Many2one("construction.work.breakdown", string="工程结构", readonly=True)
     currency_id = fields.Many2one("res.currency", string="币种", readonly=True)
-    period = fields.Char("期间(YYYY-MM)", readonly=True)
+    period = fields.Char("期间", readonly=True)
 
     budget_amount = fields.Monetary("预算成本", currency_field="currency_id", readonly=True)
     actual_amount = fields.Monetary("实际成本", currency_field="currency_id", readonly=True)

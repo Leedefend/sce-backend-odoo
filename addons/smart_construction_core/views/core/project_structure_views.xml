@@ -5,7 +5,7 @@
         <field name="name">sc.project.structure.tree</field>
         <field name="model">sc.project.structure</field>
         <field name="arch" type="xml">
-            <tree string="工程结构（清单 WBS）"
+            <tree string="工程结构"
                   default_order="project_id, parent_path, sequence, id">
                 <field name="project_id" optional="hide"/>
                 <field name="structure_type" optional="hide"/>
@@ -55,7 +55,7 @@
         </field>
     </record>
     <record id="action_sc_project_structure" model="ir.actions.act_window">
-        <field name="name">工程结构（清单 WBS）</field>
+        <field name="name">工程结构</field>
         <field name="res_model">sc.project.structure</field>
         <field name="view_mode">tree,form</field>
         <field name="view_id" ref="smart_construction_core.view_sc_project_structure_tree"/>
@@ -66,7 +66,7 @@
         <field name="name">sc.project.structure.search</field>
         <field name="model">sc.project.structure</field>
         <field name="arch" type="xml">
-            <search string="工程结构（清单 WBS）">
+            <search string="工程结构">
                 <field name="project_id"/>
                 <field name="structure_type"/>
                 <field name="code"/>

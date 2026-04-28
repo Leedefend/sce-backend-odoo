@@ -66,5 +66,6 @@
     <field name="name">历史发票税额事实</field>
     <field name="res_model">sc.legacy.invoice.tax.fact</field>
     <field name="view_mode">tree,form</field>
+    <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
   </record>
 </odoo>

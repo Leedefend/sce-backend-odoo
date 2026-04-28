@@ -56,6 +56,86 @@
         <field name="company_id" eval="False"/>
     </record>
 
+    <record id="seq_sc_settlement_adjustment" model="ir.sequence">
+        <field name="name">结算调整</field>
+        <field name="code">sc.settlement.adjustment</field>
+        <field name="prefix">SA%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_sc_expense_claim" model="ir.sequence">
+        <field name="name">费用/保证金单据</field>
+        <field name="code">sc.expense.claim</field>
+        <field name="prefix">EC%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_sc_treasury_reconciliation" model="ir.sequence">
+        <field name="name">资金对账</field>
+        <field name="code">sc.treasury.reconciliation</field>
+        <field name="prefix">TR%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_sc_receipt_income" model="ir.sequence">
+        <field name="name">收款收入登记</field>
+        <field name="code">sc.receipt.income</field>
+        <field name="prefix">RI%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_sc_payment_execution" model="ir.sequence">
+        <field name="name">付款执行登记</field>
+        <field name="code">sc.payment.execution</field>
+        <field name="prefix">PE%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_sc_invoice_registration" model="ir.sequence">
+        <field name="name">发票登记</field>
+        <field name="code">sc.invoice.registration</field>
+        <field name="prefix">IR%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_sc_financing_loan" model="ir.sequence">
+        <field name="name">融资借款登记</field>
+        <field name="code">sc.financing.loan</field>
+        <field name="prefix">FL%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_sc_general_contract" model="ir.sequence">
+        <field name="name">综合合同登记</field>
+        <field name="code">sc.general.contract</field>
+        <field name="prefix">GC%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_sc_legacy_purchase_contract_fact" model="ir.sequence">
+        <field name="name">采购/一般合同</field>
+        <field name="code">sc.legacy.purchase.contract.fact</field>
+        <field name="prefix">PC%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_sc_construction_diary" model="ir.sequence">
+        <field name="name">施工日志</field>
+        <field name="code">sc.construction.diary</field>
+        <field name="prefix">CD%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
     <record id="seq_sc_treasury_ledger" model="ir.sequence">
         <field name="name">资金台账</field>
         <field name="code">sc.treasury.ledger</field>

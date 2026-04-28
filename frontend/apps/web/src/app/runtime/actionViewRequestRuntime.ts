@@ -34,6 +34,7 @@ export function resolveDefaultSortFromContract(contractFields: Dict): string {
 
 export type ActionViewListProfileShape = {
   columns?: string[];
+  hidden_columns?: string[];
   row_secondary?: string;
 };
 
@@ -52,8 +53,9 @@ export function resolveRequestedFields(
   profile: ActionViewListProfileShape | null,
 ): string[] {
   const profileColumns = profile?.columns ?? [];
+  const hiddenColumns = profile?.hidden_columns ?? [];
   const secondary = profile?.row_secondary ? [profile.row_secondary] : [];
-  return uniqueFields([...profileColumns, ...secondary, ...contractFields]);
+  return uniqueFields([...profileColumns, ...hiddenColumns, ...secondary, ...contractFields]);
 }
 
 export function resolveFilterDomain(chips: FilterChip[], key: string): unknown[] {
@@ -92,8 +94,8 @@ export function mergeActiveFilter(base: unknown, options: { hasActiveField: bool
   return [...domain, activeClause];
 }
 
-export function resolveEffectiveFilterDomain(contractDomain: unknown, savedDomain: unknown, groupDomain: unknown): unknown[] {
-  return mergeSceneDomain(mergeSceneDomain(contractDomain, savedDomain), groupDomain);
+export function resolveEffectiveFilterDomain(contractDomain: unknown, savedDomain: unknown, customDomain: unknown, groupDomain: unknown): unknown[] {
+  return mergeSceneDomain(mergeSceneDomain(mergeSceneDomain(contractDomain, savedDomain), customDomain), groupDomain);
 }
 
 export function resolveEffectiveFilterDomainRaw(contractRaw: string, savedRaw: string): string {

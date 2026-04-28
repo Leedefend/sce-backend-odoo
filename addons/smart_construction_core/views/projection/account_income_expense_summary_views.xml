@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_account_income_expense_summary_search" model="ir.ui.view">
+            <field name="name">sc.account.income.expense.summary.search</field>
+            <field name="model">sc.account.income.expense.summary</field>
+            <field name="arch" type="xml">
+                <search string="账户收支统计表">
+                    <field name="account_type"/>
+                    <field name="account_name"/>
+                    <field name="account_no"/>
+                    <field name="bank_name"/>
+                    <field name="project_id"/>
+                    <filter string="账户类型汇总" name="row_level_type" domain="[('row_level', '=', 'type')]"/>
+                    <filter string="账户明细" name="row_level_account" domain="[('row_level', '=', 'account')]"/>
+                    <filter string="有收入" name="has_income" domain="[('income_amount', '!=', 0)]"/>
+                    <filter string="有支出" name="has_expense" domain="[('expense_amount', '!=', 0)]"/>
+                    <filter string="未匹配日报明细" name="without_line" domain="[('row_level', '=', 'account'), ('line_count', '=', 0)]"/>
+                    <filter string="按账户类型" name="group_account_type" context="{'group_by': 'account_type'}"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按行级别" name="group_row_level" context="{'group_by': 'row_level'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_account_income_expense_summary_tree" model="ir.ui.view">
+            <field name="name">sc.account.income.expense.summary.tree</field>
+            <field name="model">sc.account.income.expense.summary</field>
+            <field name="arch" type="xml">
+                <tree string="账户收支统计表" create="0" edit="0" delete="0" default_order="account_type, sort_key, account_name">
+                    <field name="row_level"/>
+                    <field name="account_type"/>
+                    <field name="account_name"/>
+                    <field name="account_no"/>
+                    <field name="bank_name"/>
+                    <field name="project_id"/>
+                    <field name="opening_balance" sum="期初余额合计"/>
+                    <field name="income_amount" sum="收入合计"/>
+                    <field name="expense_amount" sum="支出合计"/>
+                    <field name="cumulative_receipt_amount" sum="累计收款合计"/>
+                    <field name="cumulative_expense_amount" sum="累计支出合计"/>
+                    <field name="account_transfer_amount" sum="账户往来合计"/>
+                    <field name="current_account_balance" sum="当前账户余额合计"/>
+                    <field name="current_bank_balance" sum="当前银行余额合计"/>
+                    <field name="bank_system_difference" sum="账实差异合计"/>
+                    <field name="line_count" sum="明细数"/>
+                    <field name="coverage_note"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_account_income_expense_summary_pivot" model="ir.ui.view">
+            <field name="name">sc.account.income.expense.summary.pivot</field>
+            <field name="model">sc.account.income.expense.summary</field>
+            <field name="arch" type="xml">
+                <pivot string="账户收支统计表">
+                    <field name="account_type" type="row"/>
+                    <field name="account_name" type="row"/>
+                    <field name="opening_balance" type="measure"/>
+                    <field name="income_amount" type="measure"/>
+                    <field name="expense_amount" type="measure"/>
+                    <field name="cumulative_receipt_amount" type="measure"/>
+                    <field name="cumulative_expense_amount" type="measure"/>
+                    <field name="account_transfer_amount" type="measure"/>
+                    <field name="current_account_balance" type="measure"/>
+                    <field name="current_bank_balance" type="measure"/>
+                    <field name="bank_system_difference" type="measure"/>
+                    <field name="line_count" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <record id="view_sc_account_income_expense_summary_graph" model="ir.ui.view">
+            <field name="name">sc.account.income.expense.summary.graph</field>
+            <field name="model">sc.account.income.expense.summary</field>
+            <field name="arch" type="xml">
+                <graph string="账户收支统计表" type="bar" stacked="True">
+                    <field name="account_type" type="row"/>
+                    <field name="income_amount" type="measure"/>
+                    <field name="expense_amount" type="measure"/>
+                    <field name="account_transfer_amount" type="measure"/>
+                </graph>
+            </field>
+        </record>
+
+        <record id="action_sc_account_income_expense_summary" model="ir.actions.act_window">
+            <field name="name">账户收支统计表</field>
+            <field name="res_model">sc.account.income.expense.summary</field>
+            <field name="view_mode">tree,pivot,graph</field>
+            <field name="search_view_id" ref="view_sc_account_income_expense_summary_search"/>
+            <field name="context">{'create': False, 'search_default_group_account_type': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+
+        <menuitem id="menu_sc_account_income_expense_summary"
+                  name="账户收支统计表"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  action="action_sc_account_income_expense_summary"
+                  sequence="34"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    </data>
+</odoo>

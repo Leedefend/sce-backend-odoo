@@ -2489,7 +2489,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 146,
+      "test_refs": 152,
       "request_schema_hint": [
         "company_id",
         "database",
@@ -15332,7 +15332,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 4,
+      "test_refs": 7,
       "request_schema_hint": [
         "op",
         "source_mode"

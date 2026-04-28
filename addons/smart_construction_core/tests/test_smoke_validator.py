@@ -413,6 +413,18 @@ class TestValidatorSmoke(TransactionCase):
     def test_settlement_approve_happy_path(self):
         project = self.env["project.project"].create({"name": "Settle Happy Project"})
         partner = self.env["res.partner"].create({"name": "Happy Vendor"})
+        unrelated_project = self.env["project.project"].create({"name": "Settle Unrelated Bad Project"})
+        unrelated_partner = self.env["res.partner"].create({"name": "Unrelated Bad Vendor"})
+        self.env["payment.request"].create(
+            {
+                "name": "VAL-PR-UNRELATED-BAD",
+                "type": "pay",
+                "project_id": unrelated_project.id,
+                "partner_id": unrelated_partner.id,
+                "amount": 100,
+                "state": "approved",
+            }
+        )
         contract = self.env["construction.contract"].create(
             {"subject": "Happy Contract 2", "type": "in", "project_id": project.id, "partner_id": partner.id}
         )

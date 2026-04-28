@@ -1,4 +1,6 @@
 type Dict = Record<string, unknown>;
+type SavedFilterChip = { key: string; isDefault: boolean };
+type GroupByChip = { field: string; isDefault: boolean };
 
 type ExecuteLoadPreflightOptions = {
   sessionMenuTree: unknown;
@@ -105,6 +107,44 @@ export type ExecuteLoadPreflightResult =
       sortValue: string;
     };
 
+function deriveSavedFilterChipsFromContract(contract: Dict): SavedFilterChip[] {
+  const rows = (contract.search as Dict | undefined)?.saved_filters;
+  if (!Array.isArray(rows)) return [];
+  return rows
+    .map((row, idx) => {
+      const raw = row && typeof row === 'object' ? row as Dict : {};
+      const key = String(raw.key || raw.name || raw.xmlid || raw.xml_id || `saved_${idx + 1}`).trim();
+      if (!key) return null;
+      return {
+        key,
+        isDefault: raw.default === true || raw.is_default === true,
+      };
+    })
+    .filter((row): row is SavedFilterChip => Boolean(row));
+}
+
+function deriveGroupByChipsFromContract(contract: Dict): GroupByChip[] {
+  const search = contract.search as Dict | undefined;
+  const custom = search?.custom as Dict | undefined;
+  const customGroup = custom?.group_by as Dict | undefined;
+  const rows = [
+    ...(Array.isArray(search?.group_by) ? search.group_by : []),
+    ...(Array.isArray(customGroup?.fields) ? customGroup.fields : []),
+  ];
+  if (!rows.length) return [];
+  return rows
+    .map((row) => {
+      const raw = row && typeof row === 'object' ? row as Dict : {};
+      const field = String(raw.field || raw.group_by || raw.groupBy || raw.group || raw.key || raw.name || '').trim();
+      if (!field) return null;
+      return {
+        field,
+        isDefault: raw.default === true || raw.is_default === true,
+      };
+    })
+    .filter((row): row is GroupByChip => Boolean(row));
+}
+
 export function useActionViewLoadPreflightRuntime() {
   async function executeLoadPreflight(options: ExecuteLoadPreflightOptions): Promise<ExecuteLoadPreflightResult> {
     const { contract, meta } = await options.resolveAction(options.sessionMenuTree, options.actionId, options.actionMeta);
@@ -136,6 +176,8 @@ export function useActionViewLoadPreflightRuntime() {
       currentPreferredViewModeRaw: options.currentPreferredViewModeRaw,
     });
 
+    const contractSavedFilterChips = deriveSavedFilterChipsFromContract(typedContract);
+    const contractGroupByChips = deriveGroupByChipsFromContract(typedContract);
     const routeSelection = options.resolveRouteSelectionState({
       routeFilterRaw: options.routeFilterRaw,
       routeSavedFilterRaw: options.routeSavedFilterRaw,
@@ -144,8 +186,8 @@ export function useActionViewLoadPreflightRuntime() {
       activeSavedFilterKey: options.activeSavedFilterKey,
       activeGroupByField: options.activeGroupByField,
       contractFiltersRaw: (typedContract.search as Dict | undefined)?.filters,
-      savedFilterChips: options.contractSavedFilterChips,
-      groupByChips: options.contractGroupByChips,
+      savedFilterChips: contractSavedFilterChips.length ? contractSavedFilterChips : options.contractSavedFilterChips,
+      groupByChips: contractGroupByChips.length ? contractGroupByChips : options.contractGroupByChips,
     });
     const routeSelectionState = options.resolveRouteSelectionApplyState({ routeSelection });
 

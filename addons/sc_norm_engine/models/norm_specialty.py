@@ -3,14 +3,14 @@ from odoo import api, fields, models
 
 class ScNormSpecialty(models.Model):
     _name = "sc.norm.specialty"
-    _description = "Norm Specialty (Sichuan 2015)"
+    _description = "四川2015定额专业"
     _order = "sequence, code"
 
     code = fields.Char("专业代码", required=True)
     name = fields.Char("专业名称", required=True)
-    sheet_name = fields.Char("原始 Sheet 名")
-    sequence = fields.Integer(default=10)
-    active = fields.Boolean(default=True)
+    sheet_name = fields.Char("来源工作表")
+    sequence = fields.Integer("排序", default=10)
+    active = fields.Boolean("启用", default=True)
 
     chapter_ids = fields.One2many("sc.norm.chapter", "specialty_id", string="章节")
     item_ids = fields.One2many("sc.norm.item", "specialty_id", string="定额子目")
@@ -22,7 +22,7 @@ class ScNormSpecialty(models.Model):
 
 class ScNormChapter(models.Model):
     _name = "sc.norm.chapter"
-    _description = "Norm Chapter"
+    _description = "四川2015定额章节"
     _order = "specialty_id, sequence, code"
 
     code = fields.Char("章节代码", required=True)
@@ -33,7 +33,7 @@ class ScNormChapter(models.Model):
         required=True,
         ondelete="cascade",
     )
-    sequence = fields.Integer(default=10)
+    sequence = fields.Integer("排序", default=10)
 
     norm_code_start = fields.Char("开始定额号")
     norm_code_end = fields.Char("结束定额号")
@@ -51,7 +51,7 @@ class ScNormChapter(models.Model):
 
 class ScNormItem(models.Model):
     _name = "sc.norm.item"
-    _description = "Norm Item (Quota Line)"
+    _description = "四川2015定额子目"
     _order = "specialty_id, code"
 
     code = fields.Char("定额编号", required=True)
@@ -69,7 +69,7 @@ class ScNormItem(models.Model):
         ondelete="set null",
     )
 
-    unit_raw = fields.Char("原始单位")
+    unit_raw = fields.Char("来源单位")
     uom_id = fields.Many2one("uom.uom", string="计量单位")
 
     price_total = fields.Float("综合单价")
@@ -81,7 +81,7 @@ class ScNormItem(models.Model):
     cost_misc = fields.Float("综合费")
 
     work_desc = fields.Text("工作内容")
-    line_no = fields.Integer("原始序号/行号")
+    line_no = fields.Integer("来源行号")
 
     _sql_constraints = [
         (

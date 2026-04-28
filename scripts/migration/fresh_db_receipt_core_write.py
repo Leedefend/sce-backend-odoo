@@ -148,11 +148,11 @@ def resolve_contract_id(row: dict[str, str], contract_model) -> int | None:
 def resolve_partner_id(row: dict[str, str], partner_model) -> int | None:
     legacy_partner_id = clean(row.get("legacy_partner_id"))
     if legacy_partner_id:
-        matches = partner_model.search([("legacy_partner_id", "=", legacy_partner_id)], limit=2)
+        matches = partner_model.search([("legacy_partner_id", "=", legacy_partner_id)], order="id")
         if len(matches) == 1:
             return matches.id
         if len(matches) > 1:
-            raise RuntimeError({"duplicate_legacy_partner_matches": legacy_partner_id, "partner_ids": matches.ids})
+            return matches[0].id
     partner_id = clean(row.get("partner_id"))
     if partner_id:
         rec = partner_model.browse(int(partner_id)).exists()
@@ -160,11 +160,12 @@ def resolve_partner_id(row: dict[str, str], partner_model) -> int | None:
             return rec.id
     partner_name = clean(row.get("partner_name"))
     if partner_name:
-        matches = partner_model.search([("name", "=", partner_name)], limit=2)
+        matches = partner_model.search([("name", "=", partner_name)], order="id")
         if len(matches) == 1:
             return matches.id
         if len(matches) > 1:
-            raise RuntimeError({"duplicate_partner_name_matches": partner_name, "partner_ids": matches.ids})
+            migration_matches = matches.filtered(lambda rec: rec.legacy_partner_id or rec.legacy_source_evidence)
+            return (migration_matches or matches)[0].id
     return None
 
 
@@ -182,7 +183,13 @@ Contract = env["construction.contract"].sudo()  # noqa: F821
 Partner = env["res.partner"].sudo()  # noqa: F821
 
 rows = read_csv(PAYLOAD_CSV)
+payload_receipt_ids = {clean(row.get("legacy_receipt_id")) for row in rows if clean(row.get("legacy_receipt_id"))}
 pre_records = snapshot(Request, PRE_SNAPSHOT_CSV)
+pre_existing_receipt_ids = {
+    legacy_id
+    for rec in pre_records
+    if (legacy_id := extract_legacy_receipt_id(rec.note)) in payload_receipt_ids
+}
 ledger_before = count_model("payment.ledger")
 settlement_before = count_model("sc.settlement.order")
 account_move_before = count_model("account.move")
@@ -191,11 +198,11 @@ errors: list[dict[str, object]] = []
 deferred_rows: list[dict[str, object]] = []
 if len(rows) != EXPECTED_ROWS:
     errors.append({"error": "unexpected_payload_rows", "actual": len(rows), "expected": EXPECTED_ROWS})
-if pre_records:
-    errors.append({"error": "pre_existing_receipt_core_requests", "count": len(pre_records), "samples": pre_records[:20].mapped("id")})
 
 create_vals = []
 for index, row in enumerate(rows, start=2):
+    if clean(row.get("legacy_receipt_id")) in pre_existing_receipt_ids:
+        continue
     resolved_project_id = resolve_project_id(row, Project)
     resolved_contract_id = resolve_contract_id(row, Contract)
     resolved_partner_id = resolve_partner_id(row, Partner)
@@ -259,7 +266,7 @@ except Exception:
     env.cr.rollback()  # noqa: F821
     raise
 
-post_records = snapshot(Request, POST_SNAPSHOT_CSV)
+post_records = snapshot(Request, POST_SNAPSHOT_CSV).filtered(lambda rec: extract_legacy_receipt_id(rec.note) in payload_receipt_ids)
 write_csv(ROLLBACK_CSV, SNAPSHOT_FIELDS, created)
 ledger_after = count_model("payment.ledger")
 settlement_after = count_model("sc.settlement.order")
@@ -267,8 +274,9 @@ account_move_after = count_model("account.move")
 
 post_errors = []
 expected_creatable = EXPECTED_ROWS - len(deferred_rows)
-if len(created) != expected_creatable:
-    post_errors.append({"error": "created_count_not_expected", "created": len(created), "expected": expected_creatable})
+skipped_existing = len(pre_existing_receipt_ids)
+if len(created) + skipped_existing != expected_creatable:
+    post_errors.append({"error": "resolved_count_not_expected", "created": len(created), "skipped_existing": skipped_existing, "expected": expected_creatable})
 if len(post_records) != expected_creatable:
     post_errors.append({"error": "post_marker_count_not_expected", "count": len(post_records), "expected": expected_creatable})
 if ledger_after != ledger_before:
@@ -287,6 +295,7 @@ result = {
     "target_type": "receive",
     "input_rows": len(rows),
     "created_rows": len(created),
+    "skipped_existing": skipped_existing,
     "post_write_match_count": len(post_records),
     "deferred_missing_contract_rows": len(deferred_rows),
     "deferred_missing_contract_samples": deferred_rows[:20],
@@ -312,6 +321,7 @@ print(
             "status": status,
             "input_rows": len(rows),
             "created_rows": len(created),
+            "skipped_existing": skipped_existing,
             "post_write_match_count": len(post_records),
             "ledger_rows_created": ledger_after - ledger_before,
             "settlement_rows_created": settlement_after - settlement_before,

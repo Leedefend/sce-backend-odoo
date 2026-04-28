@@ -2,8 +2,18 @@ type Dict = Record<string, unknown>;
 
 type ContractActionSelection = 'none' | 'single' | 'multi';
 
-type MutationContract = Record<string, unknown>;
-type ProjectionRefreshPolicy = Record<string, unknown>;
+type MutationContract = {
+  type?: string;
+  model?: string;
+  operation?: string;
+  payload_schema?: { required?: string[] };
+  [key: string]: unknown;
+};
+type ProjectionRefreshPolicy = {
+  on_success?: string[];
+  on_failure?: string[];
+  [key: string]: unknown;
+};
 
 type ContractActionButton = {
   key: string;
@@ -33,7 +43,7 @@ type UseActionViewContractActionButtonRuntimeOptions = {
   pageText: (key: string, fallback: string) => string;
   isActionViewNumericToken: (value: unknown) => boolean;
   hasActionViewNoiseMarker: (key: unknown, label: unknown, name: unknown, xmlId: unknown) => boolean;
-  normalizeSceneActionProtocol: (row: Dict) => { mutation?: MutationContract; refresh_policy?: ProjectionRefreshPolicy } | null;
+  normalizeSceneActionProtocol: (row: unknown) => { mutation?: MutationContract; refresh_policy?: ProjectionRefreshPolicy } | null;
   parseContractContextRaw: (value: unknown) => Dict;
   normalizeActionKind: (value: unknown) => string;
   toPositiveInt: (value: unknown) => number | null;

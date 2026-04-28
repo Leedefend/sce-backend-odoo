@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_legacy_user_profile_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.user.profile.tree</field>
+        <field name="model">sc.legacy.user.profile</field>
+        <field name="arch" type="xml">
+            <tree string="历史用户" create="0" edit="0" delete="0">
+                <field name="legacy_user_id"/>
+                <field name="display_name"/>
+                <field name="user_id"/>
+                <field name="department_name"/>
+                <field name="phone"/>
+                <field name="person_state"/>
+                <field name="locked_flag"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_user_profile_search" model="ir.ui.view">
+        <field name="name">sc.legacy.user.profile.search</field>
+        <field name="model">sc.legacy.user.profile</field>
+        <field name="arch" type="xml">
+            <search string="历史用户">
+                <field name="legacy_user_id"/>
+                <field name="display_name"/>
+                <field name="user_id"/>
+                <field name="department_name"/>
+                <filter string="已绑定新用户" name="with_user" domain="[('user_id', '!=', False)]"/>
+                <filter string="按部门" name="group_department" context="{'group_by': 'department_name'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_user_role_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.user.role.tree</field>
+        <field name="model">sc.legacy.user.role</field>
+        <field name="arch" type="xml">
+            <tree string="历史用户角色" create="0" edit="0" delete="0">
+                <field name="legacy_user_id"/>
+                <field name="user_id"/>
+                <field name="role_name"/>
+                <field name="projected_group_ids" widget="many2many_tags"/>
+                <field name="projection_state"/>
+                <field name="projection_note"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_user_role_search" model="ir.ui.view">
+        <field name="name">sc.legacy.user.role.search</field>
+        <field name="model">sc.legacy.user.role</field>
+        <field name="arch" type="xml">
+            <search string="历史用户角色">
+                <field name="legacy_user_id"/>
+                <field name="role_name"/>
+                <field name="user_id"/>
+                <filter string="已投影" name="projected" domain="[('projection_state', '=', 'projected')]"/>
+                <filter string="未映射" name="unmapped" domain="[('projection_state', '=', 'unmapped')]"/>
+                <filter string="按角色" name="group_role" context="{'group_by': 'role_name'}"/>
+                <filter string="按投影状态" name="group_projection_state" context="{'group_by': 'projection_state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_user_project_scope_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.user.project.scope.tree</field>
+        <field name="model">sc.legacy.user.project.scope</field>
+        <field name="arch" type="xml">
+            <tree string="历史用户项目范围" create="0" edit="0" delete="0">
+                <field name="legacy_user_id"/>
+                <field name="user_id"/>
+                <field name="project_legacy_id"/>
+                <field name="resolved_project_ref"/>
+                <field name="project_id"/>
+                <field name="scope_state"/>
+                <field name="project_access_applied"/>
+                <field name="project_access_note"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_user_project_scope_search" model="ir.ui.view">
+        <field name="name">sc.legacy.user.project.scope.search</field>
+        <field name="model">sc.legacy.user.project.scope</field>
+        <field name="arch" type="xml">
+            <search string="历史用户项目范围">
+                <field name="legacy_user_id"/>
+                <field name="user_id"/>
+                <field name="project_legacy_id"/>
+                <field name="project_id"/>
+                <filter string="当前有效" name="current" domain="[('scope_state', '=', 'current')]"/>
+                <filter string="已回连项目" name="with_project" domain="[('project_id', '!=', False)]"/>
+                <filter string="已应用访问" name="access_applied" domain="[('project_access_applied', '=', True)]"/>
+                <filter string="按用户" name="group_user" context="{'group_by': 'user_id'}"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按状态" name="group_scope_state" context="{'group_by': 'scope_state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sc_legacy_user_profile" model="ir.actions.act_window">
+        <field name="name">历史用户</field>
+        <field name="res_model">sc.legacy.user.profile</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_sc_legacy_user_profile_search"/>
+        <field name="context">{'search_default_with_user': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+
+    <record id="action_sc_legacy_user_role" model="ir.actions.act_window">
+        <field name="name">历史用户角色</field>
+        <field name="res_model">sc.legacy.user.role</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_sc_legacy_user_role_search"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+
+    <record id="action_sc_legacy_user_project_scope" model="ir.actions.act_window">
+        <field name="name">历史项目授权范围</field>
+        <field name="res_model">sc.legacy.user.project.scope</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_sc_legacy_user_project_scope_search"/>
+        <field name="context">{'search_default_current': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+
+    <menuitem id="menu_sc_legacy_user_context"
+              name="历史用户权限"
+              parent="smart_construction_core.menu_sc_data_center"
+              sequence="70"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+    <menuitem id="menu_sc_legacy_user_profile"
+              name="历史用户"
+              parent="menu_sc_legacy_user_context"
+              action="action_sc_legacy_user_profile"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+    <menuitem id="menu_sc_legacy_user_role"
+              name="历史角色投影"
+              parent="menu_sc_legacy_user_context"
+              action="action_sc_legacy_user_role"
+              sequence="20"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+    <menuitem id="menu_sc_legacy_user_project_scope"
+              name="项目授权范围"
+              parent="menu_sc_legacy_user_context"
+              action="action_sc_legacy_user_project_scope"
+              sequence="30"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+
+    <record id="menu_sc_legacy_user_context" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_user_profile" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_user_role" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+    <record id="menu_sc_legacy_user_project_scope" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+</odoo>

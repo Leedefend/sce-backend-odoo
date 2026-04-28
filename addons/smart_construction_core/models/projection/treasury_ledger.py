@@ -5,14 +5,14 @@ from odoo.exceptions import UserError, ValidationError
 
 class TreasuryLedger(models.Model):
     _name = "sc.treasury.ledger"
-    _description = "Treasury Ledger"
+    _description = "资金台账"
     _order = "id desc"
 
     name = fields.Char(string="流水号", required=True, default="新建", copy=False)
     date = fields.Date(string="发生日期", default=fields.Date.context_today, required=True)
     project_id = fields.Many2one("project.project", string="项目", index=True, required=True)
     partner_id = fields.Many2one("res.partner", string="往来单位", index=True, required=True)
-    settlement_id = fields.Many2one("sc.settlement.order", string="结算单", index=True, required=True)
+    settlement_id = fields.Many2one("sc.settlement.order", string="结算单", index=True)
     payment_request_id = fields.Many2one("payment.request", string="付款/收款申请", index=True, required=True)
     direction = fields.Selection(
         [("out", "支出"), ("in", "收入")],
@@ -34,9 +34,22 @@ class TreasuryLedger(models.Model):
         required=True,
     )
     note = fields.Text(string="备注")
+    source_kind = fields.Selection(
+        [
+            ("runtime", "运行时"),
+            ("legacy_actual_outflow", "历史实付"),
+            ("legacy_receipt", "历史收款"),
+        ],
+        string="来源类型",
+        default="runtime",
+        required=True,
+        index=True,
+    )
+    legacy_record_id = fields.Char(string="旧系统记录ID", index=True)
+    legacy_source_ref = fields.Char(string="旧系统来源", index=True)
 
     _sql_constraints = [
-        ("payment_request_unique", "unique(payment_request_id)", "同一付款申请只能生成一条资金流水。"),
+        ("payment_request_unique", "unique(payment_request_id)", "同一付款/收款申请只能生成一条资金流水。"),
     ]
 
     @api.model_create_multi

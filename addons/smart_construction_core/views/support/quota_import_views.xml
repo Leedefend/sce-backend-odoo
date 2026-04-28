@@ -13,7 +13,7 @@
                         <field name="header_row"/>
                     </group>
                     <div class="o_form_label">
-                        不填 Sheet 名则导入配置中定义的全部 Sheet；header_row 默认第 1 行为表头。
+                        不填工作表名称则导入配置中定义的全部工作表；表头行号默认第 1 行。
                     </div>
                     <footer>
                         <button string="导入" type="object" name="action_import" class="btn-primary"/>
@@ -37,5 +37,5 @@
               parent="menu_sc_dictionary_root"
               action="action_quota_import_wizard"
               sequence="50"
-              groups="smart_construction_core.group_sc_cap_config_admin"/>
+              groups="smart_construction_core.group_sc_cap_business_config_admin"/>
 </odoo>

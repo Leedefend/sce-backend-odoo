@@ -36,11 +36,18 @@ make history.users.verify
 4. 同步 `ir.model.data`：
    - `module = migration_assets`
    - `name = legacy_user_sc_*`
-5. 输出最终统计：
+5. 历史连续性一键链路还会继续写入用户上下文中性事实：
+   - `sc.legacy.department`
+   - `sc.legacy.user.profile`
+   - `sc.legacy.user.role`
+6. 输出最终统计：
    - 总用户数
    - active / inactive 数
    - XMLID 数
    - 样本记录
+
+用户上下文事实只保留旧系统部门、用户扩展档案、旧角色分配证据，不直接授予
+新系统权限。
 
 ## 幂等规则
 

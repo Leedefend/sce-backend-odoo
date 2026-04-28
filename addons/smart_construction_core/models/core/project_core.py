@@ -18,7 +18,7 @@ _logger = logging.getLogger(__name__)
 # =========================
 class ScProjectStructure(models.Model):
     _name = 'sc.project.structure'
-    _description = '项目工程结构（WBS）'
+    _description = '项目工程结构'
     _parent_name = 'parent_id'
     _parent_store = True
     _order = 'project_id, parent_path, sequence, id'
@@ -103,6 +103,7 @@ class ScProjectStructure(models.Model):
     )
     currency_id = fields.Many2one(
         'res.currency',
+        string='币种',
         related='project_id.company_id.currency_id',
         readonly=True,
         store=True,
@@ -250,6 +251,7 @@ class ProjectProjectStage(models.Model):
 # =========================
 class ProjectProject(models.Model):
     _inherit = 'project.project'
+    _description = '项目'
 
     _STAGE_XMLID_BY_KEY = {
         "planning": "smart_construction_core.project_stage_planning",
@@ -269,6 +271,24 @@ class ProjectProject(models.Model):
         "warranty": "smart_construction_core.project_stage_warranty",
         "closed": "smart_construction_core.project_stage_archived",
     }
+
+    def _setup_complete(self):
+        super()._setup_complete()
+        labels = {
+            "sequence": "序号",
+            "name": "项目名称",
+            "message_needaction": "待处理消息",
+            "active": "有效",
+            "company_id": "公司",
+            "date": "截止日期",
+            "last_update_color": "状态颜色",
+            "last_update_status": "项目状态",
+            "open_task_count": "任务",
+            "tag_ids": "标签",
+        }
+        for field_name, label in labels.items():
+            if field_name in self._fields:
+                self._fields[field_name].string = label
 
     def _exec_structure_action(self, view_key):
         ctx = dict(self.env.context or {})

@@ -5,10 +5,21 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 from pathlib import Path
 
 
-REPO_ROOT = Path.cwd()
+def repo_root() -> Path:
+    env_root = os.getenv("MIGRATION_REPO_ROOT")
+    if env_root:
+        return Path(env_root)
+    for candidate in (Path("/mnt"), Path.cwd()):
+        if (candidate / "artifacts/migration/project_continuity_downstream_fact_state_sync_snapshot_v1.csv").exists():
+            return candidate
+    return Path.cwd()
+
+
+REPO_ROOT = repo_root()
 SNAPSHOT_CSV = REPO_ROOT / "artifacts/migration/project_continuity_downstream_fact_state_sync_snapshot_v1.csv"
 OUTPUT_JSON = REPO_ROOT / "artifacts/migration/history_project_lifecycle_continuity_adapter_result_v1.json"
 OUTPUT_CSV = REPO_ROOT / "artifacts/migration/history_project_lifecycle_continuity_payload_v1.csv"

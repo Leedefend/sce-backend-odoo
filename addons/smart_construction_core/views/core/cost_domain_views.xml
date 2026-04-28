@@ -161,15 +161,15 @@
         <field name="name">成本科目</field>
         <field name="res_model">project.cost.code</field>
         <field name="view_mode">tree,form</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
     </record>
 
-    <!-- ===== 预算 vs 实际 报表 ===== -->
+    <!-- ===== 预算与实际报表 ===== -->
     <record id="view_project_cost_compare_tree" model="ir.ui.view">
         <field name="name">project.cost.compare.tree</field>
         <field name="model">project.cost.compare</field>
         <field name="arch" type="xml">
-            <tree string="项目成本预算 vs 实际" default_order="project_id asc, period asc, wbs_id asc, cost_code_id asc">
+            <tree string="项目成本预算与实际" default_order="project_id asc, period asc, wbs_id asc, cost_code_id asc">
                 <field name="project_id"/>
                 <field name="period"/>
                 <field name="wbs_id"/>
@@ -193,7 +193,7 @@
         <field name="name">project.cost.compare.pivot</field>
         <field name="model">project.cost.compare</field>
         <field name="arch" type="xml">
-            <pivot string="项目成本预算 vs 实际">
+            <pivot string="项目成本预算与实际">
                 <field name="project_id" type="row"/>
                 <field name="period" type="row"/>
                 <field name="wbs_id" type="row"/>
@@ -207,7 +207,7 @@
     </record>
 
     <record id="action_project_cost_compare" model="ir.actions.act_window">
-        <field name="name">项目成本预算 vs 实际</field>
+        <field name="name">项目成本预算与实际</field>
         <field name="res_model">project.cost.compare</field>
         <field name="view_mode">tree,pivot</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
@@ -300,14 +300,7 @@
                             <field name="partner_id"/>
                         </group>
                     </group>
-                    <group>
-                        <group string="系统来源（只读）" modifiers="{'invisible': [['source_model','=',False]]}">
-                            <field name="source_model" readonly="1"/>
-                            <field name="source_id" readonly="1"/>
-                            <field name="source_line_id" readonly="1"/>
-                        </group>
-                        <field name="note"/>
-                    </group>
+                    <field name="note"/>
                 </sheet>
             </form>
         </field>
@@ -326,7 +319,7 @@
                 <group expand="1" string="分组">
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                     <filter string="按科目" name="group_cost" context="{'group_by': 'cost_code_id'}"/>
-                    <filter string="按WBS" name="group_wbs" context="{'group_by': 'wbs_id'}"/>
+                    <filter string="按工程结构" name="group_wbs" context="{'group_by': 'wbs_id'}"/>
                 </group>
             </search>
         </field>

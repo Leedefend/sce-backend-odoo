@@ -8,6 +8,10 @@
                 <group string="成本控制">
                     <field name="default_cost_code_id"/>
                 </group>
+                <group string="历史物料来源">
+                    <field name="legacy_material_detail_id"/>
+                    <field name="legacy_material_id"/>
+                </group>
             </xpath>
         </field>
     </record>

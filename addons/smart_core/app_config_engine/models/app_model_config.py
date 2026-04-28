@@ -60,6 +60,7 @@ class AppModelConfig(models.Model):
         fields_get = Model.fields_get()
 
         def to_item(name, spec):
+            help_text = spec.get('help') or ''
             return {
                 'name': name,
                 'string': spec.get('string') or name,
@@ -67,6 +68,7 @@ class AppModelConfig(models.Model):
                 'required': bool(spec.get('required')),
                 'readonly': bool(spec.get('readonly')),
                 'relation': spec.get('relation') or None,
+                'help': help_text,
             }
 
         items = [to_item(k, v) for k, v in fields_get.items()]
@@ -102,4 +104,3 @@ class AppModelConfig(models.Model):
         """返回标准化模型契约块：{ 'fields': [...] }"""
         self.ensure_one()
         return dict(self.fields_def or {'fields': []})
-

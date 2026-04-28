@@ -6,6 +6,14 @@ from typing import Any
 from odoo.addons.smart_construction_scene import scene_registry
 
 ROLE_SURFACE_OVERRIDES = {
+    "business_config_admin": {
+        "label": "业务配置管理员",
+        "landing_scene_candidates": ["projects.list", "projects.ledger", "projects.intake"],
+        "menu_xmlids": [
+            "smart_construction_core.menu_sc_root",
+            "smart_construction_core.menu_sc_business_config_center",
+        ],
+    },
     "owner": {
         "label": "普通员工",
         "landing_scene_candidates": ["projects.list", "project.initiation", "projects.intake"],
@@ -61,6 +69,9 @@ ROLE_SURFACE_OVERRIDES = {
 }
 
 ROLE_GROUPS_EXPLICIT = {
+    "business_config_admin": {
+        "smart_construction_core.group_sc_cap_business_config_admin",
+    },
     "executive": {
         "smart_construction_custom.group_sc_role_executive",
     },
@@ -88,7 +99,7 @@ ROLE_GROUPS_CAPABILITY_FALLBACK = {
     },
 }
 
-ROLE_PRECEDENCE = ("executive", "pm", "finance")
+ROLE_PRECEDENCE = ("business_config_admin", "executive", "pm", "finance")
 
 NAV_MENU_SCENE_MAP = {
     "smart_construction_core.menu_sc_project_initiation": "projects.intake",

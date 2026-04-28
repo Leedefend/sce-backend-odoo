@@ -5,11 +5,21 @@ type Dict = Record<string, unknown>;
 type ContractActionButton = {
   key: string;
   label: string;
-  enabled: boolean;
+  enabled?: boolean;
   hint?: string;
   selection?: 'none' | 'single' | 'multi';
   level?: string;
   visibleProfiles?: string[];
+  kind?: string;
+  actionId?: number | null;
+  methodName?: string;
+  model?: string;
+  target?: string;
+  url?: string;
+  context?: Dict;
+  domainRaw?: string;
+  mutation?: Dict;
+  refreshPolicy?: Dict;
 };
 
 type ContractActionGroupRaw = {
@@ -35,10 +45,7 @@ type UseActionViewActionPresentationRuntimeOptions = {
     allButtons: ContractActionButton[];
     actionPrimaryBudget: number;
     pageText: (key: string, fallback: string) => string;
-  }) => {
-    primaryActions: ContractActionButton[];
-    overflowActionGroups: ActionGroup[];
-  };
+  }) => any;
   pageText: (key: string, fallback: string) => string;
 };
 
@@ -64,7 +71,12 @@ export function useActionViewActionPresentationRuntime(options: UseActionViewAct
   });
 
   const actionPrimaryBudget = computed(() => {
-    const raw = Number(options.actionContract.value?.surface_policies?.actions_primary_max ?? 4);
+    const surfacePolicies = (
+      options.actionContract.value?.surface_policies
+      && typeof options.actionContract.value.surface_policies === 'object'
+      && !Array.isArray(options.actionContract.value.surface_policies)
+    ) ? options.actionContract.value.surface_policies as Dict : {};
+    const raw = Number(surfacePolicies.actions_primary_max ?? 4);
     if (!Number.isFinite(raw) || raw < 0) return 4;
     return Math.floor(raw);
   });
@@ -83,11 +95,11 @@ export function useActionViewActionPresentationRuntime(options: UseActionViewAct
   });
 
   const contractPrimaryActions = computed<ContractActionButton[]>(() => {
-    return contractActionPresentation.value.primaryActions;
+    return (contractActionPresentation.value.primaryActions || []) as ContractActionButton[];
   });
 
   const contractOverflowActionGroups = computed<ActionGroup[]>(() => {
-    return contractActionPresentation.value.overflowActionGroups;
+    return (contractActionPresentation.value.overflowActionGroups || []) as ActionGroup[];
   });
 
   const contractActionCount = computed(() => contractActionButtons.value.length);

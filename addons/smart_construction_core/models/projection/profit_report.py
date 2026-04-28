@@ -3,7 +3,7 @@ from odoo import fields, models, tools
 
 
 class ProjectProfitCompare(models.Model):
-    """Project-level profit summary aggregating revenue vs cost by period/WBS."""
+    """Project-level profit summary aggregating revenue and cost by period/structure."""
 
     _name = "project.profit.compare"
     _description = "项目经营利润对比"
@@ -12,8 +12,8 @@ class ProjectProfitCompare(models.Model):
     _order = "project_id, period, wbs_id"
 
     project_id = fields.Many2one("project.project", string="项目", readonly=True)
-    period = fields.Char("期间(YYYY-MM)", readonly=True)
-    wbs_id = fields.Many2one("construction.work.breakdown", string="工程结构(WBS)", readonly=True)
+    period = fields.Char("期间", readonly=True)
+    wbs_id = fields.Many2one("construction.work.breakdown", string="工程结构", readonly=True)
     currency_id = fields.Many2one("res.currency", string="币种", readonly=True)
 
     revenue_budget_amount = fields.Monetary("预算收入", currency_field="currency_id", readonly=True)

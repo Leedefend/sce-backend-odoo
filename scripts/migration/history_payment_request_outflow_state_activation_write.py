@@ -117,16 +117,27 @@ if duplicates:
     raise RuntimeError({"duplicate_runtime_outflow_requests": {key: value[:10] for key, value in list(duplicates.items())[:20]}})
 
 missing_runtime = sorted(set(candidate_by_legacy) - set(runtime_map))
-if missing_runtime:
-    raise RuntimeError({"missing_runtime_requests": missing_runtime[:30], "missing_count": len(missing_runtime)})
 
 promoted_rows: list[dict[str, object]] = []
+blocked_rows: list[dict[str, object]] = []
 skipped_non_draft = 0
 promote_ids: list[int] = []
 id_rows: list[tuple[int, dict[str, str], object]] = []
 
 for legacy_outflow_id, row in sorted(candidate_by_legacy.items()):
-    rec = runtime_map[legacy_outflow_id]
+    rec = runtime_map.get(legacy_outflow_id)
+    if not rec:
+        blocked_rows.append(
+            {
+                "payment_request_id": "",
+                "legacy_outflow_id": legacy_outflow_id,
+                "document_no": clean(row.get("document_no")),
+                "workflow_row_count": clean(row.get("workflow_row_count")),
+                "state": "",
+                "reason": "missing_runtime_request",
+            }
+        )
+        continue
     if clean(rec.state) != "draft":
         skipped_non_draft += 1
         continue
@@ -173,23 +184,28 @@ write_csv(
 write_csv(
     BLOCKED_CSV,
     ["payment_request_id", "legacy_outflow_id", "document_no", "workflow_row_count", "state", "reason"],
-    [],
+    blocked_rows,
 )
 
+status = "PASS" if len(promoted_rows) + skipped_non_draft + len(blocked_rows) == len(payload_rows) else "FAIL"
 payload = {
-    "status": "PASS",
+    "status": status,
     "mode": "history_payment_request_outflow_state_activation_write",
     "database": env.cr.dbname,  # noqa: F821
     "input_rows": len(payload_rows),
     "promoted_rows": len(promoted_rows),
     "skipped_non_draft": skipped_non_draft,
-    "blocked_rows": 0,
-    "blocked_reason_counts": {},
+    "blocked_rows": len(blocked_rows),
+    "blocked_reason_counts": {"missing_runtime_request": len(blocked_rows)} if blocked_rows else {},
     "artifacts": {
         "rollback_csv": str(ROLLBACK_CSV),
         "blocked_csv": str(BLOCKED_CSV),
     },
-    "decision": "outflow_request_state_activation_complete",
+    "decision": (
+        "outflow_request_state_activation_complete_with_blocked_dependencies"
+        if blocked_rows
+        else "outflow_request_state_activation_complete"
+    ) if status == "PASS" else "STOP_REVIEW_REQUIRED",
     "boundary": {
         "target_state": "submit",
         "tier_review_written": False,

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_treasury_reconciliation_search" model="ir.ui.view">
+            <field name="name">sc.treasury.reconciliation.search</field>
+            <field name="model">sc.treasury.reconciliation</field>
+            <field name="arch" type="xml">
+                <search string="资金对账">
+                    <field name="name"/>
+                    <field name="document_no"/>
+                    <field name="project_id"/>
+                    <field name="account_name"/>
+                    <field name="confirmation_item_name"/>
+                    <filter string="资金日报" name="source_kind_daily_line" domain="[('source_kind', '=', 'daily_line')]"/>
+                    <filter string="资金确认" name="source_kind_fund_confirmation" domain="[('source_kind', '=', 'fund_confirmation')]"/>
+                    <filter string="已确认" name="state_confirmed" domain="[('state', 'in', ['confirmed', 'legacy_confirmed'])]"/>
+                    <filter string="已对账" name="state_reconciled" domain="[('state', '=', 'reconciled')]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按类型" name="group_source_kind" context="{'group_by': 'source_kind'}"/>
+                    <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="按日期" name="group_date" context="{'group_by': 'date_document'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_treasury_reconciliation_tree" model="ir.ui.view">
+            <field name="name">sc.treasury.reconciliation.tree</field>
+            <field name="model">sc.treasury.reconciliation</field>
+            <field name="arch" type="xml">
+                <tree string="资金对账">
+                    <field name="name"/>
+                    <field name="date_document"/>
+                    <field name="project_id"/>
+                    <field name="document_no"/>
+                    <field name="account_name"/>
+                    <field name="confirmation_item_name"/>
+                    <field name="daily_income" sum="本日收入"/>
+                    <field name="daily_expense" sum="本日支出"/>
+                    <field name="confirmation_amount" sum="确认金额"/>
+                    <field name="system_difference" sum="银企差额"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_treasury_reconciliation_form" model="ir.ui.view">
+            <field name="name">sc.treasury.reconciliation.form</field>
+            <field name="model">sc.treasury.reconciliation</field>
+            <field name="arch" type="xml">
+                <form string="资金对账">
+                    <header>
+                        <button name="action_confirm" string="提交审批" type="object" class="btn-primary"
+                                invisible="state != 'draft' or validation_status in ('waiting', 'pending', 'validated')"/>
+                        <button name="validate_tier" string="审批通过" type="object" class="btn-primary"
+                                invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
+                        <button name="reject_tier" string="审批驳回" type="object"
+                                invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
+                        <button name="action_reconcile" string="对账完成" type="object" class="btn-primary"
+                                invisible="state not in ('draft', 'confirmed')"/>
+                        <button name="action_cancel" string="取消" type="object"
+                                invisible="state in ('cancel', 'legacy_confirmed')"/>
+                        <field name="validation_status" invisible="1"/>
+                        <field name="can_review" invisible="1"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,confirmed,reconciled,legacy_confirmed,cancel"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="date_document" readonly="state == 'legacy_confirmed'"/>
+                                <field name="document_no" readonly="state == 'legacy_confirmed'"/>
+                            </group>
+                            <group>
+                                <field name="project_id" readonly="state == 'legacy_confirmed'"/>
+                                <field name="account_name" readonly="state == 'legacy_confirmed'"/>
+                                <field name="bank_account_no" readonly="state == 'legacy_confirmed'"/>
+                                <field name="confirmation_item_name" readonly="state == 'legacy_confirmed'"/>
+                            </group>
+                        </group>
+                        <group string="资金日报">
+                            <field name="account_balance" readonly="state == 'legacy_confirmed'"/>
+                            <field name="bank_balance" readonly="state == 'legacy_confirmed'"/>
+                            <field name="system_difference" readonly="state == 'legacy_confirmed'"/>
+                            <field name="daily_income" readonly="state == 'legacy_confirmed'"/>
+                            <field name="daily_expense" readonly="state == 'legacy_confirmed'"/>
+                            <field name="currency_id"/>
+                        </group>
+                        <group string="资金确认">
+                            <field name="confirmation_amount" readonly="state == 'legacy_confirmed'"/>
+                            <field name="treasury_ledger_id"/>
+                        </group>
+                        <group>
+                            <field name="note"/>
+                            <field name="active"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_treasury_reconciliation" model="ir.actions.act_window">
+            <field name="name">资金对账</field>
+            <field name="res_model">sc.treasury.reconciliation</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_treasury_reconciliation_search"/>
+            <field name="context">{'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+
+        <menuitem id="menu_sc_treasury_reconciliation"
+                  name="资金对账"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  action="action_sc_treasury_reconciliation"
+                  sequence="34"
+                  groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    </data>
+</odoo>

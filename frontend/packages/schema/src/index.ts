@@ -37,6 +37,12 @@ export interface LoginResponse {
     lang?: string;
     tz?: string;
     company_id?: number | null;
+    company_name?: string;
+    company?: {
+      id?: number | null;
+      name?: string;
+      display_name?: string;
+    } | null;
     allowed_company_ids?: number[];
   };
   entitlement?: {
@@ -87,6 +93,7 @@ export interface NavNode {
 }
 
 export interface NavMeta {
+  [key: string]: unknown;
   name?: string;
   scene_key?: string;
   menu_id?: number;
@@ -166,6 +173,12 @@ export interface AppInitResponse {
     lang?: string;
     tz?: string;
     company_id?: number | null;
+    company_name?: string;
+    company?: {
+      id?: number | null;
+      name?: string;
+      display_name?: string;
+    } | null;
   };
   nav: NavNode[];
   default_route?: {
@@ -293,6 +306,15 @@ export interface ApiDataListResult {
     page_has_prev?: boolean;
     page_has_next?: boolean;
   }>;
+}
+
+export interface UserViewPreferenceContract {
+  scope_key?: string;
+  preference?: {
+    visible_columns?: string[];
+    hidden_columns?: string[];
+    [key: string]: unknown;
+  };
 }
 
 export interface ApiDataListRequest {
@@ -558,6 +580,30 @@ export interface ActionContract {
       default?: boolean;
     }>;
     saved_filters?: Array<Record<string, unknown>>;
+    custom?: {
+      enabled?: boolean;
+      filters?: {
+        enabled?: boolean;
+        label?: string;
+        fields?: Array<{
+          field?: string;
+          label?: string;
+          type?: string;
+          operators?: Array<{ value?: string; label?: string; needs_value?: boolean }>;
+          choices?: Array<{ value?: string; label?: string }>;
+        }>;
+      };
+      group_by?: {
+        enabled?: boolean;
+        label?: string;
+        fields?: Array<{ field?: string; label?: string; type?: string }>;
+      };
+      favorites?: {
+        save_enabled?: boolean;
+        label?: string;
+        intent?: string;
+      };
+    };
   };
   workflow?: {
     states?: Array<Record<string, unknown>>;
@@ -593,7 +639,13 @@ export interface ActionContract {
   };
   ui_contract?: {
     columns?: string[];
-    columnsSchema?: Array<{ name: string; string?: string }>;
+    columnsSchema?: Array<{
+      name: string;
+      string?: string;
+      optional?: 'show' | 'hide' | string;
+      invisible?: unknown;
+      column_invisible?: unknown;
+    }>;
   };
 }
 

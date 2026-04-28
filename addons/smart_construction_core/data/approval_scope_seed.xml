@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="approval_scope_project_manager" model="sc.approval.scope">
+            <field name="sequence">10</field>
+            <field name="name">项目负责人</field>
+            <field name="scope_key">project_manager</field>
+            <field name="note">可审批项目相关业务。</field>
+        </record>
+        <record id="approval_scope_material_manager" model="sc.approval.scope">
+            <field name="sequence">20</field>
+            <field name="name">物资审核人</field>
+            <field name="scope_key">material_manager</field>
+            <field name="note">可审批物资计划等物资中心业务。</field>
+        </record>
+        <record id="approval_scope_purchase_manager" model="sc.approval.scope">
+            <field name="sequence">30</field>
+            <field name="name">采购审核人</field>
+            <field name="scope_key">purchase_manager</field>
+            <field name="note">可审批采购订单、采购/一般合同等采购业务。</field>
+        </record>
+        <record id="approval_scope_finance_manager" model="sc.approval.scope">
+            <field name="sequence">40</field>
+            <field name="name">财务审核人</field>
+            <field name="scope_key">finance_manager</field>
+            <field name="note">可审批付款申请、费用/保证金等财务业务。</field>
+        </record>
+        <record id="approval_scope_contract_manager" model="sc.approval.scope">
+            <field name="sequence">50</field>
+            <field name="name">合同审核人</field>
+            <field name="scope_key">contract_manager</field>
+            <field name="note">可审批项目合同、一般合同等合同业务。</field>
+        </record>
+        <record id="approval_scope_cost_manager" model="sc.approval.scope">
+            <field name="sequence">60</field>
+            <field name="name">成控审核人</field>
+            <field name="scope_key">cost_manager</field>
+            <field name="note">可审批成控相关业务。</field>
+        </record>
+        <record id="approval_scope_settlement_manager" model="sc.approval.scope">
+            <field name="sequence">70</field>
+            <field name="name">结算审核人</field>
+            <field name="scope_key">settlement_manager</field>
+            <field name="note">可审批结算单等结算业务。</field>
+        </record>
+    </data>
+</odoo>

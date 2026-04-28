@@ -344,6 +344,45 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertIn("budget_total", visible_fields)
         self.assertNotIn("create_uid", visible_fields)
 
+    def test_business_detail_relation_fields_remain_visible(self):
+        data = {
+            "head": {"model": "construction.contract", "view_type": "form"},
+            "views": {
+                "form": {
+                    "layout": [
+                        {"type": "field", "name": "name"},
+                        {"type": "field", "name": "line_ids"},
+                        {"type": "field", "name": "message_ids"},
+                    ]
+                }
+            },
+            "fields": {
+                "name": {"string": "合同编号", "type": "char", "required": False, "readonly": True},
+                "line_ids": {
+                    "string": "合同明细",
+                    "type": "one2many",
+                    "required": False,
+                    "readonly": False,
+                    "relation": "construction.contract.line",
+                },
+                "message_ids": {"string": "消息", "type": "one2many", "required": False, "readonly": False},
+            },
+            "buttons": [],
+        }
+
+        out = apply_contract_governance(data, "user")
+        line_descriptor = (out.get("fields") or {}).get("line_ids") or {}
+        message_descriptor = (out.get("fields") or {}).get("message_ids") or {}
+        core_fields = next(
+            (item.get("fields") for item in out.get("field_groups") or [] if item.get("name") == "core"),
+            [],
+        )
+
+        self.assertEqual(line_descriptor.get("semantic_type"), "relation")
+        self.assertFalse(line_descriptor.get("technical"))
+        self.assertIn("line_ids", core_fields)
+        self.assertEqual(message_descriptor.get("semantic_type"), "technical")
+
     def test_user_mode_preserves_native_project_form_layout_hierarchy(self):
         data = _sample_nested_project_form_payload()
         out = apply_contract_governance(data, "user")

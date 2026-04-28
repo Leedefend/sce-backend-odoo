@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <function model="res.company" name="write">
+            <value model="res.company" search="[('id', '=', ref('base.main_company'))]"/>
+            <value eval="{'name': '四川保盛建设集团有限公司'}"/>
+        </function>
+
+        <function model="res.partner" name="write">
+            <value model="res.partner" search="[('id', '=', ref('base.main_partner'))]"/>
+            <value eval="{'name': '四川保盛建设集团有限公司', 'company_type': 'company'}"/>
+        </function>
+    </data>
+</odoo>

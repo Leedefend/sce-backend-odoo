@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="base.lang_zh_CN" model="res.lang">
+            <field name="active" eval="True"/>
+        </record>
+
+        <function model="res.partner" name="write">
+            <value model="res.partner" search="[('id', 'in', [ref('base.partner_root'), ref('base.partner_admin'), ref('base.public_partner')])]"/>
+            <value eval="{'lang': 'zh_CN', 'tz': 'Asia/Shanghai'}"/>
+        </function>
+
+        <function model="ir.config_parameter" name="set_param">
+            <value>sc.bootstrap.lang</value>
+            <value>zh_CN</value>
+        </function>
+        <function model="ir.config_parameter" name="set_param">
+            <value>sc.bootstrap.tz</value>
+            <value>Asia/Shanghai</value>
+        </function>
+    </data>
+</odoo>

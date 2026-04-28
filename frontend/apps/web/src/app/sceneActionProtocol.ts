@@ -1,4 +1,5 @@
 export interface MutationContract {
+  [key: string]: unknown;
   type: string;
   model: string;
   operation: string;
@@ -6,6 +7,7 @@ export interface MutationContract {
 }
 
 export interface ProjectionRefreshPolicy {
+  [key: string]: unknown;
   on_success: string[];
   on_failure?: string[];
   mode?: string;
@@ -79,4 +81,3 @@ export function normalizeSceneActionProtocol(row: unknown): SceneActionProtocol 
     raw: payload,
   };
 }
-

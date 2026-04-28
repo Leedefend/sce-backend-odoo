@@ -502,7 +502,7 @@ const pageSectionStyle = pageContract.sectionStyle;
 
 const myWorkOrchestrationContract = computed<PageOrchestrationContract>(() => {
   const contract = pageContract.contract.value?.page_orchestration_v1;
-  return (contract && typeof contract === 'object') ? contract as PageOrchestrationContract : {};
+  return (contract && typeof contract === 'object') ? contract as unknown as PageOrchestrationContract : {};
 });
 const useUnifiedMyWorkRenderer = computed(() => {
   if (String(route.query.legacy_my_work || '').trim() === '1') return false;
@@ -752,7 +752,7 @@ const myWorkOrchestrationDatasets = computed<Record<string, unknown>>(() => {
     id: String(sec.key || ''),
     key: String(sec.key || ''),
     title: String(sec.label || sec.key || ''),
-    hint: `${pageText('batch_selected_prefix', '已选 ')}${Number(sec.count || 0)}${pageText('batch_selected_suffix', ' 条待办')}`,
+    hint: `${pageText('batch_selected_prefix', '已选 ')}${Number((sec as { count?: unknown }).count || 0)}${pageText('batch_selected_suffix', ' 条待办')}`,
     action_key: 'switch_section',
     section_key: String(sec.key || ''),
   }));
@@ -1168,7 +1168,7 @@ function openRecord(item: MyWorkRecordItem) {
 
 function openPrimaryEntry(item: MyWorkRecordItem) {
   if (!item) return;
-  openScene(item.scene_key, item.target);
+  openRecord(item);
 }
 
 function isCompletableTodo(item: MyWorkRecordItem) {

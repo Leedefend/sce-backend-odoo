@@ -3,7 +3,7 @@ import { ApiError } from '../api/client';
 import { describeSuggestedAction } from './useSuggestedAction';
 
 export interface StatusError {
-  message: string;
+  message?: string;
   code?: number | string;
   traceId?: string;
   hint?: string;

@@ -43,11 +43,11 @@ export const DOMAIN_NAV_MAP = [
   },
   {
     key: "data_center",
-    name_cn: "数据分析",
+    name_cn: "报表中心",
     icon: "D",
     sequence: 65,
     menu_xmlids: ["smart_construction_core.menu_sc_data_center"],
-    menu_name_keywords: ["数据", "指标", "投影"],
+    menu_name_keywords: ["报表", "台账", "数据", "指标", "投影"],
   },
   {
     key: "dashboard_center",

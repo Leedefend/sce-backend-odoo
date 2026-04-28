@@ -2,15 +2,28 @@
 <odoo>
     <data noupdate="0">
 
+        <!-- =========================
+             业务发起
+             - 面向所有内部用户开放草稿创建/提交
+             - 审批/完成/取消仍由各业务域 manager 能力控制
+        ========================== -->
+        <record id="group_sc_cap_business_initiator" model="res.groups">
+            <field name="name">SC 能力 - 业务发起</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+        </record>
+
         <!-- =========================================================
              基础组：SC 内部用户
              - 唯一负责 implied base.group_user
-             - 所有 SC 能力组都应 implied 此组，避免重复黏 base.group_user
+             - 默认组合业务发起能力
         ========================================================== -->
         <record id="group_sc_internal_user" model="res.groups">
             <field name="name">SC 基础 - 内部用户</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
-            <field name="implied_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
+            <field name="implied_ids" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_business_initiator')
+            ])]"/>
         </record>
 
 
@@ -252,15 +265,32 @@
 
 
         <!-- =========================
-             配置管理员
-             - 仍建议 implied internal_user，保持其为内部用户
+             业务配置管理员
+             - 管业务主数据、业务规则、阶段要求、定额/字典
+             - 不继承 Odoo base.group_system
         ========================== -->
-        <record id="group_sc_cap_config_admin" model="res.groups">
-            <field name="name">SC 能力 - 配置管理员</field>
+        <record id="group_sc_cap_business_config_admin" model="res.groups">
+            <field name="name">SC 能力 - 业务配置管理员</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[
                 (6, 0, [
                     ref('smart_construction_core.group_sc_internal_user'),
+                    ref('smart_construction_core.group_sc_cap_data_read')
+                ])
+            ]"/>
+        </record>
+
+        <!-- =========================
+             平台级系统管理员
+             - 管场景编排、订阅、工作流、系统级治理
+             - 兼容历史 group_sc_cap_config_admin 引用
+        ========================== -->
+        <record id="group_sc_cap_config_admin" model="res.groups">
+            <field name="name">SC 能力 - 平台系统管理员</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[
+                (6, 0, [
+                    ref('smart_construction_core.group_sc_cap_business_config_admin'),
                     ref('base.group_system')
                 ])
             ]"/>
@@ -298,7 +328,7 @@
                 ref('smart_construction_core.group_sc_cap_finance_manager'),
                 ref('smart_construction_core.group_sc_cap_settlement_manager'),
                 ref('smart_construction_core.group_sc_cap_data_read'),
-                ref('smart_construction_core.group_sc_cap_config_admin'),
+                ref('smart_construction_core.group_sc_cap_business_config_admin'),
                 ref('smart_construction_core.group_sc_cap_contact_manager')
             ])]"/>
         </record>

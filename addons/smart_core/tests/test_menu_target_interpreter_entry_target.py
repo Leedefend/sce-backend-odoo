@@ -61,6 +61,12 @@ class TestMenuTargetInterpreterEntryTarget(unittest.TestCase):
         row = explained["flat"][0]
 
         self.assertEqual(row["target_type"], "scene")
+        self.assertEqual(row["scene_key"], "projects.list")
+        self.assertEqual(row["native_action_id"], 484)
+        self.assertIsNone(row["native_model"])
+        self.assertIsNone(row["native_view_mode"])
+        self.assertEqual(row["confidence"], "high")
+        self.assertFalse(row["compatibility_used"])
         self.assertEqual(row["route"], "/s/projects.list")
         self.assertEqual(
             row["entry_target"],
@@ -94,6 +100,12 @@ class TestMenuTargetInterpreterEntryTarget(unittest.TestCase):
         row = explained["flat"][0]
 
         self.assertEqual(row["target_type"], "native")
+        self.assertIsNone(row["scene_key"])
+        self.assertEqual(row["native_action_id"], 501)
+        self.assertIsNone(row["native_model"])
+        self.assertIsNone(row["native_view_mode"])
+        self.assertEqual(row["confidence"], "medium")
+        self.assertTrue(row["compatibility_used"])
         self.assertEqual(row["route"], "/native/action/501?menu_id=12")
         self.assertEqual(
             row["entry_target"],
@@ -192,6 +204,12 @@ class TestMenuTargetInterpreterEntryTarget(unittest.TestCase):
 
         self.assertEqual(row["target_type"], "scene")
         self.assertEqual(row["delivery_mode"], "custom_scene")
+        self.assertEqual(row["scene_key"], "enterprise.company")
+        self.assertEqual(row["native_action_id"], 246)
+        self.assertEqual(row["native_model"], "res.company")
+        self.assertEqual(row["native_view_mode"], "form")
+        self.assertEqual(row["confidence"], "high")
+        self.assertFalse(row["compatibility_used"])
         self.assertEqual(row["route"], "/s/enterprise.company")
         self.assertEqual(
             row["entry_target"],
@@ -230,6 +248,10 @@ class TestMenuTargetInterpreterEntryTarget(unittest.TestCase):
 
         self.assertEqual(row["target_type"], "scene")
         self.assertEqual(row["route"], "/s/contract.center")
+        self.assertEqual(row["scene_key"], "contract.center")
+        self.assertEqual(row["native_action_id"], 486)
+        self.assertEqual(row["confidence"], "high")
+        self.assertFalse(row["compatibility_used"])
         self.assertEqual(
             row["entry_target"],
             {
@@ -238,6 +260,41 @@ class TestMenuTargetInterpreterEntryTarget(unittest.TestCase):
                 "route": "/s/contract.center",
             },
         )
+
+    def test_custom_action_node_exposes_native_fact_and_compatibility_marker(self):
+        service = MenuTargetInterpreterService(env=None)
+        nav_fact = {
+            "flat": [
+                {
+                    "menu_id": 41,
+                    "key": "menu:41",
+                    "name": "原生列表",
+                    "has_children": False,
+                    "action_raw": "ir.actions.act_window,601",
+                    "action_type": "ir.actions.act_window",
+                    "action_id": 601,
+                    "action_exists": True,
+                    "action_meta": {
+                        "res_model": "project.task",
+                        "view_mode": "tree,form",
+                    },
+                }
+            ],
+            "tree": [],
+        }
+
+        explained = service.interpret(nav_fact, scene_map={}, policy={})
+        row = explained["flat"][0]
+
+        self.assertEqual(row["target_type"], "action")
+        self.assertIsNone(row["scene_key"])
+        self.assertEqual(row["native_action_id"], 601)
+        self.assertEqual(row["native_model"], "project.task")
+        self.assertEqual(row["native_view_mode"], "tree,form")
+        self.assertEqual(row["confidence"], "medium")
+        self.assertTrue(row["compatibility_used"])
+        self.assertEqual(row["route"], "/a/601?menu_id=41")
+        self.assertEqual(row["entry_target"]["type"], "compatibility")
 
 
 if __name__ == "__main__":

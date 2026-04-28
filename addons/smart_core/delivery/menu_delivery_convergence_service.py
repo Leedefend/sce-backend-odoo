@@ -8,24 +8,31 @@ class MenuDeliveryConvergenceService:
         "demo",
         "试点",
     )
-    TECHNICAL_TOKENS = (
+    ALWAYS_HIDDEN_TECHNICAL_TOKENS = (
         "设置/技术",
         "窗口动作",
         "菜单项",
         "iap",
-        "业务管理员配置中心",
         "项目管理（后台）",
+    )
+    BUSINESS_CONFIG_TOKENS = (
+        "业务配置",
+        "业务管理员配置中心",
         "数据字典",
         "定额库",
-        "工作流",
-        "数据分析",
         "业务字典",
-        "基础资料",
+        "成本科目",
+        "阶段资料要求",
+        "项目阶段资料要求",
     )
-    GOVERNANCE_TOKENS = (
+    SYSTEM_CONFIG_TOKENS = (
+        "系统配置",
+        "系统管理",
+        "基础资料",
         "场景与能力",
         "能力目录",
         "场景编排",
+        "工作流",
         "订阅实例",
         "交付包注册表",
         "订阅套餐",
@@ -35,7 +42,13 @@ class MenuDeliveryConvergenceService:
         "运营任务",
         "能力分组",
         "场景版本",
+        "scene governance",
+        "governance actions",
+        "governance logs",
+        "company channels",
     )
+    TECHNICAL_TOKENS = ALWAYS_HIDDEN_TECHNICAL_TOKENS + BUSINESS_CONFIG_TOKENS + SYSTEM_CONFIG_TOKENS
+    GOVERNANCE_TOKENS = SYSTEM_CONFIG_TOKENS
     NON_FORMAL_ENTRY_TOKENS = (
         "工作台",
         "生命周期驾驶舱",
@@ -56,6 +69,8 @@ class MenuDeliveryConvergenceService:
         "项目驾驶舱",
         "我的工作",
         "工程资料",
+        "业务配置",
+        "系统配置",
     )
     ADMIN_ALLOWED_PATH_TOKENS = (
         "智能施工 2.0",
@@ -85,9 +100,17 @@ class MenuDeliveryConvergenceService:
         "项目台账（试点）": "项目台账",
     }
 
-    def apply(self, nav_fact: dict, nav_explained: dict, *, is_admin: bool) -> tuple[dict, dict, dict]:
+    def apply(
+        self,
+        nav_fact: dict,
+        nav_explained: dict,
+        *,
+        is_admin: bool,
+        is_business_config_admin: bool = False,
+    ) -> tuple[dict, dict, dict]:
         report = {
             "profile": "delivery_admin" if is_admin else "delivery_user",
+            "is_business_config_admin": bool(is_business_config_admin),
             "hidden": [],
             "kept": [],
             "renamed": [],
@@ -110,6 +133,7 @@ class MenuDeliveryConvergenceService:
                 node,
                 path=[],
                 is_admin=is_admin,
+                is_business_config_admin=is_business_config_admin,
                 visible_menu_ids=visible_menu_ids,
                 report=report,
             )
@@ -139,7 +163,16 @@ class MenuDeliveryConvergenceService:
         report["summary"]["leaf_count_after"] = len(visible_menu_ids)
         return nav_fact_out, nav_explained_out, report
 
-    def _filter_explained_node(self, node: dict, *, path: list[str], is_admin: bool, visible_menu_ids: set[int], report: dict):
+    def _filter_explained_node(
+        self,
+        node: dict,
+        *,
+        path: list[str],
+        is_admin: bool,
+        is_business_config_admin: bool,
+        visible_menu_ids: set[int],
+        report: dict,
+    ):
         copied = dict(node)
         raw_name = str(copied.get("name") or "").strip()
         current_path = [*path, raw_name] if raw_name else list(path)
@@ -153,6 +186,7 @@ class MenuDeliveryConvergenceService:
                 child,
                 path=current_path,
                 is_admin=is_admin,
+                is_business_config_admin=is_business_config_admin,
                 visible_menu_ids=visible_menu_ids,
                 report=report,
             )
@@ -165,7 +199,12 @@ class MenuDeliveryConvergenceService:
             copied["delivery_bucket"] = report["profile"]
             return copied
 
-        category = self._classify_leaf(raw_name, current_path, is_admin=is_admin)
+        category = self._classify_leaf(
+            raw_name,
+            current_path,
+            is_admin=is_admin,
+            is_business_config_admin=is_business_config_admin,
+        )
         menu_id = copied.get("menu_id")
         row = {
             "menu_id": menu_id,
@@ -192,7 +231,14 @@ class MenuDeliveryConvergenceService:
         node["name"] = target
         report["renamed"].append({"from": label, "to": target, "menu_id": node.get("menu_id")})
 
-    def _classify_leaf(self, label: str, path: list[str], *, is_admin: bool) -> str:
+    def _classify_leaf(
+        self,
+        label: str,
+        path: list[str],
+        *,
+        is_admin: bool,
+        is_business_config_admin: bool = False,
+    ) -> str:
         normalized_label = str(label or "").strip().lower()
         full_path = "/".join(str(part or "").strip() for part in path if str(part or "").strip())
         normalized_path = full_path.lower()
@@ -204,9 +250,15 @@ class MenuDeliveryConvergenceService:
             return "hidden_governance"
         if self._contains_any(normalized_label, normalized_path, self.DEMO_TOKENS):
             return "hidden_demo"
-        if self._contains_any(normalized_label, normalized_path, self.TECHNICAL_TOKENS):
+        if self._contains_any(normalized_label, normalized_path, self.ALWAYS_HIDDEN_TECHNICAL_TOKENS):
             return "hidden_technical"
-        if self._contains_any(normalized_label, normalized_path, self.GOVERNANCE_TOKENS):
+        if self._contains_any(normalized_label, normalized_path, self.BUSINESS_CONFIG_TOKENS):
+            if is_admin or is_business_config_admin:
+                return "delivery_business_config"
+            return "hidden_business_config"
+        if self._contains_any(normalized_label, normalized_path, self.SYSTEM_CONFIG_TOKENS):
+            if is_admin:
+                return "delivery_system_config"
             return "hidden_governance"
         if not self._contains_any(normalized_label, normalized_path, allow_tokens):
             return "hidden_technical"

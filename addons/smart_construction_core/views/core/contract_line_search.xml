@@ -3,7 +3,7 @@
         <field name="name">construction.contract.line.search</field>
         <field name="model">construction.contract.line</field>
         <field name="arch" type="xml">
-            <search string="合同行">
+            <search string="合同明细">
                 <field name="contract_id"/>
                 <field name="project_id"/>
                 <field name="boq_line_id"/>
@@ -15,7 +15,7 @@
     </record>
 
     <record id="action_construction_contract_line" model="ir.actions.act_window">
-        <field name="name">合同行</field>
+        <field name="name">合同明细</field>
         <field name="res_model">construction.contract.line</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_construction_contract_line_search"/>

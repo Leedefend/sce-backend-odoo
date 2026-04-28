@@ -13,25 +13,6 @@
         {{ action.label || action.key }}
       </button>
     </section>
-    <section
-      v-if="isSectionVisible('view_switch', { defaultEnabled: true, tag: 'section', vmVisible: vm.page.availableViewModes.length > 1 })"
-      class="view-switch"
-      :style="getSectionStyle('view_switch')"
-    >
-      <p class="contract-label">{{ t('label.view_switch', '视图切换') }}</p>
-      <div class="contract-chips">
-        <button
-          v-for="mode in vm.page.availableViewModes"
-          :key="`view-mode-${mode}`"
-          class="contract-chip"
-          :class="{ active: vm.page.viewMode === mode }"
-          :disabled="isViewModeDisabled({ mode, currentViewMode: vm.page.viewMode })"
-          @click="switchViewMode(mode)"
-        >
-          {{ viewModeLabel(mode) }}
-        </button>
-      </div>
-    </section>
     <section v-if="isSectionVisible('route_preset', { defaultEnabled: pageSectionEnabled('route_preset', false), tag: 'section', vmVisible: Boolean(vm.filters.routePreset) })" class="route-preset" :style="getSectionStyle('route_preset')">
       <p>
         {{ t('route_preset_applied_prefix', '已应用推荐筛选：') }}{{ vm.filters.routePreset?.label }}
@@ -55,7 +36,7 @@
       <p class="contract-missing-summary">{{ vm.strictAlert.summary }}</p>
       <p v-if="vm.strictAlert.defaultsSummary" class="contract-missing-defaults">{{ vm.strictAlert.defaultsSummary }}</p>
     </section>
-    <section v-if="isSectionVisible('quick_filters', { defaultEnabled: pageSectionEnabled('quick_filters', false), tag: 'section', vmVisible: vm.sections.quickFilters && vm.filters.quickFilters.visible })" class="contract-block" :style="getSectionStyle('quick_filters')">
+    <section v-if="showStandaloneQuickFilters" class="contract-block" :style="getSectionStyle('quick_filters')">
       <p class="contract-label">{{ t('label.quick_filters', '快速筛选') }}</p>
       <div class="contract-chips">
         <button
@@ -102,7 +83,7 @@
         </button>
       </div>
     </section>
-    <section v-if="isSectionVisible('saved_filters', { defaultEnabled: pageSectionEnabled('saved_filters', false), tag: 'section', vmVisible: vm.sections.savedFilters && vm.filters.savedFilters.visible })" class="contract-block" :style="getSectionStyle('saved_filters')">
+    <section v-if="showStandaloneSavedFilters" class="contract-block" :style="getSectionStyle('saved_filters')">
       <p class="contract-label">{{ t('label.saved_filters', '已保存筛选') }}</p>
       <div class="contract-chips">
         <button
@@ -149,7 +130,7 @@
         </button>
       </div>
     </section>
-    <section v-if="isSectionVisible('group_view', { defaultEnabled: pageSectionEnabled('group_view', false), tag: 'section', vmVisible: vm.sections.groupBy && vm.filters.groupBy.visible })" class="contract-block" :style="getSectionStyle('group_view')">
+    <section v-if="showStandaloneGroupView" class="contract-block" :style="getSectionStyle('group_view')">
       <p class="contract-label">{{ t('label.group_view', '分组查看') }}</p>
       <div class="contract-chips">
         <button
@@ -275,7 +256,7 @@
       :loading="isUiBusy"
       :error-message="vm.page.errorMessage"
       :trace-id="vm.page.traceId"
-      :error="error"
+      :error="pageError"
       :records="records"
       :fields="kanbanFields"
       :primary-fields="kanbanPrimaryFields"
@@ -287,9 +268,75 @@
       :status-label="vm.page.statusLabel"
       :scene-key="vm.page.sceneKey"
       :page-mode="vm.page.pageMode"
+      :list-total-count="listTotalCount"
+      :list-offset="listOffset"
+      :list-limit="contractLimit"
       :on-reload="reload"
       :on-card-click="handleRowClick"
-    />
+      :on-page-change="handleListPageChange"
+    >
+      <template v-if="showTopActionToolbar" #toolbar>
+        <ActionSurfaceToolbar
+          :loading="isUiBusy"
+          :show-view-switch="showViewSwitch"
+          :view-label="t('label.view_switch', '视图')"
+          :view-modes="vm.page.availableViewModes"
+          :current-view-mode="vm.page.viewMode"
+          :view-mode-labels="toolbarViewModeLabels"
+          :search-value="toolbarSearchDraft"
+          :search-placeholder="t('placeholder.search_keyword', '搜索关键字')"
+          :clear-label="t('chip_action_clear', '清除')"
+          :show-filter="showToolbarFilter"
+          :filter-label="t('label.quick_filters', '筛选')"
+          :filter-primary="vm.filters.quickFilters.primary"
+          :filter-overflow="vm.filters.quickFilters.overflow"
+          :active-filter-key="activeContractFilterKey"
+          :show-saved-filter="showToolbarSavedFilter"
+          saved-filter-label="收藏夹"
+          :saved-filter-primary="vm.filters.savedFilters.primary"
+          :saved-filter-overflow="vm.filters.savedFilters.overflow"
+          :active-saved-filter-key="activeSavedFilterKey"
+          :sort-label="t('label.sort', '排序')"
+          :sort-options="displaySortOptions"
+          :sort-value="sortValue"
+          :show-group="showToolbarGroup"
+          group-label="分组方式"
+          :group-primary="vm.filters.groupBy.primary"
+          :group-overflow="vm.filters.groupBy.overflow"
+          :custom-filter-enabled="customSearchCapabilities.filterEnabled"
+          :custom-filter-label="customSearchCapabilities.filterLabel"
+          :custom-filter-fields="customFilterFields"
+          :custom-group-enabled="customSearchCapabilities.groupEnabled"
+          :custom-group-label="customSearchCapabilities.groupLabel"
+          :custom-group-fields="customGroupByChips"
+          :favorite-save-enabled="customSearchCapabilities.favoriteSaveEnabled"
+          :favorite-save-label="customSearchCapabilities.favoriteLabel"
+          :active-custom-filter-label="activeCustomFilterLabel"
+          :active-group-label="activeGroupByDisplayLabel || activeGroupByLabel"
+          :active-group-key="toolbarActiveGroupKey"
+          :can-create-record="canCreateRecord"
+          :create-label="t('action_create_record', '新建')"
+          @switch-view="switchViewMode"
+          @search-composition-start="onToolbarSearchCompositionStart"
+          @search-composition-end="onToolbarSearchCompositionEnd"
+          @search-input="onToolbarSearchInput"
+          @search-submit="submitToolbarSearch"
+          @clear-search="clearToolbarSearch"
+          @filter="applyContractFilter"
+          @clear-filter="clearContractFilter"
+          @saved-filter="applySavedFilter"
+          @clear-saved-filter="clearSavedFilter"
+          @sort="handleSort"
+          @group="applyGroupBy"
+          @custom-group="applyCustomGroupBy"
+          @clear-group="clearGroupBy"
+          @custom-filter="applyCustomFilter"
+          @clear-custom-filter="clearCustomFilter"
+          @save-favorite="handleSaveFavorite"
+          @create="openCreateRecord"
+        />
+      </template>
+    </KanbanPage>
     <ListPage
       v-else-if="vm.content.kind === 'list'"
       :title="vm.page.title"
@@ -298,14 +345,21 @@
       :loading="isUiBusy"
       :error-message="vm.page.errorMessage"
       :trace-id="vm.page.traceId"
-      :error="error"
+      :error="pageError"
       :columns="columns"
       :records="records"
+      :list-total-count="listTotalCount"
+      :list-offset="listOffset"
+      :list-limit="contractLimit"
       :column-labels="contractColumnLabels"
+      :column-options="listColumnOptions"
+      :column-visibility="listColumnVisibility"
+      :column-save-status="listColumnSaveStatus"
       :sort-label="sortLabel"
-      :sort-options="sortOptions"
+      :sort-options="displaySortOptions"
       :sort-value="sortValue"
       :filter-value="filterValue"
+      :status-label="vm.page.statusLabel"
       :search-term="searchTerm"
       :subtitle="vm.page.subtitle"
       :scene-key="vm.page.sceneKey"
@@ -328,12 +382,78 @@
       :on-reload="reload"
       :on-search="handleSearch"
       :on-sort="handleSort"
+      :on-filter="handleFilter"
       :on-toggle-selection="handleToggleSelection"
       :on-toggle-selection-all="handleToggleSelectionAll"
       :on-run-selection-action="handleSelectionAction"
       :on-clear-selection="clearSelection"
+      :on-toggle-record-favorite="handleToggleRecordFavorite"
       :on-row-click="handleRowClick"
-    />
+      :on-page-change="handleListPageChange"
+      @column-visibility-change="handleListColumnVisibilityChange"
+    >
+      <template v-if="showTopActionToolbar" #toolbar>
+        <ActionSurfaceToolbar
+          :loading="isUiBusy"
+          :show-view-switch="showViewSwitch"
+          :view-label="t('label.view_switch', '视图')"
+          :view-modes="vm.page.availableViewModes"
+          :current-view-mode="vm.page.viewMode"
+          :view-mode-labels="toolbarViewModeLabels"
+          :search-value="toolbarSearchDraft"
+          :search-placeholder="t('placeholder.search_keyword', '搜索关键字')"
+          :clear-label="t('chip_action_clear', '清除')"
+          :show-filter="showToolbarFilter"
+          :filter-label="t('label.quick_filters', '筛选')"
+          :filter-primary="vm.filters.quickFilters.primary"
+          :filter-overflow="vm.filters.quickFilters.overflow"
+          :active-filter-key="activeContractFilterKey"
+          :show-saved-filter="showToolbarSavedFilter"
+          saved-filter-label="收藏夹"
+          :saved-filter-primary="vm.filters.savedFilters.primary"
+          :saved-filter-overflow="vm.filters.savedFilters.overflow"
+          :active-saved-filter-key="activeSavedFilterKey"
+          :sort-label="t('label.sort', '排序')"
+          :sort-options="displaySortOptions"
+          :sort-value="sortValue"
+          :show-group="showToolbarGroup"
+          group-label="分组方式"
+          :group-primary="vm.filters.groupBy.primary"
+          :group-overflow="vm.filters.groupBy.overflow"
+          :custom-filter-enabled="customSearchCapabilities.filterEnabled"
+          :custom-filter-label="customSearchCapabilities.filterLabel"
+          :custom-filter-fields="customFilterFields"
+          :custom-group-enabled="customSearchCapabilities.groupEnabled"
+          :custom-group-label="customSearchCapabilities.groupLabel"
+          :custom-group-fields="customGroupByChips"
+          :favorite-save-enabled="customSearchCapabilities.favoriteSaveEnabled"
+          :favorite-save-label="customSearchCapabilities.favoriteLabel"
+          :active-custom-filter-label="activeCustomFilterLabel"
+          :active-group-label="activeGroupByDisplayLabel || activeGroupByLabel"
+          :active-group-key="toolbarActiveGroupKey"
+          :can-create-record="canCreateRecord"
+          :create-label="t('action_create_record', '新建')"
+          @switch-view="switchViewMode"
+          @search-composition-start="onToolbarSearchCompositionStart"
+          @search-composition-end="onToolbarSearchCompositionEnd"
+          @search-input="onToolbarSearchInput"
+          @search-submit="submitToolbarSearch"
+          @clear-search="clearToolbarSearch"
+          @filter="applyContractFilter"
+          @clear-filter="clearContractFilter"
+          @saved-filter="applySavedFilter"
+          @clear-saved-filter="clearSavedFilter"
+          @sort="handleSort"
+          @group="applyGroupBy"
+          @custom-group="applyCustomGroupBy"
+          @clear-group="clearGroupBy"
+          @custom-filter="applyCustomFilter"
+          @clear-custom-filter="clearCustomFilter"
+          @save-favorite="handleSaveFavorite"
+          @create="openCreateRecord"
+        />
+      </template>
+    </ListPage>
     <section v-else-if="isSectionVisible('advanced_view', { defaultEnabled: pageSectionEnabled('advanced_view', true), tag: 'section' })" class="advanced-view" :style="getSectionStyle('advanced_view')">
       <header class="advanced-view-head">
         <h3>{{ vm.content.advanced?.title }}</h3>
@@ -380,9 +500,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onErrorCaptured, onMounted, ref, watch } from 'vue';
+import { computed, inject, onBeforeUnmount, onErrorCaptured, onMounted, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { listRecordsRaw } from '../api/data';
+import { listRecordsRaw, saveSearchFavorite, writeRecord } from '../api/data';
+import { getUserViewPreference, setUserViewPreference } from '../api/preferences';
 import { executeButton } from '../api/executeButton';
 import { trackUsageEvent } from '../api/usage';
 import { resolveAction } from '../app/resolvers/actionResolver';
@@ -391,8 +512,10 @@ import { config } from '../config';
 import { useSessionStore } from '../stores/session';
 import ListPage from '../pages/ListPage.vue';
 import KanbanPage from '../pages/KanbanPage.vue';
+import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import GroupSummaryBar from '../components/GroupSummaryBar.vue';
+import ActionSurfaceToolbar from '../components/action/ActionSurfaceToolbar.vue';
 import { deriveListStatus } from '../app/view_state';
 import { isHudEnabled } from '../config/debug';
 import { ErrorCodes } from '../app/error_codes';
@@ -694,9 +817,16 @@ const traceId = ref('');
 const lastTraceId = ref('');
 const records = ref<Array<Record<string, unknown>>>([]);
 const listTotalCount = ref<number | null>(null);
+const listOffset = ref(0);
 const projectScopeTotals = ref<{ all: number; active: number; archived: number } | null>(null);
 const projectScopeMetrics = ref<{ warning: number; done: number; amount: number } | null>(null);
 const searchTerm = ref('');
+const toolbarSearchDraft = ref('');
+const toolbarSearchComposing = ref(false);
+const activeCustomFilter = ref<{ label: string; domain: unknown[] } | null>(null);
+const activeCustomFilterDomain = computed(() => activeCustomFilter.value?.domain || []);
+const activeCustomFilterLabel = computed(() => activeCustomFilter.value?.label || '');
+const activeGroupByDisplayLabel = ref('');
 const sortValue = ref('');
 const filterValue = ref<'all' | 'active' | 'archived'>('all');
 const columns = ref<string[]>([]);
@@ -741,7 +871,6 @@ const advancedFields = ref<string[]>([]);
 const batchBusy = ref(false);
 const {
   isUiBusy,
-  isViewModeDisabled,
   isBusyDisabled,
   isContractActionDisabled,
 } = useActionViewTemplateStateRuntime({
@@ -757,6 +886,7 @@ const lastTrackedPreset = ref('');
 const statusApi = useStatus?.();
 type StatusErrorLike = { code?: unknown; message?: string };
 const error = statusApi?.error ?? ref<StatusErrorLike | null>(null);
+const pageError = error as unknown as ReturnType<typeof useStatus>['error'];
 const clearError = statusApi?.clearError ?? (() => {});
 const setError = statusApi?.setError ?? (() => {});
 type ContractColumnSchema = { name?: string };
@@ -891,6 +1021,19 @@ const hasLedgerOverviewStrip = computed(() => pageMode.value === 'ledger');
 const listProfile = computed<SceneListProfile | null>(() => {
   return extractListProfile(actionContract.value);
 });
+const listColumnOptions = computed(() => resolveListColumnOptions(actionContract.value, listProfile.value));
+const listColumnVisibility = ref<Record<string, boolean>>({});
+const listColumnSaveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
+const listColumnPreferenceScope = computed(() => {
+  const aid = Number(actionId.value || 0);
+  const targetModel = String(resolvedModelRef.value || model.value || '').trim();
+  return {
+    action_id: aid || undefined,
+    model: targetModel,
+    view_type: 'list',
+    preference_key: 'list_columns',
+  };
+});
 const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
   if (!sceneContextEnabled.value || !sceneKey.value) return null;
   return findSceneReadyEntry(session.sceneReadyContractV1, sceneKey.value);
@@ -940,6 +1083,83 @@ const {
   showMoreGroupBy,
   showMoreContractActions,
 });
+
+function resolveCreateRight(contract: ActionContractLoose | null): boolean {
+  const effective = contract?.permissions?.effective?.rights?.create;
+  if (typeof effective === 'boolean') return effective;
+  return false;
+}
+
+const canCreateRecord = computed(() => {
+  const targetModel = (resolvedModelRef.value || model.value || '').trim();
+  if (!targetModel || !actionId.value) return false;
+  if (status.value === 'loading') return false;
+  return resolveCreateRight(actionContract.value);
+});
+const isKanbanContent = computed(() => vm.value.content.kind === 'kanban');
+const canRenderActionSurfaceToolbar = computed(() => isKanbanContent.value || vm.value.content.kind === 'list');
+const showViewSwitch = computed(() =>
+  isSectionVisible('view_switch', {
+    defaultEnabled: true,
+    tag: 'section',
+    vmVisible: canRenderActionSurfaceToolbar.value && vm.value.page.availableViewModes.length > 0,
+  }),
+);
+const toolbarViewModeLabels = computed(() =>
+  vm.value.page.availableViewModes.reduce<Record<string, string>>((acc, mode) => {
+    acc[mode] = viewModeLabel(mode);
+    return acc;
+  }, {}),
+);
+const showToolbarSearch = computed(() => canRenderActionSurfaceToolbar.value);
+const quickFiltersVisible = computed(() =>
+  isSectionVisible('quick_filters', {
+    defaultEnabled: pageSectionEnabled('quick_filters', true),
+    tag: 'section',
+    vmVisible: vm.value.sections.quickFilters && vm.value.filters.quickFilters.visible,
+  }),
+);
+const savedFiltersVisible = computed(() =>
+  isSectionVisible('saved_filters', {
+    defaultEnabled: pageSectionEnabled('saved_filters', true),
+    tag: 'section',
+    vmVisible: vm.value.sections.savedFilters && vm.value.filters.savedFilters.visible,
+  }),
+);
+const groupViewVisible = computed(() =>
+  isSectionVisible('group_view', {
+    defaultEnabled: pageSectionEnabled('group_view', true),
+    tag: 'section',
+    vmVisible: vm.value.sections.groupBy && vm.value.filters.groupBy.visible,
+  }),
+);
+const showToolbarFilter = computed(() => canRenderActionSurfaceToolbar.value && quickFiltersVisible.value);
+const showToolbarSavedFilter = computed(() => canRenderActionSurfaceToolbar.value && savedFiltersVisible.value);
+const showToolbarGroup = computed(() => canRenderActionSurfaceToolbar.value && groupViewVisible.value);
+const showStandaloneQuickFilters = computed(() => quickFiltersVisible.value && !showToolbarFilter.value);
+const showStandaloneSavedFilters = computed(() => savedFiltersVisible.value && !showToolbarSavedFilter.value);
+const showStandaloneGroupView = computed(() => groupViewVisible.value && !showToolbarGroup.value);
+const toolbarActiveGroupKey = computed(() =>
+  activeGroupByField.value || (activeGroupByDisplayLabel.value ? '__active_custom_group__' : String(route.query.group_by || '').trim()),
+);
+const showTopActionToolbar = computed(() =>
+  showViewSwitch.value
+  || showToolbarSearch.value
+  || showToolbarFilter.value
+  || showToolbarSavedFilter.value
+  || showToolbarGroup.value
+  || canCreateRecord.value,
+);
+
+async function openCreateRecord() {
+  const targetModel = (resolvedModelRef.value || model.value || '').trim();
+  if (!targetModel || !canCreateRecord.value) return;
+  await router.push(buildModelFormRouteTarget({
+    model: targetModel,
+    id: 'new',
+    query: resolveCarryQuery(),
+  }) as never);
+}
 const availableViewModes = computed(() =>
   resolveActionViewAvailableModes({
     contractViewTypeRaw: contractViewType.value,
@@ -974,6 +1194,7 @@ const {
 const {
   contractColumnLabels,
   extractListProfile,
+  resolveListColumnOptions,
   extractColumnsFromContract,
   extractListOrderFromContract,
   buildListSortOptions,
@@ -1014,6 +1235,16 @@ const {
   listTotalCount,
   pageText,
   buildListSortOptions,
+});
+const displaySortOptions = computed(() => {
+  const seen = new Set<string>();
+  return sortOptions.value.filter((option) => {
+    const label = String(option.label || '').trim();
+    const key = label || String(option.value || '').trim();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 });
 
 const {
@@ -1099,6 +1330,7 @@ const { buildHudEntriesInput } = useActionViewHudEntriesInputRuntime({
     activeContractFilterKey: activeContractFilterKey.value,
     activeSavedFilterKey: activeSavedFilterKey.value,
     activeGroupByField: activeGroupByField.value,
+    listOffset: listOffset.value,
     groupWindowOffset: groupWindowOffset.value,
     groupWindowId: groupWindowId.value,
     groupQueryFingerprint: groupQueryFingerprint.value,
@@ -1134,6 +1366,10 @@ const {
   savedFilterPrimaryChips,
   savedFilterOverflowChips,
   contractGroupByChips,
+  customFilterFields,
+  customGroupByChips,
+  routeGroupByChips,
+  customSearchCapabilities,
   groupByPrimaryChips,
   groupByOverflowChips,
   activeGroupByLabel,
@@ -1277,7 +1513,7 @@ const {
   actionId,
   resolvedModelRef,
   modelRef: model,
-  routerPush: (target) => router.push(target),
+  routerPush: (target) => router.push(target as never),
 });
 
 const {
@@ -1315,7 +1551,7 @@ const {
   resolveWorkspaceContextQuery,
   replaceCurrentRouteQuery: (query) => {
     const routeState = resolveReplaceCurrentRouteState({ routePath: route.path, query });
-    router.replace(routeState.target).catch(() => {});
+    router.replace(routeState.target as never).catch(() => {});
   },
   trackUsageEvent,
   load: requestLoadPage,
@@ -1372,8 +1608,8 @@ const {
   applySavedFilter,
   clearContractFilter,
   clearSavedFilter,
-  applyGroupBy,
-  clearGroupBy,
+  applyGroupBy: applyGroupByRuntime,
+  clearGroupBy: clearGroupByRuntime,
 } = useActionViewFilterGroupRuntime({
   activeContractFilterKey,
   showMoreContractFilters,
@@ -1386,6 +1622,57 @@ const {
     groupRuntimeCapsule.applySharedState(state);
   },
 });
+
+function applyGroupBy(field: string) {
+  const normalized = String(field || '').trim();
+  const found = routeGroupByChips.value.find((chip) => String((chip as Record<string, unknown>).field || '') === normalized) as Record<string, unknown> | undefined;
+  activeGroupByDisplayLabel.value = String(found?.label || normalized);
+  applyGroupByRuntime(field);
+}
+
+function applyCustomGroupBy(payload: { key: string; label: string }) {
+  const key = String(payload.key || '').trim();
+  if (!key) return;
+  activeGroupByDisplayLabel.value = String(payload.label || key);
+  applyGroupByRuntime(key);
+}
+
+function clearGroupBy() {
+  activeGroupByDisplayLabel.value = '';
+  clearGroupByRuntime();
+}
+
+function applyCustomFilter(payload: { label: string; domain: unknown[] }) {
+  activeCustomFilter.value = {
+    label: String(payload.label || '自定义筛选'),
+    domain: Array.isArray(payload.domain) ? payload.domain : [],
+  };
+  clearSelection();
+  void requestLoadPage();
+}
+
+function clearCustomFilter() {
+  activeCustomFilter.value = null;
+  clearSelection();
+  void requestLoadPage();
+}
+
+async function handleSaveFavorite(payload: { name: string; isDefault?: boolean; isShared?: boolean }) {
+  const targetModel = String(resolvedModelRef.value || model.value || '').trim();
+  const name = String(payload.name || '').trim();
+  if (!targetModel || !name) return;
+  await saveSearchFavorite({
+    model: targetModel,
+    name,
+    domain: resolveEffectiveFilterDomain(),
+    context: resolveEffectiveRequestContext(),
+    order: sortValue.value,
+    action_id: actionId.value,
+    is_default: payload.isDefault === true,
+    is_shared: payload.isShared === true,
+  });
+  await requestLoadPage();
+}
 
 const {
   resolveEffectiveFilterDomain,
@@ -1403,8 +1690,9 @@ const {
   activeContractFilterKey,
   contractSavedFilterChips,
   activeSavedFilterKey,
+  activeCustomFilterDomain,
   activeGroupSummaryDomain,
-  contractGroupByChips,
+  contractGroupByChips: routeGroupByChips,
   activeGroupByField,
 });
 
@@ -1428,7 +1716,10 @@ const {
   routeQueryMap,
   resolvedModelRef,
   modelRef: model,
-  actionMetaContext: () => actionMeta.value?.context,
+  actionMetaContext: () => {
+    const context = actionMeta.value?.context;
+    return context && typeof context === 'object' ? context as Record<string, unknown> : {};
+  },
   resolveEffectiveRequestContext,
   resolveEffectiveRequestContextRaw,
   mergeContext,
@@ -1448,7 +1739,7 @@ const {
   resolveReloadTriggerPlan,
   resolveFocusActionPushState,
   resolveWorkspaceContextQuery,
-  routerPush: (target) => router.push(target),
+  routerPush: (target) => router.push(target as never),
   executePageContractAction,
   router,
   pageActionIntent,
@@ -1529,7 +1820,7 @@ const { runContractAction } = useActionViewActionRuntime({
   resolveSelectionBlockMessage: resolveContractActionSelectionBlockMessage,
   resolveMissingModelMessage: resolveContractActionMissingModelMessage,
   executeProjectionRefresh: async (payload) => {
-    await executeProjectionRefresh(payload as {
+    await executeProjectionRefresh(payload as unknown as {
       policy: ProjectionRefreshPolicy;
       refreshScene: () => Promise<void>;
       refreshWorkbench: () => Promise<void>;
@@ -1537,8 +1828,8 @@ const { runContractAction } = useActionViewActionRuntime({
       recordTrace: (input: { intent: string; writeMode: string; latencyMs?: number }) => void;
     });
   },
-  executeSceneMutation,
-  executeButton,
+  executeSceneMutation: executeSceneMutation as (options: any) => Promise<unknown>,
+  executeButton: executeButton as (payload: any) => Promise<unknown>,
   buildButtonRequest: buildContractActionButtonRequest,
   resolveResponseActionId: resolveContractActionResponseActionId,
   shouldNavigate: shouldNavigateContractAction,
@@ -1693,7 +1984,7 @@ const {
   staticInput: {
     setError,
     errorMessage: () => error.value?.message || '',
-    errorTraceId: () => error.value?.traceId || '',
+    errorTraceId: () => (error.value as { traceId?: string } | null)?.traceId || '',
     resolveLoadCatchState,
     resolveLoadCatchListTotalState,
     resolveLoadCatchProjectScopeState,
@@ -1737,7 +2028,7 @@ const {
     activeSavedFilterKey: activeSavedFilterKey.value,
     activeGroupByField: activeGroupByField.value,
     contractSavedFilterChips: contractSavedFilterChips.value,
-    contractGroupByChips: contractGroupByChips.value,
+    contractGroupByChips: routeGroupByChips.value,
     currentPreferredViewModeRaw: preferredViewMode.value,
     buildWorkbenchRouteTarget,
     resolveWorkbenchQuery,
@@ -1804,8 +2095,8 @@ const {
     session.setActionMeta(payload);
   },
   setError,
-  deriveListStatus,
-  statusRef: status,
+  deriveListStatus: deriveListStatus as (input: string) => 'loading' | 'ok' | 'empty' | 'error',
+  statusRef: status as unknown as Ref<'loading' | 'ok' | 'empty' | 'error'>,
 });
 
 const {
@@ -1856,6 +2147,7 @@ const {
     searchTerm: searchTerm.value,
     sortLabel: sortLabel.value,
     activeGroupByField: activeGroupByField.value,
+    listOffset: listOffset.value,
     groupWindowOffset: groupWindowOffset.value,
     groupSampleLimit: groupSampleLimit.value,
     contractLimit: contractLimit.value,
@@ -1866,6 +2158,17 @@ const {
     executeLoadDataRequest,
     buildLoadRequestInput,
     buildLoadRequestDynamicInput,
+    resolveLoadDynamicState: () => ({
+      viewMode: viewMode.value,
+      searchTerm: searchTerm.value,
+      sortLabel: sortLabel.value,
+      activeGroupByField: activeGroupByField.value,
+      listOffset: listOffset.value,
+      groupWindowOffset: groupWindowOffset.value,
+      groupSampleLimit: groupSampleLimit.value,
+      contractLimit: contractLimit.value,
+      groupPageOffsets: groupPageOffsets.value,
+    }),
     applyLoadRequestBlocked,
     executeLoadSuccessPhase,
     executeLoadCatchPhase,
@@ -1970,11 +2273,159 @@ const {
   searchTerm,
   sortValue,
   filterValue,
+  listOffset,
   groupWindowOffset,
   syncRouteListState,
   load: requestLoadPage,
   clearSelection,
 });
+
+function onToolbarSearchInput(event: Event): void {
+  const value = String((event.target as HTMLInputElement | null)?.value || '');
+  toolbarSearchDraft.value = value;
+  if (toolbarSearchComposing.value || (event as InputEvent).isComposing) return;
+  handleSearch(value);
+}
+
+function onToolbarSearchCompositionStart(): void {
+  toolbarSearchComposing.value = true;
+}
+
+function onToolbarSearchCompositionEnd(event: CompositionEvent): void {
+  toolbarSearchComposing.value = false;
+  const value = String((event.target as HTMLInputElement | null)?.value || '');
+  toolbarSearchDraft.value = value;
+  handleSearch(value);
+}
+
+function submitToolbarSearch(): void {
+  if (toolbarSearchComposing.value) return;
+  handleSearch(toolbarSearchDraft.value || '');
+}
+
+function clearToolbarSearch(): void {
+  toolbarSearchComposing.value = false;
+  toolbarSearchDraft.value = '';
+  handleSearch('');
+}
+
+watch(
+  searchTerm,
+  (value) => {
+    if (toolbarSearchComposing.value) return;
+    toolbarSearchDraft.value = value || '';
+  },
+  { immediate: true },
+);
+
+function handleListPageChange(offset: number): void {
+  listOffset.value = Math.max(0, Math.trunc(Number(offset || 0)));
+  clearSelection();
+  void requestLoadPage();
+}
+
+let listColumnPreferenceLoadSeq = 0;
+let listColumnSaveSeq = 0;
+let listColumnSaveStatusTimer: number | null = null;
+
+function setListColumnSaveStatus(status: 'idle' | 'saving' | 'saved' | 'error') {
+  listColumnSaveStatus.value = status;
+  if (listColumnSaveStatusTimer) {
+    window.clearTimeout(listColumnSaveStatusTimer);
+    listColumnSaveStatusTimer = null;
+  }
+  if (status === 'saved') {
+    listColumnSaveStatusTimer = window.setTimeout(() => {
+      if (listColumnSaveStatus.value === 'saved') {
+        listColumnSaveStatus.value = 'idle';
+      }
+      listColumnSaveStatusTimer = null;
+    }, 2500);
+  }
+}
+
+async function loadListColumnPreference(): Promise<void> {
+  const seq = ++listColumnPreferenceLoadSeq;
+  const scope = listColumnPreferenceScope.value;
+  if (!scope.action_id && !scope.model) {
+    listColumnVisibility.value = {};
+    return;
+  }
+  try {
+    const result = await getUserViewPreference(scope);
+    if (seq !== listColumnPreferenceLoadSeq) return;
+    const preference = result.preference || {};
+    const visible = Array.isArray(preference.visible_columns) ? preference.visible_columns.map((item) => String(item || '').trim()).filter(Boolean) : [];
+    const hidden = Array.isArray(preference.hidden_columns) ? preference.hidden_columns.map((item) => String(item || '').trim()).filter(Boolean) : [];
+    const next: Record<string, boolean> = {};
+    visible.forEach((name) => { next[name] = true; });
+    hidden.forEach((name) => { next[name] = false; });
+    listColumnVisibility.value = next;
+  } catch (err) {
+    if (seq === listColumnPreferenceLoadSeq) listColumnVisibility.value = {};
+    console.warn('[list-columns] failed to load preference', err);
+  }
+}
+
+async function handleListColumnVisibilityChange(payload: { visibility: Record<string, boolean> }): Promise<void> {
+  const saveSeq = ++listColumnSaveSeq;
+  const previous = { ...listColumnVisibility.value };
+  const next = payload.visibility || {};
+  listColumnVisibility.value = { ...next };
+  setListColumnSaveStatus('saving');
+  const visibleColumns = listColumnOptions.value
+    .map((column) => column.name)
+    .filter((name) => next[name] === true);
+  const hiddenColumns = listColumnOptions.value
+    .map((column) => column.name)
+    .filter((name) => next[name] === false);
+  try {
+    await setUserViewPreference(listColumnPreferenceScope.value, {
+      visible_columns: visibleColumns,
+      hidden_columns: hiddenColumns,
+    });
+    if (saveSeq === listColumnSaveSeq) {
+      setListColumnSaveStatus('saved');
+    }
+  } catch (err) {
+    if (saveSeq === listColumnSaveSeq) {
+      listColumnVisibility.value = previous;
+      setListColumnSaveStatus('error');
+    }
+    console.warn('[list-columns] failed to save preference', err);
+  }
+}
+
+async function handleToggleRecordFavorite(row: Record<string, unknown>, nextValue: boolean): Promise<void> {
+  const targetModel = String(resolvedModelRef.value || model.value || '').trim();
+  const recordId = Number(row.id || 0);
+  if (targetModel !== 'project.project' || !recordId) return;
+  const previousValue = row.is_favorite;
+  row.is_favorite = nextValue;
+  try {
+    await writeRecord({
+      model: targetModel,
+      ids: [recordId],
+      vals: { is_favorite: nextValue },
+      context: {},
+    });
+  } catch (err) {
+    row.is_favorite = previousValue;
+    console.warn('[project-favorite] failed to save favorite state', err);
+  }
+}
+
+watch(
+  () => [
+    listColumnPreferenceScope.value.action_id || 0,
+    listColumnPreferenceScope.value.model || '',
+    listColumnOptions.value.map((column) => column.name).join(','),
+  ].join('|'),
+  () => {
+    void loadListColumnPreference();
+  },
+  { immediate: true },
+);
 
 const {
   clearSelection: selectionRuntimeClearSelection,
@@ -1996,6 +2447,13 @@ onMounted(async () => {
   await requestLoadPage();
 });
 
+onBeforeUnmount(() => {
+  if (listColumnSaveStatusTimer) {
+    window.clearTimeout(listColumnSaveStatusTimer);
+    listColumnSaveStatusTimer = null;
+  }
+});
+
 onErrorCaptured((err) => {
   const message = err instanceof Error ? err.message : String(err || 'unknown render error');
   renderErrorMessage.value = `ActionView render error: ${message}`;
@@ -2007,9 +2465,10 @@ watch(
   () => route.fullPath,
   () => {
     renderErrorMessage.value = '';
-    if (applyRoutePreset()) {
-      void requestLoadPage();
-    }
+    listOffset.value = 0;
+    clearSelection();
+    applyRoutePreset();
+    void requestLoadPage();
   },
 );
 </script>
@@ -2023,11 +2482,6 @@ watch(
 .page-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-}
-
-.view-switch {
-  display: grid;
   gap: 8px;
 }
 
@@ -2146,6 +2600,7 @@ watch(
   margin: 0;
   font-size: 13px;
   color: #334155;
+  white-space: nowrap;
 }
 
 .contract-chips {
@@ -2175,7 +2630,7 @@ watch(
   border-radius: 999px;
   background: #fff;
   color: #0f172a;
-  padding: 6px 12px;
+  padding: 5px 11px;
   font-size: 12px;
   cursor: pointer;
 }

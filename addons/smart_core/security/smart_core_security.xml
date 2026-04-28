@@ -29,4 +29,11 @@
     <field name="implied_ids" eval="[(4, ref('group_smart_core_data_operator'))]"/>
     <field name="category_id" ref="base.module_category_hidden"/>
   </record>
+
+  <record id="rule_sc_user_view_preference_own" model="ir.rule">
+    <field name="name">Smart Core User View Preference: own records</field>
+    <field name="model_id" ref="model_sc_user_view_preference"/>
+    <field name="domain_force">[('user_id', '=', user.id)]</field>
+    <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+  </record>
 </odoo>

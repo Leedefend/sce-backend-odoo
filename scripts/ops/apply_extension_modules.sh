@@ -28,6 +28,8 @@ before_value="$(psql_query "SELECT COALESCE(value, '') FROM ir_config_parameter 
 required_modules=(
   "smart_construction_core"
   "smart_construction_portal"
+  "smart_scene"
+  "smart_construction_scene"
   "smart_license_core"
   "smart_owner_core"
   "smart_owner_bundle"
@@ -53,8 +55,15 @@ done
 
 after_value="$(psql_query "SELECT COALESCE(value, '') FROM ir_config_parameter WHERE key='sc.core.extension_modules' LIMIT 1;")"
 normalized="${after_value// /}"
-if [[ ",${normalized}," != *",smart_construction_core,"* || ",${normalized}," != *",smart_construction_portal,"* || ",${normalized}," != *",smart_license_core,"* || ",${normalized}," != *",smart_owner_core,"* || ",${normalized}," != *",smart_owner_bundle,"* || ",${normalized}," != *",smart_construction_bundle,"* ]]; then
+missing_modules=()
+for mod in "${required_modules[@]}"; do
+  if [[ ",${normalized}," != *",${mod},"* ]]; then
+    missing_modules+=("${mod}")
+  fi
+done
+if [[ ${#missing_modules[@]} -gt 0 ]]; then
   echo "[policy.apply.extension_modules] FAIL db=${DB_NAME} trace_id=${TRACE_ID} old=${before_value} new=${after_value}" >&2
+  echo "[policy.apply.extension_modules] missing=${missing_modules[*]}" >&2
   exit 1
 fi
 

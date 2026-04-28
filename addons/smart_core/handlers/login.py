@@ -56,13 +56,21 @@ def _company_ids(user) -> Dict[str, Any]:
     """提取公司信息，尽量不触发额外查询。"""
     try:
         allowed = user.company_ids.ids or []
-        current = user.company_id.id if user.company_id else None
+        current_company = user.company_id
+        current = current_company.id if current_company else None
+        current_name = (current_company.name or "").strip() if current_company else ""
         return {
             "company_id": current,
+            "company_name": current_name,
+            "company": {
+                "id": current,
+                "name": current_name,
+                "display_name": current_name,
+            } if current else None,
             "allowed_company_ids": allowed,
         }
     except Exception:
-        return {"company_id": None, "allowed_company_ids": []}
+        return {"company_id": None, "company_name": "", "company": None, "allowed_company_ids": []}
 
 
 def _load_user_profile(db_name: str, user_id: int) -> Dict[str, Any]:
@@ -161,6 +169,8 @@ class LoginHandler(BaseIntentHandler):
             "lang": profile["lang"],
             "tz": profile["tz"],
             "company_id": profile["company_id"],
+            "company_name": profile.get("company_name") or "",
+            "company": profile.get("company"),
             "allowed_company_ids": profile["allowed_company_ids"],
         }
 

@@ -14,6 +14,7 @@ type ExecuteLoadDataRequestOptions = {
   searchTerm: string;
   sortLabel: string;
   activeGroupByField: string;
+  listOffset: number;
   groupWindowOffset: number;
   groupSampleLimit: number;
   contractLimit: number;
@@ -178,6 +179,7 @@ export function useActionViewLoadRequestRuntime() {
       activeDomain,
       effectiveFilterDomainRaw: options.resolveEffectiveFilterDomainRaw(),
       activeGroupByField: options.activeGroupByField,
+      listOffset: options.listOffset,
       groupWindowOffset: options.groupWindowOffset,
       groupSampleLimit: options.groupSampleLimit,
       contractLimit: options.contractLimit,

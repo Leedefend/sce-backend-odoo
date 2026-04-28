@@ -36,6 +36,13 @@ export function findEntryForHomeActionItem(
   item: Record<string, unknown>,
   entries: HomeActionEntry[],
 ): HomeActionEntry | null {
+  return findEntryForHomeActionItemTyped(item, entries);
+}
+
+export function findEntryForHomeActionItemTyped<T extends HomeActionEntry>(
+  item: Record<string, unknown>,
+  entries: T[],
+): T | null {
   const entryId = toText(item.entry_id || item.entryId);
   if (entryId) {
     const entryById = entries.find((entry) => entry.id === entryId);
@@ -55,4 +62,3 @@ export function findEntryForHomeActionItem(
   }
   return null;
 }
-

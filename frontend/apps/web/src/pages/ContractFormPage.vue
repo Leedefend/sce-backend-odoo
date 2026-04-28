@@ -23,10 +23,10 @@
           {{ action.label }}
         </button>
         <button
-          v-if="!isProjectIntakeCreateMode && !hasPrimaryHeaderAction"
+          v-if="!isProjectIntakeCreateMode"
           class="primary"
           :disabled="isQuickSubmitDisabled"
-          @click="saveRecord"
+          @click="() => saveRecord()"
         >
           {{ submitButtonLabel }}
         </button>
@@ -144,7 +144,7 @@
       <PageFooterTemplate v-if="isProjectIntakeCreateMode" hint="填写完成后点击“创建项目”">
         <template #default>
           <button class="ghost" :disabled="busy" @click="cancelIntake">取消</button>
-          <button class="primary" :disabled="isIntakeCreateDisabled" @click="saveRecord">
+          <button class="primary" :disabled="isIntakeCreateDisabled" @click="() => saveRecord()">
             {{ intakeCreateButtonLabel }}
           </button>
         </template>
@@ -558,8 +558,6 @@ const headerActionsVisible = computed(() => {
   return headerActions.value;
 });
 
-const hasPrimaryHeaderAction = computed(() => headerActionsVisible.value.some((item) => item.semantic === 'primary_action'));
-
 const isQuickSubmitDisabled = computed(() => {
   if (busy.value) return true;
   if (!canSave.value) return true;
@@ -698,7 +696,7 @@ const warnings = computed(() => {
       return '';
     })
     .map((x) => x.trim())
-    .filter(Boolean);
+    .filter((item) => Boolean(item) && !item.startsWith('access_policy:'));
 });
 
 const contractAccessPolicy = computed<ContractAccessPolicy>(() => {
@@ -881,6 +879,61 @@ function one2manyRelationFieldDescriptor(fieldName: string, column: string) {
   return descriptor || null;
 }
 
+function one2manyFallbackColumns(name: string): One2ManyColumn[] {
+  const model = one2manyRelationModel(name);
+  const descriptors = model ? relationFieldDescriptors.value[model] || {} : {};
+  const preferred = [
+    'qty_contract',
+    'price_contract',
+    'note',
+    'boq_line_id',
+    'boq_code',
+    'boq_name',
+    'qty',
+    'price_unit',
+    'amount',
+  ];
+  const blocked = new Set([
+    'id',
+    'display_name',
+    'contract_id',
+    'project_id',
+    'currency_id',
+    'company_id',
+    'create_uid',
+    'create_date',
+    'write_uid',
+    'write_date',
+  ]);
+  const technicalPrefixes = ['message_', 'activity_', 'website_', 'rating_'];
+  const names = [
+    ...preferred,
+    ...Object.keys(descriptors),
+  ].filter((fieldName, index, rows) => {
+    const normalized = String(fieldName || '').trim();
+    if (!normalized || rows.indexOf(normalized) !== index) return false;
+    if (blocked.has(normalized)) return false;
+    if (technicalPrefixes.some((prefix) => normalized.startsWith(prefix))) return false;
+    const descriptor = descriptors[normalized];
+    if (!descriptor) return false;
+    if (Boolean(descriptor.readonly)) return false;
+    const ttype = fieldType(descriptor);
+    if (['one2many', 'many2many', 'binary', 'html'].includes(ttype)) return false;
+    return true;
+  });
+
+  return names.slice(0, 4).map((fieldName) => {
+    const descriptor = descriptors[fieldName];
+    return {
+      name: fieldName,
+      label: String(descriptor?.string || fieldName),
+      ttype: fieldType(descriptor) || 'char',
+      required: Boolean(descriptor?.required),
+      selection: Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined,
+    };
+  });
+}
+
 function one2manyColumns(name: string): One2ManyColumn[] {
   const subviews = (contract.value?.views?.form as Record<string, unknown> | undefined)?.subviews;
   const fieldSubview = subviews && typeof subviews === 'object'
@@ -923,6 +976,8 @@ function one2manyColumns(name: string): One2ManyColumn[] {
     });
   }
   if (!out.length) {
+    const fallbackColumns = one2manyFallbackColumns(name);
+    if (fallbackColumns.length) return fallbackColumns;
     const descriptor = one2manyRelationFieldDescriptor(name, 'name');
     return [{
       name: 'name',
@@ -1457,10 +1512,6 @@ async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescr
 
 async function loadRelationOptions() {
   const fields = contract.value?.fields || {};
-  const one2manyNames = Object.entries(fields)
-    .filter(([, descriptor]) => fieldType(descriptor) === 'one2many')
-    .map(([name]) => name);
-  await Promise.all(one2manyNames.map((name) => ensureRelationFieldDescriptors(name)));
   const visibleRelationFields = new Set(
     layoutNodes.value
       .filter((node) => node.kind === 'field' && isFieldVisible(node.name))
@@ -1471,6 +1522,10 @@ async function loadRelationOptions() {
     if (visibleRelationFields.has(name)) return true;
     return relationIds(name).length > 0;
   });
+  const one2manyNames = entries
+    .filter(([, descriptor]) => fieldType(descriptor) === 'one2many')
+    .map(([name]) => name);
+  await Promise.all(one2manyNames.map((name) => ensureRelationFieldDescriptors(name)));
   const next: Record<string, RelationOption[]> = {};
   await Promise.all(entries.map(async ([name, descriptor]) => {
     if (!descriptor || typeof descriptor !== 'object') return;
@@ -1612,6 +1667,7 @@ const contractActions = computed<ContractAction[]>(() => {
     const level = String(row.level || 'body').trim().toLowerCase();
     const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref);
     const methodName = detectMethodName(key, String(payload.method || '').trim());
+    if (isTierValidationActionHidden(methodName)) continue;
     const targetModel = String(row.target_model || row.model || model.value || '').trim();
     const context = parseMaybeJsonRecord(payload.context_raw);
     const domainRaw = String(payload.domain_raw || '').trim();
@@ -1717,7 +1773,7 @@ const semanticFieldGroups = computed<Record<string, SemanticFieldGroup>>(() => {
 
 const contractFieldSemantics = computed<Record<string, { semantic_type?: string; surface_role?: string; technical?: boolean }>>(() => {
   const out: Record<string, { semantic_type?: string; surface_role?: string; technical?: boolean }> = {};
-  const raw = contract.value?.field_semantics;
+  const raw = (contract.value as Record<string, unknown> | null)?.field_semantics;
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
     Object.entries(raw as Record<string, unknown>).forEach(([name, value]) => {
       if (!value || typeof value !== 'object' || Array.isArray(value)) return;
@@ -2958,7 +3014,10 @@ async function runAction(action: ContractAction) {
       }
       if (action.refreshPolicy) {
         await applyProjectionRefreshPolicy(action.refreshPolicy);
+      } else {
+        await reload();
       }
+      return;
     } catch (err) {
       errorMessage.value = err instanceof Error ? err.message : 'action execute failed';
       status.value = 'error';
@@ -2966,6 +3025,21 @@ async function runAction(action: ContractAction) {
       busyKind.value = null;
     }
   }
+}
+
+function isTierValidationActionHidden(methodName: string): boolean {
+  const method = String(methodName || '').trim();
+  const validationStatus = String(formData.validation_status || '').trim();
+  if ((method === 'validate_tier' || method === 'reject_tier') && !Boolean(formData.can_review)) {
+    return true;
+  }
+  if (
+    (method === 'action_confirm' || method === 'action_submit' || method === 'button_confirm')
+    && ['waiting', 'pending', 'validated'].includes(validationStatus)
+  ) {
+    return true;
+  }
+  return false;
 }
 
 async function applyProjectionRefreshPolicy(policy?: ContractAction['refreshPolicy']) {

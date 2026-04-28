@@ -75,8 +75,8 @@
           <field name="reason"/>
         </group>
         <footer>
-          <button string="Execute" type="object" name="action_execute" class="btn-primary"/>
-          <button string="Cancel" class="btn-secondary" special="cancel"/>
+          <button string="执行" type="object" name="action_execute" class="btn-primary"/>
+          <button string="取消" class="btn-secondary" special="cancel"/>
         </footer>
       </form>
     </field>
@@ -89,8 +89,27 @@
     <field name="target">new</field>
   </record>
 
-  <menuitem id="menu_sc_scene_governance_root" name="Scene Governance" parent="smart_construction_core.menu_sc_scene_root" sequence="40"/>
-  <menuitem id="menu_sc_scene_governance_action" name="Governance Actions" parent="menu_sc_scene_governance_root" action="action_sc_scene_governance_wizard" sequence="10"/>
-  <menuitem id="menu_sc_scene_governance_company" name="Company Channels" parent="menu_sc_scene_governance_root" action="action_sc_scene_company_channel" sequence="20"/>
-  <menuitem id="menu_sc_scene_governance_logs" name="Governance Logs" parent="menu_sc_scene_governance_root" action="action_sc_scene_governance_log" sequence="30"/>
+  <menuitem id="menu_sc_scene_governance_root"
+            name="Scene Governance"
+            parent="smart_construction_core.menu_sc_scene_root"
+            sequence="40"
+            groups="smart_construction_core.group_sc_cap_config_admin"/>
+  <menuitem id="menu_sc_scene_governance_action"
+            name="Governance Actions"
+            parent="menu_sc_scene_governance_root"
+            action="action_sc_scene_governance_wizard"
+            sequence="10"
+            groups="smart_construction_core.group_sc_cap_config_admin"/>
+  <menuitem id="menu_sc_scene_governance_company"
+            name="Company Channels"
+            parent="menu_sc_scene_governance_root"
+            action="action_sc_scene_company_channel"
+            sequence="20"
+            groups="smart_construction_core.group_sc_cap_config_admin"/>
+  <menuitem id="menu_sc_scene_governance_logs"
+            name="Governance Logs"
+            parent="menu_sc_scene_governance_root"
+            action="action_sc_scene_governance_log"
+            sequence="30"
+            groups="smart_construction_core.group_sc_cap_config_admin"/>
 </odoo>

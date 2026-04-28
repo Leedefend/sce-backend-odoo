@@ -1,5 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="view_project_project_search_sc_business" model="ir.ui.view">
+        <field name="name">project.project.search.sc.business</field>
+        <field name="model">project.project</field>
+        <field name="arch" type="xml">
+            <search string="项目台账">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="owner_id"/>
+                <field name="manager_id"/>
+                <field name="user_id"/>
+                <filter name="filter_my_projects"
+                        string="我的项目"
+                        domain="['|', ('manager_id', '=', uid), '|', ('owner_id', '=', uid), ('user_id', '=', uid)]"/>
+                <filter name="filter_draft"
+                        string="草稿"
+                        domain="[('lifecycle_state', '=', 'draft')]"/>
+                <filter name="filter_in_progress"
+                        string="在建"
+                        domain="[('lifecycle_state', '=', 'in_progress')]"/>
+                <filter name="filter_paused"
+                        string="停工"
+                        domain="[('lifecycle_state', '=', 'paused')]"/>
+                <filter name="filter_closing"
+                        string="结算中"
+                        domain="[('lifecycle_state', '=', 'closing')]"/>
+                <filter name="filter_done"
+                        string="竣工"
+                        domain="[('lifecycle_state', '=', 'done')]"/>
+                <filter name="filter_active"
+                        string="有效项目"
+                        domain="[('active', '=', True)]"/>
+                <filter name="filter_archived"
+                        string="已归档"
+                        domain="[('active', '=', False)]"/>
+                <group expand="0" string="分组">
+                    <filter name="group_manager" string="按项目经理" context="{'group_by': 'manager_id'}"/>
+                    <filter name="group_user" string="按项目管理员" context="{'group_by': 'user_id'}"/>
+                    <filter name="group_owner" string="按业主单位" context="{'group_by': 'owner_id'}"/>
+                    <filter name="group_partner" string="按客户" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_state" string="按项目状态" context="{'group_by': 'lifecycle_state'}"/>
+                    <filter name="group_stage" string="按阶段" context="{'group_by': 'stage_id'}"/>
+                    <filter name="group_company" string="按公司" context="{'group_by': 'company_id'}"/>
+                    <filter name="group_start_date" string="按开始日期" context="{'group_by': 'date_start:month'}"/>
+                    <filter name="group_end_date" string="按结束日期" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="view_project_project_search_my" model="ir.ui.view">
         <field name="name">project.project.search.sc.my</field>
         <field name="model">project.project</field>

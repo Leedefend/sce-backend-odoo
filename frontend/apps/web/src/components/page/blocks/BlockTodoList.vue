@@ -16,7 +16,17 @@
     </header>
 
     <div v-if="items.length" class="todo-list">
-      <article v-for="item in items" :key="item.id" class="todo-item" :class="`tone-${item.tone || 'info'}`">
+      <article
+        v-for="item in items"
+        :key="item.id"
+        class="todo-item"
+        :class="[`tone-${item.tone || 'info'}`, { actionable: Boolean(item.actionKey) }]"
+        :tabindex="item.actionKey ? 0 : undefined"
+        :role="item.actionKey ? 'button' : undefined"
+        @click="emitAction(item.actionKey || 'open_scene', item.raw)"
+        @keydown.enter.prevent="emitAction(item.actionKey || 'open_scene', item.raw)"
+        @keydown.space.prevent="emitAction(item.actionKey || 'open_scene', item.raw)"
+      >
         <div>
           <p class="todo-title">
             <span>{{ item.title }}</span>
@@ -26,7 +36,7 @@
           <p class="todo-desc">{{ item.description }}</p>
           <p v-if="item.pendingCount > 0" class="todo-meta">待处理 {{ item.pendingCount }}</p>
         </div>
-        <button type="button" class="todo-open-btn" @click="emitAction(item.actionKey || 'open_scene', item.raw)">
+        <button type="button" class="todo-open-btn" @click.stop="emitAction(item.actionKey || 'open_scene', item.raw)">
           {{ item.buttonText }}
         </button>
       </article>
@@ -148,6 +158,17 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
   justify-content: space-between;
   gap: 10px;
   min-height: 100px;
+}
+.todo-item.actionable {
+  cursor: pointer;
+}
+.todo-item.actionable:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+.todo-item.actionable:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
 }
 .todo-title {
   margin: 0;

@@ -26,7 +26,7 @@ const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
 const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_8-6', ts);
 
 const TARGETS = [
-  { xmlid: 'smart_construction_demo.menu_sc_project_list_showcase', scene: 'projects.list' },
+  { xmlid: 'smart_construction_core.menu_sc_root', scene: 'projects.list' },
   { xmlid: 'smart_construction_core.menu_sc_project_initiation', scene: 'projects.intake' },
   { xmlid: 'smart_construction_core.menu_sc_project_management_scene', scene: 'project.management' },
 ];

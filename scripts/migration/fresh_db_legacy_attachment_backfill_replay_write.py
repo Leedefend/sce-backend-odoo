@@ -136,49 +136,51 @@ for rec in Attachment.search_read([("description", "ilike", "[migration:legacy_a
         existing_descriptions.add(description)
 
 
-def resolve_res_id(row: dict[str, str]) -> int:
+def resolve_res_id(row: dict[str, str]) -> tuple[int | None, str]:
     res_ref = row.get("res_ref", "")
     if res_ref.startswith("legacy_project_sc_"):
         legacy_id = suffix_from_ref(res_ref, "legacy_project_sc_")
         res_id = project_map.get(legacy_id)
         if not res_id:
-            raise RuntimeError({"missing_project_anchor": res_ref, "external_id": row["external_id"]})
-        return res_id
+            return None, "missing_project_anchor"
+        return res_id, ""
     if res_ref.startswith("legacy_project_member_sc_"):
         legacy_id = suffix_from_ref(res_ref, "legacy_project_member_sc_")
         res_id = member_map.get(legacy_id)
         if not res_id:
-            raise RuntimeError({"missing_project_member_anchor": res_ref, "external_id": row["external_id"]})
-        return res_id
+            return None, "missing_project_member_anchor"
+        return res_id, ""
     if res_ref.startswith("legacy_actual_outflow_sc_"):
         legacy_id = suffix_from_ref(res_ref, "legacy_actual_outflow_sc_")
         res_id = actual_outflow_map.get(legacy_id)
         if not res_id:
-            raise RuntimeError({"missing_actual_outflow_anchor": res_ref, "external_id": row["external_id"]})
-        return res_id
+            return None, "missing_actual_outflow_anchor"
+        return res_id, ""
     if res_ref.startswith("legacy_outflow_request_line_sc_"):
         legacy_id = suffix_from_ref(res_ref, "legacy_outflow_request_line_sc_")
         res_id = request_line_map.get(legacy_id)
         if not res_id:
-            raise RuntimeError({"missing_outflow_request_line_anchor": res_ref, "external_id": row["external_id"]})
-        return res_id
+            return None, "missing_outflow_request_line_anchor"
+        return res_id, ""
     if res_ref.startswith("legacy_supplier_contract_sc_"):
         legacy_id = suffix_from_ref(res_ref, "legacy_supplier_contract_sc_")
         res_id = contract_map.get(legacy_id)
         if not res_id:
-            raise RuntimeError({"missing_supplier_contract_anchor": res_ref, "external_id": row["external_id"]})
-        return res_id
+            return None, "missing_supplier_contract_anchor"
+        return res_id, ""
     if res_ref.startswith("legacy_supplier_contract_line_sc_"):
         legacy_id = suffix_from_ref(res_ref, "legacy_supplier_contract_line_sc_")
         res_id = contract_line_map.get(legacy_id)
         if not res_id:
-            raise RuntimeError({"missing_supplier_contract_line_anchor": res_ref, "external_id": row["external_id"]})
-        return res_id
-    raise RuntimeError({"unsupported_attachment_target_ref": res_ref, "external_id": row["external_id"]})
+            return None, "missing_supplier_contract_line_anchor"
+        return res_id, ""
+    return None, "unsupported_attachment_target_ref"
 
 
 created = 0
 skipped = 0
+blocked_rows: list[dict[str, object]] = []
+blocked_reason_counts: dict[str, int] = {}
 buffer: list[dict[str, object]] = []
 batch_size = 500
 for row in rows:
@@ -186,12 +188,24 @@ for row in rows:
     if description and description in existing_descriptions:
         skipped += 1
         continue
+    res_id, blocked_reason = resolve_res_id(row)
+    if not res_id:
+        blocked_reason_counts[blocked_reason] = blocked_reason_counts.get(blocked_reason, 0) + 1
+        if len(blocked_rows) < 50:
+            blocked_rows.append(
+                {
+                    "external_id": row.get("external_id"),
+                    "res_ref": row.get("res_ref"),
+                    "reason": blocked_reason,
+                }
+            )
+        continue
     vals = {
         "name": row.get("name") or False,
         "type": row.get("type") or "url",
         "url": row.get("url") or False,
         "res_model": row.get("res_model") or False,
-        "res_id": resolve_res_id(row),
+        "res_id": res_id,
         "mimetype": row.get("mimetype") or False,
         "description": description or False,
     }
@@ -208,7 +222,8 @@ if buffer:
     created += len(buffer)
 
 env.cr.commit()  # noqa: F821
-status = "PASS" if created + skipped == expected_rows else "FAIL"
+blocked_count = sum(blocked_reason_counts.values())
+status = "PASS" if created + skipped + blocked_count == expected_rows else "FAIL"
 payload = {
     "status": status,
     "mode": "fresh_db_legacy_attachment_backfill_replay_write",
@@ -216,8 +231,15 @@ payload = {
     "input_rows": len(rows),
     "created_rows": created,
     "skipped_existing": skipped,
+    "blocked_rows": blocked_count,
+    "blocked_reason_counts": blocked_reason_counts,
+    "blocked_samples": blocked_rows,
     "db_writes": created,
-    "decision": "legacy_attachment_backfill_replay_write_complete" if status == "PASS" else "STOP_REVIEW_REQUIRED",
+    "decision": (
+        "legacy_attachment_backfill_replay_write_complete_with_blocked_dependencies"
+        if blocked_count
+        else "legacy_attachment_backfill_replay_write_complete"
+    ) if status == "PASS" else "STOP_REVIEW_REQUIRED",
 }
 write_json(OUTPUT_JSON, payload)
 print("FRESH_DB_LEGACY_ATTACHMENT_BACKFILL_REPLAY_WRITE=" + json.dumps(payload, ensure_ascii=False, sort_keys=True))

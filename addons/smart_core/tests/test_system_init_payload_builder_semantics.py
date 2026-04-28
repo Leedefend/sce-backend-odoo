@@ -59,6 +59,32 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
         self.assertEqual(workspace_home_ref.get("scene_key"), "workspace.home")
         self.assertFalse(bool(workspace_home_ref.get("loaded")))
 
+    def test_build_startup_surface_exposes_role_surface_map(self):
+        payload = target.SystemInitPayloadBuilder.build_startup_surface(
+            {
+                "user": {"id": 1},
+                "nav": [],
+                "nav_meta": {},
+                "default_route": {"scene_key": "workspace.home"},
+                "intents": [],
+                "feature_flags": {},
+                "role_surface": {"role_code": "owner", "landing_scene_key": "workspace.home"},
+                "role_surface_map": {
+                    "owner": {"role_code": "owner", "role_label": "普通员工"},
+                    "executive": {"role_code": "executive", "role_label": "管理层"},
+                },
+                "role_surface_provider_meta": {"selected_provider": "smart_construction_core"},
+                "contract_version": "1.0.0",
+                "schema_version": "1.0.0",
+                "scene_version": "v1",
+            }
+        )
+
+        role_surface_map = payload.get("role_surface_map") or {}
+        self.assertIn("owner", role_surface_map)
+        self.assertIn("executive", role_surface_map)
+        self.assertEqual((payload.get("role_surface_provider_meta") or {}).get("selected_provider"), "smart_construction_core")
+
     def test_build_startup_surface_keeps_default_page_contracts_only(self):
         payload = target.SystemInitPayloadBuilder.build_startup_surface(
             {

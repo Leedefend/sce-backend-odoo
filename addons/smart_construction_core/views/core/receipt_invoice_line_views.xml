@@ -17,7 +17,7 @@
                     <field name="invoice_issue_company"/>
                     <field name="invoice_amount"/>
                     <field name="current_receipt_amount"/>
-                    <field name="invoiced_before_amount"/>
+                    <field name="attachment_count"/>
                 </tree>
             </field>
         </record>
@@ -28,6 +28,15 @@
             <field name="arch" type="xml">
                 <form string="收款发票台账" create="false" delete="false">
                     <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_open_attachments"
+                                    string="附件"
+                                    type="object"
+                                    class="oe_stat_button"
+                                    icon="fa-paperclip">
+                                <field name="attachment_count" widget="statinfo"/>
+                            </button>
+                        </div>
                         <group>
                             <group>
                                 <field name="request_id" readonly="1"/>
@@ -36,28 +45,15 @@
                                 <field name="partner_id" readonly="1"/>
                                 <field name="contract_id" readonly="1"/>
                             </group>
-                            <group string="历史锚点">
-                                <field name="legacy_invoice_line_id" readonly="1"/>
-                                <field name="legacy_receipt_id" readonly="1"/>
-                                <field name="legacy_invoice_id" readonly="1"/>
-                                <field name="legacy_invoice_child_id" readonly="1"/>
-                                <field name="legacy_pid" readonly="1"/>
-                                <field name="legacy_file_bill_id" readonly="1"/>
-                                <field name="source_table_name" readonly="1"/>
-                                <field name="amount_source" readonly="1"/>
-                                <field name="import_batch" readonly="1"/>
-                            </group>
                         </group>
                         <group>
                             <field name="invoice_no"/>
                             <field name="invoice_party_name"/>
                             <field name="invoice_issue_company"/>
-                            <field name="source_document_no"/>
                         </group>
                         <group>
                             <field name="invoice_amount"/>
                             <field name="current_receipt_amount"/>
-                            <field name="invoiced_before_amount"/>
                         </group>
                         <group>
                             <field name="note"/>
@@ -79,7 +75,6 @@
                     <field name="invoice_no"/>
                     <field name="invoice_party_name"/>
                     <field name="invoice_issue_company"/>
-                    <field name="legacy_invoice_line_id"/>
                     <group expand="0" string="分组">
                         <filter string="收款申请" name="group_by_request_id" context="{'group_by': 'request_id'}"/>
                         <filter string="项目" name="group_by_project_id" context="{'group_by': 'project_id'}"/>

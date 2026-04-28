@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_legacy_project_fund_balance_fact_search" model="ir.ui.view">
+            <field name="name">sc.legacy.project.fund.balance.fact.search</field>
+            <field name="model">sc.legacy.project.fund.balance.fact</field>
+            <field name="arch" type="xml">
+                <search string="历史项目资金余额">
+                    <field name="project_id"/>
+                    <field name="project_name"/>
+                    <field name="legacy_project_id"/>
+                    <filter string="未匹配项目" name="missing_project" domain="[('project_id', '=', False)]"/>
+                    <filter string="可用余额为负" name="negative_available" domain="[('actual_available_balance', '&lt;', 0)]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_project_fund_balance_fact_tree" model="ir.ui.view">
+            <field name="name">sc.legacy.project.fund.balance.fact.tree</field>
+            <field name="model">sc.legacy.project.fund.balance.fact</field>
+            <field name="arch" type="xml">
+                <tree string="历史项目资金余额" create="false" edit="false" delete="false">
+                    <field name="project_id"/>
+                    <field name="project_name"/>
+                    <field name="actual_available_balance" sum="实际可用余额合计"/>
+                    <field name="actual_receipt_amount" sum="累计实际收款合计"/>
+                    <field name="external_fund_amount" sum="外来资金合计"/>
+                    <field name="payment_amount" sum="累计付款合计"/>
+                    <field name="in_transit_amount" sum="在途资金合计"/>
+                    <field name="project_self_funding_amount" sum="项目自筹资金合计"/>
+                    <field name="book_balance" sum="账面余额合计"/>
+                    <field name="legacy_project_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_sc_legacy_project_fund_balance_fact" model="ir.actions.act_window">
+            <field name="name">历史项目资金余额</field>
+            <field name="res_model">sc.legacy.project.fund.balance.fact</field>
+            <field name="view_mode">tree</field>
+            <field name="search_view_id" ref="view_sc_legacy_project_fund_balance_fact_search"/>
+            <field name="context">{'create': False}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+    </data>
+</odoo>

@@ -120,6 +120,7 @@ partner_map: dict[str, int] = {}
 if partner_master_ids:
     for rec in Partner.search_read([("legacy_partner_id", "in", partner_master_ids)], ["legacy_partner_id"]):
         partner_map[f"legacy_partner_sc_{rec['legacy_partner_id']}"] = rec["id"]
+        partner_map[f"legacy_partner_sc_{rec['legacy_partner_id'].replace('-', '_')}"] = rec["id"]
 if receipt_partner_ids:
     for rec in Partner.search_read(
         [("legacy_partner_source", "=", "receipt_counterparty"), ("legacy_partner_id", "in", receipt_partner_ids)],

@@ -67,7 +67,7 @@ class AccountMoveLine(models.Model):
     )
     wbs_id = fields.Many2one(
         "construction.work.breakdown",
-        string="工程结构(WBS)",
+        string="工程结构",
         domain="[('project_id', '=', project_id)]",
     )
     cost_code_id = fields.Many2one(

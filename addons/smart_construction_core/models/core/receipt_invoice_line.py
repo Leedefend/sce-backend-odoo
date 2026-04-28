@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ReceiptInvoiceLine(models.Model):
     _name = "sc.receipt.invoice.line"
-    _description = "Receipt Invoice Line"
+    _description = "收款发票明细"
     _order = "request_id desc, sequence asc, id asc"
 
     request_id = fields.Many2one(
@@ -63,5 +63,29 @@ class ReceiptInvoiceLine(models.Model):
     invoiced_before_amount = fields.Monetary(string="历史已开票", currency_field="currency_id")
     note = fields.Text(string="备注")
     import_batch = fields.Char(string="导入批次", copy=False)
-    active = fields.Boolean(default=True)
+    active = fields.Boolean("有效", default=True)
+    attachment_count = fields.Integer(string="附件数量", compute="_compute_attachment_count")
 
+    def _compute_attachment_count(self):
+        grouped = {}
+        if self.ids:
+            data = self.env["ir.attachment"].sudo().read_group(
+                [("res_model", "=", self._name), ("res_id", "in", self.ids)],
+                ["res_id"],
+                ["res_id"],
+            )
+            grouped = {int(row["res_id"]): int(row.get("__count", row.get("res_id_count", 0))) for row in data}
+        for rec in self:
+            rec.attachment_count = grouped.get(rec.id, 0)
+
+    def action_open_attachments(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "附件",
+            "res_model": "ir.attachment",
+            "view_mode": "tree,form",
+            "domain": [("res_model", "=", self._name), ("res_id", "=", self.id)],
+            "context": {"default_res_model": self._name, "default_res_id": self.id, "create": False},
+            "target": "current",
+        }

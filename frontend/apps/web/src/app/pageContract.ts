@@ -15,7 +15,13 @@ function asTextList(value: unknown): string[] {
 
 type SectionTag = 'header' | 'section' | 'details' | 'div' | '';
 type SectionConfig = { enabled: boolean; order: number; tag: SectionTag; open: boolean | null };
-type GlobalActionConfig = { key: string; label: string; intent: string };
+type GlobalActionConfig = {
+  key: string;
+  label: string;
+  intent: string;
+  disabled?: boolean;
+  disabledReason?: string;
+};
 type UsePageContractOptions = {
   allowSceneContractFallback?: boolean;
 };

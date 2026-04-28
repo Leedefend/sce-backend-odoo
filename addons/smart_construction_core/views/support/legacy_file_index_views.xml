@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+
+    <record id="view_sc_legacy_file_index_tree" model="ir.ui.view">
+      <field name="name">sc.legacy.file.index.tree</field>
+      <field name="model">sc.legacy.file.index</field>
+      <field name="arch" type="xml">
+        <tree string="历史文件索引" create="false" edit="false" delete="false">
+          <field name="upload_time"/>
+          <field name="file_name"/>
+          <field name="extension"/>
+          <field name="file_size"/>
+          <field name="source_table"/>
+          <field name="legacy_file_id"/>
+          <field name="legacy_pid"/>
+          <field name="bill_id"/>
+          <field name="bill_type"/>
+          <field name="uploader_name"/>
+          <field name="file_path"/>
+          <field name="active"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="view_sc_legacy_file_index_form" model="ir.ui.view">
+      <field name="name">sc.legacy.file.index.form</field>
+      <field name="model">sc.legacy.file.index</field>
+      <field name="arch" type="xml">
+        <form string="历史文件索引" create="false" edit="false" delete="false">
+          <sheet>
+            <group>
+              <group string="文件">
+                <field name="file_name"/>
+                <field name="extension"/>
+                <field name="file_size"/>
+                <field name="file_md5"/>
+                <field name="file_path"/>
+                <field name="preview_path"/>
+              </group>
+              <group string="旧系统锚点">
+                <field name="legacy_file_key"/>
+                <field name="source_table"/>
+                <field name="legacy_file_id"/>
+                <field name="file_system_data_id"/>
+                <field name="legacy_pid"/>
+                <field name="bill_id"/>
+                <field name="bill_type"/>
+                <field name="business_id"/>
+              </group>
+            </group>
+            <group>
+              <group string="上传">
+                <field name="uploader_name"/>
+                <field name="uploader_legacy_user_id"/>
+                <field name="upload_time"/>
+              </group>
+              <group string="状态">
+                <field name="active"/>
+                <field name="encrypted_flag"/>
+                <field name="temporary_flag"/>
+                <field name="deleter_name"/>
+                <field name="deleter_legacy_user_id"/>
+                <field name="delete_time"/>
+              </group>
+            </group>
+            <group>
+              <field name="note"/>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <record id="view_sc_legacy_file_index_search" model="ir.ui.view">
+      <field name="name">sc.legacy.file.index.search</field>
+      <field name="model">sc.legacy.file.index</field>
+      <field name="arch" type="xml">
+        <search string="历史文件索引">
+          <field name="file_name"/>
+          <field name="file_path"/>
+          <field name="legacy_file_id"/>
+          <field name="legacy_pid"/>
+          <field name="bill_id"/>
+          <field name="bill_type"/>
+          <field name="source_table"/>
+          <field name="uploader_name"/>
+          <filter name="active_files" string="有效" domain="[('active', '=', True)]"/>
+          <filter name="deleted_files" string="已删除" domain="[('active', '=', False)]"/>
+          <group expand="0" string="分组">
+            <filter name="group_source_table" string="来源表" context="{'group_by': 'source_table'}"/>
+            <filter name="group_bill_type" string="票据类型" context="{'group_by': 'bill_type'}"/>
+            <filter name="group_extension" string="扩展名" context="{'group_by': 'extension'}"/>
+            <filter name="group_uploader" string="上传人" context="{'group_by': 'uploader_name'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <record id="action_sc_legacy_file_index" model="ir.actions.act_window">
+      <field name="name">历史文件索引</field>
+      <field name="res_model">sc.legacy.file.index</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="view_sc_legacy_file_index_search"/>
+      <field name="context">{'search_default_active_files': 1}</field>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+
+    <menuitem id="menu_sc_legacy_file_index"
+              name="历史文件索引"
+              parent="smart_construction_core.menu_sc_finance_history_center"
+              action="action_sc_legacy_file_index"
+              sequence="90"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+
+    <record id="menu_sc_legacy_file_index" model="ir.ui.menu">
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
+
+  </data>
+</odoo>

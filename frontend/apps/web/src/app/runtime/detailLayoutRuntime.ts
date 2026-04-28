@@ -1,9 +1,13 @@
 import { resolveTemplateSectionPresentation } from '../../components/template/sectionPresentation.mapper';
 import type { DetailSectionView, DetailShellView } from '../../components/template/detailLayout.types';
 import type { FormSectionFieldSchema } from '../../components/template/formSection.types';
-import { normalizeRenderProfile, type RenderProfile } from '../pageContract';
+import type { RenderProfile } from '../contractPolicies';
 
 export type LayoutKind = 'default' | 'header' | 'sheet' | 'group' | 'notebook' | 'page';
+
+function normalizeRenderProfile(value: unknown, fallback: RenderProfile): RenderProfile {
+  return value === 'create' || value === 'edit' || value === 'readonly' ? value : fallback;
+}
 
 export type LayoutNodeView = {
   key: string;

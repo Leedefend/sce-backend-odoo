@@ -46,7 +46,7 @@ def post_init_hook(env_or_cr, registry=None):
     seed_enabled = env_seed_enabled if env_seed_enabled is not None else ICP.get_param("sc.bootstrap.seed_enabled", "0")
     enabled = seed_enabled in ("1", "true", "True")
     profile = env_profile if env_profile is not None else ICP.get_param("sc.seed.profile", "")
-    steps_sel = env_steps if env_steps is not None else ICP.get_param("sc.seed.steps", "all")
+    steps_sel = env_steps if env_steps is not None else ICP.get_param("sc.seed.steps", "profile:base")
     if profile:
         steps_sel = f"profile:{profile}"
 

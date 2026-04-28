@@ -4,6 +4,7 @@
     "summary": "Platform-level scene orchestration kernel utilities",
     "version": "1.0.0",
     "depends": ["base", "smart_core"],
+    "license": "LGPL-3",
     "installable": True,
     "application": False,
 }

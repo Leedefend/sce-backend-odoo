@@ -16,7 +16,7 @@ class StockMove(models.Model):
     )
     wbs_id = fields.Many2one(
         "construction.work.breakdown",
-        string="工程结构(WBS)",
+        string="工程结构",
         domain="[('project_id', '=', project_id)]",
         compute="_compute_project_fields",
         store=True,

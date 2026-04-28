@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_invoice_registration_search" model="ir.ui.view">
+            <field name="name">sc.invoice.registration.search</field>
+            <field name="model">sc.invoice.registration</field>
+            <field name="arch" type="xml">
+                <search string="发票登记">
+                    <field name="name"/>
+                    <field name="document_no"/>
+                    <field name="invoice_no"/>
+                    <field name="invoice_code"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="contract_id"/>
+                    <field name="invoice_type"/>
+                    <filter string="发票登记" name="source_kind_invoice_registration" domain="[('source_kind', '=', 'invoice_registration')]"/>
+                    <filter string="进项税额" name="source_kind_input_invoice_tax" domain="[('source_kind', '=', 'input_invoice_tax')]"/>
+                    <filter string="销项税额" name="source_kind_output_invoice_tax" domain="[('source_kind', '=', 'output_invoice_tax')]"/>
+                    <filter string="预缴税" name="source_kind_prepaid_tax" domain="[('source_kind', '=', 'prepaid_tax')]"/>
+                    <filter string="已确认" name="state_confirmed" domain="[('state', 'in', ['confirmed', 'legacy_confirmed'])]"/>
+                    <filter string="已登记" name="state_registered" domain="[('state', '=', 'registered')]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="按方向" name="group_direction" context="{'group_by': 'direction'}"/>
+                    <filter string="按类型" name="group_source_kind" context="{'group_by': 'source_kind'}"/>
+                    <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="按发票日期" name="group_invoice_date" context="{'group_by': 'invoice_date'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_invoice_registration_tree" model="ir.ui.view">
+            <field name="name">sc.invoice.registration.tree</field>
+            <field name="model">sc.invoice.registration</field>
+            <field name="arch" type="xml">
+                <tree string="发票登记">
+                    <field name="name"/>
+                    <field name="invoice_date"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="direction"/>
+                    <field name="source_kind"/>
+                    <field name="invoice_no"/>
+                    <field name="invoice_type"/>
+                    <field name="amount_no_tax" sum="不含税金额"/>
+                    <field name="tax_amount" sum="税额"/>
+                    <field name="amount_total" sum="价税合计"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_invoice_registration_form" model="ir.ui.view">
+            <field name="name">sc.invoice.registration.form</field>
+            <field name="model">sc.invoice.registration</field>
+            <field name="arch" type="xml">
+                <form string="发票登记">
+                    <header>
+                        <button name="action_confirm" string="提交审批" type="object" class="btn-primary"
+                                invisible="state != 'draft' or validation_status in ('waiting', 'pending', 'validated')"/>
+                        <button name="validate_tier" string="审批通过" type="object" class="btn-primary"
+                                invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
+                        <button name="reject_tier" string="审批驳回" type="object"
+                                invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
+                        <button name="action_register" string="已登记" type="object" class="btn-primary"
+                                invisible="state not in ('draft', 'confirmed')"/>
+                        <button name="action_cancel" string="取消" type="object"
+                                invisible="state in ('cancel', 'legacy_confirmed')"/>
+                        <field name="validation_status" invisible="1"/>
+                        <field name="can_review" invisible="1"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,confirmed,registered,legacy_confirmed,cancel"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="source_kind" readonly="state == 'legacy_confirmed'"/>
+                                <field name="direction" readonly="state == 'legacy_confirmed'"/>
+                                <field name="document_no" readonly="state == 'legacy_confirmed'"/>
+                                <field name="document_date" readonly="state == 'legacy_confirmed'"/>
+                            </group>
+                            <group>
+                                <field name="project_id" readonly="state == 'legacy_confirmed'"/>
+                                <field name="partner_id"/>
+                                <field name="contract_id"/>
+                                <field name="settlement_id"/>
+                            </group>
+                        </group>
+                        <group string="发票">
+                            <field name="invoice_date" readonly="state == 'legacy_confirmed'"/>
+                            <field name="recognition_date" readonly="state == 'legacy_confirmed'"/>
+                            <field name="invoice_no" readonly="state == 'legacy_confirmed'"/>
+                            <field name="invoice_code" readonly="state == 'legacy_confirmed'"/>
+                            <field name="invoice_type" readonly="state == 'legacy_confirmed'"/>
+                            <field name="tax_rate" readonly="state == 'legacy_confirmed'"/>
+                            <field name="invoice_content" readonly="state == 'legacy_confirmed'"/>
+                            <field name="cost_category_name" readonly="state == 'legacy_confirmed'"/>
+                        </group>
+                        <group string="金额">
+                            <field name="amount_no_tax" readonly="state == 'legacy_confirmed'"/>
+                            <field name="tax_amount" readonly="state == 'legacy_confirmed'"/>
+                            <field name="amount_total" readonly="state == 'legacy_confirmed'"/>
+                            <field name="currency_id"/>
+                        </group>
+                        <group string="办理信息">
+                            <field name="handler_name" readonly="state == 'legacy_confirmed'"/>
+                            <field name="invoice_holder" readonly="state == 'legacy_confirmed'"/>
+                            <field name="accounting_state" readonly="state == 'legacy_confirmed'"/>
+                            <field name="voucher_no" readonly="state == 'legacy_confirmed'"/>
+                        </group>
+                        <group>
+                            <field name="note"/>
+                            <field name="active"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_invoice_registration" model="ir.actions.act_window">
+            <field name="name">发票登记</field>
+            <field name="res_model">sc.invoice.registration</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_invoice_registration_search"/>
+            <field name="context">{'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+
+        <menuitem id="menu_sc_invoice_registration"
+                  name="发票登记"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  action="action_sc_invoice_registration"
+                  sequence="37"
+                  groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    </data>
+</odoo>

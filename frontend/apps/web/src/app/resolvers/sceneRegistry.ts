@@ -1,6 +1,7 @@
 import { validateSceneRegistry } from './sceneRegistryCore';
 
 export interface SceneTarget {
+  [key: string]: unknown;
   menu_id?: number;
   menu_xmlid?: string;
   action_id?: number;
@@ -43,6 +44,7 @@ export interface SceneLayout {
 }
 
 export interface Scene {
+  [key: string]: unknown;
   key: string;
   label: string;
   icon?: string;
@@ -55,7 +57,12 @@ export interface Scene {
   list_profile?: SceneListProfile;
   filters?: unknown[];
   default_sort?: string;
+  page?: Record<string, unknown>;
   scene_ready?: {
+    runtime_handoff_surface?: Record<string, unknown>;
+    runtime_policy?: Record<string, unknown>;
+    switch_surface?: Record<string, unknown>;
+    product_delivery_surface?: Record<string, unknown>;
     search_surface?: Record<string, unknown>;
     permission_surface?: Record<string, unknown>;
     action_surface?: Record<string, unknown>;

@@ -37,9 +37,7 @@
         <field name="res_model">sc.dictionary</field>
         <field name="view_mode">tree,form</field>
         <field name="groups_id" eval="[
-            (4, ref('smart_construction_core.group_sc_cap_data_read')),
-            (4, ref('smart_construction_core.group_sc_cap_project_manager')),
-            (4, ref('smart_construction_core.group_sc_cap_config_admin'))
+            (6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])
         ]"/>
     </record>
 </odoo>

@@ -14,8 +14,8 @@ function asDict(value: unknown): Dict {
 
 export function toChipVM(value: unknown): ChipVM | null {
   const row = asDict(value);
-  const key = String(row.key || '').trim();
-  const label = String(row.label || row.key || '').trim();
+  const key = String(row.key || row.field || '').trim();
+  const label = String(row.label || row.key || row.field || '').trim();
   if (!key || !label) return null;
   return { key, label };
 }
