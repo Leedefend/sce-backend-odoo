@@ -56,3 +56,10 @@ Cannot resolve the collation conflict between "SQL_Latin1_General_CP1_CI_AS" and
 - 旧过程精确口径与 `legacy_exact` 是否一致。
 - `new_official` 相对 `legacy_exact` 多出的金额是否来自账号/账户名兜底。
 - `new_continuity` 相对 `new_official` 多出的金额是否来自 Batch-AD 历史来源账户。
+
+Batch-AF 已将上述三层口径落成脚本：
+
+```bash
+ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim \
+  make odoo.shell.exec < scripts/migration/legacy_account_income_expense_reconciliation_matrix.py
+```

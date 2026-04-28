@@ -31801,3 +31801,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 如果必须直接执行旧存储过程，需要先处理恢复容器 tempdb 排序规则或改造临时表 COLLATE。`
 - rollback: `回退本批对账预检文档。`
 - next_step: `实现三层对账脚本，输出 legacy_exact、new_official、new_continuity 的账户类型和账户明细差异矩阵。`
+
+## 2026-04-28 Batch-Legacy-Account-Reconciliation-Matrix
+
+- branch: `codex/dev-env-run`
+- short_sha: `22caf588`
+- Layer Target: `Migration Evidence / Domain Projection Validation`
+- Module: `scripts/migration`, `docs/migration_alignment`
+- Reason: `将账户收支统计表三层对账口径落成可重复执行脚本，避免只停留在人工解释。`
+- completed_step: `新增 legacy_account_income_expense_reconciliation_matrix.py，输出 legacy_exact/new_official/new_continuity 总览、账户类型矩阵、样本账户和差异。`
+- verification:
+  - `python3 -m py_compile scripts/migration/legacy_account_income_expense_reconciliation_matrix.py` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec < scripts/migration/legacy_account_income_expense_reconciliation_matrix.py` -> `PASS; legacy_exact_accounts=63, new_official_accounts=63, new_continuity_accounts=111`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 三层对账矩阵已可重复执行。new_official 比 legacy_exact 多累计收款 1,361,201,053.70、累计支出 1,248,258,421.37；new_continuity 比 new_official 多 48 个历史来源账户、累计收款 127,932,908.59、累计支出 105,634,258.37。`
+- risk: `P1; 当前脚本输出总览和账户类型矩阵，用户可读差异原因 Top 账户列表仍需下一批整理。`
+- rollback: `删除本批脚本和 Batch-AF 文档。`
+- next_step: `输出账户类型差异矩阵和金额差异最大的账户 Top 列表，并按 strict_match/fallback_match/supplemental_account 分类。`
