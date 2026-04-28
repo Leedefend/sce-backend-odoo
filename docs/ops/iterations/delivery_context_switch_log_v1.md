@@ -31915,3 +31915,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 不能直接拿旧过程执行结果做样本对账，下一步需要基于过程定义改造 COLLATE 执行副本或手工 SQL 重建关键聚合。`
 - rollback: `回退本批预检脚本和 Batch-AK 文档。`
 - next_step: `拆解 UP_USP_SELECT_YSYFHZB_XM_ZJ line 149 附近的排序规则冲突来源，生成可执行的只读对账 SQL。`
+
+## 2026-04-28 Batch-Legacy-AR-AP-Company-Collation-Probe
+
+- branch: `codex/dev-env-run`
+- short_sha: `baf24110`
+- Layer Target: `Migration Evidence / Legacy SQL Reconciliation`
+- Module: `scripts/migration`, `docs/migration_alignment`
+- Reason: `旧过程 UP_USP_SELECT_YSYFHZB_XM_ZJ 被 tempdb 与旧库排序规则冲突阻断，需要形成不修改旧库对象的只读 COLLATE 对账入口。`
+- completed_step: `新增 legacy_ar_ap_company_collation_probe.py，从旧过程定义生成 ad-hoc SQL，仅给 #TEMP_RESULT_ZJ/#TEMP_RESULT_ZZJG 字符字段补 COLLATE DATABASE_DEFAULT，并导出旧库结果 CSV/JSON。`
+- verification:
+  - `python3 -m py_compile scripts/migration/legacy_ar_ap_company_collation_probe.py` -> `PASS`
+  - `python3 scripts/migration/legacy_ar_ap_company_collation_probe.py` -> `PASS; row_count=195, income_contract_amount=569590088.6600, output_invoice_amount=496732725.6700, receipt_amount=490319045.6100`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 旧库全局应收应付报表可通过只读 COLLATE 修正版导出 195 行项目级汇总，排序规则冲突来源确认是临时表字符字段继承 tempdb 默认排序规则。`
+- risk: `P1; 本批只建立旧库可执行基线，尚未与 sc.ar.ap.company.summary 做字段级差异矩阵。`
+- rollback: `回退本批 COLLATE 探针脚本和 Batch-AL 文档。`
+- next_step: `读取旧库 CSV 与新系统 sc.ar.ap.company.summary，按 legacy_project_id 输出字段级差异矩阵。`
