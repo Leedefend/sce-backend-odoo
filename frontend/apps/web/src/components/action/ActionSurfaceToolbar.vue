@@ -1,5 +1,5 @@
 <template>
-  <section class="action-toolbar">
+  <section ref="toolbarRoot" class="action-toolbar">
     <div v-if="showViewSwitch" class="toolbar-section view-switch">
       <p class="contract-label">{{ viewLabel }}</p>
       <div class="contract-chips">
@@ -157,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 type SearchChip = { key: string; label: string };
 
@@ -211,6 +211,7 @@ const emit = defineEmits<{
 }>();
 
 const searchMenuOpen = ref(false);
+const toolbarRoot = ref<HTMLElement | null>(null);
 const selectedSymbol = '✓';
 const clearSymbol = '×';
 
@@ -246,6 +247,20 @@ function selectGroup(key: string) {
   searchMenuOpen.value = false;
   emit('group', key);
 }
+
+function handleDocumentPointerDown(event: PointerEvent) {
+  const root = toolbarRoot.value;
+  if (!root || root.contains(event.target as Node | null)) return;
+  searchMenuOpen.value = false;
+}
+
+onMounted(() => {
+  document.addEventListener('pointerdown', handleDocumentPointerDown);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', handleDocumentPointerDown);
+});
 </script>
 
 <style scoped>

@@ -30817,3 +30817,24 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 当前仍是单筛选/单分组状态模型，Odoo 原生支持更复杂的多 facet 组合；如业务需要多选筛选/多级分组，应扩展路由与请求状态承载。`
 - rollback: `回退本批次提交并重建前端静态包，即恢复上一轮平铺筛选/分组工具栏。`
 - next_step: `继续补齐已保存筛选的“保存当前搜索”写入能力，或先抽查其他业务 action 的原生搜索菜单覆盖率。`
+
+## 2026-04-28 Batch-Frontend-Native-Search-Full-Verification
+
+- branch: `codex/dev-env-run`
+- short_sha: `130accbf`
+- Layer Target: `Frontend shared search renderer`
+- Module: `frontend/apps/web`
+- Reason: `用户确认原生式搜索下拉基本形态已成立，要求继续完整验证该能力是否全部实现；验证中需要覆盖列表/看板、筛选/分组、facet 清除、中文输入、外部关闭和已保存筛选样本。`
+- completed_step: `补齐 ActionSurfaceToolbar 的外部点击关闭行为；完成一般合同列表 /a/577 与项目看板 /a/509 的真实浏览器验证矩阵。`
+- verification:
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend/apps/web node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile --dir /workspace/frontend && pnpm typecheck"`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `Playwright browser: /a/577 下拉分类展示筛选=已确认/已签署/补充合同，分组=按合同方/按状态/按类型/按项目；点击已签署后 facet=已签署，api.data domain=[['state','=','signed']]；点击按状态后 facet=已签署+按状态，api.data group_by=state；依次点击分组 facet 和筛选 facet 后 URL 与请求恢复无分组/无筛选。`
+  - `Playwright browser: /a/577 打开下拉后点击页面空白，search-dropdown 从 1 变为 0。`
+  - `Playwright browser: /a/509 看板顺序为 headerY=69、toolbarY=146.1875、gridY=218.1875；下拉展示筛选与分组分类；旧平铺 .filter-switch/.group-switch/.saved-filter-switch 可见数量为 0。`
+  - `Playwright browser: /a/509 中文输入 composition 期间 duringComposeRequests=0；compositionend 后 api.data search_term=德阳市；点击清除后输入值为空且 URL 移除 search。`
+  - `Odoo shell: sc_prod_sim 中 app.search.config saved_filters 全部为 0，当前无真实已保存筛选样本可点击验证；空态下“已保存”分类不展示。`
+- result: `PASS; 当前模拟生产库可验证范围内，原生式搜索下拉、筛选、分组、facet、中文输入和看板承载均通过。`
+- risk: `P2; 已保存筛选缺少真实数据样本，仅验证了空态；“保存当前搜索”写入能力仍未实现，属于下一轮功能缺口。`
+- rollback: `回退本批次提交并重建前端静态包，即移除外部点击关闭补强，回到 130accbf。`
+- next_step: `补齐已保存筛选/保存当前搜索能力，或先由业务配置管理员创建真实 saved filter 样本后验证选择路径。`
