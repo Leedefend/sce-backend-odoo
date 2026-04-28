@@ -1065,6 +1065,9 @@ verify.portal.tree_view_smoke.container: guard.prod.forbid check-compose-project
 .PHONY: verify.portal.ar_ap_project_summary_smoke.container
 verify.portal.ar_ap_project_summary_smoke.container: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) AUTH_TOKEN=$(AUTH_TOKEN) node /mnt/scripts/verify/fe_ar_ap_project_summary_smoke.js"
+.PHONY: verify.portal.ar_ap_company_summary_smoke.container
+verify.portal.ar_ap_company_summary_smoke.container: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) AUTH_TOKEN=$(AUTH_TOKEN) node /mnt/scripts/verify/fe_ar_ap_company_summary_smoke.js"
 verify.portal.kanban_view_smoke.container: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) MVP_MODEL=$(MVP_MODEL) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) AUTH_TOKEN=$(AUTH_TOKEN) BOOTSTRAP_SECRET=$(BOOTSTRAP_SECRET) BOOTSTRAP_LOGIN=$(BOOTSTRAP_LOGIN) node /mnt/scripts/verify/fe_kanban_view_smoke.js"
 verify.portal.scene_contract_smoke.container: guard.prod.forbid check-compose-project check-compose-env

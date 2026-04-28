@@ -31878,3 +31878,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 当前按项目汇总项目口径底表，尚未直接执行旧过程 UP_USP_SELECT_YSYFHZB_XM_ZJ 做样本条件对账。`
 - rollback: `回退本批模型、视图、ACL、manifest 和报表清单变更，升级 smart_construction_core 并重启。`
 - next_step: `为全局应收应付报表补专用契约 smoke，或按旧库常用查询条件做新旧项目级汇总对账。`
+
+## 2026-04-28 Batch-Legacy-AR-AP-Company-Smoke
+
+- branch: `codex/dev-env-run`
+- short_sha: `307b4860`
+- Layer Target: `Frontend Contract Gate / Report Verification`
+- Module: `scripts/verify`, `Makefile`, `docs/migration_alignment`
+- Reason: `全局应收应付报表已新增入口，需要固化真实用户前端契约验证，确认自定义前端和 intent 链路能消费该报表。`
+- completed_step: `新增 fe_ar_ap_company_summary_smoke.js 和 make verify.portal.ar_ap_company_summary_smoke.container，验证 load_view、字段中文标签、字段 help、只读权限和 api.data 关键数据。`
+- verification:
+  - `node --check scripts/verify/fe_ar_ap_company_summary_smoke.js` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.portal.ar_ap_company_summary_smoke.container` -> `PASS; rows=815, receivable_rows=658, negative_balance_rows=37`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- artifacts: `artifacts/codex/ar-ap-company-summary/20260428T094217/`
+- result: `PASS; 全局应收应付报表已被真实用户前端契约 smoke 覆盖。`
+- risk: `P2; api.data 查询全局聚合响应偏慢，当前可用但后续高频使用应考虑独立 SQL 聚合或物化快照。`
+- rollback: `回退本批 smoke 脚本、Make target 和文档更新。`
+- next_step: `进入 UP_USP_SELECT_YSYFHZB_XM_ZJ 旧过程样本条件对账，或继续补下一个旧库 P0 报表。`

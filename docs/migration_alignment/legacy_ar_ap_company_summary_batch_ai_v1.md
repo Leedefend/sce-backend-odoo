@@ -43,6 +43,35 @@
 
 当前状态可用于业务查看公司/全局项目维度应收应付、开票、收付款、税额、自筹、余额等指标。后续如要严格对齐旧过程 `UP_USP_SELECT_YSYFHZB_XM_ZJ`，应按旧库常用查询条件做新旧项目级汇总对账，并确认旧过程是否存在独立公司筛选或特殊汇总行。
 
+## Batch-AJ 前端契约验证
+
+已新增专用真实用户 smoke：
+
+```bash
+ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim \
+  DB_NAME=sc_prod_sim E2E_LOGIN=wutao E2E_PASSWORD=123456 \
+  make verify.portal.ar_ap_company_summary_smoke.container
+```
+
+验证内容：
+
+- `wutao/123456` 登录成功。
+- `load_view(model=sc.ar.ap.company.summary, view_type=tree)` 成功。
+- 关键列存在且中文标签正确。
+- `tax_deduction_rate`、`actual_available_balance` 的项目级指标说明透出到契约。
+- 权限为只读：`read=true, write=false, create=false, unlink=false`。
+- `api.data` 可读取 `815` 行项目汇总。
+- 有未收款项目：`658` 行。
+- 实际可用余额为负项目：`37` 行。
+
+验证产物：
+
+```text
+artifacts/codex/ar-ap-company-summary/20260428T094217/
+```
+
+本批 smoke 已通过，但查询全局聚合时响应偏慢。原因是 `sc.ar.ap.company.summary` 目前直接聚合 `sc.ar.ap.project.summary` 视图，属于视图叠视图。当前数据量可以使用，后续如报表页面进入高频使用，应考虑把全局口径改为独立 SQL 聚合或物化快照。
+
 ## 回滚
 
 回退本批新增模型、视图、ACL、manifest 注册和报表清单状态后，升级 `smart_construction_core` 并重启模拟生产服务。
