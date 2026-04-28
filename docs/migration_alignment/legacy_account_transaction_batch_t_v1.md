@@ -53,11 +53,16 @@ Batch-U 在同一载体继续接入公司财务收支：
 
 `sc.account.income.expense.summary` 已经按 `metric_bucket='cumulative'` 优先读取累计收款和累计支出，因此本批无需调整报表结构。
 
+Batch-V 在同一载体继续接入收款登记：
+
+- `C_JFHKLR`：收款登记，写入 `direction='income'`、`metric_bucket='cumulative'`，对应旧过程 `LJSK` 的收款登记部分。
+- 发生日期使用 `f_RQ`，账户使用 `SKZHID/SKZH`，金额使用 `f_JE`。
+- 项目优先使用 `XMID/XMMC`，缺失时回退到来源项目和特殊项目字段。
+
 ## 尚未覆盖
 
 旧过程中的 `LJSK/LJZC` 仍包含多来源：
 
-- `C_JFHKLR`
 - `BGGL_JHK_HKDJ`
 - `ZJGL_ZCDFSZ_FXJK_*`
 - `ZJGL_BZJGL_*`

@@ -48,6 +48,7 @@
 
 Batch-T 已接入 `C_FKGL_ZHJZJWL`，该来源对应旧过程中的账户往来收入/支出 `SRJE/ZCJE`。
 Batch-U 已接入 `C_CWSFK_GSCWSR` 和 `C_CWSFK_GSCWZC`，分别对应旧过程累计收款/累计支出中的公司财务收支部分。
+Batch-V 已接入 `C_JFHKLR`，对应旧过程累计收款中的收款登记部分。
 
 ## 尚未完全覆盖
 

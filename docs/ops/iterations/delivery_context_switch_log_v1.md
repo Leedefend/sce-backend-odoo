@@ -31574,3 +31574,26 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 仍有 41 条来源明细未绑定，需继续审计是否为真实缺失账户、虚拟账户或需要业务合并的账户别名。`
 - rollback: `回退本批脚本改动；如需回滚模拟生产绑定结果，可按 source_key 重新写入旧脚本匹配结果或清空重放 sc_legacy_account_transaction_line。`
 - next_step: `继续处理剩余 41 条未绑定来源，或接入 C_JFHKLR 收款登记来源。`
+
+## 2026-04-28 Batch-Legacy-Receipt-Income-Cumulative
+
+- branch: `codex/dev-env-run`
+- short_sha: `5587d829`
+- Layer Target: `Domain Carrier / Domain Projection`
+- Module: `scripts/migration`, `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `账户收支统计表旧过程 LJSK 包含 C_JFHKLR 收款登记，需要接入同一账户收支来源明细载体。`
+- completed_step: `扩展 fresh_db_legacy_account_transaction_replay_adapter，将 C_JFHKLR 映射为 cumulative/income，字段使用 SKZHID/SKZH/f_JE/f_RQ；更新报表清单和迁移说明。`
+- verification:
+  - `python3 -m py_compile scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_transaction.replay.adapter` -> `PASS; rows=10856`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS; created_rows=5348, skipped_existing=5508`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis healthy`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; total=10856, matched=10752, missing=104, cumulative_receipt_amount=2315201535.13`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; C_JFHKLR 收款登记已进入账户收支统计累计收款口径，来源明细与汇总表同步可用。`
+- risk: `P1; C_JFHKLR 仍有 63 条未绑定账户，整体来源明细未绑定 104 条；旧过程中的付款退回、收入退回、保证金、借还款等来源仍未接入。`
+- rollback: `回退本批 adapter 和文档；如需清理模拟生产新增数据，可删除 sc_legacy_account_transaction_line 中 source_table='C_JFHKLR'。`
+- next_step: `继续接入收入退回/付款退回或保证金、借还款来源，并继续追踪剩余未绑定账户。`

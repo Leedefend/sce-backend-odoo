@@ -216,12 +216,40 @@ WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
   AND ISNULL(DEL, 0) = 0
   AND ISNULL(DJZT, '0') = '2'
   AND ISNULL(FKJE, 0) <> 0
+UNION ALL
+SELECT
+  {clean_sql("Id + ':receipt_income'")} AS source_key,
+  'C_JFHKLR' AS source_table,
+  {clean_sql("Id")} AS legacy_record_id,
+  {clean_sql("DJBH")} AS document_no,
+  {clean_sql("CONVERT(varchar(10), f_RQ, 23)")} AS transaction_date,
+  {clean_sql("DJZT")} AS document_state,
+  {clean_sql("DEL")} AS deleted_flag,
+  {clean_sql("COALESCE(NULLIF(XMID, ''), NULLIF(LYXMID, ''), NULLIF(TSXMID, ''))")} AS project_legacy_id,
+  {clean_sql("COALESCE(NULLIF(XMMC, ''), NULLIF(LYXM, ''), NULLIF(TSXMMC, ''))")} AS project_name,
+  {clean_sql("SKZHID")} AS account_legacy_id,
+  {clean_sql("SKZH")} AS account_name,
+  {clean_sql("WLDWID")} AS counterparty_account_legacy_id,
+  {clean_sql("WLDWMC")} AS counterparty_account_name,
+  'income' AS direction,
+  'cumulative' AS metric_bucket,
+  {clean_sql("f_JE")} AS amount,
+  {clean_sql("f_SRLBName")} AS category,
+  {clean_sql("BT")} AS source_summary,
+  {clean_sql("f_BZ")} AS note,
+  '1' AS active
+FROM dbo.C_JFHKLR
+WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
+  AND NULLIF(LTRIM(RTRIM(SKZHID)), '') IS NOT NULL
+  AND ISNULL(DEL, 0) = 0
+  AND ISNULL(DJZT, '0') = '2'
+  AND ISNULL(f_JE, 0) <> 0
 ORDER BY transaction_date, legacy_record_id, direction;
 """
     rows = write_sql_csv(PAYLOAD_CSV, FIELDS, sql)
     payload = {
         "mode": "fresh_db_legacy_account_transaction_replay_adapter",
-        "source_table": "C_FKGL_ZHJZJWL,C_CWSFK_GSCWSR,C_CWSFK_GSCWZC",
+        "source_table": "C_FKGL_ZHJZJWL,C_CWSFK_GSCWSR,C_CWSFK_GSCWZC,C_JFHKLR",
         "rows": rows,
         "csv": str(PAYLOAD_CSV),
         "decision": "legacy_account_transaction_payload_ready" if rows else "STOP_REVIEW_REQUIRED",

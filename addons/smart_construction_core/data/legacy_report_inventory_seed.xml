@@ -36,9 +36,9 @@
         <field name="parameter_summary">开始日期、结束日期、账户、项目、账户类型。</field>
         <field name="metric_summary">账户余额、收入、支出、累计收款、累计支出、账户往来、当前账户余额，支持树形汇总。</field>
         <field name="source_tables">C_Base_ZHSZ, BASE_SYSTEM_PROJECT, C_CWSFK_GSCWSR, C_CWSFK_GSCWZC, C_JFHKLR, C_ZFSQGL_FKZH_CB, C_FKGL_ZHJZJWL, BGGL_JHK_HKDJ, T_KK_SJTHB, ZJGL_BZJGL_*, ZJGL_ZJSZ_DKGL_*。</field>
-        <field name="target_model">sc.legacy.account.master + sc.legacy.account.transaction.line + sc.legacy.fund.daily.line + sc.account.income.expense.summary；已具备账户主数据、账户往来来源明细、公司财务收支来源明细与第一版账户收支统计只读聚合。</field>
+        <field name="target_model">sc.legacy.account.master + sc.legacy.account.transaction.line + sc.legacy.fund.daily.line + sc.account.income.expense.summary；已具备账户主数据、账户往来来源明细、公司财务收支来源明细、收款登记来源明细与第一版账户收支统计只读聚合。</field>
         <field name="carrier_status">partial</field>
-        <field name="next_action">继续补旧过程借还款、保证金、收款登记、付款退回等累计收支来源的精确口径对账。</field>
+        <field name="next_action">继续补旧过程借还款、保证金、付款退回、收入退回等累计收支来源的精确口径对账。</field>
         <field name="evidence">ts_function_RecordUserClick: 1549 clicks, 10 users, last 2026-04-10；另有旧页面同名入口 517 clicks。</field>
     </record>
 
