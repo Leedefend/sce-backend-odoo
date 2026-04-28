@@ -387,6 +387,7 @@
       :on-toggle-selection-all="handleToggleSelectionAll"
       :on-run-selection-action="handleSelectionAction"
       :on-clear-selection="clearSelection"
+      :on-toggle-record-favorite="handleToggleRecordFavorite"
       :on-row-click="handleRowClick"
       :on-page-change="handleListPageChange"
       @column-visibility-change="handleListColumnVisibilityChange"
@@ -501,7 +502,7 @@
 <script setup lang="ts">
 import { computed, inject, onBeforeUnmount, onErrorCaptured, onMounted, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { listRecordsRaw, saveSearchFavorite } from '../api/data';
+import { listRecordsRaw, saveSearchFavorite, writeRecord } from '../api/data';
 import { getUserViewPreference, setUserViewPreference } from '../api/preferences';
 import { executeButton } from '../api/executeButton';
 import { trackUsageEvent } from '../api/usage';
@@ -2392,6 +2393,25 @@ async function handleListColumnVisibilityChange(payload: { visibility: Record<st
       setListColumnSaveStatus('error');
     }
     console.warn('[list-columns] failed to save preference', err);
+  }
+}
+
+async function handleToggleRecordFavorite(row: Record<string, unknown>, nextValue: boolean): Promise<void> {
+  const targetModel = String(resolvedModelRef.value || model.value || '').trim();
+  const recordId = Number(row.id || 0);
+  if (targetModel !== 'project.project' || !recordId) return;
+  const previousValue = row.is_favorite;
+  row.is_favorite = nextValue;
+  try {
+    await writeRecord({
+      model: targetModel,
+      ids: [recordId],
+      vals: { is_favorite: nextValue },
+      context: {},
+    });
+  } catch (err) {
+    row.is_favorite = previousValue;
+    console.warn('[project-favorite] failed to save favorite state', err);
   }
 }
 

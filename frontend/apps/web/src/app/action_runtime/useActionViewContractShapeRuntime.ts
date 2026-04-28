@@ -101,6 +101,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
   }
 
   function resolveListColumnOptions(contract: unknown, profile: { columns?: string[]; hidden_columns?: string[]; column_labels?: Record<string, string> } | null): ListColumnOption[] {
+    const typed = (contract || {}) as Dict;
     const preferred = Array.isArray(profile?.columns) ? profile?.columns || [] : [];
     const hidden = new Set(Array.isArray(profile?.hidden_columns) ? profile?.hidden_columns || [] : []);
     const schemaRows = extractColumnSchemaFromContract(contract);
@@ -110,11 +111,15 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       return acc;
     }, {});
     const baseColumns = preferred.length ? preferred : extractColumnsFromContract(contract, []);
+    const contractFields = (typed.fields || {}) as Dict;
+    const nativeFavoriteColumns = Object.prototype.hasOwnProperty.call(contractFields, 'is_favorite')
+      ? ['is_favorite']
+      : [];
     const labels = {
       ...contractColumnLabels.value,
       ...((profile?.column_labels || {}) as Record<string, string>),
     };
-    return uniqueFields([...baseColumns, ...Array.from(hidden)])
+    return uniqueFields([...baseColumns, ...Array.from(hidden), ...nativeFavoriteColumns])
       .map((name) => {
         const schema = schemaByName[name] || {};
         const optional = String(schema.optional || '').trim();

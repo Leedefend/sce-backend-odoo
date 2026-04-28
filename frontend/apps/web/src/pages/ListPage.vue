@@ -195,8 +195,20 @@
                 @click="handleRow(row)"
               >
                 <td v-for="col in displayedColumns" :key="`group-cell-${group.key}-${String(row.id ?? index)}-${col}`">
+                  <button
+                    v-if="isFavoriteColumn(col)"
+                    type="button"
+                    class="favorite-toggle"
+                    :class="{ active: isFavoriteValue(row[col]) }"
+                    :disabled="loading || !onToggleRecordFavorite"
+                    :title="favoriteTitle(row[col])"
+                    @click.stop="toggleRecordFavorite(row, col)"
+                  >
+                    <span aria-hidden="true">{{ isFavoriteValue(row[col]) ? '★' : '☆' }}</span>
+                    <span>{{ favoriteText(row[col]) }}</span>
+                  </button>
                   <span
-                    v-if="isStatusColumn(col)"
+                    v-else-if="isStatusColumn(col)"
                     class="status-badge"
                     :class="`tone-${semanticCell(col, row[col]).tone}`"
                   >
@@ -237,7 +249,7 @@
                     :disabled="loading || isLastVisibleColumn(column.name)"
                     @change="onColumnVisibilityChange(column.name, $event)"
                   />
-                  <span>{{ column.label }}</span>
+                  <span>{{ columnChoiceLabel(column) }}</span>
                 </label>
                 <button type="button" class="column-reset" :disabled="loading" @click="resetColumnVisibility">恢复默认</button>
                 <p v-if="columnSaveStatusText" class="column-save-message" :class="`is-${columnSaveStatus}`">
@@ -259,7 +271,19 @@
               />
             </td>
             <td v-for="col in displayedColumns" :key="col">
-              <div v-if="col === rowPrimary" class="cell-primary">
+              <button
+                v-if="isFavoriteColumn(col)"
+                type="button"
+                class="favorite-toggle"
+                :class="{ active: isFavoriteValue(row[col]) }"
+                :disabled="loading || !onToggleRecordFavorite"
+                :title="favoriteTitle(row[col])"
+                @click.stop="toggleRecordFavorite(row, col)"
+              >
+                <span aria-hidden="true">{{ isFavoriteValue(row[col]) ? '★' : '☆' }}</span>
+                <span>{{ favoriteText(row[col]) }}</span>
+              </button>
+              <div v-else-if="col === rowPrimary" class="cell-primary">
                 <div class="primary">{{ semanticCell(col, row[col]).text }}</div>
                 <div v-if="rowSecondary" class="secondary">{{ semanticCell(rowSecondary, row[rowSecondary]).text }}</div>
               </div>
@@ -387,6 +411,7 @@ const props = defineProps<{
   onToggleSelectionAll?: (ids: number[], selected: boolean) => void;
   onRunSelectionAction?: (key: string) => void;
   onClearSelection?: () => void;
+  onToggleRecordFavorite?: (row: Record<string, unknown>, nextValue: boolean) => void | Promise<void>;
   batchMessage?: string;
   groupedRows?: Array<{
     key: string;
@@ -480,6 +505,27 @@ function semanticCell(field: string, value: unknown) {
 function isStatusColumn(field: string) {
   const key = String(field || '').toLowerCase();
   return key.includes('state') || key.includes('status') || key.includes('stage');
+}
+
+function isFavoriteColumn(field: string) {
+  return String(field || '').trim() === 'is_favorite';
+}
+
+function isFavoriteValue(value: unknown) {
+  return value === true || value === 1 || String(value).trim().toLowerCase() === 'true';
+}
+
+function favoriteText(value: unknown) {
+  return isFavoriteValue(value) ? '已收藏' : '未收藏';
+}
+
+function favoriteTitle(value: unknown) {
+  return isFavoriteValue(value) ? '取消项目收藏' : '加入我的项目收藏';
+}
+
+function toggleRecordFavorite(row: Record<string, unknown>, field: string) {
+  if (!props.onToggleRecordFavorite || !isFavoriteColumn(field)) return;
+  props.onToggleRecordFavorite(row, !isFavoriteValue(row[field]));
 }
 
 function toggleGroupCollapsed(key: string) {
@@ -856,7 +902,13 @@ const displayedColumns = computed(() => {
 });
 
 function columnLabel(col: string) {
+  if (isFavoriteColumn(col)) return '我的收藏';
   return columnLabels.value[col] || contractColumnLabels.value[col] || col;
+}
+
+function columnChoiceLabel(column: ColumnOption) {
+  if (isFavoriteColumn(column.name)) return '我的收藏';
+  return column.label || columnLabel(column.name);
 }
 
 function isColumnVisible(name: string) {
@@ -1384,6 +1436,31 @@ tr:hover {
 .status-badge.tone-danger { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
 .status-badge.tone-info { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
 .status-badge.tone-neutral { background: #f9fafb; color: #374151; border-color: #d1d5db; }
+
+.favorite-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #fff;
+  color: #475569;
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.favorite-toggle.active {
+  border-color: #facc15;
+  background: #fffbeb;
+  color: #a16207;
+}
+
+.favorite-toggle:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
 
 th:first-child,
 td:first-child {

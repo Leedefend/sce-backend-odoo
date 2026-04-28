@@ -31089,3 +31089,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P3; 当前反馈为轻量状态提示，未加入全局 toast 或保存历史审计；如后续统一交互反馈体系，可迁入共享通知组件。`
 - rollback: `回退本批次提交并重启前端，即恢复无保存状态提示的列菜单。`
 - next_step: `继续推进列偏好消费设计：列顺序、默认列与多端状态同步策略。`
+
+## 2026-04-28 Batch-Frontend-Project-Favorite-Semantic-Column
+
+- branch: `codex/dev-env-run`
+- short_sha: `df6019fa`
+- Layer Target: `frontend list semantic rendering`
+- Module: `frontend/apps/web`
+- Reason: `用户确认 project.project.is_favorite 的业务语义不是“在仪表板上显示项目”技术文案，而是用户把项目加入个人收藏；要求不改原生模型，仅在自定义前端按业务语义改造。`
+- completed_step: `ListPage 将 is_favorite 列名和列选择菜单统一显示为“我的收藏”，单元格使用星标按钮展示“已收藏/未收藏”；ActionView 点击星标后通过现有 api.data 写入 project.project.is_favorite，失败则回滚；列选项生成器在契约字段存在 is_favorite 时纳入可选列。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/core_extension.py` -> `PASS; 未改原生模型，且最终未改变写入白名单。`
+  - `corepack pnpm -C frontend/apps/web typecheck` -> `PASS`
+  - `corepack pnpm -C frontend/apps/web build` -> `PASS; dist 输出 index-BOJ0wINk.js 后补构建 index-CV27F_NU.js / index-CUJPZSdX.css`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make restart` -> `PASS; prod-sim odoo healthy`
+  - `FRONTEND_PROFILE=prod-sim make frontend.restart` -> `frontend ready http://127.0.0.1:5174/，db=sc_prod_sim，proxy=http://localhost:18069`
+  - `Playwright browser: wutao/123456 登录 sc_prod_sim；/a/452 列选择菜单包含“我的收藏”且不暴露“在仪表板上显示项目”；启用列后表头显示“我的收藏”；首行星标从“未收藏”点击变为“已收藏”，api.data write project.project id=72 ok，再次点击恢复现场。`
+- result: `PASS; 项目收藏语义已前端业务化，原生模型和字段定义未改动。`
+- risk: `P2; 当前收藏写入复用既有 api.data 写入口，按 Odoo 写权限执行；后续如需要更强审计，可单独收口为 project.favorite.toggle 专用 intent。`
+- rollback: `回退本批次提交并重启前端，即恢复 is_favorite 的普通布尔展示和原始字段文案。`
+- next_step: `继续排查其他原生布尔/技术字段是否需要业务语义映射，避免用户看到 Odoo 内部文案。`
