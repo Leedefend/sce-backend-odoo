@@ -31856,3 +31856,25 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 当前 fallback 导出路径在 Odoo 容器 /tmp 内，若要给用户下载，需要配置宿主机可取的 MIGRATION_ARTIFACT_ROOT 或接入报表接口。`
 - rollback: `回退本批脚本 CSV 导出扩展和 Batch-AH 文档。`
 - next_step: `继续旧库常用统计分析报表承载，或将本对账 CSV 字段契约化为新系统报表接口。`
+
+## 2026-04-28 Batch-Legacy-AR-AP-Company-Summary
+
+- branch: `codex/dev-env-run`
+- short_sha: `f264f8a8`
+- Layer Target: `Domain Projection / Report View`
+- Module: `addons/smart_construction_core`
+- Reason: `旧库 P0 应收应付报表仍为 partial，需要复用已验证项目应收应付事实，补齐公司/全局项目级汇总入口。`
+- completed_step: `新增 sc.ar.ap.company.summary 只读 SQL view、树/透视/图表视图、菜单、ACL，并更新旧报表清单。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/projection/ar_ap_company_summary.py addons/smart_construction_core/models/projection/ar_ap_project_summary.py` -> `PASS`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/views/projection/ar_ap_company_summary_views.xml addons/smart_construction_core/views/menu.xml addons/smart_construction_core/data/legacy_report_inventory_seed.xml` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis/nginx healthy`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; rows=815, project_rows=11696, wutao can read rows, menu=报表中心/应收应付报表`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 旧库 P0 应收应付报表已有新系统全局项目级只读入口，复用项目口径 27 字段事实。`
+- risk: `P2; 当前按项目汇总项目口径底表，尚未直接执行旧过程 UP_USP_SELECT_YSYFHZB_XM_ZJ 做样本条件对账。`
+- rollback: `回退本批模型、视图、ACL、manifest 和报表清单变更，升级 smart_construction_core 并重启。`
+- next_step: `为全局应收应付报表补专用契约 smoke，或按旧库常用查询条件做新旧项目级汇总对账。`

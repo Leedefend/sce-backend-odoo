@@ -98,9 +98,9 @@
         <field name="parameter_summary">项目名称、开始日期、截止日期。</field>
         <field name="metric_summary">公司/全局项目维度应收应付、开票、收付款、税额、差额。</field>
         <field name="source_tables">BASE_SYSTEM_PROJECT, T_ProjectContract_Out, T_GYSHT_INFO, C_JFHKLR, C_JFHKLR_TH_ZCDF, C_JXXP_DKDJ_New, C_JXXP_DKDJ_CB, C_JXXP_XXKPDJ, C_JXXP_XXKPDJ_CB, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB。</field>
-        <field name="target_model">待建全局应收应付聚合。</field>
+        <field name="target_model">sc.ar.ap.company.summary；复用 sc.ar.ap.project.summary 已验证事实，按项目汇总为公司/全局口径。</field>
         <field name="carrier_status">partial</field>
-        <field name="next_action">与项目口径应收应付共用指标定义，区分筛选维度和汇总层级。</field>
+        <field name="next_action">已补第一版只读全局聚合；下一步按旧过程常用查询条件做项目级汇总对账，并确认是否需要公司维度筛选。</field>
         <field name="evidence">ts_function_RecordUserClick: 752 clicks, 10 users, last 2026-04-08。</field>
     </record>
 
