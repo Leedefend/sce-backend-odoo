@@ -303,7 +303,7 @@ class ScArApProjectSummary(models.Model):
                       AND project_id IS NOT NULL
                     GROUP BY project_id
                 ),
-                keys AS (
+                business_keys AS (
                     SELECT project_id, partner_id, partner_key, partner_name FROM income_contract
                     UNION
                     SELECT project_id, partner_id, partner_key, partner_name FROM payable_contract
@@ -323,6 +323,21 @@ class ScArApProjectSummary(models.Model):
                     SELECT project_id, partner_id, partner_key, partner_name FROM supplier_contract_pricing
                     UNION
                     SELECT project_id, partner_id, partner_key, partner_name FROM self_funding
+                ),
+                keys AS (
+                    SELECT project_id, partner_id, partner_key, partner_name FROM business_keys
+                    UNION
+                    SELECT
+                        pfb.project_id,
+                        NULL::integer AS partner_id,
+                        'project_balance:' || pfb.project_id::varchar AS partner_key,
+                        '项目级余额' AS partner_name
+                    FROM project_fund_balance pfb
+                    WHERE NOT EXISTS (
+                        SELECT 1
+                        FROM business_keys bk
+                        WHERE bk.project_id = pfb.project_id
+                    )
                 )
                 SELECT
                     row_number() OVER (ORDER BY k.project_id, k.partner_name, k.partner_key) AS id,

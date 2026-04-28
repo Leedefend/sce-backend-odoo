@@ -31348,3 +31348,20 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P0; 项目级实际可用余额事实 755 条，当前应收应付项目报表只覆盖 512 个项目，说明仅有资金余额且无往来单位事实的项目不会显示。P1; 抵扣比例只有 2 行非零，可能需要按项目级口径重算。`
 - rollback: `本批仅新增审计文档和迭代日志，回退提交即可。`
 - next_step: `下一轮先修复 SJKYYE 覆盖缺口，再回查旧库 SF 最终 SELECT 口径。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Balance-Coverage
+
+- branch: `codex/dev-env-run`
+- short_sha: `1bf73c3f`
+- Layer Target: `Domain Projection`
+- Module: `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `Batch-K 发现 SJKYYE 实际可用余额事实有 755 个项目，但 sc.ar.ap.project.summary 只覆盖 512 个有余额项目；根因是报表 key 只来自项目+往来单位业务事实。`
+- completed_step: `将 sc.ar.ap.project.summary 的 key 拆成 business_keys 与 keys，并为没有任何业务 key 的 project_fund_balance 项目补充 partner_key=project_balance:<project_id>、partner_name=项目级余额 的项目级余额行。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/projection/ar_ap_project_summary.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_prod_sim make mod.upgrade` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `summary_rows=11696, summary_projects=814, project_balance_rows=56, fact_projects=755, missing_fact_projects=0`
+- result: `PASS; SJKYYE 项目级余额事实已全部进入应收应付项目报表可见范围。`
+- risk: `P2; 项目级余额行使用系统显示名“项目级余额”，不是旧库往来单位。P2; actual_available_balance 是项目级指标，列表行重复展示时仍不能直接按行求和。`
+- rollback: `回退本批提交并升级 smart_construction_core。`
+- next_step: `回查旧库 SF 抵扣比例最终 SELECT 口径，决定是否改为项目级税负比例。`
