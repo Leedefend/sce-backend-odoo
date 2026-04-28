@@ -14,6 +14,11 @@
 
 ## 3. 标准部署流程
 
+生产环境正式部署与数据重建必须优先遵守：
+
+- `docs/ops/production_deployment_runbook_v1.md`
+- `docs/ops/prod_command_policy.md`
+
 ### 3.1 启动基础服务
 - `make up`
 - `make ps`

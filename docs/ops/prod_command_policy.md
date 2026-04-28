@@ -27,6 +27,9 @@ Makefile guards and script-level guards.
 - `make policy.apply.role_matrix`
 - `make audit.project.actions`
 - `make prod.upgrade.core`
+- `make history.production.fresh_init`
+- `make smoke.business_full`
+- `make smoke.role_matrix`
 
 ## Forbidden in prod (hard stop)
 
@@ -39,6 +42,8 @@ Makefile guards and script-level guards.
 - `make seed.run PROFILE!=base`
 - `make seed.run` without `SEED_DB_NAME_EXPLICIT=1`
 - `make seed.run` with `SC_BOOTSTRAP_USERS=1` unless `SEED_ALLOW_USERS_BOOTSTRAP=1`
+- `make history.continuity.rehearse`
+- `make history.continuity.replay`
 
 ## Examples
 
@@ -46,6 +51,22 @@ Enable a guarded operation:
 
 ```bash
 ENV=prod PROD_DANGER=1 make mod.upgrade MODULE=smart_construction_seed DB_NAME=sc_prod
+```
+
+Fresh production history initialization:
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
+  RUN_ID=prod_history_init_YYYYMMDDTHHMMSS \
+  make history.production.fresh_init
+```
+
+Resume a production history initialization from a replay step:
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
+  RUN_ID=<same_run_id> HISTORY_CONTINUITY_START_AT=<failed_step> \
+  make history.production.fresh_init
 ```
 
 Allow bootstrap users in prod:

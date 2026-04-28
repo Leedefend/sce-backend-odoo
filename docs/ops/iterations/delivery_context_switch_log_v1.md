@@ -16,6 +16,24 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-28T22:22:00+08:00
+- blocker_key: `codex_production_assist_policy_split_v1`
+- layer_target: `Ops Governance Documentation`
+- module: `docs/ops`
+- reason: `原 Codex 自治执行规则把 main 分支和 ENV=prod 全部拦截，导致服务器从 main/tag 正式生产部署也被误判为不允许执行；需要拆分自治开发规则与人工监督生产协助规则。`
+- completed_step: `新增 Codex 生产部署协助策略，并在自治 allowlist、workspace execution rules、生产部署规范、生产命令策略和 ops README 中明确生产部署例外：允许 main/tag/frozen commit 只读部署协助，但禁止 Codex 写仓库、Git 写操作和绕过 Makefile 的生产数据操作；同步修正生产断点续跑入口为 history.production.fresh_init。`
+- active_commit: `3262cd0e`
+- next_step: `在服务器部署前按 codex_production_assist_policy 执行一次只读预检，确认 main/tag 部署不再被自治分支规则误拦。`
+
+### 2026-04-28T22:05:28+08:00
+- blocker_key: `production_deployment_runbook_doc_v1`
+- layer_target: `Ops Documentation / Production Runtime Procedure`
+- module: `docs/ops + docs/deploy`
+- reason: `服务器生产环境正式部署缺少一份统一 SOP，尤其需要把生产数据重建、断点续跑、验收和回滚流程说清楚，避免用 db.reset/demo.reset 或临时脚本处理生产数据。`
+- completed_step: `新增生产环境正式部署规范，补充 ops README 与部署指南入口；本批次只改文档，不触达代码、contract/schema、启动链或前端页面。`
+- active_commit: `3262cd0e`
+- next_step: `按文档在 prod-sim/UAT 执行一次 history.production.fresh_init 或 history.continuity.replay 演练，并归档 RUN_ID、artifact、smoke 结果。`
+
 ### 2026-04-28T15:06:24+08:00
 - blocker_key: `legacy_ar_ap_project_surcharge_batch_i_closed`
 - layer_target: `业务事实分析层 / Domain Projection`
