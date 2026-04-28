@@ -31109,3 +31109,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 当前收藏写入复用既有 api.data 写入口，按 Odoo 写权限执行；后续如需要更强审计，可单独收口为 project.favorite.toggle 专用 intent。`
 - rollback: `回退本批次提交并重启前端，即恢复 is_favorite 的普通布尔展示和原始字段文案。`
 - next_step: `继续排查其他原生布尔/技术字段是否需要业务语义映射，避免用户看到 Odoo 内部文案。`
+
+## 2026-04-28 Batch-Frontend-Project-Favorite-Button-Visual-Refine
+
+- branch: `codex/dev-env-run`
+- short_sha: `91f5bc07`
+- Layer Target: `frontend list favorite button visual`
+- Module: `frontend/apps/web`
+- Reason: `用户反馈项目收藏功能已实现，但按钮形态粗糙、视觉过重，需要收敛为更接近原生星标心智的轻量控件。`
+- completed_step: `ListPage 将项目收藏按钮由胶囊按钮收敛为轻量星标；未收藏仅显示空星，已收藏显示实星和轻量“已收藏”；补齐 title 与 aria-label，保留现有 api.data 写入逻辑。`
+- verification:
+  - `corepack pnpm -C frontend/apps/web typecheck` -> `PASS`
+  - `corepack pnpm -C frontend/apps/web build` -> `PASS; dist 输出 index-ai2uBvXX.js / index-BgJwajXs.css`
+  - `FRONTEND_PROFILE=prod-sim make frontend.restart` -> `frontend ready http://127.0.0.1:5174/，db=sc_prod_sim，proxy=http://localhost:18069`
+  - `Playwright browser: wutao/123456 登录 sc_prod_sim 后进入 /a/452；表头包含“我的收藏”；首行未收藏按钮文本为“☆”，title/aria-label=加入我的项目收藏；点击后文本为“★ 已收藏”，class=active，title/aria-label=取消项目收藏；再次点击恢复现场。`
+- result: `PASS; 收藏按钮视觉更轻量，业务写入能力未回退。`
+- risk: `P3; 当前仍使用文本星标，后续如统一图标体系，可替换为共享 icon 组件。`
+- rollback: `回退本批次提交并重启前端，即恢复上一版收藏按钮形态。`
+- next_step: `继续按业务事实层排查其他用户态按钮的视觉一致性。`

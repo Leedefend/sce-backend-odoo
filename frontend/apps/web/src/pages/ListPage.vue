@@ -202,10 +202,11 @@
                     :class="{ active: isFavoriteValue(row[col]) }"
                     :disabled="loading || !onToggleRecordFavorite"
                     :title="favoriteTitle(row[col])"
+                    :aria-label="favoriteTitle(row[col])"
                     @click.stop="toggleRecordFavorite(row, col)"
                   >
-                    <span aria-hidden="true">{{ isFavoriteValue(row[col]) ? '★' : '☆' }}</span>
-                    <span>{{ favoriteText(row[col]) }}</span>
+                    <span class="favorite-star" aria-hidden="true">{{ isFavoriteValue(row[col]) ? '★' : '☆' }}</span>
+                    <span v-if="isFavoriteValue(row[col])" class="favorite-label">已收藏</span>
                   </button>
                   <span
                     v-else-if="isStatusColumn(col)"
@@ -278,10 +279,11 @@
                 :class="{ active: isFavoriteValue(row[col]) }"
                 :disabled="loading || !onToggleRecordFavorite"
                 :title="favoriteTitle(row[col])"
+                :aria-label="favoriteTitle(row[col])"
                 @click.stop="toggleRecordFavorite(row, col)"
               >
-                <span aria-hidden="true">{{ isFavoriteValue(row[col]) ? '★' : '☆' }}</span>
-                <span>{{ favoriteText(row[col]) }}</span>
+                <span class="favorite-star" aria-hidden="true">{{ isFavoriteValue(row[col]) ? '★' : '☆' }}</span>
+                <span v-if="isFavoriteValue(row[col])" class="favorite-label">已收藏</span>
               </button>
               <div v-else-if="col === rowPrimary" class="cell-primary">
                 <div class="primary">{{ semanticCell(col, row[col]).text }}</div>
@@ -513,10 +515,6 @@ function isFavoriteColumn(field: string) {
 
 function isFavoriteValue(value: unknown) {
   return value === true || value === 1 || String(value).trim().toLowerCase() === 'true';
-}
-
-function favoriteText(value: unknown) {
-  return isFavoriteValue(value) ? '已收藏' : '未收藏';
 }
 
 function favoriteTitle(value: unknown) {
@@ -1440,21 +1438,47 @@ tr:hover {
 .favorite-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  border: 1px solid #d1d5db;
-  border-radius: 999px;
-  background: #fff;
-  color: #475569;
-  padding: 2px 8px;
-  font-size: 12px;
-  line-height: 18px;
+  justify-content: center;
+  gap: 4px;
+  min-width: 30px;
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #94a3b8;
+  padding: 0 6px;
+  font-size: 17px;
+  line-height: 1;
   cursor: pointer;
 }
 
 .favorite-toggle.active {
-  border-color: #facc15;
+  border-color: #fde68a;
   background: #fffbeb;
-  color: #a16207;
+  color: #d97706;
+}
+
+.favorite-toggle:not(:disabled):hover {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.favorite-toggle.active:not(:disabled):hover {
+  border-color: #facc15;
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.favorite-star {
+  width: 16px;
+  text-align: center;
+}
+
+.favorite-label {
+  color: #92400e;
+  font-size: 12px;
+  line-height: 16px;
 }
 
 .favorite-toggle:disabled {
