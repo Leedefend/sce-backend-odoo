@@ -31506,3 +31506,27 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 当前累计收款/累计支出先使用资金日报已承载口径，7454 条 active 资金日报中 7452 条匹配到账户，剩余未匹配和旧过程多来源表需要下一批继续补齐。`
 - rollback: `回退本批提交，升级 smart_construction_core 并重启模拟生产服务即可移除菜单、视图和 SQL view。`
 - next_step: `继续拆旧过程多来源收入/支出来源，优先把未匹配资金日报行和公司财务收支、借还款、账户往来补成可重建事实或投影。`
+
+## 2026-04-28 Batch-Legacy-Account-Transaction
+
+- branch: `codex/dev-env-run`
+- short_sha: `dc7873ba`
+- Layer Target: `Domain Carrier / Domain Projection`
+- Module: `addons/smart_construction_core`, `scripts/migration`, `docs/migration_alignment`
+- Reason: `账户收支统计表旧过程中的 SRJE/ZCJE 来自 C_FKGL_ZHJZJWL 账户间往来，需要先补来源明细载体并接入汇总表，减少 partial 口径缺口。`
+- completed_step: `新增 sc.legacy.account.transaction.line 模型、视图、菜单、ACL、旧库 adapter/write 脚本和 Make target；将 C_FKGL_ZHJZJWL 拆成收入/支出两侧 860 条来源明细；更新 sc.account.income.expense.summary 由来源明细承载收入金额/支出金额/账户往来。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/legacy_account_transaction_line.py addons/smart_construction_core/models/projection/account_income_expense_summary.py scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/views/support/legacy_account_transaction_line_views.xml` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_transaction.replay.adapter` -> `PASS; rows=860`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS; created_rows=860; rerun updated_existing=6`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; transaction_lines=860, matched=837, missing=23, income_amount=305580740.97, expense_amount=304633612.53`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis healthy`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 账户收支统计表已承载旧过程账户往来 SRJE/ZCJE 的主要来源，并保持可重建链路。`
+- risk: `P1; 仍有 23 条账户往来来源明细因旧账户 ID/账号存在歧义未绑定到账户主数据；LJSK/LJZC 的借还款、保证金、公司财务收支等累计来源仍未完全接入。`
+- rollback: `回退本批提交，升级 smart_construction_core 并重启；如需清理模拟生产数据，可删除 sc_legacy_account_transaction_line 中 import_batch=legacy_account_transaction_v1 的记录。`
+- next_step: `继续接入旧过程 LJSK/LJZC 累计收支来源，优先处理 C_CWSFK_GSCWSR/C_CWSFK_GSCWZC 或 C_JFHKLR。`

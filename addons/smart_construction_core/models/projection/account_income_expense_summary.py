@@ -51,11 +51,12 @@ class ScAccountIncomeExpenseSummary(models.Model):
             """
             SELECT
                 to_regclass('sc_legacy_account_master'),
-                to_regclass('sc_legacy_fund_daily_line')
+                to_regclass('sc_legacy_fund_daily_line'),
+                to_regclass('sc_legacy_account_transaction_line')
             """
         )
-        account_table, fund_daily_table = self._cr.fetchone()
-        if not account_table or not fund_daily_table:
+        account_table, fund_daily_table, transaction_table = self._cr.fetchone()
+        if not account_table or not fund_daily_table or not transaction_table:
             return
         tools.drop_view_if_exists(self._cr, self._table)
         self._cr.execute(
@@ -132,6 +133,19 @@ class ScAccountIncomeExpenseSummary(models.Model):
                     WHERE m.account_id IS NOT NULL
                     GROUP BY m.account_id
                 ),
+                transaction_by_account AS (
+                    SELECT
+                        t.account_id,
+                        COALESCE(SUM(CASE WHEN t.metric_bucket = 'account_transfer' AND t.direction = 'income' THEN t.amount ELSE 0 END), 0.0) AS transfer_income,
+                        COALESCE(SUM(CASE WHEN t.metric_bucket = 'account_transfer' AND t.direction = 'expense' THEN t.amount ELSE 0 END), 0.0) AS transfer_expense,
+                        COALESCE(SUM(CASE WHEN t.metric_bucket = 'cumulative' AND t.direction = 'income' THEN t.amount ELSE 0 END), 0.0) AS cumulative_income,
+                        COALESCE(SUM(CASE WHEN t.metric_bucket = 'cumulative' AND t.direction = 'expense' THEN t.amount ELSE 0 END), 0.0) AS cumulative_expense,
+                        COUNT(*)::integer AS transaction_line_count
+                    FROM sc_legacy_account_transaction_line t
+                    WHERE t.active IS TRUE
+                      AND t.account_id IS NOT NULL
+                    GROUP BY t.account_id
+                ),
                 latest_balance AS (
                     SELECT DISTINCT ON (m.account_id)
                         m.account_id,
@@ -157,25 +171,32 @@ class ScAccountIncomeExpenseSummary(models.Model):
                         a.project_id,
                         a.project_name,
                         a.opening_balance,
-                        COALESCE(l.income_amount, 0.0) AS income_amount,
-                        COALESCE(l.expense_amount, 0.0) AS expense_amount,
-                        COALESCE(l.income_amount, 0.0) AS cumulative_receipt_amount,
-                        COALESCE(l.expense_amount, 0.0) AS cumulative_expense_amount,
-                        COALESCE(l.income_amount, 0.0) - COALESCE(l.expense_amount, 0.0) AS account_transfer_amount,
+                        COALESCE(t.transfer_income, 0.0) AS income_amount,
+                        COALESCE(t.transfer_expense, 0.0) AS expense_amount,
+                        COALESCE(t.cumulative_income, l.income_amount, 0.0) AS cumulative_receipt_amount,
+                        COALESCE(t.cumulative_expense, l.expense_amount, 0.0) AS cumulative_expense_amount,
+                        COALESCE(t.transfer_income, 0.0) - COALESCE(t.transfer_expense, 0.0) AS account_transfer_amount,
                         COALESCE(
                             b.current_account_balance,
-                            a.opening_balance + COALESCE(l.income_amount, 0.0) - COALESCE(l.expense_amount, 0.0)
+                            a.opening_balance
+                                + COALESCE(t.transfer_income, 0.0)
+                                - COALESCE(t.transfer_expense, 0.0)
+                                + COALESCE(t.cumulative_income, l.income_amount, 0.0)
+                                - COALESCE(t.cumulative_expense, l.expense_amount, 0.0)
                         ) AS current_account_balance,
                         COALESCE(b.current_bank_balance, 0.0) AS current_bank_balance,
                         COALESCE(b.bank_system_difference, 0.0) AS bank_system_difference,
-                        COALESCE(l.line_count, 0)::integer AS line_count,
+                        (COALESCE(l.line_count, 0) + COALESCE(t.transaction_line_count, 0))::integer AS line_count,
                         CASE
+                            WHEN COALESCE(t.transaction_line_count, 0) > 0 AND COALESCE(l.line_count, 0) > 0 THEN '账户主数据 + 账户往来 + 资金日报明细'
+                            WHEN COALESCE(t.transaction_line_count, 0) > 0 THEN '账户主数据 + 账户往来'
                             WHEN COALESCE(l.line_count, 0) > 0 THEN '账户主数据 + 资金日报明细'
                             ELSE '仅账户主数据'
                         END AS coverage_note,
                         COALESCE(a.account_type, '未分类账户') || '/' || COALESCE(a.sort_no, '') || '/' || COALESCE(a.account_name, '') AS sort_key
                     FROM base_account a
                     LEFT JOIN line_by_account l ON l.account_id = a.id
+                    LEFT JOIN transaction_by_account t ON t.account_id = a.id
                     LEFT JOIN latest_balance b ON b.account_id = a.id
                 ),
                 type_rows AS (

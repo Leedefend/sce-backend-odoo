@@ -49,6 +49,7 @@ from . import legacy_financing_loan_fact
 from . import legacy_fund_daily_snapshot_fact
 from . import legacy_fund_daily_line
 from . import legacy_account_master
+from . import legacy_account_transaction_line
 from . import legacy_user_context
 from . import legacy_material_catalog
 from . import legacy_file_index
