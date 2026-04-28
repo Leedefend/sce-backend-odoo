@@ -72,12 +72,17 @@ Batch-X 在同一载体继续接入供应商付款：
 - 账户名称输出为 `FKZHMC/FKZH`，让回放脚本在旧账户 ID 未进入账户主数据时，能按账号兜底匹配有效账户。
 - 账号兜底后，`T_FK_Supplier` 已绑定 13125 行，未绑定 157 行，未绑定金额 36,913,102.92。
 
+Batch-Y 在同一载体继续接入借还款：
+
+- `ZJGL_ZCDFSZ_FXJK_HK`：风险借款还款，写入 `direction='income'`、`metric_bucket='cumulative'`，对应旧过程 `LJSK` 的风险借款还款部分；模拟生产库新增 84 行，金额 55,223,063.02。
+- `ZJGL_ZCDFSZ_FXJK_JK`：风险借款申请，写入 `direction='expense'`、`metric_bucket='cumulative'`，对应旧过程 `LJZC` 的风险借款部分；模拟生产库新增 95 行，金额 96,586,522.16。
+- `BGGL_JHK_HKDJ` 与 `BGGL_JHK_JKSQ` 的员工借还款分支已保留，但当前旧库已审核有效记录的账户字段为空，因此本批未产生有效行。
+- 本批新增 179 行全部绑定到账户主数据，未新增未绑定来源。
+
 ## 尚未覆盖
 
 旧过程中的 `LJSK/LJZC` 仍包含多来源：
 
-- `BGGL_JHK_HKDJ`
-- `ZJGL_ZCDFSZ_FXJK_*`
 - `ZJGL_BZJGL_*`
 - `T_KK_SJTHB`
 

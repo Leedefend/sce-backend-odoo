@@ -31645,3 +31645,27 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 整体仍有 269 条来源明细未绑定账户，其中 T_FK_Supplier 157 条、金额 36,913,102.92；付款退回当前旧库无有效行，分支仅作为未来可重建能力保留。`
 - rollback: `回退本批 adapter 和文档；如需清理模拟生产新增数据，可删除 sc_legacy_account_transaction_line 中 source_table='T_FK_Supplier'。`
 - next_step: `继续接入借还款、保证金、投标退款等累计收支来源，并继续追踪剩余未绑定账户。`
+
+## 2026-04-28 Batch-Legacy-Risk-Loan-Cumulative
+
+- branch: `codex/dev-env-run`
+- short_sha: `c117e212`
+- Layer Target: `Domain Carrier / Domain Projection`
+- Module: `scripts/migration`, `addons/smart_construction_core`, `docs/migration_alignment`
+- Reason: `账户收支统计表旧过程 LJSK/LJZC 包含借还款，需要接入同一账户收支来源明细载体。`
+- completed_step: `扩展 fresh_db_legacy_account_transaction_replay_adapter，将 ZJGL_ZCDFSZ_FXJK_HK 映射为 cumulative/income，将 ZJGL_ZCDFSZ_FXJK_JK 映射为 cumulative/expense；同时保留 BGGL_JHK_HKDJ/BGGL_JHK_JKSQ 员工借还款分支。`
+- verification:
+  - `python3 -m py_compile scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_transaction.replay.adapter` -> `PASS; rows=25826`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_transaction_replay_write.py` -> `PASS; created_rows=179, skipped_existing=25647, missing_account=0`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; total=25826, matched=25557, missing=269, risk_loan_repayment=55223063.02, risk_loan_request=96586522.16, cumulative_receipt_amount=2370424598.15, cumulative_expense_amount=2271093057.77`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/data/legacy_report_inventory_seed.xml` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim make ps` -> `PASS; odoo/db/redis/nginx healthy`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 风险借还款已进入账户收支统计累计收款/累计支出口径，且本批新增来源全部绑定到账户。`
+- risk: `P1; 整体仍有 269 条历史来源明细未绑定账户；员工借还款表当前无有效账户行，只保留未来可重建分支。`
+- rollback: `回退本批 adapter 和文档；如需清理模拟生产新增数据，可删除 sc_legacy_account_transaction_line 中 source_table in ('ZJGL_ZCDFSZ_FXJK_HK','ZJGL_ZCDFSZ_FXJK_JK','BGGL_JHK_HKDJ','BGGL_JHK_JKSQ')。`
+- next_step: `继续接入保证金、贷款、投标退款等累计收支来源，并继续追踪剩余未绑定账户。`
