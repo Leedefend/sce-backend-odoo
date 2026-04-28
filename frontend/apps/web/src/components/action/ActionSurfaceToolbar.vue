@@ -94,6 +94,7 @@
               <span class="menu-check">{{ activeFilterKey === chip.key ? selectedSymbol : '' }}</span>
               <span>{{ chip.label }}</span>
             </button>
+            <p v-if="!allFilterChips.length" class="search-menu-empty">暂无筛选</p>
           </div>
         </section>
 
@@ -111,6 +112,7 @@
               <span class="menu-check">{{ activeGroupKey === chip.key ? selectedSymbol : '' }}</span>
               <span>{{ chip.label }}</span>
             </button>
+            <p v-if="!allGroupChips.length" class="search-menu-empty">暂无分组</p>
           </div>
         </section>
 
@@ -229,8 +231,22 @@ const activeSavedFilterChip = computed<SearchChip | null>(() =>
 const activeGroupChip = computed<SearchChip | null>(() =>
   allGroupChips.value.find((chip) => chip.key === props.activeGroupKey) || null,
 );
-const showFilterColumn = computed(() => props.showFilter && allFilterChips.value.length > 0);
-const showGroupColumn = computed(() => props.showGroup && allGroupChips.value.length > 0);
+const showFilterColumn = computed(() =>
+  props.showFilter
+  || props.showGroup
+  || props.showSavedFilter
+  || allFilterChips.value.length > 0
+  || allGroupChips.value.length > 0
+  || allSavedFilterChips.value.length > 0,
+);
+const showGroupColumn = computed(() =>
+  props.showGroup
+  || props.showFilter
+  || props.showSavedFilter
+  || allFilterChips.value.length > 0
+  || allGroupChips.value.length > 0
+  || allSavedFilterChips.value.length > 0,
+);
 const showSavedFilterColumn = computed(() =>
   props.showSavedFilter
   || showFilterColumn.value
@@ -295,6 +311,10 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 8px;
   min-width: 0;
+}
+
+.view-switch {
+  width: 120px;
 }
 
 .group-switch {

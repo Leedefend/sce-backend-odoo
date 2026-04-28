@@ -30892,3 +30892,20 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 表单页、工作台、场景页不属于本轮看板/列表结构范围，未纳入该统一控件。`
 - rollback: `回退本批次提交并重建前端静态包，即恢复 ListPage 的 PageHeader + 旧 PageToolbar 兜底结构。`
 - next_step: `继续抽查更多 action_id 的 list/kanban 业务页面，确认无业务特例样式需要迁移。`
+
+## 2026-04-28 Batch-Frontend-List-Format-Systemic-Unification
+
+- branch: `codex/dev-env-run`
+- short_sha: `23b55292`
+- Layer Target: `Frontend shared action toolbar + list renderer`
+- Module: `frontend/apps/web`
+- Reason: `用户发现项目合同列表与项目列表格式仍不一致；事实排查确认项目列表 action=452、项目合同 action=489，二者都走 ActionView/ListPage，但项目合同缺少多视图按钮且无筛选项，导致视图切换区和搜索下拉列宽/列数不一致。`
+- completed_step: `ActionSurfaceToolbar 单视图页面也显示当前“列表”视图按钮；视图切换区固定为 120px，保证搜索框起点一致；搜索下拉固定“筛选 / 分组方式 / 收藏夹”三栏，筛选/分组/收藏无数据时分别显示“暂无筛选 / 暂无分组 / 暂无收藏”；删除已无引用的旧 PageToolbar 组件，避免列表页回退旧格式。`
+- verification:
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend/apps/web node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile --dir /workspace/frontend && pnpm typecheck && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `Playwright browser: /a/452 项目列表 与 /a/489 项目合同 sameStructure=true；compactY=69、actionToolbarY=146、contentY=218、viewSwitchW=120、nativeSearchX=401、dropdown section x=402/655/909；pageHeaderCount=0、legacyToolbarCount=0、actionToolbarCount=1、nativeSearchCount=1。`
+  - `Playwright browser systemic matrix: action_id=452,489,491,492,565,577,486 全部 ok；均为紧凑页头 -> ActionSurfaceToolbar -> 内容，legacyToolbarCount=0、actionToolbarCount=1、nativeSearchCount=1、可打开搜索菜单时 sectionCount=3。`
+- result: `PASS; 项目合同列表、项目列表及合同/结算类列表已统一页面结构和搜索分类格式。`
+- risk: `P2; 当前系统性验证覆盖 ActionView 的主要业务列表，未覆盖非 ActionView 的后台管理/场景健康类管理页。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复单视图不显示视图区、按数据条件展示搜索列和旧 PageToolbar 文件。`
+- next_step: `继续根据用户实测反馈抽查剩余业务菜单入口，若出现非 ActionView 列表页，优先迁移到 ActionView/ListPage 标准结构。`

@@ -1051,7 +1051,7 @@ const showViewSwitch = computed(() =>
   isSectionVisible('view_switch', {
     defaultEnabled: true,
     tag: 'section',
-    vmVisible: vm.value.page.availableViewModes.length > 1,
+    vmVisible: canRenderActionSurfaceToolbar.value && vm.value.page.availableViewModes.length > 0,
   }),
 );
 const toolbarViewModeLabels = computed(() =>
