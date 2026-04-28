@@ -31404,3 +31404,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; actual_available_balance 和 tax_deduction_rate 是项目级指标，在多往来单位行重复展示，不应按行求和。P2; 通用 tree/form smoke 需要按模型拆基线，否则会误报。`
 - rollback: `本批仅文档与审计记录，回退提交即可。`
 - next_step: `为项目级指标补用户可读提示或专用说明，并为 sc.ar.ap.project.summary 增加专用前端契约 smoke。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Frontend-Smoke
+
+- branch: `codex/dev-env-run`
+- short_sha: `bf1a4cbf`
+- Layer Target: `Frontend Contract Gate`
+- Module: `scripts/verify`, `Makefile`, `docs/migration_alignment`
+- Reason: `通用 tree_view_smoke 使用 project.project grouped signature baseline，应用到 sc.ar.ap.project.summary 会误报；需要为应收应付项目报表固化专用前端契约 smoke。`
+- completed_step: `新增 scripts/verify/fe_ar_ap_project_summary_smoke.js 与 make verify.portal.ar_ap_project_summary_smoke.container，验证 load_view tree 列、关键字段中文标签、只读权限、项目级余额行和非零抵扣比例行。`
+- verification:
+  - `node --check scripts/verify/fe_ar_ap_project_summary_smoke.js` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.portal.ar_ap_project_summary_smoke.container` -> `PASS`
+  - `corepack pnpm -C frontend/apps/web typecheck:strict` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 应收应付报表（项目）已有专用前端契约 smoke，后续可稳定验证列、标签、权限和关键业务行。`
+- risk: `P2; 该 smoke 固定当前模拟生产库统计数 project_balance_rows=56、tax_rate_rows=7471，后续重建数据范围变化时需要同步更新预期或参数化。`
+- rollback: `回退本批提交即可移除专用 smoke 和 Make target。`
+- next_step: `为项目级指标补用户可读提示，避免导出/透视后按行求和误解。`
