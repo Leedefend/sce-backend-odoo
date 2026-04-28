@@ -79,11 +79,18 @@ Batch-Y 在同一载体继续接入借还款：
 - `BGGL_JHK_HKDJ` 与 `BGGL_JHK_JKSQ` 的员工借还款分支已保留，但当前旧库已审核有效记录的账户字段为空，因此本批未产生有效行。
 - 本批新增 179 行全部绑定到账户主数据，未新增未绑定来源。
 
+Batch-Z 在同一载体继续接入保证金：
+
+- `ZJGL_BZJGL_Pay_FBZJ`：付保证金，写入 `direction='expense'`、`metric_bucket='cumulative'`；模拟生产库新增 2903 行，金额 215,611,737.26。
+- `ZJGL_BZJGL_Pay_FBZJTH`：退付保证金，写入 `direction='income'`、`metric_bucket='cumulative'`；模拟生产库新增 1851 行，金额 209,336,943.57。
+- `ZJGL_BZJGL_Branch_SBZJDJ`：收保证金，写入 `direction='income'`、`metric_bucket='cumulative'`；模拟生产库新增 1540 行，金额 108,563,008.28。
+- `ZJGL_BZJGL_Branch_SBZJTH`：退收保证金，写入 `direction='expense'`、`metric_bucket='cumulative'`；模拟生产库新增 884 行，金额 108,850,591.28。
+- 退付保证金账户名称补 `Y_ZFZHao/Y_ZFZH` 兜底后，重放修正 511 条账户绑定；本批保证金最终未绑定 262 条，未绑定金额 48,318,603.97。
+
 ## 尚未覆盖
 
 旧过程中的 `LJSK/LJZC` 仍包含多来源：
 
-- `ZJGL_BZJGL_*`
 - `T_KK_SJTHB`
 
 下一轮应继续按同一载体补累计收款、累计支出来源。

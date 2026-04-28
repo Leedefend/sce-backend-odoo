@@ -471,12 +471,124 @@ WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
   AND ISNULL(DEL, 0) = 0
   AND ISNULL(DJZT, '0') = '2'
   AND ISNULL(JKJE, 0) <> 0
+UNION ALL
+SELECT
+  {clean_sql("Id + ':paid_guarantee_deposit'")} AS source_key,
+  'ZJGL_BZJGL_Pay_FBZJ' AS source_table,
+  {clean_sql("Id")} AS legacy_record_id,
+  {clean_sql("DJBH")} AS document_no,
+  {clean_sql("CONVERT(varchar(10), TXRQ, 23)")} AS transaction_date,
+  {clean_sql("DJZT")} AS document_state,
+  {clean_sql("DEL")} AS deleted_flag,
+  {clean_sql("COALESCE(NULLIF(XMID, ''), NULLIF(TBXMID, ''))")} AS project_legacy_id,
+  {clean_sql("COALESCE(NULLIF(XMMC, ''), NULLIF(TBXMMC, ''))")} AS project_name,
+  {clean_sql("ZFZHID")} AS account_legacy_id,
+  {clean_sql("COALESCE(NULLIF(ZFZH, ''), '') + CASE WHEN NULLIF(COALESCE(ZFZHao, ZFZH), '') IS NOT NULL THEN '/' + COALESCE(NULLIF(ZFZHao, ''), ZFZH) ELSE '' END")} AS account_name,
+  {clean_sql("SKDWID")} AS counterparty_account_legacy_id,
+  {clean_sql("SKDW")} AS counterparty_account_name,
+  'expense' AS direction,
+  'cumulative' AS metric_bucket,
+  {clean_sql("BZJJE")} AS amount,
+  {clean_sql("BZJLX")} AS category,
+  {clean_sql("D_QKXYJD_THBZ")} AS source_summary,
+  {clean_sql("BZ")} AS note,
+  '1' AS active
+FROM dbo.ZJGL_BZJGL_Pay_FBZJ
+WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
+  AND NULLIF(LTRIM(RTRIM(ZFZHID)), '') IS NOT NULL
+  AND ISNULL(DEL, 0) = 0
+  AND ISNULL(DJZT, '0') = '2'
+  AND ISNULL(BZJJE, 0) <> 0
+UNION ALL
+SELECT
+  {clean_sql("Id + ':paid_guarantee_deposit_refund'")} AS source_key,
+  'ZJGL_BZJGL_Pay_FBZJTH' AS source_table,
+  {clean_sql("Id")} AS legacy_record_id,
+  {clean_sql("DJBH")} AS document_no,
+  {clean_sql("CONVERT(varchar(10), THRQ, 23)")} AS transaction_date,
+  {clean_sql("DJZT")} AS document_state,
+  {clean_sql("DEL")} AS deleted_flag,
+  {clean_sql("COALESCE(NULLIF(XMID, ''), NULLIF(TBXMID, ''))")} AS project_legacy_id,
+  {clean_sql("COALESCE(NULLIF(XMMC, ''), NULLIF(TBXMMC, ''))")} AS project_name,
+  {clean_sql("THZHID")} AS account_legacy_id,
+  {clean_sql("COALESCE(NULLIF(THZH, ''), '') + CASE WHEN NULLIF(COALESCE(ZHHM, Y_ZFZHao, Y_ZFZH, THZH), '') IS NOT NULL THEN '/' + COALESCE(NULLIF(ZHHM, ''), NULLIF(Y_ZFZHao, ''), NULLIF(Y_ZFZH, ''), THZH) ELSE '' END")} AS account_name,
+  {clean_sql("Y_SKDWID")} AS counterparty_account_legacy_id,
+  {clean_sql("Y_SKDW")} AS counterparty_account_name,
+  'income' AS direction,
+  'cumulative' AS metric_bucket,
+  {clean_sql("THJE")} AS amount,
+  {clean_sql("Y_BZJLX")} AS category,
+  {clean_sql("SM")} AS source_summary,
+  {clean_sql("Y_BZ")} AS note,
+  '1' AS active
+FROM dbo.ZJGL_BZJGL_Pay_FBZJTH
+WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
+  AND NULLIF(LTRIM(RTRIM(THZHID)), '') IS NOT NULL
+  AND ISNULL(DEL, 0) = 0
+  AND ISNULL(DJZT, '0') = '2'
+  AND ISNULL(THJE, 0) <> 0
+UNION ALL
+SELECT
+  {clean_sql("ID + ':received_guarantee_deposit'")} AS source_key,
+  'ZJGL_BZJGL_Branch_SBZJDJ' AS source_table,
+  {clean_sql("ID")} AS legacy_record_id,
+  {clean_sql("DJBH")} AS document_no,
+  {clean_sql("CONVERT(varchar(10), DJRQ, 23)")} AS transaction_date,
+  {clean_sql("DJZT")} AS document_state,
+  {clean_sql("DEL")} AS deleted_flag,
+  {clean_sql("COALESCE(NULLIF(XMID, ''), NULLIF(TBXMID, ''))")} AS project_legacy_id,
+  {clean_sql("COALESCE(NULLIF(XMMC, ''), NULLIF(TBXMMC, ''))")} AS project_name,
+  {clean_sql("SKZHID")} AS account_legacy_id,
+  {clean_sql("COALESCE(NULLIF(SKZHMC, ''), '') + CASE WHEN NULLIF(SKZH, '') IS NOT NULL THEN '/' + SKZH ELSE '' END")} AS account_name,
+  {clean_sql("DWID")} AS counterparty_account_legacy_id,
+  {clean_sql("DW")} AS counterparty_account_name,
+  'income' AS direction,
+  'cumulative' AS metric_bucket,
+  {clean_sql("JE")} AS amount,
+  {clean_sql("BZJLX")} AS category,
+  {clean_sql("BT")} AS source_summary,
+  {clean_sql("BZ")} AS note,
+  '1' AS active
+FROM dbo.ZJGL_BZJGL_Branch_SBZJDJ
+WHERE NULLIF(LTRIM(RTRIM(ID)), '') IS NOT NULL
+  AND NULLIF(LTRIM(RTRIM(SKZHID)), '') IS NOT NULL
+  AND ISNULL(DEL, 0) = 0
+  AND ISNULL(DJZT, '0') = '2'
+  AND ISNULL(JE, 0) <> 0
+UNION ALL
+SELECT
+  {clean_sql("Id + ':received_guarantee_deposit_refund'")} AS source_key,
+  'ZJGL_BZJGL_Branch_SBZJTH' AS source_table,
+  {clean_sql("Id")} AS legacy_record_id,
+  {clean_sql("DJBH")} AS document_no,
+  {clean_sql("CONVERT(varchar(10), DJRQ, 23)")} AS transaction_date,
+  {clean_sql("DJZT")} AS document_state,
+  {clean_sql("DEL")} AS deleted_flag,
+  {clean_sql("COALESCE(NULLIF(XMID, ''), NULLIF(TBXMID, ''))")} AS project_legacy_id,
+  {clean_sql("COALESCE(NULLIF(XMMC, ''), NULLIF(TBXMMC, ''))")} AS project_name,
+  {clean_sql("THZHID")} AS account_legacy_id,
+  {clean_sql("COALESCE(NULLIF(SKZH, ''), '') + CASE WHEN NULLIF(THKHHZH, '') IS NOT NULL THEN '/' + THKHHZH ELSE '' END")} AS account_name,
+  {clean_sql("SKDWID")} AS counterparty_account_legacy_id,
+  {clean_sql("SKDW")} AS counterparty_account_name,
+  'expense' AS direction,
+  'cumulative' AS metric_bucket,
+  {clean_sql("THJE")} AS amount,
+  {clean_sql("LX")} AS category,
+  {clean_sql("BT")} AS source_summary,
+  {clean_sql("BZ")} AS note,
+  '1' AS active
+FROM dbo.ZJGL_BZJGL_Branch_SBZJTH
+WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
+  AND NULLIF(LTRIM(RTRIM(THZHID)), '') IS NOT NULL
+  AND ISNULL(DEL, 0) = 0
+  AND ISNULL(DJZT, '0') = '2'
+  AND ISNULL(THJE, 0) <> 0
 ORDER BY transaction_date, legacy_record_id, direction;
 """
     rows = write_sql_csv(PAYLOAD_CSV, FIELDS, sql)
     payload = {
         "mode": "fresh_db_legacy_account_transaction_replay_adapter",
-        "source_table": "C_FKGL_ZHJZJWL,C_CWSFK_GSCWSR,C_CWSFK_GSCWZC,C_JFHKLR,C_JFHKLR_TH,C_JFHKLR_TH_ZCDF_CB,T_FK_Supplier,BGGL_JHK_HKDJ,BGGL_JHK_JKSQ,ZJGL_ZCDFSZ_FXJK_HK,ZJGL_ZCDFSZ_FXJK_JK",
+        "source_table": "C_FKGL_ZHJZJWL,C_CWSFK_GSCWSR,C_CWSFK_GSCWZC,C_JFHKLR,C_JFHKLR_TH,C_JFHKLR_TH_ZCDF_CB,T_FK_Supplier,BGGL_JHK_HKDJ,BGGL_JHK_JKSQ,ZJGL_ZCDFSZ_FXJK_HK,ZJGL_ZCDFSZ_FXJK_JK,ZJGL_BZJGL_Pay_FBZJ,ZJGL_BZJGL_Pay_FBZJTH,ZJGL_BZJGL_Branch_SBZJDJ,ZJGL_BZJGL_Branch_SBZJTH",
         "rows": rows,
         "csv": str(PAYLOAD_CSV),
         "decision": "legacy_account_transaction_payload_ready" if rows else "STOP_REVIEW_REQUIRED",
