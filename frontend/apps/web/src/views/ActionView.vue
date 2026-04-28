@@ -303,6 +303,15 @@
           group-label="分组方式"
           :group-primary="vm.filters.groupBy.primary"
           :group-overflow="vm.filters.groupBy.overflow"
+          :custom-filter-enabled="customSearchCapabilities.filterEnabled"
+          :custom-filter-label="customSearchCapabilities.filterLabel"
+          :custom-filter-fields="customFilterFields"
+          :custom-group-enabled="customSearchCapabilities.groupEnabled"
+          :custom-group-label="customSearchCapabilities.groupLabel"
+          :custom-group-fields="customGroupByChips"
+          :favorite-save-enabled="customSearchCapabilities.favoriteSaveEnabled"
+          :favorite-save-label="customSearchCapabilities.favoriteLabel"
+          :active-custom-filter-label="activeCustomFilterLabel"
           :active-group-key="toolbarActiveGroupKey"
           :can-create-record="canCreateRecord"
           :create-label="t('action_create_record', '新建')"
@@ -319,6 +328,9 @@
           @sort="handleSort"
           @group="applyGroupBy"
           @clear-group="clearGroupBy"
+          @custom-filter="applyCustomFilter"
+          @clear-custom-filter="clearCustomFilter"
+          @save-favorite="handleSaveFavorite"
           @create="openCreateRecord"
         />
       </template>
@@ -401,6 +413,15 @@
           group-label="分组方式"
           :group-primary="vm.filters.groupBy.primary"
           :group-overflow="vm.filters.groupBy.overflow"
+          :custom-filter-enabled="customSearchCapabilities.filterEnabled"
+          :custom-filter-label="customSearchCapabilities.filterLabel"
+          :custom-filter-fields="customFilterFields"
+          :custom-group-enabled="customSearchCapabilities.groupEnabled"
+          :custom-group-label="customSearchCapabilities.groupLabel"
+          :custom-group-fields="customGroupByChips"
+          :favorite-save-enabled="customSearchCapabilities.favoriteSaveEnabled"
+          :favorite-save-label="customSearchCapabilities.favoriteLabel"
+          :active-custom-filter-label="activeCustomFilterLabel"
           :active-group-key="toolbarActiveGroupKey"
           :can-create-record="canCreateRecord"
           :create-label="t('action_create_record', '新建')"
@@ -417,6 +438,9 @@
           @sort="handleSort"
           @group="applyGroupBy"
           @clear-group="clearGroupBy"
+          @custom-filter="applyCustomFilter"
+          @clear-custom-filter="clearCustomFilter"
+          @save-favorite="handleSaveFavorite"
           @create="openCreateRecord"
         />
       </template>
@@ -469,7 +493,7 @@
 <script setup lang="ts">
 import { computed, inject, onErrorCaptured, onMounted, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { listRecordsRaw } from '../api/data';
+import { listRecordsRaw, saveSearchFavorite } from '../api/data';
 import { executeButton } from '../api/executeButton';
 import { trackUsageEvent } from '../api/usage';
 import { resolveAction } from '../app/resolvers/actionResolver';
@@ -789,6 +813,9 @@ const projectScopeMetrics = ref<{ warning: number; done: number; amount: number 
 const searchTerm = ref('');
 const toolbarSearchDraft = ref('');
 const toolbarSearchComposing = ref(false);
+const activeCustomFilter = ref<{ label: string; domain: unknown[] } | null>(null);
+const activeCustomFilterDomain = computed(() => activeCustomFilter.value?.domain || []);
+const activeCustomFilterLabel = computed(() => activeCustomFilter.value?.label || '');
 const sortValue = ref('');
 const filterValue = ref<'all' | 'active' | 'archived'>('all');
 const columns = ref<string[]>([]);
@@ -1314,6 +1341,10 @@ const {
   savedFilterPrimaryChips,
   savedFilterOverflowChips,
   contractGroupByChips,
+  customFilterFields,
+  customGroupByChips,
+  routeGroupByChips,
+  customSearchCapabilities,
   groupByPrimaryChips,
   groupByOverflowChips,
   activeGroupByLabel,
@@ -1567,6 +1598,35 @@ const {
   },
 });
 
+function applyCustomFilter(payload: { label: string; domain: unknown[] }) {
+  activeCustomFilter.value = {
+    label: String(payload.label || '自定义筛选'),
+    domain: Array.isArray(payload.domain) ? payload.domain : [],
+  };
+  clearSelection();
+  void requestLoadPage();
+}
+
+function clearCustomFilter() {
+  activeCustomFilter.value = null;
+  clearSelection();
+  void requestLoadPage();
+}
+
+async function handleSaveFavorite(payload: { name: string }) {
+  const targetModel = String(resolvedModelRef.value || model.value || '').trim();
+  const name = String(payload.name || '').trim();
+  if (!targetModel || !name) return;
+  await saveSearchFavorite({
+    model: targetModel,
+    name,
+    domain: resolveEffectiveFilterDomain(),
+    context: resolveEffectiveRequestContext(),
+    order: sortValue.value,
+  });
+  await requestLoadPage();
+}
+
 const {
   resolveEffectiveFilterDomain,
   resolveEffectiveFilterDomainRaw,
@@ -1583,8 +1643,9 @@ const {
   activeContractFilterKey,
   contractSavedFilterChips,
   activeSavedFilterKey,
+  activeCustomFilterDomain,
   activeGroupSummaryDomain,
-  contractGroupByChips,
+  contractGroupByChips: routeGroupByChips,
   activeGroupByField,
 });
 
@@ -1920,7 +1981,7 @@ const {
     activeSavedFilterKey: activeSavedFilterKey.value,
     activeGroupByField: activeGroupByField.value,
     contractSavedFilterChips: contractSavedFilterChips.value,
-    contractGroupByChips: contractGroupByChips.value,
+    contractGroupByChips: routeGroupByChips.value,
     currentPreferredViewModeRaw: preferredViewMode.value,
     buildWorkbenchRouteTarget,
     resolveWorkbenchQuery,

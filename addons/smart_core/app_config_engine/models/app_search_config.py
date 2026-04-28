@@ -68,6 +68,10 @@ class AppSearchConfig(models.Model):
 
             # 3) group_by 候选（基于字段元数据）
             groupby_candidates = self._infer_groupby_candidates(model_name, prefer=view_groupbys)
+            custom_search = self._build_custom_search_contract(
+                model_name,
+                prefer_groupbys=view_groupbys,
+            )
 
             # 4) 统一结构
             search_def = self._build_search_def(
@@ -76,6 +80,7 @@ class AppSearchConfig(models.Model):
                 saved_filters=saved_filters,
                 group_by=groupby_candidates,
                 facets={"enabled": True},
+                custom=custom_search,
                 defaults={"limit": 80, "order": getattr(self.env[model_name], "_order", "id desc") or "id desc"}
             )
 
@@ -189,7 +194,7 @@ class AppSearchConfig(models.Model):
 
     # ======================= 内部：统一结构构建 =======================
 
-    def _build_search_def(self, model_name, filters, saved_filters, group_by, facets, defaults):
+    def _build_search_def(self, model_name, filters, saved_filters, group_by, facets, custom, defaults):
         """
         统一结构（契约 2.0）：
         {
@@ -197,6 +202,7 @@ class AppSearchConfig(models.Model):
           "saved_filters": [ ir.filters 收藏/共享 ],
           "group_by":      [ group_by 候选 ],
           "facets":        { "enabled": true },
+          "custom":        { "filters": { "fields": [...] }, "group_by": { "fields": [...] }, "favorites": {...} },
           "defaults":      { "limit":80, "order":"id desc" }
         }
         """
@@ -226,6 +232,12 @@ class AppSearchConfig(models.Model):
             "saved_filters": saved_sorted,
             "group_by": group_sorted,
             "facets": facets or {"enabled": True},
+            "custom": custom or {
+                "enabled": False,
+                "filters": {"enabled": False, "fields": []},
+                "group_by": {"enabled": False, "fields": []},
+                "favorites": {"save_enabled": False},
+            },
             "defaults": defaults or {"limit": 80, "order": "id desc"}
         }
 
@@ -434,6 +446,150 @@ class AppSearchConfig(models.Model):
         return candidates
 
     # ======================= 工具 =======================
+
+    def _build_custom_search_contract(self, model_name, prefer_groupbys=None):
+        Model = self.env[model_name].sudo()
+        fields_meta = Model.fields_get()
+        filter_fields = []
+        group_fields = []
+        seen_filter = set()
+        seen_group = set()
+
+        def add_filter(fname, meta):
+            if fname in seen_filter:
+                return
+            row = self._normalize_custom_field(fname, meta, mode="filter")
+            if row:
+                filter_fields.append(row)
+                seen_filter.add(fname)
+
+        def add_group(fname, meta):
+            if fname in seen_group:
+                return
+            row = self._normalize_custom_field(fname, meta, mode="group")
+            if row:
+                group_fields.append(row)
+                seen_group.add(fname)
+
+        for gb in prefer_groupbys or []:
+            fname = str((gb or {}).get("field") or gb or '').split(':', 1)[0].strip()
+            meta = fields_meta.get(fname)
+            if meta:
+                add_group(fname, meta)
+                add_filter(fname, meta)
+
+        for fname, meta in fields_meta.items():
+            add_filter(fname, meta)
+            add_group(fname, meta)
+
+        return {
+            "enabled": True,
+            "filters": {
+                "enabled": bool(filter_fields),
+                "label": "添加自定义筛选",
+                "fields": filter_fields[:40],
+            },
+            "group_by": {
+                "enabled": bool(group_fields),
+                "label": "添加自定义分组",
+                "fields": group_fields[:30],
+            },
+            "favorites": {
+                "save_enabled": True,
+                "label": "保存当前搜索",
+                "intent": "search.favorite.set",
+            },
+        }
+
+    def _normalize_custom_field(self, fname, meta, mode="filter"):
+        field_name = str(fname or '').strip()
+        if not field_name or not isinstance(meta, dict):
+            return None
+        if not self._is_business_search_field(field_name, meta):
+            return None
+        field_type = meta.get('type')
+        if mode == "group":
+            if field_type not in ('many2one', 'many2many', 'selection', 'date', 'datetime', 'boolean'):
+                return None
+            if field_type == 'many2many' and not meta.get('store', True):
+                return None
+            if field_type != 'many2many' and meta.get('sortable') is False:
+                return None
+        elif field_type not in ('char', 'text', 'html', 'many2one', 'selection', 'date', 'datetime', 'boolean', 'integer', 'float', 'monetary'):
+            return None
+        label = meta.get('string') or field_name
+        operators = self._custom_filter_operators(field_type)
+        row = {
+            "field": field_name,
+            "label": label,
+            "type": field_type,
+        }
+        if mode == "filter":
+            row["operators"] = operators
+            if field_type == 'selection':
+                row["choices"] = [
+                    {"value": str(value), "label": str(text or value)}
+                    for value, text in (meta.get('selection') or [])
+                    if value not in (None, False, '')
+                ]
+        return row
+
+    def _is_business_search_field(self, fname, meta):
+        if fname == 'id' or fname.startswith('__'):
+            return False
+        technical_prefixes = (
+            'message_', 'activity_', 'website_', 'access_', 'portal_', 'rating_',
+            'mail_', 'alias_', 'legacy_', 'validation_', 'hide_', 'can_', 'display_',
+        )
+        technical_names = {
+            'create_uid', 'create_date', 'write_uid', 'write_date', 'display_name',
+            'message_follower_ids', 'message_partner_ids', 'message_ids',
+            'message_needaction', 'message_needaction_counter',
+            'message_has_error', 'message_has_error_counter',
+            'message_attachment_count', 'activity_ids', 'activity_state',
+            'activity_user_id', 'activity_type_id', 'activity_date_deadline',
+            'activity_summary', 'activity_exception_decoration',
+            'activity_exception_icon', 'my_activity_date_deadline',
+        }
+        if fname in technical_names or any(fname.startswith(prefix) for prefix in technical_prefixes):
+            return False
+        label = str(meta.get('string') or '').strip()
+        if not label or label == fname:
+            return False
+        if label.lower() in ('id', 'display name', 'created by', 'created on', 'last updated by', 'last updated on'):
+            return False
+        return True
+
+    def _custom_filter_operators(self, field_type):
+        if field_type in ('char', 'text', 'html', 'many2one'):
+            return [
+                {"value": "ilike", "label": "包含", "needs_value": True},
+                {"value": "=", "label": "等于", "needs_value": True},
+                {"value": "!=", "label": "不等于", "needs_value": True},
+            ]
+        if field_type == 'selection':
+            return [
+                {"value": "=", "label": "等于", "needs_value": True},
+                {"value": "!=", "label": "不等于", "needs_value": True},
+            ]
+        if field_type == 'boolean':
+            return [{"value": "=", "label": "等于", "needs_value": True}]
+        if field_type in ('integer', 'float', 'monetary'):
+            return [
+                {"value": "=", "label": "等于", "needs_value": True},
+                {"value": "!=", "label": "不等于", "needs_value": True},
+                {"value": ">", "label": "大于", "needs_value": True},
+                {"value": ">=", "label": "大于等于", "needs_value": True},
+                {"value": "<", "label": "小于", "needs_value": True},
+                {"value": "<=", "label": "小于等于", "needs_value": True},
+            ]
+        if field_type in ('date', 'datetime'):
+            return [
+                {"value": "=", "label": "等于", "needs_value": True},
+                {"value": ">=", "label": "不早于", "needs_value": True},
+                {"value": "<=", "label": "不晚于", "needs_value": True},
+            ]
+        return [{"value": "=", "label": "等于", "needs_value": True}]
 
     def _safe_eval_expr(self, expr):
         """安全求值：失败返回 None，不抛异常"""

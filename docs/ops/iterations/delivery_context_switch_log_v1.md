@@ -30929,3 +30929,26 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 当前系统性验证覆盖 ActionView 的主要业务列表，未覆盖非 ActionView 的后台管理/场景健康类管理页。`
 - rollback: `回退本批次提交并重建前端静态包，即恢复单视图不显示视图区、按数据条件展示搜索列和旧 PageToolbar 文件。`
 - next_step: `继续根据用户实测反馈抽查剩余业务菜单入口，若出现非 ActionView 列表页，优先迁移到 ActionView/ListPage 标准结构。`
+
+## 2026-04-28 Batch-Search-Custom-State-Contract
+
+- branch: `codex/dev-env-run`
+- short_sha: `759dd01a`
+- Layer Target: `ui.contract search contract + frontend shared search renderer + api.data request state`
+- Module: `addons/smart_core/app_config_engine`, `addons/smart_core/handlers`, `frontend/packages/schema`, `frontend/apps/web`
+- Reason: `用户确认自定义搜索/自定义分组必须完整契约化，为未来多端状态同步提供统一状态来源；原生 Odoo 行为已验证，但原生 custom group 会暴露技术字段，因此需要由后端输出业务字段白名单，前端通用消费。`
+- completed_step: `app.search.config 在 search.custom 下输出 filters/group_by/favorites 三类契约能力，字段候选来自 fields_get 但过滤 message/activity/alias/legacy/create/write 等技术字段；新增 search.favorite.set 意图，保存当前用户自己的 ir.filters 并刷新搜索配置；schema 补齐 search.custom 类型；ActionSurfaceToolbar 增加“添加自定义筛选 / 添加自定义分组 / 保存当前搜索”，ActionView 将自定义筛选并入 api.data domain，将自定义分组并入 route 可校验 group_by 候选，将保存当前搜索写入 ir.filters。`
+- verification:
+  - `python3 -m py_compile addons/smart_core/app_config_engine/models/app_search_config.py addons/smart_core/handlers/search_favorite_set.py` -> `PASS`
+  - `corepack pnpm -C frontend/apps/web typecheck` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make odoo.shell.exec` -> `construction.contract 添加自定义筛选/添加自定义分组/保存当前搜索; sc.settlement.order 同步; sc.general.contract 同步; project.project 同步。`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make odoo.recreate` + `FRONTEND_PROFILE=prod-sim make frontend.restart` -> `backend/frontend restarted; frontend ready http://127.0.0.1:5174/`
+  - `Playwright browser: wutao/123456 登录 sc_prod_sim；/a/489 搜索菜单包含中文“添加自定义筛选 / 添加自定义分组 / 保存当前搜索”，无 Add Custom/Save Current 英文残留。`
+  - `Playwright browser: /a/489 自定义筛选选择“合同名称 包含 合同”后 api.data domain 生效，搜索框 facet=合同名称 合同。`
+  - `Playwright browser: /a/489 保存当前搜索“验证收藏-ui-click”调用 search.favorite.set 返回 ok id=9 search_version=10，重新打开搜索菜单可见该收藏。`
+  - `Playwright browser: /a/489 自定义分组选择 partner_id 后 api.data request group_by=partner_id/context group_by=partner_id；当前工具条 facet 文案未展示该自定义分组名，需后续收口 route/toolbar 显示同步。`
+  - `corepack pnpm -C frontend/apps/web build` -> `BLOCKED: dist/assets/index-CLIAgAPW.css 为 root:root，当前用户无权限 unlink；非代码编译错误。`
+- result: `PASS_WITH_NOTE; 契约化自定义筛选、分组请求和保存当前搜索写入已打通，保存收藏真实落库；自定义分组的数据请求已生效，但工具条当前未显示自定义分组 facet，下一轮应收口显示同步。`
+- risk: `P2; 自定义筛选本轮支持单条件；复杂 domain builder 尚未实现原生 DomainSelector 的多条件编辑。P2; 构建产物 dist 存在 root 权限残留，阻塞本地 build 门禁。`
+- rollback: `回退本批次提交，重启 Odoo 与前端；如需清理验证数据，可删除 sc_prod_sim 中 construction.contract 的 ir.filters “验证收藏-ui-click”。`
+- next_step: `优先修复自定义分组 facet/route 显示同步，再评估是否扩展多条件自定义筛选编辑器。`

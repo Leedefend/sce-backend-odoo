@@ -8,6 +8,7 @@ type UseActionViewFilterComputedRuntimeOptions = {
       filters?: Array<Record<string, unknown>>;
       saved_filters?: Array<Record<string, unknown>>;
       group_by?: Array<Record<string, unknown>>;
+      custom?: Record<string, unknown>;
     };
     surface_policies?: {
       filters_primary_max?: number;
@@ -145,6 +146,74 @@ export function useActionViewFilterComputedRuntime(options: UseActionViewFilterC
       .slice(0, 12);
   });
 
+  const customFilterFields = computed(() => {
+    const custom = options.actionContract.value?.search?.custom as Dict | undefined;
+    const filterConfig = (custom?.filters || {}) as Dict;
+    const rows = filterConfig.enabled === false ? [] : filterConfig.fields;
+    if (!Array.isArray(rows)) return [];
+    return rows
+      .map((row) => {
+        const raw = row as Dict;
+        const field = String(raw.field || '').trim();
+        const label = String(raw.label || field).trim();
+        const type = String(raw.type || 'char').trim();
+        if (!field || !label) return null;
+        if (options.isActionViewNumericToken(field) || options.isActionViewNumericToken(label)) return null;
+        const operators = Array.isArray(raw.operators) ? raw.operators : [];
+        const choices = Array.isArray(raw.choices) ? raw.choices : [];
+        return { field, label, type, operators, choices };
+      })
+      .filter(Boolean)
+      .slice(0, 40);
+  });
+
+  const customGroupByChips = computed(() => {
+    const custom = options.actionContract.value?.search?.custom as Dict | undefined;
+    const groupConfig = (custom?.group_by || {}) as Dict;
+    const rows = groupConfig.enabled === false ? [] : groupConfig.fields;
+    if (!Array.isArray(rows)) return [];
+    const seen = new Set<string>();
+    return rows
+      .map((row) => {
+        const raw = row as Dict;
+        const field = String(raw.field || '').trim();
+        const label = String(raw.label || field).trim();
+        if (!field || !label || seen.has(field)) return null;
+        seen.add(field);
+        if (options.isActionViewNumericToken(field) || options.isActionViewNumericToken(label)) return null;
+        return { key: field, field, label, context: {}, contextRaw: '', isDefault: false, custom: true };
+      })
+      .filter(Boolean)
+      .slice(0, 30);
+  });
+
+  const routeGroupByChips = computed(() => {
+    const seen = new Set<string>();
+    return [...contractGroupByChips.value, ...customGroupByChips.value].filter((chip) => {
+      const field = String((chip as Dict).field || '').trim();
+      if (!field || seen.has(field)) return false;
+      seen.add(field);
+      return true;
+    });
+  });
+
+  const customSearchCapabilities = computed(() => {
+    const custom = options.actionContract.value?.search?.custom as Dict | undefined;
+    const filters = (custom?.filters || {}) as Dict;
+    const groups = (custom?.group_by || {}) as Dict;
+    const favorites = (custom?.favorites || {}) as Dict;
+    return {
+      enabled: custom?.enabled !== false,
+      filterEnabled: filters.enabled !== false && customFilterFields.value.length > 0,
+      filterLabel: String(filters.label || '添加自定义筛选'),
+      groupEnabled: groups.enabled !== false && customGroupByChips.value.length > 0,
+      groupLabel: String(groups.label || '添加自定义分组'),
+      favoriteSaveEnabled: favorites.save_enabled !== false,
+      favoriteLabel: String(favorites.label || '保存当前搜索'),
+      favoriteIntent: String(favorites.intent || 'search.favorite.set'),
+    };
+  });
+
   const groupByPrimaryChips = computed(() =>
     contractGroupByChips.value.slice(0, filterPrimaryBudget.value),
   );
@@ -156,7 +225,7 @@ export function useActionViewFilterComputedRuntime(options: UseActionViewFilterC
   const activeGroupByLabel = computed(() => {
     const field = options.activeGroupByField.value;
     if (!field) return '';
-    const found = contractGroupByChips.value.find((chip) => String((chip as Dict).field || '') === field) as Dict | undefined;
+    const found = routeGroupByChips.value.find((chip) => String((chip as Dict).field || '') === field) as Dict | undefined;
     return String(found?.label || field);
   });
 
@@ -169,6 +238,10 @@ export function useActionViewFilterComputedRuntime(options: UseActionViewFilterC
     savedFilterPrimaryChips,
     savedFilterOverflowChips,
     contractGroupByChips,
+    customFilterFields,
+    customGroupByChips,
+    routeGroupByChips,
+    customSearchCapabilities,
     groupByPrimaryChips,
     groupByOverflowChips,
     activeGroupByLabel,

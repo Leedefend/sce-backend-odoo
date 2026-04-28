@@ -194,6 +194,27 @@ export async function unlinkRecord(params: {
   });
 }
 
+export async function saveSearchFavorite(params: {
+  model: string;
+  name: string;
+  domain?: unknown[];
+  context?: Record<string, unknown>;
+  order?: string;
+  isShared?: boolean;
+}) {
+  return intentRequest<{ id: number; name: string; model: string; is_shared: boolean; search_version?: number }>({
+    intent: 'search.favorite.set',
+    params: {
+      model: params.model,
+      name: params.name,
+      domain: params.domain ?? [],
+      context: params.context ?? {},
+      order: params.order ?? '',
+      is_shared: Boolean(params.isShared),
+    },
+  });
+}
+
 export type ApiIdempotencyContract = ContractIdempotencyMeta;
 export type ApiFailureMeta = ContractFailureMeta;
 

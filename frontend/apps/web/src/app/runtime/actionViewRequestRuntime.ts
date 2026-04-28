@@ -92,8 +92,8 @@ export function mergeActiveFilter(base: unknown, options: { hasActiveField: bool
   return [...domain, activeClause];
 }
 
-export function resolveEffectiveFilterDomain(contractDomain: unknown, savedDomain: unknown, groupDomain: unknown): unknown[] {
-  return mergeSceneDomain(mergeSceneDomain(contractDomain, savedDomain), groupDomain);
+export function resolveEffectiveFilterDomain(contractDomain: unknown, savedDomain: unknown, customDomain: unknown, groupDomain: unknown): unknown[] {
+  return mergeSceneDomain(mergeSceneDomain(mergeSceneDomain(contractDomain, savedDomain), customDomain), groupDomain);
 }
 
 export function resolveEffectiveFilterDomainRaw(contractRaw: string, savedRaw: string): string {

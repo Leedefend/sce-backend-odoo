@@ -124,8 +124,14 @@ function deriveSavedFilterChipsFromContract(contract: Dict): SavedFilterChip[] {
 }
 
 function deriveGroupByChipsFromContract(contract: Dict): GroupByChip[] {
-  const rows = (contract.search as Dict | undefined)?.group_by;
-  if (!Array.isArray(rows)) return [];
+  const search = contract.search as Dict | undefined;
+  const custom = search?.custom as Dict | undefined;
+  const customGroup = custom?.group_by as Dict | undefined;
+  const rows = [
+    ...(Array.isArray(search?.group_by) ? search.group_by : []),
+    ...(Array.isArray(customGroup?.fields) ? customGroup.fields : []),
+  ];
+  if (!rows.length) return [];
   return rows
     .map((row) => {
       const raw = row && typeof row === 'object' ? row as Dict : {};

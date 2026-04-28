@@ -571,6 +571,30 @@ export interface ActionContract {
       default?: boolean;
     }>;
     saved_filters?: Array<Record<string, unknown>>;
+    custom?: {
+      enabled?: boolean;
+      filters?: {
+        enabled?: boolean;
+        label?: string;
+        fields?: Array<{
+          field?: string;
+          label?: string;
+          type?: string;
+          operators?: Array<{ value?: string; label?: string; needs_value?: boolean }>;
+          choices?: Array<{ value?: string; label?: string }>;
+        }>;
+      };
+      group_by?: {
+        enabled?: boolean;
+        label?: string;
+        fields?: Array<{ field?: string; label?: string; type?: string }>;
+      };
+      favorites?: {
+        save_enabled?: boolean;
+        label?: string;
+        intent?: string;
+      };
+    };
   };
   workflow?: {
     states?: Array<Record<string, unknown>>;
