@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-28T23:05:00+08:00
+- blocker_key: `migration_asset_delivery_packaging_audit_v1`
+- layer_target: `Migration Delivery Ops`
+- module: `migration_assets + scripts/migration + docs/migration_alignment + docs/ops`
+- reason: `上线交付前需要把复杂迁移资产包从“工程可运行”整理为“可审计交付”：明确加载资产、证据文件、发布包排除项、一键重放入口和交付门禁。`
+- completed_step: `新增只读交付审计 make migration.assets.delivery_audit，输出 artifacts/migration/migration_asset_delivery_audit_v1.json 与 docs/migration_alignment/migration_asset_delivery_audit_v1.md；新增 migration_asset_delivery_manifest_v1，冻结发布包决策：完整 XML 为 legacy_workflow_audit 加载资产，.parts 暂留仓库但不进最终发布包；新增 make migration.assets.release_package，默认输出 /tmp/sce_migration_asset_release/*.tar.gz 与 sha256，并生成小型包证据；同步修正生产断点续跑必须走 history.production.fresh_init。`
+- active_commit: `fe82d809`
+- next_step: `在 prod-sim 解包发布包，重跑 migration.assets.verify_all 与 migration.assets.delivery_audit，再执行 history.continuity.rehearse/replay。`
+
 ### 2026-04-28T22:22:00+08:00
 - blocker_key: `codex_production_assist_policy_split_v1`
 - layer_target: `Ops Governance Documentation`

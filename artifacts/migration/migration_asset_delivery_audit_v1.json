@@ -1,0 +1,320 @@
+{
+  "audit_id": "migration_asset_delivery_audit_v1",
+  "mode": "read_only",
+  "db_writes": 0,
+  "catalog": {
+    "catalog_version": "1.0",
+    "package_count": 23,
+    "package_order_count": 23,
+    "package_order_matches_packages": true,
+    "duplicate_package_ids": [],
+    "packages": [
+      {
+        "asset_package_id": "project_sc_v1",
+        "layer": "10_master",
+        "target_model": "project.project",
+        "asset_count": 3,
+        "declared_asset_record_count": 1511,
+        "risk_class": "normal"
+      },
+      {
+        "asset_package_id": "partner_sc_v1",
+        "layer": "10_master",
+        "target_model": "res.partner",
+        "asset_count": 3,
+        "declared_asset_record_count": 13083,
+        "risk_class": "normal"
+      },
+      {
+        "asset_package_id": "contract_counterparty_partner_sc_v1",
+        "layer": "10_master",
+        "target_model": "res.partner",
+        "asset_count": 3,
+        "declared_asset_record_count": 177,
+        "risk_class": "supplemental_master_data"
+      },
+      {
+        "asset_package_id": "receipt_counterparty_partner_sc_v1",
+        "layer": "10_master",
+        "target_model": "res.partner",
+        "asset_count": 3,
+        "declared_asset_record_count": 501,
+        "risk_class": "supplemental_master_data"
+      },
+      {
+        "asset_package_id": "user_sc_v1",
+        "layer": "10_master",
+        "target_model": "res.users",
+        "asset_count": 3,
+        "declared_asset_record_count": 203,
+        "risk_class": "authority_anchor"
+      },
+      {
+        "asset_package_id": "project_member_sc_v1",
+        "layer": "30_relation",
+        "target_model": "sc.project.member.staging",
+        "asset_count": 3,
+        "declared_asset_record_count": 42781,
+        "risk_class": "neutral_relation"
+      },
+      {
+        "asset_package_id": "contract_sc_v1",
+        "layer": "20_business",
+        "target_model": "construction.contract",
+        "asset_count": 3,
+        "declared_asset_record_count": 2985,
+        "risk_class": "anchored_subset"
+      },
+      {
+        "asset_package_id": "contract_line_sc_v1",
+        "layer": "20_business",
+        "target_model": "construction.contract.line",
+        "asset_count": 3,
+        "declared_asset_record_count": 2883,
+        "risk_class": "summary_fact"
+      },
+      {
+        "asset_package_id": "receipt_sc_v1",
+        "layer": "20_business",
+        "target_model": "payment.request",
+        "asset_count": 3,
+        "declared_asset_record_count": 10711,
+        "risk_class": "authorized_receipt_core"
+      },
+      {
+        "asset_package_id": "outflow_request_sc_v1",
+        "layer": "20_business",
+        "target_model": "payment.request",
+        "asset_count": 3,
+        "declared_asset_record_count": 24569,
+        "risk_class": "authorized_outflow_request_core"
+      },
+      {
+        "asset_package_id": "actual_outflow_sc_v1",
+        "layer": "20_business",
+        "target_model": "payment.request",
+        "asset_count": 3,
+        "declared_asset_record_count": 24927,
+        "risk_class": "draft_actual_outflow_core"
+      },
+      {
+        "asset_package_id": "supplier_contract_sc_v1",
+        "layer": "20_business",
+        "target_model": "construction.contract",
+        "asset_count": 3,
+        "declared_asset_record_count": 10603,
+        "risk_class": "supplier_contract_header"
+      },
+      {
+        "asset_package_id": "supplier_contract_line_sc_v1",
+        "layer": "20_business",
+        "target_model": "construction.contract.line",
+        "asset_count": 3,
+        "declared_asset_record_count": 10131,
+        "risk_class": "summary_amount_line"
+      },
+      {
+        "asset_package_id": "outflow_request_line_sc_v1",
+        "layer": "20_business",
+        "target_model": "payment.request.line",
+        "asset_count": 3,
+        "declared_asset_record_count": 31835,
+        "risk_class": "line_fact"
+      },
+      {
+        "asset_package_id": "receipt_invoice_line_sc_v1",
+        "layer": "20_business",
+        "target_model": "sc.receipt.invoice.line",
+        "asset_count": 3,
+        "declared_asset_record_count": 0,
+        "risk_class": "auxiliary_invoice_line_fact"
+      },
+      {
+        "asset_package_id": "receipt_invoice_attachment_sc_v1",
+        "layer": "30_relation",
+        "target_model": "ir.attachment",
+        "asset_count": 3,
+        "declared_asset_record_count": 0,
+        "risk_class": "attachment_url_relation"
+      },
+      {
+        "asset_package_id": "legacy_attachment_backfill_sc_v1",
+        "layer": "30_relation",
+        "target_model": "ir.attachment",
+        "asset_count": 3,
+        "declared_asset_record_count": 0,
+        "risk_class": "attachment_url_relation"
+      },
+      {
+        "asset_package_id": "legacy_expense_deposit_sc_v1",
+        "layer": "30_relation",
+        "target_model": "sc.legacy.expense.deposit.fact",
+        "asset_count": 3,
+        "declared_asset_record_count": 0,
+        "risk_class": "historical_finance_adjacent_fact"
+      },
+      {
+        "asset_package_id": "legacy_invoice_tax_sc_v1",
+        "layer": "30_relation",
+        "target_model": "sc.legacy.invoice.tax.fact",
+        "asset_count": 3,
+        "declared_asset_record_count": 0,
+        "risk_class": "historical_invoice_tax_fact"
+      },
+      {
+        "asset_package_id": "legacy_receipt_income_sc_v1",
+        "layer": "30_relation",
+        "target_model": "sc.legacy.receipt.income.fact",
+        "asset_count": 3,
+        "declared_asset_record_count": 0,
+        "risk_class": "historical_income_fact"
+      },
+      {
+        "asset_package_id": "legacy_financing_loan_sc_v1",
+        "layer": "30_relation",
+        "target_model": "sc.legacy.financing.loan.fact",
+        "asset_count": 3,
+        "declared_asset_record_count": 0,
+        "risk_class": "historical_financing_fact"
+      },
+      {
+        "asset_package_id": "legacy_fund_daily_snapshot_sc_v1",
+        "layer": "30_relation",
+        "target_model": "sc.legacy.fund.daily.snapshot.fact",
+        "asset_count": 3,
+        "declared_asset_record_count": 0,
+        "risk_class": "historical_balance_snapshot_fact"
+      },
+      {
+        "asset_package_id": "legacy_workflow_audit_sc_v1",
+        "layer": "30_relation",
+        "target_model": "sc.legacy.workflow.audit",
+        "asset_count": 3,
+        "declared_asset_record_count": 0,
+        "risk_class": "historical_audit_fact"
+      }
+    ],
+    "referenced_file_count": 93,
+    "asset_file_count": 98,
+    "unreferenced_files": [
+      "migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/part-000.part",
+      "migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/part-001.part",
+      "migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/part-002.part",
+      "migration_assets/manifest/migration_asset_coverage_snapshot_v1.json",
+      "migration_assets/manifest/receipt_blocker_policy_snapshot_v1.json"
+    ],
+    "missing_files": [],
+    "manifest_hash_mismatches": [],
+    "asset_hash_mismatches": []
+  },
+  "packaging": {
+    "file_count": 98,
+    "total_size_mb": 467.27,
+    "large_files": [
+      {
+        "path": "migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml",
+        "size_mb": 120.01
+      },
+      {
+        "path": "migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/part-000.part",
+        "size_mb": 60.0
+      },
+      {
+        "path": "migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/part-001.part",
+        "size_mb": 60.0
+      },
+      {
+        "path": "migration_assets/manifest/legacy_workflow_audit_external_id_manifest_v1.json",
+        "size_mb": 31.06
+      },
+      {
+        "path": "migration_assets/20_business/outflow_request_line/outflow_request_line_v1.xml",
+        "size_mb": 18.34
+      },
+      {
+        "path": "migration_assets/30_relation/project_member/project_member_neutral_v1.xml",
+        "size_mb": 16.82
+      },
+      {
+        "path": "migration_assets/30_relation/legacy_attachment_backfill/legacy_attachment_backfill_v1.xml",
+        "size_mb": 14.52
+      },
+      {
+        "path": "migration_assets/30_relation/legacy_expense_deposit/legacy_expense_deposit_v1.xml",
+        "size_mb": 13.18
+      },
+      {
+        "path": "migration_assets/20_business/actual_outflow/actual_outflow_core_v1.xml",
+        "size_mb": 10.05
+      }
+    ],
+    "duplicate_materialized_parts": [
+      {
+        "xml_path": "migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml",
+        "xml_size_mb": 120.01,
+        "parts_dir": "migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts",
+        "part_count": 3,
+        "parts_size_mb": 120.01,
+        "recommendation": "keep either materialized XML or parts in the release package, not both"
+      }
+    ]
+  },
+  "replay": {
+    "oneclick_exists": true,
+    "production_entry_exists": true,
+    "make_targets_present": {
+      "migration.assets.verify_all": true,
+      "history.continuity.rehearse": true,
+      "history.continuity.replay": true,
+      "history.production.fresh_init": true
+    },
+    "production_allows_replay_guard": true,
+    "production_calls_oneclick": true,
+    "start_at_supported": true,
+    "stop_after_supported": true,
+    "step_count": 144,
+    "duplicate_steps": [
+      "replay_payload_precheck",
+      "usability_probe"
+    ],
+    "privacy_opt_in_flags": [
+      "HISTORY_CONTINUITY_INCLUDE_ATTENDANCE_CHECKIN",
+      "HISTORY_CONTINUITY_INCLUDE_PERSONNEL_MOVEMENT",
+      "HISTORY_CONTINUITY_INCLUDE_SALARY_LINE"
+    ],
+    "first_steps": [
+      "manifest_dry_run",
+      "user_asset_verify",
+      "replay_payload_precheck",
+      "usability_probe",
+      "user_rebuild",
+      "legacy_user_context_adapter",
+      "legacy_user_context_replay",
+      "legacy_user_project_scope_adapter",
+      "legacy_user_project_scope_replay",
+      "legacy_task_evidence_adapter",
+      "legacy_task_evidence_replay",
+      "legacy_attendance_checkin_adapter"
+    ],
+    "last_steps": [
+      "legacy_financing_loan_replay",
+      "legacy_fund_daily_snapshot_adapter",
+      "legacy_fund_daily_snapshot_replay",
+      "legacy_fund_daily_line_adapter",
+      "legacy_fund_daily_line_replay",
+      "attachment_custody_probe",
+      "invoice_tax_runtime_probe",
+      "treasury_reconciliation_probe",
+      "expense_deposit_runtime_probe",
+      "material_catalog_runtime_probe",
+      "purchase_contract_runtime_probe",
+      "usability_probe"
+    ]
+  },
+  "status": "PASS_WITH_PACKAGING_ACTIONS",
+  "blockers": [],
+  "packaging_actions": [
+    "remove duplicated materialized XML or parts from the final release package after choosing one canonical form",
+    "classify unreferenced migration asset files as delivery evidence or remove from release package"
+  ]
+}

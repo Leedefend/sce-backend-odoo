@@ -16,6 +16,7 @@
 - 数据库命名策略：`docs/ops/db_strategy.md`
 - 历史连续性重放：`docs/ops/history_continuity_server_replay_runbook_v1.md`
 - 历史用户重建：`docs/ops/history_user_rebuild_runbook_v1.md`
+- 迁移资产交付清单：`docs/migration_alignment/migration_asset_delivery_manifest_v1.md`
 
 ## 2. 架构与治理边界
 
@@ -43,6 +44,7 @@
 | 代码版本 | 明确 commit、tag 或 release branch，不允许临时工作区部署 |
 | 配置 | `.env.prod` 已评审，`ENV=prod`、`DB_NAME=sc_prod`、`COMPOSE_PROJECT_NAME` 唯一 |
 | 依赖 | `addons_external/oca_server_ux/base_tier_validation` 存在 |
+| 迁移资产 | `make migration.assets.verify_all` 与 `make migration.assets.delivery_audit` 通过 |
 | 备份 | 当前生产库和 filestore 已完成离线备份 |
 | 数据方案 | 明确是“升级保留数据”还是“新库重建数据” |
 | 回滚方案 | 明确代码回滚、数据库回滚、filestore 回滚、DNS/反代回滚 |
