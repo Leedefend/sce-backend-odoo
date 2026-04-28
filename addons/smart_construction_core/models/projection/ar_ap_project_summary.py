@@ -33,6 +33,7 @@ class ScArApProjectSummary(models.Model):
     self_funding_income_amount = fields.Float(string="自筹收入金额", readonly=True)
     self_funding_refund_amount = fields.Float(string="自筹退回金额", readonly=True)
     self_funding_unreturned_amount = fields.Float(string="自筹未退金额", readonly=True)
+    actual_available_balance = fields.Float(string="实际可用余额", readonly=True)
 
     def init(self):
         self._cr.execute(
@@ -43,7 +44,8 @@ class ScArApProjectSummary(models.Model):
                 to_regclass('sc_invoice_registration'),
                 to_regclass('sc_treasury_ledger'),
                 to_regclass('sc_legacy_tax_deduction_fact'),
-                to_regclass('sc_legacy_self_funding_fact')
+                to_regclass('sc_legacy_self_funding_fact'),
+                to_regclass('sc_legacy_project_fund_balance_fact')
             """
         )
         if not all(self._cr.fetchone()):
@@ -217,6 +219,15 @@ class ScArApProjectSummary(models.Model):
                     FROM self_funding_norm
                     GROUP BY project_id, partner_id, partner_key, partner_name
                 ),
+                project_fund_balance AS (
+                    SELECT
+                        project_id,
+                        MAX(COALESCE(actual_available_balance, 0.0)) AS actual_available_balance
+                    FROM sc_legacy_project_fund_balance_fact
+                    WHERE active IS TRUE
+                      AND project_id IS NOT NULL
+                    GROUP BY project_id
+                ),
                 keys AS (
                     SELECT project_id, partner_id, partner_key, partner_name FROM income_contract
                     UNION
@@ -270,7 +281,8 @@ class ScArApProjectSummary(models.Model):
                     COALESCE(sf.self_funding_income_amount, 0.0) AS self_funding_income_amount,
                     COALESCE(sf.self_funding_refund_amount, 0.0) AS self_funding_refund_amount,
                     COALESCE(sf.self_funding_income_amount, 0.0) - COALESCE(sf.self_funding_refund_amount, 0.0)
-                        AS self_funding_unreturned_amount
+                        AS self_funding_unreturned_amount,
+                    COALESCE(pfb.actual_available_balance, 0.0) AS actual_available_balance
                 FROM keys k
                 LEFT JOIN project_project p ON p.id = k.project_id
                 LEFT JOIN income_contract ic
@@ -289,6 +301,8 @@ class ScArApProjectSummary(models.Model):
                     ON td.project_id = k.project_id AND td.partner_key = k.partner_key
                 LEFT JOIN self_funding sf
                     ON sf.project_id = k.project_id AND sf.partner_key = k.partner_key
+                LEFT JOIN project_fund_balance pfb
+                    ON pfb.project_id = k.project_id
             )
             """
         )

@@ -241,6 +241,8 @@ case "$MODE" in
     run_step legacy_receipt_income_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_receipt_income_replay_write.py"
     run_step legacy_self_funding_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_self_funding_replay_adapter.py"
     run_step legacy_self_funding_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_self_funding_replay_write.py"
+    run_step legacy_project_fund_balance_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_project_fund_balance_replay_adapter.py"
+    run_step legacy_project_fund_balance_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_project_fund_balance_replay_write.py"
     run_step expense_deposit_partner_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_expense_deposit_partner_targeted_replay_adapter.py"
     run_step expense_deposit_partner_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_expense_deposit_partner_targeted_replay_write.py"
     run_step legacy_expense_deposit_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_deposit_replay_adapter.py"

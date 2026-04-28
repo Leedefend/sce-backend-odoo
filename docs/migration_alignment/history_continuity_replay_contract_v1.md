@@ -159,6 +159,8 @@ Supported resume step names:
 - `legacy_receipt_income_replay`
 - `legacy_self_funding_adapter`
 - `legacy_self_funding_replay`
+- `legacy_project_fund_balance_adapter`
+- `legacy_project_fund_balance_replay`
 - `expense_deposit_partner_targeted_adapter`
 - `expense_deposit_partner_targeted_replay`
 - `legacy_expense_deposit_adapter`
@@ -231,6 +233,7 @@ Supported resume step names:
 - `legacy_attachment_backfill_sc_v1`
 - `legacy_receipt_income_sc_v1`
 - `legacy_self_funding_sc_v1`
+- `legacy_project_fund_balance_sc_v1`
 - `legacy_expense_deposit_sc_v1`
 - `legacy_invoice_tax_sc_v1`
 - `legacy_tax_deduction_sc_v1`

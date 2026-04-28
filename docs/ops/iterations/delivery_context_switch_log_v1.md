@@ -16,6 +16,15 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-28T14:52:27+08:00
+- blocker_key: `legacy_ar_ap_project_fund_balance_batch_h_closed`
+- layer_target: `业务事实分析层 / Domain Projection`
+- module: `addons/smart_construction_core + scripts/migration + docs/migration_alignment`
+- reason: `旧库应收应付报表（项目）中的 SJKYYE 实际可用余额来自 View_Select_XMCKXX_BS 项目资金汇总，不是新系统 project.project.funding_remaining_amount，必须作为项目级历史资金余额事实承载并进入可重建链路。`
+- completed_step: `新增 sc.legacy.project.fund.balance.fact、旧库 adapter/write、报表投影字段 actual_available_balance、报表中心内部菜单与一键重建 step；模拟生产写入 755 行，缺项目 0，事实合计 -2586337.86；AR/AP 项目报表共同项目金额一致，另有 1 个项目仅有资金余额事实但没有应收应付往来单位明细行。`
+- active_commit: `e938299f`
+- next_step: `继续拆应收应付报表（项目）剩余字段，按字段维度判断应进入往来单位明细、项目资金报表，还是后续经营分析报表。`
+
 ### 2026-04-27T11:19:23+08:00
 - blocker_key: `menu_navigation_verify_target_20260427_pass`
 - layer_target: `Verification infrastructure`

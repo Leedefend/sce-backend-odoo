@@ -18,6 +18,7 @@
                     <filter string="有付款超票" name="has_paid_uninvoiced" domain="[('paid_uninvoiced_amount', '!=', 0)]"/>
                     <filter string="有抵扣税额" name="has_deduction_tax" domain="[('deduction_tax_amount', '!=', 0)]"/>
                     <filter string="有自筹未退" name="has_self_funding_unreturned" domain="[('self_funding_unreturned_amount', '!=', 0)]"/>
+                    <filter string="实际可用余额为负" name="negative_actual_available" domain="[('actual_available_balance', '&lt;', 0)]"/>
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                     <filter string="按往来单位" name="group_partner" context="{'group_by': 'partner_name'}"/>
                 </search>
@@ -49,6 +50,7 @@
                     <field name="self_funding_income_amount" sum="自筹收入合计"/>
                     <field name="self_funding_refund_amount" sum="自筹退回合计"/>
                     <field name="self_funding_unreturned_amount" sum="自筹未退合计"/>
+                    <field name="actual_available_balance"/>
                 </tree>
             </field>
         </record>
