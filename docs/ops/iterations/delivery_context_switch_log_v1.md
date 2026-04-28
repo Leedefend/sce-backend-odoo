@@ -30797,3 +30797,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; context_raw 兼容当前仅提取 group_by 字段，不扩大为通用 Python literal 解析；如后续需要更多原生 context 键，应优先后端归一契约。`
 - rollback: `回退本批次提交并重建前端静态包，即恢复筛选/已保存筛选独立展示和原 group_by 消费逻辑。`
 - next_step: `继续抽查含 saved_filters/search_panel 的业务 action，确认已保存筛选与更多筛选展开路径。`
+
+## 2026-04-28 Batch-Frontend-Native-Search-Dropdown
+
+- branch: `codex/dev-env-run`
+- short_sha: `a3c59420`
+- Layer Target: `Frontend contract consumer + shared search renderer`
+- Module: `frontend/apps/web`
+- Reason: `上一轮只把原生 search.filters/search.group_by 平铺为工具栏按钮，未对齐 Odoo 原生 SearchBar 的“搜索框 facet + 下拉分类菜单 + 点击即响应”交互模型。`
+- completed_step: `ActionSurfaceToolbar 将平铺筛选/分组改为原生式搜索区：搜索框内展示已选筛选/已保存筛选/分组 facet，右侧“搜索”下拉按“筛选 / 分组 / 已保存”分类展示契约项，点击菜单项沿用现有 applyContractFilter/applySavedFilter/applyGroupBy 刷新链路，点击 facet 可移除对应条件。`
+- verification:
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend/apps/web node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile --dir /workspace/frontend && pnpm typecheck"`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `Playwright browser: 先在 Odoo 原生 http://127.0.0.1:18069/web#action=577 观察搜索栏，确认下拉包含“筛选：已确认/已签署/补充合同；分组方式：按项目/按合同方/按类型/按状态；收藏夹：保存当前搜索”，选中项以搜索框 facet 呈现。`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/577，搜索下拉展示“筛选”和“分组”分类；旧 .filter-switch/.group-switch/.saved-filter-switch 可见数量为 0。`
+  - `Playwright browser: 点击“已签署”后 URL 为 /a/577?preset_filter=state_signed，搜索框 facet 为 已签署，api.data domain=[['state','=','signed']]。`
+  - `Playwright browser: 再点击“按状态”后 URL 为 /a/577?preset_filter=state_signed&group_by=state，搜索框 facet 为 已签署 + 按状态，api.data group_by=state、need_group_total=true；点击“按状态”facet 后 URL 回到 /a/577?preset_filter=state_signed，分组请求清除。`
+- result: `PASS; 搜索分组已从平铺按钮升级为原生式下拉分类与 facet 交互，点击后页面直接响应。`
+- risk: `P2; 当前仍是单筛选/单分组状态模型，Odoo 原生支持更复杂的多 facet 组合；如业务需要多选筛选/多级分组，应扩展路由与请求状态承载。`
+- rollback: `回退本批次提交并重建前端静态包，即恢复上一轮平铺筛选/分组工具栏。`
+- next_step: `继续补齐已保存筛选的“保存当前搜索”写入能力，或先抽查其他业务 action 的原生搜索菜单覆盖率。`

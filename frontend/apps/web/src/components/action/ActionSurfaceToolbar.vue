@@ -16,113 +16,119 @@
       </div>
     </div>
 
-    <div class="toolbar-search">
-      <input
-        type="search"
-        :value="searchValue"
-        :disabled="loading"
-        :placeholder="searchPlaceholder"
-        @compositionstart="$emit('search-composition-start')"
-        @compositionend="$emit('search-composition-end', $event)"
-        @input="$emit('search-input', $event)"
-        @keydown.enter.prevent="$emit('search-submit')"
-      />
-      <button
-        v-if="searchValue"
-        class="toolbar-search-clear"
-        type="button"
-        :disabled="loading"
-        @click="$emit('clear-search')"
-      >
-        {{ clearLabel }}
-      </button>
-    </div>
-
-    <div v-if="showFilter" class="toolbar-section filter-switch">
-      <p class="contract-label">{{ filterLabel }}</p>
-      <div class="contract-chips">
+    <div class="native-search">
+      <div class="native-searchbox">
         <button
-          v-for="chip in filterPrimary"
-          :key="`filter-${chip.key}`"
-          class="contract-chip"
-          :class="{ active: activeFilterKey === chip.key }"
-          :disabled="loading"
-          @click="$emit('filter', chip.key)"
-        >
-          {{ chip.label }}
-        </button>
-        <button
-          v-if="activeFilterKey"
-          class="contract-chip ghost"
+          v-if="activeFilterChip"
+          class="search-facet"
+          type="button"
           :disabled="loading"
           @click="$emit('clear-filter')"
         >
-          {{ clearLabel }}
+          <span>{{ activeFilterChip.label }}</span>
+          <span class="facet-remove">{{ clearSymbol }}</span>
         </button>
         <button
-          v-if="filterOverflow.length"
-          class="contract-chip ghost"
-          :disabled="loading"
-          @click="$emit('toggle-more-filter')"
-        >
-          {{ showMoreFilter ? collapseFilterLabel : moreFilterLabel }}
-        </button>
-      </div>
-      <div v-if="showMoreFilter && filterOverflow.length" class="contract-chips overflow-row">
-        <button
-          v-for="chip in filterOverflow"
-          :key="`filter-overflow-${chip.key}`"
-          class="contract-chip"
-          :class="{ active: activeFilterKey === chip.key }"
-          :disabled="loading"
-          @click="$emit('filter', chip.key)"
-        >
-          {{ chip.label }}
-        </button>
-      </div>
-    </div>
-
-    <div v-if="showSavedFilter" class="toolbar-section saved-filter-switch">
-      <p class="contract-label">{{ savedFilterLabel }}</p>
-      <div class="contract-chips">
-        <button
-          v-for="chip in savedFilterPrimary"
-          :key="`saved-filter-${chip.key}`"
-          class="contract-chip"
-          :class="{ active: activeSavedFilterKey === chip.key }"
-          :disabled="loading"
-          @click="$emit('saved-filter', chip.key)"
-        >
-          {{ chip.label }}
-        </button>
-        <button
-          v-if="activeSavedFilterKey"
-          class="contract-chip ghost"
+          v-if="activeSavedFilterChip"
+          class="search-facet"
+          type="button"
           :disabled="loading"
           @click="$emit('clear-saved-filter')"
         >
+          <span>{{ activeSavedFilterChip.label }}</span>
+          <span class="facet-remove">{{ clearSymbol }}</span>
+        </button>
+        <button
+          v-if="activeGroupChip"
+          class="search-facet"
+          type="button"
+          :disabled="loading"
+          @click="$emit('clear-group')"
+        >
+          <span>{{ activeGroupChip.label }}</span>
+          <span class="facet-remove">{{ clearSymbol }}</span>
+        </button>
+        <input
+          type="search"
+          :value="searchValue"
+          :disabled="loading"
+          :placeholder="searchPlaceholder"
+          @compositionstart="$emit('search-composition-start')"
+          @compositionend="$emit('search-composition-end', $event)"
+          @input="$emit('search-input', $event)"
+          @keydown.enter.prevent="$emit('search-submit')"
+          @keydown.esc="searchMenuOpen = false"
+        />
+        <button
+          v-if="searchValue"
+          class="toolbar-search-clear"
+          type="button"
+          :disabled="loading"
+          @click="$emit('clear-search')"
+        >
           {{ clearLabel }}
         </button>
-        <button
-          v-if="savedFilterOverflow.length"
-          class="contract-chip ghost"
-          :disabled="loading"
-          @click="$emit('toggle-more-saved-filter')"
-        >
-          {{ showMoreSavedFilter ? collapseSavedFilterLabel : moreSavedFilterLabel }}
-        </button>
       </div>
-      <div v-if="showMoreSavedFilter && savedFilterOverflow.length" class="contract-chips overflow-row">
-        <button
-          v-for="chip in savedFilterOverflow"
-          :key="`saved-filter-overflow-${chip.key}`"
-          class="contract-chip"
-          :class="{ active: activeSavedFilterKey === chip.key }"
-          :disabled="loading"
-          @click="$emit('saved-filter', chip.key)"
-        >
-          {{ chip.label }}
-        </button>
+      <button
+        class="search-menu-toggle"
+        type="button"
+        :class="{ active: searchMenuOpen }"
+        :disabled="loading || !hasSearchMenu"
+        @click="searchMenuOpen = !searchMenuOpen"
+      >
+        {{ searchMenuOpen ? '收起' : '搜索' }}
+      </button>
+      <div v-if="searchMenuOpen && hasSearchMenu" class="search-dropdown">
+        <section v-if="showFilter" class="search-dropdown-section">
+          <p class="search-dropdown-title">{{ filterLabel }}</p>
+          <div class="search-dropdown-items">
+            <button
+              v-for="chip in allFilterChips"
+              :key="`filter-${chip.key}`"
+              class="search-menu-item"
+              :class="{ selected: activeFilterKey === chip.key }"
+              :disabled="loading"
+              @click="selectFilter(chip.key)"
+            >
+              <span class="menu-check">{{ activeFilterKey === chip.key ? selectedSymbol : '' }}</span>
+              <span>{{ chip.label }}</span>
+            </button>
+          </div>
+        </section>
+
+        <section v-if="showGroup" class="search-dropdown-section">
+          <p class="search-dropdown-title">{{ groupLabel }}</p>
+          <div class="search-dropdown-items">
+            <button
+              v-for="chip in allGroupChips"
+              :key="`group-${chip.key}`"
+              class="search-menu-item"
+              :class="{ selected: activeGroupKey === chip.key }"
+              :disabled="loading"
+              @click="selectGroup(chip.key)"
+            >
+              <span class="menu-check">{{ activeGroupKey === chip.key ? selectedSymbol : '' }}</span>
+              <span>{{ chip.label }}</span>
+            </button>
+          </div>
+        </section>
+
+        <section v-if="showSavedFilter" class="search-dropdown-section">
+          <p class="search-dropdown-title">{{ savedFilterLabel }}</p>
+          <div class="search-dropdown-items">
+            <button
+              v-for="chip in allSavedFilterChips"
+              :key="`saved-filter-${chip.key}`"
+              class="search-menu-item"
+              :class="{ selected: activeSavedFilterKey === chip.key }"
+              :disabled="loading"
+              @click="selectSavedFilter(chip.key)"
+            >
+              <span class="menu-check">{{ activeSavedFilterKey === chip.key ? selectedSymbol : '' }}</span>
+              <span>{{ chip.label }}</span>
+            </button>
+          </div>
+        </section>
       </div>
     </div>
 
@@ -142,50 +148,6 @@
       </div>
     </div>
 
-    <div v-if="showGroup" class="toolbar-section group-switch">
-      <p class="contract-label">{{ groupLabel }}</p>
-      <div class="contract-chips">
-        <button
-          v-for="chip in groupPrimary"
-          :key="`group-${chip.key}`"
-          class="contract-chip"
-          :class="{ active: activeGroupKey === chip.key }"
-          :disabled="loading"
-          @click="$emit('group', chip.key)"
-        >
-          {{ chip.label }}
-        </button>
-        <button
-          v-if="activeGroupKey"
-          class="contract-chip ghost"
-          :disabled="loading"
-          @click="$emit('clear-group')"
-        >
-          {{ clearLabel }}
-        </button>
-        <button
-          v-if="groupOverflow.length"
-          class="contract-chip ghost"
-          :disabled="loading"
-          @click="$emit('toggle-more-group')"
-        >
-          {{ showMoreGroup ? collapseGroupLabel : moreGroupLabel }}
-        </button>
-      </div>
-      <div v-if="showMoreGroup && groupOverflow.length" class="contract-chips overflow-row">
-        <button
-          v-for="chip in groupOverflow"
-          :key="`group-overflow-${chip.key}`"
-          class="contract-chip"
-          :class="{ active: activeGroupKey === chip.key }"
-          :disabled="loading"
-          @click="$emit('group', chip.key)"
-        >
-          {{ chip.label }}
-        </button>
-      </div>
-    </div>
-
     <div v-if="canCreateRecord" class="toolbar-actions">
       <button class="contract-chip primary" type="button" :disabled="loading" @click="$emit('create')">
         {{ createLabel }}
@@ -195,7 +157,11 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { computed, ref } from 'vue';
+
+type SearchChip = { key: string; label: string };
+
+const props = defineProps<{
   loading: boolean;
   showViewSwitch: boolean;
   viewLabel: string;
@@ -210,17 +176,11 @@ defineProps<{
   filterPrimary: Array<{ key: string; label: string }>;
   filterOverflow: Array<{ key: string; label: string }>;
   activeFilterKey: string;
-  showMoreFilter: boolean;
-  moreFilterLabel: string;
-  collapseFilterLabel: string;
   showSavedFilter: boolean;
   savedFilterLabel: string;
   savedFilterPrimary: Array<{ key: string; label: string }>;
   savedFilterOverflow: Array<{ key: string; label: string }>;
   activeSavedFilterKey: string;
-  showMoreSavedFilter: boolean;
-  moreSavedFilterLabel: string;
-  collapseSavedFilterLabel: string;
   sortLabel: string;
   sortOptions: Array<{ label: string; value: string }>;
   sortValue: string;
@@ -229,14 +189,11 @@ defineProps<{
   groupPrimary: Array<{ key: string; label: string }>;
   groupOverflow: Array<{ key: string; label: string }>;
   activeGroupKey: string;
-  showMoreGroup: boolean;
-  moreGroupLabel: string;
-  collapseGroupLabel: string;
   canCreateRecord: boolean;
   createLabel: string;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   'switch-view': [mode: string];
   'search-input': [event: Event];
   'search-composition-start': [];
@@ -245,22 +202,56 @@ defineEmits<{
   'clear-search': [];
   filter: [key: string];
   'clear-filter': [];
-  'toggle-more-filter': [];
   'saved-filter': [key: string];
   'clear-saved-filter': [];
-  'toggle-more-saved-filter': [];
   sort: [value: string];
   group: [key: string];
   'clear-group': [];
-  'toggle-more-group': [];
   create: [];
 }>();
+
+const searchMenuOpen = ref(false);
+const selectedSymbol = '✓';
+const clearSymbol = '×';
+
+const allFilterChips = computed(() => [...props.filterPrimary, ...props.filterOverflow]);
+const allSavedFilterChips = computed(() => [...props.savedFilterPrimary, ...props.savedFilterOverflow]);
+const allGroupChips = computed(() => [...props.groupPrimary, ...props.groupOverflow]);
+const activeFilterChip = computed<SearchChip | null>(() =>
+  allFilterChips.value.find((chip) => chip.key === props.activeFilterKey) || null,
+);
+const activeSavedFilterChip = computed<SearchChip | null>(() =>
+  allSavedFilterChips.value.find((chip) => chip.key === props.activeSavedFilterKey) || null,
+);
+const activeGroupChip = computed<SearchChip | null>(() =>
+  allGroupChips.value.find((chip) => chip.key === props.activeGroupKey) || null,
+);
+const hasSearchMenu = computed(() =>
+  (props.showFilter && allFilterChips.value.length > 0)
+  || (props.showGroup && allGroupChips.value.length > 0)
+  || (props.showSavedFilter && allSavedFilterChips.value.length > 0),
+);
+
+function selectFilter(key: string) {
+  searchMenuOpen.value = false;
+  emit('filter', key);
+}
+
+function selectSavedFilter(key: string) {
+  searchMenuOpen.value = false;
+  emit('saved-filter', key);
+}
+
+function selectGroup(key: string) {
+  searchMenuOpen.value = false;
+  emit('group', key);
+}
 </script>
 
 <style scoped>
 .action-toolbar {
   display: grid;
-  grid-template-columns: auto minmax(220px, 1fr) auto auto auto;
+  grid-template-columns: auto minmax(320px, 1fr) auto auto;
   align-items: start;
   gap: 10px;
   border: 1px solid #e2e8f0;
@@ -290,30 +281,40 @@ defineEmits<{
   flex-wrap: wrap;
 }
 
-.toolbar-search {
+.native-search {
+  position: relative;
   display: flex;
   align-items: center;
   justify-self: stretch;
-  min-width: 220px;
-  gap: 6px;
+  min-width: 320px;
 }
 
-.toolbar-search input {
-  width: 100%;
-  height: 28px;
+.native-searchbox {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+  min-height: 30px;
+  gap: 5px;
   border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border-radius: 8px 0 0 8px;
   background: #f8fafc;
+  padding: 3px 6px;
+}
+
+.native-searchbox input {
+  flex: 1 1 160px;
+  min-width: 120px;
+  height: 22px;
+  border: 0;
+  background: transparent;
   color: #0f172a;
   font-size: 12px;
-  padding: 5px 9px;
+  padding: 2px 4px;
 }
 
-.toolbar-search input:focus {
-  border-color: #2563eb;
-  background: #fff;
+.native-searchbox input:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
 }
 
 .toolbar-search-clear {
@@ -325,6 +326,101 @@ defineEmits<{
   padding: 5px 8px;
   font-size: 12px;
   cursor: pointer;
+}
+
+.search-facet {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 22px;
+  border: 1px solid #bfdbfe;
+  border-radius: 5px;
+  background: #eff6ff;
+  color: #1e40af;
+  padding: 2px 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.facet-remove {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.search-menu-toggle {
+  flex: 0 0 auto;
+  min-height: 30px;
+  border: 1px solid #cbd5e1;
+  border-left: 0;
+  border-radius: 0 8px 8px 0;
+  background: #fff;
+  color: #334155;
+  padding: 5px 9px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.search-menu-toggle.active {
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  width: min(520px, 90vw);
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18);
+  padding: 8px 0;
+}
+
+.search-dropdown-section + .search-dropdown-section {
+  border-top: 1px solid #e2e8f0;
+  margin-top: 6px;
+  padding-top: 6px;
+}
+
+.search-dropdown-title {
+  margin: 0;
+  padding: 5px 12px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.search-dropdown-items {
+  display: grid;
+}
+
+.search-menu-item {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: #fff;
+  color: #0f172a;
+  padding: 7px 12px;
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.search-menu-item:hover,
+.search-menu-item.selected {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.menu-check {
+  color: #2563eb;
+  font-weight: 700;
 }
 
 .toolbar-actions {
@@ -378,7 +474,10 @@ defineEmits<{
 }
 
 .contract-chip:disabled,
-.toolbar-search-clear:disabled {
+.toolbar-search-clear:disabled,
+.search-menu-toggle:disabled,
+.search-facet:disabled,
+.search-menu-item:disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -399,8 +498,12 @@ defineEmits<{
     justify-content: flex-start;
   }
 
-  .toolbar-search {
+  .native-search {
     width: 100%;
+    min-width: 0;
+  }
+
+  .native-searchbox {
     min-width: 0;
   }
 }

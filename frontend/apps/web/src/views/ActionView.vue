@@ -291,17 +291,11 @@
           :filter-primary="vm.filters.quickFilters.primary"
           :filter-overflow="vm.filters.quickFilters.overflow"
           :active-filter-key="activeContractFilterKey"
-          :show-more-filter="showMoreContractFilters"
-          :more-filter-label="toolbarMoreFilterLabel"
-          :collapse-filter-label="t('chip_more_filters_collapse', '收起更多筛选')"
           :show-saved-filter="showToolbarSavedFilter"
           :saved-filter-label="t('label.saved_filters', '已保存')"
           :saved-filter-primary="vm.filters.savedFilters.primary"
           :saved-filter-overflow="vm.filters.savedFilters.overflow"
           :active-saved-filter-key="activeSavedFilterKey"
-          :show-more-saved-filter="showMoreSavedFilters"
-          :more-saved-filter-label="toolbarMoreSavedFilterLabel"
-          :collapse-saved-filter-label="t('chip_more_filters_collapse', '收起更多筛选')"
           :sort-label="t('label.sort', '排序')"
           :sort-options="displaySortOptions"
           :sort-value="sortValue"
@@ -309,10 +303,7 @@
           :group-label="t('label.group_view', '分组')"
           :group-primary="vm.filters.groupBy.primary"
           :group-overflow="vm.filters.groupBy.overflow"
-          :active-group-key="activeGroupByField"
-          :show-more-group="showMoreGroupBy"
-          :more-group-label="toolbarMoreGroupLabel"
-          :collapse-group-label="t('chip_more_group_collapse', '收起更多分组')"
+          :active-group-key="toolbarActiveGroupKey"
           :can-create-record="canCreateRecord"
           :create-label="t('action_create_record', '新建')"
           @switch-view="switchViewMode"
@@ -323,14 +314,11 @@
           @clear-search="clearToolbarSearch"
           @filter="applyContractFilter"
           @clear-filter="clearContractFilter"
-          @toggle-more-filter="toggleMoreContractFilters"
           @saved-filter="applySavedFilter"
           @clear-saved-filter="clearSavedFilter"
-          @toggle-more-saved-filter="toggleMoreSavedFilters"
           @sort="handleSort"
           @group="applyGroupBy"
           @clear-group="clearGroupBy"
-          @toggle-more-group="toggleMoreGroupBy"
           @create="openCreateRecord"
         />
       </template>
@@ -402,17 +390,11 @@
           :filter-primary="vm.filters.quickFilters.primary"
           :filter-overflow="vm.filters.quickFilters.overflow"
           :active-filter-key="activeContractFilterKey"
-          :show-more-filter="showMoreContractFilters"
-          :more-filter-label="toolbarMoreFilterLabel"
-          :collapse-filter-label="t('chip_more_filters_collapse', '收起更多筛选')"
           :show-saved-filter="showToolbarSavedFilter"
           :saved-filter-label="t('label.saved_filters', '已保存')"
           :saved-filter-primary="vm.filters.savedFilters.primary"
           :saved-filter-overflow="vm.filters.savedFilters.overflow"
           :active-saved-filter-key="activeSavedFilterKey"
-          :show-more-saved-filter="showMoreSavedFilters"
-          :more-saved-filter-label="toolbarMoreSavedFilterLabel"
-          :collapse-saved-filter-label="t('chip_more_filters_collapse', '收起更多筛选')"
           :sort-label="t('label.sort', '排序')"
           :sort-options="displaySortOptions"
           :sort-value="sortValue"
@@ -420,10 +402,7 @@
           :group-label="t('label.group_view', '分组')"
           :group-primary="vm.filters.groupBy.primary"
           :group-overflow="vm.filters.groupBy.overflow"
-          :active-group-key="activeGroupByField"
-          :show-more-group="showMoreGroupBy"
-          :more-group-label="toolbarMoreGroupLabel"
-          :collapse-group-label="t('chip_more_group_collapse', '收起更多分组')"
+          :active-group-key="toolbarActiveGroupKey"
           :can-create-record="canCreateRecord"
           :create-label="t('action_create_record', '新建')"
           @switch-view="switchViewMode"
@@ -434,14 +413,11 @@
           @clear-search="clearToolbarSearch"
           @filter="applyContractFilter"
           @clear-filter="clearContractFilter"
-          @toggle-more-filter="toggleMoreContractFilters"
           @saved-filter="applySavedFilter"
           @clear-saved-filter="clearSavedFilter"
-          @toggle-more-saved-filter="toggleMoreSavedFilters"
           @sort="handleSort"
           @group="applyGroupBy"
           @clear-group="clearGroupBy"
-          @toggle-more-group="toggleMoreGroupBy"
           @create="openCreateRecord"
         />
       </template>
@@ -1113,14 +1089,8 @@ const showToolbarGroup = computed(() => canRenderActionSurfaceToolbar.value && g
 const showStandaloneQuickFilters = computed(() => quickFiltersVisible.value && !showToolbarFilter.value);
 const showStandaloneSavedFilters = computed(() => savedFiltersVisible.value && !showToolbarSavedFilter.value);
 const showStandaloneGroupView = computed(() => groupViewVisible.value && !showToolbarGroup.value);
-const toolbarMoreFilterLabel = computed(() =>
-  `${t('chip_more_filters_expand', '更多筛选')} (${vm.value.filters.quickFilters.overflow.length})`,
-);
-const toolbarMoreSavedFilterLabel = computed(() =>
-  `${t('chip_more_filters_expand', '更多筛选')} (${vm.value.filters.savedFilters.overflow.length})`,
-);
-const toolbarMoreGroupLabel = computed(() =>
-  `${t('chip_more_group_expand', '更多分组')} (${vm.value.filters.groupBy.overflow.length})`,
+const toolbarActiveGroupKey = computed(() =>
+  activeGroupByField.value || String(route.query.group_by || '').trim(),
 );
 const showTopActionToolbar = computed(() =>
   showViewSwitch.value
