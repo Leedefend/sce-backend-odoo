@@ -30,6 +30,9 @@ class ScArApProjectSummary(models.Model):
     input_tax_amount = fields.Float(string="进项税额", readonly=True)
     deduction_tax_amount = fields.Float(string="抵扣税额", readonly=True)
     tax_deduction_rate = fields.Float(string="抵扣比例", readonly=True)
+    self_funding_income_amount = fields.Float(string="自筹收入金额", readonly=True)
+    self_funding_refund_amount = fields.Float(string="自筹退回金额", readonly=True)
+    self_funding_unreturned_amount = fields.Float(string="自筹未退金额", readonly=True)
 
     def init(self):
         self._cr.execute(
@@ -39,7 +42,8 @@ class ScArApProjectSummary(models.Model):
                 to_regclass('sc_receipt_income'),
                 to_regclass('sc_invoice_registration'),
                 to_regclass('sc_treasury_ledger'),
-                to_regclass('sc_legacy_tax_deduction_fact')
+                to_regclass('sc_legacy_tax_deduction_fact'),
+                to_regclass('sc_legacy_self_funding_fact')
             """
         )
         if not all(self._cr.fetchone()):
@@ -182,6 +186,37 @@ class ScArApProjectSummary(models.Model):
                     FROM tax_deduction_norm
                     GROUP BY project_id, partner_id, partner_key, partner_name
                 ),
+                self_funding_norm AS (
+                    SELECT
+                        s.project_id,
+                        COALESCE(s.partner_id, pnm.partner_id) AS partner_id,
+                        CASE
+                            WHEN COALESCE(s.partner_id, pnm.partner_id) IS NOT NULL
+                                THEN 'partner:' || COALESCE(s.partner_id, pnm.partner_id)::varchar
+                            ELSE 'name:' || lower(trim(COALESCE(NULLIF(s.partner_name, ''), '未填往来单位')))
+                        END AS partner_key,
+                        COALESCE(rp.name, pnm.partner_name, NULLIF(s.partner_name, ''), '未填往来单位')
+                            AS partner_name,
+                        COALESCE(s.self_funding_amount, 0.0) AS self_funding_income_amount,
+                        COALESCE(s.refund_amount, 0.0) AS self_funding_refund_amount
+                    FROM sc_legacy_self_funding_fact s
+                    LEFT JOIN res_partner rp ON rp.id = s.partner_id
+                    LEFT JOIN partner_name_map pnm
+                        ON pnm.partner_name_key = lower(trim(s.partner_name))
+                    WHERE s.active IS TRUE
+                      AND COALESCE(s.deleted_flag, '0') IN ('0', '')
+                ),
+                self_funding AS (
+                    SELECT
+                        project_id,
+                        partner_id,
+                        partner_key,
+                        partner_name,
+                        SUM(self_funding_income_amount) AS self_funding_income_amount,
+                        SUM(self_funding_refund_amount) AS self_funding_refund_amount
+                    FROM self_funding_norm
+                    GROUP BY project_id, partner_id, partner_key, partner_name
+                ),
                 keys AS (
                     SELECT project_id, partner_id, partner_key, partner_name FROM income_contract
                     UNION
@@ -196,6 +231,8 @@ class ScArApProjectSummary(models.Model):
                     SELECT project_id, partner_id, partner_key, partner_name FROM input_invoice
                     UNION
                     SELECT project_id, partner_id, partner_key, partner_name FROM tax_deduction
+                    UNION
+                    SELECT project_id, partner_id, partner_key, partner_name FROM self_funding
                 )
                 SELECT
                     row_number() OVER (ORDER BY k.project_id, k.partner_name, k.partner_key) AS id,
@@ -229,7 +266,11 @@ class ScArApProjectSummary(models.Model):
                         WHEN COALESCE(oi.output_tax_amount, 0.0) > 0.0
                             THEN COALESCE(td.deduction_tax_amount, 0.0) / COALESCE(oi.output_tax_amount, 0.0)
                         ELSE 0.0
-                    END AS tax_deduction_rate
+                    END AS tax_deduction_rate,
+                    COALESCE(sf.self_funding_income_amount, 0.0) AS self_funding_income_amount,
+                    COALESCE(sf.self_funding_refund_amount, 0.0) AS self_funding_refund_amount,
+                    COALESCE(sf.self_funding_income_amount, 0.0) - COALESCE(sf.self_funding_refund_amount, 0.0)
+                        AS self_funding_unreturned_amount
                 FROM keys k
                 LEFT JOIN project_project p ON p.id = k.project_id
                 LEFT JOIN income_contract ic
@@ -246,6 +287,8 @@ class ScArApProjectSummary(models.Model):
                     ON ii.project_id = k.project_id AND ii.partner_key = k.partner_key
                 LEFT JOIN tax_deduction td
                     ON td.project_id = k.project_id AND td.partner_key = k.partner_key
+                LEFT JOIN self_funding sf
+                    ON sf.project_id = k.project_id AND sf.partner_key = k.partner_key
             )
             """
         )

@@ -93,6 +93,7 @@
         'views/support/legacy_expense_deposit_views.xml',
         'views/support/legacy_invoice_tax_views.xml',
         'views/support/legacy_tax_deduction_views.xml',
+        'views/support/legacy_self_funding_views.xml',
         'views/support/legacy_workflow_audit_views.xml',
         'views/support/legacy_financing_loan_views.xml',
         'views/support/legacy_fund_daily_snapshot_views.xml',

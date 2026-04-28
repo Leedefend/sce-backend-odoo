@@ -31248,3 +31248,25 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 抵扣附加税已资产化但尚未挂入汇总报表；43 行抵扣事实未匹配 res.partner，当前按历史往来单位名称兜底汇总。`
 - rollback: `回退本批次提交并升级 smart_construction_core；如需回滚模拟生产数据，可按 import_batch=legacy_tax_deduction_v1 删除 sc.legacy.tax.deduction.fact 行后升级模块。`
 - next_step: `继续处理自筹收入/退回/未退，或拆项目实际可用余额到项目资金汇总能力。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Self-Funding
+
+- branch: `codex/dev-env-run`
+- short_sha: `151a4971`
+- Layer Target: `Domain Projection`
+- Module: `addons/smart_construction_core`, `scripts/migration`, `docs/migration_alignment`
+- Reason: `旧库“应收应付报表（项目）”自筹收入、退回、未退字段来自专门收退事实，现有收款事实无法完整承载，需要专用历史事实模型进入报表投影。`
+- completed_step: `新增 sc.legacy.self.funding.fact 历史自筹事实模型、内部菜单、ACL、旧库 payload 生成/写入脚本；sc.ar.ap.project.summary 新增自筹收入金额、自筹退回金额、自筹未退金额，列表/透视/图表/搜索同步开放。`
+- verification:
+  - `python3 -m py_compile legacy_self_funding_fact.py ar_ap_project_summary.py fresh_db_legacy_self_funding_replay_*.py` -> `PASS`
+  - `python3 stdlib XML parse legacy_self_funding_views.xml / legacy_finance_internal_views.xml / ar_ap_project_summary_views.xml` -> `PASS`
+  - `CSV ir.model.access duplicate id check` -> `PASS; rows=340 duplicate_ids=[]`
+  - `ENV=test ENV_FILE=.env.prod.sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_prod_sim make mod.upgrade` -> `PASS`
+  - `python3 scripts/migration/fresh_db_legacy_self_funding_replay_adapter.py` -> `PASS; expected_rows=3728`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim MIGRATION_ARTIFACT_ROOT=/mnt/artifacts/migration make odoo.shell.exec < scripts/migration/fresh_db_legacy_self_funding_replay_write.py` -> `PASS; created_rows=3673, missing_project=55`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `fact_rows=3673, fact_missing_partner_rows=14, fact_self_funding_amount=219525590.83, fact_refund_amount=143229174.39, fact_unreturned_amount=76296416.44, summary_rows=11187, summary_self_funding_rows=595, summary_self_funding_income_amount=219525590.83, summary_self_funding_refund_amount=143229174.39, summary_self_funding_unreturned_amount=76296416.44`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make verify.restricted` -> `SKIP; Makefile 无 verify.restricted target`
+- result: `PASS; 应收应付报表（项目）已补齐自筹收入、退回和未退三项指标。`
+- risk: `P1; 55 条旧库自筹明细存在旧项目 ID 但当前模拟生产项目主数据未匹配，未进入项目报表，涉及净未退 1936367.08；实际可用余额仍未纳入。`
+- rollback: `回退本批次提交并升级 smart_construction_core；如需回滚模拟生产数据，可按 import_batch=legacy_self_funding_v1 删除 sc.legacy.self.funding.fact 行后升级模块。`
+- next_step: `继续拆解旧库实际可用余额字段，判断进入项目资金汇总能力还是应收应付项目报表专属指标。`
