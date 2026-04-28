@@ -93,10 +93,16 @@ Batch-AA 在同一载体继续接入贷款：
 - `ZJGL_ZJSZ_DKGL_HKDJ`：贷款还款，写入 `direction='expense'`、`metric_bucket='cumulative'`；模拟生产库新增 98 行，金额 31,859,781.01。
 - 本批贷款来源未绑定 13 条，金额 1,225,000.00，主要为利龙旧账户和虚拟账户。
 
+Batch-AB 在同一载体继续接入扣款实缴：
+
+- `T_KK_SJDJB_CB`：扣款实缴登记明细，写入 `direction='expense'`、`metric_bucket='cumulative'`，对应旧资金明细中的“扣款实缴登记”和累计支出方向；旧库有效账户明细 6394 行，金额 88,141,282.74。
+- `T_KK_SJTHB_CB`：扣款实缴退回明细，写入 `direction='income'`、`metric_bucket='cumulative'`，对应旧资金明细中的“扣款实缴退回”和累计收款方向；旧库有效账户明细 61 行，金额 4,842,508.14。
+- `T_KK_SJTHB` 表头本身没有金额字段，不能直接作为账户收支事实；本批使用其子表 `T_KK_SJTHB_CB.BCTHS` 作为实际退回金额。
+
 ## 尚未覆盖
 
 旧过程中的 `LJSK/LJZC` 仍包含多来源：
 
-- `T_KK_SJTHB`
+- 投标退款等后续资金来源。
 
 下一轮应继续按同一载体补累计收款、累计支出来源。

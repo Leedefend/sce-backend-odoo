@@ -35,10 +35,10 @@
         <field name="procedure_name">Report_SP_USP_Select_ZHSZTJB_GS_Tree</field>
         <field name="parameter_summary">开始日期、结束日期、账户、项目、账户类型。</field>
         <field name="metric_summary">账户余额、收入、支出、累计收款、累计支出、账户往来、当前账户余额，支持树形汇总。</field>
-        <field name="source_tables">C_Base_ZHSZ, BASE_SYSTEM_PROJECT, C_CWSFK_GSCWSR, C_CWSFK_GSCWZC, C_JFHKLR, C_JFHKLR_TH, C_JFHKLR_TH_ZCDF_CB, C_ZFSQGL_FKZH_CB, C_FKGL_ZHJZJWL, BGGL_JHK_HKDJ, BGGL_JHK_JKSQ, ZJGL_ZCDFSZ_FXJK_HK, ZJGL_ZCDFSZ_FXJK_JK, ZJGL_BZJGL_Pay_FBZJ, ZJGL_BZJGL_Pay_FBZJTH, ZJGL_BZJGL_Branch_SBZJDJ, ZJGL_BZJGL_Branch_SBZJTH, ZJGL_ZJSZ_DKGL_DKDJ, ZJGL_ZJSZ_DKGL_HKDJ, T_KK_SJTHB。</field>
-        <field name="target_model">sc.legacy.account.master + sc.legacy.account.transaction.line + sc.legacy.fund.daily.line + sc.account.income.expense.summary；已具备账户主数据、账户往来来源明细、公司财务收支来源明细、收款登记来源明细、收入退回来源明细、供应商付款来源明细、风险借还款来源明细、保证金来源明细、贷款来源明细与第一版账户收支统计只读聚合。</field>
+        <field name="source_tables">C_Base_ZHSZ, BASE_SYSTEM_PROJECT, C_CWSFK_GSCWSR, C_CWSFK_GSCWZC, C_JFHKLR, C_JFHKLR_TH, C_JFHKLR_TH_ZCDF_CB, C_ZFSQGL_FKZH_CB, C_FKGL_ZHJZJWL, BGGL_JHK_HKDJ, BGGL_JHK_JKSQ, ZJGL_ZCDFSZ_FXJK_HK, ZJGL_ZCDFSZ_FXJK_JK, ZJGL_BZJGL_Pay_FBZJ, ZJGL_BZJGL_Pay_FBZJTH, ZJGL_BZJGL_Branch_SBZJDJ, ZJGL_BZJGL_Branch_SBZJTH, ZJGL_ZJSZ_DKGL_DKDJ, ZJGL_ZJSZ_DKGL_HKDJ, T_KK_SJDJB_CB, T_KK_SJTHB_CB。</field>
+        <field name="target_model">sc.legacy.account.master + sc.legacy.account.transaction.line + sc.legacy.fund.daily.line + sc.account.income.expense.summary；已具备账户主数据、账户往来来源明细、公司财务收支来源明细、收款登记来源明细、收入退回来源明细、供应商付款来源明细、风险借还款来源明细、保证金来源明细、贷款来源明细、扣款实缴/退回来源明细与第一版账户收支统计只读聚合。</field>
         <field name="carrier_status">partial</field>
-        <field name="next_action">继续补旧过程投标退款、实退回扣等累计收支来源的精确口径对账；员工借还款与付款退回分支已保留但当前旧库无有效账户行。</field>
+        <field name="next_action">继续补旧过程投标退款等累计收支来源的精确口径对账；员工借还款与付款退回分支已保留但当前旧库无有效账户行。</field>
         <field name="evidence">ts_function_RecordUserClick: 1549 clicks, 10 users, last 2026-04-10；另有旧页面同名入口 517 clicks。</field>
     </record>
 

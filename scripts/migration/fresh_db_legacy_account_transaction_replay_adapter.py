@@ -639,12 +639,70 @@ WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
   AND ISNULL(DEL, 0) = 0
   AND ISNULL(DJZT, '0') = '2'
   AND ISNULL(HKJE, 0) <> 0
+UNION ALL
+SELECT
+  {clean_sql("c.Id + ':deduction_payment'")} AS source_key,
+  'T_KK_SJDJB_CB' AS source_table,
+  {clean_sql("c.Id")} AS legacy_record_id,
+  {clean_sql("h.DJBH")} AS document_no,
+  {clean_sql("CONVERT(varchar(10), h.DJRQ, 23)")} AS transaction_date,
+  {clean_sql("h.DJZT")} AS document_state,
+  {clean_sql("h.DEL")} AS deleted_flag,
+  {clean_sql("h.XMID")} AS project_legacy_id,
+  {clean_sql("h.XMMC")} AS project_name,
+  {clean_sql("h.KKZHID")} AS account_legacy_id,
+  {clean_sql("h.KKZH")} AS account_name,
+  {clean_sql("c.SJNRID")} AS counterparty_account_legacy_id,
+  {clean_sql("c.SJNR")} AS counterparty_account_name,
+  'expense' AS direction,
+  'cumulative' AS metric_bucket,
+  {clean_sql("c.BCSJS")} AS amount,
+  {clean_sql("c.SJNR")} AS category,
+  '扣款实缴登记' AS source_summary,
+  {clean_sql("c.BZ")} AS note,
+  '1' AS active
+FROM dbo.T_KK_SJDJB_CB c
+JOIN dbo.T_KK_SJDJB h ON h.Id = c.ZBID
+WHERE NULLIF(LTRIM(RTRIM(c.Id)), '') IS NOT NULL
+  AND NULLIF(LTRIM(RTRIM(h.KKZHID)), '') IS NOT NULL
+  AND ISNULL(h.DEL, 0) = 0
+  AND ISNULL(h.DJZT, '0') = '2'
+  AND ISNULL(c.BCSJS, 0) <> 0
+UNION ALL
+SELECT
+  {clean_sql("c.Id + ':deduction_payment_refund'")} AS source_key,
+  'T_KK_SJTHB_CB' AS source_table,
+  {clean_sql("c.Id")} AS legacy_record_id,
+  {clean_sql("h.DJBH")} AS document_no,
+  {clean_sql("CONVERT(varchar(10), h.DJRQ, 23)")} AS transaction_date,
+  {clean_sql("h.DJZT")} AS document_state,
+  {clean_sql("h.DEL")} AS deleted_flag,
+  {clean_sql("h.XMID")} AS project_legacy_id,
+  {clean_sql("h.XMMC")} AS project_name,
+  {clean_sql("h.KKZHID")} AS account_legacy_id,
+  {clean_sql("h.KKZH")} AS account_name,
+  {clean_sql("c.NRID")} AS counterparty_account_legacy_id,
+  {clean_sql("c.NR")} AS counterparty_account_name,
+  'income' AS direction,
+  'cumulative' AS metric_bucket,
+  {clean_sql("c.BCTHS")} AS amount,
+  {clean_sql("c.NR")} AS category,
+  '扣款实缴退回' AS source_summary,
+  {clean_sql("c.BZ")} AS note,
+  '1' AS active
+FROM dbo.T_KK_SJTHB_CB c
+JOIN dbo.T_KK_SJTHB h ON h.Id = c.ZBID
+WHERE NULLIF(LTRIM(RTRIM(c.Id)), '') IS NOT NULL
+  AND NULLIF(LTRIM(RTRIM(h.KKZHID)), '') IS NOT NULL
+  AND ISNULL(h.DEL, 0) = 0
+  AND ISNULL(h.DJZT, '0') = '2'
+  AND ISNULL(c.BCTHS, 0) <> 0
 ORDER BY transaction_date, legacy_record_id, direction;
 """
     rows = write_sql_csv(PAYLOAD_CSV, FIELDS, sql)
     payload = {
         "mode": "fresh_db_legacy_account_transaction_replay_adapter",
-        "source_table": "C_FKGL_ZHJZJWL,C_CWSFK_GSCWSR,C_CWSFK_GSCWZC,C_JFHKLR,C_JFHKLR_TH,C_JFHKLR_TH_ZCDF_CB,T_FK_Supplier,BGGL_JHK_HKDJ,BGGL_JHK_JKSQ,ZJGL_ZCDFSZ_FXJK_HK,ZJGL_ZCDFSZ_FXJK_JK,ZJGL_BZJGL_Pay_FBZJ,ZJGL_BZJGL_Pay_FBZJTH,ZJGL_BZJGL_Branch_SBZJDJ,ZJGL_BZJGL_Branch_SBZJTH,ZJGL_ZJSZ_DKGL_DKDJ,ZJGL_ZJSZ_DKGL_HKDJ",
+        "source_table": "C_FKGL_ZHJZJWL,C_CWSFK_GSCWSR,C_CWSFK_GSCWZC,C_JFHKLR,C_JFHKLR_TH,C_JFHKLR_TH_ZCDF_CB,T_FK_Supplier,BGGL_JHK_HKDJ,BGGL_JHK_JKSQ,ZJGL_ZCDFSZ_FXJK_HK,ZJGL_ZCDFSZ_FXJK_JK,ZJGL_BZJGL_Pay_FBZJ,ZJGL_BZJGL_Pay_FBZJTH,ZJGL_BZJGL_Branch_SBZJDJ,ZJGL_BZJGL_Branch_SBZJTH,ZJGL_ZJSZ_DKGL_DKDJ,ZJGL_ZJSZ_DKGL_HKDJ,T_KK_SJDJB_CB,T_KK_SJTHB_CB",
         "rows": rows,
         "csv": str(PAYLOAD_CSV),
         "decision": "legacy_account_transaction_payload_ready" if rows else "STOP_REVIEW_REQUIRED",
