@@ -155,6 +155,8 @@ case "$MODE" in
     run_step replay_payload_precheck run_odoo_script "$PRECHECK_SCRIPT"
     run_step partner_l4_anchor_completed run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_partner_l4_replay_write.py"
     run_step project_anchor_completed run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_project_anchor_replay_write.py"
+    run_step legacy_account_master_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_account_master_replay_adapter.py"
+    run_step legacy_account_master_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_account_master_replay_write.py"
     if [[ "$INCLUDE_MATERIAL_CATALOG" == "1" ]]; then
       run_step legacy_material_catalog_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_material_catalog_replay_adapter.py"
       run_step legacy_material_catalog_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_material_catalog_replay_write.py"

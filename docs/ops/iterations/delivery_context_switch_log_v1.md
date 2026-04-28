@@ -31461,3 +31461,25 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 旧过程直接执行在还原库触发 collation conflict，本批采用过程定义和表事实审计；建模前仍需用等价 SQL 或修正 collation 方式复核样本数。`
 - rollback: `本批仅新增审计文档和上下文日志，回退提交即可。`
 - next_step: `为 C_Base_ZHSZ 建账户主数据承载，并建立账户收支统计只读聚合的第一版。`
+
+## 2026-04-28 Batch-Legacy-Account-Master-Carrier
+
+- branch: `codex/dev-env-run`
+- short_sha: `63774523`
+- Layer Target: `Domain Carrier`
+- Module: `addons/smart_construction_core`, `scripts/migration`, `Makefile`, `docs/migration_alignment`
+- Reason: `账户收支统计表依赖 C_Base_ZHSZ 账户主数据；需要先承载账户类型、账户名称、账号、期初余额和旧账户状态，才能建立账户维度统计聚合。`
+- completed_step: `新增 sc.legacy.account.master 模型、历史账户菜单/动作、ACL、旧库 adapter、重放写入脚本、Make target，并接入 history_continuity_oneclick.sh；更新旧库报表清单 target_model。`
+- verification:
+  - `python3 -m py_compile addons/smart_construction_core/models/support/legacy_account_master.py scripts/migration/fresh_db_legacy_account_master_replay_adapter.py scripts/migration/fresh_db_legacy_account_master_replay_write.py` -> `PASS`
+  - `python3 -m xml.etree.ElementTree addons/smart_construction_core/views/support/legacy_account_master_views.xml` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make fresh_db.legacy_account_master.replay.adapter` -> `PASS; account_rows=117`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim CODEX_MODE=gate CODEX_NEED_UPGRADE=1 make mod.upgrade MODULE=smart_construction_core` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_REPLAY_DB_ALLOWLIST=sc_prod_sim make odoo.shell.exec < scripts/migration/fresh_db_legacy_account_master_replay_write.py` -> `PASS; after=117, active_rows=63, account_types=12, account_nos=112`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make restart` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; model_count=117, active=63, action=True, menu=True parent=财务账款`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; C_Base_ZHSZ 117 个历史账户已具备模型、菜单和可重建写入链路。`
+- risk: `P2; 写入结果 JSON 在 /mnt/artifacts/migration 权限不足时回落到 /tmp；后续可统一容器 artifact 权限。`
+- rollback: `回退本批提交，升级 smart_construction_core；如需清理模拟生产数据，可删除 sc_legacy_account_master 中 source_table=C_Base_ZHSZ 的记录。`
+- next_step: `建立账户收支统计只读聚合第一版，先复用 sc.legacy.account.master、sc.treasury.ledger 与 sc.legacy.fund.daily.line。`
