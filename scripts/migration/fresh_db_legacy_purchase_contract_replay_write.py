@@ -88,7 +88,7 @@ env.cr.execute(  # noqa: F821
       modifier_legacy_user_id, modifier_name, modified_time,
       is_supplement_contract, related_contract_legacy_id,
       related_contract_no, contract_attribute, credit_code, tax_rate, note,
-      source_table, active, create_uid, create_date, write_uid, write_date
+      source_table, state, active, create_uid, create_date, write_uid, write_date
     )
     SELECT
       t.legacy_record_id,
@@ -142,6 +142,7 @@ env.cr.execute(  # noqa: F821
       COALESCE(NULLIF(t.tax_rate, '')::numeric, 0),
       NULLIF(t.note, ''),
       'T_CGHT_INFO',
+      'legacy_confirmed',
       COALESCE(NULLIF(t.active, ''), '1') = '1',
       %s, NOW(), %s, NOW()
     FROM tmp_legacy_purchase_contract t
@@ -202,6 +203,7 @@ env.cr.execute(  # noqa: F821
       tax_rate = EXCLUDED.tax_rate,
       note = EXCLUDED.note,
       source_table = EXCLUDED.source_table,
+      state = EXCLUDED.state,
       active = EXCLUDED.active,
       write_uid = EXCLUDED.write_uid,
       write_date = NOW()

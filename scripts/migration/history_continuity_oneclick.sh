@@ -45,6 +45,7 @@ INCLUDE_FILE_INDEX="${HISTORY_CONTINUITY_INCLUDE_FILE_INDEX:-1}"
 INCLUDE_ATTENDANCE_CHECKIN="${HISTORY_CONTINUITY_INCLUDE_ATTENDANCE_CHECKIN:-0}"
 INCLUDE_PERSONNEL_MOVEMENT="${HISTORY_CONTINUITY_INCLUDE_PERSONNEL_MOVEMENT:-0}"
 INCLUDE_SALARY_LINE="${HISTORY_CONTINUITY_INCLUDE_SALARY_LINE:-0}"
+USE_PACKAGED_PAYLOADS="${HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS:-0}"
 MATERIALIZED_FILES=()
 
 cleanup_materialized_files() {
@@ -110,6 +111,14 @@ run_step() {
     fi
   fi
   echo "[history.continuity] step=$step_name"
+  if [[ "$USE_PACKAGED_PAYLOADS" == "1" && "$step_name" == *_adapter ]]; then
+    echo "[history.continuity] skip adapter step=$step_name by HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1"
+    if [[ -n "$STOP_AFTER" && "$step_name" == "$STOP_AFTER" ]]; then
+      echo "[history.continuity] stop after step=$step_name"
+      exit 0
+    fi
+    return 0
+  fi
   "$@"
   if [[ -n "$STOP_AFTER" && "$step_name" == "$STOP_AFTER" ]]; then
     echo "[history.continuity] stop after step=$step_name"
@@ -117,7 +126,7 @@ run_step() {
   fi
 }
 
-echo "[history.continuity] mode=$MODE db=$DB_NAME artifact_root=$ARTIFACT_ROOT"
+echo "[history.continuity] mode=$MODE db=$DB_NAME artifact_root=$ARTIFACT_ROOT packaged_payloads=$USE_PACKAGED_PAYLOADS"
 
 case "$MODE" in
   rehearse)

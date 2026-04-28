@@ -26,9 +26,10 @@ export RUN_ID
 export MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT"
 export MIGRATION_REPLAY_DB_ALLOWLIST="$ALLOWLIST"
 export HISTORY_CONTINUITY_ALLOW_PROD=1
+export HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS="${HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS:-1}"
 export HISTORY_CONTINUITY_INCLUDE_PAYMENT_STATE_RECOVERY="${HISTORY_CONTINUITY_INCLUDE_PAYMENT_STATE_RECOVERY:-1}"
 
-echo "[fresh.production.history.init] db=${DB_NAME} run_id=${RUN_ID} artifact_root=${ARTIFACT_ROOT}"
+echo "[fresh.production.history.init] db=${DB_NAME} run_id=${RUN_ID} artifact_root=${ARTIFACT_ROOT} packaged_payloads=${HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS}"
 if [[ "$INSTALL_MODULES" == "1" ]]; then
   echo "[fresh.production.history.init] step=start_stack"
   compose ${COMPOSE_FILES} up -d
@@ -54,7 +55,7 @@ echo "[fresh.production.history.init] step=platform_init_preflight"
 DB_NAME="$DB_NAME" COMPOSE_FILES="${COMPOSE_FILES}" "$ROOT_DIR/scripts/verify/platform_init_preflight.sh"
 
 echo "[fresh.production.history.init] step=history_replay"
-DB_NAME="$DB_NAME" HISTORY_CONTINUITY_MODE=replay "$ROOT_DIR/scripts/migration/history_continuity_oneclick.sh"
+DB_NAME="$DB_NAME" HISTORY_CONTINUITY_MODE=replay bash "$ROOT_DIR/scripts/migration/history_continuity_oneclick.sh"
 
 echo "[fresh.production.history.init] step=business_usable_probe"
 DB_NAME="$DB_NAME" "$ROOT_DIR/scripts/ops/odoo_shell_exec.sh" <"$ROOT_DIR/scripts/migration/history_business_usable_probe.py"

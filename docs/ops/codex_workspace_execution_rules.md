@@ -5,7 +5,11 @@
 - 将“执行前校验”变成强制步骤，而不是可选习惯。
 
 ## 适用范围
-- 本仓库内所有 Codex 代码改动、文档改动、验证执行。
+- 本仓库内所有 Codex 代码改动、文档改动、开发验证执行。
+- 不适用于人工监督下的服务器生产部署协助；该场景适用
+  `docs/ops/codex_production_assist_policy.md`。
+- 生产协助模式下，Codex 不得修改仓库文件、不得执行 Git 写操作，只能执行只读检查和
+  `docs/ops/prod_command_policy.md` 允许的 Makefile target。
 
 ## 强制执行步骤（每次开始改动前）
 1. **工作目录校验**
@@ -17,6 +21,8 @@
    - 必须执行：`git branch --show-current`
    - 分支必须匹配 allowlist：`feat/*`、`feature/*`、`codex/*`、`experiment/*`。
    - 若不匹配，立即停止执行。
+   - 例外：人工监督的生产部署协助允许 `main`、tag 或冻结 commit，但仅限只读检查和
+     生产策略允许的 Makefile target，禁止任何写文件或 Git 写操作。
 
 3. **仓库标识校验**
    - 必须执行：`git status --short`
@@ -48,4 +54,3 @@
   - 当前分支
   - 当前短 SHA
   - 本轮 Layer Target / Module / Reason
-

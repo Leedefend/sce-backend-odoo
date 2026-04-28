@@ -16,6 +16,42 @@ Each entry must include:
 
 ## Entries
 
+### 2026-04-29T00:52:00+08:00
+- blocker_key: `production_packaged_payload_replay_delivery_v1`
+- layer_target: `Ops Deploy / Migration Artifact Delivery / Verification`
+- module: `history_continuity_oneclick + fresh_production_history_init + migration_assets + smart_construction_core + audit smoke`
+- reason: `生产服务器不会安装旧库，历史重建必须只依赖随仓库交付的 artifacts/migration payload；同时生产 smoke 需要匹配“内部用户可业务发起、审核/批准严格控权”的权限口径。`
+- completed_step: `已先备份 sc_prod_sim 到 /tmp/sce_db_backups/sc_prod_sim_20260428T154612Z.dump，然后清空重建；补齐 artifacts/migration packaged payload，生产入口默认 HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1 并跳过 adapter；修复 fresh install 菜单加载顺序、采购合同 state 写入、业务/角色 smoke 的 OCA 审批路径；旧库容器停止后执行 history.production.fresh_init 后半段，payload replay、business smoke、role matrix smoke、frontend smoke 均 PASS，RUN_ID=rehearsal_packaged_final_20260429T0040。`
+- active_commit: `c58d3af4`
+- next_step: `重新生成 migration assets release package，执行交付审计与基础语法/文档门禁后提交本批生产交付资产改动。`
+
+### 2026-04-28T23:05:00+08:00
+- blocker_key: `migration_asset_delivery_packaging_audit_v1`
+- layer_target: `Migration Delivery Ops`
+- module: `migration_assets + scripts/migration + docs/migration_alignment + docs/ops`
+- reason: `上线交付前需要把复杂迁移资产包从“工程可运行”整理为“可审计交付”：明确加载资产、证据文件、发布包排除项、一键重放入口和交付门禁。`
+- completed_step: `新增只读交付审计 make migration.assets.delivery_audit，输出 artifacts/migration/migration_asset_delivery_audit_v1.json 与 docs/migration_alignment/migration_asset_delivery_audit_v1.md；新增 migration_asset_delivery_manifest_v1，冻结发布包决策：完整 XML 为 legacy_workflow_audit 加载资产，.parts 暂留仓库但不进最终发布包；新增 make migration.assets.release_package，默认输出 /tmp/sce_migration_asset_release/*.tar.gz 与 sha256，并生成小型包证据；同步修正生产断点续跑必须走 history.production.fresh_init。`
+- active_commit: `fe82d809`
+- next_step: `在 prod-sim 解包发布包，重跑 migration.assets.verify_all 与 migration.assets.delivery_audit，再执行 history.continuity.rehearse/replay。`
+
+### 2026-04-28T22:22:00+08:00
+- blocker_key: `codex_production_assist_policy_split_v1`
+- layer_target: `Ops Governance Documentation`
+- module: `docs/ops`
+- reason: `原 Codex 自治执行规则把 main 分支和 ENV=prod 全部拦截，导致服务器从 main/tag 正式生产部署也被误判为不允许执行；需要拆分自治开发规则与人工监督生产协助规则。`
+- completed_step: `新增 Codex 生产部署协助策略，并在自治 allowlist、workspace execution rules、生产部署规范、生产命令策略和 ops README 中明确生产部署例外：允许 main/tag/frozen commit 只读部署协助，但禁止 Codex 写仓库、Git 写操作和绕过 Makefile 的生产数据操作；同步修正生产断点续跑入口为 history.production.fresh_init。`
+- active_commit: `3262cd0e`
+- next_step: `在服务器部署前按 codex_production_assist_policy 执行一次只读预检，确认 main/tag 部署不再被自治分支规则误拦。`
+
+### 2026-04-28T22:05:28+08:00
+- blocker_key: `production_deployment_runbook_doc_v1`
+- layer_target: `Ops Documentation / Production Runtime Procedure`
+- module: `docs/ops + docs/deploy`
+- reason: `服务器生产环境正式部署缺少一份统一 SOP，尤其需要把生产数据重建、断点续跑、验收和回滚流程说清楚，避免用 db.reset/demo.reset 或临时脚本处理生产数据。`
+- completed_step: `新增生产环境正式部署规范，补充 ops README 与部署指南入口；本批次只改文档，不触达代码、contract/schema、启动链或前端页面。`
+- active_commit: `3262cd0e`
+- next_step: `按文档在 prod-sim/UAT 执行一次 history.production.fresh_init 或 history.continuity.replay 演练，并归档 RUN_ID、artifact、smoke 结果。`
+
 ### 2026-04-28T15:06:24+08:00
 - blocker_key: `legacy_ar_ap_project_surcharge_batch_i_closed`
 - layer_target: `业务事实分析层 / Domain Projection`

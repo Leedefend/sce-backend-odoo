@@ -1,0 +1,37 @@
+<odoo>
+    <menuitem id="menu_sc_project_center"
+              name="项目管理"
+              parent="menu_sc_root"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_project_read"/>
+    <menuitem id="menu_sc_contract_center"
+              name="合同管理"
+              parent="menu_sc_root"
+              sequence="20"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager,smart_construction_core.group_sc_cap_purchase_manager"/>
+    <menuitem id="menu_sc_cost_center"
+              name="成本管理"
+              parent="menu_sc_root"
+              sequence="25"
+              groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
+    <menuitem id="menu_sc_material_center"
+              name="物资管理"
+              parent="menu_sc_root"
+              sequence="30"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
+    <menuitem id="menu_sc_data_center"
+              name="报表中心"
+              parent="menu_sc_root"
+              sequence="60"
+              groups="smart_construction_core.group_sc_cap_data_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_business_config_center"
+              name="业务配置"
+              parent="menu_sc_root"
+              sequence="85"
+              groups="smart_construction_core.group_sc_cap_business_config_admin"/>
+    <menuitem id="menu_sc_config_center"
+              name="系统配置"
+              parent="menu_sc_root"
+              sequence="95"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+</odoo>

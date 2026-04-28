@@ -20,7 +20,16 @@ For a brand-new production database, the goal is historical fact continuity:
 - target DB already exists
 - target production DB is brand-new when using the production initialization path
 - migration assets are present in the deployed repo
+- frozen replay payloads from `artifacts/migration` are present in the deployed
+  repo or extracted release package
 - platform baseline initialization has not been bypassed
+
+Production servers do not require the old legacy database. The production
+entry defaults to `HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1`, skips all
+`*_adapter` steps, and replays from the packaged `artifacts/migration` payloads.
+Only set `HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=0` in a controlled
+non-production environment that intentionally regenerates payloads from the old
+database.
 
 ## One-Click Commands
 
@@ -43,7 +52,7 @@ fall back to:
 /tmp/history_continuity/<db>/adhoc
 ```
 
-Replay:
+Replay in non-production rehearsal environments:
 
 ```bash
 DB_NAME=<target_db> make history.continuity.replay
@@ -65,7 +74,7 @@ This production entry runs:
 3. apply extension module registry
 4. restart Odoo
 5. platform initialization preflight
-6. history continuity replay
+6. history continuity replay from packaged payloads
 7. business usable probe
 8. full business smoke
 9. role matrix smoke
@@ -166,10 +175,18 @@ HISTORY_CONTINUITY_INCLUDE_FILE_INDEX=0
 The old `HISTORY_CONTINUITY_INCLUDE_BLOCKED_GROUP_B` flag is deprecated for the
 production path.
 
-Resume from a failed step:
+Resume from a failed step in non-production replay:
 
 ```bash
 DB_NAME=<target_db> HISTORY_CONTINUITY_START_AT=<step_name> make history.continuity.replay
+```
+
+Resume from a failed production initialization step:
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=<target_db> PROD_DANGER=1 \
+  RUN_ID=<same_run_id> HISTORY_CONTINUITY_START_AT=<failed_step> \
+  make history.production.fresh_init
 ```
 
 Use an explicit artifact root if needed:
@@ -239,7 +256,7 @@ Business-usable probe decisions:
 
 ## Failure Handling
 
-If replay stops:
+If non-production replay stops:
 
 1. keep the generated `RUN_ID`
 2. inspect the artifact directory for the failing step output
@@ -249,14 +266,30 @@ If replay stops:
 DB_NAME=<target_db> HISTORY_CONTINUITY_START_AT=<failed_step> RUN_ID=<same_run_id> make history.continuity.replay
 ```
 
+If production initialization stops, keep the same `RUN_ID` and resume through
+the production entry:
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=<target_db> PROD_DANGER=1 \
+  HISTORY_CONTINUITY_START_AT=<failed_step> RUN_ID=<same_run_id> \
+  make history.production.fresh_init
+```
+
 Do not create ad-hoc server-only importer scripts.
 
 ## Operational Rule
 
-The canonical server entry remains:
+The canonical non-production replay entry remains:
 
 ```bash
 DB_NAME=<target_db> make history.continuity.replay
+```
+
+The canonical production entry is:
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=<target_db> PROD_DANGER=1 \
+  RUN_ID=<run_id> make history.production.fresh_init
 ```
 
 Any future lane addition must be merged back into:

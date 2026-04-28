@@ -24,6 +24,20 @@ Codex 在本仓库中的角色被明确为：
 Codex **不是管理员**，也 **不是决策者**；
 Codex 是一个 **被严格约束的工程执行单元**。
 
+### 0.1 适用范围边界
+
+本文仅适用于 **Codex 自治开发 / 自治验证 / PR 协作** 场景。
+
+本文不适用于人工监督下的服务器生产部署。生产服务器从 `main`、tag
+或冻结 commit 执行正式部署时，适用：
+
+- `docs/ops/codex_production_assist_policy.md`
+- `docs/ops/prod_command_policy.md`
+- `docs/ops/production_deployment_runbook_v1.md`
+
+生产协助模式下，Codex 只能做只读检查、执行生产策略允许的 Makefile target
+和整理部署证据；不得修改仓库文件、提交代码或绕过 Makefile 操作生产数据。
+
 ---
 
 ## 1. 执行边界总原则（Hard Rules）
@@ -45,6 +59,10 @@ Codex **只能** 在以下分支类型中执行自治操作：
 * 任何已打 tag 的分支
 
 若当前分支不符合要求，Codex **必须立即停止并报告**。
+
+例外：若当前任务是人工监督的生产部署协助，并且没有任何仓库写入或 Git
+写操作，则不按本文的自治分支限制处理，改按
+`docs/ops/codex_production_assist_policy.md` 执行。
 
 **分支判定规则：**
 
@@ -68,6 +86,10 @@ git branch --show-current
 * ❌ 禁止设置或使用 `PROD_DANGER=1`
 
 > `.env.prod` 文件允许存在（作为模板/参考），但禁止在 Codex 自治执行中启用 `ENV=prod` 或设置 `PROD_DANGER=1`。
+
+说明：上述限制只约束 Codex 自治执行。生产协助模式允许 `ENV=prod`、
+`ENV_FILE=.env.prod` 和经人工确认的 `PROD_DANGER=1`，但只能执行
+`docs/ops/prod_command_policy.md` 允许的 Makefile target。
 
 ---
 

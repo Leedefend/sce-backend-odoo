@@ -45,6 +45,69 @@ def exec_kw(uid, pwd, model, method, args, kwargs=None):
 def login(user, pwd):
     return jsonrpc("common", "login", [DB, user, pwd])
 
+def confirm_with_tier_approval(uid, pwd, model, record_id, expected_state="confirmed"):
+    exec_kw(uid, pwd, model, "action_confirm", [[record_id]])
+    row = exec_kw(
+        uid,
+        pwd,
+        model,
+        "read",
+        [[record_id]],
+        {"fields": ["state", "validation_status"]},
+    )[0]
+    if row.get("state") == expected_state:
+        return row
+    if row.get("validation_status") in ("waiting", "pending"):
+        exec_kw(uid, pwd, model, "validate_tier", [[record_id]])
+        exec_kw(uid, pwd, model, "action_confirm", [[record_id]])
+        row = exec_kw(
+            uid,
+            pwd,
+            model,
+            "read",
+            [[record_id]],
+            {"fields": ["state", "validation_status"]},
+        )[0]
+    return row
+
+def call_with_tier_approval(uid, pwd, model, method, record_id, expected_states):
+    try:
+        exec_kw(uid, pwd, model, method, [[record_id]])
+    except RuntimeError as exc:
+        if "已经在统一审批流程中" not in str(exc):
+            raise
+    row = exec_kw(
+        uid,
+        pwd,
+        model,
+        "read",
+        [[record_id]],
+        {"fields": ["state", "validation_status"]},
+    )[0]
+    if row.get("state") in expected_states:
+        return row
+    if row.get("validation_status") in ("waiting", "pending"):
+        exec_kw(uid, pwd, model, "validate_tier", [[record_id]])
+        try:
+            exec_kw(uid, pwd, model, "action_on_tier_approved", [[record_id]])
+        except RuntimeError as exc:
+            if "has no attribute 'action_on_tier_approved'" not in str(exc):
+                raise
+        try:
+            exec_kw(uid, pwd, model, method, [[record_id]])
+        except RuntimeError as exc:
+            if "已经在统一审批流程中" not in str(exc):
+                raise
+        row = exec_kw(
+            uid,
+            pwd,
+            model,
+            "read",
+            [[record_id]],
+            {"fields": ["state", "validation_status"]},
+        )[0]
+    return row
+
 def xmlid_to_id(uid_admin, xmlid):
     module, name = xmlid.split(".", 1)
     rows = exec_kw(
@@ -72,6 +135,7 @@ def ensure_business_user():
         "smart_construction_core.group_sc_cap_settlement_manager",
         "smart_construction_core.group_sc_cap_finance_manager",
         "smart_construction_core.group_sc_cap_purchase_user",
+        "smart_construction_core.group_sc_cap_purchase_manager",
     ]
     group_ids = [xmlid_to_id(uid_admin, xmlid) for xmlid in group_xmlids]
     rows = exec_kw(
@@ -212,8 +276,7 @@ exec_kw(
         "price_contract": 100.0,
     }],
 )
-exec_kw(uid, PWD, "construction.contract", "action_confirm", [[contract_id]])
-contract_state = exec_kw(uid, PWD, "construction.contract", "read", [[contract_id]], {"fields": ["state"]})[0]["state"]
+contract_state = confirm_with_tier_approval(uid, PWD, "construction.contract", contract_id).get("state")
 if contract_state != "confirmed":
     raise RuntimeError("contract confirm failed: state=%s" % contract_state)
 print("OK: contract confirm success")
@@ -228,7 +291,16 @@ purchase_order_id = exec_kw(
         "partner_id": partner_id,
     }],
 )
-exec_kw(uid, PWD, "purchase.order", "write", [[purchase_order_id], {"state": "purchase"}])
+purchase_state = call_with_tier_approval(
+    uid,
+    PWD,
+    "purchase.order",
+    "button_confirm",
+    purchase_order_id,
+    {"purchase", "done"},
+).get("state")
+if purchase_state not in ("purchase", "done"):
+    raise RuntimeError("purchase order confirm failed: state=%s" % purchase_state)
 settlement_id = exec_kw(
     uid,
     PWD,
