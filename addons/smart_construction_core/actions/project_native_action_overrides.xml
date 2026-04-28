@@ -8,23 +8,23 @@
 
     <record id="action_sc_project_list" model="ir.actions.act_window">
         <field name="view_id" ref="smart_construction_core.view_project_my_list_tree"/>
-        <field name="search_view_id" ref="smart_construction_core.view_project_project_search_my"/>
+        <field name="search_view_id" ref="smart_construction_core.view_project_project_search_sc_business"/>
     </record>
 
     <record id="action_project_dashboard" model="ir.actions.act_window">
-        <field name="search_view_id" ref="smart_construction_core.view_project_project_search_my"/>
+        <field name="search_view_id" ref="smart_construction_core.view_project_project_search_sc_business"/>
     </record>
 
     <record id="action_sc_project_overview" model="ir.actions.act_window">
-        <field name="search_view_id" ref="smart_construction_core.view_project_project_search_my"/>
+        <field name="search_view_id" ref="smart_construction_core.view_project_project_search_sc_business"/>
     </record>
 
     <record id="action_sc_project_manage" model="ir.actions.act_window">
-        <field name="search_view_id" ref="smart_construction_core.view_project_project_search_my"/>
+        <field name="search_view_id" ref="smart_construction_core.view_project_project_search_sc_business"/>
     </record>
 
     <record id="action_sc_project_my_list" model="ir.actions.act_window">
         <field name="view_id" ref="smart_construction_core.view_project_my_list_tree"/>
-        <field name="search_view_id" ref="smart_construction_core.view_project_project_search_my"/>
+        <field name="search_view_id" ref="smart_construction_core.view_project_project_search_sc_business"/>
     </record>
 </odoo>

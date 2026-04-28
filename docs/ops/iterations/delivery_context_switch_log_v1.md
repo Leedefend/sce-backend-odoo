@@ -30839,6 +30839,26 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - rollback: `回退本批次提交并重建前端静态包，即移除外部点击关闭补强，回到 130accbf。`
 - next_step: `补齐已保存筛选/保存当前搜索能力，或先由业务配置管理员创建真实 saved filter 样本后验证选择路径。`
 
+## 2026-04-28 Batch-Native-Search-Business-Fact-Views
+
+- branch: `codex/dev-env-run`
+- short_sha: `current batch commit`
+- Layer Target: `Native View Layer + ui.contract search normalization`
+- Module: `addons/smart_construction_core`, `addons/smart_core/app_config_engine`
+- Reason: `用户判断根因在业务事实层自定义视图没有像原生视图一样定义 search 结构；前端应消费原生/业务事实层 search view，而不是用前端特判补筛选分组。`
+- completed_step: `为项目合同 construction.contract、结算单 sc.settlement.order 补齐独立 search view 并绑定对应 action；为项目台账 project.project 补齐业务事实层独立中文 search view，并将项目列表、驾驶舱、概览、管理、我的项目动作绑定到该 search view；app.search.config 改为按 XML 顺序输出筛选，分组 filter 与普通筛选分离，显式分组存在时不再追加字段推断分组，避免暴露 Action Needed/Alias 等技术字段。`
+- verification:
+  - `python3 -m py_compile addons/smart_core/app_config_engine/models/app_search_config.py`
+  - `ENV=test ENV_FILE=.env.prod.sim ... CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core make mod.upgrade`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make odoo.shell.exec` -> `construction.contract filters=9 groups=6; sc.settlement.order filters=8 groups=6; sc.general.contract filters=3 groups=4; project.project filters=8 groups=9。`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make restart` -> `odoo healthy on :18069`
+  - `FRONTEND_PROFILE=prod-sim make frontend.restart` -> `frontend ready on http://127.0.0.1:5174/ proxy=http://localhost:18069 db=sc_prod_sim`
+  - `Playwright browser: wutao/123456 登录 sc_prod_sim；/a/489、/a/510、/a/577、/a/452 搜索下拉均为“筛选 / 分组方式 / 收藏夹”三栏；筛选/分组全部为中文业务项，无 Action Needed/Activity/Alias/Project Manager/Archived 等英文技术项。`
+- result: `PASS; 自定义前端列表页的搜索分类结构已由业务事实层 search view 驱动，项目合同、结算单、一般合同、项目台账验证通过。`
+- risk: `P2; 本轮覆盖用户当前指出的项目/合同/结算类核心列表，尚未全量审计所有业务 action 是否都已绑定独立业务 search view。`
+- rollback: `回退本批次提交，执行 smart_construction_core 模块升级并重启模拟生产后端；前端保持 prod-sim 配置即可。`
+- next_step: `继续全量扫描剩余业务 action 的 search_view_id，找出仍继承原生英文 search 或未绑定业务 search view 的页面。`
+
 ## 2026-04-28 Batch-Frontend-Native-Search-SavedFilter-Columns
 
 - branch: `codex/dev-env-run`

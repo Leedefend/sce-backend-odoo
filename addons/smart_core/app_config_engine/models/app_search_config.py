@@ -201,9 +201,25 @@ class AppSearchConfig(models.Model):
         }
         """
         # 稳定排序（避免哈希抖动）
-        filters_sorted = sorted(filters or [], key=lambda x: (x.get('label') or '', x.get('key') or ''))
+        filters_sorted = sorted(
+            filters or [],
+            key=lambda x: (
+                x.get('sequence') if x.get('sequence') is not None else 9999,
+                x.get('label') or '',
+                x.get('key') or '',
+            ),
+        )
         saved_sorted = sorted(saved_filters or [], key=lambda x: (not x.get('is_shared', False), x.get('name') or ''))
-        group_sorted = sorted(group_by or [], key=lambda x: (not x.get('default', False), x.get('label') or '', x.get('field') or ''))
+        group_sorted = sorted(
+            group_by or [],
+            key=lambda x: (
+                x.get('source') != 'search_view',
+                x.get('sequence') if x.get('sequence') is not None else 9999,
+                not x.get('default', False),
+                x.get('label') or '',
+                x.get('field') or '',
+            ),
+        )
 
         return {
             "filters": filters_sorted,
@@ -239,9 +255,10 @@ class AppSearchConfig(models.Model):
         """
         解析 <search>：
         - filters: name/string/domain/context/groups -> 统一为标准项
-        - groupbys: 从 filter 的 context 中抽取 group_by 值集合
+        - groupbys: 从 filter 的 context 中抽取 group_by 值与原生标签
         """
-        filters, groupbys = [], set()
+        filters, groupbys = [], []
+        seen_groupbys = set()
         if not arch or not etree:
             return filters, []
 
@@ -266,11 +283,29 @@ class AppSearchConfig(models.Model):
                     if isinstance(ctx_val, dict):
                         gb = ctx_val.get('group_by')
                         if isinstance(gb, str):
-                            groupbys.add(gb)
+                            group_values = [gb]
                         elif isinstance(gb, (list, tuple)):
-                            for g in gb:
-                                if isinstance(g, str):
-                                    groupbys.add(g)
+                            group_values = [g for g in gb if isinstance(g, str)]
+                        else:
+                            group_values = []
+                    else:
+                        group_values = []
+
+                    is_group_filter = bool(group_values) and not domain_raw
+                    if is_group_filter:
+                        for group_value in group_values:
+                            if group_value in seen_groupbys:
+                                continue
+                            groupbys.append({
+                                "field": group_value,
+                                "label": label or group_value,
+                                "key": name or group_value,
+                                "context_raw": context_raw,
+                                "source": "search_view",
+                                "sequence": len(groupbys),
+                            })
+                            seen_groupbys.add(group_value)
+                        continue
 
                     filters.append({
                         "key": name or label,
@@ -280,11 +315,12 @@ class AppSearchConfig(models.Model):
                         "domain_raw": domain_raw,
                         "context_raw": context_raw,
                         "groups_xmlids": [x.strip() for x in groups_attr.split(',') if x.strip()],
-                        "tags": []  # 预留：可用于 UI tag
+                        "tags": [],  # 预留：可用于 UI tag
+                        "sequence": len(filters),
                     })
         except Exception:
             _logger.exception("parse search view failed")
-        return filters, sorted(groupbys)
+        return filters, groupbys
 
     # ======================= ir.filters 收集 =======================
 
@@ -335,21 +371,52 @@ class AppSearchConfig(models.Model):
         fget = Model.fields_get()
         candidates = []
 
-        def add_field(fname, default=False):
-            meta = fget.get(fname) or {}
+        def add_field(fname, default=False, label=None, key=None, context_raw=None, source=None, sequence=None):
+            base_fname = str(fname or '').split(':', 1)[0]
+            meta = fget.get(base_fname) or fget.get(fname) or {}
             candidates.append({
                 "field": fname,
-                "label": meta.get('string', fname),
+                "label": label or meta.get('string', fname),
                 "type": meta.get('type', 'char'),
                 "default": bool(default),
+                "key": key or fname,
+                "context_raw": context_raw,
+                "source": source,
+                "sequence": sequence,
             })
 
         # 1) 先加入显式 prefer 的字段
         seen = set()
         for gb in prefer:
-            if gb in fget and gb not in seen:
-                add_field(gb, default=False)
-                seen.add(gb)
+            if isinstance(gb, dict):
+                fname = str(gb.get("field") or '').strip()
+                label = gb.get("label")
+                key = gb.get("key")
+                context_raw = gb.get("context_raw")
+                source = gb.get("source")
+                sequence = gb.get("sequence")
+            else:
+                fname = str(gb or '').strip()
+                label = None
+                key = None
+                context_raw = None
+                source = None
+                sequence = None
+            base_fname = fname.split(':', 1)[0]
+            if fname and base_fname in fget and fname not in seen:
+                add_field(
+                    fname,
+                    default=False,
+                    label=label,
+                    key=key,
+                    context_raw=context_raw,
+                    source=source,
+                    sequence=sequence,
+                )
+                seen.add(fname)
+
+        if candidates:
+            return candidates
 
         # 2) 再按类型规则补齐
         for fname, meta in fget.items():

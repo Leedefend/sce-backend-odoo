@@ -136,11 +136,45 @@
         </field>
     </record>
 
+    <!-- Search view -->
+    <record id="view_construction_contract_search" model="ir.ui.view">
+        <field name="name">construction.contract.search</field>
+        <field name="model">construction.contract</field>
+        <field name="arch" type="xml">
+            <search string="项目合同">
+                <field name="name"/>
+                <field name="subject"/>
+                <field name="project_id"/>
+                <field name="partner_id"/>
+                <field name="category_id"/>
+                <field name="contract_type_id"/>
+                <filter name="state_draft" string="草稿" domain="[('state', '=', 'draft')]"/>
+                <filter name="state_confirmed" string="已确认" domain="[('state', '=', 'confirmed')]"/>
+                <filter name="state_running" string="执行中" domain="[('state', '=', 'running')]"/>
+                <filter name="state_closed" string="已完成" domain="[('state', '=', 'closed')]"/>
+                <filter name="state_cancel" string="已取消" domain="[('state', '=', 'cancel')]"/>
+                <filter name="income_contract" string="收入合同" domain="[('type', '=', 'out')]"/>
+                <filter name="expense_contract" string="支出合同" domain="[('type', '=', 'in')]"/>
+                <filter name="with_project" string="有项目" domain="[('project_id', '!=', False)]"/>
+                <filter name="with_partner" string="有合同方" domain="[('partner_id', '!=', False)]"/>
+                <group expand="0" string="分组">
+                    <filter name="group_project" string="按项目" context="{'group_by': 'project_id'}"/>
+                    <filter name="group_partner" string="按合同方" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_type" string="按收支类型" context="{'group_by': 'type'}"/>
+                    <filter name="group_category" string="按合同类别" context="{'group_by': 'category_id'}"/>
+                    <filter name="group_state" string="按状态" context="{'group_by': 'state'}"/>
+                    <filter name="group_date_contract" string="按合同日期" context="{'group_by': 'date_contract:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <!-- Action -->
     <record id="action_construction_contract" model="ir.actions.act_window">
         <field name="name">项目合同</field>
         <field name="res_model">construction.contract</field>
         <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_construction_contract_search"/>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
     </record>
 
@@ -148,6 +182,7 @@
         <field name="name">我的合同</field>
         <field name="res_model">construction.contract</field>
         <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_construction_contract_search"/>
         <field name="domain">['|', ('project_id.user_id', '=', uid), ('project_id.manager_id', '=', uid)]</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
     </record>
@@ -156,6 +191,7 @@
         <field name="name">收入合同</field>
         <field name="res_model">construction.contract</field>
         <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_construction_contract_search"/>
         <field name="domain">[('type', '=', 'out')]</field>
         <field name="context">{'default_type': 'out'}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
@@ -165,6 +201,7 @@
         <field name="name">支出合同</field>
         <field name="res_model">construction.contract</field>
         <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_construction_contract_search"/>
         <field name="domain">[('type', '=', 'in')]</field>
         <field name="context">{'default_type': 'in'}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
