@@ -30838,3 +30838,23 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 已保存筛选缺少真实数据样本，仅验证了空态；“保存当前搜索”写入能力仍未实现，属于下一轮功能缺口。`
 - rollback: `回退本批次提交并重建前端静态包，即移除外部点击关闭补强，回到 130accbf。`
 - next_step: `补齐已保存筛选/保存当前搜索能力，或先由业务配置管理员创建真实 saved filter 样本后验证选择路径。`
+
+## 2026-04-28 Batch-Frontend-Native-Search-SavedFilter-Columns
+
+- branch: `codex/dev-env-run`
+- short_sha: `d8dae7b9`
+- Layer Target: `ui.contract search contract + frontend shared search renderer`
+- Module: `addons/smart_core/app_config_engine`, `frontend/apps/web`
+- Reason: `用户要求搜索框像原生一样在框内放下拉箭头，并且下拉弹层分栏结构对齐原生；开发状态允许直接创建验证数据，需要用真实 saved filter 验证收藏夹点击后页面响应。`
+- completed_step: `ActionSurfaceToolbar 将下拉触发器移入搜索框右侧，改为框内箭头；搜索下拉改为三栏 grid，分类标题对齐“筛选 / 分组方式 / 收藏夹”。ActionView 的共享工具条标签统一为“收藏夹”“分组方式”。app.search.config 对 ir.filters 收藏项补齐结构化 domain/context，前端前置加载改为优先用本次 ui.contract 的 search.saved_filters/search.group_by 校验路由选择，避免刚清空 actionContract 后把 saved_filter 清掉。模拟生产库创建共享收藏筛选“收藏：已签署一般合同”，domain=[('state','=','signed')]。`
+- verification:
+  - `ENV=test ENV_FILE=.env.prod.sim ... make odoo.shell.exec` -> `IR_FILTER 8 收藏：已签署一般合同 sc.general.contract shared; app.search.config sc.general.contract version=4 saved=1 domain=[['state','=','signed']]`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make restart`
+  - `docker run --rm -v "/home/odoo/workspace/sce-backend-odoo:/workspace" -w /workspace/frontend/apps/web node:20-bookworm sh -lc "corepack enable && pnpm install --frozen-lockfile --dir /workspace/frontend && pnpm typecheck && VITE_API_BASE_URL= VITE_ODOO_DB=sc_prod_sim VITE_APP_ENV=prod-sim pnpm build"`
+  - `Playwright browser: wutao/123456 登录 http://127.0.0.1/ + sc_prod_sim，进入 /a/577；.native-searchbox .search-menu-toggle=1，.native-search > .search-menu-toggle=0，箭头 button x=558/right=586 位于 searchbox x=271/right=591 内。`
+  - `Playwright browser: 搜索下拉为三栏，section x=272/525/779，文本包含“筛选”“分组方式”“收藏夹”“收藏：已签署一般合同”。`
+  - `Playwright browser: 点击“收藏：已签署一般合同”后 URL=/a/577?saved_filter=...，搜索框 facet=收藏：已签署一般合同×，api.data domain=[['state','=','signed']]、domain_raw=[('state', '=', 'signed')]、dataLen=1。`
+- result: `PASS; 原生式框内箭头、三栏搜索弹层和真实收藏筛选点击响应均通过。`
+- risk: `P2; 当前仅补齐选择已有 ir.filters 的消费路径，尚未实现“保存当前搜索”的前端写入入口。`
+- rollback: `回退本批次提交，重启 Odoo 并重建前端静态包；如需清理验证数据，可删除 sc_prod_sim 中 ir.filters id=8。`
+- next_step: `继续评估是否需要实现“保存当前搜索”写入能力，并抽查更多业务 action 的收藏筛选与 search_panel 覆盖情况。`

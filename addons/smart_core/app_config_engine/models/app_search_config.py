@@ -302,14 +302,21 @@ class AppSearchConfig(models.Model):
         # 只按 model_id 匹配；不过期望不同版本字段名相同
         flt = F.search([('model_id', '=', model_name)])
         for r in flt:
-            # domain/context 在 ir.filters 中通常为字符串
+            # domain/context 在 ir.filters 中通常为字符串；契约层统一补出结构化值，
+            # 前端只消费契约，不解析 Odoo domain/context 表达式。
+            domain_raw = getattr(r, 'domain', None)
+            context_raw = getattr(r, 'context', None)
+            domain_val = self._safe_eval_expr(domain_raw)
+            context_val = self._safe_eval_expr(context_raw)
             res.append({
                 "id": r.id,
                 "name": r.name or f"filter_{r.id}",
                 "is_shared": not bool(getattr(r, 'user_id', False)),
                 "owner": getattr(r.user_id, 'id', None),
-                "domain_raw": getattr(r, 'domain', None),
-                "context_raw": getattr(r, 'context', None),
+                "domain": domain_val if isinstance(domain_val, (list, tuple)) else [],
+                "domain_raw": domain_raw,
+                "context": context_val if isinstance(context_val, dict) else {},
+                "context_raw": context_raw,
             })
         return res
 

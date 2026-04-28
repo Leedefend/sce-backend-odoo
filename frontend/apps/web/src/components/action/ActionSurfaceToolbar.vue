@@ -68,16 +68,17 @@
         >
           {{ clearLabel }}
         </button>
+        <button
+          class="search-menu-toggle"
+          type="button"
+          :class="{ active: searchMenuOpen }"
+          :disabled="loading || !hasSearchMenu"
+          aria-label="展开搜索菜单"
+          @click="searchMenuOpen = !searchMenuOpen"
+        >
+          <span class="search-menu-caret">{{ searchMenuOpen ? '▴' : '▾' }}</span>
+        </button>
       </div>
-      <button
-        class="search-menu-toggle"
-        type="button"
-        :class="{ active: searchMenuOpen }"
-        :disabled="loading || !hasSearchMenu"
-        @click="searchMenuOpen = !searchMenuOpen"
-      >
-        {{ searchMenuOpen ? '收起' : '搜索' }}
-      </button>
       <div v-if="searchMenuOpen && hasSearchMenu" class="search-dropdown">
         <section v-if="showFilter" class="search-dropdown-section">
           <p class="search-dropdown-title">{{ filterLabel }}</p>
@@ -312,9 +313,9 @@ onBeforeUnmount(() => {
   min-height: 30px;
   gap: 5px;
   border: 1px solid #cbd5e1;
-  border-radius: 8px 0 0 8px;
+  border-radius: 8px;
   background: #f8fafc;
-  padding: 3px 6px;
+  padding: 3px 4px 3px 6px;
 }
 
 .native-searchbox input {
@@ -364,20 +365,24 @@ onBeforeUnmount(() => {
 
 .search-menu-toggle {
   flex: 0 0 auto;
-  min-height: 30px;
-  border: 1px solid #cbd5e1;
-  border-left: 0;
-  border-radius: 0 8px 8px 0;
-  background: #fff;
+  width: 28px;
+  min-height: 24px;
+  border: 0;
+  border-left: 1px solid #cbd5e1;
+  background: transparent;
   color: #334155;
-  padding: 5px 9px;
+  padding: 0;
   font-size: 12px;
   cursor: pointer;
 }
 
 .search-menu-toggle.active {
   color: #1d4ed8;
-  background: #eff6ff;
+}
+
+.search-menu-caret {
+  display: inline-block;
+  line-height: 1;
 }
 
 .search-dropdown {
@@ -385,7 +390,9 @@ onBeforeUnmount(() => {
   top: calc(100% + 6px);
   left: 0;
   z-index: 20;
-  width: min(520px, 90vw);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  width: min(760px, 92vw);
   max-height: 420px;
   overflow: auto;
   border: 1px solid #cbd5e1;
@@ -395,10 +402,12 @@ onBeforeUnmount(() => {
   padding: 8px 0;
 }
 
+.search-dropdown-section {
+  min-width: 0;
+}
+
 .search-dropdown-section + .search-dropdown-section {
-  border-top: 1px solid #e2e8f0;
-  margin-top: 6px;
-  padding-top: 6px;
+  border-left: 1px solid #e2e8f0;
 }
 
 .search-dropdown-title {
@@ -520,6 +529,16 @@ onBeforeUnmount(() => {
 
   .native-searchbox {
     min-width: 0;
+  }
+
+  .search-dropdown {
+    grid-template-columns: 1fr;
+    width: min(520px, 92vw);
+  }
+
+  .search-dropdown-section + .search-dropdown-section {
+    border-left: 0;
+    border-top: 1px solid #e2e8f0;
   }
 }
 </style>
