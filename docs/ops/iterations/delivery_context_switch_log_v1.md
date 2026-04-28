@@ -31933,3 +31933,21 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 本批只建立旧库可执行基线，尚未与 sc.ar.ap.company.summary 做字段级差异矩阵。`
 - rollback: `回退本批 COLLATE 探针脚本和 Batch-AL 文档。`
 - next_step: `读取旧库 CSV 与新系统 sc.ar.ap.company.summary，按 legacy_project_id 输出字段级差异矩阵。`
+
+## 2026-04-28 Batch-Legacy-AR-AP-Company-Reconciliation-Matrix
+
+- branch: `codex/dev-env-run`
+- short_sha: `0234eb9f`
+- Layer Target: `Migration Evidence / Reconciliation Matrix`
+- Module: `scripts/migration`, `docs/migration_alignment`
+- Reason: `旧库全局应收应付报表已有 COLLATE 可执行基线，需要按 legacy_project_id 与新系统 sc.ar.ap.company.summary 做字段级对账矩阵，判断报表承载缺口。`
+- completed_step: `新增 legacy_ar_ap_company_reconciliation_matrix.py，读取旧库 CSV 与新系统报表视图，输出行覆盖、字段汇总差异、Top 项目差异和 Batch-AM 文档。`
+- verification:
+  - `python3 -m py_compile scripts/migration/legacy_ar_ap_company_reconciliation_matrix.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec < scripts/migration/legacy_ar_ap_company_reconciliation_matrix.py` -> `PASS; legacy_rows=195, new_rows=765, matched_rows=195, legacy_only_rows=0, new_only_rows=570`
+  - `git diff --check` -> `PASS`
+  - `make verify.restricted` -> `SKIP; No rule to make target 'verify.restricted'`
+- result: `PASS; 旧库 195 行均能在新系统找到对应项目，但新系统额外覆盖 570 个项目，差异主要来自旧常用过程范围收敛与新系统全量经营事实口径不一致。`
+- risk: `P1; 若用户要求完全复刻旧报表口径，需要新增旧口径筛选/视图；若保持新系统全量口径，需要继续解释 570 个 new_only 项目的事实来源。`
+- rollback: `回退本批对账矩阵脚本和 Batch-AM 文档。`
+- next_step: `分类 570 个 new_only 项目来源，并对 Top matched 项目追踪字段级差异来源。`
