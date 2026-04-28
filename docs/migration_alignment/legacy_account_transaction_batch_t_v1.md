@@ -65,6 +65,13 @@ Batch-W 在同一载体继续接入收入退回：
 - `C_JFHKLR_TH_ZCDF_CB`：自筹收入退回明细，关联 `C_JFHKLR_TH_ZCDF` 表头，写入 `direction='expense'`、`metric_bucket='cumulative'`；金额使用 `BCTK`，账户使用 `THZHID/THZH`，日期优先 `THSJ`，再回退 `JNSJ/DJRQ`。
 - 模拟生产库本批新增 `C_JFHKLR_TH_ZCDF_CB` 1509 行，金额 128,341,610.12；其中 1501 行已绑定账户，8 行未绑定账户，未绑定金额 70,118.23。
 
+Batch-X 在同一载体继续接入供应商付款：
+
+- `T_FK_Supplier`：正常付款写入 `direction='expense'`、`metric_bucket='cumulative'`，对应旧过程 `LJZC` 的供应商付款部分；当前模拟生产库新增 13282 行，金额 2,103,459,198.35。
+- `T_FK_Supplier`：付款退回分支保留为 `direction='income'`、`metric_bucket='cumulative'`，对应旧过程 `LJSK` 的付款退回部分；当前旧库 `SFZFTK='是'` 且有效付款账户的记录为 0。
+- 账户名称输出为 `FKZHMC/FKZH`，让回放脚本在旧账户 ID 未进入账户主数据时，能按账号兜底匹配有效账户。
+- 账号兜底后，`T_FK_Supplier` 已绑定 13125 行，未绑定 157 行，未绑定金额 36,913,102.92。
+
 ## 尚未覆盖
 
 旧过程中的 `LJSK/LJZC` 仍包含多来源：
@@ -72,7 +79,6 @@ Batch-W 在同一载体继续接入收入退回：
 - `BGGL_JHK_HKDJ`
 - `ZJGL_ZCDFSZ_FXJK_*`
 - `ZJGL_BZJGL_*`
-- `T_FK_Supplier`
 - `T_KK_SJTHB`
 
 下一轮应继续按同一载体补累计收款、累计支出来源。
