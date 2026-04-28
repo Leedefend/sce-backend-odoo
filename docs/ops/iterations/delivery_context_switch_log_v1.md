@@ -31383,3 +31383,24 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; tax_deduction_rate 是项目级比例，在项目下多个往来单位行会重复显示，不应在透视中按行求和。`
 - rollback: `回退本批提交并升级 smart_construction_core。`
 - next_step: `做最终模拟生产全字段覆盖复核，并检查原生/自定义前端对项目级余额行和项目级比例的显示是否容易被用户理解。`
+
+## 2026-04-28 Batch-Legacy-ARAP-Project-Final-Readiness
+
+- branch: `codex/dev-env-run`
+- short_sha: `2952c820`
+- Layer Target: `Domain Projection / Frontend Contract Audit`
+- Module: `addons/smart_construction_core`, `frontend/apps/web`, `docs/migration_alignment`
+- Reason: `应收应付报表（项目）已修复 SJKYYE 与 SF 两个可用性缺口，需要对模拟生产运行库和自定义前端契约消费链做最终复核。`
+- completed_step: `新增 Batch-N 最终可用性复核文档；确认 27 字段运行库覆盖、项目级余额补漏行、项目级抵扣比例、load_view tree 契约列、api.data 项目级余额/抵扣比例读取均可用。`
+- verification:
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim make odoo.shell.exec` -> `PASS; rows=11696, projects=814, partner_keys=7258, missing_balance_projects=0, project_balance_rows=56, tax_deduction_rate_nonzero_rows=7471`
+  - `load_view(model=sc.ar.ap.project.summary, view_type=tree) as wutao` -> `PASS; columns=25, required columns present, read=true/write=false/create=false/unlink=false`
+  - `api.data list project_balance rows as wutao` -> `PASS; total=56`
+  - `api.data list tax_deduction_rate!=0 as wutao` -> `PASS; total=7471`
+  - `corepack pnpm -C frontend/apps/web typecheck:strict` -> `PASS`
+  - `corepack pnpm -C frontend/apps/web build` -> `PASS; Vite chunk size warning only`
+  - `ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MVP_MODEL=sc.ar.ap.project.summary E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.portal.tree_view_smoke.container` -> `PARTIAL; ui.contract/api.data 主链通过，blocked by project.project grouped signature baseline mismatch`
+- result: `PASS; 应收应付报表（项目）27 字段业务事实层和自定义前端契约消费链达到可用状态。`
+- risk: `P2; actual_available_balance 和 tax_deduction_rate 是项目级指标，在多往来单位行重复展示，不应按行求和。P2; 通用 tree/form smoke 需要按模型拆基线，否则会误报。`
+- rollback: `本批仅文档与审计记录，回退提交即可。`
+- next_step: `为项目级指标补用户可读提示或专用说明，并为 sc.ar.ap.project.summary 增加专用前端契约 smoke。`
