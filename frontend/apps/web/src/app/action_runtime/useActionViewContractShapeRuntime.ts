@@ -24,6 +24,13 @@ type SortOption = {
   value: string;
 };
 
+type ListColumnOption = {
+  name: string;
+  label: string;
+  optional: string;
+  defaultVisible: boolean;
+};
+
 export function useActionViewContractShapeRuntime(options: UseActionViewContractShapeRuntimeOptions) {
   const contractColumnLabels = computed<Record<string, string>>(() => {
     const contract = options.actionContract.value || {};
@@ -82,6 +89,43 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
         .filter(Boolean);
     }
     return [];
+  }
+
+  function extractColumnSchemaFromContract(contract: unknown): Dict[] {
+    const typed = (contract || {}) as Dict;
+    const uiContract = ((typed.ui_contract || {}) as Dict);
+    const directViews = (typed.views || uiContract.views) as Dict | undefined;
+    const treeBlock = directViews ? (directViews.tree || directViews.list || {}) as Dict : {};
+    const schema = treeBlock.columnsSchema || treeBlock.columns_schema || uiContract.columnsSchema || uiContract.columns_schema;
+    return Array.isArray(schema) ? (schema as Dict[]) : [];
+  }
+
+  function resolveListColumnOptions(contract: unknown, profile: { columns?: string[]; hidden_columns?: string[]; column_labels?: Record<string, string> } | null): ListColumnOption[] {
+    const preferred = Array.isArray(profile?.columns) ? profile?.columns || [] : [];
+    const hidden = new Set(Array.isArray(profile?.hidden_columns) ? profile?.hidden_columns || [] : []);
+    const schemaRows = extractColumnSchemaFromContract(contract);
+    const schemaByName = schemaRows.reduce<Record<string, Dict>>((acc, row) => {
+      const name = String(row.name || '').trim();
+      if (name && !acc[name]) acc[name] = row;
+      return acc;
+    }, {});
+    const baseColumns = preferred.length ? preferred : extractColumnsFromContract(contract, []);
+    const labels = {
+      ...contractColumnLabels.value,
+      ...((profile?.column_labels || {}) as Record<string, string>),
+    };
+    return uniqueFields([...baseColumns, ...Array.from(hidden)])
+      .map((name) => {
+        const schema = schemaByName[name] || {};
+        const optional = String(schema.optional || '').trim();
+        const invisible = schema.invisible === true || schema.column_invisible === true;
+        return {
+          name,
+          label: String(labels[name] || schema.string || name).trim() || name,
+          optional,
+          defaultVisible: !hidden.has(name) && optional !== 'hide' && !invisible,
+        };
+      });
   }
 
   function convergeColumnsForSurface(rawColumns: string[], fields: Record<string, unknown>) {
@@ -307,6 +351,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
   return {
     contractColumnLabels,
     extractListProfile,
+    resolveListColumnOptions,
     extractColumnsFromContract,
     extractListOrderFromContract,
     buildListSortOptions,

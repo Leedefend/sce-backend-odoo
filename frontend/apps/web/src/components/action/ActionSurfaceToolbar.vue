@@ -181,6 +181,8 @@
             >
               <span class="menu-check">{{ activeSavedFilterKey === chip.key ? selectedSymbol : '' }}</span>
               <span>{{ chip.label }}</span>
+              <span v-if="chip.isDefault" class="menu-badge">默认</span>
+              <span v-if="chip.isShared" class="menu-badge">共享</span>
             </button>
             <p v-if="!allSavedFilterChips.length" class="search-menu-empty">暂无收藏</p>
             <button
@@ -195,6 +197,14 @@
             </button>
             <div v-if="favoriteSaveEnabled && favoriteSaveOpen" class="custom-search-panel">
               <input v-model="favoriteName" placeholder="收藏名称" />
+              <label class="custom-search-check">
+                <input v-model="favoriteUseByDefault" type="checkbox" />
+                <span>设为默认筛选</span>
+              </label>
+              <label class="custom-search-check">
+                <input v-model="favoriteShared" type="checkbox" />
+                <span>共享给所有用户</span>
+              </label>
               <div class="custom-search-actions">
                 <button type="button" :disabled="!favoriteName.trim() || loading" @click="saveFavorite">保存</button>
                 <button type="button" :disabled="loading" @click="favoriteSaveOpen = false">取消</button>
@@ -259,8 +269,8 @@ const props = defineProps<{
   activeFilterKey: string;
   showSavedFilter: boolean;
   savedFilterLabel: string;
-  savedFilterPrimary: Array<{ key: string; label: string }>;
-  savedFilterOverflow: Array<{ key: string; label: string }>;
+  savedFilterPrimary: Array<{ key: string; label: string; isDefault?: boolean; isShared?: boolean }>;
+  savedFilterOverflow: Array<{ key: string; label: string; isDefault?: boolean; isShared?: boolean }>;
   activeSavedFilterKey: string;
   sortLabel: string;
   sortOptions: Array<{ label: string; value: string }>;
@@ -301,7 +311,7 @@ const emit = defineEmits<{
   'custom-group': [payload: { key: string; label: string }];
   'custom-filter': [payload: { field: string; label: string; operator: string; value: unknown; domain: unknown[] }];
   'clear-custom-filter': [];
-  'save-favorite': [payload: { name: string }];
+  'save-favorite': [payload: { name: string; isDefault: boolean; isShared: boolean }];
   create: [];
 }>();
 
@@ -313,6 +323,8 @@ const customFilterOperator = ref('');
 const customFilterValue = ref('');
 const customGroupField = ref('');
 const favoriteName = ref('');
+const favoriteUseByDefault = ref(false);
+const favoriteShared = ref(false);
 const toolbarRoot = ref<HTMLElement | null>(null);
 const selectedSymbol = '✓';
 const clearSymbol = '×';
@@ -439,7 +451,12 @@ function saveFavorite() {
   const name = favoriteName.value.trim();
   if (!name) return;
   searchMenuOpen.value = false;
-  emit('save-favorite', { name });
+  favoriteSaveOpen.value = false;
+  emit('save-favorite', {
+    name,
+    isDefault: favoriteUseByDefault.value,
+    isShared: favoriteShared.value,
+  });
 }
 
 watch(activeCustomFilterField, (field) => {
@@ -626,7 +643,7 @@ onBeforeUnmount(() => {
 
 .search-menu-item {
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr);
+  grid-template-columns: 18px minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 6px;
   border: 0;
@@ -668,6 +685,19 @@ onBeforeUnmount(() => {
   font-size: 12px;
 }
 
+.custom-search-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #334155;
+  font-size: 12px;
+}
+
+.custom-search-check input {
+  width: auto;
+  padding: 0;
+}
+
 .custom-group-select {
   margin: 7px 12px;
   width: calc(100% - 24px);
@@ -704,6 +734,15 @@ onBeforeUnmount(() => {
 .menu-check {
   color: #2563eb;
   font-weight: 700;
+}
+
+.menu-badge {
+  margin-left: auto;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  color: #475569;
+  padding: 1px 4px;
+  font-size: 11px;
 }
 
 .toolbar-actions {

@@ -360,6 +360,8 @@ class AppSearchConfig(models.Model):
                 "id": r.id,
                 "name": r.name or f"filter_{r.id}",
                 "is_shared": not bool(getattr(r, 'user_id', False)),
+                "is_default": bool(getattr(r, 'is_default', False)),
+                "action_id": getattr(getattr(r, 'action_id', False), 'id', False) or False,
                 "owner": getattr(r.user_id, 'id', None),
                 "domain": domain_val if isinstance(domain_val, (list, tuple)) else [],
                 "domain_raw": domain_raw,
@@ -496,7 +498,7 @@ class AppSearchConfig(models.Model):
             },
             "favorites": {
                 "save_enabled": True,
-                "label": "保存当前搜索",
+                "label": "加入收藏",
                 "intent": "search.favorite.set",
             },
         }

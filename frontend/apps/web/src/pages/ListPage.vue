@@ -36,6 +36,23 @@
           <h2>{{ title }}</h2>
           <p>{{ subtitle }}</p>
         </div>
+        <div v-if="columnChoices.length" ref="columnPickerRoot" class="column-picker">
+          <button type="button" class="pagination-btn" :disabled="loading" @click="columnPickerOpen = !columnPickerOpen">
+            列
+          </button>
+          <div v-if="columnPickerOpen" class="column-picker-menu">
+            <label v-for="column in columnChoices" :key="`column-choice-${column.name}`" class="column-choice">
+              <input
+                type="checkbox"
+                :checked="isColumnVisible(column.name)"
+                :disabled="loading || isLastVisibleColumn(column.name)"
+                @change="onColumnVisibilityChange(column.name, $event)"
+              />
+              <span>{{ column.label }}</span>
+            </label>
+            <button type="button" class="column-reset" :disabled="loading" @click="resetColumnVisibility">恢复默认</button>
+          </div>
+        </div>
         <div v-if="showPagination" class="pagination-actions pagination-actions--top">
           <button
             type="button"
@@ -298,7 +315,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
@@ -310,6 +327,13 @@ type SelectionAction = {
   label: string;
   enabled: boolean;
   hint?: string;
+};
+
+type ColumnOption = {
+  name: string;
+  label: string;
+  optional?: string;
+  defaultVisible?: boolean;
 };
 
 const props = defineProps<{
@@ -341,6 +365,8 @@ const props = defineProps<{
   listTotalCount?: number | null;
   listOffset?: number;
   listLimit?: number;
+  columnOptions?: ColumnOption[];
+  columnStorageKey?: string;
   enableSummaryStrip?: boolean;
   enableGroupedRows?: boolean;
   listProfile?: SceneListProfile | null;
@@ -406,6 +432,9 @@ const groupedRows = computed(() =>
 const groupJumpPageInput = ref<Record<string, string>>({});
 const pageJumpInput = ref('');
 const observedListLimit = ref(0);
+const columnPickerRoot = ref<HTMLElement | null>(null);
+const columnPickerOpen = ref(false);
+const columnVisibilityOverrides = ref<Record<string, boolean>>({});
 const groupSortDesc = computed(() => (props.groupSort || 'desc') === 'desc');
 const sortedGroupedRows = computed(() => {
   const rows = [...groupedRows.value];
@@ -780,14 +809,106 @@ const hiddenColumns = computed(() => {
 const preferredColumns = computed(() => props.listProfile?.columns || []);
 const columnLabels = computed(() => props.listProfile?.column_labels || {});
 const contractColumnLabels = computed(() => props.columnLabels || {});
-const displayedColumns = computed(() => {
+const columnChoices = computed<ColumnOption[]>(() => {
+  if (Array.isArray(props.columnOptions) && props.columnOptions.length) return props.columnOptions;
   const source = preferredColumns.value.length ? preferredColumns.value : props.columns;
-  return source.filter((col) => !hiddenColumns.value[col]);
+  return source.map((name) => ({
+    name,
+    label: columnLabels.value[name] || contractColumnLabels.value[name] || name,
+    defaultVisible: !hiddenColumns.value[name],
+  }));
+});
+const defaultVisibleColumnMap = computed<Record<string, boolean>>(() =>
+  columnChoices.value.reduce<Record<string, boolean>>((acc, column) => {
+    acc[column.name] = column.defaultVisible !== false && !hiddenColumns.value[column.name];
+    return acc;
+  }, {}),
+);
+const displayedColumns = computed(() => {
+  const source = columnChoices.value.length
+    ? columnChoices.value.map((column) => column.name)
+    : (preferredColumns.value.length ? preferredColumns.value : props.columns);
+  const filtered = source.filter((col) => {
+    if (Object.prototype.hasOwnProperty.call(columnVisibilityOverrides.value, col)) {
+      return columnVisibilityOverrides.value[col] === true;
+    }
+    return defaultVisibleColumnMap.value[col] !== false;
+  });
+  return filtered.length ? filtered : source.slice(0, 1);
 });
 
 function columnLabel(col: string) {
   return columnLabels.value[col] || contractColumnLabels.value[col] || col;
 }
+
+function loadColumnVisibilityOverrides() {
+  const key = String(props.columnStorageKey || '').trim();
+  if (!key || typeof window === 'undefined') {
+    columnVisibilityOverrides.value = {};
+    return;
+  }
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(key) || '{}') as Record<string, unknown>;
+    columnVisibilityOverrides.value = Object.entries(parsed).reduce<Record<string, boolean>>((acc, [name, value]) => {
+      if (typeof value === 'boolean') acc[name] = value;
+      return acc;
+    }, {});
+  } catch {
+    columnVisibilityOverrides.value = {};
+  }
+}
+
+function persistColumnVisibilityOverrides() {
+  const key = String(props.columnStorageKey || '').trim();
+  if (!key || typeof window === 'undefined') return;
+  window.localStorage.setItem(key, JSON.stringify(columnVisibilityOverrides.value));
+}
+
+function isColumnVisible(name: string) {
+  if (Object.prototype.hasOwnProperty.call(columnVisibilityOverrides.value, name)) {
+    return columnVisibilityOverrides.value[name] === true;
+  }
+  return defaultVisibleColumnMap.value[name] !== false;
+}
+
+function isLastVisibleColumn(name: string) {
+  return isColumnVisible(name) && displayedColumns.value.length <= 1;
+}
+
+function onColumnVisibilityChange(name: string, event: Event) {
+  const checked = Boolean((event.target as HTMLInputElement | null)?.checked);
+  if (!checked && isLastVisibleColumn(name)) return;
+  columnVisibilityOverrides.value = {
+    ...columnVisibilityOverrides.value,
+    [name]: checked,
+  };
+  persistColumnVisibilityOverrides();
+}
+
+function resetColumnVisibility() {
+  columnVisibilityOverrides.value = {};
+  persistColumnVisibilityOverrides();
+}
+
+watch(
+  () => props.columnStorageKey,
+  () => loadColumnVisibilityOverrides(),
+  { immediate: true },
+);
+
+function handleColumnPickerPointerDown(event: PointerEvent) {
+  const root = columnPickerRoot.value;
+  if (!root || root.contains(event.target as Node)) return;
+  columnPickerOpen.value = false;
+}
+
+onMounted(() => {
+  document.addEventListener('pointerdown', handleColumnPickerPointerDown);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', handleColumnPickerPointerDown);
+});
 
 </script>
 
@@ -811,6 +932,7 @@ function columnLabel(col: string) {
 
 .list-title {
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .list-title h2 {
@@ -1087,6 +1209,48 @@ function columnLabel(col: string) {
 
 .pagination-actions--top {
   flex: 0 0 auto;
+}
+
+.column-picker {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.column-picker-menu {
+  position: absolute;
+  z-index: 20;
+  right: 0;
+  top: calc(100% + 6px);
+  display: grid;
+  gap: 4px;
+  min-width: 190px;
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.16);
+}
+
+.column-choice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  color: #0f172a;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.column-reset {
+  margin-top: 4px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #1d4ed8;
+  padding: 5px 8px;
+  cursor: pointer;
 }
 
 .pagination-btn {

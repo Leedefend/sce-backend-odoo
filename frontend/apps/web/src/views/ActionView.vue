@@ -352,6 +352,8 @@
       :list-offset="listOffset"
       :list-limit="contractLimit"
       :column-labels="contractColumnLabels"
+      :column-options="listColumnOptions"
+      :column-storage-key="listColumnStorageKey"
       :sort-label="sortLabel"
       :sort-options="displaySortOptions"
       :sort-value="sortValue"
@@ -1015,6 +1017,13 @@ const hasLedgerOverviewStrip = computed(() => pageMode.value === 'ledger');
 const listProfile = computed<SceneListProfile | null>(() => {
   return extractListProfile(actionContract.value);
 });
+const listColumnOptions = computed(() => resolveListColumnOptions(actionContract.value, listProfile.value));
+const listColumnStorageKey = computed(() => {
+  const uid = Number(session.user?.id || 0);
+  const aid = Number(actionId.value || 0);
+  const targetModel = String(resolvedModelRef.value || model.value || '').trim();
+  return ['sc:list-columns', uid || 'u', aid || targetModel || 'action'].join(':');
+});
 const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
   if (!sceneContextEnabled.value || !sceneKey.value) return null;
   return findSceneReadyEntry(session.sceneReadyContractV1, sceneKey.value);
@@ -1175,6 +1184,7 @@ const {
 const {
   contractColumnLabels,
   extractListProfile,
+  resolveListColumnOptions,
   extractColumnsFromContract,
   extractListOrderFromContract,
   buildListSortOptions,
@@ -1637,7 +1647,7 @@ function clearCustomFilter() {
   void requestLoadPage();
 }
 
-async function handleSaveFavorite(payload: { name: string }) {
+async function handleSaveFavorite(payload: { name: string; isDefault?: boolean; isShared?: boolean }) {
   const targetModel = String(resolvedModelRef.value || model.value || '').trim();
   const name = String(payload.name || '').trim();
   if (!targetModel || !name) return;
@@ -1647,6 +1657,9 @@ async function handleSaveFavorite(payload: { name: string }) {
     domain: resolveEffectiveFilterDomain(),
     context: resolveEffectiveRequestContext(),
     order: sortValue.value,
+    action_id: actionId.value,
+    is_default: payload.isDefault === true,
+    is_shared: payload.isShared === true,
   });
   await requestLoadPage();
 }

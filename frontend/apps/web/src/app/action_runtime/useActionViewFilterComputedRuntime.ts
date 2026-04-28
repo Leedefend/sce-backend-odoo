@@ -106,7 +106,8 @@ export function useActionViewFilterComputedRuntime(options: UseActionViewFilterC
         const contextRaw = String(raw.context_raw || '').trim();
         const context = options.parseContractContextRaw(raw.context_raw);
         const isDefault = raw.default === true || raw.is_default === true;
-        return { key, label, domain, domainRaw, context, contextRaw, isDefault };
+        const isShared = raw.is_shared === true;
+        return { key, label, domain, domainRaw, context, contextRaw, isDefault, isShared };
       })
       .filter(Boolean)
       .slice(0, 12);
@@ -209,7 +210,7 @@ export function useActionViewFilterComputedRuntime(options: UseActionViewFilterC
       groupEnabled: groups.enabled !== false && customGroupByChips.value.length > 0,
       groupLabel: String(groups.label || '添加自定义分组'),
       favoriteSaveEnabled: favorites.save_enabled !== false,
-      favoriteLabel: String(favorites.label || '保存当前搜索'),
+      favoriteLabel: String(favorites.label || '加入收藏'),
       favoriteIntent: String(favorites.intent || 'search.favorite.set'),
     };
   });

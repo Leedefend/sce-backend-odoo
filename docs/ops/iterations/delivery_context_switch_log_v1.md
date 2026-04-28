@@ -31027,3 +31027,24 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P2; 本轮修复 ActionView 通用列表/看板加载链路，未治理 RecordView 详情页读取过宽字段的问题；详情页仍会为关系字段加载较多候选数据，属于后续性能与字段暴露治理。`
 - rollback: `回退本批次提交并重新构建 frontend/apps/web/dist，即恢复首屏请求使用 preflight 前状态的旧行为。`
 - next_step: `用户继续通过反代入口验证首次进入列表页；若发现非 ActionView 页面仍有数据不全，需要单独按对应页面加载链路排查。`
+
+## 2026-04-28 Batch-Frontend-List-Column-Favorite-Native-Alignment
+
+- branch: `codex/dev-env-run`
+- short_sha: `08bf8167`
+- Layer Target: `ui.contract search/list personalization + frontend list renderer`
+- Module: `addons/smart_core`, `frontend/apps/web`, `frontend/packages/schema`
+- Reason: `用户指出列表页还缺少原生式列显隐设置，且“显示在仪表板”类文案与原生加入收藏语义不一致。事实排查确认后端 tree parser 已输出 optional/columns_schema，但前端 ListPage 未消费；收藏保存只写入 ir.filters 基础字段，未承载 is_default/action_id/is_shared。`
+- completed_step: `ListPage 增加“列”设置入口，按契约 columns/list_profile/hidden_columns/optional 生成列选择项，并用用户+action 维度 localStorage 保存显隐偏好；列表数据请求纳入 hidden_columns，避免用户打开隐藏列后无数据。app.search.config 将收藏入口文案统一为“加入收藏”，saved_filters 输出 is_default/action_id；search.favorite.set 支持 is_default/is_shared/action_id 并写入 ir.filters 原生字段；ActionSurfaceToolbar 收藏保存弹层增加“设为默认筛选/共享给所有用户”，收藏项显示“默认/共享”标记。`
+- verification:
+  - `corepack pnpm -C frontend/apps/web typecheck` -> `PASS`
+  - `python3 -m py_compile addons/smart_core/app_config_engine/models/app_search_config.py addons/smart_core/handlers/search_favorite_set.py` -> `PASS`
+  - `ENV=test ENV_FILE=.env.prod.sim ... make restart` -> `PASS; odoo healthy`
+  - `corepack pnpm -C frontend/apps/web build` -> `PASS; 反代 HTML 命中 /assets/index-D-LLm9FH.js。`
+  - `Playwright browser via http://127.0.0.1: wutao/123456 /a/452；列菜单显示 项目名称/项目经理/业主单位/当前阶段/项目执行阶段/开始日期/结束日期；隐藏“项目经理”后表头移除，刷新后仍隐藏，恢复默认后表头恢复。`
+  - `Playwright browser: 搜索菜单包含“加入收藏”，不包含“显示在仪表板”；保存“列显隐收藏验证”时请求 search.favorite.set 携带 action_id=452,is_default=true,is_shared=true，响应 id=10,is_default=true,is_shared=true。`
+  - `ENV=test ... make odoo.shell.exec` -> `app.search.config project.project custom.favorites.label=加入收藏；saved_filters 中“列显隐收藏验证”包含 is_shared=True,is_default=True,action_id=452。`
+- result: `PASS; 列显隐已进入通用列表页，收藏保存语义已向原生 ir.filters 默认/共享/action 口径收口。`
+- risk: `P2; 列显隐偏好当前保存在自定义前端 localStorage，尚未与 Odoo 原生 web client 的浏览器本地偏好或 ir.ui.view.custom 做跨端同步；后续若要求多端同步，需要新增后端用户偏好契约。P3; 本轮验证创建了模拟生产库验证收藏“列显隐收藏验证”。`
+- rollback: `回退本批次提交，重启后端并重建前端静态包，即恢复固定列显示和旧收藏保存语义。`
+- next_step: `如用户认可交互形态，后续可继续补“列顺序拖拽/多端同步/默认筛选自动应用”的原生增强能力。`

@@ -34,6 +34,7 @@ export function resolveDefaultSortFromContract(contractFields: Dict): string {
 
 export type ActionViewListProfileShape = {
   columns?: string[];
+  hidden_columns?: string[];
   row_secondary?: string;
 };
 
@@ -52,8 +53,9 @@ export function resolveRequestedFields(
   profile: ActionViewListProfileShape | null,
 ): string[] {
   const profileColumns = profile?.columns ?? [];
+  const hiddenColumns = profile?.hidden_columns ?? [];
   const secondary = profile?.row_secondary ? [profile.row_secondary] : [];
-  return uniqueFields([...profileColumns, ...secondary, ...contractFields]);
+  return uniqueFields([...profileColumns, ...hiddenColumns, ...secondary, ...contractFields]);
 }
 
 export function resolveFilterDomain(chips: FilterChip[], key: string): unknown[] {

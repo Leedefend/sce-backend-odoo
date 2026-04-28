@@ -630,7 +630,13 @@ export interface ActionContract {
   };
   ui_contract?: {
     columns?: string[];
-    columnsSchema?: Array<{ name: string; string?: string }>;
+    columnsSchema?: Array<{
+      name: string;
+      string?: string;
+      optional?: 'show' | 'hide' | string;
+      invisible?: unknown;
+      column_invisible?: unknown;
+    }>;
   };
 }
 

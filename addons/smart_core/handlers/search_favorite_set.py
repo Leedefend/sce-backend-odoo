@@ -45,6 +45,8 @@ class SearchFavoriteSetHandler(BaseIntentHandler):
             context = {}
         order = str(params.get("sort") or params.get("order") or "").strip()
         is_shared = bool(params.get("is_shared") is True)
+        is_default = bool(params.get("is_default") is True)
+        action_id = int(params.get("action_id") or 0)
 
         Filter = self.env["ir.filters"].sudo()
         vals = {
@@ -54,12 +56,24 @@ class SearchFavoriteSetHandler(BaseIntentHandler):
             "context": json.dumps(context, ensure_ascii=False),
             "sort": order,
             "user_id": False if is_shared else self.env.uid,
+            "is_default": is_default,
         }
+        if action_id:
+            vals["action_id"] = action_id
         existing = Filter.search([
             ("model_id", "=", model),
             ("name", "=", name),
             ("user_id", "=", False if is_shared else self.env.uid),
         ], limit=1)
+        if is_default:
+            default_domain = [
+                ("model_id", "=", model),
+                ("user_id", "=", False if is_shared else self.env.uid),
+                ("is_default", "=", True),
+            ]
+            if action_id:
+                default_domain.append(("action_id", "=", action_id))
+            Filter.search(default_domain).write({"is_default": False})
         if existing:
             existing.write(vals)
             record = existing
@@ -77,6 +91,8 @@ class SearchFavoriteSetHandler(BaseIntentHandler):
                 "name": record.name,
                 "model": model,
                 "is_shared": is_shared,
+                "is_default": is_default,
+                "action_id": action_id or False,
                 "search_version": getattr(cfg, "version", None),
             },
             "meta": {"intent": self.INTENT_TYPE, "version": self.VERSION},
