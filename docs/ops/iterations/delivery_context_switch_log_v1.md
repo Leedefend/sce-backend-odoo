@@ -32061,7 +32061,7 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - Layer Target: `Repository Asset Externalization / Migration Replay Package`
 - Module: `migration_assets`, `scripts/migration`, `Makefile`, `docs/migration_alignment`
 - Reason: `重建资产载荷已显著放大仓库体积，需要从 Git 跟踪与远端历史中剥离，同时保留确定性包、锁文件、sha256 校验和验收入口。`
-- completed_step: `生成 migration_assets_release_20260429T120811Z 外部资产包；新增 migration.assets.fetch；将 migration_assets 目录改为只跟踪 README；记录 package lock 与 release URL；更新 release/delivery/audit 文档和 Makefile 入口。`
+- completed_step: `生成 migration_assets_release_20260429T120811Z 外部资产包；新增 migration.assets.fetch；将 migration_assets 目录改为只跟踪 README；记录 package lock；更新 release/delivery/audit 文档和 Makefile 入口。`
 - verification:
   - `python3 -m py_compile scripts/migration/migration_asset_fetch.py scripts/migration/migration_asset_release_package.py scripts/migration/migration_asset_delivery_audit.py` -> `PASS`
   - `git diff --check` -> `PASS`
@@ -32069,6 +32069,24 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `make migration.assets.verify_all` -> `PASS; package_count=23; db_writes=0`
   - `make migration.assets.delivery_audit` -> `PASS_WITH_PACKAGING_ACTIONS; blockers=0; duplicate_materialized_parts=0; unreferenced_files=2`
 - result: `PASS; 新克隆仓库可通过锁定外部包物化 migration_assets 后继续执行重建资产验收，仓库 HEAD 不再承载大体积 XML/manifest payload。`
-- risk: `P1; GitHub Release 资产必须在远端历史清理后发布并保留，不得只依赖 /tmp 本地包。delivery_audit 仍要求后续归类两个可选 evidence snapshot。`
+- risk: `P0; 迁移资产包包含重建用户与业务数据，禁止公开 GitHub Release 分发。必须使用私有认证对象存储、短期签名 URL 或受控本地路径。delivery_audit 仍要求后续归类两个可选 evidence snapshot。`
 - rollback: `回退外置提交可恢复 Git 跟踪资产；若远端历史已清理，需要从 release package 重新物化资产，而不是依赖 Git 历史恢复。`
-- next_step: `提交后执行远端历史清理，剥离既有 migration_assets payload，并发布 migration-assets-20260429T120811Z release assets。`
+- next_step: `提交后执行远端历史清理，剥离既有 migration_assets payload；资产包只能发布到私有认证存储。`
+
+## 2026-04-29 Batch-Migration-Assets-Public-Release-Revocation
+
+- branch: `feat/production-deploy-doc`
+- short_sha: `5f7949ae`
+- Layer Target: `Security / Migration Asset Distribution`
+- Module: `GitHub Release`, `docs/migration_alignment`, `/tmp/sce_migration_asset_release`
+- Reason: `migration_assets_release_20260429T120811Z 包含重建用户、往来单位、合同、收付款及 legacy 业务数据，公开 GitHub Release 会造成数据泄露风险。`
+- completed_step: `删除公开 GitHub Release migration-assets-20260429T120811Z、删除 tar.gz 与 sha256 release assets、删除 release tag；移除锁文件公开 package_url；将分发策略改为私有认证对象存储或受控本地路径。`
+- verification:
+  - `GitHub API release delete` -> `PASS; assets_deleted=2; tag_ref_deleted=true`
+  - `git ls-remote origin refs/tags/migration-assets-20260429T120811Z` -> `PASS; no tag returned`
+  - `curl public release asset URL` -> `PASS; HTTP 404 Not Found`
+  - `rm -rf /tmp/sce_migration_asset_release /tmp/sce_migration_asset_fetch_url_test` -> `PASS; local plaintext package cache removed`
+- result: `P0 mitigated in active distribution path; 公开下载入口已撤销，仓库不再记录公开资产 URL。`
+- risk: `P0 residual; GitHub Release 删除不能证明此前无人下载，需按可能短暂公开暴露记录安全事件。后续不得把真实迁移资产包发布到 public repo release。`
+- rollback: `不得回滚到公开 Release URL。若需恢复重建验收，使用 MIGRATION_ASSET_PACKAGE_PATH 或私有认证 MIGRATION_ASSET_PACKAGE_URL。`
+- next_step: `建立私有制品库/对象存储分发策略，并在需要时重新生成或加密迁移资产包。`

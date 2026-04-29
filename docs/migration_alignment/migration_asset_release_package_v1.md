@@ -3,9 +3,9 @@
 Status: `PASS`
 
 - package_id: `migration_assets_release_20260429T120811Z`
-- package_path: `/tmp/sce_migration_asset_release/migration_assets_release_20260429T120811Z.tar.gz`
-- package_url: `https://github.com/Leedefend/sce-backend-odoo/releases/download/migration-assets-20260429T120811Z/migration_assets_release_20260429T120811Z.tar.gz`
-- sha256_path: `/tmp/sce_migration_asset_release/migration_assets_release_20260429T120811Z.tar.gz.sha256`
+- package_path: `REQUIRES_PRIVATE_PACKAGE_PATH`
+- package_url: `REVOKED_PUBLIC_RELEASE`
+- sha256_path: `REQUIRES_PRIVATE_PACKAGE_SHA256_FILE_OR_LOCK_SHA`
 - sha256: `b9498cbbf605527b13e84d8f7710eca0454f3c7b065e990db728e1d70b699d91`
 - package_size_mb: `37.51`
 - included_file_count: `95`
@@ -16,7 +16,8 @@ Status: `PASS`
 
 - `migration_assets` payload files are externalized and are not tracked in Git.
 - The locked package is recorded in `docs/migration_alignment/migration_asset_package_lock_v1.json`.
-- The canonical external package is published as GitHub Release `migration-assets-20260429T120811Z`.
+- The canonical external package must be stored in a private authenticated object store or provided through `MIGRATION_ASSET_PACKAGE_PATH`.
+- Public GitHub Release distribution is prohibited because the package contains reconstructed user and business migration data.
 - Before verification or replay, materialize the package with `make migration.assets.fetch`.
 
 ## Excluded Paths

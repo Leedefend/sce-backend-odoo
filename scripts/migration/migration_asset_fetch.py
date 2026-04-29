@@ -29,14 +29,16 @@ make migration.assets.fetch
 make migration.assets.verify_all
 ```
 
-By default the lock points at the pinned GitHub Release package and also records
-the locally generated package path used during this cleanup. In another
-environment, set one of:
+By default the lock records the locally generated package path used during this
+cleanup. In another environment, set one of:
 
 ```bash
 MIGRATION_ASSET_PACKAGE_PATH=/path/to/migration_assets_release_*.tar.gz
-MIGRATION_ASSET_PACKAGE_URL=https://...
+MIGRATION_ASSET_PACKAGE_URL=https://private-authenticated-object-store/...
 ```
+
+Do not publish migration asset packages to public GitHub Releases. They contain
+reconstructed user and business migration data.
 
 The package hash is pinned in
 `docs/migration_alignment/migration_asset_package_lock_v1.json`.
