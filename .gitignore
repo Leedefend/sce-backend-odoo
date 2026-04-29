@@ -108,8 +108,9 @@ tmp/*
 !tmp/raw/**
 .tmp/
 
-# Migration asset package materializes this generated XML from tracked parts.
-migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml
+# Migration assets are externalized; keep only the local package placeholder.
+migration_assets/*
+!migration_assets/README.md
 !migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/
 !migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/**
 .codex_home/

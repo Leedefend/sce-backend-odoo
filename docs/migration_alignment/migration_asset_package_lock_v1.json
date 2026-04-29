@@ -1,0 +1,24 @@
+{
+  "lock_version": "migration_asset_package_lock_v1",
+  "package_id": "migration_assets_release_20260429T120811Z",
+  "package_path": "/tmp/sce_migration_asset_release/migration_assets_release_20260429T120811Z.tar.gz",
+  "package_url": "https://github.com/Leedefend/sce-backend-odoo/releases/download/migration-assets-20260429T120811Z/migration_assets_release_20260429T120811Z.tar.gz",
+  "sha256": "b9498cbbf605527b13e84d8f7710eca0454f3c7b065e990db728e1d70b699d91",
+  "sha256_path": "/tmp/sce_migration_asset_release/migration_assets_release_20260429T120811Z.tar.gz.sha256",
+  "package_size_bytes": 39330321,
+  "package_size_mb": 37.51,
+  "included_file_count": 95,
+  "excluded_file_count": 3,
+  "payload_mode": "packaged_artifacts",
+  "materializes": "migration_assets/",
+  "required_before": [
+    "migration.assets.verify_all",
+    "migration.assets.delivery_audit",
+    "history.continuity.rehearse",
+    "history.production.fresh_init"
+  ],
+  "notes": [
+    "Set MIGRATION_ASSET_PACKAGE_PATH to a local tar.gz or MIGRATION_ASSET_PACKAGE_URL to an uploaded release asset.",
+    "The repository intentionally does not track generated migration asset payload files."
+  ]
+}

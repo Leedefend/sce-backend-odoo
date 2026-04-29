@@ -32053,3 +32053,22 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - next_step: `继续跑完整重建验收时，应从 replay 总流程覆盖这些 projection，不再手工补跑。`
 - archive_conclusion: `本轮问题不是一次性手工修复。根因是官方重建流程缺少承载历史事实到正式 runtime 业务模型的 projection 步骤；已将 projection 与 runtime probe 纳入 history_continuity_oneclick。因此后续新库重建只要走官方 replay 主流程，不应再因同一原因出现 9 个 runtime surface gaps。若绕过主流程仅跑 carrier/fact replay，问题仍可能复现。`
 - future_model_upgrade_rule: `后续若将承载模型升级为系统业务模型，必须同步评估并更新历史重建影响面：projection SQL/ORM 写入目标、唯一键与幂等规则、legacy_source_model/source_origin 映射、菜单/权限/record rule、AR/AP 与业务 smoke 基线、history.business.usable.probe 判据、回滚清理条件。未完成这些评估和验证，不允许声称模型升级对历史重建无影响。`
+
+## 2026-04-29 Batch-Migration-Assets-Externalization
+
+- branch: `feat/production-deploy-doc`
+- short_sha: `9626ecde`
+- Layer Target: `Repository Asset Externalization / Migration Replay Package`
+- Module: `migration_assets`, `scripts/migration`, `Makefile`, `docs/migration_alignment`
+- Reason: `重建资产载荷已显著放大仓库体积，需要从 Git 跟踪与远端历史中剥离，同时保留确定性包、锁文件、sha256 校验和验收入口。`
+- completed_step: `生成 migration_assets_release_20260429T120811Z 外部资产包；新增 migration.assets.fetch；将 migration_assets 目录改为只跟踪 README；记录 package lock 与 release URL；更新 release/delivery/audit 文档和 Makefile 入口。`
+- verification:
+  - `python3 -m py_compile scripts/migration/migration_asset_fetch.py scripts/migration/migration_asset_release_package.py scripts/migration/migration_asset_delivery_audit.py` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - `make migration.assets.fetch` -> `PASS; file_count=96; sha256=b9498cbbf605527b13e84d8f7710eca0454f3c7b065e990db728e1d70b699d91`
+  - `make migration.assets.verify_all` -> `PASS; package_count=23; db_writes=0`
+  - `make migration.assets.delivery_audit` -> `PASS_WITH_PACKAGING_ACTIONS; blockers=0; duplicate_materialized_parts=0; unreferenced_files=2`
+- result: `PASS; 新克隆仓库可通过锁定外部包物化 migration_assets 后继续执行重建资产验收，仓库 HEAD 不再承载大体积 XML/manifest payload。`
+- risk: `P1; GitHub Release 资产必须在远端历史清理后发布并保留，不得只依赖 /tmp 本地包。delivery_audit 仍要求后续归类两个可选 evidence snapshot。`
+- rollback: `回退外置提交可恢复 Git 跟踪资产；若远端历史已清理，需要从 release package 重新物化资产，而不是依赖 Git 历史恢复。`
+- next_step: `提交后执行远端历史清理，剥离既有 migration_assets payload，并发布 migration-assets-20260429T120811Z release assets。`

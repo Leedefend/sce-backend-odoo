@@ -20,9 +20,8 @@ from typing import Any
 
 
 REPO_ROOT = Path.cwd()
-ASSET_ROOT = REPO_ROOT / "migration_assets"
+DEFAULT_ASSET_ROOT = REPO_ROOT / "migration_assets"
 MIGRATION_ARTIFACT_ROOT = REPO_ROOT / "artifacts/migration"
-CATALOG = ASSET_ROOT / "manifest/migration_asset_catalog_v1.json"
 OUTPUT_JSON = REPO_ROOT / "artifacts/migration/migration_asset_release_package_v1.json"
 OUTPUT_MD = REPO_ROOT / "docs/migration_alignment/migration_asset_release_package_v1.md"
 DEFAULT_OUT_DIR = Path("/tmp/sce_migration_asset_release")
@@ -65,8 +64,9 @@ def should_exclude_artifact(path: Path) -> bool:
     return path == OUTPUT_JSON
 
 
-def collect_files() -> tuple[list[dict[str, Any]], list[str]]:
-    catalog = load_json(CATALOG)
+def collect_files(asset_root: Path) -> tuple[list[dict[str, Any]], list[str]]:
+    catalog_path = asset_root / "manifest/migration_asset_catalog_v1.json"
+    catalog = load_json(catalog_path)
     files: dict[str, dict[str, Any]] = {}
     warnings: list[str] = []
 
@@ -84,13 +84,13 @@ def collect_files() -> tuple[list[dict[str, Any]], list[str]]:
             "sha256": sha256_file(path),
         }
 
-    add(CATALOG, "catalog")
+    add(catalog_path, "catalog")
     for package in catalog.get("packages", []):
-        manifest_path = ASSET_ROOT / package["asset_manifest_path"]
+        manifest_path = asset_root / package["asset_manifest_path"]
         add(manifest_path, "asset_manifest")
         manifest = load_json(manifest_path)
         for asset in manifest.get("assets", []):
-            add(ASSET_ROOT / asset["path"], "asset")
+            add(asset_root / asset["path"], "asset")
 
     for evidence in EVIDENCE_FILES:
         path = REPO_ROOT / evidence
@@ -130,11 +130,11 @@ def add_bytes(tar: tarfile.TarFile, arcname: str, data: bytes) -> None:
     tar.addfile(info, io.BytesIO(data))
 
 
-def build_package(out_dir: Path, package_id: str) -> dict[str, Any]:
-    files, warnings = collect_files()
+def build_package(asset_root: Path, out_dir: Path, package_id: str) -> dict[str, Any]:
+    files, warnings = collect_files(asset_root)
     excluded_paths = [
         rel(path)
-        for path in sorted(ASSET_ROOT.rglob("*"))
+        for path in sorted(asset_root.rglob("*"))
         if path.is_file() and should_exclude(rel(path))
     ]
     package_name = f"{package_id}.tar.gz"
@@ -146,7 +146,7 @@ def build_package(out_dir: Path, package_id: str) -> dict[str, Any]:
         "manifest_id": "migration_asset_release_package_v1",
         "package_id": package_id,
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "catalog": rel(CATALOG),
+        "catalog": rel(asset_root / "manifest/migration_asset_catalog_v1.json"),
         "payload_mode": "packaged_artifacts",
         "file_count": len(files),
         "excluded_paths": excluded_paths,
@@ -219,11 +219,12 @@ def build_package(out_dir: Path, package_id: str) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build migration asset release tarball.")
+    parser.add_argument("--asset-root", default=str(DEFAULT_ASSET_ROOT), help="Migration asset root")
     parser.add_argument("--out-dir", default=str(DEFAULT_OUT_DIR), help="Output directory for tarball")
     parser.add_argument("--package-id", default=f"migration_assets_release_{utc_stamp()}", help="Package id")
     args = parser.parse_args()
 
-    payload = build_package(Path(args.out_dir), args.package_id)
+    payload = build_package(Path(args.asset_root), Path(args.out_dir), args.package_id)
     print(
         "MIGRATION_ASSET_RELEASE_PACKAGE="
         + json.dumps(

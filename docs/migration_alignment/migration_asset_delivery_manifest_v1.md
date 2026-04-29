@@ -34,7 +34,19 @@ Status: `DELIVERY_READY_WITH_PACKAGING_ACTIONS`
 
 ## 3. 生产加载资产
 
-生产加载资产以 `migration_assets/manifest/migration_asset_catalog_v1.json` 为唯一目录。
+生产加载资产以物化后的 `migration_assets/manifest/migration_asset_catalog_v1.json`
+为唯一目录。`migration_assets` 大文件不再由 Git 承载，必须先按锁文件取包并
+校验 sha256 后再执行资产验证或历史重放。
+
+锁文件：
+
+- `docs/migration_alignment/migration_asset_package_lock_v1.json`
+
+取包入口：
+
+```bash
+make migration.assets.fetch
+```
 
 交付包必须包含：
 
@@ -50,6 +62,7 @@ Status: `DELIVERY_READY_WITH_PACKAGING_ACTIONS`
 上线前必须验证：
 
 ```bash
+make migration.assets.fetch
 make migration.assets.verify_all
 make migration.assets.delivery_audit
 ```
@@ -128,6 +141,7 @@ ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
 必须通过：
 
 ```bash
+make migration.assets.fetch
 make migration.assets.verify_all
 make migration.assets.delivery_audit
 make migration.assets.release_package

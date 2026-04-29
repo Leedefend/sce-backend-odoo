@@ -10,21 +10,20 @@ connect to Odoo, execute replay writes, or mutate migration assets.
 ## Summary
 
 - catalog packages: `23`
-- asset files: `98`
+- asset files: `95`
 - referenced files: `93`
-- unreferenced files: `5`
-- total asset size MB: `467.27`
-- replay steps: `144`
-- duplicate materialized parts: `1`
+- unreferenced files: `2`
+- total asset size MB: `347.26`
+- replay steps: `163`
+- duplicate materialized parts: `0`
 
 ## Decision
 
 - blockers: `0`
-- packaging actions: `2`
+- packaging actions: `1`
 
 ### Packaging Actions
 
-- remove duplicated materialized XML or parts from the final release package after choosing one canonical form
 - classify unreferenced migration asset files as delivery evidence or remove from release package
 
 ## Entrypoints
@@ -37,21 +36,16 @@ connect to Odoo, execute replay writes, or mutate migration assets.
 
 ## Duplicate Materialized Parts
 
-- `migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml` (120.01 MB) and `migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts` (3 parts, 120.01 MB)
+- none
 
 ## Unreferenced Asset Files
 
-- `migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/part-000.part`
-- `migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/part-001.part`
-- `migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/part-002.part`
 - `migration_assets/manifest/migration_asset_coverage_snapshot_v1.json`
 - `migration_assets/manifest/receipt_blocker_policy_snapshot_v1.json`
 
 ## Large Files
 
 - `migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml`: `120.01 MB`
-- `migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/part-000.part`: `60.0 MB`
-- `migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/part-001.part`: `60.0 MB`
 - `migration_assets/manifest/legacy_workflow_audit_external_id_manifest_v1.json`: `31.06 MB`
 - `migration_assets/20_business/outflow_request_line/outflow_request_line_v1.xml`: `18.34 MB`
 - `migration_assets/30_relation/project_member/project_member_neutral_v1.xml`: `16.82 MB`
@@ -62,4 +56,3 @@ connect to Odoo, execute replay writes, or mutate migration assets.
 ## Output
 
 - JSON: `artifacts/migration/migration_asset_delivery_audit_v1.json`
-- Git policy: generated audit JSON stays local and must not be committed.

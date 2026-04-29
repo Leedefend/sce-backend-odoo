@@ -9,6 +9,7 @@ delivery report for release handoff.
 from __future__ import annotations
 
 import hashlib
+import argparse
 import json
 import re
 from pathlib import Path
@@ -16,8 +17,7 @@ from typing import Any
 
 
 REPO_ROOT = Path.cwd()
-ASSET_ROOT = REPO_ROOT / "migration_assets"
-CATALOG = ASSET_ROOT / "manifest/migration_asset_catalog_v1.json"
+DEFAULT_ASSET_ROOT = REPO_ROOT / "migration_assets"
 ONECLICK = REPO_ROOT / "scripts/migration/history_continuity_oneclick.sh"
 PRODUCTION_ENTRY = REPO_ROOT / "scripts/deploy/fresh_production_history_init.sh"
 MAKEFILE = REPO_ROOT / "Makefile"
@@ -45,12 +45,17 @@ def size_mb(size: int) -> float:
     return round(size / 1024 / 1024, 2)
 
 
-def catalog_audit() -> dict[str, Any]:
-    catalog = load_json(CATALOG)
+def asset_files(asset_root: Path) -> list[Path]:
+    return sorted(path for path in asset_root.rglob("*") if path.is_file() and path.name != "README.md")
+
+
+def catalog_audit(asset_root: Path) -> dict[str, Any]:
+    catalog_path = asset_root / "manifest/migration_asset_catalog_v1.json"
+    catalog = load_json(catalog_path)
     packages = catalog.get("packages", [])
     package_order = catalog.get("package_order", [])
     package_ids = [package.get("asset_package_id") for package in packages]
-    referenced: set[str] = {rel(CATALOG)}
+    referenced: set[str] = {rel(catalog_path)}
     package_rows: list[dict[str, Any]] = []
     missing: list[str] = []
     hash_mismatches: list[dict[str, str]] = []
@@ -58,7 +63,7 @@ def catalog_audit() -> dict[str, Any]:
 
     for package in packages:
         manifest_rel = package["asset_manifest_path"]
-        manifest_path = ASSET_ROOT / manifest_rel
+        manifest_path = asset_root / manifest_rel
         referenced.add(rel(manifest_path))
         if not manifest_path.exists():
             missing.append(rel(manifest_path))
@@ -77,7 +82,7 @@ def catalog_audit() -> dict[str, Any]:
         assets = manifest.get("assets", [])
         package_record_count = 0
         for asset in assets:
-            asset_path = ASSET_ROOT / asset["path"]
+            asset_path = asset_root / asset["path"]
             referenced.add(rel(asset_path))
             if not asset_path.exists():
                 missing.append(rel(asset_path))
@@ -108,7 +113,7 @@ def catalog_audit() -> dict[str, Any]:
 
     order_mismatch = package_order != package_ids
     duplicate_package_ids = sorted({item for item in package_ids if package_ids.count(item) > 1})
-    all_asset_files = sorted(path for path in ASSET_ROOT.rglob("*") if path.is_file())
+    all_asset_files = asset_files(asset_root)
     unreferenced = [rel(path) for path in all_asset_files if rel(path) not in referenced]
 
     return {
@@ -127,8 +132,8 @@ def catalog_audit() -> dict[str, Any]:
     }
 
 
-def packaging_audit() -> dict[str, Any]:
-    files = sorted(path for path in ASSET_ROOT.rglob("*") if path.is_file())
+def packaging_audit(asset_root: Path) -> dict[str, Any]:
+    files = asset_files(asset_root)
     total_bytes = sum(path.stat().st_size for path in files)
     large_files = [
         {"path": rel(path), "size_mb": size_mb(path.stat().st_size)}
@@ -136,7 +141,7 @@ def packaging_audit() -> dict[str, Any]:
         if path.stat().st_size >= 10 * 1024 * 1024
     ]
     duplicate_materialized_parts: list[dict[str, Any]] = []
-    for xml_path in sorted(ASSET_ROOT.rglob("*.xml")):
+    for xml_path in sorted(asset_root.rglob("*.xml")):
         parts_dir = Path(str(xml_path) + ".parts")
         if not parts_dir.is_dir():
             continue
@@ -304,12 +309,17 @@ def write_outputs(payload: dict[str, Any]) -> None:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Audit migration assets for production delivery packaging.")
+    parser.add_argument("--asset-root", default=str(DEFAULT_ASSET_ROOT), help="Migration asset root")
+    args = parser.parse_args()
+    asset_root = Path(args.asset_root).resolve()
     payload: dict[str, Any] = {
         "audit_id": "migration_asset_delivery_audit_v1",
         "mode": "read_only",
         "db_writes": 0,
-        "catalog": catalog_audit(),
-        "packaging": packaging_audit(),
+        "asset_root": str(asset_root),
+        "catalog": catalog_audit(asset_root),
+        "packaging": packaging_audit(asset_root),
         "replay": replay_audit(),
     }
     status, blockers, actions = decide(payload)
