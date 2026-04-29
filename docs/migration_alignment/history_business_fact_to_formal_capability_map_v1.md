@@ -74,6 +74,57 @@ capability, the implementation sequence must be:
 
 Do not invert the order by exposing the raw carrier as the user product.
 
+## Rebuild Flow Guarantee
+
+The current official rebuild flow is not allowed to stop at carrier/fact
+replay. Historical facts that already have user-facing runtime carriers must be
+projected into those runtime models before business usability is accepted.
+
+The replay path must include projection and probe coverage for:
+
+- `sc.settlement.adjustment`
+- `sc.expense.claim`
+- `sc.treasury.reconciliation`
+- `sc.receipt.income`
+- `sc.payment.execution`
+- `sc.invoice.registration`
+- `sc.financing.loan`
+- `sc.general.contract`
+- `sc.construction.diary`
+
+Acceptance requires `history.business.usable.probe` to return
+`history_business_usable_ready` with `gap_count=0`. A result of
+`history_business_usable_visible_but_promotion_gaps` is not acceptable when the
+gap points to a user-facing runtime model that carries historical business
+data.
+
+This is a rebuild-process guarantee, not just a one-time repair of one
+database. If a rebuild bypasses the official replay flow and only imports
+carrier/fact rows, the same usability failure can reappear and the run must be
+treated as incomplete.
+
+## Model Upgrade Impact Rule
+
+Future iterations may promote a transitional carrier/projection model into a
+formal system business model. That upgrade is allowed only when its migration
+impact is explicitly reviewed and recorded.
+
+Every such model upgrade must answer:
+
+- Which historical fact sources feed the model.
+- Which projection script writes the runtime records.
+- Whether `_name`, table name, unique constraints, or `legacy_source_model`
+  values change.
+- Whether the projection remains idempotent after the model upgrade.
+- Whether menus, access rules, record rules, and role surfaces still expose the
+  records to the intended real users.
+- Whether AR/AP, finance, workflow, and business-usable smoke baselines change.
+- How old runtime rows are cleaned or migrated during rollback.
+
+No model upgrade may be marked complete until the rebuild flow and
+`history.business.usable.probe` have been updated to cover the new model
+contract.
+
 ## Current Delivery Implications
 
 ### Finance Daily Use

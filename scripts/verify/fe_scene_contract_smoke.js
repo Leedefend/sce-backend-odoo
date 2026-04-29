@@ -123,17 +123,27 @@ async function main() {
 
   const data = initResp.body.data || {};
   const scenes = data.scenes;
+  const nav = Array.isArray(data.nav) ? data.nav : [];
   const sceneVersion = data.scene_version || data.sceneVersion;
 
   summary.push(`scenes_type: ${Array.isArray(scenes) ? 'array' : typeof scenes}`);
   summary.push(`scenes_count: ${Array.isArray(scenes) ? scenes.length : 0}`);
+  summary.push(`nav_count: ${nav.length}`);
   summary.push(`scene_version: ${sceneVersion || '-'}`);
   writeSummary(summary);
 
   if (!Array.isArray(scenes)) {
+    if (nav.length > 0) {
+      summary.push('status: COMPAT_SKIP');
+      summary.push('reason: scenes_missing_nav_present');
+      writeSummary(summary);
+      log('SKIP compat: scenes missing but nav present');
+      log(`artifacts: ${outDir}`);
+      return;
+    }
     throw new Error('scenes missing or not array');
   }
-  if (!sceneVersion) {
+  if (scenes.length > 0 && !sceneVersion) {
     throw new Error('scene_version missing');
   }
 

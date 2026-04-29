@@ -93,7 +93,8 @@ cat
 make
 artifacts/*
 !artifacts/migration/
-!artifacts/migration/**
+artifacts/migration/*
+!artifacts/migration/README.md
 docs/tmp/
 # audit artifacts (generated)
 docs/audit/*.csv

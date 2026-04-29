@@ -21,3 +21,4 @@ Status: `PASS`
 
 - Excluded `.xml.parts` files are not packaged.
 - `artifacts/migration` replay payloads are packaged for old-DB-free production replay.
+- Generated package JSON and replay payloads are local artifacts and must not be committed to Git.

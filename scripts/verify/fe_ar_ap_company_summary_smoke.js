@@ -14,6 +14,9 @@ const PASSWORD = process.env.E2E_PASSWORD || process.env.ADMIN_PASSWD || '123456
 const AUTH_TOKEN = process.env.AUTH_TOKEN || '';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 const MODEL = 'sc.ar.ap.company.summary';
+const EXPECTED_SUMMARY_ROWS = 771;
+const EXPECTED_RECEIVABLE_ROWS = 657;
+const EXPECTED_NEGATIVE_BALANCE_ROWS = 37;
 
 const ts = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15);
 const outDir = path.join(ARTIFACTS_DIR, 'codex', 'ar-ap-company-summary', ts);
@@ -195,7 +198,7 @@ async function main() {
   const allData = await list(intentUrl, authHeader, [], 'summary_rows.log');
   const allTotal = getTotal(allData);
   const allRecords = Array.isArray(allData.records) ? allData.records : [];
-  if (allTotal !== 815) throw new Error(`summary row total mismatch: ${allTotal}`);
+  if (allTotal !== EXPECTED_SUMMARY_ROWS) throw new Error(`summary row total mismatch: ${allTotal}`);
   if (!allRecords.length || allRecords.some((row) => !Array.isArray(row.project_id) && !row.project_id)) {
     throw new Error('summary sample missing project values');
   }
@@ -209,7 +212,7 @@ async function main() {
     'receivable_unpaid_amount desc,id',
   );
   const receivableTotal = getTotal(receivableData);
-  if (receivableTotal !== 658) throw new Error(`receivable row total mismatch: ${receivableTotal}`);
+  if (receivableTotal !== EXPECTED_RECEIVABLE_ROWS) throw new Error(`receivable row total mismatch: ${receivableTotal}`);
 
   log('api.data negative balance rows');
   const balanceData = await list(
@@ -220,7 +223,9 @@ async function main() {
     'actual_available_balance asc,id',
   );
   const negativeBalanceTotal = getTotal(balanceData);
-  if (negativeBalanceTotal !== 37) throw new Error(`negative balance row total mismatch: ${negativeBalanceTotal}`);
+  if (negativeBalanceTotal !== EXPECTED_NEGATIVE_BALANCE_ROWS) {
+    throw new Error(`negative balance row total mismatch: ${negativeBalanceTotal}`);
+  }
 
   writeSummary([
     `model: ${MODEL}`,

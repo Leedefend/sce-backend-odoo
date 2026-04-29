@@ -180,6 +180,10 @@ real_users = all_real_users.filtered(
     lambda u: bool(u.active and u.has_group("base.group_user") and legacy_id_for(u) not in EXCLUDED_LEGACY_USER_IDS)
 )
 internal_group = env.ref("smart_construction_core.group_sc_internal_user", raise_if_not_found=False)  # noqa: F821
+business_initiator_group = env.ref(  # noqa: F821
+    "smart_construction_core.group_sc_cap_business_initiator",
+    raise_if_not_found=False,
+)
 business_config_group = env.ref(  # noqa: F821
     "smart_construction_core.group_sc_cap_business_config_admin",
     raise_if_not_found=False,
@@ -203,6 +207,9 @@ for user in real_users.sorted("id"):
         "password": INITIAL_PASSWORD,
     }
     internal_group_applied = bool(internal_group and internal_group not in user.groups_id)
+    business_initiator_group_applied = bool(
+        business_initiator_group and business_initiator_group not in user.groups_id
+    )
     business_config_group_applied = bool(
         login.lower() in BUSINESS_CONFIG_ADMIN_LOGINS
         and business_config_group
@@ -211,6 +218,8 @@ for user in real_users.sorted("id"):
     group_commands = []
     if internal_group_applied:
         group_commands.append((4, internal_group.id))
+    if business_initiator_group_applied:
+        group_commands.append((4, business_initiator_group.id))
     if business_config_group_applied:
         group_commands.append((4, business_config_group.id))
     if group_commands:
@@ -237,6 +246,7 @@ for user in real_users.sorted("id"):
             "password_initialized": True,
             "profile_used": bool(profile),
             "internal_group_applied": internal_group_applied,
+            "business_initiator_group_applied": business_initiator_group_applied,
             "business_config_admin_target": login.lower() in BUSINESS_CONFIG_ADMIN_LOGINS,
             "business_config_group_applied": business_config_group_applied,
             "email_before": before["email"],

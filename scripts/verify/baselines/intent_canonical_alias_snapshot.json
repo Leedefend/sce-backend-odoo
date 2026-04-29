@@ -1,6 +1,6 @@
 {
   "source": "docs.contract.exports.intent_catalog",
-  "canonical_count": 52,
+  "canonical_count": 76,
   "alias_count": 3,
   "rows": [
     {
@@ -64,6 +64,11 @@
       "canonical": "system.init"
     },
     {
+      "name": "business.evidence.trace",
+      "status": "canonical",
+      "canonical": "business.evidence.trace"
+    },
+    {
       "name": "capability.describe",
       "status": "canonical",
       "canonical": "capability.describe"
@@ -82,6 +87,21 @@
       "name": "chatter.timeline",
       "status": "canonical",
       "canonical": "chatter.timeline"
+    },
+    {
+      "name": "cost.tracking.block.fetch",
+      "status": "canonical",
+      "canonical": "cost.tracking.block.fetch"
+    },
+    {
+      "name": "cost.tracking.enter",
+      "status": "canonical",
+      "canonical": "cost.tracking.enter"
+    },
+    {
+      "name": "cost.tracking.record.create",
+      "status": "canonical",
+      "canonical": "cost.tracking.record.create"
     },
     {
       "name": "execute_button",
@@ -124,6 +144,11 @@
       "canonical": "meta.describe_model"
     },
     {
+      "name": "meta.intent_catalog",
+      "status": "canonical",
+      "canonical": "meta.intent_catalog"
+    },
+    {
       "name": "my.work.complete",
       "status": "canonical",
       "canonical": "my.work.complete"
@@ -137,6 +162,21 @@
       "name": "my.work.summary",
       "status": "canonical",
       "canonical": "my.work.summary"
+    },
+    {
+      "name": "payment.block.fetch",
+      "status": "canonical",
+      "canonical": "payment.block.fetch"
+    },
+    {
+      "name": "payment.enter",
+      "status": "canonical",
+      "canonical": "payment.enter"
+    },
+    {
+      "name": "payment.record.create",
+      "status": "canonical",
+      "canonical": "payment.record.create"
     },
     {
       "name": "payment.request.approve",
@@ -172,6 +212,76 @@
       "name": "permission.check",
       "status": "canonical",
       "canonical": "permission.check"
+    },
+    {
+      "name": "project.connection.transition",
+      "status": "canonical",
+      "canonical": "project.connection.transition"
+    },
+    {
+      "name": "project.dashboard",
+      "status": "canonical",
+      "canonical": "project.dashboard"
+    },
+    {
+      "name": "project.dashboard.block.fetch",
+      "status": "canonical",
+      "canonical": "project.dashboard.block.fetch"
+    },
+    {
+      "name": "project.dashboard.enter",
+      "status": "canonical",
+      "canonical": "project.dashboard.enter"
+    },
+    {
+      "name": "project.dashboard.open",
+      "status": "canonical",
+      "canonical": "project.dashboard.open"
+    },
+    {
+      "name": "project.entry.context.options",
+      "status": "canonical",
+      "canonical": "project.entry.context.options"
+    },
+    {
+      "name": "project.entry.context.resolve",
+      "status": "canonical",
+      "canonical": "project.entry.context.resolve"
+    },
+    {
+      "name": "project.execution.advance",
+      "status": "canonical",
+      "canonical": "project.execution.advance"
+    },
+    {
+      "name": "project.execution.block.fetch",
+      "status": "canonical",
+      "canonical": "project.execution.block.fetch"
+    },
+    {
+      "name": "project.execution.enter",
+      "status": "canonical",
+      "canonical": "project.execution.enter"
+    },
+    {
+      "name": "project.initiation.enter",
+      "status": "canonical",
+      "canonical": "project.initiation.enter"
+    },
+    {
+      "name": "project.plan_bootstrap.block.fetch",
+      "status": "canonical",
+      "canonical": "project.plan_bootstrap.block.fetch"
+    },
+    {
+      "name": "project.plan_bootstrap.enter",
+      "status": "canonical",
+      "canonical": "project.plan_bootstrap.enter"
+    },
+    {
+      "name": "risk.action.execute",
+      "status": "canonical",
+      "canonical": "risk.action.execute"
     },
     {
       "name": "sample.enhanced",
@@ -232,6 +342,16 @@
       "name": "session.bootstrap",
       "status": "canonical",
       "canonical": "session.bootstrap"
+    },
+    {
+      "name": "settlement.block.fetch",
+      "status": "canonical",
+      "canonical": "settlement.block.fetch"
+    },
+    {
+      "name": "settlement.enter",
+      "status": "canonical",
+      "canonical": "settlement.enter"
     },
     {
       "name": "system.init",

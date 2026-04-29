@@ -32006,3 +32006,50 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 - risk: `P1; 未分类零金额项目可能来自视图 business_keys 的零金额事实或迁移残留，需要继续追踪以避免报表噪声。`
 - rollback: `回退本批分类脚本和 Batch-AN 文档。`
 - next_step: `输出 61 个未分类项目和 50 个无旧库项目 ID 项目的来源追踪矩阵。`
+
+## 2026-04-29 Batch-Real-User-Rebuild-Acceptance
+
+- branch: `feat/production-deploy-doc`
+- short_sha: `74555103`
+- Layer Target: `Migration Data / Access Usability / Ops Gate`
+- Module: `scripts/migration`, `scripts/verify`, `smart_construction_core` user/access baseline
+- Reason: `新库重建后必须确定性纳入真实用户初始化、权限投影和可用性验收，避免污染旧数据口径继续作为基线。`
+- completed_step: `将真实用户 normalize 与 legacy_user_access projection 纳入 history_continuity_oneclick 主流程；为真实内部用户补业务发起组；将 AR/AP 页面 smoke 基线对齐 clean rebuild 数据；修复场景契约与 execute_button smoke 对当前契约字段的消费；更新 intent canonical alias 基线。`
+- verification:
+  - `history.real_users.normalize.write` -> `PASS; normalized_real_users=66; wutao initial_password=123456`
+  - `history.legacy_user_access.projection.write` -> `PASS; legacy_user_access_runtime_gap=false`
+  - `verify.business.oca_runtime_smoke` -> `PASS`
+  - `verify.business.document_state_policy_switch` -> `PASS`
+  - `verify.portal.ar_ap_company_summary_smoke.container` -> `PASS; rows=771 receivable=603 negative=37`
+  - `verify.portal.ar_ap_project_summary_smoke.container` -> `PASS; project_balance_rows=60 tax_rate_rows=0`
+  - `verify.portal.envelope_smoke.container` -> `PASS; scene compat path, my-work, execute_button dry_run, cross-stack contract`
+  - `verify.backend.contract.closure.guard` -> `PASS`
+  - `verify.menu.navigation_snapshot.container` -> `PASS; checked=148 scenes=16`
+  - `python3 -m py_compile`, `bash -n`, `node --check`, `git diff --check` -> `PASS`
+- result: `PASS; sc_prod_sim 新库可用性验收主链通过，真实用户可登录并消费 portal/contract/menu/AR-AP 页面主链。`
+- risk: `P1; history.business.usable.probe 仍提示 promotion/runtime surface gaps=9，属于业务推广面缺口，不再是真实用户初始化或权限投影缺失。verify.ops 的模块升级段在 fast mode 被策略阻断，未作为本批数据失败处理。`
+- rollback: `回退本批 migration orchestration、real user group normalization、verify smoke 与 alias baseline 改动；重跑 normalize/projection 可修复当前库。`
+- next_step: `如需 strict 收口，单独开批处理 9 个 promotion/runtime surface gaps，并在需要模块升级时显式设置 CODEX_NEED_UPGRADE=1。`
+
+## 2026-04-29 Batch-Runtime-Surface-Projection-Closure
+
+- branch: `feat/production-deploy-doc`
+- short_sha: `74555103`
+- Layer Target: `Domain Runtime Surface / Migration Promotion`
+- Module: `scripts/migration`, `scripts/verify`
+- Reason: `9 个承载历史业务数据的 runtime surface 未在重建总流程中投影，会直接影响真实用户继续使用业务模型。`
+- completed_step: `将 settlement_adjustment、expense_claim、treasury_reconciliation、receipt_income、payment_execution、invoice_registration、financing_loan、general_contract、construction_diary projection 纳入 history_continuity_oneclick，并串联对应 runtime probes；当前 sc_prod_sim 已补跑 projection。`
+- verification:
+  - `fresh_db.*.projection.write` -> `PASS; settlement_adjustment=12913 expense_claim=13314 treasury_reconciliation=19973 receipt_income=9540 payment_execution=1188 invoice_registration=27944 financing_loan=318 general_contract=41 construction_diary=5664`
+  - `history.*.runtime.probe` -> `PASS; 9 个 runtime surface gap_count=0`
+  - `history.business.usable.probe` -> `PASS; decision=history_business_usable_ready gap_count=0`
+  - `verify.portal.envelope_smoke.container` -> `PASS`
+  - `verify.portal.ar_ap_company_summary_smoke.container` -> `PASS; rows=771 receivable=657 negative=37`
+  - `verify.portal.ar_ap_project_summary_smoke.container` -> `PASS; project_balance_rows=56 tax_rate_rows=7467`
+  - `bash -n`, `node --check`, `python3 -m py_compile`, `git diff --check` -> `PASS`
+- result: `PASS; runtime surface projection 缺口已关闭，新库业务可用性从 visible_but_promotion_gaps 收口为 ready。`
+- risk: `P1; 当前库已补跑投影，后续完整重建需以更新后的 history_continuity_oneclick 为准；AR/AP 基线已更新为完整 runtime projection 后的确定口径。`
+- rollback: `回退本批 history_continuity_oneclick projection/probe 串联与 AR/AP smoke 基线改动；如需清理当前库，按各 projection 的 legacy_source_model/source_origin 条件删除对应 runtime rows 后重跑。`
+- next_step: `继续跑完整重建验收时，应从 replay 总流程覆盖这些 projection，不再手工补跑。`
+- archive_conclusion: `本轮问题不是一次性手工修复。根因是官方重建流程缺少承载历史事实到正式 runtime 业务模型的 projection 步骤；已将 projection 与 runtime probe 纳入 history_continuity_oneclick。因此后续新库重建只要走官方 replay 主流程，不应再因同一原因出现 9 个 runtime surface gaps。若绕过主流程仅跑 carrier/fact replay，问题仍可能复现。`
+- future_model_upgrade_rule: `后续若将承载模型升级为系统业务模型，必须同步评估并更新历史重建影响面：projection SQL/ORM 写入目标、唯一键与幂等规则、legacy_source_model/source_origin 映射、菜单/权限/record rule、AR/AP 与业务 smoke 基线、history.business.usable.probe 判据、回滚清理条件。未完成这些评估和验证，不允许声称模型升级对历史重建无影响。`

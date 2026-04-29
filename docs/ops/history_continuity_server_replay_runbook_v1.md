@@ -234,12 +234,14 @@ Successful rehearse should produce:
 - `HISTORY_CONTINUITY_USABILITY_PROBE = PASS`
 - `zero_critical_counts = 0`
 - `HISTORY_BUSINESS_USABLE_PROBE = PASS`
-- either `history_business_usable_ready` or
-  `history_business_usable_visible_but_promotion_gaps`
+- `history_business_usable_ready`
+- `gap_count = 0`
 
 For production cutover, `history_business_usable_visible_but_promotion_gaps` is
-acceptable when the remaining gaps are old workflow/todo promotion only
-(`mail.activity` / `tier.review`) and the following smokes pass:
+not a default pass condition. It can only be accepted by explicit human waiver
+when the remaining gaps are old workflow/todo promotion only
+(`mail.activity` / `tier.review`), no user-facing runtime carrier is missing,
+and the following smokes pass:
 
 - `scripts/audit/smoke_business_full.sh`
 - `scripts/audit/smoke_role_matrix.sh`
@@ -251,6 +253,7 @@ Business-usable probe decisions:
   - runtime list/form surfaces exist and actionable todo/approval surfaces are present
 - `history_business_usable_visible_but_promotion_gaps`
   - runtime records are visible, but old workflow/todo promotion is incomplete
+  - not acceptable for user-facing runtime carrier gaps
 - `history_business_usable_runtime_gap`
   - even the core runtime list/form surfaces are not yet present
 

@@ -345,7 +345,7 @@ prod-sim/UAT 演练；生产环境断点续跑必须继续走 `history.productio
 | 验收项 | 通过标准 |
 | --- | --- |
 | replay | `history.production.fresh_init` 内部历史重建链路无阻断失败 |
-| usable probe | `history_business_usable_ready` 或可接受的 `history_business_usable_visible_but_promotion_gaps` |
+| usable probe | `history_business_usable_ready`，且 `gap_count=0` |
 | smoke | Business Full、role matrix、frontend smoke 通过 |
 | 历史数据 | 用户、项目、合同、资金、付款、发票、文件索引等核心事实有记录数和样本 |
 | 新业务 | 新增、提交、审批、查看动作不被历史缺口全局阻断 |
@@ -353,7 +353,7 @@ prod-sim/UAT 演练；生产环境断点续跑必须继续走 `history.productio
 | contract | `system.init`、`ui.contract` 无启动链漂移 |
 | 证据 | artifact、日志、RUN_ID、源数据版本已归档 |
 
-`history_business_usable_visible_but_promotion_gaps` 只在剩余缺口属于旧工作流/todo promotion，且不影响新业务动作时可接受。若出现 `history_business_usable_runtime_gap`，不得上线。
+`history_business_usable_visible_but_promotion_gaps` 不得作为新库正式切换的默认通过标准。若剩余缺口指向用户可见 runtime 承载模型，必须先补齐 projection 和 runtime probe。任何豁免都必须由人工在部署记录中说明缺口不影响真实用户业务动作。若出现 `history_business_usable_runtime_gap`，不得上线。
 
 ## 8. 回滚策略
 

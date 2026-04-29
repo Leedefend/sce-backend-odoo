@@ -62,3 +62,4 @@ connect to Odoo, execute replay writes, or mutate migration assets.
 ## Output
 
 - JSON: `artifacts/migration/migration_asset_delivery_audit_v1.json`
+- Git policy: generated audit JSON stays local and must not be committed.

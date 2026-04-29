@@ -173,7 +173,7 @@ make migration.assets.release_package
 默认输出：
 
 - tar 包目录：`/tmp/sce_migration_asset_release`
-- 小型证据：`artifacts/migration/migration_asset_release_package_v1.json`
+- 小型证据：`artifacts/migration/migration_asset_release_package_v1.json`（本地生成，不入 Git）
 - 文档证据：`docs/migration_alignment/migration_asset_release_package_v1.md`
 
 发布包规则：

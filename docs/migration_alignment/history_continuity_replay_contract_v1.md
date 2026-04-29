@@ -205,8 +205,25 @@ Supported resume step names:
 - `legacy_fund_daily_snapshot_replay`
 - `legacy_fund_daily_line_adapter`
 - `legacy_fund_daily_line_replay`
+- `settlement_adjustment_projection`
+- `expense_claim_projection`
+- `treasury_reconciliation_projection`
+- `receipt_income_projection`
+- `payment_execution_projection`
+- `invoice_registration_projection`
+- `financing_loan_projection`
+- `general_contract_projection`
+- `construction_diary_projection`
 - `attachment_custody_probe`
 - `invoice_tax_runtime_probe`
+- `settlement_adjustment_runtime_probe`
+- `expense_claim_runtime_probe`
+- `treasury_reconciliation_runtime_probe`
+- `receipt_income_runtime_probe`
+- `payment_execution_runtime_probe`
+- `financing_loan_runtime_probe`
+- `general_contract_runtime_probe`
+- `construction_diary_runtime_probe`
 - `usability_probe`
 
 ## Included Lanes
@@ -269,6 +286,32 @@ Supported resume step names:
 - `legacy_fund_daily_line_sc_v1`
 - `legacy_material_catalog_sc_v1`
 - `legacy_file_index_sc_v1`
+- `settlement_adjustment_projection`
+- `expense_claim_projection`
+- `treasury_reconciliation_projection`
+- `receipt_income_projection`
+- `payment_execution_projection`
+- `invoice_registration_projection`
+- `financing_loan_projection`
+- `general_contract_projection`
+- `construction_diary_projection`
+
+## Runtime Surface Closure Requirement
+
+The replay contract requires the runtime projection lanes above before final
+business usability. Importing carrier/fact rows alone is incomplete when a
+formal runtime model exists for user-facing work.
+
+Final acceptance must use:
+
+- `history.business.usable.probe`
+- expected decision: `history_business_usable_ready`
+- expected gap count: `0`
+
+Any future upgrade from a transitional carrier/projection model to a formal
+system business model must update this replay contract in the same batch. The
+update must identify the new target model, projection entrypoint, idempotency
+key, affected probes, and any changed smoke-test baselines.
 
 ## Default-Excluded / Opt-In Lanes
 

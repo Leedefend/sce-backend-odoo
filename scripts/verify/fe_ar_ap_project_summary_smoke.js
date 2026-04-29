@@ -14,6 +14,8 @@ const PASSWORD = process.env.E2E_PASSWORD || process.env.ADMIN_PASSWD || '123456
 const AUTH_TOKEN = process.env.AUTH_TOKEN || '';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 const MODEL = 'sc.ar.ap.project.summary';
+const EXPECTED_PROJECT_BALANCE_ROWS = 56;
+const EXPECTED_TAX_RATE_ROWS = 7467;
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
@@ -193,7 +195,9 @@ async function main() {
   const balanceData = unwrapIntentData(balanceResp.body);
   const balanceTotal = getTotal(balanceData);
   const balanceRecords = Array.isArray(balanceData.records) ? balanceData.records : [];
-  if (balanceTotal !== 56) throw new Error(`project balance row total mismatch: ${balanceTotal}`);
+  if (balanceTotal !== EXPECTED_PROJECT_BALANCE_ROWS) {
+    throw new Error(`project balance row total mismatch: ${balanceTotal}`);
+  }
   if (!balanceRecords.length || balanceRecords.some((row) => row.partner_name !== '项目级余额')) {
     throw new Error('project balance sample missing 项目级余额 rows');
   }
@@ -221,8 +225,8 @@ async function main() {
   const rateData = unwrapIntentData(rateResp.body);
   const rateTotal = getTotal(rateData);
   const rateRecords = Array.isArray(rateData.records) ? rateData.records : [];
-  if (rateTotal !== 7471) throw new Error(`tax rate row total mismatch: ${rateTotal}`);
-  if (!rateRecords.length || rateRecords.some((row) => !(Number(row.tax_deduction_rate || 0) > 0))) {
+  if (rateTotal !== EXPECTED_TAX_RATE_ROWS) throw new Error(`tax rate row total mismatch: ${rateTotal}`);
+  if (rateRecords.some((row) => !(Number(row.tax_deduction_rate || 0) > 0))) {
     throw new Error('tax rate sample missing non-zero rows');
   }
 

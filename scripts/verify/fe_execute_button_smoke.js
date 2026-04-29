@@ -151,7 +151,26 @@ async function main() {
   writeJson(path.join(outDir, 'load_view.log'), { model_used: modelUsed, response: viewResp });
   const viewData = viewResp.body.data || {};
   const layout = (viewData && viewData.layout) || {};
-  const buttons = [...(layout.headerButtons || []), ...(layout.statButtons || [])];
+  const contractButtons = Array.isArray(viewData.buttons) ? viewData.buttons : [];
+  const normalizedContractButtons = contractButtons
+    .map((button) => {
+      if (!button || typeof button !== 'object') {
+        return null;
+      }
+      const name = button.name || ((button.payload || {}).method || '');
+      const type = button.type || (button.kind === 'object' ? 'object' : button.kind);
+      return {
+        ...button,
+        name,
+        type,
+      };
+    })
+    .filter(Boolean);
+  const buttons = [
+    ...(layout.headerButtons || []),
+    ...(layout.statButtons || []),
+    ...normalizedContractButtons,
+  ];
   const button =
     buttons.find((b) => b && b.name && /^[A-Za-z_]/.test(String(b.name)) && (b.type || 'object') === 'object') ||
     buttons.find((b) => b && b.name) ||
