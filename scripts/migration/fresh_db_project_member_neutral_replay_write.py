@@ -35,7 +35,7 @@ OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_project_member_neutral_replay_write_resu
 ROLLBACK_CSV = ARTIFACT_ROOT / "fresh_db_project_member_neutral_replay_rollback_targets_v1.csv"
 PRE_VISIBILITY_JSON = ARTIFACT_ROOT / "fresh_db_project_member_neutral_replay_pre_visibility_v1.json"
 POST_VISIBILITY_JSON = ARTIFACT_ROOT / "fresh_db_project_member_neutral_replay_post_visibility_v1.json"
-EXPECTED_ROWS = 7389
+EXPECTED_ROWS = int(os.getenv("FRESH_DB_PROJECT_MEMBER_NEUTRAL_EXPECTED_ROWS", "21390"))
 TARGET_MODEL = "sc.project.member.staging"
 FORBIDDEN_MODEL = "project.responsibility"
 
@@ -103,6 +103,12 @@ def resolve_user_id(row: dict[str, str], user_model) -> int | None:
             return rec.id
     legacy_user_ref = clean(row.get("legacy_user_ref"))
     if legacy_user_ref:
+        Profile = env["sc.legacy.user.profile"].sudo().with_context(active_test=False)  # noqa: F821
+        profile = Profile.search([("legacy_user_id", "=", legacy_user_ref)], limit=2)
+        if len(profile) == 1 and profile.user_id:
+            return profile.user_id.id
+        if len(profile) > 1:
+            raise RuntimeError({"duplicate_legacy_user_profile_matches": legacy_user_ref, "profile_ids": profile.ids})
         for login in [legacy_user_ref, f"legacy_{legacy_user_ref}"]:
             matches = user_model.search([("login", "=", login)], limit=2)
             if len(matches) == 1:

@@ -11,10 +11,10 @@ legacy project ids and counterparty names to fresh database anchors.
 
 ## Result
 
-- source rows: `1332`
-- existing fresh reference rows: `57`
+- source rows: `1492`
+- existing fresh reference rows: `0`
 - excluded existing fresh rows: `0`
-- replay payload rows: `1332`
+- replay payload rows: `1492`
 - missing project anchors: `0`
 - missing partner anchors: `0`
 - ambiguous partner anchors: `0`

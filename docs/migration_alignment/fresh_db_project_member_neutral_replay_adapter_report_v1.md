@@ -12,8 +12,8 @@ project responsibility or permission facts.
 
 ## Result
 
-- completed source rows: `7389`
-- replay payload rows: `7389`
+- completed source rows: `21390`
+- replay payload rows: `21390`
 - duplicate replay identities: `0`
 - missing raw member rows: `0`
 - missing fresh project anchors: `0`

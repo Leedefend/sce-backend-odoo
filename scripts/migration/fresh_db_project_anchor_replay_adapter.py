@@ -7,6 +7,7 @@ import csv
 import json
 from collections import Counter
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
 
 REPO_ROOT = Path.cwd()
@@ -14,6 +15,7 @@ PROJECT_CSV = REPO_ROOT / "tmp/raw/project/project.csv"
 OUTPUT_JSON = REPO_ROOT / "artifacts/migration/fresh_db_project_anchor_replay_adapter_result_v1.json"
 OUTPUT_CSV = REPO_ROOT / "artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv"
 OUTPUT_REPORT = REPO_ROOT / "docs/migration_alignment/fresh_db_project_anchor_replay_adapter_report_v1.md"
+ASSET_XML = REPO_ROOT / "migration_assets/10_master/project/project_master_v1.xml"
 
 WRITE_RESULTS = [
     "artifacts/migration/project_create_only_write_result_v1.json",
@@ -152,6 +154,35 @@ def load_created_rows() -> tuple[list[dict[str, object]], list[str]]:
     return rows, missing_files
 
 
+def field_map(record: ET.Element) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for field in record.findall("field"):
+        name = clean(field.get("name"))
+        if name:
+            values[name] = clean(field.text)
+    return values
+
+
+def load_asset_rows() -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    root = ET.parse(ASSET_XML).getroot()
+    for record in root.findall(".//record[@model='project.project']"):
+        values = field_map(record)
+        legacy_project_id = clean(values.get("legacy_project_id"))
+        if not legacy_project_id:
+            continue
+        rows.append(
+            {
+                "source_file": str(ASSET_XML.relative_to(REPO_ROOT)),
+                "legacy_project_id": legacy_project_id,
+                "name": clean(values.get("name")),
+                "current_db_project_id": "",
+                **{field: clean(values.get(field)) for field in PAYLOAD_FIELDS if field not in {"current_db_project_id", "evidence_file", "idempotency_key", "replay_action"}},
+            }
+        )
+    return rows
+
+
 def write_report(payload: dict[str, object]) -> None:
     text = f"""# Fresh DB Project Anchor Replay Adapter Report v1
 
@@ -194,8 +225,12 @@ not touch a database.
 
 
 def main() -> int:
-    source_index = project_source_index()
     created_rows, missing_files = load_created_rows()
+    use_asset_source = bool(missing_files)
+    source_index = {} if use_asset_source else project_source_index()
+    if use_asset_source:
+        created_rows = load_asset_rows()
+        missing_files = []
     seen: dict[str, dict[str, object]] = {}
     duplicates: list[dict[str, object]] = []
     raw_misses: list[dict[str, str]] = []
@@ -212,7 +247,8 @@ def main() -> int:
             continue
         source = source_index.get(legacy_project_id)
         if not source:
-            raw_misses.append({"legacy_project_id": legacy_project_id, "reason": "missing_raw_source"})
+            if not use_asset_source:
+                raw_misses.append({"legacy_project_id": legacy_project_id, "reason": "missing_raw_source"})
             source = {
                 field: ""
                 for field in PAYLOAD_FIELDS
@@ -226,6 +262,9 @@ def main() -> int:
             }
             source["legacy_project_id"] = legacy_project_id
             source["name"] = clean(row["name"])
+            for field in PAYLOAD_FIELDS:
+                if field in row and clean(row.get(field)):
+                    source[field] = clean(row.get(field))
         stage_counts[source.get("legacy_stage_name", "") or "unknown"] += 1
         if is_deleted_flag(source.get("legacy_deleted_flag")):
             deleted_source_rows += 1
@@ -245,11 +284,13 @@ def main() -> int:
     payload = {
         "status": status,
         "mode": "fresh_db_project_anchor_replay_adapter",
+        "source_mode": "asset_xml" if use_asset_source else "legacy_write_results",
         "db_writes": 0,
         "database_operations": 0,
         "write_scripts_executed": 0,
         "write_result_files": len(WRITE_RESULTS),
         "missing_write_result_files": missing_files,
+        "asset_xml": str(ASSET_XML) if use_asset_source else "",
         "created_evidence_rows": len(created_rows),
         "replay_payload_rows": len(payload_rows),
         "duplicate_replay_identities": len(duplicates),

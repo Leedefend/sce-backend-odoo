@@ -7,6 +7,7 @@ import csv
 import json
 from collections import Counter
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
 
 REPO_ROOT = Path.cwd()
@@ -15,6 +16,7 @@ SUPPLIER_CSV = REPO_ROOT / "tmp/raw/partner/supplier.csv"
 OUTPUT_JSON = REPO_ROOT / "artifacts/migration/fresh_db_partner_l4_replay_adapter_result_v1.json"
 OUTPUT_CSV = REPO_ROOT / "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv"
 OUTPUT_REPORT = REPO_ROOT / "docs/migration_alignment/fresh_db_partner_l4_replay_adapter_report_v1.md"
+ASSET_XML = REPO_ROOT / "migration_assets/10_master/partner/partner_master_v1.xml"
 
 WRITE_RESULTS = [
     "artifacts/migration/partner_l4_500_write_result_v1.json",
@@ -104,6 +106,42 @@ def load_created_rows() -> tuple[list[dict[str, object]], list[str]]:
     return rows, missing_files
 
 
+def field_map(record: ET.Element) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for field in record.findall("field"):
+        name = clean(field.get("name"))
+        if name:
+            values[name] = clean(field.text)
+    return values
+
+
+def load_asset_rows() -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    root = ET.parse(ASSET_XML).getroot()
+    for record in root.findall(".//record[@model='res.partner']"):
+        values = field_map(record)
+        source = clean(values.get("legacy_partner_source"))
+        legacy_id = clean(values.get("legacy_partner_id"))
+        if not source or not legacy_id:
+            continue
+        source_type = "supplier" if source == "supplier" else ("company_supplier" if source == "company_supplier" else "company")
+        rows.append(
+            {
+                "source_file": str(ASSET_XML.relative_to(REPO_ROOT)),
+                "legacy_partner_source": source,
+                "legacy_partner_id": legacy_id,
+                "name": clean(values.get("name")) or clean(values.get("legacy_partner_name")),
+                "tax_no": clean(values.get("legacy_tax_no")) or clean(values.get("legacy_credit_code")) or clean(values.get("vat")),
+                "source_type": source_type,
+                "deleted_flag": clean(values.get("legacy_deleted_flag")),
+                "source_status": "",
+                "source_code": "",
+                "current_db_partner_id": "",
+            }
+        )
+    return rows
+
+
 def write_report(payload: dict[str, object]) -> None:
     text = f"""# Fresh DB Partner L4 Replay Adapter Report v1
 
@@ -145,8 +183,12 @@ database.
 
 
 def main() -> int:
-    source_index = source_indexes()
     created_rows, missing_files = load_created_rows()
+    use_asset_source = bool(missing_files)
+    source_index = {} if use_asset_source else source_indexes()
+    if use_asset_source:
+        created_rows = load_asset_rows()
+        missing_files = []
     seen: dict[tuple[str, str], dict[str, object]] = {}
     duplicates: list[dict[str, object]] = []
     raw_misses: list[dict[str, str]] = []
@@ -162,14 +204,15 @@ def main() -> int:
             continue
         source = source_index.get(key)
         if not source:
-            raw_misses.append({"legacy_partner_source": key[0], "legacy_partner_id": key[1], "reason": "missing_raw_source"})
+            if not use_asset_source:
+                raw_misses.append({"legacy_partner_source": key[0], "legacy_partner_id": key[1], "reason": "missing_raw_source"})
             source = {
-                "source_type": "unknown",
+                "source_type": clean(row.get("source_type")) or "unknown",
                 "name": clean(row["name"]),
-                "tax_no": "",
-                "deleted_flag": "",
-                "source_status": "",
-                "source_code": "",
+                "tax_no": clean(row.get("tax_no")),
+                "deleted_flag": clean(row.get("deleted_flag")),
+                "source_status": clean(row.get("source_status")),
+                "source_code": clean(row.get("source_code")),
             }
         source_type_counts[source["source_type"]] += 1
         seen[key] = {
@@ -192,11 +235,13 @@ def main() -> int:
     payload = {
         "status": status,
         "mode": "fresh_db_partner_l4_replay_adapter",
+        "source_mode": "asset_xml" if use_asset_source else "legacy_write_results",
         "db_writes": 0,
         "database_operations": 0,
         "write_scripts_executed": 0,
         "write_result_files": len(WRITE_RESULTS),
         "missing_write_result_files": missing_files,
+        "asset_xml": str(ASSET_XML) if use_asset_source else "",
         "created_evidence_rows": len(created_rows),
         "replay_payload_rows": len(payload_rows),
         "duplicate_replay_identities": len(duplicates),

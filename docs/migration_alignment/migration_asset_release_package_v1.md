@@ -2,29 +2,18 @@
 
 Status: `PASS`
 
-- package_id: `migration_assets_release_20260429T120811Z`
-- package_path: `REQUIRES_PRIVATE_PACKAGE_PATH`
-- package_url: `REVOKED_PUBLIC_RELEASE`
-- sha256_path: `REQUIRES_PRIVATE_PACKAGE_SHA256_FILE_OR_LOCK_SHA`
-- sha256: `b9498cbbf605527b13e84d8f7710eca0454f3c7b065e990db728e1d70b699d91`
-- package_size_mb: `37.51`
-- included_file_count: `95`
-- excluded_file_count: `3`
+- package_id: `migration_assets_release_20260429T135959Z_baseline`
+- package_path: `/home/odoo/private/sce-assets/migration_assets_release_20260429T135959Z_baseline.tar.gz`
+- sha256_path: `/home/odoo/private/sce-assets/migration_assets_release_20260429T135959Z_baseline.tar.gz.sha256`
+- sha256: `6ec233be3798c4957b58035de30a5162c9f3a6a6602dbd1ea701f76fc5a65716`
+- package_size_mb: `220.45`
+- included_file_count: `204`
+- excluded_file_count: `0`
 - payload_mode: `packaged_artifacts`
-
-## Repository Policy
-
-- `migration_assets` payload files are externalized and are not tracked in Git.
-- The locked package is recorded in `docs/migration_alignment/migration_asset_package_lock_v1.json`.
-- The canonical external package must be stored in a private authenticated object store or provided through `MIGRATION_ASSET_PACKAGE_PATH`.
-- Public GitHub Release distribution is prohibited because the package contains reconstructed user and business migration data.
-- Before verification or replay, materialize the package with `make migration.assets.fetch`.
 
 ## Excluded Paths
 
-- `migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/part-000.part`
-- `migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/part-001.part`
-- `migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/part-002.part`
+- none
 
 ## Verification
 

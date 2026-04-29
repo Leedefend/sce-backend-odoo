@@ -28,6 +28,37 @@ ARTIFACT_INPUT_RE = re.compile(
     re.MULTILINE,
 )
 ONECLICK_SCRIPT_RE = re.compile(r'run_odoo_script\s+"\$ROOT_DIR/scripts/migration/(?P<script>[^"]+\.py)"')
+EXTRA_REPLAY_SCRIPT_NAMES = [
+    "fresh_db_replay_payload_precheck.py",
+]
+BASELINE_EXCLUDED_REQUIRED_ARTIFACTS = {
+    # Default-off privacy lanes. These are intentionally not shipped in the
+    # baseline package because they may contain sensitive personal data.
+    "artifacts/migration/fresh_db_legacy_attendance_checkin_replay_adapter_result_v1.json",
+    "artifacts/migration/fresh_db_legacy_attendance_checkin_replay_payload_v1.csv",
+    "artifacts/migration/fresh_db_legacy_personnel_movement_replay_adapter_result_v1.json",
+    "artifacts/migration/fresh_db_legacy_personnel_movement_replay_payload_v1.csv",
+    "artifacts/migration/fresh_db_legacy_salary_line_replay_adapter_result_v1.json",
+    "artifacts/migration/fresh_db_legacy_salary_line_replay_payload_v1.csv",
+    # Default-off recovery lanes backed by old downstream snapshots.
+    "artifacts/migration/history_payment_request_outflow_approved_recovery_payload_v1.csv",
+    "artifacts/migration/history_payment_request_outflow_done_recovery_payload_v1.csv",
+    "artifacts/migration/history_project_lifecycle_continuity_payload_v1.csv",
+    # Deprecated recovery lanes skipped when authoritative XML assets exist.
+    "artifacts/migration/contract_12_row_write_authorization_packet_v1.json",
+    "artifacts/migration/contract_12_row_write_authorization_payload_v1.csv",
+    "artifacts/migration/contract_partner_source_57_design_rows_v1.csv",
+    "artifacts/migration/fresh_db_contract_57_retry_rollback_targets_v1.csv",
+    "artifacts/migration/fresh_db_contract_partner_12_anchor_replay_resolution_v1.csv",
+    "artifacts/migration/history_contract_direction_defer_recovery_payload_v1.csv",
+    "artifacts/migration/history_contract_partner_recovery_payload_v1.csv",
+    "artifacts/migration/history_contract_unreached_ready_replay_payload_v1.csv",
+    "artifacts/migration/history_partner_master_direction_defer_replay_payload_v1.csv",
+    "artifacts/migration/history_partner_master_targeted_replay_payload_v1.csv",
+    "artifacts/migration/history_receipt_parent_recovery_adapter_result_v1.json",
+    "artifacts/migration/history_receipt_parent_recovery_payload_v1.csv",
+    "artifacts/migration/history_receipt_partner_targeted_replay_payload_v1.csv",
+}
 
 
 def sha256_file(path: Path) -> str:
@@ -174,7 +205,7 @@ def packaging_audit(asset_root: Path) -> dict[str, Any]:
 def required_replay_artifacts() -> list[str]:
     required: set[str] = set()
     oneclick_text = ONECLICK.read_text(encoding="utf-8") if ONECLICK.exists() else ""
-    script_names = sorted(set(ONECLICK_SCRIPT_RE.findall(oneclick_text)))
+    script_names = sorted(set(ONECLICK_SCRIPT_RE.findall(oneclick_text)) | set(EXTRA_REPLAY_SCRIPT_NAMES))
     for script_name in script_names:
         script = REPO_ROOT / "scripts/migration" / script_name
         if not script.is_file():
@@ -184,7 +215,10 @@ def required_replay_artifacts() -> list[str]:
             var = match.group("var")
             if var.startswith("OUTPUT"):
                 continue
-            required.add(match.group("path"))
+            path = match.group("path")
+            if path in BASELINE_EXCLUDED_REQUIRED_ARTIFACTS:
+                continue
+            required.add(path)
     return sorted(required)
 
 

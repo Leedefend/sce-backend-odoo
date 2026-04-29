@@ -7,6 +7,7 @@ import csv
 import json
 import os
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
 
 def repo_root() -> Path:
@@ -30,11 +31,12 @@ def ensure_allowed_db() -> None:
 REPO_ROOT = repo_root()
 ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(REPO_ROOT / "artifacts/migration")))
 PAYLOAD_CSV = REPO_ROOT / "artifacts/migration/fresh_db_receipt_write_design_payload_v1.csv"
+ASSET_XML = REPO_ROOT / "migration_assets/20_business/receipt/receipt_core_v1.xml"
 OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_receipt_core_write_result_v1.json"
 ROLLBACK_CSV = ARTIFACT_ROOT / "fresh_db_receipt_core_rollback_targets_v1.csv"
 PRE_SNAPSHOT_CSV = ARTIFACT_ROOT / "fresh_db_receipt_core_pre_write_snapshot_v1.csv"
 POST_SNAPSHOT_CSV = ARTIFACT_ROOT / "fresh_db_receipt_core_post_write_snapshot_v1.csv"
-EXPECTED_ROWS = 1683
+EXPECTED_ROWS = int(os.getenv("FRESH_DB_RECEIPT_CORE_EXPECTED_ROWS", "5355"))
 MIGRATION_MARKER = "[migration:receipt_core]"
 SAFE_FIELDS = {"type", "project_id", "contract_id", "partner_id", "amount", "date_request", "note"}
 SNAPSHOT_FIELDS = [
@@ -58,6 +60,53 @@ def clean(value: object) -> str:
 def read_csv(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         return [dict(row) for row in csv.DictReader(handle)]
+
+
+def field_map(record: ET.Element) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for field in record.findall("field"):
+        name = clean(field.get("name"))
+        if name:
+            values[name] = clean(field.text)
+    return values
+
+
+def ref_map(record: ET.Element) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for field in record.findall("field"):
+        name = clean(field.get("name"))
+        ref = clean(field.get("ref"))
+        if name and ref:
+            values[name] = ref
+    return values
+
+
+def load_asset_rows(path: Path) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    root = ET.parse(path).getroot()
+    for record in root.findall(".//record[@model='payment.request']"):
+        values = field_map(record)
+        refs = ref_map(record)
+        note = clean(values.get("note"))
+        legacy_receipt_id = extract_legacy_receipt_id(note)
+        if not legacy_receipt_id:
+            continue
+        rows.append(
+            {
+                "legacy_receipt_id": legacy_receipt_id,
+                "legacy_project_id": refs.get("project_id", "").removeprefix("legacy_project_sc_"),
+                "legacy_contract_id": refs.get("contract_id", "").removeprefix("legacy_contract_sc_"),
+                "legacy_partner_id": refs.get("partner_id", "").removeprefix("legacy_partner_sc_"),
+                "project_ref": clean(refs.get("project_id")),
+                "contract_ref": clean(refs.get("contract_id")),
+                "partner_ref": clean(refs.get("partner_id")),
+                "amount": clean(values.get("amount")),
+                "date_request": clean(values.get("date_request")),
+                "type": clean(values.get("type")) or "receive",
+                "note": note,
+            }
+        )
+    return rows
 
 
 def write_csv(path: Path, fieldnames: list[str], rows: list[dict[str, object]]) -> None:
@@ -88,7 +137,7 @@ def extract_legacy_receipt_id(note: object) -> str:
     token = "legacy_receipt_id="
     if token not in text:
         return ""
-    return text.split(token, 1)[1].split()[0].strip()
+    return text.split(token, 1)[1].split(";", 1)[0].split()[0].strip()
 
 
 def snapshot(model, path: Path):
@@ -114,6 +163,14 @@ def snapshot(model, path: Path):
 
 
 def resolve_project_id(row: dict[str, str], project_model) -> int | None:
+    project_ref = clean(row.get("project_ref"))
+    if project_ref.startswith("legacy_project_sc_"):
+        token = project_ref.removeprefix("legacy_project_sc_")
+        matches = project_model.search([("legacy_project_id", "=", token)], limit=2)
+        if len(matches) == 1:
+            return matches.id
+        if len(matches) > 1:
+            raise RuntimeError({"duplicate_legacy_project_ref_matches": project_ref, "project_ids": matches.ids})
     legacy_project_id = clean(row.get("legacy_project_id"))
     if legacy_project_id:
         matches = project_model.search([("legacy_project_id", "=", legacy_project_id)], limit=2)
@@ -130,6 +187,14 @@ def resolve_project_id(row: dict[str, str], project_model) -> int | None:
 
 
 def resolve_contract_id(row: dict[str, str], contract_model) -> int | None:
+    contract_ref = clean(row.get("contract_ref"))
+    if contract_ref.startswith("legacy_contract_sc_"):
+        token = contract_ref.removeprefix("legacy_contract_sc_")
+        matches = contract_model.search([("legacy_contract_id", "=", token)], limit=2)
+        if len(matches) == 1:
+            return matches.id
+        if len(matches) > 1:
+            raise RuntimeError({"duplicate_legacy_contract_ref_matches": contract_ref, "contract_ids": matches.ids})
     legacy_contract_id = clean(row.get("legacy_contract_id"))
     if legacy_contract_id:
         matches = contract_model.search([("legacy_contract_id", "=", legacy_contract_id)], limit=2)
@@ -146,6 +211,25 @@ def resolve_contract_id(row: dict[str, str], contract_model) -> int | None:
 
 
 def resolve_partner_id(row: dict[str, str], partner_model) -> int | None:
+    partner_ref = clean(row.get("partner_ref"))
+    if partner_ref.startswith("legacy_receipt_counterparty_sc_"):
+        token = partner_ref.removeprefix("legacy_receipt_counterparty_sc_")
+        matches = partner_model.search(
+            [
+                ("legacy_partner_source", "=", "receipt_counterparty"),
+                ("legacy_partner_id", "in", [token, f"receipt_counterparty:{token}"]),
+            ],
+            limit=2,
+        )
+        if len(matches) == 1:
+            return matches.id
+        if len(matches) > 1:
+            raise RuntimeError({"duplicate_receipt_counterparty_ref_matches": partner_ref, "partner_ids": matches.ids})
+    if partner_ref.startswith("legacy_partner_sc_"):
+        token = partner_ref.removeprefix("legacy_partner_sc_")
+        matches = partner_model.search([("legacy_partner_id", "=", token)], order="id")
+        if matches:
+            return matches[0].id
     legacy_partner_id = clean(row.get("legacy_partner_id"))
     if legacy_partner_id:
         matches = partner_model.search([("legacy_partner_id", "=", legacy_partner_id)], order="id")
@@ -182,7 +266,8 @@ Project = env["project.project"].sudo()  # noqa: F821
 Contract = env["construction.contract"].sudo()  # noqa: F821
 Partner = env["res.partner"].sudo()  # noqa: F821
 
-rows = read_csv(PAYLOAD_CSV)
+rows = read_csv(PAYLOAD_CSV) if PAYLOAD_CSV.exists() else load_asset_rows(ASSET_XML)
+asset_payload = any(clean(row.get("source_mode")) == "asset_xml" for row in rows) or not PAYLOAD_CSV.exists()
 payload_receipt_ids = {clean(row.get("legacy_receipt_id")) for row in rows if clean(row.get("legacy_receipt_id"))}
 pre_records = snapshot(Request, PRE_SNAPSHOT_CSV)
 pre_existing_receipt_ids = {
@@ -207,6 +292,29 @@ for index, row in enumerate(rows, start=2):
     resolved_contract_id = resolve_contract_id(row, Contract)
     resolved_partner_id = resolve_partner_id(row, Partner)
     contract = Contract.browse(resolved_contract_id).exists() if resolved_contract_id else Contract.browse()
+    if not contract and asset_payload:
+        if not resolved_project_id or not resolved_partner_id:
+            deferred_rows.append(
+                {
+                    "line": index,
+                    "legacy_receipt_id": clean(row.get("legacy_receipt_id")),
+                    "legacy_contract_id": clean(row.get("legacy_contract_id")),
+                    "legacy_project_id": clean(row.get("legacy_project_id")),
+                    "reason": "missing_asset_project_or_partner_anchor",
+                }
+            )
+            continue
+        request_type = clean(row.get("type")) or "receive"
+        vals = {
+            "type": request_type,
+            "project_id": resolved_project_id,
+            "partner_id": resolved_partner_id,
+            "amount": float(clean(row.get("amount"))),
+            "date_request": clean(row.get("date_request")),
+            "note": clean(row.get("note")) or note_with_marker(row),
+        }
+        create_vals.append(vals)
+        continue
     if not contract:
         deferred_rows.append(
             {

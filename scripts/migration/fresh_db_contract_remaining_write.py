@@ -35,7 +35,7 @@ OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_contract_remaining_write_result_v1.json"
 ROLLBACK_CSV = ARTIFACT_ROOT / "fresh_db_contract_remaining_rollback_targets_v1.csv"
 PRE_SNAPSHOT_CSV = ARTIFACT_ROOT / "fresh_db_contract_remaining_pre_write_snapshot_v1.csv"
 POST_SNAPSHOT_CSV = ARTIFACT_ROOT / "fresh_db_contract_remaining_post_write_snapshot_v1.csv"
-EXPECTED_ROWS = 1332
+EXPECTED_ROWS = int(os.getenv("FRESH_DB_CONTRACT_REMAINING_EXPECTED_ROWS", "1492"))
 SAFE_FIELDS = {
     "legacy_contract_id",
     "legacy_project_id",
@@ -130,8 +130,8 @@ def build_vals(row: dict[str, str]) -> dict[str, object]:
     vals = {
         "legacy_contract_id": clean(row.get("legacy_contract_id")),
         "legacy_project_id": clean(row.get("legacy_project_id")),
-        "project_id": int(clean(row.get("project_id"))),
-        "partner_id": int(clean(row.get("partner_id"))),
+        "project_id": int(clean(row.get("project_id"))) if clean(row.get("project_id")) else None,
+        "partner_id": int(clean(row.get("partner_id"))) if clean(row.get("partner_id")) else None,
         "subject": clean(row.get("subject")),
         "type": clean(row.get("type")),
         "legacy_contract_no": clean(row.get("legacy_contract_no")),
@@ -166,6 +166,27 @@ def resolve_partner_id(row: dict[str, str], partner_model) -> int | None:
         rec = partner_model.browse(int(partner_id)).exists()
         if rec:
             return rec.id
+    partner_ref = clean(row.get("partner_ref"))
+    if partner_ref.startswith("legacy_contract_counterparty_sc_"):
+        token = partner_ref.removeprefix("legacy_contract_counterparty_sc_")
+        matches = partner_model.search(
+            [
+                ("legacy_partner_source", "=", "contract_counterparty"),
+                ("legacy_partner_id", "=", f"contract_counterparty:{token}"),
+            ],
+            limit=2,
+        )
+        if len(matches) == 1:
+            return matches.id
+        if len(matches) > 1:
+            raise RuntimeError({"duplicate_contract_counterparty_ref_matches": partner_ref, "partner_ids": matches.ids})
+    if partner_ref.startswith("legacy_partner_sc_"):
+        token = partner_ref.removeprefix("legacy_partner_sc_")
+        matches = partner_model.search([("legacy_partner_id", "=", token)], limit=2)
+        if len(matches) == 1:
+            return matches.id
+        if len(matches) > 1:
+            raise RuntimeError({"duplicate_legacy_partner_ref_matches": partner_ref, "partner_ids": matches.ids})
     partner_text = clean(row.get("legacy_counterparty_text"))
     if partner_text:
         matches = partner_model.search([("name", "=", partner_text)], limit=2)
