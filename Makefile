@@ -1569,11 +1569,14 @@ codex.run: guard.prod.forbid
 	esac
 
 # ------------------ PR (Codex-safe) ------------------
-.PHONY: pr.create pr.status pr.push pr.update
+.PHONY: pr.create pr.status pr.push pr.update pr.merge
 
 PR_BASE ?= main
 PR_TITLE ?=
 PR_BODY_FILE ?= artifacts/pr_body.md
+PR_MERGE_METHOD ?= squash
+PR_MERGE_SUBJECT ?=
+PR_MERGE_BODY ?= Merged by Codex through make pr.merge.
 
 pr.create: guard.prod.forbid
 	@branch="$$(git rev-parse --abbrev-ref HEAD)"; \
@@ -1625,6 +1628,35 @@ pr.update: guard.prod.forbid
 
 pr.push: guard.prod.forbid
 	@bash scripts/ops/git_safe_push.sh
+
+pr.merge: guard.prod.forbid
+	@bash -lc '\
+	set -euo pipefail; \
+	BR="$$(git rev-parse --abbrev-ref HEAD)"; \
+	if ! echo "$$BR" | grep -Eq "^(feat|feature|codex|experiment)/.+"; then \
+	  echo "[DENY] pr.merge: branch not allowed: $$BR"; exit 2; \
+	fi; \
+	ENV_NAME="$${ENV:-dev}"; \
+	if [ "$$ENV_NAME" = "prod" ]; then \
+	  echo "[DENY] pr.merge: ENV=prod is forbidden"; exit 3; \
+	fi; \
+	if [ -n "$${PROD_DANGER:-}" ]; then \
+	  echo "[DENY] pr.merge: PROD_DANGER is set (forbidden)"; exit 4; \
+	fi; \
+	if ! command -v gh >/dev/null 2>&1; then \
+	  echo "[DENY] pr.merge: gh CLI not found"; exit 5; \
+	fi; \
+	PR="$${PR:-}"; \
+	if [ -z "$$PR" ]; then \
+	  echo "[DENY] pr.merge: missing PR=<number>"; exit 6; \
+	fi; \
+	METHOD="$(PR_MERGE_METHOD)"; \
+	case "$$METHOD" in merge|squash|rebase) ;; *) echo "[DENY] pr.merge: invalid PR_MERGE_METHOD=$$METHOD"; exit 7 ;; esac; \
+	SUBJECT="$(PR_MERGE_SUBJECT)"; \
+	if [ -z "$$SUBJECT" ]; then SUBJECT="Merge PR #$$PR"; fi; \
+	echo "[pr.merge] branch=$$BR ENV=$$ENV_NAME PR=$$PR method=$$METHOD"; \
+	gh pr merge "$$PR" "--$$METHOD" --subject "$$SUBJECT" --body "$(PR_MERGE_BODY)"; \
+	'
 
 pr.status:
 	@gh pr status || true

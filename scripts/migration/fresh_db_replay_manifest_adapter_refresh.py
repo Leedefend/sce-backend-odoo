@@ -16,7 +16,7 @@ ADAPTERS = {
     "partner_l4_anchor_completed": {
         "result": "artifacts/migration/fresh_db_partner_l4_replay_adapter_result_v1.json",
         "payload": "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv",
-        "expected_payload_rows": 4797,
+        "expected_payload_rows": 6541,
     },
     "project_anchor_completed": {
         "result": "artifacts/migration/fresh_db_project_anchor_replay_adapter_result_v1.json",

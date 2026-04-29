@@ -48,6 +48,12 @@ def clean(value: object) -> str:
 def resolve_user_id(row: dict[str, str], user_model) -> int | None:
     legacy_user_ref = clean(row.get("legacy_user_ref"))
     if legacy_user_ref:
+        Profile = env["sc.legacy.user.profile"].sudo().with_context(active_test=False)  # noqa: F821
+        profile = Profile.search([("legacy_user_id", "=", legacy_user_ref)], limit=2)
+        if len(profile) == 1 and profile.user_id:
+            return profile.user_id.id
+        if len(profile) > 1:
+            raise RuntimeError({"duplicate_legacy_user_profile_matches": legacy_user_ref, "profile_ids": profile.ids})
         for login in [legacy_user_ref, f"legacy_{legacy_user_ref}"]:
             matches = user_model.search([("login", "=", login)], limit=2)
             if len(matches) == 1:

@@ -86,13 +86,30 @@ def safe_members(tar: tarfile.TarFile) -> list[tarfile.TarInfo]:
         target = Path(member.name)
         if target.is_absolute() or ".." in target.parts:
             raise SystemExit(f"unsafe tar member: {member.name}")
-        if not str(target).startswith("migration_assets/") and member.name != "migration_asset_release_manifest_v1.json":
+        allowed = (
+            str(target).startswith("migration_assets/")
+            or str(target).startswith("artifacts/migration/")
+            or member.name == "migration_asset_release_manifest_v1.json"
+        )
+        if not allowed:
             raise SystemExit(f"unexpected tar member: {member.name}")
         members.append(member)
     return members
 
 
-def extract_package(package_path: Path, asset_root: Path) -> int:
+def copy_tree(src: Path, dst: Path) -> int:
+    count = 0
+    for path in sorted(src.rglob("*")):
+        if not path.is_file():
+            continue
+        target = dst / path.relative_to(src)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, target)
+        count += 1
+    return count
+
+
+def extract_package(package_path: Path, asset_root: Path, artifact_root: Path) -> dict[str, int]:
     with tempfile.TemporaryDirectory(prefix="sce_migration_assets_") as tmp_name:
         tmp_root = Path(tmp_name)
         with tarfile.open(package_path, "r:gz") as tar:
@@ -106,13 +123,23 @@ def extract_package(package_path: Path, asset_root: Path) -> int:
         asset_root.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(extracted_assets), str(asset_root))
         (asset_root / "README.md").write_text(README_TEXT, encoding="utf-8")
-        return sum(1 for path in asset_root.rglob("*") if path.is_file())
+
+        artifact_count = 0
+        extracted_artifacts = tmp_root / "artifacts/migration"
+        if extracted_artifacts.is_dir():
+            artifact_count = copy_tree(extracted_artifacts, artifact_root)
+
+        return {
+            "asset_file_count": sum(1 for path in asset_root.rglob("*") if path.is_file()),
+            "artifact_file_count": artifact_count,
+        }
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Fetch and extract the locked migration asset package.")
     parser.add_argument("--lock", default=str(DEFAULT_LOCK), help="Asset package lock file")
     parser.add_argument("--asset-root", default="migration_assets", help="Extraction root")
+    parser.add_argument("--artifact-root", default="artifacts/migration", help="Frozen replay artifact extraction root")
     args = parser.parse_args()
 
     lock_path = Path(args.lock)
@@ -125,7 +152,7 @@ def main() -> int:
     if actual_sha != expected_sha:
         raise SystemExit(f"sha256 mismatch: expected={expected_sha} actual={actual_sha}")
 
-    file_count = extract_package(package_path, Path(args.asset_root))
+    counts = extract_package(package_path, Path(args.asset_root), Path(args.artifact_root))
     print(
         "MIGRATION_ASSET_FETCH="
         + json.dumps(
@@ -134,7 +161,10 @@ def main() -> int:
                 "package_id": lock.get("package_id"),
                 "package_path": str(package_path),
                 "asset_root": args.asset_root,
-                "file_count": file_count,
+                "artifact_root": args.artifact_root,
+                "file_count": counts["asset_file_count"] + counts["artifact_file_count"],
+                "asset_file_count": counts["asset_file_count"],
+                "artifact_file_count": counts["artifact_file_count"],
                 "sha256": actual_sha,
             },
             sort_keys=True,

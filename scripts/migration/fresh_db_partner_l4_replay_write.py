@@ -33,7 +33,7 @@ ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(REPO_ROOT / "artif
 INPUT_CSV = REPO_ROOT / "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv"
 OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_partner_l4_replay_write_result_v1.json"
 ROLLBACK_CSV = ARTIFACT_ROOT / "fresh_db_partner_l4_replay_rollback_targets_v1.csv"
-EXPECTED_ROWS = 4797
+EXPECTED_ROWS = int(os.getenv("FRESH_DB_PARTNER_L4_EXPECTED_ROWS", "6541"))
 SAFE_FIELDS = [
     "name",
     "company_type",

@@ -41,7 +41,8 @@ SUPPLIER_CONTRACT_ADAPTER="$ROOT_DIR/scripts/migration/fresh_db_supplier_contrac
 SUPPLIER_CONTRACT_LINE_ADAPTER="$ROOT_DIR/scripts/migration/fresh_db_supplier_contract_line_replay_adapter.py"
 INCLUDE_BLOCKED_GROUP_B="${HISTORY_CONTINUITY_INCLUDE_BLOCKED_GROUP_B:-0}"
 INCLUDE_DETAIL_FACTS="${HISTORY_CONTINUITY_INCLUDE_DETAIL_FACTS:-1}"
-INCLUDE_PAYMENT_STATE_RECOVERY="${HISTORY_CONTINUITY_INCLUDE_PAYMENT_STATE_RECOVERY:-1}"
+INCLUDE_PAYMENT_STATE_RECOVERY="${HISTORY_CONTINUITY_INCLUDE_PAYMENT_STATE_RECOVERY:-0}"
+INCLUDE_PROJECT_LIFECYCLE_CONTINUITY="${HISTORY_CONTINUITY_INCLUDE_PROJECT_LIFECYCLE_CONTINUITY:-0}"
 INCLUDE_MATERIAL_CATALOG="${HISTORY_CONTINUITY_INCLUDE_MATERIAL_CATALOG:-1}"
 INCLUDE_FILE_INDEX="${HISTORY_CONTINUITY_INCLUDE_FILE_INDEX:-1}"
 INCLUDE_ATTENDANCE_CHECKIN="${HISTORY_CONTINUITY_INCLUDE_ATTENDANCE_CHECKIN:-0}"
@@ -188,24 +189,38 @@ case "$MODE" in
     run_step contract_counterparty_partner_completed run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_contract_counterparty_partner_replay_write.py"
     run_step receipt_counterparty_partner_adapter python3 "$RECEIPT_COUNTERPARTY_ADAPTER"
     run_step receipt_counterparty_partner_completed run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_counterparty_partner_replay_write.py"
+    run_step project_member_neutral_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_project_member_neutral_replay_adapter.py"
     run_step project_member_neutral_completed run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_project_member_neutral_replay_write.py"
+    run_step contract_header_remaining_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_contract_remaining_adapter.py"
     run_step contract_header_completed_1332 run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_contract_remaining_write.py"
-    run_step contract_missing_partner_anchors run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_contract_missing_partner_anchor_write.py"
-    run_step contract_12_missing_partner_anchors run_odoo_script "$ROOT_DIR/scripts/migration/contract_12_row_missing_partner_anchor_write.py"
-    run_step contract_header_special_12 run_odoo_script "$ROOT_DIR/scripts/migration/contract_12_row_create_only_write.py"
-    run_step contract_header_retry_57 run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_contract_57_retry_write.py"
-    run_step contract_unreached_ready_adapter python3 "$ROOT_DIR/scripts/migration/history_contract_unreached_ready_replay_adapter.py"
-    run_step contract_unreached_ready_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_contract_unreached_ready_replay_write.py"
-    run_step partner_master_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_partner_master_targeted_replay_adapter.py"
-    run_step partner_master_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_partner_master_targeted_replay_write.py"
-    run_step contract_partner_recovery_adapter python3 "$ROOT_DIR/scripts/migration/history_contract_partner_recovery_adapter.py"
-    run_step contract_partner_recovery_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_contract_partner_recovery_write.py"
+    if [[ -f "$ROOT_DIR/migration_assets/20_business/contract/contract_header_v1.xml" ]]; then
+      echo "[history.continuity] skip legacy contract supplemental slices because contract_header_v1.xml replay is authoritative"
+    else
+      run_step contract_missing_partner_anchors run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_contract_missing_partner_anchor_write.py"
+      run_step contract_12_missing_partner_anchors run_odoo_script "$ROOT_DIR/scripts/migration/contract_12_row_missing_partner_anchor_write.py"
+      run_step contract_header_special_12 run_odoo_script "$ROOT_DIR/scripts/migration/contract_12_row_create_only_write.py"
+      run_step contract_header_retry_57 run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_contract_57_retry_write.py"
+    fi
+    if [[ -f "$ROOT_DIR/migration_assets/20_business/contract/contract_header_v1.xml" ]]; then
+      echo "[history.continuity] skip legacy contract recovery lanes because contract_header_v1.xml replay is authoritative"
+    else
+      run_step contract_unreached_ready_adapter python3 "$ROOT_DIR/scripts/migration/history_contract_unreached_ready_replay_adapter.py"
+      run_step contract_unreached_ready_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_contract_unreached_ready_replay_write.py"
+      run_step partner_master_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_partner_master_targeted_replay_adapter.py"
+      run_step partner_master_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_partner_master_targeted_replay_write.py"
+      run_step contract_partner_recovery_adapter python3 "$ROOT_DIR/scripts/migration/history_contract_partner_recovery_adapter.py"
+      run_step contract_partner_recovery_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_contract_partner_recovery_write.py"
+    fi
     run_step legacy_purchase_contract_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_purchase_contract_replay_adapter.py"
     run_step legacy_purchase_contract_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_purchase_contract_replay_write.py"
-    run_step partner_master_direction_defer_adapter python3 "$ROOT_DIR/scripts/migration/history_partner_master_direction_defer_replay_adapter.py"
-    run_step partner_master_direction_defer_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_partner_master_direction_defer_replay_write.py"
-    run_step contract_direction_defer_recovery_adapter python3 "$ROOT_DIR/scripts/migration/history_contract_direction_defer_recovery_adapter.py"
-    run_step contract_direction_defer_recovery_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_contract_direction_defer_recovery_write.py"
+    if [[ -f "$ROOT_DIR/migration_assets/20_business/contract/contract_header_v1.xml" ]]; then
+      echo "[history.continuity] skip legacy contract direction recovery lanes because contract_header_v1.xml replay is authoritative"
+    else
+      run_step partner_master_direction_defer_adapter python3 "$ROOT_DIR/scripts/migration/history_partner_master_direction_defer_replay_adapter.py"
+      run_step partner_master_direction_defer_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_partner_master_direction_defer_replay_write.py"
+      run_step contract_direction_defer_recovery_adapter python3 "$ROOT_DIR/scripts/migration/history_contract_direction_defer_recovery_adapter.py"
+      run_step contract_direction_defer_recovery_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_contract_direction_defer_recovery_write.py"
+    fi
     if [[ "$INCLUDE_DETAIL_FACTS" == "1" ]]; then
       run_step contract_line_adapter python3 "$CONTRACT_LINE_ADAPTER"
       run_step contract_line_completed run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_contract_line_replay_write.py"
@@ -221,17 +236,20 @@ case "$MODE" in
         echo "[history.continuity] HISTORY_CONTINUITY_INCLUDE_BLOCKED_GROUP_B is deprecated; use HISTORY_CONTINUITY_INCLUDE_DETAIL_FACTS=1"
       fi
     fi
+    run_step receipt_core_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_receipt_core_replay_adapter.py"
     run_step receipt_header_pending run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_core_write.py"
-    run_step receipt_partner_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_receipt_partner_targeted_replay_adapter.py"
-    run_step receipt_partner_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_receipt_partner_targeted_replay_write.py"
-    run_step receipt_parent_recovery_adapter python3 "$ROOT_DIR/scripts/migration/history_receipt_parent_recovery_adapter.py"
-    run_step receipt_parent_recovery_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_receipt_parent_recovery_write.py"
+    if [[ -f "$ROOT_DIR/migration_assets/20_business/receipt/receipt_core_v1.xml" ]]; then
+      echo "[history.continuity] skip legacy receipt recovery lanes because receipt_core_v1.xml replay is authoritative"
+    else
+      run_step receipt_partner_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_receipt_partner_targeted_replay_adapter.py"
+      run_step receipt_partner_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_receipt_partner_targeted_replay_write.py"
+      run_step receipt_parent_recovery_adapter python3 "$ROOT_DIR/scripts/migration/history_receipt_parent_recovery_adapter.py"
+      run_step receipt_parent_recovery_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_receipt_parent_recovery_write.py"
+    fi
     run_step receipt_invoice_line_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_line_replay_adapter.py"
     run_step receipt_invoice_line_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_line_replay_write.py"
     run_step receipt_invoice_attachment_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_attachment_replay_adapter.py"
     run_step receipt_invoice_attachment_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_attachment_replay_write.py"
-    run_step project_member_attachment_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_project_member_attachment_targeted_replay_adapter.py"
-    run_step project_member_attachment_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_project_member_attachment_targeted_replay_write.py"
     run_step outflow_request_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_outflow_request_replay_adapter.py"
     run_step outflow_partner_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_outflow_partner_targeted_replay_adapter.py"
     run_step outflow_partner_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_outflow_partner_targeted_replay_write.py"
@@ -251,10 +269,12 @@ case "$MODE" in
       echo "[history.continuity] skip payment request line facts by HISTORY_CONTINUITY_INCLUDE_DETAIL_FACTS=0"
     fi
     run_step legacy_attachment_backfill_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_attachment_backfill_replay_adapter.py"
+    run_step project_member_attachment_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_project_member_attachment_targeted_replay_adapter.py"
+    run_step project_member_attachment_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_project_member_attachment_targeted_replay_write.py"
     run_step legacy_attachment_backfill_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_attachment_backfill_replay_write.py"
+    run_step legacy_receipt_income_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_receipt_income_replay_adapter.py"
     run_step receipt_income_partner_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_receipt_income_partner_targeted_replay_adapter.py"
     run_step receipt_income_partner_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_receipt_income_partner_targeted_replay_write.py"
-    run_step legacy_receipt_income_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_receipt_income_replay_adapter.py"
     run_step legacy_receipt_income_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_receipt_income_replay_write.py"
     run_step legacy_self_funding_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_self_funding_replay_adapter.py"
     run_step legacy_self_funding_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_self_funding_replay_write.py"
@@ -264,9 +284,9 @@ case "$MODE" in
     run_step legacy_invoice_surcharge_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_surcharge_replay_write.py"
     run_step legacy_supplier_contract_pricing_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_supplier_contract_pricing_replay_adapter.py"
     run_step legacy_supplier_contract_pricing_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_supplier_contract_pricing_replay_write.py"
+    run_step legacy_expense_deposit_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_deposit_replay_adapter.py"
     run_step expense_deposit_partner_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_expense_deposit_partner_targeted_replay_adapter.py"
     run_step expense_deposit_partner_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_expense_deposit_partner_targeted_replay_write.py"
-    run_step legacy_expense_deposit_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_deposit_replay_adapter.py"
     run_step legacy_expense_deposit_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_deposit_replay_write.py"
     run_step legacy_invoice_tax_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_tax_replay_adapter.py"
     run_step legacy_invoice_tax_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_tax_replay_write.py"
@@ -300,8 +320,12 @@ case "$MODE" in
     else
       echo "[history.continuity] skip payment outflow state recovery by HISTORY_CONTINUITY_INCLUDE_PAYMENT_STATE_RECOVERY=0"
     fi
-    run_step project_lifecycle_continuity_adapter python3 "$ROOT_DIR/scripts/migration/history_project_lifecycle_continuity_adapter.py"
-    run_step project_lifecycle_continuity_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_project_lifecycle_continuity_write.py"
+    if [[ "$INCLUDE_PROJECT_LIFECYCLE_CONTINUITY" == "1" ]]; then
+      run_step project_lifecycle_continuity_adapter python3 "$ROOT_DIR/scripts/migration/history_project_lifecycle_continuity_adapter.py"
+      run_step project_lifecycle_continuity_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_project_lifecycle_continuity_write.py"
+    else
+      echo "[history.continuity] skip project lifecycle continuity by HISTORY_CONTINUITY_INCLUDE_PROJECT_LIFECYCLE_CONTINUITY=0"
+    fi
     run_step legacy_financing_loan_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_financing_loan_replay_adapter.py"
     run_step legacy_financing_loan_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_financing_loan_replay_write.py"
     run_step legacy_fund_daily_snapshot_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_snapshot_replay_adapter.py"

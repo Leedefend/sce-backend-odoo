@@ -7,6 +7,7 @@ import csv
 import json
 from collections import Counter, defaultdict
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
 
 REPO_ROOT = Path.cwd()
@@ -31,10 +32,12 @@ CONTRACT_MISSING_PARTNER_RESOLUTION = (
 OUTPUT_CSV = REPO_ROOT / "artifacts/migration/fresh_db_contract_remaining_replay_payload_v1.csv"
 OUTPUT_JSON = REPO_ROOT / "artifacts/migration/fresh_db_contract_remaining_adapter_result_v1.json"
 OUTPUT_REPORT = REPO_ROOT / "docs/migration_alignment/fresh_db_contract_remaining_adapter_report_v1.md"
+ASSET_XML = REPO_ROOT / "migration_assets/20_business/contract/contract_header_v1.xml"
 
 EXPECTED_SOURCE_ROWS = 1332
 EXPECTED_EXCLUDED_ROWS = 57
 EXPECTED_REPLAY_ROWS = 1332
+ASSET_EXPECTED_REPLAY_ROWS = 1492
 OUTPUT_FIELDS = [
     "legacy_contract_id",
     "legacy_project_id",
@@ -48,6 +51,7 @@ OUTPUT_FIELDS = [
     "legacy_status",
     "legacy_deleted_flag",
     "legacy_counterparty_text",
+    "partner_ref",
     "source_payload",
 ]
 
@@ -133,6 +137,55 @@ def load_source_rows() -> list[dict[str, str]]:
     return rows
 
 
+def field_map(record: ET.Element) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for field in record.findall("field"):
+        name = clean(field.get("name"))
+        if name:
+            values[name] = clean(field.text)
+    return values
+
+
+def ref_map(record: ET.Element) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for field in record.findall("field"):
+        name = clean(field.get("name"))
+        ref = clean(field.get("ref"))
+        if name and ref:
+            values[name] = ref
+    return values
+
+
+def load_asset_rows() -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    root = ET.parse(ASSET_XML).getroot()
+    for record in root.findall(".//record[@model='construction.contract']"):
+        values = field_map(record)
+        refs = ref_map(record)
+        legacy_contract_id = clean(values.get("legacy_contract_id"))
+        if not legacy_contract_id:
+            continue
+        rows.append(
+            {
+                "legacy_contract_id": legacy_contract_id,
+                "legacy_project_id": clean(values.get("legacy_project_id")),
+                "project_id": "",
+                "partner_id": "",
+                "subject": clean(values.get("subject")),
+                "type": clean(values.get("type")),
+                "legacy_contract_no": clean(values.get("legacy_contract_no")),
+                "legacy_document_no": clean(values.get("legacy_document_no")),
+                "legacy_external_contract_no": clean(values.get("legacy_external_contract_no")),
+                "legacy_status": clean(values.get("legacy_status")),
+                "legacy_deleted_flag": clean(values.get("legacy_deleted_flag")),
+                "legacy_counterparty_text": clean(values.get("legacy_counterparty_text")),
+                "partner_ref": clean(refs.get("partner_id")),
+                "source_payload": str(ASSET_XML.relative_to(REPO_ROOT)),
+            }
+        )
+    return rows
+
+
 def write_report(payload: dict[str, object]) -> None:
     text = f"""# Fresh DB Contract Remaining Adapter Report V1
 
@@ -169,10 +222,14 @@ legacy project ids and counterparty names to fresh database anchors.
 
 
 def main() -> int:
-    project_by_legacy = indexed_project_ids()
-    partner_by_name, duplicate_partner_names = indexed_partner_ids()
-    existing_contract_ids = existing_fresh_contract_ids()
-    source_rows = load_source_rows()
+    use_asset_source = not all(path.exists() for path in PAYLOADS)
+    project_by_legacy = {} if use_asset_source else indexed_project_ids()
+    partner_by_name, duplicate_partner_names = ({}, {}) if use_asset_source else indexed_partner_ids()
+    existing_contract_ids = set() if use_asset_source else existing_fresh_contract_ids()
+    source_rows = load_asset_rows() if use_asset_source else load_source_rows()
+    expected_source_rows = ASSET_EXPECTED_REPLAY_ROWS if use_asset_source else EXPECTED_SOURCE_ROWS
+    expected_excluded_rows = 0 if use_asset_source else EXPECTED_EXCLUDED_ROWS
+    expected_replay_rows = ASSET_EXPECTED_REPLAY_ROWS if use_asset_source else EXPECTED_REPLAY_ROWS
     ids = [clean(row.get("legacy_contract_id")) for row in source_rows]
     duplicate_input_ids = sorted(identity for identity, count in Counter(ids).items() if identity and count > 1)
 
@@ -191,10 +248,10 @@ def main() -> int:
 
         legacy_project_id = clean(row.get("legacy_project_id"))
         counterparty = clean(row.get("legacy_counterparty_text"))
-        project_id = project_by_legacy.get(legacy_project_id)
-        partner_id = partner_by_name.get(counterparty)
+        project_id = "" if use_asset_source else project_by_legacy.get(legacy_project_id)
+        partner_id = "" if use_asset_source else partner_by_name.get(counterparty)
 
-        if not project_id:
+        if not use_asset_source and not project_id:
             missing_projects.add(legacy_project_id)
             errors.append(
                 {
@@ -205,7 +262,7 @@ def main() -> int:
                 }
             )
             continue
-        if counterparty in duplicate_partner_names:
+        if not use_asset_source and counterparty in duplicate_partner_names:
             ambiguous_partners.add(counterparty)
             errors.append(
                 {
@@ -217,7 +274,7 @@ def main() -> int:
                 }
             )
             continue
-        if not partner_id:
+        if not use_asset_source and not partner_id:
             missing_partners.add(counterparty)
             errors.append(
                 {
@@ -243,24 +300,25 @@ def main() -> int:
                 "legacy_status": clean(row.get("legacy_status")),
                 "legacy_deleted_flag": clean(row.get("legacy_deleted_flag")),
                 "legacy_counterparty_text": counterparty,
+                "partner_ref": clean(row.get("partner_ref")),
                 "source_payload": clean(row.get("source_payload")),
             }
         )
 
-    if len(source_rows) != EXPECTED_SOURCE_ROWS:
-        errors.append({"error": "unexpected_source_rows", "actual": len(source_rows), "expected": EXPECTED_SOURCE_ROWS})
-    if len(existing_contract_ids) != EXPECTED_EXCLUDED_ROWS:
+    if len(source_rows) != expected_source_rows:
+        errors.append({"error": "unexpected_source_rows", "actual": len(source_rows), "expected": expected_source_rows})
+    if len(existing_contract_ids) != expected_excluded_rows:
         errors.append(
             {
                 "error": "unexpected_existing_fresh_contract_rows",
                 "actual": len(existing_contract_ids),
-                "expected": EXPECTED_EXCLUDED_ROWS,
+                "expected": expected_excluded_rows,
             }
         )
     if duplicate_input_ids:
         errors.append({"error": "duplicate_input_legacy_contract_id", "ids": duplicate_input_ids[:20]})
-    if len(output_rows) != EXPECTED_REPLAY_ROWS:
-        errors.append({"error": "unexpected_replay_rows", "actual": len(output_rows), "expected": EXPECTED_REPLAY_ROWS})
+    if len(output_rows) != expected_replay_rows:
+        errors.append({"error": "unexpected_replay_rows", "actual": len(output_rows), "expected": expected_replay_rows})
 
     status = "PASS" if not errors else "FAIL"
     if status == "PASS":
@@ -270,11 +328,12 @@ def main() -> int:
         "status": status,
         "mode": "fresh_db_contract_remaining_adapter",
         "db_writes": 0,
+        "source_mode": "asset_xml" if use_asset_source else "legacy_authorization_payloads",
         "source_rows": len(source_rows),
         "existing_fresh_reference_rows": len(existing_contract_ids),
         "excluded_existing_fresh_rows": excluded_existing_rows,
         "replay_payload_rows": len(output_rows),
-        "expected_replay_rows": EXPECTED_REPLAY_ROWS,
+        "expected_replay_rows": expected_replay_rows,
         "missing_project_anchor_count": len(missing_projects),
         "missing_partner_anchor_count": len(missing_partners),
         "ambiguous_partner_anchor_count": len(ambiguous_partners),
@@ -294,6 +353,7 @@ def main() -> int:
         + json.dumps(
             {
                 "status": status,
+                "source_mode": "asset_xml" if use_asset_source else "legacy_authorization_payloads",
                 "source_rows": len(source_rows),
                 "existing_fresh_reference_rows": len(existing_contract_ids),
                 "excluded_existing_fresh_rows": excluded_existing_rows,

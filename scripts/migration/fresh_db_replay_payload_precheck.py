@@ -20,7 +20,10 @@ def repo_root() -> Path:
         candidates.append(Path(env_root))
     candidates.extend([Path("/mnt"), Path.cwd()])
     for candidate in candidates:
-        if (candidate / "artifacts/migration/fresh_db_replay_manifest_v1.json").exists():
+        if (
+            (candidate / "artifacts/migration/fresh_db_replay_manifest_v1.json").exists()
+            or (candidate / "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv").exists()
+        ):
             return candidate
     return Path.cwd()
 
@@ -29,7 +32,7 @@ REPO_ROOT = repo_root()
 ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(REPO_ROOT / "artifacts/migration")))
 PARTNER_PAYLOAD = REPO_ROOT / "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv"
 PROJECT_PAYLOAD = REPO_ROOT / "artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv"
-CONTRACT_PARTNER_PAYLOAD = REPO_ROOT / "artifacts/migration/fresh_db_contract_partner_12_anchor_replay_payload_v1.csv"
+CONTRACT_PARTNER_PAYLOAD = REPO_ROOT / "artifacts/migration/fresh_db_contract_counterparty_partner_replay_payload_v1.csv"
 OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_replay_payload_precheck_result_v1.json"
 OUTPUT_REPORT = ARTIFACT_ROOT / "fresh_db_replay_payload_precheck_report_v1.md"
 
@@ -64,7 +67,7 @@ This batch does not create, update, or delete business records.
 
 - partner L4 anchors: `{payload["payload_rows"]["partner_l4"]}`
 - project anchors: `{payload["payload_rows"]["project_anchor"]}`
-- contract partner 12 anchors: `{payload["payload_rows"]["contract_partner_12"]}`
+- contract counterparty partner anchors: `{payload["payload_rows"]["contract_counterparty_partner"]}`
 
 ## Target State
 
@@ -171,7 +174,7 @@ payload = {
     "payload_rows": {
         "partner_l4": len(partner_rows),
         "project_anchor": len(project_rows),
-        "contract_partner_12": len(contract_partner_rows),
+        "contract_counterparty_partner": len(contract_partner_rows),
     },
     "missing_models": missing_models,
     "missing_required_fields": missing_required_fields,

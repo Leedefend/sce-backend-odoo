@@ -69,10 +69,15 @@ make migration.assets.delivery_audit
 
 ## 4. 离线 Payload 与交付证据
 
-生产服务器不安装旧库，不要求 `legacy-mssql-restore` 存在。最终发布包必须携带
-`artifacts/migration` 下的冻结 payload；`history.production.fresh_init` 默认
+生产服务器不安装旧库，不要求 `legacy-mssql-restore` 存在。最终发布包必须同时携带
+`migration_assets/` 与 `artifacts/migration/` 下的冻结 payload；`make migration.assets.fetch`
+必须物化这两个目录。`history.production.fresh_init` 默认
 设置 `HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1`，所有 `*_adapter` step 会跳过，
 后续 replay/write step 直接读取这些 payload。
+
+如果 `artifacts/migration` 冻结 payload 缺失，打包和交付审计必须失败；不得把
+`HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1` 的 replay 成功建立在本地旧库、
+运行时残留 artifact 或旧数据库恢复容器上。
 
 如需在非生产环境重新从旧库生成 payload，必须显式设置：
 
