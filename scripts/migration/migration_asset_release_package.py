@@ -13,6 +13,7 @@ import argparse
 import hashlib
 import io
 import json
+import re
 import tarfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -22,6 +23,7 @@ from typing import Any
 REPO_ROOT = Path.cwd()
 DEFAULT_ASSET_ROOT = REPO_ROOT / "migration_assets"
 MIGRATION_ARTIFACT_ROOT = REPO_ROOT / "artifacts/migration"
+ONECLICK = REPO_ROOT / "scripts/migration/history_continuity_oneclick.sh"
 OUTPUT_JSON = REPO_ROOT / "artifacts/migration/migration_asset_release_package_v1.json"
 OUTPUT_MD = REPO_ROOT / "docs/migration_alignment/migration_asset_release_package_v1.md"
 DEFAULT_OUT_DIR = Path("/tmp/sce_migration_asset_release")
@@ -30,6 +32,11 @@ EVIDENCE_FILES = [
     "migration_assets/manifest/migration_asset_coverage_snapshot_v1.json",
     "migration_assets/manifest/receipt_blocker_policy_snapshot_v1.json",
 ]
+ARTIFACT_INPUT_RE = re.compile(
+    r'^\s*(?P<var>[A-Z][A-Z0-9_]*)\s*=\s*REPO_ROOT\s*/\s*"(?P<path>artifacts/migration/[^"]+)"',
+    re.MULTILINE,
+)
+ONECLICK_SCRIPT_RE = re.compile(r'run_odoo_script\s+"\$ROOT_DIR/scripts/migration/(?P<script>[^"]+\.py)"')
 
 
 def utc_stamp() -> str:
@@ -62,6 +69,23 @@ def should_exclude(path: str) -> bool:
 
 def should_exclude_artifact(path: Path) -> bool:
     return path == OUTPUT_JSON
+
+
+def required_replay_artifacts() -> list[str]:
+    required: set[str] = set()
+    oneclick_text = ONECLICK.read_text(encoding="utf-8") if ONECLICK.exists() else ""
+    script_names = sorted(set(ONECLICK_SCRIPT_RE.findall(oneclick_text)))
+    for script_name in script_names:
+        script = REPO_ROOT / "scripts/migration" / script_name
+        if not script.is_file():
+            continue
+        text = script.read_text(encoding="utf-8")
+        for match in ARTIFACT_INPUT_RE.finditer(text):
+            var = match.group("var")
+            if var.startswith("OUTPUT"):
+                continue
+            required.add(match.group("path"))
+    return sorted(required)
 
 
 def collect_files(asset_root: Path) -> tuple[list[dict[str, Any]], list[str]]:
@@ -98,6 +122,18 @@ def collect_files(asset_root: Path) -> tuple[list[dict[str, Any]], list[str]]:
             add(path, "delivery_evidence")
         else:
             warnings.append(f"missing_optional_evidence={evidence}")
+
+    missing_required_artifacts = [
+        path
+        for path in required_replay_artifacts()
+        if not (REPO_ROOT / path).is_file()
+    ]
+    if missing_required_artifacts:
+        raise FileNotFoundError(
+            "missing required frozen replay artifacts for packaged replay: "
+            + ", ".join(missing_required_artifacts[:20])
+            + (f" ... (+{len(missing_required_artifacts) - 20} more)" if len(missing_required_artifacts) > 20 else "")
+        )
 
     for path in sorted(MIGRATION_ARTIFACT_ROOT.rglob("*")):
         if not path.is_file() or should_exclude_artifact(path):
@@ -224,7 +260,7 @@ def main() -> int:
     parser.add_argument("--package-id", default=f"migration_assets_release_{utc_stamp()}", help="Package id")
     args = parser.parse_args()
 
-    payload = build_package(Path(args.asset_root), Path(args.out_dir), args.package_id)
+    payload = build_package(Path(args.asset_root).resolve(), Path(args.out_dir), args.package_id)
     print(
         "MIGRATION_ASSET_RELEASE_PACKAGE="
         + json.dumps(

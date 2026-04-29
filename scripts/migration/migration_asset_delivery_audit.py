@@ -23,6 +23,11 @@ PRODUCTION_ENTRY = REPO_ROOT / "scripts/deploy/fresh_production_history_init.sh"
 MAKEFILE = REPO_ROOT / "Makefile"
 OUTPUT_JSON = REPO_ROOT / "artifacts/migration/migration_asset_delivery_audit_v1.json"
 OUTPUT_MD = REPO_ROOT / "docs/migration_alignment/migration_asset_delivery_audit_v1.md"
+ARTIFACT_INPUT_RE = re.compile(
+    r'^\s*(?P<var>[A-Z][A-Z0-9_]*)\s*=\s*REPO_ROOT\s*/\s*"(?P<path>artifacts/migration/[^"]+)"',
+    re.MULTILINE,
+)
+ONECLICK_SCRIPT_RE = re.compile(r'run_odoo_script\s+"\$ROOT_DIR/scripts/migration/(?P<script>[^"]+\.py)"')
 
 
 def sha256_file(path: Path) -> str:
@@ -166,12 +171,35 @@ def packaging_audit(asset_root: Path) -> dict[str, Any]:
     }
 
 
+def required_replay_artifacts() -> list[str]:
+    required: set[str] = set()
+    oneclick_text = ONECLICK.read_text(encoding="utf-8") if ONECLICK.exists() else ""
+    script_names = sorted(set(ONECLICK_SCRIPT_RE.findall(oneclick_text)))
+    for script_name in script_names:
+        script = REPO_ROOT / "scripts/migration" / script_name
+        if not script.is_file():
+            continue
+        text = script.read_text(encoding="utf-8")
+        for match in ARTIFACT_INPUT_RE.finditer(text):
+            var = match.group("var")
+            if var.startswith("OUTPUT"):
+                continue
+            required.add(match.group("path"))
+    return sorted(required)
+
+
 def replay_audit() -> dict[str, Any]:
     oneclick_text = ONECLICK.read_text(encoding="utf-8") if ONECLICK.exists() else ""
     production_text = PRODUCTION_ENTRY.read_text(encoding="utf-8") if PRODUCTION_ENTRY.exists() else ""
     makefile_text = MAKEFILE.read_text(encoding="utf-8") if MAKEFILE.exists() else ""
     step_names = re.findall(r"run_step\s+([A-Za-z0-9_]+)\s", oneclick_text)
     duplicate_steps = sorted({step for step in step_names if step_names.count(step) > 1})
+    required_artifacts = required_replay_artifacts()
+    missing_required_artifacts = [
+        path
+        for path in required_artifacts
+        if not (REPO_ROOT / path).is_file()
+    ]
     return {
         "oneclick_exists": ONECLICK.exists(),
         "production_entry_exists": PRODUCTION_ENTRY.exists(),
@@ -187,6 +215,8 @@ def replay_audit() -> dict[str, Any]:
         "stop_after_supported": "HISTORY_CONTINUITY_STOP_AFTER" in oneclick_text,
         "step_count": len(step_names),
         "duplicate_steps": duplicate_steps,
+        "required_replay_artifact_count": len(required_artifacts),
+        "missing_required_replay_artifacts": missing_required_artifacts,
         "privacy_opt_in_flags": [
             flag
             for flag in [
@@ -222,6 +252,8 @@ def decide(payload: dict[str, Any]) -> tuple[str, list[str], list[str]]:
         blockers.append("production entry does not call guarded one-click replay")
     if not all(replay["make_targets_present"].values()):
         blockers.append("required Makefile replay targets are missing")
+    if replay["missing_required_replay_artifacts"]:
+        blockers.append("packaged replay frozen artifacts are missing")
 
     if packaging["duplicate_materialized_parts"]:
         actions.append("remove duplicated materialized XML or parts from the final release package after choosing one canonical form")
@@ -259,6 +291,8 @@ def write_outputs(payload: dict[str, Any]) -> None:
         f"- unreferenced files: `{len(catalog['unreferenced_files'])}`",
         f"- total asset size MB: `{packaging['total_size_mb']}`",
         f"- replay steps: `{replay['step_count']}`",
+        f"- required replay artifacts: `{replay['required_replay_artifact_count']}`",
+        f"- missing required replay artifacts: `{len(replay['missing_required_replay_artifacts'])}`",
         f"- duplicate materialized parts: `{len(packaging['duplicate_materialized_parts'])}`",
         "",
         "## Decision",
@@ -269,6 +303,11 @@ def write_outputs(payload: dict[str, Any]) -> None:
     if payload["blockers"]:
         lines.extend(["", "### Blockers", ""])
         lines.extend(f"- {item}" for item in payload["blockers"])
+    if replay["missing_required_replay_artifacts"]:
+        lines.extend(["", "### Missing Required Replay Artifacts", ""])
+        lines.extend(f"- `{item}`" for item in replay["missing_required_replay_artifacts"][:80])
+        if len(replay["missing_required_replay_artifacts"]) > 80:
+            lines.append(f"- ... +{len(replay['missing_required_replay_artifacts']) - 80} more")
     if payload["packaging_actions"]:
         lines.extend(["", "### Packaging Actions", ""])
         lines.extend(f"- {item}" for item in payload["packaging_actions"])
@@ -337,6 +376,8 @@ def main() -> int:
                 "unreferenced_files": len(payload["catalog"]["unreferenced_files"]),
                 "duplicate_materialized_parts": len(payload["packaging"]["duplicate_materialized_parts"]),
                 "replay_steps": payload["replay"]["step_count"],
+                "required_replay_artifacts": payload["replay"]["required_replay_artifact_count"],
+                "missing_required_replay_artifacts": len(payload["replay"]["missing_required_replay_artifacts"]),
                 "blockers": len(blockers),
                 "db_writes": 0,
             },
