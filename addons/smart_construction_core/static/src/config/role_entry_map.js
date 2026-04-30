@@ -10,7 +10,7 @@ export const ROLE_ENTRY_MAP = [
     desc: "项目看板与概览入口",
     default_action: {
       menu_xmlid: "smart_construction_core.menu_sc_project_project",
-      action_xmlid: "smart_construction_core.action_sc_project_kanban_lifecycle",
+      action_xmlid: "smart_construction_core.action_sc_project_list",
     },
     quick_actions: [
       { label: "新建项目", action_xmlid: "smart_construction_core.action_project_initiation" },
@@ -23,8 +23,8 @@ export const ROLE_ENTRY_MAP = [
     icon: "M",
     desc: "查看角色可用能力",
     default_action: {
-      menu_xmlid: "smart_construction_portal.menu_sc_portal_capability_matrix",
-      action_xmlid: "smart_construction_portal.action_sc_portal_capability_matrix",
+      scene_key: "portal.capability_matrix",
+      route: "/s/portal.capability_matrix",
     },
     quick_actions: [],
   },

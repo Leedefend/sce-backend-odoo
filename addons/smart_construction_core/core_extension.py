@@ -96,9 +96,6 @@ NAV_MENU_SCENE_MAP = {
     "smart_construction_demo.menu_sc_project_dashboard_showcase": "projects.dashboard_showcase",
     "smart_construction_core.menu_sc_dictionary": "data.dictionary",
     "smart_construction_core.menu_payment_request": "finance.payment_requests",
-    "smart_construction_portal.menu_sc_portal_lifecycle": "portal.lifecycle",
-    "smart_construction_portal.menu_sc_portal_capability_matrix": "portal.capability_matrix",
-    "smart_construction_portal.menu_sc_portal_dashboard": "portal.dashboard",
 }
 
 NAV_ACTION_SCENE_MAP = {
@@ -110,9 +107,6 @@ NAV_ACTION_SCENE_MAP = {
     "smart_construction_core.action_project_cost_code": "config.project_cost_code",
     "smart_construction_core.action_payment_request": "finance.payment_requests",
     "smart_construction_core.action_payment_request_my": "finance.payment_requests",
-    "smart_construction_portal.action_sc_portal_lifecycle": "portal.lifecycle",
-    "smart_construction_portal.action_sc_portal_capability_matrix": "portal.capability_matrix",
-    "smart_construction_portal.action_sc_portal_dashboard": "portal.dashboard",
 }
 
 NAV_MODEL_VIEW_SCENE_MAP = {

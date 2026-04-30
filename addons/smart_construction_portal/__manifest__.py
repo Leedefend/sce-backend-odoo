@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Smart Construction Portal",
-    "version": "17.0.1.0",
+    "version": "17.0.1.1",
     "summary": "Parallel portal shell for lifecycle dashboard",
     "author": "Leedefend",
     "depends": [
@@ -11,7 +11,6 @@
     "data": [
         "data/portal_params.xml",
         "views/portal_templates.xml",
-        "views/portal_menu.xml",
     ],
     "assets": {
         "smart_construction_portal.assets_portal": [

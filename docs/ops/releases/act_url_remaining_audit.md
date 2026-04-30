@@ -1,41 +1,40 @@
-# act_url Remaining Audit (Pre-Release)
+# act_url Remaining Audit (Resolved)
 
 Date: 2026-02-07
 Branch: `codex/pre_release_final_control`
 
 ## Summary
-Core portal menus currently reference `ir.actions.act_url` in Odoo. These routes are valid but transitional.
-Plan is to map these menus to scenes in SPA navigation (scene_key injection), so portal access is via scene -> route
-and no critical SPA menu depends on act_url at runtime.
+Core portal menus no longer reference `ir.actions.act_url` in Odoo. The legacy portal native menu entries are removed from module install data and existing databases are cleaned by `smart_construction_portal` migration `17.0.1.1`.
 
-## Remaining act_url Entries (Phase 9.3 Classification)
+Portal access is now scene/route based, so a rebuilt database must not recreate these development-era native menus.
+
+## Removed act_url Entries
 
 1. 生命周期驾驶舱
 - Menu XMLID: `smart_construction_portal.menu_sc_portal_lifecycle`
 - Action XMLID: `smart_construction_portal.action_sc_portal_lifecycle`
 - act_url: `/portal/lifecycle`
 - Scene candidate: `portal.lifecycle`
-- Status: scene mapping added (menu/action -> scene key)
-- Class: A (direct scene mapping; keep act_url as legacy only)
+- Status: removed from install data and upgrade migration
+- Replacement: `scene_key=portal.lifecycle`
 
 2. 能力矩阵
 - Menu XMLID: `smart_construction_portal.menu_sc_portal_capability_matrix`
 - Action XMLID: `smart_construction_portal.action_sc_portal_capability_matrix`
 - act_url: `/portal/capability-matrix`
 - Scene candidate: `portal.capability_matrix`
-- Status: scene mapping added (menu/action -> scene key)
-- Class: A (direct scene mapping; keep act_url as legacy only)
+- Status: removed from install data and upgrade migration
+- Replacement: `scene_key=portal.capability_matrix`, `route=/s/portal.capability_matrix`
 
 3. 工作台
 - Menu XMLID: `smart_construction_portal.menu_sc_portal_dashboard`
 - Action XMLID: `smart_construction_portal.action_sc_portal_dashboard`
 - act_url: `/portal/dashboard`
 - Scene candidate: `portal.dashboard`
-- Status: scene mapping added (menu/action -> scene key)
-- Class: A (direct scene mapping; keep act_url as legacy only)
+- Status: removed from install data and upgrade migration
+- Replacement: `scene_key=portal.dashboard`
 
 ## Notes
-- act_url remains in Odoo menu definitions for legacy compatibility.
-- SPA menu navigation uses injected `scene_key` to resolve to scenes, which then route to portal via bridge.
-- Phase 9.3 policy: no new act_url entries; act_url is legacy only.
-- Phase 9.8 guard: ACT_URL_MISSING_SCENE warning is emitted if any act_url menu lacks scene mapping.
+- New database rebuilds must not create these XMLIDs.
+- Existing databases must report zero rows for the listed `smart_construction_portal` menu/action XMLIDs after module upgrade.
+- Phase policy: no new portal native menu backed by `ir.actions.act_url`; expose portal capability through scene contract only.
