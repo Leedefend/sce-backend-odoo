@@ -15,8 +15,13 @@ class ContractSchemaMixin(models.AbstractModel):
     @api.model
     def _allowed_keys_by_view(self, vt):
         table = {
-            'tree': {'columns', 'row_actions', 'page_size', 'row_classes'},
-            'form': {'layout', 'statusbar'},
+            'tree': {'columns', 'columns_schema', 'row_actions', 'page_size', 'row_classes', 'capabilities', 'default_order'},
+            'form': {
+                'layout', 'statusbar',
+                'header_buttons', 'button_box', 'stat_buttons',
+                'field_modifiers', 'subviews',
+                'chatter', 'attachments', 'widgets',
+            },
             'kanban': {'kanban'},
             'pivot': {'pivot'},
             'graph': {'graph'},
@@ -39,10 +44,30 @@ class ContractSchemaMixin(models.AbstractModel):
         specific = self._allowed_keys_by_view(vt)
         keep = set(common) | set(specific)
 
-        def _prune(obj):
+        form_passthrough_roots = {
+            'layout',
+            'header_buttons',
+            'button_box',
+            'stat_buttons',
+            'field_modifiers',
+            'subviews',
+            'chatter',
+            'attachments',
+            'widgets',
+        }
+
+        def _prune(obj, passthrough=False):
+            if passthrough:
+                return self.json_clone(obj)
             if isinstance(obj, dict):
-                return {k: _prune(v) for k, v in obj.items()
-                        if (k in keep) or not isinstance(v, (dict, list))}
+                out = {}
+                for k, v in obj.items():
+                    if k in keep:
+                        out[k] = _prune(v, passthrough=(vt == 'form' and k in form_passthrough_roots))
+                        continue
+                    if not isinstance(v, (dict, list)):
+                        out[k] = v
+                return out
             if isinstance(obj, list):
                 return [_prune(x) for x in obj]
             return obj

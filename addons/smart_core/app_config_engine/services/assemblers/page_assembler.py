@@ -6,6 +6,7 @@
 #   - ★ 集成 P0 修复：从原始 <tree> 严格提取 columns，禁用“脏覆盖”，保证可渲染与顺序稳定
 import logging
 import re
+from odoo import _
 from odoo.http import request
 from ...utils.misc import safe_eval
 from ...utils.view_utils import extract_tree_columns_strict, normalize_cols_safely
@@ -116,6 +117,23 @@ class PageAssembler:
                 "degraded_fields": [],
             },
         }
+        raw_record_id = p.get("record_id") or p.get("recordId") or p.get("res_id") or p.get("resId")
+        try:
+            requested_record_id = int(raw_record_id) if raw_record_id not in (None, "", False) else None
+        except Exception:
+            requested_record_id = None
+        requested_render_profile = str(
+            p.get("render_profile") or p.get("renderProfile") or p.get("profile") or ""
+        ).strip().lower()
+        if requested_render_profile in {"read", "view"}:
+            requested_render_profile = "readonly"
+        if requested_render_profile not in {"create", "edit", "readonly"}:
+            requested_render_profile = ""
+        if requested_record_id and requested_record_id > 0:
+            data["record_id"] = requested_record_id
+            data["res_id"] = requested_record_id
+        if requested_render_profile:
+            data["render_profile"] = requested_render_profile
         versions = {}
 
         # 1) 字段：从模型配置生成；再归一化到 {name: {...}} 形式
@@ -143,10 +161,19 @@ class PageAssembler:
 
         # 3) 视图契约（多视图）——视图元信息用 su_env 获取，运行时修剪在各自组装器里完成
         v_versions = []
+        view_context = {}
+        if isinstance(action, dict) and action.get("id"):
+            view_context["contract_action_id"] = action.get("id")
         for vt in view_types:
             try:
-                vcfg = su['app.view.config']._generate_from_fields_view_get(model, vt)
-                v_contract = vcfg.get_contract_api(filter_runtime=True, check_model_acl=True)
+                view_config_model = env['app.view.config'].with_context(**view_context) if view_context else env['app.view.config']
+                vcfg = view_config_model._generate_from_fields_view_get(model, vt)
+                # app.view.config is platform metadata and ordinary business
+                # users do not read it directly. Keep metadata access elevated,
+                # but bind the environment user to the real requester so
+                # runtime group/ACL filtering still matches native Odoo.
+                vcfg_runtime = vcfg.with_user(env.user).sudo().with_context(**view_context)
+                v_contract = vcfg_runtime.get_contract_api(filter_runtime=True, check_model_acl=True)
                 v_versions.append(str(vcfg.version))
             except KeyError:
                 mark_missing("app.view.config")
@@ -271,6 +298,11 @@ class PageAssembler:
                 "unlink": env[model].check_access_rights('unlink', raise_exception=False),
             }
         }
+        if requested_record_id and requested_record_id > 0:
+            data["head"]["record_id"] = requested_record_id
+            data["head"]["res_id"] = requested_record_id
+        if requested_render_profile:
+            data["head"]["render_profile"] = requested_render_profile
 
         # 8.x) 访问策略（后端唯一决策点）：allow/degrade/block
         self._apply_access_policy(data, model_name=model)
@@ -590,6 +622,12 @@ class PageAssembler:
                 dict_type = self._extract_dictionary_type_from_domain(domain_hint)
             if dict_type:
                 default_vals = {"type": dict_type}
+        inline_create = self._build_relation_inline_create_contract(
+            relation,
+            can_read=can_read,
+            can_create=can_create,
+            default_vals=default_vals,
+        )
 
         if not can_read:
             create_mode = "disabled"
@@ -616,9 +654,92 @@ class PageAssembler:
                 "default_vals": default_vals,
                 "can_read": can_read,
                 "reason_code": reason_code,
+                "inline_create": inline_create,
+                "ui_labels": {
+                    "search_more": _("搜索更多..."),
+                    "quick_create": _("快速新建..."),
+                    "create_and_edit": _("新建并维护..."),
+                    "dialog_title": _("%s：搜索更多") % (descriptor.get("string") or field_name),
+                    "search_placeholder": _("输入名称搜索"),
+                    "search": _("搜索"),
+                    "select": _("选择"),
+                    "create": _("新建"),
+                    "cancel": _("取消"),
+                    "close": _("关闭"),
+                    "empty": _("未找到匹配记录"),
+                    "record_count": _("%s 条记录"),
+                    "missing_name": _("请输入要新建的名称。"),
+                    "search_failed": _("搜索失败，请稍后重试"),
+                    "quick_create_prompt": _("当前未配置维护页面，请输入新选项名称（快速新建）"),
+                    "page_unavailable_prompt": _("维护页面暂不可用，请输入新选项名称（快速新建）"),
+                    "missing_create_entry": _("未找到新建入口，请联系管理员配置菜单动作"),
+                    "missing_page_entry": _("未找到维护页面入口，请联系管理员配置 action/menu"),
+                    "create_page_failed": _("跳转新建页面失败"),
+                    "quick_create_failed": _("快速新建失败"),
+                    "inline_searching": _("正在搜索..."),
+                    "inline_create": _("保存时创建“%s”"),
+                    "inline_create_failed": _("保存时创建失败"),
+                },
             }
         )
         return entry
+
+    def _build_relation_inline_create_contract(self, relation, *, can_read, can_create, default_vals=None):
+        relation = str(relation or "").strip()
+        defaults = default_vals if isinstance(default_vals, dict) else {}
+        if not relation or not can_read or not can_create:
+            return {
+                "enabled": False,
+                "create_on_no_match": False,
+                "match": "exact_label",
+                "name_field": "",
+                "reason_code": "RELATION_CREATE_FORBIDDEN",
+            }
+        try:
+            Model = self.env[relation]
+            fields_map = Model.fields_get()
+            rec_name = str(getattr(Model, "_rec_name", "") or "name").strip() or "name"
+        except Exception:
+            fields_map = {}
+            rec_name = "name"
+        if rec_name not in fields_map and "name" in fields_map:
+            rec_name = "name"
+        descriptor = fields_map.get(rec_name) if isinstance(fields_map, dict) else {}
+        required_fields = [
+            str(name or "").strip()
+            for name, meta in (fields_map or {}).items()
+            if isinstance(meta, dict) and bool(meta.get("required"))
+        ]
+        try:
+            default_get_vals = Model.default_get([
+                name
+                for name in required_fields
+                if name not in {rec_name, "display_name"} and name not in defaults
+            ])
+        except Exception:
+            default_get_vals = {}
+        unresolved_required = [
+            name
+            for name in required_fields
+            if name not in {rec_name, "display_name"} and name not in defaults and name not in default_get_vals
+        ]
+        if not rec_name or not isinstance(descriptor, dict) or unresolved_required:
+            return {
+                "enabled": False,
+                "create_on_no_match": False,
+                "match": "exact_label",
+                "name_field": rec_name,
+                "reason_code": "RELATION_REQUIRED_FIELDS_UNRESOLVED",
+                "required_fields": unresolved_required,
+            }
+        return {
+            "enabled": True,
+            "create_on_no_match": True,
+            "match": "exact_label",
+            "name_field": rec_name,
+            "value_source": "typed_keyword",
+            "reason_code": "INLINE_CREATE_READY",
+        }
 
     def _build_relation_entry_map(self, relation_models):
         relation_models = sorted(str(m).strip() for m in (relation_models or []) if str(m).strip())
@@ -837,6 +958,7 @@ class PageAssembler:
                         "type": getattr(f, "type", None),
                         "string": getattr(f, "string", None) or k,
                         "relation": getattr(f, "comodel_name", None),
+                        "relation_field": getattr(f, "inverse_name", None),
                         "readonly": bool(getattr(f, "readonly", False)),
                         "required": bool(getattr(f, "required", False)),
                         "help": getattr(f, "help", None) or "",
@@ -862,6 +984,8 @@ class PageAssembler:
                 info["help"] = meta[name]["help"]
             if meta.get(name, {}).get("relation"):
                 info["relation"] = meta[name]["relation"]
+            if meta.get(name, {}).get("relation_field"):
+                info["relation_field"] = meta[name]["relation_field"]
             domain = (meta.get(name, {}) or {}).get("domain")
             if domain not in (None, ""):
                 info["domain"] = domain

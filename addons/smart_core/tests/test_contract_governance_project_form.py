@@ -776,6 +776,48 @@ class TestProjectFormGovernance(unittest.TestCase):
         lifecycle_column = next((row for row in columns if isinstance(row, dict) and row.get("name") == "lifecycle_state"), {})
         self.assertEqual(lifecycle_column.get("label"), "项目执行阶段")
 
+    def test_list_business_labels_override_native_technical_copy(self):
+        data = {
+            "head": {"model": "project.project", "view_type": "tree"},
+            "views": {
+                "tree": {
+                    "columns": ["is_favorite", "display_name", "name"],
+                    "columns_schema": [
+                        {"name": "is_favorite", "label": "在仪表板上显示项目", "string": "在仪表板上显示项目"},
+                        {"name": "display_name", "label": "显示名称", "string": "显示名称"},
+                        {"name": "name", "label": "名称", "string": "名称"},
+                    ],
+                }
+            },
+            "fields": {
+                "is_favorite": {"string": "在仪表板上显示项目", "type": "boolean"},
+                "display_name": {"string": "显示名称", "type": "char"},
+                "name": {"string": "名称", "type": "char"},
+                "user_id": {"string": "项目管理员", "type": "many2one"},
+                "partner_id": {"string": "客户", "type": "many2one"},
+                "stage_id": {"string": "阶段", "type": "many2one"},
+                "lifecycle_state": {"string": "生命周期", "type": "selection"},
+                "date_start": {"string": "开始日期", "type": "date"},
+                "date": {"string": "有效期", "type": "date"},
+            },
+            "permissions": {"effective": {"rights": {"write": True}}},
+        }
+
+        out = apply_contract_governance(data, "user")
+
+        fields = out.get("fields") or {}
+        self.assertEqual((fields.get("is_favorite") or {}).get("string"), "我的收藏")
+        self.assertEqual((fields.get("display_name") or {}).get("string"), "名称")
+        schema = (((out.get("views") or {}).get("tree") or {}).get("columns_schema")) or []
+        labels = {row.get("name"): row.get("label") for row in schema if isinstance(row, dict)}
+        self.assertEqual(labels.get("is_favorite"), "我的收藏")
+        self.assertEqual(labels.get("display_name"), "名称")
+        list_profile = out.get("list_profile") or {}
+        self.assertEqual((list_profile.get("column_labels") or {}).get("is_favorite"), "我的收藏")
+        list_semantics = ((out.get("semantic_page") or {}).get("list_semantics")) or {}
+        semantic_labels = {row.get("name"): row.get("label") for row in list_semantics.get("columns") or [] if isinstance(row, dict)}
+        self.assertEqual(semantic_labels.get("is_favorite"), "我的收藏")
+
     def test_project_kanban_adds_profile_and_filters_fields(self):
         data = _sample_kanban_payload()
         out = apply_contract_governance(data, "user")

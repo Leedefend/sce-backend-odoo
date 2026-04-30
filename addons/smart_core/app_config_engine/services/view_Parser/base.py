@@ -28,7 +28,17 @@ class _BaseViewParserMixin:
         返回：{"arch":str,"fields":dict,"toolbar":dict}
         """
         try:
-            data = model.get_view(view_type=view_type)
+            context = dict(getattr(self.env, "context", {}) or {})
+            action_id = context.get("contract_action_id")
+            view_id = False
+            if action_id:
+                act = self.env["ir.actions.act_window"].sudo().browse(int(action_id))
+                if act.exists() and getattr(act, "res_model", None) == getattr(model, "_name", ""):
+                    for view_spec in (act.views or []):
+                        if view_spec and len(view_spec) >= 2 and view_spec[1] == view_type:
+                            view_id = view_spec[0]
+                            break
+            data = model.get_view(view_id=view_id, view_type=view_type) if view_id else model.get_view(view_type=view_type)
             if isinstance(data, dict) and data.get('arch'):
                 return {
                     "arch": data.get('arch'),

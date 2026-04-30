@@ -292,6 +292,7 @@ class ContractNormalizer:
                                     "required": False,
                                     "readonly": False,
                                     "selection": [],
+                                    "surface_role": "business_edit",
                                 })
                                 continue
                             col_obj = _ensure_dict(col, f"views.form.subviews.{key}.tree.columns[]", warns)
@@ -305,6 +306,7 @@ class ContractNormalizer:
                                 "required": _safe_bool(col_obj.get("required", False), False),
                                 "readonly": _safe_bool(col_obj.get("readonly", False), False),
                                 "selection": _coerce_list(col_obj.get("selection", []), f"views.form.subviews.{key}.tree.columns[{cname}].selection", warns),
+                                "surface_role": _safe_str(col_obj.get("surface_role", "business_edit"), "business_edit"),
                             })
                         tree_obj["columns"] = normalized_columns
                         sub_obj["tree"] = tree_obj
