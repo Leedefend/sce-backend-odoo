@@ -42,9 +42,9 @@
               sequence="10"
               groups="smart_construction_core.group_sc_cap_project_read"/>
     <menuitem id="menu_sc_project_project"
-              name="项目台账（试点）"
+              name="项目台账"
               parent="menu_sc_project_center"
-              action="action_sc_project_kanban_lifecycle"
+              action="action_sc_project_list"
               sequence="10"
               groups="smart_construction_core.group_sc_cap_project_read"/>
     <menuitem id="menu_sc_project_management_scene"

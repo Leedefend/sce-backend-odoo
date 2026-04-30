@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Smart Construction Scene Orchestration",
-    "version": "17.0.0.1",
+    "version": "17.0.0.2",
     "summary": "Scene orchestration source for portal shell",
     "author": "Leedefend",
     "depends": [

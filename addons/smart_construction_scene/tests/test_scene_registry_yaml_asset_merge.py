@@ -25,7 +25,7 @@ class TestSceneRegistryYamlAssetMerge(unittest.TestCase):
             target._load_from_db = lambda env, drift=None: [
                 {
                     "code": "projects.list",
-                    "name": "项目列表",
+                    "name": "项目台账",
                     "target": {
                         "route": "/s/projects.list",
                         "action_id": 519,
@@ -41,7 +41,7 @@ class TestSceneRegistryYamlAssetMerge(unittest.TestCase):
                         "name": "项目列表",
                         "target": {
                             "route": "/s/projects.list",
-                            "menu_xmlid": "smart_construction_core.menu_sc_root",
+                        "menu_xmlid": "smart_construction_core.menu_sc_project_project",
                             "action_xmlid": "smart_construction_core.action_sc_project_list",
                         },
                     }
@@ -58,7 +58,7 @@ class TestSceneRegistryYamlAssetMerge(unittest.TestCase):
         scene_target = (projects_list.get("target") or {})
         self.assertEqual(scene_target.get("route"), "/s/projects.list")
         self.assertEqual(scene_target.get("action_xmlid"), "smart_construction_core.action_sc_project_list")
-        self.assertEqual(scene_target.get("menu_xmlid"), "smart_construction_core.menu_sc_root")
+        self.assertEqual(scene_target.get("menu_xmlid"), "smart_construction_core.menu_sc_project_project")
         self.assertNotIn("action_id", scene_target)
         self.assertNotIn("menu_id", scene_target)
 
@@ -78,7 +78,7 @@ class TestSceneRegistryYamlAssetMerge(unittest.TestCase):
                         "target": {
                             "route": "/s/projects.ledger",
                             "menu_xmlid": "smart_construction_core.menu_sc_project_project",
-                            "action_xmlid": "smart_construction_core.action_sc_project_kanban_lifecycle",
+                            "action_xmlid": "smart_construction_core.action_sc_project_list",
                         },
                     }
                 ],

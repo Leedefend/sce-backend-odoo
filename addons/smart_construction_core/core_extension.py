@@ -88,7 +88,7 @@ ROLE_PRECEDENCE = ("business_config_admin", "executive", "pm", "finance")
 
 NAV_MENU_SCENE_MAP = {
     "smart_construction_core.menu_sc_project_initiation": "projects.intake",
-    "smart_construction_core.menu_sc_project_project": "projects.ledger",
+    "smart_construction_core.menu_sc_project_project": "projects.list",
     "smart_construction_core.menu_sc_project_management_scene": "project.management",
     "smart_construction_core.menu_sc_project_cost_code": "config.project_cost_code",
     "smart_construction_core.menu_sc_root": "projects.list",
@@ -103,7 +103,6 @@ NAV_MENU_SCENE_MAP = {
 
 NAV_ACTION_SCENE_MAP = {
     "smart_construction_core.action_project_initiation": "projects.intake",
-    "smart_construction_core.action_sc_project_kanban_lifecycle": "projects.ledger",
     "smart_construction_core.action_sc_project_list": "projects.list",
     "smart_construction_core.action_project_dashboard": "projects.dashboard",
     "smart_construction_demo.action_project_dashboard_showcase": "projects.dashboard_showcase",
@@ -132,6 +131,7 @@ FILE_DOWNLOAD_ALLOWED_MODELS = ["project.project", "project.task"]
 API_DATA_WRITE_ALLOWLIST = {
     "project.project": ["name", "description", "date_start"],
     "project.task": ["name", "description", "date_deadline", "project_id"],
+    "purchase.order.line": ["name", "order_id"],
 }
 API_DATA_UNLINK_ALLOWED_MODELS = ["project.task"]
 

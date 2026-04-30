@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <record id="action_sc_project_list" model="ir.actions.act_window">
-        <field name="name">项目列表</field>
+        <field name="name">项目台账</field>
         <field name="res_model">project.project</field>
         <field name="view_mode">tree,kanban,form</field>
         <field name="domain">[]</field>

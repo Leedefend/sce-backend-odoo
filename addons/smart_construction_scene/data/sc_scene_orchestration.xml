@@ -57,9 +57,9 @@
             <field name="name">项目工作</field>
             <field name="group_id" ref="smart_construction_core.sc_cap_group_project_management"/>
             <field name="ui_label">项目工作</field>
-            <field name="ui_hint">项目看板与概览入口</field>
+            <field name="ui_hint">项目台账与项目办理入口</field>
             <field name="intent">ui.contract</field>
-            <field name="default_payload" eval="{'action_xmlid': 'smart_construction_core.action_sc_project_kanban_lifecycle', 'menu_xmlid': 'smart_construction_core.menu_sc_project_project'}"/>
+            <field name="default_payload" eval="{'action_xmlid': 'smart_construction_core.action_sc_project_list', 'menu_xmlid': 'smart_construction_core.menu_sc_project_project'}"/>
             <field name="required_group_ids" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_project_read')])]"/>
             <field name="tags">project</field>
             <field name="status">ga</field>
@@ -135,10 +135,10 @@
             <field name="is_test">1</field>
         </record>
 
-        <!-- Projects list scene -->
+        <!-- Projects ledger scene -->
         <record id="sc_scene_projects_list" model="sc.scene">
             <field name="sequence">30</field>
-            <field name="name">项目列表</field>
+            <field name="name">项目台账</field>
             <field name="code">projects.list</field>
             <field name="layout">grid</field>
             <field name="state">published</field>

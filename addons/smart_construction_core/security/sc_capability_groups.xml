@@ -22,6 +22,7 @@
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(6, 0, [
                 ref('base.group_user'),
+                ref('smart_core.group_smart_core_data_operator'),
                 ref('smart_construction_core.group_sc_cap_business_initiator')
             ])]"/>
         </record>

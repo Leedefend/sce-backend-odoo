@@ -31,11 +31,16 @@ compose ${COMPOSE_FILES} exec -T odoo odoo \
   -d "${DB_NAME}" \
   -c /var/lib/odoo/odoo.conf \
   -i "${PROD_SIM_MODULES}" \
+  --load-language="${SC_RUNTIME_LANG:-zh_CN}" \
   --without-demo=all \
   --stop-after-init
 
 log "prod-sim deploy: apply extension module registry"
 DB_NAME="${DB_NAME}" COMPOSE_FILES="${COMPOSE_FILES}" scripts/ops/apply_extension_modules.sh
+
+log "prod-sim deploy: ensure runtime language baseline"
+DB_NAME="${DB_NAME}" COMPOSE_FILES="${COMPOSE_FILES}" SC_RUNTIME_LANG="${SC_RUNTIME_LANG:-zh_CN}" \
+  scripts/ops/odoo_shell_exec.sh < scripts/ops/ensure_runtime_language_baseline.py
 
 log "prod-sim deploy: restart odoo after module install"
 # shellcheck disable=SC2086
@@ -43,5 +48,9 @@ compose ${COMPOSE_FILES} restart odoo
 
 log "prod-sim deploy: platform initialization preflight"
 DB_NAME="${DB_NAME}" COMPOSE_FILES="${COMPOSE_FILES}" scripts/verify/platform_init_preflight.sh
+
+log "prod-sim deploy: runtime language baseline probe"
+DB_NAME="${DB_NAME}" COMPOSE_FILES="${COMPOSE_FILES}" SC_RUNTIME_LANG="${SC_RUNTIME_LANG:-zh_CN}" \
+  scripts/ops/odoo_shell_exec.sh < scripts/verify/runtime_language_baseline_probe.py
 
 log "prod-sim deploy: ready (nginx :80 -> frontend, /api -> odoo)"

@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data noupdate="0">
-        <!-- Projects list scene -->
+        <!-- Projects ledger scene -->
         <record id="sc_scene_version_projects_list_v2" model="sc.scene.version">
             <field name="scene_id" ref="sc_scene_projects_list"/>
             <field name="version">v2</field>
             <field name="source">system</field>
             <field name="payload_json" eval="{
                 'code': 'projects.list',
-                'name': '项目列表',
+                'name': '项目台账',
                 'version': 'v2',
                 'page': {
                     'key': 'projects.list.main',
-                    'title': '项目列表',
+                    'title': '项目台账',
                     'page_type': 'list',
                     'page_mode': 'table'
                 },
@@ -42,7 +42,7 @@
                 ],
                 'target': {
                     'route': '/s/projects.list',
-                    'menu_xmlid': 'smart_construction_core.menu_sc_root',
+                    'menu_xmlid': 'smart_construction_core.menu_sc_project_project',
                     'action_xmlid': 'smart_construction_core.action_sc_project_list'
                 },
                 'list_profile': {
@@ -162,7 +162,7 @@
                 'target': {
                     'route': '/s/projects.ledger',
                     'menu_xmlid': 'smart_construction_core.menu_sc_project_project',
-                    'action_xmlid': 'smart_construction_core.action_sc_project_kanban_lifecycle'
+                    'action_xmlid': 'smart_construction_core.action_sc_project_list'
                 },
                 'list_profile': {
                     'model': 'project.project',

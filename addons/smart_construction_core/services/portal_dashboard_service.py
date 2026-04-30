@@ -88,9 +88,9 @@ class PortalDashboardService:
                 "key": "project_work",
                 "label": "项目工作",
                 "icon": "P",
-                "desc": "项目看板与概览入口",
+                "desc": "项目台账与项目办理入口",
                 "menu_xmlid": "smart_construction_core.menu_sc_project_project",
-                "action_xmlid": "smart_construction_core.action_sc_project_kanban_lifecycle",
+                "action_xmlid": "smart_construction_core.action_sc_project_list",
             },
             {
                 "key": "contract_work",
