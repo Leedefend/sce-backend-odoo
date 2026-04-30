@@ -26,6 +26,10 @@ export function dispatchTemplateFieldChange(
   const fieldName = String(payload.name || '').trim();
   if (!fieldName) return;
   const type = String(payload.type || '').trim().toLowerCase();
+  if (type === 'many2one' && payload.action && payload.action !== 'change') {
+    handlers.onMany2one(fieldName, payload.descriptor, normalizeText(payload.value));
+    return;
+  }
   switch (type) {
     case 'boolean': {
       handlers.onBoolean(fieldName, normalizeBoolean(payload.value));
@@ -48,4 +52,3 @@ export function dispatchTemplateFieldChange(
     }
   }
 }
-

@@ -12,6 +12,7 @@ from .base import _BaseViewParserMixin
 # 由于文件名包含空格和特殊字符，我们需要使用getattr来导入
 import sys
 import os
+from lxml import etree
 
 # 动态导入包含空格和特殊字符的模块
 parsers_tree_form = __import__('odoo.addons.smart_core.app_config_engine.services.view_Parser.parsers Tree Form', fromlist=['_TreeFormParserMixin'])
@@ -61,10 +62,13 @@ class OdooViewParser(_BaseViewParserMixin,
         - 首选 model.get_view(view_type=...)
         - 兼容回退 fields_view_get(view_type=..., toolbar=True)
         """
-        model = self.env[model_name].sudo()
+        # Use the current user for view composition. Odoo's get_view applies
+        # groups while resolving inherited XML, and the custom client must
+        # receive the same structure as the native client for that user.
+        model = self.env[model_name]
         odoo_view = self._safe_get_view_data(model, view_type)
         arch = (odoo_view or {}).get('arch') or ''
-        fields_info = (odoo_view or {}).get('fields') or {}
+        fields_info = self._enrich_view_fields_info(model, arch, (odoo_view or {}).get('fields') or {})
         toolbar_raw = (odoo_view or {}).get('toolbar') or {}
 
         _logger.info("VIEW_PARSER_DEBUG: model=%s view_type=%s arch_length=%s fields_count=%s",
@@ -132,3 +136,37 @@ class OdooViewParser(_BaseViewParserMixin,
             "parsed_structure": parsed_structure,
             **base,
         }
+
+    def _enrich_view_fields_info(self, model, arch, fields_info):
+        """
+        Odoo get_view can omit fields that only appear inside inline x2many
+        subviews. Those fields still define native form structure, so the
+        parser must use fields_get as the model-level source of truth.
+        """
+        out = dict(fields_info or {})
+        missing = []
+        if arch:
+            try:
+                root = etree.fromstring(arch.encode('utf-8'))
+                for el in root.xpath(".//field[@name]"):
+                    fname = (el.get("name") or "").strip()
+                    if fname and fname not in out and fname not in missing:
+                        missing.append(fname)
+            except Exception:
+                _logger.exception("VIEW_PARSER_DEBUG: enrich fields_info parse failed")
+        if not missing:
+            return out
+        try:
+            model_fields = model.fields_get(missing)
+        except Exception:
+            _logger.exception("VIEW_PARSER_DEBUG: fields_get enrich failed for %s", missing)
+            model_fields = {}
+        for fname in missing:
+            meta = (model_fields or {}).get(fname)
+            if isinstance(meta, dict):
+                out[fname] = meta
+        _logger.info(
+            "VIEW_PARSER_DEBUG: enriched fields_info with arch fields=%s",
+            [name for name in missing if name in out],
+        )
+        return out

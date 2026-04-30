@@ -6,6 +6,8 @@ export function buildActionViewRouteSyncStatePayload(options: {
   filterValue: string;
   groupSampleLimit: number;
   groupSort: 'asc' | 'desc';
+  defaultGroupSampleLimit?: number;
+  defaultGroupSort?: 'asc' | 'desc';
   collapsedGroupKeys: string[];
   groupPageOffsets: Record<string, number>;
   activeGroupByField: string;
@@ -22,6 +24,8 @@ export function buildActionViewRouteSyncStatePayload(options: {
     filterValue: options.filterValue,
     groupSampleLimit: options.groupSampleLimit,
     groupSort: options.groupSort,
+    defaultGroupSampleLimit: options.defaultGroupSampleLimit,
+    defaultGroupSort: options.defaultGroupSort,
     collapsedGroupKeys: options.collapsedGroupKeys,
     groupPageOffsets: options.groupPageOffsets,
     activeGroupByField: options.activeGroupByField,
@@ -42,4 +46,3 @@ export function resolveRouteSyncExtra(extra?: Dict): Dict | undefined {
 export function resolveRouteSyncShouldAwaitLoad(mode: 'fire_and_forget' | 'await'): boolean {
   return mode === 'await';
 }
-

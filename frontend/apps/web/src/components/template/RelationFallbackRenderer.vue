@@ -1,10 +1,19 @@
 <template>
   <div v-if="field.type === 'many2many'" class="relation-editor">
+    <div v-if="isMany2manyTags(field) && adapter.selectedRelationOptions(field.name).length" class="relation-tag-list">
+      <span
+        v-for="option in adapter.selectedRelationOptions(field.name)"
+        :key="`${field.name}-tag-${option.id}`"
+        class="relation-tag"
+      >
+        {{ option.label }}
+      </span>
+    </div>
     <input
       class="input relation-search"
       type="text"
       :value="adapter.relationKeyword(field.name)"
-      placeholder="搜索并多选..."
+      :placeholder="field.inputPlaceholder || adapter.inputPlaceholder(field.label)"
       @input="adapter.setRelationKeyword(field.name, ($event.target as HTMLInputElement).value)"
     />
     <select
@@ -25,7 +34,15 @@
   </div>
   <div v-else-if="field.type === 'one2many'" class="relation-editor">
     <div class="o2m-toolbar">
-      <button class="chip-btn" type="button" :disabled="adapter.busy" @click="adapter.addOne2manyRow(field.name)">+ 新增行</button>
+      <button
+        v-if="adapter.one2manyCanCreate(field.name)"
+        class="chip-btn"
+        type="button"
+        :disabled="adapter.busy"
+        @click="adapter.addOne2manyRow(field.name)"
+      >
+        + 新增行
+      </button>
       <span v-if="adapter.one2manySummary(field.name)" class="o2m-summary">{{ adapter.one2manySummary(field.name) }}</span>
     </div>
     <div class="o2m-list">
@@ -102,9 +119,14 @@
 </template>
 
 <script setup lang="ts">
+import type { FormSectionFieldSchema } from './formSection.types';
 import type { RelationFallbackRendererProps } from './relationFallback.types';
 
 defineProps<RelationFallbackRendererProps>();
+
+function isMany2manyTags(field: FormSectionFieldSchema) {
+  return String(field.widget || '').trim().toLowerCase() === 'many2many_tags';
+}
 </script>
 
 <style scoped>
@@ -117,6 +139,25 @@ defineProps<RelationFallbackRendererProps>();
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.relation-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.relation-tag {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: 24px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #eef2f7;
+  color: #334155;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .chip-btn {

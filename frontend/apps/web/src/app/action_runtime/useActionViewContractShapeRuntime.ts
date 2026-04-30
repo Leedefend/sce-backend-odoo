@@ -29,6 +29,12 @@ type ListColumnOption = {
   label: string;
   optional: string;
   defaultVisible: boolean;
+  type?: string;
+  widget?: string;
+  cellRole?: string;
+  mutation?: Record<string, unknown>;
+  selection?: Array<{ value: string; label: string }>;
+  toneByValue?: Record<string, string>;
 };
 
 export function useActionViewContractShapeRuntime(options: UseActionViewContractShapeRuntimeOptions) {
@@ -111,24 +117,45 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       return acc;
     }, {});
     const baseColumns = preferred.length ? preferred : extractColumnsFromContract(contract, []);
-    const contractFields = (typed.fields || {}) as Dict;
-    const nativeFavoriteColumns = Object.prototype.hasOwnProperty.call(contractFields, 'is_favorite')
-      ? ['is_favorite']
-      : [];
     const labels = {
       ...contractColumnLabels.value,
       ...((profile?.column_labels || {}) as Record<string, string>),
     };
-    return uniqueFields([...baseColumns, ...Array.from(hidden), ...nativeFavoriteColumns])
+    return uniqueFields([...baseColumns, ...Array.from(hidden)])
       .map((name) => {
         const schema = schemaByName[name] || {};
         const optional = String(schema.optional || '').trim();
         const invisible = schema.invisible === true || schema.column_invisible === true;
         return {
           name,
-          label: String(labels[name] || schema.string || name).trim() || name,
+          label: String(labels[name] || schema.label || schema.string || name).trim() || name,
           optional,
           defaultVisible: !hidden.has(name) && optional !== 'hide' && !invisible,
+          type: String(schema.type || '').trim() || undefined,
+          widget: String(schema.widget || '').trim() || undefined,
+          cellRole: String(schema.cell_role || schema.cellRole || '').trim() || undefined,
+          mutation: schema.mutation && typeof schema.mutation === 'object'
+            ? schema.mutation as Record<string, unknown>
+            : undefined,
+          selection: Array.isArray(schema.selection)
+            ? schema.selection
+                .map((item) => {
+                  const row = (item || {}) as Dict;
+                  return {
+                    value: String(row.value ?? '').trim(),
+                    label: String(row.label ?? '').trim(),
+                  };
+                })
+                .filter((item) => item.value && item.label)
+            : undefined,
+          toneByValue: typeof schema.tone_by_value === 'object' && schema.tone_by_value
+            ? Object.entries(schema.tone_by_value as Dict).reduce<Record<string, string>>((acc, [value, tone]) => {
+                const key = String(value || '').trim();
+                const normalizedTone = String(tone || '').trim();
+                if (key && normalizedTone) acc[key] = normalizedTone;
+                return acc;
+              }, {})
+            : undefined,
         };
       });
   }
@@ -341,7 +368,48 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
     });
     const rowPrimary = String(rawProfile.row_primary || listSemantics.row_primary || '').trim();
     const rowSecondary = String(rawProfile.row_secondary || listSemantics.row_secondary || '').trim();
-    if (!columns.length && !Object.keys(columnLabels).length && !rowPrimary && !rowSecondary) {
+    const statusField = String(rawProfile.status_field || listSemantics.status_field || '').trim();
+    const metricFields = Array.isArray(rawProfile.metric_fields || listSemantics.metric_fields)
+      ? ((rawProfile.metric_fields || listSemantics.metric_fields) as unknown[])
+          .map((item) => String(item || '').trim())
+          .filter(Boolean)
+      : [];
+    const rawBatchPolicy = (rawProfile.batch_policy || listSemantics.batch_policy || {}) as Dict;
+    const batchPolicy = {
+      enabled: rawBatchPolicy.enabled === true,
+      active_field: String(rawBatchPolicy.active_field || '').trim() || undefined,
+      assignee_field: String(rawBatchPolicy.assignee_field || '').trim() || undefined,
+      archive_value: typeof rawBatchPolicy.archive_value === 'boolean' ? rawBatchPolicy.archive_value : null,
+      activate_value: typeof rawBatchPolicy.activate_value === 'boolean' ? rawBatchPolicy.activate_value : null,
+      assignee_options: rawBatchPolicy.assignee_options && typeof rawBatchPolicy.assignee_options === 'object'
+        ? rawBatchPolicy.assignee_options as Dict
+        : null,
+      delete_mode: String(rawBatchPolicy.delete_mode || '').trim() || undefined,
+      available_actions: Array.isArray(rawBatchPolicy.available_actions)
+        ? rawBatchPolicy.available_actions.map((item) => String(item || '').trim()).filter(Boolean)
+        : undefined,
+    };
+    const rawGrouping = (rawProfile.grouping || listSemantics.grouping || {}) as Dict;
+    const rawGroupingSort = (rawGrouping.sort || {}) as Dict;
+    const grouping = {
+      sample_limits: Array.isArray(rawGrouping.sample_limits)
+        ? rawGrouping.sample_limits
+            .map((item) => Number(item))
+            .filter((item) => Number.isFinite(item) && item > 0)
+            .map((item) => Math.trunc(item))
+        : undefined,
+      default_sample_limit: Number.isFinite(Number(rawGrouping.default_sample_limit))
+        ? Math.trunc(Number(rawGrouping.default_sample_limit))
+        : undefined,
+      sort: {
+        key: String(rawGroupingSort.key || '').trim() || undefined,
+        default_direction: String(rawGroupingSort.default_direction || '').trim() || undefined,
+        directions: Array.isArray(rawGroupingSort.directions)
+          ? rawGroupingSort.directions.map((item) => String(item || '').trim()).filter(Boolean)
+          : undefined,
+      },
+    };
+    if (!columns.length && !Object.keys(columnLabels).length && !rowPrimary && !rowSecondary && !statusField && !metricFields.length && !Object.keys(rawBatchPolicy).length && !Object.keys(rawGrouping).length) {
       return null;
     }
     return {
@@ -350,6 +418,10 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       column_labels: columnLabels,
       row_primary: rowPrimary,
       row_secondary: rowSecondary,
+      status_field: statusField,
+      metric_fields: metricFields,
+      batch_policy: batchPolicy,
+      grouping,
     };
   }
 

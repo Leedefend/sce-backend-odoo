@@ -39,11 +39,16 @@ if [[ "$INSTALL_MODULES" == "1" ]]; then
     -d "$DB_NAME" \
     -c /var/lib/odoo/odoo.conf \
     -i "$PRODUCTION_MODULES" \
+    --load-language="${SC_RUNTIME_LANG:-zh_CN}" \
     --without-demo=all \
     --stop-after-init
 
   echo "[fresh.production.history.init] step=apply_extension_modules"
   DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" "$ROOT_DIR/scripts/ops/apply_extension_modules.sh"
+
+  echo "[fresh.production.history.init] step=ensure_runtime_language_baseline"
+  DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" SC_RUNTIME_LANG="${SC_RUNTIME_LANG:-zh_CN}" \
+    "$ROOT_DIR/scripts/ops/odoo_shell_exec.sh" <"$ROOT_DIR/scripts/ops/ensure_runtime_language_baseline.py"
 
   echo "[fresh.production.history.init] step=restart_odoo"
   compose ${COMPOSE_FILES} restart odoo
@@ -53,6 +58,10 @@ fi
 
 echo "[fresh.production.history.init] step=platform_init_preflight"
 DB_NAME="$DB_NAME" COMPOSE_FILES="${COMPOSE_FILES}" "$ROOT_DIR/scripts/verify/platform_init_preflight.sh"
+
+echo "[fresh.production.history.init] step=runtime_language_baseline_probe"
+DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" SC_RUNTIME_LANG="${SC_RUNTIME_LANG:-zh_CN}" \
+  "$ROOT_DIR/scripts/ops/odoo_shell_exec.sh" <"$ROOT_DIR/scripts/verify/runtime_language_baseline_probe.py"
 
 echo "[fresh.production.history.init] step=history_replay"
 DB_NAME="$DB_NAME" HISTORY_CONTINUITY_MODE=replay bash "$ROOT_DIR/scripts/migration/history_continuity_oneclick.sh"

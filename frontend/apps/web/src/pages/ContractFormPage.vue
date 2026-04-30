@@ -53,7 +53,7 @@
         <p v-if="strictContractDefaultsSummary" class="contract-missing-defaults">{{ strictContractDefaultsSummary }}</p>
       </section>
 
-      <section v-if="workflowTransitions.length && !isProjectIntakeCreateMode" class="block">
+      <section v-if="workflowTransitions.length && !isProjectIntakeCreateMode && !useNativeFormTree" class="block">
         <h3>流程操作</h3>
         <div class="chips">
           <button
@@ -111,7 +111,57 @@
         <p v-if="visibleFieldNodeCount === 0" class="validation-warn">
           当前页面暂无可显示字段，请检查契约可见字段与角色权限配置。
         </p>
+        <section v-if="nativeStatusbar.visible" class="native-statusbar" aria-label="项目状态">
+          <button
+            v-for="item in nativeStatusbar.states"
+            :key="String(item.value)"
+            type="button"
+            class="native-statusbar-step"
+            :class="{
+              'native-statusbar-step--active': nativeStatusbar.current === String(item.value),
+              'native-statusbar-step--done': nativeStatusbar.reachedValues.includes(String(item.value)),
+            }"
+            :disabled="busy || nativeStatusbar.readonly"
+            @click="setStatusbarValue(String(item.value))"
+          >
+            {{ item.label }}
+          </button>
+        </section>
+        <NativeFormTreeRenderer
+          v-if="useNativeFormTree"
+          :nodes="nativeFormLayoutNodes"
+          :field-schemas-for-nodes="nativeFieldSchemasForNodes"
+          :is-node-visible="isNativeLayoutNodeVisible"
+          :columns="2"
+          @field-change="onTemplateFieldChange"
+          @native-action="runNativeLayoutAction"
+        >
+          <template #readonly="{ field }">
+            <FieldValue :value="field.value" :field="field.descriptor" />
+          </template>
+          <template #fallback="{ field }">
+            <RelationFallbackRenderer :field="field" :adapter="relationFallbackAdapter" />
+          </template>
+          <template #chatter>
+            <section v-if="nativeChatterActions.length && !isProjectIntakeCreateMode" class="block native-chatter-block">
+              <h3>{{ nativeChatterTitle }}</h3>
+              <div class="chips">
+                <button
+                  v-for="action in nativeChatterActions"
+                  :key="`chatter-${action.key}`"
+                  class="chip-btn"
+                  type="button"
+                  :disabled="true"
+                  :title="action.hint"
+                >
+                  {{ action.label }}
+                </button>
+              </div>
+            </section>
+          </template>
+        </NativeFormTreeRenderer>
         <FormSectionTemplate
+          v-else
           v-for="section in templateSections"
           :key="section.key"
           :title="section.title"
@@ -133,7 +183,7 @@
             <RelationFallbackRenderer :field="field" :adapter="relationFallbackAdapter" />
           </template>
         </FormSectionTemplate>
-        <div v-if="hasAdvancedFields && !isProjectIntakeCreateMode" class="layout-divider advanced-toggle">
+        <div v-if="hasAdvancedFields && !isProjectIntakeCreateMode && !useNativeFormTree" class="layout-divider advanced-toggle">
           <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
             {{ advancedExpanded ? '收起高级信息' : '展开高级信息' }}
           </button>
@@ -150,7 +200,7 @@
         </template>
       </PageFooterTemplate>
 
-      <section v-if="bodyActions.length && !isProjectIntakeCreateMode" class="block">
+      <section v-if="bodyActions.length && !isProjectIntakeCreateMode && !useNativeFormTree" class="block">
         <h3>可执行操作</h3>
         <div class="chips">
           <button
@@ -165,6 +215,22 @@
           </button>
         </div>
       </section>
+
+      <section v-if="nativeChatterActions.length && !isProjectIntakeCreateMode && !hasNativeChatterNode" class="block native-chatter-block">
+        <h3>{{ nativeChatterTitle }}</h3>
+        <div class="chips">
+          <button
+            v-for="action in nativeChatterActions"
+            :key="`chatter-${action.key}`"
+            class="chip-btn"
+            type="button"
+            :disabled="true"
+            :title="action.hint"
+          >
+            {{ action.label }}
+          </button>
+        </div>
+      </section>
     </section>
 
     <DevContextPanel
@@ -172,6 +238,91 @@
       title="表单上下文"
       :entries="hudEntries"
     />
+
+    <div
+      v-if="relationSearchDialog.open"
+      class="relation-dialog-backdrop"
+      role="dialog"
+      aria-modal="true"
+      @keydown.esc="closeRelationSearchDialog"
+    >
+      <section class="relation-dialog">
+        <header class="relation-dialog-head">
+          <h3>{{ relationSearchDialog.title }}</h3>
+          <button class="relation-dialog-close" type="button" :disabled="busy" :aria-label="relationSearchDialog.labels.close" @click="closeRelationSearchDialog">×</button>
+        </header>
+        <div class="relation-dialog-search">
+          <input
+            class="input"
+            type="text"
+            :value="relationSearchDialog.keyword"
+            :placeholder="relationSearchDialog.labels.search_placeholder"
+            @input="setRelationSearchKeyword(($event.target as HTMLInputElement).value)"
+            @keydown.enter.prevent="runRelationSearch"
+          />
+          <button class="chip-btn" type="button" :disabled="relationSearchDialog.loading" @click="runRelationSearch">{{ relationSearchDialog.labels.search }}</button>
+        </div>
+        <p v-if="relationSearchDialog.error" class="validation-error">{{ relationSearchDialog.error }}</p>
+        <div class="relation-dialog-table-wrap">
+          <table class="relation-dialog-table">
+            <thead>
+              <tr>
+                <th class="relation-dialog-select-col"></th>
+                <th v-for="column in relationSearchDialog.columns" :key="column.name">
+                  {{ column.label }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="row in relationSearchDialog.rows"
+                :key="`rel-${row.id}`"
+                :class="{ 'relation-dialog-row--active': relationSearchDialog.selectedId === row.id }"
+                @click="selectRelationSearchRow(row)"
+                @dblclick="confirmRelationSearchSelection(row)"
+              >
+                <td class="relation-dialog-select-col">
+                  <input
+                    type="radio"
+                    name="relation-search-select"
+                    :checked="relationSearchDialog.selectedId === row.id"
+                    @change="selectRelationSearchRow(row)"
+                  />
+                </td>
+                <td v-for="column in relationSearchDialog.columns" :key="`${row.id}-${column.name}`">
+                  {{ relationSearchCell(row, column.name) }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p v-if="!relationSearchDialog.loading && !relationSearchDialog.rows.length" class="relation-dialog-empty">
+            {{ relationSearchDialog.labels.empty }}
+          </p>
+        </div>
+        <footer class="relation-dialog-footer">
+          <span class="relation-dialog-count">{{ relationRecordCountLabel }}</span>
+          <span class="relation-dialog-footer-spacer"></span>
+          <button
+            class="primary"
+            type="button"
+            :disabled="busy || relationSearchDialog.loading || !relationSearchDialog.selectedId"
+            @click="() => confirmRelationSearchSelection()"
+          >
+            {{ relationSearchDialog.labels.select }}
+          </button>
+          <button
+            v-if="relationSearchDialog.createMode !== 'none'"
+            class="ghost"
+            type="button"
+            :disabled="busy || relationSearchDialog.loading"
+            @click="createRelationFromSearchDialog"
+          >
+            {{ relationSearchDialog.labels.create }}
+          </button>
+          <button class="ghost" type="button" :disabled="busy" @click="closeRelationSearchDialog">{{ relationSearchDialog.labels.cancel }}</button>
+        </footer>
+      </section>
+    </div>
   </LayoutShell>
 </template>
 
@@ -184,6 +335,7 @@ import DevContextPanel from '../components/DevContextPanel.vue';
 import LayoutShell from '../components/template/LayoutShell.vue';
 import PageHeaderTemplate from '../components/template/PageHeader.vue';
 import FormSectionTemplate from '../components/template/FormSection.vue';
+import NativeFormTreeRenderer, { type NativeFormLayoutNode } from '../components/template/NativeFormTreeRenderer.vue';
 import PageFooterTemplate from '../components/template/PageFooter.vue';
 import RelationFallbackRenderer from '../components/template/RelationFallbackRenderer.vue';
 import type { FormSectionFieldSchema, FormSectionFieldChange } from '../components/template/formSection.types';
@@ -228,6 +380,7 @@ import { isCoreSceneStrictMode } from '../app/contractStrictMode';
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
 const MANY2ONE_CREATE_OPTION = '__create__';
+const MANY2ONE_SEARCH_MORE_OPTION = '__search_more__';
 
 type ContractAction = {
   key: string;
@@ -268,6 +421,8 @@ type LayoutNode = {
   label: string;
   readonly: boolean;
   required: boolean;
+  widget?: string;
+  widgetSemantics?: Record<string, unknown>;
   descriptor?: FieldDescriptor;
 };
 
@@ -289,6 +444,24 @@ type TemplateSectionView = {
 
 type RelationOption = {
   id: number;
+  label: string;
+};
+
+type RelationSearchColumn = {
+  name: string;
+  label: string;
+};
+
+type RelationSearchRow = {
+  id: number;
+  label: string;
+  values: Record<string, unknown>;
+};
+
+type RelationUiLabels = Record<string, string>;
+
+type StatusbarState = {
+  value: string | number;
   label: string;
 };
 
@@ -351,6 +524,33 @@ const advancedExpanded = ref(false);
 const relationOptions = ref<Record<string, RelationOption[]>>({});
 const relationFieldDescriptors = ref<Record<string, Record<string, FieldDescriptor>>>({});
 const relationKeywords = reactive<Record<string, string>>({});
+const relationSearchDialog = reactive<{
+  open: boolean;
+  fieldName: string;
+  title: string;
+  keyword: string;
+  loading: boolean;
+  error: string;
+  options: RelationOption[];
+  rows: RelationSearchRow[];
+  columns: RelationSearchColumn[];
+  selectedId: number | null;
+  createMode: 'none' | 'quick' | 'page';
+  labels: RelationUiLabels;
+}>({
+  open: false,
+  fieldName: '',
+  title: '',
+  keyword: '',
+  loading: false,
+  error: '',
+  options: [],
+  rows: [],
+  columns: [],
+  selectedId: null,
+  createMode: 'none',
+  labels: {},
+});
 const deniedRelationModels = new Set<string>();
 const one2manyRows = reactive<Record<string, One2ManyInlineRow[]>>({});
 const relationQueryTimers: Record<string, ReturnType<typeof setTimeout>> = {};
@@ -417,6 +617,11 @@ const rights = computed(() => {
 });
 
 const canSave = computed(() => (recordId.value ? rights.value.write : rights.value.create));
+const relationRecordCountLabel = computed(() => {
+  const template = relationSearchDialog.labels.record_count || '';
+  const count = String(relationSearchDialog.rows.length);
+  return template.includes('%s') ? template.replace('%s', count) : `${count} ${template}`.trim();
+});
 const isProjectQuickIntakeMode = computed(() => {
   if (String(model.value || '').trim() !== 'project.project') return false;
   if (recordId.value) return false;
@@ -447,7 +652,22 @@ const standardCreateReady = computed(() => {
   const managerId = Number(formData.manager_id || 0);
   return Boolean(projectName) && Number.isFinite(managerId) && managerId > 0;
 });
+
+function hasPendingInlineRelationChange() {
+  return layoutNodes.value.some((node) => {
+    if (node.kind !== 'field' || node.readonly) return false;
+    const descriptor = contract.value?.fields?.[node.name];
+    if (fieldType(descriptor) !== 'many2one') return false;
+    const inline = relationInlineCreate(node.name, descriptor);
+    if (!inline.enabled || !inline.createOnNoMatch) return false;
+    const currentId = Number(formData[node.name] || 0);
+    if (Number.isFinite(currentId) && currentId > 0) return false;
+    return Boolean(relationKeyword(node.name).trim());
+  });
+}
+
 const hasChanges = computed(() => {
+  if (hasPendingInlineRelationChange()) return true;
   const keys = Object.keys(formData);
   return keys.some((key) => {
     if (!isFieldWritable(key)) return false;
@@ -555,6 +775,7 @@ const normalCreateButtonLabel = computed(() => (busy.value && busyKind.value ===
 
 const headerActionsVisible = computed(() => {
   if (isProjectIntakeCreateMode.value) return [];
+  if (useNativeFormTree.value) return [];
   return headerActions.value;
 });
 
@@ -780,6 +1001,7 @@ const searchFilters = computed(() => {
 });
 
 const showSearchFilters = computed(() => {
+  if (useNativeFormTree.value) return false;
   if (!contract.value) return true;
   if (renderProfile.value !== 'create') return true;
   return !contract.value.hide_filters_on_create;
@@ -816,6 +1038,12 @@ function normalizeRelationIds(value: unknown): number[] {
 
 function relationIds(name: string): number[] {
   return normalizeRelationIds(formData[name]);
+}
+
+function selectedRelationOptions(name: string): RelationOption[] {
+  const options = relationOptionsForField(name);
+  const byId = new Map(options.map((option) => [option.id, option]));
+  return relationIds(name).map((id) => byId.get(id) || { id, label: `#${id}` });
 }
 
 function many2oneValue(name: string) {
@@ -858,6 +1086,17 @@ function upsertRelationOption(fieldName: string, option: RelationOption | null) 
   };
 }
 
+function mergeRelationOptions(fieldName: string, options: RelationOption[]) {
+  const current = Array.isArray(relationOptions.value[fieldName]) ? relationOptions.value[fieldName] : [];
+  const byId = new Map<number, RelationOption>();
+  for (const item of current) byId.set(item.id, item);
+  for (const item of options) byId.set(item.id, item);
+  relationOptions.value = {
+    ...relationOptions.value,
+    [fieldName]: Array.from(byId.values()),
+  };
+}
+
 function relationKeyword(name: string) {
   return String(relationKeywords[name] || '');
 }
@@ -879,61 +1118,6 @@ function one2manyRelationFieldDescriptor(fieldName: string, column: string) {
   return descriptor || null;
 }
 
-function one2manyFallbackColumns(name: string): One2ManyColumn[] {
-  const model = one2manyRelationModel(name);
-  const descriptors = model ? relationFieldDescriptors.value[model] || {} : {};
-  const preferred = [
-    'qty_contract',
-    'price_contract',
-    'note',
-    'boq_line_id',
-    'boq_code',
-    'boq_name',
-    'qty',
-    'price_unit',
-    'amount',
-  ];
-  const blocked = new Set([
-    'id',
-    'display_name',
-    'contract_id',
-    'project_id',
-    'currency_id',
-    'company_id',
-    'create_uid',
-    'create_date',
-    'write_uid',
-    'write_date',
-  ]);
-  const technicalPrefixes = ['message_', 'activity_', 'website_', 'rating_'];
-  const names = [
-    ...preferred,
-    ...Object.keys(descriptors),
-  ].filter((fieldName, index, rows) => {
-    const normalized = String(fieldName || '').trim();
-    if (!normalized || rows.indexOf(normalized) !== index) return false;
-    if (blocked.has(normalized)) return false;
-    if (technicalPrefixes.some((prefix) => normalized.startsWith(prefix))) return false;
-    const descriptor = descriptors[normalized];
-    if (!descriptor) return false;
-    if (Boolean(descriptor.readonly)) return false;
-    const ttype = fieldType(descriptor);
-    if (['one2many', 'many2many', 'binary', 'html'].includes(ttype)) return false;
-    return true;
-  });
-
-  return names.slice(0, 4).map((fieldName) => {
-    const descriptor = descriptors[fieldName];
-    return {
-      name: fieldName,
-      label: String(descriptor?.string || fieldName),
-      ttype: fieldType(descriptor) || 'char',
-      required: Boolean(descriptor?.required),
-      selection: Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined,
-    };
-  });
-}
-
 function one2manyColumns(name: string): One2ManyColumn[] {
   const subviews = (contract.value?.views?.form as Record<string, unknown> | undefined)?.subviews;
   const fieldSubview = subviews && typeof subviews === 'object'
@@ -950,12 +1134,13 @@ function one2manyColumns(name: string): One2ManyColumn[] {
     columnsRaw.forEach((item) => {
       if (typeof item === 'string') {
         const normalized = item.trim();
-        if (!normalized || normalized === 'id') return;
+        if (!normalized) return;
         const descriptor = one2manyRelationFieldDescriptor(name, normalized);
+        const ttype = fieldType(descriptor) || 'char';
         out.push({
           name: normalized,
           label: String(descriptor?.string || normalized),
-          ttype: fieldType(descriptor) || 'char',
+          ttype,
           required: Boolean(descriptor?.required),
           selection: Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined,
         });
@@ -964,30 +1149,41 @@ function one2manyColumns(name: string): One2ManyColumn[] {
       if (!item || typeof item !== 'object') return;
       const row = item as Record<string, unknown>;
       const colName = String(row.name || '').trim();
-      if (!colName || colName === 'id') return;
+      if (!colName) return;
       const descriptor = one2manyRelationFieldDescriptor(name, colName);
+      const ttype = String(row.ttype || fieldType(descriptor) || 'char').trim() || 'char';
       out.push({
         name: colName,
         label: String(row.label || row.string || descriptor?.string || colName).trim() || colName,
-        ttype: fieldType(descriptor) || 'char',
-        required: Boolean(descriptor?.required),
-        selection: Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined,
+        ttype,
+        required: Boolean(row.required || descriptor?.required),
+        selection: Array.isArray(row.selection)
+          ? row.selection as Array<[string, string]>
+          : (Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined),
       });
     });
   }
   if (!out.length) {
-    const fallbackColumns = one2manyFallbackColumns(name);
-    if (fallbackColumns.length) return fallbackColumns;
-    const descriptor = one2manyRelationFieldDescriptor(name, 'name');
-    return [{
-      name: 'name',
-      label: String(descriptor?.string || '名称'),
-      ttype: fieldType(descriptor) || 'char',
-      required: Boolean(descriptor?.required),
-      selection: Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined,
-    }];
+    return [];
   }
-  return out.slice(0, 4);
+  return out;
+}
+
+function one2manyPolicies(name: string) {
+  const subviews = (contract.value?.views?.form as Record<string, unknown> | undefined)?.subviews;
+  const fieldSubview = subviews && typeof subviews === 'object'
+    ? (subviews as Record<string, unknown>)[name]
+    : undefined;
+  const policies = fieldSubview && typeof fieldSubview === 'object'
+    ? (fieldSubview as Record<string, unknown>).policies
+    : undefined;
+  return policies && typeof policies === 'object'
+    ? policies as Record<string, unknown>
+    : {};
+}
+
+function one2manyCanCreate(name: string) {
+  return one2manyPolicies(name).can_create !== false;
 }
 
 function one2manyPrimaryColumn(name: string) {
@@ -1279,8 +1475,35 @@ function setRelationKeyword(name: string, keyword: string) {
     clearTimeout(relationQueryTimers[name]);
   }
   relationQueryTimers[name] = setTimeout(() => {
-    void queryRelationOptions(name, relationKeywords[name] || '');
+    const currentKeyword = relationKeywords[name] || '';
+    void queryRelationOptions(name, currentKeyword);
   }, 260);
+}
+
+function exactRelationOption(rows: RelationOption[], keyword: string) {
+  const normalized = String(keyword || '').trim().toLowerCase();
+  if (!normalized) return null;
+  return rows.find((row) => row.label.trim().toLowerCase() === normalized) || null;
+}
+
+function resolveRelationQuickFillOption(rows: RelationOption[], keyword: string) {
+  const normalized = String(keyword || '').trim();
+  if (!normalized) return null;
+  const lowered = normalized.toLowerCase();
+  const candidates = rows.filter((row) => row.label.trim().toLowerCase().includes(lowered));
+  const exact = exactRelationOption(candidates, normalized);
+  if (exact) return exact;
+  return candidates.length === 1 ? candidates[0] : null;
+}
+
+function hasAmbiguousRelationMatches(rows: RelationOption[], keyword: string) {
+  const normalized = String(keyword || '').trim().toLowerCase();
+  if (!normalized) return false;
+  const candidates = rows.filter((row) => row.label.trim().toLowerCase().includes(normalized));
+  const exactCount = candidates.filter((row) => row.label.trim().toLowerCase() === normalized).length;
+  if (exactCount > 1) return true;
+  if (exactCount === 1) return false;
+  return candidates.length > 1;
 }
 
 function filteredRelationOptions(name: string) {
@@ -1298,6 +1521,19 @@ function relationModel(name: string) {
 function sanitizeUiErrorMessage(raw: unknown, fallback: string) {
   const text = String(raw || '').trim();
   if (!text) return fallback;
+  const lower = text.toLowerCase();
+  if (
+    lower.includes('duplicate key value')
+    || lower.includes('unique constraint')
+    || lower.includes('already exists')
+    || text.includes('唯一')
+    || text.includes('已存在')
+  ) {
+    return fallback || text;
+  }
+  if (lower.includes('psycopg2') || lower.includes('traceback') || lower.includes('sql')) {
+    return fallback;
+  }
   // Do not expose raw success envelopes as UI errors.
   if (text.startsWith('{') && text.includes('"ok"') && text.includes('"data"')) {
     if (text.includes('"ok": true') || text.includes('"records"')) {
@@ -1318,6 +1554,9 @@ function relationEntry(descriptor?: FieldDescriptor) {
   const defaultVals = row.default_vals && typeof row.default_vals === 'object' && !Array.isArray(row.default_vals)
     ? (row.default_vals as Record<string, unknown>)
     : {};
+  const inlineRaw = row.inline_create && typeof row.inline_create === 'object' && !Array.isArray(row.inline_create)
+    ? row.inline_create as Record<string, unknown>
+    : {};
   return {
     model: String(row.model || '').trim(),
     actionId,
@@ -1327,7 +1566,29 @@ function relationEntry(descriptor?: FieldDescriptor) {
     createMode,
     defaultVals,
     reasonCode: String(row.reason_code || '').trim(),
+    inlineCreate: {
+      enabled: inlineRaw.enabled === true,
+      createOnNoMatch: inlineRaw.create_on_no_match === true,
+      nameField: String(inlineRaw.name_field || 'name').trim() || 'name',
+    },
   };
+}
+
+function relationUiLabels(descriptor?: FieldDescriptor): RelationUiLabels {
+  const entry = (descriptor as Record<string, unknown> | undefined)?.relation_entry;
+  const labels = entry && typeof entry === 'object' && !Array.isArray(entry)
+    ? (entry as Record<string, unknown>).ui_labels
+    : null;
+  if (!labels || typeof labels !== 'object' || Array.isArray(labels)) return {};
+  return Object.entries(labels as Record<string, unknown>).reduce<RelationUiLabels>((acc, [key, value]) => {
+    const label = String(value || '').trim();
+    if (key && label) acc[key] = label;
+    return acc;
+  }, {});
+}
+
+function relationUiLabel(descriptor: FieldDescriptor | undefined, key: string, fallback = '') {
+  return relationUiLabels(descriptor)[key] || fallback || key;
 }
 
 function relationCreateMode(_fieldName: string, descriptor?: FieldDescriptor): 'page' | 'quick' | 'none' {
@@ -1339,6 +1600,16 @@ function relationCreateMode(_fieldName: string, descriptor?: FieldDescriptor): '
   if (entry.createMode === 'page' && entry.actionId) return 'page';
   if (entry.createMode === 'quick' && entry.canCreate) return 'quick';
   return 'none';
+}
+
+function relationInlineCreate(_fieldName: string, descriptor?: FieldDescriptor) {
+  const entry = relationEntry(descriptor);
+  if (!entry?.inlineCreate?.enabled) return { enabled: false, createOnNoMatch: false, nameField: '' };
+  return {
+    enabled: true,
+    createOnNoMatch: entry.inlineCreate.createOnNoMatch,
+    nameField: entry.inlineCreate.nameField,
+  };
 }
 
 function relationDomain(descriptor?: FieldDescriptor) {
@@ -1365,16 +1636,16 @@ function mergedRelationDomain(name: string, descriptor?: FieldDescriptor) {
   return out.length ? out : undefined;
 }
 
-async function queryRelationOptions(name: string, keyword: string) {
+async function queryRelationOptions(name: string, keyword: string): Promise<RelationOption[]> {
   const descriptor = contract.value?.fields?.[name];
   const relation = relationModel(name);
-  if (!relation) return;
+  if (!relation) return [];
   const entry = relationEntry(descriptor);
   if (entry && entry.canRead === false) {
     deniedRelationModels.add(relation);
-    return;
+    return [];
   }
-  if (deniedRelationModels.has(relation)) return;
+  if (deniedRelationModels.has(relation)) return [];
   const search = String(keyword || '').trim();
   const domain = mergedRelationDomain(name, descriptor);
   try {
@@ -1404,13 +1675,261 @@ async function queryRelationOptions(name: string, keyword: string) {
       ...relationOptions.value,
       [name]: mapped,
     };
+    return mapped;
   } catch (err) {
     if (err instanceof ApiError) {
       const denied = err.status === 403 || String(err.reasonCode || '').toUpperCase() === 'PERMISSION_DENIED';
       if (denied) deniedRelationModels.add(relation);
     }
     // keep existing options if remote query fails
+    return [];
   }
+}
+
+async function fetchRelationOptions(name: string, keyword: string, limit = 80): Promise<RelationOption[]> {
+  const descriptor = contract.value?.fields?.[name];
+  const relation = relationModel(name);
+  if (!relation) return [];
+  const entry = relationEntry(descriptor);
+  if (entry && entry.canRead === false) return [];
+  const domain = mergedRelationDomain(name, descriptor);
+  const listed = await listRecords({
+    model: relation,
+    fields: ['id', 'name', 'display_name'],
+    limit,
+    order: 'id desc',
+    domain,
+    search_term: String(keyword || '').trim() || undefined,
+    silentErrors: true,
+  });
+  const records = Array.isArray(listed?.records) ? listed.records : [];
+  return records
+    .map((row) => {
+      const id = Number((row as Record<string, unknown>).id);
+      if (!Number.isFinite(id) || id <= 0) return null;
+      const label = String(
+        (row as Record<string, unknown>).display_name
+        || (row as Record<string, unknown>).name
+        || `#${id}`,
+      ).trim();
+      return { id: Math.trunc(id), label };
+    })
+    .filter((item): item is RelationOption => Boolean(item));
+}
+
+function fallbackRelationSearchColumns(name: string): RelationSearchColumn[] {
+  const descriptor = contract.value?.fields?.[name];
+  return [{
+    name: 'display_name',
+    label: String(descriptor?.string || '名称'),
+  }];
+}
+
+function normalizeRelationSearchColumns(data: Record<string, unknown> | undefined, fieldName: string): RelationSearchColumn[] {
+  const fields = data?.fields && typeof data.fields === 'object'
+    ? data.fields as Record<string, FieldDescriptor>
+    : {};
+  const views = data?.views && typeof data.views === 'object'
+    ? data.views as Record<string, unknown>
+    : {};
+  const tree = views.tree && typeof views.tree === 'object'
+    ? views.tree as Record<string, unknown>
+    : {};
+  const rawColumns = Array.isArray(tree.columns_schema) && tree.columns_schema.length
+    ? tree.columns_schema
+    : Array.isArray(tree.columns)
+      ? tree.columns
+      : [];
+  const out: RelationSearchColumn[] = [];
+  for (const item of rawColumns) {
+    const row = item && typeof item === 'object' ? item as Record<string, unknown> : null;
+    const name = String(row?.name || item || '').trim();
+    if (!name || name === 'id') continue;
+    const field = fields[name];
+    const label = String(row?.label || row?.string || field?.string || name).trim();
+    out.push({ name, label });
+    if (out.length >= 6) break;
+  }
+  if (!out.length) return fallbackRelationSearchColumns(fieldName);
+  return out;
+}
+
+async function loadRelationSearchColumns(fieldName: string): Promise<RelationSearchColumn[]> {
+  const relation = relationModel(fieldName);
+  if (!relation) return fallbackRelationSearchColumns(fieldName);
+  try {
+    const response = await loadModelContractRaw(relation, {
+      viewType: 'tree',
+      renderProfile: 'readonly',
+    });
+    const data = response?.data && typeof response.data === 'object'
+      ? response.data as Record<string, unknown>
+      : response as unknown as Record<string, unknown>;
+    return normalizeRelationSearchColumns(data, fieldName);
+  } catch {
+    return fallbackRelationSearchColumns(fieldName);
+  }
+}
+
+function relationSearchReadFields(columns: RelationSearchColumn[]) {
+  const out = new Set<string>(['id', 'display_name', 'name']);
+  for (const column of columns) {
+    if (column.name) out.add(column.name);
+  }
+  return Array.from(out);
+}
+
+async function fetchRelationSearchRows(name: string, keyword: string, limit = 120): Promise<RelationSearchRow[]> {
+  const descriptor = contract.value?.fields?.[name];
+  const relation = relationModel(name);
+  if (!relation) return [];
+  const entry = relationEntry(descriptor);
+  if (entry && entry.canRead === false) return [];
+  const domain = mergedRelationDomain(name, descriptor);
+  const columns = relationSearchDialog.columns.length ? relationSearchDialog.columns : fallbackRelationSearchColumns(name);
+  const listed = await listRecords({
+    model: relation,
+    fields: relationSearchReadFields(columns),
+    limit,
+    order: 'id desc',
+    domain,
+    search_term: String(keyword || '').trim() || undefined,
+    silentErrors: true,
+  });
+  const records = Array.isArray(listed?.records) ? listed.records : [];
+  return records
+    .map((row) => {
+      const values = row as Record<string, unknown>;
+      const id = Number(values.id);
+      if (!Number.isFinite(id) || id <= 0) return null;
+      const firstColumn = columns[0]?.name || '';
+      const label = String(values.display_name || values.name || values[firstColumn] || `#${id}`).trim();
+      return { id: Math.trunc(id), label, values };
+    })
+    .filter((item): item is RelationSearchRow => Boolean(item));
+}
+
+function closeRelationSearchDialog() {
+  relationSearchDialog.open = false;
+  relationSearchDialog.fieldName = '';
+  relationSearchDialog.error = '';
+  relationSearchDialog.selectedId = null;
+}
+
+async function openRelationSearchDialog(fieldName: string, descriptor?: FieldDescriptor) {
+  const relation = relationModel(fieldName);
+  if (!relation) return;
+  const labels = relationUiLabels(descriptor);
+  relationSearchDialog.open = true;
+  relationSearchDialog.fieldName = fieldName;
+  relationSearchDialog.labels = labels;
+  relationSearchDialog.title = labels.dialog_title || '';
+  relationSearchDialog.keyword = relationKeyword(fieldName);
+  relationSearchDialog.error = '';
+  relationSearchDialog.options = [];
+  relationSearchDialog.rows = [];
+  relationSearchDialog.columns = fallbackRelationSearchColumns(fieldName);
+  relationSearchDialog.selectedId = null;
+  relationSearchDialog.createMode = relationCreateMode(fieldName, descriptor);
+  relationSearchDialog.columns = await loadRelationSearchColumns(fieldName);
+  await runRelationSearch();
+}
+
+function setRelationSearchKeyword(keyword: string) {
+  relationSearchDialog.keyword = keyword;
+}
+
+async function runRelationSearch() {
+  const fieldName = relationSearchDialog.fieldName;
+  if (!fieldName) return;
+  relationSearchDialog.loading = true;
+  relationSearchDialog.error = '';
+  try {
+    const rows = await fetchRelationSearchRows(fieldName, relationSearchDialog.keyword, 120);
+    relationSearchDialog.rows = rows;
+    relationSearchDialog.options = rows.map((row) => ({ id: row.id, label: row.label }));
+    relationSearchDialog.selectedId = null;
+    relationOptions.value = {
+      ...relationOptions.value,
+      [fieldName]: relationSearchDialog.options,
+    };
+  } catch (err) {
+    relationSearchDialog.error = sanitizeUiErrorMessage(
+      err instanceof Error ? err.message : err,
+      relationSearchDialog.labels.search_failed || '',
+    );
+  } finally {
+    relationSearchDialog.loading = false;
+  }
+}
+
+function relationSearchCell(row: RelationSearchRow, columnName: string) {
+  const value = row.values[columnName];
+  if (value === null || value === undefined || value === false) return '';
+  if (Array.isArray(value)) {
+    if (value.length >= 2) return String(value[1] ?? '');
+    return value.map((item) => String(item ?? '')).filter(Boolean).join(', ');
+  }
+  if (typeof value === 'object') {
+    const rec = value as Record<string, unknown>;
+    return String(rec.display_name || rec.name || rec.id || '');
+  }
+  if (typeof value === 'boolean') return value ? '是' : '否';
+  return String(value);
+}
+
+function selectRelationSearchRow(row: RelationSearchRow) {
+  relationSearchDialog.selectedId = row.id;
+}
+
+function confirmRelationSearchSelection(rowArg?: RelationSearchRow) {
+  const row = rowArg || relationSearchDialog.rows.find((item) => item.id === relationSearchDialog.selectedId);
+  if (!row) return;
+  selectRelationSearchOption({ id: row.id, label: row.label });
+}
+
+function selectRelationSearchOption(option: RelationOption) {
+  const fieldName = relationSearchDialog.fieldName;
+  if (!fieldName) return;
+  setMany2oneOption(fieldName, option);
+  closeRelationSearchDialog();
+}
+
+function setMany2oneOption(fieldName: string, option: RelationOption) {
+  formData[fieldName] = option.id;
+  markFieldChanged(fieldName);
+  relationKeywords[fieldName] = option.label;
+  mergeRelationOptions(fieldName, [option]);
+}
+
+async function createRelationFromSearchDialog() {
+  const fieldName = relationSearchDialog.fieldName;
+  if (!fieldName) return;
+  const descriptor = contract.value?.fields?.[fieldName];
+  const label = relationSearchDialog.keyword.trim();
+  if (!label) {
+    relationSearchDialog.error = relationSearchDialog.labels.missing_name || '';
+    return;
+  }
+  const exact = relationSearchDialog.options.find((item) => item.label.trim().toLowerCase() === label.toLowerCase());
+  if (exact) {
+    selectRelationSearchOption(exact);
+    return;
+  }
+  const mode = relationCreateMode(fieldName, descriptor);
+  if (mode === 'quick') {
+    validationErrors.value = [];
+    await quickCreateRelation(fieldName, descriptor, label, { stayInDialog: true });
+    if (!validationErrors.value.length) {
+      closeRelationSearchDialog();
+    } else {
+      relationSearchDialog.error = validationErrors.value.join('；');
+      validationErrors.value = [];
+    }
+    return;
+  }
+  closeRelationSearchDialog();
+  await openRelationCreateForm(fieldName, descriptor);
 }
 
 async function ensureRelationFieldDescriptors(name: string) {
@@ -1439,41 +1958,19 @@ async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescr
   if (!relation) return;
   const mode = relationCreateMode(fieldName, descriptor);
   if (mode === 'none') {
-    validationErrors.value = [`未找到 ${relation} 的新建入口，请联系管理员配置菜单动作`];
+    validationErrors.value = [relationUiLabel(descriptor, 'missing_create_entry')];
     return;
   }
   const entry = relationEntry(descriptor);
   const relationActionId = entry?.actionId || null;
   const menuId = entry?.menuId || 0;
-  const quickCreate = async () => {
-    const label = String(window.prompt('当前未配置维护页面，请输入新选项名称（快速新建）') || '').trim();
-    if (!label) return;
-    try {
-      const vals: Record<string, unknown> = { ...(entry?.defaultVals || {}), name: label };
-      if (relation === 'sc.dictionary' && typeof vals.type === 'string' && String(vals.type || '').trim()) {
-        vals.code = label.toUpperCase().replace(/\\s+/g, '_').slice(0, 60);
-      }
-      const created = await createRecord({ model: relation, vals });
-      const id = Number(created?.id || 0);
-      if (Number.isFinite(id) && id > 0) {
-        formData[fieldName] = Math.trunc(id);
-        markFieldChanged(fieldName);
-        relationKeywords[fieldName] = label;
-        await queryRelationOptions(fieldName, label);
-      }
-      return;
-    } catch (err) {
-      const message = sanitizeUiErrorMessage(err instanceof Error ? err.message : err, '快速新建失败');
-      validationErrors.value = [message];
-      return;
-    }
-  };
   if (!relationActionId && mode === 'quick') {
-    await quickCreate();
+    const label = String(window.prompt(relationUiLabel(descriptor, 'quick_create_prompt')) || '').trim();
+    if (label) await quickCreateRelation(fieldName, descriptor, label);
     return;
   }
   if (!relationActionId) {
-    validationErrors.value = [`未找到 ${relation} 的维护页面入口，请联系管理员配置 action/menu`];
+    validationErrors.value = [relationUiLabel(descriptor, 'missing_page_entry')];
     return;
   }
   const defaultQuery = Object.entries(entry?.defaultVals || {}).reduce<Record<string, unknown>>((acc, [key, value]) => {
@@ -1503,10 +2000,46 @@ async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescr
     });
   } catch (err) {
     if (relation === 'sc.dictionary' && mode === 'page' && entry?.canCreate && Object.keys(entry?.defaultVals || {}).length) {
-      await quickCreate();
+      const label = String(window.prompt(relationUiLabel(descriptor, 'page_unavailable_prompt')) || '').trim();
+      if (label) await quickCreateRelation(fieldName, descriptor, label);
       return;
     }
-    validationErrors.value = [sanitizeUiErrorMessage(err instanceof Error ? err.message : err, '跳转新建页面失败')];
+    validationErrors.value = [sanitizeUiErrorMessage(err instanceof Error ? err.message : err, relationUiLabel(descriptor, 'create_page_failed'))];
+  }
+}
+
+async function quickCreateRelation(
+  fieldName: string,
+  descriptor: FieldDescriptor | undefined,
+  label: string,
+  options: { stayInDialog?: boolean } = {},
+) {
+  const relation = String((descriptor as Record<string, unknown> | undefined)?.relation || '').trim();
+  if (!relation) return;
+  const entry = relationEntry(descriptor);
+  try {
+    const existing = await fetchRelationOptions(fieldName, label, 20);
+    const exact = existing.find((item) => item.label.trim().toLowerCase() === label.trim().toLowerCase());
+    if (exact) {
+      setMany2oneOption(fieldName, exact);
+      return;
+    }
+    const inline = relationInlineCreate(fieldName, descriptor);
+    const nameField = inline.nameField || 'name';
+    const vals: Record<string, unknown> = { ...(entry?.defaultVals || {}), [nameField]: label };
+    if (relation === 'sc.dictionary' && typeof vals.type === 'string' && String(vals.type || '').trim()) {
+      vals.code = label.toUpperCase().replace(/\\s+/g, '_').slice(0, 60);
+    }
+    const created = await createRecord({ model: relation, vals });
+    const id = Number(created?.id || 0);
+    if (Number.isFinite(id) && id > 0) {
+      const option = { id: Math.trunc(id), label };
+      setMany2oneOption(fieldName, option);
+      if (!options.stayInDialog) await queryRelationOptions(fieldName, label);
+    }
+  } catch (err) {
+    const message = sanitizeUiErrorMessage(err instanceof Error ? err.message : err, relationUiLabel(descriptor, 'quick_create_failed'));
+    validationErrors.value = [message];
   }
 }
 
@@ -1634,6 +2167,13 @@ const contractActions = computed<ContractAction[]>(() => {
     ? sceneReadyFormSurface.value.actions as Array<Record<string, unknown>>
     : [];
   const merged: Array<Record<string, unknown>> = [];
+  const nativeFormContract = contract.value?.views?.form as Record<string, unknown> | undefined;
+  if (Array.isArray(nativeFormContract?.header_buttons)) {
+    merged.push(...(nativeFormContract.header_buttons as Array<Record<string, unknown>>));
+  }
+  if (Array.isArray(nativeFormContract?.button_box)) {
+    merged.push(...(nativeFormContract.button_box as Array<Record<string, unknown>>));
+  }
   if (Array.isArray(contract.value?.buttons)) merged.push(...(contract.value?.buttons as Array<Record<string, unknown>>));
   if (Array.isArray(contract.value?.toolbar?.header)) merged.push(...(contract.value?.toolbar?.header as Array<Record<string, unknown>>));
   if (Array.isArray(contract.value?.toolbar?.sidebar)) merged.push(...(contract.value?.toolbar?.sidebar as Array<Record<string, unknown>>));
@@ -1659,7 +2199,10 @@ const contractActions = computed<ContractAction[]>(() => {
       out.push(mapped);
       continue;
     }
-    const key = String(row.key || '').trim();
+    const rowName = String(row.name || '').trim();
+    const rowLabel = String(row.label || '').trim();
+    const keyBase = String(row.key || rowName || rowLabel || '').trim();
+    const key = dedup.has(keyBase) && rowLabel ? `${keyBase}:${rowLabel}` : keyBase;
     if (!key || dedup.has(key)) continue;
     dedup.add(key);
     const payload = parseMaybeJsonRecord(row.payload);
@@ -1674,7 +2217,11 @@ const contractActions = computed<ContractAction[]>(() => {
     const target = String(payload.target || '').trim();
     const selectionRaw = String(row.selection || 'none').trim().toLowerCase();
     const selection = selectionRaw === 'single' || selectionRaw === 'multi' ? selectionRaw : 'none';
-    const groups = Array.isArray(row.groups_xmlids) ? (row.groups_xmlids as string[]) : [];
+    const groups = Array.isArray(row.groups_xmlids)
+      ? (row.groups_xmlids as string[])
+      : Array.isArray(payload.groups_xmlids)
+        ? (payload.groups_xmlids as string[])
+        : [];
     const visibleProfiles = (
       Array.isArray(row.visible_profiles) ? row.visible_profiles : ['create', 'edit']
     )
@@ -1720,6 +2267,83 @@ const contractActions = computed<ContractAction[]>(() => {
 
 const headerActions = computed(() => contractActions.value.filter((item) => item.level === 'header' || item.level === 'toolbar'));
 const bodyActions = computed(() => contractActions.value.filter((item) => item.level !== 'header' && item.level !== 'toolbar'));
+const nativeChatterActions = computed(() => {
+  const chatter = contract.value?.views?.form?.chatter as Record<string, unknown> | undefined;
+  if (!chatter || chatter.enabled !== true) return [];
+  const actions = Array.isArray(chatter.actions) ? chatter.actions as Array<Record<string, unknown>> : [];
+  return actions
+    .map((row) => ({
+      key: String(row.key || row.label || '').trim(),
+      label: String(row.label || row.key || '').trim(),
+      hint: String(row.intent || row.kind || '').trim(),
+    }))
+    .filter((row) => row.key && row.label);
+});
+
+const nativeChatterTitle = computed(() => {
+  const chatter = contract.value?.views?.form?.chatter as Record<string, unknown> | undefined;
+  return String(chatter?.label || '').trim();
+});
+
+const hasNativeChatterNode = computed(() => nativeLayoutContainsType(nativeFormLayoutNodes.value, 'chatter'));
+
+function nativeLayoutContainsType(nodes: NativeFormLayoutNode[], type: string): boolean {
+  const target = String(type || '').trim().toLowerCase();
+  for (const node of nodes || []) {
+    const current = String(node?.type || '').trim().toLowerCase();
+    if (current === target) return true;
+    const children: NativeFormLayoutNode[] = [];
+    for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
+      const value = node?.[key];
+      if (Array.isArray(value)) children.push(...value);
+    }
+    if (children.length && nativeLayoutContainsType(children, target)) return true;
+  }
+  return false;
+}
+
+function contractActionFromNativeRow(row: Record<string, unknown>): ContractAction | null {
+  const payload = parseMaybeJsonRecord(row.payload);
+  const rowName = String(row.name || '').trim();
+  const rowLabel = String(row.label || '').trim();
+  const key = String(row.key || rowName || rowLabel || '').trim();
+  if (!key) return null;
+  const kind = normalizeActionKind(row.kind);
+  const level = String(row.level || 'body').trim().toLowerCase();
+  const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref);
+  const methodName = detectMethodName(key, String(payload.method || '').trim());
+  const groups = Array.isArray(row.groups_xmlids)
+    ? (row.groups_xmlids as string[])
+    : Array.isArray(payload.groups_xmlids)
+      ? (payload.groups_xmlids as string[])
+      : [];
+  const byGroup = hasGroupAccess(groups);
+  const needRecord = kind === 'object' || kind === 'server' || level === 'row' || level === 'smart';
+  return {
+    key,
+    label: rowLabel || key,
+    kind,
+    level,
+    selection: 'none',
+    actionId,
+    methodName,
+    targetModel: String(row.target_model || row.model || model.value || '').trim(),
+    context: parseMaybeJsonRecord(payload.context_raw),
+    domainRaw: String(payload.domain_raw || '').trim(),
+    target: String(payload.target || '').trim(),
+    url: String(payload.url || '').trim(),
+    enabled: byGroup && (!needRecord || Boolean(recordId.value)),
+    hint: byGroup ? (needRecord && !recordId.value ? 'requires record id' : '') : 'permission denied',
+    semantic: '',
+    visibleProfiles: ['create', 'edit', 'readonly'],
+  };
+}
+
+async function runNativeLayoutAction(row: Record<string, unknown>) {
+  const action = contractActionFromNativeRow(row);
+  if (!action) return;
+  await runAction(action);
+}
 
 type SemanticFieldGroup = {
   name: string;
@@ -1971,6 +2595,269 @@ function isFieldVisible(name: string) {
   return renderProfile.value !== 'create';
 }
 
+const useNativeFormTree = computed(() => {
+  if (isProjectIntakeCreateMode.value) return false;
+  return nativeFormLayoutNodes.value.length > 0;
+});
+
+const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
+  const layout = contract.value?.views?.form?.layout;
+  return Array.isArray(layout) ? (layout as NativeFormLayoutNode[]) : [];
+});
+
+const nativeFavoriteFieldNames = computed(() => {
+  const names = new Set<string>();
+  collectNativeFavoriteFieldNames(nativeFormLayoutNodes.value, names);
+  return names;
+});
+
+const nativeStatusbar = computed(() => {
+  const formView = contract.value?.views?.form as Record<string, unknown> | undefined;
+  const raw = formView?.statusbar && typeof formView.statusbar === 'object'
+    ? formView.statusbar as Record<string, unknown>
+    : {};
+  const field = String(raw.field || '').trim();
+  const descriptor = field ? contract.value?.fields?.[field] : undefined;
+  const rawStates = Array.isArray(raw.states) ? raw.states as Array<Record<string, unknown>> : [];
+  const selectionStates = Array.isArray(descriptor?.selection)
+    ? descriptor.selection.map((item) => {
+      const pair = item as unknown[];
+      return { value: String(pair[0] ?? ''), label: String(pair[1] ?? pair[0] ?? '') };
+    })
+    : [];
+  const states: StatusbarState[] = (rawStates.length
+    ? rawStates.map((item) => ({ value: item.value as string | number, label: String(item.label || item.value || '') }))
+    : selectionStates)
+    .filter((item) => String(item.value ?? '').trim() && String(item.label || '').trim());
+  const current = String(formData[field] ?? '').trim();
+  const currentIndex = states.findIndex((item) => String(item.value) === current);
+  const state = field ? runtimeState(field) : { readonly: true };
+  return {
+    visible: Boolean(field && states.length),
+    field,
+    current,
+    states,
+    reachedValues: currentIndex >= 0 ? states.slice(0, currentIndex).map((item) => String(item.value)) : [],
+    readonly: Boolean(state.readonly || renderProfile.value === 'readonly' || (recordId.value ? !rights.value.write : !rights.value.create)),
+  };
+});
+
+function setStatusbarValue(value: string) {
+  const field = nativeStatusbar.value.field;
+  if (!field || nativeStatusbar.value.readonly) return;
+  formData[field] = value || false;
+  markFieldChanged(field);
+}
+
+function nativeModifierValue(nodeRaw: NativeFormLayoutNode, key: 'invisible' | 'readonly' | 'required') {
+  const node = nodeRaw as Record<string, unknown>;
+  const attributes = node.attributes && typeof node.attributes === 'object'
+    ? node.attributes as Record<string, unknown>
+    : {};
+  const fieldInfo = node.fieldInfo && typeof node.fieldInfo === 'object'
+    ? node.fieldInfo as Record<string, unknown>
+    : {};
+  const attributeModifiers = attributes.modifiers && typeof attributes.modifiers === 'object'
+    ? attributes.modifiers as Record<string, unknown>
+    : {};
+  const fieldInfoModifiers = fieldInfo.modifiers && typeof fieldInfo.modifiers === 'object'
+    ? fieldInfo.modifiers as Record<string, unknown>
+    : {};
+  const modifiers = node.modifiers && typeof node.modifiers === 'object'
+    ? node.modifiers as Record<string, unknown>
+    : {};
+  if (key in modifiers) return modifiers[key];
+  if (key in attributeModifiers) return attributeModifiers[key];
+  if (key in fieldInfoModifiers) return fieldInfoModifiers[key];
+  if (key in fieldInfo) return fieldInfo[key];
+  if (key in attributes) return attributes[key];
+  if (key in node) return node[key];
+  return undefined;
+}
+
+function compareNativeModifierValue(actual: unknown, operator: string, expected: unknown) {
+  const left = Array.isArray(actual) && typeof actual[0] === 'number' ? actual[0] : actual;
+  const key = String(operator || '').trim();
+  if (key === '=' || key === '==') return String(left ?? '') === String(expected ?? '');
+  if (key === '!=' || key === '<>') return String(left ?? '') !== String(expected ?? '');
+  if (key === 'in') return Array.isArray(expected) && expected.map((item) => String(item)).includes(String(left ?? ''));
+  if (key === 'not in') return Array.isArray(expected) && !expected.map((item) => String(item)).includes(String(left ?? ''));
+  if (key === '>') return Number(left) > Number(expected);
+  if (key === '>=') return Number(left) >= Number(expected);
+  if (key === '<') return Number(left) < Number(expected);
+  if (key === '<=') return Number(left) <= Number(expected);
+  return false;
+}
+
+function evaluateNativeModifierValue(value: unknown) {
+  if (typeof value === 'boolean') return value;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return isStaticTruthyModifier(value);
+  const row = value as Record<string, unknown>;
+  const kind = String(row.kind || '').trim();
+  if (kind === 'static') return Boolean(row.value);
+  if (kind === 'not') return !evaluateNativeModifierValue(row.expr);
+  if (kind === 'all') {
+    const exprs = Array.isArray(row.exprs) ? row.exprs : [];
+    return exprs.every((expr) => evaluateNativeModifierValue(expr));
+  }
+  if (kind === 'any') {
+    const exprs = Array.isArray(row.exprs) ? row.exprs : [];
+    return exprs.some((expr) => evaluateNativeModifierValue(expr));
+  }
+  const field = String(row.field || '').trim();
+  if (!field) return false;
+  if (kind === 'field_truthy') return Boolean(formData[field]);
+  if (kind === 'field_compare') return compareNativeModifierValue(formData[field], String(row.operator || ''), row.value);
+  return false;
+}
+
+function isNativeLayoutNodeVisible(nodeRaw: NativeFormLayoutNode) {
+  return !evaluateNativeModifierValue(nativeModifierValue(nodeRaw, 'invisible'));
+}
+
+function nativeNodeWidget(nodeRaw?: NativeFormLayoutNode) {
+  const node = nodeRaw as Record<string, unknown> | undefined;
+  const fieldInfo = node?.fieldInfo && typeof node.fieldInfo === 'object'
+    ? node.fieldInfo as Record<string, unknown>
+    : {};
+  return String(node?.widget || fieldInfo.widget || '').trim().toLowerCase();
+}
+
+function nativeNodeWidgetSemantics(nodeRaw?: NativeFormLayoutNode) {
+  const node = nodeRaw as Record<string, unknown> | undefined;
+  const fieldInfo = node?.fieldInfo && typeof node.fieldInfo === 'object'
+    ? node.fieldInfo as Record<string, unknown>
+    : {};
+  const semantics = fieldInfo.widget_semantics && typeof fieldInfo.widget_semantics === 'object'
+    ? fieldInfo.widget_semantics as Record<string, unknown>
+    : {};
+  return semantics;
+}
+
+function collectNativeFavoriteFieldNames(nodes: NativeFormLayoutNode[], out: Set<string>) {
+  for (const node of nodes) {
+    const name = String(node?.name || '').trim();
+    if (name && nativeNodeWidget(node) === 'boolean_favorite') {
+      out.add(name);
+    }
+    const children: NativeFormLayoutNode[] = [];
+    for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
+      const value = node?.[key];
+      if (Array.isArray(value)) children.push(...value);
+    }
+    if (children.length) collectNativeFavoriteFieldNames(children, out);
+  }
+}
+
+function isNativeFavoriteField(name: string) {
+  return nativeFavoriteFieldNames.value.has(String(name || '').trim());
+}
+
+function nativeFieldLabel(nodeRaw: NativeFormLayoutNode, descriptor?: FieldDescriptor) {
+  const node = nodeRaw as Record<string, unknown>;
+  const fieldInfo = node.fieldInfo && typeof node.fieldInfo === 'object'
+    ? node.fieldInfo as Record<string, unknown>
+    : {};
+  return String(
+    node.string
+    || node.label
+    || fieldInfo.string
+    || fieldInfo.label
+    || descriptor?.string
+    || nodeRaw.name
+    || '',
+  );
+}
+
+function isStaticTruthyModifier(value: unknown) {
+  if (value === true || value === 1) return true;
+  if (typeof value !== 'string') return false;
+  return ['1', 'true', 'True'].includes(value.trim());
+}
+
+function isNativeFieldVisible(name: string, nodeRaw?: NativeFormLayoutNode) {
+  const normalized = String(name || '').trim();
+  if (!normalized) return false;
+  if (nodeRaw && !isNativeLayoutNodeVisible(nodeRaw)) return false;
+  if (nodeRaw && nativeNodeWidget(nodeRaw) === 'statusbar') return false;
+  const semantic = fieldSemanticMeta(normalized);
+  if ((semantic.technical || semantic.semantic_type === 'technical') && !showHud.value) return false;
+  if (semantic.surface_role === 'hidden' && !showHud.value) return false;
+  const state = runtimeState(normalized);
+  if (state.invisible) return false;
+  const descriptor = contract.value?.fields?.[normalized];
+  if (!descriptor) return false;
+  const resolved = evaluateFieldPolicy(
+    contract.value,
+    normalized,
+    {
+      required: Boolean(descriptor?.required),
+      readonly: Boolean(descriptor?.readonly),
+    },
+    policyContext.value,
+  );
+  return Boolean(resolved.visible);
+}
+
+function nativeLayoutNodeToFieldNode(nodeRaw: NativeFormLayoutNode, index: number): LayoutNode | null {
+  const name = String(nodeRaw?.name || '').trim();
+  if (!name || !isNativeFieldVisible(name, nodeRaw)) return null;
+  const fieldGroups = contract.value?.permissions?.field_groups || {};
+  const groups = fieldGroups[name]?.groups_xmlids;
+  if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) return null;
+  const descriptor = contract.value?.fields?.[name];
+  if (!descriptor) return null;
+  const resolved = evaluateFieldPolicy(
+    contract.value,
+    name,
+    {
+      required: Boolean(descriptor?.required),
+      readonly: Boolean(descriptor?.readonly),
+    },
+    policyContext.value,
+  );
+  if (!resolved.visible) return null;
+  const state = runtimeState(name);
+  const nativeReadonly = isStaticTruthyModifier(nativeModifierValue(nodeRaw, 'readonly'));
+  const nativeRequired = isStaticTruthyModifier(nativeModifierValue(nodeRaw, 'required'));
+  return {
+    key: `native_field_${name}_${index}`,
+    kind: 'field',
+    name,
+    label: nativeFieldLabel(nodeRaw, descriptor),
+    readonly: Boolean(nativeReadonly || resolved.readonly || state.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
+    required: Boolean(nativeRequired || resolved.required || state.required || descriptor?.required),
+    widget: nativeNodeWidget(nodeRaw),
+    widgetSemantics: nativeNodeWidgetSemantics(nodeRaw),
+    descriptor,
+  };
+}
+
+function nativeFieldSchemasForNodes(nodes: NativeFormLayoutNode[]): FormSectionFieldSchema[] {
+  const mappedNodes = nodes
+    .map((node, index) => ({ raw: node, field: nativeLayoutNodeToFieldNode(node, index) }))
+    .filter((item): item is { raw: NativeFormLayoutNode; field: LayoutNode } => Boolean(item.field));
+  const favoriteNode = mappedNodes.find((item) => item.field.widget === 'boolean_favorite');
+  const fieldNodes = mappedNodes
+    .filter((item) => item !== favoriteNode)
+    .map((item) => item.field);
+  const schemas = buildSectionFieldSchemas(fieldNodes);
+  if (!favoriteNode || !schemas.length) return schemas;
+  const target = schemas.find((field) => field.name === 'name')
+    || schemas.find((field) => ['char', 'text'].includes(String(field.type || '').trim().toLowerCase()))
+    || schemas[0];
+  if (target) {
+    target.favoriteToggle = {
+      name: favoriteNode.field.name,
+      label: favoriteNode.field.label || favoriteNode.field.name,
+      active: Boolean(formData[favoriteNode.field.name]),
+      readonly: Boolean(favoriteNode.field.readonly || busy.value),
+      descriptor: favoriteNode.field.descriptor,
+    };
+  }
+  return schemas;
+}
+
 function shouldShowRequiredMark(node: LayoutNode) {
   if (node.kind !== 'field' || node.readonly) return false;
   if (!node.required) return false;
@@ -2152,7 +3039,29 @@ const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
   resolveSelectionOptions: (descriptor) => mapDescriptorSelectionOptions(descriptor),
   resolveRelationOptions: (fieldName) => mapRelationOptions(relationOptionsForField(fieldName)),
   resolveRelationCreateMode: (fieldName, descriptor) => relationCreateMode(fieldName, descriptor),
+  resolveRelationInlineCreate: (fieldName, descriptor) => {
+    const inline = relationInlineCreate(fieldName, descriptor);
+    return {
+      enabled: inline.enabled,
+      createOnNoMatch: inline.createOnNoMatch,
+      nameField: inline.nameField,
+    };
+  },
+  resolveRelationTextValue: relationKeyword,
+  resolveRelationSearchLabel: (_fieldName, descriptor) => relationUiLabel(descriptor, 'search_more'),
+  resolveRelationCreateLabel: (_fieldName, descriptor) => {
+    const mode = relationCreateMode(_fieldName, descriptor);
+    if (mode === 'page') return relationUiLabel(descriptor, 'create_and_edit');
+    if (mode === 'quick') return relationUiLabel(descriptor, 'quick_create');
+    return '';
+  },
+  resolveRelationInlineCreateLabel: (_fieldName, descriptor, keyword) => {
+    const template = relationUiLabel(descriptor, 'inline_create');
+    const label = String(keyword || '').trim();
+    return template.includes('%s') ? template.replace('%s', label) : template || label;
+  },
   many2oneCreateToken: MANY2ONE_CREATE_OPTION,
+  many2oneSearchToken: MANY2ONE_SEARCH_MORE_OPTION,
 });
 
 const templateSections = computed<TemplateSectionView[]>(() => layoutSections.value.map((section) => {
@@ -2170,6 +3079,14 @@ const templateSections = computed<TemplateSectionView[]>(() => layoutSections.va
 }));
 
 function onTemplateFieldChange(payload: FormSectionFieldChange) {
+  if (String(payload.type || '').trim().toLowerCase() === 'many2one' && payload.action === 'query') {
+    queryMany2oneInline(payload.name, payload.descriptor, String(payload.value ?? ''));
+    return;
+  }
+  if (String(payload.type || '').trim().toLowerCase() === 'many2one' && payload.action === 'commit') {
+    void commitMany2oneInline(payload.name, payload.descriptor, String(payload.value ?? ''));
+    return;
+  }
   dispatchTemplateFieldChange(payload, {
     onBoolean: (name, value) => setBooleanField(name, value),
     onSelection: (name, value) => setSelectionField(name, value),
@@ -2184,8 +3101,10 @@ const relationFallbackAdapter = computed<RelationFallbackAdapter>(() => createRe
   relationKeyword,
   setRelationKeyword,
   relationIds,
+  selectedRelationOptions,
   filteredRelationOptions,
   setRelationMultiField,
+  one2manyCanCreate,
   addOne2manyRow,
   one2manySummary,
   visibleOne2manyRows,
@@ -2305,19 +3224,48 @@ function inputFieldValue(name: string) {
 }
 
 function setBooleanField(name: string, checked: boolean) {
+  const previousValue = formData[name];
   formData[name] = checked;
+  if (isNativeFavoriteField(name) && recordId.value && rights.value.write) {
+    void persistNativeFavoriteField(name, checked, previousValue);
+    return;
+  }
   markFieldChanged(name);
+}
+
+async function persistNativeFavoriteField(name: string, checked: boolean, previousValue: unknown) {
+  try {
+    await writeRecord({
+      model: model.value,
+      ids: [recordId.value],
+      vals: { [name]: checked },
+      context: {},
+    });
+    originalValues.value = {
+      ...originalValues.value,
+      [name]: checked,
+    };
+    changedFieldSet.delete(name);
+  } catch (err) {
+    formData[name] = previousValue;
+    console.warn('[native-favorite] failed to save favorite state', err);
+  }
 }
 
 function setMany2oneField(name: string, descriptor: FieldDescriptor | undefined, value: string) {
   const normalized = String(value || '').trim();
   if (!normalized) {
     formData[name] = false;
+    relationKeywords[name] = '';
     markFieldChanged(name);
     return;
   }
   if (normalized === MANY2ONE_CREATE_OPTION) {
     void openRelationCreateForm(name, descriptor);
+    return;
+  }
+  if (normalized === MANY2ONE_SEARCH_MORE_OPTION) {
+    void openRelationSearchDialog(name, descriptor);
     return;
   }
   const id = Number(normalized);
@@ -2328,6 +3276,93 @@ function setMany2oneField(name: string, descriptor: FieldDescriptor | undefined,
   }
   formData[name] = Math.trunc(id);
   markFieldChanged(name);
+}
+
+function queryMany2oneInline(name: string, descriptor: FieldDescriptor | undefined, value: string) {
+  const keyword = String(value || '').trim();
+  relationKeywords[name] = keyword;
+  if (!keyword) {
+    formData[name] = false;
+    markFieldChanged(name);
+    return;
+  }
+  setRelationKeyword(name, keyword);
+}
+
+async function commitMany2oneInline(name: string, descriptor: FieldDescriptor | undefined, value: string) {
+  const keyword = String(value || '').trim();
+  if (!keyword) {
+    formData[name] = false;
+    relationKeywords[name] = '';
+    markFieldChanged(name);
+    return;
+  }
+  const localQuickFill = resolveRelationQuickFillOption(relationOptionsForField(name), keyword);
+  if (localQuickFill) {
+    setMany2oneOption(name, localQuickFill);
+    return;
+  }
+  const rows = await queryRelationOptions(name, keyword);
+  const remoteQuickFill = resolveRelationQuickFillOption(rows, keyword);
+  if (remoteQuickFill) {
+    setMany2oneOption(name, remoteQuickFill);
+    return;
+  }
+  if (hasAmbiguousRelationMatches(rows, keyword)) {
+    relationKeywords[name] = keyword;
+    formData[name] = false;
+    markFieldChanged(name);
+    await openRelationSearchDialog(name, descriptor);
+    return;
+  }
+  const inline = relationInlineCreate(name, descriptor);
+  if (!inline.enabled || !inline.createOnNoMatch) return;
+  formData[name] = false;
+  relationKeywords[name] = keyword;
+  markFieldChanged(name);
+}
+
+async function resolvePendingInlineRelationCreates() {
+  const issues: string[] = [];
+  for (const node of layoutNodes.value) {
+    if (node.kind !== 'field' || node.readonly) continue;
+    const descriptor = contract.value?.fields?.[node.name];
+    if (fieldType(descriptor) !== 'many2one') continue;
+    const inline = relationInlineCreate(node.name, descriptor);
+    if (!inline.enabled || !inline.createOnNoMatch) continue;
+    const currentId = Number(formData[node.name] || 0);
+    if (Number.isFinite(currentId) && currentId > 0) continue;
+    const keyword = relationKeyword(node.name).trim();
+    if (!keyword) continue;
+    const localQuickFill = resolveRelationQuickFillOption(relationOptionsForField(node.name), keyword);
+    if (localQuickFill) {
+      setMany2oneOption(node.name, localQuickFill);
+      continue;
+    }
+    const rows = await queryRelationOptions(node.name, keyword);
+    const remoteQuickFill = resolveRelationQuickFillOption(rows, keyword);
+    if (remoteQuickFill) {
+      setMany2oneOption(node.name, remoteQuickFill);
+      continue;
+    }
+    if (hasAmbiguousRelationMatches(rows, keyword)) {
+      relationKeywords[node.name] = keyword;
+      await openRelationSearchDialog(node.name, descriptor);
+      issues.push(`${node.label || descriptor?.string || node.name}存在多个匹配记录，请选择具体记录`);
+      continue;
+    }
+    const beforeErrors = validationErrors.value.slice();
+    await quickCreateRelation(node.name, descriptor, keyword);
+    const resolvedId = Number(formData[node.name] || 0);
+    if (!Number.isFinite(resolvedId) || resolvedId <= 0) {
+      const createdErrors = validationErrors.value.length
+        ? validationErrors.value.slice()
+        : [relationUiLabel(descriptor, 'inline_create_failed', '保存时创建失败')];
+      issues.push(...createdErrors);
+      validationErrors.value = beforeErrors;
+    }
+  }
+  return Array.from(new Set(issues)).slice(0, 5);
 }
 
 function setSelectionField(name: string, value: string) {
@@ -2454,7 +3489,7 @@ async function runOnchangeRoundtrip() {
 
 function collectWritableValues() {
   return layoutNodes.value
-    .filter((node) => node.kind === 'field' && !node.readonly)
+    .filter((node) => node.kind === 'field' && !node.readonly && isFieldVisible(node.name))
     .reduce<Record<string, unknown>>((acc, node) => {
       const value = normalizeFieldValue(node.name, formData[node.name]);
       const ttype = fieldType(node.descriptor);
@@ -2464,6 +3499,13 @@ function collectWritableValues() {
       acc[node.name] = value;
       return acc;
     }, {});
+}
+
+function formCreateContext() {
+  const context = contract.value?.head?.context;
+  return context && typeof context === 'object' && !Array.isArray(context)
+    ? { ...(context as Record<string, unknown>) }
+    : {};
 }
 
 function fieldInputType(ttype?: string) {
@@ -3110,7 +4152,6 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
     return;
   }
   showOne2manyErrors.value = false;
-  const editableMap = collectWritableValues();
   const labels = layoutNodes.value.reduce<Record<string, string>>((acc, node) => {
     if (node.kind === 'field') acc[node.name] = node.label || node.name;
     return acc;
@@ -3121,6 +4162,13 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
     submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
     return;
   }
+  const relationCreateIssues = await resolvePendingInlineRelationCreates();
+  if (relationCreateIssues.length) {
+    validationErrors.value = relationCreateIssues;
+    submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
+    return;
+  }
+  const editableMap = collectWritableValues();
   if (!standardCreateMode) {
     const issues = validateContractFormData({
       contract: contract.value,
@@ -3168,9 +4216,10 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
       await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection'] });
       return;
     }
-    const created = await createRecord({ model: model.value, vals: values });
+    const created = await createRecord({ model: model.value, vals: values, context: formCreateContext() });
     if (created?.id) {
-      submissionFeedback.value = { kind: 'success', message: '项目已创建' };
+      const title = String(contract.value?.head?.title || '').trim();
+      submissionFeedback.value = { kind: 'success', message: `${title || '记录'}已创建` };
       clearIntakeAutosave();
       const nextSceneRoute = String(sceneReadyFormSurface.value.nextSceneRoute || '').trim();
       const nextSceneKey = String(sceneReadyFormSurface.value.nextSceneKey || '').trim();
@@ -3532,9 +4581,227 @@ watch(
   margin-top: 2px;
 }
 
+.native-statusbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 2px 0;
+  background: transparent;
+  scrollbar-width: thin;
+}
+
+.native-statusbar-step {
+  position: relative;
+  min-width: 108px;
+  flex: 1 0 auto;
+  border: 0;
+  margin-left: -12px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 10px 22px 10px 30px;
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
+  box-shadow: inset 0 0 0 1px #dbe3eb;
+  transition: background-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+  white-space: nowrap;
+}
+
+.native-statusbar-step:first-child {
+  margin-left: 0;
+  padding-left: 18px;
+  border-radius: 6px 0 0 6px;
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%);
+}
+
+.native-statusbar-step:last-child {
+  border-radius: 0 6px 6px 0;
+}
+
+.native-statusbar-step:hover:not(:disabled) {
+  background: #e2e8f0;
+  color: #1f2937;
+}
+
+.native-statusbar-step--done {
+  z-index: 1;
+  background: #d9ece7;
+  color: #0f766e;
+}
+
+.native-statusbar-step--active {
+  z-index: 2;
+  background: #0f766e;
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px #0f766e, 0 2px 8px rgba(15, 118, 110, 0.22);
+}
+
+.native-statusbar-step:disabled {
+  cursor: default;
+}
+
+.relation-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.38);
+}
+
+.relation-dialog {
+  width: min(920px, 100%);
+  max-height: min(760px, calc(100vh - 48px));
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  gap: 0;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.2);
+  overflow: hidden;
+}
+
+.relation-dialog-head,
+.relation-dialog-search,
+.relation-dialog-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.relation-dialog-head {
+  justify-content: space-between;
+  min-height: 50px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.relation-dialog-head h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #111827;
+  font-weight: 600;
+}
+
+.relation-dialog-close {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #64748b;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.relation-dialog-close:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #111827;
+}
+
+.relation-dialog-search {
+  align-items: stretch;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eef2f7;
+  background: #ffffff;
+}
+
+.relation-dialog-search .input {
+  flex: 1 1 auto;
+}
+
+.relation-dialog-table-wrap {
+  overflow: auto;
+  min-height: 160px;
+  border: 0;
+  border-radius: 0;
+}
+
+.relation-dialog-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  font-size: 13px;
+}
+
+.relation-dialog-table th,
+.relation-dialog-table td {
+  border-bottom: 1px solid #eef2f7;
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: middle;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.relation-dialog-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+}
+
+.relation-dialog-table tbody tr {
+  cursor: pointer;
+}
+
+.relation-dialog-table tbody tr:hover,
+.relation-dialog-row--active {
+  background: #f8fafc;
+}
+
+.relation-dialog-select-col {
+  width: 34px;
+  text-align: center !important;
+}
+
+.relation-dialog-empty {
+  margin: 12px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.relation-dialog-footer {
+  min-height: 54px;
+  padding: 10px 16px;
+  border-top: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.relation-dialog-count {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.relation-dialog-footer-spacer {
+  flex: 1 1 auto;
+}
+
 @media (max-width: 860px) {
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .relation-dialog-backdrop {
+    padding: 12px;
+  }
+
+  .relation-dialog-search,
+  .relation-dialog-footer {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 

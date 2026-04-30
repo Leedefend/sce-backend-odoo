@@ -7,6 +7,7 @@ type UseActionViewScopedMetricsRuntimeOptions = {
   resolveProjectStateCell: (row: Record<string, unknown>) => { text: string; tone: string };
   isCompletedState: (stateText: string, tone: string) => boolean;
   resolveProjectAmount: (row: Record<string, unknown>) => number;
+  resolveProjectMetricFields: () => string[];
 };
 
 export function useActionViewScopedMetricsRuntime(options: UseActionViewScopedMetricsRuntimeOptions) {
@@ -44,17 +45,7 @@ export function useActionViewScopedMetricsRuntime(options: UseActionViewScopedMe
     searchTerm: string;
     order: string;
   }) {
-    const fields = [
-      'id',
-      'stage_id',
-      'state',
-      'status',
-      'contract_income_total',
-      'contract_amount',
-      'amount_total',
-      'total_amount',
-      'budget_total',
-    ];
+    const fields = Array.from(new Set(['id', ...options.resolveProjectMetricFields()]));
     const pageLimit = 200;
     const maxPages = 25;
     let page = 0;
@@ -105,4 +96,3 @@ export function useActionViewScopedMetricsRuntime(options: UseActionViewScopedMe
     fetchProjectScopeMetrics,
   };
 }
-

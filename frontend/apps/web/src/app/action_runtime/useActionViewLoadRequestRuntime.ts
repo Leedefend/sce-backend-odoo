@@ -114,7 +114,7 @@ export function useActionViewLoadRequestRuntime() {
     options.kanbanQuickActionCountRef.value = kanbanFieldState.kanbanQuickActionCount;
 
     const fieldFlags = options.resolveLoadPreflightFieldFlags({
-      fieldMapRaw: options.typedContract.fields || {},
+      listProfileRaw: options.listProfile,
     });
     options.hasActiveFieldRef.value = fieldFlags.hasActiveField;
     options.hasAssigneeFieldRef.value = fieldFlags.hasAssigneeField;

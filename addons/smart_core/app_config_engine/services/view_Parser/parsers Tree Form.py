@@ -16,11 +16,237 @@ from lxml import etree
 import logging
 import ast
 import json
+import re
 
 _logger = logging.getLogger(__name__)
 
 
 class _TreeFormParserMixin:
+    _SIMPLE_MODIFIER_RE = re.compile(
+        r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*(==|!=|>=|<=|>|<|=)\s*('([^']*)'|\"([^\"]*)\"|True|False|true|false|\d+(?:\.\d+)?)\s*$"
+    )
+
+    def _normalize_modifier_value(self, value):
+        raw = str(value or "").strip()
+        if not raw:
+            return raw
+        if raw in ("1", "true", "True"):
+            return True
+        if raw in ("0", "false", "False"):
+            return False
+        normalized = self._normalize_modifier_structure(value)
+        if normalized is not None:
+            return normalized
+        parsed = self._safe_eval_expr(value)
+        if parsed is not None and parsed != value:
+            normalized = self._normalize_modifier_structure(parsed)
+            return normalized if normalized is not None else parsed
+        match = self._SIMPLE_MODIFIER_RE.match(raw)
+        if match:
+            expected_raw = match.group(4) if match.group(4) is not None else match.group(5)
+            if expected_raw is None:
+                token = match.group(3)
+                if token in ("True", "true"):
+                    expected_raw = True
+                elif token in ("False", "false"):
+                    expected_raw = False
+                elif "." in token:
+                    try:
+                        expected_raw = float(token)
+                    except Exception:
+                        expected_raw = token
+                else:
+                    try:
+                        expected_raw = int(token)
+                    except Exception:
+                        expected_raw = token
+            op = "==" if match.group(2) == "=" else match.group(2)
+            return {
+                "kind": "field_compare",
+                "field": match.group(1),
+                "operator": op,
+                "value": expected_raw,
+                "raw": raw,
+            }
+        if re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", raw):
+            return {
+                "kind": "field_truthy",
+                "field": raw,
+                "raw": raw,
+            }
+        return raw
+
+    def _normalize_modifier_structure(self, value):
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (list, tuple)):
+            return self._normalize_domain_modifier(list(value))
+        if not isinstance(value, str):
+            return None
+        raw = value.strip()
+        if not raw:
+            return None
+        try:
+            expr = ast.parse(raw, mode='eval').body
+        except Exception:
+            return None
+        node = self._normalize_python_modifier_expr(expr)
+        if isinstance(node, dict):
+            node.setdefault('raw', raw)
+        return node
+
+    def _normalize_python_modifier_expr(self, node):
+        if isinstance(node, ast.Name):
+            if node.id in ('True', 'False'):
+                return node.id == 'True'
+            return {'kind': 'field_truthy', 'field': node.id}
+        if isinstance(node, ast.Constant):
+            return node.value if isinstance(node.value, bool) else {'kind': 'static', 'value': node.value}
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+            child = self._normalize_python_modifier_expr(node.operand)
+            return {'kind': 'not', 'expr': child} if child is not None else None
+        if isinstance(node, ast.BoolOp):
+            children = [self._normalize_python_modifier_expr(v) for v in node.values]
+            children = [v for v in children if v is not None]
+            if not children:
+                return None
+            return {'kind': 'all' if isinstance(node.op, ast.And) else 'any', 'exprs': children}
+        if isinstance(node, ast.Compare) and len(node.ops) == 1 and len(node.comparators) == 1:
+            left = self._ast_field_name(node.left)
+            if not left:
+                return None
+            op = self._ast_compare_operator(node.ops[0])
+            if not op:
+                return None
+            return {
+                'kind': 'field_compare',
+                'field': left,
+                'operator': op,
+                'value': self._ast_literal_value(node.comparators[0]),
+            }
+        return None
+
+    def _ast_field_name(self, node):
+        if isinstance(node, ast.Name):
+            return node.id
+        if isinstance(node, ast.Attribute):
+            parent = self._ast_field_name(node.value)
+            return ("%s.%s" % (parent, node.attr)) if parent else node.attr
+        return ""
+
+    def _ast_compare_operator(self, op):
+        if isinstance(op, ast.Eq):
+            return '=='
+        if isinstance(op, ast.NotEq):
+            return '!='
+        if isinstance(op, ast.Gt):
+            return '>'
+        if isinstance(op, ast.GtE):
+            return '>='
+        if isinstance(op, ast.Lt):
+            return '<'
+        if isinstance(op, ast.LtE):
+            return '<='
+        if isinstance(op, ast.In):
+            return 'in'
+        if isinstance(op, ast.NotIn):
+            return 'not in'
+        return ""
+
+    def _ast_literal_value(self, node):
+        if isinstance(node, ast.Constant):
+            return node.value
+        if isinstance(node, (ast.List, ast.Tuple, ast.Set)):
+            return [self._ast_literal_value(item) for item in node.elts]
+        if isinstance(node, ast.Name):
+            if node.id == 'False':
+                return False
+            if node.id == 'True':
+                return True
+            if node.id == 'None':
+                return None
+            return node.id
+        return None
+
+    def _normalize_domain_modifier(self, value):
+        if not value:
+            return False
+        if len(value) == 3 and isinstance(value[0], str) and value[0] not in ('|', '&', '!'):
+            return {
+                'kind': 'field_compare',
+                'field': value[0],
+                'operator': '==' if value[1] == '=' else value[1],
+                'value': value[2],
+            }
+        stack = list(value)
+        parsed = self._parse_prefix_domain_modifier(stack)
+        if parsed is not None and not stack:
+            return parsed
+        exprs = [parsed] if parsed is not None else []
+        value = stack if parsed is not None else value
+        for item in value:
+            normalized = self._normalize_domain_modifier(list(item)) if isinstance(item, tuple) else None
+            if normalized is not None:
+                exprs.append(normalized)
+        if exprs:
+            return {'kind': 'all', 'exprs': exprs}
+        return None
+
+    def _parse_prefix_domain_modifier(self, stack):
+        if not stack:
+            return None
+        token = stack.pop(0)
+        if token == '|':
+            left = self._parse_prefix_domain_modifier(stack)
+            right = self._parse_prefix_domain_modifier(stack)
+            return {'kind': 'any', 'exprs': [x for x in (left, right) if x is not None]}
+        if token == '&':
+            left = self._parse_prefix_domain_modifier(stack)
+            right = self._parse_prefix_domain_modifier(stack)
+            return {'kind': 'all', 'exprs': [x for x in (left, right) if x is not None]}
+        if token == '!':
+            expr = self._parse_prefix_domain_modifier(stack)
+            return {'kind': 'not', 'expr': expr}
+        if isinstance(token, tuple):
+            return self._normalize_domain_modifier(list(token))
+        return None
+
+    def _field_widget_semantics(self, fname, widget, options):
+        if widget != 'daterange':
+            return {}
+        options = options if isinstance(options, dict) else {}
+        end_field = (
+            options.get('end_date_field')
+            or options.get('related_end_date')
+            or options.get('date_end')
+            or options.get('end_field')
+            or ''
+        )
+        return {
+            'kind': 'date_range',
+            'start_field': fname,
+            'end_field': str(end_field or '').strip(),
+        }
+
+    def _resolve_action_label(self, btn_node, name_raw):
+        label = (btn_node.get('string') or btn_node.get('title') or '').strip()
+        if label:
+            return label
+        try:
+            if str(name_raw or '').strip().isdigit():
+                action = self.env['ir.actions.actions'].sudo().browse(int(name_raw))
+                if action.exists() and action.name:
+                    return str(action.name).strip()
+        except Exception:
+            _logger.debug("failed to resolve action label for %s", name_raw, exc_info=True)
+        return ""
+
+    def _class_list(self, node):
+        return [c.strip() for c in (node.get('class') or '').split() if c.strip()]
+
+    def _has_class(self, node, class_name):
+        return class_name in self._class_list(node)
+
     def _native_button_contract_scope(self, btn_node, level='header'):
         classes = [c.strip() for c in (btn_node.get('class') or '').split() if c.strip()]
         if 'oe_stat_button' in classes or 'oe_stat_info' in classes:
@@ -108,7 +334,7 @@ class _TreeFormParserMixin:
                     for key in ('readonly', 'required', 'invisible', 'column_invisible'):
                         val = el.get(key)
                         if val:
-                            mods[key] = self._safe_eval_expr(val) or val
+                            mods[key] = self._normalize_modifier_value(val)
                     # 列上的 widget / sum（页脚汇总）
                     if el.get('widget'):
                         mods['widget'] = el.get('widget')
@@ -138,10 +364,12 @@ class _TreeFormParserMixin:
         if not row_actions:
             row_actions = [{
                 "name": "open_form",
-                "label": _("Open"),
+                "label": _("打开"),
                 "kind": "open",
                 "level": "row",
                 "selection": "single",
+                "trigger": "row_click",
+                "display_mode": "row_click",
                 "intent": "open",
                 "payload": {"ref": None, "view_mode": "form"},
             }]
@@ -149,12 +377,11 @@ class _TreeFormParserMixin:
             # 没有列时，取 fields_info 前几列兜底
             columns = [k for k in (fields_info or {}).keys() if not k.startswith('__')][:6] or ['id']
 
-        # 列模式（兼容 + 细节）
-        columns_schema = [{
-            "name": c,
-            "widget": (modifiers.get(c, {}).get('widget') or (fields_info.get(c, {}) or {}).get('type', 'char')),
-            **({k: v for k, v in (modifiers.get(c) or {}).items() if k != 'widget'})
-        } for c in columns]
+        # 列模式（兼容 + 原生字段语义）
+        columns_schema = [
+            self._tree_column_schema(c, fields_info.get(c, {}) if isinstance(fields_info, dict) else {}, modifiers.get(c, {}))
+            for c in columns
+        ]
 
         _logger.info("TREE_PARSER_DEBUG: final_columns=%s fields_info_keys=%s", columns, list((fields_info or {}).keys())[:10])
 
@@ -170,6 +397,30 @@ class _TreeFormParserMixin:
             # 让服务层不需要再兜底 search
             "search": {"filters": [], "group_by": [], "facets": {"enabled": True}},
         }
+
+    def _tree_column_schema(self, name, field_meta, modifiers):
+        meta = field_meta if isinstance(field_meta, dict) else {}
+        mods = modifiers if isinstance(modifiers, dict) else {}
+        widget = str(mods.get('widget') or meta.get('type') or 'char').strip() or 'char'
+        schema = {
+            "name": name,
+            "label": meta.get('string') or name,
+            "string": meta.get('string') or name,
+            "type": meta.get('type') or 'char',
+            "widget": widget,
+        }
+        selection = meta.get('selection')
+        if isinstance(selection, (list, tuple)):
+            schema["selection"] = [
+                {"value": item[0], "label": item[1]}
+                for item in selection
+                if isinstance(item, (list, tuple)) and len(item) >= 2
+            ]
+        for key, value in mods.items():
+            if key == 'widget':
+                continue
+            schema[key] = value
+        return schema
 
     # ---------------- form 解析（增强） ----------------
     def _parse_form_view(self, arch, fields_info, model_name):
@@ -252,7 +503,7 @@ class _TreeFormParserMixin:
         try:
             btype    = (btn_node.get('type') or 'object').strip().lower()
             name_raw = (btn_node.get('name') or '').strip()
-            label    = (btn_node.get('string') or btn_node.get('title') or name_raw or 'Button').strip()
+            label    = self._resolve_action_label(btn_node, name_raw)
             classes  = [c.strip() for c in (btn_node.get('class') or '').split() if c.strip()]
             states   = [s.strip() for s in (btn_node.get('states') or '').split(',') if s and s.strip()]
             confirm  = btn_node.get('confirm') or btn_node.get('help') or ''
@@ -279,9 +530,9 @@ class _TreeFormParserMixin:
             attrs_parsed  = self._safe_eval_expr(attrs_raw) if attrs_raw else None
 
             visible_attrs = {
-                "readonly": self._safe_eval_expr(btn_node.get('readonly')) if btn_node.get('readonly') else None,
-                "required": self._safe_eval_expr(btn_node.get('required')) if btn_node.get('required') else None,
-                "invisible": self._safe_eval_expr(btn_node.get('invisible')) if btn_node.get('invisible') else None,
+                "readonly": self._normalize_modifier_value(btn_node.get('readonly')) if btn_node.get('readonly') else None,
+                "required": self._normalize_modifier_value(btn_node.get('required')) if btn_node.get('required') else None,
+                "invisible": self._normalize_modifier_value(btn_node.get('invisible')) if btn_node.get('invisible') else None,
             }
             if isinstance(attrs_parsed, dict):
                 for k in ('readonly', 'required', 'invisible'):
@@ -295,7 +546,7 @@ class _TreeFormParserMixin:
 
             base = {
                 "name": name_raw or ('open_action' if btype == 'action' else ('open_url' if btype == 'url' else 'button')),
-                "label": label or ('Action' if btype == 'action' else ('Open URL' if btype == 'url' else 'Button')),
+                "label": label,
                 "kind": "object",
                 "level": lvl,
                 "selection": selection,
@@ -354,7 +605,7 @@ class _TreeFormParserMixin:
                 base["intent"] = "open"
                 base["payload"]["ref"] = ref
                 if not (base["label"] or '').strip():
-                    base["label"] = "Action"
+                    base["label"] = self._resolve_action_label(btn_node, name_raw) or "Action"
                 return _finalize(base, btype)
 
             if btype == 'url' or btn_node.get('url'):
@@ -460,11 +711,22 @@ class _TreeFormParserMixin:
 
     def _node_to_layout_from_dom(self, el, fields_info):
         tag = getattr(el, 'tag', '')
-        if not tag:
+        if not tag or not isinstance(tag, str):
             return None
 
         def _attrs(e):
             return {k: (v if v is None or not v.strip() else v) for k, v in (e.attrib or {}).items()}
+
+        if self._has_class(el, 'oe_chatter'):
+            chatter_fields = [f.get('name') for f in el.xpath(".//field[@name]") if f.get('name')]
+            return {
+                'type': 'chatter',
+                'name': 'chatter',
+                'label': _('沟通记录'),
+                'attributes': _attrs(el),
+                'fields': chatter_fields,
+                'children': [],
+            }
 
         # 容器节点：sheet/group/notebook/page/div/header/footer/separator
         if tag in ('sheet', 'group', 'notebook', 'page', 'div', 'header', 'footer', 'separator'):
@@ -472,6 +734,9 @@ class _TreeFormParserMixin:
                 'type': self._layout_type(tag),
                 'attributes': _attrs(el)
             }
+            text = " ".join((el.text or "").split())
+            if text:
+                node['text'] = text
             # 标签/列数等
             if tag in ('group', 'page', 'notebook'):
                 node['label'] = el.get('string', '')
@@ -486,7 +751,7 @@ class _TreeFormParserMixin:
             for k in ('readonly', 'required', 'invisible'):
                 v = el.get(k)
                 if v:
-                    mods[k] = self._safe_eval_expr(v) or v
+                    mods[k] = self._normalize_modifier_value(v)
             if el.get('attrs'):
                 parsed = self._safe_eval_expr(el.get('attrs'))
                 if isinstance(parsed, dict):
@@ -531,11 +796,17 @@ class _TreeFormParserMixin:
                 meta['help'] = el.get('help')
             if el.get('widget'):
                 meta['widget'] = el.get('widget')
+            if el.get('options'):
+                options_val = self._safe_eval_expr(el.get('options'))
+                meta['widget_options'] = options_val if isinstance(options_val, dict) else {}
+                semantics = self._field_widget_semantics(fname, meta.get('widget'), meta['widget_options'])
+                if semantics:
+                    meta['widget_semantics'] = semantics
             # 局部修饰
             fmods = {}
             for k in ('readonly', 'required', 'invisible'):
                 if el.get(k):
-                    fmods[k] = self._safe_eval_expr(el.get(k)) or el.get(k)
+                    fmods[k] = self._normalize_modifier_value(el.get(k))
             if el.get('attrs'):
                 parsed = self._safe_eval_expr(el.get('attrs'))
                 if isinstance(parsed, dict):
@@ -551,10 +822,35 @@ class _TreeFormParserMixin:
 
         # 按钮占位（通常不把按钮放进布局树，header/smart 会单独抽取）
         if tag == 'button':
-            return {'type': 'button', 'name': el.get('name', ''), 'label': el.get('string', ''), 'buttonType': el.get('type', 'object')}
+            return {
+                'type': 'button',
+                'name': el.get('name', ''),
+                'label': self._resolve_action_label(el, el.get('name', '')),
+                'buttonType': el.get('type', 'object'),
+                'action': self._button_to_action(el, level='body'),
+            }
+
+        if tag == 'widget':
+            node = {
+                'type': 'widget',
+                'name': el.get('name', ''),
+                'widget': el.get('name', ''),
+                'label': el.get('title', ''),
+                'attributes': _attrs(el),
+                'children': [],
+            }
+            mods = {}
+            if el.get('invisible'):
+                mods['invisible'] = self._normalize_modifier_value(el.get('invisible'))
+            if mods:
+                node.setdefault('attributes', {})['modifiers'] = mods
+            return node
 
         # 其他未知节点：以 container 兜底
         node = {'type': self._layout_type(tag), 'attributes': _attrs(el)}
+        text = " ".join((el.text or "").split())
+        if text:
+            node['text'] = text
         children = []
         for ch in el:
             cv = self._node_to_layout_from_dom(ch, fields_info)
@@ -652,7 +948,41 @@ class _TreeFormParserMixin:
                 _logger.exception("detect chatter/attachments failed")
         chatter = {'enabled': bool(chatter_enabled)}
         if chatter['enabled']:
-            chatter['features'] = {'message': True, 'activity': True}
+            chatter['label'] = _('沟通记录')
+            chatter['fields'] = [
+                name for name in ('message_follower_ids', 'activity_ids', 'message_ids', 'website_message_ids')
+                if name in (fields_info or {})
+            ]
+            chatter['features'] = {'message': True, 'note': True, 'activity': True}
+            chatter['actions'] = [
+                {
+                    'key': 'chatter_send_message',
+                    'label': _('发送消息'),
+                    'kind': 'chatter',
+                    'level': 'chatter',
+                    'selection': 'none',
+                    'intent': 'message',
+                    'payload': {'mode': 'message'},
+                },
+                {
+                    'key': 'chatter_log_note',
+                    'label': _('记录备注'),
+                    'kind': 'chatter',
+                    'level': 'chatter',
+                    'selection': 'none',
+                    'intent': 'note',
+                    'payload': {'mode': 'note'},
+                },
+                {
+                    'key': 'chatter_schedule_activity',
+                    'label': _('活动'),
+                    'kind': 'chatter',
+                    'level': 'chatter',
+                    'selection': 'none',
+                    'intent': 'activity',
+                    'payload': {'mode': 'activity'},
+                },
+            ]
         attachments = {'enabled': bool(attach_enabled)}
         return chatter, attachments
 
@@ -710,6 +1040,8 @@ class _TreeFormParserMixin:
             if ftype not in ('one2many', 'many2many'):
                 continue
             entry = {}
+            relation = finfo.get('relation')
+            relation_fields = self._safe_relation_fields_for_subview(relation)
             # 1) inline 定义
             inline_tree = el.xpath('./tree')
             inline_form = el.xpath('./form')
@@ -719,7 +1051,6 @@ class _TreeFormParserMixin:
                 entry['form'] = {"layout": self._extract_form_layout_dom(inline_form[0], {})}
 
             # 2) 引用式（views/context）
-            relation = finfo.get('relation')
             try:
                 # views="[(tree,ref),(form,ref)]" 风格
                 views_attr = (el.get('views') or '').strip()
@@ -755,17 +1086,118 @@ class _TreeFormParserMixin:
             # 最小兜底
             if not entry.get('tree'):
                 entry['tree'] = {'columns': ['display_name']}
+            business_columns = self._business_x2many_tree_columns(
+                (entry.get('tree') or {}).get('columns') or [],
+                relation_fields,
+            )
+            entry['tree']['columns'] = business_columns
+            entry['tree']['column_policy'] = {
+                'surface': 'business_edit',
+                'source': 'backend_native_contract',
+                'front_end_filtering': False,
+            }
+            if relation_fields:
+                entry['fields'] = relation_fields
             entry.setdefault('policies', {'inline_edit': True, 'can_create': True, 'can_unlink': True})
+            if not business_columns:
+                entry['policies'].update({
+                    'inline_edit': False,
+                    'can_create': False,
+                    'can_unlink': False,
+                    'reason_code': 'NO_BUSINESS_EDIT_COLUMNS',
+                })
             sub[fname] = entry
         return sub
+
+    def _safe_relation_fields_for_subview(self, relation):
+        relation_model = str(relation or '').strip()
+        if not relation_model:
+            return {}
+        try:
+            fields_map = self.env[relation_model].sudo().fields_get()
+        except Exception:
+            _logger.exception("collect x2many relation fields failed for %s", relation_model)
+            return {}
+        return fields_map if isinstance(fields_map, dict) else {}
+
+    def _business_x2many_tree_columns(self, columns, relation_fields):
+        out = []
+        for col in columns or []:
+            name = col.get('name') if isinstance(col, dict) else col
+            name = str(name or '').strip()
+            meta = (relation_fields or {}).get(name) or {}
+            ttype = str(meta.get('type') or 'char')
+            if not self._is_business_edit_x2many_column(name, meta, ttype, col if isinstance(col, dict) else {}):
+                continue
+            selection = meta.get('selection')
+            out.append({
+                'name': name,
+                'label': meta.get('string') or (col.get('label') if isinstance(col, dict) else name),
+                'ttype': ttype,
+                'required': bool(meta.get('required')),
+                'readonly': bool(meta.get('readonly')),
+                'selection': selection if isinstance(selection, list) else [],
+                'surface_role': 'business_edit',
+            })
+        return out
+
+    def _is_business_edit_x2many_column(self, name, meta, ttype, column_contract=None):
+        if not name:
+            return False
+        column_contract = column_contract or {}
+        modifiers = column_contract.get('modifiers') if isinstance(column_contract.get('modifiers'), dict) else {}
+        if self._static_truthy_modifier(column_contract.get('invisible')) or self._static_truthy_modifier(modifiers.get('invisible')):
+            return False
+        if column_contract.get('optional') == 'hide':
+            return False
+        if column_contract.get('column_invisible') is not None or modifiers.get('column_invisible') is not None:
+            return False
+        if self._static_truthy_modifier(column_contract.get('readonly')) or self._static_truthy_modifier(modifiers.get('readonly')):
+            return False
+        blocked_names = {
+            'id',
+            'sequence',
+            'display_name',
+            'subtask_count',
+            'closed_subtask_count',
+            'create_uid',
+            'create_date',
+            'write_uid',
+            'write_date',
+        }
+        if name in blocked_names:
+            return False
+        if bool((meta or {}).get('readonly')):
+            return False
+        if ttype in ('one2many', 'many2many', 'binary', 'html', 'properties'):
+            return False
+        return True
+
+    def _static_truthy_modifier(self, value):
+        if value is True or value == 1:
+            return True
+        if isinstance(value, str):
+            return value.strip() in ('1', 'true', 'True')
+        return False
 
     def _parse_inline_tree_columns(self, tree_el):
         try:
             cols = []
             for f in tree_el.xpath('./field[@name]'):
                 n = f.get('name')
-                if n and n not in cols:
-                    cols.append(n)
+                if not n or any((col.get('name') if isinstance(col, dict) else col) == n for col in cols):
+                    continue
+                col = {'name': n}
+                for key in ('optional', 'readonly', 'required', 'invisible', 'column_invisible', 'widget'):
+                    if f.get(key) is not None:
+                        col[key] = self._safe_eval_expr(f.get(key)) or f.get(key)
+                if f.get('string'):
+                    col['label'] = f.get('string')
+                if f.get('attrs'):
+                    attrs = self._safe_eval_expr(f.get('attrs'))
+                    if isinstance(attrs, dict):
+                        col['modifiers'] = attrs
+                cols.append(col)
             return {'columns': cols or ['display_name']}
         except Exception:
             return {'columns': ['display_name']}
@@ -811,15 +1243,25 @@ class _TreeFormParserMixin:
                 meta['help'] = attrs.get('help')
             if attrs.get('widget'):
                 meta['widget'] = attrs.get('widget')
+            if attrs.get('options'):
+                options_val = self._safe_eval_expr(attrs.get('options'))
+                meta['widget_options'] = options_val if isinstance(options_val, dict) else {}
+                semantics = self._field_widget_semantics(fname, meta.get('widget'), meta['widget_options'])
+                if semantics:
+                    meta['widget_semantics'] = semantics
             for key in ('readonly', 'required', 'invisible'):
                 if attrs.get(key):
-                    parsed = self._safe_eval_expr(attrs.get(key)) or attrs.get(key)
-                    meta.setdefault('modifiers', {})[key] = parsed
+                    meta.setdefault('modifiers', {})[key] = self._normalize_modifier_value(attrs.get(key))
             layout_node['fieldInfo'] = meta
         elif tag == 'button':
             layout_node['name'] = attrs.get('name', '')
             layout_node['label'] = attrs.get('string', '')
             layout_node['buttonType'] = attrs.get('type', 'object')
+            try:
+                fake = etree.Element('button', **{str(k): str(v) for k, v in attrs.items() if v is not None})
+                layout_node['action'] = self._button_to_action(fake, level='body')
+            except Exception:
+                layout_node['action'] = None
 
         ch_list = []
         for ch in children:

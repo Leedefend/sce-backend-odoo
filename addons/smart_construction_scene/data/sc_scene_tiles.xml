@@ -16,13 +16,13 @@
                     {
                         'key': 'project.board.open',
                         'title': '项目工作',
-                        'subtitle': '项目看板与概览入口',
+                        'subtitle': '项目台账与项目办理入口',
                         'icon': 'P',
-                        'scene_key': 'projects.ledger',
+                        'scene_key': 'projects.list',
                         'payload': {
-                            'action_xmlid': 'smart_construction_core.action_sc_project_kanban_lifecycle',
+                            'action_xmlid': 'smart_construction_core.action_sc_project_list',
                             'menu_xmlid': 'smart_construction_core.menu_sc_project_project',
-                            'scene_key': 'projects.ledger'
+                            'scene_key': 'projects.list'
                         },
                         'required_capabilities': ['project.board.open']
                     },

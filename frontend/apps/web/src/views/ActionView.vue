@@ -36,6 +36,9 @@
       <p class="contract-missing-summary">{{ vm.strictAlert.summary }}</p>
       <p v-if="vm.strictAlert.defaultsSummary" class="contract-missing-defaults">{{ vm.strictAlert.defaultsSummary }}</p>
     </section>
+    <section v-if="batchMessage" class="contract-block batch-feedback">
+      <p>{{ batchMessage }}</p>
+    </section>
     <section v-if="showStandaloneQuickFilters" class="contract-block" :style="getSectionStyle('quick_filters')">
       <p class="contract-label">{{ t('label.quick_filters', '快速筛选') }}</p>
       <div class="contract-chips">
@@ -279,28 +282,28 @@
         <ActionSurfaceToolbar
           :loading="isUiBusy"
           :show-view-switch="showViewSwitch"
-          :view-label="t('label.view_switch', '视图')"
+          :view-label="toolbarUiLabel('view_switch', '视图')"
           :view-modes="vm.page.availableViewModes"
           :current-view-mode="vm.page.viewMode"
           :view-mode-labels="toolbarViewModeLabels"
           :search-value="toolbarSearchDraft"
-          :search-placeholder="t('placeholder.search_keyword', '搜索关键字')"
+          :search-placeholder="toolbarUiLabel('search_placeholder', '搜索关键字')"
           :clear-label="t('chip_action_clear', '清除')"
           :show-filter="showToolbarFilter"
-          :filter-label="t('label.quick_filters', '筛选')"
+          :filter-label="toolbarUiLabel('filters', '筛选')"
           :filter-primary="vm.filters.quickFilters.primary"
           :filter-overflow="vm.filters.quickFilters.overflow"
           :active-filter-key="activeContractFilterKey"
           :show-saved-filter="showToolbarSavedFilter"
-          saved-filter-label="收藏夹"
+          :saved-filter-label="toolbarUiLabel('saved_filters', '收藏夹')"
           :saved-filter-primary="vm.filters.savedFilters.primary"
           :saved-filter-overflow="vm.filters.savedFilters.overflow"
           :active-saved-filter-key="activeSavedFilterKey"
-          :sort-label="t('label.sort', '排序')"
+          :sort-label="toolbarUiLabel('sort', '排序')"
           :sort-options="displaySortOptions"
           :sort-value="sortValue"
           :show-group="showToolbarGroup"
-          group-label="分组方式"
+          :group-label="toolbarUiLabel('group_by', '分组方式')"
           :group-primary="vm.filters.groupBy.primary"
           :group-overflow="vm.filters.groupBy.overflow"
           :custom-filter-enabled="customSearchCapabilities.filterEnabled"
@@ -315,7 +318,8 @@
           :active-group-label="activeGroupByDisplayLabel || activeGroupByLabel"
           :active-group-key="toolbarActiveGroupKey"
           :can-create-record="canCreateRecord"
-          :create-label="t('action_create_record', '新建')"
+          :create-label="toolbarUiLabel('create', '新建')"
+          :ui-labels="toolbarUiLabels"
           @switch-view="switchViewMode"
           @search-composition-start="onToolbarSearchCompositionStart"
           @search-composition-end="onToolbarSearchCompositionEnd"
@@ -364,12 +368,13 @@
       :subtitle="vm.page.subtitle"
       :scene-key="vm.page.sceneKey"
       :enable-summary-strip="pageSectionEnabled('summary_strip', false)"
-      :enable-grouped-rows="pageSectionEnabled('grouped_table', false)"
+      :enable-grouped-rows="listGroupedRowsEnabled"
       :summary-items="vm.content.list?.summaryItems || []"
       :selected-ids="selectedIds"
       :selection-actions="selectionActions"
       :batch-message="batchMessage"
       :list-profile="listProfile"
+      :ui-labels="toolbarUiLabels"
       :grouped-rows="groupedRows"
       :on-open-group="handleOpenGroupedRows"
       :group-sample-limit="groupSampleLimit"
@@ -396,28 +401,28 @@
         <ActionSurfaceToolbar
           :loading="isUiBusy"
           :show-view-switch="showViewSwitch"
-          :view-label="t('label.view_switch', '视图')"
+          :view-label="toolbarUiLabel('view_switch', '视图')"
           :view-modes="vm.page.availableViewModes"
           :current-view-mode="vm.page.viewMode"
           :view-mode-labels="toolbarViewModeLabels"
           :search-value="toolbarSearchDraft"
-          :search-placeholder="t('placeholder.search_keyword', '搜索关键字')"
+          :search-placeholder="toolbarUiLabel('search_placeholder', '搜索关键字')"
           :clear-label="t('chip_action_clear', '清除')"
           :show-filter="showToolbarFilter"
-          :filter-label="t('label.quick_filters', '筛选')"
+          :filter-label="toolbarUiLabel('filters', '筛选')"
           :filter-primary="vm.filters.quickFilters.primary"
           :filter-overflow="vm.filters.quickFilters.overflow"
           :active-filter-key="activeContractFilterKey"
           :show-saved-filter="showToolbarSavedFilter"
-          saved-filter-label="收藏夹"
+          :saved-filter-label="toolbarUiLabel('saved_filters', '收藏夹')"
           :saved-filter-primary="vm.filters.savedFilters.primary"
           :saved-filter-overflow="vm.filters.savedFilters.overflow"
           :active-saved-filter-key="activeSavedFilterKey"
-          :sort-label="t('label.sort', '排序')"
+          :sort-label="toolbarUiLabel('sort', '排序')"
           :sort-options="displaySortOptions"
           :sort-value="sortValue"
           :show-group="showToolbarGroup"
-          group-label="分组方式"
+          :group-label="toolbarUiLabel('group_by', '分组方式')"
           :group-primary="vm.filters.groupBy.primary"
           :group-overflow="vm.filters.groupBy.overflow"
           :custom-filter-enabled="customSearchCapabilities.filterEnabled"
@@ -432,7 +437,8 @@
           :active-group-label="activeGroupByDisplayLabel || activeGroupByLabel"
           :active-group-key="toolbarActiveGroupKey"
           :can-create-record="canCreateRecord"
-          :create-label="t('action_create_record', '新建')"
+          :create-label="toolbarUiLabel('create', '新建')"
+          :ui-labels="toolbarUiLabels"
           @switch-view="switchViewMode"
           @search-composition-start="onToolbarSearchCompositionStart"
           @search-composition-end="onToolbarSearchCompositionEnd"
@@ -502,7 +508,7 @@
 <script setup lang="ts">
 import { computed, inject, onBeforeUnmount, onErrorCaptured, onMounted, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { listRecordsRaw, saveSearchFavorite, writeRecord } from '../api/data';
+import { batchUpdateRecords, listRecordsRaw, saveSearchFavorite, writeRecord } from '../api/data';
 import { getUserViewPreference, setUserViewPreference } from '../api/preferences';
 import { executeButton } from '../api/executeButton';
 import { trackUsageEvent } from '../api/usage';
@@ -671,6 +677,16 @@ import {
 import {
   resolveExportDoneMessage,
 } from '../app/runtime/actionViewAssigneeExportRuntime';
+import {
+  buildBatchUpdateRequest,
+  resolveBatchActionFailureMessage,
+  resolveBatchActionGuardMessage,
+  resolveBatchActionResultMessage,
+} from '../app/runtime/actionViewBatchRuntime';
+import {
+  resolveBatchActionGuardDecision,
+  resolveBatchStandardExecutionSeed,
+} from '../app/runtime/actionViewBatchActionFlowRuntime';
 import { applyActionViewLoadResetState } from '../app/runtime/actionViewLoadResetRuntime';
 import {
   resolveContractFlagApplyState,
@@ -944,6 +960,7 @@ type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
     actions_max?: number;
     kind?: string;
     delete_mode?: string;
+    batch_policy?: SceneListProfile['batch_policy'];
     intent_profile?: SurfaceIntentContract;
     empty_reason?: string;
   };
@@ -1021,6 +1038,13 @@ const hasLedgerOverviewStrip = computed(() => pageMode.value === 'ledger');
 const listProfile = computed<SceneListProfile | null>(() => {
   return extractListProfile(actionContract.value);
 });
+const batchPolicy = computed(() => listProfile.value?.batch_policy || actionContract.value?.surface_policies?.batch_policy || {});
+const activeField = computed(() => String(batchPolicy.value.active_field || '').trim());
+const allowedBatchActions = computed(() =>
+  Array.isArray(batchPolicy.value.available_actions)
+    ? batchPolicy.value.available_actions.map((item) => String(item || '').trim()).filter(Boolean)
+    : [],
+);
 const listColumnOptions = computed(() => resolveListColumnOptions(actionContract.value, listProfile.value));
 const listColumnVisibility = ref<Record<string, boolean>>({});
 const listColumnSaveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -1136,6 +1160,9 @@ const groupViewVisible = computed(() =>
 const showToolbarFilter = computed(() => canRenderActionSurfaceToolbar.value && quickFiltersVisible.value);
 const showToolbarSavedFilter = computed(() => canRenderActionSurfaceToolbar.value && savedFiltersVisible.value);
 const showToolbarGroup = computed(() => canRenderActionSurfaceToolbar.value && groupViewVisible.value);
+const listGroupedRowsEnabled = computed(() =>
+  pageSectionEnabled('grouped_table', Boolean(activeGroupByField.value && listProfile.value?.grouping)),
+);
 const showStandaloneQuickFilters = computed(() => quickFiltersVisible.value && !showToolbarFilter.value);
 const showStandaloneSavedFilters = computed(() => savedFiltersVisible.value && !showToolbarSavedFilter.value);
 const showStandaloneGroupView = computed(() => groupViewVisible.value && !showToolbarGroup.value);
@@ -1248,10 +1275,14 @@ const displaySortOptions = computed(() => {
 });
 
 const {
+  metricFields: resolveProjectMetricFields,
   resolveProjectStateCell,
   resolveProjectAmount,
   isCompletedState,
-} = useActionViewProjectMetricRuntime();
+} = useActionViewProjectMetricRuntime({
+  listProfile,
+  listColumnOptions,
+});
 
 const {
   ledgerOverviewItems,
@@ -1380,6 +1411,19 @@ const {
   isActionViewNumericToken,
   hasActionViewNoiseMarker,
 });
+const toolbarUiLabels = computed<Record<string, string>>(() => {
+  const rows = customSearchCapabilities.value.uiLabels || {};
+  return Object.entries(rows).reduce<Record<string, string>>((acc, [key, value]) => {
+    const normalizedKey = String(key || '').trim();
+    const label = String(value || '').trim();
+    if (normalizedKey && label) acc[normalizedKey] = label;
+    return acc;
+  }, {});
+});
+
+function toolbarUiLabel(key: string, fallback: string) {
+  return toolbarUiLabels.value[key] || fallback;
+}
 const {
   toContractActionButton,
 } = useActionViewContractActionButtonRuntime({
@@ -1411,26 +1455,87 @@ const {
   pageText,
 });
 
-const selectionActions = computed(() =>
-  contractActionButtons.value
-    .filter((action) => {
-      if (action.selection !== 'single' && action.selection !== 'multi') return false;
-      const visibleProfiles = Array.isArray(action.visibleProfiles) ? action.visibleProfiles : [];
-      if (!visibleProfiles.length) return true;
-      return visibleProfiles.includes('readonly') || visibleProfiles.includes('list');
-    })
+const selectionActions = computed(() => {
+  return allowedBatchActions.value
+    .filter((action): action is 'archive' | 'activate' => action === 'archive' || action === 'activate')
     .map((action) => ({
-      key: action.key,
-      label: action.label,
-      enabled: action.enabled,
-      hint: action.hint,
-    })),
-);
+      key: `batch:${action}`,
+      label: toolbarUiLabel(action === 'activate' ? 'batch_label_activate' : 'batch_label_archive', action === 'activate' ? '批量激活' : '批量归档'),
+      enabled: Boolean(activeField.value),
+      hint: '',
+    }));
+});
 
 function handleSelectionAction(key: string) {
+  if (key.startsWith('batch:')) {
+    const action = key.slice('batch:'.length);
+    if (action === 'archive' || action === 'activate') {
+      void runBatchPolicyAction(action);
+    }
+    return;
+  }
   const target = contractActionButtons.value.find((action) => action.key === key);
   if (!target) return;
   void runContractAction(target as ContractActionButton);
+}
+
+async function runBatchPolicyAction(action: 'archive' | 'activate') {
+  const targetModel = String(resolvedModelRef.value || model.value || '').trim();
+  const selected = [...selectedIds.value];
+  if (!allowedBatchActions.value.includes(action)) {
+    batchMessage.value = toolbarUiLabel('batch_msg_action_not_allowed', '当前场景不支持该批量操作');
+    return;
+  }
+  const guard = resolveBatchActionGuardDecision({
+    targetModel,
+    selectedCount: selected.length,
+    action,
+    hasActiveField: Boolean(activeField.value),
+    deleteMode: String(batchPolicy.value.delete_mode || 'none'),
+  });
+  if (!guard.ok) {
+    batchMessage.value = resolveBatchActionGuardMessage({
+      reason: guard.reason as 'missing_target_model' | 'missing_selection' | 'active_field_required' | 'delete_mode_unavailable',
+      text: toolbarUiLabel,
+    });
+    return;
+  }
+  const activeValue = action === 'activate'
+    ? batchPolicy.value.activate_value === true
+    : batchPolicy.value.archive_value === true;
+  const seed = resolveBatchStandardExecutionSeed({
+    action,
+    selectedIds: selected,
+    activeField: activeField.value,
+    activeValue,
+    buildIfMatchMap,
+    buildIdempotencyKey,
+  });
+  batchBusy.value = true;
+  try {
+    const result = await batchUpdateRecords(buildBatchUpdateRequest({
+      model: targetModel,
+      ids: selected,
+      action,
+      ifMatchMap: seed.ifMatchMap,
+      idempotencyKey: seed.idempotencyKey,
+      context: resolveEffectiveRequestContext(),
+    }) as Parameters<typeof batchUpdateRecords>[0]);
+    const resultMessage = resolveBatchActionResultMessage({
+      action,
+      idempotentReplay: result.idempotent_replay === true,
+      succeeded: Number(result.succeeded || 0),
+      failed: Number(result.failed || 0),
+      text: toolbarUiLabel,
+    });
+    clearSelection();
+    await requestLoadPage();
+    batchMessage.value = resultMessage;
+  } catch {
+    batchMessage.value = resolveBatchActionFailureMessage({ action, text: toolbarUiLabel });
+  } finally {
+    batchBusy.value = false;
+  }
 }
 
 const advancedRows = computed(() => {
@@ -1511,6 +1616,7 @@ const {
   showHud,
   menuId,
   actionId,
+  actionContract,
   resolvedModelRef,
   modelRef: model,
   routerPush: (target) => router.push(target as never),
@@ -1543,6 +1649,7 @@ const {
   activeGroupSummaryDomain,
   groupSampleLimit,
   groupSort,
+  listProfile,
   collapsedGroupKeys,
   groupPageOffsets,
   appliedPresetLabel,
@@ -1593,6 +1700,7 @@ const {
   groupWindowNextOffset,
   groupSampleLimit,
   groupSort,
+  listProfile,
   collapsedGroupKeys,
   groupPageOffsets,
   syncRouteStateAndReload,
@@ -1684,7 +1792,7 @@ const {
 } = useActionViewRequestContextRuntime({
   routeContextRaw: () => String(route.query.context_raw || '').trim(),
   menuId,
-  hasActiveField,
+  activeField,
   filterValue,
   contractFilterChips,
   activeContractFilterKey,
@@ -1754,6 +1862,7 @@ const {
   resolveProjectStateCell,
   isCompletedState,
   resolveProjectAmount,
+  resolveProjectMetricFields,
 });
 
 const {
@@ -2237,6 +2346,7 @@ const {
     sortLabel: sortLabel.value,
     pageMode: pageMode.value,
     hasActiveField: hasActiveField.value,
+    activeField: activeField.value,
   }),
 });
 
@@ -2396,22 +2506,26 @@ async function handleListColumnVisibilityChange(payload: { visibility: Record<st
   }
 }
 
-async function handleToggleRecordFavorite(row: Record<string, unknown>, nextValue: boolean): Promise<void> {
+async function handleToggleRecordFavorite(row: Record<string, unknown>, field: string, nextValue: boolean): Promise<void> {
   const targetModel = String(resolvedModelRef.value || model.value || '').trim();
   const recordId = Number(row.id || 0);
-  if (targetModel !== 'project.project' || !recordId) return;
-  const previousValue = row.is_favorite;
-  row.is_favorite = nextValue;
+  const option = listColumnOptions.value.find((column) => column.name === field);
+  const mutation = option?.mutation || {};
+  const mutationOperation = String(mutation.operation || '').trim();
+  const mutationField = String(mutation.field || field || '').trim();
+  if (!targetModel || !recordId || mutationOperation !== 'record_write' || mutationField !== field) return;
+  const previousValue = row[field];
+  row[field] = nextValue;
   try {
     await writeRecord({
       model: targetModel,
       ids: [recordId],
-      vals: { is_favorite: nextValue },
+      vals: { [mutationField]: nextValue },
       context: {},
     });
   } catch (err) {
-    row.is_favorite = previousValue;
-    console.warn('[project-favorite] failed to save favorite state', err);
+    row[field] = previousValue;
+    console.warn('[list-field-mutation] failed to save field state', err);
   }
 }
 

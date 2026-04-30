@@ -78,7 +78,7 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
     # ========= 契约键白名单（类级常量） =========
     _ALLOWED_BY_VT = {
         "common": {"modifiers", "toolbar", "search", "order"},
-        "tree": {"columns", "row_actions", "page_size", "row_classes"},
+        "tree": {"columns", "columns_schema", "row_actions", "page_size", "row_classes", "capabilities", "default_order"},
         "form": {
             "layout", "statusbar",
             "header_buttons", "button_box", "stat_buttons",
@@ -397,7 +397,10 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
         - 旧：env[model].fields_view_get(view_type=..., toolbar=True)
         返回：{"arch": str, "fields": dict, "toolbar": dict}
         """
-        Model = self.env[model_name].sudo()
+        # View composition is user-sensitive: Odoo prunes inherited view nodes
+        # by groups during get_view. Keep the runtime user here; metadata writes
+        # below are still performed with sudo.
+        Model = self.env[model_name]
         data = {}
 
         # a) 尝试跟随当前动作绑定的视图（优先精准 view_id）

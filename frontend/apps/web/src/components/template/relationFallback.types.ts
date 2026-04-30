@@ -24,8 +24,10 @@ export type RelationFallbackAdapter = {
   relationKeyword: (name: string) => string;
   setRelationKeyword: (name: string, value: string) => void;
   relationIds: (name: string) => number[];
+  selectedRelationOptions: (name: string) => RelationFallbackOption[];
   filteredRelationOptions: (name: string) => RelationFallbackOption[];
   setRelationMultiField: (name: string, target: HTMLSelectElement) => void;
+  one2manyCanCreate: (name: string) => boolean;
   addOne2manyRow: (name: string) => void;
   one2manySummary: (name: string) => string;
   visibleOne2manyRows: (name: string) => RelationFallbackRow[];
@@ -51,4 +53,3 @@ export type RelationFallbackRendererProps = {
   field: FormSectionFieldSchema;
   adapter: RelationFallbackAdapter;
 };
-

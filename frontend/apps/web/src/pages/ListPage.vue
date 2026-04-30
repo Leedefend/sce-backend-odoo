@@ -6,7 +6,7 @@
       :subtitle="subtitle"
     />
 
-    <StatusPanel v-if="loading" title="正在加载列表..." variant="info" />
+    <StatusPanel v-if="loading" :title="uiLabel('loading_list', '正在加载列表...')" variant="info" />
     <StatusPanel
       v-else-if="status === 'error'"
       :title="errorCopy.title"
@@ -43,16 +43,16 @@
             :disabled="loading || !canPagePrev"
             @click="pagePrev"
           >
-            上一页
+            {{ uiLabel('pagination_prev', '上一页') }}
           </button>
-          <span>第 {{ currentPage }} / {{ totalPages }} 页</span>
+          <span>{{ paginationPageText }}</span>
           <button
             type="button"
             class="pagination-btn"
             :disabled="loading || !canPageNext"
             @click="pageNext"
           >
-            下一页
+            {{ uiLabel('pagination_next', '下一页') }}
           </button>
           <input
             class="pagination-input"
@@ -69,10 +69,10 @@
             :disabled="loading || totalPages <= 1"
             @click="jumpPage"
           >
-            跳转
+            {{ uiLabel('pagination_jump', '跳转') }}
           </button>
         </div>
-        <span v-else class="list-count">{{ records.length }} 条记录</span>
+        <span v-else class="list-count">{{ uiLabel('record_count', '{count} 条记录', { count: records.length }) }}</span>
       </section>
 
       <slot name="toolbar"></slot>
@@ -85,7 +85,7 @@
       </section>
 
       <section v-if="showBatchBar" class="batch-bar">
-        <span>已选 {{ selectedCount }} 条</span>
+        <span>{{ uiLabel('selected_count', '已选 {count} 条', { count: selectedCount }) }}</span>
         <button
           v-for="action in selectionActions"
           :key="`selection-action-${action.key}`"
@@ -96,14 +96,14 @@
         >
           {{ action.label }}
         </button>
-        <button type="button" class="ghost" :disabled="loading" @click="clearSelection">清空</button>
-        <span v-if="batchMessage" class="batch-message">{{ batchMessage }}</span>
+        <button type="button" class="ghost" :disabled="loading" @click="clearSelection">{{ uiLabel('clear', '清空') }}</button>
+        <span v-if="selectedCount > 0 && batchMessage" class="batch-message">{{ batchMessage }}</span>
       </section>
 
       <section class="table">
         <section v-if="enableGroupedRows && groupedRows.length" class="grouped-table">
         <header class="grouped-toolbar">
-          <span>分组结果</span>
+          <span>{{ uiLabel('grouped_result', '分组结果') }}</span>
           <div class="grouped-toolbar-actions">
             <button
               type="button"
@@ -111,7 +111,7 @@
               :disabled="!groupedRows.length || !hasCollapsedGroups"
               @click="expandAllGroups"
             >
-              全部展开
+              {{ uiLabel('expand_all', '全部展开') }}
             </button>
             <button
               type="button"
@@ -119,12 +119,12 @@
               :disabled="!groupedRows.length || allGroupsCollapsed"
               @click="collapseAllGroups"
             >
-              全部收起
+              {{ uiLabel('collapse_all', '全部收起') }}
             </button>
-            <select :value="String(groupSampleLimit || 3)" @change="onGroupSampleLimitSelectChange">
-              <option value="3">每组 3 条</option>
-              <option value="5">每组 5 条</option>
-              <option value="8">每组 8 条</option>
+            <select :value="String(effectiveGroupSampleLimit)" @change="onGroupSampleLimitSelectChange">
+              <option v-for="limit in groupSampleLimitOptions" :key="`group-sample-limit-${limit}`" :value="String(limit)">
+                {{ uiLabel('group_sample_limit', '每组 {count} 条', { count: limit }) }}
+              </option>
             </select>
             <button type="button" class="grouped-sort-btn" @click="toggleGroupSort">
               {{ groupSortLabel }}
@@ -134,10 +134,10 @@
         <article v-for="group in sortedGroupedRows" :key="group.key" class="group-block">
           <header class="group-head">
             <button type="button" class="group-toggle" @click="toggleGroupCollapsed(group.key)">
-              {{ isGroupCollapsed(group.key) ? '展开' : '收起' }}
+              {{ isGroupCollapsed(group.key) ? uiLabel('group_toggle_expand', '展开') : uiLabel('group_toggle_collapse', '收起') }}
             </button>
             <p>{{ group.label }}</p>
-            <span>{{ group.count }} 条</span>
+            <span>{{ uiLabel('group_count', '{count} 条', { count: group.count }) }}</span>
             <div v-if="onGroupPageChange" class="group-page">
               <button
                 type="button"
@@ -145,7 +145,7 @@
                 :disabled="Boolean(group.loading) || !canGroupPagePrev(group)"
                 @click="pageGroupPrev(group)"
               >
-                上一页
+                {{ uiLabel('pagination_prev', '上一页') }}
               </button>
               <span>{{ groupPageInfoText(group) }}</span>
               <button
@@ -154,7 +154,7 @@
                 :disabled="Boolean(group.loading) || !canGroupPageNext(group)"
                 @click="pageGroupNext(group)"
               >
-                下一页
+                {{ uiLabel('pagination_next', '下一页') }}
               </button>
               <input
                 class="group-page-input"
@@ -170,7 +170,7 @@
                 :disabled="Boolean(group.loading) || groupTotalPages(group) <= 1"
                 @click="jumpGroupPage(group)"
               >
-                跳转
+                {{ uiLabel('pagination_jump', '跳转') }}
               </button>
             </div>
             <button
@@ -179,7 +179,7 @@
               class="group-open-btn"
               @click="openGroup(group)"
             >
-              查看全部
+              {{ uiLabel('group_view_all', '查看全部') }}
             </button>
           </header>
           <table v-if="!isGroupCollapsed(group.key)">
@@ -201,12 +201,11 @@
                     class="favorite-toggle"
                     :class="{ active: isFavoriteValue(row[col]) }"
                     :disabled="loading || !onToggleRecordFavorite"
-                    :title="favoriteTitle(row[col])"
-                    :aria-label="favoriteTitle(row[col])"
+                    :title="favoriteTitle(col)"
+                    :aria-label="favoriteTitle(col)"
                     @click.stop="toggleRecordFavorite(row, col)"
                   >
                     <span class="favorite-star" aria-hidden="true">{{ isFavoriteValue(row[col]) ? '★' : '☆' }}</span>
-                    <span v-if="isFavoriteValue(row[col])" class="favorite-label">已收藏</span>
                   </button>
                   <span
                     v-else-if="isStatusColumn(col)"
@@ -237,7 +236,7 @@
             <th v-for="col in displayedColumns" :key="col">{{ columnLabel(col) }}</th>
             <th v-if="columnChoices.length" ref="columnPickerRoot" class="cell-column-picker">
               <button type="button" class="column-picker-btn" :disabled="loading" @click.stop="columnPickerOpen = !columnPickerOpen">
-                列
+                {{ uiLabel('column_picker', '列') }}
               </button>
               <span v-if="columnSaveStatusText" class="column-save-badge" :class="`is-${columnSaveStatus}`">
                 {{ columnSaveStatusText }}
@@ -252,7 +251,7 @@
                   />
                   <span>{{ columnChoiceLabel(column) }}</span>
                 </label>
-                <button type="button" class="column-reset" :disabled="loading" @click="resetColumnVisibility">恢复默认</button>
+                <button type="button" class="column-reset" :disabled="loading" @click="resetColumnVisibility">{{ uiLabel('column_reset', '恢复默认') }}</button>
                 <p v-if="columnSaveStatusText" class="column-save-message" :class="`is-${columnSaveStatus}`">
                   {{ columnSaveStatusText }}
                 </p>
@@ -278,12 +277,11 @@
                 class="favorite-toggle"
                 :class="{ active: isFavoriteValue(row[col]) }"
                 :disabled="loading || !onToggleRecordFavorite"
-                :title="favoriteTitle(row[col])"
-                :aria-label="favoriteTitle(row[col])"
+                :title="favoriteTitle(col)"
+                :aria-label="favoriteTitle(col)"
                 @click.stop="toggleRecordFavorite(row, col)"
               >
                 <span class="favorite-star" aria-hidden="true">{{ isFavoriteValue(row[col]) ? '★' : '☆' }}</span>
-                <span v-if="isFavoriteValue(row[col])" class="favorite-label">已收藏</span>
               </button>
               <div v-else-if="col === rowPrimary" class="cell-primary">
                 <div class="primary">{{ semanticCell(col, row[col]).text }}</div>
@@ -313,16 +311,16 @@
             :disabled="loading || !canPagePrev"
             @click="pagePrev"
           >
-            上一页
+            {{ uiLabel('pagination_prev', '上一页') }}
           </button>
-          <span>第 {{ currentPage }} / {{ totalPages }} 页</span>
+          <span>{{ paginationPageText }}</span>
           <button
             type="button"
             class="pagination-btn"
             :disabled="loading || !canPageNext"
             @click="pageNext"
           >
-            下一页
+            {{ uiLabel('pagination_next', '下一页') }}
           </button>
           <input
             class="pagination-input"
@@ -339,7 +337,7 @@
             :disabled="loading || totalPages <= 1"
             @click="jumpPage"
           >
-            跳转
+            {{ uiLabel('pagination_jump', '跳转') }}
           </button>
         </div>
       </section>
@@ -353,7 +351,6 @@ import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import type { SceneListProfile } from '../app/resolvers/sceneRegistry';
-import { semanticValueByField } from '../utils/semantic';
 
 type SelectionAction = {
   key: string;
@@ -367,7 +364,14 @@ type ColumnOption = {
   label: string;
   optional?: string;
   defaultVisible?: boolean;
+  type?: string;
+  widget?: string;
+  cellRole?: string;
+  mutation?: Record<string, unknown>;
+  selection?: Array<{ value: string; label: string }>;
+  toneByValue?: Record<string, string>;
 };
+type GroupSortDirection = 'asc' | 'desc';
 
 const props = defineProps<{
   title: string;
@@ -401,6 +405,7 @@ const props = defineProps<{
   columnOptions?: ColumnOption[];
   columnVisibility?: Record<string, boolean>;
   columnSaveStatus?: 'idle' | 'saving' | 'saved' | 'error';
+  uiLabels?: Record<string, string>;
   enableSummaryStrip?: boolean;
   enableGroupedRows?: boolean;
   listProfile?: SceneListProfile | null;
@@ -413,7 +418,7 @@ const props = defineProps<{
   onToggleSelectionAll?: (ids: number[], selected: boolean) => void;
   onRunSelectionAction?: (key: string) => void;
   onClearSelection?: () => void;
-  onToggleRecordFavorite?: (row: Record<string, unknown>, nextValue: boolean) => void | Promise<void>;
+  onToggleRecordFavorite?: (row: Record<string, unknown>, field: string, nextValue: boolean) => void | Promise<void>;
   batchMessage?: string;
   groupedRows?: Array<{
     key: string;
@@ -457,10 +462,19 @@ const props = defineProps<{
 const emit = defineEmits<{
   'column-visibility-change': [payload: { visibility: Record<string, boolean> }];
 }>();
+function uiLabel(key: string, fallback: string, vars: Record<string, string | number> = {}) {
+  const candidate = String(props.uiLabels?.[key] || '').trim();
+  const template = candidate || fallback;
+  return Object.entries(vars).reduce(
+    (text, [name, value]) => text.replaceAll(`{${name}}`, String(value)),
+    template,
+  );
+}
+
 const errorCopy = computed(() =>
   resolveErrorCopy(
     props.error || null,
-    props.errorMessage || '列表加载失败',
+    props.errorMessage || uiLabel('list_load_failed', '列表加载失败'),
   ),
 );
 const emptyCopy = computed(() => resolveEmptyCopy('list'));
@@ -474,14 +488,34 @@ const columnPickerRoot = ref<HTMLElement | null>(null);
 const columnPickerOpen = ref(false);
 const columnSaveStatus = computed(() => props.columnSaveStatus || 'idle');
 const columnSaveStatusText = computed(() => {
-  if (columnSaveStatus.value === 'saving') return '保存中';
-  if (columnSaveStatus.value === 'saved') return '已保存';
-  if (columnSaveStatus.value === 'error') return '保存失败，请重试';
+  if (columnSaveStatus.value === 'saving') return uiLabel('column_saving', '保存中');
+  if (columnSaveStatus.value === 'saved') return uiLabel('column_saved', '已保存');
+  if (columnSaveStatus.value === 'error') return uiLabel('column_save_error', '保存失败，请重试');
   return '';
 });
-const groupSortDesc = computed(() => (props.groupSort || 'desc') === 'desc');
+const groupSortConfig = computed(() => props.listProfile?.grouping?.sort || {});
+const groupSortKey = computed(() => String(groupSortConfig.value.key || '').trim());
+const groupSortDirections = computed<GroupSortDirection[]>(() => {
+  const values = Array.isArray(groupSortConfig.value.directions) ? groupSortConfig.value.directions : [];
+  const normalized = values
+    .map((item) => String(item || '').trim())
+    .filter((item): item is GroupSortDirection => item === 'asc' || item === 'desc');
+  return normalized.length ? normalized : ['desc', 'asc'];
+});
+const groupSortDefaultDirection = computed<GroupSortDirection>(() => {
+  const direction = String(groupSortConfig.value.default_direction || '').trim();
+  return direction === 'asc' ? 'asc' : 'desc';
+});
+const groupSortDirection = computed<GroupSortDirection>(() => {
+  const direction = props.groupSort === 'asc' || props.groupSort === 'desc'
+    ? props.groupSort
+    : groupSortDefaultDirection.value;
+  return groupSortDirections.value.includes(direction) ? direction : groupSortDirections.value[0];
+});
+const groupSortDesc = computed(() => groupSortDirection.value === 'desc');
 const sortedGroupedRows = computed(() => {
   const rows = [...groupedRows.value];
+  if (groupSortKey.value !== 'count') return rows;
   rows.sort((a, b) => {
     const cmp = Number(a.count || 0) - Number(b.count || 0);
     if (cmp === 0) return String(a.label || '').localeCompare(String(b.label || ''));
@@ -489,7 +523,11 @@ const sortedGroupedRows = computed(() => {
   });
   return rows;
 });
-const groupSortLabel = computed(() => (groupSortDesc.value ? '按数量降序' : '按数量升序'));
+const groupSortLabel = computed(() =>
+  groupSortDesc.value
+    ? uiLabel('group_sort_desc', '按数量降序')
+    : uiLabel('group_sort_asc', '按数量升序'),
+);
 const summaryItems = computed(() => Array.isArray(props.summaryItems) ? props.summaryItems : []);
 const collapsedSet = computed(() => new Set(Array.isArray(props.collapsedGroupKeys) ? props.collapsedGroupKeys : []));
 const allGroupsCollapsed = computed(() => {
@@ -500,30 +538,59 @@ const hasCollapsedGroups = computed(() => {
   if (!sortedGroupedRows.value.length) return false;
   return sortedGroupedRows.value.some((item) => collapsedSet.value.has(item.key));
 });
+function normalizeCellRawValue(value: unknown) {
+  if (Array.isArray(value)) {
+    if (value.length > 1 && value[1] !== null && value[1] !== undefined) return value[1];
+    if (value.length) return value[0];
+  }
+  return value;
+}
+
+function selectionLabel(option: ColumnOption | null, value: unknown) {
+  const raw = normalizeCellRawValue(value);
+  const key = String(raw ?? '').trim();
+  if (!key || !Array.isArray(option?.selection)) return '';
+  return option.selection.find((item) => item.value === key)?.label || '';
+}
+
 function semanticCell(field: string, value: unknown) {
-  return semanticValueByField(field, value);
+  const option = columnOption(field);
+  const raw = normalizeCellRawValue(value);
+  const selectionText = selectionLabel(option, value);
+  const text = selectionText
+    || (raw === null || raw === undefined || raw === ''
+      ? '--'
+      : (typeof raw === 'boolean'
+        ? uiLabel(raw ? 'boolean_true' : 'boolean_false', raw ? '是' : '否')
+        : String(raw)));
+  const toneKey = String(raw ?? '').trim();
+  const tone = option?.cellRole === 'status'
+    ? (option.toneByValue?.[toneKey] || 'neutral')
+    : 'neutral';
+  return { text, tone };
 }
 
 function isStatusColumn(field: string) {
-  const key = String(field || '').toLowerCase();
-  return key.includes('state') || key.includes('status') || key.includes('stage');
+  const option = columnOption(field);
+  return option?.cellRole === 'status' || props.listProfile?.status_field === field;
 }
 
 function isFavoriteColumn(field: string) {
-  return String(field || '').trim() === 'is_favorite';
+  const option = columnOption(field);
+  return option?.widget === 'boolean_favorite';
 }
 
 function isFavoriteValue(value: unknown) {
   return value === true || value === 1 || String(value).trim().toLowerCase() === 'true';
 }
 
-function favoriteTitle(value: unknown) {
-  return isFavoriteValue(value) ? '取消项目收藏' : '加入我的项目收藏';
+function favoriteTitle(field: string) {
+  return columnLabel(field);
 }
 
 function toggleRecordFavorite(row: Record<string, unknown>, field: string) {
   if (!props.onToggleRecordFavorite || !isFavoriteColumn(field)) return;
-  props.onToggleRecordFavorite(row, !isFavoriteValue(row[field]));
+  props.onToggleRecordFavorite(row, field, !isFavoriteValue(row[field]));
 }
 
 function toggleGroupCollapsed(key: string) {
@@ -540,7 +607,10 @@ function isGroupCollapsed(key: string) {
 
 function toggleGroupSort() {
   if (!props.onGroupSortChange) return;
-  props.onGroupSortChange(groupSortDesc.value ? 'asc' : 'desc');
+  const directions = groupSortDirections.value;
+  const currentIndex = directions.indexOf(groupSortDirection.value);
+  const nextDirection = directions[(currentIndex + 1) % directions.length] || groupSortDefaultDirection.value;
+  props.onGroupSortChange(nextDirection);
 }
 
 function openGroup(group: { key: string; label: string; count: number; domain?: unknown[] }) {
@@ -548,7 +618,7 @@ function openGroup(group: { key: string; label: string; count: number; domain?: 
 }
 
 function resolveGroupPageLimit(group: { pageLimit?: number }) {
-  const limitRaw = Number(group.pageLimit || props.groupSampleLimit || 3);
+  const limitRaw = Number(group.pageLimit || effectiveGroupSampleLimit.value);
   return Number.isFinite(limitRaw) && limitRaw > 0 ? Math.trunc(limitRaw) : 3;
 }
 
@@ -626,7 +696,11 @@ function groupCurrentPage(group: { count: number; pageOffset?: number; pageLimit
 }
 
 function groupPageInfoText(group: { count: number; pageOffset?: number; pageLimit?: number }) {
-  return `第 ${groupCurrentPage(group)} / ${groupTotalPages(group)} 页 · ${groupPageRangeText(group)}`;
+  return uiLabel('group_page_info', '第 {current} / {total} 页 · {range}', {
+    current: groupCurrentPage(group),
+    total: groupTotalPages(group),
+    range: groupPageRangeText(group),
+  });
 }
 
 function pageGroupPrev(group: { key: string; label: string; count: number; domain?: unknown[]; pageOffset?: number; pageLimit?: number }) {
@@ -686,8 +760,31 @@ watch(
 function onGroupSampleLimitSelectChange(event: Event) {
   const value = Number((event.target as HTMLSelectElement | null)?.value || 0);
   if (!Number.isFinite(value)) return;
-  props.onGroupSampleLimitChange?.(value);
+  const normalized = Math.trunc(value);
+  if (!groupSampleLimitOptions.value.includes(normalized)) return;
+  props.onGroupSampleLimitChange?.(normalized);
 }
+
+const groupSampleLimitOptions = computed(() => {
+  const values = Array.isArray(props.listProfile?.grouping?.sample_limits)
+    ? props.listProfile?.grouping?.sample_limits || []
+    : [];
+  const normalized = values
+    .map((item) => Number(item))
+    .filter((item) => Number.isFinite(item) && item > 0)
+    .map((item) => Math.trunc(item));
+  return normalized.length ? normalized : [3];
+});
+const groupDefaultSampleLimit = computed(() => {
+  const raw = Number(props.listProfile?.grouping?.default_sample_limit || 0);
+  const candidate = Number.isFinite(raw) && raw > 0 ? Math.trunc(raw) : groupSampleLimitOptions.value[0];
+  return groupSampleLimitOptions.value.includes(candidate) ? candidate : groupSampleLimitOptions.value[0];
+});
+const effectiveGroupSampleLimit = computed(() => {
+  const raw = Number(props.groupSampleLimit || 0);
+  const candidate = Number.isFinite(raw) && raw > 0 ? Math.trunc(raw) : groupDefaultSampleLimit.value;
+  return groupSampleLimitOptions.value.includes(candidate) ? candidate : groupDefaultSampleLimit.value;
+});
 
 function collapseAllGroups() {
   if (!props.onGroupCollapsedChange) return;
@@ -722,7 +819,7 @@ const selectionActions = computed(() =>
 );
 const selectableRows = computed(() => props.records.map((row) => rowId(row)).filter((id): id is number => typeof id === 'number'));
 const showSelectionColumn = computed(() => !!props.onToggleSelection && !!props.onToggleSelectionAll);
-const showBatchBar = computed(() => showSelectionColumn.value && selectedCount.value > 0);
+const showBatchBar = computed(() => showSelectionColumn.value && (selectedCount.value > 0 || Boolean(props.batchMessage)));
 const allSelected = computed(() => {
   const rows = selectableRows.value;
   if (!rows.length) return false;
@@ -767,9 +864,19 @@ const canPageNext = computed(() => {
 });
 const paginationSummary = computed(() => {
   const total = listTotal.value || 0;
-  if (!total) return '共 0 条';
-  return `共 ${total} 条，当前 ${rangeStart.value}-${rangeEnd.value} 条`;
+  if (!total) return uiLabel('pagination_total_empty', '共 0 条');
+  return uiLabel('pagination_summary', '共 {total} 条，当前 {start}-{end} 条', {
+    total,
+    start: rangeStart.value,
+    end: rangeEnd.value,
+  });
 });
+const paginationPageText = computed(() =>
+  uiLabel('pagination_page', '第 {current} / {total} 页', {
+    current: currentPage.value,
+    total: totalPages.value,
+  }),
+);
 
 function isSelected(row: Record<string, unknown>) {
   const id = rowId(row);
@@ -900,13 +1007,16 @@ const displayedColumns = computed(() => {
 });
 
 function columnLabel(col: string) {
-  if (isFavoriteColumn(col)) return '我的收藏';
-  return columnLabels.value[col] || contractColumnLabels.value[col] || col;
+  const option = columnOption(col);
+  return option?.label || columnLabels.value[col] || contractColumnLabels.value[col] || col;
 }
 
 function columnChoiceLabel(column: ColumnOption) {
-  if (isFavoriteColumn(column.name)) return '我的收藏';
   return column.label || columnLabel(column.name);
+}
+
+function columnOption(field: string) {
+  return columnChoices.value.find((column) => column.name === field) || null;
 }
 
 function isColumnVisible(name: string) {

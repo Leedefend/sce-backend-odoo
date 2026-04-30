@@ -22,7 +22,7 @@ if len(my_projects) == 1:
     direct_action['domain'] = [('project_id', '=', project.id)]
     action = direct_action
 else:
-    next_action = env['ir.actions.act_window']._for_xml_id('smart_construction_core.action_sc_project_kanban_lifecycle')
+    next_action = env['ir.actions.act_window']._for_xml_id('smart_construction_core.action_sc_project_list')
     next_ctx = Project._normalize_action_context(next_action.get('context'))
     next_ctx.update(ctx)
     next_ctx['search_default_filter_my_projects'] = 1

@@ -146,7 +146,11 @@ class UiContractHandler(BaseIntentHandler):
         # 上下文透传
         ctx = (self.env.context or {}).copy()
         lang = self._get_param(p, "lang"); tz = self._get_param(p, "tz")
-        if lang: ctx["lang"] = lang
+        user_lang = (getattr(self.env.user, "lang", None) or "").strip()
+        if lang:
+            ctx["lang"] = lang
+        elif user_lang:
+            ctx["lang"] = user_lang
         if tz:   ctx["tz"] = tz
         company_id = self._get_param(p, "company_id", "companyId")
         if company_id:

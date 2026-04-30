@@ -126,10 +126,10 @@ def list_scene_entries() -> List[Dict[str, Any]]:
         },
         {
             "code": "projects.list",
-            "name": "项目列表",
+            "name": "项目台账",
             "target": {
                 "route": "/s/projects.list",
-                "menu_xmlid": "smart_construction_core.menu_sc_root",
+                "menu_xmlid": "smart_construction_core.menu_sc_project_project",
                 "action_xmlid": "smart_construction_core.action_sc_project_list",
             },
         },
@@ -139,7 +139,7 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "target": {
                 "route": "/s/projects.ledger",
                 "menu_xmlid": "smart_construction_core.menu_sc_project_project",
-                "action_xmlid": "smart_construction_core.action_sc_project_kanban_lifecycle",
+                "action_xmlid": "smart_construction_core.action_sc_project_list",
             },
         },
         {

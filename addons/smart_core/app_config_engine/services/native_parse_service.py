@@ -28,7 +28,10 @@ class NativeParseService:
         if force_fallback or not model_exists:
             return None
         try:
-            parsed_json = self.owner.env["app.view.parser"].sudo().parse_odoo_view(model_name, view_type)
+            # Keep the parser in the request user's environment. Odoo applies
+            # group-based view pruning while composing inherited views; using
+            # sudo here can produce a different form from the native client.
+            parsed_json = self.owner.env["app.view.parser"].parse_odoo_view(model_name, view_type)
             if self.owner._looks_like_parser_wrapper(parsed_json):
                 _logger.info("VIEW_PARSE_DEBUG: unwrap parser wrapper → %s.%s", model_name, view_type)
                 parsed_json = self.owner._unwrap_contract_shape(view_type, parsed_json)
@@ -40,4 +43,3 @@ class NativeParseService:
         except Exception as exc:
             _logger.exception("app.view.parser 解析失败，进入降级：%s.%s, error=%s", model_name, view_type, exc)
         return parsed_json
-

@@ -26,6 +26,7 @@ from ..utils.extension_hooks import call_extension_hook_first
 
 _logger = logging.getLogger(__name__)
 _NOT_NULL_COLUMN_RE = re.compile(r'null value in column "([^"]+)"', re.IGNORECASE)
+_UNIQUE_VIOLATION_RE = re.compile(r"(duplicate key value|unique constraint|already exists)", re.IGNORECASE)
 
 
 def _json(o):
@@ -323,13 +324,26 @@ class ApiDataHandler(BaseIntentHandler):
 
     def _build_group_query_fingerprint(self, model: str, domain, group_by, order: str, search_term: str, ctx: Dict[str, Any]) -> str:
         group_by_norm = self._normalize_group_by(group_by)
+        stable_ctx_keys = {
+            "active_test",
+            "lang",
+            "tz",
+            "uid",
+            "allowed_company_ids",
+            "company_id",
+        }
+        stable_ctx = {
+            key: value
+            for key, value in (ctx if isinstance(ctx, dict) else {}).items()
+            if key in stable_ctx_keys
+        }
         payload = {
             "model": str(model or ""),
             "domain": domain if isinstance(domain, list) else [],
             "group_by": group_by_norm,
             "order": str(order or "").strip(),
             "search_term": str(search_term or "").strip(),
-            "ctx": ctx if isinstance(ctx, dict) else {},
+            "ctx": stable_ctx,
         }
         return hashlib.sha1(_json(payload).encode("utf-8")).hexdigest()
 
@@ -600,6 +614,14 @@ class ApiDataHandler(BaseIntentHandler):
         message = str(error or "")
         match = _NOT_NULL_COLUMN_RE.search(message)
         return str(match.group(1) if match else "").strip()
+
+    def _friendly_create_error(self, error: Exception) -> str:
+        message = str(error or "")
+        if _UNIQUE_VIOLATION_RE.search(message):
+            return "已有相同记录，请先搜索并选择已有记录；如确需新建，请使用不同名称。"
+        if "psycopg2" in message or "Traceback" in message or "DETAIL:" in message:
+            return "创建失败，请检查填写内容后重试。"
+        return message or "创建失败，请检查填写内容后重试。"
 
     def _fill_not_null_column_fallback(self, env_model, safe_vals: Dict[str, Any], column: str) -> bool:
         if not column or column not in env_model._fields:
@@ -944,13 +966,13 @@ class ApiDataHandler(BaseIntentHandler):
                         safe_vals = retry_vals
                     except Exception:
                         _logger.exception("create failed on %s (retry column=%s)", model, column)
-                        return self._err(500, str(e))
+                        return self._err(500, self._friendly_create_error(e))
                 else:
                     _logger.exception("create failed on %s (unresolved column=%s)", model, column)
-                    return self._err(500, str(e))
+                    return self._err(500, self._friendly_create_error(e))
             else:
                 _logger.exception("create failed on %s", model)
-                return self._err(500, str(e))
+                return self._err(500, self._friendly_create_error(e))
 
         data = {"id": rec.id}
         meta = {"op": "create", "model": model, "id": rec.id}

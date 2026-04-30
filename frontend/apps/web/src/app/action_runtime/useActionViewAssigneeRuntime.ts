@@ -4,6 +4,13 @@ import { listRecords } from '../../api/data';
 
 type UseActionViewAssigneeRuntimeOptions = {
   hasAssigneeField: Ref<boolean>;
+  assigneeOptionsContract: Ref<{
+    model?: string;
+    fields?: string[];
+    domain?: unknown[];
+    order?: string;
+    limit?: number;
+  } | null>;
   assigneeOptions: Ref<Array<{ id: number; name: string }>>;
   selectedAssigneeId: Ref<number | null>;
   batchMessage: Ref<string>;
@@ -47,12 +54,16 @@ export function useActionViewAssigneeRuntime(options: UseActionViewAssigneeRunti
       return;
     }
     try {
+      const assigneeContract = options.assigneeOptionsContract.value || {};
+      const fields = Array.isArray(assigneeContract.fields) && assigneeContract.fields.length
+        ? assigneeContract.fields
+        : ['id', 'name'];
       const result = await listRecords({
-        model: 'res.users',
-        fields: ['id', 'name'],
-        domain: [['active', '=', true]],
-        order: 'name asc',
-        limit: 80,
+        model: String(assigneeContract.model || 'res.users').trim() || 'res.users',
+        fields,
+        domain: Array.isArray(assigneeContract.domain) ? assigneeContract.domain : [],
+        order: String(assigneeContract.order || 'name asc').trim() || 'name asc',
+        limit: Number.isFinite(Number(assigneeContract.limit)) ? Math.trunc(Number(assigneeContract.limit)) : 80,
         silentErrors: true,
       });
       const rows = Array.isArray(result.records) ? result.records : [];
@@ -82,4 +93,3 @@ export function useActionViewAssigneeRuntime(options: UseActionViewAssigneeRunti
     loadAssigneeOptions,
   };
 }
-

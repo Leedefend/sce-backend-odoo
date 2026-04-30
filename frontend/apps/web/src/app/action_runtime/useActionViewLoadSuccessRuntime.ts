@@ -16,6 +16,7 @@ type ApplyLoadSuccessOptions = {
   sortLabel: string;
   pageMode: string;
   hasActiveField: boolean;
+  activeField: string;
   resolvedModel: string;
   resolveEffectiveFilterDomainRaw: () => string;
   pageText: (key: string, fallback: string) => string;
@@ -178,6 +179,7 @@ export function useActionViewLoadSuccessRuntime() {
     const projectScopeState = await options.resolveLoadSuccessProjectScopeApplyState({
       pageMode: options.pageMode,
       hasActiveField: options.hasActiveField,
+      activeField: options.activeField,
       model: options.resolvedModel,
       baseDomain: options.baseDomain,
       domainRaw: options.resolveEffectiveFilterDomainRaw(),

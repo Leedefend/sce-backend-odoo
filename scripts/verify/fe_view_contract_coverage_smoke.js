@@ -82,6 +82,41 @@ function asArray(value) {
   return [];
 }
 
+function countLayoutNodes(nodes) {
+  const counts = {
+    field: 0,
+    group: 0,
+    notebook: 0,
+    page: 0,
+    header: 0,
+    sheet: 0,
+  };
+  const walk = (node) => {
+    if (Array.isArray(node)) {
+      node.forEach(walk);
+      return;
+    }
+    if (!node || typeof node !== 'object') return;
+    const type = String(node.type || node.kind || '').trim();
+    if (Object.prototype.hasOwnProperty.call(counts, type)) {
+      counts[type] += 1;
+    }
+    ['children', 'tabs', 'pages', 'nodes', 'items'].forEach((key) => {
+      if (Array.isArray(node[key])) {
+        node[key].forEach(walk);
+      }
+    });
+  };
+  walk(nodes);
+  return counts;
+}
+
+function resolvePrimaryViewData(viewData, viewType) {
+  const views = viewData && typeof viewData.views === 'object' ? viewData.views : {};
+  const primary = views && typeof views[viewType] === 'object' ? views[viewType] : {};
+  return primary && Object.keys(primary).length ? primary : viewData;
+}
+
 function isModelMissing(resp) {
   const msg = String((((resp || {}).body || {}).error || {}).message || '');
   return (
@@ -171,24 +206,33 @@ async function main() {
       : REQUIRED_NODES;
 
   const viewData = viewResp.body.data || {};
-  const layout = viewData.layout;
+  const primaryView = resolvePrimaryViewData(viewData, VIEW_TYPE);
+  const layout = primaryView.layout || viewData.layout;
   const layoutOk = Boolean(layout && typeof layout === 'object');
   if (!layoutOk) {
     throw new Error('layout missing');
   }
 
   const present = new Set();
-  if (asArray(layout.groups).length) present.add('group');
-  const groupFields = asArray(layout.groups).some((g) => asArray(g.fields).length || asArray(g.sub_groups).length);
-  if (groupFields) present.add('field');
-  if (asArray(layout.notebooks).length) present.add('notebook');
-  if (asArray(layout.notebooks).some((nb) => asArray(nb.pages).length)) present.add('page');
-  if (asArray(layout.headerButtons).length) present.add('headerButtons');
-  if (asArray(layout.statButtons).length) present.add('statButtons');
-  if (layout.ribbon) present.add('ribbon');
-  if (layout.chatter) present.add('chatter');
+  const layoutCounts = countLayoutNodes(layout);
+  if (layoutCounts.field > 0) present.add('field');
+  if (layoutCounts.group > 0) present.add('group');
+  if (layoutCounts.notebook > 0) present.add('notebook');
+  if (layoutCounts.page > 0) present.add('page');
 
-  const supported = new Set(['field', 'group', 'notebook', 'page', 'headerButtons', 'statButtons', 'ribbon', 'chatter']);
+  if (primaryView.statusbar && typeof primaryView.statusbar === 'object') present.add('statusbar');
+  if (asArray(primaryView.header_buttons).length || asArray(primaryView.headerButtons).length) present.add('headerButtons');
+  if (
+    asArray(primaryView.stat_buttons).length
+    || asArray(primaryView.statButtons).length
+    || asArray(primaryView.button_box).length
+    || asArray(primaryView.buttonBox).length
+  ) present.add('statButtons');
+  if (primaryView.ribbon || layout.ribbon) present.add('ribbon');
+  const chatter = primaryView.chatter || layout.chatter;
+  if (chatter && typeof chatter === 'object' ? chatter.enabled !== false : Boolean(chatter)) present.add('chatter');
+
+  const supported = new Set(['field', 'group', 'notebook', 'page', 'statusbar', 'headerButtons', 'statButtons', 'ribbon', 'chatter']);
   const missing = requiredNodes.filter((node) => !present.has(node));
   const allowedMissing = new Set(ALLOWED_MISSING);
   const blockingMissing = missing.filter((node) => !allowedMissing.has(node));
@@ -215,6 +259,7 @@ async function main() {
     missing_nodes: missing,
     allowed_missing: ALLOWED_MISSING,
     blocking_missing: blockingMissing,
+    layout_counts: layoutCounts,
   });
   writeSummary(summary);
 

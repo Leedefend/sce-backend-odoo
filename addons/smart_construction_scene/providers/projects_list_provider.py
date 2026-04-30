@@ -10,7 +10,7 @@ def build(scene_key: str = "projects.list", runtime: dict | None = None, context
     _ = context or {}
     runtime_payload = runtime or {}
     primary_action = {
-        "label": "进入项目列表",
+        "label": "进入项目台账",
         "action_xmlid": "smart_construction_core.action_sc_project_list",
         "semantic": "projects_list_entry",
     }
@@ -23,8 +23,8 @@ def build(scene_key: str = "projects.list", runtime: dict | None = None, context
     return {
         "scene_key": scene_key,
         "guidance": {
-            "title": "项目列表",
-            "message": "从编排后的列表入口查看项目状态、排序和批量动作。",
+            "title": "项目台账",
+            "message": "从统一台账入口查看项目状态、排序和批量动作。",
         },
         "primary_action": primary_action,
         "fallback_strategy": fallback_strategy,

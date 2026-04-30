@@ -8,6 +8,7 @@ type Dict = Record<string, unknown>;
 export async function resolveLoadSuccessProjectScopeApplyState(options: {
   pageMode: string;
   hasActiveField: boolean;
+  activeField: string;
   model: string;
   baseDomain: unknown[];
   domainRaw: string;
@@ -36,6 +37,7 @@ export async function resolveLoadSuccessProjectScopeApplyState(options: {
 }): Promise<{ projectScopeTotals: unknown; projectScopeMetrics: unknown }> {
   const snapshot = await loadActionViewProjectScopeSnapshot({
     enabled: options.pageMode === 'list' && options.hasActiveField,
+    activeField: options.activeField,
     model: options.model,
     baseDomain: options.baseDomain,
     domainRaw: options.domainRaw,

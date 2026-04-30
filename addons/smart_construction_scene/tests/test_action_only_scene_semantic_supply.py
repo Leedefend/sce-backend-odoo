@@ -220,7 +220,7 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
         self.assertEqual(((projects_list.get("target") or {}).get("route")), "/s/projects.list")
         self.assertEqual(
             ((projects_list.get("target") or {}).get("menu_xmlid")),
-            "smart_construction_core.menu_sc_root",
+            "smart_construction_core.menu_sc_project_project",
         )
         self.assertEqual(
             ((projects_list.get("target") or {}).get("action_xmlid")),
@@ -258,7 +258,7 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
         )
         self.assertEqual(
             ((projects_ledger.get("target") or {}).get("action_xmlid")),
-            "smart_construction_core.action_sc_project_kanban_lifecycle",
+            "smart_construction_core.action_sc_project_list",
         )
 
     def test_projects_detail_scene_keeps_route_and_menu_without_sharing_ledger_action_authority(self):
@@ -636,8 +636,8 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
         maps = target_core_extension.smart_core_nav_scene_maps(_DummyEnv())
 
         self.assertEqual(
-            maps["action_xmlid_scene_map"]["smart_construction_core.action_sc_project_kanban_lifecycle"],
-            "projects.ledger",
+            maps["action_xmlid_scene_map"]["smart_construction_core.action_sc_project_list"],
+            "projects.list",
         )
         self.assertNotEqual(
             maps["action_xmlid_scene_map"]["smart_construction_core.action_sc_project_overview"],

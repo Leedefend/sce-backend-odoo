@@ -1,4 +1,5 @@
 import type { Ref } from 'vue';
+import type { SceneListProfile } from '../resolvers/sceneRegistry';
 
 type Dict = Record<string, unknown>;
 
@@ -43,6 +44,7 @@ type UseActionViewRoutePresetRuntimeOptions = {
   activeGroupSummaryDomain: Ref<unknown[]>;
   groupSampleLimit: Ref<number>;
   groupSort: Ref<string>;
+  listProfile: Ref<SceneListProfile | null>;
   collapsedGroupKeys: Ref<string[]>;
   groupPageOffsets: Ref<Record<string, number>>;
   appliedPresetLabel: Ref<string>;
@@ -162,6 +164,10 @@ export function useActionViewRoutePresetRuntime(options: UseActionViewRoutePrese
       groupSampleLimitRaw,
       groupSortRaw,
       groupCollapsedRaw,
+      sampleLimits: ((options.listProfile?.value?.grouping || {}).sample_limits || []) as number[],
+      defaultSampleLimit: (options.listProfile?.value?.grouping || {}).default_sample_limit as number | undefined,
+      sortDirections: (((options.listProfile?.value?.grouping || {}).sort || {}).directions || []) as string[],
+      defaultSortDirection: ((options.listProfile?.value?.grouping || {}).sort || {}).default_direction as string | undefined,
     });
     setIfDiff(options.groupSampleLimit, groupVisualState.groupSampleLimit);
     setIfDiff(options.groupSort, groupVisualState.groupSort);
@@ -217,6 +223,11 @@ export function useActionViewRoutePresetRuntime(options: UseActionViewRoutePrese
         filterValue: options.filterValue.value,
         groupSampleLimit: options.groupSampleLimit.value,
         groupSort: options.groupSort.value,
+        defaultGroupSampleLimit: options.listProfile.value?.grouping?.default_sample_limit,
+        defaultGroupSort: options.listProfile.value?.grouping?.sort?.default_direction === 'asc'
+          || options.listProfile.value?.grouping?.sort?.default_direction === 'desc'
+          ? options.listProfile.value.grouping.sort.default_direction
+          : undefined,
         collapsedGroupKeys: options.collapsedGroupKeys.value,
         groupPageOffsets: options.groupPageOffsets.value,
         activeGroupByField: options.activeGroupByField.value,

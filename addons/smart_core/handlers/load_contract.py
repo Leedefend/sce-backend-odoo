@@ -144,7 +144,11 @@ class LoadContractHandler(BaseIntentHandler):
 
         # ---------- 5) 上下文透传（lang/tz/company） ----------
         ctx_user = dict(self.env.context or {})
-        if p.get("lang"): ctx_user["lang"] = p["lang"]
+        user_lang = (getattr(self.env.user, "lang", None) or "").strip()
+        if p.get("lang"):
+            ctx_user["lang"] = p["lang"]
+        elif user_lang:
+            ctx_user["lang"] = user_lang
         if p.get("tz"):   ctx_user["tz"]   = p["tz"]
         if p.get("company_id"):
             try: ctx_user["allowed_company_ids"] = [int(p["company_id"])]

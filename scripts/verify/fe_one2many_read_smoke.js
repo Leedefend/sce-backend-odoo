@@ -75,25 +75,24 @@ function requestJson(url, payload, headers = {}) {
 
 function collectLayoutFields(layout) {
   const names = new Set();
-  if (!layout || typeof layout !== 'object') {
-    return names;
-  }
-  const pushField = (field) => {
-    if (field && typeof field === 'object' && field.name) {
-      names.add(field.name);
+  const walk = (node) => {
+    if (!node || typeof node !== 'object') return;
+    if (String(node.type || '').trim().toLowerCase() === 'field' && node.name) {
+      names.add(String(node.name));
+    }
+    if (node.name && !node.type && (node.ttype || node.field_type)) {
+      names.add(String(node.name));
+    }
+    for (const key of ['children', 'tabs', 'pages', 'nodes', 'items', 'groups', 'fields', 'sub_groups', 'notebooks']) {
+      const children = node[key];
+      if (Array.isArray(children)) children.forEach(walk);
     }
   };
-  const walkGroup = (group) => {
-    if (!group || typeof group !== 'object') return;
-    (group.fields || []).forEach(pushField);
-    (group.sub_groups || []).forEach(walkGroup);
-  };
-  (layout.groups || []).forEach(walkGroup);
-  (layout.notebooks || []).forEach((notebook) => {
-    (notebook.pages || []).forEach((page) => {
-      (page.groups || []).forEach(walkGroup);
-    });
-  });
+  if (Array.isArray(layout)) {
+    layout.forEach(walk);
+  } else {
+    walk(layout);
+  }
   return names;
 }
 
@@ -153,7 +152,8 @@ async function main() {
 
   const viewData = viewResp.body.data || {};
   const fields = viewData.fields || {};
-  const layout = viewData.layout || {};
+  const formView = ((viewData.views || {}).form || {});
+  const layout = viewData.layout || formView.layout || {};
   const layoutFields = collectLayoutFields(layout);
 
   let fieldName = '';

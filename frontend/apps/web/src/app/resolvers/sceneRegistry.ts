@@ -35,6 +35,33 @@ export interface SceneListProfile {
   column_labels?: Record<string, string>;
   row_primary?: string;
   row_secondary?: string;
+  status_field?: string;
+  metric_fields?: string[];
+  batch_policy?: {
+    enabled?: boolean;
+    active_field?: string;
+    assignee_field?: string;
+    archive_value?: boolean | null;
+    activate_value?: boolean | null;
+    assignee_options?: {
+      model?: string;
+      fields?: string[];
+      domain?: unknown[];
+      order?: string;
+      limit?: number;
+    } | null;
+    delete_mode?: string;
+    available_actions?: string[];
+  };
+  grouping?: {
+    sample_limits?: number[];
+    default_sample_limit?: number;
+    sort?: {
+      key?: string;
+      default_direction?: 'asc' | 'desc' | string;
+      directions?: string[];
+    };
+  };
 }
 
 export interface SceneLayout {
