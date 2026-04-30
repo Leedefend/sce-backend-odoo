@@ -98,16 +98,40 @@ export function resolveGroupWindowMoveTarget(options: {
   return options.nextOffset === null ? null : Number(options.nextOffset);
 }
 
-export function normalizeGroupSampleLimit(limit: number): number | null {
-  const normalized = Number(limit || 0);
-  if (!Number.isFinite(normalized)) return null;
-  if (![3, 5, 8].includes(normalized)) return null;
-  return normalized;
+function normalizeGroupSampleLimitOptions(limits?: number[]): number[] {
+  const values = Array.isArray(limits) ? limits : [];
+  return Array.from(new Set(values
+    .map((item) => Number(item || 0))
+    .filter((item) => Number.isFinite(item) && item > 0)
+    .map((item) => Math.trunc(item))));
 }
 
-export function buildGroupSampleLimitPatch(limit: number): Dict {
+function normalizeGroupSortDirections(directions?: string[]): Array<'asc' | 'desc'> {
+  const values = Array.isArray(directions) ? directions : [];
+  const normalized = values
+    .map((item) => String(item || '').trim())
+    .filter((item): item is 'asc' | 'desc' => item === 'asc' || item === 'desc');
+  return normalized.length ? Array.from(new Set(normalized)) : ['desc', 'asc'];
+}
+
+export function normalizeGroupSampleLimit(limit: number, sampleLimits?: number[]): number | null {
+  const normalized = Number(limit || 0);
+  if (!Number.isFinite(normalized)) return null;
+  const candidate = Math.trunc(normalized);
+  const allowedLimits = normalizeGroupSampleLimitOptions(sampleLimits);
+  if (!allowedLimits.length || !allowedLimits.includes(candidate)) return null;
+  return candidate;
+}
+
+export function buildGroupSampleLimitPatch(limit: number, options?: {
+  defaultSampleLimit?: number;
+}): Dict {
+  const defaultSampleLimitRaw = Number(options?.defaultSampleLimit || 0);
+  const defaultSampleLimit = Number.isFinite(defaultSampleLimitRaw) && defaultSampleLimitRaw > 0
+    ? Math.trunc(defaultSampleLimitRaw)
+    : null;
   return {
-    group_sample_limit: limit,
+    group_sample_limit: defaultSampleLimit !== null && limit === defaultSampleLimit ? undefined : limit,
     group_offset: undefined,
     group_fp: undefined,
     group_wid: undefined,
@@ -116,13 +140,16 @@ export function buildGroupSampleLimitPatch(limit: number): Dict {
   };
 }
 
-export function resolveGroupSampleLimitTransition(limit: number): {
+export function resolveGroupSampleLimitTransition(limit: number, options?: {
+  sampleLimits?: number[];
+  defaultSampleLimit?: number;
+}): {
   normalizedLimit: number | null;
   patch: Dict | null;
   resetGroupWindowOffset: boolean;
   resetGroupPageOffsets: boolean;
 } {
-  const normalizedLimit = normalizeGroupSampleLimit(limit);
+  const normalizedLimit = normalizeGroupSampleLimit(limit, options?.sampleLimits);
   if (normalizedLimit === null) {
     return {
       normalizedLimit: null,
@@ -133,26 +160,38 @@ export function resolveGroupSampleLimitTransition(limit: number): {
   }
   return {
     normalizedLimit,
-    patch: buildGroupSampleLimitPatch(normalizedLimit),
+    patch: buildGroupSampleLimitPatch(normalizedLimit, { defaultSampleLimit: options?.defaultSampleLimit }),
     resetGroupWindowOffset: true,
     resetGroupPageOffsets: true,
   };
 }
 
-export function buildGroupSortPatch(sort: 'asc' | 'desc'): Dict {
+export function buildGroupSortPatch(sort: 'asc' | 'desc', options?: {
+  defaultSort?: 'asc' | 'desc';
+}): Dict {
+  const defaultSort = options?.defaultSort === 'asc' || options?.defaultSort === 'desc'
+    ? options.defaultSort
+    : 'desc';
   return {
-    group_sort: sort !== 'desc' ? sort : undefined,
+    group_sort: sort !== defaultSort ? sort : undefined,
   };
 }
 
-export function resolveGroupSortTransition(sort: 'asc' | 'desc'): {
+export function resolveGroupSortTransition(sort: 'asc' | 'desc', options?: {
+  sortDirections?: string[];
+  defaultSort?: 'asc' | 'desc';
+}): {
   normalizedSort: 'asc' | 'desc';
   patch: Dict;
 } {
-  const normalizedSort: 'asc' | 'desc' = sort === 'asc' ? 'asc' : 'desc';
+  const sortDirections = normalizeGroupSortDirections(options?.sortDirections);
+  const defaultSort = options?.defaultSort === 'asc' || options?.defaultSort === 'desc'
+    ? options.defaultSort
+    : sortDirections[0];
+  const normalizedSort: 'asc' | 'desc' = sortDirections.includes(sort) ? sort : defaultSort;
   return {
     normalizedSort,
-    patch: buildGroupSortPatch(normalizedSort),
+    patch: buildGroupSortPatch(normalizedSort, { defaultSort }),
   };
 }
 

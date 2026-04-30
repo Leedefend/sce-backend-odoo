@@ -83,7 +83,7 @@
           type="button"
           :class="{ active: searchMenuOpen }"
           :disabled="loading || !hasSearchMenu"
-          aria-label="展开搜索菜单"
+          :aria-label="uiLabel('search_menu_toggle', '展开搜索菜单')"
           @click="searchMenuOpen = !searchMenuOpen"
         >
           <span class="search-menu-caret">{{ searchMenuOpen ? '▴' : '▾' }}</span>
@@ -104,7 +104,7 @@
               <span class="menu-check">{{ activeFilterKey === chip.key ? selectedSymbol : '' }}</span>
               <span>{{ chip.label }}</span>
             </button>
-            <p v-if="!allFilterChips.length" class="search-menu-empty">暂无筛选</p>
+            <p v-if="!allFilterChips.length" class="search-menu-empty">{{ uiLabel('empty_filters', '暂无筛选') }}</p>
             <button
               v-if="customFilterEnabled"
               class="search-menu-item custom-entry"
@@ -117,24 +117,24 @@
             </button>
             <div v-if="customFilterEnabled && customFilterOpen" class="custom-search-panel">
               <select v-model="customFilterField">
-                <option value="">选择字段</option>
+                <option value="">{{ uiLabel('select_field', '选择字段') }}</option>
                 <option v-for="field in customFilterFields" :key="field.field" :value="field.field">{{ field.label }}</option>
               </select>
               <select v-model="customFilterOperator">
                 <option v-for="operator in activeCustomFilterOperators" :key="operator.value" :value="operator.value">{{ operator.label }}</option>
               </select>
               <select v-if="activeCustomFilterField?.type === 'selection'" v-model="customFilterValue">
-                <option value="">选择值</option>
+                <option value="">{{ uiLabel('select_value', '选择值') }}</option>
                 <option v-for="choice in activeCustomFilterChoices" :key="choice.value" :value="choice.value">{{ choice.label }}</option>
               </select>
               <select v-else-if="activeCustomFilterField?.type === 'boolean'" v-model="customFilterValue">
-                <option value="true">是</option>
-                <option value="false">否</option>
+                <option value="true">{{ uiLabel('boolean_true', '是') }}</option>
+                <option value="false">{{ uiLabel('boolean_false', '否') }}</option>
               </select>
-              <input v-else v-model="customFilterValue" :type="customFilterInputType" placeholder="输入值" />
+              <input v-else v-model="customFilterValue" :type="customFilterInputType" :placeholder="uiLabel('input_value', '输入值')" />
               <div class="custom-search-actions">
-                <button type="button" :disabled="!canApplyCustomFilter || loading" @click="applyCustomFilter">添加</button>
-                <button type="button" :disabled="loading" @click="resetCustomFilter">取消</button>
+                <button type="button" :disabled="!canApplyCustomFilter || loading" @click="applyCustomFilter">{{ uiLabel('add', '添加') }}</button>
+                <button type="button" :disabled="loading" @click="resetCustomFilter">{{ uiLabel('cancel', '取消') }}</button>
               </div>
             </div>
           </div>
@@ -154,7 +154,7 @@
               <span class="menu-check">{{ activeGroupKey === chip.key ? selectedSymbol : '' }}</span>
               <span>{{ chip.label }}</span>
             </button>
-            <p v-if="!menuGroupChips.length" class="search-menu-empty">暂无分组</p>
+            <p v-if="!menuGroupChips.length" class="search-menu-empty">{{ uiLabel('empty_group_by', '暂无分组') }}</p>
             <select
               v-if="customGroupEnabled"
               v-model="customGroupField"
@@ -181,10 +181,10 @@
             >
               <span class="menu-check">{{ activeSavedFilterKey === chip.key ? selectedSymbol : '' }}</span>
               <span>{{ chip.label }}</span>
-              <span v-if="chip.isDefault" class="menu-badge">默认</span>
-              <span v-if="chip.isShared" class="menu-badge">共享</span>
+              <span v-if="chip.isDefault" class="menu-badge">{{ uiLabel('default', '默认') }}</span>
+              <span v-if="chip.isShared" class="menu-badge">{{ uiLabel('shared', '共享') }}</span>
             </button>
-            <p v-if="!allSavedFilterChips.length" class="search-menu-empty">暂无收藏</p>
+            <p v-if="!allSavedFilterChips.length" class="search-menu-empty">{{ uiLabel('empty_saved_filters', '暂无收藏') }}</p>
             <button
               v-if="favoriteSaveEnabled"
               class="search-menu-item custom-entry"
@@ -196,18 +196,18 @@
               <span>{{ favoriteSaveLabel }}</span>
             </button>
             <div v-if="favoriteSaveEnabled && favoriteSaveOpen" class="custom-search-panel">
-              <input v-model="favoriteName" placeholder="收藏名称" />
+              <input v-model="favoriteName" :placeholder="uiLabel('favorite_name', '收藏名称')" />
               <label class="custom-search-check">
                 <input v-model="favoriteUseByDefault" type="checkbox" />
-                <span>设为默认筛选</span>
+                <span>{{ uiLabel('favorite_use_by_default', '设为默认筛选') }}</span>
               </label>
               <label class="custom-search-check">
                 <input v-model="favoriteShared" type="checkbox" />
-                <span>共享给所有用户</span>
+                <span>{{ uiLabel('favorite_shared', '共享给所有用户') }}</span>
               </label>
               <div class="custom-search-actions">
-                <button type="button" :disabled="!favoriteName.trim() || loading" @click="saveFavorite">保存</button>
-                <button type="button" :disabled="loading" @click="favoriteSaveOpen = false">取消</button>
+                <button type="button" :disabled="!favoriteName.trim() || loading" @click="saveFavorite">{{ uiLabel('save', '保存') }}</button>
+                <button type="button" :disabled="loading" @click="favoriteSaveOpen = false">{{ uiLabel('cancel', '取消') }}</button>
               </div>
             </div>
           </div>
@@ -292,6 +292,7 @@ const props = defineProps<{
   activeGroupKey: string;
   canCreateRecord: boolean;
   createLabel: string;
+  uiLabels?: Record<string, string>;
 }>();
 
 const emit = defineEmits<{
@@ -328,6 +329,10 @@ const favoriteShared = ref(false);
 const toolbarRoot = ref<HTMLElement | null>(null);
 const selectedSymbol = '✓';
 const clearSymbol = '×';
+
+function uiLabel(key: string, fallback: string) {
+  return String(props.uiLabels?.[key] || fallback).trim() || fallback;
+}
 
 const allFilterChips = computed(() => [...props.filterPrimary, ...props.filterOverflow]);
 const allSavedFilterChips = computed(() => [...props.savedFilterPrimary, ...props.savedFilterOverflow]);

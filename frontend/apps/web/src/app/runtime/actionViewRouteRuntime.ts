@@ -59,6 +59,8 @@ type ListStatePatchOptions = {
   filterValue: 'all' | 'active' | 'archived';
   groupSampleLimit: number;
   groupSort: 'asc' | 'desc';
+  defaultGroupSampleLimit?: number;
+  defaultGroupSort?: 'asc' | 'desc';
   collapsedGroupKeys: string[];
   groupPage: string;
   activeGroupByField: string;
@@ -71,12 +73,19 @@ type ListStatePatchOptions = {
 };
 
 export function buildActionViewListStatePatch(options: ListStatePatchOptions): Dict {
+  const defaultGroupSampleLimit = Number(options.defaultGroupSampleLimit || 0) > 0
+    ? Math.trunc(Number(options.defaultGroupSampleLimit || 0))
+    : 3;
+  const defaultGroupSort = options.defaultGroupSort === 'asc' || options.defaultGroupSort === 'desc'
+    ? options.defaultGroupSort
+    : 'desc';
   return {
     search: options.searchTerm.trim() || undefined,
     order: options.sortValue.trim() || undefined,
     active_filter: options.filterValue !== 'all' ? options.filterValue : undefined,
-    group_sample_limit: options.groupSampleLimit !== 3 ? options.groupSampleLimit : undefined,
-    group_sort: options.groupSort !== 'desc' ? options.groupSort : undefined,
+    group_by: options.activeGroupByField || undefined,
+    group_sample_limit: options.groupSampleLimit !== defaultGroupSampleLimit ? options.groupSampleLimit : undefined,
+    group_sort: options.groupSort !== defaultGroupSort ? options.groupSort : undefined,
     group_collapsed: options.collapsedGroupKeys.filter(Boolean).join(',') || undefined,
     group_page: options.groupPage || undefined,
     group_offset: options.activeGroupByField && options.groupWindowOffset > 0 ? options.groupWindowOffset : undefined,
@@ -101,6 +110,8 @@ export function buildActionViewSyncedRouteQuery(currentQuery: Dict, options: Syn
       filterValue: options.filterValue,
       groupSampleLimit: options.groupSampleLimit,
       groupSort: options.groupSort,
+      defaultGroupSampleLimit: options.defaultGroupSampleLimit,
+      defaultGroupSort: options.defaultGroupSort,
       collapsedGroupKeys: options.collapsedGroupKeys,
       groupPage: serializeGroupPageOffsets(options.groupPageOffsets),
       activeGroupByField: options.activeGroupByField,

@@ -86,10 +86,11 @@ export function mergeSceneDomain(base: unknown, sceneFilters: unknown): unknown[
   return [...sceneDomain, ...baseDomain];
 }
 
-export function mergeActiveFilter(base: unknown, options: { hasActiveField: boolean; filterValue: 'all' | 'active' | 'archived' }): unknown[] {
+export function mergeActiveFilter(base: unknown, options: { activeField: string; filterValue: 'all' | 'active' | 'archived' }): unknown[] {
   const domain = normalizeDomain(base);
-  if (!options.hasActiveField || options.filterValue === 'all') return domain;
-  const activeClause = ['active', '=', options.filterValue === 'active'];
+  const activeField = String(options.activeField || '').trim();
+  if (!activeField || options.filterValue === 'all') return domain;
+  const activeClause = [activeField, '=', options.filterValue === 'active'];
   if (!domain.length) return [activeClause];
   return [...domain, activeClause];
 }

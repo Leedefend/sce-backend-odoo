@@ -35,7 +35,7 @@ type GroupByChip = {
 type UseActionViewRequestContextRuntimeOptions = {
   routeContextRaw: () => string;
   menuId: Ref<number | null>;
-  hasActiveField: Ref<boolean>;
+  activeField: Ref<string>;
   filterValue: Ref<'all' | 'active' | 'archived'>;
   contractFilterChips: Ref<FilterChip[]>;
   activeContractFilterKey: Ref<string>;
@@ -145,7 +145,7 @@ export function useActionViewRequestContextRuntime(options: UseActionViewRequest
 
   function mergeActiveFilterDomain(base: unknown) {
     return mergeActiveFilter(base, {
-      hasActiveField: options.hasActiveField.value,
+      activeField: options.activeField.value,
       filterValue: options.filterValue.value,
     });
   }

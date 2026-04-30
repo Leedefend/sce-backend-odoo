@@ -43,17 +43,22 @@ export function resolveLoadPreflightContractLimit(options: {
 }
 
 export function resolveLoadPreflightFieldFlags(options: {
-  fieldMapRaw: unknown;
+  listProfileRaw?: unknown;
 }): {
   hasActiveField: boolean;
   hasAssigneeField: boolean;
 } {
-  const fieldMap = options.fieldMapRaw && typeof options.fieldMapRaw === 'object'
-    ? (options.fieldMapRaw as Record<string, unknown>)
+  const profile = options.listProfileRaw && typeof options.listProfileRaw === 'object'
+    ? (options.listProfileRaw as Record<string, unknown>)
     : {};
+  const batchPolicy = profile.batch_policy && typeof profile.batch_policy === 'object'
+    ? (profile.batch_policy as Record<string, unknown>)
+    : {};
+  const activeField = String(batchPolicy.active_field || '').trim();
+  const assigneeField = String(batchPolicy.assignee_field || '').trim();
   return {
-    hasActiveField: 'active' in fieldMap,
-    hasAssigneeField: 'user_id' in fieldMap,
+    hasActiveField: Boolean(activeField),
+    hasAssigneeField: Boolean(assigneeField),
   };
 }
 

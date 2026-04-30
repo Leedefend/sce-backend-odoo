@@ -9,6 +9,7 @@ type UseActionViewFilterComputedRuntimeOptions = {
       saved_filters?: Array<Record<string, unknown>>;
       group_by?: Array<Record<string, unknown>>;
       custom?: Record<string, unknown>;
+      ui_labels?: Record<string, unknown>;
     };
     surface_policies?: {
       filters_primary_max?: number;
@@ -199,19 +200,24 @@ export function useActionViewFilterComputedRuntime(options: UseActionViewFilterC
   });
 
   const customSearchCapabilities = computed(() => {
+    const searchLabels = (options.actionContract.value?.search?.ui_labels || {}) as Dict;
     const custom = options.actionContract.value?.search?.custom as Dict | undefined;
     const filters = (custom?.filters || {}) as Dict;
     const groups = (custom?.group_by || {}) as Dict;
     const favorites = (custom?.favorites || {}) as Dict;
+    const customLabels = (custom?.ui_labels || {}) as Dict;
+    const uiLabels = { ...searchLabels, ...customLabels };
+    const label = (key: string, fallback: string) => String(uiLabels[key] || fallback);
     return {
       enabled: custom?.enabled !== false,
       filterEnabled: filters.enabled !== false && customFilterFields.value.length > 0,
-      filterLabel: String(filters.label || '添加自定义筛选'),
+      filterLabel: String(filters.label || label('custom_filter', '添加自定义筛选')),
       groupEnabled: groups.enabled !== false && customGroupByChips.value.length > 0,
-      groupLabel: String(groups.label || '添加自定义分组'),
+      groupLabel: String(groups.label || label('custom_group', '添加自定义分组')),
       favoriteSaveEnabled: favorites.save_enabled !== false,
-      favoriteLabel: String(favorites.label || '加入收藏'),
+      favoriteLabel: String(favorites.label || label('favorite_save', '加入收藏')),
       favoriteIntent: String(favorites.intent || 'search.favorite.set'),
+      uiLabels,
     };
   });
 

@@ -66,17 +66,38 @@ export function resolveRoutePresetGroupVisualState(options: {
   groupSampleLimitRaw: number;
   groupSortRaw: string;
   groupCollapsedRaw: string;
+  sampleLimits?: number[];
+  defaultSampleLimit?: number;
+  sortDirections?: string[];
+  defaultSortDirection?: string;
 }): {
   groupSampleLimit: number;
   groupSort: 'asc' | 'desc';
   collapsedList: string[];
 } {
-  const groupSampleLimit = Number.isFinite(options.groupSampleLimitRaw) && [3, 5, 8].includes(options.groupSampleLimitRaw)
+  const sampleLimits = Array.isArray(options.sampleLimits)
+    ? options.sampleLimits
+        .map((item) => Number(item))
+        .filter((item) => Number.isFinite(item) && item > 0)
+        .map((item) => Math.trunc(item))
+    : [];
+  const effectiveSampleLimits = sampleLimits.length ? sampleLimits : [3];
+  const defaultSampleLimitRaw = Number(options.defaultSampleLimit || 0);
+  const defaultSampleLimit = Number.isFinite(defaultSampleLimitRaw) && effectiveSampleLimits.includes(Math.trunc(defaultSampleLimitRaw))
+    ? Math.trunc(defaultSampleLimitRaw)
+    : effectiveSampleLimits[0];
+  const groupSampleLimit = Number.isFinite(options.groupSampleLimitRaw) && effectiveSampleLimits.includes(options.groupSampleLimitRaw)
     ? options.groupSampleLimitRaw
-    : 3;
-  const groupSort = options.groupSortRaw === 'asc' || options.groupSortRaw === 'desc'
+    : defaultSampleLimit;
+  const sortDirections = Array.isArray(options.sortDirections)
+    ? options.sortDirections.filter((item): item is 'asc' | 'desc' => item === 'asc' || item === 'desc')
+    : [];
+  const effectiveSortDirections: Array<'asc' | 'desc'> = sortDirections.length ? sortDirections : ['desc', 'asc'];
+  const defaultSortDirection = options.defaultSortDirection === 'asc' ? 'asc' : 'desc';
+  const fallbackSortDirection: 'asc' | 'desc' = effectiveSortDirections.includes(defaultSortDirection) ? defaultSortDirection : effectiveSortDirections[0];
+  const groupSort = (options.groupSortRaw === 'asc' || options.groupSortRaw === 'desc') && effectiveSortDirections.includes(options.groupSortRaw)
     ? options.groupSortRaw
-    : 'desc';
+    : fallbackSortDirection;
   const collapsedList = options.groupCollapsedRaw
     ? options.groupCollapsedRaw.split(',').map((item) => item.trim()).filter(Boolean)
     : [];

@@ -5,6 +5,7 @@ type ScopeMetrics = { warning: number; done: number; amount: number } | null;
 
 export async function loadActionViewProjectScopeSnapshot(options: {
   enabled: boolean;
+  activeField: string;
   model: string;
   baseDomain: unknown[];
   domainRaw: string;
@@ -34,6 +35,10 @@ export async function loadActionViewProjectScopeSnapshot(options: {
   if (!options.enabled) {
     return { totals: null, metrics: null };
   }
+  const activeField = String(options.activeField || '').trim();
+  if (!activeField) {
+    return { totals: null, metrics: null };
+  }
   try {
     const term = options.searchTerm.trim();
     const [allTotal, activeTotal, archivedTotal, metrics] = await Promise.all([
@@ -48,7 +53,7 @@ export async function loadActionViewProjectScopeSnapshot(options: {
       }),
       options.fetchScopedTotal({
         model: options.model,
-        domain: [...options.baseDomain, ['active', '=', true]],
+        domain: [...options.baseDomain, [activeField, '=', true]],
         domainRaw: options.domainRaw,
         context: options.context,
         contextRaw: options.contextRaw,
@@ -57,7 +62,7 @@ export async function loadActionViewProjectScopeSnapshot(options: {
       }),
       options.fetchScopedTotal({
         model: options.model,
-        domain: [...options.baseDomain, ['active', '=', false]],
+        domain: [...options.baseDomain, [activeField, '=', false]],
         domainRaw: options.domainRaw,
         context: options.context,
         contextRaw: options.contextRaw,

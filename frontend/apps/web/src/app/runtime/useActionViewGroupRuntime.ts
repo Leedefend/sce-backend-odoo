@@ -14,6 +14,7 @@ import {
 } from './actionViewGroupDrilldownRuntime';
 import { buildGroupWindowMoveState, type ActionViewGroupSharedState } from './actionViewGroupStateRuntime';
 import type { GroupSummaryItem } from './actionViewGroupRuntimeState';
+import type { SceneListProfile } from '../resolvers/sceneRegistry';
 
 type SyncRouteFn = (patch: Record<string, unknown>) => void;
 
@@ -26,6 +27,7 @@ export function useActionViewGroupRuntime(options: {
   groupWindowNextOffset: Ref<number | null>;
   groupSampleLimit: Ref<number>;
   groupSort: Ref<'asc' | 'desc'>;
+  listProfile: Ref<SceneListProfile | null>;
   collapsedGroupKeys: Ref<string[]>;
   groupPageOffsets: Ref<Record<string, number>>;
   syncRouteStateAndReload: SyncRouteFn;
@@ -82,7 +84,10 @@ export function useActionViewGroupRuntime(options: {
   };
 
   const handleGroupSampleLimitChange = (limit: number) => {
-    const transition = resolveGroupSampleLimitTransition(limit);
+    const transition = resolveGroupSampleLimitTransition(limit, {
+      sampleLimits: options.listProfile.value?.grouping?.sample_limits,
+      defaultSampleLimit: options.listProfile.value?.grouping?.default_sample_limit,
+    });
     if (transition.normalizedLimit === null || !transition.patch) return;
     options.groupSampleLimit.value = transition.normalizedLimit;
     if (transition.resetGroupWindowOffset) options.groupWindowOffset.value = 0;
@@ -91,7 +96,13 @@ export function useActionViewGroupRuntime(options: {
   };
 
   const handleGroupSortChange = (next: 'asc' | 'desc') => {
-    const transition = resolveGroupSortTransition(next);
+    const transition = resolveGroupSortTransition(next, {
+      sortDirections: options.listProfile.value?.grouping?.sort?.directions,
+      defaultSort: options.listProfile.value?.grouping?.sort?.default_direction === 'asc'
+        || options.listProfile.value?.grouping?.sort?.default_direction === 'desc'
+        ? options.listProfile.value.grouping.sort.default_direction
+        : undefined,
+    });
     options.groupSort.value = transition.normalizedSort;
     options.syncRouteListState(transition.patch);
   };

@@ -48,14 +48,19 @@ export function resolveBatchDeleteExecutionSeed(options: {
 export function resolveBatchStandardExecutionSeed(options: {
   action: 'archive' | 'activate' | 'delete';
   selectedIds: number[];
+  activeField: string;
+  activeValue: boolean;
   buildIfMatchMap: (ids: number[]) => Record<number, string>;
   buildIdempotencyKey: (action: string, ids: number[], extra: Record<string, unknown>) => string;
 }): {
   ifMatchMap: Record<number, string>;
   idempotencyKey: string;
 } {
+  const extra = String(options.activeField || '').trim()
+    ? { [options.activeField]: options.activeValue }
+    : {};
   return {
     ifMatchMap: options.buildIfMatchMap(options.selectedIds),
-    idempotencyKey: options.buildIdempotencyKey(options.action, options.selectedIds, { active: options.action === 'activate' }),
+    idempotencyKey: options.buildIdempotencyKey(options.action, options.selectedIds, extra),
   };
 }

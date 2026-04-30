@@ -146,13 +146,15 @@ export async function createRecord(params: {
   vals: Record<string, unknown>;
   context?: Record<string, unknown>;
 }) {
+  const context = params.context ?? {};
   return intentRequest<{ id: number }>({
     intent: 'api.data',
+    context,
     params: {
       op: 'create',
       model: params.model,
       vals: params.vals,
-      context: params.context ?? {},
+      context,
     },
   });
 }
