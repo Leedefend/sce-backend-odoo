@@ -36,6 +36,21 @@
           <h2>{{ title }}</h2>
           <p>{{ subtitle }}</p>
         </div>
+        <div class="list-plain-search">
+          <input
+            type="search"
+            :value="plainSearchDraft"
+            :disabled="loading"
+            :placeholder="uiLabel('plain_search_placeholder', '输入关键字搜索')"
+            @compositionstart="plainSearchComposing = true"
+            @compositionend="onPlainSearchCompositionEnd"
+            @input="onPlainSearchInput"
+            @keydown.enter.prevent="submitPlainSearch"
+          />
+          <button type="button" class="pagination-btn" :disabled="loading" @click="submitPlainSearch">
+            {{ uiLabel('search_submit', '搜索') }}
+          </button>
+        </div>
         <div v-if="showPagination" class="pagination-actions pagination-actions--top">
           <button
             type="button"
@@ -70,6 +85,24 @@
             @click="jumpPage"
           >
             {{ uiLabel('pagination_jump', '跳转') }}
+          </button>
+          <span class="pagination-size-label">{{ uiLabel('pagination_page_size', '每页') }}</span>
+          <input
+            class="pagination-input pagination-input--size"
+            :value="pageLimitInput"
+            :disabled="loading"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            @input="onPageLimitInput"
+            @keyup.enter="applyPageLimit"
+          />
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading"
+            @click="applyPageLimit"
+          >
+            {{ uiLabel('pagination_apply_size', '应用') }}
           </button>
         </div>
         <span v-else class="list-count">{{ uiLabel('record_count', '{count} 条记录', { count: records.length }) }}</span>
@@ -183,6 +216,10 @@
             </button>
           </header>
           <table v-if="!isGroupCollapsed(group.key)">
+            <colgroup>
+              <col class="col-row-number" />
+              <col v-for="col in displayedColumns" :key="`group-col-width-${group.key}-${col}`" :style="columnWidthStyle(col)" />
+            </colgroup>
             <thead>
               <tr>
                 <th class="cell-row-number">{{ uiLabel('row_number', '序号') }}</th>
@@ -192,6 +229,7 @@
                   class="cell-sortable"
                   :class="{ 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col }"
                   :data-column="col"
+                  :style="columnWidthStyle(col)"
                   draggable="true"
                   @dragstart="onColumnDragStart(col, $event)"
                   @dragover="onColumnDragOver(col, $event)"
@@ -208,6 +246,15 @@
                     <span>{{ columnLabel(col) }}</span>
                     <span class="sort-indicator" aria-hidden="true">{{ columnSortIndicator(col) }}</span>
                   </button>
+                  <button
+                    type="button"
+                    class="column-resize-handle"
+                    :title="uiLabel('column_resize', '调整列宽')"
+                    draggable="false"
+                    @click.stop
+                    @dragstart.stop.prevent
+                    @mousedown.stop.prevent="startColumnResize(col, $event)"
+                  ></button>
                 </th>
               </tr>
             </thead>
@@ -215,10 +262,14 @@
               <tr
                 v-for="(row, index) in group.sampleRows"
                 :key="`group-row-${group.key}-${String(row.id ?? index)}`"
-                @click="handleRow(row)"
+                @click="handleRowClick(row, $event)"
               >
                 <td class="cell-row-number">{{ groupedRowNumber(group.key, index) }}</td>
-                <td v-for="col in displayedColumns" :key="`group-cell-${group.key}-${String(row.id ?? index)}-${col}`">
+                <td
+                  v-for="col in displayedColumns"
+                  :key="`group-cell-${group.key}-${String(row.id ?? index)}-${col}`"
+                  :style="columnWidthStyle(col)"
+                >
                   <button
                     v-if="isFavoriteColumn(col)"
                     type="button"
@@ -242,10 +293,40 @@
                 </td>
               </tr>
             </tbody>
+            <tfoot>
+              <tr>
+                <th class="cell-row-number footer-row-label">{{ uiLabel('page_footer_current_total', '当前页合计') }}</th>
+                <td
+                  v-for="col in displayedColumns"
+                  :key="`group-footer-page-${group.key}-${col}`"
+                  :style="columnWidthStyle(col)"
+                  :class="{ 'footer-number': isNumericColumn(col) }"
+                >
+                  {{ footerCellText(col, 'page', group.sampleRows.length) }}
+                </td>
+              </tr>
+              <tr>
+                <th class="cell-row-number footer-row-label">{{ uiLabel('page_footer_grand_total', '总计') }}</th>
+                <td
+                  v-for="col in displayedColumns"
+                  :key="`group-footer-total-${group.key}-${col}`"
+                  :style="columnWidthStyle(col)"
+                  :class="{ 'footer-number': isNumericColumn(col) }"
+                >
+                  {{ footerCellText(col, 'total', group.count) }}
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </article>
       </section>
 	      <table v-if="!showGroupedRows">
+        <colgroup>
+          <col class="col-row-number" />
+          <col v-if="showSelectionColumn" class="col-select" />
+          <col v-for="col in displayedColumns" :key="`col-width-${col}`" :style="columnWidthStyle(col)" />
+          <col v-if="columnChoices.length" class="col-column-picker" />
+        </colgroup>
         <thead>
           <tr>
             <th class="cell-row-number">{{ uiLabel('row_number', '序号') }}</th>
@@ -264,6 +345,7 @@
               class="cell-sortable"
               :class="{ 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col }"
               :data-column="col"
+              :style="columnWidthStyle(col)"
               draggable="true"
               @dragstart="onColumnDragStart(col, $event)"
               @dragover="onColumnDragOver(col, $event)"
@@ -280,6 +362,15 @@
                 <span>{{ columnLabel(col) }}</span>
                 <span class="sort-indicator" aria-hidden="true">{{ columnSortIndicator(col) }}</span>
               </button>
+              <button
+                type="button"
+                class="column-resize-handle"
+                :title="uiLabel('column_resize', '调整列宽')"
+                draggable="false"
+                @click.stop
+                @dragstart.stop.prevent
+                @mousedown.stop.prevent="startColumnResize(col, $event)"
+              ></button>
             </th>
             <th v-if="columnChoices.length" ref="columnPickerRoot" class="cell-column-picker">
               <button type="button" class="column-picker-btn" :disabled="loading" @click.stop="columnPickerOpen = !columnPickerOpen">
@@ -307,7 +398,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(row, index) in records" :key="String(row.id ?? index)" @click="handleRow(row)">
+          <tr v-for="(row, index) in records" :key="String(row.id ?? index)" @click="handleRowClick(row, $event)">
             <td class="cell-row-number">{{ flatRowNumber(index) }}</td>
             <td v-if="showSelectionColumn" class="cell-select" @click.stop>
               <input
@@ -318,7 +409,7 @@
                 @change="onRowCheckboxChange(row, $event)"
               />
             </td>
-            <td v-for="col in displayedColumns" :key="col">
+            <td v-for="col in displayedColumns" :key="col" :style="columnWidthStyle(col)">
               <button
                 v-if="isFavoriteColumn(col)"
                 type="button"
@@ -347,23 +438,36 @@
             <td v-if="columnChoices.length" class="cell-column-picker"></td>
           </tr>
         </tbody>
+        <tfoot>
+          <tr>
+            <th class="cell-row-number footer-row-label">{{ uiLabel('page_footer_current_total', '当前页合计') }}</th>
+            <td v-if="showSelectionColumn" class="cell-select"></td>
+            <td
+              v-for="col in displayedColumns"
+              :key="`footer-page-${col}`"
+              :style="columnWidthStyle(col)"
+              :class="{ 'footer-number': isNumericColumn(col) }"
+            >
+              {{ footerCellText(col, 'page', pageVisibleRows.length) }}
+            </td>
+            <td v-if="columnChoices.length" class="cell-column-picker"></td>
+          </tr>
+          <tr>
+            <th class="cell-row-number footer-row-label">{{ uiLabel('page_footer_grand_total', '总计') }}</th>
+            <td v-if="showSelectionColumn" class="cell-select"></td>
+            <td
+              v-for="col in displayedColumns"
+              :key="`footer-total-${col}`"
+              :style="columnWidthStyle(col)"
+              :class="{ 'footer-number': isNumericColumn(col) }"
+            >
+              {{ footerCellText(col, 'total', listTotal || pageVisibleRows.length) }}
+            </td>
+            <td v-if="columnChoices.length" class="cell-column-picker"></td>
+          </tr>
+        </tfoot>
       </table>
     </section>
-
-      <section class="list-page-footer">
-        <div class="footer-total">
-          <span>{{ uiLabel('page_footer_title', '页面统计') }}</span>
-          <strong>{{ uiLabel('page_footer_count', '当前页 {count} 条', { count: pageVisibleRows.length }) }}</strong>
-        </div>
-        <div v-if="pageFooterStats.length" class="footer-summary-grid">
-          <article v-for="item in pageFooterStats" :key="`footer-stat-${item.name}`" class="footer-summary-card">
-            <span>{{ item.label }}</span>
-            <strong>{{ item.sumText }}</strong>
-            <em>{{ uiLabel('page_footer_summary_count', '{count} 项', { count: item.count }) }}</em>
-          </article>
-        </div>
-        <p v-else class="footer-empty-summary">{{ uiLabel('page_footer_no_numeric', '当前页没有可汇总的数值列') }}</p>
-      </section>
 
       <section v-if="showPagination" class="pagination-bar">
         <span>{{ paginationSummary }}</span>
@@ -401,6 +505,24 @@
             @click="jumpPage"
           >
             {{ uiLabel('pagination_jump', '跳转') }}
+          </button>
+          <span class="pagination-size-label">{{ uiLabel('pagination_page_size', '每页') }}</span>
+          <input
+            class="pagination-input pagination-input--size"
+            :value="pageLimitInput"
+            :disabled="loading"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            @input="onPageLimitInput"
+            @keyup.enter="applyPageLimit"
+          />
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading"
+            @click="applyPageLimit"
+          >
+            {{ uiLabel('pagination_apply_size', '应用') }}
           </button>
         </div>
       </section>
@@ -465,9 +587,11 @@ const props = defineProps<{
   listTotalCount?: number | null;
   listOffset?: number;
   listLimit?: number;
+  listAggregates?: Record<string, Record<string, unknown>>;
   columnOptions?: ColumnOption[];
   columnVisibility?: Record<string, boolean>;
   columnOrder?: string[];
+  columnWidths?: Record<string, number>;
   columnSaveStatus?: 'idle' | 'saving' | 'saved' | 'error';
   uiLabels?: Record<string, string>;
   enableSummaryStrip?: boolean;
@@ -522,10 +646,12 @@ const props = defineProps<{
   collapsedGroupKeys?: string[];
   onGroupCollapsedChange?: (keys: string[]) => void;
   onPageChange?: (offset: number) => void;
+  onPageLimitChange?: (limit: number) => void;
 }>();
 const emit = defineEmits<{
   'column-visibility-change': [payload: { visibility: Record<string, boolean> }];
   'column-order-change': [payload: { columnOrder: string[] }];
+  'column-widths-change': [payload: { columnWidths: Record<string, number> }];
 }>();
 function uiLabel(key: string, fallback: string, vars: Record<string, string | number> = {}) {
   const candidate = String(props.uiLabels?.[key] || '').trim();
@@ -549,10 +675,17 @@ const groupedRows = computed(() =>
 const showGroupedRows = computed(() => props.enableGroupedRows === true && groupedRows.value.length > 0);
 const groupJumpPageInput = ref<Record<string, string>>({});
 const pageJumpInput = ref('');
+const pageLimitInput = ref('');
+const plainSearchDraft = ref('');
+const plainSearchComposing = ref(false);
 const observedListLimit = ref(0);
 const columnPickerRoot = ref<HTMLElement | null>(null);
 const columnPickerOpen = ref(false);
 const draggingColumn = ref('');
+const resizingColumn = ref('');
+const resizeStartX = ref(0);
+const resizeStartWidth = ref(0);
+const draftColumnWidths = ref<Record<string, number>>({});
 const columnSaveStatus = computed(() => props.columnSaveStatus || 'idle');
 const columnSaveStatusText = computed(() => {
   if (columnSaveStatus.value === 'saving') return uiLabel('column_saving', '保存中');
@@ -882,6 +1015,19 @@ function handleRow(row: Record<string, unknown>) {
   props.onRowClick(row);
 }
 
+function hasActiveTextSelection() {
+  return Boolean(window.getSelection?.()?.toString().trim());
+}
+
+function isInteractiveTarget(target: EventTarget | null) {
+  return Boolean((target as HTMLElement | null)?.closest('button,input,select,textarea,a,[role="button"]'));
+}
+
+function handleRowClick(row: Record<string, unknown>, event: MouseEvent) {
+  if (event.defaultPrevented || hasActiveTextSelection() || isInteractiveTarget(event.target)) return;
+  handleRow(row);
+}
+
 function rowId(row: Record<string, unknown>) {
   const value = row?.id;
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -1014,10 +1160,55 @@ function jumpPage() {
   emitPageOffset((normalizedPage - 1) * listLimit.value);
 }
 
+function onPageLimitInput(event: Event) {
+  pageLimitInput.value = String((event.target as HTMLInputElement | null)?.value || '');
+}
+
+function applyPageLimit() {
+  const raw = Number(pageLimitInput.value || listLimit.value);
+  if (!Number.isFinite(raw)) return;
+  const normalized = Math.min(Math.max(Math.trunc(raw), 1), 200);
+  pageLimitInput.value = String(normalized);
+  if (normalized === listLimit.value) return;
+  observedListLimit.value = normalized;
+  props.onPageLimitChange?.(normalized);
+}
+
+function onPlainSearchInput(event: Event) {
+  plainSearchDraft.value = String((event.target as HTMLInputElement | null)?.value || '');
+}
+
+function onPlainSearchCompositionEnd(event: CompositionEvent) {
+  plainSearchComposing.value = false;
+  plainSearchDraft.value = String((event.target as HTMLInputElement | null)?.value || '');
+}
+
+function submitPlainSearch() {
+  if (plainSearchComposing.value) return;
+  props.onSearch(plainSearchDraft.value || '');
+}
+
 watch(
   currentPage,
   (page) => {
     pageJumpInput.value = String(page);
+  },
+  { immediate: true },
+);
+
+watch(
+  listLimit,
+  (limit) => {
+    pageLimitInput.value = String(limit);
+  },
+  { immediate: true },
+);
+
+watch(
+  () => props.searchTerm,
+  (value) => {
+    if (plainSearchComposing.value) return;
+    plainSearchDraft.value = value || '';
   },
   { immediate: true },
 );
@@ -1146,6 +1337,10 @@ function toggleColumnSort(col: string) {
 }
 
 function onColumnDragStart(col: string, event: DragEvent) {
+  if (resizingColumn.value) {
+    event.preventDefault();
+    return;
+  }
   if (!displayedColumns.value.includes(col)) return;
   draggingColumn.value = col;
   event.dataTransfer?.setData('text/plain', col);
@@ -1175,6 +1370,59 @@ function onColumnDrop(target: string, event: DragEvent) {
 
 function onColumnDragEnd() {
   draggingColumn.value = '';
+}
+
+function normalizeColumnWidth(value: unknown) {
+  const parsed = Number(value || 0);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 0;
+  return Math.min(Math.max(Math.trunc(parsed), 80), 640);
+}
+
+watch(
+  () => props.columnWidths,
+  (value) => {
+    draftColumnWidths.value = Object.entries(value || {}).reduce<Record<string, number>>((acc, [name, width]) => {
+      const normalizedName = String(name || '').trim();
+      const normalizedWidth = normalizeColumnWidth(width);
+      if (normalizedName && normalizedWidth) acc[normalizedName] = normalizedWidth;
+      return acc;
+    }, {});
+  },
+  { immediate: true },
+);
+
+function effectiveColumnWidth(field: string) {
+  return normalizeColumnWidth(draftColumnWidths.value[field] || props.columnWidths?.[field]);
+}
+
+function columnWidthStyle(field: string) {
+  const width = effectiveColumnWidth(field);
+  return width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : {};
+}
+
+function startColumnResize(field: string, event: MouseEvent) {
+  const header = (event.currentTarget as HTMLElement | null)?.closest('th');
+  resizingColumn.value = field;
+  resizeStartX.value = event.clientX;
+  resizeStartWidth.value = effectiveColumnWidth(field) || Math.trunc(header?.getBoundingClientRect().width || 160);
+  window.addEventListener('mousemove', onColumnResizeMove);
+  window.addEventListener('mouseup', stopColumnResize, { once: true });
+}
+
+function onColumnResizeMove(event: MouseEvent) {
+  const field = resizingColumn.value;
+  if (!field) return;
+  const nextWidth = normalizeColumnWidth(resizeStartWidth.value + event.clientX - resizeStartX.value);
+  if (!nextWidth) return;
+  draftColumnWidths.value = { ...draftColumnWidths.value, [field]: nextWidth };
+}
+
+function stopColumnResize() {
+  const field = resizingColumn.value;
+  window.removeEventListener('mousemove', onColumnResizeMove);
+  resizingColumn.value = '';
+  if (!field) return;
+  emit('column-widths-change', { columnWidths: { ...draftColumnWidths.value } });
 }
 
 function columnLabel(col: string) {
@@ -1265,6 +1513,34 @@ const pageFooterStats = computed(() =>
     .filter((item) => item.count > 0),
 );
 
+const pageFooterStatsMap = computed(() =>
+  pageFooterStats.value.reduce<Record<string, { sumText: string; count: number }>>((acc, item) => {
+    acc[item.name] = { sumText: item.sumText, count: item.count };
+    return acc;
+  }, {}),
+);
+
+function totalAggregateValue(field: string) {
+  const aggregate = props.listAggregates?.[field] || {};
+  const value = aggregate.sum;
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function footerCellText(field: string, scope: 'page' | 'total', rowCount: number) {
+  if (field === displayedColumns.value[0]) {
+    const count = Math.max(0, Math.trunc(Number(rowCount || 0)));
+    return scope === 'page'
+      ? uiLabel('page_footer_current_count', '{count} 条', { count })
+      : uiLabel('page_footer_total_count', '{count} 条', { count });
+  }
+  if (!isNumericColumn(field)) return '';
+  if (scope === 'page') {
+    return pageFooterStatsMap.value[field]?.sumText || '--';
+  }
+  const value = totalAggregateValue(field);
+  return value === null ? '--' : formatFooterNumber(value, field);
+}
+
 function handleColumnPickerPointerDown(event: PointerEvent) {
   const root = columnPickerRoot.value;
   if (!root || root.contains(event.target as Node)) return;
@@ -1277,6 +1553,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', handleColumnPickerPointerDown);
+  window.removeEventListener('mousemove', onColumnResizeMove);
 });
 
 </script>
@@ -1326,10 +1603,30 @@ onBeforeUnmount(() => {
 }
 
 .table {
-  overflow: auto;
+  overflow: visible;
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+}
+
+.list-plain-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 1 360px;
+  min-width: 240px;
+}
+
+.list-plain-search input {
+  min-width: 0;
+  width: 100%;
+  height: 30px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  padding: 4px 8px;
+  font-size: 13px;
 }
 
 .summary-strip {
@@ -1361,62 +1658,6 @@ onBeforeUnmount(() => {
 .summary-card.tone-warning { background: #fffbeb; border-color: #fde68a; color: #b45309; }
 .summary-card.tone-success { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
 .summary-card.tone-info { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
-
-.list-page-footer {
-  display: grid;
-  gap: 10px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  background: #fff;
-  padding: 10px 12px;
-}
-
-.footer-total {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: #475569;
-  font-size: 13px;
-}
-
-.footer-total strong {
-  color: #0f172a;
-  font-weight: 700;
-}
-
-.footer-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 8px;
-}
-
-.footer-summary-card {
-  display: grid;
-  gap: 4px;
-  border: 1px solid #dbeafe;
-  border-radius: 8px;
-  background: #f8fafc;
-  padding: 8px 10px;
-}
-
-.footer-summary-card span,
-.footer-summary-card em,
-.footer-empty-summary {
-  color: #64748b;
-  font-size: 12px;
-  font-style: normal;
-}
-
-.footer-summary-card strong {
-  color: #0f172a;
-  font-size: 18px;
-  font-variant-numeric: tabular-nums;
-}
-
-.footer-empty-summary {
-  margin: 0;
-}
 
 .grouped-table {
   display: grid;
@@ -1632,6 +1873,11 @@ onBeforeUnmount(() => {
   gap: 8px;
 }
 
+.pagination-size-label {
+  color: #64748b;
+  font-size: 12px;
+}
+
 .pagination-actions--top {
   flex: 0 0 auto;
 }
@@ -1763,6 +2009,10 @@ onBeforeUnmount(() => {
   font-size: 13px;
 }
 
+.pagination-input--size {
+  width: 72px;
+}
+
 @media (max-width: 900px) {
   .list-toolbar,
   .pagination-bar {
@@ -1773,11 +2023,29 @@ onBeforeUnmount(() => {
   .pagination-actions {
     flex-wrap: wrap;
   }
+
+  .list-plain-search {
+    width: 100%;
+    flex: 1 1 auto;
+  }
 }
 
 table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
+}
+
+.col-row-number {
+  width: 64px;
+}
+
+.col-select {
+  width: 44px;
+}
+
+.col-column-picker {
+  width: 72px;
 }
 
 th,
@@ -1786,6 +2054,11 @@ td {
   border-bottom: 1px solid #e2e8f0;
   text-align: left;
   font-size: 14px;
+}
+
+tbody td {
+  user-select: text;
+  cursor: text;
 }
 
 .cell-select {
@@ -1798,18 +2071,51 @@ td {
   min-width: 64px;
   color: #64748b;
   font-variant-numeric: tabular-nums;
-  text-align: right;
+  text-align: center;
   white-space: nowrap;
+}
+
+thead {
+  position: sticky;
+  top: 0;
+  z-index: 8;
 }
 
 thead th {
   position: sticky;
   top: 0;
   background: white;
-  z-index: 1;
+  z-index: 8;
+}
+
+tfoot th,
+tfoot td {
+  background: #f8fafc;
+  border-top: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+tfoot tr:nth-child(2) th,
+tfoot tr:nth-child(2) td {
+  background: #eef2ff;
+}
+
+.footer-row-label {
+  color: #0f172a;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+.footer-number {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .cell-sortable {
+  position: relative;
   cursor: grab;
   user-select: none;
 }
@@ -1831,6 +2137,34 @@ thead th {
   font-weight: 700;
   text-align: left;
   cursor: pointer;
+}
+
+.column-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 5;
+  width: 12px;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: col-resize;
+}
+
+.column-resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  right: 5px;
+  width: 1px;
+  height: calc(100% - 20px);
+  background: transparent;
+}
+
+.column-resize-handle:hover::after,
+.cell-sortable.is-dragging .column-resize-handle::after {
+  background: #93c5fd;
 }
 
 .column-sort-btn:hover {
@@ -1921,7 +2255,16 @@ td:first-child {
   position: sticky;
   left: 0;
   background: #fff;
-  z-index: 2;
+  z-index: 5;
+}
+
+thead th:first-child {
+  z-index: 7;
+}
+
+tfoot th:first-child,
+tfoot td:first-child {
+  z-index: 6;
 }
 
 </style>

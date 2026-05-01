@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import type { AppInitResponse, LoginResponse, NavMeta, NavNode } from '@sc/schema';
+import type { AppInitResponse, LoginResponse, NavMeta, NavNode, ProjectContextContract, ProjectContextOption } from '@sc/schema';
 import { intentRequest } from '../api/intents';
 import { ApiError } from '../api/client';
 import { config } from '../config';
@@ -313,6 +313,7 @@ export interface SessionState {
   sceneVersion: string | null;
   roleSurface: RoleSurface | null;
   roleSurfaceMap: RoleSurfaceMap;
+  projectContext: ProjectContextContract | null;
   capabilityCatalog: Record<string, CapabilityRuntimeMeta>;
   sceneActionHints: Record<string, SceneActionHint>;
   capabilityGroups: CapabilityGroup[];
@@ -385,6 +386,55 @@ function asObjectList(value: unknown): Record<string, unknown>[] {
     : [];
 }
 
+function normalizeProjectOption(raw: unknown): ProjectContextOption | null {
+  const row = asRecord(raw);
+  const id = Number(row.id || 0);
+  if (!Number.isFinite(id) || id <= 0) return null;
+  return {
+    id,
+    name: asText(row.name),
+    display_name: asText(row.display_name) || asText(row.name),
+    code: asText(row.code),
+    stage: asText(row.stage),
+    active: row.active === undefined ? undefined : Boolean(row.active),
+  };
+}
+
+function normalizeProjectContext(raw: unknown): ProjectContextContract | null {
+  const row = asRecord(raw);
+  if (!Object.keys(row).length) return null;
+  const selector = asRecord(row.selector);
+  const persistence = asRecord(row.persistence);
+  const selected = normalizeProjectOption(row.selected);
+  const options = Array.isArray(row.options)
+    ? row.options.map((item) => normalizeProjectOption(item)).filter(Boolean) as ProjectContextOption[]
+    : [];
+  return {
+    contract_version: asText(row.contract_version),
+    enabled: Boolean(row.enabled),
+    source: asText(row.source),
+    model: asText(row.model),
+    selected,
+    options,
+    total: Number(row.total || 0),
+    query: asText(row.query),
+    reason_code: asText(row.reason_code),
+    message: asText(row.message),
+    selector: Object.keys(selector).length ? {
+      intent: asText(selector.intent),
+      search_param: asText(selector.search_param),
+      selected_id_param: asText(selector.selected_id_param),
+      limit: Number(selector.limit || 0) || undefined,
+      label: asText(selector.label),
+      placeholder: asText(selector.placeholder),
+    } : undefined,
+    persistence: Object.keys(persistence).length ? {
+      scope: asText(persistence.scope),
+      server_preference: Boolean(persistence.server_preference),
+    } : undefined,
+  };
+}
+
 export const useSessionStore = defineStore('session', {
   state: (): SessionState => ({
     token: null,
@@ -397,6 +447,7 @@ export const useSessionStore = defineStore('session', {
     sceneVersion: null,
     roleSurface: null,
     roleSurfaceMap: {},
+    projectContext: null,
     capabilityCatalog: {},
     sceneActionHints: {},
     capabilityGroups: [],
@@ -658,6 +709,7 @@ export const useSessionStore = defineStore('session', {
           this.sceneVersion = parsed.sceneVersion ?? null;
           this.roleSurface = parsed.roleSurface ?? null;
           this.roleSurfaceMap = parsed.roleSurfaceMap ?? {};
+          this.projectContext = normalizeProjectContext(parsed.projectContext) ?? null;
           this.capabilityCatalog = parsed.capabilityCatalog ?? {};
           this.sceneActionHints = parsed.sceneActionHints ?? {};
           this.capabilityGroups = parsed.capabilityGroups ?? [];
@@ -701,6 +753,7 @@ export const useSessionStore = defineStore('session', {
       this.sceneVersion = null;
       this.roleSurface = null;
       this.roleSurfaceMap = {};
+      this.projectContext = null;
       this.capabilityCatalog = {};
       this.sceneActionHints = {};
       this.capabilityGroups = [];
@@ -761,6 +814,7 @@ export const useSessionStore = defineStore('session', {
         sceneVersion: this.sceneVersion,
         roleSurface: this.roleSurface,
         roleSurfaceMap: this.roleSurfaceMap,
+        projectContext: this.projectContext,
         capabilityCatalog: this.capabilityCatalog,
         sceneActionHints: this.sceneActionHints,
         capabilityGroups: this.capabilityGroups,
@@ -854,6 +908,7 @@ export const useSessionStore = defineStore('session', {
           scene: 'web',
           with_preload: false,
           root_xmlid: 'smart_construction_core.menu_sc_root',
+          ...(this.projectContext?.selected?.id ? { current_project_id: this.projectContext.selected.id } : {}),
         },
       };
       if (debugIntent) {
@@ -1007,6 +1062,7 @@ export const useSessionStore = defineStore('session', {
         },
       );
       this.roleSurfaceMap = ((result as AppInitResponse & { role_surface_map?: RoleSurfaceMap }).role_surface_map ?? {});
+      this.projectContext = normalizeProjectContext((result as AppInitResponse & { project_context?: ProjectContextContract }).project_context);
       const rawCapabilityGroups = (result as AppInitResponse & { capability_groups?: unknown[] }).capability_groups ?? [];
       this.capabilityGroups = rawCapabilityGroups
         .map((raw) => {
@@ -1138,6 +1194,7 @@ export const useSessionStore = defineStore('session', {
           with_preload: false,
           with: ['workspace_home'],
           root_xmlid: 'smart_construction_core.menu_sc_root',
+          ...(this.projectContext?.selected?.id ? { current_project_id: this.projectContext.selected.id } : {}),
         },
       });
       const row = result as AppInitResponse & {
@@ -1152,6 +1209,36 @@ export const useSessionStore = defineStore('session', {
       }
       this.persist();
       return this.workspaceHome;
+    },
+    async searchProjectContext(search = '') {
+      const selector = this.projectContext?.selector || {};
+      const intent = String(selector.intent || 'project.context.search').trim();
+      const result = await intentRequest<ProjectContextContract>({
+        intent,
+        params: {
+          search,
+          selected_id: this.projectContext?.selected?.id || undefined,
+          limit: selector.limit || 20,
+        },
+      });
+      const normalized = normalizeProjectContext(result);
+      if (normalized) {
+        this.projectContext = {
+          ...normalized,
+          selected: normalized.selected ?? this.projectContext?.selected ?? null,
+        };
+        this.persist();
+      }
+      return this.projectContext;
+    },
+    async selectProjectContext(option: ProjectContextOption | null) {
+      const current = this.projectContext || {};
+      this.projectContext = {
+        ...current,
+        selected: option,
+      };
+      this.persist();
+      await this.loadAppInit();
     },
     async ensureReady() {
       if (this.isReady) {

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from odoo import fields
+from odoo.addons.smart_core.core.project_context import selected_project_id_from_context
 from odoo.addons.smart_construction_core.models.support.state_machine import ScStateMachine
 from odoo.addons.smart_construction_scene.services.capability_scene_targets import (
     resolve_execution_projection_scene_key,
@@ -48,8 +49,9 @@ class ProjectExecutionItemProjectionService:
         },
     }
 
-    def __init__(self, env):
+    def __init__(self, env, context=None):
         self.env = env
+        self.context = context if isinstance(context, dict) else {}
 
     def _model(self, model_name):
         try:
@@ -77,6 +79,16 @@ class ProjectExecutionItemProjectionService:
     def _project_ids_for_user(self, user):
         Project = self._model("project.project")
         if Project is None:
+            return []
+        current_project_id = selected_project_id_from_context({}, self.context)
+        if current_project_id:
+            try:
+                if Project.sudo().search_count(
+                    [("id", "=", int(current_project_id))] + self._project_responsible_domain(user)
+                ):
+                    return [int(current_project_id)]
+            except Exception:
+                return []
             return []
         try:
             projects = Project.sudo().search(self._project_responsible_domain(user), order="id desc")

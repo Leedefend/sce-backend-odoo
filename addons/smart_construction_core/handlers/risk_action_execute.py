@@ -4,6 +4,11 @@ from __future__ import annotations
 from uuid import uuid4
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_core.core.project_context import (
+    project_scope_denied_response,
+    record_in_project_scope,
+    selected_project_id_from_context,
+)
 from odoo.addons.smart_core.handlers.reason_codes import (
     REASON_MISSING_PARAMS,
     REASON_NOT_FOUND,
@@ -96,6 +101,17 @@ class RiskActionExecuteHandler(BaseIntentHandler):
         name = str((params or {}).get("name") or "").strip()
         note = str((params or {}).get("note") or "").strip()
         owner_id = int((params or {}).get("owner_id") or 0)
+        current_project_id = selected_project_id_from_context(params, self.context if isinstance(self.context, dict) else {})
+        if current_project_id and project_id > 0 and project_id != current_project_id:
+            return project_scope_denied_response(
+                {
+                    "enabled": True,
+                    "project_id": current_project_id,
+                    "applied": True,
+                    "domain": [("project_id", "=", current_project_id)],
+                    "model": "project.risk.action",
+                }
+            )
 
         RiskAction = self.env["project.risk.action"].sudo()
         registry = getattr(self.env, "registry", None)
@@ -123,6 +139,10 @@ class RiskActionExecuteHandler(BaseIntentHandler):
                 code=404,
                 reason_code=REASON_NOT_FOUND,
             )
+        if record:
+            in_scope, scope_meta = record_in_project_scope(RiskAction, int(record.id), current_project_id)
+            if not in_scope:
+                return project_scope_denied_response(scope_meta)
 
         if not record:
             if project_id <= 0 or not name:

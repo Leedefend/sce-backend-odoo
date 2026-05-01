@@ -96,13 +96,23 @@ async function snapshot(page) {
         .filter(Boolean),
     }));
     const searchInput = document.querySelector('.native-searchbox input[type="search"]');
+    const plainSearchInput = document.querySelector('.list-plain-search input[type="search"]');
     const flatHeaders = Array.from(document.querySelectorAll('section.table > table > thead th')).map((node) => normalize(node.textContent || ''));
     const sortableColumns = Array.from(document.querySelectorAll('section.table > table > thead th.cell-sortable')).map((node) => ({
       name: node.getAttribute('data-column') || '',
       label: normalize(node.textContent || ''),
       sorted: node.classList.contains('is-sorted'),
+      width: Math.round(node.getBoundingClientRect().width),
     })).filter((row) => row.name);
     const flatFirstRowCells = Array.from(document.querySelectorAll('section.table > table > tbody > tr:first-child td')).map((node) => normalize(node.textContent || ''));
+    const footerRows = Array.from(document.querySelectorAll('section.table > table > tfoot tr')).map((row) =>
+      Array.from(row.querySelectorAll('th,td')).map((node) => normalize(node.textContent || ''))
+    );
+    const rowNumberCell = document.querySelector('section.table > table > tbody > tr:first-child td.cell-row-number');
+    const rowNumberStyle = rowNumberCell ? window.getComputedStyle(rowNumberCell) : null;
+    const headerCell = document.querySelector('section.table > table > thead th');
+    const headerStyle = headerCell ? window.getComputedStyle(headerCell) : null;
+    const pageSizeInputs = Array.from(document.querySelectorAll('.pagination-input--size')).map((node) => node.value || '');
     const firstGroup = groupedBlocks[0] || null;
     const groupedHeaders = firstGroup
       ? Array.from(firstGroup.querySelectorAll('table thead th')).map((node) => normalize(node.textContent || ''))
@@ -113,6 +123,7 @@ async function snapshot(page) {
     return {
       url: window.location.href,
       search_value: searchInput ? searchInput.value : '',
+      plain_search_value: plainSearchInput ? plainSearchInput.value : '',
       facet_texts: Array.from(document.querySelectorAll('.search-facet')).map((node) => normalize(node.textContent || '')).filter(Boolean),
       facets: Array.from(document.querySelectorAll('.search-facet')).map((node) => ({
         text: normalize(node.textContent || ''),
@@ -126,6 +137,17 @@ async function snapshot(page) {
       flat_headers: flatHeaders,
       sortable_columns: sortableColumns,
       flat_first_row_cells: flatFirstRowCells,
+      footer_rows: footerRows,
+      page_size_inputs: pageSizeInputs,
+      row_number_style: {
+        position: rowNumberStyle?.position || '',
+        left: rowNumberStyle?.left || '',
+        text_align: rowNumberStyle?.textAlign || '',
+      },
+      header_style: {
+        position: headerStyle?.position || '',
+        top: headerStyle?.top || '',
+      },
       grouped_table_count: document.querySelectorAll('.grouped-table').length,
       group_block_count: groupedBlocks.length,
       group_row_count: groupRows.length,
@@ -134,8 +156,8 @@ async function snapshot(page) {
       group_pages: groupPages,
       group_toolbar_text: normalize(document.querySelector('.grouped-toolbar')?.textContent || ''),
       pagination_text: normalize(document.querySelector('.pagination-actions--top')?.textContent || ''),
-      footer_text: normalize(document.querySelector('.list-page-footer')?.textContent || ''),
-      footer_stat_count: document.querySelectorAll('.list-page-footer .footer-summary-card').length,
+      footer_text: normalize(document.querySelector('section.table > table > tfoot')?.textContent || ''),
+      footer_stat_count: document.querySelectorAll('section.table > table > tfoot td.footer-number').length,
       visible_error: normalize(document.querySelector('.status-panel.error, .validation-error')?.textContent || ''),
       visible_empty: normalize(document.querySelector('.status-panel.info')?.textContent || ''),
       text_sample: normalize(document.body?.textContent || '').slice(0, 1200),
@@ -330,6 +352,87 @@ async function dragColumn(page, sourceColumn, targetColumn) {
   }, { sourceColumn, targetColumn });
 }
 
+async function selectFirstBusinessCellText(page) {
+  return page.evaluate(() => {
+    const row = document.querySelector('section.table > table > tbody > tr');
+    const cells = row ? Array.from(row.querySelectorAll('td')) : [];
+    const target = cells.find((cell) => String(cell.textContent || '').trim() && !cell.querySelector('input,button,select,textarea'));
+    if (!target) return { selectedText: '', clicked: false };
+    const textNode = Array.from(target.childNodes).find((node) => node.nodeType === Node.TEXT_NODE && String(node.textContent || '').trim())
+      || target.firstChild;
+    const range = document.createRange();
+    range.selectNodeContents(textNode || target);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    const beforeUrl = window.location.href;
+    target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    return {
+      selectedText: String(selection?.toString() || '').trim(),
+      beforeUrl,
+      afterUrl: window.location.href,
+      clicked: true,
+    };
+  });
+}
+
+async function resizeColumn(page, columnName, delta) {
+  const selector = `section.table > table > thead th.cell-sortable[data-column="${columnName}"] .column-resize-handle`;
+  const handle = page.locator(selector).first();
+  await handle.waitFor({ state: 'visible', timeout: 10000 });
+  const box = await handle.boundingBox();
+  if (!box) return false;
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + delta, y, { steps: 8 });
+  await page.mouse.up();
+  return true;
+}
+
+async function verifyStickyHeader(page) {
+  return page.evaluate(() => {
+    const headerRow = document.querySelector('section.table > table > thead');
+    const header = document.querySelector('section.table > table > thead th');
+    const rowNumber = document.querySelector('section.table > table > tbody > tr:first-child td.cell-row-number');
+    const beforeTop = headerRow ? headerRow.getBoundingClientRect().top : null;
+    const scrollers = Array.from(document.querySelectorAll('*')).filter((node) => {
+      const style = window.getComputedStyle(node);
+      return /(auto|scroll)/.test(`${style.overflowY} ${style.overflow}`) && node.scrollHeight > node.clientHeight + 20;
+    });
+    const tableTopBefore = document.querySelector('section.table')?.getBoundingClientRect().top ?? null;
+    const targetScroller = scrollers.find((node) => {
+      const rect = node.getBoundingClientRect();
+      return rect.top <= (tableTopBefore || 0) && rect.bottom >= Math.min(window.innerHeight, (tableTopBefore || 0) + 80);
+    }) || document.scrollingElement || document.documentElement;
+    const beforeScrollTop = targetScroller.scrollTop;
+    targetScroller.scrollTop = beforeScrollTop + 420;
+    const afterTop = headerRow ? headerRow.getBoundingClientRect().top : null;
+    const tableTopAfter = document.querySelector('section.table')?.getBoundingClientRect().top ?? null;
+    const headerRowStyle = headerRow ? window.getComputedStyle(headerRow) : null;
+    const headerStyle = header ? window.getComputedStyle(header) : null;
+    const rowStyle = rowNumber ? window.getComputedStyle(rowNumber) : null;
+    return {
+      beforeTop,
+      afterTop,
+      tableTopBefore,
+      tableTopAfter,
+      scrollContainerTag: targetScroller === document.scrollingElement ? 'document' : String(targetScroller.className || targetScroller.tagName || ''),
+      beforeScrollTop,
+      afterScrollTop: targetScroller.scrollTop,
+      headerRowPosition: headerRowStyle?.position || '',
+      headerRowTop: headerRowStyle?.top || '',
+      headerCellTop: header ? header.getBoundingClientRect().top : null,
+      headerPosition: headerStyle?.position || '',
+      headerTop: headerStyle?.top || '',
+      rowNumberPosition: rowStyle?.position || '',
+      rowNumberLeft: rowStyle?.left || '',
+      rowNumberTextAlign: rowStyle?.textAlign || '',
+    };
+  });
+}
+
 async function main() {
   fs.mkdirSync(outDir, { recursive: true });
   const browser = await chromium.launch({ headless: true });
@@ -487,13 +590,135 @@ async function main() {
     const footerSnapshot = await snapshot(page);
     summary.checks.push({
       path_id: 'LSG-P15',
-      name: 'list footer exposes current-page statistics and numeric column summaries when present',
-      status: footerSnapshot.footer_text.includes('页面统计')
-        && footerSnapshot.footer_text.includes(`当前页 ${footerSnapshot.flat_row_count} 条`)
+      name: 'list table footer aligns current-page and grand-total summaries under data columns',
+      status: footerSnapshot.footer_text.includes('当前页合计')
+        && footerSnapshot.footer_text.includes('总计')
+        && footerSnapshot.footer_rows.length >= 2
+        && footerSnapshot.footer_rows.every((row) => row.length === footerSnapshot.flat_headers.length)
         && !footerSnapshot.visible_error
         ? 'pass'
         : 'fail',
       footer_snapshot: footerSnapshot,
+    });
+
+    await openList(page);
+    const beforeTextSelection = await snapshot(page);
+    const selectionResult = await selectFirstBusinessCellText(page);
+    await page.waitForTimeout(300);
+    const afterTextSelection = await snapshot(page);
+    summary.checks.push({
+      path_id: 'LSG-P16',
+      name: 'selecting text in list cells does not trigger row navigation',
+      status: selectionResult.clicked
+        && Boolean(selectionResult.selectedText)
+        && selectionResult.beforeUrl === selectionResult.afterUrl
+        && afterTextSelection.url === beforeTextSelection.url
+        && !afterTextSelection.visible_error
+        ? 'pass'
+        : 'fail',
+      before_selection: beforeTextSelection,
+      selection_result: selectionResult,
+      after_selection: afterTextSelection,
+    });
+
+    await openList(page);
+    const beforeResize = await snapshot(page);
+    const resizeColumnSpec = (beforeResize.sortable_columns || [])[0];
+    let resizePerformed = false;
+    let afterResize = null;
+    if (resizeColumnSpec) {
+      resizePerformed = await resizeColumn(page, resizeColumnSpec.name, 80);
+      await page.waitForTimeout(900);
+      afterResize = await snapshot(page);
+    }
+    summary.checks.push({
+      path_id: 'LSG-P17',
+      name: 'dragging a column resize handle changes the visible column width',
+      status: resizeColumnSpec
+        && resizePerformed
+        && afterResize
+        && (afterResize.sortable_columns || []).some((row) => row.name === resizeColumnSpec.name && row.width >= resizeColumnSpec.width + 40)
+        && !afterResize.visible_error
+        ? 'pass'
+        : 'fail',
+      resize_column: resizeColumnSpec,
+      before_resize: beforeResize,
+      after_resize: afterResize,
+    });
+
+    await openList(page);
+    const beforeSticky = await snapshot(page);
+    const stickyResult = await verifyStickyHeader(page);
+    const afterSticky = await snapshot(page);
+    summary.checks.push({
+      path_id: 'LSG-P18',
+      name: 'table header stays sticky while row-number column remains fixed left and centered',
+      status: beforeSticky.flat_row_count > 0
+        && stickyResult.afterScrollTop > stickyResult.beforeScrollTop
+        && stickyResult.headerRowPosition === 'sticky'
+        && stickyResult.headerRowTop === '0px'
+        && stickyResult.headerPosition === 'sticky'
+        && stickyResult.headerTop === '0px'
+        && stickyResult.afterTop !== null
+        && stickyResult.afterTop >= 0
+        && stickyResult.afterTop <= Math.max(2, stickyResult.beforeTop)
+        && stickyResult.rowNumberPosition === 'sticky'
+        && stickyResult.rowNumberLeft === '0px'
+        && stickyResult.rowNumberTextAlign === 'center'
+        && !afterSticky.visible_error
+        ? 'pass'
+        : 'fail',
+      before_sticky: beforeSticky,
+      sticky_result: stickyResult,
+      after_sticky: afterSticky,
+    });
+
+    await openList(page);
+    const plainSearchInput = page.locator('.list-plain-search input[type="search"]').first();
+    await plainSearchInput.fill(SEARCH_TERM);
+    await plainSearchInput.press('Enter');
+    await page.waitForFunction((term) => {
+      const url = new URL(window.location.href);
+      const body = String(document.body?.textContent || '');
+      return url.searchParams.get('search') === term && !body.includes('正在加载列表');
+    }, SEARCH_TERM, { timeout: 20000 });
+    await waitForListReady(page);
+    const afterPlainSearch = await snapshot(page);
+    summary.checks.push({
+      path_id: 'LSG-P19',
+      name: 'plain list search accepts user input without changing existing search menu/group controls',
+      status: afterPlainSearch.plain_search_value === SEARCH_TERM
+        && new URL(afterPlainSearch.url).searchParams.get('search') === SEARCH_TERM
+        && afterPlainSearch.search_menu_enabled
+        && !afterPlainSearch.visible_error
+        ? 'pass'
+        : 'fail',
+      after_plain_search: afterPlainSearch,
+    });
+
+    await openList(page);
+    const beforePageSize = await snapshot(page);
+    const pageSizeInput = page.locator('.pagination-input--size').first();
+    await pageSizeInput.fill('5');
+    await pageSizeInput.press('Enter');
+    await page.waitForFunction(() => {
+      const body = String(document.body?.textContent || '');
+      return !body.includes('正在加载列表') && document.querySelectorAll('section.table > table > tbody > tr').length <= 5;
+    }, null, { timeout: 20000 });
+    await waitForListReady(page);
+    const afterPageSize = await snapshot(page);
+    summary.checks.push({
+      path_id: 'LSG-P20',
+      name: 'pagination accepts user-entered page size and reloads current page',
+      status: beforePageSize.flat_row_count > 0
+        && afterPageSize.page_size_inputs.includes('5')
+        && afterPageSize.flat_row_count > 0
+        && afterPageSize.flat_row_count <= Math.min(5, beforePageSize.flat_row_count)
+        && !afterPageSize.visible_error
+        ? 'pass'
+        : 'fail',
+      before_page_size: beforePageSize,
+      after_page_size: afterPageSize,
     });
 
     const groupLabel = await applyFirstGroup(page);

@@ -5,6 +5,11 @@ import re
 from uuid import uuid4
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_core.core.project_context import (
+    project_scope_denied_response,
+    record_in_project_scope,
+    selected_project_id_from_context,
+)
 from odoo.addons.smart_core.handlers.reason_codes import (
     REASON_BUSINESS_RULE_FAILED,
     REASON_MISSING_PARAMS,
@@ -274,6 +279,10 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
                 trace_id=trace_id,
                 code=404,
             )
+        current_project_id = selected_project_id_from_context(params, self.context if isinstance(self.context, dict) else {})
+        in_scope, scope_meta = record_in_project_scope(self.env["payment.request"].sudo(), payment_request_id, current_project_id)
+        if not in_scope:
+            return project_scope_denied_response(scope_meta)
 
         user_group_xmlids = self._current_user_group_xmlids()
         actions = [self._action_entry(record, spec, user_group_xmlids=user_group_xmlids) for spec in self._ACTION_SPECS]

@@ -2,6 +2,11 @@
 from typing import Any, List, Optional
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.project_context import (
+    project_scope_denied_response,
+    record_in_project_scope,
+    selected_project_id_from_context,
+)
 from odoo.exceptions import AccessError, UserError
 from odoo import fields
 import logging
@@ -72,6 +77,11 @@ class ExecuteButtonHandler(BaseIntentHandler):
                     trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
                     status_code=404,
                 )
+            current_project_id = selected_project_id_from_context(params, self.context if isinstance(self.context, dict) else {})
+            for record in recordset:
+                in_scope, scope_meta = record_in_project_scope(self.env[model], int(record.id), current_project_id)
+                if not in_scope:
+                    return project_scope_denied_response(scope_meta)
 
             recordset.check_access_rule("write")
 

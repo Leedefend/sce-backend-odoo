@@ -5,6 +5,10 @@ import time
 from typing import Any, Dict
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_core.core.project_context import (
+    project_scope_denied_response,
+    selected_project_id_from_context,
+)
 from odoo.addons.smart_construction_core.services.project_context_contract import (
     attach_project_context_to_runtime_payload,
 )
@@ -69,6 +73,17 @@ class ProjectExecutionBlockFetchHandler(BaseIntentHandler):
         ctx = ctx or {}
 
         project_id = self._resolve_project_id(params, ctx)
+        current_project_id = selected_project_id_from_context(params, ctx or self.context or {})
+        if current_project_id and project_id > 0 and int(project_id) != int(current_project_id):
+            return project_scope_denied_response(
+                {
+                    "enabled": True,
+                    "project_id": int(current_project_id),
+                    "applied": True,
+                    "domain": [("id", "=", int(current_project_id))],
+                    "model": "project.project",
+                }
+            )
         block_key = str(params.get("block_key") or "").strip().lower()
         if project_id <= 0 or not block_key:
             return {

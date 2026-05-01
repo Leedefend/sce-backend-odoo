@@ -355,10 +355,12 @@
       :list-total-count="listTotalCount"
       :list-offset="listOffset"
       :list-limit="contractLimit"
+      :list-aggregates="listAggregates"
       :column-labels="contractColumnLabels"
       :column-options="listColumnOptions"
       :column-visibility="listColumnVisibility"
       :column-order="listColumnOrder"
+      :column-widths="listColumnWidths"
       :column-save-status="listColumnSaveStatus"
       :sort-label="sortLabel"
       :sort-options="displaySortOptions"
@@ -396,8 +398,10 @@
       :on-toggle-record-favorite="handleToggleRecordFavorite"
       :on-row-click="handleRowClick"
       :on-page-change="handleListPageChange"
+      :on-page-limit-change="handleListPageLimitChange"
       @column-visibility-change="handleListColumnVisibilityChange"
       @column-order-change="handleListColumnOrderChange"
+      @column-widths-change="handleListColumnWidthsChange"
     >
       <template v-if="showTopActionToolbar" #toolbar>
         <ActionSurfaceToolbar
@@ -794,6 +798,7 @@ import { useActionPageModel } from '../app/assemblers/action/useActionPageModel'
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
+const PROJECT_CONTEXT_CHANGED_EVENT = 'sc:project-context-changed';
 const {
   resolveSceneCode,
   resolveNodeSceneKey,
@@ -836,6 +841,8 @@ const lastTraceId = ref('');
 const records = ref<Array<Record<string, unknown>>>([]);
 const listTotalCount = ref<number | null>(null);
 const listOffset = ref(0);
+const listLimitOverride = ref(0);
+const listAggregates = ref<Record<string, Record<string, unknown>>>({});
 const projectScopeTotals = ref<{ all: number; active: number; archived: number } | null>(null);
 const projectScopeMetrics = ref<{ warning: number; done: number; amount: number } | null>(null);
 const searchTerm = ref('');
@@ -1050,6 +1057,7 @@ const allowedBatchActions = computed(() =>
 const listColumnOptions = computed(() => resolveListColumnOptions(actionContract.value, listProfile.value));
 const listColumnVisibility = ref<Record<string, boolean>>({});
 const listColumnOrder = ref<string[]>([]);
+const listColumnWidths = ref<Record<string, number>>({});
 const listColumnSaveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
 const listColumnPreferenceScope = computed(() => {
   const aid = Number(actionId.value || 0);
@@ -2070,6 +2078,7 @@ const {
     groupPageOffsetsRef: groupPageOffsets,
     collapsedGroupKeysRef: collapsedGroupKeys,
     listTotalCountRef: listTotalCount,
+    listAggregatesRef: listAggregates,
     projectScopeTotalsRef: projectScopeTotals,
     projectScopeMetricsRef: projectScopeMetrics,
     recordsRef: records,
@@ -2280,7 +2289,7 @@ const {
       listOffset: listOffset.value,
       groupWindowOffset: groupWindowOffset.value,
       groupSampleLimit: groupSampleLimit.value,
-      contractLimit: contractLimit.value,
+      contractLimit: listLimitOverride.value > 0 ? listLimitOverride.value : contractLimit.value,
       groupPageOffsets: groupPageOffsets.value,
     }),
     applyLoadRequestBlocked,
@@ -2436,6 +2445,16 @@ function handleListPageChange(offset: number): void {
   void requestLoadPage();
 }
 
+function handleListPageLimitChange(limit: number): void {
+  const normalized = Math.min(Math.max(Math.trunc(Number(limit || 0)), 1), 200);
+  if (!Number.isFinite(normalized) || normalized <= 0) return;
+  listLimitOverride.value = normalized;
+  contractLimit.value = normalized;
+  listOffset.value = 0;
+  clearSelection();
+  void requestLoadPage();
+}
+
 let listColumnPreferenceLoadSeq = 0;
 let listColumnSaveSeq = 0;
 let listColumnSaveStatusTimer: number | null = null;
@@ -2462,6 +2481,7 @@ async function loadListColumnPreference(): Promise<void> {
   if (!scope.action_id && !scope.model) {
     listColumnVisibility.value = {};
     listColumnOrder.value = [];
+    listColumnWidths.value = {};
     return;
   }
   try {
@@ -2471,21 +2491,36 @@ async function loadListColumnPreference(): Promise<void> {
     const visible = Array.isArray(preference.visible_columns) ? preference.visible_columns.map((item) => String(item || '').trim()).filter(Boolean) : [];
     const hidden = Array.isArray(preference.hidden_columns) ? preference.hidden_columns.map((item) => String(item || '').trim()).filter(Boolean) : [];
     const columnOrder = Array.isArray(preference.column_order) ? preference.column_order.map((item) => String(item || '').trim()).filter(Boolean) : [];
+    const columnWidthsRaw = preference.column_widths && typeof preference.column_widths === 'object' ? preference.column_widths as Record<string, unknown> : {};
+    const columnWidths = Object.entries(columnWidthsRaw).reduce<Record<string, number>>((acc, [name, width]) => {
+      const normalizedName = String(name || '').trim();
+      const normalizedWidth = normalizeListColumnWidth(width);
+      if (normalizedName && normalizedWidth) acc[normalizedName] = normalizedWidth;
+      return acc;
+    }, {});
     const next: Record<string, boolean> = {};
     visible.forEach((name) => { next[name] = true; });
     hidden.forEach((name) => { next[name] = false; });
     listColumnVisibility.value = next;
     listColumnOrder.value = columnOrder;
+    listColumnWidths.value = columnWidths;
   } catch (err) {
     if (seq === listColumnPreferenceLoadSeq) {
       listColumnVisibility.value = {};
       listColumnOrder.value = [];
+      listColumnWidths.value = {};
     }
     console.warn('[list-columns] failed to load preference', err);
   }
 }
 
-function buildListColumnPreference(visibility: Record<string, boolean>, columnOrder: string[]) {
+function normalizeListColumnWidth(value: unknown) {
+  const parsed = Number(value || 0);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 0;
+  return Math.min(Math.max(Math.trunc(parsed), 80), 640);
+}
+
+function buildListColumnPreference(visibility: Record<string, boolean>, columnOrder: string[], columnWidths: Record<string, number>) {
   const columnNames = listColumnOptions.value.map((column) => column.name);
   const columnNameSet = new Set(columnNames);
   const visibleColumns = columnNames.filter((name) => visibility[name] === true);
@@ -2493,10 +2528,17 @@ function buildListColumnPreference(visibility: Record<string, boolean>, columnOr
   const orderedColumns = columnOrder
     .map((name) => String(name || '').trim())
     .filter((name, index, rows) => Boolean(name) && columnNameSet.has(name) && rows.indexOf(name) === index);
+  const normalizedWidths = Object.entries(columnWidths || {}).reduce<Record<string, number>>((acc, [name, width]) => {
+    const normalizedName = String(name || '').trim();
+    const normalizedWidth = normalizeListColumnWidth(width);
+    if (normalizedName && columnNameSet.has(normalizedName) && normalizedWidth) acc[normalizedName] = normalizedWidth;
+    return acc;
+  }, {});
   return {
     visible_columns: visibleColumns,
     hidden_columns: hiddenColumns,
     column_order: orderedColumns,
+    column_widths: normalizedWidths,
   };
 }
 
@@ -2507,7 +2549,7 @@ async function handleListColumnVisibilityChange(payload: { visibility: Record<st
   listColumnVisibility.value = { ...next };
   setListColumnSaveStatus('saving');
   try {
-    await setUserViewPreference(listColumnPreferenceScope.value, buildListColumnPreference(next, listColumnOrder.value));
+    await setUserViewPreference(listColumnPreferenceScope.value, buildListColumnPreference(next, listColumnOrder.value, listColumnWidths.value));
     if (saveSeq === listColumnSaveSeq) {
       setListColumnSaveStatus('saved');
     }
@@ -2527,7 +2569,7 @@ async function handleListColumnOrderChange(payload: { columnOrder: string[] }): 
   listColumnOrder.value = next;
   setListColumnSaveStatus('saving');
   try {
-    await setUserViewPreference(listColumnPreferenceScope.value, buildListColumnPreference(listColumnVisibility.value, next));
+    await setUserViewPreference(listColumnPreferenceScope.value, buildListColumnPreference(listColumnVisibility.value, next, listColumnWidths.value));
     if (saveSeq === listColumnSaveSeq) {
       setListColumnSaveStatus('saved');
     }
@@ -2537,6 +2579,34 @@ async function handleListColumnOrderChange(payload: { columnOrder: string[] }): 
       setListColumnSaveStatus('error');
     }
     console.warn('[list-columns] failed to save column order preference', err);
+  }
+}
+
+async function handleListColumnWidthsChange(payload: { columnWidths: Record<string, number> }): Promise<void> {
+  const saveSeq = ++listColumnSaveSeq;
+  const previous = { ...listColumnWidths.value };
+  const next = Object.entries(payload.columnWidths || {}).reduce<Record<string, number>>((acc, [name, width]) => {
+    const normalizedName = String(name || '').trim();
+    const normalizedWidth = normalizeListColumnWidth(width);
+    if (normalizedName && normalizedWidth) acc[normalizedName] = normalizedWidth;
+    return acc;
+  }, {});
+  listColumnWidths.value = next;
+  setListColumnSaveStatus('saving');
+  try {
+    await setUserViewPreference(
+      listColumnPreferenceScope.value,
+      buildListColumnPreference(listColumnVisibility.value, listColumnOrder.value, next),
+    );
+    if (saveSeq === listColumnSaveSeq) {
+      setListColumnSaveStatus('saved');
+    }
+  } catch (err) {
+    if (saveSeq === listColumnSaveSeq) {
+      listColumnWidths.value = previous;
+      setListColumnSaveStatus('error');
+    }
+    console.warn('[list-columns] failed to save column width preference', err);
   }
 }
 
@@ -2593,9 +2663,15 @@ onMounted(async () => {
   renderErrorMessage.value = '';
   applyRoutePreset();
   await requestLoadPage();
+  if (typeof window !== 'undefined') {
+    window.addEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
+  }
 });
 
 onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
+  }
   if (listColumnSaveStatusTimer) {
     window.clearTimeout(listColumnSaveStatusTimer);
     listColumnSaveStatusTimer = null;
@@ -2619,6 +2695,24 @@ watch(
     void requestLoadPage();
   },
 );
+
+watch(
+  () => Number(session.projectContext?.selected?.id || 0),
+  () => {
+    refreshForProjectContextChange();
+  },
+);
+
+function handleProjectContextChanged(): void {
+  refreshForProjectContextChange();
+}
+
+function refreshForProjectContextChange(): void {
+  renderErrorMessage.value = '';
+  listOffset.value = 0;
+  clearSelection();
+  void requestLoadPage();
+}
 </script>
 
 <style scoped>

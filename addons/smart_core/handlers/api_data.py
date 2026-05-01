@@ -22,6 +22,7 @@ from odoo.exceptions import AccessError
 from odoo.http import request
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.project_context import apply_project_scope_domain, selected_project_id_from_context
 from ..utils.extension_hooks import call_extension_hook_first
 from ..utils.reason_codes import (
     REASON_READONLY_PROJECTION_MUTATION_DENIED,
@@ -347,6 +348,36 @@ class ApiDataHandler(BaseIntentHandler):
             return None
         return len(rows or [])
 
+    def _build_numeric_aggregates(self, env_model, domain, fields_safe: List[str]) -> Dict[str, Dict[str, Any]]:
+        numeric_types = {"integer", "float", "monetary"}
+        aggregate_fields = []
+        for field_name in fields_safe or []:
+            field = env_model._fields.get(field_name)
+            field_type = str(getattr(field, "type", "") or "").strip().lower() if field else ""
+            if (
+                field_name != "id"
+                and field_type in numeric_types
+                and bool(getattr(field, "store", False))
+                and bool(getattr(field, "column_type", None))
+            ):
+                aggregate_fields.append(field_name)
+        if not aggregate_fields:
+            return {}
+        out: Dict[str, Dict[str, Any]] = {}
+        for field_name in aggregate_fields:
+            try:
+                rows = env_model.read_group(domain or [], [f"{field_name}:sum"], [], lazy=False)
+            except Exception:
+                _logger.exception("numeric aggregate failed model=%s field=%s", env_model._name, field_name)
+                continue
+            row = (rows or [{}])[0] or {}
+            value = row.get(f"{field_name}_sum")
+            if not isinstance(value, (int, float)):
+                value = row.get(field_name)
+            if isinstance(value, (int, float)):
+                out[field_name] = {"sum": value}
+        return out
+
     def _build_group_query_fingerprint(self, model: str, domain, group_by, order: str, search_term: str, ctx: Dict[str, Any]) -> str:
         group_by_norm = self._normalize_group_by(group_by)
         stable_ctx_keys = {
@@ -549,6 +580,48 @@ class ApiDataHandler(BaseIntentHandler):
         if "id" not in safe:
             safe.insert(0, "id")
         return safe
+
+    def _current_project_id(self, p: Dict[str, Any], ctx: Dict[str, Any]) -> int:
+        return selected_project_id_from_context(p, ctx)
+
+    def _apply_project_scope(self, env_model, domain: List[Any], p: Dict[str, Any], ctx: Dict[str, Any]):
+        return apply_project_scope_domain(env_model, domain, self._current_project_id(p, ctx))
+
+    def _project_scope_denied(self, message: str, scope_meta: Dict[str, Any]):
+        return {
+            "ok": False,
+            "error": {
+                "code": "PROJECT_SCOPE_DENIED",
+                "message": message,
+                "reason_code": "PROJECT_SCOPE_DENIED",
+                "kind": "permission",
+                "project_scope": scope_meta,
+            },
+            "code": 403,
+        }
+
+    def _normalize_ids(self, ids: List[Any]) -> List[int]:
+        out: List[int] = []
+        for value in ids or []:
+            try:
+                parsed = int(value or 0)
+            except Exception:
+                parsed = 0
+            if parsed > 0:
+                out.append(parsed)
+        return out
+
+    def _ensure_records_in_project_scope(self, env_model, ids: List[Any], p: Dict[str, Any], ctx: Dict[str, Any]):
+        normalized_ids = self._normalize_ids(ids)
+        if not normalized_ids:
+            return None
+        scoped_domain, scope_meta = self._apply_project_scope(env_model, [("id", "in", normalized_ids)], p, ctx)
+        if not scope_meta.get("applied"):
+            return None
+        allowed_count = env_model.search_count(scoped_domain)
+        if int(allowed_count or 0) == len(set(normalized_ids)):
+            return None
+        return self._project_scope_denied("当前项目上下文不允许访问或修改其他项目的数据", scope_meta)
 
     def _build_search_term_domain(self, env_model, search_term: str, fields_safe: List[str]) -> List[Any]:
         term = str(search_term or "").strip()
@@ -829,6 +902,9 @@ class ApiDataHandler(BaseIntentHandler):
         context = self._dig(p, "context") or {}
         if not isinstance(context, dict):
             context = {}
+        envelope_context = p.get("context") if isinstance(p.get("context"), dict) else {}
+        if envelope_context:
+            context = {**envelope_context, **context}
         if "active_test" not in context:
             context["active_test"] = self._get_bool(p, "active_test", True)
         if_none_match = self._read_if_none_match(p)
@@ -914,6 +990,7 @@ class ApiDataHandler(BaseIntentHandler):
         fields_safe = self._filter_readable_fields(env_model, fields or ["id", "name"])
         if search_term:
             domain = domain + self._build_search_term_domain(env_model, search_term, fields_safe)
+        domain, project_scope_meta = self._apply_project_scope(env_model, domain, p, ctx)
 
         recs = env_model.search(domain or [], order=order or None, limit=limit or None, offset=offset or 0)
         try:
@@ -925,6 +1002,8 @@ class ApiDataHandler(BaseIntentHandler):
 
         need_total = self._get_bool(p, "need_total", False)
         total = env_model.search_count(domain or []) if need_total else None
+        need_aggregates = self._get_bool(p, "need_aggregates", False)
+        aggregates = self._build_numeric_aggregates(env_model, domain, fields_safe) if need_aggregates else {}
         group_summary_probe = self._build_group_summary_with_offset(
             env_model,
             domain,
@@ -1024,6 +1103,8 @@ class ApiDataHandler(BaseIntentHandler):
             data["group_paging"]["group_total"] = int(group_total)
         if need_total:
             data["total"] = int(total or 0)
+        if need_aggregates:
+            data["aggregates"] = aggregates
 
         meta = {
             "op": "list",
@@ -1032,6 +1113,7 @@ class ApiDataHandler(BaseIntentHandler):
             "offset": offset,
             "order": order,
             "count": len(rows),
+            "aggregates": bool(aggregates),
             "fields": fields_safe,
             "domain_raw_applied": bool(domain_raw),
             "context_raw_applied": bool(context_raw),
@@ -1052,6 +1134,7 @@ class ApiDataHandler(BaseIntentHandler):
             "group_page_size": int(group_page_size or 0) or None,
             "group_limit": group_limit,
             "group_offset": group_offset,
+            "project_scope": project_scope_meta,
         }
         if group_total is not None:
             meta["group_total"] = int(group_total)
@@ -1068,6 +1151,9 @@ class ApiDataHandler(BaseIntentHandler):
             env_model = env_model.sudo()
 
         fields_safe = self._filter_readable_fields(env_model, fields)
+        scoped_error = self._ensure_records_in_project_scope(env_model, ids, p, ctx)
+        if scoped_error:
+            return scoped_error
         recs = env_model.browse(ids).exists()
         try:
             rows = recs.read(fields_safe or ["id", "name"])
@@ -1076,7 +1162,8 @@ class ApiDataHandler(BaseIntentHandler):
             rows = recs.read(["id", "name", "display_name"] if "display_name" in env_model._fields else ["id", "name"])
 
         data = {"records": rows}
-        meta = {"op": "read", "model": model, "count": len(rows), "fields": fields_safe}
+        _, project_scope_meta = self._apply_project_scope(env_model, [], p, ctx)
+        meta = {"op": "read", "model": model, "count": len(rows), "fields": fields_safe, "project_scope": project_scope_meta}
         return data, meta
 
     def _op_count(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
@@ -1084,10 +1171,11 @@ class ApiDataHandler(BaseIntentHandler):
         env_model = self.env[model].with_context(ctx)
         if sudo:
             env_model = env_model.sudo()
+        domain, project_scope_meta = self._apply_project_scope(env_model, domain, p, ctx)
 
         total = env_model.search_count(domain or [])
         data = {"total": int(total or 0)}
-        meta = {"op": "count", "model": model}
+        meta = {"op": "count", "model": model, "project_scope": project_scope_meta}
         return data, meta
 
     def _op_create(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
@@ -1107,6 +1195,19 @@ class ApiDataHandler(BaseIntentHandler):
         safe_vals = self._prepare_create_vals(env_model, vals)
         if not safe_vals:
             return self._err(400, "vals 中无可写字段")
+        project_id = self._current_project_id(p, ctx)
+        _, project_scope_meta = self._apply_project_scope(env_model, [], p, ctx)
+        if project_scope_meta.get("applied") and "project_id" in env_model._fields:
+            incoming_project_id = safe_vals.get("project_id")
+            if incoming_project_id in (None, False, ""):
+                safe_vals["project_id"] = project_id
+            else:
+                try:
+                    incoming_project_id = int(incoming_project_id or 0)
+                except Exception:
+                    incoming_project_id = 0
+                if incoming_project_id != int(project_id or 0):
+                    return self._project_scope_denied("当前项目上下文不允许创建到其他项目", project_scope_meta)
 
         try:
             rec = env_model.create(safe_vals)
@@ -1133,7 +1234,7 @@ class ApiDataHandler(BaseIntentHandler):
                 return self._err(500, self._friendly_create_error(e))
 
         data = {"id": rec.id}
-        meta = {"op": "create", "model": model, "id": rec.id}
+        meta = {"op": "create", "model": model, "id": rec.id, "project_scope": project_scope_meta}
         return data, meta
 
     def _op_write(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
@@ -1152,6 +1253,18 @@ class ApiDataHandler(BaseIntentHandler):
         env_model = self.env[model].with_context(ctx)
         if sudo:
             env_model = env_model.sudo()
+        scoped_error = self._ensure_records_in_project_scope(env_model, ids, p, ctx)
+        if scoped_error:
+            return scoped_error
+        project_id = self._current_project_id(p, ctx)
+        _, project_scope_meta = self._apply_project_scope(env_model, [], p, ctx)
+        if project_scope_meta.get("applied") and "project_id" in env_model._fields and "project_id" in vals:
+            try:
+                incoming_project_id = int(vals.get("project_id") or 0)
+            except Exception:
+                incoming_project_id = 0
+            if incoming_project_id and incoming_project_id != int(project_id or 0):
+                return self._project_scope_denied("当前项目上下文不允许移动到其他项目", project_scope_meta)
 
         recs = env_model.browse(ids).exists()
         if not recs:
@@ -1181,7 +1294,7 @@ class ApiDataHandler(BaseIntentHandler):
         data = {"ids": recs.ids}
         if len(recs) == 1 and "write_date" in env_model._fields:
             data["record_version"] = self._format_write_date(recs.write_date)
-        meta = {"op": "write", "model": model, "count": len(recs)}
+        meta = {"op": "write", "model": model, "count": len(recs), "project_scope": project_scope_meta}
         return data, meta
 
     def _format_csv_value(self, value: Any) -> str:
@@ -1227,8 +1340,13 @@ class ApiDataHandler(BaseIntentHandler):
         fields_safe = self._filter_readable_fields(env_model, fields)
 
         if ids:
+            scoped_error = self._ensure_records_in_project_scope(env_model, ids, p, ctx)
+            if scoped_error:
+                return scoped_error
+            _, project_scope_meta = self._apply_project_scope(env_model, [], p, ctx)
             recs = env_model.browse(ids).exists()
         else:
+            domain, project_scope_meta = self._apply_project_scope(env_model, domain, p, ctx)
             recs = env_model.search(domain or [], order=order or None, limit=limit)
         if not recs:
             data = {
@@ -1238,7 +1356,7 @@ class ApiDataHandler(BaseIntentHandler):
                 "count": 0,
                 "fields": fields_safe,
             }
-            meta = {"op": "export_csv", "model": model, "count": 0}
+            meta = {"op": "export_csv", "model": model, "count": 0, "project_scope": project_scope_meta}
             return data, meta
 
         try:
@@ -1265,5 +1383,5 @@ class ApiDataHandler(BaseIntentHandler):
             "count": len(rows),
             "fields": fields_safe,
         }
-        meta = {"op": "export_csv", "model": model, "count": len(rows), "limit": limit}
+        meta = {"op": "export_csv", "model": model, "count": len(rows), "limit": limit, "project_scope": project_scope_meta}
         return data, meta

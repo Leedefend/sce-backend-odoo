@@ -56,6 +56,7 @@ export function buildActionViewListRequest(options: {
     domain: options.domain,
     domain_raw: options.domainRaw,
     need_total: true,
+    need_aggregates: true,
     group_by: grouped ? options.activeGroupByField : undefined,
     group_offset: grouped ? Math.max(0, Math.trunc(options.groupWindowOffset || 0)) : 0,
     need_group_total: grouped,

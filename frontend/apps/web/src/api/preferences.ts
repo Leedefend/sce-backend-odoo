@@ -5,6 +5,7 @@ export type ListColumnPreference = {
   visible_columns?: string[];
   hidden_columns?: string[];
   column_order?: string[];
+  column_widths?: Record<string, number>;
 };
 
 export type UserViewPreferenceScope = {

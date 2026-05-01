@@ -6,6 +6,10 @@ import time
 from typing import Any, Dict
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_core.core.project_context import (
+    project_scope_denied_response,
+    selected_project_id_from_context,
+)
 from odoo.addons.smart_construction_core.services.project_execution_consistency_guard import (
     ProjectExecutionConsistencyGuard,
 )
@@ -127,6 +131,17 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
             payload or self.params or {}, ctx or {}
         )
         trace_id = str((self.context or {}).get("trace_id") or "")
+        current_project_id = selected_project_id_from_context(payload or self.params or {}, ctx or self.context or {})
+        if current_project_id and project_id > 0 and int(project_id) != int(current_project_id):
+            return project_scope_denied_response(
+                {
+                    "enabled": True,
+                    "project_id": int(current_project_id),
+                    "applied": True,
+                    "domain": [("id", "=", int(current_project_id))],
+                    "model": "project.project",
+                }
+            )
         if project_id <= 0:
             return ProjectExecutionResponseBuilder.input_error(
                 intent=self.INTENT_TYPE,
