@@ -46,6 +46,7 @@ from odoo.addons.smart_core.core.system_init_scene_runtime_surface_context impor
 from odoo.addons.smart_core.core.system_init_scene_runtime_surface_builder import SystemInitSceneRuntimeSurfaceBuilder
 from odoo.addons.smart_core.core.system_init_dictionary_data_helper import apply_dictionary_startup_data
 from odoo.addons.smart_core.core.intent_execution_result import IntentExecutionResult
+from odoo.addons.smart_core.core.project_context import build_project_context_contract
 from odoo.addons.smart_core.core.page_contracts_builder import build_page_contracts
 from odoo.addons.smart_core.core.workspace_home_contract_builder import build_workspace_home_contract
 from odoo.addons.smart_core.core.runtime_page_contract_builder import mirror_workspace_home_role_context
@@ -872,6 +873,7 @@ class SystemInitHandler(BaseIntentHandler):
         except Exception:
             pass
         data = _normalize_access_suggested_action(data)
+        data["project_context"] = build_project_context_contract(env, params)
         data["contract_mode"] = contract_mode
         if contract_mode == "user":
             data.pop("scene_diagnostics", None)

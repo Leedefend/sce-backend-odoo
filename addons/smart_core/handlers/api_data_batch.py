@@ -12,6 +12,7 @@ from uuid import uuid4
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.project_context import apply_project_scope_domain, selected_project_id_from_context
 from .reason_codes import (
     REASON_CONFLICT,
     REASON_REPLAY_WINDOW_EXPIRED,
@@ -54,6 +55,8 @@ class ApiDataBatchHandler(BaseIntentHandler):
     def _collect_params(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         params = {}
         if isinstance(payload, dict):
+            if isinstance(payload.get("context"), dict):
+                params.setdefault("context", {}).update(payload.get("context") or {})
             params.update(payload.get("params") or {})
             params.update(payload.get("payload") or {})
         if isinstance(self.params, dict):
@@ -282,6 +285,12 @@ class ApiDataBatchHandler(BaseIntentHandler):
             return self._err(400, "缺少有效的 action/vals")
 
         env_model = self.env[model].with_context(context)
+        project_id = selected_project_id_from_context(params, context)
+        scoped_domain, project_scope_meta = apply_project_scope_domain(env_model, [("id", "in", ids)], project_id)
+        if project_scope_meta.get("applied"):
+            allowed_count = env_model.search_count(scoped_domain)
+            if int(allowed_count or 0) != len(set(ids)):
+                return self._err(403, "当前项目上下文不允许批量修改其他项目的数据")
         trace_id = ""
         if isinstance(self.context, dict):
             trace_id = str(self.context.get("trace_id") or "")
@@ -346,9 +355,10 @@ class ApiDataBatchHandler(BaseIntentHandler):
                 "meta": {
                     "trace_id": str(replay_data.get("trace_id") or trace_id),
                     "write_mode": "batch",
-                    "source": "portal-shell",
-                },
-            }
+                "source": "portal-shell",
+                "project_scope": project_scope_meta,
+            },
+        }
 
         replay_window_expired = bool(decision.get("replay_window_expired"))
         try:
@@ -422,6 +432,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
                 "failed_retry_ids": failed_retry_ids,
                 "failed_reason_summary": self._failed_reason_summary(results),
                 "failed_retryable_summary": self._failed_retryable_summary(results),
+                "project_scope": project_scope_meta,
             },
             request_id=request_id,
             idempotency_key=idempotency_key,
@@ -450,5 +461,5 @@ class ApiDataBatchHandler(BaseIntentHandler):
             idem_fingerprint=idempotency_fingerprint,
             result=data,
         )
-        meta = {"trace_id": trace_id, "write_mode": "batch", "source": "portal-shell"}
+        meta = {"trace_id": trace_id, "write_mode": "batch", "source": "portal-shell", "project_scope": project_scope_meta}
         return {"ok": True, "data": data, "meta": meta}

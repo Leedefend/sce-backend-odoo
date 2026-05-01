@@ -9,6 +9,11 @@ from typing import Any, Dict
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.project_context import (
+    project_scope_denied_response,
+    record_in_project_scope,
+    selected_project_id_from_context,
+)
 from ..utils.extension_hooks import call_extension_hook_first
 
 _logger = logging.getLogger(__name__)
@@ -90,7 +95,14 @@ class FileUploadHandler(BaseIntentHandler):
 
         try:
             self.env[model].check_access_rights("write")
-            self.env[model].browse(res_id).check_access_rule("write")
+            record = self.env[model].browse(res_id).exists()
+            if not record:
+                return self._err(404, "记录不存在")
+            current_project_id = selected_project_id_from_context(params, self.context if isinstance(self.context, dict) else {})
+            in_scope, scope_meta = record_in_project_scope(self.env[model], int(record.id), current_project_id)
+            if not in_scope:
+                return project_scope_denied_response(scope_meta)
+            record.check_access_rule("write")
             attachment = self.env["ir.attachment"].create(
                 {
                     "name": name,

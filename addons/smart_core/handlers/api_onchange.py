@@ -6,6 +6,11 @@ from typing import Any, Dict, List
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.project_context import (
+    project_scope_denied_response,
+    record_in_project_scope,
+    selected_project_id_from_context,
+)
 from ..utils.reason_codes import normalize_onchange_reason_code
 
 
@@ -28,6 +33,15 @@ class ApiOnchangeHandler(BaseIntentHandler):
                 params.update(payload.get("payload") or {})
         if isinstance(self.params, dict):
             params.update(self.params)
+        context: Dict[str, Any] = {}
+        if isinstance(self.context, dict):
+            context.update(self.context)
+        if isinstance(payload, dict) and isinstance(payload.get("context"), dict):
+            context.update(payload.get("context") or {})
+        if isinstance(params.get("context"), dict):
+            context.update(params.get("context") or {})
+        if context:
+            params["context"] = context
         return params
 
     def _normalize_values(self, env_model, values: Dict[str, Any]) -> Dict[str, Any]:
@@ -241,6 +255,19 @@ class ApiOnchangeHandler(BaseIntentHandler):
 
         context = params.get("context") if isinstance(params.get("context"), dict) else {}
         env_model = self.env[model].with_context(context)
+        record_id = 0
+        for key in ("id", "res_id", "record_id"):
+            try:
+                record_id = int(params.get(key) or 0)
+            except Exception:
+                record_id = 0
+            if record_id > 0:
+                break
+        current_project_id = selected_project_id_from_context(params, context)
+        if record_id > 0:
+            in_scope, scope_meta = record_in_project_scope(env_model, record_id, current_project_id)
+            if not in_scope:
+                return project_scope_denied_response(scope_meta)
 
         try:
             env_model.check_access_rights("read")

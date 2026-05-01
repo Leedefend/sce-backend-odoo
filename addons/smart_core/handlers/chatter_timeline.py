@@ -5,6 +5,11 @@ from typing import Any, Dict, List, Optional
 from odoo.exceptions import AccessError, UserError
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.project_context import (
+    project_scope_denied_response,
+    record_in_project_scope,
+    selected_project_id_from_context,
+)
 
 
 class ChatterTimelineHandler(BaseIntentHandler):
@@ -29,6 +34,10 @@ class ChatterTimelineHandler(BaseIntentHandler):
             raise UserError("res_id 无效")
         if not record:
             raise UserError("记录不存在")
+        current_project_id = selected_project_id_from_context(params, self.context if isinstance(self.context, dict) else {})
+        in_scope, scope_meta = record_in_project_scope(self.env[model], int(record.id), current_project_id)
+        if not in_scope:
+            return project_scope_denied_response(scope_meta)
 
         self.env[model].check_access_rights("read")
         record.check_access_rule("read")
