@@ -64,6 +64,13 @@ class PaymentLedger(models.Model):
         if not request.settlement_id:
             raise UserError("付款申请未关联结算单，不能登记付款。")
         if request.settlement_id.state not in ("approve", "done"):
+            ICP = self.env["ir.config_parameter"].sudo()
+            soft_gate = bool(self.env.context.get("payment_soft_gate"))
+            force_block = str(
+                ICP.get_param("sc.payment.force_block.p0_payment_settlement_not_ready", "False") or ""
+            ).strip().lower() in ("1", "true", "yes", "on")
+            if soft_gate and not force_block:
+                return
             raise UserError("结算单未处于已审批状态，不能登记付款。")
 
     def _check_amount(self):

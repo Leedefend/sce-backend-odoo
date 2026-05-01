@@ -15,6 +15,7 @@ export type RelationFallbackColumn = {
   label: string;
   ttype: string;
   required: boolean;
+  readonly?: boolean;
   selection?: Array<[string, string]>;
 };
 
@@ -28,6 +29,7 @@ export type RelationFallbackAdapter = {
   filteredRelationOptions: (name: string) => RelationFallbackOption[];
   setRelationMultiField: (name: string, target: HTMLSelectElement) => void;
   one2manyCanCreate: (name: string) => boolean;
+  one2manyCreateLabel: (name: string) => string;
   addOne2manyRow: (name: string) => void;
   one2manySummary: (name: string) => string;
   visibleOne2manyRows: (name: string) => RelationFallbackRow[];

@@ -101,7 +101,7 @@
       </section>
 
       <section class="table">
-        <section v-if="enableGroupedRows && groupedRows.length" class="grouped-table">
+	        <section v-if="showGroupedRows" class="grouped-table">
         <header class="grouped-toolbar">
           <span>{{ uiLabel('grouped_result', '分组结果') }}</span>
           <div class="grouped-toolbar-actions">
@@ -185,7 +185,30 @@
           <table v-if="!isGroupCollapsed(group.key)">
             <thead>
               <tr>
-                <th v-for="col in displayedColumns" :key="`group-col-${group.key}-${col}`">{{ columnLabel(col) }}</th>
+                <th class="cell-row-number">{{ uiLabel('row_number', '序号') }}</th>
+                <th
+                  v-for="col in displayedColumns"
+                  :key="`group-col-${group.key}-${col}`"
+                  class="cell-sortable"
+                  :class="{ 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col }"
+                  :data-column="col"
+                  draggable="true"
+                  @dragstart="onColumnDragStart(col, $event)"
+                  @dragover="onColumnDragOver(col, $event)"
+                  @drop="onColumnDrop(col, $event)"
+                  @dragend="onColumnDragEnd"
+                >
+                  <button
+                    type="button"
+                    class="column-sort-btn"
+                    :title="columnSortTitle(col)"
+                    draggable="false"
+                    @click.stop="toggleColumnSort(col)"
+                  >
+                    <span>{{ columnLabel(col) }}</span>
+                    <span class="sort-indicator" aria-hidden="true">{{ columnSortIndicator(col) }}</span>
+                  </button>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -194,6 +217,7 @@
                 :key="`group-row-${group.key}-${String(row.id ?? index)}`"
                 @click="handleRow(row)"
               >
+                <td class="cell-row-number">{{ groupedRowNumber(group.key, index) }}</td>
                 <td v-for="col in displayedColumns" :key="`group-cell-${group.key}-${String(row.id ?? index)}-${col}`">
                   <button
                     v-if="isFavoriteColumn(col)"
@@ -221,9 +245,10 @@
           </table>
         </article>
       </section>
-      <table>
+	      <table v-if="!showGroupedRows">
         <thead>
           <tr>
+            <th class="cell-row-number">{{ uiLabel('row_number', '序号') }}</th>
             <th v-if="showSelectionColumn" class="cell-select">
               <input
                 type="checkbox"
@@ -233,7 +258,29 @@
                 @change="onSelectAllChange"
               />
             </th>
-            <th v-for="col in displayedColumns" :key="col">{{ columnLabel(col) }}</th>
+            <th
+              v-for="col in displayedColumns"
+              :key="col"
+              class="cell-sortable"
+              :class="{ 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col }"
+              :data-column="col"
+              draggable="true"
+              @dragstart="onColumnDragStart(col, $event)"
+              @dragover="onColumnDragOver(col, $event)"
+              @drop="onColumnDrop(col, $event)"
+              @dragend="onColumnDragEnd"
+            >
+              <button
+                type="button"
+                class="column-sort-btn"
+                :title="columnSortTitle(col)"
+                draggable="false"
+                @click.stop="toggleColumnSort(col)"
+              >
+                <span>{{ columnLabel(col) }}</span>
+                <span class="sort-indicator" aria-hidden="true">{{ columnSortIndicator(col) }}</span>
+              </button>
+            </th>
             <th v-if="columnChoices.length" ref="columnPickerRoot" class="cell-column-picker">
               <button type="button" class="column-picker-btn" :disabled="loading" @click.stop="columnPickerOpen = !columnPickerOpen">
                 {{ uiLabel('column_picker', '列') }}
@@ -261,6 +308,7 @@
         </thead>
         <tbody>
           <tr v-for="(row, index) in records" :key="String(row.id ?? index)" @click="handleRow(row)">
+            <td class="cell-row-number">{{ flatRowNumber(index) }}</td>
             <td v-if="showSelectionColumn" class="cell-select" @click.stop>
               <input
                 v-if="rowId(row)"
@@ -301,6 +349,21 @@
         </tbody>
       </table>
     </section>
+
+      <section class="list-page-footer">
+        <div class="footer-total">
+          <span>{{ uiLabel('page_footer_title', '页面统计') }}</span>
+          <strong>{{ uiLabel('page_footer_count', '当前页 {count} 条', { count: pageVisibleRows.length }) }}</strong>
+        </div>
+        <div v-if="pageFooterStats.length" class="footer-summary-grid">
+          <article v-for="item in pageFooterStats" :key="`footer-stat-${item.name}`" class="footer-summary-card">
+            <span>{{ item.label }}</span>
+            <strong>{{ item.sumText }}</strong>
+            <em>{{ uiLabel('page_footer_summary_count', '{count} 项', { count: item.count }) }}</em>
+          </article>
+        </div>
+        <p v-else class="footer-empty-summary">{{ uiLabel('page_footer_no_numeric', '当前页没有可汇总的数值列') }}</p>
+      </section>
 
       <section v-if="showPagination" class="pagination-bar">
         <span>{{ paginationSummary }}</span>
@@ -404,6 +467,7 @@ const props = defineProps<{
   listLimit?: number;
   columnOptions?: ColumnOption[];
   columnVisibility?: Record<string, boolean>;
+  columnOrder?: string[];
   columnSaveStatus?: 'idle' | 'saving' | 'saved' | 'error';
   uiLabels?: Record<string, string>;
   enableSummaryStrip?: boolean;
@@ -461,6 +525,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   'column-visibility-change': [payload: { visibility: Record<string, boolean> }];
+  'column-order-change': [payload: { columnOrder: string[] }];
 }>();
 function uiLabel(key: string, fallback: string, vars: Record<string, string | number> = {}) {
   const candidate = String(props.uiLabels?.[key] || '').trim();
@@ -481,11 +546,13 @@ const emptyCopy = computed(() => resolveEmptyCopy('list'));
 const groupedRows = computed(() =>
   Array.isArray(props.groupedRows) ? props.groupedRows : [],
 );
+const showGroupedRows = computed(() => props.enableGroupedRows === true && groupedRows.value.length > 0);
 const groupJumpPageInput = ref<Record<string, string>>({});
 const pageJumpInput = ref('');
 const observedListLimit = ref(0);
 const columnPickerRoot = ref<HTMLElement | null>(null);
 const columnPickerOpen = ref(false);
+const draggingColumn = ref('');
 const columnSaveStatus = computed(() => props.columnSaveStatus || 'idle');
 const columnSaveStatusText = computed(() => {
   if (columnSaveStatus.value === 'saving') return uiLabel('column_saving', '保存中');
@@ -615,6 +682,21 @@ function toggleGroupSort() {
 
 function openGroup(group: { key: string; label: string; count: number; domain?: unknown[] }) {
   props.onOpenGroup?.(group);
+}
+
+function flatRowNumber(index: number) {
+  return Math.trunc(Number(index || 0)) + 1;
+}
+
+function groupedRowNumber(groupKey: string, rowIndex: number) {
+  const currentIndex = sortedGroupedRows.value.findIndex((group) => group.key === groupKey);
+  const priorVisibleCount = sortedGroupedRows.value
+    .slice(0, Math.max(0, currentIndex))
+    .reduce((total, group) => {
+      if (isGroupCollapsed(group.key)) return total;
+      return total + (Array.isArray(group.sampleRows) ? group.sampleRows.length : 0);
+    }, 0);
+  return priorVisibleCount + Math.trunc(Number(rowIndex || 0)) + 1;
 }
 
 function resolveGroupPageLimit(group: { pageLimit?: number }) {
@@ -856,7 +938,7 @@ const rangeEnd = computed(() => {
   if (!total) return 0;
   return Math.min(total, listOffset.value + props.records.length);
 });
-const showPagination = computed(() => listTotal.value !== null && props.status === 'ok');
+const showPagination = computed(() => listTotal.value !== null && props.status === 'ok' && !showGroupedRows.value);
 const canPagePrev = computed(() => listOffset.value > 0);
 const canPageNext = computed(() => {
   const total = listTotal.value || 0;
@@ -977,10 +1059,31 @@ const hiddenColumns = computed(() => {
 const preferredColumns = computed(() => props.listProfile?.columns || []);
 const columnLabels = computed(() => props.listProfile?.column_labels || {});
 const contractColumnLabels = computed(() => props.columnLabels || {});
-const columnChoices = computed<ColumnOption[]>(() => {
-  if (Array.isArray(props.columnOptions) && props.columnOptions.length) return props.columnOptions;
+
+function applyColumnOrder(source: string[], order: string[]) {
+  const sourceSet = new Set(source);
+  const ordered = order
+    .map((item) => String(item || '').trim())
+    .filter((name, index, rows) => Boolean(name) && sourceSet.has(name) && rows.indexOf(name) === index);
+  return [...ordered, ...source.filter((name) => !ordered.includes(name))];
+}
+
+const orderedColumnNames = computed(() => {
   const source = preferredColumns.value.length ? preferredColumns.value : props.columns;
-  return source.map((name) => ({
+  return applyColumnOrder(source, Array.isArray(props.columnOrder) ? props.columnOrder : []);
+});
+
+const columnChoices = computed<ColumnOption[]>(() => {
+  if (Array.isArray(props.columnOptions) && props.columnOptions.length) {
+    const byName = props.columnOptions.reduce<Record<string, ColumnOption>>((acc, column) => {
+      acc[column.name] = column;
+      return acc;
+    }, {});
+    return applyColumnOrder(props.columnOptions.map((column) => column.name), Array.isArray(props.columnOrder) ? props.columnOrder : [])
+      .map((name) => byName[name])
+      .filter((column): column is ColumnOption => Boolean(column));
+  }
+  return orderedColumnNames.value.map((name) => ({
     name,
     label: columnLabels.value[name] || contractColumnLabels.value[name] || name,
     defaultVisible: !hiddenColumns.value[name],
@@ -995,7 +1098,7 @@ const defaultVisibleColumnMap = computed<Record<string, boolean>>(() =>
 const displayedColumns = computed(() => {
   const source = columnChoices.value.length
     ? columnChoices.value.map((column) => column.name)
-    : (preferredColumns.value.length ? preferredColumns.value : props.columns);
+    : orderedColumnNames.value;
   const filtered = source.filter((col) => {
     const visibility = props.columnVisibility || {};
     if (Object.prototype.hasOwnProperty.call(visibility, col)) {
@@ -1005,6 +1108,74 @@ const displayedColumns = computed(() => {
   });
   return filtered.length ? filtered : source.slice(0, 1);
 });
+
+function firstSortClause(value: string) {
+  return String(value || '').split(',')[0]?.trim() || '';
+}
+
+function sortField(value: string) {
+  return firstSortClause(value).split(/\s+/)[0] || '';
+}
+
+function sortDirection(value: string) {
+  const direction = firstSortClause(value).split(/\s+/)[1] || 'asc';
+  return direction.toLowerCase() === 'desc' ? 'desc' : 'asc';
+}
+
+function isSortedColumn(col: string) {
+  return sortField(props.sortValue || '') === col;
+}
+
+function columnSortIndicator(col: string) {
+  if (!isSortedColumn(col)) return '';
+  return sortDirection(props.sortValue || '') === 'desc' ? '▼' : '▲';
+}
+
+function columnSortTitle(col: string) {
+  const label = columnLabel(col);
+  if (isSortedColumn(col) && sortDirection(props.sortValue || '') === 'asc') {
+    return uiLabel('sort_column_desc', '按 {column} 降序', { column: label });
+  }
+  return uiLabel('sort_column_asc', '按 {column} 升序', { column: label });
+}
+
+function toggleColumnSort(col: string) {
+  const currentDirection = isSortedColumn(col) ? sortDirection(props.sortValue || '') : '';
+  const nextDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+  props.onSort(`${col} ${nextDirection}`);
+}
+
+function onColumnDragStart(col: string, event: DragEvent) {
+  if (!displayedColumns.value.includes(col)) return;
+  draggingColumn.value = col;
+  event.dataTransfer?.setData('text/plain', col);
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+}
+
+function onColumnDragOver(col: string, event: DragEvent) {
+  if (!draggingColumn.value || draggingColumn.value === col) return;
+  event.preventDefault();
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+}
+
+function onColumnDrop(target: string, event: DragEvent) {
+  event.preventDefault();
+  const source = draggingColumn.value || event.dataTransfer?.getData('text/plain') || '';
+  draggingColumn.value = '';
+  if (!source || source === target) return;
+  const base = columnChoices.value.map((column) => column.name);
+  const sourceIndex = base.indexOf(source);
+  const targetIndex = base.indexOf(target);
+  if (sourceIndex < 0 || targetIndex < 0) return;
+  const next = [...base];
+  const [moved] = next.splice(sourceIndex, 1);
+  next.splice(targetIndex, 0, moved);
+  emit('column-order-change', { columnOrder: next });
+}
+
+function onColumnDragEnd() {
+  draggingColumn.value = '';
+}
 
 function columnLabel(col: string) {
   const option = columnOption(col);
@@ -1045,6 +1216,54 @@ function onColumnVisibilityChange(name: string, event: Event) {
 function resetColumnVisibility() {
   emit('column-visibility-change', { visibility: {} });
 }
+
+const pageVisibleRows = computed(() => {
+  if (!showGroupedRows.value) return props.records;
+  return sortedGroupedRows.value.flatMap((group) => {
+    if (isGroupCollapsed(group.key)) return [];
+    return Array.isArray(group.sampleRows) ? group.sampleRows : [];
+  });
+});
+
+function isNumericColumn(field: string) {
+  const type = String(columnOption(field)?.type || '').trim();
+  return type === 'integer' || type === 'float' || type === 'monetary';
+}
+
+function numericCellValue(value: unknown) {
+  const raw = normalizeCellRawValue(value);
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+  if (typeof raw !== 'string') return null;
+  const normalized = raw.replace(/,/g, '').trim();
+  if (!normalized) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatFooterNumber(value: number, field: string) {
+  const type = String(columnOption(field)?.type || '').trim();
+  return value.toLocaleString('zh-CN', {
+    maximumFractionDigits: type === 'integer' ? 0 : 2,
+    minimumFractionDigits: 0,
+  });
+}
+
+const pageFooterStats = computed(() =>
+  displayedColumns.value
+    .filter((field) => isNumericColumn(field))
+    .map((field) => {
+      const values = pageVisibleRows.value
+        .map((row) => numericCellValue(row[field]))
+        .filter((value): value is number => typeof value === 'number');
+      return {
+        name: field,
+        label: uiLabel('page_footer_summary', '{column} 汇总', { column: columnLabel(field) }),
+        count: values.length,
+        sumText: formatFooterNumber(values.reduce((total, value) => total + value, 0), field),
+      };
+    })
+    .filter((item) => item.count > 0),
+);
 
 function handleColumnPickerPointerDown(event: PointerEvent) {
   const root = columnPickerRoot.value;
@@ -1142,6 +1361,62 @@ onBeforeUnmount(() => {
 .summary-card.tone-warning { background: #fffbeb; border-color: #fde68a; color: #b45309; }
 .summary-card.tone-success { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
 .summary-card.tone-info { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+
+.list-page-footer {
+  display: grid;
+  gap: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px 12px;
+}
+
+.footer-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.footer-total strong {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.footer-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.footer-summary-card {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 8px 10px;
+}
+
+.footer-summary-card span,
+.footer-summary-card em,
+.footer-empty-summary {
+  color: #64748b;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.footer-summary-card strong {
+  color: #0f172a;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.footer-empty-summary {
+  margin: 0;
+}
 
 .grouped-table {
   display: grid;
@@ -1518,11 +1793,56 @@ td {
   padding-right: 4px;
 }
 
+.cell-row-number {
+  width: 64px;
+  min-width: 64px;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
 thead th {
   position: sticky;
   top: 0;
   background: white;
   z-index: 1;
+}
+
+.cell-sortable {
+  cursor: grab;
+  user-select: none;
+}
+
+.cell-sortable.is-dragging {
+  opacity: 0.55;
+}
+
+.column-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  border: 0;
+  background: transparent;
+  color: #0f172a;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.column-sort-btn:hover {
+  color: #1d4ed8;
+}
+
+.sort-indicator {
+  width: 12px;
+  min-width: 12px;
+  color: #1d4ed8;
+  font-size: 11px;
+  line-height: 1;
 }
 
 tr:hover {

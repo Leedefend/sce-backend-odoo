@@ -7,6 +7,7 @@ export interface SceneMutationExecuteInput {
   recordId?: number | null;
   model?: string;
   context?: Record<string, unknown>;
+  params?: Record<string, unknown>;
 }
 
 export interface SceneMutationExecuteResult {
@@ -42,13 +43,16 @@ function buildParams(input: SceneMutationExecuteInput): Record<string, unknown> 
   const context = (input.context && typeof input.context === 'object')
     ? (input.context as Record<string, unknown>)
     : {};
+  const params = (input.params && typeof input.params === 'object')
+    ? (input.params as Record<string, unknown>)
+    : {};
   const recordId = asInt(input.recordId);
 
   if (model === 'finance.payment.request' || model === 'payment.request') {
     return {
       id: asInt(context.id) || asInt(context.record_id) || recordId,
       action: operation,
-      reason: asText(context.reason),
+      reason: asText(params.reason) || asText(context.reason),
     };
   }
 

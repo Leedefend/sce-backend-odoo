@@ -8,6 +8,8 @@ import logging
 import re
 from odoo import _
 from odoo.http import request
+from odoo.addons.smart_core.utils.delete_policy import resolve_unlink_policy
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 from ...utils.misc import safe_eval
 from ...utils.view_utils import extract_tree_columns_strict, normalize_cols_safely
 
@@ -303,6 +305,19 @@ class PageAssembler:
             data["head"]["res_id"] = requested_record_id
         if requested_render_profile:
             data["head"]["render_profile"] = requested_render_profile
+        self._inject_record_version_contract(
+            data,
+            model_name=model,
+            record_id=requested_record_id,
+            render_profile=requested_render_profile,
+        )
+        self._inject_form_ui_labels(data)
+        self._inject_form_business_actions(
+            data,
+            model_name=model,
+            record_id=requested_record_id,
+            render_profile=requested_render_profile,
+        )
 
         # 8.x) 访问策略（后端唯一决策点）：allow/degrade/block
         self._apply_access_policy(data, model_name=model)
@@ -345,6 +360,129 @@ class PageAssembler:
         model_row = self.su_env["ir.model"].search([("model", "=", model)], limit=1)
         title = str(getattr(model_row, "name", "") or "").strip()
         return title or model
+
+    def _inject_record_version_contract(self, data, model_name="", record_id=None, render_profile=""):
+        if not isinstance(data, dict):
+            return
+        model = str(model_name or "").strip()
+        profile = str(render_profile or data.get("render_profile") or "").strip().lower()
+        if profile != "edit" or not record_id or int(record_id or 0) <= 0:
+            return
+        policy = {
+            "enabled": True,
+            "strategy": "write_date_if_match",
+            "token_field": "write_date",
+            "request_param": "if_match",
+            "write_intent": "api.data",
+            "write_operation": "write",
+            "conflict_reason_code": "RECORD_VERSION_CONFLICT",
+            "conflict_message": "数据已被其他操作更新，请重新加载后再保存。",
+            "reload_action": "reload_record",
+        }
+        data["record_version"] = policy
+        head = data.get("head") if isinstance(data.get("head"), dict) else {}
+        head["record_version"] = dict(policy)
+        data["head"] = head
+
+    def _inject_form_ui_labels(self, data):
+        if not isinstance(data, dict):
+            return
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        if not form:
+            return
+        labels = form.get("ui_labels") if isinstance(form.get("ui_labels"), dict) else {}
+        labels.setdefault("save", _("保存"))
+        labels.setdefault("saving", _("保存中..."))
+        labels.setdefault("discard", _("放弃"))
+        labels.setdefault("reload", _("重新加载"))
+        labels.setdefault("save_success", _("保存成功，已同步最新表单内容。"))
+        form["ui_labels"] = labels
+        attachments = form.get("attachments") if isinstance(form.get("attachments"), dict) else {}
+        if attachments.get("enabled") is True:
+            attachment_labels = attachments.get("ui_labels") if isinstance(attachments.get("ui_labels"), dict) else {}
+            attachment_labels.setdefault("delete", _("删除"))
+            attachment_labels.setdefault("delete_denied", _("当前不允许删除附件"))
+            attachment_labels.setdefault("delete_failed", _("附件删除失败"))
+            delete_policy = resolve_unlink_policy(self.env, "ir.attachment")
+            attachments["delete"] = {
+                "intent": "api.data.unlink",
+                "model": "ir.attachment",
+                "enabled": bool(delete_policy.get("allowed")) and str(delete_policy.get("delete_mode") or "") == "unlink",
+                "delete_policy": delete_policy,
+            }
+            attachments["ui_labels"] = attachment_labels
+            form["attachments"] = attachments
+        views["form"] = form
+        data["views"] = views
+
+    def _inject_form_business_actions(self, data, model_name="", record_id=None, render_profile=""):
+        if not isinstance(data, dict):
+            return
+        model = str(model_name or "").strip()
+        profile = str(render_profile or data.get("render_profile") or "").strip().lower()
+        if not model or profile != "edit" or not record_id or int(record_id or 0) <= 0:
+            return
+        payload = call_extension_hook_first(
+            self.env,
+            "smart_core_form_business_actions",
+            self.env,
+            model,
+            int(record_id or 0),
+            data,
+        )
+        if not isinstance(payload, dict):
+            return
+        actions = payload.get("actions") if isinstance(payload.get("actions"), list) else []
+        if not actions:
+            return
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        header_buttons = form.get("header_buttons") if isinstance(form.get("header_buttons"), list) else []
+        by_method = {
+            str(row.get("method") or "").strip(): row
+            for row in actions
+            if isinstance(row, dict) and str(row.get("method") or "").strip()
+        }
+        for button in header_buttons:
+            if not isinstance(button, dict):
+                continue
+            method = str(button.get("name") or "").strip()
+            action = by_method.get(method)
+            if not action:
+                payload_obj = button.get("payload") if isinstance(button.get("payload"), dict) else {}
+                method = str(payload_obj.get("method") or "").strip()
+                action = by_method.get(method)
+            if not action:
+                continue
+            button["key"] = str(action.get("key") or button.get("key") or button.get("name") or "").strip()
+            button["business_action"] = dict(action)
+            button["allowed"] = bool(action.get("allowed"))
+            button["reason_code"] = str(action.get("reason_code") or "")
+            button["blocked_message"] = str(action.get("blocked_message") or "")
+            button["warning_message"] = str(action.get("warning_message") or "")
+            button["advisory_warnings"] = action.get("advisory_warnings") if isinstance(action.get("advisory_warnings"), list) else []
+            button["advisory_reason_codes"] = action.get("advisory_reason_codes") if isinstance(action.get("advisory_reason_codes"), list) else []
+            button["force_block_available"] = bool(action.get("force_block_available"))
+            button["suggested_action"] = str(action.get("suggested_action") or "")
+            button["required_role_key"] = str(action.get("required_role_key") or "")
+            button["required_role_label"] = str(action.get("required_role_label") or "")
+            button["handoff_required"] = bool(action.get("handoff_required"))
+            button["handoff_hint"] = str(action.get("handoff_hint") or "")
+            button["mutation"] = action.get("mutation") if isinstance(action.get("mutation"), dict) else {}
+            button["refresh_policy"] = action.get("refresh_policy") if isinstance(action.get("refresh_policy"), dict) else {}
+            if "semantic" not in button:
+                button["semantic"] = "primary_action" if bool(action.get("primary")) else "secondary_action"
+        form["header_buttons"] = header_buttons
+        form["business_actions"] = actions
+        attachments = payload.get("attachments") if isinstance(payload.get("attachments"), dict) else {}
+        if attachments:
+            current_attachments = form.get("attachments") if isinstance(form.get("attachments"), dict) else {}
+            merged_attachments = dict(current_attachments)
+            merged_attachments.update(attachments)
+            form["attachments"] = merged_attachments
+        views["form"] = form
+        data["views"] = views
 
     def _safe_model_can_read(self, model_name):
         name = str(model_name or "").strip()
@@ -691,7 +829,7 @@ class PageAssembler:
             return {
                 "enabled": False,
                 "create_on_no_match": False,
-                "match": "exact_label",
+                "match": "single_contains_or_exact",
                 "name_field": "",
                 "reason_code": "RELATION_CREATE_FORBIDDEN",
             }
@@ -727,7 +865,7 @@ class PageAssembler:
             return {
                 "enabled": False,
                 "create_on_no_match": False,
-                "match": "exact_label",
+                "match": "single_contains_or_exact",
                 "name_field": rec_name,
                 "reason_code": "RELATION_REQUIRED_FIELDS_UNRESOLVED",
                 "required_fields": unresolved_required,
@@ -735,7 +873,7 @@ class PageAssembler:
         return {
             "enabled": True,
             "create_on_no_match": True,
-            "match": "exact_label",
+            "match": "single_contains_or_exact",
             "name_field": rec_name,
             "value_source": "typed_keyword",
             "reason_code": "INLINE_CREATE_READY",
@@ -761,6 +899,21 @@ class PageAssembler:
                 return bool(self.env[model_name].check_access_rights("read", raise_exception=False))
             except Exception:
                 return False
+        def _safe_delete_policy(model_name):
+            try:
+                return resolve_unlink_policy(self.env, model_name)
+            except Exception:
+                return {
+                    "model": model_name,
+                    "allowed": False,
+                    "delete_mode": "none",
+                    "reason_code": "DELETE_POLICY_DENIED",
+                    "message": _("当前模型未开放删除"),
+                    "source": "delete_policy_error",
+                    "requires_acl": True,
+                    "requires_record_rule": True,
+                    "dry_run_supported": True,
+                }
 
         entry_map = {}
         Act = self.su_env["ir.actions.act_window"]
@@ -803,6 +956,7 @@ class PageAssembler:
                     "view_mode": str(act.view_mode or "form"),
                     "can_read": _safe_can_read(relation),
                     "can_create": _safe_can_create(relation),
+                    "delete_policy": _safe_delete_policy(relation),
                     "source": "backend_contract",
                 }
                 continue
@@ -814,6 +968,7 @@ class PageAssembler:
                 "view_mode": "form",
                 "can_read": _safe_can_read(relation),
                 "can_create": _safe_can_create(relation),
+                "delete_policy": _safe_delete_policy(relation),
                 "source": "backend_contract",
                 "reason_code": "NO_VISIBLE_ACTION",
             }
@@ -925,6 +1080,7 @@ class PageAssembler:
         if env is not None and model:
             try:
                 m = env[model]
+                translated_fields = m.fields_get()
                 def _resolve_selection(field_obj):
                     raw = getattr(field_obj, "selection", None)
                     if isinstance(raw, (list, tuple)):
@@ -953,47 +1109,53 @@ class PageAssembler:
                         return raw
                     return None
 
-                meta = {
-                    k: {
-                        "type": getattr(f, "type", None),
-                        "string": getattr(f, "string", None) or k,
-                        "relation": getattr(f, "comodel_name", None),
+                meta = {}
+                for k, f in m._fields.items():
+                    translated = translated_fields.get(k, {}) if isinstance(translated_fields, dict) else {}
+                    meta[k] = {
+                        "type": translated.get("type") or getattr(f, "type", None),
+                        "string": translated.get("string") or getattr(f, "string", None) or k,
+                        "relation": translated.get("relation") or getattr(f, "comodel_name", None),
                         "relation_field": getattr(f, "inverse_name", None),
-                        "readonly": bool(getattr(f, "readonly", False)),
-                        "required": bool(getattr(f, "required", False)),
-                        "help": getattr(f, "help", None) or "",
-                        "domain": _resolve_domain(f),
-                        "selection": _resolve_selection(f),
+                        "readonly": bool(translated.get("readonly", getattr(f, "readonly", False))),
+                        "required": bool(translated.get("required", getattr(f, "required", False))),
+                        "help": translated.get("help") or getattr(f, "help", None) or "",
+                        "domain": translated.get("domain") or _resolve_domain(f),
+                        "selection": translated.get("selection") or _resolve_selection(f),
                     }
-                    for k, f in m._fields.items()
-                }
             except Exception:
                 meta = {}
 
         def add_field(name, string=None, ftype=None, extra=None):
             if not name:
                 return
+            meta_info = meta.get(name, {}) or {}
+            localized_selection = meta_info.get("selection") or []
             info = {
                 "name": name,
-                "string": string or (meta.get(name, {}) or {}).get("string") or name,
-                "type": ftype or (meta.get(name, {}) or {}).get("type") or "char",
-                "readonly": bool((meta.get(name, {}) or {}).get("readonly", False)),
-                "required": bool((meta.get(name, {}) or {}).get("required", False)),
+                "string": meta_info.get("string") or string or name,
+                "type": ftype or meta_info.get("type") or "char",
+                "readonly": bool(meta_info.get("readonly", False)),
+                "required": bool(meta_info.get("required", False)),
             }
-            if (meta.get(name, {}) or {}).get("help"):
-                info["help"] = meta[name]["help"]
-            if meta.get(name, {}).get("relation"):
-                info["relation"] = meta[name]["relation"]
-            if meta.get(name, {}).get("relation_field"):
-                info["relation_field"] = meta[name]["relation_field"]
-            domain = (meta.get(name, {}) or {}).get("domain")
+            if meta_info.get("help"):
+                info["help"] = meta_info["help"]
+            if meta_info.get("relation"):
+                info["relation"] = meta_info["relation"]
+            if meta_info.get("relation_field"):
+                info["relation_field"] = meta_info["relation_field"]
+            domain = meta_info.get("domain")
             if domain not in (None, ""):
                 info["domain"] = domain
-            selection = (meta.get(name, {}) or {}).get("selection") or []
-            if selection:
-                info["selection"] = selection
+            if localized_selection:
+                info["selection"] = localized_selection
             if isinstance(extra, dict):
-                info.update({k: v for k, v in extra.items() if v is not None})
+                for k, v in extra.items():
+                    if v is None:
+                        continue
+                    if k == "selection" and localized_selection:
+                        continue
+                    info[k] = v
             res[name] = info
 
         for f in (fields or []):

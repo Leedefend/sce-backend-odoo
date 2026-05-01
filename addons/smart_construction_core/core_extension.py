@@ -96,9 +96,6 @@ NAV_MENU_SCENE_MAP = {
     "smart_construction_demo.menu_sc_project_dashboard_showcase": "projects.dashboard_showcase",
     "smart_construction_core.menu_sc_dictionary": "data.dictionary",
     "smart_construction_core.menu_payment_request": "finance.payment_requests",
-    "smart_construction_portal.menu_sc_portal_lifecycle": "portal.lifecycle",
-    "smart_construction_portal.menu_sc_portal_capability_matrix": "portal.capability_matrix",
-    "smart_construction_portal.menu_sc_portal_dashboard": "portal.dashboard",
 }
 
 NAV_ACTION_SCENE_MAP = {
@@ -110,9 +107,6 @@ NAV_ACTION_SCENE_MAP = {
     "smart_construction_core.action_project_cost_code": "config.project_cost_code",
     "smart_construction_core.action_payment_request": "finance.payment_requests",
     "smart_construction_core.action_payment_request_my": "finance.payment_requests",
-    "smart_construction_portal.action_sc_portal_lifecycle": "portal.lifecycle",
-    "smart_construction_portal.action_sc_portal_capability_matrix": "portal.capability_matrix",
-    "smart_construction_portal.action_sc_portal_dashboard": "portal.dashboard",
 }
 
 NAV_MODEL_VIEW_SCENE_MAP = {
@@ -126,14 +120,39 @@ SERVER_ACTION_WINDOW_MAP = {
     "smart_construction_core.action_exec_structure_entry": "smart_construction_core.action_exec_structure_wbs",
 }
 
-FILE_UPLOAD_ALLOWED_MODELS = ["project.project", "project.task"]
-FILE_DOWNLOAD_ALLOWED_MODELS = ["project.project", "project.task"]
+FILE_UPLOAD_ALLOWED_MODELS = ["project.project", "project.task", "payment.request"]
+FILE_DOWNLOAD_ALLOWED_MODELS = ["project.project", "project.task", "payment.request"]
 API_DATA_WRITE_ALLOWLIST = {
     "project.project": ["name", "description", "date_start"],
     "project.task": ["name", "description", "date_deadline", "project_id"],
     "purchase.order.line": ["name", "order_id"],
 }
-API_DATA_UNLINK_ALLOWED_MODELS = ["project.task"]
+API_DATA_MUTATION_POLICIES = {
+    "sc.legacy.receipt.income.fact": {
+        "allowed_ops": ["create", "write"],
+        "allowed": False,
+        "reason_code": "READONLY_PROJECTION_MUTATION_DENIED",
+        "message": "历史事实投影为只读数据，不允许通过业务办理接口创建或修改。",
+        "source": "smart_construction_core",
+    },
+}
+API_DATA_UNLINK_POLICIES = {
+    "project.task": {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "DELETE_POLICY_ALLOWED",
+        "message": "允许删除任务记录；仍受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    },
+    "project.tags": {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "RELATION_MAINTENANCE_DELETE_ALLOWED",
+        "message": "允许删除项目标签等关系维护数据；仍受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    },
+}
+API_DATA_UNLINK_ALLOWED_MODELS = list(API_DATA_UNLINK_POLICIES)
 
 MODEL_CODE_MAPPING = {
     "project": "project.project",
@@ -482,8 +501,29 @@ def get_api_data_write_allowlist_contributions(env):
     }
 
 
+def get_api_data_mutation_policy_contribution(env, model_name: str, op: str):
+    policy = API_DATA_MUTATION_POLICIES.get(str(model_name or "").strip())
+    if not isinstance(policy, dict):
+        return {"allowed": True, "reason_code": "OK", "source": "smart_construction_core"}
+    allowed_ops = {
+        str(item or "").strip().lower()
+        for item in (policy.get("allowed_ops") or [])
+        if str(item or "").strip()
+    }
+    normalized_op = str(op or "").strip().lower()
+    if allowed_ops and normalized_op not in allowed_ops:
+        return {"allowed": True, "reason_code": "OK", "source": "smart_construction_core"}
+    out = dict(policy)
+    out["op"] = normalized_op
+    out["model"] = str(model_name or "").strip()
+    return out
+
+
 def get_api_data_unlink_allowed_model_contributions(env):
-    return list(API_DATA_UNLINK_ALLOWED_MODELS)
+    return {
+        str(model_name): dict(policy)
+        for model_name, policy in API_DATA_UNLINK_POLICIES.items()
+    }
 
 
 def get_model_code_mapping_contributions(env):
@@ -1114,6 +1154,116 @@ def smart_core_create_field_fallbacks(env, model_name):
     return get_create_field_fallback_contributions(env, model_name)
 
 
+def smart_core_form_business_actions(env, model_name, record_id, contract):
+    """Return model-level business action semantics for form contracts."""
+    del contract
+    model = str(model_name or "").strip()
+    if model != "payment.request":
+        return None
+    try:
+        record = env[model].browse(int(record_id or 0)).exists()
+    except Exception:
+        record = None
+    if not record:
+        return None
+    try:
+        from odoo.addons.smart_construction_core.handlers.payment_request_available_actions import (
+            PaymentRequestAvailableActionsHandler,
+        )
+
+        result = PaymentRequestAvailableActionsHandler(env, payload={"id": int(record.id)}).run(
+            payload={"id": int(record.id)}
+        )
+    except Exception:
+        return None
+
+    data = result.get("data") if isinstance(result, dict) else {}
+    rows = data.get("actions") if isinstance(data, dict) and isinstance(data.get("actions"), list) else []
+    primary_key = str(data.get("primary_action_key") or "") if isinstance(data, dict) else ""
+    method_aliases = {
+        "submit": ["action_submit"],
+        "approve": ["action_approve", "action_set_approved", "validate_tier"],
+        "reject": ["reject_tier", "action_on_tier_rejected"],
+        "done": ["action_done"],
+    }
+    actions = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        action_key = str(row.get("key") or "").strip()
+        if not action_key:
+            continue
+        methods = method_aliases.get(action_key, [str(row.get("method") or "").strip()])
+        if action_key == "approve" and str(row.get("method") or "").strip() == "action_approval_decision":
+            methods = ["action_approval_decision", *methods]
+        for method in methods:
+            if not method:
+                continue
+            actions.append(
+                {
+                    "key": f"payment_{action_key}",
+                    "action_key": action_key,
+                    "label": str(row.get("label") or action_key),
+                    "kind": "mutation",
+                    "level": "header",
+                    "selection": "none",
+                    "visible_profiles": ["edit", "readonly"],
+                    "method": method,
+                    "intent": str(row.get("execute_intent") or row.get("intent") or "payment.request.execute"),
+                    "allowed": bool(row.get("allowed")),
+                    "reason_code": str(row.get("reason_code") or ""),
+                    "blocked_message": str(row.get("blocked_message") or ""),
+                    "warning_message": str(row.get("warning_message") or ""),
+                    "advisory_warnings": list(row.get("advisory_warnings") or []),
+                    "advisory_reason_codes": list(row.get("advisory_reason_codes") or []),
+                    "force_block_available": bool(row.get("force_block_available")),
+                    "suggested_action": str(row.get("suggested_action") or ""),
+                    "required_role_key": str(row.get("required_role_key") or ""),
+                    "required_role_label": str(row.get("required_role_label") or ""),
+                    "handoff_required": bool(row.get("handoff_required")),
+                    "handoff_hint": str(row.get("handoff_hint") or ""),
+                    "requires_reason": bool(row.get("requires_reason")),
+                    "required_params": list(row.get("required_params") or []),
+                    "primary": action_key == primary_key,
+                    "mutation": {
+                        "type": "record_action",
+                        "model": "payment.request",
+                        "operation": action_key,
+                        "payload_schema": {
+                            "id": "record_id",
+                            "reason": "string" if bool(row.get("requires_reason")) else "",
+                        },
+                    },
+                    "refresh_policy": {
+                        "on_success": ["scene_projection"],
+                        "mode": "reload_record",
+                        "scope": "record",
+                    },
+                }
+            )
+    attachments = {
+        "enabled": True,
+        "label": "附件",
+        "upload": {
+            "intent": "file.upload",
+            "max_bytes": 5 * 1024 * 1024,
+            "accepted_types": [],
+        },
+        "download": {
+            "intent": "file.download",
+        },
+        "ui_labels": {
+            "upload": "上传附件",
+            "uploading": "上传中...",
+            "download": "下载",
+            "upload_failed": "附件上传失败",
+            "download_failed": "附件下载失败",
+            "size_exceeded": "文件过大",
+        },
+    }
+    return {"actions": actions, "attachments": attachments}
+
+
 def get_system_init_fact_contributions(env, user, context=None):
     """Return construction system.init facts contribution payload."""
     del context
@@ -1202,6 +1352,10 @@ def smart_core_file_download_allowed_models(env):
 
 def smart_core_api_data_write_allowlist(env):
     return get_api_data_write_allowlist_contributions(env)
+
+
+def smart_core_api_data_mutation_policy(env, model_name: str, op: str):
+    return get_api_data_mutation_policy_contribution(env, model_name, op)
 
 
 def smart_core_api_data_unlink_allowed_models(env):

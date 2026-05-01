@@ -17,14 +17,14 @@ from ..utils.idempotency import (
     replay_window_seconds,
 )
 from ..utils.reason_codes import (
+    REASON_DELETE_POLICY_DENIED,
     REASON_MISSING_PARAMS,
     REASON_NOT_FOUND,
     REASON_PERMISSION_DENIED,
     REASON_SYSTEM_ERROR,
-    REASON_UNSUPPORTED_SOURCE,
     failure_meta_for_reason,
 )
-from ..utils.extension_hooks import call_extension_hook_first
+from ..utils.delete_policy import resolve_unlink_policy
 
 _logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ _logger = logging.getLogger(__name__)
 class ApiDataUnlinkHandler(BaseIntentHandler):
     """
     Intent: api.data.unlink
-    - 按 allowlist 限定可删除 model
+    - 按 delete_policy 契约限定可删除 model
     - 返回删除 ids
     """
 
@@ -47,13 +47,8 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
 
     ALLOWED_MODELS = {"res.partner"}
 
-    def _allowed_models(self) -> set[str]:
-        payload = call_extension_hook_first(self.env, "smart_core_api_data_unlink_allowed_models", self.env)
-        if isinstance(payload, (list, tuple, set)):
-            values = {str(item).strip() for item in payload if str(item).strip()}
-            if values:
-                return values
-        return set(self.ALLOWED_MODELS)
+    def _delete_policy(self, model: str) -> Dict[str, Any]:
+        return resolve_unlink_policy(self.env, model, default_allowed_models=self.ALLOWED_MODELS)
 
     def _err(self, code: int, message: str, reason_code: str):
         return {
@@ -164,8 +159,13 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
         model = self._get_model(params)
         if not model:
             return self._err(400, "缺少参数 model", REASON_MISSING_PARAMS)
-        if model not in self._allowed_models():
-            return self._err(403, f"模型不允许删除: {model}", REASON_UNSUPPORTED_SOURCE)
+        delete_policy = self._delete_policy(model)
+        if not bool(delete_policy.get("allowed")) or str(delete_policy.get("delete_mode") or "none") != "unlink":
+            return self._err(
+                403,
+                str(delete_policy.get("message") or f"当前模型未开放删除: {model}"),
+                str(delete_policy.get("reason_code") or REASON_DELETE_POLICY_DENIED),
+            )
         if model not in self.env:
             return self._err(404, f"未知模型: {model}", REASON_NOT_FOUND)
 
@@ -238,7 +238,7 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
             _logger.exception("api.data.unlink failed on %s", model)
             return self._err(500, str(e), REASON_SYSTEM_ERROR)
 
-        data = {"ids": ids, "model": model, "dry_run": dry_run}
+        data = {"ids": ids, "model": model, "dry_run": dry_run, "delete_policy": delete_policy}
         data = self._with_idempotency_contract(
             data,
             request_id=request_id,

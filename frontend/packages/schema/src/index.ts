@@ -313,6 +313,7 @@ export interface UserViewPreferenceContract {
   preference?: {
     visible_columns?: string[];
     hidden_columns?: string[];
+    column_order?: string[];
     [key: string]: unknown;
   };
 }

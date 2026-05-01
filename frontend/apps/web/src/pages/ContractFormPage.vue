@@ -30,9 +30,17 @@
         >
           {{ submitButtonLabel }}
         </button>
+        <button
+          v-if="showDiscardAction"
+          class="ghost"
+          :disabled="busy"
+          @click="discardChanges"
+        >
+          {{ formUiLabel('discard') }}
+        </button>
         <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="ghost" :disabled="busy || !contract" @click="copyContractJson">复制契约</button>
         <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="ghost" :disabled="busy || !contract" @click="exportContractJson">导出契约</button>
-        <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="ghost" :disabled="busy" @click="reload">重新加载</button>
+        <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="ghost" :disabled="busy" @click="reload">{{ formUiLabel('reload') }}</button>
       </template>
     </PageHeaderTemplate>
 
@@ -143,20 +151,73 @@
             <RelationFallbackRenderer :field="field" :adapter="relationFallbackAdapter" />
           </template>
           <template #chatter>
-            <section v-if="nativeChatterActions.length && !isProjectIntakeCreateMode" class="block native-chatter-block">
-              <h3>{{ nativeChatterTitle }}</h3>
+            <section v-if="(nativeChatterActions.length || nativeAttachments) && !isProjectIntakeCreateMode" class="block native-chatter-block">
+              <h3>{{ nativeCollaborationTitle }}</h3>
               <div class="chips">
                 <button
                   v-for="action in nativeChatterActions"
                   :key="`chatter-${action.key}`"
                   class="chip-btn"
                   type="button"
-                  :disabled="true"
+                  :disabled="busy || chatterPosting || !action.enabled"
                   :title="action.hint"
+                  @click="openNativeChatterAction(action)"
                 >
                   {{ action.label }}
                 </button>
               </div>
+              <section v-if="activeChatterMode" class="native-chatter-compose">
+                <template v-if="activeChatterIsActivity">
+                  <label class="native-chatter-field">
+                    <span>{{ activitySummaryLabel }}</span>
+                    <input v-model="activitySummary" class="input" type="text" :disabled="chatterPosting" />
+                  </label>
+                  <label class="native-chatter-field">
+                    <span>{{ activityDeadlineLabel }}</span>
+                    <input v-model="activityDeadline" class="input" type="date" :disabled="chatterPosting" />
+                  </label>
+                  <label class="native-chatter-field">
+                    <span>{{ activityNoteLabel }}</span>
+                    <textarea v-model="activityNote" class="native-chatter-input" :disabled="chatterPosting" />
+                  </label>
+                </template>
+                <textarea
+                  v-else
+                  v-model="chatterDraft"
+                  class="native-chatter-input"
+                  :placeholder="activeChatterPlaceholder"
+                  :disabled="chatterPosting"
+                />
+                <div class="native-chatter-compose-actions">
+                  <button class="primary" type="button" :disabled="isNativeChatterSubmitDisabled" @click="sendNativeChatter">
+                    {{ chatterPosting ? '发布中...' : activeChatterSubmitLabel }}
+                  </button>
+                  <button class="ghost" type="button" :disabled="chatterPosting" @click="closeNativeChatterComposer">取消</button>
+                </div>
+              </section>
+              <p v-if="chatterError" class="validation-error native-chatter-message">{{ chatterError }}</p>
+              <section v-if="nativeAttachments" class="native-attachment-tools">
+                <label class="chip-btn native-attachment-upload">
+                  {{ attachmentUploading ? nativeAttachmentUploadingLabel : nativeAttachmentUploadLabel }}
+                  <input type="file" :disabled="attachmentUploading" @change="onNativeAttachmentSelected" />
+                </label>
+                <p v-if="attachmentError" class="validation-error native-chatter-message">{{ attachmentError }}</p>
+              </section>
+              <ul v-if="chatterTimeline.length" class="native-chatter-timeline">
+                <li v-for="entry in chatterTimeline" :key="entry.key" class="native-chatter-entry">
+                  <span class="native-chatter-type">{{ entry.typeLabel }}</span>
+                  <span class="native-chatter-body">{{ entry.type === 'activity' ? entry.title : (entry.body || entry.title) }}</span>
+                  <span class="native-chatter-meta">{{ entry.meta }}</span>
+                  <button
+                    v-if="entry.type === 'attachment' && entry.attachment"
+                    class="ghost native-attachment-download"
+                    type="button"
+                    @click="downloadNativeAttachment(entry.attachment)"
+                  >
+                    {{ nativeAttachmentDownloadLabel }}
+                  </button>
+                </li>
+              </ul>
             </section>
           </template>
         </NativeFormTreeRenderer>
@@ -216,20 +277,73 @@
         </div>
       </section>
 
-      <section v-if="nativeChatterActions.length && !isProjectIntakeCreateMode && !hasNativeChatterNode" class="block native-chatter-block">
-        <h3>{{ nativeChatterTitle }}</h3>
+      <section v-if="(nativeChatterActions.length || nativeAttachments) && !isProjectIntakeCreateMode && !hasNativeChatterNode" class="block native-chatter-block">
+        <h3>{{ nativeCollaborationTitle }}</h3>
         <div class="chips">
           <button
             v-for="action in nativeChatterActions"
             :key="`chatter-${action.key}`"
             class="chip-btn"
             type="button"
-            :disabled="true"
+            :disabled="busy || chatterPosting || !action.enabled"
             :title="action.hint"
+            @click="openNativeChatterAction(action)"
           >
             {{ action.label }}
           </button>
         </div>
+        <section v-if="activeChatterMode" class="native-chatter-compose">
+          <template v-if="activeChatterIsActivity">
+            <label class="native-chatter-field">
+              <span>{{ activitySummaryLabel }}</span>
+              <input v-model="activitySummary" class="input" type="text" :disabled="chatterPosting" />
+            </label>
+            <label class="native-chatter-field">
+              <span>{{ activityDeadlineLabel }}</span>
+              <input v-model="activityDeadline" class="input" type="date" :disabled="chatterPosting" />
+            </label>
+            <label class="native-chatter-field">
+              <span>{{ activityNoteLabel }}</span>
+              <textarea v-model="activityNote" class="native-chatter-input" :disabled="chatterPosting" />
+            </label>
+          </template>
+          <textarea
+            v-else
+            v-model="chatterDraft"
+            class="native-chatter-input"
+            :placeholder="activeChatterPlaceholder"
+            :disabled="chatterPosting"
+          />
+          <div class="native-chatter-compose-actions">
+            <button class="primary" type="button" :disabled="isNativeChatterSubmitDisabled" @click="sendNativeChatter">
+              {{ chatterPosting ? '发布中...' : activeChatterSubmitLabel }}
+            </button>
+            <button class="ghost" type="button" :disabled="chatterPosting" @click="closeNativeChatterComposer">取消</button>
+          </div>
+        </section>
+        <p v-if="chatterError" class="validation-error native-chatter-message">{{ chatterError }}</p>
+        <section v-if="nativeAttachments" class="native-attachment-tools">
+          <label class="chip-btn native-attachment-upload">
+            {{ attachmentUploading ? nativeAttachmentUploadingLabel : nativeAttachmentUploadLabel }}
+            <input type="file" :disabled="attachmentUploading" @change="onNativeAttachmentSelected" />
+          </label>
+          <p v-if="attachmentError" class="validation-error native-chatter-message">{{ attachmentError }}</p>
+        </section>
+        <ul v-if="chatterTimeline.length" class="native-chatter-timeline">
+          <li v-for="entry in chatterTimeline" :key="entry.key" class="native-chatter-entry">
+            <span class="native-chatter-type">{{ entry.typeLabel }}</span>
+            <span class="native-chatter-body">{{ entry.type === 'activity' ? entry.title : (entry.body || entry.title) }}</span>
+            <span class="native-chatter-meta">{{ entry.meta }}</span>
+            <button
+              v-if="entry.type === 'attachment' && entry.attachment"
+              class="ghost native-attachment-download"
+              type="button"
+              @click="downloadNativeAttachment(entry.attachment)"
+            >
+              {{ nativeAttachmentDownloadLabel }}
+            </button>
+          </li>
+        </ul>
       </section>
     </section>
 
@@ -253,6 +367,7 @@
         </header>
         <div class="relation-dialog-search">
           <input
+            ref="relationSearchInputRef"
             class="input"
             type="text"
             :value="relationSearchDialog.keyword"
@@ -327,7 +442,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onErrorCaptured, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onErrorCaptured, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
@@ -352,6 +467,8 @@ import { loadActionContractRaw, loadModelContractRaw } from '../api/contract';
 import { createRecord, listRecords, readRecord, writeRecord } from '../api/data';
 import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
+import { fetchChatterTimeline, postChatterMessage, scheduleChatterActivity, type ChatterTimelineEntry } from '../api/chatter';
+import { downloadFile, fileToBase64, uploadFile } from '../api/files';
 import { triggerOnchange } from '../api/onchange';
 import type { OnchangeLinePatch } from '../api/onchange';
 import type { ActionContract, FieldDescriptor } from '@sc/schema';
@@ -399,6 +516,14 @@ type ContractAction = {
   hint: string;
   semantic: string;
   visibleProfiles: Array<'create' | 'edit' | 'readonly'>;
+  requiredParams: string[];
+  requiresReason: boolean;
+  actionSafety?: {
+    classification: 'safe' | 'danger';
+    requiresConfirm: boolean;
+    confirmMessage: string;
+    reasonCode: string;
+  };
   mutation?: {
     type: string;
     model: string;
@@ -412,6 +537,49 @@ type ContractAction = {
     scope?: string;
     debounce_ms?: number;
   };
+};
+
+function normalizeActionSafety(value: unknown): ContractAction['actionSafety'] | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const row = value as Record<string, unknown>;
+  const classificationRaw = String(row.classification || '').trim().toLowerCase();
+  const classification = classificationRaw === 'danger' ? 'danger' : classificationRaw === 'safe' ? 'safe' : '';
+  if (!classification) return undefined;
+  return {
+    classification,
+    requiresConfirm: row.requires_confirm === true,
+    confirmMessage: String(row.confirm_message || '').trim(),
+    reasonCode: String(row.reason_code || '').trim(),
+  };
+}
+
+function normalizeRequiredParams(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => String(item || '').trim())
+    .filter(Boolean);
+}
+
+function collectActionParams(action: ContractAction): Record<string, unknown> | null {
+  const requiredParams = new Set((action.requiredParams || []).map((item) => item.toLowerCase()));
+  if (!action.requiresReason && !requiredParams.has('reason')) return {};
+  const reason = window.prompt(`${action.label || '操作'}原因`)?.trim() || '';
+  if (!reason) {
+    errorMessage.value = '请填写操作原因';
+    status.value = 'error';
+    return null;
+  }
+  return { reason };
+}
+
+type NativeChatterAction = {
+  key: string;
+  label: string;
+  intent: string;
+  mode: string;
+  payload: Record<string, unknown>;
+  enabled: boolean;
+  hint: string;
 };
 
 type LayoutNode = {
@@ -471,6 +639,7 @@ type One2ManyInlineRow = {
   isNew: boolean;
   removed: boolean;
   dirty: boolean;
+  dirtyFields: string[];
   values: Record<string, unknown>;
 };
 
@@ -479,6 +648,7 @@ type One2ManyColumn = {
   label: string;
   ttype: string;
   required: boolean;
+  readonly?: boolean;
   selection?: Array<[string, string]>;
 };
 
@@ -519,6 +689,7 @@ const contract = ref<ActionContract | null>(null);
 const contractMeta = ref<Record<string, unknown> | null>(null);
 const activeFilterKey = ref('');
 const originalValues = ref<Record<string, unknown>>({});
+const recordVersionToken = ref('');
 const formData = reactive<Record<string, unknown>>({});
 const advancedExpanded = ref(false);
 const relationOptions = ref<Record<string, RelationOption[]>>({});
@@ -551,6 +722,7 @@ const relationSearchDialog = reactive<{
   createMode: 'none',
   labels: {},
 });
+const relationSearchInputRef = ref<HTMLInputElement | null>(null);
 const deniedRelationModels = new Set<string>();
 const one2manyRows = reactive<Record<string, One2ManyInlineRow[]>>({});
 const relationQueryTimers: Record<string, ReturnType<typeof setTimeout>> = {};
@@ -558,8 +730,21 @@ const onchangeModifiersPatch = ref<Record<string, Record<string, unknown>>>({});
 const onchangeWarnings = ref<Array<{ title?: string; message?: string; reason_code?: string }>>([]);
 const onchangeLinePatches = ref<OnchangeLinePatch[]>([]);
 const changedFieldSet = new Set<string>();
+const dirtyFieldSet = new Set<string>();
 let onchangeTimer: ReturnType<typeof setTimeout> | null = null;
 const applyingOnchangePatch = ref(false);
+const activeChatterMode = ref('');
+const activeChatterLabel = ref('');
+const chatterDraft = ref('');
+const activitySummary = ref('');
+const activityDeadline = ref('');
+const activityNote = ref('');
+const chatterPosting = ref(false);
+const chatterLoading = ref(false);
+const chatterError = ref('');
+const chatterTimeline = ref<ChatterTimelineEntry[]>([]);
+const attachmentUploading = ref(false);
+const attachmentError = ref('');
 
 const model = computed(() => String(route.params.model || contract.value?.head?.model || contract.value?.model || ''));
 const actionId = computed(() => {
@@ -588,6 +773,17 @@ const requestedSourceMode = computed(() => (
   requestedSurface.value === 'native' ? 'native_parser' : 'governance_pipeline'
 ));
 const busy = computed(() => busyKind.value !== null);
+
+function recordVersionPolicy() {
+  const raw = (contract.value as Record<string, unknown> | null)?.record_version;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const policy = raw as Record<string, unknown>;
+  if (policy.enabled !== true) return null;
+  const tokenField = String(policy.token_field || '').trim();
+  const requestParam = String(policy.request_param || '').trim();
+  if (!tokenField || requestParam !== 'if_match') return null;
+  return { tokenField };
+}
 
 const renderProfile = computed<'create' | 'edit' | 'readonly'>(() => {
   const profile = String(contract.value?.render_profile || '').trim().toLowerCase();
@@ -666,8 +862,26 @@ function hasPendingInlineRelationChange() {
   });
 }
 
+function hasOne2manyDraftChanges() {
+  return layoutNodes.value.some((node) => {
+    if (node.kind !== 'field' || node.readonly) return false;
+    const descriptor = contract.value?.fields?.[node.name];
+    if (fieldType(descriptor) !== 'one2many') return false;
+    return one2manyFieldRows(node.name).some((row) => row.isNew || row.dirty || row.removed);
+  });
+}
+
 const hasChanges = computed(() => {
   if (hasPendingInlineRelationChange()) return true;
+  if (hasOne2manyDraftChanges()) return true;
+  const statusField = nativeStatusbar.value.field;
+  if (
+    statusField
+    && !nativeStatusbar.value.readonly
+    && comparableFieldValue(statusField, formData[statusField]) !== comparableFieldValue(statusField, originalValues.value[statusField])
+  ) {
+    return true;
+  }
   const keys = Object.keys(formData);
   return keys.some((key) => {
     if (!isFieldWritable(key)) return false;
@@ -681,7 +895,8 @@ const visibleFieldNodeCount = computed(() =>
   layoutNodes.value.filter((node) => node.kind === 'field' && isFieldVisible(node.name)).length,
 );
 const changedFieldCount = computed(() =>
-  Object.keys(formData).filter((key) => isFieldWritable(key) && comparableFieldValue(key, formData[key]) !== comparableFieldValue(key, originalValues.value[key])).length,
+  Object.keys(formData).filter((key) => isFieldWritable(key) && comparableFieldValue(key, formData[key]) !== comparableFieldValue(key, originalValues.value[key])).length
+    + (hasOne2manyDraftChanges() ? 1 : 0),
 );
 
 const intakeRequiredFields = computed(() => {
@@ -764,18 +979,21 @@ const intakeCreateButtonLabel = computed(() => {
 
 const submitButtonLabel = computed(() => {
   if (busy.value && busyKind.value === 'save') {
-    return isProjectQuickIntakeMode.value ? '创建中...' : '保存中...';
+    return isProjectQuickIntakeMode.value ? '创建中...' : formUiLabel('saving');
   }
   if (isProjectQuickIntakeMode.value && !recordId.value) {
     return '创建并进入项目驾驶舱';
   }
-  return '保存';
+  return formUiLabel('save');
 });
 const normalCreateButtonLabel = computed(() => (busy.value && busyKind.value === 'save' ? '创建中...' : '创建项目'));
+const showDiscardAction = computed(() => !isProjectIntakeCreateMode.value && Boolean(recordId.value) && hasChanges.value);
 
 const headerActionsVisible = computed(() => {
   if (isProjectIntakeCreateMode.value) return [];
-  if (useNativeFormTree.value) return [];
+  if (useNativeFormTree.value) {
+    return headerActions.value.filter((item) => item.kind === 'mutation');
+  }
   return headerActions.value;
 });
 
@@ -1142,6 +1360,7 @@ function one2manyColumns(name: string): One2ManyColumn[] {
           label: String(descriptor?.string || normalized),
           ttype,
           required: Boolean(descriptor?.required),
+          readonly: Boolean(descriptor?.readonly),
           selection: Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined,
         });
         return;
@@ -1157,6 +1376,7 @@ function one2manyColumns(name: string): One2ManyColumn[] {
         label: String(row.label || row.string || descriptor?.string || colName).trim() || colName,
         ttype,
         required: Boolean(row.required || descriptor?.required),
+        readonly: Boolean(row.readonly || descriptor?.readonly),
         selection: Array.isArray(row.selection)
           ? row.selection as Array<[string, string]>
           : (Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined),
@@ -1184,6 +1404,14 @@ function one2manyPolicies(name: string) {
 
 function one2manyCanCreate(name: string) {
   return one2manyPolicies(name).can_create !== false;
+}
+
+function one2manyCreateLabel(name: string) {
+  const policies = one2manyPolicies(name);
+  const labels = policies.ui_labels && typeof policies.ui_labels === 'object' && !Array.isArray(policies.ui_labels)
+    ? policies.ui_labels as Record<string, unknown>
+    : {};
+  return String(labels.add_row || labels.create || '添加行').trim() || '添加行';
 }
 
 function one2manyPrimaryColumn(name: string) {
@@ -1263,6 +1491,7 @@ function addOne2manyRow(name: string) {
     isNew: true,
     removed: false,
     dirty: true,
+    dirtyFields: columns.map((column) => column.name),
     values: { ...values, [primary]: values[primary] ?? '' },
   });
   markFieldChanged(name);
@@ -1286,6 +1515,7 @@ function normalizeOne2manyColumnValue(column: One2ManyColumn, value: unknown) {
 }
 
 function setOne2manyRowField(fieldName: string, rowKey: string, column: One2ManyColumn, value: unknown) {
+  if (column.readonly) return;
   const rows = ensureOne2manyRows(fieldName);
   const row = rows.find((item) => item.key === rowKey);
   if (!row) return;
@@ -1295,6 +1525,9 @@ function setOne2manyRowField(fieldName: string, rowKey: string, column: One2Many
     [column.name]: normalized,
   };
   row.dirty = true;
+  if (!row.dirtyFields.includes(column.name)) {
+    row.dirtyFields = [...row.dirtyFields, column.name];
+  }
   markFieldChanged(fieldName);
 }
 
@@ -1347,6 +1580,7 @@ function initOne2manyRows(name: string, source: unknown) {
     isNew: false,
     removed: false,
     dirty: false,
+    dirtyFields: [],
     values: {
       [primary]: optionMap.get(id) || `#${id}`,
       name: optionMap.get(id) || `#${id}`,
@@ -1363,7 +1597,9 @@ function buildOne2manyCommandValue(name: string, mode: 'onchange' | 'write') {
       isNew: row.isNew,
       removed: row.removed,
       dirty: row.dirty,
-      values: row.values || {},
+      values: row.isNew
+        ? row.values || {}
+        : Object.fromEntries((row.dirtyFields || []).map((key) => [key, row.values?.[key]])),
     })),
     mode,
   });
@@ -1374,6 +1610,8 @@ function collectOne2manyDraftValidation() {
   const rowErrors: Record<string, string[]> = {};
   Object.entries(one2manyRows).forEach(([fieldName, rows]) => {
     if (!Array.isArray(rows) || !rows.length) return;
+    const hasTouchedRows = rows.some((row) => row.isNew || row.dirty || row.removed);
+    if (recordId.value && !hasTouchedRows) return;
     const primary = one2manyPrimaryColumn(fieldName);
     const columns = one2manyColumns(fieldName);
     const requiredColumns = columns.filter((column) => column.required);
@@ -1486,24 +1724,24 @@ function exactRelationOption(rows: RelationOption[], keyword: string) {
   return rows.find((row) => row.label.trim().toLowerCase() === normalized) || null;
 }
 
-function resolveRelationQuickFillOption(rows: RelationOption[], keyword: string) {
+function resolveRelationQuickFillOption(rows: RelationOption[], keyword: string, matchMode = 'exact_label') {
   const normalized = String(keyword || '').trim();
   if (!normalized) return null;
   const lowered = normalized.toLowerCase();
   const candidates = rows.filter((row) => row.label.trim().toLowerCase().includes(lowered));
   const exact = exactRelationOption(candidates, normalized);
   if (exact) return exact;
-  return candidates.length === 1 ? candidates[0] : null;
+  return matchMode === 'single_contains_or_exact' && candidates.length === 1 ? candidates[0] : null;
 }
 
-function hasAmbiguousRelationMatches(rows: RelationOption[], keyword: string) {
+function hasAmbiguousRelationMatches(rows: RelationOption[], keyword: string, matchMode = 'exact_label') {
   const normalized = String(keyword || '').trim().toLowerCase();
   if (!normalized) return false;
   const candidates = rows.filter((row) => row.label.trim().toLowerCase().includes(normalized));
   const exactCount = candidates.filter((row) => row.label.trim().toLowerCase() === normalized).length;
   if (exactCount > 1) return true;
   if (exactCount === 1) return false;
-  return candidates.length > 1;
+  return matchMode === 'single_contains_or_exact' && candidates.length > 1;
 }
 
 function filteredRelationOptions(name: string) {
@@ -1570,6 +1808,7 @@ function relationEntry(descriptor?: FieldDescriptor) {
       enabled: inlineRaw.enabled === true,
       createOnNoMatch: inlineRaw.create_on_no_match === true,
       nameField: String(inlineRaw.name_field || 'name').trim() || 'name',
+      match: String(inlineRaw.match || '').trim() || 'exact_label',
     },
   };
 }
@@ -1591,6 +1830,21 @@ function relationUiLabel(descriptor: FieldDescriptor | undefined, key: string, f
   return relationUiLabels(descriptor)[key] || fallback || key;
 }
 
+function formUiLabels(): Record<string, string> {
+  const formView = contract.value?.views?.form as (Record<string, unknown> | undefined);
+  const labels = formView?.ui_labels;
+  if (!labels || typeof labels !== 'object' || Array.isArray(labels)) return {};
+  return Object.entries(labels as Record<string, unknown>).reduce<Record<string, string>>((acc, [key, value]) => {
+    const label = String(value || '').trim();
+    if (key && label) acc[key] = label;
+    return acc;
+  }, {});
+}
+
+function formUiLabel(key: string) {
+  return formUiLabels()[key] || key;
+}
+
 function relationCreateMode(_fieldName: string, descriptor?: FieldDescriptor): 'page' | 'quick' | 'none' {
   const entry = relationEntry(descriptor);
   if (!entry) return 'none';
@@ -1604,11 +1858,19 @@ function relationCreateMode(_fieldName: string, descriptor?: FieldDescriptor): '
 
 function relationInlineCreate(_fieldName: string, descriptor?: FieldDescriptor) {
   const entry = relationEntry(descriptor);
-  if (!entry?.inlineCreate?.enabled) return { enabled: false, createOnNoMatch: false, nameField: '' };
+  if (!entry?.inlineCreate?.enabled) {
+    return {
+      enabled: false,
+      createOnNoMatch: false,
+      nameField: '',
+      match: entry?.inlineCreate?.match || 'exact_label',
+    };
+  }
   return {
     enabled: true,
     createOnNoMatch: entry.inlineCreate.createOnNoMatch,
     nameField: entry.inlineCreate.nameField,
+    match: entry.inlineCreate.match,
   };
 }
 
@@ -1816,6 +2078,12 @@ function closeRelationSearchDialog() {
   relationSearchDialog.selectedId = null;
 }
 
+function onRelationDialogDocumentKeydown(event: KeyboardEvent) {
+  if (!relationSearchDialog.open || event.key !== 'Escape') return;
+  event.preventDefault();
+  closeRelationSearchDialog();
+}
+
 async function openRelationSearchDialog(fieldName: string, descriptor?: FieldDescriptor) {
   const relation = relationModel(fieldName);
   if (!relation) return;
@@ -1833,6 +2101,8 @@ async function openRelationSearchDialog(fieldName: string, descriptor?: FieldDes
   relationSearchDialog.createMode = relationCreateMode(fieldName, descriptor);
   relationSearchDialog.columns = await loadRelationSearchColumns(fieldName);
   await runRelationSearch();
+  await nextTick();
+  relationSearchInputRef.value?.focus();
 }
 
 function setRelationSearchKeyword(keyword: string) {
@@ -1907,17 +2177,19 @@ async function createRelationFromSearchDialog() {
   if (!fieldName) return;
   const descriptor = contract.value?.fields?.[fieldName];
   const label = relationSearchDialog.keyword.trim();
-  if (!label) {
-    relationSearchDialog.error = relationSearchDialog.labels.missing_name || '';
-    return;
-  }
-  const exact = relationSearchDialog.options.find((item) => item.label.trim().toLowerCase() === label.toLowerCase());
-  if (exact) {
+  const mode = relationCreateMode(fieldName, descriptor);
+  const exact = label
+    ? relationSearchDialog.options.find((item) => item.label.trim().toLowerCase() === label.toLowerCase())
+    : null;
+  if (exact && mode !== 'page') {
     selectRelationSearchOption(exact);
     return;
   }
-  const mode = relationCreateMode(fieldName, descriptor);
   if (mode === 'quick') {
+    if (!label) {
+      relationSearchDialog.error = relationSearchDialog.labels.missing_name || '';
+      return;
+    }
     validationErrors.value = [];
     await quickCreateRelation(fieldName, descriptor, label, { stayInDialog: true });
     if (!validationErrors.value.length) {
@@ -2047,7 +2319,7 @@ async function loadRelationOptions() {
   const fields = contract.value?.fields || {};
   const visibleRelationFields = new Set(
     layoutNodes.value
-      .filter((node) => node.kind === 'field' && isFieldVisible(node.name))
+      .filter((node) => node.kind === 'field' && isWritableFieldVisible(node.name))
       .map((node) => node.name),
   );
   const entries = Object.entries(fields).filter(([name]) => {
@@ -2158,6 +2430,9 @@ const contractActions = computed<ContractAction[]>(() => {
       hint: '',
       semantic,
       visibleProfiles: ['create', 'edit', 'readonly'],
+      requiredParams: normalizeRequiredParams(row.required_params),
+      requiresReason: row.requires_reason === true,
+      actionSafety: normalizeActionSafety(row.action_safety),
       mutation: protocol?.mutation,
       refreshPolicy: protocol?.refresh_policy,
     };
@@ -2173,6 +2448,9 @@ const contractActions = computed<ContractAction[]>(() => {
   }
   if (Array.isArray(nativeFormContract?.button_box)) {
     merged.push(...(nativeFormContract.button_box as Array<Record<string, unknown>>));
+  }
+  if (Array.isArray(nativeFormContract?.business_actions)) {
+    merged.push(...(nativeFormContract.business_actions as Array<Record<string, unknown>>));
   }
   if (Array.isArray(contract.value?.buttons)) merged.push(...(contract.value?.buttons as Array<Record<string, unknown>>));
   if (Array.isArray(contract.value?.toolbar?.header)) merged.push(...(contract.value?.toolbar?.header as Array<Record<string, unknown>>));
@@ -2207,6 +2485,8 @@ const contractActions = computed<ContractAction[]>(() => {
     dedup.add(key);
     const payload = parseMaybeJsonRecord(row.payload);
     const kind = normalizeActionKind(row.kind);
+    const protocol = normalizeSceneActionProtocol(row);
+    const effectiveKind = protocol?.mutation ? 'mutation' : kind;
     const level = String(row.level || 'body').trim().toLowerCase();
     const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref);
     const methodName = detectMethodName(key, String(payload.method || '').trim());
@@ -2227,15 +2507,20 @@ const contractActions = computed<ContractAction[]>(() => {
     )
       .map((item) => String(item || '').trim().toLowerCase())
       .filter((item): item is 'create' | 'edit' | 'readonly' => item === 'create' || item === 'edit' || item === 'readonly');
+    const requiredParams = normalizeRequiredParams(row.required_params);
     const policy = evaluateActionPolicy(contract.value, key, policyContext.value);
     if (!policy.visible) continue;
+    if (!evaluateNativeActionVisibility(row)) continue;
     const byGroup = hasGroupAccess(groups);
-    const needRecord = kind === 'object' || kind === 'server' || level === 'row' || level === 'smart';
-    const enabled = policy.enabled && byGroup && (!needRecord || Boolean(recordId.value));
+    const contractAllowed = typeof row.allowed === 'boolean' ? Boolean(row.allowed) : true;
+    const needRecord = effectiveKind === 'object' || effectiveKind === 'server' || effectiveKind === 'mutation' || level === 'row' || level === 'smart';
+    const blockedMessage = String(row.blocked_message || row.reason || row.reason_code || '').trim();
+    const warningMessage = String(row.warning_message || '').trim();
+    const enabled = contractAllowed && policy.enabled && byGroup && (!needRecord || Boolean(recordId.value));
     out.push({
       key,
       label: String(row.label || key),
-      kind,
+      kind: effectiveKind,
       level,
       selection,
       actionId,
@@ -2247,10 +2532,15 @@ const contractActions = computed<ContractAction[]>(() => {
       url: String(payload.url || '').trim(),
       enabled,
       hint: byGroup
-        ? (needRecord && !recordId.value ? 'requires record id' : policy.reason)
+        ? (needRecord && !recordId.value ? 'requires record id' : (contractAllowed ? (warningMessage || policy.reason) : blockedMessage))
         : 'permission denied',
       semantic: policy.semantic,
       visibleProfiles,
+      requiredParams,
+      requiresReason: row.requires_reason === true || requiredParams.includes('reason'),
+      actionSafety: normalizeActionSafety(row.action_safety),
+      mutation: protocol?.mutation,
+      refreshPolicy: protocol?.refresh_policy,
     });
   }
   return out.sort((a, b) => {
@@ -2267,22 +2557,101 @@ const contractActions = computed<ContractAction[]>(() => {
 
 const headerActions = computed(() => contractActions.value.filter((item) => item.level === 'header' || item.level === 'toolbar'));
 const bodyActions = computed(() => contractActions.value.filter((item) => item.level !== 'header' && item.level !== 'toolbar'));
-const nativeChatterActions = computed(() => {
+const nativeChatterActions = computed<NativeChatterAction[]>(() => {
   const chatter = contract.value?.views?.form?.chatter as Record<string, unknown> | undefined;
   if (!chatter || chatter.enabled !== true) return [];
   const actions = Array.isArray(chatter.actions) ? chatter.actions as Array<Record<string, unknown>> : [];
   return actions
-    .map((row) => ({
-      key: String(row.key || row.label || '').trim(),
-      label: String(row.label || row.key || '').trim(),
-      hint: String(row.intent || row.kind || '').trim(),
-    }))
+    .map((row) => {
+      const key = String(row.key || row.label || '').trim();
+      const intent = String(row.intent || row.kind || key).trim().toLowerCase();
+      const payload = row.payload && typeof row.payload === 'object' && !Array.isArray(row.payload)
+        ? row.payload as Record<string, unknown>
+        : {};
+      const mode = String(payload.mode || intent || key).trim().toLowerCase();
+      return {
+        key,
+        label: String(row.label || row.key || '').trim(),
+        intent,
+        mode,
+        payload,
+        enabled: Boolean(recordId.value) && Boolean(model.value),
+        hint: intent,
+      };
+    })
     .filter((row) => row.key && row.label);
 });
 
 const nativeChatterTitle = computed(() => {
   const chatter = contract.value?.views?.form?.chatter as Record<string, unknown> | undefined;
   return String(chatter?.label || '').trim();
+});
+
+const nativeCollaborationTitle = computed(() => nativeChatterTitle.value || nativeAttachmentLabel('label', '附件'));
+
+const activeChatterSubmitLabel = computed(() => {
+  if (activeChatterMode.value === 'activity') return activeChatterLabel.value || '安排活动';
+  if (activeChatterMode.value === 'note') return '记录备注';
+  return '发送消息';
+});
+
+const activeChatterPlaceholder = computed(() => {
+  if (activeChatterMode.value === 'note') return '输入备注内容';
+  return '输入消息内容';
+});
+
+const activeChatterIsActivity = computed(() => activeChatterMode.value === 'activity');
+
+const activeActivityAction = computed(() => (
+  nativeChatterActions.value.find((item) => item.mode === 'activity' && item.label === activeChatterLabel.value)
+  || nativeChatterActions.value.find((item) => item.mode === 'activity')
+  || null
+));
+
+function activityFieldLabel(name: string, fallback: string) {
+  const fields = activeActivityAction.value?.payload?.fields;
+  if (!Array.isArray(fields)) return fallback;
+  const row = fields.find((item) => item && typeof item === 'object' && String((item as Record<string, unknown>).name || '') === name) as Record<string, unknown> | undefined;
+  return String(row?.label || fallback).trim();
+}
+
+const activitySummaryLabel = computed(() => activityFieldLabel('summary', '摘要'));
+const activityDeadlineLabel = computed(() => activityFieldLabel('date_deadline', '截止日期'));
+const activityNoteLabel = computed(() => activityFieldLabel('note', '备注'));
+
+const isNativeChatterSubmitDisabled = computed(() => {
+  if (chatterPosting.value) return true;
+  if (activeChatterMode.value === 'activity') return !activitySummary.value.trim();
+  return !chatterDraft.value.trim();
+});
+
+const nativeAttachments = computed(() => {
+  const formView = contract.value?.views?.form as (Record<string, unknown> | undefined);
+  const raw = formView?.attachments as Record<string, unknown> | undefined;
+  if (!raw || raw.enabled !== true) return null;
+  return raw;
+});
+
+const nativeAttachmentLabels = computed<Record<string, string>>(() => {
+  const labels = nativeAttachments.value?.ui_labels;
+  return labels && typeof labels === 'object' && !Array.isArray(labels)
+    ? labels as Record<string, string>
+    : {};
+});
+
+function nativeAttachmentLabel(key: string, fallback: string) {
+  return String(nativeAttachmentLabels.value[key] || fallback).trim();
+}
+
+const nativeAttachmentUploadLabel = computed(() => nativeAttachmentLabel('upload', '上传附件'));
+const nativeAttachmentUploadingLabel = computed(() => nativeAttachmentLabel('uploading', '上传中...'));
+const nativeAttachmentDownloadLabel = computed(() => nativeAttachmentLabel('download', '下载'));
+const nativeAttachmentMaxBytes = computed(() => {
+  const upload = nativeAttachments.value?.upload;
+  const raw = upload && typeof upload === 'object' && !Array.isArray(upload)
+    ? Number((upload as Record<string, unknown>).max_bytes || 0)
+    : 0;
+  return Number.isFinite(raw) && raw > 0 ? raw : 5 * 1024 * 1024;
 });
 
 const hasNativeChatterNode = computed(() => nativeLayoutContainsType(nativeFormLayoutNodes.value, 'chatter'));
@@ -2336,6 +2705,9 @@ function contractActionFromNativeRow(row: Record<string, unknown>): ContractActi
     hint: byGroup ? (needRecord && !recordId.value ? 'requires record id' : '') : 'permission denied',
     semantic: '',
     visibleProfiles: ['create', 'edit', 'readonly'],
+    requiredParams: normalizeRequiredParams(row.required_params),
+    requiresReason: row.requires_reason === true,
+    actionSafety: normalizeActionSafety(row.action_safety),
   };
 }
 
@@ -2595,6 +2967,11 @@ function isFieldVisible(name: string) {
   return renderProfile.value !== 'create';
 }
 
+function isWritableFieldVisible(name: string) {
+  if (useNativeFormTree.value) return nativeVisibleFieldNames.value.has(String(name || '').trim());
+  return isFieldVisible(name);
+}
+
 const useNativeFormTree = computed(() => {
   if (isProjectIntakeCreateMode.value) return false;
   return nativeFormLayoutNodes.value.length > 0;
@@ -2603,6 +2980,22 @@ const useNativeFormTree = computed(() => {
 const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
   const layout = contract.value?.views?.form?.layout;
   return Array.isArray(layout) ? (layout as NativeFormLayoutNode[]) : [];
+});
+
+const nativeVisibleFieldNames = computed(() => {
+  const names = new Set<string>();
+  const walk = (nodes: NativeFormLayoutNode[]) => {
+    nodes.forEach((node) => {
+      const name = String(node?.name || '').trim();
+      if (name && isNativeFieldVisible(name, node)) names.add(name);
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const children = node?.[key];
+        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[]);
+      });
+    });
+  };
+  walk(nativeFormLayoutNodes.value);
+  return names;
 });
 
 const nativeFavoriteFieldNames = computed(() => {
@@ -2709,6 +3102,27 @@ function evaluateNativeModifierValue(value: unknown) {
   if (kind === 'field_truthy') return Boolean(formData[field]);
   if (kind === 'field_compare') return compareNativeModifierValue(formData[field], String(row.operator || ''), row.value);
   return false;
+}
+
+function evaluateNativeActionVisibility(row: Record<string, unknown>) {
+  const visible = row.visible && typeof row.visible === 'object' && !Array.isArray(row.visible)
+    ? row.visible as Record<string, unknown>
+    : {};
+  const states = Array.isArray(visible.states)
+    ? visible.states.map((item) => String(item || '').trim()).filter(Boolean)
+    : [];
+  if (states.length) {
+    const currentState = String(formData.state || '').trim();
+    if (currentState && !states.includes(currentState)) return false;
+  }
+  const attrs = visible.attrs && typeof visible.attrs === 'object' && !Array.isArray(visible.attrs)
+    ? visible.attrs as Record<string, unknown>
+    : {};
+  const modifiers = row.modifiers && typeof row.modifiers === 'object' && !Array.isArray(row.modifiers)
+    ? row.modifiers as Record<string, unknown>
+    : {};
+  const invisible = attrs.invisible ?? modifiers.invisible ?? row.invisible;
+  return !evaluateNativeModifierValue(invisible);
 }
 
 function isNativeLayoutNodeVisible(nodeRaw: NativeFormLayoutNode) {
@@ -3105,6 +3519,7 @@ const relationFallbackAdapter = computed<RelationFallbackAdapter>(() => createRe
   filteredRelationOptions,
   setRelationMultiField,
   one2manyCanCreate,
+  one2manyCreateLabel,
   addOne2manyRow,
   one2manySummary,
   visibleOne2manyRows,
@@ -3154,6 +3569,7 @@ function comparableFieldValue(name: string, value: unknown) {
       isNew: row.isNew,
       removed: row.removed,
       dirty: row.dirty,
+      dirtyFields: row.dirtyFields || [],
       values: row.values || {},
     }));
     return JSON.stringify(rows);
@@ -3163,7 +3579,9 @@ function comparableFieldValue(name: string, value: unknown) {
 
 function isFieldWritable(name: string) {
   const node = layoutNodes.value.find((item) => item.kind === 'field' && item.name === name);
-  return Boolean(node && !node.readonly);
+  if (node) return !node.readonly;
+  const statusField = nativeStatusbar.value.field;
+  return Boolean(statusField && statusField === name && !nativeStatusbar.value.readonly);
 }
 
 function parseNumeric(text: unknown) {
@@ -3246,6 +3664,7 @@ async function persistNativeFavoriteField(name: string, checked: boolean, previo
       [name]: checked,
     };
     changedFieldSet.delete(name);
+    dirtyFieldSet.delete(name);
   } catch (err) {
     formData[name] = previousValue;
     console.warn('[native-favorite] failed to save favorite state', err);
@@ -3297,25 +3716,25 @@ async function commitMany2oneInline(name: string, descriptor: FieldDescriptor | 
     markFieldChanged(name);
     return;
   }
-  const localQuickFill = resolveRelationQuickFillOption(relationOptionsForField(name), keyword);
+  const inline = relationInlineCreate(name, descriptor);
+  const localQuickFill = resolveRelationQuickFillOption(relationOptionsForField(name), keyword, inline.match);
   if (localQuickFill) {
     setMany2oneOption(name, localQuickFill);
     return;
   }
   const rows = await queryRelationOptions(name, keyword);
-  const remoteQuickFill = resolveRelationQuickFillOption(rows, keyword);
+  const remoteQuickFill = resolveRelationQuickFillOption(rows, keyword, inline.match);
   if (remoteQuickFill) {
     setMany2oneOption(name, remoteQuickFill);
     return;
   }
-  if (hasAmbiguousRelationMatches(rows, keyword)) {
+  if (hasAmbiguousRelationMatches(rows, keyword, inline.match)) {
     relationKeywords[name] = keyword;
     formData[name] = false;
     markFieldChanged(name);
     await openRelationSearchDialog(name, descriptor);
     return;
   }
-  const inline = relationInlineCreate(name, descriptor);
   if (!inline.enabled || !inline.createOnNoMatch) return;
   formData[name] = false;
   relationKeywords[name] = keyword;
@@ -3334,18 +3753,18 @@ async function resolvePendingInlineRelationCreates() {
     if (Number.isFinite(currentId) && currentId > 0) continue;
     const keyword = relationKeyword(node.name).trim();
     if (!keyword) continue;
-    const localQuickFill = resolveRelationQuickFillOption(relationOptionsForField(node.name), keyword);
+    const localQuickFill = resolveRelationQuickFillOption(relationOptionsForField(node.name), keyword, inline.match);
     if (localQuickFill) {
       setMany2oneOption(node.name, localQuickFill);
       continue;
     }
     const rows = await queryRelationOptions(node.name, keyword);
-    const remoteQuickFill = resolveRelationQuickFillOption(rows, keyword);
+    const remoteQuickFill = resolveRelationQuickFillOption(rows, keyword, inline.match);
     if (remoteQuickFill) {
       setMany2oneOption(node.name, remoteQuickFill);
       continue;
     }
-    if (hasAmbiguousRelationMatches(rows, keyword)) {
+    if (hasAmbiguousRelationMatches(rows, keyword, inline.match)) {
       relationKeywords[node.name] = keyword;
       await openRelationSearchDialog(node.name, descriptor);
       issues.push(`${node.label || descriptor?.string || node.name}存在多个匹配记录，请选择具体记录`);
@@ -3387,6 +3806,7 @@ function setTextField(name: string, value: string) {
 function markFieldChanged(name: string) {
   const key = String(name || '').trim();
   if (!key || applyingOnchangePatch.value) return;
+  dirtyFieldSet.add(key);
   changedFieldSet.add(key);
   scheduleOnchange();
 }
@@ -3488,9 +3908,12 @@ async function runOnchangeRoundtrip() {
 }
 
 function collectWritableValues() {
-  return layoutNodes.value
-    .filter((node) => node.kind === 'field' && !node.readonly && isFieldVisible(node.name))
+  const values = layoutNodes.value
+    .filter((node) => node.kind === 'field' && !node.readonly && isWritableFieldVisible(node.name))
     .reduce<Record<string, unknown>>((acc, node) => {
+      if (recordId.value && !dirtyFieldSet.has(node.name)) {
+        return acc;
+      }
       const value = normalizeFieldValue(node.name, formData[node.name]);
       const ttype = fieldType(node.descriptor);
       if ((ttype === 'many2many' || ttype === 'one2many') && Array.isArray(value) && !value.length) {
@@ -3499,6 +3922,18 @@ function collectWritableValues() {
       acc[node.name] = value;
       return acc;
     }, {});
+  const statusField = nativeStatusbar.value.field;
+  if (
+    recordId.value
+    && statusField
+    && dirtyFieldSet.has(statusField)
+    && !nativeStatusbar.value.readonly
+    && statusField in (contract.value?.fields || {})
+    && !(statusField in values)
+  ) {
+    values[statusField] = normalizeFieldValue(statusField, formData[statusField]);
+  }
+  return values;
 }
 
 function formCreateContext() {
@@ -3802,7 +4237,15 @@ async function loadContract() {
 }
 
 async function loadRecord() {
+  const versionPolicy = recordVersionPolicy();
   const fieldNames = Object.keys(contract.value?.fields || {});
+  if (versionPolicy?.tokenField && !fieldNames.includes(versionPolicy.tokenField)) {
+    fieldNames.push(versionPolicy.tokenField);
+  }
+  recordVersionToken.value = '';
+  closeNativeChatterComposer();
+  chatterError.value = '';
+  chatterTimeline.value = [];
   Object.keys(formData).forEach((key) => {
     delete formData[key];
   });
@@ -3816,6 +4259,7 @@ async function loadRecord() {
   onchangeWarnings.value = [];
   onchangeLinePatches.value = [];
   changedFieldSet.clear();
+  dirtyFieldSet.clear();
   if (onchangeTimer) {
     clearTimeout(onchangeTimer);
     onchangeTimer = null;
@@ -3888,7 +4332,11 @@ async function loadRecord() {
     fields: fieldNames.length ? fieldNames : '*',
   });
   const row = read.records?.[0] || {};
+  if (versionPolicy?.tokenField) {
+    recordVersionToken.value = String((row as Record<string, unknown>)[versionPolicy.tokenField] || '').trim();
+  }
   fieldNames.forEach((name) => {
+    if (name === versionPolicy?.tokenField && !contract.value?.fields?.[name]) return;
     const descriptor = contract.value?.fields?.[name];
     const ttype = fieldType(descriptor);
     const incoming = (row as Record<string, unknown>)[name] ?? '';
@@ -3925,6 +4373,153 @@ async function loadRecord() {
   }, {});
 }
 
+async function loadNativeChatterTimeline() {
+  if (!recordId.value || !model.value) return;
+  chatterLoading.value = true;
+  try {
+    const response = await fetchChatterTimeline({
+      model: model.value,
+      res_id: recordId.value,
+      limit: 12,
+      include_audit: false,
+    });
+    chatterTimeline.value = Array.isArray(response.items) ? response.items : [];
+  } catch (err) {
+    chatterError.value = err instanceof Error ? err.message : 'chatter timeline load failed';
+  } finally {
+    chatterLoading.value = false;
+  }
+}
+
+async function openNativeChatterAction(action: NativeChatterAction) {
+  if (!action.enabled) return;
+  chatterError.value = '';
+  const mode = action.mode || action.intent;
+  if (mode === 'message' || mode === 'note' || mode === 'activity') {
+    activeChatterMode.value = mode;
+    activeChatterLabel.value = action.label;
+    if (!chatterTimeline.value.length && !chatterLoading.value) {
+      await loadNativeChatterTimeline();
+    }
+    return;
+  }
+  activeChatterMode.value = '';
+  activeChatterLabel.value = action.label;
+  chatterError.value = `${action.label} 缺少可执行调度契约`;
+}
+
+function closeNativeChatterComposer() {
+  activeChatterMode.value = '';
+  activeChatterLabel.value = '';
+  chatterDraft.value = '';
+  activitySummary.value = '';
+  activityDeadline.value = '';
+  activityNote.value = '';
+}
+
+async function sendNativeChatter() {
+  if (activeChatterMode.value === 'activity') {
+    await scheduleNativeChatterActivity();
+    return;
+  }
+  const body = chatterDraft.value.trim();
+  if (!body || !recordId.value || !model.value || chatterPosting.value) return;
+  chatterPosting.value = true;
+  chatterError.value = '';
+  try {
+    await postChatterMessage({
+      model: model.value,
+      res_id: recordId.value,
+      body,
+      subject: activeChatterLabel.value || activeChatterSubmitLabel.value,
+      mode: activeChatterMode.value === 'note' ? 'note' : 'message',
+    });
+    chatterDraft.value = '';
+    await loadNativeChatterTimeline();
+  } catch (err) {
+    chatterError.value = err instanceof Error ? err.message : 'chatter post failed';
+  } finally {
+    chatterPosting.value = false;
+  }
+}
+
+async function scheduleNativeChatterActivity() {
+  const summary = activitySummary.value.trim();
+  if (!summary || !recordId.value || !model.value || chatterPosting.value) return;
+  const action = activeActivityAction.value;
+  chatterPosting.value = true;
+  chatterError.value = '';
+  try {
+    await scheduleChatterActivity({
+      model: model.value,
+      res_id: recordId.value,
+      summary,
+      note: activityNote.value.trim(),
+      date_deadline: activityDeadline.value,
+      activity_type_xmlid: String(action?.payload?.activity_type_xmlid || '').trim() || undefined,
+    });
+    activitySummary.value = '';
+    activityDeadline.value = '';
+    activityNote.value = '';
+    await loadNativeChatterTimeline();
+  } catch (err) {
+    chatterError.value = err instanceof Error ? err.message : 'chatter activity schedule failed';
+  } finally {
+    chatterPosting.value = false;
+  }
+}
+
+async function onNativeAttachmentSelected(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file || !recordId.value || !model.value || attachmentUploading.value) return;
+  attachmentError.value = '';
+  if (file.size > nativeAttachmentMaxBytes.value) {
+    attachmentError.value = nativeAttachmentLabel('size_exceeded', '文件过大');
+    input.value = '';
+    return;
+  }
+  attachmentUploading.value = true;
+  try {
+    const { data, mimetype } = await fileToBase64(file);
+    await uploadFile({
+      model: model.value,
+      res_id: recordId.value,
+      name: file.name,
+      mimetype,
+      data,
+    });
+    await loadNativeChatterTimeline();
+  } catch (err) {
+    attachmentError.value = err instanceof Error ? err.message : nativeAttachmentLabel('upload_failed', '附件上传失败');
+  } finally {
+    attachmentUploading.value = false;
+    input.value = '';
+  }
+}
+
+async function downloadNativeAttachment(att: { id?: number; name?: string; mimetype?: string }) {
+  if (!att?.id) return;
+  attachmentError.value = '';
+  try {
+    const payload = await downloadFile({ id: Number(att.id) });
+    const binary = atob(payload.datas || '');
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: payload.mimetype || att.mimetype || 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = payload.name || att.name || 'download';
+    link.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    attachmentError.value = err instanceof Error ? err.message : nativeAttachmentLabel('download_failed', '附件下载失败');
+  }
+}
+
 async function reload() {
   renderErrorMessage.value = '';
   status.value = 'loading';
@@ -3954,6 +4549,11 @@ async function reload() {
   }
 }
 
+async function discardChanges() {
+  if (!hasChanges.value || busy.value) return;
+  await reload();
+}
+
 onErrorCaptured((err) => {
   const message = err instanceof Error ? err.message : String(err || 'unknown render error');
   renderErrorMessage.value = `ContractFormPage render error: ${message}`;
@@ -3961,8 +4561,16 @@ onErrorCaptured((err) => {
   return false;
 });
 
+function confirmActionSafety(action: ContractAction) {
+  const safety = action.actionSafety;
+  if (!safety || safety.classification !== 'danger' || !safety.requiresConfirm) return true;
+  const message = safety.confirmMessage || action.hint || action.label;
+  return window.confirm(message);
+}
+
 async function runAction(action: ContractAction) {
   if (!action.enabled) return;
+  if (!confirmActionSafety(action)) return;
   const actionKey = String(action.key || '').trim().toLowerCase();
   if (actionKey === 'submit_intake' || actionKey === 'save_draft') {
     await saveRecord(action.refreshPolicy);
@@ -4000,6 +4608,8 @@ async function runAction(action: ContractAction) {
     return;
   }
   if (action.mutation) {
+    const params = collectActionParams(action);
+    if (params === null) return;
     busyKind.value = 'action';
     try {
       const result = await executeSceneMutation({
@@ -4008,6 +4618,7 @@ async function runAction(action: ContractAction) {
         recordId: recordId.value,
         model: action.targetModel || model.value,
         context: action.context,
+        params,
       });
       if (showHud.value) {
         // eslint-disable-next-line no-console
@@ -4201,6 +4812,9 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
         }
         return acc;
       }
+      if (!dirtyFieldSet.has(key)) {
+        return acc;
+      }
       if (comparableFieldValue(key, formData[key]) !== comparableFieldValue(key, originalValues.value[key])) {
         acc[key] = value;
       }
@@ -4211,8 +4825,14 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
       return;
     }
     if (recordId.value) {
-      await writeRecord({ model: model.value, ids: [recordId.value], vals: values });
-      submissionFeedback.value = { kind: 'success', message: '保存成功，已同步最新表单内容。' };
+      await writeRecord({
+        model: model.value,
+        ids: [recordId.value],
+        vals: values,
+        ifMatch: recordVersionPolicy() ? recordVersionToken.value : undefined,
+      });
+      submissionFeedback.value = { kind: 'success', message: formUiLabel('save_success') };
+      dirtyFieldSet.clear();
       await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection'] });
       return;
     }
@@ -4255,9 +4875,10 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
       return;
     }
   } catch (err) {
-    const message = sanitizeUiErrorMessage(err instanceof Error ? err.message : err, '创建失败，请检查填写内容');
+    const fallback = recordId.value ? '保存失败，请检查填写内容' : '创建失败，请检查填写内容';
+    const message = sanitizeUiErrorMessage(err instanceof Error ? err.message : err, fallback);
     validationErrors.value = [message];
-    submissionFeedback.value = { kind: 'error', message: '创建失败，请检查填写内容' };
+    submissionFeedback.value = { kind: 'error', message: fallback };
   } finally {
     busyKind.value = null;
   }
@@ -4327,6 +4948,16 @@ watch(
     persistIntakeAutosave();
   },
 );
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('keydown', onRelationDialogDocumentKeydown);
+}
+
+onBeforeUnmount(() => {
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('keydown', onRelationDialogDocumentKeydown);
+  }
+});
 </script>
 
 <style scoped>
@@ -4498,6 +5129,104 @@ watch(
 .chip-btn.active {
   border-color: #0f766e;
   box-shadow: inset 0 0 0 1px #0f766e;
+}
+
+.native-chatter-compose {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.native-chatter-field {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.native-chatter-input {
+  min-height: 82px;
+  resize: vertical;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  background: #ffffff;
+  color: #111827;
+}
+
+.native-chatter-compose-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.native-chatter-message {
+  margin-top: 8px;
+}
+
+.native-chatter-timeline {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.native-chatter-entry {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  font-size: 12px;
+}
+
+.native-chatter-type {
+  color: #0f766e;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.native-chatter-body {
+  min-width: 0;
+  color: #111827;
+  overflow-wrap: anywhere;
+}
+
+.native-chatter-meta {
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.native-attachment-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.native-attachment-upload {
+  position: relative;
+  overflow: hidden;
+}
+
+.native-attachment-upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.native-attachment-download {
+  padding: 4px 8px;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .form-grid {

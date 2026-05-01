@@ -358,6 +358,7 @@
       :column-labels="contractColumnLabels"
       :column-options="listColumnOptions"
       :column-visibility="listColumnVisibility"
+      :column-order="listColumnOrder"
       :column-save-status="listColumnSaveStatus"
       :sort-label="sortLabel"
       :sort-options="displaySortOptions"
@@ -396,6 +397,7 @@
       :on-row-click="handleRowClick"
       :on-page-change="handleListPageChange"
       @column-visibility-change="handleListColumnVisibilityChange"
+      @column-order-change="handleListColumnOrderChange"
     >
       <template v-if="showTopActionToolbar" #toolbar>
         <ActionSurfaceToolbar
@@ -1047,6 +1049,7 @@ const allowedBatchActions = computed(() =>
 );
 const listColumnOptions = computed(() => resolveListColumnOptions(actionContract.value, listProfile.value));
 const listColumnVisibility = ref<Record<string, boolean>>({});
+const listColumnOrder = ref<string[]>([]);
 const listColumnSaveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
 const listColumnPreferenceScope = computed(() => {
   const aid = Number(actionId.value || 0);
@@ -1658,7 +1661,7 @@ const {
   resolveWorkspaceContextQuery,
   replaceCurrentRouteQuery: (query) => {
     const routeState = resolveReplaceCurrentRouteState({ routePath: route.path, query });
-    router.replace(routeState.target as never).catch(() => {});
+    return router.replace(routeState.target as never).catch(() => {});
   },
   trackUsageEvent,
   load: requestLoadPage,
@@ -1779,6 +1782,7 @@ async function handleSaveFavorite(payload: { name: string; isDefault?: boolean; 
     is_default: payload.isDefault === true,
     is_shared: payload.isShared === true,
   });
+  actionContract.value = await loadActionContract(actionId.value) as ActionContractLoose;
   await requestLoadPage();
 }
 
@@ -1821,6 +1825,7 @@ const {
   columns,
   listProfile,
   sortLabel,
+  sortValue,
   routeQueryMap,
   resolvedModelRef,
   modelRef: model,
@@ -2393,8 +2398,6 @@ const {
 function onToolbarSearchInput(event: Event): void {
   const value = String((event.target as HTMLInputElement | null)?.value || '');
   toolbarSearchDraft.value = value;
-  if (toolbarSearchComposing.value || (event as InputEvent).isComposing) return;
-  handleSearch(value);
 }
 
 function onToolbarSearchCompositionStart(): void {
@@ -2405,7 +2408,6 @@ function onToolbarSearchCompositionEnd(event: CompositionEvent): void {
   toolbarSearchComposing.value = false;
   const value = String((event.target as HTMLInputElement | null)?.value || '');
   toolbarSearchDraft.value = value;
-  handleSearch(value);
 }
 
 function submitToolbarSearch(): void {
@@ -2459,6 +2461,7 @@ async function loadListColumnPreference(): Promise<void> {
   const scope = listColumnPreferenceScope.value;
   if (!scope.action_id && !scope.model) {
     listColumnVisibility.value = {};
+    listColumnOrder.value = [];
     return;
   }
   try {
@@ -2467,14 +2470,34 @@ async function loadListColumnPreference(): Promise<void> {
     const preference = result.preference || {};
     const visible = Array.isArray(preference.visible_columns) ? preference.visible_columns.map((item) => String(item || '').trim()).filter(Boolean) : [];
     const hidden = Array.isArray(preference.hidden_columns) ? preference.hidden_columns.map((item) => String(item || '').trim()).filter(Boolean) : [];
+    const columnOrder = Array.isArray(preference.column_order) ? preference.column_order.map((item) => String(item || '').trim()).filter(Boolean) : [];
     const next: Record<string, boolean> = {};
     visible.forEach((name) => { next[name] = true; });
     hidden.forEach((name) => { next[name] = false; });
     listColumnVisibility.value = next;
+    listColumnOrder.value = columnOrder;
   } catch (err) {
-    if (seq === listColumnPreferenceLoadSeq) listColumnVisibility.value = {};
+    if (seq === listColumnPreferenceLoadSeq) {
+      listColumnVisibility.value = {};
+      listColumnOrder.value = [];
+    }
     console.warn('[list-columns] failed to load preference', err);
   }
+}
+
+function buildListColumnPreference(visibility: Record<string, boolean>, columnOrder: string[]) {
+  const columnNames = listColumnOptions.value.map((column) => column.name);
+  const columnNameSet = new Set(columnNames);
+  const visibleColumns = columnNames.filter((name) => visibility[name] === true);
+  const hiddenColumns = columnNames.filter((name) => visibility[name] === false);
+  const orderedColumns = columnOrder
+    .map((name) => String(name || '').trim())
+    .filter((name, index, rows) => Boolean(name) && columnNameSet.has(name) && rows.indexOf(name) === index);
+  return {
+    visible_columns: visibleColumns,
+    hidden_columns: hiddenColumns,
+    column_order: orderedColumns,
+  };
 }
 
 async function handleListColumnVisibilityChange(payload: { visibility: Record<string, boolean> }): Promise<void> {
@@ -2483,17 +2506,8 @@ async function handleListColumnVisibilityChange(payload: { visibility: Record<st
   const next = payload.visibility || {};
   listColumnVisibility.value = { ...next };
   setListColumnSaveStatus('saving');
-  const visibleColumns = listColumnOptions.value
-    .map((column) => column.name)
-    .filter((name) => next[name] === true);
-  const hiddenColumns = listColumnOptions.value
-    .map((column) => column.name)
-    .filter((name) => next[name] === false);
   try {
-    await setUserViewPreference(listColumnPreferenceScope.value, {
-      visible_columns: visibleColumns,
-      hidden_columns: hiddenColumns,
-    });
+    await setUserViewPreference(listColumnPreferenceScope.value, buildListColumnPreference(next, listColumnOrder.value));
     if (saveSeq === listColumnSaveSeq) {
       setListColumnSaveStatus('saved');
     }
@@ -2503,6 +2517,26 @@ async function handleListColumnVisibilityChange(payload: { visibility: Record<st
       setListColumnSaveStatus('error');
     }
     console.warn('[list-columns] failed to save preference', err);
+  }
+}
+
+async function handleListColumnOrderChange(payload: { columnOrder: string[] }): Promise<void> {
+  const saveSeq = ++listColumnSaveSeq;
+  const previous = [...listColumnOrder.value];
+  const next = Array.isArray(payload.columnOrder) ? payload.columnOrder.map((item) => String(item || '').trim()).filter(Boolean) : [];
+  listColumnOrder.value = next;
+  setListColumnSaveStatus('saving');
+  try {
+    await setUserViewPreference(listColumnPreferenceScope.value, buildListColumnPreference(listColumnVisibility.value, next));
+    if (saveSeq === listColumnSaveSeq) {
+      setListColumnSaveStatus('saved');
+    }
+  } catch (err) {
+    if (saveSeq === listColumnSaveSeq) {
+      listColumnOrder.value = previous;
+      setListColumnSaveStatus('error');
+    }
+    console.warn('[list-columns] failed to save column order preference', err);
   }
 }
 

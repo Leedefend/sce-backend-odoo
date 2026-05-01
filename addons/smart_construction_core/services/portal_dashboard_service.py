@@ -121,7 +121,7 @@ class PortalDashboardService:
                 "label": "能力矩阵",
                 "icon": "M",
                 "desc": "查看角色可用能力",
-                "menu_xmlid": "smart_construction_portal.menu_sc_portal_capability_matrix",
-                "action_xmlid": "smart_construction_portal.action_sc_portal_capability_matrix",
+                "scene_key": "portal.capability_matrix",
+                "route": "/s/portal.capability_matrix",
             },
         ]

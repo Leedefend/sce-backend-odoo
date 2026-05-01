@@ -88,7 +88,7 @@
                             <field name="settlement_amount_insufficient" invisible="1"/>
                             <div class="o_form_label text-danger"
                                  modifiers="{'invisible': [['settlement_amount_insufficient', '=', False]]}">
-                                ⚠ 结算额度不足（剩余额度低于申请金额），系统将阻止提交/完成。
+                                ⚠ 结算额度不足（剩余额度低于申请金额），系统将提示风险，是否继续办理由审批人判断。
                             </div>
                         </group>
                         <group string="来源匹配">

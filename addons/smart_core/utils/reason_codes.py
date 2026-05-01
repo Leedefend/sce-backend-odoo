@@ -40,6 +40,14 @@ REASON_ROW_DOMAIN_RESTRICTED = "ROW_DOMAIN_RESTRICTED"
 REASON_ROW_VALUE_INVALID = "ROW_VALUE_INVALID"
 REASON_ROW_PERMISSION_DENIED = "ROW_PERMISSION_DENIED"
 REASON_ROW_CONFLICT = "ROW_CONFLICT"
+REASON_DELETE_POLICY_DENIED = "DELETE_POLICY_DENIED"
+REASON_READONLY_PROJECTION_MUTATION_DENIED = "READONLY_PROJECTION_MUTATION_DENIED"
+REASON_PAYMENT_ATTACHMENTS_REQUIRED = "PAYMENT_ATTACHMENTS_REQUIRED"
+REASON_PAYMENT_SETTLEMENT_NOT_READY = "P0_PAYMENT_SETTLEMENT_NOT_READY"
+REASON_PAYMENT_FUNDING_NOT_READY = "P0_PAYMENT_FUNDING_NOT_READY"
+REASON_PAYMENT_FUNDING_BASELINE_INVALID = "P0_PAYMENT_FUNDING_BASELINE_INVALID"
+REASON_PAYMENT_FUNDING_CAP_EXCEEDED = "P0_PAYMENT_FUNDING_CAP_EXCEEDED"
+REASON_PAYMENT_NOT_FULLY_PAID = "P0_PAYMENT_NOT_FULLY_PAID"
 
 ONCHANGE_REASON_CODE_SET = {
     REASON_ONCHANGE_WARNING,
@@ -88,6 +96,46 @@ def failure_meta_for_reason(reason_code: str):
             "retryable": False,
             "error_category": "permission",
             "suggested_action": "request_access",
+        },
+        REASON_DELETE_POLICY_DENIED: {
+            "retryable": False,
+            "error_category": "permission",
+            "suggested_action": "check_delete_policy",
+        },
+        REASON_READONLY_PROJECTION_MUTATION_DENIED: {
+            "retryable": False,
+            "error_category": "permission",
+            "suggested_action": "open_readonly_record",
+        },
+        REASON_PAYMENT_ATTACHMENTS_REQUIRED: {
+            "retryable": False,
+            "error_category": "validation",
+            "suggested_action": "upload_attachment",
+        },
+        REASON_PAYMENT_SETTLEMENT_NOT_READY: {
+            "retryable": False,
+            "error_category": "business_state",
+            "suggested_action": "complete_settlement_approval",
+        },
+        REASON_PAYMENT_FUNDING_NOT_READY: {
+            "retryable": False,
+            "error_category": "business_state",
+            "suggested_action": "setup_project_funding",
+        },
+        REASON_PAYMENT_FUNDING_BASELINE_INVALID: {
+            "retryable": False,
+            "error_category": "business_state",
+            "suggested_action": "fix_project_funding_baseline",
+        },
+        REASON_PAYMENT_FUNDING_CAP_EXCEEDED: {
+            "retryable": False,
+            "error_category": "business_state",
+            "suggested_action": "adjust_payment_amount_or_funding",
+        },
+        REASON_PAYMENT_NOT_FULLY_PAID: {
+            "retryable": False,
+            "error_category": "business_state",
+            "suggested_action": "complete_payment_execution",
         },
         REASON_WRITE_FAILED: {
             "retryable": True,

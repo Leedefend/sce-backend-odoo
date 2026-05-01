@@ -293,6 +293,92 @@ class _TreeFormParserMixin:
             "visible_profiles": ["create", "edit", "readonly"],
         }
 
+    def _button_action_safety(self, *, btn_node, btype, method, label, classes, confirm, level):
+        method_text = str(method or "").strip().lower()
+        label_text = str(label or "").strip()
+        label_lower = label_text.lower()
+        class_set = set(classes or [])
+        raw_level = str(level or "").strip().lower()
+
+        navigation_prefixes = (
+            "action_open_",
+            "action_view_",
+            "open_",
+            "view_",
+        )
+        navigation_label_tokens = ("分析", "查看", "打开", "搜索", "明细", "台账")
+        dangerous_method_tokens = (
+            "cancel",
+            "delete",
+            "unlink",
+            "archive",
+            "reset",
+            "rebuild",
+            "generate",
+            "import",
+            "submit",
+            "approve",
+            "reject",
+            "confirm",
+            "done",
+            "publish",
+            "validate",
+        )
+        dangerous_label_tokens = (
+            "取消",
+            "作废",
+            "删除",
+            "归档",
+            "重置",
+            "重建",
+            "生成",
+            "导入",
+            "提交",
+            "批准",
+            "审批",
+            "驳回",
+            "确认",
+            "完成",
+            "发布",
+            "校验",
+        )
+
+        is_open = btype in ("action", "url", "workflow")
+        is_navigation_object = (
+            method_text.startswith(navigation_prefixes)
+            or any(token in label_text for token in navigation_label_tokens)
+        )
+        native_confirm = str(confirm or "").strip()
+        class_danger = bool(class_set.intersection({"btn-danger", "text-danger", "oe_danger"}))
+        destructive = (
+            class_danger
+            or bool(native_confirm)
+            or any(token in method_text for token in dangerous_method_tokens)
+            or any(token in label_text for token in dangerous_label_tokens)
+        )
+
+        if is_open or is_navigation_object:
+            return {
+                "classification": "safe",
+                "requires_confirm": False,
+                "reason_code": "SAFE_NAVIGATION_ACTION",
+            }
+
+        if destructive:
+            message = native_confirm or _("确认执行“%s”？") % (label_text or method or _("此操作"))
+            return {
+                "classification": "danger",
+                "requires_confirm": raw_level in ("body", "row") or bool(native_confirm) or class_danger,
+                "confirm_message": message,
+                "reason_code": "NATIVE_BUTTON_DANGEROUS_ACTION",
+            }
+
+        return {
+            "classification": "safe",
+            "requires_confirm": False,
+            "reason_code": "SAFE_ACTION",
+        }
+
     # ---------------- tree 解析 ----------------
     def _parse_tree_view(self, arch, fields_info):
         columns, row_actions, row_classes = [], [], []
@@ -423,6 +509,14 @@ class _TreeFormParserMixin:
         return schema
 
     # ---------------- form 解析（增强） ----------------
+    def _view_bool_attr(self, node, attr_name, default=True):
+        if node is None:
+            return bool(default)
+        raw = node.get(attr_name)
+        if raw is None:
+            return bool(default)
+        return str(raw).strip().lower() not in ('0', 'false', 'no', 'off')
+
     def _parse_form_view(self, arch, fields_info, model_name):
         """
         返回契约块：
@@ -437,6 +531,12 @@ class _TreeFormParserMixin:
                 root = etree.fromstring(arch.encode('utf-8'))
             except Exception:
                 _logger.exception("FORM_PARSER_DEBUG: XML parse failed, fallback to minimal layout")
+
+        capabilities = {
+            "can_create": self._view_bool_attr(root, "create", True),
+            "can_write": self._view_bool_attr(root, "edit", True),
+            "can_delete": self._view_bool_attr(root, "delete", True),
+        }
 
         # 1) DOM 优先解析真实布局（避免 lossless 未还原导致空表单）
         layout_dom = self._extract_form_layout_dom(root, fields_info) if root is not None else []
@@ -485,6 +585,7 @@ class _TreeFormParserMixin:
 
         result = {
             "layout": layout if isinstance(layout, list) else [layout],
+            "capabilities": capabilities,
             "statusbar": statusbar,
             "header_buttons": header_buttons,
             "button_box": button_box,
@@ -555,6 +656,15 @@ class _TreeFormParserMixin:
                 "visible": {"domain": [], "states": states, "attrs": visible_attrs},
                 "intent": "execute",
                 "icon": icon,
+                "action_safety": self._button_action_safety(
+                    btn_node=btn_node,
+                    btype=btype,
+                    method=name_raw,
+                    label=label,
+                    classes=classes,
+                    confirm=confirm,
+                    level=level,
+                ),
                 "payload": {
                     "method": None,
                     "ref": None,
@@ -573,7 +683,7 @@ class _TreeFormParserMixin:
                 if base.get("selection") not in ("single", "multi", "none"):
                     base["selection"] = "none"
                 if btype == 'object':
-                    base["kind"] = "server"; base["intent"] = "execute"
+                    base["kind"] = "object"; base["intent"] = "execute"
                     if not base["payload"].get("method"):
                         base["payload"]["method"] = "object_method"
                     if not base.get("name"):
@@ -822,13 +932,27 @@ class _TreeFormParserMixin:
 
         # 按钮占位（通常不把按钮放进布局树，header/smart 会单独抽取）
         if tag == 'button':
-            return {
+            node = {
                 'type': 'button',
                 'name': el.get('name', ''),
                 'label': self._resolve_action_label(el, el.get('name', '')),
                 'buttonType': el.get('type', 'object'),
                 'action': self._button_to_action(el, level='body'),
             }
+            mods = {}
+            for k in ('readonly', 'required', 'invisible'):
+                if el.get(k):
+                    mods[k] = self._normalize_modifier_value(el.get(k))
+            if el.get('attrs'):
+                parsed = self._safe_eval_expr(el.get('attrs'))
+                if isinstance(parsed, dict):
+                    for k in ('readonly', 'required', 'invisible'):
+                        if k in parsed:
+                            mods[k] = parsed[k]
+            if mods:
+                node['modifiers'] = mods
+                node.setdefault('attributes', {})['modifiers'] = mods
+            return node
 
         if tag == 'widget':
             node = {
@@ -884,9 +1008,9 @@ class _TreeFormParserMixin:
             elif 'state' in (fields_info or {}):
                 field_name = 'state'
         states = []
-        # selection → 直接构造
-        if field_name == 'state' and fields_info.get('state', {}).get('selection'):
-            for v, lbl in (fields_info['state'].get('selection') or []):
+        # selection → 直接构造；状态字段不一定叫 state，例如 project.lifecycle_state。
+        if field_name and fields_info.get(field_name, {}).get('selection'):
+            for v, lbl in (fields_info[field_name].get('selection') or []):
                 states.append({'value': v, 'label': lbl})
         # stage_id（many2one）→ 若能安全 name_search 就取若干候选
         try:
@@ -946,6 +1070,7 @@ class _TreeFormParserMixin:
                 attach_enabled = attach_enabled or has_attachments
             except Exception:
                 _logger.exception("detect chatter/attachments failed")
+        attach_enabled = attach_enabled or chatter_enabled
         chatter = {'enabled': bool(chatter_enabled)}
         if chatter['enabled']:
             chatter['label'] = _('沟通记录')
@@ -980,10 +1105,39 @@ class _TreeFormParserMixin:
                     'level': 'chatter',
                     'selection': 'none',
                     'intent': 'activity',
-                    'payload': {'mode': 'activity'},
+                    'payload': {
+                        'mode': 'activity',
+                        'execute_intent': 'chatter.activity.schedule',
+                        'activity_type_xmlid': 'mail.mail_activity_data_todo',
+                        'fields': [
+                            {'name': 'summary', 'label': _('摘要'), 'type': 'char', 'required': True},
+                            {'name': 'date_deadline', 'label': _('截止日期'), 'type': 'date', 'required': False},
+                            {'name': 'note', 'label': _('备注'), 'type': 'text', 'required': False},
+                        ],
+                    },
                 },
             ]
         attachments = {'enabled': bool(attach_enabled)}
+        if attachments['enabled']:
+            attachments.update({
+                'label': _('附件'),
+                'upload': {
+                    'intent': 'file.upload',
+                    'max_bytes': 5 * 1024 * 1024,
+                    'accepted_types': [],
+                },
+                'download': {
+                    'intent': 'file.download',
+                },
+                'ui_labels': {
+                    'upload': _('上传附件'),
+                    'uploading': _('上传中...'),
+                    'download': _('下载'),
+                    'upload_failed': _('附件上传失败'),
+                    'download_failed': _('附件下载失败'),
+                    'size_exceeded': _('文件过大'),
+                },
+            })
         return chatter, attachments
 
     # ---------------- 字段修饰聚合 ----------------
@@ -1096,9 +1250,14 @@ class _TreeFormParserMixin:
                 'source': 'backend_native_contract',
                 'front_end_filtering': False,
             }
+            entry.setdefault('policies', {'inline_edit': True, 'can_create': True, 'can_unlink': True})
+            entry['policies'].setdefault('ui_labels', {
+                'add_row': _('添加行'),
+                'remove': _('移除'),
+                'restore': _('撤销'),
+            })
             if relation_fields:
                 entry['fields'] = relation_fields
-            entry.setdefault('policies', {'inline_edit': True, 'can_create': True, 'can_unlink': True})
             if not business_columns:
                 entry['policies'].update({
                     'inline_edit': False,
@@ -1137,7 +1296,7 @@ class _TreeFormParserMixin:
                 'required': bool(meta.get('required')),
                 'readonly': bool(meta.get('readonly')),
                 'selection': selection if isinstance(selection, list) else [],
-                'surface_role': 'business_edit',
+                'surface_role': 'business_read' if bool(meta.get('readonly')) else 'business_edit',
             })
         return out
 
@@ -1152,8 +1311,6 @@ class _TreeFormParserMixin:
             return False
         if column_contract.get('column_invisible') is not None or modifiers.get('column_invisible') is not None:
             return False
-        if self._static_truthy_modifier(column_contract.get('readonly')) or self._static_truthy_modifier(modifiers.get('readonly')):
-            return False
         blocked_names = {
             'id',
             'sequence',
@@ -1166,8 +1323,6 @@ class _TreeFormParserMixin:
             'write_date',
         }
         if name in blocked_names:
-            return False
-        if bool((meta or {}).get('readonly')):
             return False
         if ttype in ('one2many', 'many2many', 'binary', 'html', 'properties'):
             return False
@@ -1257,6 +1412,19 @@ class _TreeFormParserMixin:
             layout_node['name'] = attrs.get('name', '')
             layout_node['label'] = attrs.get('string', '')
             layout_node['buttonType'] = attrs.get('type', 'object')
+            mods = {}
+            for key in ('readonly', 'required', 'invisible'):
+                if attrs.get(key):
+                    mods[key] = self._normalize_modifier_value(attrs.get(key))
+            if attrs.get('attrs'):
+                parsed = self._safe_eval_expr(attrs.get('attrs'))
+                if isinstance(parsed, dict):
+                    for key in ('readonly', 'required', 'invisible'):
+                        if key in parsed:
+                            mods[key] = parsed[key]
+            if mods:
+                layout_node['modifiers'] = mods
+                layout_node.setdefault('attributes', {})['modifiers'] = mods
             try:
                 fake = etree.Element('button', **{str(k): str(v) for k, v in attrs.items() if v is not None})
                 layout_node['action'] = self._button_to_action(fake, level='body')
@@ -1306,7 +1474,16 @@ class _TreeFormParserMixin:
             if t in ('one2many', 'many2many'):
                 sub[fname] = {
                     'tree': {'columns': ['display_name']},
-                    'policies': {'inline_edit': True, 'can_create': True, 'can_unlink': True}
+                    'policies': {
+                        'inline_edit': True,
+                        'can_create': True,
+                        'can_unlink': True,
+                        'ui_labels': {
+                            'add_row': _('添加行'),
+                            'remove': _('移除'),
+                            'restore': _('撤销'),
+                        },
+                    },
                 }
         return sub
 

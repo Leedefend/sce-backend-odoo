@@ -32,8 +32,8 @@
                         'subtitle': '查看角色可用能力',
                         'icon': 'M',
                         'payload': {
-                            'action_xmlid': 'smart_construction_portal.action_sc_portal_capability_matrix',
-                            'menu_xmlid': 'smart_construction_portal.menu_sc_portal_capability_matrix'
+                            'scene_key': 'portal.capability_matrix',
+                            'route': '/s/portal.capability_matrix'
                         },
                         'required_capabilities': ['governance.capability.matrix']
                     },

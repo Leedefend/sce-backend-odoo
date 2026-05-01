@@ -4,6 +4,7 @@ import type { UserViewPreferenceContract } from '@sc/schema';
 export type ListColumnPreference = {
   visible_columns?: string[];
   hidden_columns?: string[];
+  column_order?: string[];
 };
 
 export type UserViewPreferenceScope = {

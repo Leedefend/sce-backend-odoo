@@ -35,9 +35,10 @@ class ChatterTimelineHandler(BaseIntentHandler):
 
         messages = self._load_messages(model, record.id, limit)
         attachments = self._load_attachments(model, record.id, limit)
+        activity_items = self._load_activities(model, record.id, limit)
         audit_items = self._load_audit_items(model, record.id, limit) if include_audit else []
 
-        items = messages + attachments + audit_items
+        items = messages + attachments + activity_items + audit_items
         items.sort(key=lambda item: item.get("at") or "", reverse=True)
         if len(items) > limit:
             items = items[:limit]
@@ -47,6 +48,7 @@ class ChatterTimelineHandler(BaseIntentHandler):
             "counts": {
                 "messages": len(messages),
                 "attachments": len(attachments),
+                "activities": len(activity_items),
                 "audit": len(audit_items),
                 "total": len(items),
             },
@@ -62,16 +64,19 @@ class ChatterTimelineHandler(BaseIntentHandler):
         items: List[Dict[str, Any]] = []
         for row in rows:
             date_value = _to_iso(row.date)
+            subtype_xmlid = _message_subtype_xmlid(row)
+            type_label = "备注" if subtype_xmlid == "mail.mt_note" else "评论"
             items.append(
                 {
                     "key": f"m-{row.id}",
                     "type": "message",
-                    "typeLabel": "评论",
-                    "title": row.subject or "评论",
+                    "typeLabel": type_label,
+                    "title": row.subject or type_label,
                     "meta": f"{row.author_id.display_name or 'Unknown'} · {date_value or '-'}",
                     "body": _strip_html(row.body or ""),
                     "at": date_value,
                     "id": row.id,
+                    "subtype": subtype_xmlid,
                 }
             )
         return items
@@ -101,6 +106,36 @@ class ChatterTimelineHandler(BaseIntentHandler):
                         "name": row.name or "",
                         "mimetype": row.mimetype or "",
                     },
+                }
+            )
+        return items
+
+    def _load_activities(self, model: str, res_id: int, limit: int) -> List[Dict[str, Any]]:
+        Activity = self.env.get("mail.activity")
+        IrModel = self.env.get("ir.model")
+        if Activity is None or IrModel is None:
+            return []
+        model_rec = IrModel.sudo().search([("model", "=", model)], limit=1)
+        if not model_rec:
+            return []
+        rows = Activity.search(
+            [("res_model_id", "=", model_rec.id), ("res_id", "=", res_id)],
+            order="date_deadline desc, id desc",
+            limit=limit,
+        )
+        items: List[Dict[str, Any]] = []
+        for row in rows:
+            deadline = _to_iso(row.date_deadline)
+            items.append(
+                {
+                    "key": f"act-{row.id}",
+                    "type": "activity",
+                    "typeLabel": "活动",
+                    "title": row.summary or row.activity_type_id.display_name or "活动",
+                    "meta": f"{row.user_id.display_name or 'Unknown'} · {deadline or '-'}",
+                    "body": _strip_html(row.note or ""),
+                    "at": deadline,
+                    "id": row.id,
                 }
             )
         return items
@@ -171,3 +206,16 @@ def _strip_html(value: str) -> str:
         if not in_tag:
             out.append(ch)
     return "".join(out).strip()
+
+
+def _message_subtype_xmlid(row: Any) -> str:
+    subtype = getattr(row, "subtype_id", None)
+    if not subtype:
+        return ""
+    try:
+        xmlids = subtype._get_external_ids().get(subtype.id) or []
+    except Exception:
+        xmlids = []
+    if xmlids:
+        return str(xmlids[0] or "")
+    return str(subtype.name or "")

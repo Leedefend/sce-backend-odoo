@@ -24,7 +24,7 @@
             <field name="ui_label">能力矩阵</field>
             <field name="ui_hint">查看角色可用能力</field>
             <field name="intent">ui.contract</field>
-            <field name="default_payload" eval="{'action_xmlid': 'smart_construction_portal.action_sc_portal_capability_matrix', 'menu_xmlid': 'smart_construction_portal.menu_sc_portal_capability_matrix'}"/>
+            <field name="default_payload" eval="{'scene_key': 'portal.capability_matrix', 'route': '/s/portal.capability_matrix'}"/>
             <field name="tags">portal,capability</field>
             <field name="status">ga</field>
         </record>

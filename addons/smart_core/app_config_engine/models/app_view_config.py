@@ -84,6 +84,7 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             "header_buttons", "button_box", "stat_buttons",
             "field_modifiers", "subviews",
             "chatter", "attachments", "widgets",
+            "capabilities",
         },
         "kanban": {"kanban"},
         "pivot": {"pivot"},
@@ -372,6 +373,7 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             block['subviews'] = vp.get('subviews', {})
             block['chatter'] = vp.get('chatter', {'enabled': False})
             block['attachments'] = vp.get('attachments', {'enabled': False})
+            block['capabilities'] = vp.get('capabilities', {})
         elif vt == 'kanban':
             block['kanban'] = vp.get('kanban', {'template_qweb': None, 'quick_create': True, 'stages_field': 'stage_id'})
         elif vt == 'pivot':

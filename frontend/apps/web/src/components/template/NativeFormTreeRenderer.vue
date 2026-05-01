@@ -60,7 +60,7 @@
           </FormSection>
           <div v-if="buttonChildren(node).length" :class="nativeActionsClass(node)">
             <button
-              v-for="(buttonNode, buttonIndex) in buttonChildren(node)"
+              v-for="(buttonNode, buttonIndex) in visibleActionButtons(node)"
               :key="nodeKey(buttonNode, buttonIndex)"
               type="button"
               :class="nativeActionButtonClass(buttonNode)"
@@ -69,6 +69,29 @@
               <span v-if="buttonIcon(buttonNode)" :class="['native-action-icon', buttonIcon(buttonNode)]" aria-hidden="true" />
               <span class="native-action-label">{{ buttonLabel(buttonNode) }}</span>
             </button>
+            <div v-if="overflowActionButtons(node).length" class="native-action-more">
+              <button
+                type="button"
+                class="native-action-btn native-action-btn--smart native-action-btn--more"
+                :aria-expanded="isMoreOpen(node)"
+                @click="toggleMore(node)"
+              >
+                <span class="native-action-label">更多</span>
+              </button>
+              <div v-if="isMoreOpen(node)" class="native-action-more-menu" role="menu">
+                <button
+                  v-for="(buttonNode, buttonIndex) in overflowActionButtons(node)"
+                  :key="`more-${nodeKey(buttonNode, buttonIndex)}`"
+                  type="button"
+                  class="native-action-more-item"
+                  role="menuitem"
+                  @click="emitNativeAction(buttonNode); closeMore(node)"
+                >
+                  <span v-if="buttonIcon(buttonNode)" :class="['native-action-icon', buttonIcon(buttonNode)]" aria-hidden="true" />
+                  <span class="native-action-label">{{ buttonLabel(buttonNode) }}</span>
+                </button>
+              </div>
+            </div>
           </div>
           <template v-for="(widgetNode, widgetIndex) in widgetChildren(node)" :key="nodeKey(widgetNode, widgetIndex)">
             <div v-if="widgetName(widgetNode) === 'web_ribbon'" class="native-ribbon" :class="widgetClass(widgetNode)">
@@ -169,6 +192,8 @@ const emit = defineEmits<{
 }>();
 
 const activePageIndex = ref(0);
+const openMoreKeys = ref<Record<string, boolean>>({});
+const SMART_BUTTON_DIRECT_LIMIT = 4;
 const visibleNodes = computed(() => (props.nodes || []).filter((node) => isNodeVisible(node)));
 
 function isNodeVisible(node: NativeFormLayoutNode) {
@@ -210,6 +235,27 @@ function fieldChildren(node: NativeFormLayoutNode) {
 
 function buttonChildren(node: NativeFormLayoutNode) {
   return rawChildren(node).filter((child) => nodeType(child) === 'button' && isNodeVisible(child));
+}
+
+function visibleActionButtons(node: NativeFormLayoutNode) {
+  const children = buttonChildren(node);
+  if (!isSmartActionGroup(node)) return children;
+  const smartButtons = children.filter((child) => isSmartButtonNode(child));
+  if (smartButtons.length <= SMART_BUTTON_DIRECT_LIMIT) return children;
+  let smartSeen = 0;
+  return children.filter((child) => {
+    if (!isSmartButtonNode(child)) return true;
+    smartSeen += 1;
+    return smartSeen <= SMART_BUTTON_DIRECT_LIMIT;
+  });
+}
+
+function overflowActionButtons(node: NativeFormLayoutNode) {
+  const children = buttonChildren(node);
+  if (!isSmartActionGroup(node)) return [];
+  const smartButtons = children.filter((child) => isSmartButtonNode(child));
+  if (smartButtons.length <= SMART_BUTTON_DIRECT_LIMIT) return [];
+  return smartButtons.slice(SMART_BUTTON_DIRECT_LIMIT);
 }
 
 function widgetChildren(node: NativeFormLayoutNode) {
@@ -264,8 +310,12 @@ function isButtonBoxNode(node: NativeFormLayoutNode) {
   return nodeHasClass(node, 'oe_button_box') || (nodeType(node) === 'button' && isSmartButtonNode(node));
 }
 
+function isSmartActionGroup(node: NativeFormLayoutNode) {
+  return isButtonBoxNode(node) || buttonChildren(node).some((child) => isSmartButtonNode(child));
+}
+
 function nativeActionsClass(node: NativeFormLayoutNode) {
-  const smart = isButtonBoxNode(node) || buttonChildren(node).some((child) => isSmartButtonNode(child));
+  const smart = isSmartActionGroup(node);
   return ['native-actions', { 'native-actions--smart': smart }];
 }
 
@@ -316,6 +366,31 @@ function emitNativeAction(node: NativeFormLayoutNode) {
       },
     };
   emit('native-action', action);
+}
+
+function moreKey(node: NativeFormLayoutNode) {
+  return nodeKey(node, 0);
+}
+
+function isMoreOpen(node: NativeFormLayoutNode) {
+  return Boolean(openMoreKeys.value[moreKey(node)]);
+}
+
+function toggleMore(node: NativeFormLayoutNode) {
+  const key = moreKey(node);
+  openMoreKeys.value = {
+    ...openMoreKeys.value,
+    [key]: !openMoreKeys.value[key],
+  };
+}
+
+function closeMore(node: NativeFormLayoutNode) {
+  const key = moreKey(node);
+  if (!openMoreKeys.value[key]) return;
+  openMoreKeys.value = {
+    ...openMoreKeys.value,
+    [key]: false,
+  };
 }
 </script>
 
@@ -418,7 +493,7 @@ function emitNativeAction(node: NativeFormLayoutNode) {
   gap: 0;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
-  overflow: hidden;
+  overflow: visible;
   background: #ffffff;
 }
 
@@ -447,6 +522,51 @@ function emitNativeAction(node: NativeFormLayoutNode) {
   color: #334155;
   background: #ffffff;
   font-weight: 500;
+}
+
+.native-action-more {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+}
+
+.native-action-btn--more {
+  width: 100%;
+  justify-content: center;
+}
+
+.native-action-more-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 12;
+  min-width: 160px;
+  display: grid;
+  gap: 2px;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid #d8dee8;
+  border-radius: 6px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+}
+
+.native-action-more-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #1f2937;
+  padding: 8px 10px;
+  border-radius: 5px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.native-action-more-item:hover {
+  background: #f1f5f9;
 }
 
 .native-action-icon {

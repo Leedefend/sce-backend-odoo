@@ -43,6 +43,7 @@ type UseActionViewGroupedRowsRuntimeOptions = {
   columns: Ref<string[]>;
   listProfile: Ref<SceneListProfile | null>;
   sortLabel: Ref<string>;
+  sortValue: Ref<string>;
   routeQueryMap: Ref<Record<string, unknown>>;
   resolvedModelRef: Ref<string>;
   modelRef: Ref<string>;
@@ -94,17 +95,19 @@ export function useActionViewGroupedRowsRuntime(options: UseActionViewGroupedRow
         contextRaw: options.resolveEffectiveRequestContextRaw(),
         limit: pageTarget.pageLimit,
         offset: pageTarget.nextOffset,
-        order: options.sortLabel.value,
+        order: options.sortValue.value,
       }));
       const rows = resolveGroupedRowsPagePayloadRows(result.data);
-      options.groupedRows.value = applyGroupedRowsPageChangeSuccess({
+      const nextGroupedRows = applyGroupedRowsPageChangeSuccess({
         rows: options.groupedRows.value,
         groupKey: group.key,
+        groupLabel: group.label,
         payloadRows: rows,
         nextOffset: pageTarget.nextOffset,
         pageLimit: pageTarget.pageLimit,
         totalCount: Number(pageTarget.found.count || 0),
       });
+      options.groupedRows.value = nextGroupedRows;
       const pageOffsetState = resolveGroupedRowsPageOffsetState({
         groupPageOffsets: options.groupPageOffsets.value,
         groupKey: group.key,
@@ -113,6 +116,22 @@ export function useActionViewGroupedRowsRuntime(options: UseActionViewGroupedRow
       });
       options.groupPageOffsets.value = pageOffsetState.nextGroupPageOffsets;
       options.syncRouteListState({ group_page: pageOffsetState.groupPageQueryValue });
+      const reapplyPageState = () => {
+        if (!options.activeGroupByField.value) return;
+        if (!String(window.location.search || '').includes('group_page=')) return;
+        options.groupedRows.value = applyGroupedRowsPageChangeSuccess({
+          rows: options.groupedRows.value,
+          groupKey: group.key,
+          groupLabel: group.label,
+          payloadRows: rows,
+          nextOffset: pageTarget.nextOffset,
+          pageLimit: pageTarget.pageLimit,
+          totalCount: Number(pageTarget.found.count || 0),
+        });
+      };
+      window.setTimeout(reapplyPageState, 750);
+      window.setTimeout(reapplyPageState, 2000);
+      window.setTimeout(reapplyPageState, 3500);
     } catch {
       options.groupedRows.value = applyGroupedRowsPageChangeFailure({
         rows: options.groupedRows.value,
@@ -154,7 +173,7 @@ export function useActionViewGroupedRowsRuntime(options: UseActionViewGroupedRow
             contextRaw: options.resolveEffectiveRequestContextRaw(),
             limit: pageState.limit,
             offset: pageState.offset,
-            order: options.sortLabel.value,
+            order: options.sortValue.value,
           }));
           return resolveGroupedRowsHydrateUpdateSuccess({
             key: item.key,
