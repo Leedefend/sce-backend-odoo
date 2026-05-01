@@ -17,6 +17,7 @@ export async function listRecords(params: {
   domain?: unknown[];
   domain_raw?: string;
   need_total?: boolean;
+  need_aggregates?: boolean;
   group_by?: string | string[];
   group_offset?: number;
   need_group_total?: boolean;
@@ -38,6 +39,7 @@ export async function listRecords(params: {
     domain: params.domain ?? [],
     domain_raw: params.domain_raw ?? '',
     need_total: params.need_total,
+    need_aggregates: params.need_aggregates,
     group_by: params.group_by,
     group_offset: params.group_offset,
     need_group_total: params.need_group_total,
@@ -64,6 +66,7 @@ export async function listRecordsRaw(params: {
   domain?: unknown[];
   domain_raw?: string;
   need_total?: boolean;
+  need_aggregates?: boolean;
   group_by?: string | string[];
   group_offset?: number;
   need_group_total?: boolean;
@@ -84,6 +87,7 @@ export async function listRecordsRaw(params: {
     domain: params.domain ?? [],
     domain_raw: params.domain_raw ?? '',
     need_total: params.need_total,
+    need_aggregates: params.need_aggregates,
     group_by: params.group_by,
     group_offset: params.group_offset,
     need_group_total: params.need_group_total,

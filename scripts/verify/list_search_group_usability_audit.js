@@ -393,23 +393,37 @@ async function resizeColumn(page, columnName, delta) {
 
 async function verifyStickyHeader(page) {
   return page.evaluate(() => {
-    const table = document.querySelector('section.table');
+    const headerRow = document.querySelector('section.table > table > thead');
     const header = document.querySelector('section.table > table > thead th');
     const rowNumber = document.querySelector('section.table > table > tbody > tr:first-child td.cell-row-number');
-    const beforeTop = header ? header.getBoundingClientRect().top : null;
-    const beforeTableTop = table ? table.getBoundingClientRect().top : null;
-    if (table) table.scrollTop = 420;
-    const afterTop = header ? header.getBoundingClientRect().top : null;
-    const afterTableTop = table ? table.getBoundingClientRect().top : null;
+    const beforeTop = headerRow ? headerRow.getBoundingClientRect().top : null;
+    const scrollers = Array.from(document.querySelectorAll('*')).filter((node) => {
+      const style = window.getComputedStyle(node);
+      return /(auto|scroll)/.test(`${style.overflowY} ${style.overflow}`) && node.scrollHeight > node.clientHeight + 20;
+    });
+    const tableTopBefore = document.querySelector('section.table')?.getBoundingClientRect().top ?? null;
+    const targetScroller = scrollers.find((node) => {
+      const rect = node.getBoundingClientRect();
+      return rect.top <= (tableTopBefore || 0) && rect.bottom >= Math.min(window.innerHeight, (tableTopBefore || 0) + 80);
+    }) || document.scrollingElement || document.documentElement;
+    const beforeScrollTop = targetScroller.scrollTop;
+    targetScroller.scrollTop = beforeScrollTop + 420;
+    const afterTop = headerRow ? headerRow.getBoundingClientRect().top : null;
+    const tableTopAfter = document.querySelector('section.table')?.getBoundingClientRect().top ?? null;
+    const headerRowStyle = headerRow ? window.getComputedStyle(headerRow) : null;
     const headerStyle = header ? window.getComputedStyle(header) : null;
     const rowStyle = rowNumber ? window.getComputedStyle(rowNumber) : null;
     return {
       beforeTop,
       afterTop,
-      beforeTableTop,
-      afterTableTop,
-      tableScrollTop: table ? table.scrollTop : 0,
-      headerDeltaFromTableTop: header && table ? Math.round(header.getBoundingClientRect().top - table.getBoundingClientRect().top) : null,
+      tableTopBefore,
+      tableTopAfter,
+      scrollContainerTag: targetScroller === document.scrollingElement ? 'document' : String(targetScroller.className || targetScroller.tagName || ''),
+      beforeScrollTop,
+      afterScrollTop: targetScroller.scrollTop,
+      headerRowPosition: headerRowStyle?.position || '',
+      headerRowTop: headerRowStyle?.top || '',
+      headerCellTop: header ? header.getBoundingClientRect().top : null,
       headerPosition: headerStyle?.position || '',
       headerTop: headerStyle?.top || '',
       rowNumberPosition: rowStyle?.position || '',
@@ -640,12 +654,14 @@ async function main() {
       path_id: 'LSG-P18',
       name: 'table header stays sticky while row-number column remains fixed left and centered',
       status: beforeSticky.flat_row_count > 0
-        && stickyResult.tableScrollTop > 0
+        && stickyResult.afterScrollTop > stickyResult.beforeScrollTop
+        && stickyResult.headerRowPosition === 'sticky'
+        && stickyResult.headerRowTop === '0px'
         && stickyResult.headerPosition === 'sticky'
         && stickyResult.headerTop === '0px'
-        && stickyResult.headerDeltaFromTableTop !== null
-        && stickyResult.headerDeltaFromTableTop >= 0
-        && stickyResult.headerDeltaFromTableTop <= 2
+        && stickyResult.afterTop !== null
+        && stickyResult.afterTop >= 0
+        && stickyResult.afterTop <= Math.max(2, stickyResult.beforeTop)
         && stickyResult.rowNumberPosition === 'sticky'
         && stickyResult.rowNumberLeft === '0px'
         && stickyResult.rowNumberTextAlign === 'center'

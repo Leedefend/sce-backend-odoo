@@ -353,19 +353,26 @@ class ApiDataHandler(BaseIntentHandler):
         for field_name in fields_safe or []:
             field = env_model._fields.get(field_name)
             field_type = str(getattr(field, "type", "") or "").strip().lower() if field else ""
-            if field_name != "id" and field_type in numeric_types:
+            if (
+                field_name != "id"
+                and field_type in numeric_types
+                and bool(getattr(field, "store", False))
+                and bool(getattr(field, "column_type", None))
+            ):
                 aggregate_fields.append(field_name)
         if not aggregate_fields:
             return {}
-        try:
-            rows = env_model.read_group(domain or [], aggregate_fields, [], lazy=False)
-        except Exception:
-            _logger.exception("numeric aggregate failed model=%s fields=%s", env_model._name, aggregate_fields)
-            return {}
-        row = (rows or [{}])[0] or {}
         out: Dict[str, Dict[str, Any]] = {}
         for field_name in aggregate_fields:
-            value = row.get(field_name)
+            try:
+                rows = env_model.read_group(domain or [], [f"{field_name}:sum"], [], lazy=False)
+            except Exception:
+                _logger.exception("numeric aggregate failed model=%s field=%s", env_model._name, field_name)
+                continue
+            row = (rows or [{}])[0] or {}
+            value = row.get(f"{field_name}_sum")
+            if not isinstance(value, (int, float)):
+                value = row.get(field_name)
             if isinstance(value, (int, float)):
                 out[field_name] = {"sum": value}
         return out

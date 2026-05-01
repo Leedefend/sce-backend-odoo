@@ -192,3 +192,61 @@ Data hygiene:
 
 - Temporary `LSG-AUDIT-*` favorites removed from `sc_prod_sim`; remaining count `0`.
 - The validation-created `sc.user.view.preference` row for `wutao` / `list_columns:list:action:506` was removed after column-order/width tests; remaining count `0`.
+
+## Batch-I Correction
+
+The second real-user review found two gaps in Batch-H:
+
+- the prior table header implementation locked the wrong scroll context by making `section.table` the scrolling container; real users scroll the page content, so the table header still failed to stay visible in that path;
+- `buildActionViewListRequest` set `need_aggregates=true`, but `frontend/apps/web/src/api/data.ts` did not pass that field through the API payload, so backend numeric totals were never requested by the list page.
+
+Corrections:
+
+- `section.table` is back in the page/content scroll flow, and only `thead th` is sticky;
+- `tfoot` is no longer sticky, so page scroll behavior is not confused with footer locking;
+- `ApiDataListRequest` and the frontend API payload now include `need_aggregates`;
+- `api.data` numeric aggregation now sums stored numeric fields independently, so one non-aggregatable numeric field cannot blank all other totals.
+
+Verification:
+
+- focused browser probe on `/a/506?menu_id=353`: content scroller moved from `0` to `420`, `tableTopAfter=-201`, `afterTop=32`, `headerPosition=sticky`, row-number column `left=0px` and centered;
+- focused browser probe on `/a/586?menu_id=336`: request includes `need_aggregates=true`; backend returns `settlement_amount_payable.sum=400` and `amount.sum=6239218333.96`; footer shows current-page `400 / -8,745,417.08` and grand total `400 / 6,239,218,333.96`;
+- full list audit: `artifacts/list-search-group-usability/20260501T071748/summary.json`;
+- `LSG-P15`: PASS, footer rows align current-page and grand-total summaries under data columns;
+- `LSG-P18`: PASS, page/content scroll keeps table header sticky while the table body scrolls away;
+- `LSG-P19`: PASS, plain keyword input remains independent from existing search menu/group controls;
+- `LSG-P20`: PASS, page size input reloads the page and footer count remains aligned;
+- `LSG-P00` through `LSG-P17`: PASS;
+- console errors: `0`.
+
+Data hygiene:
+
+- Temporary `LSG-AUDIT-*` favorites removed from `sc_prod_sim`; remaining count `0`.
+- The validation-created `sc.user.view.preference` row for `wutao` / `list_columns:list:action:506` was removed; remaining count `0`.
+
+## Batch-J Correction
+
+The follow-up real-user review found two remaining gaps:
+
+- only the row-number column/cells were visibly fixed in the user's scroll path; the expected behavior is that the whole table header row, including the `序号` header, remains locked while rows scroll;
+- the contract summary page showed `最终合同价` as a numeric business value, but the table footer did not show current-page and grand-total figures.
+
+Corrections:
+
+- the list table now sets sticky behavior on the whole `thead` row group as well as header cells, so the `序号` header row is locked as one header band;
+- frontend list column option resolution now falls back from tree `columns_schema` to backend `fields[name]` metadata for `type`, `widget`, `selection`, and label. This keeps the frontend contract-driven while avoiding lost numeric semantics when a tree schema is incomplete.
+
+Verification:
+
+- contract summary page `/a/536?menu_id=353`: `最终合同价` footer shows current-page `23,974,168.62` and grand total `5,545,250,245.26`;
+- contract summary page desktop/content scroll: after scrolling `900px`, `theadTop=32`, `firstHeaderTop=32`, `theadPosition=sticky`;
+- contract summary page narrow/window scroll: after `window.scrollY=900`, `theadTop=0`, `headerTop=0`, `.content overflow=visible`;
+- project list full audit: `artifacts/list-search-group-usability/20260501T073257/summary.json`;
+- `LSG-P18`: PASS, now asserts `headerRowPosition=sticky` and `headerRowTop=0px` in addition to sticky header cells;
+- `LSG-P00` through `LSG-P20`: PASS;
+- console errors: `0`.
+
+Data hygiene:
+
+- Temporary `LSG-AUDIT-*` favorites removed from `sc_prod_sim`; remaining count `0`.
+- The validation-created `sc.user.view.preference` row for `wutao` / `list_columns:list:action:506` was removed; remaining count `0`.

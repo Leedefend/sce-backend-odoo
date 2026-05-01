@@ -1603,9 +1603,7 @@ onBeforeUnmount(() => {
 }
 
 .table {
-  max-height: calc(100vh - 240px);
-  overflow: auto;
-  overscroll-behavior: contain;
+  overflow: visible;
   background: white;
   border-radius: 8px;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
@@ -2077,28 +2075,26 @@ tbody td {
   white-space: nowrap;
 }
 
+thead {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+}
+
 thead th {
   position: sticky;
   top: 0;
   background: white;
-  z-index: 4;
+  z-index: 8;
 }
 
 tfoot th,
 tfoot td {
-  position: sticky;
-  bottom: 0;
-  z-index: 3;
   background: #f8fafc;
   border-top: 1px solid #cbd5e1;
   color: #334155;
   font-size: 13px;
   font-weight: 700;
-}
-
-tfoot tr:first-child th,
-tfoot tr:first-child td {
-  bottom: 41px;
 }
 
 tfoot tr:nth-child(2) th,

@@ -108,6 +108,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
 
   function resolveListColumnOptions(contract: unknown, profile: { columns?: string[]; hidden_columns?: string[]; column_labels?: Record<string, string> } | null): ListColumnOption[] {
     const typed = (contract || {}) as Dict;
+    const fieldsMap = (typed.fields && typeof typed.fields === 'object') ? typed.fields as Record<string, Dict> : {};
     const preferred = Array.isArray(profile?.columns) ? profile?.columns || [] : [];
     const hidden = new Set(Array.isArray(profile?.hidden_columns) ? profile?.hidden_columns || [] : []);
     const schemaRows = extractColumnSchemaFromContract(contract);
@@ -124,27 +125,34 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
     return uniqueFields([...baseColumns, ...Array.from(hidden)])
       .map((name) => {
         const schema = schemaByName[name] || {};
+        const field = fieldsMap[name] || {};
         const optional = String(schema.optional || '').trim();
         const invisible = schema.invisible === true || schema.column_invisible === true;
+        const type = String(schema.type || field.type || '').trim();
+        const widget = String(schema.widget || field.widget || field.type || '').trim();
+        const rawSelection = Array.isArray(schema.selection) ? schema.selection : field.selection;
         return {
           name,
-          label: String(labels[name] || schema.label || schema.string || name).trim() || name,
+          label: String(labels[name] || schema.label || schema.string || field.string || name).trim() || name,
           optional,
           defaultVisible: !hidden.has(name) && optional !== 'hide' && !invisible,
-          type: String(schema.type || '').trim() || undefined,
-          widget: String(schema.widget || '').trim() || undefined,
+          type: type || undefined,
+          widget: widget || undefined,
           cellRole: String(schema.cell_role || schema.cellRole || '').trim() || undefined,
           mutation: schema.mutation && typeof schema.mutation === 'object'
             ? schema.mutation as Record<string, unknown>
             : undefined,
-          selection: Array.isArray(schema.selection)
-            ? schema.selection
+          selection: Array.isArray(rawSelection)
+            ? rawSelection
                 .map((item) => {
+                  if (Array.isArray(item)) {
+                    return {
+                      value: String(item[0] ?? '').trim(),
+                      label: String(item[1] ?? '').trim(),
+                    };
+                  }
                   const row = (item || {}) as Dict;
-                  return {
-                    value: String(row.value ?? '').trim(),
-                    label: String(row.label ?? '').trim(),
-                  };
+                  return { value: String(row.value ?? '').trim(), label: String(row.label ?? '').trim() };
                 })
                 .filter((item) => item.value && item.label)
             : undefined,

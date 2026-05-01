@@ -326,6 +326,7 @@ export interface ApiDataListRequest {
   domain?: unknown[] | string;
   domain_raw?: string;
   need_total?: boolean;
+  need_aggregates?: boolean;
   group_by?: string | string[];
   group_offset?: number;
   need_group_total?: boolean;
