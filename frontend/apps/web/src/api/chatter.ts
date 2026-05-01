@@ -3,7 +3,7 @@ import type { ContractReasonCode } from './contractTypes';
 
 export interface ChatterTimelineEntry {
   key: string;
-  type: 'message' | 'attachment' | 'audit';
+  type: 'message' | 'attachment' | 'activity' | 'audit';
   typeLabel: string;
   title: string;
   meta: string;
@@ -23,6 +23,7 @@ export interface ChatterTimelineResponse {
   counts?: {
     messages?: number;
     attachments?: number;
+    activities?: number;
     audit?: number;
     total?: number;
   };
@@ -33,6 +34,7 @@ export async function postChatterMessage(params: {
   res_id: number;
   body: string;
   subject?: string;
+  mode?: 'message' | 'note';
 }) {
   return intentRequest<{ result: { message_id: number } }>({
     intent: 'chatter.post',
@@ -41,6 +43,28 @@ export async function postChatterMessage(params: {
       res_id: params.res_id,
       body: params.body,
       subject: params.subject,
+      mode: params.mode,
+    },
+  });
+}
+
+export async function scheduleChatterActivity(params: {
+  model: string;
+  res_id: number;
+  summary: string;
+  note?: string;
+  date_deadline?: string;
+  activity_type_xmlid?: string;
+}) {
+  return intentRequest<{ result: { activity_id: number } }>({
+    intent: 'chatter.activity.schedule',
+    params: {
+      model: params.model,
+      res_id: params.res_id,
+      summary: params.summary,
+      note: params.note,
+      date_deadline: params.date_deadline,
+      activity_type_xmlid: params.activity_type_xmlid,
     },
   });
 }

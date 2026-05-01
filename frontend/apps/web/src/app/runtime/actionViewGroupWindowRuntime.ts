@@ -2,12 +2,19 @@ export function parseGroupPageOffsets(raw: string): Record<string, number> {
   const out: Record<string, number> = {};
   if (!raw) return out;
   raw.split(';').forEach((pair) => {
-    const [rawKey, rawOffset] = pair.split(':');
-    const key = decodeURIComponent(String(rawKey || '').trim());
+    const delimiterIndex = pair.lastIndexOf(':');
+    if (delimiterIndex <= 0) return;
+    const rawKey = pair.slice(0, delimiterIndex);
+    const rawOffset = pair.slice(delimiterIndex + 1);
+    const encodedKey = String(rawKey || '').trim();
+    const key = decodeURIComponent(encodedKey);
     const offset = Number(rawOffset || 0);
     if (!key) return;
     if (!Number.isFinite(offset) || offset < 0) return;
     out[key] = Math.trunc(offset);
+    if (encodedKey && encodedKey !== key) {
+      out[encodedKey] = Math.trunc(offset);
+    }
   });
   return out;
 }

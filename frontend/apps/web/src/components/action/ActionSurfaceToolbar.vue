@@ -70,6 +70,14 @@
           @keydown.esc="searchMenuOpen = false"
         />
         <button
+          class="toolbar-search-submit"
+          type="button"
+          :disabled="loading"
+          @click="$emit('search-submit')"
+        >
+          {{ uiLabel('search_submit', '搜索') }}
+        </button>
+        <button
           v-if="searchValue"
           class="toolbar-search-clear"
           type="button"
@@ -557,6 +565,7 @@ onBeforeUnmount(() => {
   outline: none;
 }
 
+.toolbar-search-submit,
 .toolbar-search-clear {
   flex: 0 0 auto;
   border: 1px solid #cbd5e1;
@@ -566,6 +575,12 @@ onBeforeUnmount(() => {
   padding: 5px 8px;
   font-size: 12px;
   cursor: pointer;
+}
+
+.toolbar-search-submit {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
 }
 
 .search-facet {
@@ -801,6 +816,7 @@ onBeforeUnmount(() => {
 }
 
 .contract-chip:disabled,
+.toolbar-search-submit:disabled,
 .toolbar-search-clear:disabled,
 .search-menu-toggle:disabled,
 .search-facet:disabled,

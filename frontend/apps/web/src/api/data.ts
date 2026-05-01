@@ -164,6 +164,7 @@ export async function writeRecord(params: {
   ids: number[];
   vals: Record<string, unknown>;
   context?: Record<string, unknown>;
+  ifMatch?: string;
 }) {
   return intentRequest<{ ids: number[] }>({
     intent: 'api.data',
@@ -173,6 +174,7 @@ export async function writeRecord(params: {
       ids: params.ids,
       vals: params.vals,
       context: params.context ?? {},
+      if_match: params.ifMatch,
     },
   });
 }

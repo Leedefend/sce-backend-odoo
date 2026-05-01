@@ -31,13 +31,14 @@ export function setGroupedRowsLoadingByKeys(rows: GroupedRow[], keys: Set<string
 export function applyGroupedRowsPageChangeSuccess(options: {
   rows: GroupedRow[];
   groupKey: string;
+  groupLabel?: string;
   payloadRows: Array<Record<string, unknown>>;
   nextOffset: number;
   pageLimit: number;
   totalCount: number;
 }): GroupedRow[] {
   return options.rows.map((item) =>
-    item.key === options.groupKey
+    item.key === options.groupKey || (options.groupLabel && item.label === options.groupLabel)
       ? (buildGroupedRowsPatchedState({
         base: item,
         rows: options.payloadRows,

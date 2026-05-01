@@ -51,7 +51,7 @@ type UseActionViewRoutePresetRuntimeOptions = {
   routeContextSource: Ref<string>;
   lastTrackedPreset: Ref<string>;
   resolveWorkspaceContextQuery: () => Record<string, unknown>;
-  replaceCurrentRouteQuery: (query: Record<string, unknown>) => void;
+  replaceCurrentRouteQuery: (query: Record<string, unknown>) => void | Promise<unknown>;
   trackUsageEvent: (event: string, payload: Dict) => Promise<unknown>;
   load: () => Promise<void>;
   resolveActionViewRouteSnapshot: (query: Record<string, unknown>) => RouteSnapshot;
@@ -205,13 +205,12 @@ export function useActionViewRoutePresetRuntime(options: UseActionViewRoutePrese
     options.routeContextSource.value = '';
     const nextQuery = options.buildActionViewClearedPresetQuery(options.routeQueryMap.value);
     void options.trackUsageEvent('workspace.preset.clear', { view: 'action' }).catch(() => {});
-    options.replaceCurrentRouteQuery(nextQuery);
+    void options.replaceCurrentRouteQuery(nextQuery);
   }
 
   function applyRoutePatchAndReload(patch: Record<string, unknown>) {
     const query = options.buildActionViewPatchedRouteQuery(options.routeQueryMap.value, patch);
-    options.replaceCurrentRouteQuery(query);
-    void options.load();
+    void Promise.resolve(options.replaceCurrentRouteQuery(query)).then(() => options.load());
   }
 
   function syncRouteListState(extra?: Record<string, unknown>) {

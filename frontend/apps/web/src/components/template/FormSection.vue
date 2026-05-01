@@ -144,6 +144,14 @@
                     @input="emitDateRangeEndChange(field, ($event.target as HTMLInputElement).value)"
                   />
                 </div>
+                <textarea
+                  v-else-if="isMultilineField(field.type)"
+                  :value="String(field.inputValue ?? '')"
+                  class="input input--textarea"
+                  :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
+                  rows="4"
+                  @input="emitFieldChange(field, ($event.target as HTMLTextAreaElement).value)"
+                />
                 <input
                   v-else
                   :value="String(field.inputValue ?? '')"
@@ -207,11 +215,15 @@ const gridStyle = computed(() => ({
 }));
 
 function isBaseFieldType(type: TemplateFieldType) {
-  return ['char', 'text', 'selection', 'many2one', 'boolean', 'date', 'datetime'].includes(String(type || '').trim().toLowerCase());
+  return ['char', 'text', 'html', 'selection', 'many2one', 'boolean', 'date', 'datetime'].includes(String(type || '').trim().toLowerCase());
 }
 
 function defaultSpanClass(type: TemplateFieldType) {
-  return String(type || '').trim().toLowerCase() === 'text' ? 'field--full' : 'field--half';
+  return isMultilineField(type) ? 'field--full' : 'field--half';
+}
+
+function isMultilineField(type: TemplateFieldType) {
+  return ['text', 'html'].includes(String(type || '').trim().toLowerCase());
 }
 
 function inputType(type: TemplateFieldType) {
@@ -495,6 +507,12 @@ function emitFavoriteToggle(field: FormSectionFieldSchema) {
   outline: none;
   border-color: #94a3b8;
   box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.2);
+}
+
+textarea.input {
+  min-height: 104px;
+  height: auto;
+  resize: vertical;
 }
 
 select.input {

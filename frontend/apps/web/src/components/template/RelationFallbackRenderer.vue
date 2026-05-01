@@ -41,9 +41,18 @@
         :disabled="adapter.busy"
         @click="adapter.addOne2manyRow(field.name)"
       >
-        + 新增行
+        {{ adapter.one2manyCreateLabel(field.name) }}
       </button>
       <span v-if="adapter.one2manySummary(field.name)" class="o2m-summary">{{ adapter.one2manySummary(field.name) }}</span>
+    </div>
+    <div v-if="adapter.one2manyColumns(field.name).length" class="o2m-header">
+      <span
+        v-for="column in adapter.one2manyColumns(field.name)"
+        :key="`${field.name}-header-${column.name}`"
+        class="o2m-header-cell"
+      >
+        {{ column.label }}<span v-if="column.required" class="required">*</span>
+      </span>
     </div>
     <div class="o2m-list">
       <div v-for="row in adapter.visibleOne2manyRows(field.name)" :key="row.key" class="o2m-row">
@@ -59,12 +68,14 @@
               v-if="column.ttype === 'boolean'"
               class="input-checkbox"
               type="checkbox"
+              :disabled="column.readonly || adapter.busy"
               :checked="Boolean(row.values[column.name])"
               @change="adapter.setOne2manyRowField(field.name, row.key, column, ($event.target as HTMLInputElement).checked)"
             />
             <select
               v-else-if="column.ttype === 'selection'"
               class="input"
+              :disabled="column.readonly || adapter.busy"
               :value="String(row.values[column.name] ?? '')"
               @change="adapter.setOne2manyRowField(field.name, row.key, column, ($event.target as HTMLSelectElement).value)"
             >
@@ -77,6 +88,7 @@
               v-else
               class="input"
               :type="adapter.one2manyColumnInputType(column)"
+              :disabled="column.readonly || adapter.busy"
               :value="adapter.one2manyColumnDisplayValue(column, row.values[column.name])"
               :placeholder="column.label"
               @input="adapter.setOne2manyRowField(field.name, row.key, column, ($event.target as HTMLInputElement).value)"
@@ -189,6 +201,25 @@ function isMany2manyTags(field: FormSectionFieldSchema) {
 .o2m-summary {
   font-size: 12px;
   color: #475569;
+}
+
+.o2m-header {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 1px;
+  border: 1px solid #d8dee9;
+  background: #d8dee9;
+  overflow: hidden;
+}
+
+.o2m-header-cell {
+  min-height: 28px;
+  padding: 6px 8px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 600;
 }
 
 .o2m-list {
