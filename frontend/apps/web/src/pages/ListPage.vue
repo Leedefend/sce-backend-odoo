@@ -36,6 +36,21 @@
           <h2>{{ title }}</h2>
           <p>{{ subtitle }}</p>
         </div>
+        <div class="list-plain-search">
+          <input
+            type="search"
+            :value="plainSearchDraft"
+            :disabled="loading"
+            :placeholder="uiLabel('plain_search_placeholder', '输入关键字搜索')"
+            @compositionstart="plainSearchComposing = true"
+            @compositionend="onPlainSearchCompositionEnd"
+            @input="onPlainSearchInput"
+            @keydown.enter.prevent="submitPlainSearch"
+          />
+          <button type="button" class="pagination-btn" :disabled="loading" @click="submitPlainSearch">
+            {{ uiLabel('search_submit', '搜索') }}
+          </button>
+        </div>
         <div v-if="showPagination" class="pagination-actions pagination-actions--top">
           <button
             type="button"
@@ -70,6 +85,24 @@
             @click="jumpPage"
           >
             {{ uiLabel('pagination_jump', '跳转') }}
+          </button>
+          <span class="pagination-size-label">{{ uiLabel('pagination_page_size', '每页') }}</span>
+          <input
+            class="pagination-input pagination-input--size"
+            :value="pageLimitInput"
+            :disabled="loading"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            @input="onPageLimitInput"
+            @keyup.enter="applyPageLimit"
+          />
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading"
+            @click="applyPageLimit"
+          >
+            {{ uiLabel('pagination_apply_size', '应用') }}
           </button>
         </div>
         <span v-else class="list-count">{{ uiLabel('record_count', '{count} 条记录', { count: records.length }) }}</span>
@@ -260,6 +293,30 @@
                 </td>
               </tr>
             </tbody>
+            <tfoot>
+              <tr>
+                <th class="cell-row-number footer-row-label">{{ uiLabel('page_footer_current_total', '当前页合计') }}</th>
+                <td
+                  v-for="col in displayedColumns"
+                  :key="`group-footer-page-${group.key}-${col}`"
+                  :style="columnWidthStyle(col)"
+                  :class="{ 'footer-number': isNumericColumn(col) }"
+                >
+                  {{ footerCellText(col, 'page') }}
+                </td>
+              </tr>
+              <tr>
+                <th class="cell-row-number footer-row-label">{{ uiLabel('page_footer_grand_total', '总计') }}</th>
+                <td
+                  v-for="col in displayedColumns"
+                  :key="`group-footer-total-${group.key}-${col}`"
+                  :style="columnWidthStyle(col)"
+                  :class="{ 'footer-number': isNumericColumn(col) }"
+                >
+                  {{ footerCellText(col, 'total') }}
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </article>
       </section>
@@ -381,23 +438,36 @@
             <td v-if="columnChoices.length" class="cell-column-picker"></td>
           </tr>
         </tbody>
+        <tfoot>
+          <tr>
+            <th class="cell-row-number footer-row-label">{{ uiLabel('page_footer_current_total', '当前页合计') }}</th>
+            <td v-if="showSelectionColumn" class="cell-select"></td>
+            <td
+              v-for="col in displayedColumns"
+              :key="`footer-page-${col}`"
+              :style="columnWidthStyle(col)"
+              :class="{ 'footer-number': isNumericColumn(col) }"
+            >
+              {{ footerCellText(col, 'page') }}
+            </td>
+            <td v-if="columnChoices.length" class="cell-column-picker"></td>
+          </tr>
+          <tr>
+            <th class="cell-row-number footer-row-label">{{ uiLabel('page_footer_grand_total', '总计') }}</th>
+            <td v-if="showSelectionColumn" class="cell-select"></td>
+            <td
+              v-for="col in displayedColumns"
+              :key="`footer-total-${col}`"
+              :style="columnWidthStyle(col)"
+              :class="{ 'footer-number': isNumericColumn(col) }"
+            >
+              {{ footerCellText(col, 'total') }}
+            </td>
+            <td v-if="columnChoices.length" class="cell-column-picker"></td>
+          </tr>
+        </tfoot>
       </table>
     </section>
-
-      <section class="list-page-footer">
-        <div class="footer-total">
-          <span>{{ uiLabel('page_footer_title', '页面统计') }}</span>
-          <strong>{{ uiLabel('page_footer_count', '当前页 {count} 条', { count: pageVisibleRows.length }) }}</strong>
-        </div>
-        <div v-if="pageFooterStats.length" class="footer-summary-grid">
-          <article v-for="item in pageFooterStats" :key="`footer-stat-${item.name}`" class="footer-summary-card">
-            <span>{{ item.label }}</span>
-            <strong>{{ item.sumText }}</strong>
-            <em>{{ uiLabel('page_footer_summary_count', '{count} 项', { count: item.count }) }}</em>
-          </article>
-        </div>
-        <p v-else class="footer-empty-summary">{{ uiLabel('page_footer_no_numeric', '当前页没有可汇总的数值列') }}</p>
-      </section>
 
       <section v-if="showPagination" class="pagination-bar">
         <span>{{ paginationSummary }}</span>
@@ -435,6 +505,24 @@
             @click="jumpPage"
           >
             {{ uiLabel('pagination_jump', '跳转') }}
+          </button>
+          <span class="pagination-size-label">{{ uiLabel('pagination_page_size', '每页') }}</span>
+          <input
+            class="pagination-input pagination-input--size"
+            :value="pageLimitInput"
+            :disabled="loading"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            @input="onPageLimitInput"
+            @keyup.enter="applyPageLimit"
+          />
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading"
+            @click="applyPageLimit"
+          >
+            {{ uiLabel('pagination_apply_size', '应用') }}
           </button>
         </div>
       </section>
@@ -499,6 +587,7 @@ const props = defineProps<{
   listTotalCount?: number | null;
   listOffset?: number;
   listLimit?: number;
+  listAggregates?: Record<string, Record<string, unknown>>;
   columnOptions?: ColumnOption[];
   columnVisibility?: Record<string, boolean>;
   columnOrder?: string[];
@@ -557,6 +646,7 @@ const props = defineProps<{
   collapsedGroupKeys?: string[];
   onGroupCollapsedChange?: (keys: string[]) => void;
   onPageChange?: (offset: number) => void;
+  onPageLimitChange?: (limit: number) => void;
 }>();
 const emit = defineEmits<{
   'column-visibility-change': [payload: { visibility: Record<string, boolean> }];
@@ -585,6 +675,9 @@ const groupedRows = computed(() =>
 const showGroupedRows = computed(() => props.enableGroupedRows === true && groupedRows.value.length > 0);
 const groupJumpPageInput = ref<Record<string, string>>({});
 const pageJumpInput = ref('');
+const pageLimitInput = ref('');
+const plainSearchDraft = ref('');
+const plainSearchComposing = ref(false);
 const observedListLimit = ref(0);
 const columnPickerRoot = ref<HTMLElement | null>(null);
 const columnPickerOpen = ref(false);
@@ -1067,10 +1160,55 @@ function jumpPage() {
   emitPageOffset((normalizedPage - 1) * listLimit.value);
 }
 
+function onPageLimitInput(event: Event) {
+  pageLimitInput.value = String((event.target as HTMLInputElement | null)?.value || '');
+}
+
+function applyPageLimit() {
+  const raw = Number(pageLimitInput.value || listLimit.value);
+  if (!Number.isFinite(raw)) return;
+  const normalized = Math.min(Math.max(Math.trunc(raw), 1), 200);
+  pageLimitInput.value = String(normalized);
+  if (normalized === listLimit.value) return;
+  observedListLimit.value = normalized;
+  props.onPageLimitChange?.(normalized);
+}
+
+function onPlainSearchInput(event: Event) {
+  plainSearchDraft.value = String((event.target as HTMLInputElement | null)?.value || '');
+}
+
+function onPlainSearchCompositionEnd(event: CompositionEvent) {
+  plainSearchComposing.value = false;
+  plainSearchDraft.value = String((event.target as HTMLInputElement | null)?.value || '');
+}
+
+function submitPlainSearch() {
+  if (plainSearchComposing.value) return;
+  props.onSearch(plainSearchDraft.value || '');
+}
+
 watch(
   currentPage,
   (page) => {
     pageJumpInput.value = String(page);
+  },
+  { immediate: true },
+);
+
+watch(
+  listLimit,
+  (limit) => {
+    pageLimitInput.value = String(limit);
+  },
+  { immediate: true },
+);
+
+watch(
+  () => props.searchTerm,
+  (value) => {
+    if (plainSearchComposing.value) return;
+    plainSearchDraft.value = value || '';
   },
   { immediate: true },
 );
@@ -1375,6 +1513,28 @@ const pageFooterStats = computed(() =>
     .filter((item) => item.count > 0),
 );
 
+const pageFooterStatsMap = computed(() =>
+  pageFooterStats.value.reduce<Record<string, { sumText: string; count: number }>>((acc, item) => {
+    acc[item.name] = { sumText: item.sumText, count: item.count };
+    return acc;
+  }, {}),
+);
+
+function totalAggregateValue(field: string) {
+  const aggregate = props.listAggregates?.[field] || {};
+  const value = aggregate.sum;
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function footerCellText(field: string, scope: 'page' | 'total') {
+  if (!isNumericColumn(field)) return '';
+  if (scope === 'page') {
+    return pageFooterStatsMap.value[field]?.sumText || '--';
+  }
+  const value = totalAggregateValue(field);
+  return value === null ? '--' : formatFooterNumber(value, field);
+}
+
 function handleColumnPickerPointerDown(event: PointerEvent) {
   const root = columnPickerRoot.value;
   if (!root || root.contains(event.target as Node)) return;
@@ -1437,10 +1597,31 @@ onBeforeUnmount(() => {
 }
 
 .table {
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: visible;
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+}
+
+.list-plain-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 1 360px;
+  min-width: 240px;
+}
+
+.list-plain-search input {
+  min-width: 0;
+  width: 100%;
+  height: 30px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  padding: 4px 8px;
+  font-size: 13px;
 }
 
 .summary-strip {
@@ -1472,62 +1653,6 @@ onBeforeUnmount(() => {
 .summary-card.tone-warning { background: #fffbeb; border-color: #fde68a; color: #b45309; }
 .summary-card.tone-success { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
 .summary-card.tone-info { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
-
-.list-page-footer {
-  display: grid;
-  gap: 10px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  background: #fff;
-  padding: 10px 12px;
-}
-
-.footer-total {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: #475569;
-  font-size: 13px;
-}
-
-.footer-total strong {
-  color: #0f172a;
-  font-weight: 700;
-}
-
-.footer-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 8px;
-}
-
-.footer-summary-card {
-  display: grid;
-  gap: 4px;
-  border: 1px solid #dbeafe;
-  border-radius: 8px;
-  background: #f8fafc;
-  padding: 8px 10px;
-}
-
-.footer-summary-card span,
-.footer-summary-card em,
-.footer-empty-summary {
-  color: #64748b;
-  font-size: 12px;
-  font-style: normal;
-}
-
-.footer-summary-card strong {
-  color: #0f172a;
-  font-size: 18px;
-  font-variant-numeric: tabular-nums;
-}
-
-.footer-empty-summary {
-  margin: 0;
-}
 
 .grouped-table {
   display: grid;
@@ -1743,6 +1868,11 @@ onBeforeUnmount(() => {
   gap: 8px;
 }
 
+.pagination-size-label {
+  color: #64748b;
+  font-size: 12px;
+}
+
 .pagination-actions--top {
   flex: 0 0 auto;
 }
@@ -1874,6 +2004,10 @@ onBeforeUnmount(() => {
   font-size: 13px;
 }
 
+.pagination-input--size {
+  width: 72px;
+}
+
 @media (max-width: 900px) {
   .list-toolbar,
   .pagination-bar {
@@ -1883,6 +2017,11 @@ onBeforeUnmount(() => {
 
   .pagination-actions {
     flex-wrap: wrap;
+  }
+
+  .list-plain-search {
+    width: 100%;
+    flex: 1 1 auto;
   }
 }
 
@@ -1927,7 +2066,7 @@ tbody td {
   min-width: 64px;
   color: #64748b;
   font-variant-numeric: tabular-nums;
-  text-align: right;
+  text-align: center;
   white-space: nowrap;
 }
 
@@ -1935,7 +2074,39 @@ thead th {
   position: sticky;
   top: 0;
   background: white;
-  z-index: 1;
+  z-index: 4;
+}
+
+tfoot th,
+tfoot td {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  background: #f8fafc;
+  border-top: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+tfoot tr:first-child th,
+tfoot tr:first-child td {
+  bottom: 42px;
+}
+
+tfoot tr:nth-child(2) th,
+tfoot tr:nth-child(2) td {
+  background: #eef2ff;
+}
+
+.footer-row-label {
+  color: #0f172a;
+  font-size: 12px;
+}
+
+.footer-number {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .cell-sortable {
@@ -2079,7 +2250,16 @@ td:first-child {
   position: sticky;
   left: 0;
   background: #fff;
-  z-index: 2;
+  z-index: 5;
+}
+
+thead th:first-child {
+  z-index: 7;
+}
+
+tfoot th:first-child,
+tfoot td:first-child {
+  z-index: 6;
 }
 
 </style>

@@ -347,6 +347,29 @@ class ApiDataHandler(BaseIntentHandler):
             return None
         return len(rows or [])
 
+    def _build_numeric_aggregates(self, env_model, domain, fields_safe: List[str]) -> Dict[str, Dict[str, Any]]:
+        numeric_types = {"integer", "float", "monetary"}
+        aggregate_fields = []
+        for field_name in fields_safe or []:
+            field = env_model._fields.get(field_name)
+            field_type = str(getattr(field, "type", "") or "").strip().lower() if field else ""
+            if field_name != "id" and field_type in numeric_types:
+                aggregate_fields.append(field_name)
+        if not aggregate_fields:
+            return {}
+        try:
+            rows = env_model.read_group(domain or [], aggregate_fields, [], lazy=False)
+        except Exception:
+            _logger.exception("numeric aggregate failed model=%s fields=%s", env_model._name, aggregate_fields)
+            return {}
+        row = (rows or [{}])[0] or {}
+        out: Dict[str, Dict[str, Any]] = {}
+        for field_name in aggregate_fields:
+            value = row.get(field_name)
+            if isinstance(value, (int, float)):
+                out[field_name] = {"sum": value}
+        return out
+
     def _build_group_query_fingerprint(self, model: str, domain, group_by, order: str, search_term: str, ctx: Dict[str, Any]) -> str:
         group_by_norm = self._normalize_group_by(group_by)
         stable_ctx_keys = {
@@ -925,6 +948,8 @@ class ApiDataHandler(BaseIntentHandler):
 
         need_total = self._get_bool(p, "need_total", False)
         total = env_model.search_count(domain or []) if need_total else None
+        need_aggregates = self._get_bool(p, "need_aggregates", False)
+        aggregates = self._build_numeric_aggregates(env_model, domain, fields_safe) if need_aggregates else {}
         group_summary_probe = self._build_group_summary_with_offset(
             env_model,
             domain,
@@ -1024,6 +1049,8 @@ class ApiDataHandler(BaseIntentHandler):
             data["group_paging"]["group_total"] = int(group_total)
         if need_total:
             data["total"] = int(total or 0)
+        if need_aggregates:
+            data["aggregates"] = aggregates
 
         meta = {
             "op": "list",
@@ -1032,6 +1059,7 @@ class ApiDataHandler(BaseIntentHandler):
             "offset": offset,
             "order": order,
             "count": len(rows),
+            "aggregates": bool(aggregates),
             "fields": fields_safe,
             "domain_raw_applied": bool(domain_raw),
             "context_raw_applied": bool(context_raw),

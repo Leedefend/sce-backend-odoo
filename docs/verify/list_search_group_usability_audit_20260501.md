@@ -166,3 +166,29 @@ Data hygiene:
 
 - Temporary `LSG-AUDIT-*` favorites removed from `sc_prod_sim`; remaining count `0`.
 - The validation-created `sc.user.view.preference` row for `wutao` / `list_columns:list:action:506` was removed after the resize test; remaining count `0`.
+
+## Batch-H Closure
+
+Unified list table usability was extended for scrolling, fixed row numbers, plain text search, page size control, and aligned totals:
+
+- table headers are sticky while the user scrolls the page;
+- the `序号` column remains sticky at the left edge and row-number values are centered;
+- a plain list search input was added for direct keyword entry while the existing search menu, filters, groups, and favorites remain unchanged;
+- pagination accepts a user-entered page size and reloads from the first page;
+- `api.data` now supports `need_aggregates` and returns backend-computed numeric field sums for the active list domain;
+- list totals moved into table `tfoot` rows so current-page totals and backend grand totals align under their data columns.
+
+Verification:
+
+- `artifacts/list-search-group-usability/20260501T063830/summary.json`
+- `LSG-P15`: PASS, table footer renders aligned `当前页合计` and `总计` rows
+- `LSG-P18`: PASS, sticky table header, fixed-left row-number column, centered row-number data
+- `LSG-P19`: PASS, plain search input submits keyword search without removing existing search menu/group controls
+- `LSG-P20`: PASS, user-entered page size reloads the list and limits visible rows
+- `LSG-P00` through `LSG-P17`: PASS
+- console errors: `0`
+
+Data hygiene:
+
+- Temporary `LSG-AUDIT-*` favorites removed from `sc_prod_sim`; remaining count `0`.
+- The validation-created `sc.user.view.preference` row for `wutao` / `list_columns:list:action:506` was removed after column-order/width tests; remaining count `0`.

@@ -355,6 +355,7 @@
       :list-total-count="listTotalCount"
       :list-offset="listOffset"
       :list-limit="contractLimit"
+      :list-aggregates="listAggregates"
       :column-labels="contractColumnLabels"
       :column-options="listColumnOptions"
       :column-visibility="listColumnVisibility"
@@ -397,6 +398,7 @@
       :on-toggle-record-favorite="handleToggleRecordFavorite"
       :on-row-click="handleRowClick"
       :on-page-change="handleListPageChange"
+      :on-page-limit-change="handleListPageLimitChange"
       @column-visibility-change="handleListColumnVisibilityChange"
       @column-order-change="handleListColumnOrderChange"
       @column-widths-change="handleListColumnWidthsChange"
@@ -838,6 +840,8 @@ const lastTraceId = ref('');
 const records = ref<Array<Record<string, unknown>>>([]);
 const listTotalCount = ref<number | null>(null);
 const listOffset = ref(0);
+const listLimitOverride = ref(0);
+const listAggregates = ref<Record<string, Record<string, unknown>>>({});
 const projectScopeTotals = ref<{ all: number; active: number; archived: number } | null>(null);
 const projectScopeMetrics = ref<{ warning: number; done: number; amount: number } | null>(null);
 const searchTerm = ref('');
@@ -2073,6 +2077,7 @@ const {
     groupPageOffsetsRef: groupPageOffsets,
     collapsedGroupKeysRef: collapsedGroupKeys,
     listTotalCountRef: listTotalCount,
+    listAggregatesRef: listAggregates,
     projectScopeTotalsRef: projectScopeTotals,
     projectScopeMetricsRef: projectScopeMetrics,
     recordsRef: records,
@@ -2283,7 +2288,7 @@ const {
       listOffset: listOffset.value,
       groupWindowOffset: groupWindowOffset.value,
       groupSampleLimit: groupSampleLimit.value,
-      contractLimit: contractLimit.value,
+      contractLimit: listLimitOverride.value > 0 ? listLimitOverride.value : contractLimit.value,
       groupPageOffsets: groupPageOffsets.value,
     }),
     applyLoadRequestBlocked,
@@ -2435,6 +2440,16 @@ watch(
 
 function handleListPageChange(offset: number): void {
   listOffset.value = Math.max(0, Math.trunc(Number(offset || 0)));
+  clearSelection();
+  void requestLoadPage();
+}
+
+function handleListPageLimitChange(limit: number): void {
+  const normalized = Math.min(Math.max(Math.trunc(Number(limit || 0)), 1), 200);
+  if (!Number.isFinite(normalized) || normalized <= 0) return;
+  listLimitOverride.value = normalized;
+  contractLimit.value = normalized;
+  listOffset.value = 0;
   clearSelection();
   void requestLoadPage();
 }

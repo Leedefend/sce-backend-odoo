@@ -106,6 +106,7 @@ type ApplyLoadSuccessOptions = {
   groupPageOffsetsRef: { value: Record<string, number> };
   collapsedGroupKeysRef: { value: string[] };
   listTotalCountRef: { value: number | null };
+  listAggregatesRef?: { value: Record<string, Record<string, unknown>> };
   projectScopeTotalsRef: { value: Record<string, number> };
   projectScopeMetricsRef: { value: Array<Record<string, unknown>> };
   recordsRef: { value: Array<Record<string, unknown>> };
@@ -175,6 +176,12 @@ export function useActionViewLoadSuccessRuntime() {
     const resultData = pagingState.resultData;
     const listTotalState = options.resolveLoadListTotalApplyState({ resultData, readTotalFromListResultFn: options.readTotalFromListResult });
     options.listTotalCountRef.value = listTotalState.listTotalCount;
+    if (options.listAggregatesRef) {
+      const aggregates = resultData.aggregates && typeof resultData.aggregates === 'object'
+        ? resultData.aggregates as Record<string, Record<string, unknown>>
+        : {};
+      options.listAggregatesRef.value = aggregates;
+    }
 
     const projectScopeState = await options.resolveLoadSuccessProjectScopeApplyState({
       pageMode: options.pageMode,
