@@ -7,6 +7,11 @@ from uuid import uuid4
 
 from odoo import fields
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_core.core.project_context import (
+    project_scope_denied_response,
+    record_in_project_scope,
+    selected_project_id_from_context,
+)
 from odoo.exceptions import AccessError, UserError
 from odoo.addons.smart_construction_core.handlers.reason_codes import (
     REASON_DONE,
@@ -42,6 +47,11 @@ class MyWorkCompleteHandler(BaseIntentHandler):
         note = str(params.get("note") or "").strip()
         try:
             activity_id = _coerce_activity_id(item_id)
+            _assert_activity_project_scope(
+                self.env,
+                activity_id=activity_id,
+                project_id=selected_project_id_from_context(params, self.context if isinstance(self.context, dict) else {}),
+            )
             _complete_activity(self.env, source=source, activity_id=activity_id, note=note)
             data = {
                 "id": activity_id,
@@ -240,6 +250,11 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
         for raw_id in execute_ids:
             try:
                 activity_id = _coerce_activity_id(raw_id)
+                _assert_activity_project_scope(
+                    self.env,
+                    activity_id=activity_id,
+                    project_id=selected_project_id_from_context(params, self.context if isinstance(self.context, dict) else {}),
+                )
                 _complete_activity(self.env, source=source, activity_id=activity_id, note=note)
                 completed.append(activity_id)
             except Exception as exc:
@@ -336,6 +351,22 @@ def _complete_activity(env, *, source, activity_id, note):
         raise AccessError("只能完成分配给自己的待办")
     feedback = note or "Completed from my-work."
     activity.action_feedback(feedback=feedback)
+
+
+def _assert_activity_project_scope(env, *, activity_id, project_id):
+    if not int(project_id or 0):
+        return
+    Activity = env["mail.activity"]
+    activity = Activity.browse(int(activity_id or 0)).exists()
+    if not activity:
+        return
+    model_name = str(getattr(activity, "res_model", "") or "").strip()
+    record_id = int(getattr(activity, "res_id", 0) or 0)
+    if not model_name or not record_id or model_name not in env:
+        return
+    in_scope, scope_meta = record_in_project_scope(env[model_name], record_id, int(project_id))
+    if not in_scope:
+        raise AccessError((project_scope_denied_response(scope_meta).get("error") or {}).get("message"))
 
 
 def _safe_int(value):

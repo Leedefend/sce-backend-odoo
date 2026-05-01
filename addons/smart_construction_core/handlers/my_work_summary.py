@@ -5,6 +5,10 @@ import re
 
 from odoo import fields
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_core.core.project_context import (
+    record_in_project_scope,
+    selected_project_id_from_context,
+)
 from odoo.addons.smart_core.utils.reason_codes import (
     REASON_ACTIVITY_PENDING,
     REASON_FILTER_NO_MATCH,
@@ -121,10 +125,12 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         return result
 
     def _attach_targets(self, rows):
-        attached = list(rows or [])
-        for row in attached:
+        attached = []
+        for row in list(rows or []):
             model = str(row.get("model") or "").strip()
             record_id = self._coerce_record_id(row.get("record_id"))
+            if not self._row_in_current_project_scope(model, record_id):
+                continue
             action_ctx = self._resolve_action_context_for_model(model)
             action_id = int(action_ctx.get("action_id") or 0)
             menu_id = int(action_ctx.get("menu_id") or 0)
@@ -146,6 +152,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             complete_action = self._complete_action(row)
             if complete_action:
                 row["complete_action"] = complete_action
+            attached.append(row)
         return attached
 
     def _can_complete(self, row):
@@ -203,6 +210,26 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             return int(value or 0)
         except Exception:
             return 0
+
+    def _current_project_id(self):
+        return int(getattr(self, "_current_project_scope_id", 0) or 0)
+
+    def _row_in_current_project_scope(self, model_name, record_id):
+        project_id = self._current_project_id()
+        if not project_id:
+            return True
+        model = str(model_name or "").strip()
+        rid = int(record_id or 0)
+        if not model or not rid:
+            return True
+        Model = self._get_model(model, sudo=True)
+        if Model is None:
+            return True
+        try:
+            in_scope, _meta = record_in_project_scope(Model, rid, project_id)
+            return bool(in_scope)
+        except Exception:
+            return False
 
     def _safe_record_title(self, model_name, record_id, fallback):
         model = str(model_name or "").strip()
@@ -466,7 +493,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
 
     def _load_project_execution_items(self, user, limit):
         try:
-            service = ProjectExecutionItemProjectionService(self.env)
+            service = ProjectExecutionItemProjectionService(self.env, context={"current_project_id": self._current_project_id()})
             rows = service.user_items(user, limit=limit)
         except Exception:
             rows = []
@@ -621,6 +648,14 @@ class MyWorkSummaryHandler(BaseIntentHandler):
     def handle(self, payload=None, ctx=None):
         raw_payload = payload or self.params or {}
         params = raw_payload.get("params") if isinstance(raw_payload, dict) and isinstance(raw_payload.get("params"), dict) else raw_payload
+        context = {}
+        if isinstance(self.context, dict):
+            context.update(self.context)
+        if isinstance(raw_payload, dict) and isinstance(raw_payload.get("context"), dict):
+            context.update(raw_payload.get("context") or {})
+        if isinstance(params, dict) and isinstance(params.get("context"), dict):
+            context.update(params.get("context") or {})
+        self._current_project_scope_id = selected_project_id_from_context(params, context)
         user = self.env.user
         partner = user.partner_id
         limit = self._normalize_limit(params.get("limit"), default=20, max_value=100)
@@ -680,6 +715,16 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         self._append_items(items, "owned", self._load_owned_items(user, limit_each))
         self._append_items(items, "mentions", self._load_mention_items(partner, limit_each))
         self._append_items(items, "following", self._load_following_items(partner, limit_each))
+        if self._current_project_id():
+            section_counts_actual = {}
+            for item in items:
+                section_key = str(item.get("section") or "").strip()
+                if section_key:
+                    section_counts_actual[section_key] = int(section_counts_actual.get(section_key, 0)) + 1
+            todo_count = int(section_counts_actual.get("todo", 0))
+            responsible_count = int(section_counts_actual.get("owned", 0))
+            mentioned_count = int(section_counts_actual.get("mentions", 0))
+            following_count = int(section_counts_actual.get("following", 0))
         total_before_filter = len(items)
         facets = self._build_facets(items)
         section_scope_items = self._apply_filters(
@@ -760,5 +805,12 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             ),
             "visibility": visibility,
         }
-        meta = {"intent": self.INTENT_TYPE}
+        meta = {
+            "intent": self.INTENT_TYPE,
+            "project_scope": {
+                "enabled": bool(self._current_project_id()),
+                "project_id": self._current_project_id() or None,
+                "applied": bool(self._current_project_id()),
+            },
+        }
         return {"ok": True, "data": data, "meta": meta}
