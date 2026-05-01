@@ -166,6 +166,7 @@ export interface AppInitResponse {
     scene_candidates?: string[];
     menu_xmlids?: string[];
   }>;
+  project_context?: ProjectContextContract;
   user: {
     id: number;
     name: string;
@@ -223,6 +224,40 @@ export interface AppInitResponse {
   }>;
   feature_flags?: Record<string, unknown>;
   meta?: Record<string, unknown>;
+}
+
+export interface ProjectContextOption {
+  id: number;
+  name?: string;
+  display_name?: string;
+  code?: string;
+  stage?: string;
+  active?: boolean;
+}
+
+export interface ProjectContextContract {
+  contract_version?: string;
+  enabled?: boolean;
+  source?: string;
+  model?: string;
+  selected?: ProjectContextOption | null;
+  options?: ProjectContextOption[];
+  total?: number;
+  query?: string;
+  reason_code?: string;
+  message?: string;
+  selector?: {
+    intent?: string;
+    search_param?: string;
+    selected_id_param?: string;
+    limit?: number;
+    label?: string;
+    placeholder?: string;
+  };
+  persistence?: {
+    scope?: string;
+    server_preference?: boolean;
+  };
 }
 
 export interface ApiDataListResult {

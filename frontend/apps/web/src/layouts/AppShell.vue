@@ -17,6 +17,56 @@
 
       <p class="enterprise-line">当前企业：{{ enterpriseLabel }}</p>
 
+      <div class="project-context" :class="{ 'project-context--disabled': !projectContextEnabled }">
+        <div class="project-trigger-row">
+          <button
+            class="project-trigger"
+            type="button"
+            :disabled="!projectContextEnabled"
+            @click.stop="toggleProjectMenu"
+          >
+            <span>当前项目：</span>
+            <strong>{{ currentProjectLabel }}</strong>
+          </button>
+          <button
+            v-if="selectedProject"
+            class="project-clear-inline"
+            type="button"
+            title="清除当前项目，显示全部项目"
+            aria-label="清除当前项目，显示全部项目"
+            @click.stop="clearProjectSelection"
+          >
+            ×
+          </button>
+        </div>
+        <div v-if="projectMenuOpen && projectContextEnabled" class="project-dropdown" @click.stop>
+          <input
+            v-model="projectSearch"
+            class="project-search"
+            type="search"
+            :placeholder="projectSearchPlaceholder"
+            @input="queueProjectSearch"
+            @keydown.enter.prevent="selectFirstProject"
+          />
+          <div class="project-options">
+            <button
+              v-for="option in projectOptions"
+              :key="`project-${option.id}`"
+              class="project-option"
+              :class="{ active: option.id === selectedProject?.id }"
+              type="button"
+              @click="selectProject(option)"
+            >
+              <span>{{ projectOptionLabel(option) }}</span>
+              <small v-if="option.code">{{ option.code }}</small>
+            </button>
+            <p v-if="projectSearching" class="project-empty">搜索中...</p>
+            <p v-else-if="projectError" class="project-empty">{{ projectError }}</p>
+            <p v-else-if="!projectOptions.length" class="project-empty">无匹配项目</p>
+          </div>
+        </div>
+      </div>
+
       <div class="role-surface">
         <p class="role-label">当前角色：{{ roleLabel }}</p>
         <div class="role-actions">
@@ -135,7 +185,7 @@ import { resolveMenuAction } from '../app/resolvers/menuResolver';
 import { isDeliveryModeEnabled, isHudEnabled } from '../config/debug';
 import { normalizeLegacyWorkbenchPath, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { buildRuntimeNavigationRegistry } from '../app/navigationRegistry';
-import type { NavNode } from '@sc/schema';
+import type { NavNode, ProjectContextOption } from '@sc/schema';
 import {
   exportSuggestedActionTraces,
   getLatestSuggestedActionTrace,
@@ -149,6 +199,7 @@ type SceneAwareNavNode = NavNode & {
   scene_key?: string;
   sceneKey?: string;
 };
+const PROJECT_CONTEXT_CHANGED_EVENT = 'sc:project-context-changed';
 
 function asDict(value: unknown): UnknownDict | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -195,6 +246,11 @@ const session = useSessionStore();
 const route = useRoute();
 const router = useRouter();
 const query = ref('');
+const projectMenuOpen = ref(false);
+const projectSearch = ref('');
+const projectSearching = ref(false);
+const projectError = ref('');
+let projectSearchTimer: ReturnType<typeof setTimeout> | null = null;
 
 const menuTree = computed(() => session.menuTree);
 const roleSurface = computed(() => session.roleSurface);
@@ -240,6 +296,21 @@ const roleLabel = computed(() => {
   if (code) return normalizeDeliveryText(code.toUpperCase());
   return '负责人';
 });
+const projectContext = computed(() => session.projectContext);
+const projectContextEnabled = computed(() => Boolean(projectContext.value?.enabled));
+const selectedProject = computed(() => projectContext.value?.selected ?? null);
+const projectOptions = computed(() => projectContext.value?.options ?? []);
+const currentProjectLabel = computed(() => {
+  if (!projectContextEnabled.value) {
+    return projectContext.value?.message || '未启用';
+  }
+  const selected = selectedProject.value;
+  if (!selected) return '全部项目';
+  return projectOptionLabel(selected);
+});
+const projectSearchPlaceholder = computed(() =>
+  String(projectContext.value?.selector?.placeholder || '搜索项目名称').trim() || '搜索项目名称',
+);
 const roleLandingPath = computed(() => session.resolveLandingPath('/'));
 const capabilities = computed(() => session.capabilities);
 const initMeta = computed(() => asDict(session.initMeta));
@@ -346,6 +417,61 @@ function resolveDeliveryRoleLabel(roleLabelRaw: string, roleCodeRaw: string) {
   if (/ops|operation/.test(code)) return '运维专员';
   if (/admin/.test(code)) return '系统管理员';
   return normalizedLabel || '负责人';
+}
+
+function projectOptionLabel(option: ProjectContextOption | null | undefined) {
+  if (!option) return '';
+  return String(option.display_name || option.name || `项目 ${option.id}`).trim();
+}
+
+async function loadProjectOptions() {
+  if (!projectContextEnabled.value) return;
+  projectSearching.value = true;
+  projectError.value = '';
+  try {
+    await session.searchProjectContext(projectSearch.value);
+  } catch (err) {
+    projectError.value = err instanceof Error ? err.message : '项目搜索失败';
+  } finally {
+    projectSearching.value = false;
+  }
+}
+
+function queueProjectSearch() {
+  if (projectSearchTimer) {
+    clearTimeout(projectSearchTimer);
+  }
+  projectSearchTimer = setTimeout(() => {
+    void loadProjectOptions();
+  }, 260);
+}
+
+async function toggleProjectMenu() {
+  if (!projectContextEnabled.value) return;
+  projectMenuOpen.value = !projectMenuOpen.value;
+  if (projectMenuOpen.value) {
+    projectSearch.value = '';
+    await loadProjectOptions();
+  }
+}
+
+async function selectProject(option: ProjectContextOption) {
+  projectMenuOpen.value = false;
+  await session.selectProjectContext(option);
+  emitProjectContextChanged();
+}
+
+async function clearProjectSelection() {
+  projectMenuOpen.value = false;
+  await session.selectProjectContext(null);
+  emitProjectContextChanged();
+}
+
+async function selectFirstProject() {
+  const first = projectOptions.value[0];
+  if (first) {
+    await selectProject(first);
+  }
 }
 
 function resolveActionBusinessTitle(action: unknown) {
@@ -589,6 +715,19 @@ function handleTraceUpdate() {
   suggestedActionStamp.value = Date.now();
 }
 
+function closeProjectMenu() {
+  projectMenuOpen.value = false;
+}
+
+function emitProjectContextChanged() {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(PROJECT_CONTEXT_CHANGED_EVENT, {
+    detail: {
+      selected_project_id: selectedProject.value?.id || null,
+    },
+  }));
+}
+
 function downloadTextAsFile(filename: string, content: string, mimeType = 'application/json') {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
@@ -629,12 +768,18 @@ onMounted(() => {
   showExtractionStats.value = String(route.query.hud_stats || '').trim() === '1';
   if (typeof window === 'undefined') return;
   window.addEventListener(getTraceUpdateEventName(), handleTraceUpdate as (event: Event) => void);
+  window.addEventListener('click', closeProjectMenu);
   handleTraceUpdate();
 });
 
 onUnmounted(() => {
   if (typeof window === 'undefined') return;
   window.removeEventListener(getTraceUpdateEventName(), handleTraceUpdate as (event: Event) => void);
+  window.removeEventListener('click', closeProjectMenu);
+  if (projectSearchTimer) {
+    clearTimeout(projectSearchTimer);
+    projectSearchTimer = null;
+  }
 });
 
 function findMenuPath(nodes: NavNode[], menuId?: number): NavNode[] {
@@ -840,7 +985,7 @@ async function logout() {
 .sidebar {
   padding: 18px 14px 14px;
   display: grid;
-  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
   gap: 10px;
   border-right: 1px solid #e5e7eb;
   background: transparent;
@@ -864,11 +1009,10 @@ async function logout() {
 
 .enterprise-line {
   margin: 0;
-  padding: 0 2px 6px;
+  padding: 0 2px;
   font-size: 12px;
   font-weight: 500;
   color: #64748b;
-  border-bottom: 1px solid #e5e7eb;
 }
 
 .logo {
@@ -930,6 +1074,155 @@ async function logout() {
   background: transparent;
   display: grid;
   gap: 6px;
+}
+
+.project-context {
+  position: relative;
+  padding: 0 0 6px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.project-trigger-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.project-trigger {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0 2px;
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.project-trigger span {
+  flex: 0 0 auto;
+}
+
+.project-trigger strong {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.project-trigger:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.project-clear-inline {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  border: 1px solid #cbd5e1;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.project-clear-inline:hover {
+  border-color: #94a3b8;
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+.project-dropdown {
+  position: absolute;
+  z-index: 30;
+  top: 24px;
+  left: 0;
+  right: 0;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.16);
+}
+
+.project-search {
+  width: 100%;
+  border: 1px solid #dbe3ef;
+  border-radius: 6px;
+  padding: 7px 8px;
+  font-size: 12px;
+  color: #0f172a;
+}
+
+.project-options {
+  display: grid;
+  gap: 2px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.project-option {
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  padding: 7px 8px;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  cursor: pointer;
+  color: #334155;
+}
+
+.project-option:hover,
+.project-option.active {
+  background: #eef2ff;
+  color: #1e3a8a;
+}
+
+.project-option span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.project-option small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.project-empty {
+  margin: 0;
+  padding: 8px;
+  color: #94a3b8;
+  font-size: 12px;
 }
 
 .role-label {

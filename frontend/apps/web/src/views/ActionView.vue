@@ -798,6 +798,7 @@ import { useActionPageModel } from '../app/assemblers/action/useActionPageModel'
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
+const PROJECT_CONTEXT_CHANGED_EVENT = 'sc:project-context-changed';
 const {
   resolveSceneCode,
   resolveNodeSceneKey,
@@ -2662,9 +2663,15 @@ onMounted(async () => {
   renderErrorMessage.value = '';
   applyRoutePreset();
   await requestLoadPage();
+  if (typeof window !== 'undefined') {
+    window.addEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
+  }
 });
 
 onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
+  }
   if (listColumnSaveStatusTimer) {
     window.clearTimeout(listColumnSaveStatusTimer);
     listColumnSaveStatusTimer = null;
@@ -2688,6 +2695,24 @@ watch(
     void requestLoadPage();
   },
 );
+
+watch(
+  () => Number(session.projectContext?.selected?.id || 0),
+  () => {
+    refreshForProjectContextChange();
+  },
+);
+
+function handleProjectContextChanged(): void {
+  refreshForProjectContextChange();
+}
+
+function refreshForProjectContextChange(): void {
+  renderErrorMessage.value = '';
+  listOffset.value = 0;
+  clearSelection();
+  void requestLoadPage();
+}
 </script>
 
 <style scoped>

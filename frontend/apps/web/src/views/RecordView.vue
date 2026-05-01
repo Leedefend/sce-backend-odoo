@@ -180,7 +180,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { readRecordRaw, writeRecordV6Raw } from '../api/data';
 import { ApiError } from '../api/client';
@@ -327,6 +327,7 @@ const requestedSourceMode = computed(() => (
   requestedSurface.value === 'native' ? 'native_parser' : 'governance_pipeline'
 ));
 const session = useSessionStore();
+const PROJECT_CONTEXT_CHANGED_EVENT = 'sc:project-context-changed';
 const pageContract = usePageContract('record');
 const pageText = pageContract.text;
 const pageSectionEnabled = pageContract.sectionEnabled;
@@ -1046,7 +1047,22 @@ async function executeHeaderAction(actionKey: string) {
   }
 }
 
-onMounted(load);
+onMounted(() => {
+  void load();
+  if (typeof window !== 'undefined') {
+    window.addEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
+  }
+});
+
+onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
+  }
+});
+
+function handleProjectContextChanged(): void {
+  void load();
+}
 </script>
 
 <style scoped>

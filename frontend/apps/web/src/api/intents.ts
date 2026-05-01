@@ -61,6 +61,38 @@ function buildHeaders(intent: string, traceId: string) {
   return headers;
 }
 
+function withCurrentProjectContext(session: ReturnType<typeof useSessionStore>, payload: IntentPayload): IntentPayload {
+  const intent = String(payload.intent || '').trim();
+  const skip = new Set(['login', 'auth.login', 'auth.logout', 'session.bootstrap', 'sys.intents', 'project.context.search']);
+  const projectId = Number(session.projectContext?.selected?.id || 0);
+  if (!projectId || skip.has(intent)) {
+    return payload;
+  }
+  const context = {
+    ...(payload.context || {}),
+    current_project_id: projectId,
+  };
+  const params = (payload.params && typeof payload.params === 'object' && !Array.isArray(payload.params))
+    ? { ...(payload.params as Record<string, unknown>) }
+    : payload.params;
+  if (params && typeof params === 'object' && !Array.isArray(params)) {
+    const paramsRecord = params as Record<string, unknown>;
+    const paramsContext = (paramsRecord.context && typeof paramsRecord.context === 'object' && !Array.isArray(paramsRecord.context))
+      ? paramsRecord.context as Record<string, unknown>
+      : {};
+    paramsRecord.context = {
+      ...paramsContext,
+      current_project_id: projectId,
+    };
+    paramsRecord.current_project_id = projectId;
+  }
+  return {
+    ...payload,
+    context,
+    params,
+  };
+}
+
 function generateTraceId() {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID();
@@ -98,42 +130,43 @@ function throwEnvelopeError(
 export async function intentRequest<T>(payload: IntentPayload) {
   const traceId = generateTraceId();
   const session = useSessionStore();
+  const effectivePayload = withCurrentProjectContext(session, payload);
   const startedAt = Date.now();
-  enforceStartupChainOrThrow(session, payload);
+  enforceStartupChainOrThrow(session, effectivePayload);
   try {
     const response = await apiRequestRaw<IntentEnvelope<T>>('/api/v1/intent', {
       method: 'POST',
-      headers: buildHeaders(payload.intent, traceId),
-      body: JSON.stringify(payload),
+      headers: buildHeaders(effectivePayload.intent, traceId),
+      body: JSON.stringify(effectivePayload),
     });
     const resolvedTrace = response.traceId || traceId;
     session.recordIntentTrace({
       traceId: resolvedTrace,
-      intent: payload.intent,
+      intent: effectivePayload.intent,
       latencyMs: Date.now() - startedAt,
-      writeMode: payload.intent.includes('write') || payload.intent.includes('create') ? 'write' : 'read',
+      writeMode: effectivePayload.intent.includes('write') || effectivePayload.intent.includes('create') ? 'write' : 'read',
     });
 
     const parsed = parseIntentEnvelope<T>(response.body);
     const envelopeTrace = resolveEnvelopeTraceId(parsed.meta, resolvedTrace);
     if (!parsed.ok) {
-      throwEnvelopeError(payload, envelopeTrace, parsed.error);
+      throwEnvelopeError(effectivePayload, envelopeTrace, parsed.error);
     }
     // eslint-disable-next-line no-console
-    console.info(`[trace] intent=${payload.intent} status=ok trace=${envelopeTrace}`);
+    console.info(`[trace] intent=${effectivePayload.intent} status=ok trace=${envelopeTrace}`);
     return parsed.data;
   } catch (err) {
     const errorTrace = err instanceof ApiError ? err.traceId || traceId : traceId;
     session.recordIntentTrace({
       traceId: errorTrace,
-      intent: payload.intent,
+      intent: effectivePayload.intent,
       latencyMs: Date.now() - startedAt,
-      writeMode: payload.intent.includes('write') || payload.intent.includes('create') ? 'write' : 'read',
+      writeMode: effectivePayload.intent.includes('write') || effectivePayload.intent.includes('create') ? 'write' : 'read',
     });
     // eslint-disable-next-line no-console
-    if (!payload.silentErrors) {
+    if (!effectivePayload.silentErrors) {
       // eslint-disable-next-line no-console
-      console.warn(`[trace] intent=${payload.intent} status=error trace=${errorTrace}`);
+      console.warn(`[trace] intent=${effectivePayload.intent} status=error trace=${errorTrace}`);
     }
     throw err;
   }
@@ -142,25 +175,26 @@ export async function intentRequest<T>(payload: IntentPayload) {
 export async function intentRequestRaw<T>(payload: IntentPayload) {
   const traceId = generateTraceId();
   const session = useSessionStore();
+  const effectivePayload = withCurrentProjectContext(session, payload);
   const startedAt = Date.now();
-  enforceStartupChainOrThrow(session, payload);
+  enforceStartupChainOrThrow(session, effectivePayload);
   const response = await apiRequestRaw<IntentEnvelope<T>>('/api/v1/intent', {
     method: 'POST',
-    headers: buildHeaders(payload.intent, traceId),
-    body: JSON.stringify(payload),
+    headers: buildHeaders(effectivePayload.intent, traceId),
+    body: JSON.stringify(effectivePayload),
   });
   const resolvedTrace = response.traceId || traceId;
   session.recordIntentTrace({
     traceId: resolvedTrace,
-    intent: payload.intent,
+    intent: effectivePayload.intent,
     latencyMs: Date.now() - startedAt,
-    writeMode: payload.intent.includes('write') || payload.intent.includes('create') ? 'write' : 'read',
+    writeMode: effectivePayload.intent.includes('write') || effectivePayload.intent.includes('create') ? 'write' : 'read',
   });
 
   const parsed = parseIntentEnvelope<T>(response.body);
   const envelopeTrace = resolveEnvelopeTraceId(parsed.meta, resolvedTrace);
   if (!parsed.ok) {
-    throwEnvelopeError(payload, envelopeTrace, parsed.error);
+    throwEnvelopeError(effectivePayload, envelopeTrace, parsed.error);
   }
   const result: IntentRawResult<T> = {
     data: parsed.data,
