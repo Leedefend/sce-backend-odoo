@@ -183,6 +183,10 @@
             </button>
           </header>
           <table v-if="!isGroupCollapsed(group.key)">
+            <colgroup>
+              <col class="col-row-number" />
+              <col v-for="col in displayedColumns" :key="`group-col-width-${group.key}-${col}`" :style="columnWidthStyle(col)" />
+            </colgroup>
             <thead>
               <tr>
                 <th class="cell-row-number">{{ uiLabel('row_number', '序号') }}</th>
@@ -192,6 +196,7 @@
                   class="cell-sortable"
                   :class="{ 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col }"
                   :data-column="col"
+                  :style="columnWidthStyle(col)"
                   draggable="true"
                   @dragstart="onColumnDragStart(col, $event)"
                   @dragover="onColumnDragOver(col, $event)"
@@ -208,6 +213,15 @@
                     <span>{{ columnLabel(col) }}</span>
                     <span class="sort-indicator" aria-hidden="true">{{ columnSortIndicator(col) }}</span>
                   </button>
+                  <button
+                    type="button"
+                    class="column-resize-handle"
+                    :title="uiLabel('column_resize', '调整列宽')"
+                    draggable="false"
+                    @click.stop
+                    @dragstart.stop.prevent
+                    @mousedown.stop.prevent="startColumnResize(col, $event)"
+                  ></button>
                 </th>
               </tr>
             </thead>
@@ -215,10 +229,14 @@
               <tr
                 v-for="(row, index) in group.sampleRows"
                 :key="`group-row-${group.key}-${String(row.id ?? index)}`"
-                @click="handleRow(row)"
+                @click="handleRowClick(row, $event)"
               >
                 <td class="cell-row-number">{{ groupedRowNumber(group.key, index) }}</td>
-                <td v-for="col in displayedColumns" :key="`group-cell-${group.key}-${String(row.id ?? index)}-${col}`">
+                <td
+                  v-for="col in displayedColumns"
+                  :key="`group-cell-${group.key}-${String(row.id ?? index)}-${col}`"
+                  :style="columnWidthStyle(col)"
+                >
                   <button
                     v-if="isFavoriteColumn(col)"
                     type="button"
@@ -246,6 +264,12 @@
         </article>
       </section>
 	      <table v-if="!showGroupedRows">
+        <colgroup>
+          <col class="col-row-number" />
+          <col v-if="showSelectionColumn" class="col-select" />
+          <col v-for="col in displayedColumns" :key="`col-width-${col}`" :style="columnWidthStyle(col)" />
+          <col v-if="columnChoices.length" class="col-column-picker" />
+        </colgroup>
         <thead>
           <tr>
             <th class="cell-row-number">{{ uiLabel('row_number', '序号') }}</th>
@@ -264,6 +288,7 @@
               class="cell-sortable"
               :class="{ 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col }"
               :data-column="col"
+              :style="columnWidthStyle(col)"
               draggable="true"
               @dragstart="onColumnDragStart(col, $event)"
               @dragover="onColumnDragOver(col, $event)"
@@ -280,6 +305,15 @@
                 <span>{{ columnLabel(col) }}</span>
                 <span class="sort-indicator" aria-hidden="true">{{ columnSortIndicator(col) }}</span>
               </button>
+              <button
+                type="button"
+                class="column-resize-handle"
+                :title="uiLabel('column_resize', '调整列宽')"
+                draggable="false"
+                @click.stop
+                @dragstart.stop.prevent
+                @mousedown.stop.prevent="startColumnResize(col, $event)"
+              ></button>
             </th>
             <th v-if="columnChoices.length" ref="columnPickerRoot" class="cell-column-picker">
               <button type="button" class="column-picker-btn" :disabled="loading" @click.stop="columnPickerOpen = !columnPickerOpen">
@@ -307,7 +341,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(row, index) in records" :key="String(row.id ?? index)" @click="handleRow(row)">
+          <tr v-for="(row, index) in records" :key="String(row.id ?? index)" @click="handleRowClick(row, $event)">
             <td class="cell-row-number">{{ flatRowNumber(index) }}</td>
             <td v-if="showSelectionColumn" class="cell-select" @click.stop>
               <input
@@ -318,7 +352,7 @@
                 @change="onRowCheckboxChange(row, $event)"
               />
             </td>
-            <td v-for="col in displayedColumns" :key="col">
+            <td v-for="col in displayedColumns" :key="col" :style="columnWidthStyle(col)">
               <button
                 v-if="isFavoriteColumn(col)"
                 type="button"
@@ -468,6 +502,7 @@ const props = defineProps<{
   columnOptions?: ColumnOption[];
   columnVisibility?: Record<string, boolean>;
   columnOrder?: string[];
+  columnWidths?: Record<string, number>;
   columnSaveStatus?: 'idle' | 'saving' | 'saved' | 'error';
   uiLabels?: Record<string, string>;
   enableSummaryStrip?: boolean;
@@ -526,6 +561,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'column-visibility-change': [payload: { visibility: Record<string, boolean> }];
   'column-order-change': [payload: { columnOrder: string[] }];
+  'column-widths-change': [payload: { columnWidths: Record<string, number> }];
 }>();
 function uiLabel(key: string, fallback: string, vars: Record<string, string | number> = {}) {
   const candidate = String(props.uiLabels?.[key] || '').trim();
@@ -553,6 +589,10 @@ const observedListLimit = ref(0);
 const columnPickerRoot = ref<HTMLElement | null>(null);
 const columnPickerOpen = ref(false);
 const draggingColumn = ref('');
+const resizingColumn = ref('');
+const resizeStartX = ref(0);
+const resizeStartWidth = ref(0);
+const draftColumnWidths = ref<Record<string, number>>({});
 const columnSaveStatus = computed(() => props.columnSaveStatus || 'idle');
 const columnSaveStatusText = computed(() => {
   if (columnSaveStatus.value === 'saving') return uiLabel('column_saving', '保存中');
@@ -882,6 +922,19 @@ function handleRow(row: Record<string, unknown>) {
   props.onRowClick(row);
 }
 
+function hasActiveTextSelection() {
+  return Boolean(window.getSelection?.()?.toString().trim());
+}
+
+function isInteractiveTarget(target: EventTarget | null) {
+  return Boolean((target as HTMLElement | null)?.closest('button,input,select,textarea,a,[role="button"]'));
+}
+
+function handleRowClick(row: Record<string, unknown>, event: MouseEvent) {
+  if (event.defaultPrevented || hasActiveTextSelection() || isInteractiveTarget(event.target)) return;
+  handleRow(row);
+}
+
 function rowId(row: Record<string, unknown>) {
   const value = row?.id;
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -1146,6 +1199,10 @@ function toggleColumnSort(col: string) {
 }
 
 function onColumnDragStart(col: string, event: DragEvent) {
+  if (resizingColumn.value) {
+    event.preventDefault();
+    return;
+  }
   if (!displayedColumns.value.includes(col)) return;
   draggingColumn.value = col;
   event.dataTransfer?.setData('text/plain', col);
@@ -1175,6 +1232,59 @@ function onColumnDrop(target: string, event: DragEvent) {
 
 function onColumnDragEnd() {
   draggingColumn.value = '';
+}
+
+function normalizeColumnWidth(value: unknown) {
+  const parsed = Number(value || 0);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 0;
+  return Math.min(Math.max(Math.trunc(parsed), 80), 640);
+}
+
+watch(
+  () => props.columnWidths,
+  (value) => {
+    draftColumnWidths.value = Object.entries(value || {}).reduce<Record<string, number>>((acc, [name, width]) => {
+      const normalizedName = String(name || '').trim();
+      const normalizedWidth = normalizeColumnWidth(width);
+      if (normalizedName && normalizedWidth) acc[normalizedName] = normalizedWidth;
+      return acc;
+    }, {});
+  },
+  { immediate: true },
+);
+
+function effectiveColumnWidth(field: string) {
+  return normalizeColumnWidth(draftColumnWidths.value[field] || props.columnWidths?.[field]);
+}
+
+function columnWidthStyle(field: string) {
+  const width = effectiveColumnWidth(field);
+  return width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : {};
+}
+
+function startColumnResize(field: string, event: MouseEvent) {
+  const header = (event.currentTarget as HTMLElement | null)?.closest('th');
+  resizingColumn.value = field;
+  resizeStartX.value = event.clientX;
+  resizeStartWidth.value = effectiveColumnWidth(field) || Math.trunc(header?.getBoundingClientRect().width || 160);
+  window.addEventListener('mousemove', onColumnResizeMove);
+  window.addEventListener('mouseup', stopColumnResize, { once: true });
+}
+
+function onColumnResizeMove(event: MouseEvent) {
+  const field = resizingColumn.value;
+  if (!field) return;
+  const nextWidth = normalizeColumnWidth(resizeStartWidth.value + event.clientX - resizeStartX.value);
+  if (!nextWidth) return;
+  draftColumnWidths.value = { ...draftColumnWidths.value, [field]: nextWidth };
+}
+
+function stopColumnResize() {
+  const field = resizingColumn.value;
+  window.removeEventListener('mousemove', onColumnResizeMove);
+  resizingColumn.value = '';
+  if (!field) return;
+  emit('column-widths-change', { columnWidths: { ...draftColumnWidths.value } });
 }
 
 function columnLabel(col: string) {
@@ -1277,6 +1387,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', handleColumnPickerPointerDown);
+  window.removeEventListener('mousemove', onColumnResizeMove);
 });
 
 </script>
@@ -1777,7 +1888,20 @@ onBeforeUnmount(() => {
 
 table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
+}
+
+.col-row-number {
+  width: 64px;
+}
+
+.col-select {
+  width: 44px;
+}
+
+.col-column-picker {
+  width: 72px;
 }
 
 th,
@@ -1786,6 +1910,11 @@ td {
   border-bottom: 1px solid #e2e8f0;
   text-align: left;
   font-size: 14px;
+}
+
+tbody td {
+  user-select: text;
+  cursor: text;
 }
 
 .cell-select {
@@ -1810,6 +1939,7 @@ thead th {
 }
 
 .cell-sortable {
+  position: relative;
   cursor: grab;
   user-select: none;
 }
@@ -1831,6 +1961,34 @@ thead th {
   font-weight: 700;
   text-align: left;
   cursor: pointer;
+}
+
+.column-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 5;
+  width: 12px;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: col-resize;
+}
+
+.column-resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  right: 5px;
+  width: 1px;
+  height: calc(100% - 20px);
+  background: transparent;
+}
+
+.column-resize-handle:hover::after,
+.cell-sortable.is-dragging .column-resize-handle::after {
+  background: #93c5fd;
 }
 
 .column-sort-btn:hover {

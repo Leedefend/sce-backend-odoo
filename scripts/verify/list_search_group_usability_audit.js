@@ -101,6 +101,7 @@ async function snapshot(page) {
       name: node.getAttribute('data-column') || '',
       label: normalize(node.textContent || ''),
       sorted: node.classList.contains('is-sorted'),
+      width: Math.round(node.getBoundingClientRect().width),
     })).filter((row) => row.name);
     const flatFirstRowCells = Array.from(document.querySelectorAll('section.table > table > tbody > tr:first-child td')).map((node) => normalize(node.textContent || ''));
     const firstGroup = groupedBlocks[0] || null;
@@ -330,6 +331,45 @@ async function dragColumn(page, sourceColumn, targetColumn) {
   }, { sourceColumn, targetColumn });
 }
 
+async function selectFirstBusinessCellText(page) {
+  return page.evaluate(() => {
+    const row = document.querySelector('section.table > table > tbody > tr');
+    const cells = row ? Array.from(row.querySelectorAll('td')) : [];
+    const target = cells.find((cell) => String(cell.textContent || '').trim() && !cell.querySelector('input,button,select,textarea'));
+    if (!target) return { selectedText: '', clicked: false };
+    const textNode = Array.from(target.childNodes).find((node) => node.nodeType === Node.TEXT_NODE && String(node.textContent || '').trim())
+      || target.firstChild;
+    const range = document.createRange();
+    range.selectNodeContents(textNode || target);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    const beforeUrl = window.location.href;
+    target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    return {
+      selectedText: String(selection?.toString() || '').trim(),
+      beforeUrl,
+      afterUrl: window.location.href,
+      clicked: true,
+    };
+  });
+}
+
+async function resizeColumn(page, columnName, delta) {
+  const selector = `section.table > table > thead th.cell-sortable[data-column="${columnName}"] .column-resize-handle`;
+  const handle = page.locator(selector).first();
+  await handle.waitFor({ state: 'visible', timeout: 10000 });
+  const box = await handle.boundingBox();
+  if (!box) return false;
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + delta, y, { steps: 8 });
+  await page.mouse.up();
+  return true;
+}
+
 async function main() {
   fs.mkdirSync(outDir, { recursive: true });
   const browser = await chromium.launch({ headless: true });
@@ -494,6 +534,51 @@ async function main() {
         ? 'pass'
         : 'fail',
       footer_snapshot: footerSnapshot,
+    });
+
+    await openList(page);
+    const beforeTextSelection = await snapshot(page);
+    const selectionResult = await selectFirstBusinessCellText(page);
+    await page.waitForTimeout(300);
+    const afterTextSelection = await snapshot(page);
+    summary.checks.push({
+      path_id: 'LSG-P16',
+      name: 'selecting text in list cells does not trigger row navigation',
+      status: selectionResult.clicked
+        && Boolean(selectionResult.selectedText)
+        && selectionResult.beforeUrl === selectionResult.afterUrl
+        && afterTextSelection.url === beforeTextSelection.url
+        && !afterTextSelection.visible_error
+        ? 'pass'
+        : 'fail',
+      before_selection: beforeTextSelection,
+      selection_result: selectionResult,
+      after_selection: afterTextSelection,
+    });
+
+    await openList(page);
+    const beforeResize = await snapshot(page);
+    const resizeColumnSpec = (beforeResize.sortable_columns || [])[0];
+    let resizePerformed = false;
+    let afterResize = null;
+    if (resizeColumnSpec) {
+      resizePerformed = await resizeColumn(page, resizeColumnSpec.name, 80);
+      await page.waitForTimeout(900);
+      afterResize = await snapshot(page);
+    }
+    summary.checks.push({
+      path_id: 'LSG-P17',
+      name: 'dragging a column resize handle changes the visible column width',
+      status: resizeColumnSpec
+        && resizePerformed
+        && afterResize
+        && (afterResize.sortable_columns || []).some((row) => row.name === resizeColumnSpec.name && row.width >= resizeColumnSpec.width + 40)
+        && !afterResize.visible_error
+        ? 'pass'
+        : 'fail',
+      resize_column: resizeColumnSpec,
+      before_resize: beforeResize,
+      after_resize: afterResize,
     });
 
     const groupLabel = await applyFirstGroup(page);

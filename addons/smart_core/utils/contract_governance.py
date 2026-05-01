@@ -1976,6 +1976,7 @@ def _apply_standard_search_toolbar_labels(data: dict) -> None:
         "group_view_all": "查看全部",
         "group_page_info": "第 {current} / {total} 页 · {range}",
         "column_picker": "列",
+        "column_resize": "调整列宽",
         "column_reset": "恢复默认",
         "column_saving": "保存中",
         "column_saved": "已保存",

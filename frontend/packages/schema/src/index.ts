@@ -314,6 +314,7 @@ export interface UserViewPreferenceContract {
     visible_columns?: string[];
     hidden_columns?: string[];
     column_order?: string[];
+    column_widths?: Record<string, number>;
     [key: string]: unknown;
   };
 }

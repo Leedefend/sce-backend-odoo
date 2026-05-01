@@ -143,3 +143,26 @@ Data hygiene:
 
 - Temporary `LSG-AUDIT-*` favorites removed from `sc_prod_sim`; remaining count `0`.
 - The validation-created `sc.user.view.preference` row for `wutao` / `list_columns:list:action:506` was removed after the drag-order test; remaining count `0`.
+
+## Batch-G Closure
+
+Two user-level list operability gaps were closed:
+
+- selecting/copying text inside list body cells no longer opens the record row;
+- body cells explicitly allow text selection while existing row-click navigation still works when there is no active text selection;
+- list column widths can be adjusted by dragging the resize handle on business column headers;
+- column widths are saved in the existing `list_columns` user preference scope as `column_widths`, alongside `visible_columns`, `hidden_columns`, and `column_order`;
+- the resize handle uses the contracted label `column_resize=调整列宽`.
+
+Verification:
+
+- `artifacts/list-search-group-usability/20260501T062019/summary.json`
+- `LSG-P16`: PASS, selecting text in a list cell keeps the current list URL and does not trigger row navigation
+- `LSG-P17`: PASS, dragging a column resize handle changes the visible column width
+- `LSG-P00` through `LSG-P15`: PASS
+- console errors: `0`
+
+Data hygiene:
+
+- Temporary `LSG-AUDIT-*` favorites removed from `sc_prod_sim`; remaining count `0`.
+- The validation-created `sc.user.view.preference` row for `wutao` / `list_columns:list:action:506` was removed after the resize test; remaining count `0`.
