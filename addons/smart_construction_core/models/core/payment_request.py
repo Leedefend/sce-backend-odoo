@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import re
 
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError, UserError
@@ -211,7 +212,13 @@ class PaymentRequest(models.Model):
             limit=2,
         )
         if len(baseline) != 1:
-            raise UserError("项目必须且只能有一个生效中的资金基准。")
+            raise_guard(
+                "P0_PAYMENT_FUNDING_BASELINE_INVALID",
+                f"项目[{project.display_name}]",
+                "提交付款申请",
+                reasons=["项目必须且只能有一个生效中的资金基准"],
+                hints=["请先修正项目资金基准后再提交付款申请"],
+            )
         return baseline
 
     def _get_reserved_amount(self, project, exclude_ids=None):
@@ -227,22 +234,48 @@ class PaymentRequest(models.Model):
 
     def _check_project_funding_gate(self, project, amount, exclude_ids=None):
         if not project or not project.is_funding_ready():
-            raise UserError("项目未满足资金承载条件，不能提交付款申请。")
+            raise_guard(
+                "P0_PAYMENT_FUNDING_NOT_READY",
+                f"项目[{project.display_name if project else '-'}]",
+                "提交付款申请",
+                reasons=["项目未满足资金承载条件"],
+                hints=["请先完成项目资金承载设置后再提交付款申请"],
+            )
         baseline = self._get_active_funding_baseline(project)
         cap = baseline.total_amount or 0.0
         if cap <= 0.0:
-            raise UserError("项目资金基准上限必须大于 0。")
+            raise_guard(
+                "P0_PAYMENT_FUNDING_BASELINE_INVALID",
+                f"项目[{project.display_name}]",
+                "提交付款申请",
+                reasons=["项目资金基准上限必须大于 0"],
+                hints=["请先修正项目资金基准后再提交付款申请"],
+            )
         if (amount or 0.0) <= 0.0:
             raise UserError("申请金额必须大于 0。")
         used = self._get_reserved_amount(project, exclude_ids=exclude_ids)
         rounding = project.company_currency_id.rounding if project.company_currency_id else 0.01
         if float_compare((used or 0.0) + (amount or 0.0), cap, precision_rounding=rounding) == 1:
-            raise UserError(
-                _("付款申请金额累计超出资金基准上限：\n- 已提交/审批金额：%(used)s\n- 本次申请：%(amount)s\n- 资金上限：%(cap)s")
-                % {"used": used, "amount": amount, "cap": cap}
+            raise_guard(
+                "P0_PAYMENT_FUNDING_CAP_EXCEEDED",
+                f"项目[{project.display_name}]",
+                "提交付款申请",
+                reasons=[
+                    _("付款申请金额累计超出资金基准上限"),
+                    _("已提交/审批金额：%(used)s") % {"used": used},
+                    _("本次申请：%(amount)s") % {"amount": amount},
+                    _("资金上限：%(cap)s") % {"cap": cap},
+                ],
+                hints=["请调整付款金额或项目资金基准后再提交付款申请"],
             )
 
     def _enforce_funding_gate(self, vals=None):
+        if self.env.context.get("payment_soft_gate") and not (
+            self._payment_force_block_enabled("P0_PAYMENT_FUNDING_NOT_READY")
+            or self._payment_force_block_enabled("P0_PAYMENT_FUNDING_BASELINE_INVALID")
+            or self._payment_force_block_enabled("P0_PAYMENT_FUNDING_CAP_EXCEEDED")
+        ):
+            return
         vals = vals or {}
         for rec in self:
             req_type = vals.get("type", rec.type)
@@ -380,6 +413,99 @@ class PaymentRequest(models.Model):
         if val is None:
             return default
         return str(val).strip().lower() in ("1", "true", "yes", "y", "on")
+
+    def _payment_force_block_enabled(self, reason_code):
+        code = str(reason_code or "").strip().upper()
+        if not code:
+            return False
+        if self._get_bool_param("sc.payment.force_block_all", False):
+            return True
+        return self._get_bool_param("sc.payment.force_block.%s" % code.lower(), False)
+
+    def _payment_advisory(self, reason_code, message, suggested_action="", reasons=None, hints=None):
+        code = str(reason_code or "BUSINESS_RULE_FAILED").strip().upper()
+        return {
+            "reason_code": code,
+            "message": str(message or code),
+            "suggested_action": str(suggested_action or ""),
+            "reasons": [str(item) for item in (reasons or []) if str(item or "").strip()],
+            "hints": [str(item) for item in (hints or []) if str(item or "").strip()],
+            "force_block_enabled": self._payment_force_block_enabled(code),
+        }
+
+    def _payment_advisory_from_exception(self, exc, fallback_code="BUSINESS_RULE_FAILED"):
+        text = str(exc or "").strip()
+        match = re.search(r"\[SC_GUARD:([A-Z0-9_]+)\]", text)
+        code = str(match.group(1) if match else fallback_code).strip().upper()
+        suggested = {
+            "PAYMENT_ATTACHMENTS_REQUIRED": "upload_attachment",
+            "P0_PAYMENT_SETTLEMENT_NOT_READY": "complete_settlement_approval",
+            "P0_PAYMENT_FUNDING_NOT_READY": "setup_project_funding",
+            "P0_PAYMENT_FUNDING_BASELINE_INVALID": "fix_project_funding_baseline",
+            "P0_PAYMENT_FUNDING_CAP_EXCEEDED": "adjust_payment_amount_or_funding",
+            "P0_PAYMENT_NOT_FULLY_PAID": "complete_payment_execution",
+        }.get(code, "")
+        return self._payment_advisory(code, text or code, suggested_action=suggested)
+
+    def _collect_payment_advisories(self, action_name):
+        self.ensure_one()
+        action_key = str(action_name or "").strip().lower()
+        advisories = []
+        if action_key == "submit" and self._get_attachment_count() <= 0:
+            advisories.append(
+                self._payment_advisory(
+                    "PAYMENT_ATTACHMENTS_REQUIRED",
+                    _("付款申请未上传附件，建议补充附件后再提交。"),
+                    suggested_action="upload_attachment",
+                    reasons=["attachments are missing"],
+                    hints=["请补充合同、结算或付款依据附件"],
+                )
+            )
+        if action_key == "done" and not self.is_fully_paid:
+            advisories.append(
+                self._payment_advisory(
+                    "P0_PAYMENT_NOT_FULLY_PAID",
+                    _("付款申请尚未登记足额付款，完成时将自动生成付款记录。"),
+                    suggested_action="complete_payment_execution",
+                    reasons=["payment ledger is not fully paid"],
+                    hints=["请确认审批风险后完成付款办理"],
+                )
+            )
+        for check in (
+            lambda: self._check_project_lifecycle(self.project_id, action_key),
+            lambda: self._check_settlement_state(self.settlement_id),
+            lambda: self._check_project_funding_gate(self.project_id, self.amount, exclude_ids=self.ids),
+            self._check_settlement_remaining_amount,
+            self._check_not_overpay_settlement,
+            self._check_settlement_consistency,
+            lambda: self._check_settlement_compliance_or_raise(strict=False),
+        ):
+            try:
+                check()
+            except Exception as exc:
+                advisories.append(self._payment_advisory_from_exception(exc))
+        return advisories
+
+    def _handle_payment_advisories(self, action_name, advisories):
+        blocking = [item for item in (advisories or []) if item.get("force_block_enabled")]
+        if blocking:
+            first = blocking[0]
+            raise_guard(
+                first.get("reason_code") or "BUSINESS_RULE_FAILED",
+                f"付款申请[{self.display_name}]",
+                str(action_name or "办理付款申请"),
+                reasons=first.get("reasons") or [first.get("message") or ""],
+                hints=first.get("hints") or [],
+            )
+        if advisories:
+            lines = [
+                "- %s" % str(item.get("message") or item.get("reason_code") or "").strip()
+                for item in advisories
+                if str(item.get("message") or item.get("reason_code") or "").strip()
+            ]
+            if lines:
+                self._message_post_non_blocking(_("付款申请风险提示：\n%s") % "\n".join(lines))
+        return advisories
 
     def _compute_move_type(self):
         for rec in self:
@@ -535,37 +661,19 @@ class PaymentRequest(models.Model):
     def action_submit(self):
         if not self._has_submit_access():
             raise ValidationError(_("你没有提交付款/收款申请的权限。"))
+        advisory_result = {}
         for rec in self:
-            if rec._get_attachment_count() <= 0:
-                raise_guard(
-                    "PAYMENT_ATTACHMENTS_REQUIRED",
-                    f"付款申请[{rec.display_name}]",
-                    "提交付款/收款申请",
-                    reasons=["attachments are required on submit"],
-                )
             if not rec.contract_id:
                 raise UserError("请先选择关联合同后再提交付款/收款申请。")
             if rec.contract_id.state == "cancel":
                 raise UserError("关联合同已取消，不能提交付款/收款申请。")
-            rec._check_project_lifecycle(rec.project_id, "submit")
-            rec._check_settlement_state(rec.settlement_id)
-        self._enforce_funding_gate({"state": "submit"})
-        self._check_settlement_remaining_amount()
-        self._check_not_overpay_settlement()
-        scope = {
-            "res_model": self._name,
-            "res_ids": self.ids,
-            "project_id": self[:1].project_id.id if self[:1].project_id else False,
-            "company_id": self[:1].company_id.id if self[:1].company_id else False,
-        }
-        self.env["sc.data.validator"].validate_or_raise(scope=scope)
-        # 额度校验
-        self._check_settlement_consistency()
-        for rec in self:
-            rec._check_settlement_compliance_or_raise(strict=False)
+            advisory_result[rec.id] = rec._handle_payment_advisories(
+                "提交付款申请",
+                rec._collect_payment_advisories("submit"),
+            )
         for rec in self:
             before = rec._snapshot_audit_payload()
-            rec.with_context(allow_transition=True).write({"state": "submit"})
+            rec.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "submit"})
             after = rec._snapshot_audit_payload()
             rec._audit_transition("payment_submitted", before, after, action_name="action_submit")
         self.invalidate_recordset()
@@ -575,13 +683,13 @@ class PaymentRequest(models.Model):
                 allowed_company_ids=[company.id],
             ).request_validation()
         self._message_post_non_blocking(_("付款/收款申请已提交，进入审批流程。"))
+        return {"warnings": advisory_result}
 
     def action_approve(self):
+        advisory_result = {}
         for rec in self:
             if rec.state != "submit":
                 continue
-            rec._check_project_lifecycle(rec.project_id, "approve")
-            rec._check_settlement_state(rec.settlement_id)
             if rec.validation_status != "validated":
                 raise_guard(
                     "PAYMENT_TIER_INCOMPLETE",
@@ -589,34 +697,69 @@ class PaymentRequest(models.Model):
                     "审批付款申请",
                     reasons=["tier validation not complete"],
                 )
-        self._enforce_funding_gate({"state": "approve"})
-        self._check_settlement_remaining_amount()
-        self._check_not_overpay_settlement()
-        scope = {
-            "res_model": self._name,
-            "res_ids": self.ids,
-            "project_id": self[:1].project_id.id if self[:1].project_id else False,
-            "company_id": self[:1].company_id.id if self[:1].company_id else False,
-        }
-        self.env["sc.data.validator"].validate_or_raise(scope=scope)
+            advisory_result[rec.id] = rec._handle_payment_advisories(
+                "审批付款申请",
+                rec._collect_payment_advisories("approve"),
+            )
         result = None
         for rec in self:
             if rec.state != "submit":
                 continue
-            rec.with_context(allow_transition=True).write({"state": "approve"})
+            rec.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "approve"})
             action = rec.validate_tier()
             if action:
                 result = action
-        return result
+        return result or {"warnings": advisory_result}
+
+    def action_approval_decision(self):
+        """Execute the current approval step without forcing the frontend to know tier state."""
+        result = None
+        advisory_result = {}
+        for rec in self:
+            if rec.state != "submit":
+                continue
+            if rec.validation_status in ("waiting", "pending"):
+                advisory_result[rec.id] = rec._handle_payment_advisories(
+                    "审批付款申请",
+                    rec._collect_payment_advisories("approve"),
+                )
+                action = rec.validate_tier()
+                if action:
+                    result = action
+                continue
+            if rec.validation_status == "validated":
+                return rec.action_approve()
+            if rec.validation_status in ("no", False) and not rec.review_ids:
+                advisory_result[rec.id] = rec._handle_payment_advisories(
+                    "审批付款申请",
+                    rec._collect_payment_advisories("approve"),
+                )
+                before = rec._snapshot_audit_payload()
+                rec.write({"validation_status": "validated"})
+                rec.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "approved"})
+                after = rec._snapshot_audit_payload()
+                rec._audit_transition("payment_approved", before, after, action_name="action_approval_decision")
+                continue
+            raise_guard(
+                "PAYMENT_TIER_INCOMPLETE",
+                f"付款申请[{rec.display_name}]",
+                "审批付款申请",
+                reasons=[f"validation_status={rec.validation_status}"],
+            )
+        return result or {"warnings": advisory_result}
 
     def action_set_approved(self):
-        self._enforce_funding_gate({"state": "approved"})
+        advisory_result = {}
         result = None
         for rec in self:
+            advisory_result[rec.id] = rec._handle_payment_advisories(
+                "批准付款申请",
+                rec._collect_payment_advisories("approve"),
+            )
             action = rec.validate_tier()
             if action:
                 result = action
-        return result
+        return result or {"warnings": advisory_result}
 
     def action_done(self):
         has_finance_done_access = (
@@ -625,6 +768,7 @@ class PaymentRequest(models.Model):
         )
         if not has_finance_done_access:
             raise ValidationError(_("你没有完成付款/收款申请的权限。"))
+        advisory_result = {}
         for rec in self:
             if rec.validation_status != "validated":
                 raise_guard(
@@ -640,16 +784,25 @@ class PaymentRequest(models.Model):
                     "完成付款申请",
                     reasons=[f"当前状态为 {rec.state}"],
                 )
-        self._check_can_done()
+            advisory_result[rec.id] = rec._handle_payment_advisories(
+                "完成付款申请",
+                rec._collect_payment_advisories("done"),
+            )
         for rec in self:
             before = rec._snapshot_audit_payload()
-            rec.with_context(allow_transition=True).write({"state": "done"})
+            if not rec.is_fully_paid:
+                rec.with_context(payment_soft_gate=True)._ensure_payment_ledger(note="auto:payment_request_done")
+            rec.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "done"})
             after = rec._snapshot_audit_payload()
             rec._audit_transition("payment_paid", before, after, action_name="action_done")
+        return {"warnings": advisory_result}
 
     def _ensure_payment_ledger(self, amount=None, paid_at=None, ref=None, note=None):
         self.ensure_one()
-        Ledger = self.env["payment.ledger"].with_context(allow_payment_ledger_create=True)
+        Ledger = self.env["payment.ledger"].with_context(
+            allow_payment_ledger_create=True,
+            payment_soft_gate=bool(self.env.context.get("payment_soft_gate")),
+        )
         existing = Ledger.search([("payment_request_id", "=", self.id)], limit=1)
         if existing:
             return existing

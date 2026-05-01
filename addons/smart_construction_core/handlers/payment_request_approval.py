@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import re
 from uuid import uuid4
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
@@ -198,6 +199,13 @@ class _BasePaymentApprovalHandler(BaseIntentHandler):
             success_data["replay_window_reason_code"] = REASON_REPLAY_WINDOW_EXPIRED
         return success_data
 
+    def _business_reason_from_exception(self, exc: Exception) -> str:
+        message = str(exc or "")
+        match = re.search(r"\[SC_GUARD:([A-Z0-9_]+)\]", message)
+        if match:
+            return str(match.group(1) or "").strip().upper() or REASON_BUSINESS_RULE_FAILED
+        return REASON_BUSINESS_RULE_FAILED
+
     def handle(self, payload=None, ctx=None):
         self._assert_required_groups()
         params = payload or self.params or {}
@@ -339,8 +347,9 @@ class _BasePaymentApprovalHandler(BaseIntentHandler):
                 status_code=403,
             )
         except UserError as exc:
+            reason_code = self._business_reason_from_exception(exc)
             return self._error_response(
-                reason_code=REASON_BUSINESS_RULE_FAILED,
+                reason_code=reason_code,
                 message=str(exc) or "business rule failed",
                 request_id=request_id,
                 idempotency_key=idempotency_key,
@@ -364,6 +373,7 @@ class PaymentRequestSubmitHandler(_BasePaymentApprovalHandler):
     INTENT_TYPE = "payment.request.submit"
     DESCRIPTION = "Submit payment request via canonical intent contract"
     VERSION = "1.0.0"
+    REQUIRED_GROUPS = ["smart_core.group_smart_core_finance_approver"]
     AUDIT_EVENT_CODE = "PAYMENT_REQUEST_SUBMIT_INTENT"
     ACTION_METHOD = "action_submit"
     ACTION_NAME = "submit"
@@ -379,7 +389,7 @@ class PaymentRequestApproveHandler(_BasePaymentApprovalHandler):
     DESCRIPTION = "Approve payment request via canonical intent contract"
     VERSION = "1.0.0"
     AUDIT_EVENT_CODE = "PAYMENT_REQUEST_APPROVE_INTENT"
-    ACTION_METHOD = "action_approve"
+    ACTION_METHOD = "action_approval_decision"
     ACTION_NAME = "approve"
     ACCESS_GROUPS = [
         "smart_core.group_smart_core_finance_approver",

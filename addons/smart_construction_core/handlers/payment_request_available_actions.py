@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import re
 from uuid import uuid4
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
@@ -93,36 +94,33 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
         ext = groups.get_external_id() or {}
         return {str(xmlid).strip() for xmlid in ext.values() if str(xmlid or "").strip()}
 
+    def _reason_from_exception(self, exc: Exception) -> str:
+        match = re.search(r"\[SC_GUARD:([A-Z0-9_]+)\]", str(exc or ""))
+        if match:
+            return str(match.group(1) or "").strip().upper() or REASON_BUSINESS_RULE_FAILED
+        return REASON_BUSINESS_RULE_FAILED
+
     def _evaluate_prerequisites(self, record, action_key: str) -> tuple[bool, str]:
         key = str(action_key or "").strip()
         if key == "submit":
-            if int(record._get_attachment_count() or 0) <= 0:
-                return False, "PAYMENT_ATTACHMENTS_REQUIRED"
             if not record.contract_id:
                 return False, REASON_MISSING_PARAMS
             if record.contract_id and str(record.contract_id.state or "") == "cancel":
                 return False, REASON_BUSINESS_RULE_FAILED
-            try:
-                record._check_project_lifecycle(record.project_id, "submit")
-                record._check_settlement_state(record.settlement_id)
-                record._enforce_funding_gate({"state": "submit"})
-                record._check_settlement_remaining_amount()
-                record._check_not_overpay_settlement()
-                scope = {
-                    "res_model": record._name,
-                    "res_ids": [int(record.id)],
-                    "project_id": record.project_id.id if record.project_id else False,
-                    "company_id": record.company_id.id if record.company_id else False,
-                }
-                record.env["sc.data.validator"].validate_or_raise(scope=scope)
-                record._check_settlement_consistency()
-                record._check_settlement_compliance_or_raise(strict=False)
-            except Exception:
-                return False, REASON_BUSINESS_RULE_FAILED
+            advisories = record._collect_payment_advisories("submit") if hasattr(record, "_collect_payment_advisories") else []
+            blocking = [item for item in advisories if item.get("force_block_enabled")]
+            if blocking:
+                return False, str(blocking[0].get("reason_code") or REASON_BUSINESS_RULE_FAILED)
             return True, REASON_OK
         if key == "approve":
-            if str(record.validation_status or "") != "validated":
+            validation_status = str(record.validation_status or "").strip()
+            no_tier_review = validation_status in ("", "no") and not record.review_ids
+            if validation_status not in ("waiting", "pending", "validated") and not no_tier_review:
                 return False, REASON_BUSINESS_RULE_FAILED
+            advisories = record._collect_payment_advisories("approve") if hasattr(record, "_collect_payment_advisories") else []
+            blocking = [item for item in advisories if item.get("force_block_enabled")]
+            if blocking:
+                return False, str(blocking[0].get("reason_code") or REASON_BUSINESS_RULE_FAILED)
             return True, REASON_OK
         if key == "reject":
             return True, REASON_OK
@@ -131,10 +129,21 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
                 return False, REASON_BUSINESS_RULE_FAILED
             if str(record.state or "") != "approved":
                 return False, REASON_BUSINESS_RULE_FAILED
-            if not bool(record.is_fully_paid):
-                return False, REASON_BUSINESS_RULE_FAILED
+            advisories = record._collect_payment_advisories("done") if hasattr(record, "_collect_payment_advisories") else []
+            blocking = [item for item in advisories if item.get("force_block_enabled")]
+            if blocking:
+                return False, str(blocking[0].get("reason_code") or REASON_BUSINESS_RULE_FAILED)
             return True, REASON_OK
         return False, REASON_BUSINESS_RULE_FAILED
+
+    def _advisories_for_action(self, record, action_key: str) -> list[dict]:
+        key = str(action_key or "").strip()
+        if key not in {"submit", "approve", "done"} or not hasattr(record, "_collect_payment_advisories"):
+            return []
+        try:
+            return list(record._collect_payment_advisories(key) or [])
+        except Exception:
+            return []
 
     def _trace_id(self) -> str:
         if isinstance(self.context, dict):
@@ -168,6 +177,7 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
         fn = getattr(record, method_name, None)
         method_ok = callable(fn)
         state_ok = state in set(spec.get("allowed_states") or [])
+        advisories = self._advisories_for_action(record, action_key)
         precheck_ok, precheck_reason = self._evaluate_prerequisites(record, action_key)
         allowed = bool(method_ok and state_ok and precheck_ok)
         if allowed:
@@ -179,6 +189,19 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
         reason_meta = failure_meta_for_reason(reason_code)
         blocked_message = ""
         suggested_action = ""
+        warning_message = ""
+        advisory_reason_codes = [
+            str(item.get("reason_code") or "").strip()
+            for item in advisories
+            if str(item.get("reason_code") or "").strip()
+        ]
+        if allowed and advisories:
+            warning_message = "\n".join(
+                str(item.get("message") or item.get("reason_code") or "").strip()
+                for item in advisories
+                if str(item.get("message") or item.get("reason_code") or "").strip()
+            )
+            suggested_action = str(advisories[0].get("suggested_action") or "")
         if not allowed:
             blocked_message = str(reason_meta.get("message") or reason_code)
             suggested_action = str(reason_meta.get("suggested_action") or "")
@@ -210,6 +233,10 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             "idempotency_required": True,
             "requires_reason": "reason" in required_params,
             "blocked_message": blocked_message,
+            "warning_message": warning_message,
+            "advisory_warnings": advisories,
+            "advisory_reason_codes": advisory_reason_codes,
+            "force_block_available": bool(advisories),
             "suggested_action": suggested_action,
             "required_role_key": str(role_hint.get("required_role_key") or ""),
             "required_role_label": str(role_hint.get("required_role_label") or ""),
