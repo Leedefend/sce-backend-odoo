@@ -1908,6 +1908,7 @@ def _apply_standard_search_toolbar_labels(data: dict) -> None:
     labels.update({
         "view_switch": "视图",
         "search_placeholder": "搜索关键字",
+        "search_submit": "搜索",
         "search_menu_toggle": "展开搜索菜单",
         "filters": "筛选",
         "empty_filters": "暂无筛选",
@@ -1916,6 +1917,8 @@ def _apply_standard_search_toolbar_labels(data: dict) -> None:
         "group_by": "分组方式",
         "empty_group_by": "暂无分组",
         "sort": "排序",
+        "sort_column_asc": "按 {column} 升序",
+        "sort_column_desc": "按 {column} 降序",
         "create": "新建",
         "select_field": "选择字段",
         "select_value": "选择值",
@@ -1943,6 +1946,12 @@ def _apply_standard_search_toolbar_labels(data: dict) -> None:
         "pagination_total_empty": "共 0 条",
         "pagination_summary": "共 {total} 条，当前 {start}-{end} 条",
         "record_count": "{count} 条记录",
+        "row_number": "序号",
+        "page_footer_title": "页面统计",
+        "page_footer_count": "当前页 {count} 条",
+        "page_footer_summary": "{column} 汇总",
+        "page_footer_summary_count": "{count} 项",
+        "page_footer_no_numeric": "当前页没有可汇总的数值列",
         "selected_count": "已选 {count} 条",
         "clear": "清空",
         "batch_label_archive": "批量归档",
@@ -2460,6 +2469,7 @@ def _emit_relation_entry_semantics(data: dict) -> None:
                 "create_mode": _safe_text(relation_entry.get("create_mode"), "disabled"),
                 "can_read": bool(relation_entry.get("can_read", True)),
                 "can_create": bool(relation_entry.get("can_create", False)),
+                "delete_policy": _as_dict(relation_entry.get("delete_policy")),
                 "reason_code": _safe_text(relation_entry.get("reason_code")),
                 "default_vals": _as_dict(relation_entry.get("default_vals")),
                 "inline_create": _as_dict(relation_entry.get("inline_create")),
@@ -2525,6 +2535,34 @@ def _resolve_render_profile(data: dict) -> str:
             # 非数字主键在当前项目契约中不作为“已有记录”判定依据
             continue
     return _RENDER_PROFILE_EDIT if has_record else _RENDER_PROFILE_CREATE
+
+
+def _apply_form_view_capabilities(data: dict) -> None:
+    form = _as_dict(_as_dict(data.get("views")).get("form"))
+    capabilities = _as_dict(form.get("capabilities"))
+    if not capabilities:
+        return
+    permission_root = _as_dict(data.get("permissions"))
+    effective = _as_dict(permission_root.get("effective"))
+    effective_rights = _as_dict(effective.get("rights"))
+    head = _as_dict(data.get("head"))
+    head_permissions = _as_dict(head.get("permissions"))
+
+    if capabilities.get("can_create") is False:
+        effective_rights["create"] = False
+        head_permissions["create"] = False
+    if capabilities.get("can_write") is False:
+        effective_rights["write"] = False
+        head_permissions["write"] = False
+    if capabilities.get("can_delete") is False:
+        effective_rights["unlink"] = False
+        head_permissions["unlink"] = False
+
+    effective["rights"] = effective_rights
+    permission_root["effective"] = effective
+    data["permissions"] = permission_root
+    head["permissions"] = head_permissions
+    data["head"] = head
 
 
 def _iter_field_order(data: dict) -> list[str]:
@@ -2852,7 +2890,11 @@ def _annotate_form_actions(data: dict) -> None:
 def _apply_form_render_semantics(data: dict, contract_mode: str) -> None:
     if not _is_form_contract(data):
         return
+    _apply_form_view_capabilities(data)
     data["render_profile"] = _resolve_render_profile(data)
+    rights = _as_dict(_as_dict(_as_dict(data.get("permissions")).get("effective")).get("rights"))
+    if not _to_bool(rights.get("write"), fallback=False) and not _to_bool(rights.get("create"), fallback=False):
+        data["render_profile"] = _RENDER_PROFILE_READONLY
     data["hide_filters_on_create"] = True
     _apply_form_field_groups(data)
     _annotate_form_actions(data)
