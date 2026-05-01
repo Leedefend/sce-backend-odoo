@@ -180,11 +180,11 @@ Unified list table usability was extended for scrolling, fixed row numbers, plai
 
 Verification:
 
-- `artifacts/list-search-group-usability/20260501T063830/summary.json`
+- `artifacts/list-search-group-usability/20260501T065437/summary.json`
 - `LSG-P15`: PASS, table footer renders aligned `当前页合计` and `总计` rows
-- `LSG-P18`: PASS, sticky table header, fixed-left row-number column, centered row-number data
+- `LSG-P18`: PASS, table body scrolls inside `section.table`; after `tableScrollTop=420`, header remains at the table top with `headerDeltaFromTableTop=0`, fixed-left row-number column, centered row-number data
 - `LSG-P19`: PASS, plain search input submits keyword search without removing existing search menu/group controls
-- `LSG-P20`: PASS, user-entered page size reloads the list and limits visible rows
+- `LSG-P20`: PASS, user-entered page size reloads the list and limits visible rows; footer shows current-page row count and backend total count under the first business column
 - `LSG-P00` through `LSG-P17`: PASS
 - console errors: `0`
 

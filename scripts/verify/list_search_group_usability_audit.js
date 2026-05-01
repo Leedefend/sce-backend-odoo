@@ -393,16 +393,23 @@ async function resizeColumn(page, columnName, delta) {
 
 async function verifyStickyHeader(page) {
   return page.evaluate(() => {
+    const table = document.querySelector('section.table');
     const header = document.querySelector('section.table > table > thead th');
     const rowNumber = document.querySelector('section.table > table > tbody > tr:first-child td.cell-row-number');
     const beforeTop = header ? header.getBoundingClientRect().top : null;
-    window.scrollTo(0, Math.max(240, window.scrollY + 420));
+    const beforeTableTop = table ? table.getBoundingClientRect().top : null;
+    if (table) table.scrollTop = 420;
     const afterTop = header ? header.getBoundingClientRect().top : null;
+    const afterTableTop = table ? table.getBoundingClientRect().top : null;
     const headerStyle = header ? window.getComputedStyle(header) : null;
     const rowStyle = rowNumber ? window.getComputedStyle(rowNumber) : null;
     return {
       beforeTop,
       afterTop,
+      beforeTableTop,
+      afterTableTop,
+      tableScrollTop: table ? table.scrollTop : 0,
+      headerDeltaFromTableTop: header && table ? Math.round(header.getBoundingClientRect().top - table.getBoundingClientRect().top) : null,
       headerPosition: headerStyle?.position || '',
       headerTop: headerStyle?.top || '',
       rowNumberPosition: rowStyle?.position || '',
@@ -633,8 +640,12 @@ async function main() {
       path_id: 'LSG-P18',
       name: 'table header stays sticky while row-number column remains fixed left and centered',
       status: beforeSticky.flat_row_count > 0
+        && stickyResult.tableScrollTop > 0
         && stickyResult.headerPosition === 'sticky'
         && stickyResult.headerTop === '0px'
+        && stickyResult.headerDeltaFromTableTop !== null
+        && stickyResult.headerDeltaFromTableTop >= 0
+        && stickyResult.headerDeltaFromTableTop <= 2
         && stickyResult.rowNumberPosition === 'sticky'
         && stickyResult.rowNumberLeft === '0px'
         && stickyResult.rowNumberTextAlign === 'center'

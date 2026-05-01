@@ -1954,6 +1954,8 @@ def _apply_standard_search_toolbar_labels(data: dict) -> None:
         "page_footer_count": "当前页 {count} 条",
         "page_footer_current_total": "当前页合计",
         "page_footer_grand_total": "总计",
+        "page_footer_current_count": "{count} 条",
+        "page_footer_total_count": "{count} 条",
         "page_footer_summary": "{column} 汇总",
         "page_footer_summary_count": "{count} 项",
         "page_footer_no_numeric": "当前页没有可汇总的数值列",

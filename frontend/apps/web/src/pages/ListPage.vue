@@ -302,7 +302,7 @@
                   :style="columnWidthStyle(col)"
                   :class="{ 'footer-number': isNumericColumn(col) }"
                 >
-                  {{ footerCellText(col, 'page') }}
+                  {{ footerCellText(col, 'page', group.sampleRows.length) }}
                 </td>
               </tr>
               <tr>
@@ -313,7 +313,7 @@
                   :style="columnWidthStyle(col)"
                   :class="{ 'footer-number': isNumericColumn(col) }"
                 >
-                  {{ footerCellText(col, 'total') }}
+                  {{ footerCellText(col, 'total', group.count) }}
                 </td>
               </tr>
             </tfoot>
@@ -448,7 +448,7 @@
               :style="columnWidthStyle(col)"
               :class="{ 'footer-number': isNumericColumn(col) }"
             >
-              {{ footerCellText(col, 'page') }}
+              {{ footerCellText(col, 'page', pageVisibleRows.length) }}
             </td>
             <td v-if="columnChoices.length" class="cell-column-picker"></td>
           </tr>
@@ -461,7 +461,7 @@
               :style="columnWidthStyle(col)"
               :class="{ 'footer-number': isNumericColumn(col) }"
             >
-              {{ footerCellText(col, 'total') }}
+              {{ footerCellText(col, 'total', listTotal || pageVisibleRows.length) }}
             </td>
             <td v-if="columnChoices.length" class="cell-column-picker"></td>
           </tr>
@@ -1526,7 +1526,13 @@ function totalAggregateValue(field: string) {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
-function footerCellText(field: string, scope: 'page' | 'total') {
+function footerCellText(field: string, scope: 'page' | 'total', rowCount: number) {
+  if (field === displayedColumns.value[0]) {
+    const count = Math.max(0, Math.trunc(Number(rowCount || 0)));
+    return scope === 'page'
+      ? uiLabel('page_footer_current_count', '{count} 条', { count })
+      : uiLabel('page_footer_total_count', '{count} 条', { count });
+  }
   if (!isNumericColumn(field)) return '';
   if (scope === 'page') {
     return pageFooterStatsMap.value[field]?.sumText || '--';
@@ -1597,8 +1603,9 @@ onBeforeUnmount(() => {
 }
 
 .table {
-  overflow-x: auto;
-  overflow-y: visible;
+  max-height: calc(100vh - 240px);
+  overflow: auto;
+  overscroll-behavior: contain;
   background: white;
   border-radius: 8px;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
@@ -2091,7 +2098,7 @@ tfoot td {
 
 tfoot tr:first-child th,
 tfoot tr:first-child td {
-  bottom: 42px;
+  bottom: 41px;
 }
 
 tfoot tr:nth-child(2) th,
@@ -2102,6 +2109,8 @@ tfoot tr:nth-child(2) td {
 .footer-row-label {
   color: #0f172a;
   font-size: 12px;
+  line-height: 1.2;
+  white-space: normal;
 }
 
 .footer-number {
