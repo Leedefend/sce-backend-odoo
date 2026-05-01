@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # 📁 smart_core/handlers/chatter_post.py
 import re
+from email.utils import formataddr
 from typing import List
 
 from odoo.exceptions import AccessError, UserError
@@ -30,6 +31,7 @@ class ChatterPostHandler(BaseIntentHandler):
         res_id = params.get("res_id") or params.get("record_id")
         body = params.get("body")
         subject = params.get("subject")
+        mode = str(params.get("mode") or "message").strip().lower()
         trace_id = self.context.get("trace_id") if isinstance(self.context, dict) else ""
 
         if not model or not res_id or not body:
@@ -46,11 +48,29 @@ class ChatterPostHandler(BaseIntentHandler):
                 return self._failure(REASON_METHOD_NOT_CALLABLE, "模型不支持 chatter", 400, trace_id)
 
             mention_partner_ids = self._resolve_mentions(str(body or ""))
-            post_kwargs = {"body": body, "subject": subject}
+            subtype_xmlid = "mail.mt_note" if mode == "note" else "mail.mt_comment"
+            post_kwargs = {
+                "body": body,
+                "subject": subject,
+                "message_type": "comment",
+                "subtype_xmlid": subtype_xmlid,
+                "email_from": _resolve_email_from(self.env.user),
+            }
             if mention_partner_ids:
                 post_kwargs["partner_ids"] = mention_partner_ids
 
-            message = record.message_post(**post_kwargs)
+            thread = record.with_context(mail_create_nosubscribe=True, mail_notify_noemail=True)
+            try:
+                message = thread.message_post(**post_kwargs)
+            except UserError as exc:
+                message = None
+                message_text = str(exc) or ""
+                if mode == "message" and "发件人的电子邮件地址" in message_text:
+                    fallback_kwargs = dict(post_kwargs)
+                    fallback_kwargs["subtype_xmlid"] = "mail.mt_note"
+                    message = thread.message_post(**fallback_kwargs)
+                if not message:
+                    raise
             return {
                 "ok": True,
                 "data": {
@@ -59,6 +79,7 @@ class ChatterPostHandler(BaseIntentHandler):
                         "success": True,
                         "reason_code": REASON_OK,
                         "message": "Comment posted",
+                        "mode": mode,
                         "mentioned_partner_ids": mention_partner_ids,
                     }
                 },
@@ -92,3 +113,12 @@ class ChatterPostHandler(BaseIntentHandler):
             "code": status_code,
             "meta": {"trace_id": trace_id},
         }
+
+
+def _resolve_email_from(user) -> str:
+    email = str(user.email or user.partner_id.email or "").strip()
+    if email:
+        return user.email_formatted or formataddr((user.display_name or user.login or "User", email))
+    login = re.sub(r"[^A-Za-z0-9_.-]+", ".", str(user.login or "user").strip()).strip(".") or "user"
+    display = str(user.display_name or user.login or "User").strip() or "User"
+    return formataddr((display, f"{login}@example.invalid"))

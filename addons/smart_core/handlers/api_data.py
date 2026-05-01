@@ -23,6 +23,10 @@ from odoo.http import request
 
 from ..core.base_handler import BaseIntentHandler
 from ..utils.extension_hooks import call_extension_hook_first
+from ..utils.reason_codes import (
+    REASON_READONLY_PROJECTION_MUTATION_DENIED,
+    failure_meta_for_reason,
+)
 
 _logger = logging.getLogger(__name__)
 _NOT_NULL_COLUMN_RE = re.compile(r'null value in column "([^"]+)"', re.IGNORECASE)
@@ -43,8 +47,11 @@ class ApiDataHandler(BaseIntentHandler):
 
     # ----------------- 通用取参 -----------------
 
-    def _err(self, code: int, message: str):
-        return {"ok": False, "error": {"code": code, "message": message}}
+    def _err(self, code: int, message: str, reason_code: str = ""):
+        error = {"code": code, "message": message}
+        if reason_code:
+            error["reason_code"] = reason_code
+        return {"ok": False, "error": error}
 
     def _read_if_none_match(self, p: Dict[str, Any]) -> str:
         if_none_match = str(self._dig(p, "if_none_match", "") or "").strip().strip('"')
@@ -54,6 +61,24 @@ class ApiDataHandler(BaseIntentHandler):
             return str((request.httprequest.headers.get("If-None-Match") or "")).strip().strip('"')
         except Exception:
             return ""
+
+    def _read_if_match(self, p: Dict[str, Any]) -> str:
+        return str(
+            self._dig(p, "if_match", "")
+            or self._dig(p, "ifMatch", "")
+            or self._dig(p, "record_version", "")
+            or self._dig(p, "recordVersion", "")
+            or ""
+        ).strip().strip('"')
+
+    @staticmethod
+    def _format_write_date(value) -> str:
+        if not value:
+            return ""
+        try:
+            return value.strftime("%Y-%m-%d %H:%M:%S")
+        except Exception:
+            return str(value or "").strip()
 
     def _build_etag(self, *, model: str, op: str, ctx: Dict[str, Any], data: Dict[str, Any], meta: Dict[str, Any]) -> str:
         src = {
@@ -525,6 +550,36 @@ class ApiDataHandler(BaseIntentHandler):
             safe.insert(0, "id")
         return safe
 
+    def _build_search_term_domain(self, env_model, search_term: str, fields_safe: List[str]) -> List[Any]:
+        term = str(search_term or "").strip()
+        if not term:
+            return []
+        try:
+            search_id = int(term)
+        except Exception:
+            search_id = None
+
+        candidates: List[str] = []
+        rec_name = str(getattr(env_model, "_rec_name", "") or "").strip()
+        for field_name in [rec_name, "name"] + list(fields_safe or []):
+            if not field_name or field_name == "id" or field_name in candidates:
+                continue
+            field = env_model._fields.get(field_name)
+            if not field:
+                continue
+            field_type = str(getattr(field, "type", "") or "")
+            if field_type in ("char", "text", "html", "many2one"):
+                candidates.append(field_name)
+
+        leaves: List[Any] = [(field_name, "ilike", term) for field_name in candidates]
+        if search_id is not None:
+            leaves.append(("id", "=", search_id))
+        if not leaves:
+            return [("id", "=", 0)]
+        if len(leaves) == 1:
+            return leaves
+        return ["|"] * (len(leaves) - 1) + leaves
+
     def _prepare_create_vals(self, env_model, vals: Dict[str, Any]) -> Dict[str, Any]:
         safe_vals = {k: v for k, v in (vals or {}).items() if k in env_model._fields}
         if not safe_vals:
@@ -623,6 +678,32 @@ class ApiDataHandler(BaseIntentHandler):
             return "创建失败，请检查填写内容后重试。"
         return message or "创建失败，请检查填写内容后重试。"
 
+    def _mutation_policy(self, model: str, op: str) -> Dict[str, Any]:
+        payload = call_extension_hook_first(
+            self.env,
+            "smart_core_api_data_mutation_policy",
+            self.env,
+            model,
+            op,
+        )
+        if isinstance(payload, dict):
+            return payload
+        return {"allowed": True, "reason_code": "OK", "source": "smart_core_default"}
+
+    def _check_mutation_policy(self, model: str, op: str):
+        policy = self._mutation_policy(model, op)
+        if policy.get("allowed") is not False:
+            return None
+
+        reason_code = str(policy.get("reason_code") or REASON_READONLY_PROJECTION_MUTATION_DENIED).strip()
+        message = str(policy.get("message") or "当前数据为只读投影，不允许通过公开数据接口创建或修改。").strip()
+        error = self._err(403, message, reason_code=reason_code)
+        meta = failure_meta_for_reason(reason_code)
+        if meta:
+            error.setdefault("error", {}).update(meta)
+        error.setdefault("error", {})["policy_source"] = str(policy.get("source") or "").strip()
+        return error
+
     def _fill_not_null_column_fallback(self, env_model, safe_vals: Dict[str, Any], column: str) -> bool:
         if not column or column not in env_model._fields:
             return False
@@ -643,6 +724,87 @@ class ApiDataHandler(BaseIntentHandler):
             safe_vals[column] = 0
             return True
         return False
+
+    def _record_field_value_for_child(self, parent, field_name: str):
+        if not parent or field_name not in parent._fields:
+            return None
+        try:
+            value = parent[field_name]
+        except Exception:
+            return None
+        if hasattr(value, "id"):
+            return value.id or None
+        return value if value not in (None, False, "") else None
+
+    def _prepare_one2many_create_vals(self, parent, parent_field, raw_vals: Dict[str, Any]) -> Dict[str, Any]:
+        comodel_name = str(getattr(parent_field, "comodel_name", "") or "").strip()
+        if not comodel_name or comodel_name not in self.env:
+            return raw_vals
+        inverse_name = str(getattr(parent_field, "inverse_name", "") or "").strip()
+        child_model = self.env[comodel_name].with_context(
+            dict(self.env.context, **({f"default_{inverse_name}": parent.id} if inverse_name and parent and parent.id else {}))
+        )
+        vals = dict(raw_vals or {})
+        if inverse_name and inverse_name in child_model._fields and parent and parent.id and vals.get(inverse_name) in (None, False, ""):
+            vals[inverse_name] = parent.id
+
+        # Parent-owned facts such as company/currency/partner are backend facts.
+        # When the child subview omits them, copy same-name values from the parent
+        # instead of making the frontend infer hidden required fields.
+        for name in ("company_id", "currency_id", "partner_id"):
+            if name in child_model._fields and vals.get(name) in (None, False, ""):
+                parent_value = self._record_field_value_for_child(parent, name)
+                if parent_value:
+                    vals[name] = parent_value
+        if "date_planned" in child_model._fields and vals.get("date_planned") in (None, False, ""):
+            parent_date = self._record_field_value_for_child(parent, "date_order")
+            if parent_date:
+                vals["date_planned"] = parent_date
+        if "product_id" in child_model._fields and "product_uom" in child_model._fields and vals.get("product_uom") in (None, False, ""):
+            product_id = vals.get("product_id")
+            if isinstance(product_id, (list, tuple)) and product_id:
+                product_id = product_id[0]
+            try:
+                product_id = int(product_id or 0)
+            except Exception:
+                product_id = 0
+            if product_id and "product.product" in self.env:
+                product = self.env["product.product"].browse(product_id).exists()
+                if product:
+                    uom = product.uom_po_id or product.uom_id
+                    if uom:
+                        vals["product_uom"] = uom.id
+
+        return self._prepare_create_vals(child_model, vals) or vals
+
+    def _prepare_write_vals(self, env_model, recs, vals: Dict[str, Any]) -> Dict[str, Any]:
+        safe_vals = {k: v for k, v in vals.items() if k in env_model._fields}
+        if not safe_vals or len(recs) != 1:
+            return safe_vals
+        parent = recs[0]
+        prepared = dict(safe_vals)
+        for name, value in list(prepared.items()):
+            field = env_model._fields.get(name)
+            if not field or str(getattr(field, "type", "") or "").strip().lower() != "one2many":
+                continue
+            if not isinstance(value, list):
+                continue
+            commands = []
+            changed = False
+            for command in value:
+                if not isinstance(command, (list, tuple)) or len(command) < 3:
+                    commands.append(command)
+                    continue
+                op = int(command[0] or 0)
+                if op != 0 or not isinstance(command[2], dict):
+                    commands.append(command)
+                    continue
+                child_vals = self._prepare_one2many_create_vals(parent, field, command[2])
+                commands.append([command[0], command[1], child_vals])
+                changed = True
+            if changed:
+                prepared[name] = commands
+        return prepared
 
     # ----------------- 主处理 -----------------
 
@@ -740,16 +902,6 @@ class ApiDataHandler(BaseIntentHandler):
                     # 同时存在 domain 与 domain_raw 时，按 AND 语义合并，确保快捷筛选生效。
                     domain = parsed_domain + domain
 
-        if search_term:
-            try:
-                search_id = int(search_term)
-            except Exception:
-                search_id = None
-            if search_id is not None:
-                domain = domain + ["|", ("name", "ilike", search_term), ("id", "=", search_id)]
-            else:
-                domain = domain + [("name", "ilike", search_term)]
-
         env_model = self.env[model].with_context(ctx)
         if sudo:
             env_model = env_model.sudo()
@@ -760,6 +912,8 @@ class ApiDataHandler(BaseIntentHandler):
 
         # 先按 groups 过滤一遍，避免 AccessError
         fields_safe = self._filter_readable_fields(env_model, fields or ["id", "name"])
+        if search_term:
+            domain = domain + self._build_search_term_domain(env_model, search_term, fields_safe)
 
         recs = env_model.search(domain or [], order=order or None, limit=limit or None, offset=offset or 0)
         try:
@@ -941,6 +1095,10 @@ class ApiDataHandler(BaseIntentHandler):
         if not isinstance(vals, dict) or not vals:
             return self._err(400, "缺少参数 vals")
 
+        denied = self._check_mutation_policy(model, "create")
+        if denied:
+            return denied
+
         env_model = self.env[model].with_context(ctx)
         if sudo:
             env_model = env_model.sudo()
@@ -981,10 +1139,15 @@ class ApiDataHandler(BaseIntentHandler):
     def _op_write(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
         ids = self._get_list(p, "ids", [])
         vals = self._dig(p, "vals") or self._dig(p, "values") or {}
+        if_match = self._read_if_match(p)
         if not ids:
             return self._err(400, "缺少参数 ids")
         if not isinstance(vals, dict) or not vals:
             return self._err(400, "缺少参数 vals")
+
+        denied = self._check_mutation_policy(model, "write")
+        if denied:
+            return denied
 
         env_model = self.env[model].with_context(ctx)
         if sudo:
@@ -994,11 +1157,19 @@ class ApiDataHandler(BaseIntentHandler):
         if not recs:
             return self._err(404, "记录不存在")
 
-        safe_vals = {k: v for k, v in vals.items() if k in env_model._fields}
+        safe_vals = self._prepare_write_vals(env_model, recs, vals)
         if not safe_vals:
             return self._err(400, "vals 中无可写字段")
 
         try:
+            if if_match and len(recs) == 1 and "write_date" in env_model._fields:
+                current = self._format_write_date(recs.write_date)
+                if current and current != if_match:
+                    return self._err(
+                        409,
+                        "数据已被其他操作更新，请重新加载后再保存。",
+                        reason_code="RECORD_VERSION_CONFLICT",
+                    )
             recs.write(safe_vals)
         except AccessError as ae:
             _logger.warning("write AccessError on %s: %s", model, ae)
@@ -1008,6 +1179,8 @@ class ApiDataHandler(BaseIntentHandler):
             return self._err(500, str(e))
 
         data = {"ids": recs.ids}
+        if len(recs) == 1 and "write_date" in env_model._fields:
+            data["record_version"] = self._format_write_date(recs.write_date)
         meta = {"op": "write", "model": model, "count": len(recs)}
         return data, meta
 

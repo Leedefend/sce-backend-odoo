@@ -21,6 +21,7 @@ class ContractSchemaMixin(models.AbstractModel):
                 'header_buttons', 'button_box', 'stat_buttons',
                 'field_modifiers', 'subviews',
                 'chatter', 'attachments', 'widgets',
+                'capabilities',
             },
             'kanban': {'kanban'},
             'pivot': {'pivot'},
@@ -54,6 +55,7 @@ class ContractSchemaMixin(models.AbstractModel):
             'chatter',
             'attachments',
             'widgets',
+            'capabilities',
         }
 
         def _prune(obj, passthrough=False):
