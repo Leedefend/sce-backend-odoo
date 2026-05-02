@@ -1,0 +1,98 @@
+{
+  "permission_surface": {
+    "allowed": true,
+    "reason_code": "OK",
+    "effective": {
+      "rights": {
+        "read": true,
+        "write": true,
+        "create": false,
+        "unlink": false
+      }
+    }
+  },
+  "access_policy": {
+    "allowed": true
+  },
+  "meta_fields": [
+    {
+      "name": "name",
+      "string": "Name",
+      "readonly": false,
+      "required": true
+    },
+    {
+      "name": "project_code",
+      "string": "Project Code",
+      "readonly": true,
+      "required": false
+    },
+    {
+      "name": "secret_note",
+      "string": "Secret Note",
+      "readonly": false,
+      "required": false
+    }
+  ],
+  "field_policies": {
+    "name": {
+      "visible_profiles": [
+        "create",
+        "edit",
+        "readonly"
+      ],
+      "required_profiles": [
+        "create",
+        "edit"
+      ]
+    },
+    "secret_note": {
+      "visible": false,
+      "reason_code": "FIELD_SCOPE_HIDDEN"
+    }
+  },
+  "modifiers": {
+    "project_code": {
+      "readonly": true,
+      "required": false
+    },
+    "secret_note": {
+      "invisible": true
+    }
+  },
+  "validation_surface": {
+    "required_fields": [
+      "name"
+    ],
+    "field_rules": [
+      {
+        "field": "stage_id",
+        "rule": "required"
+      }
+    ]
+  },
+  "action_policies": {
+    "save": {
+      "enabled": true,
+      "visible": true
+    },
+    "approve": {
+      "enabled": false,
+      "visible": true,
+      "reason_code": "MISSING_APPROVER_ROLE"
+    }
+  },
+  "container_policies": {
+    "main.basic": {
+      "visible": true,
+      "disabled": false
+    }
+  },
+  "selector_status": [
+    {
+      "selector": "finance.*",
+      "readonly": true,
+      "reason_code": "ROLE_READONLY"
+    }
+  ]
+}

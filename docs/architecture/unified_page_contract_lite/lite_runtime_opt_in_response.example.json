@@ -1,0 +1,22 @@
+{
+  "contractMode": "lite_preview",
+  "contractVersion": "2.0.0",
+  "entryPoint": "load_contract",
+  "fallbackMode": "legacy_default",
+  "meta": {
+    "defaultUnchanged": true,
+    "previewOnly": true,
+    "traceId": "trace.lite.preview.response.001"
+  },
+  "payload": {
+    "pageInfo": {
+      "clientType": "web_pc",
+      "contractVersion": "2.0.0",
+      "model": "project.project",
+      "pageId": "project.form",
+      "sceneKey": "project.intake",
+      "viewType": "form"
+    }
+  },
+  "payloadType": "lite_contract"
+}

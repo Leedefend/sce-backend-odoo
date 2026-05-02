@@ -1,0 +1,59 @@
+{
+  "onchange_fields": [
+    {
+      "field": "name",
+      "targets": [
+        "display_name",
+        "code"
+      ],
+      "debounce_ms": 300
+    },
+    {
+      "field": "stage_id",
+      "targets": [
+        "btn.save"
+      ],
+      "debounce_ms": 0
+    }
+  ],
+  "action_schema": {
+    "actions": {
+      "open_my_work": {
+        "label": "Open My Work",
+        "intent": "ui.contract",
+        "target": {
+          "scene_key": "my.work"
+        }
+      }
+    }
+  },
+  "action_policies": {
+    "approve": {
+      "enabled": false,
+      "visible": true,
+      "sourceWidgetId": "btn.approve",
+      "dispatchMode": "serverBlocking",
+      "refreshMode": "partial",
+      "targetIds": [
+        "field.stage_id"
+      ]
+    }
+  },
+  "form_actions": {
+    "save": true,
+    "validate": true
+  },
+  "delete_policy": {
+    "allowed": true,
+    "delete_mode": "unlink"
+  },
+  "chain_actions": [
+    {
+      "source": "form.save",
+      "targets": [
+        "project.name.change",
+        "open_my_work"
+      ]
+    }
+  ]
+}

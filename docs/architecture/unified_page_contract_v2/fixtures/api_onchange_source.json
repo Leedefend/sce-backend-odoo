@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "patch": {
+    "display_name": "Example Project"
+  },
+  "modifiers_patch": {
+    "code": {
+      "readonly": true,
+      "required": false
+    }
+  },
+  "line_patches": [],
+  "warnings": [],
+  "applied_fields": [
+    "name"
+  ]
+}

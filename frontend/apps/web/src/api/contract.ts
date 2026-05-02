@@ -1,6 +1,8 @@
 import { intentRequest, intentRequestRaw } from './intents';
 import { ApiError } from './client';
 import type { ActionContract } from '@sc/schema';
+import { extractLiteContractFromIntentBody } from '../app/runtime/unifiedPageContractLitePilot';
+import type { UnifiedPageContractLite } from '../app/contracts/unifiedPageContractLite';
 
 type LoadActionContractOptions = {
   recordId?: number | null;
@@ -129,4 +131,23 @@ export async function loadModelContractRaw(model: string, options?: LoadModelCon
   } catch (err) {
     rethrowContractError(err, { op: 'model', model });
   }
+}
+
+export async function loadModelLitePreviewContract(model: string, options?: LoadModelContractOptions): Promise<UnifiedPageContractLite | null> {
+  const viewType = options?.viewType || 'tree';
+  const result = await intentRequestRaw<Record<string, unknown>>({
+    intent: 'load_contract',
+    params: {
+      model: String(model || '').trim(),
+      view_type: viewType,
+      include: 'all',
+      contractMode: 'lite_preview',
+      contractVersion: '2.0.0',
+      entryPoint: 'load_contract',
+      clientType: 'web_pc',
+      fallbackMode: 'legacy_default',
+      traceId: `lite-frontend-pilot-${String(model || '').trim() || 'model'}-${viewType}`,
+    },
+  });
+  return extractLiteContractFromIntentBody(result.rawBody);
 }

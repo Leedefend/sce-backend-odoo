@@ -1,0 +1,53 @@
+{
+  "ok": true,
+  "data": {
+    "schema_version": "v1",
+    "patch": {
+      "amount_total": 3000
+    },
+    "modifiers_patch": {
+      "budget_total": {
+        "readonly": true,
+        "required": true,
+        "invisible": false
+      }
+    },
+    "button_status_patch": {
+      "save": {
+        "visible": true,
+        "disabled": false
+      },
+      "submit": {
+        "visible": true,
+        "disabled": true
+      }
+    },
+    "line_patches": [
+      {
+        "field": "task_ids",
+        "row_key": "row.10",
+        "row_id": 10,
+        "patch": {
+          "planned_hours": 8
+        },
+        "modifiers_patch": {
+          "planned_hours": {
+            "readonly": false,
+            "required": true,
+            "invisible": false
+          }
+        },
+        "warnings": [],
+        "row_state": "update",
+        "command_hint": [1]
+      }
+    ],
+    "warnings": [],
+    "applied_fields": ["budget_total"]
+  },
+  "meta": {
+    "model": "project.project",
+    "intent": "api.onchange",
+    "version": "1.1.0"
+  }
+}

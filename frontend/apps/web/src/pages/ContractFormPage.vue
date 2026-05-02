@@ -2676,14 +2676,19 @@ function contractActionFromNativeRow(row: Record<string, unknown>): ContractActi
     ? row.action as Record<string, unknown>
     : {};
   const payload = parseMaybeJsonRecord(nativeAction.payload || row.payload);
-  const rowName = String(nativeAction.name || row.name || '').trim();
+  const rowName = String(nativeAction.name || row.name || payload.method || payload.ref || '').trim();
   const rowLabel = String(nativeAction.label || row.label || '').trim();
   const key = String(nativeAction.key || row.key || rowName || rowLabel || '').trim();
   if (!key) return null;
-  const kind = normalizeActionKind(nativeAction.kind || row.kind || row.buttonType);
+  const kind = normalizeActionKind(
+    nativeAction.kind || row.kind || row.type || row.buttonType || payload.type || (rowName ? 'object' : ''),
+  );
   const level = String(nativeAction.level || row.level || 'body').trim().toLowerCase();
-  const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref);
-  const methodName = detectMethodName(key, String(payload.method || '').trim());
+  const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref) ?? toActionId(row.action_id) ?? toActionId(row.ref);
+  const methodName = detectMethodName(
+    key,
+    String(payload.method || row.method || (kind === 'object' || kind === 'server' ? rowName : '') || '').trim(),
+  );
   const groups = Array.isArray(nativeAction.groups_xmlids)
     ? (nativeAction.groups_xmlids as string[])
     : Array.isArray(nativeAction.groups)
@@ -2703,11 +2708,11 @@ function contractActionFromNativeRow(row: Record<string, unknown>): ContractActi
     selection: 'none',
     actionId,
     methodName,
-    targetModel: String(row.target_model || row.model || model.value || '').trim(),
-    context: parseMaybeJsonRecord(payload.context_raw),
-    domainRaw: String(payload.domain_raw || '').trim(),
-    target: String(payload.target || '').trim(),
-    url: String(payload.url || '').trim(),
+    targetModel: String(row.target_model || row.model || payload.model || model.value || '').trim(),
+    context: parseMaybeJsonRecord(payload.context_raw || row.context),
+    domainRaw: String(payload.domain_raw || row.domain_raw || '').trim(),
+    target: String(payload.target || row.target || '').trim(),
+    url: String(payload.url || row.url || '').trim(),
     enabled: byGroup && (!needRecord || Boolean(recordId.value)),
     hint: byGroup ? (needRecord && !recordId.value ? 'requires record id' : '') : 'permission denied',
     semantic: '',

@@ -1,0 +1,39 @@
+{
+  "contract_version": "page_orchestration_v1",
+  "scene_key": "workspace.home",
+  "page": {
+    "key": "home",
+    "title": "Workspace",
+    "page_type": "dashboard",
+    "intent": "ui.contract",
+    "scene_key": "workspace.home"
+  },
+  "zones": [
+    {
+      "key": "primary",
+      "title": "Primary",
+      "display_mode": "cards",
+      "blocks": [
+        {
+          "key": "home.todo",
+          "title": "Todo",
+          "block_type": "task_list"
+        }
+      ]
+    }
+  ],
+  "data_sources": {
+    "ds_sections": {
+      "source_type": "static",
+      "provider": "page_contract.sections"
+    }
+  },
+  "action_schema": {
+    "actions": {
+      "open_my_work": {
+        "label": "Open My Work",
+        "intent": "ui.contract"
+      }
+    }
+  }
+}

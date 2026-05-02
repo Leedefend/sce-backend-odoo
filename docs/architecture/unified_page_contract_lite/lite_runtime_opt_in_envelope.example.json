@@ -1,0 +1,8 @@
+{
+  "clientType": "web_pc",
+  "contractMode": "lite_preview",
+  "contractVersion": "2.0.0",
+  "entryPoint": "load_contract",
+  "fallbackMode": "legacy_default",
+  "traceId": "trace.lite.preview.001"
+}

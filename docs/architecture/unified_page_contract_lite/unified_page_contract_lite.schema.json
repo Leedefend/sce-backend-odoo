@@ -1,0 +1,370 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sce.local/schemas/unified_page_contract_lite.schema.json",
+  "title": "Unified Semantic Page Contract Lite",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "pageInfo",
+    "layoutContract",
+    "statusContract",
+    "actionContract",
+    "dataContract",
+    "meta"
+  ],
+  "properties": {
+    "pageInfo": {
+      "$ref": "#/$defs/pageInfo"
+    },
+    "layoutContract": {
+      "$ref": "#/$defs/layoutContract"
+    },
+    "statusContract": {
+      "$ref": "#/$defs/statusContract"
+    },
+    "actionContract": {
+      "$ref": "#/$defs/actionContract"
+    },
+    "dataContract": {
+      "$ref": "#/$defs/dataContract"
+    },
+    "meta": {
+      "$ref": "#/$defs/meta"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_.:-]*$"
+    },
+    "pageInfo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pageId",
+        "sceneKey",
+        "model",
+        "viewType",
+        "clientType",
+        "contractVersion"
+      ],
+      "properties": {
+        "pageId": {
+          "$ref": "#/$defs/id"
+        },
+        "sceneKey": {
+          "$ref": "#/$defs/id"
+        },
+        "model": {
+          "type": "string"
+        },
+        "viewType": {
+          "enum": [
+            "form",
+            "tree",
+            "list",
+            "kanban",
+            "search",
+            "gantt",
+            "popup",
+            "combine"
+          ]
+        },
+        "clientType": {
+          "enum": [
+            "web_pc",
+            "wx_mini",
+            "harmony_h5"
+          ]
+        },
+        "contractVersion": {
+          "const": "2.0.0"
+        }
+      }
+    },
+    "layoutContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "layoutType",
+        "containerList"
+      ],
+      "properties": {
+        "layoutType": {
+          "enum": [
+            "form",
+            "tree",
+            "list",
+            "kanban",
+            "search",
+            "gantt",
+            "popup",
+            "combine"
+          ]
+        },
+        "containerList": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/container"
+          }
+        }
+      }
+    },
+    "container": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "containerId",
+        "containerType",
+        "title",
+        "children",
+        "widgetList"
+      ],
+      "properties": {
+        "containerId": {
+          "$ref": "#/$defs/id"
+        },
+        "containerType": {
+          "enum": [
+            "group",
+            "tab",
+            "popup",
+            "x2many",
+            "tree",
+            "gantt",
+            "workflow",
+            "section"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/container"
+          }
+        },
+        "widgetList": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/widget"
+          }
+        }
+      }
+    },
+    "widget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "widgetId",
+        "widgetType",
+        "fieldCode",
+        "label",
+        "component",
+        "props"
+      ],
+      "properties": {
+        "widgetId": {
+          "$ref": "#/$defs/id"
+        },
+        "widgetType": {
+          "enum": [
+            "input",
+            "select",
+            "date",
+            "number",
+            "table",
+            "upload",
+            "button",
+            "textarea",
+            "checkbox",
+            "radio",
+            "tree",
+            "gantt",
+            "display"
+          ]
+        },
+        "fieldCode": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "type": "string"
+        },
+        "component": {
+          "type": "string"
+        },
+        "props": {
+          "type": "object"
+        }
+      }
+    },
+    "statusContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "widgetStatus",
+        "buttonStatus"
+      ],
+      "properties": {
+        "widgetStatus": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/widgetStatus"
+          }
+        },
+        "buttonStatus": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/buttonStatus"
+          }
+        }
+      }
+    },
+    "widgetStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "widgetId",
+        "visible",
+        "readonly",
+        "required",
+        "disabled"
+      ],
+      "properties": {
+        "widgetId": {
+          "$ref": "#/$defs/id"
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "buttonStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "btnId",
+        "visible",
+        "disabled"
+      ],
+      "properties": {
+        "btnId": {
+          "$ref": "#/$defs/id"
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "actionContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actionRuleList"
+      ],
+      "properties": {
+        "actionRuleList": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/actionRule"
+          }
+        }
+      }
+    },
+    "actionRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actionId",
+        "triggerType",
+        "sourceWidgetId",
+        "dispatchMode",
+        "refreshMode"
+      ],
+      "properties": {
+        "actionId": {
+          "$ref": "#/$defs/id"
+        },
+        "triggerType": {
+          "enum": [
+            "change",
+            "click",
+            "select",
+            "refresh",
+            "add",
+            "delete",
+            "confirm",
+            "submit"
+          ]
+        },
+        "sourceWidgetId": {
+          "$ref": "#/$defs/id"
+        },
+        "dispatchMode": {
+          "enum": [
+            "server"
+          ]
+        },
+        "refreshMode": {
+          "enum": [
+            "partial",
+            "full"
+          ]
+        }
+      }
+    },
+    "dataContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mainData",
+        "relationData",
+        "dictData"
+      ],
+      "properties": {
+        "mainData": {
+          "type": "object"
+        },
+        "relationData": {
+          "type": "object"
+        },
+        "dictData": {
+          "type": "object"
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "etag",
+        "traceId"
+      ],
+      "properties": {
+        "etag": {
+          "type": "string"
+        },
+        "traceId": {
+          "$ref": "#/$defs/id"
+        },
+        "semanticAdapter": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

@@ -25,7 +25,10 @@ from ..core.base_handler import BaseIntentHandler
 from ..core.project_context import apply_project_scope_domain, selected_project_id_from_context
 from ..utils.extension_hooks import call_extension_hook_first
 from ..utils.reason_codes import (
+    REASON_OK,
+    REASON_PROJECT_SCOPE_DENIED,
     REASON_READONLY_PROJECTION_MUTATION_DENIED,
+    REASON_RECORD_VERSION_CONFLICT,
     failure_meta_for_reason,
 )
 
@@ -591,9 +594,9 @@ class ApiDataHandler(BaseIntentHandler):
         return {
             "ok": False,
             "error": {
-                "code": "PROJECT_SCOPE_DENIED",
+                "code": REASON_PROJECT_SCOPE_DENIED,
                 "message": message,
-                "reason_code": "PROJECT_SCOPE_DENIED",
+                "reason_code": REASON_PROJECT_SCOPE_DENIED,
                 "kind": "permission",
                 "project_scope": scope_meta,
             },
@@ -761,7 +764,7 @@ class ApiDataHandler(BaseIntentHandler):
         )
         if isinstance(payload, dict):
             return payload
-        return {"allowed": True, "reason_code": "OK", "source": "smart_core_default"}
+        return {"allowed": True, "reason_code": REASON_OK, "source": "smart_core_default"}
 
     def _check_mutation_policy(self, model: str, op: str):
         policy = self._mutation_policy(model, op)
@@ -1281,7 +1284,7 @@ class ApiDataHandler(BaseIntentHandler):
                     return self._err(
                         409,
                         "数据已被其他操作更新，请重新加载后再保存。",
-                        reason_code="RECORD_VERSION_CONFLICT",
+                        reason_code=REASON_RECORD_VERSION_CONFLICT,
                     )
             recs.write(safe_vals)
         except AccessError as ae:

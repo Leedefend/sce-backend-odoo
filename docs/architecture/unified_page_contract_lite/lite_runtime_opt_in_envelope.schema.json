@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sce.local/schemas/unified_page_contract_lite_runtime_opt_in_envelope.schema.json",
+  "title": "Unified Semantic Page Contract Lite Runtime Opt-in Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractMode",
+    "contractVersion",
+    "entryPoint",
+    "clientType"
+  ],
+  "properties": {
+    "contractMode": {
+      "const": "lite_preview"
+    },
+    "contractVersion": {
+      "const": "2.0.0"
+    },
+    "entryPoint": {
+      "enum": [
+        "load_contract",
+        "ui_contract",
+        "api_onchange"
+      ]
+    },
+    "clientType": {
+      "enum": [
+        "web_pc",
+        "wx_mini",
+        "harmony_h5"
+      ]
+    },
+    "fallbackMode": {
+      "const": "legacy_default"
+    },
+    "traceId": {
+      "type": "string"
+    }
+  }
+}

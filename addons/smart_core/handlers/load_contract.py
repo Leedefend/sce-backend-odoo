@@ -7,6 +7,7 @@ import re
 from odoo import SUPERUSER_ID, api
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.unified_page_contract_lite_preview import with_lite_preview_if_requested
 from ..utils.extension_hooks import call_extension_hook_first
 from ..utils.reason_codes import REASON_OK, REASON_PERMISSION_DENIED
 
@@ -182,6 +183,7 @@ class LoadContractHandler(BaseIntentHandler):
 
         # ---------- 6.x) 统一语义契约补充（非破坏式） ----------
         # 保留现有 head/views/fields/search/... 结构，新增 native_view + semantic_page。
+        self._ensure_form_auxiliary_slots(data, model_name)
         self._inject_semantic_contract(data)
 
         # ---------- 7) 计算聚合 ETag ----------
@@ -202,7 +204,8 @@ class LoadContractHandler(BaseIntentHandler):
             return {"status": "not_modified", "code": 304, "data": None, "meta": {"etag": etag}}
 
         meta_out = dict(meta); meta_out["etag"] = etag
-        return {"status": status, "code": 200, "data": data, "meta": meta_out}
+        response = {"status": status, "code": 200, "data": data, "meta": meta_out}
+        return with_lite_preview_if_requested(response, p, "load_contract", payload_type="lite_contract")
 
     def _generate_with_ui_contract(self, *, model_name, view_type, menu_id, action_id, ctx_user):
         """Compatibility bridge for legacy load_contract/load_view callers."""
@@ -241,6 +244,129 @@ class LoadContractHandler(BaseIntentHandler):
             "data": data or {},
             "meta": meta or {},
         }
+
+    def _ensure_form_auxiliary_slots(self, data: dict, model_name: str):
+        """Expose stable form auxiliary slots so clients do not infer them."""
+        if not isinstance(data, dict):
+            return
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        if not form:
+            return
+
+        def _as_dict(value):
+            return value if isinstance(value, dict) else {}
+
+        def _layout_ribbon(node):
+            if isinstance(node, list):
+                for item in node:
+                    found = _layout_ribbon(item)
+                    if found:
+                        return found
+                return None
+            if not isinstance(node, dict):
+                return None
+            widget = str(node.get("widget") or node.get("widgetName") or node.get("name") or "").strip()
+            node_type = str(node.get("type") or node.get("kind") or "").strip()
+            if node_type == "widget" and widget == "web_ribbon":
+                return {
+                    "enabled": True,
+                    "widget": "web_ribbon",
+                    "title": node.get("title") or node.get("text") or node.get("label") or "Ribbon",
+                    "class": node.get("class") or node.get("className") or "",
+                    "bg_color": node.get("bg_color") or node.get("bgColor") or "",
+                }
+            for key in ("children", "tabs", "pages", "nodes", "items"):
+                found = _layout_ribbon(node.get(key))
+                if found:
+                    return found
+            return None
+
+        if "ribbon" not in form:
+            form["ribbon"] = _layout_ribbon(form.get("layout")) or {"enabled": False}
+        elif not isinstance(form.get("ribbon"), dict):
+            form["ribbon"] = {"enabled": bool(form.get("ribbon"))}
+
+        chatter = _as_dict(form.get("chatter"))
+        chatter_enabled = bool(chatter.get("enabled"))
+        if not chatter_enabled:
+            model_fields = {}
+            try:
+                model_fields = getattr(self.env[model_name], "_fields", {}) or {}
+            except Exception:
+                model_fields = {}
+            chatter_fields = [
+                field_name
+                for field_name in ("message_follower_ids", "activity_ids", "message_ids", "website_message_ids")
+                if field_name in model_fields
+            ]
+            if chatter_fields:
+                chatter = {
+                    **chatter,
+                    "enabled": True,
+                    "label": chatter.get("label") or "沟通记录",
+                    "fields": chatter.get("fields") if isinstance(chatter.get("fields"), list) else chatter_fields,
+                    "features": chatter.get("features") if isinstance(chatter.get("features"), dict) else {
+                        "message": "message_ids" in model_fields,
+                        "note": "message_ids" in model_fields,
+                        "activity": "activity_ids" in model_fields,
+                    },
+                    "actions": chatter.get("actions") if isinstance(chatter.get("actions"), list) else [
+                        {
+                            "key": "chatter_send_message",
+                            "label": "发送消息",
+                            "kind": "chatter",
+                            "level": "chatter",
+                            "selection": "none",
+                            "intent": "message",
+                            "payload": {"mode": "message"},
+                        },
+                        {
+                            "key": "chatter_log_note",
+                            "label": "记录备注",
+                            "kind": "chatter",
+                            "level": "chatter",
+                            "selection": "none",
+                            "intent": "note",
+                            "payload": {"mode": "note"},
+                        },
+                        {
+                            "key": "chatter_schedule_activity",
+                            "label": "活动",
+                            "kind": "chatter",
+                            "level": "chatter",
+                            "selection": "none",
+                            "intent": "activity",
+                            "payload": {
+                                "mode": "activity",
+                                "execute_intent": "chatter.activity.schedule",
+                                "activity_type_xmlid": "mail.mail_activity_data_todo",
+                                "fields": [
+                                    {"name": "summary", "label": "摘要", "type": "char", "required": True},
+                                    {"name": "date_deadline", "label": "截止日期", "type": "date", "required": False},
+                                    {"name": "note", "label": "备注", "type": "text", "required": False},
+                                ],
+                            },
+                        },
+                    ],
+                }
+                form["chatter"] = chatter
+
+        attachments = _as_dict(form.get("attachments"))
+        if bool(_as_dict(form.get("chatter")).get("enabled")) and not attachments.get("enabled"):
+            form["attachments"] = {
+                **attachments,
+                "enabled": True,
+                "label": attachments.get("label") or "附件",
+                "upload": attachments.get("upload") if isinstance(attachments.get("upload"), dict) else {
+                    "intent": "file.upload",
+                    "max_bytes": 5 * 1024 * 1024,
+                    "accepted_types": [],
+                },
+                "download": attachments.get("download") if isinstance(attachments.get("download"), dict) else {
+                    "intent": "file.download",
+                },
+            }
 
     def _inject_semantic_contract(self, data: dict):
         if not isinstance(data, dict):

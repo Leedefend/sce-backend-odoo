@@ -1,0 +1,44 @@
+{
+  "value": {
+    "amount_total": 3000
+  },
+  "modifiers": {
+    "budget_total": {
+      "readonly": true,
+      "required": true,
+      "invisible": false
+    }
+  },
+  "button_status": {
+    "save": {
+      "visible": true,
+      "disabled": false
+    },
+    "submit": {
+      "visible": true,
+      "disabled": true
+    }
+  },
+  "x2many_changes": [
+    {
+      "relation_field": "task_ids",
+      "key": "row.10",
+      "row_id": 10,
+      "values": {
+        "planned_hours": 8
+      },
+      "modifiers": {
+        "planned_hours": {
+          "readonly": false,
+          "required": true,
+          "invisible": false
+        }
+      },
+      "state": "update",
+      "command": [1],
+      "warnings": []
+    }
+  ],
+  "warning": [],
+  "changed_fields": ["budget_total"]
+}

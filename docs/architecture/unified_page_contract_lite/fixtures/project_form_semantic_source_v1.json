@@ -1,0 +1,89 @@
+{
+  "page_id": "project.form",
+  "scene_key": "project.intake",
+  "client_type": "web_pc",
+  "etag": "lite-project-form-adapter-source-001",
+  "trace_id": "trace.lite.adapter.project.form.001",
+  "render_profile": "edit",
+  "semantic_page": {
+    "model": "project.project",
+    "view_type": "form",
+    "layout": "auto",
+    "permission_verdicts": {
+      "read": {"allowed": true, "reason_code": "OK"},
+      "create": {"allowed": true, "reason_code": "OK"},
+      "write": {"allowed": true, "reason_code": "OK"},
+      "unlink": {"allowed": false, "reason_code": "PERMISSION_DENIED"},
+      "execute": {"allowed": true, "reason_code": "OK"}
+    },
+    "actions": {
+      "header_actions": [
+        {"key": "submit", "label": "提交立项", "enabled": true, "reason_code": "OK"}
+      ],
+      "record_actions": [
+        {"key": "open", "label": "打开", "enabled": true, "reason_code": "OK"}
+      ],
+      "toolbar_actions": []
+    },
+    "zones": [
+      {
+        "key": "detail_zone",
+        "blocks": [
+          {
+            "type": "field_group_block",
+            "data": {
+              "fields": ["name", "stage_id"]
+            }
+          }
+        ]
+      },
+      {
+        "key": "relation_zone",
+        "blocks": [
+          {
+            "type": "relation_table_block",
+            "data": {
+              "items": [
+                {
+                  "field": "task_ids",
+                  "relation_model": "project.task",
+                  "field_type": "one2many",
+                  "preferred_view_type": "tree"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "fields": {
+    "name": {"type": "char", "label": "项目名称", "required": true},
+    "stage_id": {"type": "many2one", "label": "项目阶段", "required": false},
+    "task_ids": {"type": "one2many", "label": "任务", "required": false}
+  },
+  "field_policies": {
+    "name": {"visible_profiles": ["create", "edit", "readonly"], "required_profiles": ["create", "edit"]},
+    "stage_id": {"visible_profiles": ["edit", "readonly"], "readonly_profiles": ["readonly"]},
+    "task_ids": {"visible_profiles": ["edit", "readonly"]}
+  },
+  "action_policies": {
+    "submit": {"visible": true, "enabled": true},
+    "open": {"visible": true, "enabled": true}
+  },
+  "onchange_fields": ["name", "stage_id"],
+  "record": {
+    "name": "示例项目",
+    "stage_id": 1
+  },
+  "relation_rows": {
+    "task_ids": [
+      {"id": 10, "name": "任务一"}
+    ]
+  },
+  "dict_data": {
+    "stage_id": [
+      {"value": 1, "label": "草稿"}
+    ]
+  }
+}

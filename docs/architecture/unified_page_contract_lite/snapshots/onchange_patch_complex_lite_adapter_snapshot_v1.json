@@ -1,0 +1,64 @@
+{
+  "updateType": "partial",
+  "operation": "merge",
+  "statusPatch": {
+    "widgetStatus": [
+      {
+        "widgetId": "field.budget_total",
+        "visible": true,
+        "readonly": true,
+        "required": true,
+        "disabled": false
+      },
+      {
+        "widgetId": "field.task_ids.row.10.planned_hours",
+        "visible": true,
+        "readonly": false,
+        "required": true,
+        "disabled": false
+      },
+      {
+        "widgetId": "field.task_ids.row.10.user_id",
+        "visible": true,
+        "readonly": true,
+        "required": false,
+        "disabled": false
+      }
+    ],
+    "buttonStatus": [
+      {
+        "btnId": "btn.save",
+        "visible": true,
+        "disabled": false
+      },
+      {
+        "btnId": "btn.submit",
+        "visible": true,
+        "disabled": true
+      }
+    ]
+  },
+  "dataPatch": {
+    "mainData": {
+      "amount_total": 3000
+    },
+    "relationData": {
+      "task_ids": {
+        "linePatches": [
+          {
+            "field": "task_ids",
+            "row_key": "row.10",
+            "row_id": 10,
+            "patch": {
+              "planned_hours": 8
+            },
+            "row_state": "update",
+            "command_hint": [1]
+          }
+        ]
+      }
+    },
+    "dictData": {}
+  },
+  "layoutPatch": {}
+}

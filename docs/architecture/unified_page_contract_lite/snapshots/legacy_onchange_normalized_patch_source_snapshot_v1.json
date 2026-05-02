@@ -1,0 +1,49 @@
+{
+  "applied_fields": [
+    "budget_total"
+  ],
+  "button_status_patch": {
+    "save": {
+      "disabled": false,
+      "visible": true
+    },
+    "submit": {
+      "disabled": true,
+      "visible": true
+    }
+  },
+  "line_patches": [
+    {
+      "command_hint": [
+        1
+      ],
+      "field": "task_ids",
+      "modifiers_patch": {
+        "planned_hours": {
+          "invisible": false,
+          "readonly": false,
+          "required": true
+        }
+      },
+      "patch": {
+        "planned_hours": 8
+      },
+      "row_id": 10,
+      "row_key": "row.10",
+      "row_state": "update",
+      "warnings": []
+    }
+  ],
+  "modifiers_patch": {
+    "budget_total": {
+      "invisible": false,
+      "readonly": true,
+      "required": true
+    }
+  },
+  "patch": {
+    "amount_total": 3000
+  },
+  "schema_version": "v1",
+  "warnings": []
+}
