@@ -1,6 +1,10 @@
 import type { NavMeta, NavNode } from '@sc/schema';
 import { findActionMeta } from '../menu';
-import { loadActionContract } from '../../api/contract';
+import { loadActionContract, loadModelLitePreviewContract } from '../../api/contract';
+import {
+  adaptLiteContractToActionViewContract,
+  isLiteContractPilotCandidate,
+} from '../runtime/unifiedPageContractLitePilot';
 
 export interface ActionResolution {
   meta: NavMeta;
@@ -89,11 +93,24 @@ export async function resolveAction(
   actionId: number,
   currentAction?: NavMeta | null,
 ): Promise<ActionResolution> {
-  const contract = await loadActionContract(actionId);
   const currentMatches = Boolean(currentAction && Number(currentAction.action_id || 0) === Number(actionId || 0));
   const metaFromMenu = findActionMeta(menuTree, actionId);
   // Always prefer menuTree meta to avoid stale/incomplete currentAction snapshots.
   const seedMeta = metaFromMenu || (currentMatches ? currentAction : null);
+  if (isLiteContractPilotCandidate(seedMeta)) {
+    const liteContract = await loadModelLitePreviewContract(String(seedMeta?.model || ''), { viewType: 'tree' });
+    if (liteContract) {
+      const contract = adaptLiteContractToActionViewContract(liteContract);
+      const fallbackMeta = resolveMetaFromContract(contract, actionId);
+      const meta = mergeMeta(seedMeta, fallbackMeta);
+      if (!meta.action_id) {
+        meta.action_id = Number(actionId || 0);
+      }
+      return { meta, contract };
+    }
+  }
+
+  const contract = await loadActionContract(actionId);
   const fallbackMeta = resolveMetaFromContract(contract, actionId);
   const meta = mergeMeta(seedMeta, fallbackMeta);
   if (!meta.action_id) {
