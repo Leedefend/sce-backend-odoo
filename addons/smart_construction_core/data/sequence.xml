@@ -256,6 +256,14 @@
         <field name="company_id" eval="False"/>
     </record>
 
+    <record id="seq_sc_equipment_request" model="ir.sequence">
+        <field name="name">设备申请</field>
+        <field name="code">sc.equipment.request</field>
+        <field name="prefix">ERQ%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
     <record id="seq_sc_material_inbound" model="ir.sequence">
         <field name="name">材料入库单</field>
         <field name="code">sc.material.inbound</field>
