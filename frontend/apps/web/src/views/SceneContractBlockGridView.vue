@@ -19,6 +19,7 @@ import { intentRequest } from '../api/intents';
 import StatusPanel from '../components/StatusPanel.vue';
 import PageRenderer from '../components/page/PageRenderer.vue';
 import { useSessionStore } from '../stores/session';
+import { getSceneByKey } from '../app/resolvers/sceneRegistry';
 import type { PageBlockActionEvent, PageOrchestrationBlock, PageOrchestrationContract } from '../app/pageOrchestration';
 
 type SceneBlock = Record<string, unknown> & {
@@ -54,6 +55,20 @@ const rawContract = ref<SceneContract | null>(null);
 
 function asText(value: unknown) {
   return String(value || '').trim();
+}
+
+function parseRouteTarget(rawRoute: string) {
+  const raw = asText(rawRoute);
+  if (!raw) return null;
+  const [path, queryRaw] = raw.split('?', 2);
+  const query: Record<string, string> = {};
+  if (queryRaw) {
+    const params = new URLSearchParams(queryRaw);
+    params.forEach((value, key) => {
+      if (key) query[key] = value;
+    });
+  }
+  return { path: path || raw, query };
 }
 
 function normalizeBlockType(type: unknown) {
@@ -111,13 +126,23 @@ function normalizeDataset(block: SceneBlock) {
     }));
   }
   if (block.type === 'native_view_ref') {
-    return {
-      title: asText(block.title),
-      summary: asText(block.summary),
-      model: asText(block.model),
-      count: Number(block.count || 0),
-      target,
-    };
+    return [
+      {
+        key: 'summary',
+        label: '说明',
+        value: asText(block.summary) || '可继续打开原生明细。',
+      },
+      {
+        key: 'model',
+        label: '业务对象',
+        value: asText(block.model) || '--',
+      },
+      {
+        key: 'count',
+        label: '记录数',
+        value: Number(block.count || 0),
+      },
+    ];
   }
   return block;
 }
@@ -127,12 +152,14 @@ function normalizeBlock(block: SceneBlock, index: number): PageOrchestrationBloc
   return {
     key,
     block_type: normalizeBlockType(block.type),
-    title: asText(block.title),
+    title: block.type === 'metric_card' ? '' : asText(block.title),
     subtitle: asText(block.subtitle),
     priority: 100 - index,
     tone: normalizeTone(block.tone),
     data_source: `ds_${key}`,
-    actions: block.type === 'native_view_ref' ? [{ key: targetActionKey(key), label: '打开明细' }] : [],
+    actions: block.target && typeof block.target === 'object'
+      ? [{ key: targetActionKey(key), label: block.type === 'native_view_ref' ? '打开明细' : '打开' }]
+      : [],
   };
 }
 
@@ -218,9 +245,26 @@ function findTargetByActionKey(actionKey: string) {
 }
 
 async function openTarget(target: Record<string, unknown>) {
+  const sceneKey = asText(target.scene_key || target.sceneKey);
+  if (sceneKey) {
+    const scene = getSceneByKey(sceneKey);
+    const rawRoute = asText(target.route || scene?.target?.route || scene?.route || `/s/${sceneKey}`);
+    const parsed = parseRouteTarget(rawRoute);
+    if (parsed) {
+      await router.push({ path: parsed.path, query: { ...route.query, ...parsed.query } });
+      return true;
+    }
+  }
   const routePath = asText(target.route);
   if (routePath) {
-    await router.push({ path: routePath, query: route.query });
+    const parsed = parseRouteTarget(routePath);
+    await router.push({
+      path: parsed?.path || routePath,
+      query: {
+        ...route.query,
+        ...(parsed?.query || {}),
+      },
+    });
     return true;
   }
   const actionXmlid = asText(target.action_xmlid);
@@ -255,7 +299,13 @@ async function openTarget(target: Record<string, unknown>) {
 }
 
 async function handleAction(event: PageBlockActionEvent) {
-  const target = event.target && Object.keys(event.target).length ? event.target : findTargetByActionKey(event.actionKey);
+  const itemTarget = event.item?.target && typeof event.item.target === 'object' ? event.item.target as Record<string, unknown> : {};
+  const eventTarget = event.target && Object.keys(event.target).length ? event.target : {};
+  const target = Object.keys(eventTarget).length
+    ? eventTarget
+    : Object.keys(itemTarget).length
+      ? itemTarget
+      : findTargetByActionKey(event.actionKey);
   await openTarget((target || {}) as Record<string, unknown>);
 }
 

@@ -1049,7 +1049,7 @@ class ScBusinessMenuTaxonomySeed(models.AbstractModel):
     def _ensure_menu(self, xml_name, name, parent, sequence, action=None):
         menu = self._xmlid_record("smart_construction_core.%s" % xml_name)
         vals = {"name": name, "parent_id": parent.id, "sequence": sequence, "active": True}
-        vals["action"] = "ir.actions.act_window,%s" % action.id if action else False
+        vals["action"] = "%s,%s" % (action._name, action.id) if action else False
         if menu:
             menu.sudo().write(vals)
         else:

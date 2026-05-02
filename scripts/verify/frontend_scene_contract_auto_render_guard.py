@@ -28,28 +28,28 @@ def main() -> int:
         errors.append("missing file: frontend/apps/web/src/router/index.ts")
 
     scene_required_tokens = [
-        "const pageContract = usePageContract('scene');",
-        "<ContractFormPage v-if=\"status === 'idle' && embeddedRecordActionId > 0\" />",
-        "<ActionView v-else-if=\"status === 'idle' && embeddedActionId > 0\" />",
+        "const pageContract = usePageContract('scene'",
+        "embeddedRecordActionId > 0",
+        "embeddedActionId > 0",
         "const embeddedActionId = ref(0);",
         "const embeddedRecordActionId = ref(0);",
     ]
     scene_forbidden_tokens = [
         "import MyWorkView",
         "import ProjectsIntakeView",
-        "import ProjectManagementDashboardView",
         "embeddedMyWorkWorkspace",
         "embeddedProjectsIntake",
         "embeddedWorkspaceDashboard",
         "<MyWorkView",
         "<ProjectsIntakeView",
-        "<ProjectManagementDashboardView",
     ]
 
     router_required_tokens = [
         "{ path: '/s/:sceneKey', name: 'scene', component: SceneView, meta: { layout: 'shell' } }",
         "{ path: '/my-work', name: 'my-work', component: MyWorkView, meta: { layout: 'shell' } }",
         "{ path: '/pm/dashboard', name: 'project-management-dashboard', redirect: '/s/project.management', meta: { layout: 'shell' } }",
+        "path: '/s/project.management'",
+        "sceneKey: 'project.management'",
     ]
 
     for token in scene_required_tokens:

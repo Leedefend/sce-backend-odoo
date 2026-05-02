@@ -24,10 +24,21 @@ def main() -> int:
 
     _must(router_text, "ProjectManagementDashboardView", "router", errors)
     _must(router_text, "path: '/pm/dashboard'", "router", errors)
-
-    _must(scene_text, "sceneKey === 'project.management'", "SceneView", errors)
-    _must(scene_text, "path: '/pm/dashboard'", "SceneView", errors)
-    _must(scene_text, "query: workspaceContextQuery", "SceneView", errors)
+    direct_scene_route = (
+        "path: '/s/project.management'" in router_text
+        and "sceneKey: 'project.management'" in router_text
+        and "component: ProjectManagementDashboardView" in router_text
+    )
+    scene_view_bridge = (
+        "sceneKey === 'project.management'" in scene_text
+        and "path: '/pm/dashboard'" in scene_text
+        and "query: workspaceContextQuery" in scene_text
+    )
+    if not direct_scene_route and not scene_view_bridge:
+        errors.append(
+            "project.management bridge: missing direct /s/project.management route "
+            "or SceneView /pm/dashboard bridge"
+        )
 
     _must(ctx_text, "project_id", "workspaceContext", errors)
     _must(ctx_text, "context.project_id", "workspaceContext", errors)

@@ -8,6 +8,7 @@ import ContractFormPage from '../pages/ContractFormPage.vue';
 import WorkbenchView from '../views/WorkbenchView.vue';
 import SceneView from '../views/SceneView.vue';
 import ProjectManagementDashboardView from '../views/ProjectManagementDashboardView.vue';
+import ProjectsIntakeView from '../views/ProjectsIntakeView.vue';
 import MyWorkView from '../views/MyWorkView.vue';
 import SceneHealthView from '../views/SceneHealthView.vue';
 import ScenePackagesView from '../views/ScenePackagesView.vue';
@@ -23,6 +24,7 @@ function routeTitle(routeName: string | symbol | null | undefined): string {
     home: '工作台',
     'my-work': '我的工作',
     'project-management-dashboard': '项目管理驾驶舱',
+    'projects-intake': '项目立项',
     scene: '业务场景',
     menu: '业务菜单',
     action: '业务动作',
@@ -47,7 +49,8 @@ const router = createRouter({
     { path: '/', name: 'home', component: HomeView, meta: { layout: 'shell' } },
     { path: '/my-work', name: 'my-work', component: MyWorkView, meta: { layout: 'shell' } },
     { path: '/pm/dashboard', name: 'project-management-dashboard', redirect: '/s/project.management', meta: { layout: 'shell' } },
-    { path: '/s/project.management', name: 'scene-project-management', component: ProjectManagementDashboardView, meta: { layout: 'shell' } },
+    { path: '/s/project.management', name: 'scene-project-management', component: ProjectManagementDashboardView, meta: { layout: 'shell', sceneKey: 'project.management' } },
+    { path: '/s/projects.intake', name: 'projects-intake', component: ProjectsIntakeView, meta: { layout: 'shell', sceneKey: 'projects.intake' } },
     { path: '/s/:sceneKey', name: 'scene', component: SceneView, meta: { layout: 'shell' } },
     { path: '/m/:menuId', name: 'menu', component: MenuView, meta: { layout: 'shell' } },
     // Diagnostic-only surface; must not be used as product navigation.

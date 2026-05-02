@@ -115,7 +115,7 @@
               {{ item.label }}
             </button>
           </div>
-          <p v-if="!useMinimalTopbar && sceneHeaderMinimal" class="scene-anchor-line">{{ sceneHeaderAnchorLine }}</p>
+          <p v-if="!useMinimalTopbar && sceneHeaderMinimal && sceneHeaderAnchorLine" class="scene-anchor-line">{{ sceneHeaderAnchorLine }}</p>
           <h1 v-if="!useMinimalTopbar && !sceneHeaderMinimal" class="headline">{{ pageTitle }}</h1>
           <p v-if="!useMinimalTopbar && !sceneHeaderMinimal && topbarSubtitle" class="headline-subtitle">{{ topbarSubtitle }}</p>
         </div>
@@ -322,7 +322,8 @@ const showSceneErrors = computed(() => import.meta.env.DEV && sceneRegistryError
 const sceneRegistryErrors = getSceneRegistryDiagnostics().errors;
 const routeSceneKey = computed(() => {
   const metaSceneKey = route.meta?.sceneKey as string | undefined;
-  return metaSceneKey || parseSceneKeyFromQuery(route.query as LocationQueryRaw);
+  const paramSceneKey = typeof route.params.sceneKey === 'string' ? route.params.sceneKey : '';
+  return metaSceneKey || paramSceneKey || parseSceneKeyFromQuery(route.query as LocationQueryRaw);
 });
 const routeScene = computed(() => {
   const key = routeSceneKey.value;
@@ -517,10 +518,15 @@ const topbarSubtitle = computed(() => {
   return '';
 });
 
-const sceneHeaderMinimal = computed(() => String(routeSceneKey.value || '').trim() === 'projects.intake');
+const sceneHeaderMinimal = computed(() => [
+  'projects.intake',
+  'workspace.home',
+  'dashboard.company',
+].includes(String(routeSceneKey.value || '').trim()));
 
 const sceneHeaderAnchorLine = computed(() => {
   if (!sceneHeaderMinimal.value) return '';
+  if (String(routeSceneKey.value || '').trim() !== 'projects.intake') return '';
   return '项目立项 / 创建项目';
 });
 
