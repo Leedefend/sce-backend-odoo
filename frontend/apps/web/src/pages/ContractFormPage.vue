@@ -5021,20 +5021,24 @@ onBeforeUnmount(() => {
 .page {
   display: grid;
   gap: 6px;
+  min-width: 0;
   padding-bottom: 24px;
 }
 
 .page--flow {
-  max-width: 1080px;
+  max-width: min(1080px, 100%);
   margin: 0 auto;
   padding: 24px 32px;
+  box-sizing: border-box;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: flex-start;
+  min-width: 0;
 }
 
 .header--flow {
@@ -5046,6 +5050,8 @@ onBeforeUnmount(() => {
 .header-main {
   display: grid;
   gap: 0;
+  min-width: 0;
+  flex: 1 1 320px;
 }
 
 .page-subtitle {
@@ -5064,6 +5070,7 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: 36px;
   line-height: 1.12;
+  overflow-wrap: anywhere;
 }
 
 .meta {
@@ -5088,7 +5095,7 @@ onBeforeUnmount(() => {
   gap: 4px;
   margin-left: auto;
   text-align: right;
-  min-width: 240px;
+  min-width: min(240px, 100%);
   padding-top: 3px;
 }
 
@@ -5118,7 +5125,9 @@ onBeforeUnmount(() => {
   background: #fff;
   max-width: 1360px;
   width: 100%;
+  min-width: 0;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .card--flow {
@@ -5136,6 +5145,7 @@ onBeforeUnmount(() => {
   padding: 10px;
   margin-bottom: 10px;
   background: #f8fafc;
+  min-width: 0;
 }
 
 .block.warn {
@@ -5172,6 +5182,9 @@ onBeforeUnmount(() => {
   border-radius: 999px;
   border: 1px solid #cbd5e1;
   background: #fff;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .chip-btn {
@@ -5181,6 +5194,9 @@ onBeforeUnmount(() => {
   border: 1px solid #cbd5e1;
   background: #fff;
   cursor: pointer;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .chip-btn.active {
@@ -5216,6 +5232,7 @@ onBeforeUnmount(() => {
 .native-chatter-compose-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -5382,7 +5399,7 @@ onBeforeUnmount(() => {
 
 .native-statusbar-step {
   position: relative;
-  min-width: 108px;
+  min-width: 124px;
   flex: 1 0 auto;
   border: 0;
   margin-left: -12px;
@@ -5396,7 +5413,8 @@ onBeforeUnmount(() => {
   clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
   box-shadow: inset 0 0 0 1px #dbe3eb;
   transition: background-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .native-statusbar-step:first-child {
@@ -5497,6 +5515,7 @@ onBeforeUnmount(() => {
 
 .relation-dialog-search {
   align-items: stretch;
+  flex-wrap: wrap;
   padding: 12px 16px;
   border-bottom: 1px solid #eef2f7;
   background: #ffffff;
@@ -5514,7 +5533,8 @@ onBeforeUnmount(() => {
 }
 
 .relation-dialog-table {
-  width: 100%;
+  width: max(100%, 720px);
+  min-width: 720px;
   border-collapse: collapse;
   background: #ffffff;
   font-size: 13px;
@@ -5527,7 +5547,8 @@ onBeforeUnmount(() => {
   text-align: left;
   vertical-align: middle;
   color: #111827;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .relation-dialog-table th {
@@ -5577,6 +5598,19 @@ onBeforeUnmount(() => {
 
 @media (max-width: 860px) {
   .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page--flow {
+    padding: 14px 12px 20px;
+  }
+
+  .header-status {
+    margin-left: 0;
+    text-align: left;
+  }
+
+  .native-chatter-entry {
     grid-template-columns: 1fr;
   }
 

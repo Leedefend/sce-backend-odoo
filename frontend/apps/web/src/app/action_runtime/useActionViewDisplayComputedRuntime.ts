@@ -21,7 +21,7 @@ export function useActionViewDisplayComputedRuntime(options: UseActionViewDispla
 
   const subtitle = computed(
     () =>
-      `${options.records.value.length}${options.pageText('subtitle_records_suffix', ' 条记录')} · ${options.pageText('subtitle_sort_prefix', '排序：')}${options.sortLabel.value}`,
+      `${options.records.value.length}${options.pageText('subtitle_records_suffix', ' 条记录')}`,
   );
 
   const statusLabel = computed(() => {

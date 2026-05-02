@@ -378,6 +378,7 @@
       :batch-message="batchMessage"
       :list-profile="listProfile"
       :ui-labels="toolbarUiLabels"
+      :show-plain-search="!showTopActionToolbar"
       :grouped-rows="groupedRows"
       :can-create-record="canCreateRecord"
       :create-label="toolbarUiLabel('create', '新建')"
@@ -1285,14 +1286,7 @@ const {
   buildListSortOptions,
 });
 const displaySortOptions = computed(() => {
-  const seen = new Set<string>();
-  return sortOptions.value.filter((option) => {
-    const label = String(option.label || '').trim();
-    const key = label || String(option.value || '').trim();
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  return [];
 });
 
 const {
@@ -2728,7 +2722,7 @@ function refreshForProjectContextChange(): void {
 <style scoped>
 .page {
   display: grid;
-  gap: 16px;
+  gap: 6px;
 }
 
 .page-actions {

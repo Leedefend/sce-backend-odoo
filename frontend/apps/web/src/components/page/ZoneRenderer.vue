@@ -49,6 +49,7 @@ function onBlockAction(payload: PageBlockActionEvent) {
 
 <style scoped>
 .zone-renderer {
+  min-width: 0;
   border: 1px solid #d9e2ec;
   border-radius: 16px;
   background: #fff;
@@ -59,19 +60,22 @@ function onBlockAction(payload: PageBlockActionEvent) {
   margin: 0;
   font-size: 21px;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 .zone-renderer-header p {
   margin: 8px 0 0;
   color: #475569;
   font-size: 14px;
+  overflow-wrap: anywhere;
 }
 .zone-renderer-body {
   margin-top: 16px;
   display: grid;
   gap: 16px;
+  min-width: 0;
 }
 .display-grid {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
 }
 .display-grid > * {
   height: 100%;

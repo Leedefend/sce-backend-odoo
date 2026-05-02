@@ -495,13 +495,15 @@ onBeforeUnmount(() => {
 <style scoped>
 .action-toolbar {
   display: grid;
-  grid-template-columns: auto minmax(320px, 1fr) auto auto;
-  align-items: start;
-  gap: 10px;
+  grid-template-columns: max-content minmax(320px, 1fr) minmax(0, auto) max-content;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #fff;
-  padding: 8px 10px;
+  padding: 4px 6px;
 }
 
 .toolbar-section,
@@ -512,12 +514,20 @@ onBeforeUnmount(() => {
 .group-switch {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
+  flex-wrap: nowrap;
 }
 
 .view-switch {
-  width: 120px;
+  width: auto;
+  max-width: 240px;
+  white-space: nowrap;
+}
+
+.view-switch .contract-chips {
+  flex-wrap: nowrap;
+  gap: 4px;
 }
 
 .group-switch {
@@ -534,25 +544,27 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-self: stretch;
-  min-width: 320px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .native-searchbox {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   flex: 1 1 auto;
-  min-height: 30px;
-  gap: 5px;
+  min-width: 0;
+  min-height: 26px;
+  gap: 4px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   background: #f8fafc;
-  padding: 3px 4px 3px 6px;
+  padding: 2px 3px 2px 6px;
 }
 
 .native-searchbox input {
   flex: 1 1 160px;
-  min-width: 120px;
+  min-width: 90px;
   height: 22px;
   border: 0;
   background: transparent;
@@ -572,9 +584,10 @@ onBeforeUnmount(() => {
   border-radius: 8px;
   background: #fff;
   color: #475569;
-  padding: 5px 8px;
+  padding: 4px 7px;
   font-size: 12px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .toolbar-search-submit {
@@ -588,6 +601,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 5px;
   min-height: 22px;
+  max-width: 180px;
   border: 1px solid #bfdbfe;
   border-radius: 5px;
   background: #eff6ff;
@@ -595,6 +609,13 @@ onBeforeUnmount(() => {
   padding: 2px 6px;
   font-size: 12px;
   cursor: pointer;
+  white-space: nowrap;
+}
+
+.search-facet span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .facet-remove {
@@ -673,6 +694,13 @@ onBeforeUnmount(() => {
   text-align: left;
   font-size: 13px;
   cursor: pointer;
+  min-width: 0;
+}
+
+.search-menu-item span,
+.contract-chip {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .search-menu-item:hover,
@@ -768,7 +796,9 @@ onBeforeUnmount(() => {
 .toolbar-actions {
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
 }
 
 .contract-label {
@@ -780,8 +810,9 @@ onBeforeUnmount(() => {
 
 .contract-chips {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-wrap: nowrap;
+  gap: 5px;
+  min-width: 0;
 }
 
 .contract-chips.overflow-row {
@@ -794,9 +825,17 @@ onBeforeUnmount(() => {
   border-radius: 999px;
   background: #fff;
   color: #0f172a;
-  padding: 5px 11px;
+  padding: 3px 8px;
   font-size: 12px;
   cursor: pointer;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+@media (max-width: 1360px) {
+  .action-toolbar {
+    grid-template-columns: max-content minmax(260px, 1fr) minmax(0, auto) max-content;
+  }
 }
 
 .contract-chip.active {

@@ -368,6 +368,7 @@ function emitFavoriteToggle(field: FormSectionFieldSchema) {
 <style scoped>
 .template-form-section {
   grid-column: 1 / -1;
+  min-width: 0;
   border: 0;
   border-top: 1px solid #f1f3f6;
   border-radius: 0;
@@ -389,8 +390,10 @@ function emitFavoriteToggle(field: FormSectionFieldSchema) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 8px;
+  min-width: 0;
 }
 
 .template-form-section-title {
@@ -398,6 +401,7 @@ function emitFavoriteToggle(field: FormSectionFieldSchema) {
   font-size: 14px;
   color: #374151;
   font-weight: 500;
+  overflow-wrap: anywhere;
 }
 
 .template-form-section-hint {
@@ -410,6 +414,7 @@ function emitFavoriteToggle(field: FormSectionFieldSchema) {
   display: grid;
   row-gap: 16px;
   column-gap: 24px;
+  min-width: 0;
 }
 
 .field {
@@ -439,6 +444,8 @@ function emitFavoriteToggle(field: FormSectionFieldSchema) {
   color: #111827;
   font-weight: 600;
   margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .field-favorite-toggle {
@@ -478,6 +485,7 @@ function emitFavoriteToggle(field: FormSectionFieldSchema) {
 .field-control-row {
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
   gap: 6px;
   min-width: 0;
 }
@@ -494,6 +502,8 @@ function emitFavoriteToggle(field: FormSectionFieldSchema) {
   min-height: 40px;
   display: inline-flex;
   align-items: center;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .input {
@@ -588,6 +598,7 @@ select.input {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  min-width: 0;
 }
 
 .many2one-action,
@@ -601,6 +612,9 @@ select.input {
   font-size: 12px;
   line-height: 1.2;
   cursor: pointer;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .many2one-action:hover,
@@ -633,7 +647,7 @@ select.input {
 
 .native-date-range {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(130px, 1fr) auto minmax(130px, 1fr);
   gap: 6px;
   align-items: center;
   min-width: 0;
@@ -654,6 +668,14 @@ select.input {
     grid-template-columns: 1fr !important;
     row-gap: 16px;
     column-gap: 0;
+  }
+
+  .native-date-range {
+    grid-template-columns: 1fr;
+  }
+
+  .native-date-range-separator {
+    display: none;
   }
 }
 </style>
