@@ -266,6 +266,18 @@
         <field name="parent_id" ref="smart_construction_core.menu_sc_projection_root"/>
         <field name="sequence">20</field>
     </record>
+    <menuitem id="menu_sc_dashboard_fund_cockpit_fact"
+              name="资金驾驶舱"
+              parent="smart_construction_core.menu_sc_projection_root"
+              action="smart_construction_core.action_sc_dashboard_fund_cockpit_fact"
+              sequence="30"/>
+    <menuitem id="menu_sc_dashboard_cost_cockpit_fact"
+              name="成本驾驶舱"
+              parent="smart_construction_core.menu_sc_projection_root"
+              action="smart_construction_core.action_sc_dashboard_cost_cockpit_fact"
+              sequence="40"/>
+    <delete model="ir.ui.menu"
+            search="[('name', 'in', ['资金驾驶舱', '成本驾驶舱']), ('parent_id', '=', ref('smart_construction_core.menu_sc_projection_root')), ('id', 'not in', [ref('smart_construction_core.menu_sc_dashboard_fund_cockpit_fact'), ref('smart_construction_core.menu_sc_dashboard_cost_cockpit_fact')])]"/>
 
     <!-- 工作台 -->
     <record id="menu_sc_history_todo" model="ir.ui.menu">
@@ -282,6 +294,20 @@
               action="smart_construction_core.action_sc_project_my_list"
               sequence="20"
               groups="smart_construction_core.group_sc_cap_project_read"/>
+    <menuitem id="menu_sc_workbench_my_todo_fact"
+              name="我的待办"
+              parent="smart_construction_core.menu_sc_workspace_center"
+              action="smart_construction_core.action_sc_workbench_my_todo_fact"
+              sequence="30"
+              groups="smart_construction_core.group_sc_internal_user"/>
+    <menuitem id="menu_sc_workbench_my_approval_fact"
+              name="我的审批"
+              parent="smart_construction_core.menu_sc_workspace_center"
+              action="smart_construction_core.action_sc_workbench_my_approval_fact"
+              sequence="40"
+              groups="smart_construction_core.group_sc_internal_user"/>
+    <delete model="ir.ui.menu"
+            search="[('name', 'in', ['我的待办', '我的审批']), ('parent_id', '=', ref('smart_construction_core.menu_sc_workspace_center')), ('id', 'not in', [ref('smart_construction_core.menu_sc_workbench_my_todo_fact'), ref('smart_construction_core.menu_sc_workbench_my_approval_fact')])]"/>
 
     <!-- 项目中心 / 项目管理 -->
     <menuitem id="menu_sc_project_management_group"

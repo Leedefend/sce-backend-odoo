@@ -52,7 +52,7 @@ FORMAL_TARGET_HINTS = {
     "receipt_income": ("sc.receipt.income", "receipt.invoice.line"),
     "payment_execution": ("sc.payment.execution", "payment.request", "payment.request.line"),
     "invoice_registration": ("sc.invoice.registration", "receipt.invoice.line"),
-    "treasury_fund": ("sc.treasury.ledger", "sc.treasury.reconciliation", "sc.fund.operation"),
+    "treasury_fund": ("sc.treasury.ledger", "sc.treasury.reconciliation"),
     "contract": ("construction.contract", "sc.general.contract", "purchase.order"),
     "project": ("project.project",),
     "partner": ("res.partner",),
