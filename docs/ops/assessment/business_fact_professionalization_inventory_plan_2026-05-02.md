@@ -251,6 +251,7 @@ Scope: 基于 `项目建设-产品功能清单（0301 ）.xlsx`，对当前 `sc.
 | WP9 劳务结算 | `sc.labor.settlement`、`sc.labor.settlement.line` | `models/core/labor_management.py`、`views/core/labor_management_views.xml` | 从 `sc.labor.document(labor_settlement)` 拆出劳务结算专业动作；现有“劳务结算”入口只承载劳务单位、结算日期、结算明细和金额确认，不再混入考勤或用工登记 |
 | WP10 劳务申请 | `sc.labor.request`、`sc.labor.request.line` | `models/core/labor_management.py`、`views/core/labor_management_views.xml` | 从 `sc.labor.document(labor_request)` 拆出劳务申请专业动作；现有“劳务申请”入口只承载劳务需求发起、需用日期和申请明细，不再混入实际用工或结算 |
 | WP11 劳务计划 | `sc.labor.plan`、`sc.labor.plan.line` | `models/core/labor_management.py`、`views/core/labor_management_views.xml` | 从 `sc.labor.document(labor_plan)` 拆出劳务计划专业动作；现有“劳务计划”入口只承载计划周期、负责人、计划人数和计划工时，不再混入申请、实际用工、考勤或结算 |
+| WP12 劳务价格库 | `sc.labor.price` | `models/core/labor_management.py`、`views/core/labor_management_views.xml` | 从 `sc.labor.document(labor_price_library)` 拆出劳务价格标准；现有“劳务价格库”入口只维护班组、作业内容、计价单位、单价、税率和生效期，不再混入劳务计划、用工或结算单据 |
 
 ## 6. 不再建议投入的方向
 
