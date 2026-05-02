@@ -7,6 +7,16 @@ class ProjectBudget(models.Model):
     _inherit = ["project.budget", "mail.thread", "mail.activity.mixin"]
     # 兼容旧视图/列表的 active 字段，代理到 is_active，避免缺少数据库列报错
     active = fields.Boolean(related="is_active", string="启用", readonly=False, store=False)
+    target_type = fields.Selection(
+        [("investment", "投资目标"), ("drawing_budget", "施工图预算"), ("contract_plan", "合约规划"), ("dynamic_cost", "动态成本")],
+        string="目标类型",
+        default="investment",
+        index=True,
+    )
+    version_no = fields.Char(string="目标版本号", index=True)
+    is_baseline = fields.Boolean(string="基准版", default=False, index=True)
+    source_channel = fields.Selection([("manual", "手工"), ("excel", "Excel导入"), ("system", "系统测算")], string="来源", default="manual", index=True)
+    measurement_note = fields.Text(string="测算说明")
 
 
 class ProjectBudgetLine(models.Model):
@@ -64,6 +74,16 @@ class ProjectBudgetLine(models.Model):
             ("by_schedule", "按节点"),
         ],
         string="计价方式",
+    )
+    cost_collection_method = fields.Selection(
+        [("contract", "合同归集"), ("non_contract", "无合同归集"), ("adjustment", "事后调整")],
+        string="成本归集方式",
+        index=True,
+    )
+    cost_allocation_method = fields.Selection(
+        [("direct", "直接分摊"), ("ratio", "按比例分摊"), ("area", "按面积分摊"), ("manual", "手工分摊")],
+        string="成本分摊方式",
+        index=True,
     )
     revenue_recognition = fields.Selection(
         [

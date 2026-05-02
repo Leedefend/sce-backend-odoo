@@ -10,6 +10,7 @@
                 <tree string="结算单">
                     <field name="name"/>
                     <field name="settlement_type"/>
+                    <field name="settlement_stage"/>
                     <field name="project_id"/>
                     <field name="contract_id"/>
                     <field name="partner_id"/>
@@ -18,6 +19,7 @@
                     <field name="amount_payable"/>
                     <field name="state"/>
                     <field name="date_settlement"/>
+                    <field name="planned_settlement_date"/>
                 </tree>
             </field>
         </record>
@@ -31,6 +33,7 @@
                     <field name="project_id"/>
                     <field name="contract_id"/>
                     <field name="partner_id"/>
+                    <field name="settlement_stage"/>
                     <filter name="state_draft" string="草稿" domain="[('state', '=', 'draft')]"/>
                     <filter name="state_submit" string="已提交" domain="[('state', '=', 'submit')]"/>
                     <filter name="state_approve" string="已批准" domain="[('state', '=', 'approve')]"/>
@@ -39,11 +42,13 @@
                     <filter name="type_out" string="支出结算" domain="[('settlement_type', '=', 'out')]"/>
                     <filter name="type_in" string="收入结算" domain="[('settlement_type', '=', 'in')]"/>
                     <filter name="with_contract" string="有关联合同" domain="[('contract_id', '!=', False)]"/>
+                    <filter name="stage_final" string="结算定案" domain="[('settlement_stage', '=', 'final')]"/>
                     <group expand="0" string="分组">
                         <filter name="group_project" string="按项目" context="{'group_by': 'project_id'}"/>
                         <filter name="group_contract" string="按合同" context="{'group_by': 'contract_id'}"/>
                         <filter name="group_partner" string="按往来单位" context="{'group_by': 'partner_id'}"/>
                         <filter name="group_type" string="按结算类型" context="{'group_by': 'settlement_type'}"/>
+                        <filter name="group_stage" string="按结算阶段" context="{'group_by': 'settlement_stage'}"/>
                         <filter name="group_state" string="按状态" context="{'group_by': 'state'}"/>
                         <filter name="group_date_settlement" string="按结算日期" context="{'group_by': 'date_settlement:month'}"/>
                     </group>
@@ -107,12 +112,16 @@
                                 <field name="name" readonly="1"/>
                                 <field name="project_id" options="{'no_create': True}" required="1"/>
                                 <field name="settlement_type" required="1"/>
+                                <field name="settlement_stage"/>
                                 <field name="contract_id"
                                        domain="[('project_id','=',project_id),('company_id','=',company_id)]"/>
                             </group>
                             <group>
                                 <field name="partner_id" options="{'no_create_edit': True}" required="1"/>
                                 <field name="date_settlement"/>
+                                <field name="planned_settlement_date"/>
+                                <field name="declared_date"/>
+                                <field name="final_approved_date"/>
                                 <field name="currency_id" required="1"/>
                                 <field name="company_id" readonly="1"/>
                             </group>
@@ -187,6 +196,9 @@
                                         <field name="state"/>
                                     </tree>
                                 </field>
+                            </page>
+                            <page string="结算附件">
+                                <field name="attachment_ids" widget="many2many_binary"/>
                             </page>
                         </notebook>
                     </sheet>

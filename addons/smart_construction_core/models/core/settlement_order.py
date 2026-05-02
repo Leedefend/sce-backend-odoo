@@ -31,7 +31,24 @@ class ScSettlementOrder(models.Model):
         string="结算类型",
         default="out",
     )
+    settlement_stage = fields.Selection(
+        [
+            ("plan", "结算计划"),
+            ("declared", "结算申报"),
+            ("preliminary", "工程初审"),
+            ("first_review", "一审"),
+            ("second_review", "二审"),
+            ("final", "结算定案"),
+            ("spot_check", "结算抽查"),
+        ],
+        string="结算阶段",
+        default="declared",
+        index=True,
+    )
     date_settlement = fields.Date(string="结算日期", default=fields.Date.context_today)
+    planned_settlement_date = fields.Date(string="计划结算日期", index=True)
+    declared_date = fields.Date(string="申报日期", index=True)
+    final_approved_date = fields.Date(string="定案日期", index=True)
     company_id = fields.Many2one(
         "res.company",
         string="公司",
@@ -105,6 +122,7 @@ class ScSettlementOrder(models.Model):
     invoice_amount = fields.Monetary(string="发票金额", currency_field="currency_id")
     invoice_date = fields.Date(string="发票日期")
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
+    attachment_ids = fields.Many2many("ir.attachment", "sc_settlement_order_attachment_rel", "settlement_id", "attachment_id", string="结算附件")
 
     compliance_contract_ok = fields.Boolean(string="合同一致", compute="_compute_compliance_summary", store=False)
     compliance_state = fields.Selection(

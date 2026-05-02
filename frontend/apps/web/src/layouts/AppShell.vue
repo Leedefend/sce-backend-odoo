@@ -1236,10 +1236,10 @@ async function logout() {
 }
 
 .content {
-  padding: 24px 32px;
+  padding: 10px 20px;
   display: grid;
-  grid-template-rows: auto 1fr;
-  gap: 14px;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 6px;
   min-width: 0;
   height: 100vh;
   overflow: auto;
@@ -1248,27 +1248,30 @@ async function logout() {
 }
 
 .content--scene-compact {
-  gap: 6px;
-  padding: 24px 32px;
+  gap: 4px;
+  padding: 10px 20px;
 }
 
 .topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
   background: var(--panel);
-  border-radius: 16px;
-  padding: 20px 24px;
+  border-radius: 10px;
+  padding: 6px 10px;
   border: 1px solid rgba(15, 23, 42, 0.06);
-  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
 }
 
 .topbar-main {
   min-width: 0;
+  flex: 1 1 320px;
 }
 
 .topbar--compact {
-  padding: 12px 18px;
+  padding: 6px 10px;
 }
 
 .topbar--scene-minimal {
@@ -1323,7 +1326,7 @@ async function logout() {
 
 .eyebrow {
   margin: 0;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1331,36 +1334,40 @@ async function logout() {
 }
 
 .headline {
-  margin: 6px 0 0;
-  font-size: 30px;
-  line-height: 1.15;
+  margin: 2px 0 0;
+  font-size: 20px;
+  line-height: 1.12;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .headline-subtitle {
-  margin: 6px 0 0;
-  font-size: 12px;
+  margin: 2px 0 0;
+  font-size: 11px;
   color: #94a3b8;
 }
 
 .breadcrumb {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
   margin: 0;
+  min-width: 0;
 }
 
 .crumb {
   background: transparent;
   border: 1px solid transparent;
-  padding: 4px 8px;
-  border-radius: 9px;
-  font-size: 13px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0;
   text-transform: uppercase;
   color: #64748b;
   cursor: pointer;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .crumb.active {
@@ -1378,6 +1385,7 @@ async function logout() {
 .router-host {
   min-height: 0;
   min-width: 0;
+  overflow: visible;
 }
 
 @media (max-width: 960px) {

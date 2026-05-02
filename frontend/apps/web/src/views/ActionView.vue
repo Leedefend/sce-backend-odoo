@@ -378,7 +378,8 @@
       :batch-message="batchMessage"
       :list-profile="listProfile"
       :ui-labels="toolbarUiLabels"
-      :grouped-rows="groupedRows"
+      :show-plain-search="!showTopActionToolbar"
+      :grouped-rows="currentPageGroupedRows"
       :can-create-record="canCreateRecord"
       :create-label="toolbarUiLabel('create', '新建')"
       :on-open-group="handleOpenGroupedRows"
@@ -1175,8 +1176,82 @@ const showToolbarFilter = computed(() => canRenderActionSurfaceToolbar.value && 
 const showToolbarSavedFilter = computed(() => canRenderActionSurfaceToolbar.value && savedFiltersVisible.value);
 const showToolbarGroup = computed(() => canRenderActionSurfaceToolbar.value && groupViewVisible.value);
 const listGroupedRowsEnabled = computed(() =>
-  pageSectionEnabled('grouped_table', Boolean(activeGroupByField.value && listProfile.value?.grouping)),
+  pageSectionEnabled('grouped_table', Boolean(activeGroupByField.value && groupViewVisible.value)),
 );
+function normalizeGroupCell(field: string, value: unknown) {
+  const option = listColumnOptions.value.find((column) => column.name === field);
+  if (Array.isArray(value)) {
+    const rawValue = value.length ? value[0] : null;
+    const label = value.length > 1 && value[1] !== null && value[1] !== undefined
+      ? String(value[1])
+      : String(rawValue ?? pageText('group_label_unset', '未设置'));
+    return { value: rawValue, label };
+  }
+  if (value === null || value === undefined || value === '') {
+    return { value: null, label: pageText('group_label_unset', '未设置') };
+  }
+  if (typeof value === 'boolean') {
+    return { value, label: pageText(value ? 'boolean_true' : 'boolean_false', value ? '是' : '否') };
+  }
+  const key = String(value ?? '').trim();
+  const selectionLabel = Array.isArray(option?.selection)
+    ? option.selection.find((item) => item.value === key)?.label
+    : '';
+  return { value, label: selectionLabel || key || pageText('group_label_unset', '未设置') };
+}
+const currentPageGroupedRows = computed(() => {
+  const field = String(activeGroupByField.value || '').trim();
+  if (!field || !groupViewVisible.value) return [];
+  const groups = new Map<string, {
+    key: string;
+    label: string;
+    count: number;
+    sampleRows: Array<Record<string, unknown>>;
+    domain: unknown[];
+    pageOffset: number;
+    pageLimit: number;
+    pageCurrent: number;
+    pageTotal: number;
+    pageRangeStart: number;
+    pageRangeEnd: number;
+    pageHasPrev: boolean;
+    pageHasNext: boolean;
+  }>();
+  records.value.forEach((row) => {
+    const normalized = normalizeGroupCell(field, row[field]);
+    const key = buildGroupKey(field, normalized.value, normalized.label);
+    const existing = groups.get(key);
+    if (existing) {
+      existing.sampleRows.push(row);
+      existing.count = existing.sampleRows.length;
+      existing.pageLimit = existing.count || 1;
+      existing.pageRangeEnd = existing.count;
+      return;
+    }
+    groups.set(key, {
+      key,
+      label: normalized.label,
+      count: 1,
+      sampleRows: [row],
+      domain: [[field, '=', normalized.value]],
+      pageOffset: 0,
+      pageLimit: 1,
+      pageCurrent: 1,
+      pageTotal: 1,
+      pageRangeStart: 1,
+      pageRangeEnd: 1,
+      pageHasPrev: false,
+      pageHasNext: false,
+    });
+  });
+  return Array.from(groups.values()).map((group) => ({
+    ...group,
+    count: group.sampleRows.length,
+    pageLimit: group.sampleRows.length || 1,
+    pageRangeStart: group.sampleRows.length ? 1 : 0,
+    pageRangeEnd: group.sampleRows.length,
+  }));
+});
 const showStandaloneQuickFilters = computed(() => quickFiltersVisible.value && !showToolbarFilter.value);
 const showStandaloneSavedFilters = computed(() => savedFiltersVisible.value && !showToolbarSavedFilter.value);
 const showStandaloneGroupView = computed(() => groupViewVisible.value && !showToolbarGroup.value);
@@ -1285,14 +1360,7 @@ const {
   buildListSortOptions,
 });
 const displaySortOptions = computed(() => {
-  const seen = new Set<string>();
-  return sortOptions.value.filter((option) => {
-    const label = String(option.label || '').trim();
-    const key = label || String(option.value || '').trim();
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  return [];
 });
 
 const {
@@ -2728,7 +2796,7 @@ function refreshForProjectContextChange(): void {
 <style scoped>
 .page {
   display: grid;
-  gap: 16px;
+  gap: 6px;
 }
 
 .page-actions {

@@ -16,13 +16,16 @@ withDefaults(defineProps<{
 .template-layout-shell {
   display: grid;
   gap: 6px;
+  width: 100%;
+  min-width: 0;
   padding-bottom: 24px;
 }
 
 .template-layout-shell--flow {
-  max-width: 1080px;
+  max-width: min(1080px, 100%);
   margin: 0 auto;
   padding: 24px 32px;
+  box-sizing: border-box;
 }
 
 @media (max-width: 860px) {

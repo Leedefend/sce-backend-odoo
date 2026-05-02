@@ -464,17 +464,6 @@ access_sc_legacy_supplier_contract_pricing_fact_contract_user,sc.legacy.supplier
 access_sc_legacy_supplier_contract_pricing_fact_contract_manager,sc.legacy.supplier.contract.pricing.fact.contract.manager,model_sc_legacy_supplier_contract_pricing_fact,smart_construction_core.group_sc_cap_contract_manager,1,0,0,0
 access_sc_dashboard_cockpit_fact_user,sc.dashboard.cockpit.fact.user,model_sc_dashboard_cockpit_fact,base.group_user,1,1,1,1
 access_sc_workbench_item_user,sc.workbench.item.user,model_sc_workbench_item,base.group_user,1,1,1,1
-access_sc_project_budget_fact_user,sc.project.budget.fact.user,model_sc_project_budget_fact,base.group_user,1,1,1,1
-access_sc_project_document_fact_user,sc.project.document.fact.user,model_sc_project_document_fact,base.group_user,1,1,1,1
-access_sc_material_document_user,sc.material.document.user,model_sc_material_document,base.group_user,1,1,1,1
-access_sc_labor_document_user,sc.labor.document.user,model_sc_labor_document,base.group_user,1,1,1,1
-access_sc_equipment_document_user,sc.equipment.document.user,model_sc_equipment_document,base.group_user,1,1,1,1
-access_sc_subcontract_document_user,sc.subcontract.document.user,model_sc_subcontract_document,base.group_user,1,1,1,1
-access_sc_construction_inspection_user,sc.construction.inspection.user,model_sc_construction_inspection,base.group_user,1,1,1,1
-access_sc_construction_report_user,sc.construction.report.user,model_sc_construction_report,base.group_user,1,1,1,1
-access_sc_finance_expense_document_user,sc.finance.expense.document.user,model_sc_finance_expense_document,base.group_user,1,1,1,1
-access_sc_fund_operation_user,sc.fund.operation.user,model_sc_fund_operation,base.group_user,1,1,1,1
-access_sc_analysis_report_fact_user,sc.analysis.report.fact.user,model_sc_analysis_report_fact,base.group_user,1,1,1,1
 access_sc_fund_account_finance_read,sc.fund.account.finance.read,model_sc_fund_account,smart_construction_core.group_sc_cap_finance_read,1,0,0,0
 access_sc_fund_account_finance_user,sc.fund.account.finance.user,model_sc_fund_account,smart_construction_core.group_sc_cap_finance_user,1,1,1,0
 access_sc_fund_account_finance_manager,sc.fund.account.finance.manager,model_sc_fund_account,smart_construction_core.group_sc_cap_finance_manager,1,1,1,1

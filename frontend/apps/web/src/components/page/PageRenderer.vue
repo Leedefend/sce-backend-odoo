@@ -186,8 +186,10 @@ function onZoneAction(payload: PageBlockActionEvent) {
 .page-renderer {
   display: grid;
   gap: 20px;
-  max-width: 1380px;
+  width: 100%;
+  max-width: min(1380px, 100%);
   margin: 0 auto;
+  min-width: 0;
 }
 .workbench-zone-layout {
   display: grid;
@@ -201,15 +203,18 @@ function onZoneAction(payload: PageBlockActionEvent) {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
   gap: 16px;
+  min-width: 0;
 }
 .cockpit-support-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
+  min-width: 0;
 }
 .page-renderer-header {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16px;
   padding: 20px 22px;
   border: 1px solid #cfe2ff;
@@ -222,6 +227,7 @@ function onZoneAction(payload: PageBlockActionEvent) {
   font-size: 30px;
   font-weight: 700;
   letter-spacing: 0.2px;
+  overflow-wrap: anywhere;
 }
 .page-renderer-subtitle {
   margin: 8px 0 0;
@@ -243,6 +249,7 @@ function onZoneAction(payload: PageBlockActionEvent) {
 }
 .page-renderer-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 .page-renderer-action {
@@ -252,6 +259,9 @@ function onZoneAction(payload: PageBlockActionEvent) {
   padding: 8px 14px;
   font-weight: 600;
   cursor: pointer;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .tone-success { background: #ecfdf5; color: #047857; }
 .tone-warning { background: #fffbeb; color: #b45309; }

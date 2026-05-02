@@ -54,11 +54,16 @@ class ScGeneralContract(models.Model):
     contract_name = fields.Char(string="合同名称", required=True, index=True)
     contract_type = fields.Char(string="合同类型", index=True)
     contract_attribute = fields.Char(string="合同属性", index=True)
+    template_name = fields.Char(string="合同模板", index=True)
+    union_mode = fields.Selection([("none", "非联合体"), ("lead", "联合体牵头"), ("member", "联合体成员")], string="联合体模式", default="none", index=True)
+    pricing_mode = fields.Selection([("lump_sum", "总价"), ("unit_price", "单价"), ("mixed", "综合单价"), ("other", "其他")], string="计价模式", index=True)
+    subcontract_mode = fields.Selection([("none", "非分包"), ("professional", "专业分包"), ("labor", "劳务分包"), ("material", "材料采购"), ("equipment", "设备租赁")], string="合同分包类型", index=True)
     signing_place = fields.Char(string="签署地点", index=True)
     contract_date = fields.Date(string="合同日期", default=fields.Date.context_today, index=True)
     expected_sign_date = fields.Date(string="预计签署日期", index=True)
     completion_date = fields.Date(string="完成日期", index=True)
     amount_total = fields.Monetary(string="合同金额", currency_field="currency_id", required=True)
+    amount_untaxed = fields.Monetary(string="不含税金额", currency_field="currency_id")
     prepayment_amount = fields.Monetary(string="预付款", currency_field="currency_id")
     install_debug_payment = fields.Monetary(string="安装调试款", currency_field="currency_id")
     install_commissioning_payment = fields.Monetary(
@@ -68,6 +73,8 @@ class ScGeneralContract(models.Model):
     )
     warranty_deposit = fields.Monetary(string="质保金", currency_field="currency_id")
     tax_rate = fields.Float(string="税率", digits=(16, 4))
+    change_amount_total = fields.Monetary(string="累计变更金额", currency_field="currency_id")
+    change_rate = fields.Float(string="变更率(%)", compute="_compute_change_rate", store=True)
     currency_id = fields.Many2one(
         "res.currency",
         string="币种",
@@ -76,6 +83,7 @@ class ScGeneralContract(models.Model):
     )
     payment_terms = fields.Text(string="付款条件")
     special_condition = fields.Text(string="特殊条款")
+    attachment_ids = fields.Many2many("ir.attachment", "sc_general_contract_attachment_rel", "contract_id", "attachment_id", string="合同附件")
     applicant_name = fields.Char(string="申请人", index=True)
     applicant_department = fields.Char(string="申请部门", index=True)
     purchase_engineer = fields.Char(string="采购工程师", index=True)
@@ -118,6 +126,11 @@ class ScGeneralContract(models.Model):
     def _compute_business_aliases(self):
         for rec in self:
             rec.install_commissioning_payment = rec.install_debug_payment
+
+    @api.depends("amount_total", "change_amount_total")
+    def _compute_change_rate(self):
+        for rec in self:
+            rec.change_rate = (rec.change_amount_total / rec.amount_total * 100.0) if rec.amount_total else 0.0
 
     def action_confirm(self):
         policy_model = self.env["sc.approval.policy"]

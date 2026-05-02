@@ -399,12 +399,14 @@ function closeMore(node: NativeFormLayoutNode) {
   display: grid;
   gap: 14px;
   grid-column: 1 / -1;
+  min-width: 0;
 }
 
 .native-container {
   display: grid;
   gap: 12px;
   min-width: 0;
+  position: relative;
 }
 
 .native-container--header {
@@ -436,16 +438,19 @@ function closeMore(node: NativeFormLayoutNode) {
   padding: 10px 12px;
   font-size: 13px;
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .native-ribbon {
   justify-self: end;
+  max-width: 100%;
   border-radius: 4px;
   background: #991b1b;
   color: #fff;
   padding: 4px 10px;
   font-size: 12px;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .native-ribbon.text-bg-danger {
@@ -456,6 +461,7 @@ function closeMore(node: NativeFormLayoutNode) {
   display: flex;
   gap: 6px;
   overflow-x: auto;
+  max-width: 100%;
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -480,6 +486,7 @@ function closeMore(node: NativeFormLayoutNode) {
   display: grid;
   gap: 14px;
   min-height: 260px;
+  min-width: 0;
   align-content: start;
 }
 
@@ -487,11 +494,12 @@ function closeMore(node: NativeFormLayoutNode) {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
 }
 
 .native-actions--smart {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
   gap: 0;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
@@ -511,6 +519,9 @@ function closeMore(node: NativeFormLayoutNode) {
   border-radius: 6px;
   font-size: 13px;
   cursor: pointer;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
 }
 
 .native-action-btn--smart {
@@ -530,6 +541,7 @@ function closeMore(node: NativeFormLayoutNode) {
   position: relative;
   display: inline-flex;
   min-width: 0;
+  width: 100%;
 }
 
 .native-action-btn--more {
@@ -543,6 +555,7 @@ function closeMore(node: NativeFormLayoutNode) {
   right: 0;
   z-index: 12;
   min-width: 160px;
+  max-width: min(280px, 80vw);
   display: grid;
   gap: 2px;
   padding: 6px;
@@ -565,6 +578,7 @@ function closeMore(node: NativeFormLayoutNode) {
   font: inherit;
   text-align: left;
   cursor: pointer;
+  min-width: 0;
 }
 
 .native-action-more-item:hover {
@@ -581,6 +595,7 @@ function closeMore(node: NativeFormLayoutNode) {
 .native-action-label {
   min-width: 0;
   overflow-wrap: anywhere;
+  line-height: 1.25;
 }
 
 .native-action-btn:hover {

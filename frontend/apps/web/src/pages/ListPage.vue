@@ -1,7 +1,7 @@
 <template>
   <section class="page">
     <PageHeader
-      v-if="status !== 'ok'"
+      v-if="status !== 'ok' && status !== 'empty'"
       :title="title"
       :subtitle="subtitle"
     />
@@ -23,7 +23,31 @@
       :on-retry="onReload"
     />
     <template v-else-if="status === 'empty'">
-      <slot name="toolbar"></slot>
+      <section class="list-toolbar">
+        <div class="list-title">
+          <h2>{{ title }}</h2>
+          <p>{{ subtitle }}</p>
+        </div>
+        <div class="list-header-toolbar">
+          <slot name="toolbar"></slot>
+        </div>
+        <div v-if="showPlainSearch" class="list-plain-search">
+          <input
+            type="search"
+            :value="plainSearchDraft"
+            :disabled="loading"
+            :placeholder="uiLabel('plain_search_placeholder', '输入关键字搜索')"
+            @compositionstart="plainSearchComposing = true"
+            @compositionend="onPlainSearchCompositionEnd"
+            @input="onPlainSearchInput"
+            @keydown.enter.prevent="submitPlainSearch"
+          />
+          <button type="button" class="pagination-btn" :disabled="loading" @click="submitPlainSearch">
+            {{ uiLabel('search_submit', '搜索') }}
+          </button>
+        </div>
+        <span v-else class="list-count">{{ uiLabel('record_count', '{count} 条记录', { count: records.length }) }}</span>
+      </section>
       <section class="list-empty-state">
         <div class="list-empty-copy">
           <h2>{{ emptyStateTitle }}</h2>
@@ -52,7 +76,10 @@
           <h2>{{ title }}</h2>
           <p>{{ subtitle }}</p>
         </div>
-        <div class="list-plain-search">
+        <div class="list-header-toolbar">
+          <slot name="toolbar"></slot>
+        </div>
+        <div v-if="showPlainSearch" class="list-plain-search">
           <input
             type="search"
             :value="plainSearchDraft"
@@ -124,8 +151,6 @@
         <span v-else class="list-count">{{ uiLabel('record_count', '{count} 条记录', { count: records.length }) }}</span>
       </section>
 
-      <slot name="toolbar"></slot>
-
       <section v-if="enableSummaryStrip && summaryItems.length" class="summary-strip">
         <article v-for="item in summaryItems" :key="item.key" class="summary-card" :class="`tone-${item.tone || 'neutral'}`">
           <p class="summary-label">{{ item.label }}</p>
@@ -170,11 +195,6 @@
             >
               {{ uiLabel('collapse_all', '全部收起') }}
             </button>
-            <select :value="String(effectiveGroupSampleLimit)" @change="onGroupSampleLimitSelectChange">
-              <option v-for="limit in groupSampleLimitOptions" :key="`group-sample-limit-${limit}`" :value="String(limit)">
-                {{ uiLabel('group_sample_limit', '每组 {count} 条', { count: limit }) }}
-              </option>
-            </select>
             <button type="button" class="grouped-sort-btn" @click="toggleGroupSort">
               {{ groupSortLabel }}
             </button>
@@ -187,7 +207,7 @@
             </button>
             <p>{{ group.label }}</p>
             <span>{{ uiLabel('group_count', '{count} 条', { count: group.count }) }}</span>
-            <div v-if="onGroupPageChange" class="group-page">
+            <div v-if="onGroupPageChange && groupTotalPages(group) > 1" class="group-page">
               <button
                 type="button"
                 class="group-page-btn"
@@ -231,7 +251,7 @@
               {{ uiLabel('group_view_all', '查看全部') }}
             </button>
           </header>
-          <table v-if="!isGroupCollapsed(group.key)">
+          <table v-if="!isGroupCollapsed(group.key)" class="group-table">
             <colgroup>
               <col class="col-row-number" />
               <col v-for="col in displayedColumns" :key="`group-col-width-${group.key}-${col}`" :style="columnWidthStyle(col)" />
@@ -243,7 +263,7 @@
                   v-for="col in displayedColumns"
                   :key="`group-col-${group.key}-${col}`"
                   class="cell-sortable"
-                  :class="{ 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col }"
+                  :class="[columnDensityClass(col), { 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col }]"
                   :data-column="col"
                   :style="columnWidthStyle(col)"
                   draggable="true"
@@ -285,6 +305,7 @@
                   v-for="col in displayedColumns"
                   :key="`group-cell-${group.key}-${String(row.id ?? index)}-${col}`"
                   :style="columnWidthStyle(col)"
+                  :class="columnDensityClass(col)"
                 >
                   <button
                     v-if="isFavoriteColumn(col)"
@@ -311,41 +332,40 @@
             </tbody>
             <tfoot>
               <tr>
-                <th class="cell-row-number footer-row-label">{{ uiLabel('page_footer_current_total', '当前页合计') }}</th>
+                <th class="cell-row-number footer-row-label">{{ footerRowLabel('page', group.sampleRows.length) }}</th>
                 <td
                   v-for="col in displayedColumns"
                   :key="`group-footer-page-${group.key}-${col}`"
                   :style="columnWidthStyle(col)"
-                  :class="{ 'footer-number': isNumericColumn(col) }"
+                  :class="[columnDensityClass(col), { 'footer-number': isNumericColumn(col) }]"
                 >
-                  {{ footerCellText(col, 'page', group.sampleRows.length) }}
+                  {{ groupFooterCellText(col, group, 'page') }}
                 </td>
               </tr>
               <tr>
-                <th class="cell-row-number footer-row-label">{{ uiLabel('page_footer_grand_total', '总计') }}</th>
+                <th class="cell-row-number footer-row-label">{{ footerRowLabel('total', group.count) }}</th>
                 <td
                   v-for="col in displayedColumns"
                   :key="`group-footer-total-${group.key}-${col}`"
                   :style="columnWidthStyle(col)"
-                  :class="{ 'footer-number': isNumericColumn(col) }"
+                  :class="[columnDensityClass(col), { 'footer-number': isNumericColumn(col) }]"
                 >
-                  {{ footerCellText(col, 'total', group.count) }}
+                  {{ groupFooterCellText(col, group, 'total') }}
                 </td>
               </tr>
             </tfoot>
           </table>
         </article>
       </section>
-	      <table v-if="!showGroupedRows">
+      <table v-if="!showGroupedRows" class="flat-table">
         <colgroup>
-          <col class="col-row-number" />
           <col v-if="showSelectionColumn" class="col-select" />
+          <col class="col-row-number" />
           <col v-for="col in displayedColumns" :key="`col-width-${col}`" :style="columnWidthStyle(col)" />
           <col v-if="columnChoices.length" class="col-column-picker" />
         </colgroup>
         <thead>
           <tr>
-            <th class="cell-row-number">{{ uiLabel('row_number', '序号') }}</th>
             <th v-if="showSelectionColumn" class="cell-select">
               <input
                 type="checkbox"
@@ -355,11 +375,12 @@
                 @change="onSelectAllChange"
               />
             </th>
+            <th class="cell-row-number">{{ uiLabel('row_number', '序号') }}</th>
             <th
               v-for="col in displayedColumns"
               :key="col"
               class="cell-sortable"
-              :class="{ 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col }"
+              :class="[columnDensityClass(col), { 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col }]"
               :data-column="col"
               :style="columnWidthStyle(col)"
               draggable="true"
@@ -415,7 +436,6 @@
         </thead>
         <tbody>
           <tr v-for="(row, index) in records" :key="String(row.id ?? index)" @click="handleRowClick(row, $event)">
-            <td class="cell-row-number">{{ flatRowNumber(index) }}</td>
             <td v-if="showSelectionColumn" class="cell-select" @click.stop>
               <input
                 v-if="rowId(row)"
@@ -425,7 +445,8 @@
                 @change="onRowCheckboxChange(row, $event)"
               />
             </td>
-            <td v-for="col in displayedColumns" :key="col" :style="columnWidthStyle(col)">
+            <td class="cell-row-number">{{ flatRowNumber(index) }}</td>
+            <td v-for="col in displayedColumns" :key="col" :style="columnWidthStyle(col)" :class="columnDensityClass(col)">
               <button
                 v-if="isFavoriteColumn(col)"
                 type="button"
@@ -456,26 +477,26 @@
         </tbody>
         <tfoot>
           <tr>
-            <th class="cell-row-number footer-row-label">{{ uiLabel('page_footer_current_total', '当前页合计') }}</th>
             <td v-if="showSelectionColumn" class="cell-select"></td>
+            <th class="cell-row-number footer-row-label">{{ footerRowLabel('page', pageVisibleRows.length) }}</th>
             <td
               v-for="col in displayedColumns"
               :key="`footer-page-${col}`"
               :style="columnWidthStyle(col)"
-              :class="{ 'footer-number': isNumericColumn(col) }"
+              :class="[columnDensityClass(col), { 'footer-number': isNumericColumn(col) }]"
             >
               {{ footerCellText(col, 'page', pageVisibleRows.length) }}
             </td>
             <td v-if="columnChoices.length" class="cell-column-picker"></td>
           </tr>
           <tr>
-            <th class="cell-row-number footer-row-label">{{ uiLabel('page_footer_grand_total', '总计') }}</th>
             <td v-if="showSelectionColumn" class="cell-select"></td>
+            <th class="cell-row-number footer-row-label">{{ footerRowLabel('total', listTotal || pageVisibleRows.length) }}</th>
             <td
               v-for="col in displayedColumns"
               :key="`footer-total-${col}`"
               :style="columnWidthStyle(col)"
-              :class="{ 'footer-number': isNumericColumn(col) }"
+              :class="[columnDensityClass(col), { 'footer-number': isNumericColumn(col) }]"
             >
               {{ footerCellText(col, 'total', listTotal || pageVisibleRows.length) }}
             </td>
@@ -485,63 +506,6 @@
       </table>
     </section>
 
-      <section v-if="showPagination" class="pagination-bar">
-        <span>{{ paginationSummary }}</span>
-        <div class="pagination-actions">
-          <button
-            type="button"
-            class="pagination-btn"
-            :disabled="loading || !canPagePrev"
-            @click="pagePrev"
-          >
-            {{ uiLabel('pagination_prev', '上一页') }}
-          </button>
-          <span>{{ paginationPageText }}</span>
-          <button
-            type="button"
-            class="pagination-btn"
-            :disabled="loading || !canPageNext"
-            @click="pageNext"
-          >
-            {{ uiLabel('pagination_next', '下一页') }}
-          </button>
-          <input
-            class="pagination-input"
-            :value="pageJumpInput"
-            :disabled="loading || totalPages <= 1"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            @input="onPageJumpInput"
-            @keyup.enter="jumpPage"
-          />
-          <button
-            type="button"
-            class="pagination-btn"
-            :disabled="loading || totalPages <= 1"
-            @click="jumpPage"
-          >
-            {{ uiLabel('pagination_jump', '跳转') }}
-          </button>
-          <span class="pagination-size-label">{{ uiLabel('pagination_page_size', '每页') }}</span>
-          <input
-            class="pagination-input pagination-input--size"
-            :value="pageLimitInput"
-            :disabled="loading"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            @input="onPageLimitInput"
-            @keyup.enter="applyPageLimit"
-          />
-          <button
-            type="button"
-            class="pagination-btn"
-            :disabled="loading"
-            @click="applyPageLimit"
-          >
-            {{ uiLabel('pagination_apply_size', '应用') }}
-          </button>
-        </div>
-      </section>
     </template>
   </section>
 </template>
@@ -639,6 +603,7 @@ const props = defineProps<{
     pageWindow?: { start?: number; end?: number };
     pageHasPrev?: boolean;
     pageHasNext?: boolean;
+    aggregates?: Record<string, Record<string, unknown>>;
     loading?: boolean;
   }>;
   onOpenGroup?: (group: {
@@ -666,6 +631,7 @@ const props = defineProps<{
   canCreateRecord?: boolean;
   createLabel?: string;
   onCreate?: () => void;
+  showPlainSearch?: boolean;
 }>();
 const emit = defineEmits<{
   'column-visibility-change': [payload: { visibility: Record<string, boolean> }];
@@ -699,6 +665,7 @@ const emptyStateMessage = computed(() =>
     ? uiLabel('empty_create_message', '可以先新建一条业务记录，开始录入和办理。')
     : uiLabel('empty_readonly_message', emptyCopy.value.message),
 );
+const showPlainSearch = computed(() => props.showPlainSearch !== false);
 const groupedRows = computed(() =>
   Array.isArray(props.groupedRows) ? props.groupedRows : [],
 );
@@ -1427,7 +1394,40 @@ function effectiveColumnWidth(field: string) {
 
 function columnWidthStyle(field: string) {
   const width = effectiveColumnWidth(field);
-  return width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : {};
+  if (!width) return {};
+  const maxTextWidth = isNameLikeColumn(field) ? 220 : isLongTextColumn(field) ? 180 : 0;
+  const resolvedWidth = maxTextWidth ? Math.min(width, maxTextWidth) : width;
+  return { width: `${resolvedWidth}px`, minWidth: `${resolvedWidth}px`, maxWidth: `${resolvedWidth}px` };
+}
+
+function isLongTextColumn(field: string) {
+  if (isNumericColumn(field)) return false;
+  const name = String(field || '').toLowerCase();
+  const label = columnLabel(field);
+  const type = String(columnOption(field)?.type || '').trim();
+  return [
+    'name',
+    'display_name',
+    'title',
+    'subject',
+    'description',
+  ].includes(name)
+    || ['char', 'text', 'html', 'many2one', 'reference'].includes(type)
+    || /名称|标题|摘要|说明|备注|开户行|账号|来源/.test(label);
+}
+
+function isNameLikeColumn(field: string) {
+  const name = String(field || '').toLowerCase();
+  const label = columnLabel(field);
+  return ['name', 'display_name', 'title', 'subject'].includes(name) || /名称|标题/.test(label);
+}
+
+function columnDensityClass(field: string) {
+  return {
+    'column-long-text': isLongTextColumn(field),
+    'column-name-text': isNameLikeColumn(field),
+    'column-numeric': isNumericColumn(field),
+  };
 }
 
 function startColumnResize(field: string, event: MouseEvent) {
@@ -1557,18 +1557,49 @@ function totalAggregateValue(field: string) {
 }
 
 function footerCellText(field: string, scope: 'page' | 'total', rowCount: number) {
-  if (field === displayedColumns.value[0]) {
-    const count = Math.max(0, Math.trunc(Number(rowCount || 0)));
-    return scope === 'page'
-      ? uiLabel('page_footer_current_count', '{count} 条', { count })
-      : uiLabel('page_footer_total_count', '{count} 条', { count });
-  }
   if (!isNumericColumn(field)) return '';
+  const label = columnLabel(field);
   if (scope === 'page') {
-    return pageFooterStatsMap.value[field]?.sumText || '--';
+    return `${label}：${pageFooterStatsMap.value[field]?.sumText || '--'}`;
   }
   const value = totalAggregateValue(field);
-  return value === null ? '--' : formatFooterNumber(value, field);
+  return `${label}：${value === null ? '--' : formatFooterNumber(value, field)}`;
+}
+
+function rowsNumericSum(rows: Array<Record<string, unknown>>, field: string) {
+  const values = rows
+    .map((row) => numericCellValue(row[field]))
+    .filter((value): value is number => typeof value === 'number');
+  if (!values.length) return null;
+  return values.reduce((total, value) => total + value, 0);
+}
+
+function groupAggregateValue(group: { aggregates?: Record<string, Record<string, unknown>> }, field: string) {
+  const aggregate = group.aggregates?.[field] || {};
+  const value = aggregate.sum;
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function groupFooterCellText(
+  field: string,
+  group: { sampleRows: Array<Record<string, unknown>>; aggregates?: Record<string, Record<string, unknown>> },
+  scope: 'page' | 'total',
+) {
+  if (!isNumericColumn(field)) return '';
+  const label = columnLabel(field);
+  if (scope === 'page') {
+    const value = rowsNumericSum(group.sampleRows || [], field);
+    return `${label}：${value === null ? '--' : formatFooterNumber(value, field)}`;
+  }
+  const value = groupAggregateValue(group, field);
+  return value === null ? '' : `${label}：${formatFooterNumber(value, field)}`;
+}
+
+function footerRowLabel(scope: 'page' | 'total', rowCount: number) {
+  const count = Math.max(0, Math.trunc(Number(rowCount || 0)));
+  return scope === 'page'
+    ? uiLabel('page_footer_current_count', '本页：{count} 条', { count })
+    : uiLabel('page_footer_total_count', '总计：{count} 条', { count });
 }
 
 function handleColumnPickerPointerDown(event: PointerEvent) {
@@ -1591,45 +1622,72 @@ onBeforeUnmount(() => {
 <style scoped>
 .page {
   display: grid;
-  gap: 16px;
+  gap: 6px;
+  min-width: 0;
 }
 
 .list-toolbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(132px, 180px) minmax(0, 600px) max-content;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 6px;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #fff;
-  padding: 10px 12px;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  padding: 4px 6px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
 }
 
 .list-title {
   min-width: 0;
-  flex: 1 1 auto;
+  justify-self: start;
 }
 
 .list-title h2 {
   margin: 0;
   color: #0f172a;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .list-title p {
-  margin: 3px 0 0;
+  margin: 1px 0 0;
   color: #64748b;
-  font-size: 12px;
-  line-height: 1.35;
+  font-size: 11px;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .list-count {
   color: #475569;
   font-size: 13px;
   white-space: nowrap;
+}
+
+.list-header-toolbar {
+  display: flex;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+.list-header-toolbar :deep(.action-toolbar) {
+  grid-template-columns: max-content minmax(280px, 460px) max-content;
+  justify-content: start;
+  width: min(600px, 100%);
+  max-width: 600px;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+.list-header-toolbar :deep(.native-search) {
+  width: clamp(280px, 32vw, 460px);
 }
 
 .list-empty-state {
@@ -1698,18 +1756,23 @@ onBeforeUnmount(() => {
 }
 
 .table {
-  overflow: visible;
+  width: 100%;
+  max-width: 100%;
+  max-height: max(500px, calc(100vh - 185px));
+  overflow: auto;
   background: white;
   border-radius: 8px;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+  overscroll-behavior: contain;
 }
 
 .list-plain-search {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   flex: 0 1 360px;
-  min-width: 240px;
+  min-width: min(240px, 100%);
 }
 
 .list-plain-search input {
@@ -1766,6 +1829,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -1778,6 +1842,7 @@ onBeforeUnmount(() => {
 .grouped-toolbar-actions {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -1811,6 +1876,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 8px 10px;
   border-bottom: 1px solid #dbeafe;
@@ -1828,10 +1894,13 @@ onBeforeUnmount(() => {
 }
 
 .group-head p {
+  flex: 1 1 180px;
+  min-width: 0;
   margin: 0;
   color: #0f172a;
   font-size: 13px;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .group-head span {
@@ -1842,6 +1911,7 @@ onBeforeUnmount(() => {
 .group-page {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   color: #475569;
   font-size: 12px;
@@ -1874,6 +1944,7 @@ onBeforeUnmount(() => {
 .batch-bar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
@@ -1894,9 +1965,10 @@ onBeforeUnmount(() => {
 }
 
 .batch-message {
-  margin-left: auto;
+  margin-left: 0;
   font-size: 13px;
   color: #166534;
+  overflow-wrap: anywhere;
 }
 
 .batch-note {
@@ -1953,6 +2025,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
@@ -1965,7 +2038,8 @@ onBeforeUnmount(() => {
 .pagination-actions {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 
 .pagination-size-label {
@@ -1974,7 +2048,13 @@ onBeforeUnmount(() => {
 }
 
 .pagination-actions--top {
+  justify-self: end;
   flex: 0 0 auto;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  color: #475569;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .cell-column-picker {
@@ -2003,10 +2083,8 @@ onBeforeUnmount(() => {
 }
 
 .column-save-badge {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
-  z-index: 10;
+  display: inline-flex;
+  margin-left: 4px;
   border: 1px solid #bbf7d0;
   border-radius: 6px;
   background: #f0fdf4;
@@ -2015,7 +2093,6 @@ onBeforeUnmount(() => {
   font-size: 12px;
   line-height: 16px;
   white-space: nowrap;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
 }
 
 .column-save-badge.is-saving,
@@ -2082,11 +2159,12 @@ onBeforeUnmount(() => {
 
 .pagination-btn {
   border: 1px solid #bfdbfe;
-  border-radius: 8px;
+  border-radius: 6px;
   background: #fff;
   color: #1d4ed8;
-  padding: 4px 10px;
-  font-size: 13px;
+  padding: 3px 7px;
+  font-size: 12px;
+  line-height: 18px;
   cursor: pointer;
 }
 
@@ -2096,23 +2174,33 @@ onBeforeUnmount(() => {
 }
 
 .pagination-input {
-  width: 60px;
+  width: 46px;
   border: 1px solid #bfdbfe;
-  border-radius: 8px;
-  padding: 4px 8px;
+  border-radius: 6px;
+  padding: 3px 6px;
   color: #0f172a;
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .pagination-input--size {
-  width: 72px;
+  width: 54px;
 }
 
 @media (max-width: 900px) {
-  .list-toolbar,
+  .list-toolbar {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+
   .pagination-bar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .list-header-toolbar,
+  .list-header-toolbar :deep(.native-search) {
+    width: 100%;
   }
 
   .pagination-actions {
@@ -2126,8 +2214,9 @@ onBeforeUnmount(() => {
 }
 
 table {
-  width: 100%;
-  table-layout: fixed;
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
   border-collapse: collapse;
 }
 
@@ -2145,10 +2234,13 @@ table {
 
 th,
 td {
-  padding: 12px 16px;
+  padding: 8px 10px;
   border-bottom: 1px solid #e2e8f0;
   text-align: left;
-  font-size: 14px;
+  font-size: 13px;
+  vertical-align: top;
+  min-width: 72px;
+  overflow-wrap: anywhere;
 }
 
 tbody td {
@@ -2158,6 +2250,7 @@ tbody td {
 
 .cell-select {
   width: 44px;
+  min-width: 44px;
   padding-right: 4px;
 }
 
@@ -2170,17 +2263,46 @@ tbody td {
   white-space: nowrap;
 }
 
+.column-long-text {
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
+}
+
+.column-name-text {
+  max-width: 220px;
+}
+
+.column-long-text > *,
+.column-long-text .column-sort-btn,
+.column-long-text .primary,
+.column-long-text .secondary {
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
+}
+
+.column-numeric {
+  min-width: 92px;
+  text-align: right;
+}
+
 thead {
   position: sticky;
   top: 0;
-  z-index: 8;
+  z-index: 20;
 }
 
 thead th {
   position: sticky;
   top: 0;
   background: white;
-  z-index: 8;
+  z-index: 20;
 }
 
 tfoot th,
@@ -2188,8 +2310,9 @@ tfoot td {
   background: #f8fafc;
   border-top: 1px solid #cbd5e1;
   color: #334155;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
+  line-height: 1.35;
 }
 
 tfoot tr:nth-child(2) th,
@@ -2205,8 +2328,11 @@ tfoot tr:nth-child(2) td {
 }
 
 .footer-number {
-  text-align: center;
+  min-width: 150px;
+  text-align: left;
   font-variant-numeric: tabular-nums;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .cell-sortable {
@@ -2232,6 +2358,8 @@ tfoot tr:nth-child(2) td {
   font-weight: 700;
   text-align: left;
   cursor: pointer;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .column-resize-handle {
@@ -2282,10 +2410,13 @@ tr:hover {
 .status-badge {
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
   border-radius: 999px;
   padding: 2px 8px;
   font-size: 12px;
   border: 1px solid #d1d5db;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .status-badge.tone-success { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
@@ -2345,21 +2476,66 @@ tr:hover {
   cursor: not-allowed;
 }
 
-th:first-child,
-td:first-child {
+.flat-table .cell-select {
   position: sticky;
   left: 0;
   background: #fff;
-  z-index: 5;
+  z-index: 14;
 }
 
-thead th:first-child {
-  z-index: 7;
+.flat-table .cell-row-number {
+  position: sticky;
+  left: 44px;
+  background: #fff;
+  z-index: 13;
 }
 
-tfoot th:first-child,
-tfoot td:first-child {
-  z-index: 6;
+.flat-table thead .cell-select {
+  z-index: 26;
+}
+
+.flat-table thead .cell-row-number {
+  z-index: 25;
+}
+
+.flat-table tfoot .cell-select {
+  background: #f8fafc;
+  z-index: 15;
+}
+
+.flat-table tfoot .cell-row-number {
+  background: #f8fafc;
+  z-index: 14;
+}
+
+.flat-table tfoot tr:nth-child(2) .cell-select,
+.flat-table tfoot tr:nth-child(2) .cell-row-number {
+  background: #eef2ff;
+}
+
+.group-table .cell-row-number {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 13;
+}
+
+.group-table thead .cell-row-number {
+  z-index: 24;
+}
+
+.group-table tfoot .cell-row-number {
+  background: #f8fafc;
+  z-index: 14;
+}
+
+.group-table tfoot tr:nth-child(2) .cell-row-number {
+  background: #eef2ff;
+}
+
+tbody tr:hover .cell-select,
+tbody tr:hover .cell-row-number {
+  background: #f1f5f9;
 }
 
 </style>

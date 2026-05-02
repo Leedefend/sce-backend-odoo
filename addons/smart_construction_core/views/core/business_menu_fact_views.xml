@@ -1,8 +1,222 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>
-        <!-- Formal business fact views are created idempotently by
-             sc.business.menu.taxonomy.seed.sync_full_coverage so every menu
-             target receives model-specific tree/form/search views. -->
-    </data>
+  <data>
+
+    <record id="view_sc_dashboard_cockpit_fact_search" model="ir.ui.view">
+      <field name="name">sc.dashboard.cockpit.fact.search</field>
+      <field name="model">sc.dashboard.cockpit.fact</field>
+      <field name="arch" type="xml">
+        <search string="驾驶舱业务事实">
+          <field name="name"/>
+          <field name="document_no"/>
+          <field name="project_id"/>
+          <field name="partner_id"/>
+          <field name="fact_type"/>
+          <field name="source_model"/>
+          <filter string="资金驾驶舱" name="fund_cockpit" domain="[('fact_type', '=', 'fund_cockpit')]"/>
+          <filter string="成本驾驶舱" name="cost_cockpit" domain="[('fact_type', '=', 'cost_cockpit')]"/>
+          <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+          <filter string="按类型" name="group_type" context="{'group_by': 'fact_type'}"/>
+          <filter string="按来源模型" name="group_source_model" context="{'group_by': 'source_model'}"/>
+        </search>
+      </field>
+    </record>
+
+    <record id="view_sc_dashboard_cockpit_fact_tree" model="ir.ui.view">
+      <field name="name">sc.dashboard.cockpit.fact.tree</field>
+      <field name="model">sc.dashboard.cockpit.fact</field>
+      <field name="arch" type="xml">
+        <tree string="驾驶舱业务事实" default_order="business_date desc, id desc">
+          <field name="business_date"/>
+          <field name="fact_type"/>
+          <field name="name"/>
+          <field name="project_id"/>
+          <field name="partner_id"/>
+          <field name="cockpit_scope"/>
+          <field name="metric_period"/>
+          <field name="metric_value" sum="指标合计"/>
+          <field name="amount" sum="金额合计"/>
+          <field name="source_model"/>
+          <field name="source_res_id"/>
+          <field name="state"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="view_sc_dashboard_cockpit_fact_form" model="ir.ui.view">
+      <field name="name">sc.dashboard.cockpit.fact.form</field>
+      <field name="model">sc.dashboard.cockpit.fact</field>
+      <field name="arch" type="xml">
+        <form string="驾驶舱业务事实">
+          <header>
+            <button name="action_submit" type="object" string="提交" class="btn-primary" invisible="state != 'draft'"/>
+            <button name="action_done" type="object" string="完成" class="btn-primary" invisible="state not in ['draft', 'in_progress']"/>
+            <button name="action_cancel" type="object" string="取消" invisible="state in ['done', 'cancel']"/>
+            <button name="action_reset_draft" type="object" string="重置草稿" invisible="state == 'draft'"/>
+            <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,done,cancel"/>
+          </header>
+          <sheet>
+            <group>
+              <group string="业务事实">
+                <field name="document_no"/>
+                <field name="name"/>
+                <field name="fact_type"/>
+                <field name="business_date"/>
+                <field name="project_id"/>
+                <field name="partner_id"/>
+              </group>
+              <group string="驾驶舱指标">
+                <field name="cockpit_scope"/>
+                <field name="metric_period"/>
+                <field name="metric_value"/>
+                <field name="amount"/>
+                <field name="currency_id"/>
+              </group>
+            </group>
+            <group>
+              <group string="历史来源">
+                <field name="source_model"/>
+                <field name="source_res_id"/>
+              </group>
+              <group string="办理信息">
+                <field name="requester_id"/>
+                <field name="handler_id"/>
+                <field name="due_date"/>
+                <field name="active"/>
+              </group>
+            </group>
+            <group>
+              <field name="description"/>
+              <field name="result_note"/>
+            </group>
+          </sheet>
+          <chatter/>
+        </form>
+      </field>
+    </record>
+
+    <record id="action_sc_dashboard_fund_cockpit_fact" model="ir.actions.act_window">
+      <field name="name">资金驾驶舱</field>
+      <field name="res_model">sc.dashboard.cockpit.fact</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="smart_construction_core.view_sc_dashboard_cockpit_fact_search"/>
+      <field name="domain">[('fact_type', '=', 'fund_cockpit')]</field>
+      <field name="context">{'default_fact_type': 'fund_cockpit', 'search_default_group_project': 1}</field>
+    </record>
+
+    <record id="action_sc_dashboard_cost_cockpit_fact" model="ir.actions.act_window">
+      <field name="name">成本驾驶舱</field>
+      <field name="res_model">sc.dashboard.cockpit.fact</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="smart_construction_core.view_sc_dashboard_cockpit_fact_search"/>
+      <field name="domain">[('fact_type', '=', 'cost_cockpit')]</field>
+      <field name="context">{'default_fact_type': 'cost_cockpit', 'search_default_group_project': 1}</field>
+    </record>
+
+    <record id="view_sc_workbench_item_search" model="ir.ui.view">
+      <field name="name">sc.workbench.item.search</field>
+      <field name="model">sc.workbench.item</field>
+      <field name="arch" type="xml">
+        <search string="工作台事项">
+          <field name="name"/>
+          <field name="document_no"/>
+          <field name="project_id"/>
+          <field name="partner_id"/>
+          <field name="fact_type"/>
+          <field name="source_model"/>
+          <filter string="我的待办" name="my_todo" domain="[('fact_type', '=', 'my_todo')]"/>
+          <filter string="我的审批" name="my_approval" domain="[('fact_type', '=', 'my_approval')]"/>
+          <filter string="最近访问" name="recent_visit" domain="[('fact_type', '=', 'recent_visit')]"/>
+          <filter string="按类型" name="group_type" context="{'group_by': 'fact_type'}"/>
+          <filter string="按优先级" name="group_priority" context="{'group_by': 'priority'}"/>
+          <filter string="按来源模型" name="group_source_model" context="{'group_by': 'source_model'}"/>
+        </search>
+      </field>
+    </record>
+
+    <record id="view_sc_workbench_item_tree" model="ir.ui.view">
+      <field name="name">sc.workbench.item.tree</field>
+      <field name="model">sc.workbench.item</field>
+      <field name="arch" type="xml">
+        <tree string="工作台事项" default_order="todo_deadline asc, id desc">
+          <field name="todo_deadline"/>
+          <field name="priority"/>
+          <field name="fact_type"/>
+          <field name="name"/>
+          <field name="project_id"/>
+          <field name="partner_id"/>
+          <field name="source_model"/>
+          <field name="source_res_id"/>
+          <field name="state"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="view_sc_workbench_item_form" model="ir.ui.view">
+      <field name="name">sc.workbench.item.form</field>
+      <field name="model">sc.workbench.item</field>
+      <field name="arch" type="xml">
+        <form string="工作台事项">
+          <header>
+            <button name="action_submit" type="object" string="提交" class="btn-primary" invisible="state != 'draft'"/>
+            <button name="action_done" type="object" string="完成" class="btn-primary" invisible="state not in ['draft', 'in_progress']"/>
+            <button name="action_cancel" type="object" string="取消" invisible="state in ['done', 'cancel']"/>
+            <button name="action_reset_draft" type="object" string="重置草稿" invisible="state == 'draft'"/>
+            <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,done,cancel"/>
+          </header>
+          <sheet>
+            <group>
+              <group string="事项">
+                <field name="document_no"/>
+                <field name="name"/>
+                <field name="fact_type"/>
+                <field name="priority"/>
+                <field name="todo_deadline"/>
+                <field name="business_date"/>
+              </group>
+              <group string="业务定位">
+                <field name="project_id"/>
+                <field name="partner_id"/>
+                <field name="requester_id"/>
+                <field name="handler_id"/>
+              </group>
+            </group>
+            <group>
+              <group string="历史来源">
+                <field name="source_model"/>
+                <field name="source_res_id"/>
+              </group>
+              <group string="控制">
+                <field name="active"/>
+              </group>
+            </group>
+            <group>
+              <field name="description"/>
+              <field name="result_note"/>
+            </group>
+          </sheet>
+          <chatter/>
+        </form>
+      </field>
+    </record>
+
+    <record id="action_sc_workbench_my_todo_fact" model="ir.actions.act_window">
+      <field name="name">我的待办</field>
+      <field name="res_model">sc.workbench.item</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="smart_construction_core.view_sc_workbench_item_search"/>
+      <field name="domain">[('fact_type', '=', 'my_todo')]</field>
+      <field name="context">{'default_fact_type': 'my_todo', 'search_default_group_priority': 1}</field>
+    </record>
+
+    <record id="action_sc_workbench_my_approval_fact" model="ir.actions.act_window">
+      <field name="name">我的审批</field>
+      <field name="res_model">sc.workbench.item</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="smart_construction_core.view_sc_workbench_item_search"/>
+      <field name="domain">[('fact_type', '=', 'my_approval')]</field>
+      <field name="context">{'default_fact_type': 'my_approval', 'search_default_group_priority': 1}</field>
+    </record>
+
+  </data>
 </odoo>

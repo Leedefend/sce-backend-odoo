@@ -48,8 +48,10 @@
                 <field name="name"/>
                 <field name="standard_type"/>
                 <field name="scope"/>
+                <field name="import_source"/>
                 <field name="company_id"/>
                 <field name="project_id"/>
+                <field name="default_rechecker_id"/>
                 <field name="active"/>
             </tree>
         </field>
@@ -68,15 +70,26 @@
                         <field name="company_id"/>
                         <field name="project_id"/>
                         <field name="parent_id"/>
+                        <field name="default_rechecker_id"/>
+                        <field name="cc_user_ids" widget="many2many_tags"/>
+                        <field name="import_source"/>
+                        <field name="effective_from"/>
+                        <field name="effective_to"/>
+                        <field name="applies_building_room"/>
+                        <field name="applies_road_coordinate"/>
                         <field name="active"/>
                     </group>
                     <field name="item_ids">
                         <tree editable="bottom">
                             <field name="sequence" widget="handle"/>
                             <field name="name"/>
+                            <field name="control_type"/>
                             <field name="requirement"/>
                             <field name="bottom_line"/>
+                            <field name="default_pass"/>
                             <field name="photo_required"/>
+                            <field name="acceptance_flow"/>
+                            <field name="score_weight"/>
                             <field name="tag"/>
                         </tree>
                     </field>
@@ -95,8 +108,12 @@
                 <field name="standard_id"/>
                 <field name="name"/>
                 <field name="requirement"/>
+                <field name="control_type"/>
                 <field name="bottom_line"/>
+                <field name="default_pass"/>
                 <field name="photo_required"/>
+                <field name="acceptance_flow"/>
+                <field name="score_weight"/>
                 <field name="tag"/>
             </tree>
         </field>
@@ -113,8 +130,13 @@
                         <field name="sequence"/>
                         <field name="name"/>
                         <field name="requirement"/>
+                        <field name="control_type"/>
                         <field name="bottom_line"/>
+                        <field name="default_pass"/>
                         <field name="photo_required"/>
+                        <field name="measurement_method"/>
+                        <field name="acceptance_flow"/>
+                        <field name="score_weight"/>
                         <field name="tag"/>
                     </group>
                 </sheet>
@@ -130,8 +152,11 @@
                 <field name="name"/>
                 <field name="standard_id"/>
                 <field name="tag"/>
+                <field name="control_type"/>
                 <filter string="拍照必填" name="photo_required" domain="[('photo_required', '=', True)]"/>
+                <filter string="底线项" name="bottom_line" domain="[('bottom_line', '=', True)]"/>
                 <filter string="按检查标准" name="group_standard" context="{'group_by': 'standard_id'}"/>
+                <filter string="按控制类型" name="group_control_type" context="{'group_by': 'control_type'}"/>
             </search>
         </field>
     </record>
@@ -143,11 +168,16 @@
             <tree string="质量问题" default_order="issue_date desc">
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="issue_category"/>
+                <field name="source_channel"/>
                 <field name="issue_date"/>
                 <field name="location"/>
                 <field name="issue_level"/>
                 <field name="responsible_party_id"/>
+                <field name="rechecker_id"/>
                 <field name="rectification_deadline"/>
+                <field name="overdue_days"/>
+                <field name="is_overdue"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -168,18 +198,32 @@
                         <group>
                             <field name="name"/>
                             <field name="project_id"/>
+                            <field name="issue_category"/>
+                            <field name="source_channel"/>
                             <field name="issue_level"/>
                             <field name="issue_date"/>
                         </group>
                         <group>
                             <field name="location"/>
+                            <field name="coordinate"/>
                             <field name="responsible_party_id"/>
+                            <field name="owner_id"/>
+                            <field name="rechecker_id"/>
+                            <field name="cc_user_ids" widget="many2many_tags"/>
                             <field name="rectification_deadline"/>
+                            <field name="reminder_before_days"/>
+                            <field name="closed_date" readonly="1"/>
+                            <field name="overdue_days" readonly="1"/>
+                            <field name="is_overdue" readonly="1"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="问题描述">
                             <field name="description" nolabel="1"/>
+                            <field name="voice_text" nolabel="1"/>
+                        </page>
+                        <page string="问题附件">
+                            <field name="attachment_ids" widget="many2many_binary"/>
                         </page>
                         <page string="检查照片">
                             <field name="photo_batch_ids"/>
@@ -190,6 +234,7 @@
                                 <field name="standard_item_id"/>
                                 <field name="building"/>
                                 <field name="room"/>
+                                <field name="coordinate"/>
                             </group>
                         </page>
                         <page string="来源追溯">
@@ -213,6 +258,7 @@
             <tree string="质量整改" default_order="rectification_date desc">
                 <field name="issue_id"/>
                 <field name="project_id"/>
+                <field name="source_channel"/>
                 <field name="issue_level"/>
                 <field name="responsible_party_id"/>
                 <field name="rectification_deadline"/>
@@ -240,12 +286,14 @@
                             <field name="responsible_party_id" readonly="1"/>
                             <field name="rectification_deadline" readonly="1"/>
                             <field name="rectification_date"/>
+                            <field name="source_channel"/>
                             <field name="handler_id"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="整改结果">
                             <field name="result" nolabel="1"/>
+                            <field name="attachment_ids" widget="many2many_binary"/>
                         </page>
                         <page string="照片批次">
                             <field name="photo_batch_ids"/>
@@ -287,6 +335,7 @@
             <tree string="质量复验" default_order="recheck_date desc">
                 <field name="issue_id"/>
                 <field name="project_id"/>
+                <field name="source_channel"/>
                 <field name="issue_level"/>
                 <field name="responsible_party_id"/>
                 <field name="recheck_date"/>
@@ -313,6 +362,7 @@
                         <group>
                             <field name="responsible_party_id" readonly="1"/>
                             <field name="recheck_date"/>
+                            <field name="source_channel"/>
                             <field name="recheck_user_id"/>
                             <field name="result"/>
                         </group>
@@ -320,6 +370,7 @@
                     <notebook>
                         <page string="复验意见">
                             <field name="comment" nolabel="1"/>
+                            <field name="attachment_ids" widget="many2many_binary"/>
                         </page>
                         <page string="照片批次">
                             <field name="photo_batch_ids"/>
@@ -355,6 +406,8 @@
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="evidence_stage"/>
+                <field name="source_channel"/>
+                <field name="album_category"/>
                 <field name="quality_issue_id"/>
                 <field name="safety_issue_id"/>
                 <field name="batch_date"/>
@@ -375,6 +428,8 @@
                             <field name="name"/>
                             <field name="project_id"/>
                             <field name="evidence_stage"/>
+                            <field name="source_channel"/>
+                            <field name="album_category"/>
                             <field name="batch_date"/>
                             <field name="owner_id"/>
                             <field name="location"/>
@@ -409,11 +464,14 @@
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="owner_id"/>
+                <field name="source_channel"/>
+                <field name="album_category"/>
                 <filter string="检查阶段" name="stage_check" domain="[('evidence_stage', '=', 'check')]"/>
                 <filter string="整改阶段" name="stage_rectification" domain="[('evidence_stage', '=', 'rectification')]"/>
                 <filter string="复验阶段" name="stage_recheck" domain="[('evidence_stage', '=', 'recheck')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 <filter string="按阶段" name="group_stage" context="{'group_by': 'evidence_stage'}"/>
+                <filter string="按相册分类" name="group_album_category" context="{'group_by': 'album_category'}"/>
             </search>
         </field>
     </record>
@@ -426,9 +484,13 @@
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="responsible_party_id"/>
+                <field name="issue_category"/>
+                <field name="source_channel"/>
                 <filter string="未闭环" name="not_closed" domain="[('state', 'not in', ['closed', 'cancel'])]"/>
+                <filter string="已逾期" name="overdue" domain="[('is_overdue', '=', True)]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 <filter string="按等级" name="group_level" context="{'group_by': 'issue_level'}"/>
+                <filter string="按场景" name="group_issue_category" context="{'group_by': 'issue_category'}"/>
                 <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
             </search>
         </field>

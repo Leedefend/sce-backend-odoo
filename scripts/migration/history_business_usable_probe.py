@@ -145,6 +145,26 @@ def grouped_state_counts(model_name: str, domain=None, *, state_field: str = "st
     return dict(sorted(result.items(), key=lambda item: item[0]))
 
 
+def active_legacy_business_menu_exposures() -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    Menu = env["ir.ui.menu"].sudo()  # noqa: F821
+    for menu in Menu.search([("active", "=", True), ("action", "like", "ir.actions.act_window,")], order="id asc"):
+        action = menu.action
+        res_model = str(getattr(action, "res_model", "") or "")
+        if not res_model.startswith("sc.legacy."):
+            continue
+        rows.append(
+            {
+                "menu_id": int(menu.id),
+                "menu_name": menu.complete_name,
+                "action_id": int(action.id),
+                "action_name": action.name,
+                "res_model": res_model,
+            }
+        )
+    return rows
+
+
 def migrated_payment_request_domain() -> list[tuple[str, str, str]]:
     if field_exists("payment.request", "note"):
         return [("note", "ilike", "[migration:")]
@@ -755,6 +775,7 @@ promotion_gaps = {
             )
         )
     ),
+    "active_legacy_business_menu_exposures": active_legacy_business_menu_exposures(),
 }
 
 failing_gaps = [
@@ -770,7 +791,7 @@ elif failing_gaps:
     decision = "history_business_usable_visible_but_promotion_gaps"
 
 payload = {
-    "status": "PASS",
+    "status": "FAIL" if promotion_gaps["active_legacy_business_menu_exposures"] else "PASS",
     "mode": "history_business_usable_probe",
     "database": env.cr.dbname,  # noqa: F821
     "db_writes": 0,
@@ -796,3 +817,5 @@ print(
         sort_keys=True,
     )
 )
+if promotion_gaps["active_legacy_business_menu_exposures"]:
+    raise SystemExit(2)

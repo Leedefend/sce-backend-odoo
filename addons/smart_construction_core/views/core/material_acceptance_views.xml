@@ -192,7 +192,11 @@
                 <field name="project_id"/>
                 <field name="acceptance_date"/>
                 <field name="supplier_id"/>
+                <field name="purchase_request_id"/>
+                <field name="acceptance_flow"/>
+                <field name="source_channel"/>
                 <field name="inspector_id"/>
+                <field name="sampling_required"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -218,10 +222,17 @@
                             <field name="project_id"/>
                             <field name="acceptance_date"/>
                             <field name="supplier_id"/>
+                            <field name="purchase_request_id"/>
+                            <field name="acceptance_flow"/>
+                            <field name="source_channel"/>
                         </group>
                         <group>
                             <field name="purchase_order_id"/>
                             <field name="inspector_id"/>
+                            <field name="supervisor_inspector_id"/>
+                            <field name="owner_inspector_id"/>
+                            <field name="sampling_required"/>
+                            <field name="sampling_report_ref"/>
                         </group>
                     </group>
                     <notebook>
@@ -237,7 +248,10 @@
                                     <field name="received_qty"/>
                                     <field name="accepted_qty"/>
                                     <field name="rejected_qty"/>
+                                    <field name="sampled_qty"/>
+                                    <field name="returned_qty"/>
                                     <field name="result"/>
+                                    <field name="quality_status"/>
                                 </tree>
                             </field>
                         </page>
@@ -272,12 +286,17 @@
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="supplier_id"/>
+                <field name="purchase_request_id"/>
+                <field name="acceptance_flow"/>
+                <field name="source_channel"/>
                 <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="待验收" name="submitted" domain="[('state', '=', 'submitted')]"/>
                 <filter string="已通过" name="accepted" domain="[('state', '=', 'accepted')]"/>
                 <filter string="未通过" name="rejected" domain="[('state', '=', 'rejected')]"/>
+                <filter string="需要送检" name="sampling_required" domain="[('sampling_required', '=', True)]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 <filter string="按供应商" name="group_supplier" context="{'group_by': 'supplier_id'}"/>
+                <filter string="按验收流程" name="group_acceptance_flow" context="{'group_by': 'acceptance_flow'}"/>
                 <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
             </search>
         </field>

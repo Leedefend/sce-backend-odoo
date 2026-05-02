@@ -97,6 +97,29 @@ run_legacy_workflow_audit_adapter() {
   python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_workflow_audit_replay_adapter.py"
 }
 
+run_payment_request_outflow_state_activation_adapter() {
+  materialize_xml_parts "$ROOT_DIR/migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml"
+  python3 "$ROOT_DIR/scripts/migration/history_payment_request_outflow_state_activation_adapter.py"
+}
+
+packaged_payload_path_for_step() {
+  local step_name="$1"
+  case "$step_name" in
+    payment_request_outflow_state_activation_adapter)
+      printf '%s\n' "$ROOT_DIR/artifacts/migration/history_payment_request_outflow_state_activation_payload_v1.csv"
+      ;;
+    payment_request_outflow_approved_recovery_adapter)
+      printf '%s\n' "$ROOT_DIR/artifacts/migration/history_payment_request_outflow_approved_recovery_payload_v1.csv"
+      ;;
+    payment_request_outflow_done_recovery_adapter)
+      printf '%s\n' "$ROOT_DIR/artifacts/migration/history_payment_request_outflow_done_recovery_payload_v1.csv"
+      ;;
+    *)
+      printf '\n'
+      ;;
+  esac
+}
+
 STEP_ACTIVE=1
 if [[ -n "$START_AT" ]]; then
   STEP_ACTIVE=0
@@ -115,12 +138,17 @@ run_step() {
   fi
   echo "[history.continuity] step=$step_name"
   if [[ "$USE_PACKAGED_PAYLOADS" == "1" && "$step_name" == *_adapter ]]; then
-    echo "[history.continuity] skip adapter step=$step_name by HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1"
-    if [[ -n "$STOP_AFTER" && "$step_name" == "$STOP_AFTER" ]]; then
-      echo "[history.continuity] stop after step=$step_name"
-      exit 0
+    local packaged_payload_path
+    packaged_payload_path="$(packaged_payload_path_for_step "$step_name")"
+    if [[ -z "$packaged_payload_path" || -f "$packaged_payload_path" ]]; then
+      echo "[history.continuity] skip adapter step=$step_name by HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1"
+      if [[ -n "$STOP_AFTER" && "$step_name" == "$STOP_AFTER" ]]; then
+        echo "[history.continuity] stop after step=$step_name"
+        exit 0
+      fi
+      return 0
     fi
-    return 0
+    echo "[history.continuity] run adapter step=$step_name because packaged payload is missing: $packaged_payload_path"
   fi
   "$@"
   if [[ -n "$STOP_AFTER" && "$step_name" == "$STOP_AFTER" ]]; then
@@ -311,7 +339,7 @@ case "$MODE" in
     run_step history_todo_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_history_todo_projection_write.py"
     run_step treasury_ledger_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_treasury_ledger_projection_write.py"
     if [[ "$INCLUDE_PAYMENT_STATE_RECOVERY" == "1" ]]; then
-      run_step payment_request_outflow_state_activation_adapter python3 "$ROOT_DIR/scripts/migration/history_payment_request_outflow_state_activation_adapter.py"
+      run_step payment_request_outflow_state_activation_adapter run_payment_request_outflow_state_activation_adapter
       run_step payment_request_outflow_state_activation_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_payment_request_outflow_state_activation_write.py"
       run_step payment_request_outflow_approved_recovery_adapter python3 "$ROOT_DIR/scripts/migration/history_payment_request_outflow_approved_recovery_adapter.py"
       run_step payment_request_outflow_approved_recovery_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_payment_request_outflow_approved_recovery_write.py"

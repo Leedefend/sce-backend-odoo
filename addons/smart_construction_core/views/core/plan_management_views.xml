@@ -11,6 +11,7 @@
         <field name="name">计划汇报</field>
         <field name="res_model">sc.plan.report</field>
         <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_plan': 1}</field>
     </record>
 
     <record id="view_sc_plan_tree" model="ir.ui.view">
@@ -21,10 +22,14 @@
                 <field name="name"/>
                 <field name="plan_type"/>
                 <field name="project_id"/>
+                <field name="phase_name"/>
+                <field name="creation_method"/>
+                <field name="version_stage"/>
                 <field name="owner_id"/>
                 <field name="planned_start"/>
                 <field name="planned_finish"/>
                 <field name="progress_rate"/>
+                <field name="attainment_state"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -49,14 +54,20 @@
                             <field name="name"/>
                             <field name="plan_type"/>
                             <field name="project_id"/>
+                            <field name="phase_name"/>
                             <field name="company_id"/>
                         </group>
                         <group>
                             <field name="owner_id"/>
                             <field name="department_id"/>
+                            <field name="template_name"/>
+                            <field name="creation_method"/>
+                            <field name="version_stage"/>
+                            <field name="report_cycle"/>
                             <field name="planned_start"/>
                             <field name="planned_finish"/>
                             <field name="progress_rate" readonly="1"/>
+                            <field name="attainment_state" readonly="1"/>
                         </group>
                     </group>
                     <notebook>
@@ -66,10 +77,16 @@
                                     <field name="sequence" widget="handle"/>
                                     <field name="parent_id"/>
                                     <field name="name"/>
+                                    <field name="node_type"/>
                                     <field name="owner_id"/>
+                                    <field name="department_id"/>
+                                    <field name="linked_plan_line_id"/>
+                                    <field name="contract_id"/>
                                     <field name="planned_start"/>
                                     <field name="planned_finish"/>
                                     <field name="progress_rate"/>
+                                    <field name="delay_days" readonly="1"/>
+                                    <field name="is_overdue" readonly="1"/>
                                     <field name="state"/>
                                 </tree>
                             </field>
@@ -78,7 +95,20 @@
                             <field name="report_ids"/>
                         </page>
                         <page string="版本">
-                            <field name="version_ids"/>
+                            <field name="version_ids">
+                                <tree editable="bottom">
+                                    <field name="version_no"/>
+                                    <field name="revision_type"/>
+                                    <field name="base_version_id"/>
+                                    <field name="version_date"/>
+                                    <field name="approved_by"/>
+                                    <field name="approved_date"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="附件">
+                            <field name="attachment_ids" widget="many2many_binary"/>
                         </page>
                         <page string="来源追溯">
                             <group>
@@ -105,9 +135,99 @@
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="owner_id"/>
+                <field name="creation_method"/>
+                <field name="version_stage"/>
+                <field name="attainment_state"/>
                 <filter string="执行中" name="in_progress" domain="[('state', '=', 'in_progress')]"/>
+                <filter string="已逾期" name="overdue" domain="[('attainment_state', '=', 'overdue')]"/>
+                <filter string="即将逾期" name="due_soon" domain="[('attainment_state', '=', 'due_soon')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 <filter string="按类型" name="group_type" context="{'group_by': 'plan_type'}"/>
+                <filter string="按版本阶段" name="group_version_stage" context="{'group_by': 'version_stage'}"/>
+                <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_plan_report_tree" model="ir.ui.view">
+        <field name="name">sc.plan.report.tree</field>
+        <field name="model">sc.plan.report</field>
+        <field name="arch" type="xml">
+            <tree string="计划汇报" default_order="report_date desc, id desc">
+                <field name="report_date"/>
+                <field name="name"/>
+                <field name="plan_id"/>
+                <field name="line_id"/>
+                <field name="report_type"/>
+                <field name="source_channel"/>
+                <field name="reporter_id"/>
+                <field name="progress_rate"/>
+                <field name="approver_id"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_plan_report_form" model="ir.ui.view">
+        <field name="name">sc.plan.report.form</field>
+        <field name="model">sc.plan.report</field>
+        <field name="arch" type="xml">
+            <form string="计划汇报">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="plan_id"/>
+                            <field name="line_id"/>
+                            <field name="report_type"/>
+                            <field name="source_channel"/>
+                            <field name="report_date"/>
+                        </group>
+                        <group>
+                            <field name="reporter_id"/>
+                            <field name="progress_rate"/>
+                            <field name="approver_id"/>
+                            <field name="approved_date"/>
+                            <field name="state"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="summary"/>
+                        <field name="risk_note"/>
+                        <field name="reject_reason"/>
+                    </group>
+                    <group string="成果附件">
+                        <field name="attachment_ids" widget="many2many_binary"/>
+                    </group>
+                    <group string="来源追溯">
+                        <field name="legacy_fact_model"/>
+                        <field name="legacy_fact_id"/>
+                        <field name="legacy_fact_type"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_plan_report_search" model="ir.ui.view">
+        <field name="name">sc.plan.report.search</field>
+        <field name="model">sc.plan.report</field>
+        <field name="arch" type="xml">
+            <search string="计划汇报">
+                <field name="name"/>
+                <field name="plan_id"/>
+                <field name="line_id"/>
+                <field name="reporter_id"/>
+                <field name="report_type"/>
+                <field name="source_channel"/>
+                <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="已提交" name="submitted" domain="[('state', '=', 'submitted')]"/>
+                <filter string="已确认" name="accepted" domain="[('state', '=', 'accepted')]"/>
+                <filter string="已退回" name="rejected" domain="[('state', '=', 'rejected')]"/>
+                <filter string="按计划" name="group_plan" context="{'group_by': 'plan_id'}"/>
+                <filter string="按汇报人" name="group_reporter" context="{'group_by': 'reporter_id'}"/>
+                <filter string="按汇报类型" name="group_report_type" context="{'group_by': 'report_type'}"/>
                 <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
             </search>
         </field>

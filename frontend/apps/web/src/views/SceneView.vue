@@ -1108,6 +1108,7 @@ watch(
 <style scoped>
 .scene {
   padding: 12px;
+  min-width: 0;
 }
 
 .scene--compact-controls {
@@ -1124,6 +1125,7 @@ watch(
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 4px;
   min-width: 0;
@@ -1136,9 +1138,10 @@ watch(
 }
 
 .scene-actions--compact {
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 4px;
   margin: 0;
+  min-width: 0;
 }
 
 .scene-view-switch {
@@ -1169,7 +1172,7 @@ watch(
 }
 
 .scene-view-switch--compact .scene-view-switch__chips {
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 4px;
   min-width: 0;
 }
@@ -1183,6 +1186,9 @@ watch(
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .scene-view-switch__chip.active {
@@ -1216,6 +1222,7 @@ watch(
 .scene-delivery__copy {
   display: grid;
   gap: 6px;
+  min-width: 0;
 }
 
 .scene-delivery__eyebrow {
@@ -1229,6 +1236,7 @@ watch(
   margin: 0;
   font-size: 16px;
   color: #0f172a;
+  overflow-wrap: anywhere;
 }
 
 .scene-delivery__message {
@@ -1236,6 +1244,7 @@ watch(
   font-size: 13px;
   line-height: 1.5;
   color: #334155;
+  overflow-wrap: anywhere;
 }
 
 .scene-delivery__cta {
@@ -1245,7 +1254,8 @@ watch(
 .scene-top-controls--compact :deep(.ghost) {
   padding: 5px 11px;
   border-radius: 999px;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .scene-top-controls--compact .scene-view-switch__chip {

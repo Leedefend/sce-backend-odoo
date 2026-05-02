@@ -495,13 +495,16 @@ onBeforeUnmount(() => {
 <style scoped>
 .action-toolbar {
   display: grid;
-  grid-template-columns: auto minmax(320px, 1fr) auto auto;
-  align-items: start;
-  gap: 10px;
+  grid-template-columns: max-content minmax(320px, 560px) max-content;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #fff;
-  padding: 8px 10px;
+  padding: 4px 6px;
 }
 
 .toolbar-section,
@@ -512,12 +515,20 @@ onBeforeUnmount(() => {
 .group-switch {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
+  flex-wrap: nowrap;
 }
 
 .view-switch {
-  width: 120px;
+  width: auto;
+  max-width: 240px;
+  white-space: nowrap;
+}
+
+.view-switch .contract-chips {
+  flex-wrap: nowrap;
+  gap: 4px;
 }
 
 .group-switch {
@@ -533,26 +544,29 @@ onBeforeUnmount(() => {
   position: relative;
   display: flex;
   align-items: center;
-  justify-self: stretch;
-  min-width: 320px;
+  justify-self: center;
+  width: clamp(320px, 46vw, 560px);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .native-searchbox {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   flex: 1 1 auto;
-  min-height: 30px;
-  gap: 5px;
+  min-width: 0;
+  min-height: 26px;
+  gap: 4px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   background: #f8fafc;
-  padding: 3px 4px 3px 6px;
+  padding: 2px 3px 2px 6px;
 }
 
 .native-searchbox input {
-  flex: 1 1 160px;
-  min-width: 120px;
+  flex: 1 1 110px;
+  min-width: 72px;
   height: 22px;
   border: 0;
   background: transparent;
@@ -572,9 +586,10 @@ onBeforeUnmount(() => {
   border-radius: 8px;
   background: #fff;
   color: #475569;
-  padding: 5px 8px;
+  padding: 4px 7px;
   font-size: 12px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .toolbar-search-submit {
@@ -588,6 +603,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 5px;
   min-height: 22px;
+  max-width: min(150px, 38%);
   border: 1px solid #bfdbfe;
   border-radius: 5px;
   background: #eff6ff;
@@ -595,6 +611,13 @@ onBeforeUnmount(() => {
   padding: 2px 6px;
   font-size: 12px;
   cursor: pointer;
+  white-space: nowrap;
+}
+
+.search-facet span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .facet-remove {
@@ -627,11 +650,12 @@ onBeforeUnmount(() => {
 .search-dropdown {
   position: absolute;
   top: calc(100% + 6px);
-  left: 0;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 20;
   display: grid;
   grid-template-columns: repeat(3, minmax(180px, 1fr));
-  width: min(760px, 92vw);
+  width: min(680px, calc(100vw - 32px));
   max-height: 420px;
   overflow: auto;
   border: 1px solid #cbd5e1;
@@ -673,6 +697,13 @@ onBeforeUnmount(() => {
   text-align: left;
   font-size: 13px;
   cursor: pointer;
+  min-width: 0;
+}
+
+.search-menu-item span,
+.contract-chip {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .search-menu-item:hover,
@@ -768,7 +799,9 @@ onBeforeUnmount(() => {
 .toolbar-actions {
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
 }
 
 .contract-label {
@@ -780,8 +813,9 @@ onBeforeUnmount(() => {
 
 .contract-chips {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-wrap: nowrap;
+  gap: 5px;
+  min-width: 0;
 }
 
 .contract-chips.overflow-row {
@@ -794,9 +828,21 @@ onBeforeUnmount(() => {
   border-radius: 999px;
   background: #fff;
   color: #0f172a;
-  padding: 5px 11px;
+  padding: 3px 8px;
   font-size: 12px;
   cursor: pointer;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+@media (max-width: 1360px) {
+  .action-toolbar {
+    grid-template-columns: max-content minmax(300px, 500px) max-content;
+  }
+
+  .native-search {
+    width: clamp(300px, 44vw, 500px);
+  }
 }
 
 .contract-chip.active {
@@ -846,11 +892,17 @@ onBeforeUnmount(() => {
     min-width: 0;
   }
 
+  .search-facet {
+    max-width: 34%;
+  }
+
   .native-searchbox {
     min-width: 0;
   }
 
   .search-dropdown {
+    left: 0;
+    transform: none;
     grid-template-columns: 1fr;
     width: min(520px, 92vw);
   }

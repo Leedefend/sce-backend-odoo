@@ -7,6 +7,26 @@
         <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
+    <record id="action_sc_safety_disclosure" model="ir.actions.act_window">
+        <field name="name">安全交底</field>
+        <field name="res_model">sc.safety.disclosure</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+    </record>
+
+    <record id="action_sc_risk_library" model="ir.actions.act_window">
+        <field name="name">风险库</field>
+        <field name="res_model">sc.risk.library</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_sc_risk_item" model="ir.actions.act_window">
+        <field name="name">风险项</field>
+        <field name="res_model">sc.risk.item</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_library': 1}</field>
+    </record>
+
     <record id="action_sc_hazard_source" model="ir.actions.act_window">
         <field name="name">危险源清单</field>
         <field name="res_model">sc.hazard.source</field>
@@ -35,6 +55,13 @@
         <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
+    <record id="action_sc_safety_patrol_task" model="ir.actions.act_window">
+        <field name="name">安全巡检任务</field>
+        <field name="res_model">sc.safety.patrol.task</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+    </record>
+
     <record id="view_sc_safety_plan_tree" model="ir.ui.view">
         <field name="name">sc.safety.plan.tree</field>
         <field name="model">sc.safety.plan</field>
@@ -45,6 +72,7 @@
                 <field name="project_id"/>
                 <field name="owner_id"/>
                 <field name="plan_date"/>
+                <field name="approval_deadline"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -67,10 +95,173 @@
                         <field name="project_id"/>
                         <field name="owner_id"/>
                         <field name="plan_date"/>
+                        <field name="approval_deadline"/>
+                        <field name="copied_user_ids" widget="many2many_tags"/>
                     </group>
-                    <field name="description" nolabel="1"/>
+                    <notebook>
+                        <page string="方案说明">
+                            <field name="description" nolabel="1"/>
+                        </page>
+                        <page string="方案附件">
+                            <field name="attachment_ids" widget="many2many_binary"/>
+                        </page>
+                    </notebook>
                 </sheet>
                 <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_safety_disclosure_tree" model="ir.ui.view">
+        <field name="name">sc.safety.disclosure.tree</field>
+        <field name="model">sc.safety.disclosure</field>
+        <field name="arch" type="xml">
+            <tree string="安全交底" default_order="disclosure_date desc">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="safety_plan_id"/>
+                <field name="disclosure_date"/>
+                <field name="approval_deadline"/>
+                <field name="owner_id"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_safety_disclosure_form" model="ir.ui.view">
+        <field name="name">sc.safety.disclosure.form</field>
+        <field name="model">sc.safety.disclosure</field>
+        <field name="arch" type="xml">
+            <form string="安全交底">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="project_id"/>
+                            <field name="safety_plan_id"/>
+                            <field name="disclosure_date"/>
+                            <field name="approval_deadline"/>
+                        </group>
+                        <group>
+                            <field name="owner_id"/>
+                            <field name="copied_user_ids" widget="many2many_tags"/>
+                            <field name="state"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="交底内容">
+                            <field name="participant_note"/>
+                            <field name="content"/>
+                        </page>
+                        <page string="交底附件">
+                            <field name="attachment_ids" widget="many2many_binary"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_safety_disclosure_search" model="ir.ui.view">
+        <field name="name">sc.safety.disclosure.search</field>
+        <field name="model">sc.safety.disclosure</field>
+        <field name="arch" type="xml">
+            <search string="安全交底">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="owner_id"/>
+                <field name="safety_plan_id"/>
+                <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="已提交" name="submitted" domain="[('state', '=', 'submitted')]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_risk_library_tree" model="ir.ui.view">
+        <field name="name">sc.risk.library.tree</field>
+        <field name="model">sc.risk.library</field>
+        <field name="arch" type="xml">
+            <tree string="风险库">
+                <field name="name"/>
+                <field name="library_level"/>
+                <field name="company_id"/>
+                <field name="version_no"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_risk_library_form" model="ir.ui.view">
+        <field name="name">sc.risk.library.form</field>
+        <field name="model">sc.risk.library</field>
+        <field name="arch" type="xml">
+            <form string="风险库">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="library_level"/>
+                        <field name="company_id"/>
+                        <field name="version_no"/>
+                        <field name="active"/>
+                    </group>
+                    <field name="item_ids">
+                        <tree editable="bottom">
+                            <field name="name"/>
+                            <field name="category"/>
+                            <field name="subcategory"/>
+                            <field name="risk_level"/>
+                            <field name="group_attention"/>
+                            <field name="bottom_line"/>
+                            <field name="qualification_required"/>
+                        </tree>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_risk_item_tree" model="ir.ui.view">
+        <field name="name">sc.risk.item.tree</field>
+        <field name="model">sc.risk.item</field>
+        <field name="arch" type="xml">
+            <tree string="风险项">
+                <field name="library_id"/>
+                <field name="name"/>
+                <field name="category"/>
+                <field name="subcategory"/>
+                <field name="risk_level"/>
+                <field name="group_attention"/>
+                <field name="bottom_line"/>
+                <field name="qualification_required"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_risk_item_form" model="ir.ui.view">
+        <field name="name">sc.risk.item.form</field>
+        <field name="model">sc.risk.item</field>
+        <field name="arch" type="xml">
+            <form string="风险项">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="library_id"/>
+                            <field name="name"/>
+                            <field name="category"/>
+                            <field name="subcategory"/>
+                            <field name="risk_level"/>
+                        </group>
+                        <group>
+                            <field name="group_attention"/>
+                            <field name="bottom_line"/>
+                            <field name="qualification_required"/>
+                        </group>
+                    </group>
+                    <field name="control_measure"/>
+                </sheet>
             </form>
         </field>
     </record>
@@ -84,10 +275,74 @@
                 <field name="project_id"/>
                 <field name="risk_item_id"/>
                 <field name="location"/>
+                <field name="coordinate"/>
                 <field name="valid_to"/>
                 <field name="owner_id"/>
+                <field name="control_status"/>
                 <field name="state"/>
             </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_hazard_source_form" model="ir.ui.view">
+        <field name="name">sc.hazard.source.form</field>
+        <field name="model">sc.hazard.source</field>
+        <field name="arch" type="xml">
+            <form string="危险源">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="project_id"/>
+                            <field name="risk_item_id"/>
+                            <field name="location"/>
+                            <field name="coordinate"/>
+                        </group>
+                        <group>
+                            <field name="valid_from"/>
+                            <field name="valid_to"/>
+                            <field name="owner_id"/>
+                            <field name="reporter_id"/>
+                            <field name="control_status"/>
+                            <field name="state"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="说明">
+                            <field name="description" nolabel="1"/>
+                        </page>
+                        <page string="现场附件">
+                            <field name="attachment_ids" widget="many2many_binary"/>
+                        </page>
+                        <page string="来源追溯">
+                            <group>
+                                <field name="legacy_fact_model"/>
+                                <field name="legacy_fact_id"/>
+                                <field name="legacy_fact_type"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_hazard_source_search" model="ir.ui.view">
+        <field name="name">sc.hazard.source.search</field>
+        <field name="model">sc.hazard.source</field>
+        <field name="arch" type="xml">
+            <search string="危险源">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="risk_item_id"/>
+                <field name="owner_id"/>
+                <filter string="未关闭" name="not_closed" domain="[('state', '!=', 'closed')]"/>
+                <filter string="重大风险" name="critical" domain="[('risk_item_id.risk_level', '=', 'critical')]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按管控状态" name="group_control_status" context="{'group_by': 'control_status'}"/>
+                <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+            </search>
         </field>
     </record>
 
@@ -98,11 +353,16 @@
             <tree string="安全问题" default_order="issue_date desc">
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="issue_category"/>
+                <field name="source_channel"/>
                 <field name="issue_date"/>
                 <field name="location"/>
                 <field name="issue_level"/>
                 <field name="responsible_party_id"/>
+                <field name="rechecker_id"/>
                 <field name="rectification_deadline"/>
+                <field name="overdue_days"/>
+                <field name="is_overdue"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -122,19 +382,32 @@
                         <group>
                             <field name="name"/>
                             <field name="project_id"/>
+                            <field name="issue_category"/>
+                            <field name="source_channel"/>
                             <field name="issue_level"/>
                             <field name="issue_date"/>
                         </group>
                         <group>
                             <field name="location"/>
+                            <field name="coordinate"/>
                             <field name="responsible_party_id"/>
                             <field name="owner_id"/>
+                            <field name="rechecker_id"/>
+                            <field name="cc_user_ids" widget="many2many_tags"/>
                             <field name="rectification_deadline"/>
+                            <field name="reminder_before_days"/>
+                            <field name="closed_date" readonly="1"/>
+                            <field name="overdue_days" readonly="1"/>
+                            <field name="is_overdue" readonly="1"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="问题描述">
                             <field name="description" nolabel="1"/>
+                            <field name="voice_text" nolabel="1"/>
+                        </page>
+                        <page string="问题附件">
+                            <field name="attachment_ids" widget="many2many_binary"/>
                         </page>
                         <page string="检查照片">
                             <field name="photo_batch_ids"/>
@@ -156,6 +429,7 @@
             <tree string="安全整改" default_order="rectification_date desc">
                 <field name="issue_id"/>
                 <field name="project_id"/>
+                <field name="source_channel"/>
                 <field name="issue_level"/>
                 <field name="responsible_party_id"/>
                 <field name="rectification_deadline"/>
@@ -183,12 +457,14 @@
                             <field name="responsible_party_id" readonly="1"/>
                             <field name="rectification_deadline" readonly="1"/>
                             <field name="rectification_date"/>
+                            <field name="source_channel"/>
                             <field name="handler_id"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="整改结果">
                             <field name="result" nolabel="1"/>
+                            <field name="attachment_ids" widget="many2many_binary"/>
                         </page>
                         <page string="照片批次">
                             <field name="photo_batch_ids"/>
@@ -230,6 +506,7 @@
             <tree string="安全复验" default_order="recheck_date desc">
                 <field name="issue_id"/>
                 <field name="project_id"/>
+                <field name="source_channel"/>
                 <field name="issue_level"/>
                 <field name="responsible_party_id"/>
                 <field name="recheck_date"/>
@@ -256,6 +533,7 @@
                         <group>
                             <field name="responsible_party_id" readonly="1"/>
                             <field name="recheck_date"/>
+                            <field name="source_channel"/>
                             <field name="recheck_user_id"/>
                             <field name="result"/>
                         </group>
@@ -263,6 +541,7 @@
                     <notebook>
                         <page string="复验意见">
                             <field name="comment" nolabel="1"/>
+                            <field name="attachment_ids" widget="many2many_binary"/>
                         </page>
                         <page string="照片批次">
                             <field name="photo_batch_ids"/>
@@ -290,6 +569,72 @@
         </field>
     </record>
 
+    <record id="view_sc_safety_patrol_task_tree" model="ir.ui.view">
+        <field name="name">sc.safety.patrol.task.tree</field>
+        <field name="model">sc.safety.patrol.task</field>
+        <field name="arch" type="xml">
+            <tree string="安全巡检任务" default_order="planned_date desc">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="patrol_type"/>
+                <field name="check_standard_id"/>
+                <field name="planned_date"/>
+                <field name="owner_id"/>
+                <field name="score"/>
+                <field name="pass_rate"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_safety_patrol_task_form" model="ir.ui.view">
+        <field name="name">sc.safety.patrol.task.form</field>
+        <field name="model">sc.safety.patrol.task</field>
+        <field name="arch" type="xml">
+            <form string="安全巡检任务">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="project_id"/>
+                            <field name="patrol_type"/>
+                            <field name="check_standard_id"/>
+                            <field name="planned_date"/>
+                        </group>
+                        <group>
+                            <field name="owner_id"/>
+                            <field name="member_ids" widget="many2many_tags"/>
+                            <field name="planned_scope"/>
+                            <field name="score"/>
+                            <field name="pass_rate"/>
+                            <field name="state"/>
+                        </group>
+                    </group>
+                    <field name="note"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_safety_patrol_task_search" model="ir.ui.view">
+        <field name="name">sc.safety.patrol.task.search</field>
+        <field name="model">sc.safety.patrol.task</field>
+        <field name="arch" type="xml">
+            <search string="安全巡检任务">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="owner_id"/>
+                <field name="check_standard_id"/>
+                <filter string="已计划" name="planned" domain="[('state', '=', 'planned')]"/>
+                <filter string="已完成" name="done" domain="[('state', '=', 'done')]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按巡检类型" name="group_patrol_type" context="{'group_by': 'patrol_type'}"/>
+                <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
     <record id="view_sc_safety_issue_search" model="ir.ui.view">
         <field name="name">sc.safety.issue.search</field>
         <field name="model">sc.safety.issue</field>
@@ -298,9 +643,13 @@
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="responsible_party_id"/>
+                <field name="issue_category"/>
+                <field name="source_channel"/>
                 <filter string="未闭环" name="not_closed" domain="[('state', 'not in', ['closed', 'cancel'])]"/>
+                <filter string="已逾期" name="overdue" domain="[('is_overdue', '=', True)]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 <filter string="按等级" name="group_level" context="{'group_by': 'issue_level'}"/>
+                <filter string="按场景" name="group_issue_category" context="{'group_by': 'issue_category'}"/>
                 <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
             </search>
         </field>

@@ -78,10 +78,10 @@ function stringify(value: unknown) {
 <style scoped>
 .block { border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; padding: 10px; min-height: 170px; }
 .block-header h4 { margin: 0 0 8px; font-size: 15px; font-weight: 700; }
-.table-wrap { overflow: auto; }
-.mini-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table-wrap { max-width: 100%; overflow: auto; }
+.mini-table { width: max(100%, 560px); min-width: 560px; border-collapse: collapse; font-size: 13px; }
 .mini-table th,
-.mini-table td { border: 1px solid #e5e7eb; padding: 8px 10px; text-align: left; }
+.mini-table td { border: 1px solid #e5e7eb; padding: 8px 10px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
 .mini-table th { border: 1px solid #e5e7eb; background: #f8fafc; font-weight: 700; color: #334155; padding: 8px 10px; }
 .mini-table tbody tr:nth-child(2n) td { background: #fcfdff; }
 .empty-text { margin: 6px 0 0; color: #6b7280; font-size: 13px; }

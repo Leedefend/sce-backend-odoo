@@ -172,7 +172,6 @@
         'security/menu_tech_hide_patch.xml',
         'actions/project_native_action_overrides.xml',
         'views/menu_business_taxonomy.xml',
-        'data/business_menu_full_coverage.xml',
     ],
     'assets': {
         'web.assets_frontend_minimal': [
