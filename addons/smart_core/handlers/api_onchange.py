@@ -11,6 +11,7 @@ from ..core.project_context import (
     record_in_project_scope,
     selected_project_id_from_context,
 )
+from ..core.unified_page_contract_lite_preview import with_lite_preview_if_requested
 from ..utils.reason_codes import normalize_onchange_reason_code
 
 
@@ -277,7 +278,7 @@ class ApiOnchangeHandler(BaseIntentHandler):
         values = self._normalize_values(env_model, params.get("values") if isinstance(params.get("values"), dict) else {})
         changed_fields = self._normalize_changed_fields(env_model, params.get("changed_fields") or params.get("changed"))
         if not changed_fields:
-            return {
+            response = {
                 "ok": True,
                 "data": {
                     "schema_version": "v1",
@@ -289,6 +290,7 @@ class ApiOnchangeHandler(BaseIntentHandler):
                 },
                 "meta": {"model": model, "intent": self.INTENT_TYPE, "version": self.VERSION},
             }
+            return with_lite_preview_if_requested(response, params, "api_onchange")
 
         field_onchange = self._build_field_onchange_map(env_model)
 
@@ -312,7 +314,7 @@ class ApiOnchangeHandler(BaseIntentHandler):
             prev["domain"] = field_domain
             modifiers_patch[field_name] = prev
 
-        return {
+        response = {
             "ok": True,
             "data": {
                 "schema_version": "v1",
@@ -324,3 +326,4 @@ class ApiOnchangeHandler(BaseIntentHandler):
             },
             "meta": {"model": model, "intent": self.INTENT_TYPE, "version": self.VERSION},
         }
+        return with_lite_preview_if_requested(response, params, "api_onchange")

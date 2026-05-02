@@ -1,0 +1,122 @@
+{
+  "pageInfo": {
+    "pageId": "project.search",
+    "sceneKey": "project.search",
+    "model": "project.project",
+    "viewType": "search",
+    "clientType": "web_pc",
+    "contractVersion": "2.0.0"
+  },
+  "layoutContract": {
+    "layoutType": "search",
+    "containerList": [
+      {
+        "containerId": "zone.action_zone",
+        "containerType": "section",
+        "title": "action zone",
+        "children": [
+          {
+            "containerId": "action_zone.action_bar_block.1",
+            "containerType": "group",
+            "title": "操作",
+            "children": [],
+            "widgetList": [
+              {
+                "widgetId": "field.name",
+                "widgetType": "input",
+                "fieldCode": "name",
+                "label": "项目名称",
+                "component": "input",
+                "props": {}
+              },
+              {
+                "widgetId": "field.stage_id",
+                "widgetType": "select",
+                "fieldCode": "stage_id",
+                "label": "项目阶段",
+                "component": "select",
+                "props": {}
+              }
+            ]
+          }
+        ],
+        "widgetList": []
+      }
+    ]
+  },
+  "statusContract": {
+    "widgetStatus": [
+      {
+        "widgetId": "field.name",
+        "visible": true,
+        "readonly": false,
+        "required": false,
+        "disabled": false
+      },
+      {
+        "widgetId": "field.stage_id",
+        "visible": true,
+        "readonly": false,
+        "required": false,
+        "disabled": false
+      }
+    ],
+    "buttonStatus": [
+      {
+        "btnId": "btn.apply_filters",
+        "visible": true,
+        "disabled": false
+      },
+      {
+        "btnId": "btn.reset_filters",
+        "visible": true,
+        "disabled": false
+      }
+    ]
+  },
+  "actionContract": {
+    "actionRuleList": [
+      {
+        "actionId": "btn.apply_filters.click",
+        "triggerType": "click",
+        "sourceWidgetId": "btn.apply_filters",
+        "dispatchMode": "server",
+        "refreshMode": "partial"
+      },
+      {
+        "actionId": "btn.reset_filters.click",
+        "triggerType": "click",
+        "sourceWidgetId": "btn.reset_filters",
+        "dispatchMode": "server",
+        "refreshMode": "partial"
+      },
+      {
+        "actionId": "form.save.submit",
+        "triggerType": "submit",
+        "sourceWidgetId": "btn.save",
+        "dispatchMode": "server",
+        "refreshMode": "partial"
+      }
+    ]
+  },
+  "dataContract": {
+    "mainData": {},
+    "relationData": {},
+    "dictData": {
+      "quick_filters": [
+        {
+          "value": "in_progress",
+          "label": "进行中"
+        }
+      ]
+    }
+  },
+  "meta": {
+    "etag": "lite-project-search-adapter-source-001",
+    "traceId": "trace.lite.adapter.project.search.001",
+    "semanticAdapter": {
+      "source": "odoo.semantic_page",
+      "adapterVersion": "2.0.0"
+    }
+  }
+}

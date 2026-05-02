@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sce.local/schemas/unified_page_contract_lite_adapter_patch_source.schema.json",
+  "title": "Unified Semantic Page Contract Lite Adapter Patch Source",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "patch",
+    "modifiers_patch",
+    "line_patches"
+  ],
+  "properties": {
+    "schema_version": {"const": "v1"},
+    "patch": {"type": "object"},
+    "modifiers_patch": {"type": "object"},
+    "button_status_patch": {
+      "oneOf": [
+        {"type": "object"},
+        {"type": "array"}
+      ]
+    },
+    "line_patches": {"type": "array"},
+    "warnings": {"type": "array"},
+    "applied_fields": {"type": "array", "items": {"type": "string"}}
+  }
+}

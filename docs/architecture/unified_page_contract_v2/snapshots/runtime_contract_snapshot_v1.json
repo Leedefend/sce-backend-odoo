@@ -1,0 +1,30 @@
+{
+  "snapshotVersion": "v1",
+  "contractVersion": "2.1.0",
+  "expected": {
+    "patchStrategy": "incremental",
+    "cachePolicy": "etag",
+    "renderStrategy": "sync",
+    "patchOperations": [
+      "replace",
+      "merge",
+      "append",
+      "remove",
+      "reorder",
+      "invalidate"
+    ],
+    "complexityBudget": {
+      "containers": 1,
+      "widgets": 1,
+      "actions": 1,
+      "selectorStatus": 1,
+      "dataSources": 1,
+      "level": "low"
+    },
+    "aiEnvelope": {
+      "mode": "suggestion",
+      "executable": false,
+      "allowed": true
+    }
+  }
+}

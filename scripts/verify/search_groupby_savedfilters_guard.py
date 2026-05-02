@@ -8,6 +8,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 ACTION_VIEW = ROOT / "frontend/apps/web/src/views/ActionView.vue"
+REQUEST_RUNTIME = ROOT / "frontend/apps/web/src/app/runtime/actionViewRequestRuntime.ts"
+LOAD_REQUEST_RUNTIME = ROOT / "frontend/apps/web/src/app/runtime/actionViewLoadRequestRuntime.ts"
 API_DATA = ROOT / "addons/smart_core/handlers/api_data.py"
 
 
@@ -21,6 +23,8 @@ def main() -> int:
     errors: list[str] = []
     try:
         action_view = _read(ACTION_VIEW)
+        request_runtime = _read(REQUEST_RUNTIME)
+        load_request_runtime = _read(LOAD_REQUEST_RUNTIME)
         api_data = _read(API_DATA)
     except FileNotFoundError as exc:
         print("[FAIL] search_groupby_savedfilters_guard")
@@ -28,17 +32,38 @@ def main() -> int:
         return 1
 
     action_markers = [
-        "search?.saved_filters",
-        "search?.group_by",
-        "function resolveEffectiveRequestContext()",
-        "function resolveEffectiveRequestContextRaw()",
-        "group_by: activeGroupByField.value || undefined",
-        "function applySavedFilter(key: string)",
+        "savedFilterPrimaryChips",
+        "savedFilterOverflowChips",
+        "routeGroupByChips",
+        "applySavedFilter,",
+        "applyGroupBy: applyGroupByRuntime",
+        "function applyGroupBy(field: string)",
+        "context: resolveEffectiveRequestContext()",
+        "resolveEffectiveRequestContext,",
+        "resolveEffectiveRequestContextRaw,",
         "function applyGroupBy(field: string)",
     ]
     for marker in action_markers:
         if marker not in action_view:
             errors.append(f"action_view missing marker: {marker}")
+
+    request_markers = [
+        "export function resolveEffectiveRequestContext(filterContext: Dict, groupContext: Dict): Dict",
+        "export function resolveEffectiveRequestContextRaw(filterContextRaw: string, groupContextRaw: string): string",
+        "return { ...(found?.context || {}), group_by: field };",
+        "`{'group_by': '${field}'}`",
+    ]
+    for marker in request_markers:
+        if marker not in request_runtime:
+            errors.append(f"request_runtime missing marker: {marker}")
+
+    load_request_markers = [
+        "group_by: grouped ? options.activeGroupByField : undefined",
+        "activeGroupByField: string;",
+    ]
+    for marker in load_request_markers:
+        if marker not in load_request_runtime:
+            errors.append(f"load_request_runtime missing marker: {marker}")
 
     api_markers = [
         "def _normalize_group_by(self, val):",
@@ -63,6 +88,8 @@ def main() -> int:
 
     print("[OK] search_groupby_savedfilters_guard")
     print(f"- action_view: {ACTION_VIEW}")
+    print(f"- request_runtime: {REQUEST_RUNTIME}")
+    print(f"- load_request_runtime: {LOAD_REQUEST_RUNTIME}")
     print(f"- api_data: {API_DATA}")
     return 0
 

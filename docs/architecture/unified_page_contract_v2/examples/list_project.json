@@ -1,0 +1,162 @@
+{
+  "pageInfo": {
+    "pageId": "project.list",
+    "sceneKey": "project.list",
+    "pageName": "Project List",
+    "model": "project.project",
+    "viewType": "list",
+    "layoutType": "table",
+    "renderMode": "governed",
+    "contractVersion": "2.1.0",
+    "clientType": "web_pc"
+  },
+  "layoutContract": {
+    "pageId": "project.list",
+    "layoutType": "table",
+    "adaptMode": "pc",
+    "containerTree": [
+      {
+        "containerId": "main.table",
+        "containerType": "section",
+        "title": "Projects",
+        "span": 12,
+        "styleToken": "tableSection",
+        "children": [],
+        "widgetList": [
+          {
+            "widgetId": "table.project",
+            "widgetType": "table",
+            "fieldCode": "project_rows",
+            "label": "Projects",
+            "span": 12,
+            "componentKey": "sc.table.data",
+            "capabilities": [
+              "sortable",
+              "filterable",
+              "virtual-scroll",
+              "bulk-select"
+            ],
+            "componentConfig": {
+              "dataKey": "project_rows"
+            }
+          }
+        ]
+      }
+    ],
+    "layoutHints": {
+      "density": "compact"
+    },
+    "componentRegistry": {
+      "sc.table.data": {
+        "version": "1.0",
+        "adapter": {
+          "web_pc": "ElTable",
+          "wx_mini": "WxList",
+          "harmony_h5": "H5Table"
+        },
+        "fallback": "sc.list.basic"
+      }
+    }
+  },
+  "statusContract": {
+    "globalStatus": {
+      "pageVisible": true,
+      "pageAuth": "read"
+    },
+    "containerStatus": [
+      {
+        "containerId": "main.table",
+        "visible": true,
+        "disabled": false
+      }
+    ],
+    "widgetStatus": [
+      {
+        "widgetId": "table.project",
+        "visible": true,
+        "readonly": true,
+        "required": false,
+        "disabled": false,
+        "auth": "read"
+      }
+    ],
+    "buttonStatus": [],
+    "selectorStatus": [
+      {
+        "selector": "finance.*",
+        "readonly": true,
+        "reasonCode": "ROLE_READONLY"
+      }
+    ]
+  },
+  "actionContract": {
+    "actionRuleList": [
+      {
+        "actionId": "project.list.refresh",
+        "triggerType": "refresh",
+        "sourceWidgetId": "table.project",
+        "targetIds": [
+          "table.project"
+        ],
+        "dispatchMode": "server",
+        "targetScope": "dataSource",
+        "refreshMode": "partial"
+      }
+    ],
+    "dependencyGraph": {
+      "table.project": []
+    }
+  },
+  "dataContract": {
+    "mainData": {},
+    "tableRows": {
+      "project_rows": [
+        {
+          "id": 1,
+          "name": "Example Project",
+          "stage_id": 1
+        }
+      ]
+    },
+    "relationRows": {},
+    "dictData": {},
+    "pagination": {
+      "project_rows": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 1
+      }
+    },
+    "dataSource": {
+      "project_rows": {
+        "query": "project.search",
+        "cachePolicy": "etag",
+        "consistency": "eventual",
+        "subscription": false
+      }
+    },
+    "dataMeta": {}
+  },
+  "runtimeContract": {
+    "patchStrategy": "incremental",
+    "cachePolicy": "etag",
+    "optimistic": false,
+    "lazyContainer": [],
+    "virtualization": {
+      "table.project": {
+        "enabled": true,
+        "rowHeight": 44
+      }
+    },
+    "retryPolicy": {
+      "maxRetries": 1
+    }
+  },
+  "meta": {
+    "etag": "upc-v2-list-project-001",
+    "snapshotId": "snapshot.project.list.001",
+    "traceId": "trace.project.list.001",
+    "requestId": "request.project.list.001",
+    "compat": {}
+  }
+}

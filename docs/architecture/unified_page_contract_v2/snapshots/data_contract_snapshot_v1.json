@@ -1,0 +1,40 @@
+{
+  "snapshotVersion": "v1",
+  "contractVersion": "2.1.0",
+  "expected": {
+    "mainDataKeys": [
+      "id",
+      "name",
+      "stage_id"
+    ],
+    "tableRows": {
+      "project_rows": 1
+    },
+    "relationRows": {
+      "contract_line_ids": 1
+    },
+    "treeDataKeys": [
+      "project_tree"
+    ],
+    "dictDataKeys": [
+      "project_stage"
+    ],
+    "paginationKeys": [
+      "project_rows"
+    ],
+    "dataSource": {
+      "project_rows": {
+        "query": "project.search",
+        "cachePolicy": "etag",
+        "consistency": "eventual",
+        "subscription": false
+      },
+      "contract_line_ids": {
+        "query": "project.contract.line.search",
+        "cachePolicy": "etag",
+        "consistency": "strong",
+        "subscription": false
+      }
+    }
+  }
+}

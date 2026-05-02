@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sce.local/schemas/unified_page_contract_lite_adapter_source.schema.json",
+  "title": "Unified Semantic Page Contract Lite Adapter Source",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "page_id",
+    "scene_key",
+    "client_type",
+    "semantic_page",
+    "fields"
+  ],
+  "properties": {
+    "page_id": {"type": "string"},
+    "scene_key": {"type": "string"},
+    "client_type": {"enum": ["web_pc", "wx_mini", "harmony_h5"]},
+    "etag": {"type": "string"},
+    "trace_id": {"type": "string"},
+    "render_profile": {"enum": ["create", "edit", "readonly", "search", "list"]},
+    "semantic_page": {
+      "type": "object",
+      "required": ["model", "view_type"],
+      "additionalProperties": true,
+      "properties": {
+        "model": {"type": "string"},
+        "view_type": {"enum": ["form", "tree", "list", "kanban", "search", "gantt", "popup", "combine"]},
+        "layout": {"type": "string"},
+        "permission_verdicts": {"type": "object"},
+        "actions": {"type": "object"},
+        "zones": {"type": "array"}
+      }
+    },
+    "fields": {"type": "object"},
+    "field_policies": {"type": "object"},
+    "action_policies": {"type": "object"},
+    "access_policy": {"type": "object"},
+    "modifiers": {"type": "object"},
+    "field_modifiers": {"type": "object"},
+    "onchange_fields": {"type": "array", "items": {"type": "string"}},
+    "record": {"type": "object"},
+    "relation_rows": {"type": "object"},
+    "dict_data": {"type": "object"}
+  }
+}

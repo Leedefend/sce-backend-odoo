@@ -1,0 +1,206 @@
+{
+  "pageInfo": {
+    "pageId": "project.form.relation",
+    "sceneKey": "project.contracting",
+    "pageName": "Project Contracting",
+    "model": "project.project",
+    "viewType": "form",
+    "layoutType": "combine",
+    "renderMode": "governed",
+    "contractVersion": "2.1.0",
+    "clientType": "web_pc"
+  },
+  "layoutContract": {
+    "pageId": "project.form.relation",
+    "layoutType": "combine",
+    "adaptMode": "pc",
+    "containerTree": [
+      {
+        "containerId": "main.contracting",
+        "containerType": "group",
+        "title": "Contracting",
+        "span": 12,
+        "styleToken": "defaultGroup",
+        "children": [
+          {
+            "containerId": "main.contracting.lines",
+            "containerType": "subTable",
+            "title": "Contract Lines",
+            "span": 12,
+            "styleToken": "subTable",
+            "children": [],
+            "widgetList": [
+              {
+                "widgetId": "table.contract_line",
+                "widgetType": "table",
+                "fieldCode": "contract_line_ids",
+                "label": "Lines",
+                "span": 12,
+                "componentKey": "sc.table.relation",
+                "capabilities": [
+                  "editable",
+                  "inline-create",
+                  "inline-delete"
+                ],
+                "componentConfig": {
+                  "dataKey": "contract_line_ids"
+                }
+              }
+            ]
+          }
+        ],
+        "widgetList": [
+          {
+            "widgetId": "field.contract_amount",
+            "widgetType": "number",
+            "fieldCode": "contract_amount",
+            "label": "Contract Amount",
+            "span": 6,
+            "componentKey": "sc.input.number",
+            "capabilities": [],
+            "componentConfig": {
+              "precision": 2
+            }
+          }
+        ]
+      }
+    ],
+    "layoutHints": {
+      "columns": 12
+    },
+    "componentRegistry": {
+      "sc.input.number": {
+        "version": "1.0",
+        "adapter": {
+          "web_pc": "ElInputNumber",
+          "wx_mini": "WxNumberInput",
+          "harmony_h5": "H5NumberInput"
+        }
+      },
+      "sc.table.relation": {
+        "version": "1.0",
+        "adapter": {
+          "web_pc": "ElEditableTable",
+          "wx_mini": "WxRelationList",
+          "harmony_h5": "H5EditableTable"
+        },
+        "fallback": "sc.list.relation"
+      }
+    }
+  },
+  "statusContract": {
+    "globalStatus": {
+      "pageVisible": true,
+      "pageAuth": "edit"
+    },
+    "containerStatus": [
+      {
+        "containerId": "main.contracting",
+        "visible": true,
+        "disabled": false
+      },
+      {
+        "containerId": "main.contracting.lines",
+        "visible": true,
+        "disabled": false
+      }
+    ],
+    "widgetStatus": [
+      {
+        "widgetId": "field.contract_amount",
+        "visible": true,
+        "readonly": false,
+        "required": true,
+        "disabled": false,
+        "auth": "edit"
+      },
+      {
+        "widgetId": "table.contract_line",
+        "visible": true,
+        "readonly": false,
+        "required": false,
+        "disabled": false,
+        "auth": "edit"
+      }
+    ],
+    "buttonStatus": [
+      {
+        "btnId": "btn.contract_line.add",
+        "visible": true,
+        "disabled": false
+      }
+    ],
+    "selectorStatus": [
+      {
+        "selector": "main.contracting.lines.*",
+        "readonly": false
+      }
+    ]
+  },
+  "actionContract": {
+    "actionRuleList": [
+      {
+        "actionId": "project.contract_line.add",
+        "triggerType": "add",
+        "sourceWidgetId": "table.contract_line",
+        "targetIds": [
+          "table.contract_line",
+          "field.contract_amount"
+        ],
+        "dispatchMode": "serverBlocking",
+        "targetScope": "page",
+        "refreshMode": "partial"
+      }
+    ],
+    "dependencyGraph": {
+      "table.contract_line": [
+        "field.contract_amount"
+      ]
+    }
+  },
+  "dataContract": {
+    "mainData": {
+      "contract_amount": 1000.0
+    },
+    "tableRows": {},
+    "relationRows": {
+      "contract_line_ids": [
+        {
+          "id": 10,
+          "name": "Initial Line",
+          "amount": 1000.0
+        }
+      ]
+    },
+    "dictData": {},
+    "pagination": {},
+    "dataSource": {
+      "contract_line_ids": {
+        "query": "project.contract.line.search",
+        "cachePolicy": "etag",
+        "consistency": "strong",
+        "subscription": false
+      }
+    },
+    "dataMeta": {}
+  },
+  "runtimeContract": {
+    "patchStrategy": "incremental",
+    "cachePolicy": "etag",
+    "optimistic": true,
+    "lazyContainer": [
+      "main.contracting.lines"
+    ],
+    "virtualization": {},
+    "retryPolicy": {
+      "maxRetries": 0
+    }
+  },
+  "meta": {
+    "etag": "upc-v2-nested-form-relation-001",
+    "snapshotId": "snapshot.project.contracting.001",
+    "traceId": "trace.project.contracting.001",
+    "requestId": "request.project.contracting.001",
+    "compat": {}
+  }
+}

@@ -479,6 +479,7 @@
       "has_idempotency_window": true,
       "test_refs": 0,
       "request_schema_hint": [
+        "context",
         "dry_run",
         "idempotency_key",
         "ids",
@@ -915,6 +916,68 @@
       "inferred_example": null
     },
     {
+      "intent": "chatter.activity.schedule",
+      "owner": {
+        "module": "addons/smart_core/handlers/chatter_activity_schedule.py",
+        "class": "ChatterActivityScheduleHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "activity_type_xmlid",
+        "date_deadline",
+        "model",
+        "note",
+        "record_id",
+        "res_id",
+        "summary",
+        "user_id"
+      ],
+      "response_data_schema_hint": [],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "activity_type_xmlid",
+            "date_deadline",
+            "model",
+            "note",
+            "record_id",
+            "res_id",
+            "summary",
+            "user_id"
+          ],
+          "response_data_keys": [],
+          "response_error_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "activity_type_xmlid",
+          "date_deadline",
+          "model",
+          "note",
+          "record_id",
+          "res_id",
+          "summary",
+          "user_id"
+        ],
+        "response_data_keys": [],
+        "response_error_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
+    },
+    {
       "intent": "chatter.post",
       "owner": {
         "module": "addons/smart_core/handlers/chatter_post.py",
@@ -926,6 +989,7 @@
       "test_refs": 1,
       "request_schema_hint": [
         "body",
+        "mode",
         "model",
         "record_id",
         "res_id",
@@ -1673,7 +1737,9 @@
       "has_idempotency_window": false,
       "test_refs": 5,
       "request_schema_hint": [
+        "action_id",
         "include",
+        "menu_id",
         "model",
         "view_type"
       ],
@@ -2489,7 +2555,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 152,
+      "test_refs": 153,
       "request_schema_hint": [
         "company_id",
         "database",
@@ -11931,6 +11997,7 @@
       "has_idempotency_window": false,
       "test_refs": 1,
       "request_schema_hint": [
+        "context",
         "limit",
         "limit_each",
         "page",
@@ -12780,6 +12847,53 @@
         "snapshot_file": "",
         "request_keys": [
           "params"
+        ],
+        "response_data_keys": [],
+        "response_error_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
+    },
+    {
+      "intent": "project.context.search",
+      "owner": {
+        "module": "addons/smart_core/handlers/project_context.py",
+        "class": "ProjectContextSearchHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "limit",
+        "query",
+        "search"
+      ],
+      "response_data_schema_hint": [],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "limit",
+            "query",
+            "search"
+          ],
+          "response_data_keys": [],
+          "response_error_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "limit",
+          "query",
+          "search"
         ],
         "response_data_keys": [],
         "response_error_keys": [],
@@ -15078,6 +15192,71 @@
       "inferred_example": null
     },
     {
+      "intent": "search.favorite.set",
+      "owner": {
+        "module": "addons/smart_core/handlers/search_favorite_set.py",
+        "class": "SearchFavoriteSetHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "action_id",
+        "context",
+        "domain",
+        "is_default",
+        "is_shared",
+        "model",
+        "name",
+        "order",
+        "sort"
+      ],
+      "response_data_schema_hint": [],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "action_id",
+            "context",
+            "domain",
+            "is_default",
+            "is_shared",
+            "model",
+            "name",
+            "order",
+            "sort"
+          ],
+          "response_data_keys": [],
+          "response_error_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "action_id",
+          "context",
+          "domain",
+          "is_default",
+          "is_shared",
+          "model",
+          "name",
+          "order",
+          "sort"
+        ],
+        "response_data_keys": [],
+        "response_error_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
+    },
+    {
       "intent": "session.bootstrap",
       "owner": {
         "module": "addons/smart_core/handlers/session_bootstrap.py",
@@ -15627,6 +15806,115 @@
         }
       ],
       "inferred_example": null
+    },
+    {
+      "intent": "user.view.preference.get",
+      "owner": {
+        "module": "addons/smart_core/handlers/user_view_preference.py",
+        "class": "UserViewPreferenceGetHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "action_id",
+        "model",
+        "model_name",
+        "preference_key",
+        "view_type"
+      ],
+      "response_data_schema_hint": [],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "action_id",
+            "model",
+            "model_name",
+            "preference_key",
+            "view_type"
+          ],
+          "response_data_keys": [],
+          "response_error_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "action_id",
+          "model",
+          "model_name",
+          "preference_key",
+          "view_type"
+        ],
+        "response_data_keys": [],
+        "response_error_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
+    },
+    {
+      "intent": "user.view.preference.set",
+      "owner": {
+        "module": "addons/smart_core/handlers/user_view_preference.py",
+        "class": "UserViewPreferenceSetHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "action_id",
+        "model",
+        "model_name",
+        "preference",
+        "preference_key",
+        "view_type"
+      ],
+      "response_data_schema_hint": [],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "action_id",
+            "model",
+            "model_name",
+            "preference",
+            "preference_key",
+            "view_type"
+          ],
+          "response_data_keys": [],
+          "response_error_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "action_id",
+          "model",
+          "model_name",
+          "preference",
+          "preference_key",
+          "view_type"
+        ],
+        "response_data_keys": [],
+        "response_error_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     }
   ]
 }

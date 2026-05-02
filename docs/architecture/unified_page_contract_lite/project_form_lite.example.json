@@ -1,0 +1,105 @@
+{
+  "pageInfo": {
+    "pageId": "project.form",
+    "sceneKey": "project.intake",
+    "model": "project.project",
+    "viewType": "form",
+    "clientType": "web_pc",
+    "contractVersion": "2.0.0"
+  },
+  "layoutContract": {
+    "layoutType": "form",
+    "containerList": [
+      {
+        "containerId": "basic.group",
+        "containerType": "group",
+        "title": "基础信息",
+        "children": [],
+        "widgetList": [
+          {
+            "widgetId": "field.name",
+            "widgetType": "input",
+            "fieldCode": "name",
+            "label": "项目名称",
+            "component": "input",
+            "props": {}
+          },
+          {
+            "widgetId": "field.stage_id",
+            "widgetType": "select",
+            "fieldCode": "stage_id",
+            "label": "项目阶段",
+            "component": "select",
+            "props": {}
+          }
+        ]
+      }
+    ]
+  },
+  "statusContract": {
+    "widgetStatus": [
+      {
+        "widgetId": "field.name",
+        "visible": true,
+        "readonly": false,
+        "required": true,
+        "disabled": false
+      },
+      {
+        "widgetId": "field.stage_id",
+        "visible": true,
+        "readonly": false,
+        "required": false,
+        "disabled": false
+      }
+    ],
+    "buttonStatus": [
+      {
+        "btnId": "btn.save",
+        "visible": true,
+        "disabled": false
+      }
+    ]
+  },
+  "actionContract": {
+    "actionRuleList": [
+      {
+        "actionId": "field.name.change",
+        "triggerType": "change",
+        "sourceWidgetId": "field.name",
+        "dispatchMode": "server",
+        "refreshMode": "partial"
+      },
+      {
+        "actionId": "btn.save.click",
+        "triggerType": "click",
+        "sourceWidgetId": "btn.save",
+        "dispatchMode": "server",
+        "refreshMode": "partial"
+      }
+    ]
+  },
+  "dataContract": {
+    "mainData": {
+      "name": "示例项目",
+      "stage_id": 1
+    },
+    "relationData": {},
+    "dictData": {
+      "stage_id": [
+        {
+          "value": 1,
+          "label": "草稿"
+        }
+      ]
+    }
+  },
+  "meta": {
+    "etag": "lite-project-form-001",
+    "traceId": "trace.lite.project.form.001",
+    "semanticAdapter": {
+      "source": "odoo.view.form",
+      "adapterVersion": "lite.2.0.0"
+    }
+  }
+}

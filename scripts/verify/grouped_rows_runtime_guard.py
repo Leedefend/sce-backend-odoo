@@ -92,7 +92,8 @@ def main() -> int:
             errors.append(f"action_view missing marker: {marker}")
 
     list_markers = [
-        "v-if=\"groupedRows.length\" class=\"grouped-table\"",
+        "v-if=\"showGroupedRows\" class=\"grouped-table\"",
+        "const showGroupedRows = computed(() => props.enableGroupedRows === true && groupedRows.value.length > 0);",
         "v-for=\"group in sortedGroupedRows\"",
         "sampleRows",
         "toggleGroupCollapsed(",

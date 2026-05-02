@@ -1,0 +1,67 @@
+{
+  "head": {
+    "page_id": "project.form",
+    "scene_key": "project.intake",
+    "model": "project.project",
+    "view_type": "form",
+    "client_type": "web_pc",
+    "etag": "legacy-lite-project-form-001",
+    "trace_id": "trace.legacy.project.form.001",
+    "render_profile": "edit"
+  },
+  "meta": {
+    "semantic_page": {
+      "layout": "auto",
+      "permission_verdicts": {
+        "read": {"allowed": true, "reason_code": "OK"},
+        "write": {"allowed": true, "reason_code": "OK"}
+      },
+      "actions": {
+        "header_actions": [
+          {"key": "submit", "label": "提交立项", "enabled": true, "reason_code": "OK"}
+        ],
+        "record_actions": [],
+        "toolbar_actions": []
+      },
+      "zones": [
+        {
+          "key": "detail_zone",
+          "blocks": [
+            {
+              "type": "field_group_block",
+              "data": {
+                "fields": ["name", "stage_id"]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "fields": {
+    "name": {"type": "char", "label": "项目名称", "required": true},
+    "stage_id": {"type": "many2one", "label": "项目阶段", "required": false}
+  },
+  "field_policies": {
+    "name": {"visible_profiles": ["create", "edit", "readonly"], "required_profiles": ["create", "edit"]},
+    "stage_id": {"visible_profiles": ["edit", "readonly"], "readonly_profiles": ["readonly"]}
+  },
+  "action_policies": {
+    "submit": {"visible": true, "enabled": true}
+  },
+  "onchange_fields": ["name", "stage_id"],
+  "values": {
+    "name": "示例项目",
+    "stage_id": 1
+  },
+  "relationData": {
+    "task_ids": [
+      {"id": 10, "name": "任务一"}
+    ]
+  },
+  "options": {
+    "stage_id": [
+      {"value": 1, "label": "草稿"}
+    ]
+  }
+}

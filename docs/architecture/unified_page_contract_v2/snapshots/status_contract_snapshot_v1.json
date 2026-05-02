@@ -1,0 +1,61 @@
+{
+  "snapshotVersion": "v1",
+  "contractVersion": "2.1.0",
+  "expected": {
+    "globalStatus": {
+      "pageVisible": true,
+      "pageAuth": "edit",
+      "reasonCode": "OK"
+    },
+    "widgetStatus": {
+      "field.name": {
+        "visible": true,
+        "readonly": false,
+        "required": true,
+        "auth": "edit"
+      },
+      "field.project_code": {
+        "visible": true,
+        "readonly": true,
+        "required": false,
+        "auth": "read"
+      },
+      "field.secret_note": {
+        "visible": false,
+        "readonly": false,
+        "required": false,
+        "auth": "none",
+        "reasonCode": "FIELD_SCOPE_HIDDEN"
+      },
+      "field.stage_id": {
+        "visible": true,
+        "readonly": false,
+        "required": true,
+        "auth": "edit"
+      }
+    },
+    "buttonStatus": {
+      "btn.save": {
+        "visible": true,
+        "disabled": false
+      },
+      "btn.approve": {
+        "visible": true,
+        "disabled": true,
+        "reasonCode": "MISSING_APPROVER_ROLE"
+      }
+    },
+    "containerStatus": {
+      "main.basic": {
+        "visible": true,
+        "disabled": false
+      }
+    },
+    "selectorStatus": {
+      "finance.*": {
+        "readonly": true,
+        "reasonCode": "ROLE_READONLY"
+      }
+    }
+  }
+}

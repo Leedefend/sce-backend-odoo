@@ -1,0 +1,181 @@
+{
+  "pageInfo": {
+    "pageId": "project.form",
+    "sceneKey": "project.intake",
+    "pageName": "Project Form",
+    "model": "project.project",
+    "viewType": "form",
+    "layoutType": "form",
+    "renderMode": "governed",
+    "contractVersion": "2.1.0",
+    "clientType": "web_pc"
+  },
+  "layoutContract": {
+    "pageId": "project.form",
+    "layoutType": "form",
+    "adaptMode": "pc",
+    "containerTree": [
+      {
+        "containerId": "main.basic",
+        "containerType": "group",
+        "title": "Basic",
+        "span": 12,
+        "styleToken": "defaultGroup",
+        "children": [],
+        "widgetList": [
+          {
+            "widgetId": "field.name",
+            "widgetType": "input",
+            "fieldCode": "name",
+            "label": "Name",
+            "span": 6,
+            "componentKey": "sc.input.text",
+            "capabilities": [
+              "clearable"
+            ],
+            "componentConfig": {}
+          },
+          {
+            "widgetId": "field.stage_id",
+            "widgetType": "select",
+            "fieldCode": "stage_id",
+            "label": "Stage",
+            "span": 6,
+            "componentKey": "sc.select.remote",
+            "capabilities": [
+              "searchable"
+            ],
+            "componentConfig": {
+              "dictKey": "project_stage"
+            }
+          }
+        ]
+      }
+    ],
+    "layoutHints": {
+      "columns": 12
+    },
+    "componentRegistry": {
+      "sc.input.text": {
+        "version": "1.0",
+        "adapter": {
+          "web_pc": "ElInput",
+          "wx_mini": "WxInput",
+          "harmony_h5": "H5Input"
+        }
+      },
+      "sc.select.remote": {
+        "version": "1.0",
+        "adapter": {
+          "web_pc": "ElSelect",
+          "wx_mini": "WxPicker",
+          "harmony_h5": "H5Select"
+        }
+      }
+    }
+  },
+  "statusContract": {
+    "globalStatus": {
+      "pageVisible": true,
+      "pageAuth": "edit"
+    },
+    "containerStatus": [
+      {
+        "containerId": "main.basic",
+        "visible": true,
+        "disabled": false
+      }
+    ],
+    "widgetStatus": [
+      {
+        "widgetId": "field.name",
+        "visible": true,
+        "readonly": false,
+        "required": true,
+        "disabled": false,
+        "auth": "edit"
+      },
+      {
+        "widgetId": "field.stage_id",
+        "visible": true,
+        "readonly": false,
+        "required": true,
+        "disabled": false,
+        "auth": "edit"
+      }
+    ],
+    "buttonStatus": [
+      {
+        "btnId": "btn.save",
+        "visible": true,
+        "disabled": false
+      }
+    ],
+    "selectorStatus": []
+  },
+  "actionContract": {
+    "actionRuleList": [
+      {
+        "actionId": "project.name.change",
+        "triggerType": "change",
+        "sourceWidgetId": "field.name",
+        "targetIds": [
+          "field.display_name"
+        ],
+        "dispatchMode": "serverDebounced",
+        "targetScope": "page",
+        "refreshMode": "partial",
+        "submitPolicy": {
+          "debounceMs": 300
+        },
+        "tracePolicy": {
+          "required": true
+        }
+      }
+    ],
+    "dependencyGraph": {
+      "field.name": [
+        "field.display_name"
+      ],
+      "field.stage_id": [
+        "btn.save"
+      ]
+    }
+  },
+  "dataContract": {
+    "mainData": {
+      "name": "Example Project",
+      "stage_id": 1
+    },
+    "tableRows": {},
+    "relationRows": {},
+    "dictData": {
+      "project_stage": [
+        {
+          "value": 1,
+          "label": "Draft"
+        }
+      ]
+    },
+    "pagination": {},
+    "dataSource": {},
+    "dataMeta": {}
+  },
+  "runtimeContract": {
+    "patchStrategy": "incremental",
+    "cachePolicy": "etag",
+    "optimistic": false,
+    "lazyContainer": [],
+    "virtualization": {},
+    "retryPolicy": {
+      "maxRetries": 1
+    }
+  },
+  "meta": {
+    "etag": "upc-v2-form-project-001",
+    "snapshotId": "snapshot.project.form.001",
+    "traceId": "trace.project.form.001",
+    "requestId": "request.project.form.001",
+    "compat": {}
+  }
+}
