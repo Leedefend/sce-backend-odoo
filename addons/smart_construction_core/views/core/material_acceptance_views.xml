@@ -7,6 +7,13 @@
         <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
+    <record id="action_sc_material_inbound" model="ir.actions.act_window">
+        <field name="name">入库单</field>
+        <field name="res_model">sc.material.inbound</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+    </record>
+
     <record id="view_sc_material_acceptance_tree" model="ir.ui.view">
         <field name="name">sc.material.acceptance.tree</field>
         <field name="model">sc.material.acceptance</field>
@@ -16,8 +23,6 @@
                 <field name="project_id"/>
                 <field name="acceptance_date"/>
                 <field name="supplier_id"/>
-                <field name="warehouse_id"/>
-                <field name="dest_location_id"/>
                 <field name="inspector_id"/>
                 <field name="state"/>
             </tree>
@@ -47,8 +52,6 @@
                         </group>
                         <group>
                             <field name="purchase_order_id"/>
-                            <field name="warehouse_id"/>
-                            <field name="dest_location_id"/>
                             <field name="inspector_id"/>
                         </group>
                     </group>
@@ -100,13 +103,111 @@
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="supplier_id"/>
-                <field name="warehouse_id"/>
                 <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="待验收" name="submitted" domain="[('state', '=', 'submitted')]"/>
                 <filter string="已通过" name="accepted" domain="[('state', '=', 'accepted')]"/>
                 <filter string="未通过" name="rejected" domain="[('state', '=', 'rejected')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 <filter string="按供应商" name="group_supplier" context="{'group_by': 'supplier_id'}"/>
+                <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_material_inbound_tree" model="ir.ui.view">
+        <field name="name">sc.material.inbound.tree</field>
+        <field name="model">sc.material.inbound</field>
+        <field name="arch" type="xml">
+            <tree string="入库单" default_order="inbound_date desc">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="inbound_date"/>
+                <field name="acceptance_id"/>
+                <field name="supplier_id"/>
+                <field name="warehouse_id"/>
+                <field name="dest_location_id"/>
+                <field name="keeper_id"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_material_inbound_form" model="ir.ui.view">
+        <field name="name">sc.material.inbound.form</field>
+        <field name="model">sc.material.inbound</field>
+        <field name="arch" type="xml">
+            <form string="入库单">
+                <header>
+                    <button name="action_submit" string="提交" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_receive" string="确认入库" type="object" class="btn-primary" invisible="state != 'submitted'"/>
+                    <button name="action_reset_draft" string="退回草稿" type="object" invisible="state != 'submitted'"/>
+                    <button name="action_cancel" string="取消" type="object" invisible="state in ('received', 'cancel')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,received"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="project_id"/>
+                            <field name="inbound_date"/>
+                            <field name="acceptance_id"/>
+                            <button name="action_load_acceptance_lines" string="带入验收明细" type="object" class="btn-secondary"/>
+                        </group>
+                        <group>
+                            <field name="supplier_id"/>
+                            <field name="warehouse_id"/>
+                            <field name="dest_location_id"/>
+                            <field name="keeper_id"/>
+                            <field name="stock_picking_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="入库明细">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="acceptance_line_id"/>
+                                    <field name="product_id"/>
+                                    <field name="material_catalog_id"/>
+                                    <field name="material_spec"/>
+                                    <field name="product_uom_id"/>
+                                    <field name="qty"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="入库说明">
+                            <field name="note" nolabel="1"/>
+                        </page>
+                        <page string="来源追溯">
+                            <group>
+                                <field name="legacy_fact_model"/>
+                                <field name="legacy_fact_id"/>
+                                <field name="legacy_fact_type"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_material_inbound_search" model="ir.ui.view">
+        <field name="name">sc.material.inbound.search</field>
+        <field name="model">sc.material.inbound</field>
+        <field name="arch" type="xml">
+            <search string="入库单">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="acceptance_id"/>
+                <field name="supplier_id"/>
+                <field name="warehouse_id"/>
+                <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="待入库" name="submitted" domain="[('state', '=', 'submitted')]"/>
+                <filter string="已入库" name="received" domain="[('state', '=', 'received')]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按仓库" name="group_warehouse" context="{'group_by': 'warehouse_id'}"/>
                 <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
             </search>
         </field>

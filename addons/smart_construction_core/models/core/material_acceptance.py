@@ -117,3 +117,143 @@ class ScMaterialAcceptanceLine(models.Model):
                 raise ValidationError(_("材料验收数量不能为负数。"))
             if record.accepted_qty + record.rejected_qty > record.received_qty:
                 raise ValidationError(_("合格数量与不合格数量之和不能大于到场数量。"))
+
+
+class ScMaterialInbound(models.Model):
+    _name = "sc.material.inbound"
+    _description = "材料入库单"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _order = "inbound_date desc, id desc"
+
+    name = fields.Char(string="入库单号", required=True, default="新建", tracking=True)
+    project_id = fields.Many2one("project.project", string="项目", required=True, index=True, tracking=True)
+    inbound_date = fields.Date(string="入库日期", default=fields.Date.context_today, index=True, tracking=True)
+    acceptance_id = fields.Many2one(
+        "sc.material.acceptance",
+        string="来源验收单",
+        domain="[('state', '=', 'accepted')]",
+        index=True,
+    )
+    supplier_id = fields.Many2one("res.partner", string="供应商", index=True)
+    warehouse_id = fields.Many2one("stock.warehouse", string="入库仓库", required=True, index=True)
+    dest_location_id = fields.Many2one("stock.location", string="入库库位", required=True, index=True)
+    keeper_id = fields.Many2one("res.users", string="仓管员", default=lambda self: self.env.user, index=True)
+    stock_picking_id = fields.Many2one("stock.picking", string="库存入库单", readonly=True, copy=False, index=True)
+    state = fields.Selection(
+        [
+            ("draft", "草稿"),
+            ("submitted", "已提交"),
+            ("received", "已入库"),
+            ("cancel", "已取消"),
+        ],
+        string="状态",
+        default="draft",
+        index=True,
+        tracking=True,
+    )
+    line_ids = fields.One2many("sc.material.inbound.line", "inbound_id", string="入库明细")
+    note = fields.Text(string="入库说明")
+    legacy_fact_model = fields.Char(string="来源通用模型", index=True)
+    legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
+    legacy_fact_type = fields.Char(string="来源业务类型", index=True)
+
+    _sql_constraints = [
+        (
+            "legacy_material_inbound_unique",
+            "unique(legacy_fact_model, legacy_fact_id)",
+            "来源通用材料入库记录已迁移为入库单。",
+        ),
+    ]
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        seq = self.env["ir.sequence"]
+        for vals in vals_list:
+            if vals.get("name", "新建") == "新建":
+                vals["name"] = seq.next_by_code("sc.material.inbound") or _("材料入库单")
+        return super().create(vals_list)
+
+    @api.onchange("acceptance_id")
+    def _onchange_acceptance_id(self):
+        for record in self:
+            acceptance = record.acceptance_id
+            if not acceptance:
+                continue
+            record.project_id = acceptance.project_id
+            record.supplier_id = acceptance.supplier_id
+            record.line_ids = [(5, 0, 0)] + [
+                (
+                    0,
+                    0,
+                    {
+                        "acceptance_line_id": line.id,
+                        "product_id": line.product_id.id,
+                        "material_catalog_id": line.material_catalog_id.id,
+                        "material_spec": line.material_spec,
+                        "product_uom_id": line.product_uom_id.id,
+                        "qty": line.accepted_qty or line.received_qty,
+                    },
+                )
+                for line in acceptance.line_ids
+                if line.result in ("accepted", "partial") and (line.accepted_qty or line.received_qty)
+            ]
+
+    def action_load_acceptance_lines(self):
+        for record in self:
+            record._onchange_acceptance_id()
+        return True
+
+    def action_submit(self):
+        for record in self:
+            if not record.line_ids:
+                raise ValidationError(_("提交入库前必须维护入库明细。"))
+            record.line_ids._check_qty()
+        self.write({"state": "submitted"})
+        return True
+
+    def action_receive(self):
+        for record in self:
+            record.line_ids._check_qty()
+            if record.acceptance_id and record.acceptance_id.state != "accepted":
+                raise ValidationError(_("只有验收通过的材料才能办理入库。"))
+        self.write({"state": "received"})
+        return True
+
+    def action_cancel(self):
+        self.write({"state": "cancel"})
+        return True
+
+    def action_reset_draft(self):
+        self.write({"state": "draft"})
+        return True
+
+
+class ScMaterialInboundLine(models.Model):
+    _name = "sc.material.inbound.line"
+    _description = "材料入库明细"
+    _order = "inbound_id, sequence, id"
+
+    inbound_id = fields.Many2one("sc.material.inbound", string="入库单", required=True, ondelete="cascade", index=True)
+    sequence = fields.Integer(default=10)
+    project_id = fields.Many2one("project.project", string="项目", related="inbound_id.project_id", store=True, index=True)
+    acceptance_line_id = fields.Many2one("sc.material.acceptance.line", string="来源验收明细", index=True)
+    product_id = fields.Many2one("product.product", string="材料", required=True, index=True)
+    material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
+    material_spec = fields.Char(string="规格型号")
+    product_uom_id = fields.Many2one("uom.uom", string="单位")
+    qty = fields.Float(string="入库数量", required=True)
+    note = fields.Char(string="备注")
+
+    @api.onchange("product_id")
+    def _onchange_product_id(self):
+        for record in self:
+            if record.product_id:
+                record.product_uom_id = record.product_id.uom_id
+                if not record.material_spec:
+                    record.material_spec = record.product_id.default_code or ""
+
+    @api.constrains("qty")
+    def _check_qty(self):
+        for record in self:
+            if record.qty <= 0:
+                raise ValidationError(_("入库数量必须大于0。"))
