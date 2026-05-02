@@ -1,0 +1,296 @@
+<template>
+  <section class="scene-contract-block-grid">
+    <StatusPanel v-if="status === 'loading'" title="正在加载场景..." variant="info" />
+    <StatusPanel v-else-if="status === 'error'" title="场景加载失败" :message="errorMessage" variant="error" />
+    <PageRenderer
+      v-else
+      :contract="pageContract"
+      :datasets="datasets"
+      @action="handleAction"
+    />
+  </section>
+</template>
+
+<script setup lang="ts">
+import { computed, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import type { NavNode } from '@sc/schema';
+import { intentRequest } from '../api/intents';
+import StatusPanel from '../components/StatusPanel.vue';
+import PageRenderer from '../components/page/PageRenderer.vue';
+import { useSessionStore } from '../stores/session';
+import type { PageBlockActionEvent, PageOrchestrationBlock, PageOrchestrationContract } from '../app/pageOrchestration';
+
+type SceneBlock = Record<string, unknown> & {
+  key?: string;
+  type?: string;
+  title?: string;
+  subtitle?: string;
+  value?: unknown;
+  items?: Array<Record<string, unknown>>;
+  target?: Record<string, unknown>;
+};
+
+type SceneContract = {
+  schema_version?: string;
+  scene?: Record<string, unknown>;
+  page?: {
+    layout?: string;
+    blocks?: SceneBlock[];
+  };
+};
+
+const props = defineProps<{
+  intent: string;
+  sceneKey: string;
+}>();
+
+const route = useRoute();
+const router = useRouter();
+const session = useSessionStore();
+const status = ref<'loading' | 'error' | 'idle'>('loading');
+const errorMessage = ref('');
+const rawContract = ref<SceneContract | null>(null);
+
+function asText(value: unknown) {
+  return String(value || '').trim();
+}
+
+function normalizeBlockType(type: unknown) {
+  const raw = asText(type).toLowerCase();
+  if (raw === 'metric_card') return 'metric';
+  if (raw === 'shortcut_grid') return 'entry_grid';
+  if (raw === 'warning_list') return 'alert_panel';
+  if (raw === 'native_view_ref') return 'record_summary';
+  return raw || 'record_summary';
+}
+
+function normalizeTone(value: unknown) {
+  const raw = asText(value).toLowerCase();
+  if (['success', 'warning', 'danger', 'info', 'neutral'].includes(raw)) return raw;
+  return 'neutral';
+}
+
+function targetActionKey(blockKey: string) {
+  return `open_${blockKey}`;
+}
+
+function normalizeDataset(block: SceneBlock) {
+  const target = block.target && typeof block.target === 'object' ? block.target : {};
+  const actionKey = targetActionKey(asText(block.key));
+  if (block.type === 'metric_card') {
+    return [{
+      key: asText(block.key),
+      label: asText(block.title),
+      value: block.value ?? '--',
+      hint: asText(block.subtitle),
+      tone: normalizeTone(block.tone),
+      action_key: actionKey,
+      target,
+    }];
+  }
+  if (block.type === 'shortcut_grid') {
+    return (Array.isArray(block.items) ? block.items : []).map((item, index) => ({
+      id: asText(item.key) || `entry-${index + 1}`,
+      title: asText(item.label || item.title) || `入口 ${index + 1}`,
+      hint: asText(item.subtitle || item.hint),
+      action_key: targetActionKey(`${asText(block.key)}_${asText(item.key) || index + 1}`),
+      target: item.target && typeof item.target === 'object' ? item.target : {},
+    }));
+  }
+  if (block.type === 'todo_list' || block.type === 'warning_list') {
+    return (Array.isArray(block.items) ? block.items : []).map((item, index) => ({
+      id: asText(item.key) || `${block.type}-${index + 1}`,
+      title: asText(item.title) || asText(item.label) || `事项 ${index + 1}`,
+      description: asText(item.description || item.subtitle),
+      count: Number(item.count || 0),
+      tone: block.type === 'warning_list' ? 'warning' : 'info',
+      action_label: '打开',
+      action_key: targetActionKey(`${asText(block.key)}_${asText(item.key) || index + 1}`),
+      target: item.target && typeof item.target === 'object' ? item.target : {},
+    }));
+  }
+  if (block.type === 'native_view_ref') {
+    return {
+      title: asText(block.title),
+      summary: asText(block.summary),
+      model: asText(block.model),
+      count: Number(block.count || 0),
+      target,
+    };
+  }
+  return block;
+}
+
+function normalizeBlock(block: SceneBlock, index: number): PageOrchestrationBlock {
+  const key = asText(block.key) || `block_${index + 1}`;
+  return {
+    key,
+    block_type: normalizeBlockType(block.type),
+    title: asText(block.title),
+    subtitle: asText(block.subtitle),
+    priority: 100 - index,
+    tone: normalizeTone(block.tone),
+    data_source: `ds_${key}`,
+    actions: block.type === 'native_view_ref' ? [{ key: targetActionKey(key), label: '打开明细' }] : [],
+  };
+}
+
+const blocks = computed(() => {
+  const page = rawContract.value?.page;
+  return Array.isArray(page?.blocks) ? page.blocks : [];
+});
+
+const pageContract = computed<PageOrchestrationContract>(() => ({
+  schema_version: 'v1',
+  contract_version: 'page_orchestration_v1',
+  scene_key: props.sceneKey,
+  page: {
+    key: props.sceneKey,
+    title: asText(rawContract.value?.scene?.title) || props.sceneKey,
+    subtitle: asText(rawContract.value?.scene?.subtitle),
+    page_type: 'dashboard',
+    layout_mode: 'block_grid',
+  },
+  zones: [{
+    key: 'main',
+    title: '',
+    display_mode: 'grid',
+    zone_type: 'primary',
+    priority: 100,
+    blocks: blocks.value.map(normalizeBlock),
+  }],
+}));
+
+const datasets = computed<Record<string, unknown>>(() => {
+  const out: Record<string, unknown> = {};
+  blocks.value.forEach((block, index) => {
+    const key = asText(block.key) || `block_${index + 1}`;
+    out[`ds_${key}`] = normalizeDataset(block);
+  });
+  return out;
+});
+
+function findActionNodeByXmlid(nodes: NavNode[], xmlid: string): NavNode | null {
+  const wanted = asText(xmlid);
+  if (!wanted) return null;
+  for (const node of nodes) {
+    const nodeXmlid = asText(node.meta?.action_xmlid);
+    if (nodeXmlid === wanted && node.meta?.action_id) return node;
+    if (node.children?.length) {
+      const found = findActionNodeByXmlid(node.children, wanted);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function findMenuNodeByXmlid(nodes: NavNode[], xmlid: string): NavNode | null {
+  const wanted = asText(xmlid);
+  if (!wanted) return null;
+  for (const node of nodes) {
+    const nodeXmlid = asText((node as NavNode & { xmlid?: string }).xmlid || node.meta?.menu_xmlid);
+    if (nodeXmlid === wanted) return node;
+    if (node.children?.length) {
+      const found = findMenuNodeByXmlid(node.children, wanted);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function findTargetByActionKey(actionKey: string) {
+  for (const block of blocks.value) {
+    const blockKey = asText(block.key);
+    if (targetActionKey(blockKey) === actionKey) {
+      return block.target && typeof block.target === 'object' ? block.target : {};
+    }
+    const items = Array.isArray(block.items) ? block.items : [];
+    for (let index = 0; index < items.length; index += 1) {
+      const item = items[index] || {};
+      const itemActionKey = targetActionKey(`${blockKey}_${asText(item.key) || index + 1}`);
+      if (itemActionKey === actionKey) {
+        return item.target && typeof item.target === 'object' ? item.target : {};
+      }
+    }
+  }
+  return {};
+}
+
+async function openTarget(target: Record<string, unknown>) {
+  const routePath = asText(target.route);
+  if (routePath) {
+    await router.push({ path: routePath, query: route.query });
+    return true;
+  }
+  const actionXmlid = asText(target.action_xmlid);
+  const actionNode = findActionNodeByXmlid(session.menuTree, actionXmlid);
+  if (actionNode?.meta?.action_id) {
+    await router.push({
+      path: `/a/${actionNode.meta.action_id}`,
+      query: {
+        action_id: String(actionNode.meta.action_id),
+        menu_id: actionNode.menu_id ? String(actionNode.menu_id) : undefined,
+      },
+    });
+    return true;
+  }
+  const menuXmlid = asText(target.menu_xmlid);
+  const menuNode = findMenuNodeByXmlid(session.menuTree, menuXmlid);
+  if (menuNode?.meta?.action_id) {
+    await router.push({
+      path: `/a/${menuNode.meta.action_id}`,
+      query: {
+        action_id: String(menuNode.meta.action_id),
+        menu_id: menuNode.menu_id ? String(menuNode.menu_id) : undefined,
+      },
+    });
+    return true;
+  }
+  if (menuNode?.menu_id) {
+    await router.push({ path: `/m/${menuNode.menu_id}` });
+    return true;
+  }
+  return false;
+}
+
+async function handleAction(event: PageBlockActionEvent) {
+  const target = event.target && Object.keys(event.target).length ? event.target : findTargetByActionKey(event.actionKey);
+  await openTarget((target || {}) as Record<string, unknown>);
+}
+
+async function loadContract() {
+  try {
+    status.value = 'loading';
+    errorMessage.value = '';
+    const data = await intentRequest<SceneContract>({
+      intent: props.intent,
+      params: {},
+      context: {
+        scene_key: props.sceneKey,
+      },
+    });
+    rawContract.value = (data && typeof data === 'object') ? data : {};
+    status.value = 'idle';
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : 'unknown error';
+    status.value = 'error';
+  }
+}
+
+watch(
+  () => [props.intent, props.sceneKey, route.fullPath],
+  () => {
+    void loadContract();
+  },
+  { immediate: true },
+);
+</script>
+
+<style scoped>
+.scene-contract-block-grid {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+</style>
