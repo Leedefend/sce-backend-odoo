@@ -3261,7 +3261,8 @@ function isNativeFieldVisible(name: string, nodeRaw?: NativeFormLayoutNode) {
     },
     policyContext.value,
   );
-  return Boolean(resolved.visible);
+  if (resolved.visible) return true;
+  return renderProfile.value === 'create' && semantic.surface_role === 'advanced';
 }
 
 function nativeLayoutNodeToFieldNode(nodeRaw: NativeFormLayoutNode, index: number): LayoutNode | null {
@@ -3281,7 +3282,7 @@ function nativeLayoutNodeToFieldNode(nodeRaw: NativeFormLayoutNode, index: numbe
     },
     policyContext.value,
   );
-  if (!resolved.visible) return null;
+  if (!resolved.visible && !(renderProfile.value === 'create' && fieldSemanticMeta(name).surface_role === 'advanced')) return null;
   const state = runtimeState(name);
   const nativeReadonly = isStaticTruthyModifier(nativeModifierValue(nodeRaw, 'readonly'));
   const nativeRequired = isStaticTruthyModifier(nativeModifierValue(nodeRaw, 'required'));

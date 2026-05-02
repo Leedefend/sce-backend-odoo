@@ -479,6 +479,8 @@ function closeMore(node: NativeFormLayoutNode) {
 .native-tab-panel {
   display: grid;
   gap: 14px;
+  min-height: 260px;
+  align-content: start;
 }
 
 .native-actions {

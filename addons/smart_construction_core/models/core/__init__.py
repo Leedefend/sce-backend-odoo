@@ -16,6 +16,10 @@ from . import settlement
 from . import funding_baseline
 from . import fund_account
 from . import business_menu_facts
+from . import plan_management
+from . import quality_management
+from . import safety_management
+from . import contract_event
 from . import expense_claim
 from . import treasury_reconciliation
 from . import receipt_income

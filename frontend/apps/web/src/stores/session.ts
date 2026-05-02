@@ -701,7 +701,10 @@ export const useSessionStore = defineStore('session', {
         try {
           const parsed = JSON.parse(cached) as Partial<SessionState>;
           this.user = parsed.user ?? null;
-          this.menuTree = parsed.menuTree ?? [];
+          // Navigation is a live backend contract. Do not hydrate it from
+          // localStorage, otherwise menu/model changes can look stale until a
+          // manual cache clear.
+          this.menuTree = [];
           this.menuExpandedKeys = parsed.menuExpandedKeys ?? [];
           this.currentAction = parsed.currentAction ?? null;
           this.capabilities = parsed.capabilities ?? [];

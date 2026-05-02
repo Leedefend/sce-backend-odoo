@@ -2,7 +2,7 @@
 # pyright: reportUnusedExpression=false
 {
     'name': 'Smart Construction Core',
-    'version': '17.0.0.4',
+    'version': '17.0.0.6',
     'summary': 'Core module for construction enterprise management (Architecture 2.0)',
     'author': 'Leedefend',
     'depends': [
@@ -125,6 +125,10 @@
         'views/core/funding_baseline_views.xml',
         'views/core/fund_account_views.xml',
         'views/core/business_menu_fact_views.xml',
+        'views/core/plan_management_views.xml',
+        'views/core/quality_management_views.xml',
+        'views/core/safety_management_views.xml',
+        'views/core/contract_event_views.xml',
         'views/core/general_contract_views.xml',
         'views/core/payment_request_views.xml',
         'views/core/project_overview_views.xml',
