@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-02T11:52:18+08:00
+- blocker_key: `unified_page_contract_lite_frontend_pilot_implementation_batch_45`
+- layer_target: `Frontend Contract Consumer / Lite v2.0 Pilot`
+- module: `frontend/apps/web/src/app/contracts + frontend/apps/web/src/app/runtime + frontend/apps/web/src/api + frontend/apps/web/src/app/resolvers + scripts/verify + Makefile`
+- reason: `Lite v2.0 契约已冻结；按用户要求在独立分支实现前端匹配，但必须保持默认关闭、单模型单视图、load_contract opt-in preview、legacy fallback。`
+- completed_step: `从治理提交 7ee6eb8e 切出 codex/frontend-lite-contract-match；新增 unifiedPageContractLite.ts 定义并校验 Lite v2.0 shape；新增 unifiedPageContractLitePilot.ts 提供 VITE_LITE_CONTRACT_PILOT=1 受控开关、project.project:tree allowlist 与 Lite->ActionView adapter；api/contract.ts 新增 loadModelLitePreviewContract，通过 load_contract opt-in preview 提取 top-level lite_preview；actionResolver.ts 在 seedMeta 命中 pilot 时优先尝试 Lite，缺失或无效时回退 loadActionContract(ui.contract)；frontend_runtime_negative_guard 调整为仅允许 pilot 文件出现 Lite token；新增 frontend_pilot_implementation_batch_45.md 与 frontend_pilot_implementation_guard。`
+- verification: `pnpm --dir frontend/apps/web run typecheck PASS；make verify.unified_page_contract.lite.frontend_pilot_implementation PASS；make verify.unified_page_contract.lite PASS；make verify.frontend.quick.gate PASS（vite chunk size warning only）；DB_NAME=sc_demo E2E_LOGIN=cost1 E2E_PASSWORD=123456 make verify.unified_page_contract.lite.load_contract_live_scope.container PASS；git diff --check PASS。`
+- active_commit: `7ee6eb8e`
+- next_step: `提交 codex/frontend-lite-contract-match；后续若需要真实浏览器验收，再新增 VITE_LITE_CONTRACT_PILOT=1 的单页 browser smoke，不扩大到 ui.contract/login/system.init。`
+
 ### 2026-05-02T10:06:44+08:00
 - blocker_key: `unified_page_contract_lite_frontend_consumption_freeze_v2_0_batch_44`
 - layer_target: `Contract Governance / Lite v2.0 Freeze`

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Guard that frontend runtime does not consume Lite preview yet."""
+"""Guard that frontend runtime only consumes Lite preview through the pilot path."""
 
 from __future__ import annotations
 
@@ -36,6 +36,11 @@ FORBIDDEN_TOKENS = (
     "UnifiedPageContractLite",
     "unified_page_contract_lite",
 )
+ALLOWED_PILOT_FILES = {
+    "frontend/apps/web/src/api/contract.ts",
+    "frontend/apps/web/src/app/contracts/unifiedPageContractLite.ts",
+    "frontend/apps/web/src/app/runtime/unifiedPageContractLitePilot.ts",
+}
 
 
 def iter_frontend_files():
@@ -56,9 +61,12 @@ def find_hits() -> list[dict[str, Any]]:
             text = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             continue
+        relative = path.relative_to(ROOT).as_posix()
+        if relative in ALLOWED_PILOT_FILES:
+            continue
         matched = sorted({token for token in FORBIDDEN_TOKENS if token in text})
         if matched:
-            hits.append({"path": path.relative_to(ROOT).as_posix(), "tokens": matched})
+            hits.append({"path": relative, "tokens": matched})
     return sorted(hits, key=lambda item: item["path"])
 
 
@@ -75,9 +83,10 @@ def main() -> int:
     hits = find_hits()
     report = {
         "ok": not hits,
-        "policy": "frontend runtime must not consume Lite preview before explicit frontend integration approval",
+        "policy": "frontend runtime may consume Lite preview only through the default-off project.project:tree pilot adapter",
         "frontend_roots": [root.relative_to(ROOT).as_posix() for root in FRONTEND_ROOTS],
         "forbidden_tokens": list(FORBIDDEN_TOKENS),
+        "allowed_pilot_files": sorted(ALLOWED_PILOT_FILES),
         "hit_count": len(hits),
         "hits": hits,
     }
@@ -91,6 +100,7 @@ def main() -> int:
         return 1
 
     print("Unified Semantic Page Contract Lite frontend runtime negative guard passed")
+    print("- policy: default-off pilot files only")
     print("- report: %s" % args.report)
     return 0
 
