@@ -13,3 +13,6 @@ from . import my_work_aggregate_service
 from . import project_dashboard_builders
 from . import project_dashboard_service
 from . import project_creation_service
+from . import scene_block_schema
+from . import workspace_contract_builder
+from . import dashboard_contract_builder

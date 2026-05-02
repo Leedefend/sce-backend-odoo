@@ -806,6 +806,12 @@ def get_intent_handler_contributions():
         from odoo.addons.smart_construction_core.handlers.app_open import (
             AppOpenHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.workspace_home_enter import (
+            WorkspaceHomeEnterHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.dashboard_company_enter import (
+            DashboardCompanyEnterHandler,
+        )
     except Exception as e:
         _logger.warning("[get_intent_handler_contributions] import handler failed: %s", e)
         return []
@@ -853,6 +859,8 @@ def get_intent_handler_contributions():
         ("app.catalog", AppCatalogHandler),
         ("app.nav", AppNavHandler),
         ("app.open", AppOpenHandler),
+        ("workspace.home.enter", WorkspaceHomeEnterHandler),
+        ("dashboard.company.enter", DashboardCompanyEnterHandler),
     ]
     return [
         {
