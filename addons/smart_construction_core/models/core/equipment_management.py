@@ -181,3 +181,72 @@ class ScEquipmentRequestLine(models.Model):
                 raise ValidationError(_("申请台数必须大于0。"))
             if record.planned_hours < 0:
                 raise ValidationError(_("预计台时不能为负数。"))
+
+
+class ScEquipmentUsage(models.Model):
+    _name = "sc.equipment.usage"
+    _description = "设备使用登记"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _order = "usage_date desc, id desc"
+
+    name = fields.Char(string="登记单号", required=True, default="新建", tracking=True)
+    project_id = fields.Many2one("project.project", string="项目", required=True, index=True, tracking=True)
+    request_id = fields.Many2one("sc.equipment.request", string="来源设备申请", index=True)
+    usage_date = fields.Date(string="使用日期", required=True, default=fields.Date.context_today, index=True, tracking=True)
+    equipment_name = fields.Char(string="设备名称", required=True, index=True, tracking=True)
+    equipment_code = fields.Char(string="设备编号", index=True)
+    usage_location = fields.Char(string="使用地点", required=True, index=True)
+    operator_name = fields.Char(string="操作人员", required=True, index=True)
+    usage_qty = fields.Float(string="使用台数", required=True, default=1)
+    usage_hours = fields.Float(string="使用台时", required=True)
+    supplier_id = fields.Many2one("res.partner", string="供应单位", index=True)
+    recorder_id = fields.Many2one("res.users", string="记录人", default=lambda self: self.env.user, index=True)
+    state = fields.Selection(
+        [("draft", "草稿"), ("submitted", "已提交"), ("confirmed", "已确认"), ("cancel", "已取消")],
+        string="状态",
+        default="draft",
+        index=True,
+        tracking=True,
+    )
+    note = fields.Text(string="使用说明")
+    legacy_fact_model = fields.Char(string="来源通用模型", index=True)
+    legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
+    legacy_fact_type = fields.Char(string="来源业务类型", index=True)
+
+    _sql_constraints = [
+        ("legacy_equipment_usage_unique", "unique(legacy_fact_model, legacy_fact_id)", "来源通用设备使用登记已迁移为专业设备使用登记。"),
+    ]
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        seq = self.env["ir.sequence"]
+        for vals in vals_list:
+            if vals.get("name", "新建") == "新建":
+                vals["name"] = seq.next_by_code("sc.equipment.usage") or _("设备使用登记")
+        return super().create(vals_list)
+
+    def action_submit(self):
+        self._check_values()
+        self.write({"state": "submitted"})
+        return True
+
+    def action_confirm(self):
+        self._check_values()
+        self.write({"state": "confirmed"})
+        return True
+
+    def action_cancel(self):
+        self.write({"state": "cancel"})
+        return True
+
+    def action_reset_draft(self):
+        self.write({"state": "draft"})
+        return True
+
+    @api.constrains("usage_qty", "usage_hours")
+    def _check_values(self):
+        for record in self:
+            if record.usage_qty <= 0:
+                raise ValidationError(_("使用台数必须大于0。"))
+            if record.usage_hours <= 0:
+                raise ValidationError(_("使用台时必须大于0。"))

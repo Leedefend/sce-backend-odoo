@@ -264,6 +264,14 @@
         <field name="company_id" eval="False"/>
     </record>
 
+    <record id="seq_sc_equipment_usage" model="ir.sequence">
+        <field name="name">设备使用登记</field>
+        <field name="code">sc.equipment.usage</field>
+        <field name="prefix">EUS%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
     <record id="seq_sc_material_inbound" model="ir.sequence">
         <field name="name">材料入库单</field>
         <field name="code">sc.material.inbound</field>

@@ -14,6 +14,13 @@
         <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
+    <record id="action_sc_equipment_usage" model="ir.actions.act_window">
+        <field name="name">设备使用登记</field>
+        <field name="res_model">sc.equipment.usage</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+    </record>
+
     <record id="view_sc_equipment_plan_tree" model="ir.ui.view">
         <field name="name">sc.equipment.plan.tree</field>
         <field name="model">sc.equipment.plan</field>
@@ -209,6 +216,104 @@
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 <filter string="按来源计划" name="group_plan" context="{'group_by': 'plan_id'}"/>
                 <filter string="按申请人" name="group_requester" context="{'group_by': 'requester_id'}"/>
+                <filter string="按供应单位" name="group_supplier" context="{'group_by': 'supplier_id'}"/>
+                <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_equipment_usage_tree" model="ir.ui.view">
+        <field name="name">sc.equipment.usage.tree</field>
+        <field name="model">sc.equipment.usage</field>
+        <field name="arch" type="xml">
+            <tree string="设备使用登记" default_order="usage_date desc">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="request_id"/>
+                <field name="usage_date"/>
+                <field name="equipment_name"/>
+                <field name="equipment_code"/>
+                <field name="usage_location"/>
+                <field name="operator_name"/>
+                <field name="usage_qty"/>
+                <field name="usage_hours"/>
+                <field name="supplier_id"/>
+                <field name="recorder_id"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_equipment_usage_form" model="ir.ui.view">
+        <field name="name">sc.equipment.usage.form</field>
+        <field name="model">sc.equipment.usage</field>
+        <field name="arch" type="xml">
+            <form string="设备使用登记">
+                <header>
+                    <button name="action_submit" string="提交" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_confirm" string="确认使用" type="object" class="btn-primary" invisible="state != 'submitted'"/>
+                    <button name="action_reset_draft" string="退回草稿" type="object" invisible="state != 'submitted'"/>
+                    <button name="action_cancel" string="取消" type="object" invisible="state in ('confirmed', 'cancel')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,confirmed"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="project_id"/>
+                            <field name="request_id"/>
+                            <field name="usage_date"/>
+                            <field name="equipment_name"/>
+                            <field name="equipment_code"/>
+                        </group>
+                        <group>
+                            <field name="usage_location"/>
+                            <field name="operator_name"/>
+                            <field name="usage_qty"/>
+                            <field name="usage_hours"/>
+                            <field name="supplier_id"/>
+                            <field name="recorder_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="使用说明">
+                            <field name="note" nolabel="1"/>
+                        </page>
+                        <page string="来源追溯">
+                            <group>
+                                <field name="legacy_fact_model"/>
+                                <field name="legacy_fact_id"/>
+                                <field name="legacy_fact_type"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_equipment_usage_search" model="ir.ui.view">
+        <field name="name">sc.equipment.usage.search</field>
+        <field name="model">sc.equipment.usage</field>
+        <field name="arch" type="xml">
+            <search string="设备使用登记">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="request_id"/>
+                <field name="usage_date"/>
+                <field name="equipment_name"/>
+                <field name="equipment_code"/>
+                <field name="usage_location"/>
+                <field name="operator_name"/>
+                <field name="supplier_id"/>
+                <field name="recorder_id"/>
+                <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="已提交" name="submitted" domain="[('state', '=', 'submitted')]"/>
+                <filter string="已确认" name="confirmed" domain="[('state', '=', 'confirmed')]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按来源申请" name="group_request" context="{'group_by': 'request_id'}"/>
+                <filter string="按设备名称" name="group_equipment" context="{'group_by': 'equipment_name'}"/>
                 <filter string="按供应单位" name="group_supplier" context="{'group_by': 'supplier_id'}"/>
                 <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
             </search>
