@@ -11,6 +11,7 @@ from . import boq
 from . import material_plan
 from . import material_catalog
 from . import material_acceptance
+from . import labor_management
 from . import settlement_order
 from . import settlement_adjustment
 from . import settlement
