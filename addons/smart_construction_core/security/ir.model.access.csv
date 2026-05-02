@@ -245,6 +245,8 @@ access_purchase_order_line_business_initiator,purchase.order.line.business.initi
 access_material_plan_to_rfq_wizard,material.plan.to.rfq.wizard,model_material_plan_to_rfq_wizard,smart_construction_core.group_sc_cap_material_user,1,1,1,0
 access_sc_attendance_checkin_user,sc.attendance.checkin.user,model_sc_attendance_checkin,smart_construction_core.group_sc_internal_user,1,1,1,0
 access_sc_attendance_checkin_manager,sc.attendance.checkin.manager,model_sc_attendance_checkin,smart_construction_core.group_sc_super_admin,1,1,1,1
+access_sc_labor_usage_user,sc.labor.usage.user,model_sc_labor_usage,smart_construction_core.group_sc_internal_user,1,1,1,0
+access_sc_labor_usage_manager,sc.labor.usage.manager,model_sc_labor_usage,smart_construction_core.group_sc_super_admin,1,1,1,1
 access_sc_workflow_def_admin,sc.workflow.def.admin,model_sc_workflow_def,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
 access_sc_workflow_node_admin,sc.workflow.node.admin,model_sc_workflow_node,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
 access_sc_workflow_instance_admin,sc.workflow.instance.admin,model_sc_workflow_instance,smart_construction_core.group_sc_cap_config_admin,1,1,1,1

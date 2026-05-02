@@ -208,6 +208,14 @@
         <field name="company_id" eval="False"/>
     </record>
 
+    <record id="seq_sc_labor_usage" model="ir.sequence">
+        <field name="name">劳务用工</field>
+        <field name="code">sc.labor.usage</field>
+        <field name="prefix">LUS%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
     <record id="seq_sc_material_inbound" model="ir.sequence">
         <field name="name">材料入库单</field>
         <field name="code">sc.material.inbound</field>

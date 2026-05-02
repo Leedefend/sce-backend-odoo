@@ -247,6 +247,7 @@ Scope: 基于 `项目建设-产品功能清单（0301 ）.xlsx`，对当前 `sc.
 | WP5 映射与迁移 | 通用源模型到专业模型的映射、迁移 wizard | `docs/contract/*`、`wizard/*professionalization*` | 保证历史数据和菜单入口不断链 |
 | WP6 材料采购/验收/询比价/出入库/结算/价格 | `sc.material.purchase.request`、`sc.material.purchase.request.line`、`sc.material.acceptance`、`sc.material.acceptance.line`、`sc.material.rfq`、`sc.material.rfq.line`、`sc.material.inbound`、`sc.material.inbound.line`、`sc.material.outbound`、`sc.material.outbound.line`、`sc.material.settlement`、`sc.material.settlement.line`、`sc.material.price` | `models/core/material_acceptance.py`、`models/core/material_catalog.py`、`views/core/material_acceptance_views.xml`、`views/support/product_extend_views.xml` | 从 `sc.material.document(purchase_request/rfq/inbound/outbound/settlement)` 拆出采购申请、询比价、到场验收、库存入库、库存出库、材料结算专业动作；材料价格库独立于材料档案/产品库，现有“采购申请/询比价/入库单/出库单/材料结算/材料价格库”入口只承载对应动作 |
 | WP7 劳务考勤 | `sc.attendance.checkin` | `models/core/labor_management.py`、`views/core/labor_management_views.xml` | 从 `sc.labor.document(attendance_record)` 拆出考勤记录专业动作；现有“考勤记录”入口只承载班组、出勤人数、工时和作业内容，不再混入劳务计划、用工或结算 |
+| WP8 劳务用工 | `sc.labor.usage` | `models/core/labor_management.py`、`views/core/labor_management_views.xml` | 从 `sc.labor.document(labor_employment)` 拆出劳务用工专业动作；现有“劳务用工”入口只承载实际用工发生、班组、劳务单位、人数和工时，不再混入考勤或结算 |
 
 ## 6. 不再建议投入的方向
 
