@@ -548,7 +548,10 @@ export interface ActionContract {
     model?: string;
     view_type?: string;
     action_id?: number;
+    domain?: unknown[] | string;
+    domain_raw?: string;
     context?: Record<string, unknown> | null;
+    context_raw?: string;
     permissions?: {
       read?: boolean;
       write?: boolean;

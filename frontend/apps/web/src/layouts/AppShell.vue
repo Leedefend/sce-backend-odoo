@@ -73,16 +73,6 @@
           <button class="ghost mini" @click="openRoleLanding">进入工作台</button>
           <button class="ghost mini" @click="router.push('/my-work')">我的工作</button>
         </div>
-        <div v-if="roleMenus.length" class="role-menus">
-          <button
-            v-for="menu in roleMenus"
-            :key="`role-menu-${menu.id}`"
-            class="role-menu-item"
-            @click="openRoleMenu(menu.id)"
-          >
-            {{ normalizeDeliveryText(menu.label) }}
-          </button>
-        </div>
       </div>
 
       <div class="nav-shell">
@@ -899,27 +889,6 @@ function filterNodes(nodes: NavNode[], q: string): NavNode[] {
 }
 
 const filteredMenu = computed(() => filterNodes(menuNodes.value, query.value));
-const roleMenus = computed(() => {
-  const allow = new Set(roleSurface.value?.menu_xmlids || []);
-  if (!allow.size) return [];
-  const found: Array<{ id: number; label: string }> = [];
-  const seen = new Set<number>();
-  const walk = (nodes: NavNode[]) => {
-    for (const node of nodes) {
-      const xmlid = (node as NavNode & { xmlid?: string }).xmlid || node.meta?.menu_xmlid;
-      const id = Number(node.menu_id || node.id || 0);
-      if (xmlid && allow.has(xmlid) && id && !seen.has(id)) {
-        seen.add(id);
-        found.push({ id, label: node.title || node.name || node.label || `菜单 ${id}` });
-      }
-      if (node.children?.length) {
-        walk(node.children);
-      }
-    }
-  };
-  walk(menuTree.value);
-  return found.slice(0, 6);
-});
 
 function handleSelect(node: NavNode) {
   if (!node.menu_id && node.id) {
@@ -943,14 +912,6 @@ function handleSelect(node: NavNode) {
 
 function openRoleLanding() {
   router.push(roleLandingPath.value).catch(() => {});
-}
-
-function openRoleMenu(menuId: number) {
-  if (isRootContainerMenuId(menuId)) {
-    openRoleLanding();
-    return;
-  }
-  router.push(`/m/${menuId}`).catch(() => {});
 }
 
 async function refreshInit() {
@@ -1235,22 +1196,6 @@ async function logout() {
 .role-actions {
   display: flex;
   gap: 4px;
-}
-
-.role-menus {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.role-menu-item {
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  background: rgba(255, 255, 255, 0.84);
-  border-radius: 999px;
-  padding: 4px 8px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #334155;
 }
 
 .menu {

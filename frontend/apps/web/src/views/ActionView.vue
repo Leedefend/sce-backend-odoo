@@ -379,6 +379,8 @@
       :list-profile="listProfile"
       :ui-labels="toolbarUiLabels"
       :grouped-rows="groupedRows"
+      :can-create-record="canCreateRecord"
+      :create-label="toolbarUiLabel('create', '新建')"
       :on-open-group="handleOpenGroupedRows"
       :group-sample-limit="groupSampleLimit"
       :on-group-sample-limit-change="handleGroupSampleLimitChange"
@@ -399,6 +401,7 @@
       :on-row-click="handleRowClick"
       :on-page-change="handleListPageChange"
       :on-page-limit-change="handleListPageLimitChange"
+      :on-create="openCreateRecord"
       @column-visibility-change="handleListColumnVisibilityChange"
       @column-order-change="handleListColumnOrderChange"
       @column-widths-change="handleListColumnWidthsChange"
@@ -486,7 +489,7 @@
         <p class="empty-next-hint">{{ vm.content.advanced?.hint }}</p>
       </section>
     </section>
-    <section v-if="isSectionVisible('empty_next', { defaultEnabled: pageSectionEnabled('empty_next', true), tag: 'section', vmVisible: Boolean(vm.empty) })" class="empty-next" :style="getSectionStyle('empty_next')">
+    <section v-if="showGlobalEmptyNext" class="empty-next" :style="getSectionStyle('empty_next')">
       <p class="empty-next-title">{{ vm.empty.title }}</p>
       <p class="empty-next-hint">{{ vm.empty.hint }}</p>
       <p class="empty-next-reason">{{ vm.empty.reason }}</p>
@@ -1187,6 +1190,13 @@ const showTopActionToolbar = computed(() =>
   || showToolbarSavedFilter.value
   || showToolbarGroup.value
   || canCreateRecord.value,
+);
+const showGlobalEmptyNext = computed(() =>
+  isSectionVisible('empty_next', {
+    defaultEnabled: pageSectionEnabled('empty_next', true),
+    tag: 'section',
+    vmVisible: Boolean(vm.value.empty) && vm.value.content.kind !== 'list',
+  }),
 );
 
 async function openCreateRecord() {

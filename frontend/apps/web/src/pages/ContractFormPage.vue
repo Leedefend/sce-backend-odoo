@@ -2672,17 +2672,24 @@ function nativeLayoutContainsType(nodes: NativeFormLayoutNode[], type: string): 
 }
 
 function contractActionFromNativeRow(row: Record<string, unknown>): ContractAction | null {
-  const payload = parseMaybeJsonRecord(row.payload);
-  const rowName = String(row.name || '').trim();
-  const rowLabel = String(row.label || '').trim();
-  const key = String(row.key || rowName || rowLabel || '').trim();
+  const nativeAction = row.action && typeof row.action === 'object' && !Array.isArray(row.action)
+    ? row.action as Record<string, unknown>
+    : {};
+  const payload = parseMaybeJsonRecord(nativeAction.payload || row.payload);
+  const rowName = String(nativeAction.name || row.name || '').trim();
+  const rowLabel = String(nativeAction.label || row.label || '').trim();
+  const key = String(nativeAction.key || row.key || rowName || rowLabel || '').trim();
   if (!key) return null;
-  const kind = normalizeActionKind(row.kind);
-  const level = String(row.level || 'body').trim().toLowerCase();
+  const kind = normalizeActionKind(nativeAction.kind || row.kind || row.buttonType);
+  const level = String(nativeAction.level || row.level || 'body').trim().toLowerCase();
   const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref);
   const methodName = detectMethodName(key, String(payload.method || '').trim());
-  const groups = Array.isArray(row.groups_xmlids)
-    ? (row.groups_xmlids as string[])
+  const groups = Array.isArray(nativeAction.groups_xmlids)
+    ? (nativeAction.groups_xmlids as string[])
+    : Array.isArray(nativeAction.groups)
+      ? (nativeAction.groups as string[])
+      : Array.isArray(row.groups_xmlids)
+        ? (row.groups_xmlids as string[])
     : Array.isArray(payload.groups_xmlids)
       ? (payload.groups_xmlids as string[])
       : [];
@@ -2705,15 +2712,49 @@ function contractActionFromNativeRow(row: Record<string, unknown>): ContractActi
     hint: byGroup ? (needRecord && !recordId.value ? 'requires record id' : '') : 'permission denied',
     semantic: '',
     visibleProfiles: ['create', 'edit', 'readonly'],
-    requiredParams: normalizeRequiredParams(row.required_params),
-    requiresReason: row.requires_reason === true,
-    actionSafety: normalizeActionSafety(row.action_safety),
+    requiredParams: normalizeRequiredParams(nativeAction.required_params || row.required_params),
+    requiresReason: nativeAction.requires_reason === true || row.requires_reason === true,
+    actionSafety: normalizeActionSafety(nativeAction.action_safety || row.action_safety),
   };
 }
 
 async function runNativeLayoutAction(row: Record<string, unknown>) {
   const action = contractActionFromNativeRow(row);
   if (!action) return;
+  if ((action.kind === 'object' || action.kind === 'server') && action.methodName && recordId.value) {
+    if (!action.enabled || !confirmActionSafety(action)) return;
+    busyKind.value = 'action';
+    try {
+      const response = await executeButton({
+        model: action.targetModel || model.value,
+        res_id: recordId.value,
+        button: { name: action.methodName, type: action.kind === 'server' ? 'server' : 'object' },
+        context: action.context,
+        meta: {
+          menu_id: Number(route.query.menu_id || 0) || undefined,
+          action_id: actionId.value || undefined,
+        },
+      });
+      const result = response?.result;
+      const nextActionId = toPositiveInt(result?.action_id);
+      if (nextActionId) {
+        await router.push({
+          name: 'action',
+          params: { actionId: String(nextActionId) },
+          query: pickContractNavQuery(route.query as Record<string, unknown>, { action_id: nextActionId }),
+        });
+        return;
+      }
+      await reload();
+      return;
+    } catch (err) {
+      errorMessage.value = err instanceof Error ? err.message : 'action execute failed';
+      status.value = 'error';
+      return;
+    } finally {
+      busyKind.value = null;
+    }
+  }
   await runAction(action);
 }
 
@@ -3047,6 +3088,15 @@ function nativeModifierValue(nodeRaw: NativeFormLayoutNode, key: 'invisible' | '
   const attributes = node.attributes && typeof node.attributes === 'object'
     ? node.attributes as Record<string, unknown>
     : {};
+  const action = node.action && typeof node.action === 'object' && !Array.isArray(node.action)
+    ? node.action as Record<string, unknown>
+    : {};
+  const actionVisible = action.visible && typeof action.visible === 'object' && !Array.isArray(action.visible)
+    ? action.visible as Record<string, unknown>
+    : {};
+  const actionVisibleAttrs = actionVisible.attrs && typeof actionVisible.attrs === 'object' && !Array.isArray(actionVisible.attrs)
+    ? actionVisible.attrs as Record<string, unknown>
+    : {};
   const fieldInfo = node.fieldInfo && typeof node.fieldInfo === 'object'
     ? node.fieldInfo as Record<string, unknown>
     : {};
@@ -3061,6 +3111,7 @@ function nativeModifierValue(nodeRaw: NativeFormLayoutNode, key: 'invisible' | '
     : {};
   if (key in modifiers) return modifiers[key];
   if (key in attributeModifiers) return attributeModifiers[key];
+  if (key in actionVisibleAttrs) return actionVisibleAttrs[key];
   if (key in fieldInfoModifiers) return fieldInfoModifiers[key];
   if (key in fieldInfo) return fieldInfo[key];
   if (key in attributes) return attributes[key];

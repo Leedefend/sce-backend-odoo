@@ -57,6 +57,10 @@ function resolveMetaFromContract(contract: unknown, actionId: number): NavMeta {
   const viewModes = splitViewModes(head.view_type || normalized.view_type || '');
   const name = String(head.title || normalized.name || '').trim();
   const actionType = String(normalized.action_type || head.action_type || 'ir.actions.act_window').trim();
+  const domain = head.domain ?? normalized.domain;
+  const domainRaw = head.domain_raw ?? normalized.domain_raw;
+  const context = head.context ?? normalized.context;
+  const contextRaw = head.context_raw ?? normalized.context_raw;
   const out: NavMeta = {
     action_id: Number(actionId || 0),
     action_type: actionType || 'ir.actions.act_window',
@@ -64,19 +68,38 @@ function resolveMetaFromContract(contract: unknown, actionId: number): NavMeta {
   if (model) out.model = model;
   if (name) out.name = name;
   if (viewModes.length) out.view_modes = viewModes;
+  if (Array.isArray(domain) || typeof domain === 'string') out.domain = domain;
+  if (typeof domainRaw === 'string' && domainRaw.trim()) out.domain_raw = domainRaw;
+  if ((context && typeof context === 'object' && !Array.isArray(context)) || typeof context === 'string') {
+    out.context = context as NavMeta['context'];
+  }
+  if (typeof contextRaw === 'string' && contextRaw.trim()) out.context_raw = contextRaw;
   return out;
 }
 
 function mergeMeta(base: NavMeta | null, fallback: NavMeta): NavMeta {
   const merged: NavMeta = { ...(base || {}), ...fallback };
-  // Preserve authoritative fields from existing meta when present.
+  const contractModelChanged = Boolean(fallback.model && base?.model && fallback.model !== base.model);
+  const baseDomain = base?.domain;
+  const baseHasDomain = Array.isArray(baseDomain)
+    ? baseDomain.length > 0
+    : typeof baseDomain === 'string' && baseDomain.trim().length > 0;
+  const baseContext = base?.context;
+  const baseHasContext = typeof baseContext === 'string'
+    ? baseContext.trim().length > 0
+    : Boolean(baseContext && typeof baseContext === 'object' && !Array.isArray(baseContext) && Object.keys(baseContext).length);
+  // Keep stable navigation fields from menu meta, but treat ui.contract as
+  // authoritative for action execution when the backend model has changed.
   if (base?.action_type) merged.action_type = base.action_type;
   if (base?.menu_id) merged.menu_id = base.menu_id;
   if (base?.menu_xmlid) merged.menu_xmlid = base.menu_xmlid;
   if (base?.groups_xmlids?.length) merged.groups_xmlids = base.groups_xmlids;
-  if (base?.model) merged.model = base.model;
+  if (fallback.model) merged.model = fallback.model;
+  else if (base?.model) merged.model = base.model;
+  if (baseHasDomain && !contractModelChanged) merged.domain = baseDomain;
+  if (baseHasContext && !contractModelChanged) merged.context = baseContext as NavMeta['context'];
   const baseModes = splitViewModes(base?.view_modes || []);
-  if (baseModes.length) {
+  if (baseModes.length && !contractModelChanged) {
     merged.view_modes = baseModes;
   } else if (fallback.view_modes?.length) {
     merged.view_modes = fallback.view_modes;

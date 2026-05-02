@@ -64,7 +64,7 @@
               :key="nodeKey(buttonNode, buttonIndex)"
               type="button"
               :class="nativeActionButtonClass(buttonNode)"
-              @click="emitNativeAction(buttonNode)"
+              @click.stop.prevent="emitNativeAction(buttonNode)"
             >
               <span v-if="buttonIcon(buttonNode)" :class="['native-action-icon', buttonIcon(buttonNode)]" aria-hidden="true" />
               <span class="native-action-label">{{ buttonLabel(buttonNode) }}</span>
@@ -85,7 +85,7 @@
                   type="button"
                   class="native-action-more-item"
                   role="menuitem"
-                  @click="emitNativeAction(buttonNode); closeMore(node)"
+                  @click.stop.prevent="emitNativeAction(buttonNode); closeMore(node)"
                 >
                   <span v-if="buttonIcon(buttonNode)" :class="['native-action-icon', buttonIcon(buttonNode)]" aria-hidden="true" />
                   <span class="native-action-label">{{ buttonLabel(buttonNode) }}</span>
@@ -137,7 +137,7 @@
       </FormSection>
 
       <div v-else-if="nodeType(node) === 'button'" :class="nativeActionsClass(node)">
-        <button type="button" :class="nativeActionButtonClass(node)" @click="emitNativeAction(node)">
+        <button type="button" :class="nativeActionButtonClass(node)" @click.stop.prevent="emitNativeAction(node)">
           <span v-if="buttonIcon(node)" :class="['native-action-icon', buttonIcon(node)]" aria-hidden="true" />
           <span class="native-action-label">{{ buttonLabel(node) }}</span>
         </button>

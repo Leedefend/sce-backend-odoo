@@ -57,6 +57,34 @@ class PageAssembler:
             return [str(x).strip() for x in vt if str(x).strip()]
         return ['tree', 'form']
 
+    @staticmethod
+    def _normalize_action_domain(action):
+        if not isinstance(action, dict):
+            return [], ""
+        raw = action.get("domain")
+        if raw in (None, False, ""):
+            return [], ""
+        raw_text = raw if isinstance(raw, str) else ""
+        parsed = safe_eval(raw) if isinstance(raw, str) else raw
+        if isinstance(parsed, tuple):
+            parsed = list(parsed)
+        if not isinstance(parsed, list):
+            return [], raw_text
+        return parsed, raw_text
+
+    @staticmethod
+    def _normalize_action_context(action):
+        if not isinstance(action, dict):
+            return {}, ""
+        raw = action.get("context")
+        if raw in (None, False, ""):
+            return {}, ""
+        raw_text = raw if isinstance(raw, str) else ""
+        parsed = safe_eval(raw) if isinstance(raw, str) else raw
+        if not isinstance(parsed, dict):
+            return {}, raw_text
+        return parsed, raw_text
+
     def assemble_page_contract(self, p, action=None):
         """
         页面契约主装配：
@@ -75,6 +103,10 @@ class PageAssembler:
         env = self.env
         su = self.su_env
         action = action or self._resolve_action_from_payload(p, model)
+        action_domain, action_domain_raw = self._normalize_action_domain(action)
+        action_context, action_context_raw = self._normalize_action_context(action)
+        if action_domain and not p.get("domain"):
+            p["domain"] = action_domain
 
         required_models = {
             "app.model.config": True,
@@ -292,7 +324,10 @@ class PageAssembler:
             "model": model,
             "view_type": ",".join(view_types),
             "action_id": action.get('id') if isinstance(action, dict) else None,
-            "context": safe_eval(action.get('context')) if isinstance(action, dict) else {},
+            "domain": action_domain,
+            "domain_raw": action_domain_raw,
+            "context": action_context,
+            "context_raw": action_context_raw,
             "permissions": {
                 "read": env[model].check_access_rights('read', raise_exception=False),
                 "write": env[model].check_access_rights('write', raise_exception=False),
@@ -305,6 +340,10 @@ class PageAssembler:
             data["head"]["res_id"] = requested_record_id
         if requested_render_profile:
             data["head"]["render_profile"] = requested_render_profile
+        data["domain"] = action_domain
+        data["domain_raw"] = action_domain_raw
+        data["context"] = action_context
+        data["context_raw"] = action_context_raw
         self._inject_record_version_contract(
             data,
             model_name=model,
@@ -350,6 +389,7 @@ class PageAssembler:
             "id": action.id,
             "name": action.name or "",
             "context": action.context or "{}",
+            "domain": action.domain or "[]",
         }
 
     def _resolve_page_title(self, model, action=None):
