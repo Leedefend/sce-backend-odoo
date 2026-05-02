@@ -261,6 +261,10 @@ access_sc_labor_settlement_line_user,sc.labor.settlement.line.user,model_sc_labo
 access_sc_labor_settlement_line_manager,sc.labor.settlement.line.manager,model_sc_labor_settlement_line,smart_construction_core.group_sc_super_admin,1,1,1,1
 access_sc_labor_price_user,sc.labor.price.user,model_sc_labor_price,smart_construction_core.group_sc_internal_user,1,1,1,0
 access_sc_labor_price_manager,sc.labor.price.manager,model_sc_labor_price,smart_construction_core.group_sc_super_admin,1,1,1,1
+access_sc_equipment_plan_user,sc.equipment.plan.user,model_sc_equipment_plan,smart_construction_core.group_sc_internal_user,1,1,1,0
+access_sc_equipment_plan_manager,sc.equipment.plan.manager,model_sc_equipment_plan,smart_construction_core.group_sc_super_admin,1,1,1,1
+access_sc_equipment_plan_line_user,sc.equipment.plan.line.user,model_sc_equipment_plan_line,smart_construction_core.group_sc_internal_user,1,1,1,0
+access_sc_equipment_plan_line_manager,sc.equipment.plan.line.manager,model_sc_equipment_plan_line,smart_construction_core.group_sc_super_admin,1,1,1,1
 access_sc_workflow_def_admin,sc.workflow.def.admin,model_sc_workflow_def,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
 access_sc_workflow_node_admin,sc.workflow.node.admin,model_sc_workflow_node,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
 access_sc_workflow_instance_admin,sc.workflow.instance.admin,model_sc_workflow_instance,smart_construction_core.group_sc_cap_config_admin,1,1,1,1

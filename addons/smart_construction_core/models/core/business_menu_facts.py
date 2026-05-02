@@ -703,7 +703,7 @@ class ScBusinessMenuTaxonomySeed(models.AbstractModel):
                     "劳务价格库": "smart_construction_core.action_sc_labor_price",
                 },
                 "机械设备": {
-                    "设备计划": f("sc.equipment.document", "equipment_plan"),
+                    "设备计划": "smart_construction_core.action_sc_equipment_plan",
                     "设备申请": f("sc.equipment.document", "equipment_request"),
                     "设备使用登记": f("sc.equipment.document", "equipment_usage"),
                     "设备结算": f("sc.equipment.document", "equipment_settlement"),
