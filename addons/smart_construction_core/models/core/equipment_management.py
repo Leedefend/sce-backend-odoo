@@ -250,3 +250,114 @@ class ScEquipmentUsage(models.Model):
                 raise ValidationError(_("使用台数必须大于0。"))
             if record.usage_hours <= 0:
                 raise ValidationError(_("使用台时必须大于0。"))
+
+
+class ScEquipmentSettlement(models.Model):
+    _name = "sc.equipment.settlement"
+    _description = "设备结算"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _order = "settlement_date desc, id desc"
+
+    name = fields.Char(string="结算单号", required=True, default="新建", tracking=True)
+    project_id = fields.Many2one("project.project", string="项目", required=True, index=True, tracking=True)
+    supplier_id = fields.Many2one("res.partner", string="供应单位", required=True, index=True, tracking=True)
+    settlement_date = fields.Date(string="结算日期", required=True, default=fields.Date.context_today, index=True)
+    owner_id = fields.Many2one("res.users", string="经办人", default=lambda self: self.env.user, index=True)
+    currency_id = fields.Many2one("res.currency", string="币种", required=True, default=lambda self: self.env.company.currency_id.id)
+    amount_untaxed = fields.Monetary(string="未税金额", currency_field="currency_id", compute="_compute_amounts", store=True)
+    tax_amount = fields.Monetary(string="税额", currency_field="currency_id", compute="_compute_amounts", store=True)
+    amount_total = fields.Monetary(string="结算金额", currency_field="currency_id", compute="_compute_amounts", store=True)
+    state = fields.Selection(
+        [("draft", "草稿"), ("submitted", "已提交"), ("confirmed", "已确认"), ("cancel", "已取消")],
+        string="状态",
+        default="draft",
+        index=True,
+        tracking=True,
+    )
+    line_ids = fields.One2many("sc.equipment.settlement.line", "settlement_id", string="结算明细")
+    note = fields.Text(string="结算说明")
+    legacy_fact_model = fields.Char(string="来源通用模型", index=True)
+    legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
+    legacy_fact_type = fields.Char(string="来源业务类型", index=True)
+
+    _sql_constraints = [
+        ("legacy_equipment_settlement_unique", "unique(legacy_fact_model, legacy_fact_id)", "来源通用设备结算已迁移为专业设备结算。"),
+    ]
+
+    @api.depends("line_ids.amount_untaxed", "line_ids.tax_amount", "line_ids.amount_total")
+    def _compute_amounts(self):
+        for record in self:
+            record.amount_untaxed = sum(record.line_ids.mapped("amount_untaxed"))
+            record.tax_amount = sum(record.line_ids.mapped("tax_amount"))
+            record.amount_total = sum(record.line_ids.mapped("amount_total"))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        seq = self.env["ir.sequence"]
+        for vals in vals_list:
+            if vals.get("name", "新建") == "新建":
+                vals["name"] = seq.next_by_code("sc.equipment.settlement") or _("设备结算")
+        return super().create(vals_list)
+
+    def action_submit(self):
+        for record in self:
+            if not record.line_ids:
+                raise ValidationError(_("提交设备结算前必须维护结算明细。"))
+            record.line_ids._check_values()
+        self.write({"state": "submitted"})
+        return True
+
+    def action_confirm(self):
+        for record in self:
+            record.line_ids._check_values()
+        self.write({"state": "confirmed"})
+        return True
+
+    def action_cancel(self):
+        self.write({"state": "cancel"})
+        return True
+
+    def action_reset_draft(self):
+        self.write({"state": "draft"})
+        return True
+
+
+class ScEquipmentSettlementLine(models.Model):
+    _name = "sc.equipment.settlement.line"
+    _description = "设备结算明细"
+    _order = "settlement_id, sequence, id"
+
+    settlement_id = fields.Many2one("sc.equipment.settlement", string="结算单", required=True, ondelete="cascade", index=True)
+    sequence = fields.Integer(default=10)
+    project_id = fields.Many2one("project.project", string="项目", related="settlement_id.project_id", store=True, index=True)
+    usage_id = fields.Many2one("sc.equipment.usage", string="使用登记", index=True)
+    equipment_name = fields.Char(string="设备名称", required=True)
+    equipment_code = fields.Char(string="设备编号")
+    qty = fields.Float(string="结算台时", required=True, default=1)
+    unit_name = fields.Char(string="单位", default="台时")
+    currency_id = fields.Many2one("res.currency", string="币种", related="settlement_id.currency_id", store=True)
+    unit_price = fields.Monetary(string="结算单价", currency_field="currency_id", required=True)
+    tax_rate = fields.Float(string="税率%")
+    amount_untaxed = fields.Monetary(string="未税金额", currency_field="currency_id", compute="_compute_amounts", store=True)
+    tax_amount = fields.Monetary(string="税额", currency_field="currency_id", compute="_compute_amounts", store=True)
+    amount_total = fields.Monetary(string="含税金额", currency_field="currency_id", compute="_compute_amounts", store=True)
+    note = fields.Char(string="备注")
+
+    @api.depends("qty", "unit_price", "tax_rate")
+    def _compute_amounts(self):
+        for record in self:
+            amount_untaxed = record.qty * record.unit_price
+            tax_amount = amount_untaxed * record.tax_rate / 100
+            record.amount_untaxed = amount_untaxed
+            record.tax_amount = tax_amount
+            record.amount_total = amount_untaxed + tax_amount
+
+    @api.constrains("qty", "unit_price", "tax_rate")
+    def _check_values(self):
+        for record in self:
+            if record.qty <= 0:
+                raise ValidationError(_("结算台时必须大于0。"))
+            if record.unit_price < 0:
+                raise ValidationError(_("结算单价不能为负数。"))
+            if record.tax_rate < 0:
+                raise ValidationError(_("税率不能为负数。"))

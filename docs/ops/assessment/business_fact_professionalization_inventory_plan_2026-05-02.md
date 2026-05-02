@@ -255,6 +255,7 @@ Scope: 基于 `项目建设-产品功能清单（0301 ）.xlsx`，对当前 `sc.
 | WP13 设备计划 | `sc.equipment.plan`、`sc.equipment.plan.line` | `models/core/equipment_management.py`、`views/core/equipment_management_views.xml` | 从 `sc.equipment.document(equipment_plan)` 拆出设备计划专业动作；现有“设备计划”入口只承载计划周期、使用地点、计划设备、计划台时和负责人，不再混入设备申请、实际使用、结算或价格库 |
 | WP14 设备申请 | `sc.equipment.request`、`sc.equipment.request.line` | `models/core/equipment_management.py`、`views/core/equipment_management_views.xml` | 从 `sc.equipment.document(equipment_request)` 拆出设备申请专业动作；现有“设备申请”入口只承载需求发起、需用日期、申请设备、申请台数和预计台时，不再混入设备计划执行、使用登记、结算或价格库 |
 | WP15 设备使用登记 | `sc.equipment.usage` | `models/core/equipment_management.py`、`views/core/equipment_management_views.xml` | 从 `sc.equipment.document(equipment_usage)` 拆出设备实际使用专业动作；现有“设备使用登记”入口只承载使用日期、设备、地点、操作人员、使用台数和台时，不再混入设备计划、申请、结算或价格库 |
+| WP16 设备结算 | `sc.equipment.settlement`、`sc.equipment.settlement.line` | `models/core/equipment_management.py`、`views/core/equipment_management_views.xml` | 从 `sc.equipment.document(equipment_settlement)` 拆出设备结算专业动作；现有“设备结算”入口只承载供应单位、结算日期、结算明细和金额确认，不再混入设备计划、申请、使用登记或价格库 |
 
 ## 6. 不再建议投入的方向
 

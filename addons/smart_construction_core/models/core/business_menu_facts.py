@@ -706,7 +706,7 @@ class ScBusinessMenuTaxonomySeed(models.AbstractModel):
                     "设备计划": "smart_construction_core.action_sc_equipment_plan",
                     "设备申请": "smart_construction_core.action_sc_equipment_request",
                     "设备使用登记": "smart_construction_core.action_sc_equipment_usage",
-                    "设备结算": f("sc.equipment.document", "equipment_settlement"),
+                    "设备结算": "smart_construction_core.action_sc_equipment_settlement",
                     "设备价格库": f("sc.equipment.document", "equipment_price_library"),
                 },
                 "专业分包": {
