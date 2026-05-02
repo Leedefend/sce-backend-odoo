@@ -361,3 +361,68 @@ class ScEquipmentSettlementLine(models.Model):
                 raise ValidationError(_("结算单价不能为负数。"))
             if record.tax_rate < 0:
                 raise ValidationError(_("税率不能为负数。"))
+
+
+class ScEquipmentPrice(models.Model):
+    _name = "sc.equipment.price"
+    _description = "设备价格库"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _order = "effective_date desc, id desc"
+
+    name = fields.Char(string="价格编号", required=True, default="新建", tracking=True)
+    project_id = fields.Many2one("project.project", string="适用项目", index=True, tracking=True)
+    supplier_id = fields.Many2one("res.partner", string="供应单位", index=True)
+    equipment_name = fields.Char(string="设备名称", required=True, index=True, tracking=True)
+    equipment_code = fields.Char(string="设备编号", index=True)
+    unit_name = fields.Char(string="计价单位", required=True, default="台时")
+    currency_id = fields.Many2one("res.currency", string="币种", required=True, default=lambda self: self.env.company.currency_id.id)
+    unit_price = fields.Monetary(string="单价", currency_field="currency_id", required=True, tracking=True)
+    tax_rate = fields.Float(string="税率%")
+    effective_date = fields.Date(string="生效日期", required=True, default=fields.Date.context_today, index=True)
+    expire_date = fields.Date(string="失效日期", index=True)
+    state = fields.Selection(
+        [("draft", "草稿"), ("active", "生效"), ("inactive", "停用")],
+        string="状态",
+        default="draft",
+        index=True,
+        tracking=True,
+    )
+    note = fields.Text(string="价格说明")
+    legacy_fact_model = fields.Char(string="来源通用模型", index=True)
+    legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
+    legacy_fact_type = fields.Char(string="来源业务类型", index=True)
+
+    _sql_constraints = [
+        ("legacy_equipment_price_unique", "unique(legacy_fact_model, legacy_fact_id)", "来源通用设备价格已迁移为专业设备价格。"),
+    ]
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        seq = self.env["ir.sequence"]
+        for vals in vals_list:
+            if vals.get("name", "新建") == "新建":
+                vals["name"] = seq.next_by_code("sc.equipment.price") or _("设备价格")
+        return super().create(vals_list)
+
+    def action_activate(self):
+        self._check_values()
+        self.write({"state": "active"})
+        return True
+
+    def action_deactivate(self):
+        self.write({"state": "inactive"})
+        return True
+
+    def action_reset_draft(self):
+        self.write({"state": "draft"})
+        return True
+
+    @api.constrains("unit_price", "tax_rate", "effective_date", "expire_date")
+    def _check_values(self):
+        for record in self:
+            if record.unit_price < 0:
+                raise ValidationError(_("设备单价不能为负数。"))
+            if record.tax_rate < 0:
+                raise ValidationError(_("税率不能为负数。"))
+            if record.effective_date and record.expire_date and record.effective_date > record.expire_date:
+                raise ValidationError(_("生效日期不能晚于失效日期。"))
