@@ -8,10 +8,14 @@
             <tree>
                 <field name="active" invisible="1"/>
                 <field name="name"/>
+                <field name="target_type"/>
                 <field name="budget_kind"/>
                 <field name="project_id"/>
                 <field name="version"/>
+                <field name="version_no"/>
                 <field name="version_date"/>
+                <field name="is_baseline"/>
+                <field name="source_channel"/>
                 <field name="amount_cost_target"/>
                 <field name="amount_revenue_target"/>
                 <field name="is_active"/>
@@ -44,16 +48,23 @@
                 <sheet>
                     <group>
                         <field name="name"/>
+                        <field name="target_type"/>
                         <field name="budget_kind"/>
                         <field name="project_id"/>
                         <field name="version"/>
+                        <field name="version_no"/>
                         <field name="version_date"/>
+                        <field name="is_baseline"/>
+                        <field name="source_channel"/>
                         <field name="is_active"/>
                         <field name="active"/>
                     </group>
                     <group>
                         <field name="amount_cost_target"/>
                         <field name="amount_revenue_target"/>
+                    </group>
+                    <group string="测算说明">
+                        <field name="measurement_note" nolabel="1"/>
                     </group>
 
                     <notebook>
@@ -67,6 +78,8 @@
                                     <field name="qty_bidded"/>
                                     <field name="price_bidded"/>
                                     <field name="amount_bidded"/>
+                                    <field name="cost_collection_method"/>
+                                    <field name="cost_allocation_method"/>
                                 </tree>
                             </field>
                         </page>

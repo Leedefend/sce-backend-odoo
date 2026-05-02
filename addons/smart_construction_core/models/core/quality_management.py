@@ -21,6 +21,24 @@ class ScCheckStandard(models.Model):
     company_id = fields.Many2one("res.company", string="公司", default=lambda self: self.env.company, index=True)
     project_id = fields.Many2one("project.project", string="项目", index=True)
     parent_id = fields.Many2one("sc.check.standard", string="继承来源", index=True)
+    default_rechecker_id = fields.Many2one("res.users", string="默认复验人", index=True)
+    cc_user_ids = fields.Many2many(
+        "res.users",
+        "sc_check_standard_cc_user_rel",
+        "standard_id",
+        "user_id",
+        string="默认抄送人",
+    )
+    import_source = fields.Selection(
+        [("manual", "手工维护"), ("excel", "Excel导入"), ("standard_library", "标准库引入"), ("inherit", "逐级继承")],
+        string="标准来源",
+        default="manual",
+        index=True,
+    )
+    effective_from = fields.Date(string="生效日期", index=True)
+    effective_to = fields.Date(string="失效日期", index=True)
+    applies_building_room = fields.Boolean(string="适用楼栋房间", default=True)
+    applies_road_coordinate = fields.Boolean(string="适用道路坐标")
     active = fields.Boolean(default=True)
     item_ids = fields.One2many("sc.check.standard.item", "standard_id", string="检查项")
     legacy_fact_model = fields.Char(string="来源通用模型", index=True)
@@ -40,6 +58,16 @@ class ScCheckStandardItem(models.Model):
     bottom_line = fields.Boolean(string="底线项", default=False)
     tag = fields.Char(string="标签")
     photo_required = fields.Boolean(string="要求拍照", default=False)
+    control_type = fields.Selection([("main", "主控项"), ("general", "一般项"), ("score", "评分项")], string="控制类型", default="general", index=True)
+    default_pass = fields.Boolean(string="默认合格")
+    measurement_method = fields.Char(string="工程量/实测计算方式")
+    acceptance_flow = fields.Selection(
+        [("self", "自检"), ("supervisor", "监理验收"), ("owner", "甲方抽验"), ("multi", "多级验收")],
+        string="验收流程",
+        default="self",
+        index=True,
+    )
+    score_weight = fields.Float(string="评分权重")
 
 
 class ScQualityIssue(models.Model):
@@ -53,14 +81,37 @@ class ScQualityIssue(models.Model):
     standard_id = fields.Many2one("sc.check.standard", string="检查标准", index=True)
     standard_item_id = fields.Many2one("sc.check.standard.item", string="检查项", index=True)
     issue_date = fields.Date(string="发现日期", default=fields.Date.context_today, index=True)
+    source_channel = fields.Selection([("pc", "PC"), ("app", "APP"), ("import", "导入"), ("system", "系统")], string="来源端", default="pc", index=True)
+    issue_category = fields.Selection(
+        [("quality", "质量检查"), ("process", "工序验收"), ("material", "材料验收"), ("patrol", "巡检评估"), ("photo", "随手拍")],
+        string="问题来源场景",
+        default="quality",
+        index=True,
+    )
     location = fields.Char(string="问题部位", index=True)
     building = fields.Char(string="楼栋/道路")
     room = fields.Char(string="房间/坐标描述")
+    coordinate = fields.Char(string="坐标")
     issue_level = fields.Selection([("normal", "一般"), ("important", "重要"), ("critical", "重大")], string="问题等级", default="normal", index=True)
     responsible_party_id = fields.Many2one("res.partner", string="责任单位", index=True)
     owner_id = fields.Many2one("res.users", string="责任人", default=lambda self: self.env.user, index=True)
+    rechecker_id = fields.Many2one("res.users", string="复验人", index=True)
+    cc_user_ids = fields.Many2many(
+        "res.users",
+        "sc_quality_issue_cc_user_rel",
+        "issue_id",
+        "user_id",
+        string="抄送人",
+    )
     rectification_deadline = fields.Date(string="整改期限", index=True)
+    reminder_before_days = fields.Integer(string="提前提醒天数")
+    overdue_notice_sent = fields.Boolean(string="逾期提醒已发送")
+    closed_date = fields.Date(string="闭环日期", index=True)
+    overdue_days = fields.Integer(string="逾期天数", compute="_compute_overdue_days", store=True)
+    is_overdue = fields.Boolean(string="是否逾期", compute="_compute_overdue_days", store=True, index=True)
     description = fields.Text(string="问题描述")
+    voice_text = fields.Text(string="语音转文字")
+    attachment_ids = fields.Many2many("ir.attachment", "sc_quality_issue_attachment_rel", "issue_id", "attachment_id", string="问题附件")
     state = fields.Selection(
         [
             ("draft", "草稿"),
@@ -82,6 +133,18 @@ class ScQualityIssue(models.Model):
     legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
     legacy_fact_type = fields.Char(string="来源业务类型", index=True)
 
+    @api.depends("state", "rectification_deadline", "closed_date")
+    def _compute_overdue_days(self):
+        today = fields.Date.context_today(self)
+        for issue in self:
+            end_date = issue.closed_date or today
+            if issue.rectification_deadline and issue.state != "cancel" and end_date > issue.rectification_deadline:
+                issue.overdue_days = (end_date - issue.rectification_deadline).days
+                issue.is_overdue = issue.state != "closed" or bool(issue.closed_date and issue.closed_date > issue.rectification_deadline)
+            else:
+                issue.overdue_days = 0
+                issue.is_overdue = False
+
     def action_submit(self):
         self.write({"state": "submitted"})
         return True
@@ -95,7 +158,7 @@ class ScQualityIssue(models.Model):
         return True
 
     def action_close(self):
-        self.write({"state": "closed"})
+        self.write({"state": "closed", "closed_date": fields.Date.context_today(self)})
         return True
 
     def action_cancel(self):
@@ -117,8 +180,10 @@ class ScQualityRectification(models.Model):
     responsible_party_id = fields.Many2one("res.partner", string="责任单位", related="issue_id.responsible_party_id", store=True, index=True)
     rectification_deadline = fields.Date(string="整改期限", related="issue_id.rectification_deadline", store=True, index=True)
     rectification_date = fields.Date(string="整改日期", default=fields.Date.context_today, index=True)
+    source_channel = fields.Selection([("pc", "PC"), ("app", "APP"), ("import", "导入")], string="来源端", default="pc", index=True)
     handler_id = fields.Many2one("res.users", string="整改人", default=lambda self: self.env.user, index=True)
     result = fields.Text(string="整改结果", required=True)
+    attachment_ids = fields.Many2many("ir.attachment", "sc_quality_rectification_attachment_rel", "rectification_id", "attachment_id", string="整改附件")
     photo_batch_ids = fields.One2many("sc.site.photo.batch", "quality_rectification_id", string="照片批次")
     legacy_fact_model = fields.Char(string="来源通用模型", index=True)
     legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
@@ -144,9 +209,11 @@ class ScQualityRecheck(models.Model):
     issue_state = fields.Selection(related="issue_id.state", string="问题状态", store=True, index=True)
     responsible_party_id = fields.Many2one("res.partner", string="责任单位", related="issue_id.responsible_party_id", store=True, index=True)
     recheck_date = fields.Date(string="复验日期", default=fields.Date.context_today, index=True)
+    source_channel = fields.Selection([("pc", "PC"), ("app", "APP"), ("import", "导入")], string="来源端", default="pc", index=True)
     recheck_user_id = fields.Many2one("res.users", string="复验人", default=lambda self: self.env.user, index=True)
     result = fields.Selection([("passed", "通过"), ("failed", "不通过")], string="复验结果", required=True, index=True)
     comment = fields.Text(string="复验意见")
+    attachment_ids = fields.Many2many("ir.attachment", "sc_quality_recheck_attachment_rel", "recheck_id", "attachment_id", string="复验附件")
     photo_batch_ids = fields.One2many("sc.site.photo.batch", "quality_recheck_id", string="照片批次")
     legacy_fact_model = fields.Char(string="来源通用模型", index=True)
     legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
@@ -157,7 +224,7 @@ class ScQualityRecheck(models.Model):
         records = super().create(vals_list)
         for record in records:
             if record.result == "passed":
-                record.issue_id.write({"state": "closed"})
+                record.issue_id.write({"state": "closed", "closed_date": fields.Date.context_today(record)})
             elif record.result == "failed":
                 record.issue_id.write({"state": "rectifying"})
         return records
@@ -186,6 +253,13 @@ class ScSitePhotoBatch(models.Model):
     batch_date = fields.Date(string="批次日期", default=fields.Date.context_today, index=True)
     owner_id = fields.Many2one("res.users", string="上传人", default=lambda self: self.env.user, index=True)
     location = fields.Char(string="拍摄位置")
+    source_channel = fields.Selection([("pc", "PC"), ("app", "APP"), ("import", "导入")], string="来源端", default="app", index=True)
+    album_category = fields.Selection(
+        [("quick_photo", "随手拍"), ("meeting_review", "会议回顾"), ("inspection", "检查留痕"), ("rectification", "整改留痕"), ("recheck", "复验留痕")],
+        string="相册分类",
+        default="inspection",
+        index=True,
+    )
     attachment_ids = fields.Many2many("ir.attachment", string="照片附件")
     note = fields.Text(string="说明")
 

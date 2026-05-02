@@ -135,9 +135,28 @@ class ScMaterialAcceptance(models.Model):
     acceptance_date = fields.Date(string="验收日期", default=fields.Date.context_today, index=True, tracking=True)
     supplier_id = fields.Many2one("res.partner", string="供应商", index=True)
     purchase_order_id = fields.Many2one("purchase.order", string="采购订单", index=True)
+    purchase_request_id = fields.Many2one("sc.material.purchase.request", string="采购申请", index=True)
     warehouse_id = fields.Many2one("stock.warehouse", string="仓库", index=True)
     dest_location_id = fields.Many2one("stock.location", string="入库库位", index=True)
     inspector_id = fields.Many2one("res.users", string="验收人", default=lambda self: self.env.user, index=True)
+    supervisor_inspector_id = fields.Many2one("res.users", string="监理验收人", index=True)
+    owner_inspector_id = fields.Many2one("res.users", string="甲方验收人", index=True)
+    source_channel = fields.Selection([("pc", "PC"), ("app", "APP"), ("import", "导入")], string="来源端", default="pc", index=True)
+    acceptance_flow = fields.Selection(
+        [
+            ("epc", "EPC验收"),
+            ("supervisor", "监理验收"),
+            ("owner", "甲方验收"),
+            ("sampling", "送检"),
+            ("return", "退场验收"),
+            ("combined", "组合流程"),
+        ],
+        string="验收流程",
+        default="combined",
+        index=True,
+    )
+    sampling_required = fields.Boolean(string="需要送检")
+    sampling_report_ref = fields.Char(string="送检报告编号", index=True)
     state = fields.Selection(
         [
             ("draft", "草稿"),
@@ -220,7 +239,10 @@ class ScMaterialAcceptanceLine(models.Model):
     received_qty = fields.Float(string="到场数量", required=True)
     accepted_qty = fields.Float(string="合格数量")
     rejected_qty = fields.Float(string="不合格数量")
+    sampled_qty = fields.Float(string="送检数量")
+    returned_qty = fields.Float(string="退场数量")
     result = fields.Selection([("accepted", "合格"), ("partial", "部分合格"), ("rejected", "不合格")], string="验收结果", default="accepted", index=True)
+    quality_status = fields.Selection([("unknown", "未判定"), ("qualified", "合格"), ("unqualified", "不合格")], string="质量状态", default="unknown", index=True)
     issue_note = fields.Text(string="问题说明")
 
     @api.onchange("product_id")
@@ -231,13 +253,15 @@ class ScMaterialAcceptanceLine(models.Model):
                 if not record.material_spec:
                     record.material_spec = record.product_id.default_code or ""
 
-    @api.constrains("received_qty", "accepted_qty", "rejected_qty")
+    @api.constrains("received_qty", "accepted_qty", "rejected_qty", "sampled_qty", "returned_qty")
     def _check_quantities(self):
         for record in self:
-            if record.received_qty < 0 or record.accepted_qty < 0 or record.rejected_qty < 0:
+            if record.received_qty < 0 or record.accepted_qty < 0 or record.rejected_qty < 0 or record.sampled_qty < 0 or record.returned_qty < 0:
                 raise ValidationError(_("材料验收数量不能为负数。"))
             if record.accepted_qty + record.rejected_qty > record.received_qty:
                 raise ValidationError(_("合格数量与不合格数量之和不能大于到场数量。"))
+            if record.returned_qty > record.rejected_qty:
+                raise ValidationError(_("退场数量不能大于不合格数量。"))
 
 
 class ScMaterialInbound(models.Model):

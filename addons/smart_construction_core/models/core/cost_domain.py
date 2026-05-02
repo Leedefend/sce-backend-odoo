@@ -234,6 +234,25 @@ class ProjectBudgetBoqLine(models.Model):
         string="计价规则",
         default="qty",
     )
+    cost_collection_method = fields.Selection(
+        [
+            ("contract", "合同归集"),
+            ("non_contract", "无合同归集"),
+            ("adjustment", "事后调整"),
+        ],
+        string="成本归集方式",
+        index=True,
+    )
+    cost_allocation_method = fields.Selection(
+        [
+            ("direct", "直接分摊"),
+            ("ratio", "按比例分摊"),
+            ("area", "按面积分摊"),
+            ("manual", "手工分摊"),
+        ],
+        string="成本分摊方式",
+        index=True,
+    )
 
     revenue_recognition = fields.Selection(
         [
