@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_sc_fund_account_operation_search" model="ir.ui.view">
+        <field name="name">sc.fund.account.operation.search</field>
+        <field name="model">sc.fund.account.operation</field>
+        <field name="arch" type="xml">
+            <search string="资金账户操作">
+                <field name="name"/>
+                <field name="operation_date"/>
+                <field name="source_account_id"/>
+                <field name="target_account_id"/>
+                <field name="project_id"/>
+                <filter string="资金划拨" name="type_transfer_out" domain="[('operation_type', '=', 'transfer_out')]"/>
+                <filter string="资金调拨" name="type_transfer_between" domain="[('operation_type', '=', 'transfer_between')]"/>
+                <filter string="余额调整" name="type_balance_adjustment" domain="[('operation_type', '=', 'balance_adjustment')]"/>
+                <filter string="已完成" name="state_done" domain="[('state', '=', 'done')]"/>
+                <filter string="按业务类型" name="group_operation_type" context="{'group_by': 'operation_type'}"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按日期" name="group_operation_date" context="{'group_by': 'operation_date'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_fund_account_operation_tree" model="ir.ui.view">
+        <field name="name">sc.fund.account.operation.tree</field>
+        <field name="model">sc.fund.account.operation</field>
+        <field name="arch" type="xml">
+            <tree string="资金账户操作" default_order="operation_date desc,id desc">
+                <field name="name"/>
+                <field name="operation_type"/>
+                <field name="operation_date"/>
+                <field name="project_id"/>
+                <field name="source_account_id"/>
+                <field name="target_account_id"/>
+                <field name="amount" sum="金额合计"/>
+                <field name="before_balance"/>
+                <field name="after_balance"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_fund_account_operation_form" model="ir.ui.view">
+        <field name="name">sc.fund.account.operation.form</field>
+        <field name="model">sc.fund.account.operation</field>
+        <field name="arch" type="xml">
+            <form string="资金账户操作">
+                <header>
+                    <button name="action_confirm" string="确认" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_done" string="完成" type="object" class="oe_highlight" invisible="state not in ('draft', 'confirmed')"/>
+                    <button name="action_cancel" string="取消" type="object" invisible="state in ('done', 'cancelled')"/>
+                    <button name="action_reset_draft" string="重置草稿" type="object" invisible="state != 'cancelled'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="基础信息">
+                            <field name="name" readonly="1"/>
+                            <field name="operation_type"/>
+                            <field name="operation_date"/>
+                            <field name="project_id"/>
+                            <field name="company_id"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="账户与金额">
+                            <field name="currency_id"/>
+                            <field name="source_account_id"/>
+                            <field name="target_account_id"/>
+                            <field name="amount" invisible="operation_type == 'balance_adjustment'"/>
+                            <field name="before_balance" invisible="operation_type != 'balance_adjustment'"/>
+                            <field name="after_balance" invisible="operation_type != 'balance_adjustment'"/>
+                        </group>
+                    </group>
+                    <group string="说明">
+                        <field name="operation_reason"/>
+                        <field name="note"/>
+                    </group>
+                    <notebook>
+                        <page string="历史来源" groups="smart_construction_core.group_sc_cap_config_admin">
+                            <group>
+                                <field name="legacy_source_model"/>
+                                <field name="legacy_record_id"/>
+                                <field name="legacy_document_state"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_fund_transfer_out" model="ir.actions.act_window">
+        <field name="name">资金划拨</field>
+        <field name="res_model">sc.fund.account.operation</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_sc_fund_account_operation_search"/>
+        <field name="domain">[('operation_type', '=', 'transfer_out')]</field>
+        <field name="context">{'default_operation_type': 'transfer_out', 'search_default_type_transfer_out': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                       (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                       (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+
+    <record id="action_sc_fund_transfer_between" model="ir.actions.act_window">
+        <field name="name">资金调拨</field>
+        <field name="res_model">sc.fund.account.operation</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_sc_fund_account_operation_search"/>
+        <field name="domain">[('operation_type', '=', 'transfer_between')]</field>
+        <field name="context">{'default_operation_type': 'transfer_between', 'search_default_type_transfer_between': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                       (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                       (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+
+    <record id="action_sc_fund_balance_adjustment" model="ir.actions.act_window">
+        <field name="name">余额调整</field>
+        <field name="res_model">sc.fund.account.operation</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_sc_fund_account_operation_search"/>
+        <field name="domain">[('operation_type', '=', 'balance_adjustment')]</field>
+        <field name="context">{'default_operation_type': 'balance_adjustment', 'search_default_type_balance_adjustment': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                       (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                       (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+</odoo>

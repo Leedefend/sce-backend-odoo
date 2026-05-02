@@ -8,6 +8,7 @@
             <tree>
                 <field name="active" invisible="1"/>
                 <field name="name"/>
+                <field name="budget_kind"/>
                 <field name="project_id"/>
                 <field name="version"/>
                 <field name="version_date"/>
@@ -43,6 +44,7 @@
                 <sheet>
                     <group>
                         <field name="name"/>
+                        <field name="budget_kind"/>
                         <field name="project_id"/>
                         <field name="version"/>
                         <field name="version_date"/>
@@ -78,6 +80,60 @@
         <field name="name">项目预算</field>
         <field name="res_model">project.budget</field>
         <field name="view_mode">tree,form</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
+    </record>
+
+    <record id="action_project_budget_material" model="ir.actions.act_window">
+        <field name="name">物资预算</field>
+        <field name="res_model">project.budget</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('budget_kind', '=', 'material')]</field>
+        <field name="context">{'default_budget_kind': 'material'}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
+    </record>
+
+    <record id="action_project_budget_labor" model="ir.actions.act_window">
+        <field name="name">人工预算</field>
+        <field name="res_model">project.budget</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('budget_kind', '=', 'labor')]</field>
+        <field name="context">{'default_budget_kind': 'labor'}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
+    </record>
+
+    <record id="action_project_budget_machine" model="ir.actions.act_window">
+        <field name="name">机械预算</field>
+        <field name="res_model">project.budget</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('budget_kind', '=', 'machine')]</field>
+        <field name="context">{'default_budget_kind': 'machine'}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
+    </record>
+
+    <record id="action_project_budget_subcontract" model="ir.actions.act_window">
+        <field name="name">分包预算</field>
+        <field name="res_model">project.budget</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('budget_kind', '=', 'subcontract')]</field>
+        <field name="context">{'default_budget_kind': 'subcontract'}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
+    </record>
+
+    <record id="action_project_budget_measure" model="ir.actions.act_window">
+        <field name="name">措施费</field>
+        <field name="res_model">project.budget</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('budget_kind', '=', 'measure')]</field>
+        <field name="context">{'default_budget_kind': 'measure'}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
+    </record>
+
+    <record id="action_project_budget_tax" model="ir.actions.act_window">
+        <field name="name">税费</field>
+        <field name="res_model">project.budget</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('budget_kind', '=', 'tax')]</field>
+        <field name="context">{'default_budget_kind': 'tax'}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
     </record>
 

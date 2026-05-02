@@ -31,15 +31,20 @@ class ScConstructionDiary(models.Model):
     )
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True)
     date_diary = fields.Datetime(string="日志日期", default=fields.Datetime.now, index=True)
+    report_period_start = fields.Date(string="报表期间开始", index=True)
+    report_period_end = fields.Date(string="报表期间结束", index=True)
     document_no = fields.Char(string="来源单号", index=True)
     title = fields.Char(string="标题", index=True)
     diary_type = fields.Char(string="日志类型", index=True)
     category = fields.Char(string="分类", index=True)
     construction_unit = fields.Char(string="施工单位", index=True)
     project_manager = fields.Char(string="项目经理", index=True)
+    weather = fields.Char(string="天气")
+    manpower_count = fields.Integer(string="现场人数")
     quality_name = fields.Char(string="质量/事项", index=True)
     handler_name = fields.Char(string="经办人", index=True)
     description = fields.Text(string="日志内容")
+    next_plan = fields.Text(string="下步计划")
     header_description = fields.Text(string="单据说明")
     note = fields.Text(string="备注")
     legacy_source_model = fields.Char(string="历史来源模型", index=True, readonly=True)
@@ -79,6 +84,12 @@ class ScConstructionDiary(models.Model):
             if set(vals) - allowed:
                 raise UserError(_("历史迁移施工日志已确认，只允许补充备注。"))
         return super().write(vals)
+
+    @api.constrains("report_period_start", "report_period_end")
+    def _check_report_period_order(self):
+        for rec in self:
+            if rec.report_period_start and rec.report_period_end and rec.report_period_start > rec.report_period_end:
+                raise UserError(_("报表期间开始不能晚于报表期间结束。"))
 
     def action_confirm(self):
         for rec in self:

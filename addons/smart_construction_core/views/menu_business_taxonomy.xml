@@ -191,6 +191,42 @@
         <field name="context">{'default_claim_type': 'expense', 'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
     </record>
+    <record id="action_sc_expense_claim_advance_fund" model="ir.actions.act_window">
+        <field name="name">备用金</field>
+        <field name="res_model">sc.expense.claim</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_search"/>
+        <field name="domain">[('claim_type', '=', 'expense'), ('expense_type', '=', '备用金')]</field>
+        <field name="context">{'default_claim_type': 'expense', 'default_expense_type': '备用金', 'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+    </record>
+    <record id="action_sc_expense_claim_repayment" model="ir.actions.act_window">
+        <field name="name">还款单</field>
+        <field name="res_model">sc.expense.claim</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_search"/>
+        <field name="domain">[('claim_type', '=', 'expense'), ('expense_type', '=', '还款单')]</field>
+        <field name="context">{'default_claim_type': 'expense', 'default_expense_type': '还款单', 'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+    </record>
+    <record id="action_sc_expense_claim_project" model="ir.actions.act_window">
+        <field name="name">项目费用报销单</field>
+        <field name="res_model">sc.expense.claim</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_search"/>
+        <field name="domain">[('claim_type', '=', 'expense'), ('expense_type', '=', '项目费用报销单')]</field>
+        <field name="context">{'default_claim_type': 'expense', 'default_expense_type': '项目费用报销单', 'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+    </record>
+    <record id="action_sc_financing_loan_borrowing" model="ir.actions.act_window">
+        <field name="name">借款单</field>
+        <field name="res_model">sc.financing.loan</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_financing_loan_search"/>
+        <field name="domain">[('loan_type', '=', 'borrowing_request')]</field>
+        <field name="context">{'default_loan_type': 'borrowing_request', 'default_direction': 'borrowed_fund', 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+    </record>
     <record id="action_sc_expense_claim_deposit" model="ir.actions.act_window">
         <field name="name">保证金管理</field>
         <field name="res_model">sc.expense.claim</field>
@@ -572,6 +608,12 @@
               action="smart_construction_core.action_project_funding_baseline"
               sequence="10"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_funding_plan_summary"
+              name="资金计划汇总"
+              parent="smart_construction_core.menu_sc_funding_plan_group"
+              action="smart_construction_core.action_project_funding_baseline_summary"
+              sequence="20"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
     <menuitem id="menu_sc_expense_reimbursement_group"
               name="费用报销"
@@ -635,6 +677,24 @@
         <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
         <field name="sequence">40</field>
     </record>
+    <menuitem id="menu_sc_fund_transfer_out"
+              name="资金划拨"
+              parent="smart_construction_core.menu_sc_fund_account_group"
+              action="smart_construction_core.action_sc_fund_transfer_out"
+              sequence="45"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_fund_transfer_between"
+              name="资金调拨"
+              parent="smart_construction_core.menu_sc_fund_account_group"
+              action="smart_construction_core.action_sc_fund_transfer_between"
+              sequence="46"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_fund_balance_adjustment"
+              name="余额调整"
+              parent="smart_construction_core.menu_sc_fund_account_group"
+              action="smart_construction_core.action_sc_fund_balance_adjustment"
+              sequence="47"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <record id="menu_sc_fund_daily" model="ir.ui.menu">
         <field name="name">资金日报表</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>

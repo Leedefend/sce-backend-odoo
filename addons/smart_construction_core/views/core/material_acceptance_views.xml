@@ -42,6 +42,51 @@
         <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
+    <record id="view_sc_material_settlement_line_search" model="ir.ui.view">
+        <field name="name">sc.material.settlement.line.search</field>
+        <field name="model">sc.material.settlement.line</field>
+        <field name="arch" type="xml">
+            <search string="材料结算明细表">
+                <field name="settlement_id"/>
+                <field name="project_id"/>
+                <field name="product_id"/>
+                <field name="material_catalog_id"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按材料" name="group_product" context="{'group_by': 'product_id'}"/>
+                <filter string="按结算单" name="group_settlement" context="{'group_by': 'settlement_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_material_settlement_line_tree" model="ir.ui.view">
+        <field name="name">sc.material.settlement.line.tree</field>
+        <field name="model">sc.material.settlement.line</field>
+        <field name="arch" type="xml">
+            <tree string="材料结算明细表">
+                <field name="settlement_id"/>
+                <field name="project_id"/>
+                <field name="product_id"/>
+                <field name="material_catalog_id"/>
+                <field name="material_spec"/>
+                <field name="product_uom_id"/>
+                <field name="qty" sum="结算数量合计"/>
+                <field name="unit_price"/>
+                <field name="tax_rate"/>
+                <field name="amount_untaxed" sum="未税金额合计"/>
+                <field name="tax_amount" sum="税额合计"/>
+                <field name="amount_total" sum="含税金额合计"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_sc_material_settlement_line" model="ir.actions.act_window">
+        <field name="name">材料结算明细表</field>
+        <field name="res_model">sc.material.settlement.line</field>
+        <field name="view_mode">tree,pivot,graph</field>
+        <field name="search_view_id" ref="view_sc_material_settlement_line_search"/>
+        <field name="context">{'search_default_group_project': 1}</field>
+    </record>
+
     <record id="view_sc_material_purchase_request_tree" model="ir.ui.view">
         <field name="name">sc.material.purchase.request.tree</field>
         <field name="model">sc.material.purchase.request</field>

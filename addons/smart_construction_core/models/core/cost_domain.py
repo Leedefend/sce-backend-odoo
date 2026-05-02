@@ -19,6 +19,21 @@ class ProjectBudget(models.Model):
     _order = "project_id, version_date desc, id desc"
 
     name = fields.Char("预算名称", required=True)
+    budget_kind = fields.Selection(
+        [
+            ("general", "综合预算"),
+            ("material", "物资预算"),
+            ("labor", "人工预算"),
+            ("machine", "机械预算"),
+            ("subcontract", "分包预算"),
+            ("measure", "措施费"),
+            ("tax", "税费"),
+        ],
+        string="预算业务分类",
+        default="general",
+        required=True,
+        index=True,
+    )
     project_id = fields.Many2one(
         "project.project",
         string="项目",
@@ -69,6 +84,9 @@ class ProjectBudget(models.Model):
     )
 
     note = fields.Text("说明")
+    legacy_source_model = fields.Char("历史来源模型", index=True, readonly=True)
+    legacy_record_id = fields.Char("历史记录ID", index=True, readonly=True)
+    legacy_document_state = fields.Char("历史状态", index=True, readonly=True)
 
     line_ids = fields.One2many(
         "project.budget.boq.line",

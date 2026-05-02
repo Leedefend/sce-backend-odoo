@@ -80,6 +80,14 @@
         <field name="company_id" eval="False"/>
     </record>
 
+    <record id="seq_sc_fund_account_operation" model="ir.sequence">
+        <field name="name">资金账户操作单</field>
+        <field name="code">sc.fund.account.operation</field>
+        <field name="prefix">FAO%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
     <record id="seq_sc_receipt_income" model="ir.sequence">
         <field name="name">收款收入登记</field>
         <field name="code">sc.receipt.income</field>
@@ -300,6 +308,30 @@
         <field name="name">分包申请</field>
         <field name="code">sc.subcontract.request</field>
         <field name="prefix">SRQ%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_sc_subcontract_register" model="ir.sequence">
+        <field name="name">分包登记</field>
+        <field name="code">sc.subcontract.register</field>
+        <field name="prefix">SRG%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_sc_subcontract_settlement" model="ir.sequence">
+        <field name="name">分包结算</field>
+        <field name="code">sc.subcontract.settlement</field>
+        <field name="prefix">SST%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_sc_subcontract_price" model="ir.sequence">
+        <field name="name">分包价格</field>
+        <field name="code">sc.subcontract.price</field>
+        <field name="prefix">SPR%(y)s</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>

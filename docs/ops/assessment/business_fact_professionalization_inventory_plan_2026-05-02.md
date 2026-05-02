@@ -259,6 +259,9 @@ Scope: 基于 `项目建设-产品功能清单（0301 ）.xlsx`，对当前 `sc.
 | WP17 设备价格库 | `sc.equipment.price` | `models/core/equipment_management.py`、`views/core/equipment_management_views.xml` | 从 `sc.equipment.document(equipment_price_library)` 拆出设备价格标准；现有“设备价格库”入口只维护设备、供应单位、计价单位、单价、税率和生效期，不再混入设备计划、申请、使用登记或结算单据 |
 | WP18 分包计划 | `sc.subcontract.plan`、`sc.subcontract.plan.line` | `models/core/subcontract_management.py`、`views/core/subcontract_management_views.xml` | 从 `sc.subcontract.document(subcontract_plan)` 拆出分包计划专业动作；现有“分包计划”入口只承载计划范围、计划周期、建议分包单位和预计金额，不再混入分包申请、登记、结算或价格库 |
 | WP19 分包申请 | `sc.subcontract.request`、`sc.subcontract.request.line` | `models/core/subcontract_management.py`、`views/core/subcontract_management_views.xml` | 从 `sc.subcontract.document(subcontract_request)` 拆出分包申请专业动作；现有“分包申请”入口只承载分包需求发起、需用日期、申请范围和申请明细，不再混入分包计划、登记、结算或价格库 |
+| WP20 分包登记 | `sc.subcontract.register`、`sc.subcontract.register.line` | `models/core/subcontract_management.py`、`views/core/subcontract_management_views.xml` | 从 `sc.subcontract.document(subcontract_register)` 拆出分包登记专业动作；现有“分包登记”入口只承载实际分包单位、登记日期、履约周期、合同关系和登记明细，不再混入分包计划、申请、结算或价格库 |
+| WP21 分包结算 | `sc.subcontract.settlement`、`sc.subcontract.settlement.line` | `models/core/subcontract_management.py`、`views/core/subcontract_management_views.xml` | 从 `sc.subcontract.document(subcontract_settlement)` 拆出分包结算专业动作；现有“分包结算”入口只承载分包单位、结算日期、结算明细和金额确认，不再混入分包计划、申请、登记或价格库 |
+| WP22 分包价格库 | `sc.subcontract.price` | `models/core/subcontract_management.py`、`views/core/subcontract_management_views.xml` | 从 `sc.subcontract.document(subcontract_price_library)` 拆出分包价格标准；现有“分包价格库”入口只维护分包单位、工作范围、计价单位、单价、税率和生效期，不再混入分包计划、申请、登记或结算单据 |
 
 ## 6. 不再建议投入的方向
 
