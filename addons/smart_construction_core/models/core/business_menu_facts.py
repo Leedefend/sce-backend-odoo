@@ -711,7 +711,7 @@ class ScBusinessMenuTaxonomySeed(models.AbstractModel):
                 },
                 "专业分包": {
                     "分包计划": "smart_construction_core.action_sc_subcontract_plan",
-                    "分包申请": f("sc.subcontract.document", "subcontract_request"),
+                    "分包申请": "smart_construction_core.action_sc_subcontract_request",
                     "分包登记": f("sc.subcontract.document", "subcontract_register"),
                     "分包结算": f("sc.subcontract.document", "subcontract_settlement"),
                     "分包价格库": f("sc.subcontract.document", "subcontract_price_library"),
