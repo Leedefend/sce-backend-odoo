@@ -245,6 +245,7 @@ Scope: 基于 `项目建设-产品功能清单（0301 ）.xlsx`，对当前 `sc.
 | WP3 计划主干 | `sc.plan`、`sc.plan.line`、`sc.plan.version`、`sc.plan.report`、`sc.plan.warning.log` | `models/core/plan_management.py`、`views/core/plan_management_views.xml` | 替代任务/报表对计划需求的弱承载 |
 | WP4 合同履约事件 | 变更、签证、认质认价、调差、索赔、产值申报 | `models/core/contract_event.py`、`views/core/contract_event_views.xml` | 关联 `construction.contract`、`project.cost.code`、结算/付款 |
 | WP5 映射与迁移 | 通用源模型到专业模型的映射、迁移 wizard | `docs/contract/*`、`wizard/*professionalization*` | 保证历史数据和菜单入口不断链 |
+| WP6 材料进场验收 | `sc.material.acceptance`、`sc.material.acceptance.line` | `models/core/material_acceptance.py`、`views/core/material_acceptance_views.xml` | 从 `sc.material.document(inbound)` 拆出入库前验收语义，先接管现有“入库单”入口 |
 
 ## 6. 不再建议投入的方向
 

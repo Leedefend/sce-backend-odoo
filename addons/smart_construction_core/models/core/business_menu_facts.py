@@ -689,7 +689,7 @@ class ScBusinessMenuTaxonomySeed(models.AbstractModel):
                     "采购申请": f("sc.material.document", "purchase_request"),
                     "询比价": f("sc.material.document", "rfq"),
                     "采购订单": "smart_construction_core.action_sc_purchase_order",
-                    "入库单": f("sc.material.document", "inbound"),
+                    "入库单": "smart_construction_core.action_sc_material_acceptance",
                     "出库单": f("sc.material.document", "outbound"),
                     "材料结算": f("sc.material.document", "settlement"),
                     "材料价格库": "smart_construction_core.action_sc_material_product_template",

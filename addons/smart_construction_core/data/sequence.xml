@@ -167,4 +167,12 @@
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
+
+    <record id="seq_sc_material_acceptance" model="ir.sequence">
+        <field name="name">材料进场验收</field>
+        <field name="code">sc.material.acceptance</field>
+        <field name="prefix">MA%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
 </odoo>

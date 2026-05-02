@@ -452,6 +452,72 @@
             <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
         </record>
 
+        <record id="rule_sc_material_read_acceptance" model="ir.rule">
+            <field name="name">SC Material Read - sc.material.acceptance by project member</field>
+            <field name="model_id" ref="model_sc_material_acceptance"/>
+            <field name="domain_force">['|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read'))]"/>
+        </record>
+
+        <record id="rule_sc_material_user_acceptance" model="ir.rule">
+            <field name="name">SC Material User - sc.material.acceptance own or project member</field>
+            <field name="model_id" ref="model_sc_material_acceptance"/>
+            <field name="domain_force">['|','|', ('create_uid', '=', user.id), ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_material_user'))]"/>
+        </record>
+
+        <record id="rule_sc_material_manager_acceptance" model="ir.rule">
+            <field name="name">SC Material Manager - sc.material.acceptance ALL</field>
+            <field name="model_id" ref="model_sc_material_acceptance"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
+        </record>
+
+        <record id="rule_sc_material_read_acceptance_line" model="ir.rule">
+            <field name="name">SC Material Read - sc.material.acceptance.line by project member</field>
+            <field name="model_id" ref="model_sc_material_acceptance_line"/>
+            <field name="domain_force">['|', ('acceptance_id.project_id.user_id', '=', user.id), ('acceptance_id.project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read'))]"/>
+        </record>
+
+        <record id="rule_sc_material_user_acceptance_line" model="ir.rule">
+            <field name="name">SC Material User - sc.material.acceptance.line own or project member</field>
+            <field name="model_id" ref="model_sc_material_acceptance_line"/>
+            <field name="domain_force">['|','|', ('acceptance_id.create_uid', '=', user.id), ('acceptance_id.project_id.user_id', '=', user.id), ('acceptance_id.project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_material_user'))]"/>
+        </record>
+
+        <record id="rule_sc_material_manager_acceptance_line" model="ir.rule">
+            <field name="name">SC Material Manager - sc.material.acceptance.line ALL</field>
+            <field name="model_id" ref="model_sc_material_acceptance_line"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
+        </record>
+
         <!-- =========================================================
              结算中心：结算单 record rules
              - read/user: 仅限负责或关注的项目
