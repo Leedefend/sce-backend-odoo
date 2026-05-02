@@ -1,0 +1,761 @@
+<odoo>
+    <!--
+        Business menu taxonomy v1.
+        This file only reorganizes existing business facts/actions. Requested
+        entries without a real model/action are intentionally not exposed here.
+    -->
+
+    <record id="menu_sc_root" model="ir.ui.menu">
+        <field name="name">智慧施工管理平台</field>
+        <field name="sequence">30</field>
+        <field name="action" eval="False"/>
+        <field name="groups_id" eval="[(5, 0, 0)]"/>
+    </record>
+
+    <!-- Top-level centers -->
+    <record id="menu_sc_projection_root" model="ir.ui.menu">
+        <field name="name">智慧大屏</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
+        <field name="sequence">5</field>
+        <field name="action" eval="False"/>
+        <field name="groups_id" eval="[(5, 0, 0)]"/>
+    </record>
+
+    <menuitem id="menu_sc_workspace_center"
+              name="工作台"
+              parent="smart_construction_core.menu_sc_root"
+              sequence="10"/>
+
+    <record id="menu_sc_project_center" model="ir.ui.menu">
+        <field name="name">项目中心</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
+        <field name="sequence">20</field>
+        <field name="action" eval="False"/>
+        <field name="groups_id" eval="[(5, 0, 0)]"/>
+    </record>
+
+    <record id="menu_sc_contract_center" model="ir.ui.menu">
+        <field name="name">合同中心</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
+        <field name="sequence">30</field>
+        <field name="action" eval="False"/>
+        <field name="groups_id" eval="[(5, 0, 0)]"/>
+    </record>
+
+    <record id="menu_sc_material_center" model="ir.ui.menu">
+        <field name="name">物资与分包</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
+        <field name="sequence">40</field>
+        <field name="action" eval="False"/>
+        <field name="groups_id" eval="[(5, 0, 0)]"/>
+    </record>
+
+    <menuitem id="menu_sc_construction_management_center"
+              name="施工管理"
+              parent="smart_construction_core.menu_sc_root"
+              sequence="50"/>
+
+    <record id="menu_sc_cost_center" model="ir.ui.menu">
+        <field name="name">成本中心</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
+        <field name="sequence">60</field>
+        <field name="action" eval="False"/>
+        <field name="groups_id" eval="[(5, 0, 0)]"/>
+    </record>
+
+    <record id="menu_sc_finance_center" model="ir.ui.menu">
+        <field name="name">财务中心</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
+        <field name="sequence">70</field>
+        <field name="action" eval="False"/>
+        <field name="groups_id" eval="[(5, 0, 0)]"/>
+    </record>
+
+    <record id="menu_sc_data_center" model="ir.ui.menu">
+        <field name="name">统计分析</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
+        <field name="sequence">80</field>
+        <field name="action" eval="False"/>
+        <field name="groups_id" eval="[(5, 0, 0)]"/>
+    </record>
+
+    <record id="menu_sc_business_config_center" model="ir.ui.menu">
+        <field name="name">基础设置</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
+        <field name="sequence">90</field>
+        <field name="action" eval="False"/>
+        <field name="groups_id" eval="[(5, 0, 0)]"/>
+    </record>
+
+    <record id="menu_sc_config_center" model="ir.ui.menu">
+        <field name="name">系统权限</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
+        <field name="sequence">90</field>
+        <field name="action" eval="False"/>
+    </record>
+
+    <!-- Reusable business actions for taxonomy-specific entries. -->
+    <record id="action_sc_tender_prepare" model="ir.actions.act_window">
+        <field name="name">投标准备</field>
+        <field name="res_model">tender.bid</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_tender_bid_search"/>
+        <field name="domain">[('state', 'in', ['prepare', 'estimating', 'submitted'])]</field>
+        <field name="context">{'default_state': 'prepare'}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
+    </record>
+    <record id="action_sc_tender_opening" model="ir.actions.act_window">
+        <field name="name">开标记录</field>
+        <field name="res_model">tender.opening</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_tender_opening_search"/>
+        <field name="context">{'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+    </record>
+    <record id="action_sc_tender_won" model="ir.actions.act_window">
+        <field name="name">中标记录</field>
+        <field name="res_model">tender.bid</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_tender_bid_search"/>
+        <field name="domain">[('state', '=', 'won')]</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
+    </record>
+    <record id="action_sc_tender_guarantee" model="ir.actions.act_window">
+        <field name="name">投标保证金</field>
+        <field name="res_model">tender.guarantee</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_tender_guarantee_search"/>
+        <field name="context">{'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+    </record>
+    <record id="action_construction_contract_income_execution" model="ir.actions.act_window">
+        <field name="name">收入合同执行</field>
+        <field name="res_model">construction.contract</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_construction_contract_search"/>
+        <field name="domain">[('type', '=', 'out'), ('state', 'in', ['confirmed', 'running'])]</field>
+        <field name="context">{'default_type': 'out'}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+    </record>
+    <record id="action_construction_contract_expense_execution" model="ir.actions.act_window">
+        <field name="name">支出合同执行</field>
+        <field name="res_model">construction.contract</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_construction_contract_search"/>
+        <field name="domain">[('type', '=', 'in'), ('state', 'in', ['confirmed', 'running'])]</field>
+        <field name="context">{'default_type': 'in'}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+    </record>
+    <record id="action_sc_settlement_order_income" model="ir.actions.act_window">
+        <field name="name">收入合同结算</field>
+        <field name="res_model">sc.settlement.order</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_settlement_order_search"/>
+        <field name="domain">[('settlement_type', '=', 'in')]</field>
+        <field name="context">{'default_settlement_type': 'in', 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_read'))]"/>
+    </record>
+    <record id="action_sc_settlement_order_expense" model="ir.actions.act_window">
+        <field name="name">支出合同结算</field>
+        <field name="res_model">sc.settlement.order</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_settlement_order_search"/>
+        <field name="domain">[('settlement_type', '=', 'out')]</field>
+        <field name="context">{'default_settlement_type': 'out', 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_read'))]"/>
+    </record>
+    <record id="action_sc_invoice_output" model="ir.actions.act_window">
+        <field name="name">销项发票</field>
+        <field name="res_model">sc.invoice.registration</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_registration_search"/>
+        <field name="domain">[('direction', '=', 'output')]</field>
+        <field name="context">{'default_direction': 'output', 'default_source_kind': 'output_invoice_tax', 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+    </record>
+    <record id="action_sc_invoice_input" model="ir.actions.act_window">
+        <field name="name">进项发票</field>
+        <field name="res_model">sc.invoice.registration</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_registration_search"/>
+        <field name="domain">[('direction', '=', 'input')]</field>
+        <field name="context">{'default_direction': 'input', 'default_source_kind': 'input_invoice_tax', 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+    </record>
+    <record id="action_sc_expense_claim_expense" model="ir.actions.act_window">
+        <field name="name">费用报销单</field>
+        <field name="res_model">sc.expense.claim</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_search"/>
+        <field name="domain">[('claim_type', '=', 'expense')]</field>
+        <field name="context">{'default_claim_type': 'expense', 'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+    </record>
+    <record id="action_sc_expense_claim_deposit" model="ir.actions.act_window">
+        <field name="name">保证金管理</field>
+        <field name="res_model">sc.expense.claim</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_search"/>
+        <field name="domain">[('claim_type', 'in', ['deposit_pay', 'deposit_refund', 'deposit_receive'])]</field>
+        <field name="context">{'default_claim_type': 'deposit_pay', 'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+    </record>
+    <record id="action_sc_customer_partner" model="ir.actions.act_window">
+        <field name="name">客户</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('customer_rank', '&gt;', 0)]</field>
+        <field name="context">{'default_customer_rank': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contact_manager'))]"/>
+    </record>
+    <record id="action_sc_supplier_partner" model="ir.actions.act_window">
+        <field name="name">供应商</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('supplier_rank', '&gt;', 0)]</field>
+        <field name="context">{'default_supplier_rank': 1, 'default_is_company': True}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contact_manager'))]"/>
+    </record>
+
+    <!-- 智慧大屏 -->
+    <record id="menu_sc_operating_metrics_project" model="ir.ui.menu">
+        <field name="name">经营驾驶舱</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_projection_root"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="menu_sc_project_dashboard" model="ir.ui.menu">
+        <field name="name">项目驾驶舱</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_projection_root"/>
+        <field name="sequence">20</field>
+    </record>
+
+    <!-- 工作台 -->
+    <record id="menu_sc_history_todo" model="ir.ui.menu">
+        <field name="name">我的待办</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_workspace_center"/>
+        <field name="sequence">10</field>
+    </record>
+    <menuitem id="menu_sc_workspace_my_project"
+              name="我的项目"
+              parent="smart_construction_core.menu_sc_workspace_center"
+              action="smart_construction_core.action_sc_project_my_list"
+              sequence="20"
+              groups="smart_construction_core.group_sc_cap_project_read"/>
+
+    <!-- 项目中心 / 项目管理 -->
+    <menuitem id="menu_sc_project_management_group"
+              name="项目管理"
+              parent="smart_construction_core.menu_sc_project_center"
+              sequence="10"/>
+    <record id="menu_sc_project_initiation" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_project_management_group"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="menu_sc_project_quick_create" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_project_management_group"/>
+        <field name="sequence">15</field>
+    </record>
+    <record id="menu_sc_project_project" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_project_management_group"/>
+        <field name="sequence">20</field>
+    </record>
+    <record id="menu_sc_project_wbs" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_project_management_group"/>
+        <field name="sequence">25</field>
+    </record>
+    <menuitem id="menu_sc_project_kanban"
+              name="项目看板"
+              parent="smart_construction_core.menu_sc_project_management_group"
+              action="smart_construction_core.action_project_dashboard"
+              sequence="30"
+              groups="smart_construction_core.group_sc_cap_project_read"/>
+    <record id="menu_sc_project_management_scene" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_project_management_group"/>
+        <field name="sequence">35</field>
+    </record>
+    <record id="menu_sc_project_documents" model="ir.ui.menu">
+        <field name="name">项目资料</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_project_management_group"/>
+        <field name="sequence">40</field>
+    </record>
+    <record id="menu_sc_project_work_breakdown" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_project_management_group"/>
+        <field name="sequence">50</field>
+    </record>
+    <record id="menu_sc_project_structure_wbs" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_project_management_group"/>
+        <field name="sequence">60</field>
+    </record>
+    <record id="menu_sc_project_manage" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_config_center"/>
+        <field name="sequence">40</field>
+    </record>
+
+    <!-- 项目中心 / 投标管理 -->
+    <menuitem id="menu_sc_tender_management_group"
+              name="投标管理"
+              parent="smart_construction_core.menu_sc_project_center"
+              sequence="20"/>
+    <record id="menu_sc_project_tender" model="ir.ui.menu">
+        <field name="name">投标项目</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_tender_management_group"/>
+        <field name="sequence">10</field>
+    </record>
+    <menuitem id="menu_sc_tender_prepare"
+              name="投标准备"
+              parent="smart_construction_core.menu_sc_tender_management_group"
+              action="smart_construction_core.action_sc_tender_prepare"
+              sequence="20"
+              groups="smart_construction_core.group_sc_cap_project_read"/>
+    <menuitem id="menu_sc_tender_opening"
+              name="开标记录"
+              parent="smart_construction_core.menu_sc_tender_management_group"
+              action="smart_construction_core.action_sc_tender_opening"
+              sequence="30"
+              groups="smart_construction_core.group_sc_cap_project_user,smart_construction_core.group_sc_cap_project_manager"/>
+    <menuitem id="menu_sc_tender_won"
+              name="中标记录"
+              parent="smart_construction_core.menu_sc_tender_management_group"
+              action="smart_construction_core.action_sc_tender_won"
+              sequence="40"
+              groups="smart_construction_core.group_sc_cap_project_read"/>
+    <menuitem id="menu_sc_tender_guarantee"
+              name="投标保证金"
+              parent="smart_construction_core.menu_sc_tender_management_group"
+              action="smart_construction_core.action_sc_tender_guarantee"
+              sequence="50"
+              groups="smart_construction_core.group_sc_cap_project_user,smart_construction_core.group_sc_cap_project_manager"/>
+
+    <!-- 项目中心 / 项目预算 -->
+    <menuitem id="menu_sc_project_budget_group"
+              name="项目预算"
+              parent="smart_construction_core.menu_sc_project_center"
+              sequence="30"/>
+    <record id="menu_sc_project_budget_center" model="ir.ui.menu">
+        <field name="name">预算清单</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_project_budget_group"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="menu_sc_project_boq_root" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_project_budget_group"/>
+        <field name="sequence">20</field>
+    </record>
+
+    <!-- 项目中心 / 施工资料 -->
+    <record id="menu_sc_doc_center" model="ir.ui.menu">
+        <field name="name">施工资料</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_project_center"/>
+        <field name="sequence">40</field>
+        <field name="action" eval="False"/>
+        <field name="groups_id" eval="[(5, 0, 0)]"/>
+    </record>
+    <menuitem id="menu_sc_site_documents"
+              name="现场资料"
+              parent="smart_construction_core.menu_sc_doc_center"
+              action="smart_construction_core.action_sc_project_document"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_project_read"/>
+
+    <!-- 合同中心 -->
+    <menuitem id="menu_sc_income_contract_group"
+              name="收入合同"
+              parent="smart_construction_core.menu_sc_contract_center"
+              sequence="10"/>
+    <record id="menu_sc_construction_contract" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_income_contract_group"/>
+        <field name="sequence">5</field>
+    </record>
+    <record id="menu_sc_contract_income" model="ir.ui.menu">
+        <field name="name">收入合同台账</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_income_contract_group"/>
+        <field name="sequence">10</field>
+    </record>
+    <menuitem id="menu_sc_income_contract_variation"
+              name="收入合同签证"
+              parent="smart_construction_core.menu_sc_income_contract_group"
+              action="smart_construction_core.action_sc_settlement_adjustment"
+              sequence="20"
+              groups="smart_construction_core.group_sc_cap_settlement_read"/>
+    <menuitem id="menu_sc_income_contract_execution"
+              name="收入合同执行"
+              parent="smart_construction_core.menu_sc_income_contract_group"
+              action="smart_construction_core.action_construction_contract_income_execution"
+              sequence="30"
+              groups="smart_construction_core.group_sc_cap_contract_read"/>
+    <menuitem id="menu_sc_income_contract_settlement"
+              name="收入合同结算"
+              parent="smart_construction_core.menu_sc_income_contract_group"
+              action="smart_construction_core.action_sc_settlement_order_income"
+              sequence="40"
+              groups="smart_construction_core.group_sc_cap_settlement_read"/>
+    <menuitem id="menu_sc_expense_contract_group"
+              name="支出合同"
+              parent="smart_construction_core.menu_sc_contract_center"
+              sequence="20"/>
+    <record id="menu_sc_general_contract" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_expense_contract_group"/>
+        <field name="sequence">5</field>
+    </record>
+    <record id="menu_sc_contract_expense" model="ir.ui.menu">
+        <field name="name">支出合同台账</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_expense_contract_group"/>
+        <field name="sequence">10</field>
+    </record>
+    <menuitem id="menu_sc_expense_contract_variation"
+              name="支出合同签证"
+              parent="smart_construction_core.menu_sc_expense_contract_group"
+              action="smart_construction_core.action_sc_settlement_adjustment"
+              sequence="20"
+              groups="smart_construction_core.group_sc_cap_settlement_read"/>
+    <menuitem id="menu_sc_expense_contract_execution"
+              name="支出合同执行"
+              parent="smart_construction_core.menu_sc_expense_contract_group"
+              action="smart_construction_core.action_construction_contract_expense_execution"
+              sequence="30"
+              groups="smart_construction_core.group_sc_cap_contract_read"/>
+    <menuitem id="menu_sc_expense_contract_settlement"
+              name="支出合同结算"
+              parent="smart_construction_core.menu_sc_expense_contract_group"
+              action="smart_construction_core.action_sc_settlement_order_expense"
+              sequence="40"
+              groups="smart_construction_core.group_sc_cap_settlement_read"/>
+    <record id="menu_sc_legacy_purchase_contract_fact" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_expense_contract_group"/>
+        <field name="sequence">90</field>
+    </record>
+
+    <!-- 物资与分包 -->
+    <menuitem id="menu_sc_material_management_group"
+              name="物资管理"
+              parent="smart_construction_core.menu_sc_material_center"
+              sequence="10"/>
+    <record id="menu_project_material_plan" model="ir.ui.menu">
+        <field name="name">材料计划</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_material_management_group"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="menu_sc_purchase_order" model="ir.ui.menu">
+        <field name="name">采购订单</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_material_management_group"/>
+        <field name="sequence">40</field>
+    </record>
+    <menuitem id="menu_sc_material_price_library"
+              name="材料价格库"
+              parent="smart_construction_core.menu_sc_material_management_group"
+              action="smart_construction_core.action_sc_material_product_template"
+              sequence="80"
+              groups="smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
+    <record id="menu_sc_legacy_material_category" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_material_management_group"/>
+        <field name="sequence">90</field>
+    </record>
+    <menuitem id="menu_sc_labor_management_group"
+              name="劳务管理"
+              parent="smart_construction_core.menu_sc_material_center"
+              sequence="20"/>
+    <menuitem id="menu_sc_equipment_management_group"
+              name="机械设备"
+              parent="smart_construction_core.menu_sc_material_center"
+              sequence="30"/>
+    <menuitem id="menu_sc_subcontract_management_group"
+              name="专业分包"
+              parent="smart_construction_core.menu_sc_material_center"
+              sequence="40"/>
+
+    <!-- 施工管理 -->
+    <menuitem id="menu_sc_construction_progress"
+              name="进度管理"
+              parent="smart_construction_core.menu_sc_construction_management_center"
+              action="smart_construction_core.action_project_progress_entry"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
+    <record id="menu_sc_construction_diary" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_construction_management_center"/>
+        <field name="sequence">60</field>
+    </record>
+
+    <!-- 成本中心 -->
+    <record id="menu_sc_project_budget" model="ir.ui.menu">
+        <field name="name">目标成本</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_cost_center"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="menu_sc_budget_alloc" model="ir.ui.menu">
+        <field name="sequence">20</field>
+    </record>
+    <record id="menu_sc_project_progress" model="ir.ui.menu">
+        <field name="name">进度计量</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_cost_center"/>
+        <field name="sequence">30</field>
+    </record>
+    <record id="menu_sc_project_cost_ledger" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_cost_center"/>
+        <field name="sequence">40</field>
+    </record>
+    <record id="menu_sc_cost_reports" model="ir.ui.menu">
+        <field name="name">成本汇总</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_cost_center"/>
+        <field name="sequence">50</field>
+        <field name="action" eval="False"/>
+    </record>
+    <record id="menu_sc_profit_reports" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_cost_center"/>
+        <field name="sequence">60</field>
+    </record>
+
+    <!-- 财务中心 -->
+    <menuitem id="menu_sc_receipt_payment_group"
+              name="收付款管理"
+              parent="smart_construction_core.menu_sc_finance_center"
+              sequence="10"/>
+    <record id="menu_sc_receipt_income" model="ir.ui.menu">
+        <field name="name">收款登记</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="menu_payment_request_receive" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
+        <field name="sequence">15</field>
+    </record>
+    <record id="menu_payment_request" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
+        <field name="sequence">20</field>
+    </record>
+    <record id="menu_payment_request_line" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
+        <field name="sequence">25</field>
+    </record>
+    <record id="menu_sc_payment_execution" model="ir.ui.menu">
+        <field name="name">付款登记</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
+        <field name="sequence">30</field>
+    </record>
+    <record id="menu_sc_settlement_center" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
+        <field name="sequence">40</field>
+    </record>
+
+    <menuitem id="menu_sc_invoice_management_group"
+              name="发票管理"
+              parent="smart_construction_core.menu_sc_finance_center"
+              sequence="20"/>
+    <record id="menu_sc_invoice_registration" model="ir.ui.menu">
+        <field name="name">开票申请</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_invoice_management_group"/>
+        <field name="sequence">10</field>
+    </record>
+    <menuitem id="menu_sc_invoice_output"
+              name="销项发票"
+              parent="smart_construction_core.menu_sc_invoice_management_group"
+              action="smart_construction_core.action_sc_invoice_output"
+              sequence="20"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_invoice_input"
+              name="进项发票"
+              parent="smart_construction_core.menu_sc_invoice_management_group"
+              action="smart_construction_core.action_sc_invoice_input"
+              sequence="30"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <record id="menu_receipt_invoice_line" model="ir.ui.menu">
+        <field name="name">收款发票</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_invoice_management_group"/>
+        <field name="sequence">40</field>
+    </record>
+
+    <menuitem id="menu_sc_funding_plan_group"
+              name="资金计划"
+              parent="smart_construction_core.menu_sc_finance_center"
+              sequence="30"/>
+    <menuitem id="menu_sc_funding_plan_declaration"
+              name="资金计划申报"
+              parent="smart_construction_core.menu_sc_funding_plan_group"
+              action="smart_construction_core.action_project_funding_baseline"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+
+    <menuitem id="menu_sc_expense_reimbursement_group"
+              name="费用报销"
+              parent="smart_construction_core.menu_sc_finance_center"
+              sequence="40"/>
+    <record id="menu_sc_expense_claim" model="ir.ui.menu">
+        <field name="name">费用报销单</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_expense_reimbursement_group"/>
+        <field name="sequence">40</field>
+        <field name="action" ref="smart_construction_core.action_sc_expense_claim_expense"/>
+    </record>
+    <menuitem id="menu_sc_deposit_management_group"
+              name="保证金管理"
+              parent="smart_construction_core.menu_sc_finance_center"
+              sequence="60"/>
+    <menuitem id="menu_sc_bid_deposit_pay"
+              name="投标保证金缴纳"
+              parent="smart_construction_core.menu_sc_deposit_management_group"
+              action="smart_construction_core.action_sc_expense_claim_deposit"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_bid_deposit_return"
+              name="投标保证金退回"
+              parent="smart_construction_core.menu_sc_deposit_management_group"
+              action="smart_construction_core.action_sc_expense_claim_deposit"
+              sequence="20"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_contract_deposit_register"
+              name="合同保证金登记"
+              parent="smart_construction_core.menu_sc_deposit_management_group"
+              action="smart_construction_core.action_sc_expense_claim_deposit"
+              sequence="30"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_contract_deposit_return"
+              name="合同保证金退回"
+              parent="smart_construction_core.menu_sc_deposit_management_group"
+              action="smart_construction_core.action_sc_expense_claim_deposit"
+              sequence="40"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+
+    <menuitem id="menu_sc_fund_account_group"
+              name="资金账户"
+              parent="smart_construction_core.menu_sc_finance_center"
+              sequence="50"/>
+    <record id="menu_sc_legacy_account_master" model="ir.ui.menu">
+        <field name="name">账户管理</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
+        <field name="action" ref="smart_construction_core.action_sc_fund_account"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="menu_sc_treasury_reconciliation" model="ir.ui.menu">
+        <field name="name">资金对账</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
+        <field name="sequence">20</field>
+    </record>
+    <record id="menu_sc_legacy_account_transaction_line" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
+        <field name="sequence">30</field>
+    </record>
+    <record id="menu_sc_financing_loan" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
+        <field name="sequence">40</field>
+    </record>
+    <record id="menu_sc_fund_daily" model="ir.ui.menu">
+        <field name="name">资金日报表</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
+        <field name="action" ref="smart_construction_core.action_sc_fund_daily_summary"/>
+        <field name="sequence">50</field>
+    </record>
+    <record id="menu_sc_finance_history_center" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_config_center"/>
+        <field name="sequence">80</field>
+    </record>
+
+    <!-- 统计分析 -->
+    <menuitem id="menu_sc_business_analysis_group"
+              name="经营分析"
+              parent="smart_construction_core.menu_sc_data_center"
+              sequence="10"/>
+    <record id="menu_sc_project_contract_overview" model="ir.ui.menu">
+        <field name="name">合同执行表</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_business_analysis_group"/>
+        <field name="sequence">40</field>
+    </record>
+    <record id="menu_sc_operating_metrics_root" model="ir.ui.menu">
+        <field name="active">0</field>
+    </record>
+    <menuitem id="menu_sc_analysis_project_operation"
+              name="项目经营分析"
+              parent="smart_construction_core.menu_sc_business_analysis_group"
+              action="smart_construction_core.action_sc_operating_metrics_project"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_data_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
+
+    <menuitem id="menu_sc_finance_analysis_group"
+              name="财务分析"
+              parent="smart_construction_core.menu_sc_data_center"
+              sequence="20"/>
+    <record id="menu_sc_legacy_report_inventory" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_business_analysis_group"/>
+        <field name="sequence">90</field>
+    </record>
+    <record id="menu_sc_legacy_user_context" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_config_center"/>
+        <field name="sequence">70</field>
+    </record>
+    <record id="menu_sc_ar_ap_project_summary" model="ir.ui.menu">
+        <field name="name">客户账款</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_finance_analysis_group"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="menu_sc_ar_ap_company_summary" model="ir.ui.menu">
+        <field name="name">供应商账款</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_finance_analysis_group"/>
+        <field name="sequence">20</field>
+    </record>
+    <record id="menu_sc_treasury_ledger_income" model="ir.ui.menu">
+        <field name="name">收款统计表</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_finance_analysis_group"/>
+        <field name="sequence">30</field>
+    </record>
+    <record id="menu_payment_ledger" model="ir.ui.menu">
+        <field name="name">付款统计表</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_finance_analysis_group"/>
+        <field name="sequence">40</field>
+    </record>
+    <record id="menu_sc_account_income_expense_summary" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_finance_analysis_group"/>
+        <field name="sequence">50</field>
+    </record>
+    <record id="menu_sc_treasury_ledger" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_finance_analysis_group"/>
+        <field name="sequence">60</field>
+    </record>
+    <record id="menu_sc_financing_ledger" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_finance_analysis_group"/>
+        <field name="sequence">70</field>
+    </record>
+    <record id="menu_sc_fund_daily_summary" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_finance_analysis_group"/>
+        <field name="sequence">80</field>
+    </record>
+    <record id="menu_sc_fund_daily_line" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_finance_analysis_group"/>
+        <field name="sequence">90</field>
+    </record>
+
+    <!-- 基础设置 -->
+    <menuitem id="menu_sc_customer_partner"
+              name="客户"
+              parent="smart_construction_core.menu_sc_business_config_center"
+              action="smart_construction_core.action_sc_customer_partner"
+              sequence="1"
+              groups="smart_construction_core.group_sc_cap_contact_manager"/>
+    <menuitem id="menu_sc_supplier_partner"
+              name="供应商"
+              parent="smart_construction_core.menu_sc_business_config_center"
+              action="smart_construction_core.action_sc_supplier_partner"
+              sequence="2"
+              groups="smart_construction_core.group_sc_cap_contact_manager"/>
+    <record id="menu_sc_dictionary" model="ir.ui.menu">
+        <field name="name">数据字典</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="menu_sc_organization_department" model="ir.ui.menu">
+        <field name="name">内部单位</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
+        <field name="sequence">20</field>
+    </record>
+    <record id="menu_sc_legacy_material_detail" model="ir.ui.menu">
+        <field name="name">材料档案</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
+        <field name="action" ref="smart_construction_core.action_sc_material_product_template"/>
+        <field name="sequence">30</field>
+    </record>
+    <record id="menu_sc_approval_policy" model="ir.ui.menu">
+        <field name="name">审批配置</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
+        <field name="sequence">60</field>
+    </record>
+    <record id="menu_sc_project_cost_code" model="ir.ui.menu">
+        <field name="name">预算类型</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
+        <field name="sequence">50</field>
+    </record>
+</odoo>

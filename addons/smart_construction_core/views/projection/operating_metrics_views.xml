@@ -4,12 +4,37 @@
     <record id="action_sc_operating_metrics_project" model="ir.actions.act_window">
         <field name="name">经营指标（项目）</field>
         <field name="res_model">sc.operating.metrics.project</field>
-        <field name="view_mode">tree,pivot</field>
+        <field name="view_mode">tree,form,pivot</field>
         <field name="context">{}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 经营指标（项目维度）
             </p>
+        </field>
+    </record>
+
+    <record id="view_sc_operating_metrics_project_form" model="ir.ui.view">
+        <field name="name">sc.operating.metrics.project.form</field>
+        <field name="model">sc.operating.metrics.project</field>
+        <field name="arch" type="xml">
+            <form string="经营指标（项目）" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group string="项目">
+                            <field name="project_id"/>
+                        </group>
+                        <group string="结算与付款">
+                            <field name="settlement_amount_total"/>
+                            <field name="settlement_amount_paid"/>
+                            <field name="settlement_amount_payable"/>
+                        </group>
+                    </group>
+                    <group string="风险">
+                        <field name="overpay_risk_count"/>
+                        <field name="three_way_missing_count"/>
+                    </group>
+                </sheet>
+            </form>
         </field>
     </record>
 

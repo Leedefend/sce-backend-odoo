@@ -159,6 +159,8 @@
             </xpath>
 
             <xpath expr="//sheet/*[1]" position="before">
+                <field name="message_needaction" invisible="1"/>
+                <field name="display_name" invisible="1"/>
                 <div class="alert alert-info" role="alert" invisible="lifecycle_state != 'draft'">
                     当前为草稿，系统将自动保存你的修改；提交（立项）时才会进行完整校验。
                 </div>

@@ -41,6 +41,9 @@
             <xpath expr="//sheet/group/group" position="inside">
                 <field name="project_id"/>
                 <field name="reject_reason" readonly="1" modifiers='{"invisible": [["reject_reason","=",false]]}'/>
+                <field name="amount_untaxed" invisible="1"/>
+                <field name="amount_total" invisible="1"/>
+                <field name="activity_exception_decoration" invisible="1"/>
             </xpath>
 
             <xpath expr="//field[@name='order_line']/tree/field[@name='name']" position="after">

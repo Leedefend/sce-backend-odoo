@@ -122,6 +122,9 @@
         'views/core/payment_execution_views.xml',
         'views/core/invoice_registration_views.xml',
         'views/core/financing_loan_views.xml',
+        'views/core/funding_baseline_views.xml',
+        'views/core/fund_account_views.xml',
+        'views/core/business_menu_fact_views.xml',
         'views/core/general_contract_views.xml',
         'views/core/payment_request_views.xml',
         'views/core/project_overview_views.xml',
@@ -159,6 +162,8 @@
         'security/action_groups_patch.xml',
         'security/menu_tech_hide_patch.xml',
         'actions/project_native_action_overrides.xml',
+        'views/menu_business_taxonomy.xml',
+        'data/business_menu_full_coverage.xml',
     ],
     'assets': {
         'web.assets_frontend_minimal': [

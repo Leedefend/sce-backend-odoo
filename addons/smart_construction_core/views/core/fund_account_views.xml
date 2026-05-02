@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_sc_fund_account_search" model="ir.ui.view">
+        <field name="name">sc.fund.account.search</field>
+        <field name="model">sc.fund.account</field>
+        <field name="arch" type="xml">
+            <search string="资金账户">
+                <field name="name"/>
+                <field name="account_no"/>
+                <field name="bank_name"/>
+                <field name="project_id"/>
+                <field name="account_type"/>
+                <filter string="启用" name="state_active" domain="[('state', '=', 'active')]"/>
+                <filter string="默认账户" name="is_default" domain="[('is_default', '=', True)]"/>
+                <filter string="历史迁移" name="source_legacy" domain="[('source_origin', '=', 'legacy')]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按账户类型" name="group_account_type" context="{'group_by': 'account_type'}"/>
+                <filter string="按开户行" name="group_bank" context="{'group_by': 'bank_name'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_fund_account_tree" model="ir.ui.view">
+        <field name="name">sc.fund.account.tree</field>
+        <field name="model">sc.fund.account</field>
+        <field name="arch" type="xml">
+            <tree string="资金账户" default_order="account_type,name,id">
+                <field name="display_name"/>
+                <field name="project_id"/>
+                <field name="account_type"/>
+                <field name="bank_name"/>
+                <field name="account_no"/>
+                <field name="opening_balance" sum="期初余额"/>
+                <field name="is_default"/>
+                <field name="fixed_account"/>
+                <field name="state"/>
+                <field name="source_origin"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_fund_account_form" model="ir.ui.view">
+        <field name="name">sc.fund.account.form</field>
+        <field name="model">sc.fund.account</field>
+        <field name="arch" type="xml">
+            <form string="资金账户">
+                <header>
+                    <field name="state" widget="statusbar" statusbar_visible="active,inactive"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="账户信息">
+                            <field name="display_name" readonly="1"/>
+                            <field name="name"/>
+                            <field name="account_no"/>
+                            <field name="account_type"/>
+                            <field name="bank_name"/>
+                            <field name="project_id"/>
+                            <field name="source_origin" readonly="1"/>
+                            <field name="company_id"/>
+                        </group>
+                        <group string="资金信息">
+                            <field name="currency_id"/>
+                            <field name="opening_balance"/>
+                            <field name="is_default"/>
+                            <field name="fixed_account"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="备注">
+                            <field name="note"/>
+                        </page>
+                        <page string="历史来源" groups="smart_construction_core.group_sc_cap_config_admin">
+                            <group>
+                                <field name="source_origin"/>
+                                <field name="legacy_source_model"/>
+                                <field name="legacy_source_table"/>
+                                <field name="legacy_record_id"/>
+                                <field name="legacy_account_id"/>
+                                <field name="legacy_project_id"/>
+                                <field name="legacy_state"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_fund_account" model="ir.actions.act_window">
+        <field name="name">账户管理</field>
+        <field name="res_model">sc.fund.account</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_sc_fund_account_search"/>
+        <field name="context">{'search_default_state_active': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                       (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                       (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+</odoo>

@@ -23,16 +23,35 @@
         <field name="model">project.budget</field>
         <field name="arch" type="xml">
             <form string="项目预算">
+                <header>
+                    <button name="action_set_active" type="object" string="设为当前"
+                            class="oe_highlight"
+                            modifiers="{'invisible': [['is_active','=',True]]}"
+                            groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
+                    <button name="action_archive_version" type="object" string="停用"
+                            modifiers="{'invisible': [['is_active','=',False]]}"
+                            groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
+                    <button name="action_copy_version" type="object" string="复制并保留分摊"
+                            class="btn-secondary"
+                            groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
+                    <button name="action_copy_version" type="object" string="复制不带分摊"
+                            class="btn-secondary"
+                            context="{'copy_allocations': False}"
+                            groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
+                    <field name="is_active"/>
+                </header>
                 <sheet>
                     <group>
                         <field name="name"/>
                         <field name="project_id"/>
                         <field name="version"/>
+                        <field name="version_date"/>
+                        <field name="is_active"/>
                         <field name="active"/>
                     </group>
                     <group>
-                        <field name="amount_cost_target" readonly="1"/>
-                        <field name="amount_revenue_target" readonly="1"/>
+                        <field name="amount_cost_target"/>
+                        <field name="amount_revenue_target"/>
                     </group>
 
                     <notebook>

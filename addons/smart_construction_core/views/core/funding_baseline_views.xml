@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_project_funding_baseline_search" model="ir.ui.view">
+            <field name="name">project.funding.baseline.search</field>
+            <field name="model">project.funding.baseline</field>
+            <field name="arch" type="xml">
+                <search string="资金计划申报">
+                    <field name="project_id"/>
+                    <filter string="草稿" name="state_draft" domain="[('state', '=', 'draft')]"/>
+                    <filter string="生效" name="state_active" domain="[('state', '=', 'active')]"/>
+                    <filter string="关闭" name="state_closed" domain="[('state', '=', 'closed')]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_project_funding_baseline_tree" model="ir.ui.view">
+            <field name="name">project.funding.baseline.tree</field>
+            <field name="model">project.funding.baseline</field>
+            <field name="arch" type="xml">
+                <tree string="资金计划申报" default_order="id desc">
+                    <field name="project_id"/>
+                    <field name="total_amount" sum="资金上限合计"/>
+                    <field name="currency_id"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_project_funding_baseline_form" model="ir.ui.view">
+            <field name="name">project.funding.baseline.form</field>
+            <field name="model">project.funding.baseline</field>
+            <field name="arch" type="xml">
+                <form string="资金计划申报">
+                    <sheet>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="total_amount"/>
+                            <field name="currency_id" readonly="1"/>
+                            <field name="state"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_project_funding_baseline" model="ir.actions.act_window">
+            <field name="name">资金计划申报</field>
+            <field name="res_model">project.funding.baseline</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_project_funding_baseline_search"/>
+            <field name="context">{'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+    </data>
+</odoo>

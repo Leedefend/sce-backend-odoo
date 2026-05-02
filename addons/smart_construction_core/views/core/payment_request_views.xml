@@ -77,6 +77,7 @@
                             <field name="settlement_amount_payable"
                                    readonly="1"
                                    modifiers="{'invisible': [['settlement_id', '=', False]]}"/>
+                            <field name="is_overpay_risk" readonly="1"/>
                             <field name="settlement_remaining_amount"
                                    readonly="1"
                                    modifiers="{'invisible': [['settlement_id', '=', False], ['settlement_amount_insufficient', '=', True]]}"/>

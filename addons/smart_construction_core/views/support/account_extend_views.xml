@@ -15,4 +15,15 @@
             </xpath>
         </field>
     </record>
+
+    <record id="view_partner_form_sc_complete_name_contract" model="ir.ui.view">
+        <field name="name">res.partner.form.sc.complete.name.contract</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <field name="complete_name" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
 </odoo>

@@ -161,6 +161,132 @@
         </field>
     </record>
 
+    <record id="view_tender_opening_search" model="ir.ui.view">
+        <field name="name">tender.opening.search</field>
+        <field name="model">tender.opening</field>
+        <field name="arch" type="xml">
+            <search string="开标记录">
+                <field name="bid_id"/>
+                <field name="project_id"/>
+                <field name="result"/>
+                <filter string="中标" name="result_won" domain="[('result', '=', 'won')]"/>
+                <filter string="未中标" name="result_lost" domain="[('result', '=', 'lost')]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按结果" name="group_result" context="{'group_by': 'result'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_tender_opening_tree" model="ir.ui.view">
+        <field name="name">tender.opening.tree</field>
+        <field name="model">tender.opening</field>
+        <field name="arch" type="xml">
+            <tree string="开标记录" default_order="open_time desc, id desc">
+                <field name="open_time"/>
+                <field name="project_id"/>
+                <field name="bid_id"/>
+                <field name="result"/>
+                <field name="win_price"/>
+                <field name="remark"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_tender_opening_form" model="ir.ui.view">
+        <field name="name">tender.opening.form</field>
+        <field name="model">tender.opening</field>
+        <field name="arch" type="xml">
+            <form string="开标记录">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="bid_id" required="1"/>
+                            <field name="project_id" readonly="1"/>
+                            <field name="open_time"/>
+                        </group>
+                        <group>
+                            <field name="result"/>
+                            <field name="win_price"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="competitor_ids">
+                            <tree editable="bottom">
+                                <field name="name"/>
+                                <field name="quote"/>
+                                <field name="rank"/>
+                                <field name="remark"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group>
+                        <field name="remark"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_tender_guarantee_search" model="ir.ui.view">
+        <field name="name">tender.guarantee.search</field>
+        <field name="model">tender.guarantee</field>
+        <field name="arch" type="xml">
+            <search string="投标保证金">
+                <field name="bid_id"/>
+                <field name="project_id"/>
+                <field name="type"/>
+                <filter string="缴纳" name="type_out" domain="[('type', '=', 'out')]"/>
+                <filter string="退回" name="type_return" domain="[('type', '=', 'return')]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按类型" name="group_type" context="{'group_by': 'type'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_tender_guarantee_tree" model="ir.ui.view">
+        <field name="name">tender.guarantee.tree</field>
+        <field name="model">tender.guarantee</field>
+        <field name="arch" type="xml">
+            <tree string="投标保证金" default_order="date desc, id desc">
+                <field name="date"/>
+                <field name="project_id"/>
+                <field name="bid_id"/>
+                <field name="type"/>
+                <field name="amount" sum="保证金合计"/>
+                <field name="bank_account_id"/>
+                <field name="remark"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_tender_guarantee_form" model="ir.ui.view">
+        <field name="name">tender.guarantee.form</field>
+        <field name="model">tender.guarantee</field>
+        <field name="arch" type="xml">
+            <form string="投标保证金">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="bid_id" required="1"/>
+                            <field name="project_id" readonly="1"/>
+                            <field name="type"/>
+                        </group>
+                        <group>
+                            <field name="date"/>
+                            <field name="amount"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="bank_account_id"/>
+                        <field name="remark"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
     <!-- Action -->
     <record id="action_tender_bid" model="ir.actions.act_window">
         <field name="name">投标管理</field>

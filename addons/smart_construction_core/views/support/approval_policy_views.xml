@@ -60,6 +60,7 @@
                             <field name="mode"/>
                             <field name="runtime_state"/>
                             <field name="manager_scope_key"/>
+                            <field name="step_count" readonly="1"/>
                             <field name="manager_group_id" invisible="1"/>
                         </group>
                     </group>

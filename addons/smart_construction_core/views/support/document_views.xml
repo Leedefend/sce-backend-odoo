@@ -68,6 +68,7 @@
 
                     <group>
                         <field name="responsible_id"/>
+                        <field name="attachment_count" readonly="1"/>
                         <field name="company_id" readonly="1"/>
                     </group>
 

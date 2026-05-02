@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Formal business fact views are created idempotently by
+             sc.business.menu.taxonomy.seed.sync_full_coverage so every menu
+             target receives model-specific tree/form/search views. -->
+    </data>
+</odoo>
