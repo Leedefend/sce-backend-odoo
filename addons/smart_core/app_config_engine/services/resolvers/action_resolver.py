@@ -116,6 +116,8 @@ class ActionResolver:
                 'view_mode': getattr(act, 'view_mode', None), 'tag': getattr(act, 'tag', None),
                 'url': getattr(act, 'url', None), 'target': getattr(act, 'target', None),
                 'name': getattr(act, 'name', None),
+                'domain': getattr(act, 'domain', None),
+                'context': getattr(act, 'context', None),
                 'exists': True,
             }
         except Exception:

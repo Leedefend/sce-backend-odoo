@@ -5,23 +5,26 @@
     </header>
 
     <div class="metric-grid">
-      <article
+      <component
+        :is="item.actionKey ? 'button' : 'article'"
         v-for="item in metrics"
         :key="item.key"
         class="metric-item"
         :class="`tone-${item.tone || 'neutral'}`"
+        type="button"
+        @click="item.actionKey ? emitAction(item) : undefined"
       >
         <p class="metric-label">{{ item.label }}</p>
         <p class="metric-value">{{ item.value }}</p>
         <p v-if="item.delta || item.hint" class="metric-meta">{{ item.delta || item.hint }}</p>
-      </article>
+      </component>
     </div>
   </article>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { PageOrchestrationBlock } from '../../../app/pageOrchestration';
+import type { PageBlockActionEvent, PageOrchestrationBlock } from '../../../app/pageOrchestration';
 
 type MetricItem = {
   key: string;
@@ -30,12 +33,18 @@ type MetricItem = {
   delta?: string;
   hint?: string;
   tone?: string;
+  actionKey?: string;
+  raw?: Record<string, unknown>;
 };
 
 const props = defineProps<{
   block: PageOrchestrationBlock;
   zoneKey: string;
   dataset: unknown;
+}>();
+
+const emit = defineEmits<{
+  (event: 'action', payload: PageBlockActionEvent): void;
 }>();
 
 const metrics = computed<MetricItem[]>(() => {
@@ -49,6 +58,8 @@ const metrics = computed<MetricItem[]>(() => {
         delta: String(row.delta || ''),
         hint: String(row.hint || ''),
         tone: String(row.tone || 'neutral').toLowerCase(),
+        actionKey: String(row.action_key || ''),
+        raw: row,
       };
     });
   }
@@ -64,6 +75,17 @@ const metrics = computed<MetricItem[]>(() => {
       tone: 'neutral',
     }));
 });
+
+function emitAction(item: MetricItem) {
+  const actionKey = String(item.actionKey || '').trim();
+  if (!actionKey) return;
+  emit('action', {
+    actionKey,
+    blockKey: props.block.key,
+    zoneKey: props.zoneKey,
+    item: item.raw || {},
+  });
+}
 </script>
 
 <style scoped>
@@ -89,6 +111,13 @@ const metrics = computed<MetricItem[]>(() => {
   border: 1px solid #e5e7eb;
   padding: 12px;
   min-height: 110px;
+  text-align: left;
+  color: inherit;
+}
+button.metric-item { cursor: pointer; }
+button.metric-item:hover {
+  border-color: #60a5fa;
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.12);
 }
 .metric-label {
   margin: 0;

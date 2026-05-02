@@ -10,8 +10,12 @@
                     <field name="document_no"/>
                     <field name="title"/>
                     <field name="project_id"/>
+                    <field name="diary_type"/>
                     <field name="quality_name"/>
                     <field name="handler_name"/>
+                    <filter string="日报表" name="daily_report" domain="[('diary_type', '=', '日报表')]"/>
+                    <filter string="周报表" name="weekly_report" domain="[('diary_type', '=', '周报表')]"/>
+                    <filter string="月报表" name="monthly_report" domain="[('diary_type', '=', '月报表')]"/>
                     <filter string="已确认" name="state_confirmed" domain="[('state', 'in', ['confirmed', 'legacy_confirmed'])]"/>
                     <filter string="已完成" name="state_done" domain="[('state', '=', 'done')]"/>
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
@@ -31,6 +35,9 @@
                     <field name="date_diary"/>
                     <field name="project_id"/>
                     <field name="document_no"/>
+                    <field name="diary_type"/>
+                    <field name="report_period_start"/>
+                    <field name="report_period_end"/>
                     <field name="quality_name"/>
                     <field name="handler_name"/>
                     <field name="state"/>
@@ -59,6 +66,8 @@
                             <group>
                                 <field name="name" readonly="1"/>
                                 <field name="date_diary" readonly="state == 'legacy_confirmed'"/>
+                                <field name="report_period_start" readonly="state == 'legacy_confirmed'"/>
+                                <field name="report_period_end" readonly="state == 'legacy_confirmed'"/>
                                 <field name="document_no" readonly="state == 'legacy_confirmed'"/>
                                 <field name="title" readonly="state == 'legacy_confirmed'"/>
                             </group>
@@ -72,10 +81,13 @@
                         <group string="现场信息">
                             <field name="construction_unit" readonly="state == 'legacy_confirmed'"/>
                             <field name="project_manager" readonly="state == 'legacy_confirmed'"/>
+                            <field name="weather" readonly="state == 'legacy_confirmed'"/>
+                            <field name="manpower_count" readonly="state == 'legacy_confirmed'"/>
                             <field name="quality_name" readonly="state == 'legacy_confirmed'"/>
                         </group>
                         <group string="日志内容">
                             <field name="description" readonly="state == 'legacy_confirmed'"/>
+                            <field name="next_plan" readonly="state == 'legacy_confirmed'"/>
                             <field name="header_description" readonly="state == 'legacy_confirmed'"/>
                         </group>
                         <group>
@@ -93,6 +105,42 @@
             <field name="view_mode">tree,form</field>
             <field name="search_view_id" ref="view_sc_construction_diary_search"/>
             <field name="context">{'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_project_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+        </record>
+
+        <record id="action_sc_construction_daily_report" model="ir.actions.act_window">
+            <field name="name">日报表</field>
+            <field name="res_model">sc.construction.diary</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_construction_diary_search"/>
+            <field name="domain">[('diary_type', '=', '日报表')]</field>
+            <field name="context">{'default_diary_type': '日报表', 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_project_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+        </record>
+
+        <record id="action_sc_construction_weekly_report" model="ir.actions.act_window">
+            <field name="name">周报表</field>
+            <field name="res_model">sc.construction.diary</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_construction_diary_search"/>
+            <field name="domain">[('diary_type', '=', '周报表')]</field>
+            <field name="context">{'default_diary_type': '周报表', 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_project_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+        </record>
+
+        <record id="action_sc_construction_monthly_report" model="ir.actions.act_window">
+            <field name="name">月报表</field>
+            <field name="res_model">sc.construction.diary</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_construction_diary_search"/>
+            <field name="domain">[('diary_type', '=', '月报表')]</field>
+            <field name="context">{'default_diary_type': '月报表', 'search_default_group_project': 1}</field>
             <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read')),
                                            (4, ref('smart_construction_core.group_sc_cap_project_user')),
                                            (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>

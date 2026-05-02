@@ -442,7 +442,20 @@ def list_scene_entries() -> List[Dict[str, Any]]:
         },
         {
             "code": "workspace.home",
-            "name": "工作台首页",
-            "target": {"route": "/my-work"},
+            "name": "工作台",
+            "target": {
+                "route": "/s/workspace.home",
+                "menu_xmlid": "smart_construction_core.menu_sc_history_todo",
+                "intent": "workspace.home.enter",
+            },
+        },
+        {
+            "code": "dashboard.company",
+            "name": "公司驾驶舱",
+            "target": {
+                "route": "/s/dashboard.company",
+                "menu_xmlid": "smart_construction_core.menu_sc_operating_metrics_project",
+                "intent": "dashboard.company.enter",
+            },
         },
     ]

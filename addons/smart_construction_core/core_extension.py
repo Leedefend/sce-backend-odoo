@@ -93,6 +93,8 @@ NAV_MENU_SCENE_MAP = {
     "smart_construction_core.menu_sc_project_cost_code": "config.project_cost_code",
     "smart_construction_core.menu_sc_root": "projects.list",
     "smart_construction_core.menu_sc_project_dashboard": "projects.dashboard",
+    "smart_construction_core.menu_sc_history_todo": "workspace.home",
+    "smart_construction_core.menu_sc_operating_metrics_project": "dashboard.company",
     "smart_construction_demo.menu_sc_project_dashboard_showcase": "projects.dashboard_showcase",
     "smart_construction_core.menu_sc_dictionary": "data.dictionary",
     "smart_construction_core.menu_payment_request": "finance.payment_requests",
@@ -806,6 +808,12 @@ def get_intent_handler_contributions():
         from odoo.addons.smart_construction_core.handlers.app_open import (
             AppOpenHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.workspace_home_enter import (
+            WorkspaceHomeEnterHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.dashboard_company_enter import (
+            DashboardCompanyEnterHandler,
+        )
     except Exception as e:
         _logger.warning("[get_intent_handler_contributions] import handler failed: %s", e)
         return []
@@ -853,6 +861,8 @@ def get_intent_handler_contributions():
         ("app.catalog", AppCatalogHandler),
         ("app.nav", AppNavHandler),
         ("app.open", AppOpenHandler),
+        ("workspace.home.enter", WorkspaceHomeEnterHandler),
+        ("dashboard.company.enter", DashboardCompanyEnterHandler),
     ]
     return [
         {

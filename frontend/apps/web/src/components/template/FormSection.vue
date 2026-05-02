@@ -215,7 +215,19 @@ const gridStyle = computed(() => ({
 }));
 
 function isBaseFieldType(type: TemplateFieldType) {
-  return ['char', 'text', 'html', 'selection', 'many2one', 'boolean', 'date', 'datetime'].includes(String(type || '').trim().toLowerCase());
+  return [
+    'char',
+    'text',
+    'html',
+    'selection',
+    'many2one',
+    'boolean',
+    'date',
+    'datetime',
+    'integer',
+    'float',
+    'monetary',
+  ].includes(String(type || '').trim().toLowerCase());
 }
 
 function defaultSpanClass(type: TemplateFieldType) {
@@ -230,6 +242,7 @@ function inputType(type: TemplateFieldType) {
   const t = String(type || '').trim().toLowerCase();
   if (t === 'date') return 'date';
   if (t === 'datetime') return 'datetime-local';
+  if (['integer', 'float', 'monetary'].includes(t)) return 'number';
   return 'text';
 }
 

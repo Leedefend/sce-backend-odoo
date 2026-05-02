@@ -1,0 +1,713 @@
+# -*- coding: utf-8 -*-
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
+
+
+class ScMaterialPurchaseRequest(models.Model):
+    _name = "sc.material.purchase.request"
+    _description = "材料采购申请"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _order = "request_date desc, id desc"
+
+    name = fields.Char(string="申请单号", required=True, default="新建", tracking=True)
+    project_id = fields.Many2one("project.project", string="项目", required=True, index=True, tracking=True)
+    request_date = fields.Date(string="申请日期", default=fields.Date.context_today, index=True, tracking=True)
+    required_date = fields.Date(string="期望到货日期", index=True)
+    requester_id = fields.Many2one("res.users", string="申请人", default=lambda self: self.env.user, index=True)
+    department_id = fields.Many2one("hr.department", string="申请部门", index=True)
+    purpose = fields.Char(string="采购用途")
+    state = fields.Selection(
+        [
+            ("draft", "草稿"),
+            ("submitted", "已提交"),
+            ("approved", "已确认"),
+            ("cancel", "已取消"),
+        ],
+        string="状态",
+        default="draft",
+        index=True,
+        tracking=True,
+    )
+    line_ids = fields.One2many("sc.material.purchase.request.line", "request_id", string="申请明细")
+    note = fields.Text(string="申请说明")
+    legacy_fact_model = fields.Char(string="来源通用模型", index=True)
+    legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
+    legacy_fact_type = fields.Char(string="来源业务类型", index=True)
+
+    _sql_constraints = [
+        (
+            "legacy_material_purchase_request_unique",
+            "unique(legacy_fact_model, legacy_fact_id)",
+            "来源通用材料采购申请已迁移为专业采购申请。",
+        ),
+    ]
+
+    @api.constrains("request_date", "required_date")
+    def _check_required_date(self):
+        for record in self:
+            if record.request_date and record.required_date and record.required_date < record.request_date:
+                raise ValidationError(_("期望到货日期不能早于申请日期。"))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        seq = self.env["ir.sequence"]
+        for vals in vals_list:
+            if vals.get("name", "新建") == "新建":
+                vals["name"] = seq.next_by_code("sc.material.purchase.request") or _("材料采购申请")
+        return super().create(vals_list)
+
+    def action_submit(self):
+        for record in self:
+            if not record.line_ids:
+                raise ValidationError(_("提交采购申请前必须维护申请明细。"))
+            record.line_ids._check_qty()
+        self.write({"state": "submitted"})
+        return True
+
+    def action_approve(self):
+        for record in self:
+            record.line_ids._check_qty()
+        self.write({"state": "approved"})
+        return True
+
+    def action_cancel(self):
+        self.write({"state": "cancel"})
+        return True
+
+    def action_reset_draft(self):
+        self.write({"state": "draft"})
+        return True
+
+
+class ScMaterialPurchaseRequestLine(models.Model):
+    _name = "sc.material.purchase.request.line"
+    _description = "材料采购申请明细"
+    _order = "request_id, sequence, id"
+
+    request_id = fields.Many2one("sc.material.purchase.request", string="采购申请", required=True, ondelete="cascade", index=True)
+    sequence = fields.Integer(default=10)
+    project_id = fields.Many2one("project.project", string="项目", related="request_id.project_id", store=True, index=True)
+    product_id = fields.Many2one("product.product", string="材料", required=True, index=True)
+    material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
+    material_spec = fields.Char(string="规格型号")
+    product_uom_id = fields.Many2one("uom.uom", string="单位")
+    qty = fields.Float(string="申请数量", required=True)
+    estimated_unit_price = fields.Monetary(string="预计单价", currency_field="currency_id")
+    estimated_amount = fields.Monetary(string="预计金额", currency_field="currency_id", compute="_compute_estimated_amount", store=True)
+    currency_id = fields.Many2one(
+        "res.currency",
+        string="币种",
+        required=True,
+        default=lambda self: self.env.company.currency_id.id,
+    )
+    note = fields.Char(string="备注")
+
+    @api.depends("qty", "estimated_unit_price")
+    def _compute_estimated_amount(self):
+        for record in self:
+            record.estimated_amount = record.qty * record.estimated_unit_price
+
+    @api.onchange("product_id")
+    def _onchange_product_id(self):
+        for record in self:
+            if record.product_id:
+                record.product_uom_id = record.product_id.uom_id
+                if not record.material_spec:
+                    record.material_spec = record.product_id.default_code or ""
+
+    @api.constrains("qty", "estimated_unit_price")
+    def _check_qty(self):
+        for record in self:
+            if record.qty <= 0:
+                raise ValidationError(_("申请数量必须大于0。"))
+            if record.estimated_unit_price < 0:
+                raise ValidationError(_("预计单价不能为负数。"))
+
+
+class ScMaterialAcceptance(models.Model):
+    _name = "sc.material.acceptance"
+    _description = "材料进场验收"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _order = "acceptance_date desc, id desc"
+
+    name = fields.Char(string="验收单号", required=True, default="新建", tracking=True)
+    project_id = fields.Many2one("project.project", string="项目", required=True, index=True, tracking=True)
+    acceptance_date = fields.Date(string="验收日期", default=fields.Date.context_today, index=True, tracking=True)
+    supplier_id = fields.Many2one("res.partner", string="供应商", index=True)
+    purchase_order_id = fields.Many2one("purchase.order", string="采购订单", index=True)
+    warehouse_id = fields.Many2one("stock.warehouse", string="仓库", index=True)
+    dest_location_id = fields.Many2one("stock.location", string="入库库位", index=True)
+    inspector_id = fields.Many2one("res.users", string="验收人", default=lambda self: self.env.user, index=True)
+    state = fields.Selection(
+        [
+            ("draft", "草稿"),
+            ("submitted", "已提交"),
+            ("accepted", "验收通过"),
+            ("rejected", "验收不通过"),
+            ("cancel", "已取消"),
+        ],
+        string="状态",
+        default="draft",
+        index=True,
+        tracking=True,
+    )
+    line_ids = fields.One2many("sc.material.acceptance.line", "acceptance_id", string="验收明细")
+    attachment_ids = fields.Many2many("ir.attachment", string="验收附件")
+    note = fields.Text(string="验收说明")
+    rejection_reason = fields.Text(string="不通过原因")
+    legacy_fact_model = fields.Char(string="来源通用模型", index=True)
+    legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
+    legacy_fact_type = fields.Char(string="来源业务类型", index=True)
+
+    _sql_constraints = [
+        (
+            "legacy_material_acceptance_unique",
+            "unique(legacy_fact_model, legacy_fact_id)",
+            "来源通用材料记录已迁移为材料验收单。",
+        ),
+    ]
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        seq = self.env["ir.sequence"]
+        for vals in vals_list:
+            if vals.get("name", "新建") == "新建":
+                vals["name"] = seq.next_by_code("sc.material.acceptance") or _("材料进场验收")
+        return super().create(vals_list)
+
+    def action_submit(self):
+        for record in self:
+            if not record.line_ids:
+                raise ValidationError(_("提交前必须维护验收明细。"))
+        self.write({"state": "submitted"})
+        return True
+
+    def action_accept(self):
+        for record in self:
+            record.line_ids._check_quantities()
+        self.write({"state": "accepted", "rejection_reason": False})
+        return True
+
+    def action_reject(self):
+        for record in self:
+            if not record.rejection_reason:
+                raise ValidationError(_("验收不通过前必须填写不通过原因。"))
+        self.write({"state": "rejected"})
+        return True
+
+    def action_cancel(self):
+        self.write({"state": "cancel"})
+        return True
+
+    def action_reset_draft(self):
+        self.write({"state": "draft"})
+        return True
+
+
+class ScMaterialAcceptanceLine(models.Model):
+    _name = "sc.material.acceptance.line"
+    _description = "材料进场验收明细"
+    _order = "acceptance_id, sequence, id"
+
+    acceptance_id = fields.Many2one("sc.material.acceptance", string="验收单", required=True, ondelete="cascade", index=True)
+    sequence = fields.Integer(default=10)
+    project_id = fields.Many2one("project.project", string="项目", related="acceptance_id.project_id", store=True, index=True)
+    product_id = fields.Many2one("product.product", string="材料", required=True, index=True)
+    material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
+    material_spec = fields.Char(string="规格型号")
+    product_uom_id = fields.Many2one("uom.uom", string="单位")
+    planned_qty = fields.Float(string="计划数量")
+    received_qty = fields.Float(string="到场数量", required=True)
+    accepted_qty = fields.Float(string="合格数量")
+    rejected_qty = fields.Float(string="不合格数量")
+    result = fields.Selection([("accepted", "合格"), ("partial", "部分合格"), ("rejected", "不合格")], string="验收结果", default="accepted", index=True)
+    issue_note = fields.Text(string="问题说明")
+
+    @api.onchange("product_id")
+    def _onchange_product_id(self):
+        for record in self:
+            if record.product_id:
+                record.product_uom_id = record.product_id.uom_id
+                if not record.material_spec:
+                    record.material_spec = record.product_id.default_code or ""
+
+    @api.constrains("received_qty", "accepted_qty", "rejected_qty")
+    def _check_quantities(self):
+        for record in self:
+            if record.received_qty < 0 or record.accepted_qty < 0 or record.rejected_qty < 0:
+                raise ValidationError(_("材料验收数量不能为负数。"))
+            if record.accepted_qty + record.rejected_qty > record.received_qty:
+                raise ValidationError(_("合格数量与不合格数量之和不能大于到场数量。"))
+
+
+class ScMaterialInbound(models.Model):
+    _name = "sc.material.inbound"
+    _description = "材料入库单"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _order = "inbound_date desc, id desc"
+
+    name = fields.Char(string="入库单号", required=True, default="新建", tracking=True)
+    project_id = fields.Many2one("project.project", string="项目", required=True, index=True, tracking=True)
+    inbound_date = fields.Date(string="入库日期", default=fields.Date.context_today, index=True, tracking=True)
+    acceptance_id = fields.Many2one(
+        "sc.material.acceptance",
+        string="来源验收单",
+        domain="[('state', '=', 'accepted')]",
+        index=True,
+    )
+    supplier_id = fields.Many2one("res.partner", string="供应商", index=True)
+    warehouse_id = fields.Many2one("stock.warehouse", string="入库仓库", required=True, index=True)
+    dest_location_id = fields.Many2one("stock.location", string="入库库位", required=True, index=True)
+    keeper_id = fields.Many2one("res.users", string="仓管员", default=lambda self: self.env.user, index=True)
+    stock_picking_id = fields.Many2one("stock.picking", string="库存入库单", readonly=True, copy=False, index=True)
+    state = fields.Selection(
+        [
+            ("draft", "草稿"),
+            ("submitted", "已提交"),
+            ("received", "已入库"),
+            ("cancel", "已取消"),
+        ],
+        string="状态",
+        default="draft",
+        index=True,
+        tracking=True,
+    )
+    line_ids = fields.One2many("sc.material.inbound.line", "inbound_id", string="入库明细")
+    note = fields.Text(string="入库说明")
+    legacy_fact_model = fields.Char(string="来源通用模型", index=True)
+    legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
+    legacy_fact_type = fields.Char(string="来源业务类型", index=True)
+
+    _sql_constraints = [
+        (
+            "legacy_material_inbound_unique",
+            "unique(legacy_fact_model, legacy_fact_id)",
+            "来源通用材料入库记录已迁移为入库单。",
+        ),
+    ]
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        seq = self.env["ir.sequence"]
+        for vals in vals_list:
+            if vals.get("name", "新建") == "新建":
+                vals["name"] = seq.next_by_code("sc.material.inbound") or _("材料入库单")
+        return super().create(vals_list)
+
+    @api.onchange("acceptance_id")
+    def _onchange_acceptance_id(self):
+        for record in self:
+            acceptance = record.acceptance_id
+            if not acceptance:
+                continue
+            record.project_id = acceptance.project_id
+            record.supplier_id = acceptance.supplier_id
+            record.line_ids = [(5, 0, 0)] + [
+                (
+                    0,
+                    0,
+                    {
+                        "acceptance_line_id": line.id,
+                        "product_id": line.product_id.id,
+                        "material_catalog_id": line.material_catalog_id.id,
+                        "material_spec": line.material_spec,
+                        "product_uom_id": line.product_uom_id.id,
+                        "qty": line.accepted_qty or line.received_qty,
+                    },
+                )
+                for line in acceptance.line_ids
+                if line.result in ("accepted", "partial") and (line.accepted_qty or line.received_qty)
+            ]
+
+    def action_load_acceptance_lines(self):
+        for record in self:
+            record._onchange_acceptance_id()
+        return True
+
+    def action_submit(self):
+        for record in self:
+            if not record.line_ids:
+                raise ValidationError(_("提交入库前必须维护入库明细。"))
+            record.line_ids._check_qty()
+        self.write({"state": "submitted"})
+        return True
+
+    def action_receive(self):
+        for record in self:
+            record.line_ids._check_qty()
+            if record.acceptance_id and record.acceptance_id.state != "accepted":
+                raise ValidationError(_("只有验收通过的材料才能办理入库。"))
+        self.write({"state": "received"})
+        return True
+
+    def action_cancel(self):
+        self.write({"state": "cancel"})
+        return True
+
+    def action_reset_draft(self):
+        self.write({"state": "draft"})
+        return True
+
+
+class ScMaterialInboundLine(models.Model):
+    _name = "sc.material.inbound.line"
+    _description = "材料入库明细"
+    _order = "inbound_id, sequence, id"
+
+    inbound_id = fields.Many2one("sc.material.inbound", string="入库单", required=True, ondelete="cascade", index=True)
+    sequence = fields.Integer(default=10)
+    project_id = fields.Many2one("project.project", string="项目", related="inbound_id.project_id", store=True, index=True)
+    acceptance_line_id = fields.Many2one("sc.material.acceptance.line", string="来源验收明细", index=True)
+    product_id = fields.Many2one("product.product", string="材料", required=True, index=True)
+    material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
+    material_spec = fields.Char(string="规格型号")
+    product_uom_id = fields.Many2one("uom.uom", string="单位")
+    qty = fields.Float(string="入库数量", required=True)
+    note = fields.Char(string="备注")
+
+    @api.onchange("product_id")
+    def _onchange_product_id(self):
+        for record in self:
+            if record.product_id:
+                record.product_uom_id = record.product_id.uom_id
+                if not record.material_spec:
+                    record.material_spec = record.product_id.default_code or ""
+
+    @api.constrains("qty")
+    def _check_qty(self):
+        for record in self:
+            if record.qty <= 0:
+                raise ValidationError(_("入库数量必须大于0。"))
+
+
+class ScMaterialOutbound(models.Model):
+    _name = "sc.material.outbound"
+    _description = "材料出库单"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _order = "outbound_date desc, id desc"
+
+    name = fields.Char(string="出库单号", required=True, default="新建", tracking=True)
+    project_id = fields.Many2one("project.project", string="项目", required=True, index=True, tracking=True)
+    outbound_date = fields.Date(string="出库日期", default=fields.Date.context_today, index=True, tracking=True)
+    warehouse_id = fields.Many2one("stock.warehouse", string="出库仓库", required=True, index=True)
+    source_location_id = fields.Many2one("stock.location", string="出库库位", required=True, index=True)
+    receiver_id = fields.Many2one("res.partner", string="领用单位", index=True)
+    receiver_user_id = fields.Many2one("res.users", string="领料人", index=True)
+    keeper_id = fields.Many2one("res.users", string="仓管员", default=lambda self: self.env.user, index=True)
+    stock_picking_id = fields.Many2one("stock.picking", string="库存出库单", readonly=True, copy=False, index=True)
+    state = fields.Selection(
+        [
+            ("draft", "草稿"),
+            ("submitted", "已提交"),
+            ("issued", "已出库"),
+            ("cancel", "已取消"),
+        ],
+        string="状态",
+        default="draft",
+        index=True,
+        tracking=True,
+    )
+    line_ids = fields.One2many("sc.material.outbound.line", "outbound_id", string="出库明细")
+    purpose = fields.Char(string="领用用途")
+    note = fields.Text(string="出库说明")
+    legacy_fact_model = fields.Char(string="来源通用模型", index=True)
+    legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
+    legacy_fact_type = fields.Char(string="来源业务类型", index=True)
+
+    _sql_constraints = [
+        (
+            "legacy_material_outbound_unique",
+            "unique(legacy_fact_model, legacy_fact_id)",
+            "来源通用材料出库记录已迁移为出库单。",
+        ),
+    ]
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        seq = self.env["ir.sequence"]
+        for vals in vals_list:
+            if vals.get("name", "新建") == "新建":
+                vals["name"] = seq.next_by_code("sc.material.outbound") or _("材料出库单")
+        return super().create(vals_list)
+
+    def action_submit(self):
+        for record in self:
+            if not record.line_ids:
+                raise ValidationError(_("提交出库前必须维护出库明细。"))
+            record.line_ids._check_qty()
+        self.write({"state": "submitted"})
+        return True
+
+    def action_issue(self):
+        for record in self:
+            record.line_ids._check_qty()
+        self.write({"state": "issued"})
+        return True
+
+    def action_cancel(self):
+        self.write({"state": "cancel"})
+        return True
+
+    def action_reset_draft(self):
+        self.write({"state": "draft"})
+        return True
+
+
+class ScMaterialOutboundLine(models.Model):
+    _name = "sc.material.outbound.line"
+    _description = "材料出库明细"
+    _order = "outbound_id, sequence, id"
+
+    outbound_id = fields.Many2one("sc.material.outbound", string="出库单", required=True, ondelete="cascade", index=True)
+    sequence = fields.Integer(default=10)
+    project_id = fields.Many2one("project.project", string="项目", related="outbound_id.project_id", store=True, index=True)
+    product_id = fields.Many2one("product.product", string="材料", required=True, index=True)
+    material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
+    material_spec = fields.Char(string="规格型号")
+    product_uom_id = fields.Many2one("uom.uom", string="单位")
+    qty = fields.Float(string="出库数量", required=True)
+    note = fields.Char(string="备注")
+
+    @api.onchange("product_id")
+    def _onchange_product_id(self):
+        for record in self:
+            if record.product_id:
+                record.product_uom_id = record.product_id.uom_id
+                if not record.material_spec:
+                    record.material_spec = record.product_id.default_code or ""
+
+    @api.constrains("qty")
+    def _check_qty(self):
+        for record in self:
+            if record.qty <= 0:
+                raise ValidationError(_("出库数量必须大于0。"))
+
+
+class ScMaterialRfq(models.Model):
+    _name = "sc.material.rfq"
+    _description = "材料询比价"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _order = "rfq_date desc, id desc"
+
+    name = fields.Char(string="询价单号", required=True, default="新建", tracking=True)
+    project_id = fields.Many2one("project.project", string="项目", required=True, index=True, tracking=True)
+    purchase_request_id = fields.Many2one("sc.material.purchase.request", string="来源采购申请", index=True)
+    rfq_date = fields.Date(string="询价日期", default=fields.Date.context_today, index=True)
+    due_date = fields.Date(string="报价截止日期", index=True)
+    owner_id = fields.Many2one("res.users", string="经办人", default=lambda self: self.env.user, index=True)
+    selected_supplier_id = fields.Many2one("res.partner", string="选定供应商", index=True, tracking=True)
+    state = fields.Selection(
+        [("draft", "草稿"), ("submitted", "已发起"), ("selected", "已定价"), ("cancel", "已取消")],
+        string="状态",
+        default="draft",
+        index=True,
+        tracking=True,
+    )
+    line_ids = fields.One2many("sc.material.rfq.line", "rfq_id", string="报价明细")
+    note = fields.Text(string="询价说明")
+    legacy_fact_model = fields.Char(string="来源通用模型", index=True)
+    legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
+    legacy_fact_type = fields.Char(string="来源业务类型", index=True)
+
+    _sql_constraints = [
+        ("legacy_material_rfq_unique", "unique(legacy_fact_model, legacy_fact_id)", "来源通用询比价已迁移为专业询比价。"),
+    ]
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        seq = self.env["ir.sequence"]
+        for vals in vals_list:
+            if vals.get("name", "新建") == "新建":
+                vals["name"] = seq.next_by_code("sc.material.rfq") or _("材料询比价")
+        return super().create(vals_list)
+
+    def action_submit(self):
+        for record in self:
+            if not record.line_ids:
+                raise ValidationError(_("发起询价前必须维护报价明细。"))
+            record.line_ids._check_values()
+        self.write({"state": "submitted"})
+        return True
+
+    def action_select(self):
+        for record in self:
+            record.line_ids._check_values()
+            selected = record.line_ids.filtered("selected")
+            if not selected:
+                raise ValidationError(_("定价前必须选择至少一条报价。"))
+            record.selected_supplier_id = selected[0].supplier_id
+        self.write({"state": "selected"})
+        return True
+
+    def action_cancel(self):
+        self.write({"state": "cancel"})
+        return True
+
+    def action_reset_draft(self):
+        self.write({"state": "draft"})
+        return True
+
+
+class ScMaterialRfqLine(models.Model):
+    _name = "sc.material.rfq.line"
+    _description = "材料询比价明细"
+    _order = "rfq_id, sequence, id"
+
+    rfq_id = fields.Many2one("sc.material.rfq", string="询价单", required=True, ondelete="cascade", index=True)
+    sequence = fields.Integer(default=10)
+    project_id = fields.Many2one("project.project", string="项目", related="rfq_id.project_id", store=True, index=True)
+    supplier_id = fields.Many2one("res.partner", string="供应商", required=True, index=True)
+    product_id = fields.Many2one("product.product", string="材料", required=True, index=True)
+    material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
+    material_spec = fields.Char(string="规格型号")
+    product_uom_id = fields.Many2one("uom.uom", string="单位")
+    qty = fields.Float(string="询价数量", required=True)
+    currency_id = fields.Many2one("res.currency", string="币种", required=True, default=lambda self: self.env.company.currency_id.id)
+    unit_price = fields.Monetary(string="报价单价", currency_field="currency_id", required=True)
+    amount = fields.Monetary(string="报价金额", currency_field="currency_id", compute="_compute_amount", store=True)
+    tax_rate = fields.Float(string="税率%")
+    selected = fields.Boolean(string="选中")
+    note = fields.Char(string="备注")
+
+    @api.depends("qty", "unit_price")
+    def _compute_amount(self):
+        for record in self:
+            record.amount = record.qty * record.unit_price
+
+    @api.onchange("product_id")
+    def _onchange_product_id(self):
+        for record in self:
+            if record.product_id:
+                record.product_uom_id = record.product_id.uom_id
+                if not record.material_spec:
+                    record.material_spec = record.product_id.default_code or ""
+
+    @api.constrains("qty", "unit_price", "tax_rate")
+    def _check_values(self):
+        for record in self:
+            if record.qty <= 0:
+                raise ValidationError(_("询价数量必须大于0。"))
+            if record.unit_price < 0:
+                raise ValidationError(_("报价单价不能为负数。"))
+            if record.tax_rate < 0:
+                raise ValidationError(_("税率不能为负数。"))
+
+
+class ScMaterialSettlement(models.Model):
+    _name = "sc.material.settlement"
+    _description = "材料结算"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _order = "settlement_date desc, id desc"
+
+    name = fields.Char(string="结算单号", required=True, default="新建", tracking=True)
+    project_id = fields.Many2one("project.project", string="项目", required=True, index=True, tracking=True)
+    supplier_id = fields.Many2one("res.partner", string="供应商", required=True, index=True, tracking=True)
+    purchase_order_id = fields.Many2one("purchase.order", string="采购订单", index=True)
+    settlement_date = fields.Date(string="结算日期", default=fields.Date.context_today, index=True)
+    owner_id = fields.Many2one("res.users", string="经办人", default=lambda self: self.env.user, index=True)
+    currency_id = fields.Many2one("res.currency", string="币种", required=True, default=lambda self: self.env.company.currency_id.id)
+    amount_untaxed = fields.Monetary(string="未税金额", currency_field="currency_id", compute="_compute_amounts", store=True)
+    tax_amount = fields.Monetary(string="税额", currency_field="currency_id", compute="_compute_amounts", store=True)
+    amount_total = fields.Monetary(string="结算金额", currency_field="currency_id", compute="_compute_amounts", store=True)
+    state = fields.Selection(
+        [("draft", "草稿"), ("submitted", "已提交"), ("confirmed", "已确认"), ("cancel", "已取消")],
+        string="状态",
+        default="draft",
+        index=True,
+        tracking=True,
+    )
+    line_ids = fields.One2many("sc.material.settlement.line", "settlement_id", string="结算明细")
+    note = fields.Text(string="结算说明")
+    legacy_fact_model = fields.Char(string="来源通用模型", index=True)
+    legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
+    legacy_fact_type = fields.Char(string="来源业务类型", index=True)
+
+    _sql_constraints = [
+        ("legacy_material_settlement_unique", "unique(legacy_fact_model, legacy_fact_id)", "来源通用材料结算已迁移为专业结算。"),
+    ]
+
+    @api.depends("line_ids.amount_untaxed", "line_ids.tax_amount", "line_ids.amount_total")
+    def _compute_amounts(self):
+        for record in self:
+            record.amount_untaxed = sum(record.line_ids.mapped("amount_untaxed"))
+            record.tax_amount = sum(record.line_ids.mapped("tax_amount"))
+            record.amount_total = sum(record.line_ids.mapped("amount_total"))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        seq = self.env["ir.sequence"]
+        for vals in vals_list:
+            if vals.get("name", "新建") == "新建":
+                vals["name"] = seq.next_by_code("sc.material.settlement") or _("材料结算")
+        return super().create(vals_list)
+
+    def action_submit(self):
+        for record in self:
+            if not record.line_ids:
+                raise ValidationError(_("提交结算前必须维护结算明细。"))
+            record.line_ids._check_values()
+        self.write({"state": "submitted"})
+        return True
+
+    def action_confirm(self):
+        for record in self:
+            record.line_ids._check_values()
+        self.write({"state": "confirmed"})
+        return True
+
+    def action_cancel(self):
+        self.write({"state": "cancel"})
+        return True
+
+    def action_reset_draft(self):
+        self.write({"state": "draft"})
+        return True
+
+
+class ScMaterialSettlementLine(models.Model):
+    _name = "sc.material.settlement.line"
+    _description = "材料结算明细"
+    _order = "settlement_id, sequence, id"
+
+    settlement_id = fields.Many2one("sc.material.settlement", string="结算单", required=True, ondelete="cascade", index=True)
+    sequence = fields.Integer(default=10)
+    project_id = fields.Many2one("project.project", string="项目", related="settlement_id.project_id", store=True, index=True)
+    product_id = fields.Many2one("product.product", string="材料", required=True, index=True)
+    material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
+    material_spec = fields.Char(string="规格型号")
+    product_uom_id = fields.Many2one("uom.uom", string="单位")
+    qty = fields.Float(string="结算数量", required=True)
+    currency_id = fields.Many2one("res.currency", string="币种", related="settlement_id.currency_id", store=True)
+    unit_price = fields.Monetary(string="结算单价", currency_field="currency_id", required=True)
+    tax_rate = fields.Float(string="税率%")
+    amount_untaxed = fields.Monetary(string="未税金额", currency_field="currency_id", compute="_compute_amounts", store=True)
+    tax_amount = fields.Monetary(string="税额", currency_field="currency_id", compute="_compute_amounts", store=True)
+    amount_total = fields.Monetary(string="含税金额", currency_field="currency_id", compute="_compute_amounts", store=True)
+    note = fields.Char(string="备注")
+
+    @api.depends("qty", "unit_price", "tax_rate")
+    def _compute_amounts(self):
+        for record in self:
+            amount_untaxed = record.qty * record.unit_price
+            tax_amount = amount_untaxed * record.tax_rate / 100
+            record.amount_untaxed = amount_untaxed
+            record.tax_amount = tax_amount
+            record.amount_total = amount_untaxed + tax_amount
+
+    @api.onchange("product_id")
+    def _onchange_product_id(self):
+        for record in self:
+            if record.product_id:
+                record.product_uom_id = record.product_id.uom_id
+                if not record.material_spec:
+                    record.material_spec = record.product_id.default_code or ""
+
+    @api.constrains("qty", "unit_price", "tax_rate")
+    def _check_values(self):
+        for record in self:
+            if record.qty <= 0:
+                raise ValidationError(_("结算数量必须大于0。"))
+            if record.unit_price < 0:
+                raise ValidationError(_("结算单价不能为负数。"))
+            if record.tax_rate < 0:
+                raise ValidationError(_("税率不能为负数。"))

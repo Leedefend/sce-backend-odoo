@@ -22,13 +22,29 @@
       variant="error"
       :on-retry="onReload"
     />
-    <StatusPanel
-      v-else-if="status === 'empty'"
-      :title="emptyCopy.title"
-      :message="emptyCopy.message"
-      variant="info"
-      :on-retry="onReload"
-    />
+    <template v-else-if="status === 'empty'">
+      <slot name="toolbar"></slot>
+      <section class="list-empty-state">
+        <div class="list-empty-copy">
+          <h2>{{ emptyStateTitle }}</h2>
+          <p>{{ emptyStateMessage }}</p>
+        </div>
+        <div class="list-empty-actions">
+          <button
+            v-if="canCreateRecord"
+            type="button"
+            class="list-empty-primary"
+            :disabled="loading"
+            @click="onCreate"
+          >
+            {{ createLabelText }}
+          </button>
+          <button type="button" class="list-empty-secondary" :disabled="loading" @click="onReload">
+            {{ uiLabel('empty_retry', '刷新') }}
+          </button>
+        </div>
+      </section>
+    </template>
 
     <template v-else>
       <section class="list-toolbar">
@@ -647,6 +663,9 @@ const props = defineProps<{
   onGroupCollapsedChange?: (keys: string[]) => void;
   onPageChange?: (offset: number) => void;
   onPageLimitChange?: (limit: number) => void;
+  canCreateRecord?: boolean;
+  createLabel?: string;
+  onCreate?: () => void;
 }>();
 const emit = defineEmits<{
   'column-visibility-change': [payload: { visibility: Record<string, boolean> }];
@@ -669,6 +688,17 @@ const errorCopy = computed(() =>
   ),
 );
 const emptyCopy = computed(() => resolveEmptyCopy('list'));
+const createLabelText = computed(() => props.createLabel || uiLabel('create', '新建'));
+const emptyStateTitle = computed(() =>
+  props.canCreateRecord
+    ? uiLabel('empty_create_title', '当前还没有数据')
+    : uiLabel('empty_readonly_title', emptyCopy.value.title),
+);
+const emptyStateMessage = computed(() =>
+  props.canCreateRecord
+    ? uiLabel('empty_create_message', '可以先新建一条业务记录，开始录入和办理。')
+    : uiLabel('empty_readonly_message', emptyCopy.value.message),
+);
 const groupedRows = computed(() =>
   Array.isArray(props.groupedRows) ? props.groupedRows : [],
 );
@@ -1600,6 +1630,71 @@ onBeforeUnmount(() => {
   color: #475569;
   font-size: 13px;
   white-space: nowrap;
+}
+
+.list-empty-state {
+  display: grid;
+  gap: 14px;
+  border: 1px solid #dbe4f0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 20px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.list-empty-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.list-empty-copy h2,
+.list-empty-copy p {
+  margin: 0;
+}
+
+.list-empty-copy h2 {
+  color: #0f172a;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.list-empty-copy p {
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.list-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.list-empty-primary,
+.list-empty-secondary {
+  min-height: 34px;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.list-empty-primary {
+  border: 1px solid #111827;
+  background: #111827;
+  color: #fff;
+}
+
+.list-empty-secondary {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+}
+
+.list-empty-primary:disabled,
+.list-empty-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .table {

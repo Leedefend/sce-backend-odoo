@@ -64,20 +64,25 @@
       :style="pageSectionStyle('status_forbidden')"
     />
     <StatusPanel
-      v-else-if="status === 'idle' && !shouldRenderDashboardSurface && !productDeliverySurface.visible && embeddedRecordActionId <= 0 && embeddedActionId <= 0"
+      v-else-if="status === 'idle' && !sceneContractEntryIntent && !shouldRenderDashboardSurface && !productDeliverySurface.visible && embeddedRecordActionId <= 0 && embeddedActionId <= 0"
       :title="pageText('status_idle_diag_title', '场景已加载，但没有可渲染目标')"
       :message="idleDiagnosticMessage"
       variant="info"
     />
-    <ProjectManagementDashboardView v-if="status === 'idle' && shouldRenderDashboardSurface" />
+    <SceneContractBlockGridView
+      v-if="status === 'idle' && sceneContractEntryIntent"
+      :intent="sceneContractEntryIntent"
+      :scene-key="currentSceneKey"
+    />
+    <ProjectManagementDashboardView v-else-if="status === 'idle' && shouldRenderDashboardSurface" />
     <StatusPanel
-      v-if="status === 'idle' && !shouldRenderDashboardSurface && validationHint"
+      v-if="status === 'idle' && !sceneContractEntryIntent && !shouldRenderDashboardSurface && validationHint"
       :title="pageText('validation_surface_title', '表单约束提示')"
       :message="validationHint"
       variant="info"
     />
     <section
-      v-if="status === 'idle' && !shouldRenderDashboardSurface && productDeliverySurface.visible"
+      v-if="status === 'idle' && !sceneContractEntryIntent && !shouldRenderDashboardSurface && productDeliverySurface.visible"
       class="scene-delivery"
       :class="{ 'scene-delivery--advisory': productDeliverySurface.advisoryOnly }"
     >
@@ -99,13 +104,13 @@
       </button>
     </section>
     <StatusPanel
-      v-if="status === 'idle' && !shouldRenderDashboardSurface && runtimeDiagnosticMessage"
+      v-if="status === 'idle' && !sceneContractEntryIntent && !shouldRenderDashboardSurface && runtimeDiagnosticMessage"
       :title="runtimeDiagnosticTitle"
       :message="runtimeDiagnosticMessage"
       variant="info"
     />
-    <ContractFormPage v-if="status === 'idle' && !shouldRenderDashboardSurface && embeddedRecordActionId > 0" />
-    <ActionView v-else-if="status === 'idle' && !shouldRenderDashboardSurface && embeddedActionId > 0" />
+    <ContractFormPage v-if="status === 'idle' && !sceneContractEntryIntent && !shouldRenderDashboardSurface && embeddedRecordActionId > 0" />
+    <ActionView v-else-if="status === 'idle' && !sceneContractEntryIntent && !shouldRenderDashboardSurface && embeddedActionId > 0" />
   </section>
 </template>
 
@@ -114,6 +119,7 @@ import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
 import ActionView from './ActionViewShell.vue';
 import ProjectManagementDashboardView from './ProjectManagementDashboardView.vue';
+import SceneContractBlockGridView from './SceneContractBlockGridView.vue';
 import ContractFormPage from '../pages/ContractFormPage.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import { getSceneByKey, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
@@ -143,6 +149,11 @@ const pageActionTarget = pageContract.actionTarget;
 const pageGlobalActions = pageContract.globalActions;
 const headerActions = computed(() => pageGlobalActions.value);
 const currentSceneKey = computed(() => String(route.params.sceneKey || route.meta?.sceneKey || '').trim());
+const sceneContractEntryIntentMap: Record<string, string> = {
+  'workspace.home': 'workspace.home.enter',
+  'dashboard.company': 'dashboard.company.enter',
+};
+const sceneContractEntryIntent = computed(() => sceneContractEntryIntentMap[currentSceneKey.value] || '');
 const findActionNodeByModelRef = findActionNodeByModel;
 const scene = ref<Scene | null>(null);
 const status = ref<'loading' | 'error' | 'forbidden' | 'idle'>('loading');
@@ -650,6 +661,28 @@ function fallbackSceneFromSceneReady(sceneKey: string): Scene | null {
   return null;
 }
 
+function fallbackSceneFromEntryIntent(sceneKey: string): Scene | null {
+  const key = String(sceneKey || '').trim();
+  if (!sceneContractEntryIntentMap[key]) return null;
+  return {
+    key,
+    label: key === 'dashboard.company' ? '公司驾驶舱' : '工作台',
+    route: `/s/${key}`,
+    target: {
+      route: `/s/${key}`,
+    },
+    page: {
+      key,
+      page_type: 'dashboard',
+      layout_mode: 'block_grid',
+    },
+    layout: resolveSceneLayout(null),
+    capabilities: [],
+    breadcrumbs: [],
+    tiles: [],
+  };
+}
+
 function resolveRoutePathOnly(targetRoute: string) {
   const raw = String(targetRoute || '').trim();
   if (!raw) return '';
@@ -699,7 +732,7 @@ async function resolveScene() {
     embeddedRecordActionId.value = 0;
     validationHint.value = '';
     const sceneKey = String(route.meta?.sceneKey || route.params.sceneKey || '');
-    const resolvedScene = getSceneByKey(sceneKey) || fallbackSceneFromSceneReady(sceneKey);
+    const resolvedScene = getSceneByKey(sceneKey) || fallbackSceneFromSceneReady(sceneKey) || fallbackSceneFromEntryIntent(sceneKey);
     if (!resolvedScene) {
       setError(new Error(`scene not found: ${sceneKey}`), 'scene not found');
       errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
@@ -707,6 +740,10 @@ async function resolveScene() {
       return;
     }
     scene.value = resolvedScene;
+    if (sceneContractEntryIntentMap[sceneKey]) {
+      status.value = 'idle';
+      return;
+    }
 
     const validationSurface = (resolvedScene.validation_surface && typeof resolvedScene.validation_surface === 'object')
       ? resolvedScene.validation_surface as Record<string, unknown>

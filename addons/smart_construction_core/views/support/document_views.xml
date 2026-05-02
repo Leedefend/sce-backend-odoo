@@ -7,6 +7,7 @@
             <tree>
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="document_kind"/>
                 <field name="wbs_id"/>
                 <field name="doc_type_id"/>
                 <field name="doc_subtype_id"/>
@@ -52,6 +53,7 @@
                 <sheet>
                     <group>
                         <field name="name"/>
+                        <field name="document_kind"/>
                         <field name="project_id" required="1"/>
                         <field name="wbs_id"/>
                         <field name="task_id"/>
@@ -68,6 +70,7 @@
 
                     <group>
                         <field name="responsible_id"/>
+                        <field name="attachment_count" readonly="1"/>
                         <field name="company_id" readonly="1"/>
                     </group>
 
@@ -92,6 +95,38 @@
         <field name="name">工程资料</field>
         <field name="res_model">sc.project.document</field>
         <field name="view_mode">tree,form</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
+    </record>
+    <record id="action_sc_project_document_safety" model="ir.actions.act_window">
+        <field name="name">安全资料</field>
+        <field name="res_model">sc.project.document</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('document_kind', '=', 'safety')]</field>
+        <field name="context">{'default_document_kind': 'safety'}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
+    </record>
+    <record id="action_sc_project_document_quality" model="ir.actions.act_window">
+        <field name="name">质量资料</field>
+        <field name="res_model">sc.project.document</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('document_kind', '=', 'quality')]</field>
+        <field name="context">{'default_document_kind': 'quality'}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
+    </record>
+    <record id="action_sc_project_document_self_inspection" model="ir.actions.act_window">
+        <field name="name">自检资料</field>
+        <field name="res_model">sc.project.document</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('document_kind', '=', 'self_inspection')]</field>
+        <field name="context">{'default_document_kind': 'self_inspection'}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
+    </record>
+    <record id="action_sc_project_document_archive" model="ir.actions.act_window">
+        <field name="name">归档备案</field>
+        <field name="res_model">sc.project.document</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('document_kind', '=', 'archive')]</field>
+        <field name="context">{'default_document_kind': 'archive'}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
     </record>
 </odoo>

@@ -179,7 +179,11 @@ class AppMenuConfig(models.Model):
             }
 
             any_child_related = False
-            for c in menu.child_id.sorted(key=lambda m: (m.sequence, m.id)):
+            children = self.env["ir.ui.menu"].sudo().with_context(**{"ir.ui.menu.full_list": True}).search(
+                [("parent_id", "=", menu.id), ("active", "=", True)],
+                order="sequence,id",
+            )
+            for c in children:
                 cnode, c_related = collect(c, parent_stack + [{'id': node['id'], 'name': node['name']}])
                 if c_related:
                     node['children'].append(cnode)
@@ -201,7 +205,10 @@ class AppMenuConfig(models.Model):
 
         try:
             # 1) 全量抓取菜单（sudo，避免 groups 限制影响元数据完整性）
-            all_menus = self.env['ir.ui.menu'].sudo().with_context(**{'ir.ui.menu.full_list': True}).search([], order='sequence,id')
+            all_menus = self.env['ir.ui.menu'].sudo().with_context(**{'ir.ui.menu.full_list': True}).search(
+                [('active', '=', True)],
+                order='sequence,id',
+            )
             roots = all_menus.filtered(lambda m: not m.parent_id).sorted(key=lambda m: (m.sequence, m.id))
 
             tree, action_index = [], {}

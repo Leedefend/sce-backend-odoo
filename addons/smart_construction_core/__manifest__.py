@@ -2,7 +2,7 @@
 # pyright: reportUnusedExpression=false
 {
     'name': 'Smart Construction Core',
-    'version': '17.0.0.4',
+    'version': '17.0.0.36',
     'summary': 'Core module for construction enterprise management (Architecture 2.0)',
     'author': 'Leedefend',
     'depends': [
@@ -72,6 +72,10 @@
         'views/core/project_lifecycle_kanban_views.xml',
         'wizard/material_plan_to_rfq_views.xml',
         'views/core/material_plan_views.xml',
+        'views/core/material_acceptance_views.xml',
+        'views/core/labor_management_views.xml',
+        'views/core/equipment_management_views.xml',
+        'views/core/subcontract_management_views.xml',
         'actions/finance_actions.xml',
         'views/support/payment_request_tier_review_views.xml',
         'views/menu_finance_center.xml',
@@ -122,6 +126,14 @@
         'views/core/payment_execution_views.xml',
         'views/core/invoice_registration_views.xml',
         'views/core/financing_loan_views.xml',
+        'views/core/funding_baseline_views.xml',
+        'views/core/fund_account_views.xml',
+        'views/core/fund_account_operation_views.xml',
+        'views/core/business_menu_fact_views.xml',
+        'views/core/plan_management_views.xml',
+        'views/core/quality_management_views.xml',
+        'views/core/safety_management_views.xml',
+        'views/core/contract_event_views.xml',
         'views/core/general_contract_views.xml',
         'views/core/payment_request_views.xml',
         'views/core/project_overview_views.xml',
@@ -159,6 +171,8 @@
         'security/action_groups_patch.xml',
         'security/menu_tech_hide_patch.xml',
         'actions/project_native_action_overrides.xml',
+        'views/menu_business_taxonomy.xml',
+        'data/business_menu_full_coverage.xml',
     ],
     'assets': {
         'web.assets_frontend_minimal': [

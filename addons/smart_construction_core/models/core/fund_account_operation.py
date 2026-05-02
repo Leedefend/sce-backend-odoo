@@ -1,0 +1,123 @@
+# -*- coding: utf-8 -*-
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
+
+
+class ScFundAccountOperation(models.Model):
+    _name = "sc.fund.account.operation"
+    _description = "资金账户操作单"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _order = "operation_date desc, id desc"
+
+    name = fields.Char(string="单据编号", required=True, default="/", copy=False, tracking=True)
+    operation_type = fields.Selection(
+        [
+            ("transfer_out", "资金划拨"),
+            ("transfer_between", "资金调拨"),
+            ("balance_adjustment", "余额调整"),
+        ],
+        string="业务类型",
+        required=True,
+        default=lambda self: self.env.context.get("default_operation_type") or "transfer_between",
+        tracking=True,
+        index=True,
+    )
+    operation_date = fields.Date(
+        string="业务日期",
+        required=True,
+        default=fields.Date.context_today,
+        tracking=True,
+        index=True,
+    )
+    source_account_id = fields.Many2one(
+        "sc.fund.account",
+        string="转出账户",
+        index=True,
+        ondelete="restrict",
+        tracking=True,
+    )
+    target_account_id = fields.Many2one(
+        "sc.fund.account",
+        string="转入账户",
+        index=True,
+        ondelete="restrict",
+        tracking=True,
+    )
+    project_id = fields.Many2one("project.project", string="项目", index=True, ondelete="set null")
+    company_id = fields.Many2one(
+        "res.company",
+        string="公司",
+        required=True,
+        default=lambda self: self.env.company,
+        index=True,
+    )
+    currency_id = fields.Many2one(
+        "res.currency",
+        string="币种",
+        required=True,
+        default=lambda self: self.env.company.currency_id.id,
+    )
+    amount = fields.Monetary(string="金额", currency_field="currency_id", tracking=True)
+    before_balance = fields.Monetary(string="调整前余额", currency_field="currency_id", tracking=True)
+    after_balance = fields.Monetary(string="调整后余额", currency_field="currency_id", tracking=True)
+    operation_reason = fields.Char(string="操作原因", required=True, tracking=True)
+    state = fields.Selection(
+        [
+            ("draft", "草稿"),
+            ("confirmed", "已确认"),
+            ("done", "已完成"),
+            ("cancelled", "已取消"),
+        ],
+        string="状态",
+        required=True,
+        default="draft",
+        tracking=True,
+        index=True,
+    )
+    note = fields.Text(string="备注")
+    legacy_source_model = fields.Char(string="历史来源模型", readonly=True, index=True)
+    legacy_record_id = fields.Char(string="历史记录ID", readonly=True, index=True)
+    legacy_document_state = fields.Char(string="历史单据状态", readonly=True, index=True)
+    active = fields.Boolean(string="有效", default=True, index=True)
+
+    _sql_constraints = [
+        (
+            "legacy_source_unique",
+            "unique(legacy_source_model, legacy_record_id)",
+            "同一历史资金操作只能迁移一次。",
+        ),
+    ]
+
+    @api.constrains("operation_type", "source_account_id", "target_account_id", "amount", "before_balance", "after_balance")
+    def _check_operation_values(self):
+        for record in self:
+            if record.operation_type in ("transfer_out", "transfer_between"):
+                if not record.source_account_id or not record.target_account_id:
+                    raise ValidationError(_("资金划拨/调拨必须填写转出账户和转入账户。"))
+                if record.source_account_id == record.target_account_id:
+                    raise ValidationError(_("转出账户和转入账户不能相同。"))
+                if record.amount <= 0:
+                    raise ValidationError(_("资金划拨/调拨金额必须大于 0。"))
+            if record.operation_type == "balance_adjustment":
+                if record.before_balance == record.after_balance:
+                    raise ValidationError(_("余额调整前后金额不能相同。"))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        seq = self.env["ir.sequence"].sudo()
+        for vals in vals_list:
+            if vals.get("name", "/") == "/":
+                vals["name"] = seq.next_by_code("sc.fund.account.operation") or _("资金账户操作单")
+        return super().create(vals_list)
+
+    def action_confirm(self):
+        self.write({"state": "confirmed"})
+
+    def action_done(self):
+        self.write({"state": "done"})
+
+    def action_cancel(self):
+        self.write({"state": "cancelled"})
+
+    def action_reset_draft(self):
+        self.write({"state": "draft"})

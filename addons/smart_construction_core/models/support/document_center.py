@@ -10,6 +10,20 @@ class ScProjectDocument(models.Model):
     _order = 'project_id, doc_type_id, create_date desc'
 
     name = fields.Char('资料名称', required=True, tracking=True)
+    document_kind = fields.Selection(
+        [
+            ('site', '现场资料'),
+            ('safety', '安全资料'),
+            ('quality', '质量资料'),
+            ('self_inspection', '自检资料'),
+            ('archive', '归档备案'),
+        ],
+        string='资料业务分类',
+        default='site',
+        required=True,
+        index=True,
+        tracking=True,
+    )
 
     project_id = fields.Many2one(
         'project.project', string='所属项目',
@@ -60,6 +74,9 @@ class ScProjectDocument(models.Model):
     )
 
     note = fields.Text('说明/备注')
+    legacy_source_model = fields.Char('历史来源模型', index=True, readonly=True)
+    legacy_record_id = fields.Char('历史记录ID', index=True, readonly=True)
+    legacy_document_state = fields.Char('历史状态', index=True, readonly=True)
 
     attachment_ids = fields.Many2many(
         'ir.attachment',

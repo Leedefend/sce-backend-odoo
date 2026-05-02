@@ -254,10 +254,44 @@
         </field>
     </record>
 
+    <record id="view_project_profit_compare_form" model="ir.ui.view">
+        <field name="name">project.profit.compare.form</field>
+        <field name="model">project.profit.compare</field>
+        <field name="arch" type="xml">
+            <form string="项目经营利润" create="false" edit="false" delete="false">
+                <sheet>
+                    <group string="统计维度">
+                        <group>
+                            <field name="project_id" readonly="1"/>
+                            <field name="period" readonly="1"/>
+                            <field name="wbs_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="currency_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="收入与成本">
+                        <group>
+                            <field name="revenue_budget_amount" readonly="1"/>
+                            <field name="revenue_actual_amount" readonly="1"/>
+                            <field name="gross_profit_budget" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="cost_budget_amount" readonly="1"/>
+                            <field name="cost_actual_amount" readonly="1"/>
+                            <field name="gross_profit_actual" readonly="1"/>
+                            <field name="gross_margin_rate" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
     <record id="action_project_profit_compare" model="ir.actions.act_window">
         <field name="name">项目经营利润</field>
         <field name="res_model">project.profit.compare</field>
-        <field name="view_mode">tree,pivot</field>
+        <field name="view_mode">tree,form,pivot</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
     </record>
 

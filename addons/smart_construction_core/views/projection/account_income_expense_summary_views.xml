@@ -49,6 +49,42 @@
             </field>
         </record>
 
+        <record id="view_sc_account_income_expense_summary_form" model="ir.ui.view">
+            <field name="name">sc.account.income.expense.summary.form</field>
+            <field name="model">sc.account.income.expense.summary</field>
+            <field name="arch" type="xml">
+                <form string="账户收支统计表" create="0" edit="0" delete="0">
+                    <sheet>
+                        <group>
+                            <group string="账户">
+                                <field name="row_level"/>
+                                <field name="account_type"/>
+                                <field name="account_name"/>
+                                <field name="account_no"/>
+                                <field name="bank_name"/>
+                                <field name="project_id"/>
+                            </group>
+                            <group string="余额">
+                                <field name="opening_balance"/>
+                                <field name="current_account_balance"/>
+                                <field name="current_bank_balance"/>
+                                <field name="bank_system_difference"/>
+                            </group>
+                        </group>
+                        <group string="收支">
+                            <field name="income_amount"/>
+                            <field name="expense_amount"/>
+                            <field name="cumulative_receipt_amount"/>
+                            <field name="cumulative_expense_amount"/>
+                            <field name="account_transfer_amount"/>
+                            <field name="line_count"/>
+                            <field name="coverage_note"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
         <record id="view_sc_account_income_expense_summary_pivot" model="ir.ui.view">
             <field name="name">sc.account.income.expense.summary.pivot</field>
             <field name="model">sc.account.income.expense.summary</field>
@@ -86,7 +122,7 @@
         <record id="action_sc_account_income_expense_summary" model="ir.actions.act_window">
             <field name="name">账户收支统计表</field>
             <field name="res_model">sc.account.income.expense.summary</field>
-            <field name="view_mode">tree,pivot,graph</field>
+            <field name="view_mode">tree,form,pivot,graph</field>
             <field name="search_view_id" ref="view_sc_account_income_expense_summary_search"/>
             <field name="context">{'create': False, 'search_default_group_account_type': 1}</field>
             <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),

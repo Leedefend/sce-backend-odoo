@@ -70,6 +70,41 @@
             </field>
         </record>
 
+        <record id="view_sc_fund_daily_summary_form" model="ir.ui.view">
+            <field name="name">sc.fund.daily.summary.form</field>
+            <field name="model">sc.fund.daily.summary</field>
+            <field name="arch" type="xml">
+                <form string="资金日报汇总" create="0" edit="0" delete="0">
+                    <sheet>
+                        <group>
+                            <group string="日期与项目">
+                                <field name="document_date"/>
+                                <field name="project_id"/>
+                                <field name="project_name"/>
+                            </group>
+                            <group string="账户">
+                                <field name="account_name"/>
+                                <field name="bank_account_no"/>
+                                <field name="line_count"/>
+                            </group>
+                        </group>
+                        <group string="收支余额">
+                            <group>
+                                <field name="daily_income"/>
+                                <field name="daily_expense"/>
+                                <field name="net_amount"/>
+                            </group>
+                            <group>
+                                <field name="current_account_balance"/>
+                                <field name="current_bank_balance"/>
+                                <field name="bank_system_difference"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
         <record id="view_sc_fund_daily_summary_pivot" model="ir.ui.view">
             <field name="name">sc.fund.daily.summary.pivot</field>
             <field name="model">sc.fund.daily.summary</field>
@@ -105,7 +140,7 @@
         <record id="action_sc_fund_daily_summary" model="ir.actions.act_window">
             <field name="name">资金日报汇总</field>
             <field name="res_model">sc.fund.daily.summary</field>
-            <field name="view_mode">tree,pivot,graph</field>
+            <field name="view_mode">tree,form,pivot,graph</field>
             <field name="search_view_id" ref="view_sc_fund_daily_summary_search"/>
             <field name="context">{'create': False, 'search_default_group_document_date': 1}</field>
             <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),

@@ -21,3 +21,16 @@ class ProductTemplate(models.Model):
         ondelete="set null",
     )
     legacy_material_id = fields.Char(string="历史物料ID", index=True, readonly=True)
+
+
+class ProductCategory(models.Model):
+    _inherit = "product.category"
+
+    legacy_material_category_id = fields.Many2one(
+        "sc.legacy.material.category",
+        string="历史材料分类来源",
+        index=True,
+        readonly=True,
+        ondelete="set null",
+    )
+    legacy_material_category_code = fields.Char(string="历史材料分类编码", index=True, readonly=True)

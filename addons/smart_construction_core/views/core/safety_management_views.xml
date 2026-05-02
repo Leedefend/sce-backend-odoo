@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="action_sc_safety_plan" model="ir.actions.act_window">
+        <field name="name">施工方案</field>
+        <field name="res_model">sc.safety.plan</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+    </record>
+
+    <record id="action_sc_hazard_source" model="ir.actions.act_window">
+        <field name="name">危险源清单</field>
+        <field name="res_model">sc.hazard.source</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+    </record>
+
+    <record id="action_sc_safety_issue" model="ir.actions.act_window">
+        <field name="name">安全问题闭环</field>
+        <field name="res_model">sc.safety.issue</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+    </record>
+
+    <record id="action_sc_safety_rectification" model="ir.actions.act_window">
+        <field name="name">安全整改执行</field>
+        <field name="res_model">sc.safety.rectification</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+    </record>
+
+    <record id="action_sc_safety_recheck" model="ir.actions.act_window">
+        <field name="name">安全复验</field>
+        <field name="res_model">sc.safety.recheck</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+    </record>
+
+    <record id="view_sc_safety_plan_tree" model="ir.ui.view">
+        <field name="name">sc.safety.plan.tree</field>
+        <field name="model">sc.safety.plan</field>
+        <field name="arch" type="xml">
+            <tree string="安全施工方案" default_order="plan_date desc">
+                <field name="name"/>
+                <field name="plan_type"/>
+                <field name="project_id"/>
+                <field name="owner_id"/>
+                <field name="plan_date"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_safety_plan_form" model="ir.ui.view">
+        <field name="name">sc.safety.plan.form</field>
+        <field name="model">sc.safety.plan</field>
+        <field name="arch" type="xml">
+            <form string="安全施工方案">
+                <header>
+                    <button name="action_submit" string="提交" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_approve" string="审批通过" type="object" class="btn-primary" invisible="state != 'submitted'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="plan_type"/>
+                        <field name="project_id"/>
+                        <field name="owner_id"/>
+                        <field name="plan_date"/>
+                    </group>
+                    <field name="description" nolabel="1"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_hazard_source_tree" model="ir.ui.view">
+        <field name="name">sc.hazard.source.tree</field>
+        <field name="model">sc.hazard.source</field>
+        <field name="arch" type="xml">
+            <tree string="危险源" default_order="valid_to desc">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="risk_item_id"/>
+                <field name="location"/>
+                <field name="valid_to"/>
+                <field name="owner_id"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_safety_issue_tree" model="ir.ui.view">
+        <field name="name">sc.safety.issue.tree</field>
+        <field name="model">sc.safety.issue</field>
+        <field name="arch" type="xml">
+            <tree string="安全问题" default_order="issue_date desc">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="issue_date"/>
+                <field name="location"/>
+                <field name="issue_level"/>
+                <field name="responsible_party_id"/>
+                <field name="rectification_deadline"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_safety_issue_form" model="ir.ui.view">
+        <field name="name">sc.safety.issue.form</field>
+        <field name="model">sc.safety.issue</field>
+        <field name="arch" type="xml">
+            <form string="安全问题">
+                <header>
+                    <button name="action_submit" string="提交" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,rectifying,rechecking,closed"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="project_id"/>
+                            <field name="issue_level"/>
+                            <field name="issue_date"/>
+                        </group>
+                        <group>
+                            <field name="location"/>
+                            <field name="responsible_party_id"/>
+                            <field name="owner_id"/>
+                            <field name="rectification_deadline"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="问题描述">
+                            <field name="description" nolabel="1"/>
+                        </page>
+                        <page string="检查照片">
+                            <field name="photo_batch_ids"/>
+                        </page>
+                        <page string="隐患信息">
+                            <field name="hazard_source_id"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_safety_rectification_tree" model="ir.ui.view">
+        <field name="name">sc.safety.rectification.tree</field>
+        <field name="model">sc.safety.rectification</field>
+        <field name="arch" type="xml">
+            <tree string="安全整改" default_order="rectification_date desc">
+                <field name="issue_id"/>
+                <field name="project_id"/>
+                <field name="issue_level"/>
+                <field name="responsible_party_id"/>
+                <field name="rectification_deadline"/>
+                <field name="rectification_date"/>
+                <field name="handler_id"/>
+                <field name="issue_state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_safety_rectification_form" model="ir.ui.view">
+        <field name="name">sc.safety.rectification.form</field>
+        <field name="model">sc.safety.rectification</field>
+        <field name="arch" type="xml">
+            <form string="安全整改">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="issue_id"/>
+                            <field name="project_id" readonly="1"/>
+                            <field name="issue_level" readonly="1"/>
+                            <field name="issue_state" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="responsible_party_id" readonly="1"/>
+                            <field name="rectification_deadline" readonly="1"/>
+                            <field name="rectification_date"/>
+                            <field name="handler_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="整改结果">
+                            <field name="result" nolabel="1"/>
+                        </page>
+                        <page string="照片批次">
+                            <field name="photo_batch_ids"/>
+                        </page>
+                        <page string="来源追溯">
+                            <group>
+                                <field name="legacy_fact_model"/>
+                                <field name="legacy_fact_id"/>
+                                <field name="legacy_fact_type"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_safety_rectification_search" model="ir.ui.view">
+        <field name="name">sc.safety.rectification.search</field>
+        <field name="model">sc.safety.rectification</field>
+        <field name="arch" type="xml">
+            <search string="安全整改">
+                <field name="issue_id"/>
+                <field name="project_id"/>
+                <field name="handler_id"/>
+                <filter string="待整改问题" name="pending_rectification" domain="[('issue_state', 'in', ['submitted', 'rectifying'])]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按整改人" name="group_handler" context="{'group_by': 'handler_id'}"/>
+                <filter string="按问题状态" name="group_issue_state" context="{'group_by': 'issue_state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_safety_recheck_tree" model="ir.ui.view">
+        <field name="name">sc.safety.recheck.tree</field>
+        <field name="model">sc.safety.recheck</field>
+        <field name="arch" type="xml">
+            <tree string="安全复验" default_order="recheck_date desc">
+                <field name="issue_id"/>
+                <field name="project_id"/>
+                <field name="issue_level"/>
+                <field name="responsible_party_id"/>
+                <field name="recheck_date"/>
+                <field name="recheck_user_id"/>
+                <field name="result"/>
+                <field name="issue_state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_safety_recheck_form" model="ir.ui.view">
+        <field name="name">sc.safety.recheck.form</field>
+        <field name="model">sc.safety.recheck</field>
+        <field name="arch" type="xml">
+            <form string="安全复验">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="issue_id"/>
+                            <field name="project_id" readonly="1"/>
+                            <field name="issue_level" readonly="1"/>
+                            <field name="issue_state" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="responsible_party_id" readonly="1"/>
+                            <field name="recheck_date"/>
+                            <field name="recheck_user_id"/>
+                            <field name="result"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="复验意见">
+                            <field name="comment" nolabel="1"/>
+                        </page>
+                        <page string="照片批次">
+                            <field name="photo_batch_ids"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_safety_recheck_search" model="ir.ui.view">
+        <field name="name">sc.safety.recheck.search</field>
+        <field name="model">sc.safety.recheck</field>
+        <field name="arch" type="xml">
+            <search string="安全复验">
+                <field name="issue_id"/>
+                <field name="project_id"/>
+                <field name="recheck_user_id"/>
+                <filter string="待复验问题" name="pending_recheck" domain="[('issue_state', '=', 'rechecking')]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按复验人" name="group_user" context="{'group_by': 'recheck_user_id'}"/>
+                <filter string="按复验结果" name="group_result" context="{'group_by': 'result'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_safety_issue_search" model="ir.ui.view">
+        <field name="name">sc.safety.issue.search</field>
+        <field name="model">sc.safety.issue</field>
+        <field name="arch" type="xml">
+            <search string="安全问题">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="responsible_party_id"/>
+                <filter string="未闭环" name="not_closed" domain="[('state', 'not in', ['closed', 'cancel'])]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按等级" name="group_level" context="{'group_by': 'issue_level'}"/>
+                <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+</odoo>
