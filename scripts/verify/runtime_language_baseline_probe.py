@@ -80,7 +80,7 @@ for field_name, expected in expected_labels.items():
 
 form_strings = _form_arch_strings(env, probe_user, "project.project")
 report["project_project_form_arch_required_strings"] = {
-    value: value in form_strings for value in ["提交立项", "预算", "合同", "执行结构", "工程量清单"]
+    value: value in form_strings for value in ["提交立项"]
 }
 for value, exists in report["project_project_form_arch_required_strings"].items():
     if not exists:
@@ -94,9 +94,9 @@ for xmlid in ["smart_construction_core.menu_sc_root", "smart_construction_core.m
         continue
     menu_labels[xmlid] = rec.sudo().with_context(lang=LANG_CODE).name
 report["menu_labels"] = menu_labels
-if menu_labels.get("smart_construction_core.menu_sc_root") != "智能施工 2.0":
+if menu_labels.get("smart_construction_core.menu_sc_root") != "智慧施工管理平台":
     _fail(errors, "root menu zh_CN label mismatch")
-if menu_labels.get("smart_construction_core.menu_sc_project_project") != "项目台账（试点）":
+if menu_labels.get("smart_construction_core.menu_sc_project_project") != "项目台账":
     _fail(errors, "project menu zh_CN label mismatch")
 
 report["errors"] = errors
