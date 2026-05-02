@@ -17,7 +17,9 @@ REQUIRED_FILES = (
     "frontend/apps/web/src/app/runtime/unifiedPageContractLitePilot.ts",
     "frontend/apps/web/src/api/contract.ts",
     "frontend/apps/web/src/app/resolvers/actionResolver.ts",
+    "scripts/verify/unified_page_contract_lite_frontend_pilot_browser_smoke.js",
     "docs/architecture/unified_page_contract_lite/frontend_pilot_implementation_batch_45.md",
+    "docs/architecture/unified_page_contract_lite/frontend_pilot_browser_smoke_batch_46.md",
 )
 
 REQUIRED_TOKENS = {
@@ -57,6 +59,21 @@ REQUIRED_TOKENS = {
         "VITE_LITE_CONTRACT_PILOT=0",
         "legacy `ui.contract`",
         "set VITE_LITE_CONTRACT_PILOT=0 and redeploy frontend",
+    ),
+    "scripts/verify/unified_page_contract_lite_frontend_pilot_browser_smoke.js": (
+        "VITE_LITE_CONTRACT_PILOT",
+        "load_contract",
+        "lite_preview",
+        "payloadType === 'lite_contract'",
+        "ui.contract",
+        "project tree did not render rows",
+    ),
+    "docs/architecture/unified_page_contract_lite/frontend_pilot_browser_smoke_batch_46.md": (
+        "VITE_LITE_CONTRACT_PILOT=1",
+        "load_contract Lite preview",
+        "no `ui.contract` fallback",
+        "project.project:tree",
+        "verify.unified_page_contract.lite.frontend_pilot_browser.host",
     ),
 }
 
@@ -102,6 +119,8 @@ def main() -> int:
     makefile_text = args.makefile.read_text(encoding="utf-8")
     if "verify.unified_page_contract.lite.frontend_pilot_implementation" not in makefile_text:
         errors.append("Makefile missing frontend pilot implementation target")
+    if "verify.unified_page_contract.lite.frontend_pilot_browser.host" not in makefile_text:
+        errors.append("Makefile missing frontend pilot browser smoke target")
 
     runtime_report: dict[str, Any] = {}
     if args.runtime_negative_report.exists():
