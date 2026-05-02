@@ -710,7 +710,7 @@ class ScBusinessMenuTaxonomySeed(models.AbstractModel):
                     "设备价格库": "smart_construction_core.action_sc_equipment_price",
                 },
                 "专业分包": {
-                    "分包计划": f("sc.subcontract.document", "subcontract_plan"),
+                    "分包计划": "smart_construction_core.action_sc_subcontract_plan",
                     "分包申请": f("sc.subcontract.document", "subcontract_request"),
                     "分包登记": f("sc.subcontract.document", "subcontract_register"),
                     "分包结算": f("sc.subcontract.document", "subcontract_settlement"),

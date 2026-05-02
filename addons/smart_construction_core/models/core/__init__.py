@@ -13,6 +13,7 @@ from . import material_catalog
 from . import material_acceptance
 from . import labor_management
 from . import equipment_management
+from . import subcontract_management
 from . import settlement_order
 from . import settlement_adjustment
 from . import settlement

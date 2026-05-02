@@ -288,6 +288,14 @@
         <field name="company_id" eval="False"/>
     </record>
 
+    <record id="seq_sc_subcontract_plan" model="ir.sequence">
+        <field name="name">分包计划</field>
+        <field name="code">sc.subcontract.plan</field>
+        <field name="prefix">SPL%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
     <record id="seq_sc_material_inbound" model="ir.sequence">
         <field name="name">材料入库单</field>
         <field name="code">sc.material.inbound</field>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="action_sc_subcontract_plan" model="ir.actions.act_window">
+        <field name="name">分包计划</field>
+        <field name="res_model">sc.subcontract.plan</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+    </record>
+
+    <record id="view_sc_subcontract_plan_tree" model="ir.ui.view">
+        <field name="name">sc.subcontract.plan.tree</field>
+        <field name="model">sc.subcontract.plan</field>
+        <field name="arch" type="xml">
+            <tree string="分包计划" default_order="plan_date desc">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="contract_id"/>
+                <field name="plan_date"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="subcontract_scope"/>
+                <field name="subcontractor_id"/>
+                <field name="estimated_amount"/>
+                <field name="currency_id"/>
+                <field name="owner_id"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_subcontract_plan_form" model="ir.ui.view">
+        <field name="name">sc.subcontract.plan.form</field>
+        <field name="model">sc.subcontract.plan</field>
+        <field name="arch" type="xml">
+            <form string="分包计划">
+                <header>
+                    <button name="action_submit" string="提交" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_approve" string="确认计划" type="object" class="btn-primary" invisible="state != 'submitted'"/>
+                    <button name="action_reset_draft" string="退回草稿" type="object" invisible="state != 'submitted'"/>
+                    <button name="action_cancel" string="取消" type="object" invisible="state in ('approved', 'cancel')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="project_id"/>
+                            <field name="contract_id"/>
+                            <field name="plan_date"/>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                            <field name="subcontract_scope"/>
+                        </group>
+                        <group>
+                            <field name="subcontractor_id"/>
+                            <field name="owner_id"/>
+                            <field name="currency_id"/>
+                            <field name="estimated_amount"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="计划明细">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="work_scope"/>
+                                    <field name="work_content"/>
+                                    <field name="planned_qty"/>
+                                    <field name="unit_name"/>
+                                    <field name="estimated_amount"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="计划说明">
+                            <field name="note" nolabel="1"/>
+                        </page>
+                        <page string="来源追溯">
+                            <group>
+                                <field name="legacy_fact_model"/>
+                                <field name="legacy_fact_id"/>
+                                <field name="legacy_fact_type"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_subcontract_plan_search" model="ir.ui.view">
+        <field name="name">sc.subcontract.plan.search</field>
+        <field name="model">sc.subcontract.plan</field>
+        <field name="arch" type="xml">
+            <search string="分包计划">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="contract_id"/>
+                <field name="plan_date"/>
+                <field name="subcontract_scope"/>
+                <field name="subcontractor_id"/>
+                <field name="owner_id"/>
+                <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="已提交" name="submitted" domain="[('state', '=', 'submitted')]"/>
+                <filter string="已确认" name="approved" domain="[('state', '=', 'approved')]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按关联合同" name="group_contract" context="{'group_by': 'contract_id'}"/>
+                <filter string="按分包单位" name="group_subcontractor" context="{'group_by': 'subcontractor_id'}"/>
+                <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+</odoo>
