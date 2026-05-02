@@ -255,8 +255,10 @@
 
     <!-- 智慧大屏 -->
     <record id="menu_sc_operating_metrics_project" model="ir.ui.menu">
-        <field name="name">经营驾驶舱</field>
+        <field name="name">公司驾驶舱</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_projection_root"/>
+        <field name="action" eval="False"/>
+        <field name="active" eval="True"/>
         <field name="sequence">10</field>
     </record>
     <record id="menu_sc_project_dashboard" model="ir.ui.menu">
@@ -267,8 +269,11 @@
 
     <!-- 工作台 -->
     <record id="menu_sc_history_todo" model="ir.ui.menu">
-        <field name="name">我的待办</field>
+        <field name="name">工作台</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_workspace_center"/>
+        <field name="action" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_internal_user')])]"/>
         <field name="sequence">10</field>
     </record>
     <menuitem id="menu_sc_workspace_my_project"

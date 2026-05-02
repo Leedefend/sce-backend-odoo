@@ -626,13 +626,13 @@ class ScBusinessMenuTaxonomySeed(models.AbstractModel):
         f = self._formal
         return {
             "智慧大屏": {
-                "经营驾驶舱": "smart_construction_core.action_sc_operating_metrics_project",
+                "公司驾驶舱": "smart_construction_core.action_sc_operating_metrics_project",
                 "项目驾驶舱": "smart_construction_core.action_project_dashboard",
                 "资金驾驶舱": "smart_construction_core.action_sc_finance_dashboard",
                 "成本驾驶舱": "smart_construction_core.action_project_cost_ledger",
             },
             "工作台": {
-                "我的待办": "smart_construction_core.action_sc_project_workbench",
+                "工作台": "smart_construction_core.action_sc_project_workbench",
                 "我的项目": "smart_construction_core.action_sc_project_my_list",
                 "我的审批": "smart_construction_core.action_sc_project_workbench",
                 "最近访问": "smart_construction_core.action_sc_project_workbench",
@@ -869,11 +869,11 @@ class ScBusinessMenuTaxonomySeed(models.AbstractModel):
             "财务中心": "finance",
             "统计分析": "analysis",
             "基础设置": "settings",
-            "经营驾驶舱": "operation_cockpit",
+            "公司驾驶舱": "company_dashboard",
             "项目驾驶舱": "project_cockpit",
             "资金驾驶舱": "fund_cockpit",
             "成本驾驶舱": "cost_cockpit",
-            "我的待办": "my_todo",
+            "工作台": "workspace_home",
             "我的项目": "my_project",
             "我的审批": "my_approval",
             "最近访问": "recent_visit",

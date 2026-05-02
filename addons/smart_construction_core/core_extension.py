@@ -93,6 +93,8 @@ NAV_MENU_SCENE_MAP = {
     "smart_construction_core.menu_sc_project_cost_code": "config.project_cost_code",
     "smart_construction_core.menu_sc_root": "projects.list",
     "smart_construction_core.menu_sc_project_dashboard": "projects.dashboard",
+    "smart_construction_core.menu_sc_history_todo": "workspace.home",
+    "smart_construction_core.menu_sc_operating_metrics_project": "dashboard.company",
     "smart_construction_demo.menu_sc_project_dashboard_showcase": "projects.dashboard_showcase",
     "smart_construction_core.menu_sc_dictionary": "data.dictionary",
     "smart_construction_core.menu_payment_request": "finance.payment_requests",
