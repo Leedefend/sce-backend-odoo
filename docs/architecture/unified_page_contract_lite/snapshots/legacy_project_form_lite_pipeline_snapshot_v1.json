@@ -1,0 +1,134 @@
+{
+  "actionContract": {
+    "actionRuleList": [
+      {
+        "actionId": "field.name.change",
+        "dispatchMode": "server",
+        "refreshMode": "partial",
+        "sourceWidgetId": "field.name",
+        "triggerType": "change"
+      },
+      {
+        "actionId": "field.stage_id.change",
+        "dispatchMode": "server",
+        "refreshMode": "partial",
+        "sourceWidgetId": "field.stage_id",
+        "triggerType": "change"
+      },
+      {
+        "actionId": "btn.submit.click",
+        "dispatchMode": "server",
+        "refreshMode": "partial",
+        "sourceWidgetId": "btn.submit",
+        "triggerType": "click"
+      },
+      {
+        "actionId": "form.save.submit",
+        "dispatchMode": "server",
+        "refreshMode": "partial",
+        "sourceWidgetId": "btn.save",
+        "triggerType": "submit"
+      }
+    ]
+  },
+  "dataContract": {
+    "dictData": {
+      "stage_id": [
+        {
+          "label": "草稿",
+          "value": 1
+        }
+      ]
+    },
+    "mainData": {
+      "name": "示例项目",
+      "stage_id": 1
+    },
+    "relationData": {
+      "task_ids": [
+        {
+          "id": 10,
+          "name": "任务一"
+        }
+      ]
+    }
+  },
+  "layoutContract": {
+    "containerList": [
+      {
+        "children": [
+          {
+            "children": [],
+            "containerId": "detail_zone.field_group_block.1",
+            "containerType": "group",
+            "title": "字段",
+            "widgetList": [
+              {
+                "component": "input",
+                "fieldCode": "name",
+                "label": "项目名称",
+                "props": {},
+                "widgetId": "field.name",
+                "widgetType": "input"
+              },
+              {
+                "component": "select",
+                "fieldCode": "stage_id",
+                "label": "项目阶段",
+                "props": {},
+                "widgetId": "field.stage_id",
+                "widgetType": "select"
+              }
+            ]
+          }
+        ],
+        "containerId": "zone.detail_zone",
+        "containerType": "group",
+        "title": "detail zone",
+        "widgetList": []
+      }
+    ],
+    "layoutType": "form"
+  },
+  "meta": {
+    "etag": "legacy-lite-project-form-001",
+    "semanticAdapter": {
+      "adapterVersion": "2.0.0",
+      "source": "odoo.semantic_page"
+    },
+    "traceId": "trace.legacy.project.form.001"
+  },
+  "pageInfo": {
+    "clientType": "web_pc",
+    "contractVersion": "2.0.0",
+    "model": "project.project",
+    "pageId": "project.form",
+    "sceneKey": "project.intake",
+    "viewType": "form"
+  },
+  "statusContract": {
+    "buttonStatus": [
+      {
+        "btnId": "btn.submit",
+        "disabled": false,
+        "visible": true
+      }
+    ],
+    "widgetStatus": [
+      {
+        "disabled": false,
+        "readonly": false,
+        "required": true,
+        "visible": true,
+        "widgetId": "field.name"
+      },
+      {
+        "disabled": false,
+        "readonly": false,
+        "required": false,
+        "visible": true,
+        "widgetId": "field.stage_id"
+      }
+    ]
+  }
+}

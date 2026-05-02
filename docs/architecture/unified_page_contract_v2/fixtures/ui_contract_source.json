@@ -1,0 +1,28 @@
+{
+  "case": "project_form_fixture",
+  "model": "project.project",
+  "view_type": "form",
+  "contract_version": "v1",
+  "meta_fields": [
+    {
+      "name": "name",
+      "string": "Name",
+      "ttype": "char",
+      "readonly": false,
+      "required": true
+    },
+    {
+      "name": "stage_id",
+      "string": "Stage",
+      "ttype": "many2one",
+      "readonly": false,
+      "required": true
+    }
+  ],
+  "ui_contract": {
+    "model": "project.project",
+    "view_type": "form",
+    "titleField": "name",
+    "sheet": []
+  }
+}

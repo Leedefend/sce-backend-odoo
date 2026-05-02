@@ -18,6 +18,7 @@ export interface IntentRawResult<T> {
   ok: boolean;
   error?: IntentEnvelopeError;
   hasEnvelope: boolean;
+  rawBody?: unknown;
 }
 
 const STARTUP_CHAIN_ALLOWED_INTENTS = new Set([
@@ -203,6 +204,7 @@ export async function intentRequestRaw<T>(payload: IntentPayload) {
     ok: true,
     error: parsed.error,
     hasEnvelope: parsed.hasEnvelope,
+    rawBody: response.body,
   };
   return result;
 }

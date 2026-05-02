@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sce.local/schemas/unified_page_contract_lite_runtime_opt_in_response.schema.json",
+  "title": "Unified Semantic Page Contract Lite Runtime Opt-in Response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractMode",
+    "contractVersion",
+    "entryPoint",
+    "payloadType",
+    "fallbackMode",
+    "payload",
+    "meta"
+  ],
+  "properties": {
+    "contractMode": {
+      "const": "lite_preview"
+    },
+    "contractVersion": {
+      "const": "2.0.0"
+    },
+    "entryPoint": {
+      "enum": [
+        "load_contract",
+        "ui_contract",
+        "api_onchange"
+      ]
+    },
+    "payloadType": {
+      "enum": [
+        "lite_contract",
+        "lite_patch"
+      ]
+    },
+    "fallbackMode": {
+      "const": "legacy_default"
+    },
+    "payload": {
+      "type": "object"
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "previewOnly",
+        "defaultUnchanged"
+      ],
+      "properties": {
+        "previewOnly": {
+          "const": true
+        },
+        "defaultUnchanged": {
+          "const": true
+        },
+        "traceId": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

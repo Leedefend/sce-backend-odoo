@@ -1,0 +1,343 @@
+{
+  "version": "1.0.0",
+  "status": "phase_1_mapping_freeze",
+  "date": "2026-05-01",
+  "targetContract": "Unified Semantic Page Contract Lite",
+  "contractVersion": "2.0.0",
+  "layerTarget": "Contract Governance / Semantic Adapter Mapping",
+  "principles": [
+    "contract_deep",
+    "runtime_thin",
+    "backend_owns_semantics",
+    "frontend_dispatch_only",
+    "no_runtime_kernel_in_phase_1"
+  ],
+  "activeTopLevelKeys": [
+    "pageInfo",
+    "layoutContract",
+    "statusContract",
+    "actionContract",
+    "dataContract",
+    "meta"
+  ],
+  "sourceSurfaces": [
+    {
+      "key": "ui_contract",
+      "path": "addons/smart_core/handlers/ui_contract.py",
+      "role": "delivery_source",
+      "phase1Use": "input_only"
+    },
+    {
+      "key": "native_view_projection",
+      "path": "addons/smart_core/core/native_view_contract_projection.py",
+      "role": "primary_view_projection",
+      "phase1Use": "input_only"
+    },
+    {
+      "key": "semantic_page",
+      "path": "docs/contract/snapshots/native_view/*.json",
+      "role": "semantic_layout_status_action_basis",
+      "phase1Use": "preferred_input"
+    },
+    {
+      "key": "view_parser",
+      "path": "addons/smart_core/app_config_engine/services/view_Parser/parsers Tree Form.py",
+      "role": "odoo_xml_modifiers_x2many_parser",
+      "phase1Use": "input_only"
+    },
+    {
+      "key": "page_assembler",
+      "path": "addons/smart_core/app_config_engine/services/assemblers/page_assembler.py",
+      "role": "fields_permissions_relation_entry_access_policy_source",
+      "phase1Use": "input_only"
+    },
+    {
+      "key": "contract_governance",
+      "path": "addons/smart_core/utils/contract_governance.py",
+      "role": "field_policy_action_policy_validation_policy_source",
+      "phase1Use": "input_only"
+    },
+    {
+      "key": "api_onchange",
+      "path": "addons/smart_core/handlers/api_onchange.py",
+      "role": "onchange_patch_source",
+      "phase1Use": "patch_input"
+    },
+    {
+      "key": "x2many_commands",
+      "path": "frontend/apps/web/src/app/x2manyCommands.ts",
+      "role": "current_frontend_command_semantics_reference",
+      "phase1Use": "reference_only"
+    },
+    {
+      "key": "scene_contract_v1",
+      "path": "addons/smart_core/core/scene_contract_builder.py",
+      "role": "compat_scene_source",
+      "phase1Use": "compat_input_only"
+    },
+    {
+      "key": "page_orchestration_v1",
+      "path": "addons/smart_core/core/page_contracts_builder.py",
+      "role": "compat_orchestration_source",
+      "phase1Use": "compat_input_only"
+    }
+  ],
+  "mappings": [
+    {
+      "area": "pageInfo",
+      "sourceSurface": "ui_contract",
+      "sourcePath": "$.head",
+      "sourceFields": ["model", "view_type", "scene_key", "menu_id", "action_id"],
+      "targetContract": "pageInfo",
+      "targetPath": "$.pageInfo",
+      "targetFields": ["pageId", "sceneKey", "model", "viewType", "clientType", "contractVersion"],
+      "owner": "semantic_adapter",
+      "rule": "Use model + primary view type for stable page identity. Client type is request-derived but must not change semantics.",
+      "confidence": "high",
+      "phase": "phase_1"
+    },
+    {
+      "area": "layout",
+      "sourceSurface": "semantic_page",
+      "sourcePath": "$.semantic_page.zones",
+      "sourceFields": ["zones[].key", "zones[].blocks[].type", "zones[].blocks[].data"],
+      "targetContract": "layoutContract",
+      "targetPath": "$.layoutContract.containerList",
+      "targetFields": ["containerId", "containerType", "title", "children", "widgetList"],
+      "owner": "semantic_adapter",
+      "rule": "Map zone/block hierarchy to containers. Field group, relation table, notebook, chatter, and action bar become stable containers or widgets.",
+      "confidence": "high",
+      "phase": "phase_1"
+    },
+    {
+      "area": "layout",
+      "sourceSurface": "view_parser",
+      "sourcePath": "$.views.form.layout",
+      "sourceFields": ["layout", "statusbar", "header_buttons", "button_box", "subviews"],
+      "targetContract": "layoutContract",
+      "targetPath": "$.layoutContract.containerList",
+      "targetFields": ["containerType", "widgetList"],
+      "owner": "semantic_adapter",
+      "rule": "Use parser layout details only when semantic_page lacks enough structure. Do not emit componentRegistry or capabilities in Phase 1.",
+      "confidence": "medium",
+      "phase": "phase_1"
+    },
+    {
+      "area": "status",
+      "sourceSurface": "semantic_page",
+      "sourcePath": "$.semantic_page.permission_verdicts",
+      "sourceFields": ["read", "create", "write", "unlink", "execute"],
+      "targetContract": "statusContract",
+      "targetPath": "$.statusContract.widgetStatus",
+      "targetFields": ["visible", "readonly", "required", "disabled", "reasonCode"],
+      "owner": "semantic_adapter",
+      "rule": "Permission verdicts provide global write/create/delete defaults. Field-level status still comes from field policies and modifiers.",
+      "confidence": "high",
+      "phase": "phase_1"
+    },
+    {
+      "area": "status",
+      "sourceSurface": "contract_governance",
+      "sourcePath": "$.field_policies",
+      "sourceFields": ["visible_profiles", "readonly_profiles", "required_profiles", "reason_code", "semantic"],
+      "targetContract": "statusContract",
+      "targetPath": "$.statusContract.widgetStatus[]",
+      "targetFields": ["widgetId", "visible", "readonly", "required", "disabled", "reasonCode"],
+      "owner": "semantic_adapter",
+      "rule": "Field policies are the preferred source for final widget status. Frontend must not infer status from field name or role.",
+      "confidence": "high",
+      "phase": "phase_1"
+    },
+    {
+      "area": "status",
+      "sourceSurface": "view_parser",
+      "sourcePath": "$.views.form.field_modifiers",
+      "sourceFields": ["invisible", "readonly", "required", "domain"],
+      "targetContract": "statusContract",
+      "targetPath": "$.statusContract.widgetStatus[]",
+      "targetFields": ["visible", "readonly", "required", "disabled"],
+      "owner": "semantic_adapter",
+      "rule": "Modifiers are normalized by backend. Static verdicts may be emitted directly; dynamic expressions remain backend-owned and are resolved through onchange patches.",
+      "confidence": "medium",
+      "phase": "phase_1"
+    },
+    {
+      "area": "status",
+      "sourceSurface": "page_assembler",
+      "sourcePath": "$.access_policy",
+      "sourceFields": ["mode", "reason_code", "blocked_fields", "degraded_fields"],
+      "targetContract": "statusContract",
+      "targetPath": "$.statusContract.widgetStatus[]",
+      "targetFields": ["visible", "readonly", "disabled", "reasonCode"],
+      "owner": "semantic_adapter",
+      "rule": "Access policy can block or degrade widgets. Relation read denial must become backend-owned status, not frontend fallback.",
+      "confidence": "high",
+      "phase": "phase_1"
+    },
+    {
+      "area": "status",
+      "sourceSurface": "contract_governance",
+      "sourcePath": "$.action_policies",
+      "sourceFields": ["enabled", "visible_profiles", "disabled_reason", "reason_code"],
+      "targetContract": "statusContract",
+      "targetPath": "$.statusContract.buttonStatus[]",
+      "targetFields": ["btnId", "visible", "disabled", "reasonCode"],
+      "owner": "semantic_adapter",
+      "rule": "Action policies and semantic_page action enabled flags are the only button state source.",
+      "confidence": "high",
+      "phase": "phase_1"
+    },
+    {
+      "area": "action",
+      "sourceSurface": "semantic_page",
+      "sourcePath": "$.semantic_page.actions",
+      "sourceFields": ["header_actions", "record_actions", "toolbar_actions"],
+      "targetContract": "actionContract",
+      "targetPath": "$.actionContract.actionRuleList[]",
+      "targetFields": ["actionId", "triggerType", "sourceWidgetId", "dispatchMode", "refreshMode"],
+      "owner": "semantic_adapter",
+      "rule": "Emit event declarations only. Do not copy workflow, condition branches, actionType lists, or executable logic.",
+      "confidence": "high",
+      "phase": "phase_1"
+    },
+    {
+      "area": "action",
+      "sourceSurface": "view_parser",
+      "sourcePath": "$.views.form.header_buttons",
+      "sourceFields": ["key", "name", "type", "payload"],
+      "targetContract": "actionContract",
+      "targetPath": "$.actionContract.actionRuleList[]",
+      "targetFields": ["actionId", "triggerType", "sourceWidgetId", "dispatchMode", "refreshMode"],
+      "owner": "semantic_adapter",
+      "rule": "Header, smart, row, save, and delete actions become click or submit dispatch declarations.",
+      "confidence": "medium",
+      "phase": "phase_1"
+    },
+    {
+      "area": "action",
+      "sourceSurface": "api_onchange",
+      "sourcePath": "$.applied_fields",
+      "sourceFields": ["applied_fields"],
+      "targetContract": "actionContract",
+      "targetPath": "$.actionContract.actionRuleList[]",
+      "targetFields": ["actionId", "triggerType", "sourceWidgetId", "dispatchMode", "refreshMode"],
+      "owner": "semantic_adapter",
+      "rule": "Each backend-known onchange field can be declared as a change action. The frontend only dispatches actionId.",
+      "confidence": "medium",
+      "phase": "phase_1"
+    },
+    {
+      "area": "data",
+      "sourceSurface": "ui_contract",
+      "sourcePath": "$.data",
+      "sourceFields": ["record", "values", "rows", "dict_data", "options"],
+      "targetContract": "dataContract",
+      "targetPath": "$.dataContract",
+      "targetFields": ["mainData", "relationData", "dictData"],
+      "owner": "semantic_adapter",
+      "rule": "Only renderable values move into dataContract. Permissions, readonly, workflow, and linkage stay out.",
+      "confidence": "medium",
+      "phase": "phase_1"
+    },
+    {
+      "area": "data",
+      "sourceSurface": "page_assembler",
+      "sourcePath": "$.fields.*.relation_entry",
+      "sourceFields": ["model", "can_read", "can_create", "inline_create", "default_vals", "delete_policy"],
+      "targetContract": "dataContract",
+      "targetPath": "$.dataContract.dictData",
+      "targetFields": ["dictData"],
+      "owner": "semantic_adapter",
+      "rule": "Relation entry metadata may feed dictionary/option loading hints only when renderable. Permission verdicts still belong to StatusContract.",
+      "confidence": "medium",
+      "phase": "phase_1"
+    },
+    {
+      "area": "patch",
+      "sourceSurface": "api_onchange",
+      "sourcePath": "$",
+      "sourceFields": ["patch", "modifiers_patch", "line_patches", "warnings", "applied_fields"],
+      "targetContract": "LitePatch",
+      "targetPath": "$",
+      "targetFields": ["updateType", "operation", "statusPatch", "dataPatch", "layoutPatch"],
+      "owner": "semantic_adapter",
+      "rule": "patch maps to dataPatch, modifiers_patch maps to statusPatch, line_patches map to relation-scoped dataPatch. Only replace and merge are allowed.",
+      "confidence": "high",
+      "phase": "phase_1"
+    },
+    {
+      "area": "patch",
+      "sourceSurface": "x2many_commands",
+      "sourcePath": "$",
+      "sourceFields": ["0", "1", "2", "3", "4", "6"],
+      "targetContract": "LitePatch",
+      "targetPath": "$.dataPatch.relationData",
+      "targetFields": ["relationData"],
+      "owner": "semantic_adapter",
+      "rule": "Odoo command heads remain backend semantics. Lite patch exposes relation data deltas, not frontend command construction rules.",
+      "confidence": "medium",
+      "phase": "phase_1"
+    },
+    {
+      "area": "meta",
+      "sourceSurface": "ui_contract",
+      "sourcePath": "$.meta",
+      "sourceFields": ["etag", "intent", "contract_version", "schema_version", "contract_mode", "contract_surface"],
+      "targetContract": "meta",
+      "targetPath": "$.meta",
+      "targetFields": ["etag", "traceId", "semanticAdapter", "compat"],
+      "owner": "semantic_adapter",
+      "rule": "Meta carries trace, adapter source, version, and compat references only. Legacy payloads must not leak into canonical top-level keys.",
+      "confidence": "high",
+      "phase": "phase_1"
+    }
+  ],
+  "deferredSurfaces": [
+    "runtimeContract",
+    "componentRegistry",
+    "capabilities",
+    "selectorStatus",
+    "dependencyGraph",
+    "dataSource",
+    "streaming",
+    "subscription",
+    "collaboration",
+    "ai_orchestration"
+  ],
+  "forbiddenActionFields": [
+    "actionType",
+    "chainAction",
+    "conditionBranch",
+    "loop",
+    "workflow",
+    "jsonLogic",
+    "script",
+    "function",
+    "eval",
+    "expression"
+  ],
+  "phase1StopConditions": [
+    "frontend_infers_permission_or_status",
+    "action_contract_contains_executable_logic",
+    "lite_schema_accepts_runtime_contract",
+    "adapter_changes_login_system_init_ui_contract_chain",
+    "patch_protocol_adds_non_replace_merge_operation"
+  ],
+  "nextBatchReadiness": {
+    "batch": "Lite Phase 1 / Batch-2 - Pure Backend Lite Adapter Skeleton",
+    "ready": true,
+    "allowedScope": [
+      "addons/smart_core/core",
+      "docs/architecture/unified_page_contract_lite",
+      "scripts/verify",
+      "Makefile"
+    ],
+    "mustNotTouch": [
+      "login",
+      "system.init",
+      "ui.contract default output",
+      "frontend runtime",
+      "runtimeContract"
+    ]
+  }
+}

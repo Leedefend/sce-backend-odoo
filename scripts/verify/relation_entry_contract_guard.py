@@ -51,7 +51,10 @@ def main() -> int:
         "function relationDomain(",
         "function normalizeRouteDefault(value: unknown)",
         "if (key.startsWith('default_')) {",
-        "relationCreateMode(node.name, node.descriptor) === 'page' ? '+ 新建并维护...' : '+ 快速新建...'",
+        "function relationUiLabel(descriptor: FieldDescriptor | undefined, key: string, fallback = '')",
+        "if (mode === 'page') return relationUiLabel(descriptor, 'create_and_edit');",
+        "if (mode === 'quick') return relationUiLabel(descriptor, 'quick_create');",
+        "{{ relationSearchDialog.labels.create }}",
         "acc[`default_${key}`] = value;",
     ]
     for marker in frontend_required:

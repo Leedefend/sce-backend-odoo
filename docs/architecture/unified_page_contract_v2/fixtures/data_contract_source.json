@@ -1,0 +1,62 @@
+{
+  "record": {
+    "id": 771,
+    "name": "Example Project",
+    "stage_id": 1
+  },
+  "rows": [
+    {
+      "id": 771,
+      "name": "Example Project",
+      "stage_id": 1
+    }
+  ],
+  "data_key": "project_rows",
+  "relation_rows": {
+    "contract_line_ids": [
+      {
+        "id": 10,
+        "name": "Initial Line",
+        "amount": 1000.0
+      }
+    ]
+  },
+  "tree_data": {
+    "project_tree": [
+      {
+        "id": "root",
+        "label": "Example Project",
+        "children": []
+      }
+    ]
+  },
+  "dict_data": {
+    "project_stage": [
+      {
+        "value": 1,
+        "label": "Draft"
+      }
+    ]
+  },
+  "pagination": {
+    "project_rows": {
+      "page": 1,
+      "pageSize": 20,
+      "total": 1
+    }
+  },
+  "data_source": {
+    "project_rows": {
+      "query": "project.search",
+      "cache_policy": "etag",
+      "consistency": "eventual",
+      "subscription": false
+    },
+    "contract_line_ids": {
+      "provider": "project.contract.line.search",
+      "cachePolicy": "etag",
+      "consistency": "strong",
+      "subscription": false
+    }
+  }
+}

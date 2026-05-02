@@ -1,0 +1,7 @@
+{
+  "field_name": "name",
+  "model": "project.project",
+  "values": {
+    "name": "示例项目"
+  }
+}

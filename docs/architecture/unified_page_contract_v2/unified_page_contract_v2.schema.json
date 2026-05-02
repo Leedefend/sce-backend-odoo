@@ -1,0 +1,680 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sce.local/schemas/unified_page_contract_v2.schema.json",
+  "title": "Unified Page Contract v2+",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "pageInfo",
+    "layoutContract",
+    "statusContract",
+    "actionContract",
+    "dataContract",
+    "runtimeContract",
+    "meta"
+  ],
+  "properties": {
+    "pageInfo": {
+      "$ref": "#/$defs/pageInfo"
+    },
+    "layoutContract": {
+      "$ref": "#/$defs/layoutContract"
+    },
+    "statusContract": {
+      "$ref": "#/$defs/statusContract"
+    },
+    "actionContract": {
+      "$ref": "#/$defs/actionContract"
+    },
+    "dataContract": {
+      "$ref": "#/$defs/dataContract"
+    },
+    "runtimeContract": {
+      "$ref": "#/$defs/runtimeContract"
+    },
+    "meta": {
+      "$ref": "#/$defs/meta"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_.:-]*$"
+    },
+    "pageInfo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pageId",
+        "sceneKey",
+        "pageName",
+        "model",
+        "viewType",
+        "layoutType",
+        "renderMode",
+        "contractVersion",
+        "clientType"
+      ],
+      "properties": {
+        "pageId": {
+          "$ref": "#/$defs/id"
+        },
+        "sceneKey": {
+          "$ref": "#/$defs/id"
+        },
+        "pageName": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "viewType": {
+          "enum": [
+            "form",
+            "list",
+            "table",
+            "kanban",
+            "tree",
+            "gantt",
+            "combine"
+          ]
+        },
+        "layoutType": {
+          "enum": [
+            "form",
+            "table",
+            "kanban",
+            "tree",
+            "gantt",
+            "combine"
+          ]
+        },
+        "renderMode": {
+          "enum": [
+            "governed"
+          ]
+        },
+        "contractVersion": {
+          "type": "string",
+          "pattern": "^2\\.[0-9]+\\.[0-9]+$"
+        },
+        "clientType": {
+          "enum": [
+            "web_pc",
+            "wx_mini",
+            "harmony_h5"
+          ]
+        }
+      }
+    },
+    "layoutContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pageId",
+        "layoutType",
+        "adaptMode",
+        "containerTree",
+        "layoutHints",
+        "componentRegistry"
+      ],
+      "properties": {
+        "pageId": {
+          "$ref": "#/$defs/id"
+        },
+        "layoutType": {
+          "enum": [
+            "form",
+            "table",
+            "kanban",
+            "tree",
+            "gantt",
+            "combine"
+          ]
+        },
+        "adaptMode": {
+          "enum": [
+            "pc",
+            "mobile"
+          ]
+        },
+        "containerTree": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/container"
+          }
+        },
+        "layoutHints": {
+          "type": "object"
+        },
+        "componentRegistry": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/componentRegistryEntry"
+          }
+        }
+      }
+    },
+    "container": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "containerId",
+        "containerType",
+        "title",
+        "span",
+        "children",
+        "widgetList"
+      ],
+      "properties": {
+        "containerId": {
+          "$ref": "#/$defs/id"
+        },
+        "containerType": {
+          "enum": [
+            "group",
+            "tab",
+            "popup",
+            "subTable",
+            "card",
+            "tree",
+            "gantt",
+            "toolbar",
+            "section"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "span": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 24
+        },
+        "styleToken": {
+          "type": "string"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/container"
+          }
+        },
+        "widgetList": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/widget"
+          }
+        }
+      }
+    },
+    "widget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "widgetId",
+        "widgetType",
+        "fieldCode",
+        "label",
+        "span",
+        "componentKey",
+        "capabilities",
+        "componentConfig"
+      ],
+      "properties": {
+        "widgetId": {
+          "$ref": "#/$defs/id"
+        },
+        "widgetType": {
+          "enum": [
+            "input",
+            "select",
+            "date",
+            "datetime",
+            "number",
+            "table",
+            "upload",
+            "button",
+            "textarea",
+            "checkbox",
+            "radio",
+            "tree",
+            "gantt",
+            "relation",
+            "display"
+          ]
+        },
+        "fieldCode": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "type": "string"
+        },
+        "span": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 24
+        },
+        "componentKey": {
+          "$ref": "#/$defs/id"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "componentConfig": {
+          "type": "object"
+        }
+      }
+    },
+    "componentRegistryEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "adapter"
+      ],
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "adapter": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "fallback": {
+          "type": "string"
+        }
+      }
+    },
+    "statusContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "globalStatus",
+        "containerStatus",
+        "widgetStatus",
+        "buttonStatus",
+        "selectorStatus"
+      ],
+      "properties": {
+        "globalStatus": {
+          "type": "object"
+        },
+        "containerStatus": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/containerStatus"
+          }
+        },
+        "widgetStatus": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/widgetStatus"
+          }
+        },
+        "buttonStatus": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/buttonStatus"
+          }
+        },
+        "selectorStatus": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/selectorStatus"
+          }
+        }
+      }
+    },
+    "containerStatus": {
+      "type": "object",
+      "required": [
+        "containerId"
+      ],
+      "properties": {
+        "containerId": {
+          "$ref": "#/$defs/id"
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "reasonCode": {
+          "type": "string"
+        }
+      }
+    },
+    "widgetStatus": {
+      "type": "object",
+      "required": [
+        "widgetId"
+      ],
+      "properties": {
+        "widgetId": {
+          "$ref": "#/$defs/id"
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "auth": {
+          "enum": [
+            "none",
+            "read",
+            "edit",
+            "admin"
+          ]
+        },
+        "reasonCode": {
+          "type": "string"
+        }
+      }
+    },
+    "buttonStatus": {
+      "type": "object",
+      "required": [
+        "btnId"
+      ],
+      "properties": {
+        "btnId": {
+          "$ref": "#/$defs/id"
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "reasonCode": {
+          "type": "string"
+        }
+      }
+    },
+    "selectorStatus": {
+      "type": "object",
+      "required": [
+        "selector"
+      ],
+      "properties": {
+        "selector": {
+          "type": "string"
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "reasonCode": {
+          "type": "string"
+        }
+      }
+    },
+    "actionContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actionRuleList",
+        "dependencyGraph"
+      ],
+      "properties": {
+        "actionRuleList": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/actionRule"
+          }
+        },
+        "dependencyGraph": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        }
+      }
+    },
+    "actionRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actionId",
+        "triggerType",
+        "sourceWidgetId",
+        "dispatchMode",
+        "targetScope",
+        "refreshMode"
+      ],
+      "properties": {
+        "actionId": {
+          "$ref": "#/$defs/id"
+        },
+        "triggerType": {
+          "enum": [
+            "change",
+            "click",
+            "select",
+            "refresh",
+            "add",
+            "delete",
+            "confirm",
+            "submit",
+            "blur",
+            "focus"
+          ]
+        },
+        "sourceWidgetId": {
+          "$ref": "#/$defs/id"
+        },
+        "targetIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "dispatchMode": {
+          "enum": [
+            "local",
+            "server",
+            "serverDebounced",
+            "serverBlocking"
+          ]
+        },
+        "targetScope": {
+          "enum": [
+            "widget",
+            "container",
+            "page",
+            "dataSource",
+            "runtime"
+          ]
+        },
+        "refreshMode": {
+          "enum": [
+            "none",
+            "partial",
+            "full"
+          ]
+        },
+        "submitPolicy": {
+          "type": "object"
+        },
+        "tracePolicy": {
+          "type": "object"
+        }
+      }
+    },
+    "dataContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mainData",
+        "tableRows",
+        "relationRows",
+        "dictData",
+        "pagination",
+        "dataSource",
+        "dataMeta"
+      ],
+      "properties": {
+        "mainData": {
+          "type": "object"
+        },
+        "tableRows": {
+          "type": "object"
+        },
+        "relationRows": {
+          "type": "object"
+        },
+        "treeData": {
+          "type": "object"
+        },
+        "ganttData": {
+          "type": "object"
+        },
+        "dictData": {
+          "type": "object"
+        },
+        "pagination": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
+        },
+        "dataMeta": {
+          "type": "object"
+        }
+      }
+    },
+    "runtimeContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "patchStrategy",
+        "cachePolicy",
+        "optimistic",
+        "lazyContainer",
+        "virtualization",
+        "retryPolicy"
+      ],
+      "properties": {
+        "patchStrategy": {
+          "enum": [
+            "incremental",
+            "full"
+          ]
+        },
+        "cachePolicy": {
+          "enum": [
+            "none",
+            "etag",
+            "snapshot"
+          ]
+        },
+        "optimistic": {
+          "type": "boolean"
+        },
+        "lazyContainer": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "virtualization": {
+          "type": "object"
+        },
+        "retryPolicy": {
+          "type": "object"
+        },
+        "renderStrategy": {
+          "enum": [
+            "sync",
+            "scheduled",
+            "virtualized"
+          ]
+        },
+        "hydration": {
+          "type": "object"
+        },
+        "patchOperations": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "replace",
+              "merge",
+              "append",
+              "remove",
+              "reorder",
+              "invalidate"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "tracePolicy": {
+          "type": "object"
+        },
+        "complexityBudget": {
+          "type": "object"
+        },
+        "aiEnvelope": {
+          "type": "object"
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "etag",
+        "snapshotId",
+        "traceId",
+        "requestId",
+        "compat"
+      ],
+      "properties": {
+        "etag": {
+          "type": "string"
+        },
+        "snapshotId": {
+          "$ref": "#/$defs/id"
+        },
+        "traceId": {
+          "$ref": "#/$defs/id"
+        },
+        "requestId": {
+          "$ref": "#/$defs/id"
+        },
+        "compat": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

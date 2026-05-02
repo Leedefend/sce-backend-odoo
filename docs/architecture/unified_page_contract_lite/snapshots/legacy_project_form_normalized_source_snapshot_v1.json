@@ -1,0 +1,115 @@
+{
+  "action_policies": {
+    "submit": {
+      "enabled": true,
+      "visible": true
+    }
+  },
+  "client_type": "web_pc",
+  "dict_data": {
+    "stage_id": [
+      {
+        "label": "草稿",
+        "value": 1
+      }
+    ]
+  },
+  "etag": "legacy-lite-project-form-001",
+  "field_policies": {
+    "name": {
+      "required_profiles": [
+        "create",
+        "edit"
+      ],
+      "visible_profiles": [
+        "create",
+        "edit",
+        "readonly"
+      ]
+    },
+    "stage_id": {
+      "readonly_profiles": [
+        "readonly"
+      ],
+      "visible_profiles": [
+        "edit",
+        "readonly"
+      ]
+    }
+  },
+  "fields": {
+    "name": {
+      "label": "项目名称",
+      "required": true,
+      "type": "char"
+    },
+    "stage_id": {
+      "label": "项目阶段",
+      "required": false,
+      "type": "many2one"
+    }
+  },
+  "onchange_fields": [
+    "name",
+    "stage_id"
+  ],
+  "page_id": "project.form",
+  "record": {
+    "name": "示例项目",
+    "stage_id": 1
+  },
+  "relation_rows": {
+    "task_ids": [
+      {
+        "id": 10,
+        "name": "任务一"
+      }
+    ]
+  },
+  "render_profile": "edit",
+  "scene_key": "project.intake",
+  "semantic_page": {
+    "actions": {
+      "header_actions": [
+        {
+          "enabled": true,
+          "key": "submit",
+          "label": "提交立项",
+          "reason_code": "OK"
+        }
+      ],
+      "record_actions": [],
+      "toolbar_actions": []
+    },
+    "layout": "auto",
+    "model": "project.project",
+    "permission_verdicts": {
+      "read": {
+        "allowed": true,
+        "reason_code": "OK"
+      },
+      "write": {
+        "allowed": true,
+        "reason_code": "OK"
+      }
+    },
+    "view_type": "form",
+    "zones": [
+      {
+        "blocks": [
+          {
+            "data": {
+              "fields": [
+                "name",
+                "stage_id"
+              ]
+            },
+            "type": "field_group_block"
+          }
+        ],
+        "key": "detail_zone"
+      }
+    ]
+  },
+  "trace_id": "trace.legacy.project.form.001"
+}

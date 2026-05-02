@@ -13,6 +13,9 @@ const artifactDir = process.env.BUSINESS_BROWSER_ARTIFACT_DIR
 const setupPath = path.join(artifactDir, 'setup.json');
 const actionButtonLabel = closureAction === 'reject' ? '审批驳回' : '审批通过';
 const browserStatus = closureAction === 'reject' ? 'rejected_and_removed_from_todo' : 'approved_and_removed_from_todo';
+const caseOffset = Math.max(0, Number.parseInt(process.env.BROWSER_CLOSURE_CASE_OFFSET || '0', 10) || 0);
+const caseLimitRaw = Number.parseInt(process.env.BROWSER_CLOSURE_CASE_LIMIT || '0', 10) || 0;
+const caseLimit = caseLimitRaw > 0 ? caseLimitRaw : 0;
 
 function writeJson(name, data) {
   fs.mkdirSync(artifactDir, { recursive: true });
@@ -32,6 +35,9 @@ async function login(page, user) {
 async function runCase(browser, row, index) {
   const context = await browser.newContext({ locale: 'zh-CN' });
   const page = await context.newPage();
+  page.on('dialog', async (dialog) => {
+    await dialog.accept();
+  });
   const user = { login: row.reviewer_login, password: row.reviewer_password };
   const title = String(row.title || '');
   const screenshotBase = `case_${index + 1}_${row.model.replaceAll('.', '_')}`;
@@ -46,9 +52,10 @@ async function runCase(browser, row, index) {
     await page.screenshot({ path: path.join(artifactDir, `${screenshotBase}_todo.png`), fullPage: true });
     await todoEntry.click();
     await page.waitForURL((url) => url.pathname.includes(`/r/${row.model}/${row.record_id}`), { timeout: 20000 });
-    await page.getByRole('button', { name: actionButtonLabel }).waitFor({ timeout: 20000 });
+    const actionButton = page.getByRole('button', { name: actionButtonLabel }).first();
+    await actionButton.waitFor({ timeout: 20000 });
     await page.screenshot({ path: path.join(artifactDir, `${screenshotBase}_record_before.png`), fullPage: true });
-    await page.getByRole('button', { name: actionButtonLabel }).click();
+    await actionButton.click();
     await page.getByText(/操作成功|审批通过|审批驳回|执行成功|validated|rejected|已完成/, { exact: false }).first().waitFor({ timeout: 20000 }).catch(() => {});
     await page.waitForTimeout(1500);
     await page.screenshot({ path: path.join(artifactDir, `${screenshotBase}_record_after.png`), fullPage: true });
@@ -75,11 +82,17 @@ async function runCase(browser, row, index) {
 
 async function main() {
   const setup = JSON.parse(fs.readFileSync(setupPath, 'utf8'));
+  const allCases = Array.isArray(setup.cases) ? setup.cases : [];
+  const selectedCases = caseLimit > 0
+    ? allCases.slice(caseOffset, caseOffset + caseLimit)
+    : allCases.slice(caseOffset);
   const browser = await chromium.launch({ headless: true });
   const results = [];
   try {
-    for (const [index, row] of setup.cases.entries()) {
-      results.push(await runCase(browser, row, index));
+    for (const [localIndex, row] of selectedCases.entries()) {
+      const caseIndex = caseOffset + localIndex;
+      const result = await runCase(browser, row, caseIndex);
+      results.push({ ...result, case_index: caseIndex });
     }
   } finally {
     await browser.close();
@@ -88,6 +101,8 @@ async function main() {
     frontend_url: frontendUrl,
     db_name: dbName,
     action: closureAction,
+    case_offset: caseOffset,
+    case_limit: caseLimit,
     results,
   });
   console.log('[business_real_user_browser_closure] PASS');

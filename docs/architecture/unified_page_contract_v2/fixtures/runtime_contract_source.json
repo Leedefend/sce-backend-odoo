@@ -1,0 +1,134 @@
+{
+  "pageInfo": {
+    "pageId": "project.runtime",
+    "sceneKey": "project.runtime",
+    "pageName": "Project Runtime",
+    "model": "project.project",
+    "viewType": "form",
+    "layoutType": "form",
+    "renderMode": "governed",
+    "contractVersion": "2.1.0",
+    "clientType": "web_pc"
+  },
+  "layoutContract": {
+    "pageId": "project.runtime",
+    "layoutType": "form",
+    "adaptMode": "pc",
+    "containerTree": [
+      {
+        "containerId": "main.basic",
+        "containerType": "group",
+        "title": "Basic",
+        "span": 12,
+        "children": [],
+        "widgetList": [
+          {
+            "widgetId": "field.name",
+            "widgetType": "input",
+            "fieldCode": "name",
+            "label": "Name",
+            "span": 6,
+            "componentKey": "sc.input.text",
+            "capabilities": [
+              "clearable"
+            ],
+            "componentConfig": {}
+          }
+        ]
+      }
+    ],
+    "layoutHints": {},
+    "componentRegistry": {
+      "sc.input.text": {
+        "version": "1.0",
+        "adapter": {
+          "web_pc": "ElInput",
+          "wx_mini": "WxInput",
+          "harmony_h5": "H5Input"
+        }
+      }
+    }
+  },
+  "statusContract": {
+    "globalStatus": {
+      "pageVisible": true,
+      "pageAuth": "edit"
+    },
+    "containerStatus": [],
+    "widgetStatus": [],
+    "buttonStatus": [],
+    "selectorStatus": [
+      {
+        "selector": "finance.*",
+        "readonly": true
+      }
+    ]
+  },
+  "actionContract": {
+    "actionRuleList": [
+      {
+        "actionId": "action.name.change",
+        "triggerType": "change",
+        "sourceWidgetId": "field.name",
+        "targetIds": [],
+        "dispatchMode": "serverDebounced",
+        "targetScope": "widget",
+        "refreshMode": "partial"
+      }
+    ],
+    "dependencyGraph": {
+      "field.name": [
+        "action.name.change"
+      ]
+    }
+  },
+  "dataContract": {
+    "mainData": {
+      "name": "Example Project"
+    },
+    "tableRows": {},
+    "relationRows": {},
+    "dictData": {},
+    "pagination": {},
+    "dataSource": {
+      "project": {
+        "query": "project.read",
+        "cachePolicy": "etag",
+        "consistency": "strong",
+        "subscription": false
+      }
+    },
+    "dataMeta": {}
+  },
+  "runtimeContract": {
+    "patchStrategy": "incremental",
+    "cachePolicy": "etag",
+    "optimistic": false,
+    "lazyContainer": [],
+    "virtualization": {},
+    "retryPolicy": {
+      "maxRetries": 1
+    },
+    "patchOperations": [
+      "replace",
+      "merge",
+      "append",
+      "remove",
+      "reorder",
+      "invalidate"
+    ],
+    "aiEnvelope": {
+      "allowed": true,
+      "capabilities": [
+        "contract.inspection"
+      ]
+    }
+  },
+  "meta": {
+    "etag": "upc-v2-runtime-001",
+    "snapshotId": "snapshot.upc.v2.runtime.001",
+    "traceId": "trace.upc.v2.runtime.001",
+    "requestId": "request.upc.v2.runtime.001",
+    "compat": {}
+  }
+}

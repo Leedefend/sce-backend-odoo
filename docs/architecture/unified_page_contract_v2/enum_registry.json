@@ -1,0 +1,159 @@
+{
+  "registryVersion": "2.1.0",
+  "normativeStatus": "draft",
+  "clientType": {
+    "stable": [
+      "web_pc",
+      "wx_mini",
+      "harmony_h5"
+    ],
+    "reserved": [
+      "mobile_app"
+    ]
+  },
+  "viewType": [
+    "form",
+    "list",
+    "table",
+    "kanban",
+    "tree",
+    "gantt",
+    "combine"
+  ],
+  "layoutType": [
+    "form",
+    "table",
+    "kanban",
+    "tree",
+    "gantt",
+    "combine"
+  ],
+  "renderMode": [
+    "governed"
+  ],
+  "adaptMode": [
+    "pc",
+    "mobile"
+  ],
+  "containerType": [
+    "group",
+    "tab",
+    "popup",
+    "subTable",
+    "card",
+    "tree",
+    "gantt",
+    "toolbar",
+    "section"
+  ],
+  "widgetType": [
+    "input",
+    "select",
+    "date",
+    "datetime",
+    "number",
+    "table",
+    "upload",
+    "button",
+    "textarea",
+    "checkbox",
+    "radio",
+    "tree",
+    "gantt",
+    "relation",
+    "display"
+  ],
+  "componentCapability": [
+    "clearable",
+    "searchable",
+    "filterable",
+    "sortable",
+    "resizable",
+    "editable",
+    "virtual-scroll",
+    "drag",
+    "aggregate",
+    "tree-expand",
+    "inline-create",
+    "inline-delete",
+    "bulk-select",
+    "preview"
+  ],
+  "authLevel": [
+    "none",
+    "read",
+    "edit",
+    "admin"
+  ],
+  "triggerType": [
+    "change",
+    "click",
+    "select",
+    "refresh",
+    "add",
+    "delete",
+    "confirm",
+    "submit",
+    "blur",
+    "focus"
+  ],
+  "dispatchMode": [
+    "local",
+    "server",
+    "serverDebounced",
+    "serverBlocking"
+  ],
+  "targetScope": [
+    "widget",
+    "container",
+    "page",
+    "dataSource",
+    "runtime"
+  ],
+  "refreshMode": [
+    "none",
+    "partial",
+    "full"
+  ],
+  "patchStrategy": [
+    "incremental",
+    "full"
+  ],
+  "cachePolicy": [
+    "none",
+    "etag",
+    "snapshot"
+  ],
+  "consistency": [
+    "strong",
+    "eventual"
+  ],
+  "patchOperation": [
+    "replace",
+    "merge",
+    "append",
+    "remove",
+    "reorder",
+    "invalidate"
+  ],
+  "forbiddenContractKeys": [
+    "script",
+    "scripts",
+    "function",
+    "functions",
+    "eval",
+    "expression",
+    "expressions",
+    "jsonLogic",
+    "bpmn",
+    "workflowDsl",
+    "codeBlock",
+    "dynamicImport",
+    "componentCode",
+    "frontendPrivate",
+    "localState",
+    "vueState",
+    "reactState",
+    "clientCache"
+  ]
+}

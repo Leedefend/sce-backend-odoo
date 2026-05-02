@@ -20,8 +20,21 @@ def main():
     if BROWSER_SUMMARY_JSON.exists():
         browser_summary = json.loads(BROWSER_SUMMARY_JSON.read_text(encoding="utf-8"))
     action = str(browser_summary.get("action") or "approve").strip().lower()
+    browser_results = browser_summary.get("results") if isinstance(browser_summary.get("results"), list) else []
+    browser_keys = {
+        (str(row.get("model") or ""), int(row.get("record_id") or 0))
+        for row in browser_results
+        if isinstance(row, dict) and row.get("model") and row.get("record_id")
+    }
+    cases = setup.get("cases") or []
+    if browser_keys:
+        cases = [
+            row
+            for row in cases
+            if (str(row.get("model") or ""), int(row.get("record_id") or 0)) in browser_keys
+        ]
     rows = []
-    for row in setup.get("cases") or []:
+    for row in cases:
         record = _env()[row["model"]].sudo().browse(int(row["record_id"])).exists()
         if not record:
             raise AssertionError("%s/%s missing before cleanup" % (row["model"], row["record_id"]))

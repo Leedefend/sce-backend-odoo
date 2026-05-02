@@ -1,0 +1,18 @@
+{
+  "statusPatch": {
+    "widgetStatus": [
+      {
+        "widgetId": "field.code",
+        "readonly": true
+      }
+    ]
+  },
+  "dataPatch": {
+    "mainData": {
+      "display_name": "Example Project"
+    }
+  },
+  "runtimePatch": {
+    "lazyContainer": []
+  }
+}
