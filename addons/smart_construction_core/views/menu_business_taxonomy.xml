@@ -442,7 +442,7 @@
     <menuitem id="menu_sc_material_price_library"
               name="材料价格库"
               parent="smart_construction_core.menu_sc_material_management_group"
-              action="smart_construction_core.action_sc_material_product_template"
+              action="smart_construction_core.action_sc_material_price_library"
               sequence="80"
               groups="smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
     <record id="menu_sc_legacy_material_category" model="ir.ui.menu">

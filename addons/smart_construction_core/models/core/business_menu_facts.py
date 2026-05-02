@@ -692,7 +692,7 @@ class ScBusinessMenuTaxonomySeed(models.AbstractModel):
                     "入库单": "smart_construction_core.action_sc_material_inbound",
                     "出库单": "smart_construction_core.action_sc_material_outbound",
                     "材料结算": f("sc.material.document", "settlement"),
-                    "材料价格库": "smart_construction_core.action_sc_material_product_template",
+                    "材料价格库": "smart_construction_core.action_sc_material_price_library",
                 },
                 "劳务管理": {
                     "劳务计划": f("sc.labor.document", "labor_plan"),

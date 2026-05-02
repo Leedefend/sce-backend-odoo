@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class ScMaterialCatalog(models.Model):
@@ -59,3 +60,67 @@ class ScMaterialCatalog(models.Model):
             "Legacy material detail must be unique.",
         ),
     ]
+
+
+class ScMaterialPrice(models.Model):
+    _name = "sc.material.price"
+    _description = "材料价格库"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _order = "effective_date desc, id desc"
+
+    name = fields.Char(string="价格名称", compute="_compute_name", store=True)
+    material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", required=True, index=True, tracking=True)
+    product_id = fields.Many2one("product.product", string="产品", index=True)
+    supplier_id = fields.Many2one("res.partner", string="供应商", index=True, tracking=True)
+    project_id = fields.Many2one("project.project", string="项目", index=True)
+    price_type = fields.Selection(
+        [
+            ("planned", "计划价"),
+            ("internal", "内部价"),
+            ("quote", "报价"),
+            ("contract", "合同价"),
+            ("latest_purchase", "最近采购价"),
+        ],
+        string="价格类型",
+        default="quote",
+        required=True,
+        index=True,
+        tracking=True,
+    )
+    spec_model = fields.Char(string="规格型号", related="material_catalog_id.spec_model", store=True, index=True)
+    uom_text = fields.Char(string="单位", related="material_catalog_id.uom_text", store=True, index=True)
+    currency_id = fields.Many2one(
+        "res.currency",
+        string="币种",
+        required=True,
+        default=lambda self: self.env.company.currency_id.id,
+    )
+    unit_price = fields.Monetary(string="单价", currency_field="currency_id", required=True, tracking=True)
+    tax_rate = fields.Float(string="税率%")
+    tax_included = fields.Boolean(string="含税", default=True)
+    effective_date = fields.Date(string="生效日期", default=fields.Date.context_today, index=True)
+    expiry_date = fields.Date(string="失效日期", index=True)
+    source_model = fields.Char(string="来源模型", index=True)
+    source_res_id = fields.Integer(string="来源记录ID", index=True)
+    source_type = fields.Char(string="来源类型", index=True)
+    note = fields.Text(string="备注")
+    active = fields.Boolean(string="有效", default=True, index=True)
+
+    @api.depends("material_catalog_id", "supplier_id", "price_type", "unit_price", "currency_id")
+    def _compute_name(self):
+        type_labels = dict(self._fields["price_type"].selection)
+        for record in self:
+            material = record.material_catalog_id.name or _("材料")
+            supplier = record.supplier_id.name or _("通用")
+            price_type = type_labels.get(record.price_type, record.price_type or "")
+            record.name = "%s / %s / %s" % (material, supplier, price_type)
+
+    @api.constrains("unit_price", "tax_rate", "effective_date", "expiry_date")
+    def _check_price_values(self):
+        for record in self:
+            if record.unit_price < 0:
+                raise ValidationError(_("材料价格不能为负数。"))
+            if record.tax_rate < 0:
+                raise ValidationError(_("税率不能为负数。"))
+            if record.effective_date and record.expiry_date and record.effective_date > record.expiry_date:
+                raise ValidationError(_("生效日期不能晚于失效日期。"))

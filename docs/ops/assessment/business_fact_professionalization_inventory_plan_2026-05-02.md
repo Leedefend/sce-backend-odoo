@@ -245,7 +245,7 @@ Scope: 基于 `项目建设-产品功能清单（0301 ）.xlsx`，对当前 `sc.
 | WP3 计划主干 | `sc.plan`、`sc.plan.line`、`sc.plan.version`、`sc.plan.report`、`sc.plan.warning.log` | `models/core/plan_management.py`、`views/core/plan_management_views.xml` | 替代任务/报表对计划需求的弱承载 |
 | WP4 合同履约事件 | 变更、签证、认质认价、调差、索赔、产值申报 | `models/core/contract_event.py`、`views/core/contract_event_views.xml` | 关联 `construction.contract`、`project.cost.code`、结算/付款 |
 | WP5 映射与迁移 | 通用源模型到专业模型的映射、迁移 wizard | `docs/contract/*`、`wizard/*professionalization*` | 保证历史数据和菜单入口不断链 |
-| WP6 材料采购/验收/出入库 | `sc.material.purchase.request`、`sc.material.purchase.request.line`、`sc.material.acceptance`、`sc.material.acceptance.line`、`sc.material.inbound`、`sc.material.inbound.line`、`sc.material.outbound`、`sc.material.outbound.line` | `models/core/material_acceptance.py`、`views/core/material_acceptance_views.xml` | 从 `sc.material.document(purchase_request/inbound/outbound)` 拆出采购申请、到场验收、库存入库、库存出库专业动作，现有“采购申请/入库单/出库单”入口只承载对应动作 |
+| WP6 材料采购/验收/出入库/价格 | `sc.material.purchase.request`、`sc.material.purchase.request.line`、`sc.material.acceptance`、`sc.material.acceptance.line`、`sc.material.inbound`、`sc.material.inbound.line`、`sc.material.outbound`、`sc.material.outbound.line`、`sc.material.price` | `models/core/material_acceptance.py`、`models/core/material_catalog.py`、`views/core/material_acceptance_views.xml`、`views/support/product_extend_views.xml` | 从 `sc.material.document(purchase_request/inbound/outbound)` 拆出采购申请、到场验收、库存入库、库存出库专业动作；材料价格库独立于材料档案/产品库，现有“采购申请/入库单/出库单/材料价格库”入口只承载对应动作 |
 
 ## 6. 不再建议投入的方向
 
