@@ -1,0 +1,24 @@
+{
+  "updateType": "partial",
+  "operation": "merge",
+  "statusPatch": {
+    "widgetStatus": [
+      {
+        "widgetId": "field.stage_id",
+        "visible": true,
+        "readonly": true,
+        "required": false,
+        "disabled": false
+      }
+    ],
+    "buttonStatus": []
+  },
+  "dataPatch": {
+    "mainData": {
+      "display_name": "示例项目"
+    },
+    "relationData": {},
+    "dictData": {}
+  },
+  "layoutPatch": {}
+}

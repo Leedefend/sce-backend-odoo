@@ -1,0 +1,6 @@
+{
+  "clientType": "web_pc",
+  "contractMode": "lite_preview",
+  "entryPoint": "load_contract",
+  "fallbackMode": "legacy_default"
+}

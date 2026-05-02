@@ -1,0 +1,40 @@
+{
+  "contract_version": "scene_contract_standard_v1",
+  "identity": {
+    "scene_key": "projects.intake",
+    "title": "Project Intake",
+    "product_key": "fr1",
+    "capability": "project_intake"
+  },
+  "target": {
+    "route": "/s/projects.intake",
+    "openable": true
+  },
+  "state": {
+    "status": "ready",
+    "state_tone": "stable",
+    "reason_code": "DELIVERY_ENGINE_RELEASED_SCENE"
+  },
+  "page": {
+    "layout": "entry_shell",
+    "blocks": [
+      {
+        "key": "intake.quick",
+        "title": "Quick Intake",
+        "block_type": "runtime_block"
+      }
+    ]
+  },
+  "actions": {
+    "primary_actions": [
+      {
+        "key": "quick_project_create",
+        "label": "Quick Create",
+        "intent": "ui.contract"
+      }
+    ]
+  },
+  "governance": {
+    "trace_id": "trace.fixture.scene"
+  }
+}

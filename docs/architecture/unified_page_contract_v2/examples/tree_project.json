@@ -1,0 +1,138 @@
+{
+  "pageInfo": {
+    "pageId": "project.tree",
+    "sceneKey": "project.structure",
+    "pageName": "Project Structure",
+    "model": "project.project",
+    "viewType": "tree",
+    "layoutType": "tree",
+    "renderMode": "governed",
+    "contractVersion": "2.1.0",
+    "clientType": "web_pc"
+  },
+  "layoutContract": {
+    "pageId": "project.tree",
+    "layoutType": "tree",
+    "adaptMode": "pc",
+    "containerTree": [
+      {
+        "containerId": "main.structure",
+        "containerType": "tree",
+        "title": "Structure",
+        "span": 12,
+        "styleToken": "treeSection",
+        "children": [],
+        "widgetList": [
+          {
+            "widgetId": "tree.project",
+            "widgetType": "tree",
+            "fieldCode": "project_tree",
+            "label": "Project Tree",
+            "span": 12,
+            "componentKey": "sc.tree.data",
+            "capabilities": [
+              "tree-expand",
+              "filterable"
+            ],
+            "componentConfig": {
+              "dataKey": "project_tree"
+            }
+          }
+        ]
+      }
+    ],
+    "layoutHints": {},
+    "componentRegistry": {
+      "sc.tree.data": {
+        "version": "1.0",
+        "adapter": {
+          "web_pc": "ElTree",
+          "wx_mini": "WxTree",
+          "harmony_h5": "H5Tree"
+        }
+      }
+    }
+  },
+  "statusContract": {
+    "globalStatus": {
+      "pageVisible": true,
+      "pageAuth": "read"
+    },
+    "containerStatus": [
+      {
+        "containerId": "main.structure",
+        "visible": true,
+        "disabled": false
+      }
+    ],
+    "widgetStatus": [
+      {
+        "widgetId": "tree.project",
+        "visible": true,
+        "readonly": true,
+        "required": false,
+        "disabled": false,
+        "auth": "read"
+      }
+    ],
+    "buttonStatus": [],
+    "selectorStatus": []
+  },
+  "actionContract": {
+    "actionRuleList": [
+      {
+        "actionId": "project.tree.select",
+        "triggerType": "select",
+        "sourceWidgetId": "tree.project",
+        "targetIds": [
+          "project.detail"
+        ],
+        "dispatchMode": "server",
+        "targetScope": "page",
+        "refreshMode": "partial"
+      }
+    ],
+    "dependencyGraph": {
+      "tree.project": [
+        "project.detail"
+      ]
+    }
+  },
+  "dataContract": {
+    "mainData": {},
+    "tableRows": {},
+    "relationRows": {},
+    "dictData": {},
+    "pagination": {},
+    "dataSource": {
+      "project_tree": {
+        "query": "project.structure",
+        "cachePolicy": "etag",
+        "consistency": "eventual",
+        "subscription": false
+      }
+    },
+    "dataMeta": {
+      "project_tree": {
+        "rootId": "root"
+      }
+    }
+  },
+  "runtimeContract": {
+    "patchStrategy": "incremental",
+    "cachePolicy": "etag",
+    "optimistic": false,
+    "lazyContainer": [],
+    "virtualization": {},
+    "retryPolicy": {
+      "maxRetries": 1
+    }
+  },
+  "meta": {
+    "etag": "upc-v2-tree-project-001",
+    "snapshotId": "snapshot.project.tree.001",
+    "traceId": "trace.project.tree.001",
+    "requestId": "request.project.tree.001",
+    "compat": {}
+  }
+}

@@ -8,6 +8,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 FORM_PAGE = ROOT / 'frontend/apps/web/src/pages/ContractFormPage.vue'
 ENGINE = ROOT / 'frontend/apps/web/src/app/x2manyCommands.ts'
+RELATION_RENDERER = ROOT / 'frontend/apps/web/src/components/template/RelationFallbackRenderer.vue'
+RELATION_ADAPTER = ROOT / 'frontend/apps/web/src/components/template/relationFallback.adapter.ts'
 
 
 def _read(path: Path) -> str:
@@ -21,6 +23,8 @@ def main() -> int:
     try:
         form = _read(FORM_PAGE)
         engine = _read(ENGINE)
+        relation_renderer = _read(RELATION_RENDERER)
+        relation_adapter = _read(RELATION_ADAPTER)
     except FileNotFoundError as exc:
         print('[FAIL] x2many_inline_edit_guard')
         print(f'- {exc}')
@@ -38,7 +42,6 @@ def main() -> int:
             errors.append(f'engine missing marker: {marker}')
 
     form_markers = [
-        "v-else-if=\"fieldType(node.descriptor) === 'one2many'\"",
         'const showOne2manyErrors = ref(false);',
         'const one2manyValidation = computed(() => collectOne2manyDraftValidation());',
         'function one2manyColumns(name: string): One2ManyColumn[] {',
@@ -61,6 +64,32 @@ def main() -> int:
         if marker not in form:
             errors.append(f'form missing marker: {marker}')
 
+    renderer_markers = [
+        "v-else-if=\"field.type === 'one2many'\"",
+        "adapter.one2manyCanCreate(field.name)",
+        "adapter.addOne2manyRow(field.name)",
+        "adapter.one2manyColumns(field.name)",
+        "adapter.setOne2manyRowField(field.name, row.key, column",
+        "adapter.removeOne2manyRow(field.name, row.key)",
+        "adapter.one2manyRowErrors(field.name, row.key)",
+        "adapter.restoreOne2manyRow(field.name, row.key)",
+    ]
+    for marker in renderer_markers:
+        if marker not in relation_renderer:
+            errors.append(f'relation_renderer missing marker: {marker}')
+
+    adapter_markers = [
+        "one2manyCanCreate: context.one2manyCanCreate",
+        "one2manyCreateLabel: context.one2manyCreateLabel",
+        "addOne2manyRow: context.addOne2manyRow",
+        "setOne2manyRowField: context.setOne2manyRowField",
+        "removeOne2manyRow: context.removeOne2manyRow",
+        "restoreOne2manyRow: context.restoreOne2manyRow",
+    ]
+    for marker in adapter_markers:
+        if marker not in relation_adapter:
+            errors.append(f'relation_adapter missing marker: {marker}')
+
     if errors:
         print('[FAIL] x2many_inline_edit_guard')
         for line in errors:
@@ -70,6 +99,8 @@ def main() -> int:
     print('[OK] x2many_inline_edit_guard')
     print(f'- form: {FORM_PAGE}')
     print(f'- engine: {ENGINE}')
+    print(f'- relation_renderer: {RELATION_RENDERER}')
+    print(f'- relation_adapter: {RELATION_ADAPTER}')
     return 0
 
 

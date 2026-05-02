@@ -1,0 +1,55 @@
+{
+  "snapshotVersion": "v1",
+  "contractVersion": "2.1.0",
+  "expectedActionIds": [
+    "action.approve",
+    "action.form.save",
+    "action.form.validate",
+    "action.name.change",
+    "action.open_my_work",
+    "action.record.delete",
+    "action.stage_id.change"
+  ],
+  "expectedRules": {
+    "action.name.change": {
+      "triggerType": "change",
+      "sourceWidgetId": "field.name",
+      "dispatchMode": "serverDebounced",
+      "targetScope": "widget",
+      "refreshMode": "partial"
+    },
+    "action.stage_id.change": {
+      "triggerType": "change",
+      "sourceWidgetId": "field.stage_id",
+      "dispatchMode": "server",
+      "targetScope": "widget"
+    },
+    "action.form.save": {
+      "triggerType": "submit",
+      "dispatchMode": "serverBlocking",
+      "refreshMode": "partial"
+    },
+    "action.record.delete": {
+      "triggerType": "delete",
+      "dispatchMode": "serverBlocking"
+    }
+  },
+  "expectedDependencies": {
+    "action.form.save": [
+      "action.open_my_work",
+      "action.project.name.change"
+    ],
+    "field.name": [
+      "action.name.change"
+    ],
+    "field.stage_id": [
+      "action.stage_id.change"
+    ]
+  },
+  "expectedPatch": {
+    "updateType": "partial",
+    "actionId": "action.form.save",
+    "minDataPatchKeys": 1,
+    "minStatusPatchKeys": 1
+  }
+}

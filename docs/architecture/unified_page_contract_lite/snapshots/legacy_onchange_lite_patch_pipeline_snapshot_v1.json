@@ -1,0 +1,59 @@
+{
+  "dataPatch": {
+    "dictData": {},
+    "mainData": {
+      "amount_total": 3000
+    },
+    "relationData": {
+      "task_ids": {
+        "linePatches": [
+          {
+            "command_hint": [
+              1
+            ],
+            "field": "task_ids",
+            "patch": {
+              "planned_hours": 8
+            },
+            "row_id": 10,
+            "row_key": "row.10",
+            "row_state": "update"
+          }
+        ]
+      }
+    }
+  },
+  "layoutPatch": {},
+  "operation": "merge",
+  "statusPatch": {
+    "buttonStatus": [
+      {
+        "btnId": "btn.save",
+        "disabled": false,
+        "visible": true
+      },
+      {
+        "btnId": "btn.submit",
+        "disabled": true,
+        "visible": true
+      }
+    ],
+    "widgetStatus": [
+      {
+        "disabled": false,
+        "readonly": true,
+        "required": true,
+        "visible": true,
+        "widgetId": "field.budget_total"
+      },
+      {
+        "disabled": false,
+        "readonly": false,
+        "required": true,
+        "visible": true,
+        "widgetId": "field.task_ids.row.10.planned_hours"
+      }
+    ]
+  },
+  "updateType": "partial"
+}

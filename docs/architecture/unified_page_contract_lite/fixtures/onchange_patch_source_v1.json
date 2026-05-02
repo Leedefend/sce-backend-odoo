@@ -1,0 +1,29 @@
+{
+  "schema_version": "v1",
+  "patch": {
+    "display_name": "示例项目"
+  },
+  "modifiers_patch": {
+    "stage_id": {
+      "readonly": true,
+      "required": false,
+      "invisible": false
+    }
+  },
+  "line_patches": [
+    {
+      "field": "task_ids",
+      "row_key": "tmp.1",
+      "row_id": 0,
+      "patch": {
+        "name": "自动任务"
+      },
+      "modifiers_patch": {},
+      "warnings": [],
+      "row_state": "create",
+      "command_hint": [0]
+    }
+  ],
+  "warnings": [],
+  "applied_fields": ["name"]
+}

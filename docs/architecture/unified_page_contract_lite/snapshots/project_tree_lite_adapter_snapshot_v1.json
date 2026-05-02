@@ -1,0 +1,130 @@
+{
+  "pageInfo": {
+    "pageId": "project.tree",
+    "sceneKey": "project.list",
+    "model": "project.project",
+    "viewType": "tree",
+    "clientType": "web_pc",
+    "contractVersion": "2.0.0"
+  },
+  "layoutContract": {
+    "layoutType": "tree",
+    "containerList": [
+      {
+        "containerId": "zone.detail_zone",
+        "containerType": "group",
+        "title": "detail zone",
+        "children": [
+          {
+            "containerId": "detail_zone.field_group_block.1",
+            "containerType": "group",
+            "title": "字段",
+            "children": [],
+            "widgetList": [
+              {
+                "widgetId": "field.name",
+                "widgetType": "input",
+                "fieldCode": "name",
+                "label": "项目名称",
+                "component": "input",
+                "props": {}
+              },
+              {
+                "widgetId": "field.manager_id",
+                "widgetType": "select",
+                "fieldCode": "manager_id",
+                "label": "项目经理",
+                "component": "select",
+                "props": {}
+              },
+              {
+                "widgetId": "field.stage_id",
+                "widgetType": "select",
+                "fieldCode": "stage_id",
+                "label": "项目阶段",
+                "component": "select",
+                "props": {}
+              }
+            ]
+          }
+        ],
+        "widgetList": []
+      }
+    ]
+  },
+  "statusContract": {
+    "widgetStatus": [
+      {
+        "widgetId": "field.name",
+        "visible": true,
+        "readonly": true,
+        "required": true,
+        "disabled": false
+      },
+      {
+        "widgetId": "field.manager_id",
+        "visible": true,
+        "readonly": true,
+        "required": false,
+        "disabled": true
+      },
+      {
+        "widgetId": "field.stage_id",
+        "visible": true,
+        "readonly": true,
+        "required": false,
+        "disabled": false
+      }
+    ],
+    "buttonStatus": [
+      {
+        "btnId": "btn.open",
+        "visible": true,
+        "disabled": false
+      },
+      {
+        "btnId": "btn.archive",
+        "visible": true,
+        "disabled": true
+      }
+    ]
+  },
+  "actionContract": {
+    "actionRuleList": [
+      {
+        "actionId": "btn.open.click",
+        "triggerType": "click",
+        "sourceWidgetId": "btn.open",
+        "dispatchMode": "server",
+        "refreshMode": "partial"
+      },
+      {
+        "actionId": "btn.archive.click",
+        "triggerType": "click",
+        "sourceWidgetId": "btn.archive",
+        "dispatchMode": "server",
+        "refreshMode": "partial"
+      },
+      {
+        "actionId": "form.save.submit",
+        "triggerType": "submit",
+        "sourceWidgetId": "btn.save",
+        "dispatchMode": "server",
+        "refreshMode": "partial"
+      }
+    ]
+  },
+  "dataContract": {
+    "mainData": {},
+    "relationData": {},
+    "dictData": {}
+  },
+  "meta": {
+    "etag": "lite-project-tree-adapter-source-001",
+    "traceId": "trace.lite.adapter.project.tree.001",
+    "semanticAdapter": {
+      "source": "odoo.semantic_page",
+      "adapterVersion": "2.0.0"
+    }
+  }
+}

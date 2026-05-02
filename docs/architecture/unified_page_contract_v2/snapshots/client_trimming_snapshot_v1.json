@@ -1,0 +1,29 @@
+{
+  "snapshotVersion": "v1",
+  "contractVersion": "2.1.0",
+  "stableClientTypes": [
+    "web_pc",
+    "wx_mini",
+    "harmony_h5"
+  ],
+  "reservedClientTypes": [
+    "mobile_app"
+  ],
+  "expected": {
+    "web_pc": {
+      "adaptMode": "pc",
+      "columns": 12,
+      "mobileCollapse": false
+    },
+    "wx_mini": {
+      "adaptMode": "mobile",
+      "columns": 1,
+      "mobileCollapse": true
+    },
+    "harmony_h5": {
+      "adaptMode": "mobile",
+      "columns": 1,
+      "mobileCollapse": true
+    }
+  }
+}
