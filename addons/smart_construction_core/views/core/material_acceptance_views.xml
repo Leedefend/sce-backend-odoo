@@ -14,6 +14,13 @@
         <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
+    <record id="action_sc_material_outbound" model="ir.actions.act_window">
+        <field name="name">出库单</field>
+        <field name="res_model">sc.material.outbound</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+    </record>
+
     <record id="view_sc_material_acceptance_tree" model="ir.ui.view">
         <field name="name">sc.material.acceptance.tree</field>
         <field name="model">sc.material.acceptance</field>
@@ -206,6 +213,103 @@
                 <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="待入库" name="submitted" domain="[('state', '=', 'submitted')]"/>
                 <filter string="已入库" name="received" domain="[('state', '=', 'received')]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按仓库" name="group_warehouse" context="{'group_by': 'warehouse_id'}"/>
+                <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_material_outbound_tree" model="ir.ui.view">
+        <field name="name">sc.material.outbound.tree</field>
+        <field name="model">sc.material.outbound</field>
+        <field name="arch" type="xml">
+            <tree string="出库单" default_order="outbound_date desc">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="outbound_date"/>
+                <field name="warehouse_id"/>
+                <field name="source_location_id"/>
+                <field name="receiver_id"/>
+                <field name="receiver_user_id"/>
+                <field name="keeper_id"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_material_outbound_form" model="ir.ui.view">
+        <field name="name">sc.material.outbound.form</field>
+        <field name="model">sc.material.outbound</field>
+        <field name="arch" type="xml">
+            <form string="出库单">
+                <header>
+                    <button name="action_submit" string="提交" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_issue" string="确认出库" type="object" class="btn-primary" invisible="state != 'submitted'"/>
+                    <button name="action_reset_draft" string="退回草稿" type="object" invisible="state != 'submitted'"/>
+                    <button name="action_cancel" string="取消" type="object" invisible="state in ('issued', 'cancel')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,issued"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="project_id"/>
+                            <field name="outbound_date"/>
+                            <field name="purpose"/>
+                        </group>
+                        <group>
+                            <field name="warehouse_id"/>
+                            <field name="source_location_id"/>
+                            <field name="receiver_id"/>
+                            <field name="receiver_user_id"/>
+                            <field name="keeper_id"/>
+                            <field name="stock_picking_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="出库明细">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_id"/>
+                                    <field name="material_catalog_id"/>
+                                    <field name="material_spec"/>
+                                    <field name="product_uom_id"/>
+                                    <field name="qty"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="出库说明">
+                            <field name="note" nolabel="1"/>
+                        </page>
+                        <page string="来源追溯">
+                            <group>
+                                <field name="legacy_fact_model"/>
+                                <field name="legacy_fact_id"/>
+                                <field name="legacy_fact_type"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_material_outbound_search" model="ir.ui.view">
+        <field name="name">sc.material.outbound.search</field>
+        <field name="model">sc.material.outbound</field>
+        <field name="arch" type="xml">
+            <search string="出库单">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="receiver_id"/>
+                <field name="warehouse_id"/>
+                <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="待出库" name="submitted" domain="[('state', '=', 'submitted')]"/>
+                <filter string="已出库" name="issued" domain="[('state', '=', 'issued')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 <filter string="按仓库" name="group_warehouse" context="{'group_by': 'warehouse_id'}"/>
                 <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>

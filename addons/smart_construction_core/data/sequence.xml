@@ -183,4 +183,12 @@
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
+
+    <record id="seq_sc_material_outbound" model="ir.sequence">
+        <field name="name">材料出库单</field>
+        <field name="code">sc.material.outbound</field>
+        <field name="prefix">MO%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
 </odoo>

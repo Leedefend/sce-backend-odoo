@@ -257,3 +257,106 @@ class ScMaterialInboundLine(models.Model):
         for record in self:
             if record.qty <= 0:
                 raise ValidationError(_("入库数量必须大于0。"))
+
+
+class ScMaterialOutbound(models.Model):
+    _name = "sc.material.outbound"
+    _description = "材料出库单"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _order = "outbound_date desc, id desc"
+
+    name = fields.Char(string="出库单号", required=True, default="新建", tracking=True)
+    project_id = fields.Many2one("project.project", string="项目", required=True, index=True, tracking=True)
+    outbound_date = fields.Date(string="出库日期", default=fields.Date.context_today, index=True, tracking=True)
+    warehouse_id = fields.Many2one("stock.warehouse", string="出库仓库", required=True, index=True)
+    source_location_id = fields.Many2one("stock.location", string="出库库位", required=True, index=True)
+    receiver_id = fields.Many2one("res.partner", string="领用单位", index=True)
+    receiver_user_id = fields.Many2one("res.users", string="领料人", index=True)
+    keeper_id = fields.Many2one("res.users", string="仓管员", default=lambda self: self.env.user, index=True)
+    stock_picking_id = fields.Many2one("stock.picking", string="库存出库单", readonly=True, copy=False, index=True)
+    state = fields.Selection(
+        [
+            ("draft", "草稿"),
+            ("submitted", "已提交"),
+            ("issued", "已出库"),
+            ("cancel", "已取消"),
+        ],
+        string="状态",
+        default="draft",
+        index=True,
+        tracking=True,
+    )
+    line_ids = fields.One2many("sc.material.outbound.line", "outbound_id", string="出库明细")
+    purpose = fields.Char(string="领用用途")
+    note = fields.Text(string="出库说明")
+    legacy_fact_model = fields.Char(string="来源通用模型", index=True)
+    legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
+    legacy_fact_type = fields.Char(string="来源业务类型", index=True)
+
+    _sql_constraints = [
+        (
+            "legacy_material_outbound_unique",
+            "unique(legacy_fact_model, legacy_fact_id)",
+            "来源通用材料出库记录已迁移为出库单。",
+        ),
+    ]
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        seq = self.env["ir.sequence"]
+        for vals in vals_list:
+            if vals.get("name", "新建") == "新建":
+                vals["name"] = seq.next_by_code("sc.material.outbound") or _("材料出库单")
+        return super().create(vals_list)
+
+    def action_submit(self):
+        for record in self:
+            if not record.line_ids:
+                raise ValidationError(_("提交出库前必须维护出库明细。"))
+            record.line_ids._check_qty()
+        self.write({"state": "submitted"})
+        return True
+
+    def action_issue(self):
+        for record in self:
+            record.line_ids._check_qty()
+        self.write({"state": "issued"})
+        return True
+
+    def action_cancel(self):
+        self.write({"state": "cancel"})
+        return True
+
+    def action_reset_draft(self):
+        self.write({"state": "draft"})
+        return True
+
+
+class ScMaterialOutboundLine(models.Model):
+    _name = "sc.material.outbound.line"
+    _description = "材料出库明细"
+    _order = "outbound_id, sequence, id"
+
+    outbound_id = fields.Many2one("sc.material.outbound", string="出库单", required=True, ondelete="cascade", index=True)
+    sequence = fields.Integer(default=10)
+    project_id = fields.Many2one("project.project", string="项目", related="outbound_id.project_id", store=True, index=True)
+    product_id = fields.Many2one("product.product", string="材料", required=True, index=True)
+    material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
+    material_spec = fields.Char(string="规格型号")
+    product_uom_id = fields.Many2one("uom.uom", string="单位")
+    qty = fields.Float(string="出库数量", required=True)
+    note = fields.Char(string="备注")
+
+    @api.onchange("product_id")
+    def _onchange_product_id(self):
+        for record in self:
+            if record.product_id:
+                record.product_uom_id = record.product_id.uom_id
+                if not record.material_spec:
+                    record.material_spec = record.product_id.default_code or ""
+
+    @api.constrains("qty")
+    def _check_qty(self):
+        for record in self:
+            if record.qty <= 0:
+                raise ValidationError(_("出库数量必须大于0。"))
