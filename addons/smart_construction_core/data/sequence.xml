@@ -224,6 +224,14 @@
         <field name="company_id" eval="False"/>
     </record>
 
+    <record id="seq_sc_labor_plan" model="ir.sequence">
+        <field name="name">劳务计划</field>
+        <field name="code">sc.labor.plan</field>
+        <field name="prefix">LPL%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
     <record id="seq_sc_labor_settlement" model="ir.sequence">
         <field name="name">劳务结算</field>
         <field name="code">sc.labor.settlement</field>

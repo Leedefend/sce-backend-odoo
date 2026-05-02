@@ -3,6 +3,96 @@ from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
 
+class ScLaborPlan(models.Model):
+    _name = "sc.labor.plan"
+    _description = "劳务计划"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _order = "plan_date desc, id desc"
+
+    name = fields.Char(string="计划单号", required=True, default="新建", tracking=True)
+    project_id = fields.Many2one("project.project", string="项目", required=True, index=True, tracking=True)
+    plan_date = fields.Date(string="计划日期", required=True, default=fields.Date.context_today, index=True)
+    start_date = fields.Date(string="计划开始日期", index=True)
+    end_date = fields.Date(string="计划结束日期", index=True)
+    owner_id = fields.Many2one("res.users", string="负责人", default=lambda self: self.env.user, index=True)
+    contractor_id = fields.Many2one("res.partner", string="建议劳务单位", index=True)
+    state = fields.Selection(
+        [("draft", "草稿"), ("submitted", "已提交"), ("approved", "已确认"), ("cancel", "已取消")],
+        string="状态",
+        default="draft",
+        index=True,
+        tracking=True,
+    )
+    line_ids = fields.One2many("sc.labor.plan.line", "plan_id", string="计划明细")
+    note = fields.Text(string="计划说明")
+    legacy_fact_model = fields.Char(string="来源通用模型", index=True)
+    legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
+    legacy_fact_type = fields.Char(string="来源业务类型", index=True)
+
+    _sql_constraints = [
+        ("legacy_labor_plan_unique", "unique(legacy_fact_model, legacy_fact_id)", "来源通用劳务计划已迁移为专业劳务计划。"),
+    ]
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        seq = self.env["ir.sequence"]
+        for vals in vals_list:
+            if vals.get("name", "新建") == "新建":
+                vals["name"] = seq.next_by_code("sc.labor.plan") or _("劳务计划")
+        return super().create(vals_list)
+
+    def action_submit(self):
+        for record in self:
+            if not record.line_ids:
+                raise ValidationError(_("提交劳务计划前必须维护计划明细。"))
+            record.line_ids._check_values()
+        self.write({"state": "submitted"})
+        return True
+
+    def action_approve(self):
+        for record in self:
+            record.line_ids._check_values()
+        self.write({"state": "approved"})
+        return True
+
+    def action_cancel(self):
+        self.write({"state": "cancel"})
+        return True
+
+    def action_reset_draft(self):
+        self.write({"state": "draft"})
+        return True
+
+    @api.constrains("start_date", "end_date")
+    def _check_date_order(self):
+        for record in self:
+            if record.start_date and record.end_date and record.start_date > record.end_date:
+                raise ValidationError(_("计划开始日期不能晚于计划结束日期。"))
+
+
+class ScLaborPlanLine(models.Model):
+    _name = "sc.labor.plan.line"
+    _description = "劳务计划明细"
+    _order = "plan_id, sequence, id"
+
+    plan_id = fields.Many2one("sc.labor.plan", string="计划单", required=True, ondelete="cascade", index=True)
+    sequence = fields.Integer(default=10)
+    project_id = fields.Many2one("project.project", string="项目", related="plan_id.project_id", store=True, index=True)
+    labor_team = fields.Char(string="班组")
+    work_content = fields.Char(string="作业内容", required=True)
+    planned_qty = fields.Float(string="计划人数", required=True, default=1)
+    planned_work_hours = fields.Float(string="计划工时")
+    note = fields.Char(string="备注")
+
+    @api.constrains("planned_qty", "planned_work_hours")
+    def _check_values(self):
+        for record in self:
+            if record.planned_qty <= 0:
+                raise ValidationError(_("计划人数必须大于0。"))
+            if record.planned_work_hours < 0:
+                raise ValidationError(_("计划工时不能为负数。"))
+
+
 class ScLaborRequest(models.Model):
     _name = "sc.labor.request"
     _description = "劳务申请"

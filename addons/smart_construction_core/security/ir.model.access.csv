@@ -251,6 +251,10 @@ access_sc_labor_request_user,sc.labor.request.user,model_sc_labor_request,smart_
 access_sc_labor_request_manager,sc.labor.request.manager,model_sc_labor_request,smart_construction_core.group_sc_super_admin,1,1,1,1
 access_sc_labor_request_line_user,sc.labor.request.line.user,model_sc_labor_request_line,smart_construction_core.group_sc_internal_user,1,1,1,0
 access_sc_labor_request_line_manager,sc.labor.request.line.manager,model_sc_labor_request_line,smart_construction_core.group_sc_super_admin,1,1,1,1
+access_sc_labor_plan_user,sc.labor.plan.user,model_sc_labor_plan,smart_construction_core.group_sc_internal_user,1,1,1,0
+access_sc_labor_plan_manager,sc.labor.plan.manager,model_sc_labor_plan,smart_construction_core.group_sc_super_admin,1,1,1,1
+access_sc_labor_plan_line_user,sc.labor.plan.line.user,model_sc_labor_plan_line,smart_construction_core.group_sc_internal_user,1,1,1,0
+access_sc_labor_plan_line_manager,sc.labor.plan.line.manager,model_sc_labor_plan_line,smart_construction_core.group_sc_super_admin,1,1,1,1
 access_sc_labor_settlement_user,sc.labor.settlement.user,model_sc_labor_settlement,smart_construction_core.group_sc_internal_user,1,1,1,0
 access_sc_labor_settlement_manager,sc.labor.settlement.manager,model_sc_labor_settlement,smart_construction_core.group_sc_super_admin,1,1,1,1
 access_sc_labor_settlement_line_user,sc.labor.settlement.line.user,model_sc_labor_settlement_line,smart_construction_core.group_sc_internal_user,1,1,1,0

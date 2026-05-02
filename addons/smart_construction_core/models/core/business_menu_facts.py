@@ -695,7 +695,7 @@ class ScBusinessMenuTaxonomySeed(models.AbstractModel):
                     "材料价格库": "smart_construction_core.action_sc_material_price_library",
                 },
                 "劳务管理": {
-                    "劳务计划": f("sc.labor.document", "labor_plan"),
+                    "劳务计划": "smart_construction_core.action_sc_labor_plan",
                     "劳务申请": "smart_construction_core.action_sc_labor_request",
                     "劳务用工": "smart_construction_core.action_sc_labor_usage",
                     "考勤记录": "smart_construction_core.action_sc_attendance_checkin",
