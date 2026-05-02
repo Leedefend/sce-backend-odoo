@@ -57,6 +57,42 @@ output_json = artifact_root / "fresh_db_settlement_adjustment_projection_write_r
 uid = env.uid  # noqa: F821
 company = env.company  # noqa: F821
 currency_id = company.currency_id.id
+Project = env["project.project"].sudo().with_context(active_test=False)  # noqa: F821
+
+env.cr.execute(  # noqa: F821
+    """
+    SELECT DISTINCT project_legacy_id
+    FROM sc_legacy_deduction_adjustment_line
+    WHERE project_id IS NULL
+      AND COALESCE(project_legacy_id, '') <> ''
+    """
+)
+missing_project_refs = [row[0] for row in env.cr.fetchall()]  # noqa: F821
+created_project_refs = []
+for legacy_project_id in missing_project_refs:
+    project = Project.search(
+        ["|", ("legacy_project_id", "=", legacy_project_id), ("legacy_parent_id", "=", legacy_project_id)],
+        limit=1,
+    )
+    if not project:
+        vals = {"name": "历史未归档项目 %s" % legacy_project_id}
+        if "legacy_project_id" in Project._fields:
+            vals["legacy_project_id"] = legacy_project_id
+        if "legacy_parent_id" in Project._fields:
+            vals["legacy_parent_id"] = legacy_project_id
+        project = Project.create(vals)
+        created_project_refs.append(legacy_project_id)
+    env.cr.execute(  # noqa: F821
+        """
+        UPDATE sc_legacy_deduction_adjustment_line
+           SET project_id = %s,
+               write_uid = %s,
+               write_date = NOW()
+         WHERE project_id IS NULL
+           AND project_legacy_id = %s
+        """,
+        [project.id, uid, legacy_project_id],
+    )
 
 env.cr.execute("SELECT COUNT(*) FROM sc_settlement_adjustment")  # noqa: F821
 before = env.cr.fetchone()[0]  # noqa: F821
@@ -108,7 +144,6 @@ env.cr.execute(  # noqa: F821
       %s, NOW(), %s, NOW()
     FROM sc_legacy_deduction_adjustment_line l
     WHERE l.project_id IS NOT NULL
-      AND ABS(COALESCE(NULLIF(l.current_actual_amount, 0), l.current_planned_amount, 0)) > 0
     ON CONFLICT (legacy_line_id) DO UPDATE SET
       name = EXCLUDED.name,
       source_origin = EXCLUDED.source_origin,
@@ -158,6 +193,8 @@ payload = {
     "legacy_signed_amount_sum": float(signed_sum or 0),
     "legacy_amount_sum": float(amount_sum or 0),
     "db_writes": max(after - before, 0),
+    "created_placeholder_project_count": len(created_project_refs),
+    "created_placeholder_project_refs_sample": created_project_refs[:20],
     "decision": "legacy_deduction_adjustments_projected_to_settlement_runtime",
 }
 write_json(output_json, payload)
