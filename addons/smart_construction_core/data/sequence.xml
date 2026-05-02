@@ -184,6 +184,22 @@
         <field name="company_id" eval="False"/>
     </record>
 
+    <record id="seq_sc_material_rfq" model="ir.sequence">
+        <field name="name">材料询比价</field>
+        <field name="code">sc.material.rfq</field>
+        <field name="prefix">MRFQ%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_sc_material_settlement" model="ir.sequence">
+        <field name="name">材料结算</field>
+        <field name="code">sc.material.settlement</field>
+        <field name="prefix">MST%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
     <record id="seq_sc_material_inbound" model="ir.sequence">
         <field name="name">材料入库单</field>
         <field name="code">sc.material.inbound</field>
