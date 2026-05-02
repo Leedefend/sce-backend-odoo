@@ -14,6 +14,13 @@
         <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
+    <record id="action_sc_labor_request" model="ir.actions.act_window">
+        <field name="name">劳务申请</field>
+        <field name="res_model">sc.labor.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+    </record>
+
     <record id="action_sc_labor_settlement" model="ir.actions.act_window">
         <field name="name">劳务结算</field>
         <field name="res_model">sc.labor.settlement</field>
@@ -37,6 +44,99 @@
                 <field name="recorder_id"/>
                 <field name="state"/>
             </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_labor_request_tree" model="ir.ui.view">
+        <field name="name">sc.labor.request.tree</field>
+        <field name="model">sc.labor.request</field>
+        <field name="arch" type="xml">
+            <tree string="劳务申请" default_order="request_date desc">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="request_date"/>
+                <field name="required_date"/>
+                <field name="requester_id"/>
+                <field name="contractor_id"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_labor_request_form" model="ir.ui.view">
+        <field name="name">sc.labor.request.form</field>
+        <field name="model">sc.labor.request</field>
+        <field name="arch" type="xml">
+            <form string="劳务申请">
+                <header>
+                    <button name="action_submit" string="提交" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_approve" string="确认申请" type="object" class="btn-primary" invisible="state != 'submitted'"/>
+                    <button name="action_reset_draft" string="退回草稿" type="object" invisible="state != 'submitted'"/>
+                    <button name="action_cancel" string="取消" type="object" invisible="state in ('approved', 'cancel')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="project_id"/>
+                            <field name="request_date"/>
+                            <field name="required_date"/>
+                        </group>
+                        <group>
+                            <field name="requester_id"/>
+                            <field name="contractor_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="申请明细">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="labor_team"/>
+                                    <field name="work_content"/>
+                                    <field name="requested_qty"/>
+                                    <field name="planned_work_hours"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="申请说明">
+                            <field name="note" nolabel="1"/>
+                        </page>
+                        <page string="来源追溯">
+                            <group>
+                                <field name="legacy_fact_model"/>
+                                <field name="legacy_fact_id"/>
+                                <field name="legacy_fact_type"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_labor_request_search" model="ir.ui.view">
+        <field name="name">sc.labor.request.search</field>
+        <field name="model">sc.labor.request</field>
+        <field name="arch" type="xml">
+            <search string="劳务申请">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="request_date"/>
+                <field name="required_date"/>
+                <field name="requester_id"/>
+                <field name="contractor_id"/>
+                <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="已提交" name="submitted" domain="[('state', '=', 'submitted')]"/>
+                <filter string="已确认" name="approved" domain="[('state', '=', 'approved')]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按申请人" name="group_requester" context="{'group_by': 'requester_id'}"/>
+                <filter string="按劳务单位" name="group_contractor" context="{'group_by': 'contractor_id'}"/>
+                <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+            </search>
         </field>
     </record>
 

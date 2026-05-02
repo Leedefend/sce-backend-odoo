@@ -247,6 +247,10 @@ access_sc_attendance_checkin_user,sc.attendance.checkin.user,model_sc_attendance
 access_sc_attendance_checkin_manager,sc.attendance.checkin.manager,model_sc_attendance_checkin,smart_construction_core.group_sc_super_admin,1,1,1,1
 access_sc_labor_usage_user,sc.labor.usage.user,model_sc_labor_usage,smart_construction_core.group_sc_internal_user,1,1,1,0
 access_sc_labor_usage_manager,sc.labor.usage.manager,model_sc_labor_usage,smart_construction_core.group_sc_super_admin,1,1,1,1
+access_sc_labor_request_user,sc.labor.request.user,model_sc_labor_request,smart_construction_core.group_sc_internal_user,1,1,1,0
+access_sc_labor_request_manager,sc.labor.request.manager,model_sc_labor_request,smart_construction_core.group_sc_super_admin,1,1,1,1
+access_sc_labor_request_line_user,sc.labor.request.line.user,model_sc_labor_request_line,smart_construction_core.group_sc_internal_user,1,1,1,0
+access_sc_labor_request_line_manager,sc.labor.request.line.manager,model_sc_labor_request_line,smart_construction_core.group_sc_super_admin,1,1,1,1
 access_sc_labor_settlement_user,sc.labor.settlement.user,model_sc_labor_settlement,smart_construction_core.group_sc_internal_user,1,1,1,0
 access_sc_labor_settlement_manager,sc.labor.settlement.manager,model_sc_labor_settlement,smart_construction_core.group_sc_super_admin,1,1,1,1
 access_sc_labor_settlement_line_user,sc.labor.settlement.line.user,model_sc_labor_settlement_line,smart_construction_core.group_sc_internal_user,1,1,1,0

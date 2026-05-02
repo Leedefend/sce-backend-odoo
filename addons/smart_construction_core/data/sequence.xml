@@ -216,6 +216,14 @@
         <field name="company_id" eval="False"/>
     </record>
 
+    <record id="seq_sc_labor_request" model="ir.sequence">
+        <field name="name">劳务申请</field>
+        <field name="code">sc.labor.request</field>
+        <field name="prefix">LRQ%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
     <record id="seq_sc_labor_settlement" model="ir.sequence">
         <field name="name">劳务结算</field>
         <field name="code">sc.labor.settlement</field>

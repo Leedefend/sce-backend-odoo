@@ -249,6 +249,7 @@ Scope: 基于 `项目建设-产品功能清单（0301 ）.xlsx`，对当前 `sc.
 | WP7 劳务考勤 | `sc.attendance.checkin` | `models/core/labor_management.py`、`views/core/labor_management_views.xml` | 从 `sc.labor.document(attendance_record)` 拆出考勤记录专业动作；现有“考勤记录”入口只承载班组、出勤人数、工时和作业内容，不再混入劳务计划、用工或结算 |
 | WP8 劳务用工 | `sc.labor.usage` | `models/core/labor_management.py`、`views/core/labor_management_views.xml` | 从 `sc.labor.document(labor_employment)` 拆出劳务用工专业动作；现有“劳务用工”入口只承载实际用工发生、班组、劳务单位、人数和工时，不再混入考勤或结算 |
 | WP9 劳务结算 | `sc.labor.settlement`、`sc.labor.settlement.line` | `models/core/labor_management.py`、`views/core/labor_management_views.xml` | 从 `sc.labor.document(labor_settlement)` 拆出劳务结算专业动作；现有“劳务结算”入口只承载劳务单位、结算日期、结算明细和金额确认，不再混入考勤或用工登记 |
+| WP10 劳务申请 | `sc.labor.request`、`sc.labor.request.line` | `models/core/labor_management.py`、`views/core/labor_management_views.xml` | 从 `sc.labor.document(labor_request)` 拆出劳务申请专业动作；现有“劳务申请”入口只承载劳务需求发起、需用日期和申请明细，不再混入实际用工或结算 |
 
 ## 6. 不再建议投入的方向
 
