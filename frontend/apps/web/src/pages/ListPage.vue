@@ -1,7 +1,7 @@
 <template>
   <section class="page">
     <PageHeader
-      v-if="status !== 'ok'"
+      v-if="status !== 'ok' && status !== 'empty'"
       :title="title"
       :subtitle="subtitle"
     />
@@ -23,7 +23,31 @@
       :on-retry="onReload"
     />
     <template v-else-if="status === 'empty'">
-      <slot name="toolbar"></slot>
+      <section class="list-toolbar">
+        <div class="list-title">
+          <h2>{{ title }}</h2>
+          <p>{{ subtitle }}</p>
+        </div>
+        <div class="list-header-toolbar">
+          <slot name="toolbar"></slot>
+        </div>
+        <div v-if="showPlainSearch" class="list-plain-search">
+          <input
+            type="search"
+            :value="plainSearchDraft"
+            :disabled="loading"
+            :placeholder="uiLabel('plain_search_placeholder', '输入关键字搜索')"
+            @compositionstart="plainSearchComposing = true"
+            @compositionend="onPlainSearchCompositionEnd"
+            @input="onPlainSearchInput"
+            @keydown.enter.prevent="submitPlainSearch"
+          />
+          <button type="button" class="pagination-btn" :disabled="loading" @click="submitPlainSearch">
+            {{ uiLabel('search_submit', '搜索') }}
+          </button>
+        </div>
+        <span v-else class="list-count">{{ uiLabel('record_count', '{count} 条记录', { count: records.length }) }}</span>
+      </section>
       <section class="list-empty-state">
         <div class="list-empty-copy">
           <h2>{{ emptyStateTitle }}</h2>
@@ -51,6 +75,9 @@
         <div class="list-title">
           <h2>{{ title }}</h2>
           <p>{{ subtitle }}</p>
+        </div>
+        <div class="list-header-toolbar">
+          <slot name="toolbar"></slot>
         </div>
         <div v-if="showPlainSearch" class="list-plain-search">
           <input
@@ -124,8 +151,6 @@
         <span v-else class="list-count">{{ uiLabel('record_count', '{count} 条记录', { count: records.length }) }}</span>
       </section>
 
-      <slot name="toolbar"></slot>
-
       <section v-if="enableSummaryStrip && summaryItems.length" class="summary-strip">
         <article v-for="item in summaryItems" :key="item.key" class="summary-card" :class="`tone-${item.tone || 'neutral'}`">
           <p class="summary-label">{{ item.label }}</p>
@@ -170,11 +195,6 @@
             >
               {{ uiLabel('collapse_all', '全部收起') }}
             </button>
-            <select :value="String(effectiveGroupSampleLimit)" @change="onGroupSampleLimitSelectChange">
-              <option v-for="limit in groupSampleLimitOptions" :key="`group-sample-limit-${limit}`" :value="String(limit)">
-                {{ uiLabel('group_sample_limit', '每组 {count} 条', { count: limit }) }}
-              </option>
-            </select>
             <button type="button" class="grouped-sort-btn" @click="toggleGroupSort">
               {{ groupSortLabel }}
             </button>
@@ -187,7 +207,7 @@
             </button>
             <p>{{ group.label }}</p>
             <span>{{ uiLabel('group_count', '{count} 条', { count: group.count }) }}</span>
-            <div v-if="onGroupPageChange" class="group-page">
+            <div v-if="onGroupPageChange && groupTotalPages(group) > 1" class="group-page">
               <button
                 type="button"
                 class="group-page-btn"
@@ -317,9 +337,9 @@
                   v-for="col in displayedColumns"
                   :key="`group-footer-page-${group.key}-${col}`"
                   :style="columnWidthStyle(col)"
-                  :class="{ 'footer-number': isNumericColumn(col) }"
+                  :class="[columnDensityClass(col), { 'footer-number': isNumericColumn(col) }]"
                 >
-                  {{ footerCellText(col, 'page', group.sampleRows.length) }}
+                  {{ groupFooterCellText(col, group, 'page') }}
                 </td>
               </tr>
               <tr>
@@ -328,9 +348,9 @@
                   v-for="col in displayedColumns"
                   :key="`group-footer-total-${group.key}-${col}`"
                   :style="columnWidthStyle(col)"
-                  :class="{ 'footer-number': isNumericColumn(col) }"
+                  :class="[columnDensityClass(col), { 'footer-number': isNumericColumn(col) }]"
                 >
-                  {{ footerCellText(col, 'total', group.count) }}
+                  {{ groupFooterCellText(col, group, 'total') }}
                 </td>
               </tr>
             </tfoot>
@@ -486,63 +506,6 @@
       </table>
     </section>
 
-      <section v-if="showPagination" class="pagination-bar">
-        <span>{{ paginationSummary }}</span>
-        <div class="pagination-actions">
-          <button
-            type="button"
-            class="pagination-btn"
-            :disabled="loading || !canPagePrev"
-            @click="pagePrev"
-          >
-            {{ uiLabel('pagination_prev', '上一页') }}
-          </button>
-          <span>{{ paginationPageText }}</span>
-          <button
-            type="button"
-            class="pagination-btn"
-            :disabled="loading || !canPageNext"
-            @click="pageNext"
-          >
-            {{ uiLabel('pagination_next', '下一页') }}
-          </button>
-          <input
-            class="pagination-input"
-            :value="pageJumpInput"
-            :disabled="loading || totalPages <= 1"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            @input="onPageJumpInput"
-            @keyup.enter="jumpPage"
-          />
-          <button
-            type="button"
-            class="pagination-btn"
-            :disabled="loading || totalPages <= 1"
-            @click="jumpPage"
-          >
-            {{ uiLabel('pagination_jump', '跳转') }}
-          </button>
-          <span class="pagination-size-label">{{ uiLabel('pagination_page_size', '每页') }}</span>
-          <input
-            class="pagination-input pagination-input--size"
-            :value="pageLimitInput"
-            :disabled="loading"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            @input="onPageLimitInput"
-            @keyup.enter="applyPageLimit"
-          />
-          <button
-            type="button"
-            class="pagination-btn"
-            :disabled="loading"
-            @click="applyPageLimit"
-          >
-            {{ uiLabel('pagination_apply_size', '应用') }}
-          </button>
-        </div>
-      </section>
     </template>
   </section>
 </template>
@@ -640,6 +603,7 @@ const props = defineProps<{
     pageWindow?: { start?: number; end?: number };
     pageHasPrev?: boolean;
     pageHasNext?: boolean;
+    aggregates?: Record<string, Record<string, unknown>>;
     loading?: boolean;
   }>;
   onOpenGroup?: (group: {
@@ -1602,6 +1566,35 @@ function footerCellText(field: string, scope: 'page' | 'total', rowCount: number
   return `${label}：${value === null ? '--' : formatFooterNumber(value, field)}`;
 }
 
+function rowsNumericSum(rows: Array<Record<string, unknown>>, field: string) {
+  const values = rows
+    .map((row) => numericCellValue(row[field]))
+    .filter((value): value is number => typeof value === 'number');
+  if (!values.length) return null;
+  return values.reduce((total, value) => total + value, 0);
+}
+
+function groupAggregateValue(group: { aggregates?: Record<string, Record<string, unknown>> }, field: string) {
+  const aggregate = group.aggregates?.[field] || {};
+  const value = aggregate.sum;
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function groupFooterCellText(
+  field: string,
+  group: { sampleRows: Array<Record<string, unknown>>; aggregates?: Record<string, Record<string, unknown>> },
+  scope: 'page' | 'total',
+) {
+  if (!isNumericColumn(field)) return '';
+  const label = columnLabel(field);
+  if (scope === 'page') {
+    const value = rowsNumericSum(group.sampleRows || [], field);
+    return `${label}：${value === null ? '--' : formatFooterNumber(value, field)}`;
+  }
+  const value = groupAggregateValue(group, field);
+  return value === null ? '' : `${label}：${formatFooterNumber(value, field)}`;
+}
+
 function footerRowLabel(scope: 'page' | 'total', rowCount: number) {
   const count = Math.max(0, Math.trunc(Number(rowCount || 0)));
   return scope === 'page'
@@ -1634,21 +1627,20 @@ onBeforeUnmount(() => {
 }
 
 .list-toolbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(132px, 180px) minmax(0, 600px) max-content;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #fff;
-  padding: 6px 8px;
+  padding: 4px 6px;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
 }
 
 .list-title {
   min-width: 0;
-  flex: 1 1 auto;
+  justify-self: start;
 }
 
 .list-title h2 {
@@ -1657,7 +1649,9 @@ onBeforeUnmount(() => {
   font-size: 14px;
   font-weight: 700;
   line-height: 1.25;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .list-title p {
@@ -1665,13 +1659,35 @@ onBeforeUnmount(() => {
   color: #64748b;
   font-size: 11px;
   line-height: 1.25;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .list-count {
   color: #475569;
   font-size: 13px;
   white-space: nowrap;
+}
+
+.list-header-toolbar {
+  display: flex;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+.list-header-toolbar :deep(.action-toolbar) {
+  grid-template-columns: max-content minmax(280px, 460px) max-content;
+  justify-content: start;
+  width: min(600px, 100%);
+  max-width: 600px;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+.list-header-toolbar :deep(.native-search) {
+  width: clamp(280px, 32vw, 460px);
 }
 
 .list-empty-state {
@@ -2023,7 +2039,7 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 5px;
 }
 
 .pagination-size-label {
@@ -2032,7 +2048,13 @@ onBeforeUnmount(() => {
 }
 
 .pagination-actions--top {
+  justify-self: end;
   flex: 0 0 auto;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  color: #475569;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .cell-column-picker {
@@ -2137,11 +2159,12 @@ onBeforeUnmount(() => {
 
 .pagination-btn {
   border: 1px solid #bfdbfe;
-  border-radius: 8px;
+  border-radius: 6px;
   background: #fff;
   color: #1d4ed8;
-  padding: 4px 10px;
-  font-size: 13px;
+  padding: 3px 7px;
+  font-size: 12px;
+  line-height: 18px;
   cursor: pointer;
 }
 
@@ -2151,23 +2174,33 @@ onBeforeUnmount(() => {
 }
 
 .pagination-input {
-  width: 60px;
+  width: 46px;
   border: 1px solid #bfdbfe;
-  border-radius: 8px;
-  padding: 4px 8px;
+  border-radius: 6px;
+  padding: 3px 6px;
   color: #0f172a;
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .pagination-input--size {
-  width: 72px;
+  width: 54px;
 }
 
 @media (max-width: 900px) {
-  .list-toolbar,
+  .list-toolbar {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+
   .pagination-bar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .list-header-toolbar,
+  .list-header-toolbar :deep(.native-search) {
+    width: 100%;
   }
 
   .pagination-actions {

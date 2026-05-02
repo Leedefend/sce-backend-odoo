@@ -495,9 +495,10 @@ onBeforeUnmount(() => {
 <style scoped>
 .action-toolbar {
   display: grid;
-  grid-template-columns: max-content minmax(320px, 1fr) minmax(0, auto) max-content;
+  grid-template-columns: max-content minmax(320px, 560px) max-content;
+  justify-content: center;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
   max-width: 100%;
   border: 1px solid #e2e8f0;
@@ -543,7 +544,8 @@ onBeforeUnmount(() => {
   position: relative;
   display: flex;
   align-items: center;
-  justify-self: stretch;
+  justify-self: center;
+  width: clamp(320px, 46vw, 560px);
   min-width: 0;
   max-width: 100%;
 }
@@ -563,8 +565,8 @@ onBeforeUnmount(() => {
 }
 
 .native-searchbox input {
-  flex: 1 1 160px;
-  min-width: 90px;
+  flex: 1 1 110px;
+  min-width: 72px;
   height: 22px;
   border: 0;
   background: transparent;
@@ -601,7 +603,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 5px;
   min-height: 22px;
-  max-width: 180px;
+  max-width: min(150px, 38%);
   border: 1px solid #bfdbfe;
   border-radius: 5px;
   background: #eff6ff;
@@ -648,11 +650,12 @@ onBeforeUnmount(() => {
 .search-dropdown {
   position: absolute;
   top: calc(100% + 6px);
-  left: 0;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 20;
   display: grid;
   grid-template-columns: repeat(3, minmax(180px, 1fr));
-  width: min(760px, 92vw);
+  width: min(680px, calc(100vw - 32px));
   max-height: 420px;
   overflow: auto;
   border: 1px solid #cbd5e1;
@@ -834,7 +837,11 @@ onBeforeUnmount(() => {
 
 @media (max-width: 1360px) {
   .action-toolbar {
-    grid-template-columns: max-content minmax(260px, 1fr) minmax(0, auto) max-content;
+    grid-template-columns: max-content minmax(300px, 500px) max-content;
+  }
+
+  .native-search {
+    width: clamp(300px, 44vw, 500px);
   }
 }
 
@@ -885,11 +892,17 @@ onBeforeUnmount(() => {
     min-width: 0;
   }
 
+  .search-facet {
+    max-width: 34%;
+  }
+
   .native-searchbox {
     min-width: 0;
   }
 
   .search-dropdown {
+    left: 0;
+    transform: none;
     grid-template-columns: 1fr;
     width: min(520px, 92vw);
   }
