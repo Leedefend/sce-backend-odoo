@@ -836,9 +836,6 @@ class PaymentRequest(models.Model):
         for rec in self:
             if rec.state != "submit":
                 continue
-            rec._check_project_lifecycle(rec.project_id, "approved")
-            rec._check_settlement_state(rec.settlement_id)
-            rec._enforce_funding_gate({"state": "approved"})
             if rec.validation_status != "validated":
                 raise_guard(
                     "PAYMENT_TIER_INCOMPLETE",
@@ -846,8 +843,17 @@ class PaymentRequest(models.Model):
                     "审批付款申请",
                     reasons=["tier validation not complete"],
                 )
+            advisories = rec._collect_payment_advisories("approve")
+            if advisories:
+                lines = [
+                    "- %s" % str(item.get("message") or item.get("reason_code") or "").strip()
+                    for item in advisories
+                    if str(item.get("message") or item.get("reason_code") or "").strip()
+                ]
+                if lines:
+                    rec._message_post_non_blocking(_("付款申请审批风险提示：\n%s") % "\n".join(lines))
             before = rec._snapshot_audit_payload()
-            rec.with_context(allow_transition=True).write({"state": "approved"})
+            rec.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "approved"})
             after = rec._snapshot_audit_payload()
             rec._audit_transition("payment_approved", before, after, action_name="action_on_tier_approved")
             rec._message_post_non_blocking(_("付款/收款申请审批通过。"))

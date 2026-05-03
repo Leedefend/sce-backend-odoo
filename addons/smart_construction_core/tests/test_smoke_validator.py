@@ -16,7 +16,7 @@ class TestValidatorSmoke(TransactionCase):
     def test_validator_catches_missing_settlement(self):
         project = self.env["project.project"].create({"name": "Validator Project"})
         partner = self.env["res.partner"].create({"name": "Validator Partner"})
-        bad_pr = self.env["payment.request"].create(
+        bad_pr = self.env["payment.request"].with_context(payment_soft_gate=True).create(
             {
                 "name": "VAL-PR-BAD",
                 "type": "pay",
@@ -55,6 +55,7 @@ class TestValidatorSmoke(TransactionCase):
             {
                 "partner_id": partner.id,
                 "project_id": project.id,
+                "state": "purchase",
                 "order_line": [
                     (
                         0,
@@ -70,7 +71,6 @@ class TestValidatorSmoke(TransactionCase):
                 ],
             }
         )
-        po.button_confirm()
         settle = self.env["sc.settlement.order"].create(
             {
                 "project_id": project.id,
@@ -90,6 +90,7 @@ class TestValidatorSmoke(TransactionCase):
             "groups_id": [(6, 0, [finance_group.id])],
             "email": "fin+happy@test.com",
         })
+        project.message_subscribe(partner_ids=fin_user.partner_id.ids)
         pr = self.env["payment.request"].sudo().create(
             {
                 "name": "PR Happy",
@@ -116,7 +117,7 @@ class TestValidatorSmoke(TransactionCase):
         # bad_pr：缺少 settlement_id，但处于必须有关联的状态
         project1 = self.env["project.project"].create({"name": "Scope Project BAD"})
         partner1 = self.env["res.partner"].create({"name": "Scope Vendor BAD"})
-        bad_pr = self.env["payment.request"].create(
+        bad_pr = self.env["payment.request"].with_context(payment_soft_gate=True).create(
             {
                 "name": "VAL-PR-BAD-SCOPE",
                 "type": "pay",
@@ -145,6 +146,7 @@ class TestValidatorSmoke(TransactionCase):
             {
                 "partner_id": partner2.id,
                 "project_id": project2.id,
+                "state": "purchase",
                 "order_line": [
                     (
                         0,
@@ -160,7 +162,6 @@ class TestValidatorSmoke(TransactionCase):
                 ],
             }
         )
-        po2.button_confirm()
         settle2 = self.env["sc.settlement.order"].create(
             {
                 "project_id": project2.id,
@@ -171,7 +172,7 @@ class TestValidatorSmoke(TransactionCase):
                 "state": "approve",
             }
         )
-        good_pr = self.env["payment.request"].sudo().create(
+        good_pr = self.env["payment.request"].sudo().with_context(payment_soft_gate=True).create(
             {
                 "name": "VAL-PR-GOOD-SCOPE",
                 "type": "pay",
@@ -205,8 +206,12 @@ class TestValidatorSmoke(TransactionCase):
                 }
             )
 
-    def test_payment_request_overpay_blocked(self):
+    def test_payment_request_overpay_can_be_approved_with_advisory(self):
         project = self.env["project.project"].create({"name": "Overpay Project"})
+        project.write({"code": "OVERPAY-PROJ", "funding_enabled": True})
+        self.env["project.funding.baseline"].create(
+            {"project_id": project.id, "total_amount": 100.0, "state": "active"}
+        )
         partner = self.env["res.partner"].create({"name": "Overpay Vendor"})
         company = self.env.ref("base.main_company")
         contract = self.env["construction.contract"].create(
@@ -224,6 +229,7 @@ class TestValidatorSmoke(TransactionCase):
             {
                 "partner_id": partner.id,
                 "project_id": project.id,
+                "state": "purchase",
                 "order_line": [
                     (
                         0,
@@ -239,7 +245,6 @@ class TestValidatorSmoke(TransactionCase):
                 ],
             }
         )
-        po.button_confirm()
         settle = self.env["sc.settlement.order"].create(
             {
                 "project_id": project.id,
@@ -268,6 +273,7 @@ class TestValidatorSmoke(TransactionCase):
             "groups_id": [(6, 0, [finance_mgr_group.id])],
             "email": "finmgr+overpay@test.com",
         })
+        project.message_subscribe(partner_ids=fin_user.partner_id.ids)
         # 第一笔 80 正常通过
         pr1 = self.env["payment.request"].sudo().create(
             {
@@ -282,10 +288,11 @@ class TestValidatorSmoke(TransactionCase):
             }
         )
         pr1.with_user(fin_user).action_submit()
-        pr1.with_user(fin_mgr).action_approve()
+        pr1.with_user(fin_mgr).validate_tier()
+        pr1.invalidate_recordset()
         self.assertIn(pr1.state, ("approve", "approved"))
 
-        # 第二笔超付（结算剩余 20，尝试付款 30），应阻断
+        # 第二笔超付（结算剩余 20，尝试付款 30），审批人可带风险提示继续推进。
         pr2 = self.env["payment.request"].sudo().create(
             {
                 "name": "PR-2",
@@ -298,12 +305,18 @@ class TestValidatorSmoke(TransactionCase):
                 "state": "draft",
             }
         )
-        with self.assertRaises(UserError):
-            pr2.with_user(fin_user).action_submit()
+        pr2.with_user(fin_user).action_submit()
+        pr2.with_user(fin_mgr).validate_tier()
+        pr2.invalidate_recordset()
+        self.assertEqual(pr2.state, "approved")
 
     def test_payment_request_paid_payable_consistent(self):
         """口径一致性：已付/可付/风险/validator 同源。"""
         project = self.env["project.project"].create({"name": "PaidPayable Project"})
+        project.write({"code": "PAID-PAYABLE-PROJ", "funding_enabled": True})
+        self.env["project.funding.baseline"].create(
+            {"project_id": project.id, "total_amount": 100.0, "state": "active"}
+        )
         partner = self.env["res.partner"].create({"name": "PaidPayable Vendor"})
         contract = self.env["construction.contract"].create(
             {"subject": "PaidPayable Contract", "type": "in", "project_id": project.id, "partner_id": partner.id}
@@ -320,6 +333,7 @@ class TestValidatorSmoke(TransactionCase):
             {
                 "partner_id": partner.id,
                 "project_id": project.id,
+                "state": "purchase",
                 "order_line": [
                     (
                         0,
@@ -335,7 +349,6 @@ class TestValidatorSmoke(TransactionCase):
                 ],
             }
         )
-        po.button_confirm()
         settle = self.env["sc.settlement.order"].create(
             {
                 "project_id": project.id,
@@ -365,6 +378,7 @@ class TestValidatorSmoke(TransactionCase):
             "groups_id": [(6, 0, [finance_mgr_group.id])],
             "email": "finmgr+paidpayable@test.com",
         })
+        project.message_subscribe(partner_ids=fin_user.partner_id.ids)
 
         # 第一笔 80 提交+审批，计入已付
         pr1 = self.env["payment.request"].sudo().create(
@@ -380,7 +394,8 @@ class TestValidatorSmoke(TransactionCase):
             }
         )
         pr1.with_user(fin_user).action_submit()
-        pr1.with_user(fin_mgr).action_approve()
+        pr1.with_user(fin_mgr).validate_tier()
+        pr1.invalidate_recordset()
 
         settle.invalidate_recordset()
         self.assertEqual(settle.amount_paid, 80)
@@ -415,7 +430,7 @@ class TestValidatorSmoke(TransactionCase):
         partner = self.env["res.partner"].create({"name": "Happy Vendor"})
         unrelated_project = self.env["project.project"].create({"name": "Settle Unrelated Bad Project"})
         unrelated_partner = self.env["res.partner"].create({"name": "Unrelated Bad Vendor"})
-        self.env["payment.request"].create(
+        self.env["payment.request"].with_context(payment_soft_gate=True).create(
             {
                 "name": "VAL-PR-UNRELATED-BAD",
                 "type": "pay",
@@ -440,6 +455,7 @@ class TestValidatorSmoke(TransactionCase):
             {
                 "partner_id": partner.id,
                 "project_id": project.id,
+                "state": "purchase",
                 "order_line": [
                     (
                         0,
@@ -455,7 +471,6 @@ class TestValidatorSmoke(TransactionCase):
                 ],
             }
         )
-        po.button_confirm()
         settle = self.env["sc.settlement.order"].create(
             {
                 "project_id": project.id,
@@ -466,6 +481,17 @@ class TestValidatorSmoke(TransactionCase):
                 "state": "draft",
             }
         )
+        company = self.env.ref("base.main_company")
+        settlement_group = self.env.ref("smart_construction_core.group_sc_cap_settlement_manager")
+        settlement_mgr = self.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "Settle Happy Manager",
+            "login": "settle_happy_mgr",
+            "company_id": company.id,
+            "company_ids": [(6, 0, [company.id])],
+            "groups_id": [(6, 0, [settlement_group.id])],
+            "email": "settle+happy@test.com",
+        })
         settle.action_submit()
-        settle.action_approve()
+        settle.with_user(settlement_mgr).validate_tier()
+        settle.invalidate_recordset()
         self.assertEqual(settle.state, "approve")

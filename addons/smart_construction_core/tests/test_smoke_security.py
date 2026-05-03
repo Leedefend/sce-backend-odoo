@@ -55,6 +55,7 @@ class TestSmokeSecurity(TransactionCase):
             "company_ids": [(6, 0, [company.id])],
             "groups_id": [(6, 0, [g.id for g in admin_groups])],
         })
+        cls.project.message_subscribe(partner_ids=cls.finance_user.partner_id.ids)
 
     def test_finance_user_can_create_payment_request(self):
         request = self.env["payment.request"].with_user(self.finance_user).create(

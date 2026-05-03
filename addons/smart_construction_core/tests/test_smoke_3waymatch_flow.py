@@ -26,10 +26,22 @@ class TestSmokeThreeWayMatchFlow(TransactionCase):
                 "partner_id": cls.partner.id,
             }
         )
+        settlement_group = cls.env.ref("smart_construction_core.group_sc_cap_settlement_manager")
+        company = cls.env.ref("base.main_company")
+        cls.settlement_manager = cls.env["res.users"].with_context(no_reset_password=True).create(
+            {
+                "name": "Flow Settlement Manager",
+                "login": "flow_settlement_mgr",
+                "company_id": company.id,
+                "company_ids": [(6, 0, [company.id])],
+                "groups_id": [(6, 0, [settlement_group.id])],
+            }
+        )
         cls.purchase_order = cls.env["purchase.order"].create(
             {
                 "partner_id": cls.partner.id,
                 "project_id": cls.project.id,
+                "state": "purchase",
                 "order_line": [
                     (
                         0,
@@ -45,7 +57,6 @@ class TestSmokeThreeWayMatchFlow(TransactionCase):
                 ],
             }
         )
-        cls.purchase_order.button_confirm()
 
     def test_minimum_three_way_match_chain(self):
         settlement = self.env["sc.settlement.order"].create(
@@ -58,7 +69,8 @@ class TestSmokeThreeWayMatchFlow(TransactionCase):
             }
         )
         settlement.action_submit()
-        settlement.action_approve()
+        settlement.with_user(self.settlement_manager).validate_tier()
+        settlement.invalidate_recordset()
 
         request = self.env["payment.request"].create(
             {
