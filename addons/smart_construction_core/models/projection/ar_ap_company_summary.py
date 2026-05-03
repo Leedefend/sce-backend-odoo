@@ -20,7 +20,7 @@ class ScArApCompanySummary(models.Model):
     invoiced_unreceived_amount = fields.Float(string="已开票未收款", readonly=True)
     received_uninvoiced_amount = fields.Float(string="已收款未开票", readonly=True)
     payable_contract_amount = fields.Float(string="应付合同金额", readonly=True)
-    payable_pricing_method_text = fields.Char(string="计价方式", readonly=True)
+    payable_pricing_method_text = fields.Char(string="历史计价方式", readonly=True)
     input_invoice_amount = fields.Float(string="已收供应商发票", readonly=True)
     paid_amount = fields.Float(string="已付款", readonly=True)
     payable_unpaid_amount = fields.Float(string="未付款", readonly=True)

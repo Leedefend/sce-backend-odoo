@@ -150,7 +150,7 @@
         <field name="active">0</field>
     </record>
     <menuitem id="menu_sc_tier_review_my_general_contract"
-              name="待我审批（一般合同）"
+              name="待我审批（一般合同（公司））"
               parent="menu_sc_contract_center"
               action="smart_construction_core.action_sc_tier_review_my_general_contract"
               sequence="35"

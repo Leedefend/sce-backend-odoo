@@ -26,4 +26,85 @@
             </xpath>
         </field>
     </record>
+
+    <record id="view_sc_supplier_partner_tree" model="ir.ui.view">
+        <field name="name">res.partner.sc.supplier.tree</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <tree string="供应商" default_order="name">
+                <field name="name" string="名称"/>
+                <field name="sc_supplier_type"/>
+                <field name="phone" string="电话"/>
+                <field name="mobile" string="手机"/>
+                <field name="email" string="电子邮件"/>
+                <field name="vat" string="统一社会信用代码"/>
+                <field name="sc_region"/>
+                <field name="sc_account_name"/>
+                <field name="sc_bank_name"/>
+                <field name="sc_bank_account"/>
+                <field name="active" string="活动"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_supplier_partner_form" model="ir.ui.view">
+        <field name="name">res.partner.sc.supplier.form</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <form string="供应商">
+                <sheet>
+                    <group>
+                        <group string="基本信息">
+                            <field name="name" string="名称"/>
+                            <field name="is_company" string="公司"/>
+                            <field name="sc_supplier_type"/>
+                            <field name="vat" string="统一社会信用代码"/>
+                            <field name="sc_region"/>
+                            <field name="active" string="活动"/>
+                        </group>
+                        <group string="联系方式">
+                            <field name="phone" string="电话"/>
+                            <field name="mobile" string="手机"/>
+                            <field name="email" string="电子邮件"/>
+                            <field name="street" string="地址"/>
+                            <field name="city" string="城市"/>
+                        </group>
+                    </group>
+                    <group string="账户信息">
+                        <group>
+                            <field name="sc_account_name"/>
+                            <field name="sc_bank_name"/>
+                        </group>
+                        <group>
+                            <field name="sc_bank_account"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="备注">
+                            <field name="sc_supplier_note" nolabel="1"/>
+                        </page>
+                        <page string="附件">
+                            <field name="sc_attachment_ids" widget="many2many_binary"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_supplier_partner_search" model="ir.ui.view">
+        <field name="name">res.partner.sc.supplier.search</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <search string="供应商">
+                <field name="name" string="名称"/>
+                <field name="sc_supplier_type"/>
+                <field name="vat" string="统一社会信用代码"/>
+                <field name="sc_region"/>
+                <filter string="活动" name="active_supplier" domain="[('active', '=', True)]"/>
+                <filter string="按供应商类型" name="group_supplier_type" context="{'group_by': 'sc_supplier_type'}"/>
+                <filter string="按地区" name="group_region" context="{'group_by': 'sc_region'}"/>
+            </search>
+        </field>
+    </record>
 </odoo>

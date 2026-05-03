@@ -42,7 +42,7 @@
                                 string="快速创建项目"
                                 class="oe_stat_button"/>
                     </div>
-                    <div class="alert alert-info" invisible="context.get('intake_mode') != 'quick'">
+                    <div class="alert alert-info" role="status" invisible="context.get('intake_mode') != 'quick'">
                         快速创建模式：仅需填写项目名称与项目经理即可创建项目，其他信息可在项目驾驶舱后续补充。
                     </div>
                     <group string="项目创建（必填）" col="2">
@@ -77,7 +77,7 @@
         <field name="arch" type="xml">
             <form string="快速创建项目">
                 <sheet>
-                    <div class="alert alert-info">
+                    <div class="alert alert-info" role="status">
                         快速创建模式：仅填写最小必填信息，创建后进入项目驾驶舱继续补充。
                     </div>
                     <group string="最小立项信息" col="2">

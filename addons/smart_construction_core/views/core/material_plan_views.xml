@@ -9,6 +9,9 @@
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="date_plan"/>
+                <field name="total_plan_qty" sum="计划数量合计"/>
+                <field name="total_bill_qty" sum="清单数量合计"/>
+                <field name="total_unplanned_qty" sum="未计划数量合计"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -86,23 +89,39 @@
                                    modifiers='{"readonly": [["state","!=","draft"]]}'>
                                 <tree editable="bottom" create="1" delete="1">
                                     <field name="product_id"/>
+                                    <field name="material_name"/>
                                     <field name="spec"/>
+                                    <field name="spec_model"/>
                                     <field name="quantity"/>
+                                    <field name="bill_qty"/>
+                                    <field name="unplanned_qty"/>
                                     <field name="uom_id"/>
                                     <field name="vendor_id"/>
                                     <field name="note"/>
+                                    <field name="attachment_ids" widget="many2many_binary"/>
                                 </tree>
                                 <form string="明细">
                                     <group>
                                         <field name="product_id"/>
+                                        <field name="material_name" readonly="1"/>
                                         <field name="spec"/>
+                                        <field name="spec_model" readonly="1"/>
                                         <field name="quantity"/>
+                                        <field name="bill_qty"/>
+                                        <field name="unplanned_qty" readonly="1"/>
                                         <field name="uom_id"/>
                                         <field name="vendor_id"/>
                                         <field name="note"/>
+                                        <field name="attachment_ids" widget="many2many_binary"/>
                                     </group>
                                 </form>
                             </field>
+                        </page>
+                        <page string="备注">
+                            <field name="reject_reason" readonly="1" invisible="not reject_reason"/>
+                        </page>
+                        <page string="附件">
+                            <field name="attachment_ids" widget="many2many_binary"/>
                         </page>
                     </notebook>
                 </sheet>

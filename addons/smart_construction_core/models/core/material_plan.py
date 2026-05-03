@@ -24,6 +24,16 @@ class ProjectMaterialPlan(models.Model):
         readonly=True,
     )
     date_plan = fields.Date("需用日期")
+    total_plan_qty = fields.Float(string="计划数量", compute="_compute_plan_totals", store=True)
+    total_bill_qty = fields.Float(string="清单数量", compute="_compute_plan_totals", store=True)
+    total_unplanned_qty = fields.Float(string="未计划数量", compute="_compute_plan_totals", store=True)
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "project_material_plan_attachment_rel",
+        "plan_id",
+        "attachment_id",
+        string="附件",
+    )
     state = fields.Selection(
         [
             ("draft", "草稿"),
@@ -48,6 +58,15 @@ class ProjectMaterialPlan(models.Model):
 
     purchase_order_count = fields.Integer("采购单", compute="_compute_po_counts")
     purchase_line_count = fields.Integer("采购明细", compute="_compute_po_counts")
+
+    @api.depends("line_ids.quantity", "line_ids.bill_qty")
+    def _compute_plan_totals(self):
+        for rec in self:
+            planned = sum(rec.line_ids.mapped("quantity"))
+            bill = sum(rec.line_ids.mapped("bill_qty"))
+            rec.total_plan_qty = planned
+            rec.total_bill_qty = bill
+            rec.total_unplanned_qty = max(bill - planned, 0.0)
 
     def _message_post_non_blocking(self, body):
         for rec in self:
@@ -249,8 +268,12 @@ class ProjectMaterialPlanLine(models.Model):
         index=True,
     )
     product_id = fields.Many2one("product.product", string="物料", required=True)
+    material_name = fields.Char(string="材料名称", compute="_compute_material_text", store=True)
     spec = fields.Char("规格")
+    spec_model = fields.Char(string="规格型号", compute="_compute_material_text", store=True)
     quantity = fields.Float("数量", default=1.0)
+    bill_qty = fields.Float(string="清单数量")
+    unplanned_qty = fields.Float(string="未计划数量", compute="_compute_unplanned_qty", store=True)
     uom_id = fields.Many2one("uom.uom", string="单位")
     vendor_id = fields.Many2one(
         "res.partner",
@@ -258,6 +281,24 @@ class ProjectMaterialPlanLine(models.Model):
         domain="[('supplier_rank','>',0)]",
     )
     note = fields.Char("备注")
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "project_material_plan_line_attachment_rel",
+        "line_id",
+        "attachment_id",
+        string="附件",
+    )
+
+    @api.depends("product_id", "spec")
+    def _compute_material_text(self):
+        for line in self:
+            line.material_name = line.product_id.display_name if line.product_id else False
+            line.spec_model = line.spec
+
+    @api.depends("quantity", "bill_qty")
+    def _compute_unplanned_qty(self):
+        for line in self:
+            line.unplanned_qty = max(line.bill_qty - line.quantity, 0.0)
 
     @api.model_create_multi
     def create(self, vals_list):

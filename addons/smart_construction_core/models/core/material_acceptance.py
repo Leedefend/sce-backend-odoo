@@ -280,10 +280,24 @@ class ScMaterialInbound(models.Model):
         index=True,
     )
     supplier_id = fields.Many2one("res.partner", string="供应商", index=True)
-    warehouse_id = fields.Many2one("stock.warehouse", string="入库仓库", required=True, index=True)
-    dest_location_id = fields.Many2one("stock.location", string="入库库位", required=True, index=True)
+    warehouse_id = fields.Many2one(
+        "stock.warehouse",
+        string="入库仓库",
+        required=True,
+        index=True,
+        default=lambda self: self._default_warehouse_id(),
+    )
+    dest_location_id = fields.Many2one(
+        "stock.location",
+        string="入库库位",
+        required=True,
+        index=True,
+        default=lambda self: self._default_dest_location_id(),
+    )
     keeper_id = fields.Many2one("res.users", string="仓管员", default=lambda self: self.env.user, index=True)
     stock_picking_id = fields.Many2one("stock.picking", string="库存入库单", readonly=True, copy=False, index=True)
+    currency_id = fields.Many2one("res.currency", string="币种", related="project_id.company_id.currency_id", store=True)
+    amount_total = fields.Monetary(string="金额合计", currency_field="currency_id", compute="_compute_amount_total", store=True)
     state = fields.Selection(
         [
             ("draft", "草稿"),
@@ -310,6 +324,24 @@ class ScMaterialInbound(models.Model):
         ),
     ]
 
+    @api.model
+    def _default_warehouse_id(self):
+        warehouse = self.env["stock.warehouse"].search(
+            [("company_id", "in", [self.env.company.id, False])],
+            limit=1,
+        )
+        return warehouse.id or False
+
+    @api.model
+    def _default_dest_location_id(self):
+        warehouse = self.env["stock.warehouse"].browse(self._default_warehouse_id())
+        return warehouse.lot_stock_id.id if warehouse and warehouse.lot_stock_id else False
+
+    @api.depends("line_ids.amount")
+    def _compute_amount_total(self):
+        for record in self:
+            record.amount_total = sum(record.line_ids.mapped("amount"))
+
     @api.model_create_multi
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
@@ -317,6 +349,12 @@ class ScMaterialInbound(models.Model):
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.material.inbound") or _("材料入库单")
         return super().create(vals_list)
+
+    @api.onchange("warehouse_id")
+    def _onchange_warehouse_id(self):
+        for record in self:
+            if record.warehouse_id and not record.dest_location_id:
+                record.dest_location_id = record.warehouse_id.lot_stock_id
 
     @api.onchange("acceptance_id")
     def _onchange_acceptance_id(self):
@@ -337,6 +375,7 @@ class ScMaterialInbound(models.Model):
                         "material_spec": line.material_spec,
                         "product_uom_id": line.product_uom_id.id,
                         "qty": line.accepted_qty or line.received_qty,
+                        "unit_price": 0.0,
                     },
                 )
                 for line in acceptance.line_ids
@@ -387,7 +426,15 @@ class ScMaterialInboundLine(models.Model):
     material_spec = fields.Char(string="规格型号")
     product_uom_id = fields.Many2one("uom.uom", string="单位")
     qty = fields.Float(string="入库数量", required=True)
+    currency_id = fields.Many2one("res.currency", string="币种", related="inbound_id.project_id.company_id.currency_id", store=True)
+    unit_price = fields.Monetary(string="单价", currency_field="currency_id")
+    amount = fields.Monetary(string="金额", currency_field="currency_id", compute="_compute_amount", store=True)
     note = fields.Char(string="备注")
+
+    @api.depends("qty", "unit_price")
+    def _compute_amount(self):
+        for record in self:
+            record.amount = record.qty * record.unit_price
 
     @api.onchange("product_id")
     def _onchange_product_id(self):
@@ -519,6 +566,9 @@ class ScMaterialRfq(models.Model):
     rfq_date = fields.Date(string="询价日期", default=fields.Date.context_today, index=True)
     due_date = fields.Date(string="报价截止日期", index=True)
     owner_id = fields.Many2one("res.users", string="经办人", default=lambda self: self.env.user, index=True)
+    contact_name = fields.Char(string="联系人")
+    contact_phone = fields.Char(string="联系电话")
+    supplier_ids = fields.Many2many("res.partner", string="参与供应商", compute="_compute_supplier_ids")
     selected_supplier_id = fields.Many2one("res.partner", string="选定供应商", index=True, tracking=True)
     state = fields.Selection(
         [("draft", "草稿"), ("submitted", "已发起"), ("selected", "已定价"), ("cancel", "已取消")],
@@ -544,6 +594,11 @@ class ScMaterialRfq(models.Model):
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.material.rfq") or _("材料询比价")
         return super().create(vals_list)
+
+    @api.depends("line_ids.supplier_id")
+    def _compute_supplier_ids(self):
+        for record in self:
+            record.supplier_ids = record.line_ids.mapped("supplier_id")
 
     def action_submit(self):
         for record in self:

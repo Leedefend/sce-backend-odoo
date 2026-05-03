@@ -315,6 +315,8 @@
                 <field name="warehouse_id"/>
                 <field name="dest_location_id"/>
                 <field name="keeper_id"/>
+                <field name="note"/>
+                <field name="amount_total" sum="金额合计"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -347,6 +349,7 @@
                             <field name="dest_location_id"/>
                             <field name="keeper_id"/>
                             <field name="stock_picking_id"/>
+                            <field name="amount_total" readonly="1"/>
                         </group>
                     </group>
                     <notebook>
@@ -360,6 +363,8 @@
                                     <field name="material_spec"/>
                                     <field name="product_uom_id"/>
                                     <field name="qty"/>
+                                    <field name="unit_price"/>
+                                    <field name="amount" sum="金额合计"/>
                                     <field name="note"/>
                                 </tree>
                             </field>
@@ -508,6 +513,9 @@
                 <field name="rfq_date"/>
                 <field name="due_date"/>
                 <field name="purchase_request_id"/>
+                <field name="contact_name"/>
+                <field name="contact_phone"/>
+                <field name="supplier_ids" widget="many2many_tags"/>
                 <field name="selected_supplier_id"/>
                 <field name="owner_id"/>
                 <field name="state"/>
@@ -538,6 +546,9 @@
                         <group>
                             <field name="due_date"/>
                             <field name="owner_id"/>
+                            <field name="contact_name"/>
+                            <field name="contact_phone"/>
+                            <field name="supplier_ids" widget="many2many_tags" readonly="1"/>
                             <field name="selected_supplier_id" readonly="1"/>
                         </group>
                     </group>
@@ -587,6 +598,10 @@
                 <field name="project_id"/>
                 <field name="purchase_request_id"/>
                 <field name="selected_supplier_id"/>
+                <field name="contact_name"/>
+                <field name="contact_phone"/>
+                <field name="owner_id"/>
+                <field name="note"/>
                 <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="已发起" name="submitted" domain="[('state', '=', 'submitted')]"/>
                 <filter string="已定价" name="selected" domain="[('state', '=', 'selected')]"/>
