@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-03T15:10:00+08:00
+- blocker_key: `unified_page_contract_lite_harmony_h5_compile_pilot_batch_77`
+- layer_target: `Frontend Mobile Compile Verification`
+- module: `frontend/apps/mobile + scripts/verify + docs/architecture/unified_page_contract_lite + Makefile`
+- reason: `harmony_h5 已具备契约一致性、renderer input、UI renderer、page integration 与 runtime mount pilot，但缺少真实 H5 编译门禁，矩阵仍停在 compile-pending。`
+- completed_step: `新增 unified_page_contract_lite_harmony_h5_compile_pilot_guard.py 与 verify.unified_page_contract.lite.harmony_h5_compile_pilot.host，标准目标执行 pnpm -C frontend/apps/mobile build:h5；更新 terminal coverage matrix，将 harmony_h5 推进为 compile_gate_ready_acceptance_pending。`
+- verification: `python3 -m py_compile scripts/verify/unified_page_contract_lite_harmony_h5_compile_pilot_guard.py scripts/verify/unified_page_contract_lite_terminal_coverage_matrix_guard.py PASS；git diff --check PASS；make verify.unified_page_contract.lite.harmony_h5_compile_pilot.host PASS，decision=harmony_h5_compile_pilot_passed；make verify.unified_page_contract.lite.terminal_coverage_matrix PASS，decision=terminal_matrix_compile_gates_ready_acceptance_pending；pnpm -C frontend/apps/mobile typecheck PASS；make verify.unified_page_contract.lite PASS；make verify.docs.all PASS。`
+- active_commit: `634a5a7a`
+- next_step: `提交 Batch-77；下一批进入 wx_mini_runtime_acceptance_pilot.host 或 harmony_h5_runtime_acceptance_pilot.host。`
+
 ### 2026-05-03T14:45:00+08:00
 - blocker_key: `unified_page_contract_lite_wx_mini_real_compile_pass_batch_76`
 - layer_target: `Frontend Mobile Compile Verification`
