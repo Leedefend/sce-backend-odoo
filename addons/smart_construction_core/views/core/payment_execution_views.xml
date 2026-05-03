@@ -38,9 +38,13 @@
                     <field name="contract_id"/>
                     <field name="source_kind"/>
                     <field name="document_no"/>
+                    <field name="payment_family"/>
                     <field name="payment_method"/>
+                    <field name="bank_account"/>
+                    <field name="handler_name"/>
                     <field name="planned_amount" sum="申请/计划金额"/>
                     <field name="paid_amount" sum="实付金额"/>
+                    <field name="invoice_amount" sum="发票金额"/>
                     <field name="state"/>
                 </tree>
             </field>

@@ -12,10 +12,14 @@
                     <field name="project_id"/>
                     <field name="partner_id"/>
                     <field name="contract_id"/>
-                    <field name="amount"/>
-                    <field name="paid_before_amount"/>
-                    <field name="remaining_amount"/>
-                    <field name="current_pay_amount"/>
+                    <field name="source_document_no"/>
+                    <field name="source_line_type"/>
+                    <field name="source_counterparty_text"/>
+                    <field name="source_contract_no"/>
+                    <field name="amount" sum="明细金额合计"/>
+                    <field name="paid_before_amount" sum="历史已付合计"/>
+                    <field name="remaining_amount" sum="历史未付合计"/>
+                    <field name="current_pay_amount" sum="本次申请合计"/>
                     <field name="attachment_count"/>
                 </tree>
             </field>
@@ -43,7 +47,17 @@
                                 <field name="project_id" readonly="1"/>
                                 <field name="partner_id" readonly="1"/>
                                 <field name="contract_id"/>
+                                <field name="source_document_no"/>
+                                <field name="source_line_type"/>
+                                <field name="source_counterparty_text"/>
+                                <field name="source_contract_no"/>
                             </group>
+                        </group>
+                        <group string="历史来源">
+                            <field name="legacy_line_id" readonly="1"/>
+                            <field name="legacy_parent_id" readonly="1"/>
+                            <field name="legacy_supplier_contract_id" readonly="1"/>
+                            <field name="import_batch" readonly="1"/>
                         </group>
                         <group>
                             <field name="amount"/>

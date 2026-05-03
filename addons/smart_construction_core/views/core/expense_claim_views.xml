@@ -13,9 +13,15 @@
                     <field name="project_id"/>
                     <field name="partner_id"/>
                     <field name="applicant_name"/>
+                    <field name="payee"/>
+                    <field name="payee_account"/>
+                    <field name="payee_bank"/>
                     <field name="expense_type"/>
-                    <field name="amount"/>
-                    <field name="approved_amount"/>
+                    <field name="summary"/>
+                    <field name="amount" sum="申请金额合计"/>
+                    <field name="approved_amount" sum="批准金额合计"/>
+                    <field name="legacy_document_no"/>
+                    <field name="legacy_document_state"/>
                     <field name="state"/>
                 </tree>
             </field>

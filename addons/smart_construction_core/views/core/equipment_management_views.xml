@@ -48,6 +48,7 @@
                 <field name="usage_location"/>
                 <field name="owner_id"/>
                 <field name="supplier_id"/>
+                <field name="legacy_fact_type"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -147,6 +148,7 @@
                 <field name="usage_location"/>
                 <field name="requester_id"/>
                 <field name="supplier_id"/>
+                <field name="legacy_fact_type"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -249,10 +251,11 @@
                 <field name="equipment_code"/>
                 <field name="usage_location"/>
                 <field name="operator_name"/>
-                <field name="usage_qty"/>
+                <field name="usage_qty" sum="使用台数合计"/>
                 <field name="usage_hours"/>
                 <field name="supplier_id"/>
                 <field name="recorder_id"/>
+                <field name="legacy_fact_type"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -343,11 +346,12 @@
                 <field name="project_id"/>
                 <field name="settlement_date"/>
                 <field name="supplier_id"/>
-                <field name="amount_untaxed"/>
-                <field name="tax_amount"/>
-                <field name="amount_total"/>
+                <field name="amount_untaxed" sum="未税金额合计"/>
+                <field name="tax_amount" sum="税额合计"/>
+                <field name="amount_total" sum="结算金额合计"/>
                 <field name="currency_id"/>
                 <field name="owner_id"/>
+                <field name="legacy_fact_type"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -452,6 +456,7 @@
                 <field name="tax_rate"/>
                 <field name="effective_date"/>
                 <field name="expire_date"/>
+                <field name="legacy_fact_type"/>
                 <field name="state"/>
             </tree>
         </field>

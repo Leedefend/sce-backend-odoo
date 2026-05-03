@@ -37,15 +37,27 @@
                 <tree string="发票登记">
                     <field name="name"/>
                     <field name="invoice_date"/>
+                    <field name="document_no"/>
+                    <field name="document_date"/>
                     <field name="project_id"/>
                     <field name="partner_id"/>
+                    <field name="contract_id"/>
+                    <field name="settlement_id"/>
                     <field name="direction"/>
                     <field name="source_kind"/>
                     <field name="invoice_no"/>
+                    <field name="invoice_code"/>
                     <field name="invoice_type"/>
+                    <field name="tax_rate"/>
+                    <field name="invoice_content"/>
+                    <field name="cost_category_name"/>
                     <field name="amount_no_tax" sum="不含税金额"/>
                     <field name="tax_amount" sum="税额"/>
                     <field name="amount_total" sum="价税合计"/>
+                    <field name="handler_name"/>
+                    <field name="invoice_holder"/>
+                    <field name="accounting_state"/>
+                    <field name="voucher_no"/>
                     <field name="state"/>
                 </tree>
             </field>

@@ -52,10 +52,11 @@
                 <field name="attendance_date"/>
                 <field name="labor_team"/>
                 <field name="work_content"/>
-                <field name="attendance_qty"/>
-                <field name="work_hours"/>
+                <field name="attendance_qty" sum="考勤人数合计"/>
+                <field name="work_hours" sum="工时合计"/>
                 <field name="contractor_id"/>
                 <field name="recorder_id"/>
+                <field name="legacy_fact_type"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -73,6 +74,7 @@
                 <field name="end_date"/>
                 <field name="owner_id"/>
                 <field name="contractor_id"/>
+                <field name="legacy_fact_type"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -165,6 +167,7 @@
                 <field name="required_date"/>
                 <field name="requester_id"/>
                 <field name="contractor_id"/>
+                <field name="legacy_fact_type"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -328,10 +331,11 @@
                 <field name="labor_team"/>
                 <field name="contractor_id"/>
                 <field name="work_content"/>
-                <field name="worker_qty"/>
+                <field name="worker_qty" sum="用工人数合计"/>
                 <field name="work_hours"/>
                 <field name="foreman_name"/>
                 <field name="recorder_id"/>
+                <field name="legacy_fact_type"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -417,11 +421,12 @@
                 <field name="project_id"/>
                 <field name="settlement_date"/>
                 <field name="contractor_id"/>
-                <field name="amount_untaxed"/>
-                <field name="tax_amount"/>
-                <field name="amount_total"/>
+                <field name="amount_untaxed" sum="未税金额合计"/>
+                <field name="tax_amount" sum="税额合计"/>
+                <field name="amount_total" sum="结算金额合计"/>
                 <field name="currency_id"/>
                 <field name="owner_id"/>
+                <field name="legacy_fact_type"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -524,6 +529,7 @@
                 <field name="tax_rate"/>
                 <field name="effective_date"/>
                 <field name="expire_date"/>
+                <field name="legacy_fact_type"/>
                 <field name="state"/>
             </tree>
         </field>

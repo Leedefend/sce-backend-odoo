@@ -14,12 +14,18 @@
                     <field name="settlement_stage"/>
                     <field name="project_id"/>
                     <field name="contract_id"/>
+                    <field name="contract_subject"/>
+                    <field name="contract_total_amount" sum="合同总额合计"/>
                     <field name="settlement_unit_id"/>
                     <field name="partner_id"/>
-                    <field name="amount_total"/>
-                    <field name="deduction_amount"/>
-                    <field name="amount_paid"/>
-                    <field name="unpaid_amount"/>
+                    <field name="submitted_amount" sum="送审金额合计"/>
+                    <field name="approved_amount" sum="审定金额合计"/>
+                    <field name="requested_fund_amount" sum="申请资金金额合计"/>
+                    <field name="amount_total" sum="金额合计"/>
+                    <field name="deduction_amount" sum="扣款金额合计"/>
+                    <field name="amount_paid" sum="已付款金额合计"/>
+                    <field name="unpaid_amount" sum="未付款金额合计"/>
+                    <field name="engineering_address"/>
                     <field name="settlement_description"/>
                     <field name="attachment_count"/>
                     <field name="entry_user_id"/>

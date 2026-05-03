@@ -27,6 +27,11 @@ class ProjectMaterialPlan(models.Model):
     total_plan_qty = fields.Float(string="计划数量", compute="_compute_plan_totals", store=True)
     total_bill_qty = fields.Float(string="清单数量", compute="_compute_plan_totals", store=True)
     total_unplanned_qty = fields.Float(string="未计划数量", compute="_compute_plan_totals", store=True)
+    material_name_summary = fields.Char(string="材料名称", compute="_compute_line_summaries", store=True)
+    material_spec_summary = fields.Char(string="规格型号", compute="_compute_line_summaries", store=True)
+    material_uom_summary = fields.Char(string="单位", compute="_compute_line_summaries", store=True)
+    line_note_summary = fields.Char(string="备注", compute="_compute_line_summaries", store=True)
+    line_attachment_count = fields.Integer(string="附件数", compute="_compute_line_summaries", store=True)
     attachment_ids = fields.Many2many(
         "ir.attachment",
         "project_material_plan_attachment_rel",
@@ -67,6 +72,37 @@ class ProjectMaterialPlan(models.Model):
             rec.total_plan_qty = planned
             rec.total_bill_qty = bill
             rec.total_unplanned_qty = max(bill - planned, 0.0)
+
+    @api.depends(
+        "line_ids.material_name",
+        "line_ids.spec",
+        "line_ids.spec_model",
+        "line_ids.uom_id",
+        "line_ids.note",
+        "line_ids.attachment_ids",
+    )
+    def _compute_line_summaries(self):
+        for rec in self:
+            rec.material_name_summary = rec._summarize_line_text(rec.line_ids.mapped("material_name"))
+            rec.material_spec_summary = rec._summarize_line_text(
+                line.spec_model or line.spec for line in rec.line_ids
+            )
+            rec.material_uom_summary = rec._summarize_line_text(rec.line_ids.mapped("uom_id.name"))
+            rec.line_note_summary = rec._summarize_line_text(rec.line_ids.mapped("note"))
+            rec.line_attachment_count = sum(len(line.attachment_ids) for line in rec.line_ids)
+
+    @api.model
+    def _summarize_line_text(self, values, limit=3):
+        values = list(values)
+        texts = []
+        for value in values:
+            if not value or value in texts:
+                continue
+            texts.append(value)
+            if len(texts) >= limit:
+                break
+        suffix = "等" if len([value for value in values if value]) > len(texts) else ""
+        return "、".join(texts) + suffix if texts else False
 
     def _message_post_non_blocking(self, body):
         for rec in self:

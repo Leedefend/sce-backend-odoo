@@ -8,6 +8,7 @@
                 <form string="生成询价单">
                     <group>
                         <field name="partner_id"/>
+                        <field name="partner_ids" widget="many2many_tags"/>
                         <field name="note"/>
                     </group>
                     <footer>

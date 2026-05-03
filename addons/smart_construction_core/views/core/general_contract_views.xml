@@ -10,6 +10,7 @@
                     <field name="document_no"/>
                     <field name="contract_no"/>
                     <field name="contract_name"/>
+                    <field name="submitted_time"/>
                     <field name="project_id"/>
                     <field name="partner_name_text"/>
                     <field name="credit_code"/>
@@ -36,6 +37,7 @@
                     <field name="name"/>
                     <field name="state"/>
                     <field name="contract_date"/>
+                    <field name="submitted_time"/>
                     <field name="document_no"/>
                     <field name="contract_no"/>
                     <field name="contract_name"/>
@@ -44,6 +46,7 @@
                     <field name="contact_name"/>
                     <field name="contact_phone"/>
                     <field name="contract_type"/>
+                    <field name="sign_status"/>
                     <field name="contract_attribute"/>
                     <field name="pricing_mode"/>
                     <field name="subcontract_mode"/>
@@ -96,7 +99,9 @@
                                 <field name="document_no" readonly="state == 'legacy_confirmed'"/>
                                 <field name="contract_no" readonly="state == 'legacy_confirmed'"/>
                                 <field name="contract_name" readonly="state == 'legacy_confirmed'"/>
+                                <field name="submitted_time" readonly="state == 'legacy_confirmed'"/>
                                 <field name="contract_type" readonly="state == 'legacy_confirmed'"/>
+                                <field name="sign_status" readonly="state == 'legacy_confirmed'"/>
                                 <field name="contract_attribute" readonly="state == 'legacy_confirmed'"/>
                                 <field name="template_name" readonly="state == 'legacy_confirmed'"/>
                                 <field name="union_mode" readonly="state == 'legacy_confirmed'"/>

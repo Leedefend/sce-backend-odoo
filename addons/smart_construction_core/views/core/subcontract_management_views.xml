@@ -20,9 +20,10 @@
                 <field name="end_date"/>
                 <field name="subcontract_scope"/>
                 <field name="subcontractor_id"/>
-                <field name="estimated_amount"/>
+                <field name="estimated_amount" sum="预计金额合计"/>
                 <field name="currency_id"/>
                 <field name="owner_id"/>
+                <field name="legacy_fact_type"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -133,9 +134,10 @@
                 <field name="need_end_date"/>
                 <field name="subcontract_scope"/>
                 <field name="suggested_subcontractor_id"/>
-                <field name="estimated_amount"/>
+                <field name="estimated_amount" sum="预计金额合计"/>
                 <field name="priority"/>
                 <field name="applicant_id"/>
+                <field name="legacy_fact_type"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -256,8 +258,9 @@
                 <field name="end_date"/>
                 <field name="subcontract_scope"/>
                 <field name="subcontractor_id"/>
-                <field name="registered_amount"/>
+                <field name="registered_amount" sum="登记金额合计"/>
                 <field name="responsible_id"/>
+                <field name="legacy_fact_type"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -371,10 +374,11 @@
                 <field name="contract_id"/>
                 <field name="subcontractor_id"/>
                 <field name="settlement_date"/>
-                <field name="amount_untaxed"/>
-                <field name="tax_amount"/>
-                <field name="amount_total"/>
+                <field name="amount_untaxed" sum="未税金额合计"/>
+                <field name="tax_amount" sum="税额合计"/>
+                <field name="amount_total" sum="结算金额合计"/>
                 <field name="owner_id"/>
+                <field name="legacy_fact_type"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -488,6 +492,7 @@
                 <field name="tax_rate"/>
                 <field name="effective_date"/>
                 <field name="expire_date"/>
+                <field name="legacy_fact_type"/>
                 <field name="state"/>
             </tree>
         </field>

@@ -36,6 +36,22 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertTrue(inbound.dest_location_id, "入库单应自动带出默认入库库位，避免填单保存失败。")
         self.assertEqual(inbound.line_ids.amount, 30)
         self.assertEqual(inbound.amount_total, 30)
+        self.assertEqual(inbound.material_name_summary, self.product.display_name)
+        self.assertEqual(inbound.total_qty, 2)
+        self.assertEqual(inbound.unit_price_summary, "15")
+        self.assertEqual(inbound.line_note_summary, "feedback-save-smoke")
+
+    def test_material_inbound_list_exposes_line_business_summaries(self):
+        view = self.env.ref("smart_construction_core.view_sc_material_inbound_tree")
+        arch = view.arch_db
+
+        self.assertIn('name="material_name_summary"', arch)
+        self.assertIn('name="material_spec_summary"', arch)
+        self.assertIn('name="material_uom_summary"', arch)
+        self.assertIn('name="total_qty" sum="入库数量合计"', arch)
+        self.assertIn('name="unit_price_summary"', arch)
+        self.assertIn('name="line_note_summary"', arch)
+        self.assertIn('name="amount_total" sum="金额合计"', arch)
 
     def test_material_inbound_system_defaults_do_not_block_draft_creation(self):
         inbound = self.env["sc.material.inbound"].create(
@@ -137,11 +153,25 @@ class TestUserFeedbackBusinessViews(TransactionCase):
                 "sc_bank_account": "100200300",
                 "vat": "91510000FEEDBACK",
                 "sc_region": "四川",
+                "legacy_partner_id": "SUP-OLD-001",
+                "legacy_partner_source": "supplier_master",
+                "legacy_partner_name": "旧库供应商",
+                "legacy_deleted_flag": "0",
             }
         )
+        action = self.env.ref("smart_construction_core.action_sc_supplier_partner")
+        tree = self.env.ref("smart_construction_core.view_sc_supplier_partner_tree")
+        form = self.env.ref("smart_construction_core.view_sc_supplier_partner_form")
+        search = self.env.ref("smart_construction_core.view_sc_supplier_partner_search")
 
         self.assertEqual(supplier.sc_supplier_type, "material")
         self.assertEqual(supplier.sc_bank_account, "100200300")
+        self.assertEqual(supplier._fields["legacy_partner_id"].string, "历史供应商编号")
+        self.assertIn("'active_test': False", action.context)
+        self.assertIn('name="legacy_partner_id"', tree.arch_db)
+        self.assertIn('name="legacy_partner_source"', tree.arch_db)
+        self.assertIn('name="legacy_partner_name"', form.arch_db)
+        self.assertIn('name="legacy_deleted_flag"', search.arch_db)
 
     def test_material_rfq_exposes_contact_and_supplier_set(self):
         supplier = self.env["res.partner"].create(
@@ -282,6 +312,82 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertEqual(rfq.line_ids.qty, 4)
         self.assertEqual(rfq.line_ids.note, "plan line note")
 
+    def test_material_plan_rfq_wizard_can_generate_multi_supplier_quotes(self):
+        self.env.user.groups_id |= self.env.ref("smart_construction_core.group_sc_cap_material_user")
+        supplier = self.env["res.partner"].create({"name": "Plan RFQ Multi Supplier A", "supplier_rank": 1})
+        supplier_b = self.env["res.partner"].create({"name": "Plan RFQ Multi Supplier B", "supplier_rank": 1})
+        plan = self.env["project.material.plan"].create(
+            {
+                "project_id": self.project.id,
+                "state": "approved",
+                "line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "product_id": self.product.id,
+                            "spec": "Multi-Spec",
+                            "quantity": 6,
+                            "vendor_id": supplier.id,
+                        },
+                    )
+                ],
+            }
+        )
+        wizard = self.env["material.plan.to.rfq.wizard"].with_context(
+            active_model="project.material.plan",
+            active_ids=plan.ids,
+        ).create(
+            {
+                "partner_id": supplier.id,
+                "partner_ids": [(6, 0, [supplier_b.id])],
+            }
+        )
+
+        action = wizard.action_generate_rfq()
+        rfq = self.env["sc.material.rfq"].browse(action["domain"][0][2])
+
+        self.assertEqual(rfq.supplier_ids, supplier | supplier_b)
+        self.assertEqual(len(rfq.line_ids), 2)
+        self.assertEqual(set(rfq.line_ids.mapped("supplier_id").ids), set((supplier | supplier_b).ids))
+        self.assertEqual(set(rfq.line_ids.mapped("source_material_plan_line_id").ids), {plan.line_ids.id})
+        self.assertEqual(set(rfq.line_ids.mapped("qty")), {6})
+
+    def test_material_plan_list_exposes_line_business_summaries(self):
+        plan = self.env["project.material.plan"].create(
+            {
+                "project_id": self.project.id,
+                "line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "product_id": self.product.id,
+                            "spec": "List-Spec",
+                            "quantity": 7,
+                            "bill_qty": 10,
+                            "note": "list summary note",
+                        },
+                    )
+                ],
+            }
+        )
+        view = self.env.ref("smart_construction_core.view_project_material_plan_tree")
+        arch = view.arch_db
+
+        self.assertIn('name="material_name_summary"', arch)
+        self.assertIn('name="material_spec_summary"', arch)
+        self.assertIn('name="material_uom_summary"', arch)
+        self.assertIn('name="line_note_summary"', arch)
+        self.assertIn('name="line_attachment_count"', arch)
+        self.assertEqual(plan.material_name_summary, self.product.display_name)
+        self.assertEqual(plan.material_spec_summary, "List-Spec")
+        self.assertTrue(plan.material_uom_summary)
+        self.assertEqual(plan.total_plan_qty, 7)
+        self.assertEqual(plan.total_bill_qty, 10)
+        self.assertEqual(plan.total_unplanned_qty, 3)
+        self.assertEqual(plan.line_note_summary, "list summary note")
+
     def test_material_rfq_purchase_acceptance_chain_carries_sources(self):
         supplier = self.env["res.partner"].create({"name": "RFQ Purchase Supplier", "supplier_rank": 1})
         plan = self.env["project.material.plan"].create(
@@ -384,6 +490,32 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertEqual(contract.received_amount, 80)
         self.assertEqual(contract.paid_amount, 50)
 
+    def test_contract_list_exposes_legacy_contract_numbers(self):
+        contract = self.env["construction.contract"].create(
+            {
+                "subject": "Feedback Legacy Contract No",
+                "type": "out",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "legacy_contract_no": "HT-OLD-001",
+                "legacy_document_no": "DJ-OLD-001",
+                "legacy_external_contract_no": "WB-OLD-001",
+            }
+        )
+        view = self.env.ref("smart_construction_core.view_construction_contract_tree")
+        form = self.env.ref("smart_construction_core.view_construction_contract_form")
+
+        self.assertEqual(contract.name[:3], "CON")
+        self.assertEqual(contract.legacy_contract_no, "HT-OLD-001")
+        self.assertEqual(contract._fields["name"].string, "单据编号")
+        self.assertEqual(contract._fields["legacy_contract_no"].string, "合同编号")
+        self.assertIn('name="legacy_contract_no"', view.arch_db)
+        self.assertIn('name="legacy_external_contract_no"', view.arch_db)
+        self.assertIn('name="legacy_document_no"', form.arch_db)
+        self.assertIn('name="settlement_amount" sum="结算金额合计"', view.arch_db)
+        self.assertIn('name="invoice_amount" sum="开票金额合计"', view.arch_db)
+        self.assertIn('name="unpaid_amount" sum="未付款金额合计"', view.arch_db)
+
     def test_legacy_purchase_contract_is_not_business_approval_target(self):
         policy = self.env["sc.approval.policy"].get_active_policy("sc.legacy.purchase.contract.fact")
         self.assertFalse(policy)
@@ -393,11 +525,278 @@ class TestUserFeedbackBusinessViews(TransactionCase):
 
     def test_general_contract_company_view_exposes_contact_columns(self):
         view = self.env.ref("smart_construction_core.view_sc_general_contract_tree")
+        form = self.env.ref("smart_construction_core.view_sc_general_contract_form")
         arch = view.arch_db
+        contract = self.env["sc.general.contract"].create(
+            {
+                "project_id": self.project.id,
+                "contract_name": "Feedback General Contract",
+                "amount_total": 100,
+                "document_no": "SP-OLD-001",
+                "contract_no": "HT-OLD-GEN-001",
+                "submitted_time": "2026-05-03 10:30:00",
+                "sign_status": "已签署",
+                "signing_place": "成都",
+                "expected_sign_date": "2026-05-06",
+                "completion_date": "2026-06-01",
+                "contact_name": "李四",
+                "contact_phone": "13800001111",
+            }
+        )
 
         self.assertIn('tree string="一般合同（公司）"', arch)
+        self.assertEqual(contract.submitted_time.strftime("%Y-%m-%d %H:%M:%S"), "2026-05-03 10:30:00")
+        self.assertEqual(contract.sign_status, "已签署")
+        self.assertEqual(contract._fields["document_no"].string, "审批编号")
+        self.assertEqual(contract._fields["contract_no"].string, "合同编号")
+        self.assertEqual(contract._fields["signing_place"].string, "合同签订地点")
+        self.assertEqual(contract._fields["expected_sign_date"].string, "合同预计签订日期")
+        self.assertEqual(contract._fields["completion_date"].string, "计划交货或完工日期")
         self.assertIn('name="contact_name"', arch)
         self.assertIn('name="contact_phone"', arch)
+        self.assertIn('name="submitted_time"', arch)
+        self.assertIn('name="sign_status"', arch)
+        self.assertIn('name="signing_place"', form.arch_db)
+        self.assertIn('name="expected_sign_date"', form.arch_db)
+        self.assertIn('name="completion_date"', form.arch_db)
+
+    def test_finance_projection_lists_expose_projected_business_fields(self):
+        receipt_tree = self.env.ref("smart_construction_core.view_sc_receipt_income_tree").arch_db
+        payment_tree = self.env.ref("smart_construction_core.view_sc_payment_execution_tree").arch_db
+        invoice_tree = self.env.ref("smart_construction_core.view_sc_invoice_registration_tree").arch_db
+        reconciliation_tree = self.env.ref("smart_construction_core.view_sc_treasury_reconciliation_tree").arch_db
+        financing_tree = self.env.ref("smart_construction_core.view_sc_financing_loan_tree").arch_db
+
+        for field_name in ("payment_method", "receiving_account", "bill_no", "invoice_ref"):
+            self.assertIn('name="%s"' % field_name, receipt_tree)
+        self.assertIn('name="deducted_invoice_amount" sum="已抵发票金额"', receipt_tree)
+        self.assertIn('name="deducted_tax_amount" sum="已抵税额"', receipt_tree)
+        self.assertIn('name="settlement_amount" sum="结算金额"', receipt_tree)
+
+        for field_name in ("payment_family", "bank_account", "handler_name"):
+            self.assertIn('name="%s"' % field_name, payment_tree)
+        self.assertIn('name="invoice_amount" sum="发票金额"', payment_tree)
+
+        for field_name in (
+            "document_no",
+            "document_date",
+            "contract_id",
+            "settlement_id",
+            "invoice_code",
+            "tax_rate",
+            "invoice_content",
+            "cost_category_name",
+            "handler_name",
+            "invoice_holder",
+            "accounting_state",
+            "voucher_no",
+        ):
+            self.assertIn('name="%s"' % field_name, invoice_tree)
+
+        for field_name in ("source_kind", "bank_account_no"):
+            self.assertIn('name="%s"' % field_name, reconciliation_tree)
+        self.assertIn('name="account_balance" sum="账面余额"', reconciliation_tree)
+        self.assertIn('name="bank_balance" sum="银行余额"', reconciliation_tree)
+
+        for field_name in ("purpose", "rate_label", "extra_ref", "extra_label"):
+            self.assertIn('name="%s"' % field_name, financing_tree)
+
+    def test_construction_diary_list_exposes_projected_site_fields(self):
+        tree = self.env.ref("smart_construction_core.view_sc_construction_diary_tree").arch_db
+
+        for field_name in (
+            "title",
+            "category",
+            "construction_unit",
+            "project_manager",
+            "weather",
+        ):
+            self.assertIn('name="%s"' % field_name, tree)
+        self.assertIn('name="manpower_count" sum="现场人数"', tree)
+
+    def test_rebuild_projection_lists_expose_source_and_audit_fields(self):
+        ledger_tree = self.env.ref("smart_construction_core.view_sc_treasury_ledger_tree").arch_db
+        ledger_form = self.env.ref("smart_construction_core.view_sc_treasury_ledger_form").arch_db
+        dashboard_tree = self.env.ref("smart_construction_core.view_sc_dashboard_cockpit_fact_tree").arch_db
+        workbench_tree = self.env.ref("smart_construction_core.view_sc_workbench_item_tree").arch_db
+        material_tree = self.env.ref("smart_construction_core.view_sc_material_catalog_tree").arch_db
+
+        for field_name in ("source_kind", "legacy_record_id", "legacy_source_ref"):
+            self.assertIn('name="%s"' % field_name, ledger_tree)
+            self.assertIn('name="%s"' % field_name, ledger_form)
+        self.assertIn('name="amount" sum="金额合计"', ledger_tree)
+
+        for field_name in ("document_no", "business_date", "requester_id", "handler_id"):
+            self.assertIn('name="%s"' % field_name, dashboard_tree)
+            self.assertIn('name="%s"' % field_name, workbench_tree)
+        self.assertIn('name="quantity" sum="数量合计"', dashboard_tree)
+        self.assertIn('name="tax_amount" sum="税额合计"', dashboard_tree)
+        self.assertIn('name="due_date"', workbench_tree)
+
+        for field_name in ("aux_uom_text", "depth", "short_pinyin", "active"):
+            self.assertIn('name="%s"' % field_name, material_tree)
+
+    def test_legacy_detail_lists_expose_source_and_amount_fields(self):
+        expense_tree = self.env.ref("smart_construction_core.view_sc_expense_claim_tree").arch_db
+        payment_line_tree = self.env.ref("smart_construction_core.view_payment_request_line_tree").arch_db
+        payment_line_form = self.env.ref("smart_construction_core.view_payment_request_line_form").arch_db
+        receipt_line_tree = self.env.ref("smart_construction_core.view_receipt_invoice_line_tree").arch_db
+        receipt_line_form = self.env.ref("smart_construction_core.view_receipt_invoice_line_form").arch_db
+
+        for field_name in (
+            "payee",
+            "payee_account",
+            "payee_bank",
+            "summary",
+            "legacy_document_no",
+            "legacy_document_state",
+        ):
+            self.assertIn('name="%s"' % field_name, expense_tree)
+        self.assertIn('name="amount" sum="申请金额合计"', expense_tree)
+        self.assertIn('name="approved_amount" sum="批准金额合计"', expense_tree)
+
+        for field_name in (
+            "source_document_no",
+            "source_line_type",
+            "source_counterparty_text",
+            "source_contract_no",
+        ):
+            self.assertIn('name="%s"' % field_name, payment_line_tree)
+            self.assertIn('name="%s"' % field_name, payment_line_form)
+        self.assertIn('name="amount" sum="明细金额合计"', payment_line_tree)
+        self.assertIn('name="current_pay_amount" sum="本次申请合计"', payment_line_tree)
+        self.assertIn('name="legacy_line_id"', payment_line_form)
+        self.assertIn('name="legacy_parent_id"', payment_line_form)
+        self.assertIn('name="legacy_supplier_contract_id"', payment_line_form)
+
+        for field_name in ("source_document_no", "source_table_name", "amount_source"):
+            self.assertIn('name="%s"' % field_name, receipt_line_tree)
+            self.assertIn('name="%s"' % field_name, receipt_line_form)
+        self.assertIn('name="invoice_amount" sum="发票金额合计"', receipt_line_tree)
+        self.assertIn('name="invoiced_before_amount" sum="历史已开票合计"', receipt_line_tree)
+        self.assertIn('name="current_receipt_amount" sum="本次收款合计"', receipt_line_tree)
+        self.assertIn('name="legacy_invoice_line_id"', receipt_line_form)
+        self.assertIn('name="legacy_receipt_id"', receipt_line_form)
+        self.assertIn('name="legacy_file_bill_id"', receipt_line_form)
+
+    def test_material_outbound_and_settlement_lists_expose_business_totals(self):
+        purchase_request_tree = self.env.ref("smart_construction_core.view_sc_material_purchase_request_tree").arch_db
+        acceptance_tree = self.env.ref("smart_construction_core.view_sc_material_acceptance_tree").arch_db
+        inbound_tree = self.env.ref("smart_construction_core.view_sc_material_inbound_tree").arch_db
+        rfq_tree = self.env.ref("smart_construction_core.view_sc_material_rfq_tree").arch_db
+        outbound_tree = self.env.ref("smart_construction_core.view_sc_material_outbound_tree").arch_db
+        settlement_tree = self.env.ref("smart_construction_core.view_sc_material_settlement_tree").arch_db
+
+        for arch in (purchase_request_tree, acceptance_tree, inbound_tree, rfq_tree):
+            self.assertIn('name="legacy_fact_type"', arch)
+        self.assertIn('name="purpose"', outbound_tree)
+        self.assertIn('name="legacy_fact_type"', outbound_tree)
+        self.assertIn('name="legacy_fact_type"', settlement_tree)
+        self.assertIn('name="amount_untaxed" sum="未税金额合计"', settlement_tree)
+        self.assertIn('name="tax_amount" sum="税额合计"', settlement_tree)
+        self.assertIn('name="amount_total" sum="结算金额合计"', settlement_tree)
+
+    def test_labor_equipment_subcontract_lists_expose_totals_and_source_type(self):
+        attendance_tree = self.env.ref("smart_construction_core.view_sc_attendance_checkin_tree").arch_db
+        labor_plan_tree = self.env.ref("smart_construction_core.view_sc_labor_plan_tree").arch_db
+        labor_request_tree = self.env.ref("smart_construction_core.view_sc_labor_request_tree").arch_db
+        labor_usage_tree = self.env.ref("smart_construction_core.view_sc_labor_usage_tree").arch_db
+        labor_settlement_tree = self.env.ref("smart_construction_core.view_sc_labor_settlement_tree").arch_db
+        labor_price_tree = self.env.ref("smart_construction_core.view_sc_labor_price_tree").arch_db
+        equipment_plan_tree = self.env.ref("smart_construction_core.view_sc_equipment_plan_tree").arch_db
+        equipment_request_tree = self.env.ref("smart_construction_core.view_sc_equipment_request_tree").arch_db
+        equipment_usage_tree = self.env.ref("smart_construction_core.view_sc_equipment_usage_tree").arch_db
+        equipment_settlement_tree = self.env.ref("smart_construction_core.view_sc_equipment_settlement_tree").arch_db
+        equipment_price_tree = self.env.ref("smart_construction_core.view_sc_equipment_price_tree").arch_db
+        subcontract_plan_tree = self.env.ref("smart_construction_core.view_sc_subcontract_plan_tree").arch_db
+        subcontract_request_tree = self.env.ref("smart_construction_core.view_sc_subcontract_request_tree").arch_db
+        subcontract_register_tree = self.env.ref("smart_construction_core.view_sc_subcontract_register_tree").arch_db
+        subcontract_settlement_tree = self.env.ref("smart_construction_core.view_sc_subcontract_settlement_tree").arch_db
+        subcontract_price_tree = self.env.ref("smart_construction_core.view_sc_subcontract_price_tree").arch_db
+
+        self.assertIn('name="attendance_qty" sum="考勤人数合计"', attendance_tree)
+        self.assertIn('name="work_hours" sum="工时合计"', attendance_tree)
+        self.assertIn('name="worker_qty" sum="用工人数合计"', labor_usage_tree)
+        self.assertIn('name="usage_qty" sum="使用台数合计"', equipment_usage_tree)
+        for arch in (
+            attendance_tree,
+            labor_plan_tree,
+            labor_request_tree,
+            labor_usage_tree,
+            labor_settlement_tree,
+            labor_price_tree,
+            equipment_plan_tree,
+            equipment_request_tree,
+            equipment_usage_tree,
+            equipment_settlement_tree,
+            equipment_price_tree,
+            subcontract_plan_tree,
+            subcontract_request_tree,
+            subcontract_register_tree,
+            subcontract_settlement_tree,
+            subcontract_price_tree,
+        ):
+            self.assertIn('name="legacy_fact_type"', arch)
+
+        for arch in (labor_settlement_tree, equipment_settlement_tree, subcontract_settlement_tree):
+            self.assertIn('name="amount_untaxed" sum="未税金额合计"', arch)
+            self.assertIn('name="tax_amount" sum="税额合计"', arch)
+            self.assertIn('name="amount_total" sum="结算金额合计"', arch)
+
+        self.assertIn('name="estimated_amount" sum="预计金额合计"', subcontract_plan_tree)
+        self.assertIn('name="estimated_amount" sum="预计金额合计"', subcontract_request_tree)
+        self.assertIn('name="registered_amount" sum="登记金额合计"', subcontract_register_tree)
+
+    def test_plan_contract_quality_safety_lists_expose_source_type_and_totals(self):
+        plan_tree = self.env.ref("smart_construction_core.view_sc_plan_tree").arch_db
+        plan_form = self.env.ref("smart_construction_core.view_sc_plan_form").arch_db
+        plan_report_tree = self.env.ref("smart_construction_core.view_sc_plan_report_tree").arch_db
+        contract_event_tree = self.env.ref("smart_construction_core.view_sc_contract_event_tree").arch_db
+        quality_standard_tree = self.env.ref("smart_construction_core.view_sc_check_standard_tree").arch_db
+        quality_standard_form = self.env.ref("smart_construction_core.view_sc_check_standard_form").arch_db
+        quality_issue_tree = self.env.ref("smart_construction_core.view_sc_quality_issue_tree").arch_db
+        quality_rectification_tree = self.env.ref("smart_construction_core.view_sc_quality_rectification_tree").arch_db
+        quality_recheck_tree = self.env.ref("smart_construction_core.view_sc_quality_recheck_tree").arch_db
+        quality_recheck_form = self.env.ref("smart_construction_core.view_sc_quality_recheck_form").arch_db
+        safety_plan_tree = self.env.ref("smart_construction_core.view_sc_safety_plan_tree").arch_db
+        safety_plan_form = self.env.ref("smart_construction_core.view_sc_safety_plan_form").arch_db
+        safety_disclosure_tree = self.env.ref("smart_construction_core.view_sc_safety_disclosure_tree").arch_db
+        safety_disclosure_form = self.env.ref("smart_construction_core.view_sc_safety_disclosure_form").arch_db
+        hazard_tree = self.env.ref("smart_construction_core.view_sc_hazard_source_tree").arch_db
+        safety_issue_tree = self.env.ref("smart_construction_core.view_sc_safety_issue_tree").arch_db
+        safety_issue_form = self.env.ref("smart_construction_core.view_sc_safety_issue_form").arch_db
+        safety_rectification_tree = self.env.ref("smart_construction_core.view_sc_safety_rectification_tree").arch_db
+        safety_recheck_tree = self.env.ref("smart_construction_core.view_sc_safety_recheck_tree").arch_db
+        safety_recheck_form = self.env.ref("smart_construction_core.view_sc_safety_recheck_form").arch_db
+
+        for arch in (
+            plan_tree,
+            plan_form,
+            plan_report_tree,
+            contract_event_tree,
+            quality_standard_tree,
+            quality_standard_form,
+            quality_issue_tree,
+            quality_rectification_tree,
+            quality_recheck_tree,
+            quality_recheck_form,
+            safety_plan_tree,
+            safety_plan_form,
+            safety_disclosure_tree,
+            safety_disclosure_form,
+            hazard_tree,
+            safety_issue_tree,
+            safety_issue_form,
+            safety_rectification_tree,
+            safety_recheck_tree,
+            safety_recheck_form,
+        ):
+            self.assertIn('name="legacy_fact_type"', arch)
+
+        self.assertIn('name="amount_impact" sum="金额影响"', contract_event_tree)
+        self.assertIn('name="tax_excluded_amount" sum="不含税金额"', contract_event_tree)
+        self.assertIn('name="tax_amount" sum="税额"', contract_event_tree)
+        self.assertIn('name="change_limit_amount" sum="变更控制上限"', contract_event_tree)
 
     def test_settlement_feedback_fields_are_real_business_fields(self):
         contract = self.env["construction.contract"].create(
@@ -458,3 +857,11 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertEqual(settlement.unpaid_amount, 100)
         self.assertEqual(settlement.employer_name, self.partner.display_name)
         self.assertEqual(settlement.contractor_name, self.env.company.partner_id.display_name)
+
+        tree = self.env.ref("smart_construction_core.view_sc_settlement_order_tree").arch_db
+        self.assertIn('name="contract_subject"', tree)
+        self.assertIn('name="contract_total_amount" sum="合同总额合计"', tree)
+        self.assertIn('name="submitted_amount" sum="送审金额合计"', tree)
+        self.assertIn('name="approved_amount" sum="审定金额合计"', tree)
+        self.assertIn('name="requested_fund_amount" sum="申请资金金额合计"', tree)
+        self.assertIn('name="engineering_address"', tree)

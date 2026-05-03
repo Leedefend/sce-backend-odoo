@@ -19,8 +19,12 @@
                 <field name="contract_id"/>
                 <field name="partner_id"/>
                 <field name="source_channel"/>
+                <field name="legacy_fact_type"/>
                 <field name="event_date"/>
                 <field name="amount_impact" sum="金额影响"/>
+                <field name="tax_excluded_amount" sum="不含税金额"/>
+                <field name="tax_amount" sum="税额"/>
+                <field name="change_limit_amount" sum="变更控制上限"/>
                 <field name="limit_control_result"/>
                 <field name="settlement_included"/>
                 <field name="state"/>

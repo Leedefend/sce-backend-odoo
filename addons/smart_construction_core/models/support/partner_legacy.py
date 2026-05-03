@@ -32,10 +32,10 @@ class ResPartner(models.Model):
     )
 
     # Legacy identity carrier fields for idempotent migration replay.
-    legacy_partner_id = fields.Char(index=True)
-    legacy_partner_source = fields.Char(index=True)
-    legacy_partner_name = fields.Char()
-    legacy_credit_code = fields.Char()
-    legacy_tax_no = fields.Char(index=True)
-    legacy_deleted_flag = fields.Char()
-    legacy_source_evidence = fields.Char()
+    legacy_partner_id = fields.Char(string="历史供应商编号", index=True)
+    legacy_partner_source = fields.Char(string="历史来源", index=True)
+    legacy_partner_name = fields.Char(string="历史供应商名称")
+    legacy_credit_code = fields.Char(string="历史统一信用代码")
+    legacy_tax_no = fields.Char(string="历史税号", index=True)
+    legacy_deleted_flag = fields.Char(string="历史删除标识")
+    legacy_source_evidence = fields.Char(string="历史来源证据")
