@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="action_sc_material_rental_plan" model="ir.actions.act_window">
+        <field name="name">租赁计划</field>
+        <field name="res_model">sc.material.rental.plan</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+    </record>
+
+    <record id="action_sc_material_rental_order" model="ir.actions.act_window">
+        <field name="name">租赁单</field>
+        <field name="res_model">sc.material.rental.order</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+    </record>
+
+    <record id="action_sc_material_rental_settlement" model="ir.actions.act_window">
+        <field name="name">租赁结算</field>
+        <field name="res_model">sc.material.rental.settlement</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+    </record>
+
+    <record id="view_sc_material_rental_plan_tree" model="ir.ui.view">
+        <field name="name">sc.material.rental.plan.tree</field>
+        <field name="model">sc.material.rental.plan</field>
+        <field name="arch" type="xml">
+            <tree string="周转材料租赁计划" default_order="plan_date desc">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="plan_date"/>
+                <field name="planned_start"/>
+                <field name="planned_end"/>
+                <field name="rent_purpose"/>
+                <field name="supplier_id"/>
+                <field name="contract_id"/>
+                <field name="estimated_amount" sum="预计租赁金额合计"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="owner_id"/>
+                <field name="legacy_fact_type"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_material_rental_plan_form" model="ir.ui.view">
+        <field name="name">sc.material.rental.plan.form</field>
+        <field name="model">sc.material.rental.plan</field>
+        <field name="arch" type="xml">
+            <form string="周转材料租赁计划">
+                <header>
+                    <button name="action_submit" string="提交" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_approve" string="确认" type="object" class="btn-primary" invisible="state != 'submitted'"/>
+                    <button name="action_reset_draft" string="退回草稿" type="object" invisible="state != 'submitted'"/>
+                    <button name="action_cancel" string="取消" type="object" invisible="state in ('approved', 'cancel')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="project_id"/>
+                            <field name="plan_date"/>
+                            <field name="planned_start"/>
+                            <field name="planned_end"/>
+                            <field name="rent_purpose"/>
+                        </group>
+                        <group>
+                            <field name="supplier_id"/>
+                            <field name="contract_id"/>
+                            <field name="owner_id"/>
+                            <field name="estimated_amount" readonly="1"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="计划明细">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_id"/>
+                                    <field name="material_name"/>
+                                    <field name="material_spec"/>
+                                    <field name="unit_name"/>
+                                    <field name="planned_qty"/>
+                                    <field name="planned_days"/>
+                                    <field name="daily_price"/>
+                                    <field name="estimated_amount"/>
+                                    <field name="currency_id" invisible="1"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="来源追溯">
+                            <group>
+                                <field name="legacy_fact_model"/>
+                                <field name="legacy_fact_id"/>
+                                <field name="legacy_fact_type"/>
+                            </group>
+                        </page>
+                        <page string="备注">
+                            <field name="note" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_material_rental_plan_search" model="ir.ui.view">
+        <field name="name">sc.material.rental.plan.search</field>
+        <field name="model">sc.material.rental.plan</field>
+        <field name="arch" type="xml">
+            <search string="周转材料租赁计划">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="supplier_id"/>
+                <field name="contract_id"/>
+                <field name="rent_purpose"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按供应商" name="group_supplier" context="{'group_by': 'supplier_id'}"/>
+                <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_material_rental_order_tree" model="ir.ui.view">
+        <field name="name">sc.material.rental.order.tree</field>
+        <field name="model">sc.material.rental.order</field>
+        <field name="arch" type="xml">
+            <tree string="周转材料租赁单" default_order="rental_date desc">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="rental_date"/>
+                <field name="planned_return_date"/>
+                <field name="plan_id"/>
+                <field name="contract_id"/>
+                <field name="supplier_id"/>
+                <field name="amount_total" sum="租赁金额合计"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="owner_id"/>
+                <field name="legacy_fact_type"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_material_rental_order_form" model="ir.ui.view">
+        <field name="name">sc.material.rental.order.form</field>
+        <field name="model">sc.material.rental.order</field>
+        <field name="arch" type="xml">
+            <form string="周转材料租赁单">
+                <header>
+                    <button name="action_activate" string="确认租赁" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_return" string="确认退还" type="object" class="btn-primary" invisible="state != 'active'"/>
+                    <button name="action_settle" string="完成结算" type="object" class="btn-primary" invisible="state != 'returned'"/>
+                    <button name="action_cancel" string="取消" type="object" invisible="state in ('settled', 'cancel')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active,returned,settled"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="project_id"/>
+                            <field name="plan_id"/>
+                            <field name="rental_date"/>
+                            <field name="planned_return_date"/>
+                        </group>
+                        <group>
+                            <field name="supplier_id"/>
+                            <field name="contract_id"/>
+                            <field name="owner_id"/>
+                            <field name="amount_total" readonly="1"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="租赁明细">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_id"/>
+                                    <field name="material_name"/>
+                                    <field name="material_spec"/>
+                                    <field name="unit_name"/>
+                                    <field name="qty"/>
+                                    <field name="rental_days"/>
+                                    <field name="daily_price"/>
+                                    <field name="amount_total"/>
+                                    <field name="returned_qty"/>
+                                    <field name="damage_qty"/>
+                                    <field name="currency_id" invisible="1"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="来源追溯">
+                            <group>
+                                <field name="legacy_fact_model"/>
+                                <field name="legacy_fact_id"/>
+                                <field name="legacy_fact_type"/>
+                            </group>
+                        </page>
+                        <page string="备注">
+                            <field name="note" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_material_rental_order_search" model="ir.ui.view">
+        <field name="name">sc.material.rental.order.search</field>
+        <field name="model">sc.material.rental.order</field>
+        <field name="arch" type="xml">
+            <search string="周转材料租赁单">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="supplier_id"/>
+                <field name="contract_id"/>
+                <field name="plan_id"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按供应商" name="group_supplier" context="{'group_by': 'supplier_id'}"/>
+                <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_material_rental_settlement_tree" model="ir.ui.view">
+        <field name="name">sc.material.rental.settlement.tree</field>
+        <field name="model">sc.material.rental.settlement</field>
+        <field name="arch" type="xml">
+            <tree string="周转材料租赁结算" default_order="settlement_date desc">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="settlement_date"/>
+                <field name="rental_order_id"/>
+                <field name="contract_id"/>
+                <field name="supplier_id"/>
+                <field name="payment_request_id"/>
+                <field name="rent_amount" sum="租金金额合计"/>
+                <field name="damage_amount" sum="赔偿金额合计"/>
+                <field name="amount_total" sum="结算金额合计"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="owner_id"/>
+                <field name="legacy_fact_type"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_material_rental_settlement_form" model="ir.ui.view">
+        <field name="name">sc.material.rental.settlement.form</field>
+        <field name="model">sc.material.rental.settlement</field>
+        <field name="arch" type="xml">
+            <form string="周转材料租赁结算">
+                <header>
+                    <button name="action_submit" string="提交" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_confirm" string="确认结算" type="object" class="btn-primary" invisible="state != 'submitted'"/>
+                    <button name="action_paid" string="确认支付" type="object" class="btn-primary" invisible="state != 'confirmed'"/>
+                    <button name="action_cancel" string="取消" type="object" invisible="state in ('paid', 'cancel')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,confirmed,paid"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="project_id"/>
+                            <field name="rental_order_id"/>
+                            <field name="settlement_date"/>
+                            <field name="payment_request_id"/>
+                        </group>
+                        <group>
+                            <field name="supplier_id"/>
+                            <field name="contract_id"/>
+                            <field name="owner_id"/>
+                            <field name="rent_amount" readonly="1"/>
+                            <field name="damage_amount" readonly="1"/>
+                            <field name="amount_total" readonly="1"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="结算明细">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_id"/>
+                                    <field name="material_name"/>
+                                    <field name="material_spec"/>
+                                    <field name="unit_name"/>
+                                    <field name="qty"/>
+                                    <field name="rental_days"/>
+                                    <field name="daily_price"/>
+                                    <field name="rent_amount"/>
+                                    <field name="damage_amount"/>
+                                    <field name="currency_id" invisible="1"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="来源追溯">
+                            <group>
+                                <field name="legacy_fact_model"/>
+                                <field name="legacy_fact_id"/>
+                                <field name="legacy_fact_type"/>
+                            </group>
+                        </page>
+                        <page string="备注">
+                            <field name="note" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_material_rental_settlement_search" model="ir.ui.view">
+        <field name="name">sc.material.rental.settlement.search</field>
+        <field name="model">sc.material.rental.settlement</field>
+        <field name="arch" type="xml">
+            <search string="周转材料租赁结算">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="supplier_id"/>
+                <field name="contract_id"/>
+                <field name="rental_order_id"/>
+                <field name="payment_request_id"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按供应商" name="group_supplier" context="{'group_by': 'supplier_id'}"/>
+                <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+</odoo>

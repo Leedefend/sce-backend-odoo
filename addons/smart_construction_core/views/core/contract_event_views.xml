@@ -61,7 +61,7 @@
                             <field name="applicant_id"/>
                             <field name="department_id"/>
                             <field name="cost_code_id"/>
-                            <field name="currency_id"/>
+                            <field name="currency_id" invisible="1"/>
                             <field name="amount_impact"/>
                             <field name="tax_excluded_amount"/>
                             <field name="tax_amount"/>

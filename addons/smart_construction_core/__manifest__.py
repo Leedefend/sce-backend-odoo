@@ -23,6 +23,7 @@
     'data': [
         # 基础数据
         'data/sequence.xml',
+        'data/currency_defaults.xml',
         'data/project_stage_data.xml',
         'data/project_next_action_rules.xml',
         'data/project_stage_requirement_items.xml',
@@ -73,6 +74,7 @@
         'wizard/material_plan_to_rfq_views.xml',
         'views/core/material_plan_views.xml',
         'views/core/material_acceptance_views.xml',
+        'views/core/material_rental_views.xml',
         'views/core/labor_management_views.xml',
         'views/core/equipment_management_views.xml',
         'views/core/subcontract_management_views.xml',

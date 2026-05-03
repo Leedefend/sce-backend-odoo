@@ -13,9 +13,13 @@
                     <field name="project_id"/>
                     <field name="partner_id"/>
                     <field name="applicant_name"/>
+                    <field name="guarantee_project_name"/>
+                    <field name="guarantee_type"/>
+                    <field name="payment_method"/>
                     <field name="payee"/>
                     <field name="payee_account"/>
                     <field name="payee_bank"/>
+                    <field name="payer_account"/>
                     <field name="expense_type"/>
                     <field name="summary"/>
                     <field name="amount" sum="申请金额合计"/>
@@ -60,11 +64,12 @@
                                 <field name="claim_type" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="direction" readonly="1"/>
                                 <field name="date_claim" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                                <field name="fill_date" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             </group>
                             <group>
                                 <field name="amount" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="approved_amount" readonly="state in ['done', 'legacy_confirmed', 'cancel']"/>
-                                <field name="currency_id" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                                <field name="currency_id" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']" invisible="1"/>
                                 <field name="active"/>
                             </group>
                         </group>
@@ -73,13 +78,24 @@
                                 <field name="project_id" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="partner_id"/>
                                 <field name="payment_request_id"/>
+                                <field name="company_name_text"/>
+                                <field name="guarantee_project_name"/>
+                                <field name="guarantee_type"/>
                             </group>
                             <group string="申请与收款">
                                 <field name="applicant_name" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="payee" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="payee_account" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="payee_bank" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                                <field name="payer_account" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                                <field name="payer_bank" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             </group>
+                        </group>
+                        <group string="保证金办理">
+                            <field name="payment_method" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                            <field name="clearing_method" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                            <field name="is_returned" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                            <field name="return_reason" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                         </group>
                         <group string="费用说明">
                             <field name="expense_type" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>

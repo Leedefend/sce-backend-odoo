@@ -61,9 +61,24 @@ class ScExpenseClaim(models.Model):
     )
     partner_id = fields.Many2one("res.partner", string="往来单位", index=True)
     applicant_name = fields.Char(string="申请人", index=True)
+    company_name_text = fields.Char(string="所属公司")
+    guarantee_project_name = fields.Char(string="投标项目/合同名称", index=True)
+    guarantee_type = fields.Selection(
+        [("bid", "投标保证金"), ("contract", "合同保证金"), ("other", "其他保证金")],
+        string="保证金类型",
+        default="bid",
+        index=True,
+    )
+    payment_method = fields.Char(string="支付方式")
+    clearing_method = fields.Char(string="缴纳方式")
+    return_reason = fields.Char(string="退回原因")
+    is_returned = fields.Boolean(string="是否清退退回")
+    fill_date = fields.Date(string="填写日期", default=fields.Date.context_today)
     payee = fields.Char(string="收款人", index=True)
     payee_account = fields.Char(string="收款账号")
     payee_bank = fields.Char(string="开户行")
+    payer_account = fields.Char(string="支付账户")
+    payer_bank = fields.Char(string="支付账户开户行")
     date_claim = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
     expense_type = fields.Char(string="费用类型", index=True)
     summary = fields.Char(string="摘要", index=True)

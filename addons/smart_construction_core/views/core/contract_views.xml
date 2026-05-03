@@ -100,7 +100,7 @@
                         <group>
                             <field name="company_id" readonly="1"/>
                             <field name="reject_reason" readonly="1" modifiers='{"invisible": [["reject_reason","=",false]]}'/>
-                            <field name="currency_id"/>
+                            <field name="currency_id" invisible="1"/>
                             <field name="date_contract"/>
                             <field name="date_start"/>
                             <field name="date_end"/>

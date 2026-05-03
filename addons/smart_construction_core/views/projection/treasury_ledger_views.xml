@@ -36,7 +36,7 @@
                     <field name="direction"/>
                     <field name="source_kind"/>
                     <field name="amount" sum="金额合计"/>
-                    <field name="currency_id"/>
+                    <field name="currency_id" invisible="1"/>
                     <field name="legacy_record_id"/>
                     <field name="legacy_source_ref"/>
                     <field name="state"/>
@@ -68,7 +68,7 @@
                         </group>
                         <group string="金额">
                             <field name="amount" readonly="1"/>
-                            <field name="currency_id" readonly="1"/>
+                            <field name="currency_id" readonly="1" invisible="1"/>
                         </group>
                         <group string="来源">
                             <field name="source_kind" readonly="1"/>

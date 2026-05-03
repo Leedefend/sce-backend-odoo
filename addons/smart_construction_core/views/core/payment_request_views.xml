@@ -59,7 +59,7 @@
                             <group>
                                 <field name="partner_id"/>
                                 <field name="amount"/>
-                                <field name="currency_id"/>
+                                <field name="currency_id" invisible="1"/>
                                 <field name="date_request"/>
                                 <field name="paid_amount_total" readonly="1"/>
                                 <field name="unpaid_amount" readonly="1"/>

@@ -142,10 +142,16 @@ def pre_init_hook(env):
 
 def post_init_hook(env):
     """Install-time hook to ensure core taxes are present."""
+    _ensure_cny_company_currency(env)
     ensure_core_taxes(env)
     _archive_default_project_stages(env)
     _ensure_signup_defaults(env)
     _task_sc_state_backfill(env)
+
+
+def _ensure_cny_company_currency(env):
+    """The business product is RMB-only for users; keep company defaults aligned."""
+    env["res.company"]._sc_ensure_cny_currency()
 
 
 def _archive_default_project_stages(env):

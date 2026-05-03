@@ -5,6 +5,7 @@ from . import account_extend
 from . import account_move_line_ext
 from . import stock_extend
 from . import product_extend
+from . import res_company
 from . import quota_spec
 from . import contract_center
 from . import document_center

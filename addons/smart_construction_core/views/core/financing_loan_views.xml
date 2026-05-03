@@ -82,7 +82,7 @@
                                 <field name="project_id" readonly="state == 'legacy_confirmed'"/>
                                 <field name="partner_id"/>
                                 <field name="amount" readonly="state == 'legacy_confirmed'"/>
-                                <field name="currency_id"/>
+                                <field name="currency_id" invisible="1"/>
                             </group>
                         </group>
                         <group string="说明">

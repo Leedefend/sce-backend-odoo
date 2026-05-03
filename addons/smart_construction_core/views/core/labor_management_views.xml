@@ -424,7 +424,7 @@
                 <field name="amount_untaxed" sum="未税金额合计"/>
                 <field name="tax_amount" sum="税额合计"/>
                 <field name="amount_total" sum="结算金额合计"/>
-                <field name="currency_id"/>
+                <field name="currency_id" invisible="1"/>
                 <field name="owner_id"/>
                 <field name="legacy_fact_type"/>
                 <field name="state"/>
@@ -454,7 +454,7 @@
                         </group>
                         <group>
                             <field name="owner_id"/>
-                            <field name="currency_id"/>
+                            <field name="currency_id" invisible="1"/>
                             <field name="amount_untaxed"/>
                             <field name="tax_amount"/>
                             <field name="amount_total"/>
@@ -557,7 +557,7 @@
                         </group>
                         <group>
                             <field name="unit_name"/>
-                            <field name="currency_id"/>
+                            <field name="currency_id" invisible="1"/>
                             <field name="unit_price"/>
                             <field name="tax_rate"/>
                             <field name="effective_date"/>
