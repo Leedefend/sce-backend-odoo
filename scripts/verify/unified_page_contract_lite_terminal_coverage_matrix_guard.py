@@ -33,6 +33,10 @@ def require_tokens(label: str, text: str, tokens: tuple[str, ...], errors: list[
         errors.append(f"{label} missing tokens: {missing}")
 
 
+def has_target(makefile: str, target: str) -> bool:
+    return target in makefile
+
+
 def build_matrix(parity: dict[str, Any], makefile: str) -> list[dict[str, Any]]:
     signature_ok = parity.get("ok") is True
     reports = parity.get("contractReports") or []
@@ -59,17 +63,31 @@ def build_matrix(parity: dict[str, Any], makefile: str) -> list[dict[str, Any]]:
             "clientType": "wx_mini",
             "semanticContract": "pass" if signature_ok else "fail",
             "semanticContractCases": parity_count,
-            "rendererPilot": "pending",
+            "rendererInputPilot": (
+                "available"
+                if has_target(makefile, "verify.unified_page_contract.lite.wx_mini_renderer_input_pilot.host")
+                else "missing"
+            ),
+            "uiRendererPilot": "pending",
             "browserAcceptanceGate": "pending",
-            "status": "contract_ready_renderer_pending" if signature_ok else "blocked",
+            "status": "renderer_input_ready_ui_renderer_pending"
+            if signature_ok and has_target(makefile, "verify.unified_page_contract.lite.wx_mini_renderer_input_pilot.host")
+            else "blocked",
         },
         {
             "clientType": "harmony_h5",
             "semanticContract": "pass" if signature_ok else "fail",
             "semanticContractCases": parity_count,
-            "rendererPilot": "pending",
+            "rendererInputPilot": (
+                "available"
+                if has_target(makefile, "verify.unified_page_contract.lite.harmony_h5_renderer_input_pilot.host")
+                else "missing"
+            ),
+            "uiRendererPilot": "pending",
             "browserAcceptanceGate": "pending",
-            "status": "contract_ready_renderer_pending" if signature_ok else "blocked",
+            "status": "renderer_input_ready_ui_renderer_pending"
+            if signature_ok and has_target(makefile, "verify.unified_page_contract.lite.harmony_h5_renderer_input_pilot.host")
+            else "blocked",
         },
     ]
 
@@ -129,7 +147,7 @@ def main() -> int:
         (
             "Terminal Coverage Matrix",
             "`web_pc` is the current browser acceptance anchor",
-            "`wx_mini` and `harmony_h5` are contract-ready but renderer-pending",
+            "`wx_mini` and `harmony_h5` are renderer-input-ready but UI-renderer-pending",
             "must not be reported as fully covered",
         ),
         errors,
@@ -140,6 +158,8 @@ def main() -> int:
         (
             "verify.unified_page_contract.lite.terminal_client_parity",
             "verify.unified_page_contract.lite.terminal_coverage_matrix",
+            "verify.unified_page_contract.lite.wx_mini_renderer_input_pilot.host",
+            "verify.unified_page_contract.lite.harmony_h5_renderer_input_pilot.host",
             "verify.unified_page_contract.lite.all_tree_acceptance_browser.host",
             "unified_page_contract_lite_terminal_coverage_matrix_guard.py",
         ),
@@ -151,17 +171,17 @@ def main() -> int:
         errors.append("web_pc must remain the covered browser anchor")
     for client in ("wx_mini", "harmony_h5"):
         item = next((row for row in matrix if row["clientType"] == client), None)
-        if not item or item["status"] != "contract_ready_renderer_pending":
-            errors.append(f"{client} must be explicitly renderer-pending")
+        if not item or item["status"] != "renderer_input_ready_ui_renderer_pending":
+            errors.append(f"{client} must be explicitly renderer-input-ready and UI-renderer-pending")
 
     report = {
         "ok": not errors,
-        "decision": "terminal_matrix_contract_ready_renderer_pending" if not errors else "blocked",
+        "decision": "terminal_matrix_renderer_input_ready_ui_renderer_pending" if not errors else "blocked",
         "clients": list(CLIENTS),
         "matrix": matrix,
         "nextRequiredGates": [
-            "verify.unified_page_contract.lite.wx_mini_pilot.host",
-            "verify.unified_page_contract.lite.harmony_h5_pilot.host",
+            "verify.unified_page_contract.lite.wx_mini_ui_renderer_pilot.host",
+            "verify.unified_page_contract.lite.harmony_h5_ui_renderer_pilot.host",
         ],
         "errors": errors,
     }
@@ -176,8 +196,8 @@ def main() -> int:
 
     print("Unified Semantic Page Contract Lite terminal coverage matrix guard passed")
     print("- web_pc: covered browser anchor")
-    print("- wx_mini: contract-ready, renderer pending")
-    print("- harmony_h5: contract-ready, renderer pending")
+    print("- wx_mini: renderer input ready, UI renderer pending")
+    print("- harmony_h5: renderer input ready, UI renderer pending")
     print(f"- report: {args.report}")
     return 0
 
