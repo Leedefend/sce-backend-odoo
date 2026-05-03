@@ -20,7 +20,8 @@ acceptance gates. UniApp mini program and Harmony H5 have semantic contract
 parity, renderer input pilot gates, UI renderer pilot gates, page integration
 pilot gates, runtime mount pilot gates, and real compile gates. wx_mini has
 compiled runtime artifact acceptance and a device acceptance probe. harmony_h5
-has browser runtime acceptance. Actual device runners are still pending.
+has browser runtime acceptance and a device acceptance probe. Actual device
+runners are still pending.
 
 ## 2. Current Matrix
 
@@ -28,13 +29,13 @@ has browser runtime acceptance. Actual device runners are still pending.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `web_pc` | pass | available | available | available | available | available | covered browser anchor |
 | `wx_mini` | pass | available | available | available | available | available | device-acceptance-probe-ready, device-runner-pending |
-| `harmony_h5` | pass | available | available | available | available | available | runtime-browser-acceptance-ready, device-acceptance-pending |
+| `harmony_h5` | pass | available | available | available | available | available | device-acceptance-probe-ready, device-runner-pending |
 
 `web_pc` is the current browser acceptance anchor.
 
 `wx_mini` has a device acceptance probe but device runner is pending.
 
-`harmony_h5` has runtime browser acceptance but device acceptance is pending.
+`harmony_h5` has a device acceptance probe but device runner is pending.
 
 They must not be reported as fully covered until their guarded compile pilot
 gates exist and pass.
@@ -70,7 +71,8 @@ It verifies:
 - mini program is explicitly marked device-runner-pending
 - Harmony H5 compile pilot gate remains present
 - Harmony H5 runtime acceptance pilot gate remains present
-- Harmony H5 is explicitly marked device-acceptance-pending
+- Harmony H5 device acceptance pilot gate remains present
+- Harmony H5 is explicitly marked device-runner-pending
 - future pilot gates are named as next required gates
 
 ## 4. Non-Goals
@@ -103,6 +105,7 @@ make verify.unified_page_contract.lite.wx_mini_device_runner_acceptance.host
 make verify.unified_page_contract.lite.harmony_h5_compile_pilot.host
 make verify.unified_page_contract.lite.harmony_h5_runtime_acceptance_pilot.host
 make verify.unified_page_contract.lite.harmony_h5_device_acceptance_pilot.host
+make verify.unified_page_contract.lite.harmony_h5_device_runner_acceptance.host
 ```
 
 Those gates must prove terminal rendering and interaction, not just contract

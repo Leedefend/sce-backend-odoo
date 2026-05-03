@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-03T16:30:00+08:00
+- blocker_key: `unified_page_contract_lite_harmony_h5_device_acceptance_pilot_batch_81`
+- layer_target: `Frontend Mobile Device Acceptance Governance`
+- module: `frontend/apps/mobile + scripts/verify + docs/architecture/unified_page_contract_lite + Makefile`
+- reason: `harmony_h5 已完成真实编译与浏览器运行时验收，但不能把缺失 hdc/DevEco runner 的环境误报为鸿蒙设备验收通过。`
+- completed_step: `新增 unified_page_contract_lite_harmony_h5_device_acceptance_pilot_guard.py 与 verify.unified_page_contract.lite.harmony_h5_device_acceptance_pilot.host；目标依赖 harmony_h5 runtime browser acceptance，检查 H5 index/asset 产物与 app mount 节点，并探测 HARMONY_HDC/HARMONY_DEVTOOLS_CLI/DEVECO_CLI/PATH 中的 hdc/deveco runner。`
+- verification: `python3 -m py_compile scripts/verify/unified_page_contract_lite_harmony_h5_device_acceptance_pilot_guard.py scripts/verify/unified_page_contract_lite_terminal_coverage_matrix_guard.py PASS；git diff --check PASS；make verify.unified_page_contract.lite.harmony_h5_device_acceptance_pilot.host PASS，decision=harmony_h5_device_acceptance_pilot_blocked_missing_harmony_runner；make verify.unified_page_contract.lite.terminal_coverage_matrix PASS，decision=terminal_matrix_device_probes_ready_runners_pending；pnpm -C frontend/apps/mobile typecheck PASS；make verify.unified_page_contract.lite PASS；make verify.docs.all PASS。`
+- active_commit: `552679bd`
+- next_step: `提交 Batch-81；下一批需要接入真实设备 runner：wx_mini_device_runner_acceptance.host 或 harmony_h5_device_runner_acceptance.host。`
+
 ### 2026-05-03T16:10:00+08:00
 - blocker_key: `unified_page_contract_lite_wx_mini_device_acceptance_pilot_batch_80`
 - layer_target: `Frontend Mobile Device Acceptance Governance`
