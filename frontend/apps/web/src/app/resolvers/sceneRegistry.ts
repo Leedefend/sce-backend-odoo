@@ -109,6 +109,7 @@ let sceneRegistry: Scene[] = [];
 let errors: Array<{ index: number; key?: string | null; route?: string | null; issues: string[] }> = [];
 
 const SCENE_ROUTE_OVERRIDES: Record<string, string> = {
+  'workspace.home': '/s/workspace.home',
   'my_work.workspace': '/my-work',
 };
 

@@ -61,6 +61,24 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         "construction.contract": "合同执行事项",
         "payment.request": "付款执行事项",
         "sc.settlement.order": "结算执行事项",
+        "mail.message": "消息提醒",
+        "mail.followers": "关注动态",
+    }
+    PREFERRED_RECORD_ACTIONS = {
+        "project.project": {
+            "action_xmlid": "smart_construction_core.action_sc_project_list",
+            "menu_xmlid": "smart_construction_core.menu_sc_project_project",
+        },
+        "construction.contract": {
+            "action_xmlid": "smart_construction_core.action_construction_contract",
+            "menu_xmlid": "smart_construction_core.menu_sc_construction_contract",
+        },
+        "payment.request": {
+            "action_xmlid": "smart_construction_core.action_payment_request",
+        },
+        "sc.settlement.order": {
+            "action_xmlid": "smart_construction_core.action_sc_settlement_order",
+        },
     }
 
     def _get_model(self, model_name, *, sudo=False):
@@ -107,6 +125,18 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         if model in cache:
             return cache[model]
         result = {}
+        preferred = self.PREFERRED_RECORD_ACTIONS.get(model) or {}
+        if preferred:
+            action_xmlid = str(preferred.get("action_xmlid") or "").strip()
+            menu_xmlid = str(preferred.get("menu_xmlid") or "").strip()
+            action = self.env.ref(action_xmlid, raise_if_not_found=False) if action_xmlid else None
+            menu = self.env.ref(menu_xmlid, raise_if_not_found=False) if menu_xmlid else None
+            if action and getattr(action, "id", 0):
+                result["action_id"] = int(action.id)
+                if menu and getattr(menu, "id", 0):
+                    result["menu_id"] = int(menu.id)
+                cache[model] = result
+                return result
         try:
             Action = self._get_model("ir.actions.act_window", sudo=True)
             Menu = self._get_model("ir.ui.menu", sudo=True)

@@ -1,12 +1,17 @@
 <template>
-  <component
-    :is="blockComponent"
+  <div
     v-if="blockComponent"
-    :block="block"
-    :zone-key="zoneKey"
-    :dataset="dataset"
-    @action="onAction"
-  />
+    class="block-renderer"
+    :class="blockClasses"
+  >
+    <component
+      :is="blockComponent"
+      :block="block"
+      :zone-key="zoneKey"
+      :dataset="dataset"
+      @action="onAction"
+    />
+  </div>
   <article v-else class="block-fallback">
     <p class="block-fallback-title">未支持的区块类型</p>
     <p class="block-fallback-meta">block_type={{ block.block_type || 'unknown' }}</p>
@@ -29,6 +34,11 @@ const emit = defineEmits<{
 }>();
 
 const blockComponent = computed(() => resolveBlockComponent(String(props.block.block_type || '')));
+const blockClasses = computed(() => {
+  const type = String(props.block.block_type || 'unknown').replace(/[^a-zA-Z0-9_-]/g, '-');
+  const key = String(props.block.key || 'unknown').replace(/[^a-zA-Z0-9_-]/g, '-');
+  return [`block-type-${type}`, `block-key-${key}`];
+});
 
 function onAction(payload: PageBlockActionEvent) {
   emit('action', payload);
@@ -36,6 +46,10 @@ function onAction(payload: PageBlockActionEvent) {
 </script>
 
 <style scoped>
+.block-renderer {
+  min-width: 0;
+  height: 100%;
+}
 .block-fallback {
   border: 1px dashed #d1d5db;
   border-radius: 10px;

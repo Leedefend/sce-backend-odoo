@@ -666,7 +666,7 @@ function fallbackSceneFromEntryIntent(sceneKey: string): Scene | null {
   if (!sceneContractEntryIntentMap[key]) return null;
   return {
     key,
-    label: key === 'dashboard.company' ? '公司驾驶舱' : '工作台',
+    label: key === 'dashboard.company' ? '公司驾驶舱' : '角色首页',
     route: `/s/${key}`,
     target: {
       route: `/s/${key}`,

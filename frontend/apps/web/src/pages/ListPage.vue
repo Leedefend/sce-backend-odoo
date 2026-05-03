@@ -251,7 +251,7 @@
               {{ uiLabel('group_view_all', '查看全部') }}
             </button>
           </header>
-          <table v-if="!isGroupCollapsed(group.key)" class="group-table">
+          <table v-if="!isGroupCollapsed(group.key)" class="group-table" :style="tableWidthStyle">
             <colgroup>
               <col class="col-row-number" />
               <col v-for="col in displayedColumns" :key="`group-col-width-${group.key}-${col}`" :style="columnWidthStyle(col)" />
@@ -357,7 +357,7 @@
           </table>
         </article>
       </section>
-      <table v-if="!showGroupedRows" class="flat-table">
+      <table v-if="!showGroupedRows" class="flat-table" :style="tableWidthStyle">
         <colgroup>
           <col v-if="showSelectionColumn" class="col-select" />
           <col class="col-row-number" />
@@ -1296,6 +1296,21 @@ const displayedColumns = computed(() => {
   });
   return filtered.length ? filtered : source.slice(0, 1);
 });
+const tableMinWidthPx = computed(() => {
+  const fixedWidth = (showSelectionColumn.value ? 44 : 0) + 64 + (columnChoices.value.length ? 72 : 0);
+  const dynamicWidth = displayedColumns.value.reduce((total, field) => {
+    const explicit = effectiveColumnWidth(field);
+    if (explicit) return total + explicit;
+    if (isNameLikeColumn(field)) return total + 220;
+    if (isLongTextColumn(field)) return total + 180;
+    if (isNumericColumn(field)) return total + 120;
+    return total + 128;
+  }, 0);
+  return Math.max(0, fixedWidth + dynamicWidth);
+});
+const tableWidthStyle = computed(() => ({
+  minWidth: `max(100%, ${tableMinWidthPx.value}px)`,
+}));
 
 function firstSortClause(value: string) {
   return String(value || '').split(',')[0]?.trim() || '';
@@ -1759,11 +1774,13 @@ onBeforeUnmount(() => {
   width: 100%;
   max-width: 100%;
   max-height: max(500px, calc(100vh - 185px));
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: auto;
   background: white;
   border-radius: 8px;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
   overscroll-behavior: contain;
+  touch-action: pan-x pan-y;
 }
 
 .list-plain-search {
@@ -1869,7 +1886,7 @@ onBeforeUnmount(() => {
   border: 1px solid #dbeafe;
   border-radius: 10px;
   background: #fff;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .group-head {

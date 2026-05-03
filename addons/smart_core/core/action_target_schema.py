@@ -36,7 +36,7 @@ def resolve_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
     if key == "open_workbench":
         return scene_target("workspace.home")
     if key == "open_workspace_overview":
-        return scene_target("workspace.home")
+        return scene_target("my_work.workspace")
     if key == "open_menu":
         return menu_first_reachable_target()
     if key in {"refresh_page", "refresh"}:

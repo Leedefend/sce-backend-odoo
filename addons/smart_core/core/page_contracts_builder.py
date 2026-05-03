@@ -332,8 +332,8 @@ def _zone_for_section(page_key: str, section_key: str, tag: str) -> Dict[str, st
             payload["description"] = "角色上下文、建议入口与工作总览。"
             return payload
         if section in {"todo_focus", "list_main"}:
-            payload["title"] = "待办处理"
-            payload["description"] = "按优先级处理当前工作项与动态。"
+            payload["title"] = "当前工作项"
+            payload["description"] = "按优先级查看待办、关注和相关动态。"
             return payload
         if section == "retry_panel":
             payload["title"] = "失败与重试"
@@ -517,25 +517,24 @@ def _default_page_actions(page_key: str, profile_overrides: Dict[str, Any] | Non
         ]
     if key == "my_work":
         return [
-            {"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"},
-            {"key": "open_workspace_overview", "label": "查看工作概览", "intent": "ui.contract"},
+            {"key": "open_workbench", "label": "返回角色首页", "intent": "ui.contract"},
             {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
         ]
     if key == "workbench":
         return [
-            {"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"},
+            {"key": "open_workbench", "label": "返回角色首页", "intent": "ui.contract"},
             {"key": "open_menu", "label": "打开菜单", "intent": "ui.contract"},
             {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
         ]
     if key in {"scene_health", "usage_analytics", "scene_packages"}:
         return [
-            {"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"},
+            {"key": "open_workbench", "label": "返回角色首页", "intent": "ui.contract"},
             {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
         ]
     if key in {"action", "record", "scene"}:
         return [
             {"key": "open_my_work", "label": "进入工作区", "intent": "ui.contract"},
-            {"key": "open_workspace_overview", "label": "查看工作概览", "intent": "ui.contract"},
+            {"key": "open_workspace_overview", "label": "查看我的工作概览", "intent": "ui.contract"},
             {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
         ]
     return [{"key": "refresh_page", "label": "刷新", "intent": "api.data"}]
@@ -727,7 +726,7 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             "home": {
                 "schema_version": "v1",
                 "texts": {
-                    "title": "工作台",
+                    "title": "角色首页",
                     "hero_lead": "围绕项目经营、风险与审批，优先处理今天最关键事项。",
                     "entry_error_title_prefix": "进入失败：",
                     "action_retry": "重试",
@@ -758,17 +757,17 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "action_clear_lock_reason": "清除锁定原因",
                     "action_show_all_capabilities": "显示全部功能",
                     "action_clear_search_filters": "清空搜索与筛选",
-                    "empty_no_capability": "当前账号暂无可用功能，可能因为角色权限未开通或工作台尚未配置。",
+                    "empty_no_capability": "当前账号暂无可用功能，可能因为角色权限未开通或角色首页尚未配置。",
                     "action_switch_role": "切换角色",
                     "action_back_home": "返回首页",
                     "action_expand_help": "查看帮助",
                     "action_collapse_help": "收起帮助",
-                    "empty_help_detail": "建议先点击“切换角色”确认当前角色；若仍无功能，请联系管理员开通角色权限或配置工作台目录。",
+                    "empty_help_detail": "建议先点击“切换角色”确认当前角色；若仍无功能，请联系管理员开通角色权限或配置角色首页目录。",
                     "entry_subtitle_empty": "无说明",
                     "role_fallback_owner": "负责人",
                     "role_label_executive": "高管",
                     "role_label_owner": "负责人",
-                    "role_landing_fallback": "工作台首页",
+                    "role_landing_fallback": "角色首页",
                     "tile_title_fallback_prefix": "功能 ",
                     "scene_title_uncategorized": "未分类模块",
                     "scene_title_uncategorized_with_key_prefix": "未分类模块（",
@@ -967,7 +966,7 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "diagnostic_hint": "诊断页仅用于排查，不作为正式产品界面。",
                     "context_prefix": "推荐上下文：",
                     "action_clear_context": "清除",
-                    "action_go_workbench": "返回工作台",
+                    "action_go_workbench": "返回角色首页",
                     "action_open_menu": "打开菜单",
                     "action_refresh": "刷新",
                     "hud_label_reason": "原因",
@@ -998,7 +997,7 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "message_act_unsupported_type": "当前入口类型暂未接入门户前端承接，请改走原生页面或已注册场景。",
                     "message_contract_context_missing": "当前入口缺少页面契约所需上下文，请补齐 action_id、menu_id 或 scene 参数后重试。",
                     "message_capability_missing": "当前账号尚未开通该入口所需能力，请联系管理员确认授权范围。",
-                    "message_default": "请返回工作台、重新选择菜单，或刷新后重试。",
+                    "message_default": "请返回角色首页、重新选择菜单，或刷新后重试。",
                 },
             },
             "my_work": {
@@ -1098,7 +1097,7 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "action_batch_complete": "批量完成",
                     "action_clear_selection": "清空",
                     "empty_title_default": "当前无待处理事项",
-                    "action_go_workbench": "去工作台",
+                    "action_go_workbench": "去角色首页",
                     "action_go_risk_cockpit": "去风险驾驶舱",
                     "table_col_item": "事项",
                     "table_col_action": "动作",
@@ -1110,7 +1109,7 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "pager_middle_sep": " / ",
                     "pager_middle_suffix": " 页",
                     "pager_next": "下一页",
-                    "empty_desc": "当前没有待处理事项。你可以返回工作台查看其他入口，或进入风险驾驶舱继续巡检。",
+                    "empty_desc": "当前没有待处理事项。你可以返回角色首页查看其他入口，或进入风险驾驶舱继续巡检。",
                     "error_request_failed": "请求失败",
                     "feedback_save_preset_failed": "保存常用筛选失败",
                     "feedback_apply_preset_failed": "应用常用筛选失败",
@@ -1306,7 +1305,7 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "secondary_action_project": "进入风险驾驶舱",
                     "intent_title_default": "业务列表：先看状态，再执行动作",
                     "intent_summary_default": "通过快速筛选与快捷操作，优先处理最关键事项。",
-                    "intent_action_default_home": "工作台",
+                    "intent_action_default_home": "角色首页",
                     "intent_action_default_my_work": "我的工作",
                     "empty_title_default": "当前视图暂无数据",
                     "empty_hint_default": "建议切换到我的工作或风险驾驶舱继续处理。",
@@ -1348,7 +1347,7 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "advanced_hint_activity": "当前为可读降级视图，可查看活动记录并继续下钻到列表/表单。",
                     "advanced_hint_dashboard": "当前为可读降级视图，可查看关键记录并继续下钻到列表/表单。",
                     "advanced_hint_default": "当前视图使用可读降级渲染。",
-                    "page_title_fallback": "工作台",
+                    "page_title_fallback": "角色首页",
                     "hint_select_single_record": "请选择 1 条记录",
                     "hint_select_record_first": "请先选择记录",
                     "hint_permission_denied": "权限不足",

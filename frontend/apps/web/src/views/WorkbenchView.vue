@@ -282,7 +282,7 @@ const headerActions = computed(() => {
     return pageGlobalActions.value;
   }
   return [
-    { key: 'open_workbench', label: pageActionText('open_workbench', pageText('action_go_workbench', '返回工作台')), intent: 'ui.contract' },
+    { key: 'open_workbench', label: pageActionText('open_workbench', pageText('action_go_workbench', '返回角色首页')), intent: 'ui.contract' },
     { key: 'open_menu', label: pageActionText('open_menu', pageText('action_open_menu', '打开菜单')), intent: 'ui.contract' },
     { key: 'refresh_page', label: pageActionText('refresh_page', pageText('action_refresh', '刷新')), intent: 'api.data' },
   ];
@@ -330,7 +330,7 @@ const message = computed(() => {
     case ErrorCodes.CAPABILITY_MISSING:
       return pageText('message_capability_missing', '');
     default:
-      return pageText('message_default', '你可以返回工作台或打开菜单继续操作。');
+      return pageText('message_default', '你可以返回角色首页或打开菜单继续操作。');
   }
 });
 

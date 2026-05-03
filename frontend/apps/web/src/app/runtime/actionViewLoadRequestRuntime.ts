@@ -1,5 +1,8 @@
 type Dict = Record<string, unknown>;
 
+const DEFAULT_ACTION_VIEW_LIMIT = 20;
+const LEGACY_ACTION_VIEW_DEFAULT_LIMIT = 80;
+
 export function resolveActionViewSortSeed(options: {
   currentSortRaw?: unknown;
   sceneReadyDefaultSortRaw?: unknown;
@@ -28,9 +31,10 @@ export function resolveActionViewSortSeed(options: {
 }
 
 export function resolveActionViewContractLimit(limitRaw?: unknown): number {
-  const normalized = Number(limitRaw || 40);
-  if (!Number.isFinite(normalized) || normalized <= 0) return 40;
-  return Math.min(Math.trunc(normalized), 200);
+  const normalized = Number(limitRaw || DEFAULT_ACTION_VIEW_LIMIT);
+  if (!Number.isFinite(normalized) || normalized <= 0) return DEFAULT_ACTION_VIEW_LIMIT;
+  const limit = Math.min(Math.trunc(normalized), 200);
+  return limit === LEGACY_ACTION_VIEW_DEFAULT_LIMIT ? DEFAULT_ACTION_VIEW_LIMIT : limit;
 }
 
 export function buildActionViewListRequest(options: {

@@ -29,7 +29,7 @@ CAPABILITY_GROUPS: list[dict[str, Any]] = [
     {"key": "analytics", "label": "经营分析", "icon": "chart", "sequence": 50},
     {"key": "governance", "label": "治理配置", "icon": "shield", "sequence": 60},
     {"key": "material_management", "label": "物资管理", "icon": "boxes", "sequence": 70},
-    {"key": "others", "label": "工作台", "icon": "grid", "sequence": 80},
+    {"key": "others", "label": "常用入口", "icon": "grid", "sequence": 80},
 ]
 
 ROLE_GROUP_PREFIX = "smart_construction_custom.group_sc_role_"
@@ -119,8 +119,8 @@ _CAPABILITIES: list[dict[str, Any]] = [
     _cap("material.catalog.open", "物资目录", "查看物资目录与分类", "material_management", required_roles=["pm", "finance", "executive"]),
     _cap("material.procurement.list", "采购清单", "查看采购与供应入口", "material_management", required_roles=["pm", "finance", "executive"]),
 
-    _cap("workspace.today.focus", "今日关键动作", "今日关键动作工作台", "others", required_roles=["owner", "pm", "finance", "executive"]),
-    _cap("workspace.project.watch", "我关注的项目", "从工作台进入关注项目", "others", required_roles=["owner", "pm", "finance", "executive"]),
+    _cap("workspace.today.focus", "今日关键动作", "角色首页今日关键动作", "others", required_roles=["owner", "pm", "finance", "executive"]),
+    _cap("workspace.project.watch", "我关注的项目", "从角色首页进入关注项目", "others", required_roles=["owner", "pm", "finance", "executive"]),
 ]
 
 

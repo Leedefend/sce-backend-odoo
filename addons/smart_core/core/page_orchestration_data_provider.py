@@ -127,25 +127,24 @@ def build_default_page_actions(page_key: str) -> list[Dict[str, Any]]:
         ]
     if key == "my_work":
         return [
-            {"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"},
-            {"key": "open_workspace_overview", "label": "查看工作概览", "intent": "ui.contract"},
+            {"key": "open_workbench", "label": "返回角色首页", "intent": "ui.contract"},
             {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
         ]
     if key == "workbench":
         return [
-            {"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"},
+            {"key": "open_workbench", "label": "返回角色首页", "intent": "ui.contract"},
             {"key": "open_menu", "label": "打开菜单", "intent": "ui.contract"},
             {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
         ]
     if key in {"scene_health", "usage_analytics", "scene_packages"}:
         return [
-            {"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"},
+            {"key": "open_workbench", "label": "返回角色首页", "intent": "ui.contract"},
             {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
         ]
     if key in {"action", "record", "scene"}:
         return [
             {"key": "open_my_work", "label": "进入工作区", "intent": "ui.contract"},
-            {"key": "open_workspace_overview", "label": "查看工作概览", "intent": "ui.contract"},
+            {"key": "open_workspace_overview", "label": "查看我的工作概览", "intent": "ui.contract"},
             {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
         ]
     return [{"key": "refresh_page", "label": "刷新", "intent": "api.data"}]

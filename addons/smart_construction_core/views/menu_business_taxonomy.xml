@@ -22,7 +22,7 @@
     </record>
 
     <menuitem id="menu_sc_workspace_center"
-              name="工作台"
+              name="首页"
               parent="smart_construction_core.menu_sc_root"
               sequence="10"/>
 
@@ -279,9 +279,9 @@
     <delete model="ir.ui.menu"
             search="[('name', 'in', ['资金驾驶舱', '成本驾驶舱']), ('parent_id', '=', ref('smart_construction_core.menu_sc_projection_root')), ('id', 'not in', [ref('smart_construction_core.menu_sc_dashboard_fund_cockpit_fact'), ref('smart_construction_core.menu_sc_dashboard_cost_cockpit_fact')])]"/>
 
-    <!-- 工作台 -->
+    <!-- 首页 -->
     <record id="menu_sc_history_todo" model="ir.ui.menu">
-        <field name="name">工作台</field>
+        <field name="name">角色首页</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_workspace_center"/>
         <field name="action" eval="False"/>
         <field name="active" eval="True"/>

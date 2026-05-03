@@ -126,8 +126,8 @@ def _is_platform_minimum_surface_mode(env) -> bool:
 def _build_platform_minimum_nav_contract() -> dict:
     workspace_leaf = {
         "key": "scene:workspace.home",
-        "label": "工作台",
-        "title": "工作台",
+        "label": "角色首页",
+        "title": "角色首页",
         "menu_id": None,
         "children": [],
         "scene_key": "workspace.home",

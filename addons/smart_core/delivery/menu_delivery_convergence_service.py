@@ -50,7 +50,7 @@ class MenuDeliveryConvergenceService:
     TECHNICAL_TOKENS = ALWAYS_HIDDEN_TECHNICAL_TOKENS + BUSINESS_CONFIG_TOKENS + SYSTEM_CONFIG_TOKENS
     GOVERNANCE_TOKENS = SYSTEM_CONFIG_TOKENS
     NON_FORMAL_ENTRY_TOKENS = (
-        "工作台",
+        "角色首页",
         "生命周期驾驶舱",
         "能力矩阵",
     )

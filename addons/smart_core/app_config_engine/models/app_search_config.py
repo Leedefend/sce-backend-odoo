@@ -81,7 +81,7 @@ class AppSearchConfig(models.Model):
                 group_by=groupby_candidates,
                 facets={"enabled": True},
                 custom=custom_search,
-                defaults={"limit": 80, "order": getattr(self.env[model_name], "_order", "id desc") or "id desc"}
+                defaults={"limit": 20, "order": getattr(self.env[model_name], "_order", "id desc") or "id desc"}
             )
 
             # 5) 稳定哈希并落库
@@ -128,7 +128,7 @@ class AppSearchConfig(models.Model):
           "saved_filters":[{"id":12,"name":"本月客户","owner":3,"is_shared":true,"domain_raw":"[]","context_raw":"{}"}],
           "group_by":[{"field":"state","label":"状态","type":"selection","default":false}, ...],
           "facets":{"enabled":true},
-          "defaults":{"limit":80,"order":"id desc"}
+          "defaults":{"limit":20,"order":"id desc"}
         }
         """
         self.ensure_one()
@@ -203,7 +203,7 @@ class AppSearchConfig(models.Model):
           "group_by":      [ group_by 候选 ],
           "facets":        { "enabled": true },
           "custom":        { "filters": { "fields": [...] }, "group_by": { "fields": [...] }, "favorites": {...} },
-          "defaults":      { "limit":80, "order":"id desc" }
+          "defaults":      { "limit":20, "order":"id desc" }
         }
         """
         # 稳定排序（避免哈希抖动）
@@ -238,7 +238,7 @@ class AppSearchConfig(models.Model):
                 "group_by": {"enabled": False, "fields": []},
                 "favorites": {"save_enabled": False},
             },
-            "defaults": defaults or {"limit": 80, "order": "id desc"}
+            "defaults": defaults or {"limit": 20, "order": "id desc"}
         }
 
     # ======================= 视图解析 =======================

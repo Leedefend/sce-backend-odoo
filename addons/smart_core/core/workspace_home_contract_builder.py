@@ -142,7 +142,7 @@ def _workspace_layout_actions(defaults: Dict[str, str]) -> Dict[str, str]:
 
 def _workspace_hero_payload(*, has_business_signal: bool, gap_level: str, updated_at: str, partial_notice: str) -> Dict[str, Any]:
     defaults = {
-        "title": "工作台",
+        "title": "角色首页",
         "lead": "先做什么、状态如何、下一步去哪：围绕今日行动推进工作闭环。",
         "product_tags": ["工作协同", "状态洞察", "系统提醒"],
         "updated_at": updated_at,
@@ -183,6 +183,171 @@ def _workspace_hero_payload(*, has_business_signal: bool, gap_level: str, update
         if normalized:
             merged["product_tags"] = normalized
     return merged
+
+
+def _walk_workspace_nav_nodes(nodes: Any) -> Iterable[Dict[str, Any]]:
+    if not isinstance(nodes, list):
+        return
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        yield node
+        children = node.get("children")
+        if isinstance(children, list):
+            yield from _walk_workspace_nav_nodes(children)
+
+
+def _workspace_nav_node_text(node: Dict[str, Any], *keys: str) -> str:
+    for key in keys:
+        value = _to_text(node.get(key))
+        if value:
+            return value
+    meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+    for key in keys:
+        value = _to_text(meta.get(key))
+        if value:
+            return value
+    target = node.get("target") if isinstance(node.get("target"), dict) else {}
+    for key in keys:
+        value = _to_text(target.get(key))
+        if value:
+            return value
+    return ""
+
+
+def _workspace_route_scene_key(route: str) -> str:
+    text = _to_text(route)
+    if not text:
+        return ""
+    parsed = urlparse(text)
+    path = parsed.path or text
+    if path.startswith("/s/"):
+        return path[3:].strip("/")
+    query = parse_qs(parsed.query or "")
+    for key in ("scene_key", "scene"):
+        values = query.get(key) or []
+        if values:
+            return _to_text(values[0])
+    return ""
+
+
+def _workspace_landing_entry_label(data: Dict[str, Any], role_surface: Dict[str, Any]) -> Tuple[str, Dict[str, str]]:
+    landing_path = _to_text(role_surface.get("landing_path"))
+    landing_scene_key = _to_text(role_surface.get("landing_scene_key"))
+    candidate_routes = {landing_path} if landing_path else set()
+    if landing_scene_key:
+        candidate_routes.add(f"/s/{landing_scene_key}")
+    candidate_routes = {route for route in candidate_routes if route}
+
+    candidate_scene_keys = {landing_scene_key, _workspace_route_scene_key(landing_path)}
+    candidate_scene_keys = {key for key in candidate_scene_keys if key}
+
+    route_matches: List[Tuple[bool, str, str]] = []
+    scene_matches: List[Tuple[bool, str, str]] = []
+    for node in _walk_workspace_nav_nodes(data.get("nav")) or []:
+        label = _workspace_nav_node_text(node, "label", "title", "name")
+        if not label:
+            continue
+        is_leaf = not bool(node.get("children"))
+        node_routes = {
+            _workspace_nav_node_text(node, "route", "path", "url"),
+            _workspace_nav_node_text(node, "href"),
+        }
+        node_routes = {route for route in node_routes if route}
+        if candidate_routes and candidate_routes.intersection(node_routes):
+            route_matches.append((is_leaf, label, next(iter(candidate_routes.intersection(node_routes)))))
+        node_scene_key = (
+            _workspace_nav_node_text(node, "scene_key", "sceneKey")
+            or _workspace_route_scene_key(_workspace_nav_node_text(node, "route", "path", "url", "href"))
+        )
+        if node_scene_key and node_scene_key in candidate_scene_keys:
+            scene_matches.append((is_leaf, label, node_scene_key))
+    if route_matches:
+        _, label, route = sorted(route_matches, key=lambda item: not item[0])[0]
+        return label, {"source": "nav", "route": route}
+    if scene_matches:
+        _, label, scene_key = sorted(scene_matches, key=lambda item: not item[0])[0]
+        return label, {"source": "nav", "scene_key": scene_key}
+
+    scene_sources = []
+    if isinstance(data.get("scenes"), list):
+        scene_sources.append(data.get("scenes") or [])
+    scene_ready = data.get("scene_ready_contract_v1") if isinstance(data.get("scene_ready_contract_v1"), dict) else {}
+    if isinstance(scene_ready.get("scenes"), list):
+        scene_sources.append(scene_ready.get("scenes") or [])
+    for scenes in scene_sources:
+        for scene in scenes:
+            if not isinstance(scene, dict):
+                continue
+            scene_key = _to_text(scene.get("key")) or _to_text(scene.get("scene_key")) or _to_text(scene.get("code"))
+            if scene_key not in candidate_scene_keys:
+                continue
+            label = _to_text(scene.get("label")) or _to_text(scene.get("title")) or _to_text(scene.get("name"))
+            if label:
+                return label, {"source": "scene", "scene_key": scene_key}
+
+    fallback = landing_scene_key or landing_path
+    return fallback, {"source": "role_surface", "scene_key": landing_scene_key, "route": landing_path}
+
+
+def _build_workspace_hero_summary_rows(data: Dict[str, Any], role_source_code: str) -> List[Dict[str, str]]:
+    role_surface = data.get("role_surface") if isinstance(data.get("role_surface"), dict) else {}
+    user = data.get("user") if isinstance(data.get("user"), dict) else {}
+    rows: List[Dict[str, str]] = []
+
+    user_name = _to_text(user.get("name"))
+    role_label = _to_text(role_surface.get("role_label")) or _to_text(role_surface.get("role_code")) or _to_text(role_source_code)
+    if user_name:
+        rows.append(
+            {
+                "key": "user",
+                "label": "当前登录",
+                "value": user_name,
+            }
+        )
+    if role_label:
+        rows.append(
+            {
+                "key": "role",
+                "label": "当前角色",
+                "value": role_label,
+            }
+        )
+
+    landing_path = _to_text(role_surface.get("landing_path"))
+    landing_scene_key = _to_text(role_surface.get("landing_scene_key"))
+    if landing_path or landing_scene_key:
+        landing_label, landing_meta = _workspace_landing_entry_label(data, role_surface)
+        row = {
+            "key": "landing_entry",
+            "label": "默认入口",
+            "value": landing_label or landing_scene_key or landing_path,
+        }
+        if landing_path:
+            row["route"] = landing_path
+        if landing_scene_key:
+            row["scene_key"] = landing_scene_key
+        if landing_meta:
+            row["source"] = _to_text(landing_meta.get("source"))
+            source_route = _to_text(landing_meta.get("route"))
+            source_scene_key = _to_text(landing_meta.get("scene_key"))
+            if source_route:
+                row["source_route"] = source_route
+            if source_scene_key:
+                row["source_scene_key"] = source_scene_key
+        rows.append(
+            {key: value for key, value in row.items() if value}
+        )
+    return rows
+
+
+def _actual_fact_rows(rows: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    return [
+        row for row in rows
+        if isinstance(row, dict)
+        and _to_text(row.get("source")) == "business"
+        and _to_text(row.get("source_detail")) == "factual_record"
+    ]
 
 
 def _workspace_risk_summary_text(risk_red: int) -> str:
@@ -756,9 +921,9 @@ def _workspace_v1_zone_order(role_code: str) -> List[str]:
                 pass
 
     default_order = {
-        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
-        "finance": ["analysis", "today_focus", "quick_entries", "hero"],
-        "owner": ["analysis", "today_focus", "hero", "quick_entries"],
+        "pm": ["hero", "quick_entries", "today_focus", "analysis"],
+        "finance": ["hero", "quick_entries", "today_focus", "analysis"],
+        "owner": ["hero", "quick_entries", "today_focus", "analysis"],
     }
     return list(default_order.get(_to_text(role_code).lower(), default_order["owner"]))
 
@@ -1119,6 +1284,27 @@ def _build_capability_group_rows(
     capabilities: Iterable[Dict[str, Any]],
 ) -> List[Dict[str, Any]]:
     normalized_groups = [row for row in capability_groups if isinstance(row, dict)]
+    examples_by_group: Dict[str, List[Dict[str, Any]]] = {}
+    for cap in capabilities:
+        if not isinstance(cap, dict):
+            continue
+        group_key = _to_text(cap.get("group_key"))
+        if not group_key:
+            continue
+        examples = examples_by_group.setdefault(group_key, [])
+        if len(examples) >= 4:
+            continue
+        label = _to_text(cap.get("label")) or _to_text(cap.get("name")) or _to_text(cap.get("key"))
+        if not label:
+            continue
+        examples.append(
+            {
+                "key": _to_text(cap.get("key")),
+                "label": label,
+                "state": _capability_state(cap),
+                "capability_state": _to_text(cap.get("capability_state")).lower(),
+            }
+        )
     if normalized_groups:
         rows: List[Dict[str, Any]] = []
         for row in normalized_groups:
@@ -1137,6 +1323,7 @@ def _build_capability_group_rows(
                     "deny_count": _to_int(capability_state_counts.get("deny")),
                     "ready_count": ready_count,
                     "score": ready_count * 2 + allow_count,
+                    "examples": list(examples_by_group.get(_to_text(row.get("key")), [])),
                 }
             )
         return [row for row in rows if row.get("key")]
@@ -1159,10 +1346,22 @@ def _build_capability_group_rows(
                 "readonly_count": 0,
                 "deny_count": 0,
                 "ready_count": 0,
+                "examples": [],
             },
         )
-        row["capability_count"] += 1
         capability_state = _to_text(cap.get("capability_state")).lower()
+        if len(row["examples"]) < 4:
+            label = _to_text(cap.get("label")) or _to_text(cap.get("name")) or _to_text(cap.get("key"))
+            if label:
+                row["examples"].append(
+                    {
+                        "key": _to_text(cap.get("key")),
+                        "label": label,
+                        "state": _capability_state(cap),
+                        "capability_state": capability_state,
+                    }
+                )
+        row["capability_count"] += 1
         if capability_state == "allow":
             row["allow_count"] += 1
         elif capability_state == "readonly":
@@ -1954,28 +2153,28 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
     )
     v1_copy = _workspace_v1_copy(
         {
-            "zone.hero.title": "核心关注",
-            "zone.hero.description": "角色上下文与默认入口。",
-            "zone.today_focus.title": "今日优先事项",
-            "zone.today_focus.description": "先处理行动项，再快速处置风险提醒。",
-            "zone.analysis.title": "项目总体状态",
-            "zone.analysis.description": "关键指标、执行进展与风险动态。",
-            "zone.quick_entries.title": "常用功能",
-            "zone.quick_entries.description": "按业务场景快速进入处理。",
-            "block.hero_record_summary.title": "角色与入口摘要",
-            "block.todo_list_today.title": "今日行动",
+            "zone.hero.title": "欢迎使用智慧施工管理平台",
+            "zone.hero.description": "在这里查看项目、合同、成本、财务和待办事项，按你的角色处理日常业务。",
+            "zone.today_focus.title": "今天先做什么",
+            "zone.today_focus.description": "按角色优先级聚合当前需要处理的业务动作。",
+            "zone.analysis.title": "我需要关注什么",
+            "zone.analysis.description": "展示与当前角色相关的能力、进展和风险状态。",
+            "zone.quick_entries.title": "我可以做什么",
+            "zone.quick_entries.description": "按业务域进入当前角色可使用的功能。",
+            "block.hero_record_summary.title": "角色定位",
+            "block.todo_list_today.title": "今日优先动作",
             "block.risk_alert_panel.title": "系统提醒（高优先）",
             "block.advice_fold.title": "系统建议（补充）",
-            "block.metric_row_core.title": "关键指标",
+            "block.metric_row_core.title": "角色能力摘要",
             "block.progress_summary_ops.title": "综合进展",
             "block.activity_feed_risk.title": "风险动态",
-            "block.entry_grid_scene.title": "常用功能",
+            "block.entry_grid_scene.title": "可使用的业务域",
             "action.open_landing.label": "打开默认入口",
             "action.open_my_work.label": "查看全部",
             "action.open_risk_dashboard.label": "进入风险驾驶舱",
             "action.open_scene.label": "进入场景",
-            "page.title": "工作台",
-            "page.subtitle": "先处理行动项，再关注风险与总体状态",
+            "page.title": "角色首页",
+            "page.subtitle": "查看业务状态并处理当前角色下的日常工作",
             "page.badge.runtime_ok": "运行正常",
             "page.action.refresh": "刷新",
         }
@@ -1995,8 +2194,8 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
         zones = [
         {
             "key": "hero",
-            "title": v1_copy.get("zone.hero.title") or "核心关注",
-            "description": v1_copy.get("zone.hero.description") or "角色上下文与默认入口。",
+            "title": v1_copy.get("zone.hero.title") or "欢迎使用智慧施工管理平台",
+            "description": v1_copy.get("zone.hero.description") or "在这里查看项目、合同、成本、财务和待办事项，按你的角色处理日常业务。",
             "zone_type": "hero",
             "display_mode": "stack",
             "priority": 40,
@@ -2169,7 +2368,7 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
                     "collapsible": False,
                     "visibility": {"roles": audience, "capabilities": [], "expr": None},
                     "actions": [{"key": "open_scene", "label": v1_copy.get("action.open_scene.label") or "进入场景", "intent": "ui.contract"}],
-                    "payload": {"layout": "2x4", "show_icon": True, "show_hint": True},
+                    "payload": {"layout": "2x3", "show_icon": True, "show_hint": True, "max_items": 6},
                 },
             ],
         },
@@ -2208,8 +2407,8 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
         "scene_key": _workspace_scene("dashboard"),
         "page": {
             "key": "workspace.home",
-            "title": v1_copy.get("page.title") or "工作台",
-            "subtitle": v1_copy.get("page.subtitle") or "先处理行动项，再关注风险与总体状态",
+            "title": v1_copy.get("page.title") or "角色首页",
+            "subtitle": v1_copy.get("page.subtitle") or "查看业务状态并处理当前角色下的日常工作",
             "page_type": "workspace",
             "intent": "ui.contract",
             "scene_key": _workspace_scene("dashboard"),
@@ -2329,20 +2528,18 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         role_code=role_code,
         keyword_overrides=keyword_overrides,
     )
+    raw_today_actions = list(today_actions)
+    raw_risk_actions = list(risk_actions)
+    today_actions = _actual_fact_rows(today_actions)
+    risk_actions = _actual_fact_rows(risk_actions)
     today_business_count = len([row for row in today_actions if _to_text(row.get("source")) == "business"])
     risk_business_count = len([row for row in risk_actions if _to_text(row.get("source")) == "business"])
     urgent_risk_count = len([row for row in risk_actions if _to_text(row.get("status")) == "urgent"])
     risk_red = max(risk_red, urgent_risk_count)
     risk_now = max(risk_now, len(risk_actions))
     risk_max = max(risk_now, risk_d7, risk_d30, 1)
-    business_metrics, platform_metrics = _build_metric_sets(
-        ready_count=ready_count,
-        locked_count=locked_count,
-        preview_count=preview_count,
-        scene_count=scene_count,
-        today_action_count=today_business_count,
-        risk_action_count=risk_business_count,
-    )
+    business_metrics: List[Dict[str, Any]] = []
+    platform_metrics: List[Dict[str, Any]] = []
     extraction_stats = _build_extraction_stats(data=data, today_actions=today_actions, risk_actions=risk_actions)
     visibility_diagnosis = _build_business_visibility_diagnosis(data, role_code)
     has_business_signal = bool(
@@ -2352,14 +2549,14 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
     )
     scene_contract_core: Dict[str, Any] = {
         "scene": {"key": "workspace.home", "page": "workspace.home"},
-        "page": {"key": "workspace.home", "title": "工作台", "route": "/"},
+        "page": {"key": "workspace.home", "title": "角色首页", "route": "/"},
         "nav_ref": {
             "active_scene_key": _workspace_scene("dashboard"),
             "active_menu_key": f"scene:{_workspace_scene('dashboard')}",
             "active_menu_id": None,
         },
         "zones": {},
-        "record": {"hero": {"title": "工作台", "role_code": role_source_code}},
+        "record": {"hero": {"title": "角色首页", "role_code": role_source_code}},
         "permissions": {},
         "actions": {},
         "extensions": {},
@@ -2405,10 +2602,10 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 }
             contract = engine_fn(
                 scene_hint={"key": "workspace.home", "page": "workspace.home"},
-                page_hint={"key": "workspace.home", "title": "工作台", "route": "/"},
+                page_hint={"key": "workspace.home", "title": "角色首页", "route": "/"},
                 zone_specs=zone_specs,
                 built_zones=built_zones,
-                record={"hero": {"title": "工作台"}},
+                record={"hero": {"title": "角色首页"}},
                 diagnostics={"source": "workspace_home_contract_builder"},
             )
             if isinstance(contract, dict) and contract:
@@ -2436,6 +2633,9 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         updated_at=updated_at,
         partial_notice=partial_notice,
     )
+    hero_summary_rows = _build_workspace_hero_summary_rows(data, role_source_code)
+    if hero_summary_rows:
+        hero_payload["summary_rows"] = hero_summary_rows
     risk_summary_text = _workspace_risk_summary_text(risk_red)
     risk_payload = _workspace_risk_payload(
         summary=risk_summary_text,
@@ -2455,8 +2655,8 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         today_business_count=today_business_count,
     )
     ops_meta = _workspace_ops_meta(has_business_signal=has_business_signal)
-    scene_group_rows = _build_scene_group_rows(scenes, normalized_caps)
-    capability_group_rows = _build_capability_group_rows(capability_groups, normalized_caps)
+    scene_group_rows: List[Dict[str, Any]] = []
+    capability_group_rows: List[Dict[str, Any]] = []
     return {
         "scene": scene_contract_core.get("scene") or {},
         "page": scene_contract_core.get("page") or {},
@@ -2555,16 +2755,12 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
             "actions": list(risk_payload.get("actions") or []),
         },
         "ops": {
-            "bars": ops_payload.get("bars") or {},
-            "kpi": ops_payload.get("kpi") or {},
-            "summary": _workspace_ops_summary_text(
-                has_business_signal=has_business_signal,
-                risk_business_count=risk_business_count,
-                today_business_count=today_business_count,
-            ),
-            "tone": _to_text(ops_meta.get("tone")) or "info",
-            "progress": _to_text(ops_meta.get("progress")) or "running",
-            "data_state": _to_text(ops_meta.get("data_state")) or "fallback",
+            "bars": {},
+            "kpi": {},
+            "summary": "",
+            "tone": "",
+            "progress": "",
+            "data_state": "",
         },
         "scene_groups": list(scene_group_rows),
         "group_overview": list(capability_group_rows),
@@ -2574,7 +2770,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 "key": "workspace.hero",
                 "data": {
                     "hero": {
-                        "title": hero_payload.get("title") or "工作台",
+                        "title": hero_payload.get("title") or "角色首页",
                         "updated_at": hero_payload.get("updated_at") or updated_at,
                         "status_notice": hero_payload.get("status_notice") or partial_notice,
                     },
@@ -2621,7 +2817,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 ],
             },
         ],
-        "advice": _build_advice_items(locked_caps),
+        "advice": [],
         "contract_protocol": {
             "primary": "page_orchestration_v1",
             "legacy": {"key": "page_orchestration", "status": "compatibility"},
@@ -2647,9 +2843,20 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 "feature_disabled": feature_disabled,
             },
             "data_origin": {
-                "today_actions": "business_first_with_capability_fallback",
-                "risk_actions": "business_first_with_capability_fallback",
-                "metrics": "business_metrics",
+                "today_actions": "factual_record_only",
+                "risk_actions": "factual_record_only",
+                "metrics": "disabled_without_factual_metric_source",
+            },
+            "strict_fact_surface": {
+                "enabled": True,
+                "today_actions_input_count": len(raw_today_actions),
+                "today_actions_visible_count": len(today_actions),
+                "risk_actions_input_count": len(raw_risk_actions),
+                "risk_actions_visible_count": len(risk_actions),
+                "capability_group_overview_visible": False,
+                "scene_group_entries_visible": False,
+                "synthetic_metrics_visible": False,
+                "synthetic_ops_visible": False,
             },
             "action_ranking_policy": {
                 "version": "action_ranking_policy_v1",

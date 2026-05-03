@@ -32,7 +32,7 @@ export function buildActionViewLoadContractResetState(): {
     contractViewType: '',
     actionContract: null,
     resolvedModelRef: '',
-    contractLimit: 40,
+    contractLimit: 20,
   };
 }
 
@@ -171,4 +171,3 @@ export function applyActionViewLoadResetState(options: {
   options.kanbanTitleFieldHint.value = fields.kanbanTitleFieldHint;
   options.advancedFields.value = fields.advancedFields;
 }
-

@@ -172,7 +172,7 @@ class AppCatalogHandler(BaseIntentHandler):
         if not apps_out:
             apps_out.append({
                 "key": "app:workspace",
-                "label": "工作台",
+                "label": "角色首页",
                 "icon": None,
                 "badges": {"todo": 0},
                 "meta": {"app_id": "workspace", "category": "platform", "fallback": True},

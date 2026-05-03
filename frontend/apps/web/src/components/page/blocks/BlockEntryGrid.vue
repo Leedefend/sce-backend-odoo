@@ -16,12 +16,14 @@
     </header>
 
     <div v-if="items.length" class="entry-grid">
-      <button
+      <component
+        :is="item.actionable ? 'button' : 'article'"
         v-for="item in items"
         :key="item.id"
-        type="button"
+        :type="item.actionable ? 'button' : undefined"
         class="entry-item"
-        @click="emitAction(item.actionKey || 'open_scene', item.raw)"
+        :class="{ 'entry-item--readonly': !item.actionable }"
+        @click="item.actionable ? emitAction(item.actionKey || 'open_scene', item.raw) : undefined"
       >
         <p class="entry-title">{{ item.title }}</p>
         <p class="entry-hint">{{ item.hint }}</p>
@@ -30,7 +32,7 @@
             {{ meta.label }} {{ meta.value }}
           </span>
         </div>
-      </button>
+      </component>
     </div>
 
     <p v-else class="entry-empty">当前无可用入口</p>
@@ -69,6 +71,12 @@ const items = computed(() => {
       title: String(row.title || row.label || `入口 ${index + 1}`),
       hint: String(row.hint || row.subtitle || ''),
       actionKey: String(row.action_key || ''),
+      actionable: Boolean(
+        String(row.action_key || '').trim()
+        || String(row.scene_key || '').trim()
+        || String(row.route || '').trim()
+        || Number(row.action_id || row.menu_id || row.entry_id || 0) > 0
+      ),
       metaRows: [
         {
           label: '可用',
@@ -143,11 +151,22 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
   min-height: 104px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
+article.entry-item {
+  display: block;
+}
 
 .entry-item:hover {
   border-color: #60a5fa;
   box-shadow: 0 14px 28px rgba(37, 99, 235, 0.14);
   transform: translateY(-2px);
+}
+.entry-item--readonly {
+  cursor: default;
+}
+.entry-item--readonly:hover {
+  border-color: #e5e7eb;
+  box-shadow: none;
+  transform: none;
 }
 .entry-title {
   margin: 0;

@@ -24,5 +24,5 @@ export function pageModeLabel(mode: string): string {
   if (normalized === 'dashboard') return '驾驶舱';
   if (normalized === 'list') return '台账列表';
   if (normalized === 'ledger') return '业务台账';
-  return '工作台';
+  return '角色首页';
 }
