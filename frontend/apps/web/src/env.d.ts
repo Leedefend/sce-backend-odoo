@@ -2,6 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_LITE_CONTRACT_PILOT?: string;
+  readonly VITE_LITE_CONTRACT_ROLLOUT?: string;
 }
 
 interface ImportMeta {

@@ -47,7 +47,8 @@ REQUIRED_TOKENS = {
         "fallbackMode: 'legacy_default'",
     ),
     "frontend/apps/web/src/app/resolvers/actionResolver.ts": (
-        "isLiteContractPilotCandidate(seedMeta)",
+        "needsLiteContractAllTreeViewPreflight(seedMeta)",
+        "isLiteContractPilotCandidate(candidateMeta)",
         "loadModelLitePreviewContract",
         "adaptLiteContractToActionViewContract",
         "loadActionContract(actionId)",

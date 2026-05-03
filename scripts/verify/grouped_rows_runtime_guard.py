@@ -69,7 +69,7 @@ def main() -> int:
             errors.append(f"api_data missing marker: {marker}")
 
     action_markers = [
-        ":grouped-rows=\"groupedRows\"",
+        ":grouped-rows=\"currentPageGroupedRows\"",
         ":on-open-group=\"handleOpenGroupedRows\"",
         ":group-sample-limit=\"groupSampleLimit\"",
         ":on-group-sample-limit-change=\"handleGroupSampleLimitChange\"",
