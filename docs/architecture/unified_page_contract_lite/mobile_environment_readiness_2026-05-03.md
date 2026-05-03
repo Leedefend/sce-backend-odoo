@@ -11,7 +11,7 @@ mobile contract gates are executable.
 Current decision:
 
 ```text
-mobile_code_ready_terminal_device_environment_pending
+mobile_code_ready_wx_runner_ready_harmony_runner_pending
 ```
 
 ## Verified Locally
@@ -44,21 +44,28 @@ harmony_h5_runtime_browser_acceptance_pilot_passed
 Generated build output under `frontend/apps/mobile/dist/` is a local verification
 artifact and must not be committed.
 
-## Environment Blockers
+## Device Runner Status
 
-The final device acceptance probes are implemented and runnable, but this
-machine does not expose the required terminal runners.
+The final device acceptance probes are implemented and runnable.
 
-Missing WeChat mini-program runner:
+The WeChat mini-program runner is available through a WSL wrapper:
 
 ```text
-wechat-devtools
-wechatwebdevtools
-wxdt
-cli
+~/.local/bin/wechat-devtools -> C:\Program Files (x86)\Tencent\微信web开发者工具\cli.bat
 ```
 
-Missing Harmony runner:
+Current wx_mini decision:
+
+```text
+wx_mini_device_acceptance_runner_ready_manual_device_pending
+```
+
+The Harmony runner is still missing. A non-interactive WinGet attempt for
+`Huawei.DevEcoDeviceTool` downloaded the installer but did not complete package
+registration in this WSL-driven session. Complete DevEco Device Tool / DevEco
+Studio installation from the Windows GUI, then rerun the WSL setup helper.
+
+Missing Harmony runner commands:
 
 ```text
 hdc
@@ -67,23 +74,40 @@ deveco-studio
 HARMONY_HDC / HARMONY_DEVTOOLS_CLI / DEVECO_CLI
 ```
 
-Current device-gate decisions:
+Current harmony_h5 decision:
 
 ```text
-wx_mini_device_acceptance_pilot_blocked_missing_wechat_devtools_cli
 harmony_h5_device_acceptance_pilot_blocked_missing_harmony_runner
 ```
 
-These are environment blockers, not code failures.
+The Harmony blocker is an environment blocker, not a code failure.
+
+## WSL Helper
+
+Use this helper after installing Windows-side tooling:
+
+```bash
+bash scripts/ops/setup_mobile_device_acceptance_wsl.sh
+```
+
+It creates WSL wrappers under `~/.local/bin` for:
+
+```text
+wechat-devtools
+hdc
+deveco
+```
+
+The wrappers allow the existing Makefile device probes to discover Windows-side
+tools from WSL.
 
 ## Next Gate
 
-After the terminal runners are available, rerun:
+After the Harmony runner is available, rerun:
 
 ```bash
-make verify.unified_page_contract.lite.wx_mini_device_acceptance_pilot.host
 make verify.unified_page_contract.lite.harmony_h5_device_acceptance_pilot.host
 ```
 
-Only after those runners prove the terminal/device path should this branch be
-treated as fully accepted for mobile delivery.
+The WeChat runner probe is already ready, but still requires manual/device-level
+confirmation before it should be treated as end-user device acceptance.
