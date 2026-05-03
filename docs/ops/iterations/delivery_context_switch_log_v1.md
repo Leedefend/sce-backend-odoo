@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-03T15:30:00+08:00
+- blocker_key: `unified_page_contract_lite_wx_mini_runtime_acceptance_pilot_batch_78`
+- layer_target: `Frontend Mobile Runtime Artifact Acceptance`
+- module: `frontend/apps/mobile + scripts/verify + docs/architecture/unified_page_contract_lite + Makefile`
+- reason: `wx_mini 真实编译已通过，但还缺少产物级验收，不能直接把编译通过等同于小程序端可导入可运行。`
+- completed_step: `新增 unified_page_contract_lite_wx_mini_runtime_acceptance_pilot_guard.py 与 verify.unified_page_contract.lite.wx_mini_runtime_acceptance_pilot.host，目标执行真实 mp-weixin 编译并检查 app.json、project.config.json、app.js/app.wxss/App.wxml、vendor.js 与 pages/contract/index 四类产物，确认 app.json 注册 pages/contract/index。`
+- verification: `python3 -m py_compile scripts/verify/unified_page_contract_lite_wx_mini_runtime_acceptance_pilot_guard.py scripts/verify/unified_page_contract_lite_terminal_coverage_matrix_guard.py PASS；git diff --check PASS；make verify.unified_page_contract.lite.wx_mini_runtime_acceptance_pilot.host PASS，decision=wx_mini_runtime_artifact_acceptance_pilot_passed；make verify.unified_page_contract.lite.terminal_coverage_matrix PASS，decision=terminal_matrix_wx_artifact_acceptance_ready_harmony_acceptance_pending；pnpm -C frontend/apps/mobile typecheck PASS；make verify.unified_page_contract.lite PASS；make verify.docs.all PASS。`
+- active_commit: `7178f74a`
+- next_step: `提交 Batch-78；下一批进入 harmony_h5_runtime_acceptance_pilot.host 或 wx_mini_device_acceptance_pilot.host。`
+
 ### 2026-05-03T15:10:00+08:00
 - blocker_key: `unified_page_contract_lite_harmony_h5_compile_pilot_batch_77`
 - layer_target: `Frontend Mobile Compile Verification`
