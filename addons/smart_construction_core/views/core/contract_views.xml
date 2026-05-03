@@ -6,6 +6,8 @@
         <field name="arch" type="xml">
             <tree>
                 <field name="name"/>
+                <field name="legacy_contract_no"/>
+                <field name="legacy_external_contract_no"/>
                 <field name="state"/>
                 <field name="subject"/>
                 <field name="project_id"/>
@@ -14,13 +16,13 @@
                 <field name="category_id"/>
                 <field name="date_contract"/>
                 <field name="amount_final" sum="最终合同价合计"/>
-                <field name="settlement_amount"/>
-                <field name="invoice_amount"/>
-                <field name="uninvoiced_amount"/>
-                <field name="received_amount"/>
-                <field name="unreceived_amount"/>
-                <field name="paid_amount"/>
-                <field name="unpaid_amount"/>
+                <field name="settlement_amount" sum="结算金额合计"/>
+                <field name="invoice_amount" sum="开票金额合计"/>
+                <field name="uninvoiced_amount" sum="未开票金额合计"/>
+                <field name="received_amount" sum="收款金额合计"/>
+                <field name="unreceived_amount" sum="未收款金额合计"/>
+                <field name="paid_amount" sum="付款金额合计"/>
+                <field name="unpaid_amount" sum="未付款金额合计"/>
                 <field name="archived"/>
                 <field name="handler_id"/>
                 <field name="engineering_address"/>
@@ -84,6 +86,9 @@
                     <group>
                         <group>
                             <field name="name"/>
+                            <field name="legacy_contract_no"/>
+                            <field name="legacy_external_contract_no"/>
+                            <field name="legacy_document_no"/>
                             <field name="subject"/>
                             <field name="type" required="1"/>
                             <field name="project_id" required="1"/>
@@ -105,6 +110,7 @@
                             <field name="entry_user_id"/>
                             <field name="entry_data"/>
                             <field name="archived"/>
+                            <field name="legacy_status"/>
                         </group>
                     </group>
 

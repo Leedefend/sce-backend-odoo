@@ -8,10 +8,15 @@
             <tree>
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="material_name_summary"/>
+                <field name="material_spec_summary"/>
+                <field name="material_uom_summary"/>
                 <field name="date_plan"/>
                 <field name="total_plan_qty" sum="计划数量合计"/>
                 <field name="total_bill_qty" sum="清单数量合计"/>
                 <field name="total_unplanned_qty" sum="未计划数量合计"/>
+                <field name="line_note_summary"/>
+                <field name="line_attachment_count" sum="附件合计"/>
                 <field name="state"/>
             </tree>
         </field>

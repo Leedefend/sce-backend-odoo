@@ -99,6 +99,7 @@
                 <field name="requester_id"/>
                 <field name="department_id"/>
                 <field name="purpose"/>
+                <field name="legacy_fact_type"/>
                 <field name="sc_has_system_default"/>
                 <field name="state"/>
             </tree>
@@ -203,6 +204,7 @@
                 <field name="purchase_order_id"/>
                 <field name="acceptance_flow"/>
                 <field name="source_channel"/>
+                <field name="legacy_fact_type"/>
                 <field name="inspector_id"/>
                 <field name="sampling_required"/>
                 <field name="sc_has_system_default"/>
@@ -330,13 +332,19 @@
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="inbound_date"/>
+                <field name="material_name_summary"/>
+                <field name="material_spec_summary"/>
+                <field name="material_uom_summary"/>
+                <field name="total_qty" sum="入库数量合计"/>
+                <field name="unit_price_summary"/>
                 <field name="acceptance_id"/>
                 <field name="supplier_id"/>
                 <field name="warehouse_id"/>
                 <field name="dest_location_id"/>
                 <field name="keeper_id"/>
-                <field name="note"/>
+                <field name="line_note_summary"/>
                 <field name="amount_total" sum="金额合计"/>
+                <field name="legacy_fact_type"/>
                 <field name="sc_has_system_default"/>
                 <field name="state"/>
             </tree>
@@ -443,9 +451,11 @@
                 <field name="outbound_date"/>
                 <field name="warehouse_id"/>
                 <field name="source_location_id"/>
+                <field name="purpose"/>
                 <field name="receiver_id"/>
                 <field name="receiver_user_id"/>
                 <field name="keeper_id"/>
+                <field name="legacy_fact_type"/>
                 <field name="sc_has_system_default"/>
                 <field name="state"/>
             </tree>
@@ -553,6 +563,7 @@
                 <field name="supplier_ids" widget="many2many_tags"/>
                 <field name="selected_supplier_id"/>
                 <field name="owner_id"/>
+                <field name="legacy_fact_type"/>
                 <field name="sc_has_system_default"/>
                 <field name="state"/>
             </tree>
@@ -671,11 +682,12 @@
                 <field name="settlement_date"/>
                 <field name="supplier_id"/>
                 <field name="purchase_order_id"/>
-                <field name="amount_untaxed"/>
-                <field name="tax_amount"/>
-                <field name="amount_total"/>
+                <field name="amount_untaxed" sum="未税金额合计"/>
+                <field name="tax_amount" sum="税额合计"/>
+                <field name="amount_total" sum="结算金额合计"/>
                 <field name="currency_id"/>
                 <field name="owner_id"/>
+                <field name="legacy_fact_type"/>
                 <field name="sc_has_system_default"/>
                 <field name="state"/>
             </tree>

@@ -12,11 +12,15 @@
                     <field name="project_id"/>
                     <field name="partner_id"/>
                     <field name="contract_id"/>
+                    <field name="source_document_no"/>
                     <field name="invoice_no"/>
                     <field name="invoice_party_name"/>
                     <field name="invoice_issue_company"/>
-                    <field name="invoice_amount"/>
-                    <field name="current_receipt_amount"/>
+                    <field name="source_table_name"/>
+                    <field name="amount_source"/>
+                    <field name="invoice_amount" sum="发票金额合计"/>
+                    <field name="invoiced_before_amount" sum="历史已开票合计"/>
+                    <field name="current_receipt_amount" sum="本次收款合计"/>
                     <field name="attachment_count"/>
                 </tree>
             </field>
@@ -44,7 +48,19 @@
                                 <field name="project_id" readonly="1"/>
                                 <field name="partner_id" readonly="1"/>
                                 <field name="contract_id" readonly="1"/>
+                                <field name="source_document_no"/>
+                                <field name="source_table_name"/>
+                                <field name="amount_source"/>
                             </group>
+                        </group>
+                        <group string="历史来源">
+                            <field name="legacy_invoice_line_id" readonly="1"/>
+                            <field name="legacy_receipt_id" readonly="1"/>
+                            <field name="legacy_invoice_id" readonly="1"/>
+                            <field name="legacy_invoice_child_id" readonly="1"/>
+                            <field name="legacy_pid" readonly="1"/>
+                            <field name="legacy_file_bill_id" readonly="1"/>
+                            <field name="import_batch" readonly="1"/>
                         </group>
                         <group>
                             <field name="invoice_no"/>

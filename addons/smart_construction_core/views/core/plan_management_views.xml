@@ -25,6 +25,7 @@
                 <field name="phase_name"/>
                 <field name="creation_method"/>
                 <field name="version_stage"/>
+                <field name="legacy_fact_type"/>
                 <field name="owner_id"/>
                 <field name="planned_start"/>
                 <field name="planned_finish"/>
@@ -87,6 +88,7 @@
                                     <field name="progress_rate"/>
                                     <field name="delay_days" readonly="1"/>
                                     <field name="is_overdue" readonly="1"/>
+                                    <field name="legacy_fact_type"/>
                                     <field name="state"/>
                                 </tree>
                             </field>
@@ -103,6 +105,7 @@
                                     <field name="version_date"/>
                                     <field name="approved_by"/>
                                     <field name="approved_date"/>
+                                    <field name="legacy_fact_type"/>
                                     <field name="state"/>
                                 </tree>
                             </field>
@@ -160,6 +163,7 @@
                 <field name="line_id"/>
                 <field name="report_type"/>
                 <field name="source_channel"/>
+                <field name="legacy_fact_type"/>
                 <field name="reporter_id"/>
                 <field name="progress_rate"/>
                 <field name="approver_id"/>

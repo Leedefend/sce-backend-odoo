@@ -32,8 +32,12 @@
                     <field name="date_document"/>
                     <field name="project_id"/>
                     <field name="document_no"/>
+                    <field name="source_kind"/>
                     <field name="account_name"/>
+                    <field name="bank_account_no"/>
                     <field name="confirmation_item_name"/>
+                    <field name="account_balance" sum="账面余额"/>
+                    <field name="bank_balance" sum="银行余额"/>
                     <field name="daily_income" sum="本日收入"/>
                     <field name="daily_expense" sum="本日支出"/>
                     <field name="confirmation_amount" sum="确认金额"/>

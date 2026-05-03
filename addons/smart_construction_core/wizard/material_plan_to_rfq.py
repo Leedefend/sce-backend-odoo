@@ -13,9 +13,15 @@ class MaterialPlanToRfqWizard(models.TransientModel):
 
     partner_id = fields.Many2one(
         "res.partner",
-        string="供应商",
+        string="主供应商",
         required=True,
         domain=[("supplier_rank", ">", 0)],
+    )
+    partner_ids = fields.Many2many(
+        "res.partner",
+        string="其他参与供应商",
+        domain=[("supplier_rank", ">", 0)],
+        help="同一询比价可同时维护多家供应商报价；主供应商会自动纳入参与范围。",
     )
     note = fields.Text(string="备注")
 
@@ -57,10 +63,11 @@ class MaterialPlanToRfqWizard(models.TransientModel):
             if rec._name == "project.material.plan" and rec.state != "approved":
                 raise UserError(_("物资计划未批准，不能生成询比价。"))
 
+        suppliers = self.partner_id | self.partner_ids
         matched_lines = []
         for line, parent in self._iter_plan_lines(records):
             partner = getattr(line, "partner_id", False) or getattr(line, "vendor_id", False)
-            if partner and partner.id == self.partner_id.id:
+            if partner and partner in suppliers:
                 matched_lines.append((line, parent))
 
         # 如果明细未标注供应商或与选择不符，回退为“该计划下全部明细”
@@ -106,26 +113,27 @@ class MaterialPlanToRfqWizard(models.TransientModel):
                         _("物料 %s 的计量单位 %s 与产品默认采购单位 %s 不属于同一类别，请调整产品或计划行。")
                         % (product.display_name, uom.display_name, base_uom.display_name)
                     )
-                rfq_vals["line_ids"].append(
-                    (
-                        0,
-                        0,
-                        {
-                            "source_material_plan_line_id": line.id
-                            if line._name == "project.material.plan.line"
-                            else False,
-                            "supplier_id": self.partner_id.id,
-                            "product_id": product.id,
-                            "material_spec": getattr(line, "spec_model", False)
-                            or getattr(line, "spec", False)
-                            or product.default_code,
-                            "product_uom_id": (product.uom_po_id or uom).id,
-                            "qty": qty,
-                            "unit_price": getattr(line, "price_unit", None) or getattr(line, "price", None) or 0.0,
-                            "note": getattr(line, "note", False),
-                        },
+                for supplier in suppliers:
+                    rfq_vals["line_ids"].append(
+                        (
+                            0,
+                            0,
+                            {
+                                "source_material_plan_line_id": line.id
+                                if line._name == "project.material.plan.line"
+                                else False,
+                                "supplier_id": supplier.id,
+                                "product_id": product.id,
+                                "material_spec": getattr(line, "spec_model", False)
+                                or getattr(line, "spec", False)
+                                or product.default_code,
+                                "product_uom_id": (product.uom_po_id or uom).id,
+                                "qty": qty,
+                                "unit_price": getattr(line, "price_unit", None) or getattr(line, "price", None) or 0.0,
+                                "note": getattr(line, "note", False),
+                            },
+                        )
                     )
-                )
             created_rfqs |= MaterialRfq.create(rfq_vals)
 
         _logger.warning("✅ material_plan_to_rfq.py 已加载")

@@ -41,12 +41,16 @@
                 <field name="name"/>
                 <field name="spec_model"/>
                 <field name="uom_text"/>
+                <field name="aux_uom_text"/>
                 <field name="planned_price"/>
                 <field name="internal_price"/>
                 <field name="category_id"/>
                 <field name="project_id"/>
+                <field name="depth"/>
+                <field name="short_pinyin"/>
                 <field name="source_origin"/>
                 <field name="promoted_product_id"/>
+                <field name="active"/>
             </tree>
         </field>
     </record>

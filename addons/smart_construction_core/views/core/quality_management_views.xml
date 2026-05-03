@@ -49,6 +49,7 @@
                 <field name="standard_type"/>
                 <field name="scope"/>
                 <field name="import_source"/>
+                <field name="legacy_fact_type"/>
                 <field name="company_id"/>
                 <field name="project_id"/>
                 <field name="default_rechecker_id"/>
@@ -78,6 +79,11 @@
                         <field name="applies_building_room"/>
                         <field name="applies_road_coordinate"/>
                         <field name="active"/>
+                    </group>
+                    <group string="来源追溯">
+                        <field name="legacy_fact_model"/>
+                        <field name="legacy_fact_id"/>
+                        <field name="legacy_fact_type"/>
                     </group>
                     <field name="item_ids">
                         <tree editable="bottom">
@@ -170,6 +176,7 @@
                 <field name="project_id"/>
                 <field name="issue_category"/>
                 <field name="source_channel"/>
+                <field name="legacy_fact_type"/>
                 <field name="issue_date"/>
                 <field name="location"/>
                 <field name="issue_level"/>
@@ -259,6 +266,7 @@
                 <field name="issue_id"/>
                 <field name="project_id"/>
                 <field name="source_channel"/>
+                <field name="legacy_fact_type"/>
                 <field name="issue_level"/>
                 <field name="responsible_party_id"/>
                 <field name="rectification_deadline"/>
@@ -336,6 +344,7 @@
                 <field name="issue_id"/>
                 <field name="project_id"/>
                 <field name="source_channel"/>
+                <field name="legacy_fact_type"/>
                 <field name="issue_level"/>
                 <field name="responsible_party_id"/>
                 <field name="recheck_date"/>
@@ -374,6 +383,13 @@
                         </page>
                         <page string="照片批次">
                             <field name="photo_batch_ids"/>
+                        </page>
+                        <page string="来源追溯">
+                            <group>
+                                <field name="legacy_fact_model"/>
+                                <field name="legacy_fact_id"/>
+                                <field name="legacy_fact_type"/>
+                            </group>
                         </page>
                     </notebook>
                 </sheet>

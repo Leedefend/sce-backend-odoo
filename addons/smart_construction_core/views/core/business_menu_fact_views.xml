@@ -27,15 +27,20 @@
       <field name="model">sc.dashboard.cockpit.fact</field>
       <field name="arch" type="xml">
         <tree string="驾驶舱业务事实" default_order="business_date desc, id desc">
+          <field name="document_no"/>
           <field name="business_date"/>
           <field name="fact_type"/>
           <field name="name"/>
           <field name="project_id"/>
           <field name="partner_id"/>
+          <field name="requester_id"/>
+          <field name="handler_id"/>
           <field name="cockpit_scope"/>
           <field name="metric_period"/>
+          <field name="quantity" sum="数量合计"/>
           <field name="metric_value" sum="指标合计"/>
           <field name="amount" sum="金额合计"/>
+          <field name="tax_amount" sum="税额合计"/>
           <field name="source_model"/>
           <field name="source_res_id"/>
           <field name="state"/>
@@ -139,12 +144,17 @@
       <field name="model">sc.workbench.item</field>
       <field name="arch" type="xml">
         <tree string="工作台事项" default_order="todo_deadline asc, id desc">
+          <field name="document_no"/>
+          <field name="business_date"/>
           <field name="todo_deadline"/>
           <field name="priority"/>
           <field name="fact_type"/>
           <field name="name"/>
           <field name="project_id"/>
           <field name="partner_id"/>
+          <field name="requester_id"/>
+          <field name="handler_id"/>
+          <field name="due_date"/>
           <field name="source_model"/>
           <field name="source_res_id"/>
           <field name="state"/>

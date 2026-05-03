@@ -545,6 +545,12 @@ class ScMaterialInbound(models.Model):
     stock_picking_id = fields.Many2one("stock.picking", string="库存入库单", readonly=True, copy=False, index=True)
     currency_id = fields.Many2one("res.currency", string="币种", related="project_id.company_id.currency_id", store=True)
     amount_total = fields.Monetary(string="金额合计", currency_field="currency_id", compute="_compute_amount_total", store=True)
+    material_name_summary = fields.Char(string="材料名称", compute="_compute_inbound_line_summaries", store=True)
+    material_spec_summary = fields.Char(string="规格型号", compute="_compute_inbound_line_summaries", store=True)
+    material_uom_summary = fields.Char(string="单位", compute="_compute_inbound_line_summaries", store=True)
+    total_qty = fields.Float(string="入库数量合计", compute="_compute_inbound_line_summaries", store=True)
+    unit_price_summary = fields.Char(string="单价", compute="_compute_inbound_line_summaries", store=True)
+    line_note_summary = fields.Char(string="备注", compute="_compute_inbound_line_summaries", store=True)
     state = fields.Selection(
         [
             ("draft", "草稿"),
@@ -583,6 +589,49 @@ class ScMaterialInbound(models.Model):
     def _compute_amount_total(self):
         for record in self:
             record.amount_total = sum(record.line_ids.mapped("amount"))
+
+    @api.depends(
+        "line_ids.product_id",
+        "line_ids.material_spec",
+        "line_ids.product_uom_id",
+        "line_ids.qty",
+        "line_ids.unit_price",
+        "line_ids.note",
+    )
+    def _compute_inbound_line_summaries(self):
+        for record in self:
+            record.material_name_summary = record._summarize_inbound_line_text(
+                record.line_ids.mapped("product_id.display_name")
+            )
+            record.material_spec_summary = record._summarize_inbound_line_text(
+                record.line_ids.mapped("material_spec")
+            )
+            record.material_uom_summary = record._summarize_inbound_line_text(
+                record.line_ids.mapped("product_uom_id.name")
+            )
+            record.total_qty = sum(record.line_ids.mapped("qty"))
+            record.unit_price_summary = record._summarize_inbound_line_text(
+                record._format_summary_number(line.unit_price) for line in record.line_ids
+            )
+            record.line_note_summary = record._summarize_inbound_line_text(record.line_ids.mapped("note"))
+
+    @api.model
+    def _format_summary_number(self, value):
+        value = value or 0.0
+        return ("%s" % value).rstrip("0").rstrip(".")
+
+    @api.model
+    def _summarize_inbound_line_text(self, values, limit=3):
+        values = list(values)
+        texts = []
+        for value in values:
+            if value in (False, None, "") or value in texts:
+                continue
+            texts.append(value)
+            if len(texts) >= limit:
+                break
+        suffix = "等" if len([value for value in values if value not in (False, None, "")]) > len(texts) else ""
+        return "、".join(texts) + suffix if texts else False
 
     @api.model_create_multi
     def create(self, vals_list):

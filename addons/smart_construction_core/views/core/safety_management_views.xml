@@ -73,6 +73,7 @@
                 <field name="owner_id"/>
                 <field name="plan_date"/>
                 <field name="approval_deadline"/>
+                <field name="legacy_fact_type"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -105,6 +106,13 @@
                         <page string="方案附件">
                             <field name="attachment_ids" widget="many2many_binary"/>
                         </page>
+                        <page string="来源追溯">
+                            <group>
+                                <field name="legacy_fact_model"/>
+                                <field name="legacy_fact_id"/>
+                                <field name="legacy_fact_type"/>
+                            </group>
+                        </page>
                     </notebook>
                 </sheet>
                 <chatter/>
@@ -122,6 +130,7 @@
                 <field name="safety_plan_id"/>
                 <field name="disclosure_date"/>
                 <field name="approval_deadline"/>
+                <field name="legacy_fact_type"/>
                 <field name="owner_id"/>
                 <field name="state"/>
             </tree>
@@ -155,6 +164,13 @@
                         </page>
                         <page string="交底附件">
                             <field name="attachment_ids" widget="many2many_binary"/>
+                        </page>
+                        <page string="来源追溯">
+                            <group>
+                                <field name="legacy_fact_model"/>
+                                <field name="legacy_fact_id"/>
+                                <field name="legacy_fact_type"/>
+                            </group>
                         </page>
                     </notebook>
                 </sheet>
@@ -277,6 +293,7 @@
                 <field name="location"/>
                 <field name="coordinate"/>
                 <field name="valid_to"/>
+                <field name="legacy_fact_type"/>
                 <field name="owner_id"/>
                 <field name="control_status"/>
                 <field name="state"/>
@@ -355,6 +372,7 @@
                 <field name="project_id"/>
                 <field name="issue_category"/>
                 <field name="source_channel"/>
+                <field name="legacy_fact_type"/>
                 <field name="issue_date"/>
                 <field name="location"/>
                 <field name="issue_level"/>
@@ -415,6 +433,13 @@
                         <page string="隐患信息">
                             <field name="hazard_source_id"/>
                         </page>
+                        <page string="来源追溯">
+                            <group>
+                                <field name="legacy_fact_model"/>
+                                <field name="legacy_fact_id"/>
+                                <field name="legacy_fact_type"/>
+                            </group>
+                        </page>
                     </notebook>
                 </sheet>
                 <chatter/>
@@ -430,6 +455,7 @@
                 <field name="issue_id"/>
                 <field name="project_id"/>
                 <field name="source_channel"/>
+                <field name="legacy_fact_type"/>
                 <field name="issue_level"/>
                 <field name="responsible_party_id"/>
                 <field name="rectification_deadline"/>
@@ -507,6 +533,7 @@
                 <field name="issue_id"/>
                 <field name="project_id"/>
                 <field name="source_channel"/>
+                <field name="legacy_fact_type"/>
                 <field name="issue_level"/>
                 <field name="responsible_party_id"/>
                 <field name="recheck_date"/>
@@ -545,6 +572,13 @@
                         </page>
                         <page string="照片批次">
                             <field name="photo_batch_ids"/>
+                        </page>
+                        <page string="来源追溯">
+                            <group>
+                                <field name="legacy_fact_model"/>
+                                <field name="legacy_fact_id"/>
+                                <field name="legacy_fact_type"/>
+                            </group>
                         </page>
                     </notebook>
                 </sheet>

@@ -35,9 +35,15 @@
                     <field name="date_diary"/>
                     <field name="project_id"/>
                     <field name="document_no"/>
+                    <field name="title"/>
                     <field name="diary_type"/>
+                    <field name="category"/>
                     <field name="report_period_start"/>
                     <field name="report_period_end"/>
+                    <field name="construction_unit"/>
+                    <field name="project_manager"/>
+                    <field name="weather"/>
+                    <field name="manpower_count" sum="现场人数"/>
                     <field name="quality_name"/>
                     <field name="handler_name"/>
                     <field name="state"/>
