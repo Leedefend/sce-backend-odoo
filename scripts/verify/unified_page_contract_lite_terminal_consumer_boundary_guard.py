@@ -15,6 +15,7 @@ BOUNDARY_PATH = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractL
 STORE_PATH = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractLiteTerminalStore.ts"
 RENDERER_INPUT_PATH = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractLiteTerminalRendererInput.ts"
 RENDERER_PATH = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractLiteTerminalRenderer.ts"
+PAGE_INTEGRATION_PATH = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractLiteTerminalPageIntegration.ts"
 BASE_CONTRACT_PATH = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractLite.ts"
 MAKEFILE_PATH = ROOT / "Makefile"
 
@@ -82,6 +83,16 @@ REQUIRED_RENDERER_TOKENS = (
     "actionNodeCount",
 )
 
+REQUIRED_PAGE_INTEGRATION_TOKENS = (
+    "LiteTerminalPageIntegration",
+    "LiteTerminalPageIntegrationSnapshot",
+    "createLiteTerminalPageIntegration",
+    "createLiteTerminalPageIntegrationSnapshot",
+    "LiteTerminalRendererOutput",
+    "rootNodeId",
+    "mountedNodeCount",
+)
+
 
 def read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
@@ -98,7 +109,15 @@ def main() -> int:
     args = parser.parse_args()
 
     errors: list[str] = []
-    for path in (BOUNDARY_PATH, STORE_PATH, RENDERER_INPUT_PATH, RENDERER_PATH, BASE_CONTRACT_PATH, MAKEFILE_PATH):
+    for path in (
+        BOUNDARY_PATH,
+        STORE_PATH,
+        RENDERER_INPUT_PATH,
+        RENDERER_PATH,
+        PAGE_INTEGRATION_PATH,
+        BASE_CONTRACT_PATH,
+        MAKEFILE_PATH,
+    ):
         if not path.exists():
             errors.append(f"missing file: {path.relative_to(ROOT)}")
 
@@ -106,6 +125,7 @@ def main() -> int:
     store = read_text(STORE_PATH) if STORE_PATH.exists() else ""
     renderer_input = read_text(RENDERER_INPUT_PATH) if RENDERER_INPUT_PATH.exists() else ""
     renderer = read_text(RENDERER_PATH) if RENDERER_PATH.exists() else ""
+    page_integration = read_text(PAGE_INTEGRATION_PATH) if PAGE_INTEGRATION_PATH.exists() else ""
     base_contract = read_text(BASE_CONTRACT_PATH) if BASE_CONTRACT_PATH.exists() else ""
     makefile = read_text(MAKEFILE_PATH) if MAKEFILE_PATH.exists() else ""
 
@@ -133,6 +153,12 @@ def main() -> int:
     renderer_output_forbidden = sorted(token for token in FORBIDDEN_BOUNDARY_TOKENS if token in renderer)
     if renderer_output_forbidden:
         errors.append(f"renderer contains forbidden semantic/runtime tokens: {renderer_output_forbidden}")
+    for token in REQUIRED_PAGE_INTEGRATION_TOKENS:
+        if token not in page_integration:
+            errors.append(f"page integration missing token: {token}")
+    page_integration_forbidden = sorted(token for token in FORBIDDEN_BOUNDARY_TOKENS if token in page_integration)
+    if page_integration_forbidden:
+        errors.append(f"page integration contains forbidden semantic/runtime tokens: {page_integration_forbidden}")
 
     if "export type LiteClientType = 'web_pc' | 'wx_mini' | 'harmony_h5';" not in base_contract:
         errors.append("base Lite contract does not expose the three supported terminal clients")
@@ -154,6 +180,7 @@ def main() -> int:
         and path.endswith("unifiedPageContractLiteTerminalStore.ts") is False
         and path.endswith("unifiedPageContractLiteTerminalRendererInput.ts") is False
         and path.endswith("unifiedPageContractLiteTerminalRenderer.ts") is False
+        and path.endswith("unifiedPageContractLiteTerminalPageIntegration.ts") is False
         and path.endswith("unifiedPageContractLite.ts") is False
         and "unifiedPageContractLitePilot.ts" not in path
     ]
@@ -166,6 +193,7 @@ def main() -> int:
         "store": STORE_PATH.relative_to(ROOT).as_posix(),
         "rendererInput": RENDERER_INPUT_PATH.relative_to(ROOT).as_posix(),
         "renderer": RENDERER_PATH.relative_to(ROOT).as_posix(),
+        "pageIntegration": PAGE_INTEGRATION_PATH.relative_to(ROOT).as_posix(),
         "baseContract": BASE_CONTRACT_PATH.relative_to(ROOT).as_posix(),
         "frontendLiteFiles": frontend_contract_files,
         "policy": "shared_terminal_consumer_boundary_only",
