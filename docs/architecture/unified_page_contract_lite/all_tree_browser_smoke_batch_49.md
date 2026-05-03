@@ -30,7 +30,7 @@ It validates:
 - selected action ids are opened through `/a/<action_id>`
 - action routing dispatches `load_contract`
 - the response contains `load_contract Lite preview`
-- there is no action-phase `ui.contract` fallback
+- there is no repeated action-phase `ui.contract` fallback
 - table rows render
 - no browser console or page errors appear
 

@@ -4,6 +4,7 @@ import { loadActionContract, loadModelLitePreviewContract } from '../../api/cont
 import {
   adaptLiteContractToActionViewContract,
   isLiteContractPilotCandidate,
+  needsLiteContractAllTreeViewPreflight,
 } from '../runtime/unifiedPageContractLitePilot';
 
 export interface ActionResolution {
@@ -120,12 +121,20 @@ export async function resolveAction(
   const metaFromMenu = findActionMeta(menuTree, actionId);
   // Always prefer menuTree meta to avoid stale/incomplete currentAction snapshots.
   const seedMeta = metaFromMenu || (currentMatches ? currentAction : null);
-  if (isLiteContractPilotCandidate(seedMeta)) {
-    const liteContract = await loadModelLitePreviewContract(String(seedMeta?.model || ''), { viewType: 'tree' });
+
+  let legacyContract: Awaited<ReturnType<typeof loadActionContract>> | null = null;
+  let candidateMeta = seedMeta;
+  if (needsLiteContractAllTreeViewPreflight(seedMeta)) {
+    legacyContract = await loadActionContract(actionId);
+    candidateMeta = mergeMeta(seedMeta, resolveMetaFromContract(legacyContract, actionId));
+  }
+
+  if (isLiteContractPilotCandidate(candidateMeta)) {
+    const liteContract = await loadModelLitePreviewContract(String(candidateMeta?.model || ''), { viewType: 'tree' });
     if (liteContract) {
       const contract = adaptLiteContractToActionViewContract(liteContract);
       const fallbackMeta = resolveMetaFromContract(contract, actionId);
-      const meta = mergeMeta(seedMeta, fallbackMeta);
+      const meta = mergeMeta(candidateMeta, fallbackMeta);
       if (!meta.action_id) {
         meta.action_id = Number(actionId || 0);
       }
@@ -133,7 +142,7 @@ export async function resolveAction(
     }
   }
 
-  const contract = await loadActionContract(actionId);
+  const contract = legacyContract || await loadActionContract(actionId);
   const fallbackMeta = resolveMetaFromContract(contract, actionId);
   const meta = mergeMeta(seedMeta, fallbackMeta);
   if (!meta.action_id) {

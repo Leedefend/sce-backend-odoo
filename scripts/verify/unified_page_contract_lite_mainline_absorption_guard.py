@@ -65,7 +65,8 @@ FRONTEND_TOKENS = {
         "entryPoint: 'load_contract'",
     ),
     "frontend/apps/web/src/app/resolvers/actionResolver.ts": (
-        "isLiteContractPilotCandidate(seedMeta)",
+        "needsLiteContractAllTreeViewPreflight(seedMeta)",
+        "isLiteContractPilotCandidate(candidateMeta)",
         "loadModelLitePreviewContract",
         "loadActionContract(actionId)",
     ),

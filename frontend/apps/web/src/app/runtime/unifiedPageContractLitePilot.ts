@@ -50,6 +50,13 @@ export function isLiteContractPilotCandidate(meta?: NavMeta | null): boolean {
   return model === LITE_CONTRACT_PILOT_MODEL;
 }
 
+export function needsLiteContractAllTreeViewPreflight(meta?: NavMeta | null): boolean {
+  if (liteContractRolloutMode() !== 'all_tree') return false;
+  const model = String(meta?.model || '').trim();
+  if (!model) return false;
+  return splitModes(meta?.view_modes || []).length === 0;
+}
+
 function collectWidgets(containers: LiteContainer[]): LiteWidget[] {
   const out: LiteWidget[] = [];
   const visit = (rows: LiteContainer[]) => {

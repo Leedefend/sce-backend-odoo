@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-03T10:49:19+08:00
+- blocker_key: `unified_page_contract_lite_all_tree_legacy_fallback_batch_50`
+- layer_target: `Frontend Contract Consumer / Lite all_tree Fallback Guard`
+- module: `frontend/apps/web/src/app/runtime + frontend/apps/web/src/app/resolvers + scripts/verify + Makefile + docs/architecture/unified_page_contract_lite`
+- reason: `发现 demo nav 中 action 642 真实 view_type=kanban 但菜单 meta 缺少 view_modes；all_tree 不能把未知视图猜成 tree，必须先用后端 ui.contract 预检真实 view_type，再决定是否取 Lite。`
+- completed_step: `新增 all_tree view preflight：菜单 meta 缺少 view_modes 时先用 legacy ui.contract 读取后端真实 view_type，只允许确认 tree/list 后继续 load_contract Lite preview；新增 all_tree legacy browser negative；更新 rollout guard、Make target、Batch-49 正向 smoke 口径与 Batch-50 文档。`
+- verification: `pnpm --dir frontend/apps/web run typecheck PASS；make verify.unified_page_contract.lite.rollout_switch PASS；make verify.unified_page_contract.lite PASS；make verify.frontend.quick.gate PASS（vite chunk size warning only）；DB_NAME=sc_demo E2E_LOGIN=cost1 E2E_PASSWORD=123456 FRONTEND_URL=http://127.0.0.1:5176 LITE_ALL_TREE_ACTION_IDS=506 make verify.unified_page_contract.lite.all_tree_browser.host PASS，report=artifacts/playwright/lite_all_tree_rollout/20260503T024746/summary.json；DB_NAME=sc_demo E2E_LOGIN=cost1 E2E_PASSWORD=123456 FRONTEND_URL=http://127.0.0.1:5176 LITE_ALL_TREE_LEGACY_ACTION_ID=642 make verify.unified_page_contract.lite.all_tree_legacy_browser.host PASS，report=artifacts/playwright/lite_all_tree_legacy_rollout/20260503T024743/summary.json。`
+- active_commit: `6b63e802`
+- next_step: `执行 docs/diff final gate 后提交 Batch-50；下一批可扩大 all_tree action 矩阵。`
+
 ### 2026-05-03T10:35:11+08:00
 - blocker_key: `unified_page_contract_lite_all_tree_browser_smoke_batch_49`
 - layer_target: `Frontend Contract Consumer / Lite all_tree Validation`
