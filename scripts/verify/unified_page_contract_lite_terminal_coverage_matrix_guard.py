@@ -218,6 +218,7 @@ def main() -> int:
             "verify.unified_page_contract.lite.wx_mini_runtime_mount_pilot.host",
             "verify.unified_page_contract.lite.harmony_h5_runtime_mount_pilot.host",
             "verify.unified_page_contract.lite.wx_mini_compile_pilot.host",
+            "verify.unified_page_contract.lite.wx_mini_real_compile_pilot.host",
             "verify.unified_page_contract.lite.all_tree_acceptance_browser.host",
             "unified_page_contract_lite_terminal_coverage_matrix_guard.py",
         ),

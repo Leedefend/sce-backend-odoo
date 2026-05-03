@@ -63,6 +63,7 @@ It verifies:
 - mini program and Harmony H5 page integration pilot gates remain present
 - mini program and Harmony H5 runtime mount pilot gates remain present
 - mini program compile preflight gate remains present
+- mini program real compile pilot gate remains present
 - mini program is explicitly marked real-compile-pending
 - Harmony H5 is explicitly marked compile-pending
 - future pilot gates are named as next required gates

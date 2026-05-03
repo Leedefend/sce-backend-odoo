@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-03T14:27:30+08:00
+- blocker_key: `unified_page_contract_lite_wx_mini_real_compile_pilot_batch_75`
+- layer_target: `Frontend Mobile Compile Verification`
+- module: `frontend/apps/mobile + scripts/verify + docs/architecture/unified_page_contract_lite + Makefile`
+- reason: `wx_mini 已有 UniApp workspace 和 build:mp-weixin 编译脚本，但不能把编译前置就绪误报为真实小程序编译通过；必须新增真实编译门禁并如实暴露当前缺锁文件/依赖的卡点。`
+- completed_step: `新增 unified_page_contract_lite_wx_mini_real_compile_pilot_guard.py 与 verify.unified_page_contract.lite.wx_mini_real_compile_pilot.host，守卫检查 mobile package、manifest、build:mp-weixin、pnpm、pnpm-lock UniApp 依赖和 mobile node_modules；当前决策为 wx_mini_real_compile_pilot_blocked_missing_lockfile_or_dependencies。`
+- verification: `python3 -m py_compile scripts/verify/unified_page_contract_lite_wx_mini_real_compile_pilot_guard.py scripts/verify/unified_page_contract_lite_terminal_coverage_matrix_guard.py PASS；git diff --check PASS；make verify.unified_page_contract.lite.wx_mini_real_compile_pilot.host PASS，decision=wx_mini_real_compile_pilot_blocked_missing_lockfile_or_dependencies；make verify.unified_page_contract.lite.terminal_coverage_matrix PASS；make verify.unified_page_contract.lite PASS；make verify.docs.all PASS。`
+- active_commit: `c19d8c14`
+- next_step: `提交 Batch-75；下一批执行 pnpm lock/install 准备，随后再运行带 --execute 的真实小程序编译。`
+
 ### 2026-05-03T11:07:33+08:00
 - blocker_key: `unified_page_contract_lite_mainline_readiness_batch_53`
 - layer_target: `Contract Rollout Governance / Mainline Readiness`
