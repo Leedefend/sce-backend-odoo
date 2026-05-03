@@ -6,14 +6,24 @@
         <field name="arch" type="xml">
             <tree>
                 <field name="name"/>
+                <field name="state"/>
                 <field name="subject"/>
                 <field name="project_id"/>
                 <field name="type"/>
-                <field name="category_id"/>
                 <field name="partner_id"/>
+                <field name="category_id"/>
                 <field name="date_contract"/>
-                <field name="amount_final" sum="合同金额合计"/>
-                <field name="state"/>
+                <field name="amount_final" sum="最终合同价合计"/>
+                <field name="settlement_amount"/>
+                <field name="invoice_amount"/>
+                <field name="uninvoiced_amount"/>
+                <field name="received_amount"/>
+                <field name="unreceived_amount"/>
+                <field name="paid_amount"/>
+                <field name="unpaid_amount"/>
+                <field name="archived"/>
+                <field name="handler_id"/>
+                <field name="engineering_address"/>
             </tree>
         </field>
     </record>
@@ -80,6 +90,7 @@
                             <field name="partner_id" required="1"/>
                             <field name="category_id"/>
                             <field name="contract_type_id"/>
+                            <field name="engineering_address"/>
                         </group>
                         <group>
                             <field name="company_id" readonly="1"/>
@@ -90,6 +101,10 @@
                             <field name="date_end"/>
                             <field name="budget_id"/>
                             <field name="analytic_id"/>
+                            <field name="handler_id"/>
+                            <field name="entry_user_id"/>
+                            <field name="entry_data"/>
+                            <field name="archived"/>
                         </group>
                     </group>
 
@@ -101,6 +116,13 @@
                         <field name="line_amount_total" readonly="1"/>
                         <field name="amount_change" readonly="1"/>
                         <field name="amount_final" readonly="1"/>
+                        <field name="settlement_amount" readonly="1"/>
+                        <field name="invoice_amount" readonly="1"/>
+                        <field name="uninvoiced_amount" readonly="1"/>
+                        <field name="received_amount" readonly="1"/>
+                        <field name="unreceived_amount" readonly="1"/>
+                        <field name="paid_amount" readonly="1"/>
+                        <field name="unpaid_amount" readonly="1"/>
                     </group>
 
                     <notebook>

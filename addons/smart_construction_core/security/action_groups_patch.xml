@@ -239,6 +239,160 @@
             (4, ref('smart_construction_core.group_sc_cap_material_manager'))
         ]"/>
     </record>
+    <record id="action_sc_material_product_template" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
+    </record>
+    <record id="action_sc_material_purchase_request" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
+    </record>
+    <record id="action_sc_material_acceptance" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
+    </record>
+    <record id="action_sc_material_rfq" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
+    </record>
+    <record id="action_sc_material_inbound" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
+    </record>
+    <record id="action_sc_material_outbound" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
+    </record>
+    <record id="action_sc_material_price_library" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
+    </record>
+    <record id="action_sc_material_settlement" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
+    </record>
+    <record id="action_sc_material_settlement_line" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
+    </record>
+
+    <!-- 劳务 / 设备 / 分包 / 施工管理：菜单对内部用户开放，Action 同步限流。 -->
+    <record id="action_sc_attendance_checkin" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_labor_usage" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_labor_request" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_labor_plan" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_labor_settlement" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_labor_price" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_equipment_plan" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_equipment_request" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_equipment_usage" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_equipment_settlement" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_equipment_price" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_subcontract_plan" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_subcontract_request" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_subcontract_register" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_subcontract_settlement" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_subcontract_price" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_plan" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_plan_report" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+
+    <!-- 质量 / 安全 / 合同事件 / 工作台 -->
+    <record id="action_sc_check_standard" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+    </record>
+    <record id="action_sc_check_standard_item" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+    </record>
+    <record id="action_sc_quality_issue" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read')), (4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+    </record>
+    <record id="action_sc_quality_rectification" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read')), (4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+    </record>
+    <record id="action_sc_quality_recheck" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read')), (4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+    </record>
+    <record id="action_sc_site_photo_batch" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read')), (4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+    </record>
+    <record id="action_sc_safety_plan" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read')), (4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+    </record>
+    <record id="action_sc_safety_disclosure" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read')), (4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+    </record>
+    <record id="action_sc_risk_library" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read')), (4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+    </record>
+    <record id="action_sc_risk_item" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read')), (4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+    </record>
+    <record id="action_sc_hazard_source" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read')), (4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+    </record>
+    <record id="action_sc_safety_issue" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read')), (4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+    </record>
+    <record id="action_sc_safety_rectification" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read')), (4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+    </record>
+    <record id="action_sc_safety_recheck" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read')), (4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+    </record>
+    <record id="action_sc_safety_patrol_task" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read')), (4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
+    </record>
+    <record id="action_sc_contract_event" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read')), (4, ref('smart_construction_core.group_sc_cap_contract_user')), (4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
+    </record>
+    <record id="action_sc_workbench_my_todo_fact" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_workbench_my_approval_fact" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+    <record id="action_sc_dashboard_fund_cockpit_fact" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+    <record id="action_sc_dashboard_cost_cockpit_fact" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read')), (4, ref('smart_construction_core.group_sc_cap_cost_user')), (4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
+    </record>
+    <record id="action_sc_legacy_workflow_audit" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
+    </record>
+    <record id="action_sc_tier_review_my_construction_contract" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
+    </record>
+    <record id="action_sc_tier_review_my_general_contract" model="ir.actions.act_window">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
+    </record>
 
     <!-- 项目：工程结构（清单 WBS） -->
     <record id="action_sc_project_structure" model="ir.actions.act_window">
@@ -279,6 +433,78 @@
     </record>
     <record id="server_action_payment_request_on_rejected" model="ir.actions.server">
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+    <record id="server_action_construction_contract_on_approved" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
+    </record>
+    <record id="server_action_construction_contract_on_rejected" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
+    </record>
+    <record id="server_action_general_contract_on_approved" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
+    </record>
+    <record id="server_action_general_contract_on_rejected" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
+    </record>
+    <record id="server_action_legacy_purchase_contract_on_approved" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
+    </record>
+    <record id="server_action_legacy_purchase_contract_on_rejected" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
+    </record>
+    <record id="server_action_expense_claim_on_approved" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+    <record id="server_action_expense_claim_on_rejected" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+    <record id="server_action_receipt_income_on_approved" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+    <record id="server_action_receipt_income_on_rejected" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+    <record id="server_action_payment_execution_on_approved" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+    <record id="server_action_payment_execution_on_rejected" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+    <record id="server_action_invoice_registration_on_approved" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+    <record id="server_action_invoice_registration_on_rejected" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+    <record id="server_action_financing_loan_on_approved" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+    <record id="server_action_financing_loan_on_rejected" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+    <record id="server_action_treasury_reconciliation_on_approved" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+    <record id="server_action_treasury_reconciliation_on_rejected" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+    <record id="server_action_settlement_adjustment_on_approved" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_manager'))]"/>
+    </record>
+    <record id="server_action_settlement_adjustment_on_rejected" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_manager'))]"/>
+    </record>
+    <record id="server_action_settlement_order_on_approved" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_manager'))]"/>
+    </record>
+    <record id="server_action_settlement_order_on_rejected" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_manager'))]"/>
+    </record>
+    <record id="server_action_purchase_order_on_approved" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_purchase_manager'))]"/>
+    </record>
+    <record id="server_action_purchase_order_on_rejected" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_purchase_manager'))]"/>
     </record>
 
     <record id="ir_cron_sc_signup_throttle_gc_ir_actions_server" model="ir.actions.server">
@@ -341,6 +567,38 @@
 
     <record id="digest.digest_tip_action" model="ir.actions.act_window">
       <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_super_admin')])]"/>
+    </record>
+
+    <!-- ===== HR native configuration menus installed as dependencies ===== -->
+    <record id="hr.hr_config_settings_action" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+    <record id="hr.hr_contract_type_action" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+    <record id="hr.hr_department_tree_action" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+    <record id="hr.hr_work_location_action" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+    <record id="hr_org_chart.action_hr_employee_org_chart" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+    <record id="resource.action_resource_calendar_form" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+    <record id="hr.hr_departure_reason_action" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+    <record id="hr_skills.hr_skill_type_action" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+    <record id="hr.hr_department_kanban_action" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+    <record id="hr.mail_activity_plan_action" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
     </record>
 
     <!-- ===== Purchase report (at least purchase user) ===== -->

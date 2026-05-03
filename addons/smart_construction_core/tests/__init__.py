@@ -38,3 +38,4 @@ from . import test_scene_package_payload_backend
 from . import test_intent_surface_coverage_gate
 from . import test_risk_action_execute_backend
 from . import test_odoo_native_alignment_boundaries
+from . import test_user_feedback_business_views

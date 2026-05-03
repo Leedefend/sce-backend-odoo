@@ -23,7 +23,7 @@
         </record>
 
         <record id="approval_policy_general_contract" model="sc.approval.policy">
-            <field name="name">一般合同</field>
+            <field name="name">一般合同（公司）</field>
             <field name="code">general_contract_approval</field>
             <field name="sequence">20</field>
             <field name="target_model">sc.general.contract</field>
@@ -44,17 +44,18 @@
         </record>
 
         <record id="approval_policy_legacy_purchase_contract" model="sc.approval.policy">
-            <field name="name">采购/一般合同</field>
+            <field name="name">历史采购/一般合同事实</field>
             <field name="code">legacy_purchase_contract_approval</field>
             <field name="sequence">30</field>
             <field name="target_model">sc.legacy.purchase.contract.fact</field>
-            <field name="approval_required">1</field>
+            <field name="approval_required">0</field>
             <field name="trigger">confirm</field>
-            <field name="mode">single</field>
-            <field name="runtime_state">tier_validation</field>
+            <field name="mode">none</field>
+            <field name="runtime_state">policy_only</field>
+            <field name="active">0</field>
             <field name="manager_scope_key">purchase_manager</field>
             <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_purchase_manager"/>
-            <field name="note">采购/一般合同提交后由采购审核人审核，批准后可登记签署状态。</field>
+            <field name="note">历史合同事实仅用于旧库承载和追溯，不再作为新系统业务审批对象。</field>
         </record>
         <record id="approval_step_legacy_purchase_contract_10" model="sc.approval.step">
             <field name="policy_id" ref="approval_policy_legacy_purchase_contract"/>
@@ -296,4 +297,16 @@
         </record>
 
     </data>
+    <function model="sc.approval.policy" name="write">
+        <function model="sc.approval.policy" name="search">
+            <value eval="[('target_model', '=', 'sc.legacy.purchase.contract.fact')]"/>
+        </function>
+        <value eval="{'active': False, 'approval_required': False, 'mode': 'none', 'runtime_state': 'policy_only', 'note': '历史合同事实仅用于旧库承载和追溯，不再作为新系统业务审批对象。'}"/>
+    </function>
+    <function model="sc.approval.policy" name="write">
+        <function model="sc.approval.policy" name="search">
+            <value eval="[('target_model', '=', 'sc.general.contract')]"/>
+        </function>
+        <value eval="{'name': '一般合同（公司）'}"/>
+    </function>
 </odoo>

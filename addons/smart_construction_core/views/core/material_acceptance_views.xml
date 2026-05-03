@@ -99,6 +99,7 @@
                 <field name="requester_id"/>
                 <field name="department_id"/>
                 <field name="purpose"/>
+                <field name="sc_has_system_default"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -130,6 +131,11 @@
                             <field name="purpose"/>
                         </group>
                     </group>
+                    <group string="系统默认提示" invisible="not sc_has_system_default">
+                        <field name="sc_has_system_default" readonly="1"/>
+                        <field name="sc_system_default_fields" readonly="1"/>
+                        <field name="sc_system_default_note" readonly="1"/>
+                    </group>
                     <notebook>
                         <page string="申请明细">
                             <field name="line_ids">
@@ -144,6 +150,7 @@
                                     <field name="estimated_amount"/>
                                     <field name="currency_id"/>
                                     <field name="note"/>
+                                    <field name="sc_has_system_default"/>
                                 </tree>
                             </field>
                         </page>
@@ -193,10 +200,12 @@
                 <field name="acceptance_date"/>
                 <field name="supplier_id"/>
                 <field name="purchase_request_id"/>
+                <field name="purchase_order_id"/>
                 <field name="acceptance_flow"/>
                 <field name="source_channel"/>
                 <field name="inspector_id"/>
                 <field name="sampling_required"/>
+                <field name="sc_has_system_default"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -223,11 +232,13 @@
                             <field name="acceptance_date"/>
                             <field name="supplier_id"/>
                             <field name="purchase_request_id"/>
+                            <button name="action_load_purchase_request_lines" string="带入申请明细" type="object" class="btn-secondary"/>
                             <field name="acceptance_flow"/>
                             <field name="source_channel"/>
                         </group>
                         <group>
                             <field name="purchase_order_id"/>
+                            <button name="action_load_purchase_order_lines" string="带入采购明细" type="object" class="btn-secondary"/>
                             <field name="inspector_id"/>
                             <field name="supervisor_inspector_id"/>
                             <field name="owner_inspector_id"/>
@@ -235,11 +246,18 @@
                             <field name="sampling_report_ref"/>
                         </group>
                     </group>
+                    <group string="系统默认提示" invisible="not sc_has_system_default">
+                        <field name="sc_has_system_default" readonly="1"/>
+                        <field name="sc_system_default_fields" readonly="1"/>
+                        <field name="sc_system_default_note" readonly="1"/>
+                    </group>
                     <notebook>
                         <page string="验收明细">
                             <field name="line_ids">
                                 <tree editable="bottom">
                                     <field name="sequence" widget="handle"/>
+                                    <field name="purchase_request_line_id"/>
+                                    <field name="purchase_order_line_id"/>
                                     <field name="product_id"/>
                                     <field name="material_catalog_id"/>
                                     <field name="material_spec"/>
@@ -252,6 +270,7 @@
                                     <field name="returned_qty"/>
                                     <field name="result"/>
                                     <field name="quality_status"/>
+                                    <field name="sc_has_system_default"/>
                                 </tree>
                             </field>
                         </page>
@@ -287,6 +306,7 @@
                 <field name="project_id"/>
                 <field name="supplier_id"/>
                 <field name="purchase_request_id"/>
+                <field name="purchase_order_id"/>
                 <field name="acceptance_flow"/>
                 <field name="source_channel"/>
                 <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
@@ -315,6 +335,9 @@
                 <field name="warehouse_id"/>
                 <field name="dest_location_id"/>
                 <field name="keeper_id"/>
+                <field name="note"/>
+                <field name="amount_total" sum="金额合计"/>
+                <field name="sc_has_system_default"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -347,7 +370,13 @@
                             <field name="dest_location_id"/>
                             <field name="keeper_id"/>
                             <field name="stock_picking_id"/>
+                            <field name="amount_total" readonly="1"/>
                         </group>
+                    </group>
+                    <group string="系统默认提示" invisible="not sc_has_system_default">
+                        <field name="sc_has_system_default" readonly="1"/>
+                        <field name="sc_system_default_fields" readonly="1"/>
+                        <field name="sc_system_default_note" readonly="1"/>
                     </group>
                     <notebook>
                         <page string="入库明细">
@@ -360,7 +389,10 @@
                                     <field name="material_spec"/>
                                     <field name="product_uom_id"/>
                                     <field name="qty"/>
+                                    <field name="unit_price"/>
+                                    <field name="amount" sum="金额合计"/>
                                     <field name="note"/>
+                                    <field name="sc_has_system_default"/>
                                 </tree>
                             </field>
                         </page>
@@ -414,6 +446,7 @@
                 <field name="receiver_id"/>
                 <field name="receiver_user_id"/>
                 <field name="keeper_id"/>
+                <field name="sc_has_system_default"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -448,6 +481,11 @@
                             <field name="stock_picking_id"/>
                         </group>
                     </group>
+                    <group string="系统默认提示" invisible="not sc_has_system_default">
+                        <field name="sc_has_system_default" readonly="1"/>
+                        <field name="sc_system_default_fields" readonly="1"/>
+                        <field name="sc_system_default_note" readonly="1"/>
+                    </group>
                     <notebook>
                         <page string="出库明细">
                             <field name="line_ids">
@@ -459,6 +497,7 @@
                                     <field name="product_uom_id"/>
                                     <field name="qty"/>
                                     <field name="note"/>
+                                    <field name="sc_has_system_default"/>
                                 </tree>
                             </field>
                         </page>
@@ -508,8 +547,13 @@
                 <field name="rfq_date"/>
                 <field name="due_date"/>
                 <field name="purchase_request_id"/>
+                <field name="source_material_plan_id"/>
+                <field name="contact_name"/>
+                <field name="contact_phone"/>
+                <field name="supplier_ids" widget="many2many_tags"/>
                 <field name="selected_supplier_id"/>
                 <field name="owner_id"/>
+                <field name="sc_has_system_default"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -523,6 +567,7 @@
                 <header>
                     <button name="action_submit" string="发起询价" type="object" class="btn-primary" invisible="state != 'draft'"/>
                     <button name="action_select" string="确定报价" type="object" class="btn-primary" invisible="state != 'submitted'"/>
+                    <button name="action_create_purchase_order" string="生成采购订单" type="object" class="btn-primary" invisible="state == 'cancel'"/>
                     <button name="action_reset_draft" string="退回草稿" type="object" invisible="state != 'submitted'"/>
                     <button name="action_cancel" string="取消" type="object" invisible="state in ('selected', 'cancel')"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,selected"/>
@@ -533,20 +578,33 @@
                             <field name="name"/>
                             <field name="project_id"/>
                             <field name="purchase_request_id"/>
+                            <field name="source_material_plan_id"/>
                             <field name="rfq_date"/>
                         </group>
                         <group>
                             <field name="due_date"/>
                             <field name="owner_id"/>
+                            <field name="contact_name"/>
+                            <field name="contact_phone"/>
+                            <field name="supplier_ids" widget="many2many_tags" readonly="1"/>
                             <field name="selected_supplier_id" readonly="1"/>
                         </group>
+                    </group>
+                    <group string="系统默认提示" invisible="not sc_has_system_default">
+                        <field name="sc_has_system_default" readonly="1"/>
+                        <field name="sc_system_default_fields" readonly="1"/>
+                        <field name="sc_system_default_note" readonly="1"/>
                     </group>
                     <notebook>
                         <page string="报价明细">
                             <field name="line_ids">
                                 <tree editable="bottom">
                                     <field name="sequence" widget="handle"/>
+                                    <field name="source_material_plan_line_id"/>
                                     <field name="supplier_id"/>
+                                    <field name="supplier_contact_name"/>
+                                    <field name="supplier_contact_phone"/>
+                                    <field name="quote_status"/>
                                     <field name="product_id"/>
                                     <field name="material_catalog_id"/>
                                     <field name="material_spec"/>
@@ -558,6 +616,7 @@
                                     <field name="tax_rate"/>
                                     <field name="selected"/>
                                     <field name="note"/>
+                                    <field name="sc_has_system_default"/>
                                 </tree>
                             </field>
                         </page>
@@ -586,7 +645,12 @@
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="purchase_request_id"/>
+                <field name="source_material_plan_id"/>
                 <field name="selected_supplier_id"/>
+                <field name="contact_name"/>
+                <field name="contact_phone"/>
+                <field name="owner_id"/>
+                <field name="note"/>
                 <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="已发起" name="submitted" domain="[('state', '=', 'submitted')]"/>
                 <filter string="已定价" name="selected" domain="[('state', '=', 'selected')]"/>
@@ -612,6 +676,7 @@
                 <field name="amount_total"/>
                 <field name="currency_id"/>
                 <field name="owner_id"/>
+                <field name="sc_has_system_default"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -648,6 +713,11 @@
                         <field name="tax_amount"/>
                         <field name="amount_total"/>
                     </group>
+                    <group string="系统默认提示" invisible="not sc_has_system_default">
+                        <field name="sc_has_system_default" readonly="1"/>
+                        <field name="sc_system_default_fields" readonly="1"/>
+                        <field name="sc_system_default_note" readonly="1"/>
+                    </group>
                     <notebook>
                         <page string="结算明细">
                             <field name="line_ids">
@@ -664,6 +734,7 @@
                                     <field name="tax_amount"/>
                                     <field name="amount_total"/>
                                     <field name="note"/>
+                                    <field name="sc_has_system_default"/>
                                 </tree>
                             </field>
                         </page>

@@ -76,6 +76,19 @@ class TestP0StateClosure(TransactionCase):
             }
         )
 
+    def _create_finance_manager(self, login="p0_finance_manager_state_closure"):
+        finance_group = self.env.ref("smart_construction_core.group_sc_cap_finance_manager")
+        return self.env["res.users"].with_context(no_reset_password=True).create(
+            {
+                "name": "P0 Finance Manager",
+                "login": login,
+                "company_id": self.company.id,
+                "company_ids": [(6, 0, [self.company.id])],
+                "groups_id": [(6, 0, [finance_group.id])],
+                "email": f"{login}@test.local",
+            }
+        )
+
     def _create_purchase_order(self, partner):
         product = self.env["product.product"].create(
             {
@@ -88,6 +101,7 @@ class TestP0StateClosure(TransactionCase):
         po = self.env["purchase.order"].create(
             {
                 "partner_id": partner.id,
+                "state": "purchase",
                 "order_line": [
                     (
                         0,
@@ -104,7 +118,6 @@ class TestP0StateClosure(TransactionCase):
                 ],
             }
         )
-        po.write({"state": "purchase"})
         return po
 
     def _enable_funding(self, project, cap=1000.0):
@@ -202,7 +215,7 @@ class TestP0StateClosure(TransactionCase):
         with self.assertRaises(UserError):
             project.action_set_lifecycle_state("warranty")
 
-    def test_payment_requires_settlement_approved(self):
+    def test_payment_settlement_not_approved_can_be_approved_with_advisory(self):
         project = self._create_project("P0 Project Settle State", with_boq=True)
         partner = self._create_partner()
         contract = self._create_contract(project, partner)
@@ -221,10 +234,15 @@ class TestP0StateClosure(TransactionCase):
                 "state": "draft",
             }
         )
-        with self.assertRaises(UserError):
-            pr.action_submit()
+        finance_user = self._create_finance_user("p0_finance_user_settle_state")
+        finance_manager = self._create_finance_manager("p0_finance_manager_settle_state")
+        project.message_subscribe(partner_ids=finance_user.partner_id.ids)
+        pr.with_user(finance_user).action_submit()
+        pr.with_user(finance_manager).validate_tier()
+        pr.invalidate_recordset()
+        self.assertEqual(pr.state, "approved")
 
-    def test_payment_overpay_blocked(self):
+    def test_payment_overpay_can_be_approved_with_advisory(self):
         project = self._create_project("P0 Project Overpay", with_boq=True)
         partner = self._create_partner()
         contract = self._create_contract(project, partner)
@@ -243,8 +261,13 @@ class TestP0StateClosure(TransactionCase):
                 "state": "draft",
             }
         )
-        with self.assertRaises(UserError):
-            pr.action_submit()
+        finance_user = self._create_finance_user("p0_finance_user_overpay")
+        finance_manager = self._create_finance_manager("p0_finance_manager_overpay")
+        project.message_subscribe(partner_ids=finance_user.partner_id.ids)
+        pr.with_user(finance_user).action_submit()
+        pr.with_user(finance_manager).validate_tier()
+        pr.invalidate_recordset()
+        self.assertEqual(pr.state, "approved")
 
     def test_payment_write_approved_requires_tier(self):
         project = self._create_project("P0 Project Tier", with_boq=True)

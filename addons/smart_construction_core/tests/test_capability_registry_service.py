@@ -13,8 +13,12 @@ class TestCapabilityRegistryService(TransactionCase):
         self.assertFalse(issues, f"registry lint issues: {issues}")
 
     def test_registry_surface_count(self):
+        definitions = capability_registry.capability_definitions()
+        self.assertGreaterEqual(len(definitions), 30)
+        definition_keys = {item.get("key") for item in definitions}
         rows = capability_registry.list_capabilities_for_user(self.env, self.env.user)
-        self.assertGreaterEqual(len(rows), 30)
+        self.assertTrue(rows)
+        self.assertTrue(all(row.get("key") in definition_keys for row in rows))
         self.assertTrue(any((row.get("group_key") == "project_management") for row in rows))
 
     def test_capability_matrix_sections(self):

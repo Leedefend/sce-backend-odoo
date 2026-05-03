@@ -282,7 +282,7 @@ class ProjectProject(models.Model):
             "company_id": "公司",
             "date": "截止日期",
             "last_update_color": "状态颜色",
-            "last_update_status": "项目状态",
+            "last_update_status": "项目更新状态",
             "open_task_count": "任务",
             "tag_ids": "标签",
         }
@@ -593,7 +593,7 @@ class ProjectProject(models.Model):
 
     lifecycle_state = fields.Selection(
         ScStateMachine.selection(ScStateMachine.PROJECT),
-        string='项目状态',
+        string='生命周期状态',
         default='draft',
         tracking=True,
         help='驱动项目级联动控制：暂停/关闭禁止新增进度、成本等业务数据；结算中限制部分操作。'

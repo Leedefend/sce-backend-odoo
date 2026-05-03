@@ -166,11 +166,20 @@ for index, row in enumerate(rows, start=2):
     create_vals.append(vals)
 
 legacy_batch_pairs = [(vals["legacy_member_id"], vals["import_batch"]) for vals in create_vals]
-existing = Model.browse()
+existing_by_key = {}
 for legacy_member_id, import_batch in legacy_batch_pairs:
-    existing |= Model.search([("legacy_member_id", "=", legacy_member_id), ("import_batch", "=", import_batch)], limit=1)
-if existing:
-    errors.append({"error": "target_identity_not_empty", "count": len(existing), "samples": existing[:20].mapped("id")})
+    matches = Model.search([("legacy_member_id", "=", legacy_member_id), ("import_batch", "=", import_batch)])
+    if len(matches) > 1:
+        errors.append(
+            {
+                "error": "duplicate_target_identity",
+                "legacy_member_id": legacy_member_id,
+                "import_batch": import_batch,
+                "samples": matches[:20].mapped("id"),
+            }
+        )
+    elif matches:
+        existing_by_key[(legacy_member_id, import_batch)] = matches
 
 project_ids = sorted({vals["project_id"] for vals in create_vals})
 user_ids = sorted({vals["user_id"] for vals in create_vals})
@@ -182,10 +191,18 @@ if errors:
     raise RuntimeError({"precheck_failed": errors[:40]})
 
 created_rows = []
+updated_rows = []
 try:
     for vals in create_vals:
-        rec = Model.create(vals)
-        created_rows.append(
+        key = (vals["legacy_member_id"], vals["import_batch"])
+        rec = existing_by_key.get(key)
+        if rec:
+            rec.write(vals)
+            target_rows = updated_rows
+        else:
+            rec = Model.create(vals)
+            target_rows = created_rows
+        target_rows.append(
             {
                 "neutral_id": rec.id,
                 "legacy_member_id": rec.legacy_member_id or "",
@@ -213,8 +230,15 @@ write_csv(
 )
 
 post_errors = []
-if len(created_rows) != EXPECTED_ROWS:
-    post_errors.append({"error": "created_count_not_7389", "created": len(created_rows)})
+if len(created_rows) + len(updated_rows) != EXPECTED_ROWS:
+    post_errors.append(
+        {
+            "error": "processed_count_not_expected",
+            "created": len(created_rows),
+            "updated": len(updated_rows),
+            "expected": EXPECTED_ROWS,
+        }
+    )
 if visibility_changed:
     post_errors.append({"error": "project_visibility_changed"})
 if project_responsibility_writes != 0:
@@ -226,11 +250,11 @@ result = {
     "database": env.cr.dbname,  # noqa: F821
     "target_model": TARGET_MODEL,
     "created_rows": len(created_rows),
-    "updated_rows": 0,
+    "updated_rows": len(updated_rows),
     "rollback_target_rows": len(created_rows),
     "project_responsibility_writes": project_responsibility_writes,
     "visibility_changed": visibility_changed,
-    "db_writes": len(created_rows),
+    "db_writes": len(created_rows) + len(updated_rows),
     "demo_targets_executed": 0,
     "post_errors": post_errors,
     "artifacts": {
@@ -248,9 +272,10 @@ print(
         {
             "status": status,
             "created_rows": len(created_rows),
+            "updated_rows": len(updated_rows),
             "project_responsibility_writes": project_responsibility_writes,
             "visibility_changed": visibility_changed,
-            "db_writes": len(created_rows),
+            "db_writes": len(created_rows) + len(updated_rows),
         },
         ensure_ascii=False,
         sort_keys=True,

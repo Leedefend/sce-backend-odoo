@@ -17,7 +17,7 @@
             <field name="sequence">30</field>
             <field name="name">采购审核人</field>
             <field name="scope_key">purchase_manager</field>
-            <field name="note">可审批采购订单、采购/一般合同等采购业务。</field>
+            <field name="note">可审批采购订单等采购业务；历史合同事实仅作只读承载。</field>
         </record>
         <record id="approval_scope_finance_manager" model="sc.approval.scope">
             <field name="sequence">40</field>
@@ -29,7 +29,7 @@
             <field name="sequence">50</field>
             <field name="name">合同审核人</field>
             <field name="scope_key">contract_manager</field>
-            <field name="note">可审批项目合同、一般合同等合同业务。</field>
+            <field name="note">可审批项目合同、一般合同（公司）等合同业务。</field>
         </record>
         <record id="approval_scope_cost_manager" model="sc.approval.scope">
             <field name="sequence">60</field>

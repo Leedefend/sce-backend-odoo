@@ -22,6 +22,21 @@ class TestP0FinanceUiGate(TransactionCase):
         root = etree.fromstring(arch.encode("utf-8"))
         return root.xpath(".//button")
 
+    def _source_button_has_groups(self, model, name, string):
+        for view in self.env["ir.ui.view"].search([("model", "=", model)]):
+            arch = view.arch_db or ""
+            if not arch or name not in arch:
+                continue
+            root = etree.fromstring(arch.encode("utf-8"))
+            for btn in root.xpath(".//button"):
+                if (btn.get("name") or "").strip() != name:
+                    continue
+                if string and (btn.get("string") or "").strip() != string:
+                    continue
+                if (btn.get("groups") or "").strip():
+                    return True
+        return False
+
     def _is_high_risk_button(self, btn):
         btn_type = (btn.get("type") or "").strip()
         name = (btn.get("name") or "").strip()
@@ -42,7 +57,7 @@ class TestP0FinanceUiGate(TransactionCase):
             if name in ignore_names:
                 continue
             groups = (btn.get("groups") or "").strip()
-            if groups:
+            if groups or self._source_button_has_groups(model, name, (btn.get("string") or "").strip()):
                 continue
             offenders.append(
                 {

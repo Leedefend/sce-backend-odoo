@@ -47,10 +47,11 @@ class ScGeneralContract(models.Model):
     credit_code = fields.Char(string="统一信用代码", index=True)
     contact_name = fields.Char(string="联系人", index=True)
     contact_phone = fields.Char(string="联系电话", index=True)
+    engineering_address = fields.Char(string="工程地址", index=True)
     bank_name = fields.Char(string="开户行", index=True)
     bank_account = fields.Char(string="银行账号", index=True)
     document_no = fields.Char(string="来源单号", index=True)
-    contract_no = fields.Char(string="合同编号", index=True)
+    contract_no = fields.Char(string="单据编号", index=True)
     contract_name = fields.Char(string="合同名称", required=True, index=True)
     contract_type = fields.Char(string="合同类型", index=True)
     contract_attribute = fields.Char(string="合同属性", index=True)
@@ -62,12 +63,19 @@ class ScGeneralContract(models.Model):
     contract_date = fields.Date(string="合同日期", default=fields.Date.context_today, index=True)
     expected_sign_date = fields.Date(string="预计签署日期", index=True)
     completion_date = fields.Date(string="完成日期", index=True)
-    amount_total = fields.Monetary(string="合同金额", currency_field="currency_id", required=True)
+    amount_total = fields.Monetary(string="最终合同价", currency_field="currency_id", required=True)
     amount_untaxed = fields.Monetary(string="不含税金额", currency_field="currency_id")
+    settlement_amount = fields.Monetary(string="结算金额", currency_field="currency_id")
+    invoice_amount = fields.Monetary(string="开票金额", currency_field="currency_id")
+    uninvoiced_amount = fields.Monetary(string="未开票金额", currency_field="currency_id", compute="_compute_business_amounts", store=True)
+    received_amount = fields.Monetary(string="收款金额", currency_field="currency_id")
+    unreceived_amount = fields.Monetary(string="未收款金额", currency_field="currency_id", compute="_compute_business_amounts", store=True)
+    paid_amount = fields.Monetary(string="付款金额", currency_field="currency_id")
+    unpaid_amount = fields.Monetary(string="未付款金额", currency_field="currency_id", compute="_compute_business_amounts", store=True)
     prepayment_amount = fields.Monetary(string="预付款", currency_field="currency_id")
     install_debug_payment = fields.Monetary(string="安装调试款", currency_field="currency_id")
     install_commissioning_payment = fields.Monetary(
-        string="安装调试款",
+        string="安装调试款（兼容）",
         currency_field="currency_id",
         compute="_compute_business_aliases",
     )
@@ -87,6 +95,9 @@ class ScGeneralContract(models.Model):
     applicant_name = fields.Char(string="申请人", index=True)
     applicant_department = fields.Char(string="申请部门", index=True)
     purchase_engineer = fields.Char(string="采购工程师", index=True)
+    handler_id = fields.Many2one("res.users", string="经办人", index=True)
+    entry_user_id = fields.Many2one("res.users", string="录入人", default=lambda self: self.env.user, index=True)
+    entry_data = fields.Char(string="录入数据")
     related_contract_no = fields.Char(string="关联合同号", index=True)
     is_supplement_contract = fields.Char(string="是否补充合同", index=True)
     legacy_source_model = fields.Char(string="历史来源模型", index=True, readonly=True)
@@ -97,6 +108,7 @@ class ScGeneralContract(models.Model):
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
     note = fields.Text(string="备注")
     active = fields.Boolean(string="有效", default=True, index=True)
+    archived = fields.Boolean(string="是否归档", default=False, index=True)
 
     _sql_constraints = [
         (
@@ -112,7 +124,7 @@ class ScGeneralContract(models.Model):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
             if vals.get("name", "新建") == "新建":
-                vals["name"] = seq.next_by_code("sc.general.contract") or _("General Contract")
+                vals["name"] = seq.next_by_code("sc.general.contract") or _("一般合同（公司）")
         return super().create(vals_list)
 
     def write(self, vals):
@@ -131,6 +143,13 @@ class ScGeneralContract(models.Model):
     def _compute_change_rate(self):
         for rec in self:
             rec.change_rate = (rec.change_amount_total / rec.amount_total * 100.0) if rec.amount_total else 0.0
+
+    @api.depends("amount_total", "invoice_amount", "received_amount", "paid_amount")
+    def _compute_business_amounts(self):
+        for rec in self:
+            rec.uninvoiced_amount = max((rec.amount_total or 0.0) - (rec.invoice_amount or 0.0), 0.0)
+            rec.unreceived_amount = max((rec.amount_total or 0.0) - (rec.received_amount or 0.0), 0.0)
+            rec.unpaid_amount = max((rec.amount_total or 0.0) - (rec.paid_amount or 0.0), 0.0)
 
     def action_confirm(self):
         policy_model = self.env["sc.approval.policy"]
@@ -160,9 +179,9 @@ class ScGeneralContract(models.Model):
         elif not self.review_ids or self.validation_status == "no":
             reviews = self.request_validation()
             if not reviews:
-                raise UserError(_("一般合同已启用审批，但没有匹配的统一审批规则，请检查业务审批配置。"))
+                    raise UserError(_("一般合同（公司）已启用审批，但没有匹配的统一审批规则，请检查业务审批配置。"))
         else:
-            raise UserError(_("一般合同已经在统一审批流程中，请等待审批完成。"))
+            raise UserError(_("一般合同（公司）已经在统一审批流程中，请等待审批完成。"))
         self.with_context(skip_validation_check=True).write({"reject_reason": False})
 
     def _check_state_from_condition(self):
@@ -183,7 +202,7 @@ class ScGeneralContract(models.Model):
             if rec.state != "draft":
                 continue
             if rec.validation_status != "validated":
-                raise UserError(_("一般合同尚未完成统一审批流程。"))
+                raise UserError(_("一般合同（公司）尚未完成统一审批流程。"))
             rec.with_context(skip_validation_check=True).write({"reject_reason": False})
         return self.action_confirm()
 

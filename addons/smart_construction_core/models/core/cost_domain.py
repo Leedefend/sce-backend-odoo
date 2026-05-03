@@ -372,10 +372,10 @@ class ProjectCostLedger(models.Model):
     )
 
     date = fields.Date("发生日期", index=True, default=fields.Date.context_today)
-    period = fields.Char("期间", index=True)
+    period = fields.Char("期间文本", index=True)
     period_id = fields.Many2one(
         "project.cost.period",
-        string="期间",
+        string="成本期间",
         required=True,
         index=True,
     )
