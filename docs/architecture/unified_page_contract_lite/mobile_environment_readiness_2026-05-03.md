@@ -84,6 +84,24 @@ harmony_h5_device_acceptance_runner_ready_manual_device_pending
 Both terminal runners are now available. The remaining gate is manual/physical
 device confirmation, not repository code or local runner setup.
 
+Additional runner probes:
+
+```text
+wechat-devtools --project <compiled mp-weixin path> --disable-gpu --version
+```
+
+This command starts the Windows WeChat developer tool process and returns CLI
+help with exit code 0. Windows process evidence showed `WeChatAppEx` running
+after the probe.
+
+```text
+hdc list targets
+[Empty]
+```
+
+This proves the Harmony `hdc` runner is callable, but no Harmony device or
+container is connected in the current environment.
+
 ## WSL Helper
 
 Use this helper after installing Windows-side tooling:
@@ -114,3 +132,10 @@ make verify.unified_page_contract.lite.harmony_h5_device_acceptance_pilot.host
 
 Both should report `*_runner_ready_manual_device_pending`. Treat that as runner
 readiness, not as final end-user device acceptance.
+
+Manual confirmation checklist:
+
+```text
+wx_mini: open the generated mp-weixin project in WeChat DevTools and verify the contract page renders.
+harmony_h5: connect a Harmony device/container so hdc list targets is non-empty, then open the generated H5 runtime.
+```
