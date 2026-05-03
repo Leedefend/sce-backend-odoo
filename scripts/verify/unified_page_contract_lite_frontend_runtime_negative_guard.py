@@ -43,6 +43,7 @@ ALLOWED_PILOT_FILES = {
     "frontend/apps/web/src/app/contracts/unifiedPageContractLiteTerminalPageIntegration.ts",
     "frontend/apps/web/src/app/contracts/unifiedPageContractLiteTerminalRenderer.ts",
     "frontend/apps/web/src/app/contracts/unifiedPageContractLiteTerminalRendererInput.ts",
+    "frontend/apps/web/src/app/contracts/unifiedPageContractLiteTerminalRuntimeMount.ts",
     "frontend/apps/web/src/app/contracts/unifiedPageContractLiteTerminalStore.ts",
     "frontend/apps/web/src/app/runtime/unifiedPageContractLitePilot.ts",
 }

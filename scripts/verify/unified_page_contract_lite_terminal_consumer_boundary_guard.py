@@ -16,6 +16,7 @@ STORE_PATH = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractLite
 RENDERER_INPUT_PATH = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractLiteTerminalRendererInput.ts"
 RENDERER_PATH = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractLiteTerminalRenderer.ts"
 PAGE_INTEGRATION_PATH = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractLiteTerminalPageIntegration.ts"
+RUNTIME_MOUNT_PATH = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractLiteTerminalRuntimeMount.ts"
 BASE_CONTRACT_PATH = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractLite.ts"
 MAKEFILE_PATH = ROOT / "Makefile"
 
@@ -93,6 +94,16 @@ REQUIRED_PAGE_INTEGRATION_TOKENS = (
     "mountedNodeCount",
 )
 
+REQUIRED_RUNTIME_MOUNT_TOKENS = (
+    "LiteTerminalRuntimeMount",
+    "LiteTerminalRuntimeMountSnapshot",
+    "createLiteTerminalRuntimeMount",
+    "createLiteTerminalRuntimeMountSnapshot",
+    "LiteTerminalPageIntegration",
+    "mountedNodeCount",
+    "status: 'mounted'",
+)
+
 
 def read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
@@ -115,6 +126,7 @@ def main() -> int:
         RENDERER_INPUT_PATH,
         RENDERER_PATH,
         PAGE_INTEGRATION_PATH,
+        RUNTIME_MOUNT_PATH,
         BASE_CONTRACT_PATH,
         MAKEFILE_PATH,
     ):
@@ -126,6 +138,7 @@ def main() -> int:
     renderer_input = read_text(RENDERER_INPUT_PATH) if RENDERER_INPUT_PATH.exists() else ""
     renderer = read_text(RENDERER_PATH) if RENDERER_PATH.exists() else ""
     page_integration = read_text(PAGE_INTEGRATION_PATH) if PAGE_INTEGRATION_PATH.exists() else ""
+    runtime_mount = read_text(RUNTIME_MOUNT_PATH) if RUNTIME_MOUNT_PATH.exists() else ""
     base_contract = read_text(BASE_CONTRACT_PATH) if BASE_CONTRACT_PATH.exists() else ""
     makefile = read_text(MAKEFILE_PATH) if MAKEFILE_PATH.exists() else ""
 
@@ -159,6 +172,12 @@ def main() -> int:
     page_integration_forbidden = sorted(token for token in FORBIDDEN_BOUNDARY_TOKENS if token in page_integration)
     if page_integration_forbidden:
         errors.append(f"page integration contains forbidden semantic/runtime tokens: {page_integration_forbidden}")
+    for token in REQUIRED_RUNTIME_MOUNT_TOKENS:
+        if token not in runtime_mount:
+            errors.append(f"runtime mount missing token: {token}")
+    runtime_mount_forbidden = sorted(token for token in FORBIDDEN_BOUNDARY_TOKENS if token in runtime_mount)
+    if runtime_mount_forbidden:
+        errors.append(f"runtime mount contains forbidden semantic/runtime tokens: {runtime_mount_forbidden}")
 
     if "export type LiteClientType = 'web_pc' | 'wx_mini' | 'harmony_h5';" not in base_contract:
         errors.append("base Lite contract does not expose the three supported terminal clients")
@@ -181,6 +200,7 @@ def main() -> int:
         and path.endswith("unifiedPageContractLiteTerminalRendererInput.ts") is False
         and path.endswith("unifiedPageContractLiteTerminalRenderer.ts") is False
         and path.endswith("unifiedPageContractLiteTerminalPageIntegration.ts") is False
+        and path.endswith("unifiedPageContractLiteTerminalRuntimeMount.ts") is False
         and path.endswith("unifiedPageContractLite.ts") is False
         and "unifiedPageContractLitePilot.ts" not in path
     ]
@@ -194,6 +214,7 @@ def main() -> int:
         "rendererInput": RENDERER_INPUT_PATH.relative_to(ROOT).as_posix(),
         "renderer": RENDERER_PATH.relative_to(ROOT).as_posix(),
         "pageIntegration": PAGE_INTEGRATION_PATH.relative_to(ROOT).as_posix(),
+        "runtimeMount": RUNTIME_MOUNT_PATH.relative_to(ROOT).as_posix(),
         "baseContract": BASE_CONTRACT_PATH.relative_to(ROOT).as_posix(),
         "frontendLiteFiles": frontend_contract_files,
         "policy": "shared_terminal_consumer_boundary_only",
