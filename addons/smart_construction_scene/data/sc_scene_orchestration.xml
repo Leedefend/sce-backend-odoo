@@ -234,7 +234,7 @@
         <!-- Portal dashboard scene -->
         <record id="sc_scene_portal_dashboard" model="sc.scene">
             <field name="sequence">62</field>
-            <field name="name">工作台</field>
+            <field name="name">角色首页</field>
             <field name="code">portal.dashboard</field>
             <field name="layout">grid</field>
             <field name="state">published</field>

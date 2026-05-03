@@ -1,7 +1,7 @@
 <template>
   <PageRenderer
     v-if="useUnifiedHomeRenderer"
-    :contract="homeOrchestrationContract"
+    :contract="strictHomeOrchestrationContract"
     :datasets="homeOrchestrationDatasets"
     @action="handleHomeBlockAction"
   />
@@ -349,7 +349,7 @@
         </div>
       </template>
       <template v-else>
-        <p>{{ pageText('empty_no_capability', '当前账号暂无可用功能，可能因为角色权限未开通或工作台尚未配置。') }}</p>
+          <p>{{ pageText('empty_no_capability', '当前账号暂无可用功能，可能因为角色权限未开通或角色首页尚未配置。') }}</p>
         <div class="empty-actions">
           <button v-if="hasRoleSwitch" class="empty-btn" @click="goToMyWork">{{ pageText('action_switch_role', '切换角色') }}</button>
           <button class="empty-btn" @click="goHome">{{ pageText('action_back_home', '返回首页') }}</button>
@@ -358,7 +358,7 @@
           </button>
         </div>
         <p v-if="showEmptyHelp" class="empty-help">
-          {{ pageText('empty_help_detail', '建议先点击“切换角色”确认当前角色；若仍无功能，请联系管理员开通角色权限或配置工作台目录。') }}
+          {{ pageText('empty_help_detail', '建议先点击“切换角色”确认当前角色；若仍无功能，请联系管理员开通角色权限或配置角色首页目录。') }}
         </p>
       </template>
     </div>
@@ -423,7 +423,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useSessionStore, type CapabilityRuntimeMeta, type WorkspaceAdviceRow, type WorkspaceCapabilityGroupRow, type WorkspaceHeroRow, type WorkspaceSceneEntryRow } from '../stores/session';
+import { useSessionStore, type CapabilityRuntimeMeta, type WorkspaceAdviceRow, type WorkspaceCapabilityGroupRow, type WorkspaceSceneEntryRow } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { isDeliveryModeEnabled, isHudEnabled as resolveHudEnabled } from '../config/debug';
@@ -670,6 +670,32 @@ const workspacePageOrchestrationV1DataSources = computed(() => (
 const homeOrchestrationContract = computed<PageOrchestrationContract>(() => {
   return homePageOrchestrationV1.value as PageOrchestrationContract;
 });
+function hasStrictDatasetValue(value: unknown): boolean {
+  if (Array.isArray(value)) return value.length > 0;
+  if (!value || typeof value !== 'object') return Boolean(asText(value));
+  return Object.values(value as Record<string, unknown>).some((item) => hasStrictDatasetValue(item));
+}
+const strictHomeOrchestrationContract = computed<PageOrchestrationContract>(() => {
+  const contract = homeOrchestrationContract.value || {};
+  const zones = Array.isArray(contract.zones) ? contract.zones : [];
+  const datasets = homeOrchestrationDatasets.value;
+  return {
+    ...contract,
+    zones: zones
+      .map((zone) => {
+        const blocks = Array.isArray(zone.blocks) ? zone.blocks : [];
+        return {
+          ...zone,
+          blocks: blocks.filter((block) => {
+            const dataSource = asText(block.data_source);
+            if (!dataSource) return false;
+            return hasStrictDatasetValue(datasets[dataSource]);
+          }),
+        };
+      })
+      .filter((zone) => Array.isArray(zone.blocks) && zone.blocks.length > 0),
+  };
+});
 const hasHomePageContract = computed(() => Object.keys(homePageContractRow.value).length > 0);
 const useUnifiedHomeRenderer = computed(() => {
   if (asText(route.query.legacy_home) === '1') return false;
@@ -758,7 +784,7 @@ const workspaceHeroEffective = computed<Record<string, unknown>>(() => {
     ? blockHeroData.value.hero as Record<string, unknown>
     : {};
 });
-const heroTitle = computed(() => asText(workspaceHeroEffective.value.title) || pageText('title', '工作台'));
+const heroTitle = computed(() => asText(workspaceHeroEffective.value.title) || pageText('title', '角色首页'));
 const heroLead = computed(() => asText(workspaceHeroEffective.value.lead) || pageText('hero_lead', '围绕项目经营、风险与审批，优先处理今天最关键事项。'));
 const heroProductTags = computed(() => {
   const raw = Array.isArray(workspaceHeroEffective.value.product_tags) ? workspaceHeroEffective.value.product_tags : [];
@@ -798,6 +824,7 @@ const capabilityGroupCards = computed(() => {
       allowCount: group.allowCount,
       readonlyCount: group.readonlyCount,
       denyCount: group.denyCount,
+      examples: group.examples || [],
     }));
 });
 const capabilityGroupScoreMap = computed(() => {
@@ -813,8 +840,12 @@ const defaultSceneKey = computed(() => {
   const first = session.scenes.find((scene) => asText(scene.key));
   return first ? asText(first.key) : '';
 });
-const roleLandingScene = computed(() => asText(roleSurface.value?.landing_scene_key) || defaultSceneKey.value);
-const roleLandingLabel = computed(() => sceneTitleMap.value.get(roleLandingScene.value) || pageText('role_landing_fallback', '工作台首页'));
+const roleLandingScene = computed(() => asText(roleSurface.value?.landing_scene_key));
+const roleLandingLabel = computed(() => {
+  const sceneKey = roleLandingScene.value;
+  if (!sceneKey) return '';
+  return sceneTitleMap.value.get(sceneKey) || sceneKey;
+});
 const internalTileCount = computed(() => {
   let count = 0;
   session.scenes.forEach((scene) => {
@@ -1533,28 +1564,29 @@ const homeSectionDatasetPayloads = computed<Record<string, unknown>>(() => {
     .map((group) => {
       const matched = entries.value.find((entry) => entry.groupKey === group.key && entry.state === 'READY')
         || entries.value.find((entry) => entry.groupKey === group.key);
+      const examples = (group.examples || [])
+        .map((example) => asText(example.label))
+        .filter(Boolean)
+        .slice(0, 3);
       return {
         id: group.key,
         key: group.key,
         title: group.label,
-        hint: matched?.sceneTitle || '点击进入业务模块',
-        action_key: 'open_scene',
+        hint: matched
+          ? [matched.sceneTitle || matched.title, matched.subtitle].filter(Boolean).join('：')
+          : examples.length
+            ? examples.join('、')
+            : '',
+        action_key: matched ? 'open_scene' : '',
         entry_id: matched?.id || '',
         scene_key: matched?.sceneKey || '',
+        allow_count: group.allowCount,
+        capability_count: group.capabilityCount,
+        examples,
       };
     });
   return {
-    hero: [
-      ...session.workspaceHeroRows.map((item: WorkspaceHeroRow) => ({
-        key: item.key,
-        label: item.key === 'role_label'
-          ? homeLayoutText('hero.role_label', '当前角色')
-          : item.key === 'landing_label'
-            ? homeLayoutText('hero.landing_label', '默认入口')
-            : homeLayoutText('hero.steady_notice', '当前运行平稳'),
-        value: item.value || (item.key === 'runtime' ? homeLayoutText('hero.runtime_ok', '状态正常') : ''),
-      })),
-    ],
+    hero: session.workspaceHeroRows,
     metrics: session.workspaceMetricRows,
     today_actions: session.workspaceTodayActionRows.map((item) => ({
       id: item.id,
@@ -1585,7 +1617,7 @@ const homeSectionDatasetPayloads = computed<Record<string, unknown>>(() => {
       entry_id: item.entryId,
     })),
     ops: session.workspaceOpsSummary,
-    scene_groups: readyEntries,
+    scene_groups: capabilityEntries.length ? capabilityEntries : readyEntries,
     group_overview: capabilityEntries,
     advice: systemAdvice.value,
     filters: {
@@ -1724,6 +1756,11 @@ function findEntryForActionItem(item: Record<string, unknown>) {
 
 async function handleHomeBlockAction(event: PageBlockActionEvent) {
   const actionKey = asText(event.actionKey);
+  if (actionKey === 'open_landing') {
+    openRoleLanding();
+    return;
+  }
+
   const item = event.item && typeof event.item === 'object' ? event.item as Record<string, unknown> : {};
   const linkedEntry = findEntryForActionItem(item);
   if (linkedEntry) {

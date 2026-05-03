@@ -7,7 +7,7 @@ def build_nav_group_policy() -> dict:
 
     return {
         "group_labels": {
-            "portal": "工作台",
+            "portal": "首页",
             "projects": "项目管理",
             "task": "任务管理",
             "risk": "风险管理",

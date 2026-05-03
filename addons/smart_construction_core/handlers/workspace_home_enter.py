@@ -9,7 +9,7 @@ from odoo.addons.smart_construction_core.services.workspace_contract_builder imp
 
 class WorkspaceHomeEnterHandler(BaseIntentHandler):
     INTENT_TYPE = "workspace.home.enter"
-    DESCRIPTION = "返回工作台 scene contract"
+    DESCRIPTION = "返回角色首页 scene contract"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["base.group_user"]

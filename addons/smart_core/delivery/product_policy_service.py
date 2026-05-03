@@ -140,7 +140,7 @@ DEFAULT_PRODUCT_POLICY = {
             "product_key": "my_work",
             "capability_key": "delivery.my_work.workspace",
             "description": "聚合当前用户的待办、风险与动作入口。",
-            "scope": "工作台 -> 待办 -> 风险 -> 场景入口。",
+            "scope": "角色首页 -> 我的工作 -> 风险 -> 场景入口。",
         },
     ],
     "capabilities": [

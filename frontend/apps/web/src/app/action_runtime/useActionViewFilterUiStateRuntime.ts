@@ -3,7 +3,7 @@ import { ref } from 'vue';
 export function useActionViewFilterUiStateRuntime() {
   const activeContractFilterKey = ref('');
   const activeSavedFilterKey = ref('');
-  const contractLimit = ref(40);
+  const contractLimit = ref(20);
   const preferredViewMode = ref('');
 
   return {
@@ -13,4 +13,3 @@ export function useActionViewFilterUiStateRuntime() {
     preferredViewMode,
   };
 }
-

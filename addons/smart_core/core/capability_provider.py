@@ -8,7 +8,7 @@ from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_fir
 
 
 DEFAULT_CAPABILITY_GROUPS = [
-    {"key": "workspace", "label": "工作台", "icon": "layout-grid"},
+    {"key": "workspace", "label": "首页入口", "icon": "layout-grid"},
     {"key": "governance", "label": "治理配置", "icon": "shield"},
     {"key": "analytics", "label": "经营分析", "icon": "chart"},
     {"key": "others", "label": "其他能力", "icon": "grid"},

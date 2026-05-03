@@ -146,6 +146,7 @@ export interface WorkspaceHomeContract {
 
 export interface WorkspaceHeroRow {
   key: string;
+  label: string;
   value: string;
 }
 
@@ -242,6 +243,12 @@ export interface WorkspaceCapabilityGroupRow {
   denyCount: number;
   readyCount: number;
   score: number;
+  examples: Array<{
+    key: string;
+    label: string;
+    state: string;
+    capabilityState: string;
+  }>;
 }
 
 export interface PageContract {
@@ -474,23 +481,18 @@ export const useSessionStore = defineStore('session', {
   }),
   getters: {
     workspaceHeroRows(state): WorkspaceHeroRow[] {
-      const rows: WorkspaceHeroRow[] = [];
-      const roleLabel = asText(state.roleSurface?.role_label) || asText(state.roleSurface?.role_code);
-      if (roleLabel) {
-        rows.push({ key: 'role_label', value: roleLabel });
-      }
-
-      const landingSceneKey = asText(state.roleSurface?.landing_scene_key);
-      if (landingSceneKey) {
-        const landingScene = state.scenes.find((scene) => asText(scene.key) === landingSceneKey);
-        const landingLabel = asText(landingScene?.label) || landingSceneKey;
-        rows.push({ key: 'landing_label', value: landingLabel });
-      }
-
       const hero = asRecord(state.workspaceHome?.hero);
-      const runtimeValue = asText(hero.status_notice) || '状态正常';
-      rows.push({ key: 'runtime', value: runtimeValue });
-      return rows;
+      const source = Array.isArray(hero.summary_rows) ? hero.summary_rows : [];
+      return source
+        .map((item, index) => {
+          const row = asRecord(item);
+          return {
+            key: asText(row.key) || `hero-${index + 1}`,
+            label: asText(row.label),
+            value: asText(row.value),
+          };
+        })
+        .filter((row) => row.label && row.value);
     },
     workspaceAdviceRows(state): WorkspaceAdviceRow[] {
       const source = Array.isArray(state.workspaceHome?.advice) ? state.workspaceHome?.advice : [];
@@ -664,6 +666,12 @@ export const useSessionStore = defineStore('session', {
             denyCount: Number(row.deny_count || 0),
             readyCount: Number(row.ready_count || 0),
             score: Number(row.score || 0),
+            examples: asObjectList(row.examples).map((example) => ({
+              key: asText(example.key),
+              label: asText(example.label) || asText(example.key),
+              state: asText(example.state).toUpperCase(),
+              capabilityState: asText(example.capability_state).toLowerCase(),
+            })).filter((example) => example.label.length > 0),
           };
         });
       }
@@ -680,6 +688,7 @@ export const useSessionStore = defineStore('session', {
           denyCount: Number(group.capability_state_counts?.deny || 0),
           readyCount,
           score: readyCount * 2 + allowCount,
+          examples: [],
         };
       });
     },
@@ -1250,6 +1259,17 @@ export const useSessionStore = defineStore('session', {
       await this.loadAppInit();
     },
     resolveLandingPath(fallback = '/') {
+      const candidate = String(this.roleSurface?.landing_path || '').trim();
+      if (candidate.startsWith('/')) {
+        const normalized = normalizeLegacyWorkbenchPath(candidate);
+        return normalized || fallback;
+      }
+      const sceneKey = String(this.roleSurface?.landing_scene_key || '').trim();
+      if (sceneKey) {
+        const scene = getSceneByKey(sceneKey);
+        const rawPath = String(scene?.target?.route || scene?.route || `/s/${sceneKey}`).trim();
+        return normalizeLegacyWorkbenchPath(rawPath) || `/s/${sceneKey}`;
+      }
       const defaultRoutePath = String(this.defaultRoute?.route || '').trim();
       const defaultRouteSceneKey = String(this.defaultRoute?.scene_key || '').trim();
       const startsWithNativeActionRoute = /^\/(a|f|r)\//.test(defaultRoutePath);
@@ -1263,17 +1283,6 @@ export const useSessionStore = defineStore('session', {
         const normalized = normalizeLegacyWorkbenchPath(rawPath);
         if (normalized) return normalized;
         return `/s/${defaultRouteSceneKey}`;
-      }
-      const candidate = String(this.roleSurface?.landing_path || '').trim();
-      if (candidate.startsWith('/')) {
-        const normalized = normalizeLegacyWorkbenchPath(candidate);
-        return normalized || fallback;
-      }
-      const sceneKey = String(this.roleSurface?.landing_scene_key || '').trim();
-      if (sceneKey) {
-        const scene = getSceneByKey(sceneKey);
-        const rawPath = String(scene?.target?.route || scene?.route || `/s/${sceneKey}`).trim();
-        return normalizeLegacyWorkbenchPath(rawPath) || `/s/${sceneKey}`;
       }
       return fallback;
     },

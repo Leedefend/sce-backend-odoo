@@ -92,4 +92,4 @@ class WorkspaceContractBuilder:
                 summary="嵌入原生项目列表摘要，可继续打开完整列表/看板。",
             ),
         ]
-        return build_contract(scene_key="workspace.home", title="工作台", subtitle="今日任务、快捷入口与业务摘要", blocks=blocks)
+        return build_contract(scene_key="workspace.home", title="角色首页", subtitle="今日任务、快捷入口与业务摘要", blocks=blocks)

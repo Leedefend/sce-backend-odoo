@@ -70,7 +70,14 @@
       <div class="role-surface">
         <p class="role-label">当前角色：{{ roleLabel }}</p>
         <div class="role-actions">
-          <button class="ghost mini" @click="openRoleLanding">进入工作台</button>
+          <button
+            v-if="showRoleLandingAction"
+            class="ghost mini"
+            :title="roleLandingTitle"
+            @click="openRoleLanding"
+          >
+            {{ roleLandingActionLabel }}
+          </button>
           <button class="ghost mini" @click="router.push('/my-work')">我的工作</button>
         </div>
       </div>
@@ -123,7 +130,7 @@
 
       <StatusPanel
         v-if="initStatus === 'loading'"
-        title="正在初始化工作台..."
+        title="正在初始化角色首页..."
         variant="info"
       />
       <StatusPanel
@@ -302,6 +309,21 @@ const projectSearchPlaceholder = computed(() =>
   String(projectContext.value?.selector?.placeholder || '搜索项目名称').trim() || '搜索项目名称',
 );
 const roleLandingPath = computed(() => session.resolveLandingPath('/'));
+const roleLandingActionLabel = computed(() => {
+  const sceneKey = String(session.defaultRoute?.scene_key || roleSurface.value?.landing_scene_key || '').trim();
+  if (sceneKey) {
+    const scene = getSceneByKey(sceneKey);
+    const label = String(scene?.label || '').trim();
+    if (label && label !== '工作台' && label !== '角色首页') return label;
+    if (label) return '角色首页';
+  }
+  const path = String(roleLandingPath.value || '').trim();
+  if (path === '/' || path === '/home' || path === '/workbench' || path === '/s/workspace.home') return '角色首页';
+  if (path === '/my-work' || path === '/s/my_work.workspace') return '我的工作';
+  return '默认入口';
+});
+const roleLandingTitle = computed(() => `打开当前角色默认入口：${roleLandingActionLabel.value}`);
+const showRoleLandingAction = computed(() => roleLandingActionLabel.value !== '角色首页');
 const capabilities = computed(() => session.capabilities);
 const initMeta = computed(() => asDict(session.initMeta));
 const effectiveDb = computed(() => asText(initMeta.value?.effective_db) ?? 'N/A');
@@ -507,7 +529,7 @@ const pageTitle = computed(() => {
   if (route.name === 'record') {
     return '记录';
   }
-  return '工作台';
+  return '角色首页';
 });
 
 const topbarSubtitle = computed(() => {
@@ -848,7 +870,7 @@ const breadcrumb = computed(() => {
     crumbs.push({ label: recordLabel });
   }
   if (!crumbs.length) {
-    crumbs.push({ label: '工作台' });
+    crumbs.push({ label: '角色首页' });
   }
   return crumbs;
 });

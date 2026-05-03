@@ -117,8 +117,12 @@ function normalizeDataset(block: SceneBlock) {
     return (Array.isArray(block.items) ? block.items : []).map((item, index) => ({
       id: asText(item.key) || `${block.type}-${index + 1}`,
       title: asText(item.title) || asText(item.label) || `事项 ${index + 1}`,
-      description: asText(item.description || item.subtitle),
+      description: asText(item.description || item.subtitle) || (
+        Number(item.count || 0) > 0 ? `待处理 ${Number(item.count || 0)} 条` : ''
+      ),
       count: Number(item.count || 0),
+      source: asText(item.source || item.model || block.model || 'business'),
+      source_label: asText(item.source_label || item.sourceLabel),
       tone: block.type === 'warning_list' ? 'warning' : 'info',
       action_label: '打开',
       action_key: targetActionKey(`${asText(block.key)}_${asText(item.key) || index + 1}`),

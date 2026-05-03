@@ -57,7 +57,7 @@ def build_workspace_hero_payload(
     elif _to_text(gap_level).lower() == "limited":
         status_detail = "当前可见业务数据偏少，建议核对岗位授权与数据分配。"
     return {
-        "title": "工程协作工作台",
+        "title": "工程协作首页",
         "lead": "围绕项目执行、经营态势与风险事项，快速完成今日关键动作。",
         "product_tags": ["项目执行", "经营态势", "风险预警"],
         "updated_at": _to_text(updated_at),
@@ -487,37 +487,38 @@ def build_v1_focus_map() -> Dict[str, List[str]]:
 
 
 def build_v1_zone_order() -> Dict[str, List[str]]:
+    role_home_order = ["hero", "quick_entries", "today_focus", "analysis"]
     return {
-        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
-        "finance": ["analysis", "today_focus", "quick_entries", "hero"],
-        "owner": ["analysis", "today_focus", "hero", "quick_entries"],
+        "pm": role_home_order,
+        "finance": role_home_order,
+        "owner": role_home_order,
     }
 
 
 def build_v1_copy_overrides() -> Dict[str, str]:
     return {
-        "zone.hero.title": "核心关注",
-        "zone.hero.description": "角色上下文与默认入口。",
-        "zone.today_focus.title": "今日优先事项",
-        "zone.today_focus.description": "先处理行动项，再快速处置风险提醒。",
-        "zone.analysis.title": "项目总体状态",
-        "zone.analysis.description": "关键指标、执行进展与风险动态。",
-        "zone.quick_entries.title": "常用功能",
-        "zone.quick_entries.description": "按业务场景快速进入处理。",
-        "block.hero_record_summary.title": "角色与入口摘要",
-        "block.todo_list_today.title": "今日行动",
+        "zone.hero.title": "欢迎使用智慧施工管理平台",
+        "zone.hero.description": "在这里查看项目、合同、成本、财务和待办事项，按你的角色处理日常业务。",
+        "zone.today_focus.title": "今天先做什么",
+        "zone.today_focus.description": "按角色优先级聚合当前需要处理的业务动作。",
+        "zone.analysis.title": "我需要关注什么",
+        "zone.analysis.description": "展示与当前角色相关的能力、进展和风险状态。",
+        "zone.quick_entries.title": "我可以做什么",
+        "zone.quick_entries.description": "按业务域进入当前角色可使用的功能。",
+        "block.hero_record_summary.title": "角色定位",
+        "block.todo_list_today.title": "今日优先动作",
         "block.risk_alert_panel.title": "系统提醒（高优先）",
         "block.advice_fold.title": "系统建议（补充）",
-        "block.metric_row_core.title": "关键指标",
+        "block.metric_row_core.title": "角色能力摘要",
         "block.progress_summary_ops.title": "综合进展",
         "block.activity_feed_risk.title": "风险动态",
-        "block.entry_grid_scene.title": "常用功能",
+        "block.entry_grid_scene.title": "可使用的业务域",
         "action.open_landing.label": "打开默认入口",
         "action.open_my_work.label": "查看全部",
         "action.open_risk_dashboard.label": "进入风险驾驶舱",
         "action.open_scene.label": "进入场景",
-        "page.title": "工作台",
-        "page.subtitle": "先处理行动项，再关注风险与总体状态",
+        "page.title": "角色首页",
+        "page.subtitle": "查看业务状态并处理当前角色下的日常工作",
         "page.badge.runtime_ok": "运行正常",
         "page.action.refresh": "刷新",
     }
@@ -719,8 +720,8 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
     zones: List[Dict[str, Any]] = [
         {
             "key": "hero",
-            "title": "核心关注",
-            "description": "角色上下文与默认入口。",
+            "title": "欢迎使用智慧施工管理平台",
+            "description": "在这里查看项目、合同、成本、财务和待办事项，按你的角色处理日常业务。",
             "zone_type": "hero",
             "display_mode": "stack",
             "priority": 40,
@@ -729,7 +730,7 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
                 {
                     "key": "hero_record_summary",
                     "block_type": "record_summary",
-                    "title": "角色与入口摘要",
+                    "title": "角色定位",
                     "priority": 100,
                     "importance": "critical",
                     "tone": "info",
@@ -747,8 +748,8 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
         },
         {
             "key": "today_focus",
-            "title": "今日优先事项",
-            "description": "先处理行动项，再快速处置风险提醒。",
+            "title": "今天先做什么",
+            "description": "按角色优先级聚合当前需要处理的业务动作。",
             "zone_type": "primary",
             "display_mode": "grid",
             "priority": 100,
@@ -757,7 +758,7 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
                 {
                     "key": "todo_list_today",
                     "block_type": "todo_list",
-                    "title": "今日行动",
+                    "title": "今日优先动作",
                     "priority": 98,
                     "importance": "critical",
                     "tone": "warning",
@@ -792,8 +793,8 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
         },
         {
             "key": "analysis",
-            "title": "项目总体状态",
-            "description": "关键指标、执行进展与风险动态。",
+            "title": "我需要关注什么",
+            "description": "展示与当前角色相关的能力、进展和风险状态。",
             "zone_type": "secondary",
             "display_mode": "grid",
             "priority": 80,
@@ -802,7 +803,7 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
                 {
                     "key": "metric_row_core",
                     "block_type": "metric_row",
-                    "title": "关键指标",
+                    "title": "角色能力摘要",
                     "priority": 80,
                     "importance": "medium",
                     "tone": "neutral",
@@ -854,8 +855,8 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
         },
         {
             "key": "quick_entries",
-            "title": "常用功能",
-            "description": "按业务场景快速进入处理。",
+            "title": "我可以做什么",
+            "description": "按业务域进入当前角色可使用的功能。",
             "zone_type": "supporting",
             "display_mode": "grid",
             "priority": 60,
@@ -864,7 +865,7 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
                 {
                     "key": "entry_grid_scene",
                     "block_type": "entry_grid",
-                    "title": "常用功能",
+                    "title": "可使用的业务域",
                     "priority": 65,
                     "importance": "medium",
                     "tone": "neutral",
@@ -876,16 +877,16 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
                     "collapsible": False,
                     "visibility": {"roles": audience, "capabilities": [], "expr": None},
                     "actions": [{"key": "open_scene", "label": "进入场景", "intent": "ui.contract"}],
-                    "payload": {"layout": "2x4", "show_icon": True, "show_hint": True},
+                    "payload": {"layout": "2x3", "show_icon": True, "show_hint": True, "max_items": 6},
                 },
             ],
         },
     ]
 
     role_zone_order: Dict[str, List[str]] = {
-        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
-        "finance": ["analysis", "today_focus", "quick_entries", "hero"],
-        "owner": ["analysis", "today_focus", "hero", "quick_entries"],
+        "pm": ["hero", "quick_entries", "today_focus", "analysis"],
+        "finance": ["hero", "quick_entries", "today_focus", "analysis"],
+        "owner": ["hero", "quick_entries", "today_focus", "analysis"],
     }
     preferred_order = role_zone_order.get(_to_text(role_code), role_zone_order["owner"])
     max_priority = 100

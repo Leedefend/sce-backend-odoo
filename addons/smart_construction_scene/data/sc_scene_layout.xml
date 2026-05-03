@@ -363,13 +363,13 @@
             <field name="source">system</field>
             <field name="payload_json" eval="{
                 'code': 'portal.dashboard',
-                'name': '工作台',
+                'name': '角色首页',
                 'version': 'v2',
                 'portal_only': False,
                 'spa_ready': True,
                 'page': {
                     'key': 'portal.dashboard.workspace',
-                    'title': '工作台',
+                    'title': '角色首页',
                     'page_type': 'workspace',
                     'page_mode': 'workspace'
                 },

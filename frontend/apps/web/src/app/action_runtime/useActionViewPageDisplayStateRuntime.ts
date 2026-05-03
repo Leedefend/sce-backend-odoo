@@ -30,7 +30,7 @@ export function useActionViewPageDisplayStateRuntime(options: UseActionViewPageD
     if (options.routeSceneLabel.value) return options.routeSceneLabel.value;
     const contractTitle = String(options.actionContract.value?.head?.title || '').trim();
     if (contractTitle) return contractTitle;
-    return options.injectedTitle.value || options.actionMetaName.value || options.t('page_title_fallback', '工作台');
+    return options.injectedTitle.value || options.actionMetaName.value || options.t('page_title_fallback', '角色首页');
   });
 
   const emptyReasonText = computed(() => {

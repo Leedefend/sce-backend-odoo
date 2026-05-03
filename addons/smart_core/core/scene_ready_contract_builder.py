@@ -322,7 +322,7 @@ def _pilot_scene_surface_spec(scene_key: str) -> Dict[str, Any]:
         return {
             "kind": "workspace",
             "intent": {
-                "title": "工作台：先处理高优先级行动",
+                "title": "角色首页：先处理高优先级行动",
                 "summary": "优先处理今日待办，完成后自动刷新当前视图。",
                 "empty_title": "当前暂无待处理事项",
                 "empty_hint": "建议切换筛选条件或进入场景导航继续巡检。",
@@ -337,7 +337,7 @@ def _pilot_scene_surface_spec(scene_key: str) -> Dict[str, Any]:
             "summary": "当前场景已启用严格契约消费模式。",
             "empty_title": "暂无可展示数据",
             "empty_hint": "请检查场景契约或稍后重试。",
-            "primary_action": {"label": "返回工作台", "target": "/my-work"},
+            "primary_action": {"label": "返回角色首页", "target": "/"},
         },
     }
 

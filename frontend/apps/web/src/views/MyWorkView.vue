@@ -400,9 +400,9 @@
       >
         <section v-if="!displayItems.length && !showFilterEmptyGuide" class="empty-guide">
           <p class="empty-title">{{ summaryStatus?.message || pageText('empty_title_default', '当前无待处理事项') }}</p>
-          <p class="empty-desc">{{ pageText('empty_desc', '状态良好。你可以返回工作台查看整体态势，或进入风险驾驶舱继续巡检。') }}</p>
+          <p class="empty-desc">{{ pageText('empty_desc', '状态良好。你可以返回角色首页查看整体态势，或进入风险驾驶舱继续巡检。') }}</p>
           <div class="guide-actions">
-            <button class="guide-btn primary" @click="goWorkbench">{{ pageText('action_go_workbench', '去工作台') }}</button>
+            <button class="guide-btn primary" @click="goWorkbench">{{ pageText('action_go_workbench', '去角色首页') }}</button>
             <button class="guide-btn" @click="goRiskCockpit">{{ pageText('action_go_risk_cockpit', '去风险驾驶舱') }}</button>
           </div>
         </section>
@@ -502,7 +502,23 @@ const pageSectionStyle = pageContract.sectionStyle;
 
 const myWorkOrchestrationContract = computed<PageOrchestrationContract>(() => {
   const contract = pageContract.contract.value?.page_orchestration_v1;
-  return (contract && typeof contract === 'object') ? contract as unknown as PageOrchestrationContract : {};
+  if (!contract || typeof contract !== 'object') return {};
+  const normalized = contract as unknown as PageOrchestrationContract;
+  if (retryFailedItems.value.length > 0 || !Array.isArray(normalized.zones)) return normalized;
+  return {
+    ...normalized,
+    zones: normalized.zones
+      .map((zone) => ({
+        ...zone,
+        blocks: Array.isArray(zone.blocks)
+          ? zone.blocks.filter((block) => (
+            String(block.key || '') !== 'my_work.retry_panel'
+            && String(block.data_source || '') !== 'ds_section_retry_panel'
+          ))
+          : [],
+      }))
+      .filter((zone) => zone.blocks.length > 0),
+  };
 });
 const useUnifiedMyWorkRenderer = computed(() => {
   if (String(route.query.legacy_my_work || '').trim() === '1') return false;
@@ -732,6 +748,30 @@ const groupedVisibleRetryItems = computed(() => {
   return Array.from(map.entries()).map(([reasonCode, rows]) => ({ reasonCode, items: rows }));
 });
 const headerActions = computed(() => pageGlobalActions.value);
+function workItemSourceLabel(source: unknown) {
+  const raw = String(source || '').trim();
+  const mapping: Record<string, string> = {
+    'sc.workflow.workitem': '流程待办',
+    'tier.review': '审批复核',
+    'mail.activity': '待办活动',
+    'mail.followers': '关注动态',
+    'project.task': '项目任务',
+    'project.project': '项目主数据',
+    business: '业务事项',
+    capability_fallback: '系统补充',
+  };
+  return mapping[raw] || mapping[raw.toLowerCase()] || raw || '业务事项';
+}
+
+function workItemActionLabel(item: MyWorkRecordItem) {
+  const explicit = String(item.action_label || '').trim();
+  if (explicit) return explicit;
+  const source = String(item.source || '').trim();
+  if (source === 'mail.followers' || source === 'mail.message') return pageText('action_view_item', '查看');
+  if (source === 'project.project') return pageText('action_view_project', '查看项目');
+  return pageText('action_process_item', '处理');
+}
+
 const myWorkOrchestrationDatasets = computed<Record<string, unknown>>(() => {
   const summaryMetrics = summaryCards.value.map((item) => ({
     key: String(item.key || ''),
@@ -739,12 +779,19 @@ const myWorkOrchestrationDatasets = computed<Record<string, unknown>>(() => {
     value: Number(item.count || 0),
     tone: item.key === activeSection.value ? 'info' : 'neutral',
   }));
-  const todoRows = displayItems.value.slice(0, 20).map((item) => ({
+  const todoRows = displayItems.value.slice(0, 12).map((item) => ({
     id: item.id,
     title: String(item.title || '-'),
-    description: `${String(item.source || '-')}${item.deadline ? ` · ${item.deadline}` : ''}`,
+    description: [
+      workItemSourceLabel(item.source),
+      item.deadline ? `截至 ${item.deadline}` : '',
+      item.reason_code ? `原因 ${item.reason_code}` : '',
+    ].filter(Boolean).join(' · '),
+    source: String(item.source || 'business'),
+    source_label: workItemSourceLabel(item.source),
     tone: item.reason_code ? 'warning' : 'info',
     action_key: 'open_item',
+    action_label: workItemActionLabel(item),
     entry_id: item.id,
     scene_key: item.scene_key,
   }));
