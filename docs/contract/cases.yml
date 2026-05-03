@@ -160,7 +160,9 @@
     "intent": "my.work.complete_batch",
     "intent_params": {
       "source": "mail.activity",
-      "ids": [999999991],
+      "ids": [
+        999999991
+      ],
       "request_id": "snapshot_my_work_batch_1"
     }
   },
@@ -182,7 +184,9 @@
     "intent": "api.data.batch",
     "intent_params": {
       "model": "res.partner",
-      "ids": [999999991],
+      "ids": [
+        999999991
+      ],
       "action": "archive",
       "request_id": "snapshot_api_data_batch_1"
     }
@@ -500,7 +504,9 @@
         },
         "compatibility": {
           "min_core_version": "10.6.0",
-          "supported_schema_versions": ["v2"]
+          "supported_schema_versions": [
+            "v2"
+          ]
         },
         "generated_at": "2026-02-10T00:00:00Z",
         "checksum": "3f6a3127419458814029b8fe124a081d4bd6f4a18cd60446c036b90beaba5870"
@@ -548,7 +554,9 @@
         },
         "compatibility": {
           "min_core_version": "10.6.0",
-          "supported_schema_versions": ["v2"]
+          "supported_schema_versions": [
+            "v2"
+          ]
         },
         "generated_at": "2026-02-10T00:00:00Z",
         "checksum": "3f6a3127419458814029b8fe124a081d4bd6f4a18cd60446c036b90beaba5870"
@@ -566,7 +574,10 @@
       "limit": 5,
       "offset": 0,
       "order": "id desc",
-      "fields": ["id", "name"]
+      "fields": [
+        "id",
+        "name"
+      ]
     }
   },
   {
@@ -591,7 +602,9 @@
     "intent": "api.data.unlink",
     "intent_params": {
       "model": "project.task",
-      "ids": [1],
+      "ids": [
+        1
+      ],
       "dry_run": true,
       "request_id": "snapshot_api_data_unlink_1"
     },
@@ -687,40 +700,6 @@
     "allow_error_response": true,
     "intent_params": {
       "reason": "contract snapshot"
-    }
-  },
-  {
-    "case": "sample_enhanced_intent_admin",
-    "user": "admin",
-    "op": "intent.invoke",
-    "intent": "sample.enhanced",
-    "allow_error_response": true,
-    "intent_params": {
-      "sample_param": "snapshot",
-      "number_param": 1,
-      "flag_param": true
-    }
-  },
-  {
-    "case": "ui_contract_enhanced_intent_admin",
-    "user": "admin",
-    "op": "intent.invoke",
-    "intent": "ui.contract.enhanced",
-    "allow_error_response": true,
-    "intent_params": {
-      "op": "nav"
-    }
-  },
-  {
-    "case": "ui_contract_model_view_intent_admin",
-    "user": "admin",
-    "op": "intent.invoke",
-    "intent": "ui.contract.model.view",
-    "allow_error_response": true,
-    "intent_params": {
-      "model_name": "res.partner",
-      "view_type": "list",
-      "id": 1
     }
   },
   {

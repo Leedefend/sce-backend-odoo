@@ -1,6 +1,6 @@
 {
   "source": "intent_capability_matrix_report",
-  "intent_count": 51,
+  "intent_count": 48,
   "intents": [
     {
       "intent_type": "api.data",
@@ -537,22 +537,6 @@
       "source": "addons/smart_core/handlers/permission_check.py"
     },
     {
-      "intent_type": "sample.enhanced",
-      "class_name": "EnhancedSampleHandler",
-      "required_groups": [],
-      "etag_enabled": false,
-      "has_test_file": true,
-      "has_smoke_make_target": false,
-      "smoke_make_targets": [],
-      "is_write_operation": false,
-      "is_write": false,
-      "acl_mode": "",
-      "layer": "domain",
-      "orm_used": false,
-      "may_trigger_sudo": false,
-      "source": "addons/smart_core/handlers/enhanced_sample_handler.py"
-    },
-    {
       "intent_type": "scene.governance.export_contract",
       "class_name": "SceneGovernanceExportContractHandler",
       "required_groups": [],
@@ -841,38 +825,6 @@
       "orm_used": true,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/ui_contract.py"
-    },
-    {
-      "intent_type": "ui.contract.enhanced",
-      "class_name": "EnhancedUIContractHandler",
-      "required_groups": [],
-      "etag_enabled": false,
-      "has_test_file": true,
-      "has_smoke_make_target": false,
-      "smoke_make_targets": [],
-      "is_write_operation": false,
-      "is_write": false,
-      "acl_mode": "",
-      "layer": "domain",
-      "orm_used": false,
-      "may_trigger_sudo": false,
-      "source": "addons/smart_core/handlers/enhanced_ui_contract.py"
-    },
-    {
-      "intent_type": "ui.contract.model.view",
-      "class_name": "EnhancedModelViewHandler",
-      "required_groups": [],
-      "etag_enabled": false,
-      "has_test_file": true,
-      "has_smoke_make_target": false,
-      "smoke_make_targets": [],
-      "is_write_operation": false,
-      "is_write": false,
-      "acl_mode": "",
-      "layer": "domain",
-      "orm_used": false,
-      "may_trigger_sudo": false,
-      "source": "addons/smart_core/handlers/enhanced_ui_contract.py"
     },
     {
       "intent_type": "usage.export.csv",

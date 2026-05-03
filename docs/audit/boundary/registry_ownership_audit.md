@@ -86,7 +86,6 @@
 - `addons/smart_core/handlers/scene_package.py:17` → `service_cls = call_extension_hook_first(env, "smart_core_scene_package_service_class", env)`
 - `addons/smart_core/handlers/scene_package.py:24` → `REQUIRED_GROUPS = ["smart_core.group_smart_core_scene_admin"]`
 - `addons/smart_core/core/workspace_home_contract_builder.py:1148` → `"source_type": "capability_registry",`
-- `addons/smart_core/handlers/enhanced_ui_contract.py:264` → `def register_middlewares(router):`
 - `addons/smart_core/utils/contract_governance.py:2713` → `def register_contract_domain_override(`
 - `addons/smart_core/handlers/scene_governance.py:16` → `service_cls = call_extension_hook_first(env, "smart_core_scene_governance_service_class", env)`
 - `addons/smart_core/handlers/scene_governance.py:23` → `REQUIRED_GROUPS = ["smart_core.group_smart_core_scene_admin"]`

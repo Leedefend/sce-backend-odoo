@@ -49,7 +49,6 @@
         "my.work.complete_batch",
         "usage.report",
         "usage.track",
-        "sample.enhanced",
         "system.ping.construction"
       ],
       "required_behavioral_intents": [

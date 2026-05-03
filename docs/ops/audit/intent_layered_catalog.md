@@ -40,13 +40,10 @@
 | payment.request.execute | domain | Y | 1 | addons/smart_construction_core/handlers/payment_request_execute.py |
 | payment.request.reject | domain | Y | 0 | addons/smart_construction_core/handlers/payment_request_approval.py |
 | payment.request.submit | domain | Y | 0 | addons/smart_construction_core/handlers/payment_request_approval.py |
-| sample.enhanced | domain | N | 0 | addons/smart_core/handlers/enhanced_sample_handler.py |
 | scene.health | domain | N | 0 | addons/smart_core/handlers/scene_health.py |
 | scene.packages.installed | domain | N | 1 | addons/smart_core/handlers/scene_packages_installed.py |
 | session.bootstrap | domain | N | 0 | addons/smart_core/handlers/session_bootstrap.py |
 | system.ping.construction | domain | Y | 1 | addons/smart_construction_core/handlers/system_ping_construction.py |
-| ui.contract.enhanced | domain | N | 0 | addons/smart_core/handlers/enhanced_ui_contract.py |
-| ui.contract.model.view | domain | N | 0 | addons/smart_core/handlers/enhanced_ui_contract.py |
 | usage.export.csv | domain | N | 1 | addons/smart_construction_core/handlers/usage_export_csv.py |
 | usage.report | domain | N | 0 | addons/smart_construction_core/handlers/usage_report.py |
 | usage.track | domain | Y | 1 | addons/smart_construction_core/handlers/usage_track.py |
@@ -96,13 +93,10 @@
 - `payment.request.execute`
 - `payment.request.reject`
 - `payment.request.submit`
-- `sample.enhanced`
 - `scene.health`
 - `scene.packages.installed`
 - `session.bootstrap`
 - `system.ping.construction`
-- `ui.contract.enhanced`
-- `ui.contract.model.view`
 - `usage.export.csv`
 - `usage.report`
 - `usage.track`
