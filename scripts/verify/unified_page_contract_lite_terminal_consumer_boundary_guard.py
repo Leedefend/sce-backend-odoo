@@ -13,6 +13,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 BOUNDARY_PATH = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractLiteTerminal.ts"
 STORE_PATH = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractLiteTerminalStore.ts"
+RENDERER_INPUT_PATH = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractLiteTerminalRendererInput.ts"
 BASE_CONTRACT_PATH = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractLite.ts"
 MAKEFILE_PATH = ROOT / "Makefile"
 
@@ -59,6 +60,17 @@ REQUIRED_STORE_TOKENS = (
     "LiteTerminalConsumerBoundary",
 )
 
+REQUIRED_RENDERER_INPUT_TOKENS = (
+    "LiteTerminalRendererInput",
+    "LiteTerminalRendererInputSnapshot",
+    "createLiteTerminalRendererInput",
+    "createLiteTerminalRendererInputSnapshot",
+    "LiteTerminalContractStoreSnapshot",
+    "widgetCount",
+    "fieldCount",
+    "actionCount",
+)
+
 
 def read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
@@ -75,12 +87,13 @@ def main() -> int:
     args = parser.parse_args()
 
     errors: list[str] = []
-    for path in (BOUNDARY_PATH, STORE_PATH, BASE_CONTRACT_PATH, MAKEFILE_PATH):
+    for path in (BOUNDARY_PATH, STORE_PATH, RENDERER_INPUT_PATH, BASE_CONTRACT_PATH, MAKEFILE_PATH):
         if not path.exists():
             errors.append(f"missing file: {path.relative_to(ROOT)}")
 
     boundary = read_text(BOUNDARY_PATH) if BOUNDARY_PATH.exists() else ""
     store = read_text(STORE_PATH) if STORE_PATH.exists() else ""
+    renderer_input = read_text(RENDERER_INPUT_PATH) if RENDERER_INPUT_PATH.exists() else ""
     base_contract = read_text(BASE_CONTRACT_PATH) if BASE_CONTRACT_PATH.exists() else ""
     makefile = read_text(MAKEFILE_PATH) if MAKEFILE_PATH.exists() else ""
 
@@ -96,6 +109,12 @@ def main() -> int:
     store_forbidden = sorted(token for token in FORBIDDEN_BOUNDARY_TOKENS if token in store)
     if store_forbidden:
         errors.append(f"store contains forbidden semantic/runtime tokens: {store_forbidden}")
+    for token in REQUIRED_RENDERER_INPUT_TOKENS:
+        if token not in renderer_input:
+            errors.append(f"renderer input missing token: {token}")
+    renderer_forbidden = sorted(token for token in FORBIDDEN_BOUNDARY_TOKENS if token in renderer_input)
+    if renderer_forbidden:
+        errors.append(f"renderer input contains forbidden semantic/runtime tokens: {renderer_forbidden}")
 
     if "export type LiteClientType = 'web_pc' | 'wx_mini' | 'harmony_h5';" not in base_contract:
         errors.append("base Lite contract does not expose the three supported terminal clients")
@@ -115,6 +134,7 @@ def main() -> int:
         path for path in frontend_contract_files
         if path.endswith("unifiedPageContractLiteTerminal.ts") is False
         and path.endswith("unifiedPageContractLiteTerminalStore.ts") is False
+        and path.endswith("unifiedPageContractLiteTerminalRendererInput.ts") is False
         and path.endswith("unifiedPageContractLite.ts") is False
         and "unifiedPageContractLitePilot.ts" not in path
     ]
@@ -125,6 +145,7 @@ def main() -> int:
         "ok": not errors,
         "boundary": BOUNDARY_PATH.relative_to(ROOT).as_posix(),
         "store": STORE_PATH.relative_to(ROOT).as_posix(),
+        "rendererInput": RENDERER_INPUT_PATH.relative_to(ROOT).as_posix(),
         "baseContract": BASE_CONTRACT_PATH.relative_to(ROOT).as_posix(),
         "frontendLiteFiles": frontend_contract_files,
         "policy": "shared_terminal_consumer_boundary_only",
