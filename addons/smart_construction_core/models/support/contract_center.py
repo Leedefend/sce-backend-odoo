@@ -32,7 +32,7 @@ class ConstructionContract(models.Model):
 
     # --- Identity & basics -------------------------------------------------
     name = fields.Char(
-        string="合同编号",
+        string="单据编号",
         default="新建",
         readonly=True,
         copy=False,
@@ -132,6 +132,48 @@ class ConstructionContract(models.Model):
         currency_field="currency_id",
         store=True,
     )
+    settlement_amount = fields.Monetary(
+        string="结算金额",
+        currency_field="currency_id",
+        compute="_compute_execution_amounts",
+        compute_sudo=True,
+    )
+    invoice_amount = fields.Monetary(
+        string="开票金额",
+        currency_field="currency_id",
+        compute="_compute_execution_amounts",
+        compute_sudo=True,
+    )
+    uninvoiced_amount = fields.Monetary(
+        string="未开票金额",
+        currency_field="currency_id",
+        compute="_compute_execution_amounts",
+        compute_sudo=True,
+    )
+    received_amount = fields.Monetary(
+        string="收款金额",
+        currency_field="currency_id",
+        compute="_compute_execution_amounts",
+        compute_sudo=True,
+    )
+    unreceived_amount = fields.Monetary(
+        string="未收款金额",
+        currency_field="currency_id",
+        compute="_compute_execution_amounts",
+        compute_sudo=True,
+    )
+    paid_amount = fields.Monetary(
+        string="付款金额",
+        currency_field="currency_id",
+        compute="_compute_execution_amounts",
+        compute_sudo=True,
+    )
+    unpaid_amount = fields.Monetary(
+        string="未付款金额",
+        currency_field="currency_id",
+        compute="_compute_execution_amounts",
+        compute_sudo=True,
+    )
 
     # --- Dates & relations -------------------------------------------------
     date_contract = fields.Date(string="签订日期")
@@ -142,6 +184,11 @@ class ConstructionContract(models.Model):
         "account.analytic.account",
         string="分析账户",
     )
+    engineering_address = fields.Char(string="工程地址")
+    handler_id = fields.Many2one("res.users", string="经办人", default=lambda self: self.env.user, index=True)
+    entry_user_id = fields.Many2one("res.users", string="录入人", default=lambda self: self.env.user, index=True)
+    entry_data = fields.Char(string="录入数据")
+    archived = fields.Boolean(string="是否归档", index=True)
     budget_id = fields.Many2one(
         "project.budget",
         string="控制预算版本",
@@ -298,6 +345,58 @@ class ConstructionContract(models.Model):
             contract.payment_request_count = pay_cnt
             contract.settlement_count = settle_cnt
             contract.is_locked = bool(pay_cnt or settle_cnt)
+
+    @api.depends("amount_final")
+    def _compute_execution_amounts(self):
+        settlement_map = self._sum_amount_by_contract(
+            "sc.settlement.order",
+            "amount_total",
+            excluded_states=("cancel", "cancelled"),
+        )
+        invoice_map = self._sum_amount_by_contract(
+            "sc.invoice.registration",
+            "amount_total",
+            excluded_states=("cancel", "cancelled"),
+        )
+        receipt_map = self._sum_amount_by_contract(
+            "sc.receipt.income",
+            "amount",
+            excluded_states=("cancel", "cancelled"),
+        )
+        payment_map = self._sum_amount_by_contract(
+            "sc.payment.execution",
+            "paid_amount",
+            excluded_states=("cancel", "cancelled"),
+        )
+        for contract in self:
+            total = contract.amount_final or 0.0
+            invoice_amount = invoice_map.get(contract.id, 0.0)
+            received_amount = receipt_map.get(contract.id, 0.0)
+            paid_amount = payment_map.get(contract.id, 0.0)
+            contract.settlement_amount = settlement_map.get(contract.id, 0.0)
+            contract.invoice_amount = invoice_amount
+            contract.uninvoiced_amount = max(total - invoice_amount, 0.0)
+            contract.received_amount = received_amount
+            contract.unreceived_amount = max(total - received_amount, 0.0)
+            contract.paid_amount = paid_amount
+            contract.unpaid_amount = max(total - paid_amount, 0.0)
+
+    def _sum_amount_by_contract(self, model_name, amount_field, excluded_states=()):
+        contract_ids = self.ids
+        if not contract_ids or model_name not in self.env.registry:
+            return {}
+        Model = self.env[model_name].sudo()
+        if amount_field not in Model._fields or "contract_id" not in Model._fields:
+            return {}
+        domain = [("contract_id", "in", contract_ids)]
+        if excluded_states and "state" in Model._fields:
+            domain.append(("state", "not in", list(excluded_states)))
+        rows = Model.read_group(domain, [amount_field], ["contract_id"])
+        return {
+            row["contract_id"][0]: row.get(f"{amount_field}_sum", row.get(amount_field, 0.0)) or 0.0
+            for row in rows
+            if row.get("contract_id")
+        }
 
     def action_generate_lines_from_budget(self):
         """Populate contract lines from the active budget BoQ."""

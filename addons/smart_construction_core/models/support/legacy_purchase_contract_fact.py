@@ -5,7 +5,7 @@ from odoo.exceptions import UserError
 
 class ScLegacyPurchaseContractFact(models.Model):
     _name = "sc.legacy.purchase.contract.fact"
-    _description = "采购/一般合同"
+    _description = "历史采购/一般合同事实"
     _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation"]
     _state_from = ["submit"]
     _state_to = ["approved"]
@@ -58,7 +58,7 @@ class ScLegacyPurchaseContractFact(models.Model):
     currency_name = fields.Char(string="币种", index=True)
     prepayment_amount = fields.Float(string="预付款")
     install_debug_payment = fields.Float(string="安装调试款")
-    install_commissioning_payment = fields.Float(string="安装调试款", compute="_compute_business_aliases")
+    install_commissioning_payment = fields.Float(string="安装调试款（兼容）", compute="_compute_business_aliases")
     warranty_deposit = fields.Float(string="质保金")
     payment_terms = fields.Text(string="付款条件")
     partner_legacy_id = fields.Char(string="往来方原编号", index=True)
@@ -100,7 +100,7 @@ class ScLegacyPurchaseContractFact(models.Model):
 
     @api.model
     def _default_record_id(self):
-        return self.env["ir.sequence"].next_by_code("sc.legacy.purchase.contract.fact") or "新系统采购一般合同"
+        return self.env["ir.sequence"].next_by_code("sc.legacy.purchase.contract.fact") or "历史采购一般合同事实"
 
     def init(self):
         self.env.cr.execute(
@@ -128,6 +128,11 @@ class ScLegacyPurchaseContractFact(models.Model):
         return super().create(vals_list)
 
     def action_submit(self):
+        if self.env.context.get("allow_legacy_contract_workflow"):
+            return self._action_submit_legacy_workflow()
+        raise UserError(_("历史采购/一般合同事实只作为旧库承载，不再发起新系统审批。"))
+
+    def _action_submit_legacy_workflow(self):
         policy_model = self.env["sc.approval.policy"]
         for rec in self:
             if rec.state == "draft":
@@ -142,7 +147,7 @@ class ScLegacyPurchaseContractFact(models.Model):
         for rec in self:
             if rec.state == "submit":
                 if policy_model.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
-                    raise UserError(_("采购/一般合同尚未完成统一审批流程。"))
+                    raise UserError(_("历史采购/一般合同事实尚未完成兼容审批流程。"))
                 policy = policy_model.get_active_policy(rec._name, company=rec.company_id)
                 if policy and not policy_model.is_approval_required(rec._name, company=rec.company_id):
                     policy.assert_user_can_approve()
@@ -155,9 +160,9 @@ class ScLegacyPurchaseContractFact(models.Model):
         elif not self.review_ids or self.validation_status == "no":
             reviews = self.request_validation()
             if not reviews:
-                raise UserError(_("采购/一般合同已启用审批，但没有匹配的统一审批规则，请检查业务审批配置。"))
+                raise UserError(_("历史采购/一般合同事实已启用兼容审批，但没有匹配的统一审批规则，请检查业务审批配置。"))
         else:
-            raise UserError(_("采购/一般合同已经在统一审批流程中，请等待审批完成。"))
+            raise UserError(_("历史采购/一般合同事实已经在兼容审批流程中，请等待审批完成。"))
 
     def _check_state_from_condition(self):
         self.ensure_one()
@@ -177,7 +182,7 @@ class ScLegacyPurchaseContractFact(models.Model):
             if rec.state != "submit":
                 continue
             if rec.validation_status != "validated":
-                raise UserError(_("采购/一般合同尚未完成统一审批流程。"))
+                raise UserError(_("历史采购/一般合同事实尚未完成兼容审批流程。"))
             rec.with_context(skip_validation_check=True).write({"state": "approved", "reject_reason": False})
 
     def action_on_tier_rejected(self, reason=None):
@@ -194,13 +199,13 @@ class ScLegacyPurchaseContractFact(models.Model):
     def action_signed(self):
         for rec in self:
             if rec.state in ("draft", "submit"):
-                raise UserError("采购/一般合同需先批准后再签署。")
+                raise UserError("历史采购/一般合同事实需先批准后再签署。")
             if rec.state == "approved":
                 rec.state = "signed"
 
     def action_cancel(self):
         for rec in self:
             if rec.state == "legacy_confirmed":
-                raise UserError("历史迁移采购/一般合同不能在新系统取消。")
+                raise UserError("历史采购/一般合同事实不能在新系统取消。")
             if rec.state not in ("signed", "cancel"):
                 rec.state = "cancel"

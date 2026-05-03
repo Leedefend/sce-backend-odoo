@@ -9,13 +9,14 @@ class ScApprovalPolicy(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "sequence, id"
     _runtime_authority = "base_tier_validation"
+    LEGACY_FACT_MODELS = {"sc.legacy.purchase.contract.fact"}
 
     BUSINESS_MODEL_SELECTION = [
         ("project.project", "项目立项"),
         ("project.task", "项目任务"),
         ("construction.contract", "项目合同"),
-        ("sc.general.contract", "一般合同"),
-        ("sc.legacy.purchase.contract.fact", "采购/一般合同"),
+        ("sc.general.contract", "一般合同（公司）"),
+        ("sc.legacy.purchase.contract.fact", "历史采购/一般合同事实（只读）"),
         ("project.material.plan", "物资计划"),
         ("purchase.order", "采购订单"),
         ("sc.settlement.order", "结算单"),
@@ -151,9 +152,13 @@ class ScApprovalPolicy(models.Model):
         for rec in self:
             if not rec.approval_required and rec.mode != "none":
                 raise ValidationError(_("无需审核的业务，审核方式应选择“无需审核”。"))
+            if rec.target_model in self.LEGACY_FACT_MODELS and rec.active and rec.approval_required:
+                raise ValidationError(_("历史事实模型只作为只读承载，不再作为业务审批对象。"))
 
     @api.model
     def get_active_policy(self, model_name, company=None):
+        if model_name in self.LEGACY_FACT_MODELS:
+            return self.browse()
         company = company or self.env.company
         domain = [
             ("active", "=", True),
@@ -202,7 +207,6 @@ class ScApprovalPolicy(models.Model):
             "purchase.order",
             "construction.contract",
             "sc.general.contract",
-            "sc.legacy.purchase.contract.fact",
             "sc.receipt.income",
             "sc.payment.execution",
             "sc.invoice.registration",
@@ -246,10 +250,6 @@ class ScApprovalPolicy(models.Model):
                 "smart_construction_core.server_action_general_contract_on_approved",
                 "smart_construction_core.server_action_general_contract_on_rejected",
             ),
-            "sc.legacy.purchase.contract.fact": (
-                "smart_construction_core.server_action_legacy_purchase_contract_on_approved",
-                "smart_construction_core.server_action_legacy_purchase_contract_on_rejected",
-            ),
             "sc.receipt.income": (
                 "smart_construction_core.server_action_receipt_income_on_approved",
                 "smart_construction_core.server_action_receipt_income_on_rejected",
@@ -289,7 +289,6 @@ class ScApprovalPolicy(models.Model):
             "purchase.order": "amount_total",
             "construction.contract": "amount_total",
             "sc.general.contract": "amount_total",
-            "sc.legacy.purchase.contract.fact": "total_amount",
             "sc.receipt.income": "amount",
             "sc.payment.execution": "paid_amount",
             "sc.invoice.registration": "amount_total",
