@@ -115,21 +115,39 @@ for index, row in enumerate(rows, start=2):
     if not clean(row.get("name")):
         errors.append({"line": index, "error": "missing_name"})
 
-existing = Partner.browse()
+existing_by_key = {}
 for source, legacy_id in keys:
-    existing |= Partner.search([("legacy_partner_source", "=", source), ("legacy_partner_id", "=", legacy_id)], limit=1)
-if existing:
-    errors.append({"error": "target_identity_not_empty", "count": len(existing), "samples": existing[:20].mapped("id")})
+    matches = Partner.search([("legacy_partner_source", "=", source), ("legacy_partner_id", "=", legacy_id)])
+    if len(matches) > 1:
+        errors.append(
+            {
+                "error": "duplicate_target_identity",
+                "legacy_partner_source": source,
+                "legacy_partner_id": legacy_id,
+                "samples": matches[:20].mapped("id"),
+            }
+        )
+    elif matches:
+        existing_by_key[(source, legacy_id)] = matches
 if errors:
     env.cr.rollback()  # noqa: F821
     raise RuntimeError({"precheck_failed": errors[:30]})
 
 created_rows: list[dict[str, object]] = []
+updated_rows: list[dict[str, object]] = []
 try:
     for row in rows:
         vals = build_vals(row)
-        rec = Partner.create({field: value for field, value in vals.items() if value not in ("", None)})
-        created_rows.append(
+        write_vals = {field: value for field, value in vals.items() if value not in ("", None)}
+        key = (write_vals["legacy_partner_source"], write_vals["legacy_partner_id"])
+        rec = existing_by_key.get(key)
+        if rec:
+            rec.write(write_vals)
+            target_rows = updated_rows
+        else:
+            rec = Partner.create(write_vals)
+            target_rows = created_rows
+        target_rows.append(
             {
                 "id": rec.id,
                 "legacy_partner_source": rec.legacy_partner_source or "",
@@ -146,7 +164,7 @@ post_count = 0
 for source, legacy_id in keys:
     post_count += Partner.search_count([("legacy_partner_source", "=", source), ("legacy_partner_id", "=", legacy_id)])
 
-status = "PASS" if len(created_rows) == EXPECTED_ROWS and post_count == EXPECTED_ROWS else "FAIL"
+status = "PASS" if len(created_rows) + len(updated_rows) == EXPECTED_ROWS and post_count == EXPECTED_ROWS else "FAIL"
 result = {
     "status": status,
     "mode": "fresh_db_partner_l4_replay_write",
@@ -154,9 +172,10 @@ result = {
     "target_model": "res.partner",
     "input_rows": len(rows),
     "created_rows": len(created_rows),
+    "updated_rows": len(updated_rows),
     "post_write_identity_count": post_count,
     "skipped_existing": 0,
-    "db_writes": len(created_rows),
+    "db_writes": len(created_rows) + len(updated_rows),
     "demo_targets_executed": 0,
     "write_payload": str(INPUT_CSV),
     "rollback_targets": str(ROLLBACK_CSV),
@@ -176,8 +195,9 @@ print(
             "status": status,
             "input_rows": len(rows),
             "created_rows": len(created_rows),
+            "updated_rows": len(updated_rows),
             "post_write_identity_count": post_count,
-            "db_writes": len(created_rows),
+            "db_writes": len(created_rows) + len(updated_rows),
         },
         ensure_ascii=False,
         sort_keys=True,

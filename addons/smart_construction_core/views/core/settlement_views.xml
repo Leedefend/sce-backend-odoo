@@ -9,16 +9,22 @@
             <field name="arch" type="xml">
                 <tree string="结算单">
                     <field name="name"/>
+                    <field name="title"/>
                     <field name="settlement_type"/>
                     <field name="settlement_stage"/>
                     <field name="project_id"/>
                     <field name="contract_id"/>
+                    <field name="settlement_unit_id"/>
                     <field name="partner_id"/>
                     <field name="amount_total"/>
+                    <field name="deduction_amount"/>
                     <field name="amount_paid"/>
-                    <field name="amount_payable"/>
+                    <field name="unpaid_amount"/>
+                    <field name="settlement_description"/>
+                    <field name="attachment_count"/>
+                    <field name="entry_user_id"/>
                     <field name="state"/>
-                    <field name="date_settlement"/>
+                    <field name="document_date"/>
                     <field name="planned_settlement_date"/>
                 </tree>
             </field>
@@ -30,9 +36,11 @@
             <field name="arch" type="xml">
                 <search string="结算单">
                     <field name="name"/>
+                    <field name="title"/>
                     <field name="project_id"/>
                     <field name="contract_id"/>
                     <field name="partner_id"/>
+                    <field name="settlement_unit_id"/>
                     <field name="settlement_stage"/>
                     <filter name="state_draft" string="草稿" domain="[('state', '=', 'draft')]"/>
                     <filter name="state_submit" string="已提交" domain="[('state', '=', 'submit')]"/>
@@ -84,9 +92,13 @@
                     <sheet>
                         <group string="结算额度">
                             <field name="amount_total" readonly="1"/>
+                            <field name="submitted_amount"/>
+                            <field name="approved_amount"/>
+                            <field name="deduction_amount" readonly="1"/>
                             <field name="adjustment_total" readonly="1"/>
                             <field name="amount_after_adjustment" readonly="1"/>
                             <field name="amount_paid" readonly="1"/>
+                            <field name="unpaid_amount" readonly="1"/>
                             <field name="amount_payable" readonly="1"
                                    modifiers="{'invisible': [['amount_payable','&lt;',0.0]]}"/>
                             <field name="amount_payable" readonly="1" string="可付余额（风险）"
@@ -112,24 +124,36 @@
                         <group>
                             <group>
                                 <field name="name" readonly="1"/>
+                                <field name="title"/>
                                 <field name="project_id" options="{'no_create': True}" required="1"/>
                                 <field name="settlement_type" required="1"/>
                                 <field name="settlement_stage"/>
                                 <field name="contract_id"
                                        domain="[('project_id','=',project_id),('company_id','=',company_id)]"/>
+                                <field name="contract_subject" readonly="1"/>
+                                <field name="contract_total_amount" readonly="1"/>
                             </group>
                             <group>
                                 <field name="partner_id" options="{'no_create_edit': True}" required="1"/>
+                                <field name="settlement_unit_id" options="{'no_create_edit': True}"/>
+                                <field name="employer_name" readonly="1"/>
+                                <field name="contractor_name" readonly="1"/>
+                                <field name="document_date"/>
                                 <field name="date_settlement"/>
                                 <field name="planned_settlement_date"/>
                                 <field name="declared_date"/>
                                 <field name="final_approved_date"/>
+                                <field name="approved_date"/>
                                 <field name="currency_id" required="1"/>
                                 <field name="company_id" readonly="1"/>
                             </group>
                         </group>
                         <group>
-                            <field name="amount_total" readonly="1"/>
+                            <field name="requested_fund_amount"/>
+                            <field name="engineering_address" readonly="1"/>
+                            <field name="entry_user_id"/>
+                            <field name="entry_data"/>
+                            <field name="settlement_description"/>
                             <field name="note"/>
                         </group>
                         <group string="发票信息（占位）">

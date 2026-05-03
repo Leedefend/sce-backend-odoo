@@ -121,22 +121,37 @@ for index, row in enumerate(rows, start=2):
     if clean(row.get("replay_action")) != "create_if_missing":
         errors.append({"line": index, "error": "unexpected_replay_action", "value": clean(row.get("replay_action"))})
 
-existing = Project.browse()
+existing_by_key = {}
 for legacy_project_id in keys:
     if legacy_project_id:
-        existing |= Project.search([("legacy_project_id", "=", legacy_project_id)], limit=1)
-if existing:
-    errors.append({"error": "target_identity_not_empty", "count": len(existing), "samples": existing[:20].mapped("id")})
+        matches = Project.search([("legacy_project_id", "=", legacy_project_id)])
+        if len(matches) > 1:
+            errors.append(
+                {
+                    "error": "duplicate_target_identity",
+                    "legacy_project_id": legacy_project_id,
+                    "samples": matches[:20].mapped("id"),
+                }
+            )
+        elif matches:
+            existing_by_key[legacy_project_id] = matches
 if errors:
     env.cr.rollback()  # noqa: F821
     raise RuntimeError({"precheck_failed": errors[:30]})
 
 created_rows: list[dict[str, object]] = []
+updated_rows: list[dict[str, object]] = []
 try:
     for row in rows:
         vals = build_vals(row, existing_fields)
-        rec = Project.create(vals)
-        created_rows.append(
+        rec = existing_by_key.get(vals["legacy_project_id"])
+        if rec:
+            rec.write(vals)
+            target_rows = updated_rows
+        else:
+            rec = Project.create(vals)
+            target_rows = created_rows
+        target_rows.append(
             {
                 "id": rec.id,
                 "legacy_project_id": rec.legacy_project_id or "",
@@ -153,7 +168,7 @@ post_count = 0
 for legacy_project_id in keys:
     post_count += Project.search_count([("legacy_project_id", "=", legacy_project_id)])
 
-status = "PASS" if len(created_rows) == EXPECTED_ROWS and post_count == EXPECTED_ROWS else "FAIL"
+status = "PASS" if len(created_rows) + len(updated_rows) == EXPECTED_ROWS and post_count == EXPECTED_ROWS else "FAIL"
 result = {
     "status": status,
     "mode": "fresh_db_project_anchor_replay_write",
@@ -161,9 +176,10 @@ result = {
     "target_model": "project.project",
     "input_rows": len(rows),
     "created_rows": len(created_rows),
+    "updated_rows": len(updated_rows),
     "post_write_identity_count": post_count,
     "skipped_existing": 0,
-    "db_writes": len(created_rows),
+    "db_writes": len(created_rows) + len(updated_rows),
     "demo_targets_executed": 0,
     "source_only_fields_not_written": sorted(OPTIONAL_SOURCE_ONLY_FIELDS),
     "write_payload": str(INPUT_CSV),
@@ -184,8 +200,9 @@ print(
             "status": status,
             "input_rows": len(rows),
             "created_rows": len(created_rows),
+            "updated_rows": len(updated_rows),
             "post_write_identity_count": post_count,
-            "db_writes": len(created_rows),
+            "db_writes": len(created_rows) + len(updated_rows),
         },
         ensure_ascii=False,
         sort_keys=True,

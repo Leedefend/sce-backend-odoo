@@ -207,23 +207,25 @@ rows = read_csv(PAYLOAD_CSV)
 ids = [clean(row.get("legacy_contract_id")) for row in rows]
 duplicate_input_ids = sorted(identity for identity, count in Counter(ids).items() if identity and count > 1)
 pre_records = snapshot(Contract, PRE_SNAPSHOT_CSV, ids)
+existing_by_legacy: dict[str, object] = {}
+duplicate_existing_ids: list[dict[str, object]] = []
+for rec in pre_records:
+    identity = rec.legacy_contract_id or ""
+    if not identity:
+        continue
+    if identity in existing_by_legacy:
+        first = existing_by_legacy[identity]
+        duplicate_existing_ids.append({"legacy_contract_id": identity, "ids": [first.id, rec.id]})
+    else:
+        existing_by_legacy[identity] = rec
 
 errors: list[dict[str, object]] = []
 if len(rows) != EXPECTED_ROWS:
     errors.append({"error": "unexpected_payload_rows", "actual": len(rows), "expected": EXPECTED_ROWS})
 if duplicate_input_ids:
     errors.append({"error": "duplicate_input_legacy_contract_id", "ids": duplicate_input_ids[:20]})
-if pre_records:
-    errors.append(
-        {
-            "error": "pre_existing_contracts",
-            "count": len(pre_records),
-            "samples": [
-                {"contract_id": rec.id, "legacy_contract_id": rec.legacy_contract_id or "", "name": rec.name or ""}
-                for rec in pre_records[:20]
-            ],
-        }
-    )
+if duplicate_existing_ids:
+    errors.append({"error": "duplicate_existing_legacy_contract_id", "matches": duplicate_existing_ids[:20]})
 
 create_vals = []
 for index, row in enumerate(rows, start=2):
@@ -252,8 +254,27 @@ if errors:
     raise RuntimeError({"precheck_failed": errors[:60]})
 
 created = []
+updated = []
 try:
     for vals in create_vals:
+        legacy_contract_id = vals["legacy_contract_id"]
+        rec = existing_by_legacy.get(legacy_contract_id)
+        if rec:
+            rec.write(vals)
+            updated.append(
+                {
+                    "contract_id": rec.id,
+                    "legacy_contract_id": rec.legacy_contract_id or "",
+                    "legacy_project_id": rec.legacy_project_id or "",
+                    "project_id": rec.project_id.id or "",
+                    "partner_id": rec.partner_id.id or "",
+                    "name": rec.name or "",
+                    "subject": rec.subject or "",
+                    "type": rec.type or "",
+                    "state": rec.state or "",
+                }
+            )
+            continue
         rec = Contract.create(vals)
         created.append(
             {
@@ -306,13 +327,14 @@ for rec in post_records:
 write_csv(ROLLBACK_CSV, SNAPSHOT_FIELDS, rollback_rows)
 
 post_errors = []
-if len(created) != EXPECTED_ROWS:
-    post_errors.append({"error": "created_count_not_expected", "created": len(created), "expected": EXPECTED_ROWS})
+if len(created) + len(updated) != EXPECTED_ROWS:
+    post_errors.append({"error": "processed_count_not_expected", "created": len(created), "updated": len(updated), "expected": EXPECTED_ROWS})
 if len(post_records) != EXPECTED_ROWS:
     post_errors.append({"error": "post_write_match_count_not_expected", "matched": len(post_records), "expected": EXPECTED_ROWS})
 if any(len(records) > 1 for records in grouped.values()):
     post_errors.append({"error": "duplicate_legacy_identity_matches"})
-if any(len(rec.line_ids) for rec in post_records):
+contract_line_rows = sum(len(rec.line_ids) for rec in post_records)
+if len(created) == EXPECTED_ROWS and contract_line_rows:
     post_errors.append({"error": "unexpected_contract_line_rows"})
 
 status = "PASS" if not post_errors else "FAIL"
@@ -325,8 +347,8 @@ result = {
     "created_rows": len(created),
     "post_write_match_count": len(post_records),
     "rollback_target_rows": len(rollback_rows),
-    "updated_rows": 0,
-    "contract_line_rows": 0,
+    "updated_rows": len(updated),
+    "contract_line_rows": contract_line_rows,
     "payment_rows": 0,
     "settlement_rows": 0,
     "accounting_rows": 0,
@@ -348,8 +370,9 @@ print(
             "status": status,
             "input_rows": len(rows),
             "created_rows": len(created),
+            "updated_rows": len(updated),
             "post_write_match_count": len(post_records),
-            "db_writes": len(created),
+            "db_writes": len(created) + len(updated),
         },
         ensure_ascii=False,
         sort_keys=True,

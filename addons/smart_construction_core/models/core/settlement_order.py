@@ -26,6 +26,11 @@ class ScSettlementOrder(models.Model):
         index=True,
     )
     partner_id = fields.Many2one("res.partner", string="往来单位", required=True)
+    title = fields.Char(string="标题", index=True)
+    document_date = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
+    settlement_unit_id = fields.Many2one("res.partner", string="结算单位", index=True)
+    employer_name = fields.Char(string="发包人", compute="_compute_party_names", store=True)
+    contractor_name = fields.Char(string="承包人", compute="_compute_party_names", store=True)
     settlement_type = fields.Selection(
         [("out", "支出结算"), ("in", "收入结算")],
         string="结算类型",
@@ -49,6 +54,7 @@ class ScSettlementOrder(models.Model):
     planned_settlement_date = fields.Date(string="计划结算日期", index=True)
     declared_date = fields.Date(string="申报日期", index=True)
     final_approved_date = fields.Date(string="定案日期", index=True)
+    approved_date = fields.Date(string="审定日期", index=True)
     company_id = fields.Many2one(
         "res.company",
         string="公司",
@@ -67,6 +73,44 @@ class ScSettlementOrder(models.Model):
         compute="_compute_amount_total",
         store=True,
     )
+    contract_subject = fields.Char(
+        string="合同名称",
+        related="contract_id.subject",
+        store=True,
+        readonly=True,
+    )
+    contract_total_amount = fields.Monetary(
+        string="合同总额",
+        currency_field="currency_id",
+        compute="_compute_contract_snapshot",
+        store=True,
+        compute_sudo=True,
+    )
+    submitted_amount = fields.Monetary(string="送审金额", currency_field="currency_id")
+    approved_amount = fields.Monetary(string="审定金额", currency_field="currency_id")
+    requested_fund_amount = fields.Monetary(string="申请资金金额", currency_field="currency_id")
+    engineering_address = fields.Char(
+        string="工程地址",
+        compute="_compute_contract_snapshot",
+        store=True,
+        compute_sudo=True,
+    )
+    deduction_amount = fields.Monetary(
+        string="扣款金额",
+        currency_field="currency_id",
+        compute="_compute_adjustment_breakdown",
+        compute_sudo=True,
+    )
+    unpaid_amount = fields.Monetary(
+        string="未付款金额",
+        currency_field="currency_id",
+        compute="_compute_paid_amounts",
+        store=True,
+        compute_sudo=True,
+    )
+    settlement_description = fields.Text(string="结算说明")
+    entry_user_id = fields.Many2one("res.users", string="录入人", default=lambda self: self.env.user, index=True)
+    entry_data = fields.Char(string="录入数据")
     note = fields.Text(string="备注")
 
     line_ids = fields.One2many(
@@ -123,6 +167,7 @@ class ScSettlementOrder(models.Model):
     invoice_date = fields.Date(string="发票日期")
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
     attachment_ids = fields.Many2many("ir.attachment", "sc_settlement_order_attachment_rel", "settlement_id", "attachment_id", string="结算附件")
+    attachment_count = fields.Integer(string="附件数", compute="_compute_attachment_count")
 
     compliance_contract_ok = fields.Boolean(string="合同一致", compute="_compute_compliance_summary", store=False)
     compliance_state = fields.Selection(
@@ -150,6 +195,7 @@ class ScSettlementOrder(models.Model):
             order.remaining_amount = remaining
             order.amount_paid = paid
             order.amount_payable = remaining
+            order.unpaid_amount = remaining
 
     state = fields.Selection(
         ScStateMachine.selection(ScStateMachine.SETTLEMENT_ORDER),
@@ -161,6 +207,46 @@ class ScSettlementOrder(models.Model):
     def _compute_amount_total(self):
         for order in self:
             order.amount_total = sum(order.line_ids.mapped("amount"))
+
+    @api.depends("settlement_type", "partner_id", "company_id.partner_id")
+    def _compute_party_names(self):
+        for order in self:
+            company_partner = order.company_id.partner_id
+            company_name = company_partner.display_name if company_partner else (order.company_id.name or "")
+            partner_name = order.partner_id.display_name or ""
+            if order.settlement_type == "in":
+                order.employer_name = partner_name
+                order.contractor_name = company_name
+            else:
+                order.employer_name = company_name
+                order.contractor_name = partner_name
+
+    @api.depends("contract_id.amount_final", "contract_id.amount_total", "contract_id.engineering_address", "project_id")
+    def _compute_contract_snapshot(self):
+        for order in self:
+            contract = order.contract_id
+            order.contract_total_amount = contract.amount_final or contract.amount_total or 0.0
+            order.engineering_address = (
+                contract.engineering_address
+                or getattr(order.project_id, "sc_address", False)
+                or getattr(order.project_id, "location", False)
+                or ""
+            )
+
+    @api.depends("adjustment_ids.adjustment_type", "adjustment_ids.amount", "adjustment_ids.state")
+    def _compute_adjustment_breakdown(self):
+        for order in self:
+            order.deduction_amount = sum(
+                order.adjustment_ids.filtered(
+                    lambda adjustment: adjustment.adjustment_type == "deduction"
+                    and adjustment.state in ("confirmed", "legacy_confirmed")
+                ).mapped("amount")
+            )
+
+    @api.depends("attachment_ids")
+    def _compute_attachment_count(self):
+        for order in self:
+            order.attachment_count = len(order.attachment_ids)
 
     @api.constrains("purchase_order_ids", "partner_id")
     def _check_po_vendor_consistency(self):
@@ -430,21 +516,39 @@ class ScSettlementOrder(models.Model):
             if vals.get("name", "新建") in (False, "新建"):
                 seq = self.env["ir.sequence"].next_by_code("sc.settlement.order")
                 vals["name"] = seq or _("Settlement")
+            self._normalize_feedback_defaults(vals)
         records = super().create(vals_list)
         records._apply_contract_defaults_if_needed()
         return records
 
     def write(self, vals):
+        self._normalize_feedback_defaults(vals)
         res = super().write(vals)
-        if "contract_id" in vals:
+        if {"contract_id", "partner_id", "date_settlement", "document_date", "final_approved_date", "approved_date"} & set(vals):
             self._apply_contract_defaults_if_needed()
         return res
+
+    @api.model
+    def _normalize_feedback_defaults(self, vals):
+        if vals.get("partner_id") and not vals.get("settlement_unit_id"):
+            vals["settlement_unit_id"] = vals["partner_id"]
+        if vals.get("document_date") and not vals.get("date_settlement"):
+            vals["date_settlement"] = vals["document_date"]
+        if vals.get("date_settlement") and not vals.get("document_date"):
+            vals["document_date"] = vals["date_settlement"]
+        if vals.get("approved_date") and not vals.get("final_approved_date"):
+            vals["final_approved_date"] = vals["approved_date"]
+        if vals.get("final_approved_date") and not vals.get("approved_date"):
+            vals["approved_date"] = vals["final_approved_date"]
+        return vals
 
     def _apply_contract_defaults_if_needed(self):
         """兜底：导入/批量写入绕过 onchange 时也能带出合同信息。"""
         for rec in self:
             c = rec.contract_id
             if not c:
+                if rec.partner_id and not rec.settlement_unit_id:
+                    rec.with_context(skip_onchange=True).sudo().write({"settlement_unit_id": rec.partner_id.id})
                 continue
             updates = {}
             if not rec.project_id and getattr(c, "project_id", False):
@@ -458,8 +562,19 @@ class ScSettlementOrder(models.Model):
             partner = getattr(c, "partner_id", False)
             if partner and not rec.partner_id:
                 updates["partner_id"] = partner.id
+            effective_partner = self.env["res.partner"].browse(updates["partner_id"]) if updates.get("partner_id") else rec.partner_id
+            if effective_partner and not rec.settlement_unit_id:
+                updates["settlement_unit_id"] = effective_partner.id
             if not rec.settlement_type and getattr(c, "type", False):
                 updates["settlement_type"] = "in" if c.type == "out" else "out"
+            if rec.date_settlement and not rec.document_date:
+                updates["document_date"] = rec.date_settlement
+            if rec.document_date and not rec.date_settlement:
+                updates["date_settlement"] = rec.document_date
+            if rec.final_approved_date and not rec.approved_date:
+                updates["approved_date"] = rec.final_approved_date
+            if rec.approved_date and not rec.final_approved_date:
+                updates["final_approved_date"] = rec.approved_date
             if updates:
                 rec.with_context(skip_onchange=True).sudo().write(updates)
 

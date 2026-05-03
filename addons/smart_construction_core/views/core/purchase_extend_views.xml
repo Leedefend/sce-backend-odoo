@@ -40,6 +40,8 @@
 
             <xpath expr="//sheet/group/group" position="inside">
                 <field name="project_id"/>
+                <field name="plan_id"/>
+                <field name="source_material_rfq_id"/>
                 <field name="reject_reason" readonly="1" modifiers='{"invisible": [["reject_reason","=",false]]}'/>
                 <field name="amount_untaxed" invisible="1"/>
                 <field name="amount_total" invisible="1"/>
@@ -48,6 +50,8 @@
 
             <xpath expr="//field[@name='order_line']/tree/field[@name='name']" position="after">
                 <field name="project_id"/>
+                <field name="plan_line_id"/>
+                <field name="source_material_rfq_line_id"/>
                 <field name="wbs_id"/>
                 <field name="cost_code_id"/>
             </xpath>
@@ -55,6 +59,8 @@
             <xpath expr="//field[@name='order_line']/form//group/group" position="after">
                 <group>
                     <field name="project_id"/>
+                    <field name="plan_line_id"/>
+                    <field name="source_material_rfq_line_id"/>
                     <field name="wbs_id"/>
                     <field name="cost_code_id"/>
                 </group>

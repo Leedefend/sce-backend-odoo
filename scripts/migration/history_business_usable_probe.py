@@ -68,6 +68,12 @@ def write_report(path: Path, payload: dict[str, object]) -> None:
         json.dumps(payload["counts"], ensure_ascii=False, indent=2),
         "```",
         "",
+        "## User Feedback Formal Field Coverage",
+        "",
+        "```json",
+        json.dumps(payload["feedback_formal_field_coverage"], ensure_ascii=False, indent=2),
+        "```",
+        "",
         "## Promotion Gaps",
         "",
         "```json",
@@ -143,6 +149,35 @@ def grouped_state_counts(model_name: str, domain=None, *, state_field: str = "st
         key = str(raw or "__empty__").strip() or "__empty__"
         result[key] = int(row.get("__count") or 0)
     return dict(sorted(result.items(), key=lambda item: item[0]))
+
+
+def field_coverage(model_name: str, field_names: list[str]) -> dict[str, object]:
+    if not model_exists(model_name):
+        return {"model_exists": False, "fields": {}}
+    model_fields = env[model_name]._fields  # noqa: F821
+    coverage = {}
+    for field_name in field_names:
+        field = model_fields.get(field_name)
+        exists = bool(field)
+        searchable = bool(exists and (getattr(field, "store", False) or getattr(field, "search", None)))
+        coverage[field_name] = {
+            "exists": exists,
+            "searchable": searchable,
+            "filled_records": (
+                count(
+                    model_name,
+                    [(field_name, "!=", False)],
+                    required_fields=[field_name],
+                    active_test=False,
+                )
+                if searchable
+                else None
+            ),
+        }
+    return {
+        "model_exists": True,
+        "fields": coverage,
+    }
 
 
 def active_legacy_business_menu_exposures() -> list[dict[str, object]]:
@@ -398,6 +433,18 @@ counts = {
         required_fields=["promotion_state"],
         active_test=False,
     ),
+    "product_categories_from_legacy_material": count(
+        "product.category",
+        [("legacy_material_category_id", "!=", False)],
+        required_fields=["legacy_material_category_id"],
+        active_test=False,
+    ),
+    "material_catalog_from_legacy_material": count(
+        "sc.material.catalog",
+        [("legacy_material_detail_id", "!=", False)],
+        required_fields=["legacy_material_detail_id"],
+        active_test=False,
+    ),
     "product_templates_from_legacy_material": count(
         "product.template",
         [("legacy_material_detail_id", "!=", False)],
@@ -612,6 +659,49 @@ counts["payment_request_state_distribution"] = grouped_state_counts(
     migrated_payment_request_domain(),
 )
 
+feedback_formal_field_coverage = {
+    "sc.settlement.order": field_coverage(
+        "sc.settlement.order",
+        [
+            "title",
+            "document_date",
+            "settlement_unit_id",
+            "submitted_amount",
+            "approved_amount",
+            "requested_fund_amount",
+            "engineering_address",
+            "deduction_amount",
+            "unpaid_amount",
+            "settlement_description",
+            "attachment_count",
+        ],
+    ),
+    "sc.material.rfq": field_coverage(
+        "sc.material.rfq",
+        ["contact_name", "contact_phone", "source_material_plan_id", "selected_supplier_id", "note"],
+    ),
+    "sc.material.rfq.line": field_coverage(
+        "sc.material.rfq.line",
+        ["source_material_plan_line_id", "supplier_contact_name", "supplier_contact_phone", "quote_status"],
+    ),
+    "purchase.order": field_coverage(
+        "purchase.order",
+        ["project_id", "plan_id", "source_material_rfq_id"],
+    ),
+    "purchase.order.line": field_coverage(
+        "purchase.order.line",
+        ["project_id", "plan_line_id", "source_material_rfq_line_id"],
+    ),
+    "sc.material.acceptance.line": field_coverage(
+        "sc.material.acceptance.line",
+        ["purchase_request_line_id", "purchase_order_line_id", "planned_qty", "issue_note"],
+    ),
+    "sc.material.inbound.line": field_coverage(
+        "sc.material.inbound.line",
+        ["acceptance_line_id", "unit_price", "amount", "note"],
+    ),
+}
+
 sample_runtime_records = {
     "project_project_id": sample_id("project.project", [("legacy_project_id", "!=", False)], required_fields=["legacy_project_id"]),
     "construction_contract_id": sample_id("construction.contract", [("legacy_contract_id", "!=", False)], required_fields=["legacy_contract_id"]),
@@ -752,6 +842,14 @@ promotion_gaps = {
             or counts.get("product_templates_from_legacy_material") is None
         )
     ),
+    "material_category_projection_gap": bool(
+        (counts.get("legacy_material_category_rows") or 0) > 0
+        and (counts.get("product_categories_from_legacy_material") or 0) == 0
+    ),
+    "material_catalog_projection_gap": bool(
+        (counts.get("legacy_material_detail_rows") or 0) > 0
+        and (counts.get("material_catalog_from_legacy_material") or 0) == 0
+    ),
     "construction_diary_runtime_surface_gap": bool(
         (counts.get("legacy_construction_diary_with_project") or 0) > 0
         and (counts.get("construction_diary_legacy_with_project") or 0) == 0
@@ -791,11 +889,12 @@ elif failing_gaps:
     decision = "history_business_usable_visible_but_promotion_gaps"
 
 payload = {
-    "status": "FAIL" if promotion_gaps["active_legacy_business_menu_exposures"] else "PASS",
+    "status": "FAIL" if failing_gaps else "PASS",
     "mode": "history_business_usable_probe",
     "database": env.cr.dbname,  # noqa: F821
     "db_writes": 0,
     "counts": counts,
+    "feedback_formal_field_coverage": feedback_formal_field_coverage,
     "sample_runtime_records": sample_runtime_records,
     "promotion_gaps": promotion_gaps,
     "decision": decision,

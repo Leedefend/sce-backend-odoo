@@ -5,7 +5,7 @@
             <field name="name">sc.general.contract.search</field>
             <field name="model">sc.general.contract</field>
             <field name="arch" type="xml">
-                <search string="综合合同">
+                <search string="一般合同（公司）">
                     <field name="name"/>
                     <field name="document_no"/>
                     <field name="contract_no"/>
@@ -32,7 +32,7 @@
             <field name="name">sc.general.contract.tree</field>
             <field name="model">sc.general.contract</field>
             <field name="arch" type="xml">
-                <tree string="综合合同">
+                <tree string="一般合同（公司）">
                     <field name="name"/>
                     <field name="state"/>
                     <field name="contract_date"/>
@@ -41,6 +41,8 @@
                     <field name="contract_name"/>
                     <field name="project_id"/>
                     <field name="partner_name_text"/>
+                    <field name="contact_name"/>
+                    <field name="contact_phone"/>
                     <field name="contract_type"/>
                     <field name="contract_attribute"/>
                     <field name="pricing_mode"/>
@@ -66,7 +68,7 @@
             <field name="name">sc.general.contract.form</field>
             <field name="model">sc.general.contract</field>
             <field name="arch" type="xml">
-                <form string="综合合同">
+                <form string="一般合同（公司）">
                     <header>
                         <button name="action_confirm" string="提交审批" type="object" class="btn-primary"
                                 invisible="state != 'draft' or validation_status in ['waiting', 'pending']"

@@ -103,6 +103,37 @@ class ScMaterialSystemDefaultMixin(models.AbstractModel):
                 defaulted_fields.append("material_spec")
         self._sc_mark_system_defaults(vals, defaulted_fields)
 
+    def _sc_warn_system_defaults_on_action(self, action_label):
+        for record in self:
+            default_hints = []
+            if record.sc_has_system_default:
+                default_hints.append(record.sc_system_default_fields or _("主单字段"))
+            line_model = record._fields.get("line_ids")
+            if line_model:
+                line_defaults = record.line_ids.filtered("sc_has_system_default")
+                if line_defaults:
+                    line_fields = [value for value in line_defaults.mapped("sc_system_default_fields") if value]
+                    default_hints.append(_("明细字段：%s") % ", ".join(line_fields or [_("未标明字段")]))
+            if not default_hints or not hasattr(record, "message_post"):
+                continue
+            body = _(
+                "%(action)s时发现本单含系统默认兜底值：%(fields)s。"
+                "系统不阻断业务推进，请经办人或审批人在真实业务办理前补充完善。"
+            ) % {
+                "action": action_label,
+                "fields": "；".join(default_hints),
+            }
+            try:
+                author = self.env.ref("base.partner_root", raise_if_not_found=False)
+                record.sudo().message_post(
+                    body=body,
+                    author_id=author.id if author else False,
+                    subtype_xmlid="mail.mt_note",
+                )
+            except Exception:
+                # 提醒不能反过来阻断业务动作；页面字段标识仍保留兜底痕迹。
+                continue
+
 
 class ScMaterialPurchaseRequest(models.Model):
     _name = "sc.material.purchase.request"
@@ -163,12 +194,14 @@ class ScMaterialPurchaseRequest(models.Model):
             if not record.line_ids:
                 raise ValidationError(_("提交采购申请前必须维护申请明细。"))
             record.line_ids._check_qty()
+        self._sc_warn_system_defaults_on_action(_("提交采购申请"))
         self.write({"state": "submitted"})
         return True
 
     def action_approve(self):
         for record in self:
             record.line_ids._check_qty()
+        self._sc_warn_system_defaults_on_action(_("审批采购申请"))
         self.write({"state": "approved"})
         return True
 
@@ -179,6 +212,20 @@ class ScMaterialPurchaseRequest(models.Model):
     def action_reset_draft(self):
         self.write({"state": "draft"})
         return True
+
+    def _prepare_acceptance_line_vals(self, line):
+        qty = line.qty or 1.0
+        return {
+            "purchase_request_line_id": line.id,
+            "product_id": line.product_id.id,
+            "material_catalog_id": line.material_catalog_id.id,
+            "material_spec": line.material_spec,
+            "product_uom_id": line.product_uom_id.id,
+            "planned_qty": qty,
+            "received_qty": qty,
+            "accepted_qty": qty,
+            "issue_note": line.note,
+        }
 
 
 class ScMaterialPurchaseRequestLine(models.Model):
@@ -299,21 +346,94 @@ class ScMaterialAcceptance(models.Model):
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            self._apply_purchase_request_defaults(vals)
             self._sc_apply_system_defaults(vals, {"project_id": "_sc_default_project_id"})
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.material.acceptance") or _("材料进场验收")
         return super().create(vals_list)
 
+    @api.model
+    def _apply_purchase_request_defaults(self, vals):
+        request_id = vals.get("purchase_request_id")
+        if not request_id:
+            return vals
+        request = self.env["sc.material.purchase.request"].browse(request_id)
+        if request.exists():
+            vals.setdefault("project_id", request.project_id.id)
+            vals.setdefault("note", request.note)
+            if not vals.get("line_ids") and request.line_ids:
+                vals["line_ids"] = [
+                    (0, 0, request._prepare_acceptance_line_vals(line))
+                    for line in request.line_ids
+                ]
+        return vals
+
+    @api.model
+    def _prepare_purchase_order_acceptance_line_vals(self, line):
+        qty = line.product_qty or 1.0
+        rfq_line = line.source_material_rfq_line_id
+        return {
+            "purchase_order_line_id": line.id,
+            "product_id": line.product_id.id,
+            "material_catalog_id": rfq_line.material_catalog_id.id if rfq_line else False,
+            "material_spec": rfq_line.material_spec if rfq_line else "",
+            "product_uom_id": line.product_uom.id,
+            "planned_qty": qty,
+            "received_qty": qty,
+            "accepted_qty": qty,
+            "issue_note": line.name,
+        }
+
+    @api.onchange("purchase_request_id")
+    def _onchange_purchase_request_id(self):
+        for record in self:
+            request = record.purchase_request_id
+            if not request:
+                continue
+            record.project_id = request.project_id
+            if not record.note:
+                record.note = request.note
+            record.line_ids = [(5, 0, 0)] + [
+                (0, 0, request._prepare_acceptance_line_vals(line))
+                for line in request.line_ids
+            ]
+
+    def action_load_purchase_request_lines(self):
+        for record in self:
+            record._onchange_purchase_request_id()
+        return True
+
+    @api.onchange("purchase_order_id")
+    def _onchange_purchase_order_id(self):
+        for record in self:
+            order = record.purchase_order_id
+            if not order:
+                continue
+            if order.project_id:
+                record.project_id = order.project_id
+            record.supplier_id = order.partner_id
+            record.line_ids = [(5, 0, 0)] + [
+                (0, 0, self._prepare_purchase_order_acceptance_line_vals(line))
+                for line in order.order_line
+            ]
+
+    def action_load_purchase_order_lines(self):
+        for record in self:
+            record._onchange_purchase_order_id()
+        return True
+
     def action_submit(self):
         for record in self:
             if not record.line_ids:
                 raise ValidationError(_("提交前必须维护验收明细。"))
+        self._sc_warn_system_defaults_on_action(_("提交材料验收"))
         self.write({"state": "submitted"})
         return True
 
     def action_accept(self):
         for record in self:
             record.line_ids._check_quantities()
+        self._sc_warn_system_defaults_on_action(_("验收通过"))
         self.write({"state": "accepted", "rejection_reason": False})
         return True
 
@@ -342,6 +462,8 @@ class ScMaterialAcceptanceLine(models.Model):
     acceptance_id = fields.Many2one("sc.material.acceptance", string="验收单", required=True, ondelete="cascade", index=True)
     sequence = fields.Integer(default=10)
     project_id = fields.Many2one("project.project", string="项目", related="acceptance_id.project_id", store=True, index=True)
+    purchase_request_line_id = fields.Many2one("sc.material.purchase.request.line", string="来源申请明细", index=True)
+    purchase_order_line_id = fields.Many2one("purchase.order.line", string="来源采购明细", index=True)
     product_id = fields.Many2one("product.product", string="材料", required=True, index=True)
     material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
     material_spec = fields.Char(string="规格型号")
@@ -359,9 +481,11 @@ class ScMaterialAcceptanceLine(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            input_qty = vals.get("qty")
             self._sc_apply_line_defaults(vals)
+            default_qty = vals.pop("qty", None)
             if vals.get("received_qty") is None:
-                vals["received_qty"] = vals.get("accepted_qty") or 1.0
+                vals["received_qty"] = input_qty or vals.get("accepted_qty") or default_qty or 1.0
                 self._sc_mark_system_defaults(vals, ["received_qty"])
             if vals.get("accepted_qty") is None:
                 vals["accepted_qty"] = vals.get("received_qty") or 1.0
@@ -503,7 +627,8 @@ class ScMaterialInbound(models.Model):
                         "material_spec": line.material_spec,
                         "product_uom_id": line.product_uom_id.id,
                         "qty": line.accepted_qty or line.received_qty,
-                        "unit_price": 0.0,
+                        "unit_price": line.purchase_request_line_id.estimated_unit_price or 0.0,
+                        "note": line.issue_note,
                     },
                 )
                 for line in acceptance.line_ids
@@ -520,6 +645,7 @@ class ScMaterialInbound(models.Model):
             if not record.line_ids:
                 raise ValidationError(_("提交入库前必须维护入库明细。"))
             record.line_ids._check_qty()
+        self._sc_warn_system_defaults_on_action(_("提交材料入库"))
         self.write({"state": "submitted"})
         return True
 
@@ -528,6 +654,7 @@ class ScMaterialInbound(models.Model):
             record.line_ids._check_qty()
             if record.acceptance_id and record.acceptance_id.state != "accepted":
                 raise ValidationError(_("只有验收通过的材料才能办理入库。"))
+        self._sc_warn_system_defaults_on_action(_("确认材料入库"))
         self.write({"state": "received"})
         return True
 
@@ -538,7 +665,6 @@ class ScMaterialInbound(models.Model):
     def action_reset_draft(self):
         self.write({"state": "draft"})
         return True
-
 
 class ScMaterialInboundLine(models.Model):
     _name = "sc.material.inbound.line"
@@ -663,12 +789,14 @@ class ScMaterialOutbound(models.Model):
             if not record.line_ids:
                 raise ValidationError(_("提交出库前必须维护出库明细。"))
             record.line_ids._check_qty()
+        self._sc_warn_system_defaults_on_action(_("提交材料出库"))
         self.write({"state": "submitted"})
         return True
 
     def action_issue(self):
         for record in self:
             record.line_ids._check_qty()
+        self._sc_warn_system_defaults_on_action(_("确认材料出库"))
         self.write({"state": "issued"})
         return True
 
@@ -727,6 +855,7 @@ class ScMaterialRfq(models.Model):
     name = fields.Char(string="询价单号", required=True, default="新建", tracking=True)
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True, tracking=True)
     purchase_request_id = fields.Many2one("sc.material.purchase.request", string="来源采购申请", index=True)
+    source_material_plan_id = fields.Many2one("project.material.plan", string="来源材料计划", index=True)
     rfq_date = fields.Date(string="询价日期", default=fields.Date.context_today, index=True)
     due_date = fields.Date(string="报价截止日期", index=True)
     owner_id = fields.Many2one("res.users", string="经办人", default=lambda self: self.env.user, index=True)
@@ -770,6 +899,7 @@ class ScMaterialRfq(models.Model):
             if not record.line_ids:
                 raise ValidationError(_("发起询价前必须维护报价明细。"))
             record.line_ids._check_values()
+        self._sc_warn_system_defaults_on_action(_("提交材料询比价"))
         self.write({"state": "submitted"})
         return True
 
@@ -780,6 +910,7 @@ class ScMaterialRfq(models.Model):
             if not selected:
                 raise ValidationError(_("定价前必须选择至少一条报价。"))
             record.selected_supplier_id = selected[0].supplier_id
+        self._sc_warn_system_defaults_on_action(_("选定材料报价"))
         self.write({"state": "selected"})
         return True
 
@@ -791,6 +922,70 @@ class ScMaterialRfq(models.Model):
         self.write({"state": "draft"})
         return True
 
+    def _get_purchase_order_lines(self):
+        self.ensure_one()
+        selected = self.line_ids.filtered("selected")
+        if selected:
+            return selected
+        if self.selected_supplier_id:
+            supplier_lines = self.line_ids.filtered(lambda line: line.supplier_id == self.selected_supplier_id)
+            if supplier_lines:
+                return supplier_lines
+        return self.line_ids.filtered(lambda line: line.quote_status != "abandoned")
+
+    def _prepare_purchase_order_line_vals(self, line):
+        name = line.product_id.display_name
+        if line.material_spec:
+            name = "%s / %s" % (name, line.material_spec)
+        if line.note:
+            name = "%s\n%s" % (name, line.note)
+        return {
+            "product_id": line.product_id.id,
+            "name": name,
+            "product_qty": line.qty or 1.0,
+            "product_uom": line.product_uom_id.id or line.product_id.uom_po_id.id or line.product_id.uom_id.id,
+            "price_unit": line.unit_price,
+            "date_planned": fields.Datetime.now(),
+            "project_id": self.project_id.id,
+            "plan_line_id": line.source_material_plan_line_id.id,
+            "source_material_rfq_line_id": line.id,
+        }
+
+    def action_create_purchase_order(self):
+        purchase_orders = self.env["purchase.order"]
+        for record in self:
+            lines = record._get_purchase_order_lines()
+            if not lines:
+                raise ValidationError(_("生成采购订单前必须维护有效报价明细。"))
+            suppliers = lines.mapped("supplier_id")
+            if not suppliers:
+                raise ValidationError(_("生成采购订单前报价明细必须有供应商。"))
+            for supplier in suppliers:
+                grouped_lines = lines.filtered(lambda line: line.supplier_id == supplier)
+                purchase_orders |= self.env["purchase.order"].create(
+                    {
+                        "partner_id": supplier.id,
+                        "project_id": record.project_id.id,
+                        "plan_id": record.source_material_plan_id.id,
+                        "source_material_rfq_id": record.id,
+                        "origin": record.name,
+                        "order_line": [
+                            (0, 0, record._prepare_purchase_order_line_vals(line))
+                            for line in grouped_lines
+                        ],
+                    }
+                )
+        action = self.env.ref("smart_construction_core.action_sc_purchase_order").read()[0]
+        action["domain"] = [("id", "in", purchase_orders.ids)]
+        if len(purchase_orders) == 1:
+            action.update(
+                {
+                    "views": [(self.env.ref("purchase.purchase_order_form").id, "form")],
+                    "res_id": purchase_orders.id,
+                }
+            )
+        return action
+
 
 class ScMaterialRfqLine(models.Model):
     _name = "sc.material.rfq.line"
@@ -801,7 +996,21 @@ class ScMaterialRfqLine(models.Model):
     rfq_id = fields.Many2one("sc.material.rfq", string="询价单", required=True, ondelete="cascade", index=True)
     sequence = fields.Integer(default=10)
     project_id = fields.Many2one("project.project", string="项目", related="rfq_id.project_id", store=True, index=True)
+    source_material_plan_line_id = fields.Many2one("project.material.plan.line", string="来源计划明细", index=True)
     supplier_id = fields.Many2one("res.partner", string="供应商", required=True, index=True)
+    supplier_contact_name = fields.Char(string="供应商联系人")
+    supplier_contact_phone = fields.Char(string="供应商联系电话")
+    quote_status = fields.Selection(
+        [
+            ("pending", "待报价"),
+            ("quoted", "已报价"),
+            ("abandoned", "放弃报价"),
+        ],
+        string="报价状态",
+        default="pending",
+        required=True,
+        index=True,
+    )
     product_id = fields.Many2one("product.product", string="材料", required=True, index=True)
     material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
     material_spec = fields.Char(string="规格型号")
@@ -818,7 +1027,20 @@ class ScMaterialRfqLine(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             self._sc_apply_line_defaults(vals, require_supplier=True, require_unit_price=True)
+            self._fill_supplier_contact_defaults(vals)
         return super().create(vals_list)
+
+    @api.model
+    def _fill_supplier_contact_defaults(self, vals):
+        supplier_id = vals.get("supplier_id")
+        if not supplier_id:
+            return vals
+        supplier = self.env["res.partner"].browse(supplier_id)
+        if not vals.get("supplier_contact_name"):
+            vals["supplier_contact_name"] = supplier.name
+        if not vals.get("supplier_contact_phone"):
+            vals["supplier_contact_phone"] = supplier.mobile or supplier.phone
+        return vals
 
     @api.depends("qty", "unit_price")
     def _compute_amount(self):
@@ -832,6 +1054,15 @@ class ScMaterialRfqLine(models.Model):
                 record.product_uom_id = record.product_id.uom_id
                 if not record.material_spec:
                     record.material_spec = record.product_id.default_code or ""
+
+    @api.onchange("supplier_id")
+    def _onchange_supplier_id(self):
+        for record in self:
+            if record.supplier_id:
+                if not record.supplier_contact_name:
+                    record.supplier_contact_name = record.supplier_id.name
+                if not record.supplier_contact_phone:
+                    record.supplier_contact_phone = record.supplier_id.mobile or record.supplier_id.phone
 
     @api.constrains("qty", "unit_price", "tax_rate")
     def _check_values(self):
@@ -904,12 +1135,14 @@ class ScMaterialSettlement(models.Model):
             if not record.line_ids:
                 raise ValidationError(_("提交结算前必须维护结算明细。"))
             record.line_ids._check_values()
+        self._sc_warn_system_defaults_on_action(_("提交材料结算"))
         self.write({"state": "submitted"})
         return True
 
     def action_confirm(self):
         for record in self:
             record.line_ids._check_values()
+        self._sc_warn_system_defaults_on_action(_("确认材料结算"))
         self.write({"state": "confirmed"})
         return True
 

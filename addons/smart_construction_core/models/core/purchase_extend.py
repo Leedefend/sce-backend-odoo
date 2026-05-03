@@ -21,6 +21,12 @@ class PurchaseOrder(models.Model):
         string="物资计划",
         help="来源物资计划，便于追溯生成关系。",
     )
+    source_material_rfq_id = fields.Many2one(
+        "sc.material.rfq",
+        string="来源询比价",
+        index=True,
+        help="由材料询比价生成时记录来源询价单。",
+    )
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False, tracking=True)
 
     def button_confirm(self):
@@ -147,6 +153,12 @@ class PurchaseOrderLine(models.Model):
         "project.material.plan.line",
         string="计划明细",
         help="记录采购行对应的物资计划行，便于追溯。",
+    )
+    source_material_rfq_line_id = fields.Many2one(
+        "sc.material.rfq.line",
+        string="来源询价明细",
+        index=True,
+        help="由材料询比价生成时记录来源报价明细。",
     )
     wbs_id = fields.Many2one(
         "construction.work.breakdown",
