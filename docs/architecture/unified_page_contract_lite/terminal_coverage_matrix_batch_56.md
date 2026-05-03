@@ -19,20 +19,20 @@ All-terminal coverage needs a truthful matrix. Web PC already has browser
 acceptance gates. UniApp mini program and Harmony H5 have semantic contract
 parity, renderer input pilot gates, UI renderer pilot gates, page integration
 pilot gates, runtime mount pilot gates, and real compile gates. wx_mini has
-compiled runtime artifact acceptance. harmony_h5 has browser runtime acceptance.
-Device acceptance is still pending.
+compiled runtime artifact acceptance and a device acceptance probe. harmony_h5
+has browser runtime acceptance. Actual device runners are still pending.
 
 ## 2. Current Matrix
 
 | Client | Contract parity | Renderer input pilot | UI renderer pilot | Page integration pilot | Runtime mount pilot | Compile preflight | Acceptance status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `web_pc` | pass | available | available | available | available | available | covered browser anchor |
-| `wx_mini` | pass | available | available | available | available | available | runtime-artifact-acceptance-ready, device-acceptance-pending |
+| `wx_mini` | pass | available | available | available | available | available | device-acceptance-probe-ready, device-runner-pending |
 | `harmony_h5` | pass | available | available | available | available | available | runtime-browser-acceptance-ready, device-acceptance-pending |
 
 `web_pc` is the current browser acceptance anchor.
 
-`wx_mini` has runtime artifact acceptance but device acceptance is pending.
+`wx_mini` has a device acceptance probe but device runner is pending.
 
 `harmony_h5` has runtime browser acceptance but device acceptance is pending.
 
@@ -66,7 +66,8 @@ It verifies:
 - mini program compile preflight gate remains present
 - mini program real compile pilot gate remains present
 - mini program runtime artifact acceptance pilot gate remains present
-- mini program is explicitly marked device-acceptance-pending
+- mini program device acceptance pilot gate remains present
+- mini program is explicitly marked device-runner-pending
 - Harmony H5 compile pilot gate remains present
 - Harmony H5 runtime acceptance pilot gate remains present
 - Harmony H5 is explicitly marked device-acceptance-pending
@@ -98,6 +99,7 @@ make verify.unified_page_contract.lite.wx_mini_compile_pilot.host
 make verify.unified_page_contract.lite.wx_mini_real_compile_pilot.host
 make verify.unified_page_contract.lite.wx_mini_runtime_acceptance_pilot.host
 make verify.unified_page_contract.lite.wx_mini_device_acceptance_pilot.host
+make verify.unified_page_contract.lite.wx_mini_device_runner_acceptance.host
 make verify.unified_page_contract.lite.harmony_h5_compile_pilot.host
 make verify.unified_page_contract.lite.harmony_h5_runtime_acceptance_pilot.host
 make verify.unified_page_contract.lite.harmony_h5_device_acceptance_pilot.host

@@ -50,6 +50,7 @@ def build_matrix(parity: dict[str, Any], makefile: str) -> list[dict[str, Any]]:
     )
     wx_real_compile_gate = has_target(makefile, "verify.unified_page_contract.lite.wx_mini_real_compile_pilot.host")
     wx_runtime_acceptance_gate = has_target(makefile, "verify.unified_page_contract.lite.wx_mini_runtime_acceptance_pilot.host")
+    wx_device_probe_gate = has_target(makefile, "verify.unified_page_contract.lite.wx_mini_device_acceptance_pilot.host")
     harmony_compile_gate = has_target(makefile, "verify.unified_page_contract.lite.harmony_h5_compile_pilot.host")
     harmony_runtime_acceptance_gate = has_target(makefile, "verify.unified_page_contract.lite.harmony_h5_runtime_acceptance_pilot.host")
     web_browser_gate = all(
@@ -99,7 +100,8 @@ def build_matrix(parity: dict[str, Any], makefile: str) -> list[dict[str, Any]]:
             "compilePreflight": "available" if wx_compile_preflight else "missing",
             "compileGate": "available" if wx_real_compile_gate else "pending",
             "browserAcceptanceGate": "available" if wx_runtime_acceptance_gate else "pending",
-            "status": "runtime_artifact_acceptance_ready_device_pending"
+            "deviceAcceptanceGate": "probe" if wx_device_probe_gate else "pending",
+            "status": "device_acceptance_probe_ready_runner_pending"
             if signature_ok and has_target(makefile, "verify.unified_page_contract.lite.wx_mini_renderer_input_pilot.host")
             and has_target(makefile, "verify.unified_page_contract.lite.wx_mini_ui_renderer_pilot.host")
             and has_target(makefile, "verify.unified_page_contract.lite.wx_mini_page_integration_pilot.host")
@@ -107,6 +109,7 @@ def build_matrix(parity: dict[str, Any], makefile: str) -> list[dict[str, Any]]:
             and wx_compile_preflight
             and wx_real_compile_gate
             and wx_runtime_acceptance_gate
+            and wx_device_probe_gate
             else "blocked",
         },
         {
@@ -205,7 +208,7 @@ def main() -> int:
         (
             "Terminal Coverage Matrix",
             "`web_pc` is the current browser acceptance anchor",
-            "`wx_mini` has runtime artifact acceptance but device acceptance is pending",
+            "`wx_mini` has a device acceptance probe but device runner is pending",
             "`harmony_h5` has runtime browser acceptance but device acceptance is pending",
             "must not be reported as fully covered",
         ),
@@ -227,6 +230,8 @@ def main() -> int:
             "verify.unified_page_contract.lite.harmony_h5_runtime_mount_pilot.host",
             "verify.unified_page_contract.lite.wx_mini_compile_pilot.host",
             "verify.unified_page_contract.lite.wx_mini_real_compile_pilot.host",
+            "verify.unified_page_contract.lite.wx_mini_runtime_acceptance_pilot.host",
+            "verify.unified_page_contract.lite.wx_mini_device_acceptance_pilot.host",
             "verify.unified_page_contract.lite.all_tree_acceptance_browser.host",
             "unified_page_contract_lite_terminal_coverage_matrix_guard.py",
         ),
@@ -237,19 +242,19 @@ def main() -> int:
     if not any(item["clientType"] == "web_pc" and item["status"] == "covered" for item in matrix):
         errors.append("web_pc must remain the covered browser anchor")
     wx_item = next((row for row in matrix if row["clientType"] == "wx_mini"), None)
-    if not wx_item or wx_item["status"] != "runtime_artifact_acceptance_ready_device_pending":
-        errors.append("wx_mini must be explicitly runtime-artifact-acceptance-ready and device-pending")
+    if not wx_item or wx_item["status"] != "device_acceptance_probe_ready_runner_pending":
+        errors.append("wx_mini must be explicitly device-acceptance-probe-ready and runner-pending")
     harmony_item = next((row for row in matrix if row["clientType"] == "harmony_h5"), None)
     if not harmony_item or harmony_item["status"] != "runtime_browser_acceptance_ready_device_pending":
         errors.append("harmony_h5 must be explicitly runtime-browser-acceptance-ready and device-pending")
 
     report = {
         "ok": not errors,
-        "decision": "terminal_matrix_runtime_acceptance_ready_device_pending" if not errors else "blocked",
+        "decision": "terminal_matrix_wx_device_probe_ready_harmony_device_pending" if not errors else "blocked",
         "clients": list(CLIENTS),
         "matrix": matrix,
         "nextRequiredGates": [
-            "verify.unified_page_contract.lite.wx_mini_device_acceptance_pilot.host",
+            "verify.unified_page_contract.lite.wx_mini_device_runner_acceptance.host",
             "verify.unified_page_contract.lite.harmony_h5_device_acceptance_pilot.host",
         ],
         "errors": errors,
@@ -265,7 +270,7 @@ def main() -> int:
 
     print("Unified Semantic Page Contract Lite terminal coverage matrix guard passed")
     print("- web_pc: covered browser anchor")
-    print("- wx_mini: runtime artifact acceptance ready, device acceptance pending")
+    print("- wx_mini: device acceptance probe ready, device runner pending")
     print("- harmony_h5: runtime browser acceptance ready, device acceptance pending")
     print(f"- report: {args.report}")
     return 0

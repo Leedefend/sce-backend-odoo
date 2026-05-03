@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-03T16:10:00+08:00
+- blocker_key: `unified_page_contract_lite_wx_mini_device_acceptance_pilot_batch_80`
+- layer_target: `Frontend Mobile Device Acceptance Governance`
+- module: `frontend/apps/mobile + scripts/verify + docs/architecture/unified_page_contract_lite + Makefile`
+- reason: `wx_mini 已完成真实编译与产物级验收，但不能把缺失微信开发者工具/真机 runner 的环境误报为设备验收通过。`
+- completed_step: `新增 unified_page_contract_lite_wx_mini_device_acceptance_pilot_guard.py 与 verify.unified_page_contract.lite.wx_mini_device_acceptance_pilot.host；目标依赖 wx_mini runtime artifact acceptance，检查 mp-weixin app/project/page 产物与 app.json 注册，并探测 WECHAT_DEVTOOLS_CLI/WX_DEVTOOLS_CLI/PATH 中的微信开发者工具 CLI。`
+- verification: `python3 -m py_compile scripts/verify/unified_page_contract_lite_wx_mini_device_acceptance_pilot_guard.py scripts/verify/unified_page_contract_lite_terminal_coverage_matrix_guard.py PASS；git diff --check PASS；make verify.unified_page_contract.lite.wx_mini_device_acceptance_pilot.host PASS，decision=wx_mini_device_acceptance_pilot_blocked_missing_wechat_devtools_cli；make verify.unified_page_contract.lite.terminal_coverage_matrix PASS，decision=terminal_matrix_wx_device_probe_ready_harmony_device_pending；pnpm -C frontend/apps/mobile typecheck PASS；make verify.unified_page_contract.lite PASS；make verify.docs.all PASS。`
+- active_commit: `bbccde16`
+- next_step: `提交 Batch-80；下一批进入 harmony_h5_device_acceptance_pilot.host 或接入 wx_mini 微信开发者工具 runner。`
+
 ### 2026-05-03T15:50:00+08:00
 - blocker_key: `unified_page_contract_lite_harmony_h5_runtime_acceptance_pilot_batch_79`
 - layer_target: `Frontend Mobile Runtime Artifact Acceptance`
