@@ -1,0 +1,16 @@
+{
+  "pages": [
+    {
+      "path": "pages/contract/index",
+      "style": {
+        "navigationBarTitleText": "Contract"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "SCE",
+    "navigationBarBackgroundColor": "#ffffff",
+    "backgroundColor": "#ffffff"
+  }
+}

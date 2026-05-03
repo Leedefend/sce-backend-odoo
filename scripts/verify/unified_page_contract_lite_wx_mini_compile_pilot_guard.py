@@ -49,6 +49,9 @@ def main() -> int:
 
     if "verify.unified_page_contract.lite.wx_mini_compile_pilot.host" not in makefile:
         errors.append("Makefile target missing: verify.unified_page_contract.lite.wx_mini_compile_pilot.host")
+    mobile_package_text = read_text(MOBILE_PACKAGE) if MOBILE_PACKAGE.exists() else ""
+    if MOBILE_PACKAGE.exists() and '"build:mp-weixin"' not in mobile_package_text:
+        errors.append("mobile package missing script: build:mp-weixin")
 
     workspace_files = [
         path.relative_to(ROOT).as_posix()
@@ -63,7 +66,7 @@ def main() -> int:
         )
         if path.exists()
     ]
-    has_mobile_workspace = MOBILE_PACKAGE.exists() and MOBILE_MANIFEST.exists()
+    has_mobile_workspace = MOBILE_PACKAGE.exists() and MOBILE_MANIFEST.exists() and '"build:mp-weixin"' in mobile_package_text
     decision = (
         "wx_mini_compile_pilot_ready"
         if has_mobile_workspace and not errors

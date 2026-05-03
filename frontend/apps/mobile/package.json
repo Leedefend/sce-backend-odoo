@@ -1,0 +1,21 @@
+{
+  "name": "@sc/mobile",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:mp-weixin": "uni build -p mp-weixin",
+    "build:h5": "uni build -p h5",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "^3.0.0",
+    "@dcloudio/uni-components": "^3.0.0",
+    "@dcloudio/uni-h5": "^3.0.0",
+    "vue": "^3.5.6"
+  },
+  "devDependencies": {
+    "@dcloudio/vite-plugin-uni": "^3.0.0",
+    "typescript": "^5.6.3",
+    "vue-tsc": "^2.1.6"
+  }
+}
