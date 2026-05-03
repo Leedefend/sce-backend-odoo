@@ -17,23 +17,23 @@ Reason:
 
 All-terminal coverage needs a truthful matrix. Web PC already has browser
 acceptance gates. UniApp mini program and Harmony H5 have semantic contract
-parity, renderer input pilot gates, and UI renderer pilot gates, but no page
-integration pilot yet. The matrix must make that gap visible before page
-implementation begins.
+parity, renderer input pilot gates, UI renderer pilot gates, and page integration
+pilot gates, but no runtime mount pilot yet. The matrix must make that gap
+visible before runtime implementation begins.
 
 ## 2. Current Matrix
 
-| Client | Contract parity | Renderer input pilot | UI renderer pilot | Acceptance status |
-| --- | --- | --- | --- | --- |
-| `web_pc` | pass | available | available | covered browser anchor |
-| `wx_mini` | pass | available | available | UI-renderer-ready, page-integration-pending |
-| `harmony_h5` | pass | available | available | UI-renderer-ready, page-integration-pending |
+| Client | Contract parity | Renderer input pilot | UI renderer pilot | Page integration pilot | Acceptance status |
+| --- | --- | --- | --- | --- | --- |
+| `web_pc` | pass | available | available | available | covered browser anchor |
+| `wx_mini` | pass | available | available | available | page-integration-ready, runtime-mount-pending |
+| `harmony_h5` | pass | available | available | available | page-integration-ready, runtime-mount-pending |
 
 `web_pc` is the current browser acceptance anchor.
 
-`wx_mini` and `harmony_h5` are UI-renderer-ready but page-integration-pending.
+`wx_mini` and `harmony_h5` are page-integration-ready but runtime-mount-pending.
 
-They must not be reported as fully covered until their guarded page integration
+They must not be reported as fully covered until their guarded runtime mount
 pilot gates exist and pass.
 
 ## 3. Guard
@@ -58,7 +58,8 @@ It verifies:
 - Web all-tree acceptance gates remain present
 - mini program and Harmony H5 renderer input pilot gates remain present
 - mini program and Harmony H5 UI renderer pilot gates remain present
-- mini program and Harmony H5 are explicitly marked page-integration-pending
+- mini program and Harmony H5 page integration pilot gates remain present
+- mini program and Harmony H5 are explicitly marked runtime-mount-pending
 - future pilot gates are named as next required gates
 
 ## 4. Non-Goals
@@ -81,6 +82,8 @@ make verify.unified_page_contract.lite.wx_mini_ui_renderer_pilot.host
 make verify.unified_page_contract.lite.harmony_h5_ui_renderer_pilot.host
 make verify.unified_page_contract.lite.wx_mini_page_integration_pilot.host
 make verify.unified_page_contract.lite.harmony_h5_page_integration_pilot.host
+make verify.unified_page_contract.lite.wx_mini_runtime_mount_pilot.host
+make verify.unified_page_contract.lite.harmony_h5_runtime_mount_pilot.host
 ```
 
 Those gates must prove terminal rendering and interaction, not just contract

@@ -74,10 +74,17 @@ def build_matrix(parity: dict[str, Any], makefile: str) -> list[dict[str, Any]]:
                 else "missing"
             ),
             "pageIntegrationGate": "pending",
+            "pageIntegrationPilot": (
+                "available"
+                if has_target(makefile, "verify.unified_page_contract.lite.wx_mini_page_integration_pilot.host")
+                else "missing"
+            ),
+            "runtimeMountGate": "pending",
             "browserAcceptanceGate": "pending",
-            "status": "ui_renderer_ready_page_integration_pending"
+            "status": "page_integration_ready_runtime_mount_pending"
             if signature_ok and has_target(makefile, "verify.unified_page_contract.lite.wx_mini_renderer_input_pilot.host")
             and has_target(makefile, "verify.unified_page_contract.lite.wx_mini_ui_renderer_pilot.host")
+            and has_target(makefile, "verify.unified_page_contract.lite.wx_mini_page_integration_pilot.host")
             else "blocked",
         },
         {
@@ -95,10 +102,17 @@ def build_matrix(parity: dict[str, Any], makefile: str) -> list[dict[str, Any]]:
                 else "missing"
             ),
             "pageIntegrationGate": "pending",
+            "pageIntegrationPilot": (
+                "available"
+                if has_target(makefile, "verify.unified_page_contract.lite.harmony_h5_page_integration_pilot.host")
+                else "missing"
+            ),
+            "runtimeMountGate": "pending",
             "browserAcceptanceGate": "pending",
-            "status": "ui_renderer_ready_page_integration_pending"
+            "status": "page_integration_ready_runtime_mount_pending"
             if signature_ok and has_target(makefile, "verify.unified_page_contract.lite.harmony_h5_renderer_input_pilot.host")
             and has_target(makefile, "verify.unified_page_contract.lite.harmony_h5_ui_renderer_pilot.host")
+            and has_target(makefile, "verify.unified_page_contract.lite.harmony_h5_page_integration_pilot.host")
             else "blocked",
         },
     ]
@@ -159,7 +173,7 @@ def main() -> int:
         (
             "Terminal Coverage Matrix",
             "`web_pc` is the current browser acceptance anchor",
-            "`wx_mini` and `harmony_h5` are UI-renderer-ready but page-integration-pending",
+            "`wx_mini` and `harmony_h5` are page-integration-ready but runtime-mount-pending",
             "must not be reported as fully covered",
         ),
         errors,
@@ -174,6 +188,8 @@ def main() -> int:
             "verify.unified_page_contract.lite.harmony_h5_renderer_input_pilot.host",
             "verify.unified_page_contract.lite.wx_mini_ui_renderer_pilot.host",
             "verify.unified_page_contract.lite.harmony_h5_ui_renderer_pilot.host",
+            "verify.unified_page_contract.lite.wx_mini_page_integration_pilot.host",
+            "verify.unified_page_contract.lite.harmony_h5_page_integration_pilot.host",
             "verify.unified_page_contract.lite.all_tree_acceptance_browser.host",
             "unified_page_contract_lite_terminal_coverage_matrix_guard.py",
         ),
@@ -185,17 +201,17 @@ def main() -> int:
         errors.append("web_pc must remain the covered browser anchor")
     for client in ("wx_mini", "harmony_h5"):
         item = next((row for row in matrix if row["clientType"] == client), None)
-        if not item or item["status"] != "ui_renderer_ready_page_integration_pending":
-            errors.append(f"{client} must be explicitly UI-renderer-ready and page-integration-pending")
+        if not item or item["status"] != "page_integration_ready_runtime_mount_pending":
+            errors.append(f"{client} must be explicitly page-integration-ready and runtime-mount-pending")
 
     report = {
         "ok": not errors,
-        "decision": "terminal_matrix_ui_renderer_ready_page_integration_pending" if not errors else "blocked",
+        "decision": "terminal_matrix_page_integration_ready_runtime_mount_pending" if not errors else "blocked",
         "clients": list(CLIENTS),
         "matrix": matrix,
         "nextRequiredGates": [
-            "verify.unified_page_contract.lite.wx_mini_page_integration_pilot.host",
-            "verify.unified_page_contract.lite.harmony_h5_page_integration_pilot.host",
+            "verify.unified_page_contract.lite.wx_mini_runtime_mount_pilot.host",
+            "verify.unified_page_contract.lite.harmony_h5_runtime_mount_pilot.host",
         ],
         "errors": errors,
     }
@@ -210,8 +226,8 @@ def main() -> int:
 
     print("Unified Semantic Page Contract Lite terminal coverage matrix guard passed")
     print("- web_pc: covered browser anchor")
-    print("- wx_mini: UI renderer ready, page integration pending")
-    print("- harmony_h5: UI renderer ready, page integration pending")
+    print("- wx_mini: page integration ready, runtime mount pending")
+    print("- harmony_h5: page integration ready, runtime mount pending")
     print(f"- report: {args.report}")
     return 0
 
