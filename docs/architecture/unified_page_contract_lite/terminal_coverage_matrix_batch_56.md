@@ -17,23 +17,24 @@ Reason:
 
 All-terminal coverage needs a truthful matrix. Web PC already has browser
 acceptance gates. UniApp mini program and Harmony H5 have semantic contract
-parity and renderer input pilot gates, but no UI renderer pilot yet. The matrix
-must make that gap visible before implementation begins.
+parity, renderer input pilot gates, and UI renderer pilot gates, but no page
+integration pilot yet. The matrix must make that gap visible before page
+implementation begins.
 
 ## 2. Current Matrix
 
 | Client | Contract parity | Renderer input pilot | UI renderer pilot | Acceptance status |
 | --- | --- | --- | --- | --- |
 | `web_pc` | pass | available | available | covered browser anchor |
-| `wx_mini` | pass | available | pending | renderer-input-ready, UI-renderer-pending |
-| `harmony_h5` | pass | available | pending | renderer-input-ready, UI-renderer-pending |
+| `wx_mini` | pass | available | available | UI-renderer-ready, page-integration-pending |
+| `harmony_h5` | pass | available | available | UI-renderer-ready, page-integration-pending |
 
 `web_pc` is the current browser acceptance anchor.
 
-`wx_mini` and `harmony_h5` are renderer-input-ready but UI-renderer-pending.
+`wx_mini` and `harmony_h5` are UI-renderer-ready but page-integration-pending.
 
-They must not be reported as fully covered until their guarded UI renderer pilot
-gates exist and pass.
+They must not be reported as fully covered until their guarded page integration
+pilot gates exist and pass.
 
 ## 3. Guard
 
@@ -56,7 +57,8 @@ It verifies:
 - `web_pc`, `wx_mini`, and `harmony_h5` share contract parity
 - Web all-tree acceptance gates remain present
 - mini program and Harmony H5 renderer input pilot gates remain present
-- mini program and Harmony H5 are explicitly marked UI-renderer-pending
+- mini program and Harmony H5 UI renderer pilot gates remain present
+- mini program and Harmony H5 are explicitly marked page-integration-pending
 - future pilot gates are named as next required gates
 
 ## 4. Non-Goals
@@ -77,6 +79,8 @@ The next implementation batches must add and pass:
 ```bash
 make verify.unified_page_contract.lite.wx_mini_ui_renderer_pilot.host
 make verify.unified_page_contract.lite.harmony_h5_ui_renderer_pilot.host
+make verify.unified_page_contract.lite.wx_mini_page_integration_pilot.host
+make verify.unified_page_contract.lite.harmony_h5_page_integration_pilot.host
 ```
 
 Those gates must prove terminal rendering and interaction, not just contract
