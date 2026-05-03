@@ -11,7 +11,7 @@ mobile contract gates are executable.
 Current decision:
 
 ```text
-mobile_code_ready_wx_runner_ready_harmony_runner_pending
+mobile_code_ready_device_runners_ready_manual_device_pending
 ```
 
 ## Verified Locally
@@ -60,27 +60,29 @@ Current wx_mini decision:
 wx_mini_device_acceptance_runner_ready_manual_device_pending
 ```
 
-The Harmony runner is still missing. A non-interactive WinGet attempt for
-`Huawei.DevEcoDeviceTool` downloaded the installer but did not complete package
-registration in this WSL-driven session. Complete DevEco Device Tool / DevEco
-Studio installation from the Windows GUI, then rerun the WSL setup helper.
-
-Missing Harmony runner commands:
+The Harmony runner is available through WSL wrappers after installing DevEco
+Studio from Windows:
 
 ```text
-hdc
-deveco
-deveco-studio
-HARMONY_HDC / HARMONY_DEVTOOLS_CLI / DEVECO_CLI
+~/.local/bin/hdc -> D:\Program Files\Huawei\DevEco Studio\sdk\default\openharmony\toolchains\hdc.exe
+~/.local/bin/deveco-studio -> D:\Program Files\Huawei\DevEco Studio\bin\devecostudio64.exe
+```
+
+Runner probe:
+
+```text
+hdc -v
+Ver: 3.2.0d
 ```
 
 Current harmony_h5 decision:
 
 ```text
-harmony_h5_device_acceptance_pilot_blocked_missing_harmony_runner
+harmony_h5_device_acceptance_runner_ready_manual_device_pending
 ```
 
-The Harmony blocker is an environment blocker, not a code failure.
+Both terminal runners are now available. The remaining gate is manual/physical
+device confirmation, not repository code or local runner setup.
 
 ## WSL Helper
 
@@ -95,7 +97,7 @@ It creates WSL wrappers under `~/.local/bin` for:
 ```text
 wechat-devtools
 hdc
-deveco
+deveco-studio
 ```
 
 The wrappers allow the existing Makefile device probes to discover Windows-side
@@ -103,11 +105,12 @@ tools from WSL.
 
 ## Next Gate
 
-After the Harmony runner is available, rerun:
+Before manual device confirmation, rerun:
 
 ```bash
+make verify.unified_page_contract.lite.wx_mini_device_acceptance_pilot.host
 make verify.unified_page_contract.lite.harmony_h5_device_acceptance_pilot.host
 ```
 
-The WeChat runner probe is already ready, but still requires manual/device-level
-confirmation before it should be treated as end-user device acceptance.
+Both should report `*_runner_ready_manual_device_pending`. Treat that as runner
+readiness, not as final end-user device acceptance.
