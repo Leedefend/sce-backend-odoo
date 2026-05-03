@@ -18,6 +18,7 @@ DOC_PATH = ROOT / "docs/architecture/unified_page_contract_lite/rollout_switch_b
 ALL_TREE_DOC_PATH = ROOT / "docs/architecture/unified_page_contract_lite/all_tree_browser_smoke_batch_49.md"
 ALL_TREE_LEGACY_DOC_PATH = ROOT / "docs/architecture/unified_page_contract_lite/all_tree_legacy_fallback_batch_50.md"
 ALL_TREE_MATRIX_DOC_PATH = ROOT / "docs/architecture/unified_page_contract_lite/all_tree_matrix_browser_smoke_batch_51.md"
+ALL_TREE_ACCEPTANCE_DOC_PATH = ROOT / "docs/architecture/unified_page_contract_lite/all_tree_acceptance_gate_batch_52.md"
 ALL_TREE_SMOKE_PATH = ROOT / "scripts/verify/unified_page_contract_lite_all_tree_browser_smoke.js"
 ALL_TREE_LEGACY_SMOKE_PATH = ROOT / "scripts/verify/unified_page_contract_lite_all_tree_legacy_browser_smoke.js"
 ALL_TREE_MATRIX_SMOKE_PATH = ROOT / "scripts/verify/unified_page_contract_lite_all_tree_matrix_browser_smoke.js"
@@ -80,6 +81,16 @@ ALL_TREE_MATRIX_DOC_REQUIRED = (
     "does not make Lite the default",
 )
 
+ALL_TREE_ACCEPTANCE_DOC_REQUIRED = (
+    "Status: implemented acceptance gate",
+    "verify.unified_page_contract.lite.all_tree_acceptance_browser.host",
+    "verify.unified_page_contract.lite.all_tree_browser.host",
+    "verify.unified_page_contract.lite.all_tree_legacy_browser.host",
+    "verify.unified_page_contract.lite.all_tree_matrix_browser.host",
+    "This is a review gate, not a default runtime switch.",
+    "does not make Lite the default",
+)
+
 ALL_TREE_SMOKE_REQUIRED = (
     "VITE_LITE_CONTRACT_ROLLOUT=all_tree",
     "LITE_ALL_TREE_ACTION_IDS",
@@ -122,6 +133,7 @@ MAKEFILE_REQUIRED = (
     "verify.unified_page_contract.lite.all_tree_browser.host",
     "verify.unified_page_contract.lite.all_tree_legacy_browser.host",
     "verify.unified_page_contract.lite.all_tree_matrix_browser.host",
+    "verify.unified_page_contract.lite.all_tree_acceptance_browser.host",
     "unified_page_contract_lite_all_tree_browser_smoke.js",
     "unified_page_contract_lite_all_tree_legacy_browser_smoke.js",
     "unified_page_contract_lite_all_tree_matrix_browser_smoke.js",
@@ -164,6 +176,7 @@ def main() -> int:
         ALL_TREE_DOC_PATH,
         ALL_TREE_LEGACY_DOC_PATH,
         ALL_TREE_MATRIX_DOC_PATH,
+        ALL_TREE_ACCEPTANCE_DOC_PATH,
         ALL_TREE_SMOKE_PATH,
         ALL_TREE_LEGACY_SMOKE_PATH,
         ALL_TREE_MATRIX_SMOKE_PATH,
@@ -180,6 +193,7 @@ def main() -> int:
     all_tree_doc = read_text(ALL_TREE_DOC_PATH) if ALL_TREE_DOC_PATH.exists() else ""
     all_tree_legacy_doc = read_text(ALL_TREE_LEGACY_DOC_PATH) if ALL_TREE_LEGACY_DOC_PATH.exists() else ""
     all_tree_matrix_doc = read_text(ALL_TREE_MATRIX_DOC_PATH) if ALL_TREE_MATRIX_DOC_PATH.exists() else ""
+    all_tree_acceptance_doc = read_text(ALL_TREE_ACCEPTANCE_DOC_PATH) if ALL_TREE_ACCEPTANCE_DOC_PATH.exists() else ""
     all_tree_smoke = read_text(ALL_TREE_SMOKE_PATH) if ALL_TREE_SMOKE_PATH.exists() else ""
     all_tree_legacy_smoke = read_text(ALL_TREE_LEGACY_SMOKE_PATH) if ALL_TREE_LEGACY_SMOKE_PATH.exists() else ""
     all_tree_matrix_smoke = read_text(ALL_TREE_MATRIX_SMOKE_PATH) if ALL_TREE_MATRIX_SMOKE_PATH.exists() else ""
@@ -194,6 +208,7 @@ def main() -> int:
         ("all_tree_doc", all_tree_doc, ALL_TREE_DOC_REQUIRED),
         ("all_tree_legacy_doc", all_tree_legacy_doc, ALL_TREE_LEGACY_DOC_REQUIRED),
         ("all_tree_matrix_doc", all_tree_matrix_doc, ALL_TREE_MATRIX_DOC_REQUIRED),
+        ("all_tree_acceptance_doc", all_tree_acceptance_doc, ALL_TREE_ACCEPTANCE_DOC_REQUIRED),
         ("all_tree_smoke", all_tree_smoke, ALL_TREE_SMOKE_REQUIRED),
         ("all_tree_legacy_smoke", all_tree_legacy_smoke, ALL_TREE_LEGACY_SMOKE_REQUIRED),
         ("all_tree_matrix_smoke", all_tree_matrix_smoke, ALL_TREE_MATRIX_SMOKE_REQUIRED),
@@ -214,6 +229,7 @@ def main() -> int:
         or token in all_tree_doc
         or token in all_tree_legacy_doc
         or token in all_tree_matrix_doc
+        or token in all_tree_acceptance_doc
         or token in all_tree_smoke
         or token in all_tree_legacy_smoke
         or token in all_tree_matrix_smoke
@@ -230,6 +246,7 @@ def main() -> int:
         "all_tree_browser_smoke": "verify.unified_page_contract.lite.all_tree_browser.host",
         "all_tree_legacy_browser_smoke": "verify.unified_page_contract.lite.all_tree_legacy_browser.host",
         "all_tree_matrix_browser_smoke": "verify.unified_page_contract.lite.all_tree_matrix_browser.host",
+        "all_tree_acceptance_browser_smoke": "verify.unified_page_contract.lite.all_tree_acceptance_browser.host",
         "errors": errors,
     }
     write_report(args.report, report)

@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-03T11:01:53+08:00
+- blocker_key: `unified_page_contract_lite_all_tree_acceptance_gate_batch_52`
+- layer_target: `Contract Rollout Gate / Lite all_tree Acceptance`
+- module: `Makefile + scripts/verify + docs/architecture/unified_page_contract_lite`
+- reason: `all_tree 已有正向、负向、自动矩阵三个浏览器验收；进入主线评审前需要一个统一 host acceptance target，避免漏跑任一关键用例。`
+- completed_step: `新增 verify.unified_page_contract.lite.all_tree_acceptance_browser.host 聚合正向、负向、矩阵三个 browser host target；新增 all_tree_acceptance_gate_batch_52.md；rollout guard 增加验收文档和聚合 target 静态门禁。`
+- verification: `make verify.unified_page_contract.lite.rollout_switch PASS；make verify.unified_page_contract.lite PASS；git diff --check PASS；DB_NAME=sc_demo E2E_LOGIN=cost1 E2E_PASSWORD=123456 FRONTEND_URL=http://127.0.0.1:5176 API_BASE_URL=http://127.0.0.1:8070 LITE_ALL_TREE_ACTION_IDS=506 LITE_ALL_TREE_LEGACY_ACTION_ID=642 LITE_ALL_TREE_MATRIX_LIMIT=8 make verify.unified_page_contract.lite.all_tree_acceptance_browser.host PASS，reports=artifacts/playwright/lite_all_tree_rollout/20260503T025940/summary.json, artifacts/playwright/lite_all_tree_legacy_rollout/20260503T030019/summary.json, artifacts/playwright/lite_all_tree_matrix_rollout/20260503T030050/summary.json。`
+- active_commit: `49035f5d`
+- next_step: `执行 docs final gate 后提交 Batch-52；下一批可进入合并前风险清单/主线准入结论。`
+
 ### 2026-05-03T10:56:21+08:00
 - blocker_key: `unified_page_contract_lite_all_tree_matrix_browser_smoke_batch_51`
 - layer_target: `Frontend Contract Rollout Gate / Lite all_tree Matrix`
