@@ -20,11 +20,23 @@ class BaseSceneEntryOrchestrator:
         self.env = env
         self._service = service
 
+    def source_authority_contract(self):
+        provider = getattr(self._service, "source_authority_contract", None)
+        if callable(provider):
+            return provider()
+        return {
+            "kind": "scene_entry_business_fact_projection",
+            "authorities": ["odoo.orm"],
+            "projection_only": True,
+            "runtime_carrier": "scene_entry_and_block_contract",
+        }
+
     def build_entry(self, project_id=None, context=None):
         project, _diag = self._service.resolve_project_with_diagnostics(project_id)
         project_payload = self._service.project_payload(project)
         resolved_project_id = int(project_payload.get("id") or 0)
         blocks = [{"key": key, "title": title, "state": state} for key, title, state in self.entry_blocks]
+        source_authority = self.source_authority_contract()
         if resolved_project_id <= 0:
             return {
                 "project_id": 0,
@@ -41,6 +53,7 @@ class BaseSceneEntryOrchestrator:
                     first_action={},
                     stage="entry_missing_project",
                 ),
+                "source_authority": source_authority,
             }
 
         runtime_fetch_hints = {
@@ -76,6 +89,7 @@ class BaseSceneEntryOrchestrator:
                 first_action=first_action,
                 stage="entry_ready",
             ),
+            "source_authority": source_authority,
         }
 
     def build_runtime_block(self, block_key, project_id=None, context=None):
@@ -89,6 +103,7 @@ class BaseSceneEntryOrchestrator:
             "block_key": self.block_alias_map.get(normalized_key, normalized_key or ""),
             "block": block if isinstance(block, dict) else self._service.error_block(normalized_key or "unknown", "INVALID_BLOCK_PAYLOAD"),
             "degraded": state != "ready",
+            "source_authority": self.source_authority_contract(),
         }
 
     def resolve_first_action(self, runtime_fetch_hints):

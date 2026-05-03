@@ -10,6 +10,8 @@ class ProjectContextSearchHandler(BaseIntentHandler):
     INTENT_TYPE = "project.context.search"
     DESCRIPTION = "Search selectable projects for current project context"
     VERSION = "1.0.0"
+    SOURCE_KIND = "odoo_project_context_projection"
+    SOURCE_AUTHORITIES = ("project.project", "ir.rule", "ir.model.access")
 
     def handle(self, payload=None, ctx=None):
         params = {}
@@ -28,5 +30,10 @@ class ProjectContextSearchHandler(BaseIntentHandler):
             ok=True,
             status="success",
             data=data,
-            meta={"intent": self.INTENT_TYPE, "version": self.VERSION},
+            meta={
+                "intent": self.INTENT_TYPE,
+                "version": self.VERSION,
+                "source_kind": self.SOURCE_KIND,
+                "source_authorities": list(self.SOURCE_AUTHORITIES),
+            },
         )

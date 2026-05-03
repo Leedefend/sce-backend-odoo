@@ -18,9 +18,9 @@
 
 ## system.init 链
 
-- evidence_count: `41`
+- evidence_count: `37`
 - frontend_references: `32`
-- backend_route_or_service_refs: `9`
+- backend_route_or_service_refs: `5`
 
 ### Evidence
 
@@ -28,10 +28,6 @@
 - `addons/smart_core/controllers/intent_dispatcher.py:38` → `"system.init": "system.init",`
 - `addons/smart_core/controllers/intent_dispatcher.py:214` → `@http.route('/api/v1/intent', type='http', auth='public', methods=['POST', 'OPTIONS'], csrf=False)`
 - `addons/smart_construction_core/controllers/ui_contract_controller.py:14` → `"legacy /api/ui/contract endpoint is disabled; use /api/v1/intent system.init scene-ready contracts",`
-- `addons/smart_core/controllers/enhanced_intent_dispatcher.py:8` → `@http.route('/api/v1/intent_enhanced', type='http', auth='public', methods=['POST'], csrf=False)`
-- `addons/smart_core/controllers/enhanced_intent_dispatcher.py:16` → `"message": "intent_enhanced endpoint is decommissioned; use /api/v1/intent",`
-- `addons/smart_core/controllers/enhanced_intent_dispatcher.py:24` → `@http.route('/api/v2/intent', type='http', auth='public', methods=['POST'], csrf=False)`
-- `addons/smart_core/controllers/enhanced_intent_dispatcher.py:33` → `"message": "enhanced intent router is decommissioned; use /api/v1/intent",`
 - `addons/smart_construction_core/controllers/scene_controller.py:21` → `_LEGACY_SCENES_SUCCESSOR = "/api/v1/intent"`
 - `frontend/apps/web/src/api/client.ts:96` → `if (!raw.startsWith('/api/v1/intent')) return raw;`
 - `frontend/apps/web/src/api/client.ts:121` → `const isIntentEndpoint = String(path || '').trim().startsWith('/api/v1/intent');`

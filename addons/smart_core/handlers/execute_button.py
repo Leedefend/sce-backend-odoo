@@ -31,6 +31,18 @@ class ExecuteButtonHandler(BaseIntentHandler):
     REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
     ACL_MODE = "explicit_check"
     NON_IDEMPOTENT_ALLOWED = "button methods can trigger business side effects beyond replay-safe scope"
+    SOURCE_KIND = "odoo_model_button_proxy"
+    SOURCE_AUTHORITIES = ("odoo.model.method", "ir.actions", "ir.model.access", "ir.rule")
+
+    def _source_authority_contract(self, model: str, method_name: str, button_type: str):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "model": str(model or ""),
+            "method": str(method_name or ""),
+            "button_type": str(button_type or ""),
+            "proxy_only": True,
+        }
 
     def handle(self, payload=None, ctx=None):
         params = self.params if isinstance(self.params, dict) else {}
@@ -115,7 +127,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                 return {
                     "ok": True,
                     "data": {"result": payload, "effect": effect},
-                    "meta": {"trace_id": self.context.get("trace_id") if isinstance(self.context, dict) else ""},
+                    "meta": {"trace_id": self.context.get("trace_id") if isinstance(self.context, dict) else "", "source_authority": self._source_authority_contract(model, method_name, button_type)},
                 }
 
             result = method()
@@ -174,7 +186,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
             return {
                 "ok": True,
                 "data": {"result": payload, "effect": effect},
-                "meta": {"trace_id": self.context.get("trace_id") if isinstance(self.context, dict) else ""},
+                "meta": {"trace_id": self.context.get("trace_id") if isinstance(self.context, dict) else "", "source_authority": self._source_authority_contract(model, method_name, button_type)},
             }
         except AccessError as exc:
             return _failure_result(

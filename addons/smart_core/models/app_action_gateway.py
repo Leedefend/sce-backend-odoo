@@ -13,6 +13,8 @@ from ..handlers.api_onchange import ApiOnchangeHandler
 class AppActionGateway(models.AbstractModel):
     _name = "app.action.gateway"
     _description = "Smart Core Operation Gateway"
+    SOURCE_KIND = "odoo_runtime_action_gateway"
+    SOURCE_AUTHORITIES = ("odoo.model.method", "odoo.onchange", "ir.model.access", "ir.rule")
 
     @api.model
     def _normalize_ids(self, record_ids: Any) -> List[int]:

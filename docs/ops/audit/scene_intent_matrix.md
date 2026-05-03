@@ -202,7 +202,6 @@
 - `payment.request.reject`
 - `payment.request.submit`
 - `permission.check`
-- `sample.enhanced`
 - `scene.governance.export_contract`
 - `scene.governance.pin_stable`
 - `scene.governance.rollback`
@@ -216,8 +215,6 @@
 - `session.bootstrap`
 - `system.init`
 - `system.ping.construction`
-- `ui.contract.enhanced`
-- `ui.contract.model.view`
 - `usage.export.csv`
 - `usage.report`
 - `usage.track`

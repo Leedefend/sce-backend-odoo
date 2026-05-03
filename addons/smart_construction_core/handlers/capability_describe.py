@@ -28,6 +28,13 @@ class CapabilityDescribeHandler(BaseIntentHandler):
     DESCRIPTION = "Describe capability payload/permissions/intent"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
+    SOURCE_AUTHORITY = {
+        "kind": "capability_delivery_projection",
+        "authorities": ["sc.capability", "res.groups", "smart_core.intent"],
+        "projection_only": True,
+        "delivery_only": True,
+        "no_business_fact_authority": True,
+    }
 
     def handle(self, payload=None, ctx=None):
         params = payload or self.params or {}
@@ -72,5 +79,5 @@ class CapabilityDescribeHandler(BaseIntentHandler):
             "contract_version": CONTRACT_VERSION,
             "api_version": API_VERSION,
         }
-        meta = {"intent": self.INTENT_TYPE}
+        meta = {"intent": self.INTENT_TYPE, "source_authority": self.SOURCE_AUTHORITY}
         return {"ok": True, "data": data, "meta": meta}

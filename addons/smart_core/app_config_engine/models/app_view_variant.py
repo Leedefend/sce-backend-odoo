@@ -7,6 +7,8 @@ class AppViewVariant(models.Model, ContractSchemaMixin):
     _name = 'app.view.variant'
     _description = 'Conditional View Variant (Overlay Patch)'
     _order = 'priority desc, version desc, id desc'
+    SOURCE_KIND = "ui_contract_variant_overlay"
+    SOURCE_AUTHORITIES = ("app.view.config", "ir.ui.view", "ir.actions.act_window", "ir.ui.menu")
 
     name = fields.Char(required=True)
     model = fields.Char(required=True, index=True)

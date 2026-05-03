@@ -16,6 +16,12 @@ class ProjectEntryContextResolveHandler(BaseIntentHandler):
     VERSION = "1.0.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["base.group_user"]
+    SOURCE_AUTHORITY = {
+        "kind": "project_entry_context_projection",
+        "authorities": ["project.project", "ir.model.access", "ir.rule", "odoo.orm"],
+        "projection_only": True,
+        "runtime_carrier": "project_context_selector_contract",
+    }
 
     @staticmethod
     def _coerce_project_id(raw: Any) -> int:
@@ -55,5 +61,6 @@ class ProjectEntryContextResolveHandler(BaseIntentHandler):
                 "intent": self.INTENT_TYPE,
                 "elapsed_ms": int((time.time() - ts0) * 1000),
                 "trace_id": str((self.context or {}).get("trace_id") or ""),
+                "source_authority": self.SOURCE_AUTHORITY,
             },
         }

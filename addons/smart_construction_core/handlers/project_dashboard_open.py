@@ -14,6 +14,13 @@ class ProjectDashboardOpenHandler(BaseIntentHandler):
     VERSION = "1.0.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["base.group_user"]
+    SOURCE_AUTHORITY = {
+        "kind": "project_dashboard_legacy_alias_proxy",
+        "authorities": ["project.dashboard.enter"],
+        "projection_only": True,
+        "compatibility_only": True,
+        "no_business_fact_authority": True,
+    }
 
     @staticmethod
     def _coerce_project_id(raw: Any) -> int:
@@ -55,6 +62,7 @@ class ProjectDashboardOpenHandler(BaseIntentHandler):
                 "deprecated": True,
                 "deprecated_replacement_intent": "project.dashboard.enter",
                 "deprecated_removal_phase": "Phase 12-G",
+                "source_authority": meta.get("source_authority") or self.SOURCE_AUTHORITY,
             }
         )
         if delegated.get("ok") is not True:

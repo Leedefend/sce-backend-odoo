@@ -6,6 +6,8 @@ import copy, json
 class ContractSchemaMixin(models.AbstractModel):
     _name = 'contract.schema.mixin'
     _description = 'Contract Schema & Merge Mixin'
+    SOURCE_KIND = "ui_contract_sanitizer"
+    SOURCE_AUTHORITIES = ("contract.payload",)
 
     # ---- 契约白名单（与前端约定保持一致）----
     @api.model

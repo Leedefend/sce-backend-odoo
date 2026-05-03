@@ -3,11 +3,13 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 CONFIG_GROUP = "smart_construction_core.group_sc_cap_config_admin"
+LEGACY_WORKFLOW_RUNTIME_PARAM = "sc.workflow.legacy_runtime_enabled"
+LEGACY_WORKFLOW_RUNTIME_CONTEXT = "allow_legacy_workflow_runtime"
 
 
 class ScWorkflowDef(models.Model):
     _name = "sc.workflow.def"
-    _description = "SC Workflow Definition"
+    _description = "SC Legacy Workflow Definition"
     _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "id desc"
 
@@ -53,8 +55,25 @@ class ScWorkflowDef(models.Model):
         if not self.env.user.has_group(CONFIG_GROUP):
             raise UserError(_("You do not have permission to manage workflows."))
 
+    def _legacy_runtime_enabled(self):
+        if self.env.context.get(LEGACY_WORKFLOW_RUNTIME_CONTEXT):
+            return True
+        value = self.env["ir.config_parameter"].sudo().get_param(LEGACY_WORKFLOW_RUNTIME_PARAM, "0")
+        return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+    def _require_legacy_runtime_enabled(self):
+        if not self._legacy_runtime_enabled():
+            raise UserError(
+                _(
+                    "SC workflow is retained for legacy compatibility. "
+                    "Use base_tier_validation for approval runtime, or enable %s explicitly."
+                )
+                % LEGACY_WORKFLOW_RUNTIME_PARAM
+            )
+
     def action_publish(self):
         self._require_admin()
+        self._require_legacy_runtime_enabled()
         for rec in self:
             start = rec.start_node_id or rec.get_start_node()
             if not start:
@@ -124,7 +143,7 @@ class ScWorkflowNode(models.Model):
 
 class ScWorkflowInstance(models.Model):
     _name = "sc.workflow.instance"
-    _description = "SC Workflow Instance"
+    _description = "SC Legacy Workflow Instance"
     _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "id desc"
 
@@ -165,6 +184,22 @@ class ScWorkflowInstance(models.Model):
     def _require_admin(self):
         if not self.env.user.has_group(CONFIG_GROUP):
             raise UserError(_("You do not have permission to manage workflow instances."))
+
+    def _legacy_runtime_enabled(self):
+        if self.env.context.get(LEGACY_WORKFLOW_RUNTIME_CONTEXT):
+            return True
+        value = self.env["ir.config_parameter"].sudo().get_param(LEGACY_WORKFLOW_RUNTIME_PARAM, "0")
+        return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+    def _require_legacy_runtime_enabled(self):
+        if not self._legacy_runtime_enabled():
+            raise UserError(
+                _(
+                    "SC workflow runtime is disabled because approval runtime is base_tier_validation. "
+                    "Enable %s only for legacy compatibility."
+                )
+                % LEGACY_WORKFLOW_RUNTIME_PARAM
+            )
 
     def _require_group(self, group_xmlid):
         if group_xmlid and not self.env.user.has_group(group_xmlid):
@@ -215,6 +250,7 @@ class ScWorkflowInstance(models.Model):
     @api.model
     def create_instance(self, workflow_def, model_name, res_id, note=None):
         self._require_admin()
+        self._require_legacy_runtime_enabled()
         if isinstance(workflow_def, int):
             workflow_def = self.env["sc.workflow.def"].browse(workflow_def)
         workflow_def = workflow_def.exists()

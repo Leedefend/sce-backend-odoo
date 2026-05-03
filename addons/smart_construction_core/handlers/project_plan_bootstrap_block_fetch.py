@@ -67,6 +67,8 @@ class ProjectPlanBootstrapBlockFetchHandler(BaseIntentHandler):
 
         project_id = self._resolve_project_id(params, ctx)
         block_key = str(params.get("block_key") or "").strip().lower()
+        orchestrator = ProjectPlanBootstrapSceneOrchestrator(self.env)
+        source_authority = orchestrator.source_authority_contract()
         if project_id <= 0 or not block_key:
             return {
                 "ok": False,
@@ -82,10 +84,10 @@ class ProjectPlanBootstrapBlockFetchHandler(BaseIntentHandler):
                     "intent": self.INTENT_TYPE,
                     "elapsed_ms": int((time.time() - ts0) * 1000),
                     "trace_id": str((self.context or {}).get("trace_id") or ""),
+                    "source_authority": source_authority,
                 },
             }
 
-        orchestrator = ProjectPlanBootstrapSceneOrchestrator(self.env)
         data = orchestrator.build_runtime_block(block_key=block_key, project_id=project_id, context=ctx)
         return {
             "ok": True,
@@ -94,5 +96,6 @@ class ProjectPlanBootstrapBlockFetchHandler(BaseIntentHandler):
                 "intent": self.INTENT_TYPE,
                 "elapsed_ms": int((time.time() - ts0) * 1000),
                 "trace_id": str((self.context or {}).get("trace_id") or ""),
+                "source_authority": source_authority,
             },
         }

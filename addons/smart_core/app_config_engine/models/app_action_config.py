@@ -17,6 +17,8 @@ class AppActionConfig(models.Model):
     _description = 'Application Action Configuration'
     _rec_name = 'label'
     _order = 'model'
+    SOURCE_KIND = "odoo_native_action_projection"
+    SOURCE_AUTHORITIES = ("ir.actions.act_window", "ir.actions.server", "ir.actions.act_url", "ir.ui.view")
 
     # ========= 基础信息（按模型聚合一份）=========
     name = fields.Char('Action Name', required=True)      # 记录名（例如 action_<model>）
@@ -73,6 +75,16 @@ class AppActionConfig(models.Model):
         ('uniq_model', 'unique(model)', '每个模型仅允许一条动作聚合配置（model 唯一）。'),
     ]
 
+    @api.model
+    def _source_contract(self, model_name):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "model": str(model_name or ""),
+            "projection_only": True,
+            "rebuildable": True,
+        }
+
     # ================== 生成（聚合 Odoo 各类动作） ==================
 
     @api.model
@@ -113,6 +125,7 @@ class AppActionConfig(models.Model):
                 "label": f"Actions for {model_name}",
                 "model": model_name,
                 "actions_def": actions_def,
+                "meta_info": {"source": self._source_contract(model_name)},
                 "config_hash": new_hash,
                 "last_generated": fields.Datetime.now(),
             }

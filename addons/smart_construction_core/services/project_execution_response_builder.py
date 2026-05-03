@@ -7,12 +7,15 @@ from typing import Any, Dict
 
 class ProjectExecutionResponseBuilder:
     @staticmethod
-    def _meta(*, intent: str, ts0: float, trace_id: str) -> Dict[str, Any]:
-        return {
+    def _meta(*, intent: str, ts0: float, trace_id: str, source_authority: Dict[str, Any] | None = None) -> Dict[str, Any]:
+        meta = {
             "intent": str(intent or ""),
             "elapsed_ms": int((time.time() - float(ts0 or 0.0)) * 1000),
             "trace_id": str(trace_id or ""),
         }
+        if isinstance(source_authority, dict) and source_authority:
+            meta["source_authority"] = dict(source_authority)
+        return meta
 
     @classmethod
     def input_error(
@@ -26,6 +29,7 @@ class ProjectExecutionResponseBuilder:
         reason_code: str,
         suggested_action: str,
         data: Dict[str, Any] | None = None,
+        source_authority: Dict[str, Any] | None = None,
     ) -> Dict[str, Any]:
         return {
             "ok": False,
@@ -36,7 +40,7 @@ class ProjectExecutionResponseBuilder:
                 "suggested_action": str(suggested_action or ""),
             },
             "data": dict(data or {}),
-            "meta": cls._meta(intent=intent, ts0=ts0, trace_id=trace_id),
+            "meta": cls._meta(intent=intent, ts0=ts0, trace_id=trace_id, source_authority=source_authority),
         }
 
     @classmethod
@@ -54,6 +58,7 @@ class ProjectExecutionResponseBuilder:
         lifecycle_hints: Dict[str, Any] | None = None,
         suggested_action_payload: Dict[str, Any] | None = None,
         extra_data: Dict[str, Any] | None = None,
+        source_authority: Dict[str, Any] | None = None,
     ) -> Dict[str, Any]:
         data = {
             "result": "blocked",
@@ -71,7 +76,7 @@ class ProjectExecutionResponseBuilder:
         return {
             "ok": True,
             "data": data,
-            "meta": cls._meta(intent=intent, ts0=ts0, trace_id=trace_id),
+            "meta": cls._meta(intent=intent, ts0=ts0, trace_id=trace_id, source_authority=source_authority),
         }
 
     @classmethod
@@ -82,9 +87,10 @@ class ProjectExecutionResponseBuilder:
         ts0: float,
         trace_id: str,
         data: Dict[str, Any] | None = None,
+        source_authority: Dict[str, Any] | None = None,
     ) -> Dict[str, Any]:
         return {
             "ok": True,
             "data": dict(data or {}),
-            "meta": cls._meta(intent=intent, ts0=ts0, trace_id=trace_id),
+            "meta": cls._meta(intent=intent, ts0=ts0, trace_id=trace_id, source_authority=source_authority),
         }

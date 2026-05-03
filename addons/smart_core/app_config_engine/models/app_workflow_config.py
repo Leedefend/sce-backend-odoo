@@ -11,6 +11,8 @@ class AppWorkflowConfig(models.Model):
     _description = 'Application Workflow Configuration'
     _rec_name = 'model'
     _order = 'model'
+    SOURCE_KIND = "odoo_native_workflow_projection"
+    SOURCE_AUTHORITIES = ("ir.ui.view:form.buttons", "ir.model.fields:state", "mail.activity.type")
 
     # ===== 基础信息 =====
     model = fields.Char('Model', required=True, index=True)
@@ -31,6 +33,17 @@ class AppWorkflowConfig(models.Model):
     _sql_constraints = [
         ('uniq_model', 'unique(model)', '每个模型仅允许一条工作流配置（model 唯一）。'),
     ]
+
+    @api.model
+    def _source_contract(self, model_name):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "model": str(model_name or ""),
+            "projection_only": True,
+            "rebuildable": True,
+            "runtime_authority": "odoo_model_methods_and_mail_activity",
+        }
 
     # ======================= 生成入口 =======================
 
@@ -65,6 +78,7 @@ class AppWorkflowConfig(models.Model):
             vals = {
                 "model": model_name,
                 "workflows_def": wf_def,
+                "meta_info": {"source": self._source_contract(model_name)},
                 "config_hash": new_hash,
                 "last_generated": fields.Datetime.now(),
             }

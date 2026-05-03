@@ -17,6 +17,8 @@ class ScenePackagesInstalledHandler(BaseIntentHandler):
     DESCRIPTION = "Installed scene package registry"
     VERSION = "1.0.0"
     REQUIRED_GROUPS = ["smart_core.group_smart_core_scene_admin"]
+    SOURCE_KIND = "scene_package_registry_projection"
+    SOURCE_AUTHORITIES = ("sc.scene.package", "sc.scene", "ir.module.module")
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
@@ -30,5 +32,7 @@ class ScenePackagesInstalledHandler(BaseIntentHandler):
             "meta": {
                 "intent": self.INTENT_TYPE,
                 "elapsed_ms": int((time.time() - ts0) * 1000),
+                "source_kind": self.SOURCE_KIND,
+                "source_authorities": list(self.SOURCE_AUTHORITIES),
             },
         }

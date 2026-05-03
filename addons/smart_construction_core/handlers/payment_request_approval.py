@@ -42,6 +42,24 @@ class _BasePaymentApprovalHandler(BaseIntentHandler):
     ACTION_METHOD = ""
     ACTION_NAME = ""
 
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": "payment_request_odoo_model_method_proxy",
+            "authorities": [
+                "payment.request",
+                "tier.review",
+                "mail.activity",
+                "sc.audit.log",
+                "ir.model.access",
+                "ir.rule",
+                "odoo.orm",
+            ],
+            "projection_only": False,
+            "runtime_authority": "payment.request.%s" % str(cls.ACTION_METHOD or "model_method"),
+            "idempotency_authority": "sc.audit.log",
+        }
+
     def _assert_required_groups(self):
         user = self.env.user
         if not user:
@@ -143,7 +161,7 @@ class _BasePaymentApprovalHandler(BaseIntentHandler):
                 **failure_meta_for_reason(reason_code),
             },
             "code": int(status_code),
-            "meta": {"intent": self.INTENT_TYPE, "trace_id": trace_id},
+            "meta": {"intent": self.INTENT_TYPE, "trace_id": trace_id, "source_authority": self.source_authority_contract()},
         }
 
     def _conflict_response(self, *, request_id: str, idempotency_key: str, idempotency_fingerprint: str, trace_id: str):
@@ -158,6 +176,7 @@ class _BasePaymentApprovalHandler(BaseIntentHandler):
         data["idempotency_fingerprint"] = str(idempotency_fingerprint or "")
         data["intent_action"] = self.ACTION_NAME
         payload.setdefault("meta", {})["trace_id"] = trace_id
+        payload.setdefault("meta", {})["source_authority"] = self.source_authority_contract()
         return payload
 
     def _write_audit(self, *, payment_request_id: int, trace_id: str, idempotency_key: str, idempotency_fingerprint: str, result: dict):
@@ -310,7 +329,7 @@ class _BasePaymentApprovalHandler(BaseIntentHandler):
                 replay_entry=replay_entry,
                 include_replay_evidence=True,
             )
-            return {"ok": True, "data": replay_data, "meta": {"intent": self.INTENT_TYPE, "trace_id": trace_id}}
+            return {"ok": True, "data": replay_data, "meta": {"intent": self.INTENT_TYPE, "trace_id": trace_id, "source_authority": self.source_authority_contract()}}
 
         replay_window_expired = bool(decision.get("replay_window_expired"))
         action_kwargs = self._build_action_kwargs(params)
@@ -344,7 +363,7 @@ class _BasePaymentApprovalHandler(BaseIntentHandler):
                 idempotency_fingerprint=idempotency_fingerprint,
                 result=data,
             )
-            return {"ok": True, "data": data, "meta": {"intent": self.INTENT_TYPE, "trace_id": trace_id}}
+            return {"ok": True, "data": data, "meta": {"intent": self.INTENT_TYPE, "trace_id": trace_id, "source_authority": self.source_authority_contract()}}
         except AccessError as exc:
             return self._error_response(
                 reason_code=REASON_PERMISSION_DENIED,

@@ -24,6 +24,18 @@ class _NullEvidenceSummaryService:
 
 class ProjectDashboardService:
     """Provide business-truth-backed dashboard data for orchestration carriers."""
+    SOURCE_KIND = "project_dashboard_business_fact_projection"
+    SOURCE_AUTHORITIES = (
+        "project.project",
+        "project.task",
+        "payment.request",
+        "payment.ledger",
+        "project.cost.ledger",
+        "sc.evidence.summary.service",
+        "business_projection_models",
+        "odoo.orm",
+        "odoo.read_group",
+    )
 
     ENTRY_BLOCKS = (
         ("progress", "项目进度", "deferred"),
@@ -47,6 +59,14 @@ class ProjectDashboardService:
         self._metrics_explain_service = ProjectMetricsExplainService(env)
         self._builders = [builder_cls(env) for builder_cls in BUILDERS]
         self._builder_map = {builder.block_key: builder for builder in self._builders}
+
+    def source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "no_frontend_synthetic_metrics": True,
+        }
 
     def build(self, project_id=0, context=None):
         """Compatibility envelope retained for project.dashboard handler callers."""
@@ -74,6 +94,7 @@ class ProjectDashboardService:
                 "project_id": int(project_data.get("id") or 0),
             },
             "project": project_data,
+            "source_authority": self.source_authority_contract(),
             "summary_rows": summary_rows,
             "state_explain": state_explain,
             "metrics_explain": metrics_explain,

@@ -60,6 +60,8 @@ def _enqueue_from_signal(env, *, reason: str, action_ids: list[int] | None = Non
 
 class IrActionsActWindowAssetTrigger(models.Model):
     _inherit = "ir.actions.act_window"
+    SOURCE_KIND = "ui_base_contract_asset_invalidation_trigger"
+    SOURCE_AUTHORITIES = ("ir.actions.act_window", "ui_base_contract_asset")
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -97,6 +99,8 @@ class IrActionsActWindowAssetTrigger(models.Model):
 
 class IrUiViewAssetTrigger(models.Model):
     _inherit = "ir.ui.view"
+    SOURCE_KIND = "ui_base_contract_asset_invalidation_trigger"
+    SOURCE_AUTHORITIES = ("ir.ui.view", "ui_base_contract_asset")
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -130,6 +134,8 @@ class IrUiViewAssetTrigger(models.Model):
 
 class ResGroupsAssetTrigger(models.Model):
     _inherit = "res.groups"
+    SOURCE_KIND = "ui_base_contract_asset_invalidation_trigger"
+    SOURCE_AUTHORITIES = ("res.groups", "ui_base_contract_asset")
 
     @api.model_create_multi
     def create(self, vals_list):

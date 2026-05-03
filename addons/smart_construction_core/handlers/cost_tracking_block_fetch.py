@@ -67,6 +67,8 @@ class CostTrackingBlockFetchHandler(BaseIntentHandler):
                 }
             )
         block_key = str(params.get("block_key") or "").strip().lower()
+        orchestrator = CostTrackingContractOrchestrator(self.env)
+        source_authority = orchestrator.source_authority_contract()
         if project_id <= 0 or not block_key:
             return {
                 "ok": False,
@@ -79,10 +81,10 @@ class CostTrackingBlockFetchHandler(BaseIntentHandler):
                     "intent": self.INTENT_TYPE,
                     "elapsed_ms": int((time.time() - ts0) * 1000),
                     "trace_id": str((self.context or {}).get("trace_id") or ""),
+                    "source_authority": source_authority,
                 },
             }
 
-        orchestrator = CostTrackingContractOrchestrator(self.env)
         data = orchestrator.build_runtime_block(block_key=block_key, project_id=project_id, context=ctx)
         project, _diag = orchestrator._service.resolve_project_with_diagnostics(project_id)
         data = attach_project_context_to_runtime_payload(data, project)
@@ -93,5 +95,6 @@ class CostTrackingBlockFetchHandler(BaseIntentHandler):
                 "intent": self.INTENT_TYPE,
                 "elapsed_ms": int((time.time() - ts0) * 1000),
                 "trace_id": str((self.context or {}).get("trace_id") or ""),
+                "source_authority": source_authority,
             },
         }

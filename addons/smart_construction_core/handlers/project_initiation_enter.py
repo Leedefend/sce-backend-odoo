@@ -67,6 +67,7 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
+        source_authority = ProjectCreationService.source_authority_contract()
         params: Dict[str, Any] = payload or self.params or {}
         if isinstance(params, dict) and isinstance(params.get("params"), dict):
             params = params.get("params") or {}
@@ -95,6 +96,7 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
                     "intent": self.INTENT_TYPE,
                     "elapsed_ms": int((time.time() - ts0) * 1000),
                     "trace_id": str((self.context or {}).get("trace_id") or ""),
+                    "source_authority": source_authority,
                 },
             }
 
@@ -131,6 +133,7 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
                     "intent": self.INTENT_TYPE,
                     "elapsed_ms": int((time.time() - ts0) * 1000),
                     "trace_id": str((self.context or {}).get("trace_id") or ""),
+                    "source_authority": source_authority,
                 },
             }
         except UserError as exc:
@@ -156,6 +159,7 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
                     "intent": self.INTENT_TYPE,
                     "elapsed_ms": int((time.time() - ts0) * 1000),
                     "trace_id": str((self.context or {}).get("trace_id") or ""),
+                    "source_authority": source_authority,
                 },
             }
 
@@ -215,5 +219,6 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
                 "intent": self.INTENT_TYPE,
                 "elapsed_ms": int((time.time() - ts0) * 1000),
                 "trace_id": str((self.context or {}).get("trace_id") or ""),
+                "source_authority": source_authority,
             },
         }

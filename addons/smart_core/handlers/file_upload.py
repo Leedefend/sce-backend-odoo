@@ -35,6 +35,7 @@ class FileUploadHandler(BaseIntentHandler):
 
     ALLOWED_MODELS = {"res.partner"}
     MAX_BYTES = 5 * 1024 * 1024
+    SOURCE_AUTHORITY = "ir.attachment"
 
     def _allowed_models(self):
         payload = call_extension_hook_first(self.env, "smart_core_file_upload_allowed_models", self.env)
@@ -120,5 +121,10 @@ class FileUploadHandler(BaseIntentHandler):
             return self._err(500, str(e))
 
         data = {"id": attachment.id, "name": attachment.name, "model": model, "res_id": res_id}
-        meta = {"trace_id": trace_id, "write_mode": "upload", "source": "portal-shell"}
+        meta = {
+            "trace_id": trace_id,
+            "write_mode": "upload",
+            "source": "portal-shell",
+            "source_authority": self.SOURCE_AUTHORITY,
+        }
         return {"ok": True, "data": data, "meta": meta}

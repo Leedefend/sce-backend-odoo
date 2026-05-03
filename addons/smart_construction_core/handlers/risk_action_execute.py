@@ -28,6 +28,20 @@ class RiskActionExecuteHandler(BaseIntentHandler):
     ACL_MODE = "explicit_check"
 
     _SUPPORTED_ACTIONS = {"claim", "escalate", "close"}
+    SOURCE_AUTHORITY = {
+        "kind": "project_risk_action_odoo_model_method_proxy",
+        "authorities": [
+            "project.risk.action",
+            "sc.evidence.exception",
+            "project.project",
+            "ir.model.access",
+            "ir.rule",
+            "odoo.orm",
+        ],
+        "projection_only": False,
+        "runtime_authority": "project.risk.action model methods",
+        "write_authority": "project.risk.action.create/write",
+    }
 
     def _trace_id(self) -> str:
         if isinstance(self.context, dict):
@@ -51,7 +65,7 @@ class RiskActionExecuteHandler(BaseIntentHandler):
                 **failure_meta_for_reason(reason_code),
             },
             "code": int(code),
-            "meta": {"intent": self.INTENT_TYPE, "trace_id": trace_id},
+            "meta": {"intent": self.INTENT_TYPE, "trace_id": trace_id, "source_authority": self.SOURCE_AUTHORITY},
         }
 
     def _assert_permission(self):
@@ -206,5 +220,6 @@ class RiskActionExecuteHandler(BaseIntentHandler):
             "meta": {
                 "intent": self.INTENT_TYPE,
                 "trace_id": trace_id,
+                "source_authority": self.SOURCE_AUTHORITY,
             },
         }

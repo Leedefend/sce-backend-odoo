@@ -23,5 +23,6 @@ class WorkspaceHomeEnterHandler(BaseIntentHandler):
             "meta": {
                 "intent": self.INTENT_TYPE,
                 "elapsed_ms": int((time.time() - ts0) * 1000),
+                "source_authority": WorkspaceContractBuilder.source_authority_contract(),
             },
         }

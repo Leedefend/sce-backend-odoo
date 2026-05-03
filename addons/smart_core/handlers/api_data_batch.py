@@ -42,6 +42,8 @@ class ApiDataBatchHandler(BaseIntentHandler):
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
     ACL_MODE = "explicit_check"
+    SOURCE_KIND = "odoo_orm_batch_write_proxy"
+    SOURCE_AUTHORITIES = ("odoo.orm", "ir.model.access", "ir.rule", "ir.model.fields")
 
     ACTION_MAP = {
         "archive": {"active": False},
@@ -51,6 +53,15 @@ class ApiDataBatchHandler(BaseIntentHandler):
 
     def _err(self, code: int, message: str):
         return {"ok": False, "error": {"code": code, "message": message}, "code": code}
+
+    def _source_authority_contract(self, model: str, action: str) -> Dict[str, Any]:
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "model": str(model or ""),
+            "action": str(action or "write"),
+            "proxy_only": True,
+        }
 
     def _collect_params(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         params = {}
@@ -355,9 +366,10 @@ class ApiDataBatchHandler(BaseIntentHandler):
                 "meta": {
                     "trace_id": str(replay_data.get("trace_id") or trace_id),
                     "write_mode": "batch",
-                "source": "portal-shell",
-                "project_scope": project_scope_meta,
-            },
+                    "source": "portal-shell",
+                    "source_authority": self._source_authority_contract(model, action or "write"),
+                    "project_scope": project_scope_meta,
+                },
         }
 
         replay_window_expired = bool(decision.get("replay_window_expired"))
@@ -461,5 +473,5 @@ class ApiDataBatchHandler(BaseIntentHandler):
             idem_fingerprint=idempotency_fingerprint,
             result=data,
         )
-        meta = {"trace_id": trace_id, "write_mode": "batch", "source": "portal-shell", "project_scope": project_scope_meta}
+        meta = {"trace_id": trace_id, "write_mode": "batch", "source": "portal-shell", "source_authority": self._source_authority_contract(model, action or "write"), "project_scope": project_scope_meta}
         return {"ok": True, "data": data, "meta": meta}

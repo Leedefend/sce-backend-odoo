@@ -16,6 +16,8 @@ class AppPermissionConfig(models.Model):
     _description = 'Application Permission Configuration'
     _rec_name = 'target_ref'
     _order = 'target_type, target_ref'
+    SOURCE_KIND = "odoo_native_permission_projection"
+    SOURCE_AUTHORITIES = ("ir.model.access", "ir.rule", "ir.model.fields", "res.groups")
 
     # ========== 目标定义 ==========
     target_type = fields.Selection([
@@ -70,6 +72,17 @@ class AppPermissionConfig(models.Model):
         ('uniq_target_model', 'unique(target_type, target_ref)', '每个 (target_type,target_ref) 只允许一条权限配置。'),
     ]
 
+    @api.model
+    def _source_contract(self, target_ref, target_type="model"):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "target_type": str(target_type or "model"),
+            "target_ref": str(target_ref or ""),
+            "projection_only": True,
+            "rebuildable": True,
+        }
+
     # ================== 生成契约 ==================
 
     @api.model
@@ -116,6 +129,7 @@ class AppPermissionConfig(models.Model):
                 "target_type": "model",
                 "target_ref": model_name,
                 "permission_def": permission_def,
+                "meta_info": {"source": self._source_contract(model_name, "model")},
                 "config_hash": new_hash,
                 "last_generated": fields.Datetime.now(),
             }

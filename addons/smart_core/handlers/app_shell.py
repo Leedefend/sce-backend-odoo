@@ -55,6 +55,8 @@ class AppCatalogHandler(BaseIntentHandler):
     VERSION = "1.0.0"
     ETAG_ENABLED = True
     REQUIRED_GROUPS = []
+    SOURCE_KIND = "scene_delivery_catalog_projection"
+    SOURCE_AUTHORITIES = ("sc.scene", "ui_base_contract_asset")
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
@@ -82,7 +84,13 @@ class AppCatalogHandler(BaseIntentHandler):
             "status": "success",
             "ok": True,
             "data": {"apps": apps, "meta": {"fingerprint": fp, "scene": "web"}},
-            "meta": {"intent": self.INTENT_TYPE, "elapsed_ms": int((time.time() - ts0) * 1000), "etag": fp},
+            "meta": {
+                "intent": self.INTENT_TYPE,
+                "elapsed_ms": int((time.time() - ts0) * 1000),
+                "etag": fp,
+                "source_kind": self.SOURCE_KIND,
+                "source_authorities": list(self.SOURCE_AUTHORITIES),
+            },
         }
 
 
@@ -92,6 +100,8 @@ class AppNavHandler(BaseIntentHandler):
     VERSION = "1.0.0"
     ETAG_ENABLED = True
     REQUIRED_GROUPS = []
+    SOURCE_KIND = "scene_delivery_navigation_projection"
+    SOURCE_AUTHORITIES = ("sc.scene", "ui_base_contract_asset")
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
@@ -124,7 +134,13 @@ class AppNavHandler(BaseIntentHandler):
             "status": "success",
             "ok": True,
             "data": {"sections": sections, "meta": {"fingerprint": fp}},
-            "meta": {"intent": self.INTENT_TYPE, "elapsed_ms": int((time.time() - ts0) * 1000), "etag": fp},
+            "meta": {
+                "intent": self.INTENT_TYPE,
+                "elapsed_ms": int((time.time() - ts0) * 1000),
+                "etag": fp,
+                "source_kind": self.SOURCE_KIND,
+                "source_authorities": list(self.SOURCE_AUTHORITIES),
+            },
         }
 
 
@@ -134,6 +150,8 @@ class AppOpenHandler(BaseIntentHandler):
     VERSION = "1.0.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = []
+    SOURCE_KIND = "scene_delivery_open_projection"
+    SOURCE_AUTHORITIES = ("sc.scene", "ui_base_contract_asset", "ui.contract")
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
@@ -154,6 +172,10 @@ class AppOpenHandler(BaseIntentHandler):
             "status": "success",
             "ok": True,
             "data": {"subject": "ui.contract", "scene_key": scene_key, "route": f"/s/{scene_key}"},
-            "meta": {"intent": self.INTENT_TYPE, "elapsed_ms": int((time.time() - ts0) * 1000)},
+            "meta": {
+                "intent": self.INTENT_TYPE,
+                "elapsed_ms": int((time.time() - ts0) * 1000),
+                "source_kind": self.SOURCE_KIND,
+                "source_authorities": list(self.SOURCE_AUTHORITIES),
+            },
         }
-

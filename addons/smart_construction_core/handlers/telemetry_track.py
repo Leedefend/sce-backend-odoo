@@ -17,6 +17,14 @@ class TelemetryTrackHandler(BaseIntentHandler):
     ACL_MODE = "explicit_check"
     REQUIRED_GROUPS = ["base.group_user"]
     NON_IDEMPOTENT_ALLOWED = "telemetry stream is append-only and intentionally non-replayable"
+    SOURCE_AUTHORITY = {
+        "kind": "telemetry_observability_log_stream",
+        "authorities": ["python.logging", "res.users", "res.company"],
+        "projection_only": False,
+        "observability_only": True,
+        "no_business_fact_authority": True,
+        "write_authority": "application_log",
+    }
 
     def handle(self, payload=None, ctx=None):
         params = payload or self.params or {}
@@ -35,7 +43,7 @@ class TelemetryTrackHandler(BaseIntentHandler):
             return {
                 "ok": True,
                 "data": {"ignored": True, "reason": "invalid telemetry params"},
-                "meta": {"intent": self.INTENT_TYPE},
+                "meta": {"intent": self.INTENT_TYPE, "source_authority": self.SOURCE_AUTHORITY},
             }
 
         user = self.env.user
@@ -49,4 +57,4 @@ class TelemetryTrackHandler(BaseIntentHandler):
             "[telemetry.track] %s",
             json.dumps(data, ensure_ascii=False, sort_keys=True, default=str),
         )
-        return {"ok": True, "data": {"event_type": event_type}, "meta": {"intent": self.INTENT_TYPE}}
+        return {"ok": True, "data": {"event_type": event_type}, "meta": {"intent": self.INTENT_TYPE, "source_authority": self.SOURCE_AUTHORITY}}

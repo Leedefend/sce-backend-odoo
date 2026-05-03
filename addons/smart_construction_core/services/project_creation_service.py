@@ -45,9 +45,29 @@ class ProjectInitializationService:
 class ProjectCreationService:
     """Domain service for intake-style project creation semantics."""
 
+    SOURCE_KIND = "project_initiation_odoo_orm_write_proxy"
+    SOURCE_AUTHORITIES = (
+        "project.project",
+        "project.task",
+        "mail.message",
+        "ir.model.access",
+        "ir.rule",
+        "odoo.orm",
+    )
+
     def __init__(self, env):
         self.env = env
         self.initializer = ProjectInitializationService(env)
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": False,
+            "runtime_authority": "odoo.orm",
+            "write_authority": "project.project.create",
+        }
 
     def normalize_create_vals(self, vals):
         normalized = dict(vals or {})

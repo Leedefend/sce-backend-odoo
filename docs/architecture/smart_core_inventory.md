@@ -9,7 +9,6 @@ This document inventories smart_core assets and where contract dependencies (`ap
 
 ## Controllers
 - `addons/smart_core/controllers/dashboard_controller.py`
-- `addons/smart_core/controllers/enhanced_intent_dispatcher.py`
 - `addons/smart_core/controllers/frontend_api.py`
 - `addons/smart_core/controllers/intent_dispatcher.py`
 - App config engine controller:
@@ -17,7 +16,6 @@ This document inventories smart_core assets and where contract dependencies (`ap
 
 ## Handlers (contract/intent)
 - `addons/smart_core/handlers/ui_contract.py`
-- `addons/smart_core/handlers/enhanced_ui_contract.py`
 - `addons/smart_core/handlers/execute_button.py`
 - `addons/smart_core/handlers/api_data.py`
 - `addons/smart_core/handlers/load_contract.py`
@@ -93,10 +91,8 @@ Misc models:
 ## Contract entry points
 - `addons/smart_core/app_config_engine/controllers/contract_api.py`
 - `addons/smart_core/handlers/ui_contract.py`
-- `addons/smart_core/handlers/enhanced_ui_contract.py`
 - `addons/smart_core/app_config_engine/services/contract_service.py`
 
 ## Known risks
 - Missing app.*.config models can break contract assembly (handled via degrade fallback in page_assembler).
 - Contract output stability depends on deterministic ordering and consistent default data (snapshots can drift).
-

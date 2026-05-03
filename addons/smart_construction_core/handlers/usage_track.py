@@ -18,6 +18,14 @@ class UsageTrackHandler(BaseIntentHandler):
     REQUIRED_GROUPS = ["base.group_user"]
     ACL_MODE = "explicit_check"
     NON_IDEMPOTENT_ALLOWED = "analytics counters are append-only metrics and intentionally non-replayable"
+    SOURCE_AUTHORITY = {
+        "kind": "usage_analytics_counter_write_proxy",
+        "authorities": ["sc.usage.counter", "res.groups", "odoo.orm"],
+        "projection_only": False,
+        "observability_only": True,
+        "no_business_fact_authority": True,
+        "write_authority": "sc.usage.counter.bump",
+    }
 
     def _bump(self, usage_model, company, key):
         if usage_model is None or not company or not key:
@@ -115,6 +123,6 @@ class UsageTrackHandler(BaseIntentHandler):
                 f"usage.capability_open.daily.{day_key}",
             ])
         else:
-            return {"ok": False, "error": {"code": 400, "message": "invalid usage params"}}
+            return {"ok": False, "error": {"code": 400, "message": "invalid usage params"}, "meta": {"intent": self.INTENT_TYPE, "source_authority": self.SOURCE_AUTHORITY}}
 
-        return {"ok": True, "data": {"tracked": tracked, "event_type": event_type}, "meta": {"intent": self.INTENT_TYPE}}
+        return {"ok": True, "data": {"tracked": tracked, "event_type": event_type}, "meta": {"intent": self.INTENT_TYPE, "source_authority": self.SOURCE_AUTHORITY}}

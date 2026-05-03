@@ -15,12 +15,19 @@ class CapabilityVisibilityReportHandler(BaseIntentHandler):
     DESCRIPTION = "Capability visibility/lock report for current user"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
+    SOURCE_AUTHORITY = {
+        "kind": "capability_visibility_delivery_projection",
+        "authorities": ["sc.capability", "res.groups"],
+        "projection_only": True,
+        "delivery_only": True,
+        "no_business_fact_authority": True,
+    }
 
     def handle(self, payload=None, ctx=None):
         user = self.env.user
         Cap = self.env.get("sc.capability")
         if not Cap:
-            return {"ok": True, "data": self._empty_payload()}
+            return {"ok": True, "data": self._empty_payload(), "meta": {"intent": self.INTENT_TYPE, "source_authority": self.SOURCE_AUTHORITY}}
 
         caps = Cap.sudo().search([("active", "=", True)], order="sequence, id")
         summary = {
@@ -94,7 +101,7 @@ class CapabilityVisibilityReportHandler(BaseIntentHandler):
             "hidden_samples": hidden_samples,
             "locked_samples": locked_samples,
         }
-        return {"ok": True, "data": data, "meta": {"intent": self.INTENT_TYPE}}
+        return {"ok": True, "data": data, "meta": {"intent": self.INTENT_TYPE, "source_authority": self.SOURCE_AUTHORITY}}
 
     def _empty_payload(self):
         return {

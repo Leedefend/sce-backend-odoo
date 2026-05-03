@@ -26,6 +26,8 @@ class AppMenuConfig(models.Model):
     _description = 'Application Menu Configuration'
     _rec_name = 'target_model'
     _order = 'scene, target_model, id'
+    SOURCE_KIND = "odoo_native_menu_projection"
+    SOURCE_AUTHORITIES = ("ir.ui.menu", "ir.actions", "res.groups")
 
     # —— 维度键：用于切分缓存与唯一性 —— #
     # target_model: '__all__' 表示全量导航；也可指定某模型，仅保留关联该模型的分支（精简生成量）
@@ -59,6 +61,17 @@ class AppMenuConfig(models.Model):
         ('uniq_dim', 'unique(target_model, scene, company_id, lang)',
          '每个 target_model+scene+company+lang 仅允许一条菜单配置。'),
     ]
+
+    @api.model
+    def _source_contract(self, target_model="__all__", scene="web"):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "target_model": str(target_model or "__all__"),
+            "scene": str(scene or "web"),
+            "projection_only": True,
+            "rebuildable": True,
+        }
 
     
 

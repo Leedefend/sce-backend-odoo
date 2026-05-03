@@ -4,7 +4,7 @@ import json, hashlib, logging, time
 from typing import Any, Dict, List, Set
 from odoo import api, SUPERUSER_ID
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
-from .app_catalog import APP_DEFS, _xmlid_to_id, _visible_menu_ids, _current_perms, _installed_modules
+from .app_catalog import APP_DEFS, APP_DELIVERY_SOURCE_AUTHORITY, _xmlid_to_id, _visible_menu_ids, _current_perms, _installed_modules
 
 _logger = logging.getLogger(__name__)
 
@@ -62,7 +62,7 @@ class AppNavHandler(BaseIntentHandler):
                 ],
                 "meta": {"fingerprint": _md5({"app": app_id, "fallback": True})},
             }
-            meta = {"elapsed_ms": int((time.time()-ts0)*1000), "intent": self.INTENT_TYPE}
+            meta = {"elapsed_ms": int((time.time()-ts0)*1000), "intent": self.INTENT_TYPE, "source_authority": APP_DELIVERY_SOURCE_AUTHORITY}
             top_etag = _md5({"fp": data["meta"]["fingerprint"], "uid": env.uid})
             return {"status":"success","data":data,"meta":{**meta,"etag":top_etag},"ok":True}
 
@@ -86,6 +86,6 @@ class AppNavHandler(BaseIntentHandler):
 
         fp = _md5({"app": app_id, "ver": _md5(app), "uid": env.uid, "sec": sections})
         data = {"sections": sections, "meta": {"fingerprint": fp}}
-        meta = {"elapsed_ms": int((time.time()-ts0)*1000), "intent": self.INTENT_TYPE}
+        meta = {"elapsed_ms": int((time.time()-ts0)*1000), "intent": self.INTENT_TYPE, "source_authority": APP_DELIVERY_SOURCE_AUTHORITY}
         top_etag = _md5({"fp": fp, "uid": env.uid})
         return {"status":"success","data":data,"meta":{**meta,"etag":top_etag},"ok":True}

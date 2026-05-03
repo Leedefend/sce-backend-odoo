@@ -22,6 +22,8 @@ def _service(env, user):
 class _BaseSceneGovernanceHandler(BaseIntentHandler):
     REQUIRED_GROUPS = ["smart_core.group_smart_core_scene_admin"]
     ACL_MODE = "explicit_check"
+    SOURCE_KIND = "scene_delivery_governance"
+    SOURCE_AUTHORITIES = ("sc.scene", "sc.scene.version", "ir.ui.menu", "ir.actions", "res.groups")
 
     def _params(self, payload):
         params = (payload or {}).get("params") if isinstance(payload, dict) else payload
@@ -45,7 +47,16 @@ class _BaseSceneGovernanceHandler(BaseIntentHandler):
             "meta": {
                 "intent": self.INTENT_TYPE,
                 "elapsed_ms": int((time.time() - ts0) * 1000),
+                "source_authority": self._source_authority_contract(),
             },
+        }
+
+    def _source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "delivery_only": True,
+            "no_business_fact_authority": True,
         }
 
 

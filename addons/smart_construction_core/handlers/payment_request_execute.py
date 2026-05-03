@@ -12,6 +12,7 @@ from odoo.addons.smart_core.handlers.reason_codes import (
 from odoo.exceptions import AccessError
 
 from .payment_request_approval import (
+    _BasePaymentApprovalHandler,
     PaymentRequestApproveHandler,
     PaymentRequestDoneHandler,
     PaymentRequestRejectHandler,
@@ -78,7 +79,7 @@ class PaymentRequestExecuteHandler(BaseIntentHandler):
                 **failure_meta_for_reason(reason_code),
             },
             "code": int(code),
-            "meta": {"intent": self.INTENT_TYPE, "trace_id": trace_id},
+            "meta": {"intent": self.INTENT_TYPE, "trace_id": trace_id, "source_authority": _BasePaymentApprovalHandler.source_authority_contract()},
         }
 
     def handle(self, payload=None, ctx=None):
@@ -114,6 +115,7 @@ class PaymentRequestExecuteHandler(BaseIntentHandler):
         meta = result.get("meta") if isinstance(result.get("meta"), dict) else {}
         meta.setdefault("intent", self.INTENT_TYPE)
         meta.setdefault("trace_id", trace_id)
+        meta.setdefault("source_authority", handler_cls.source_authority_contract())
         result["meta"] = meta
         data = result.get("data") if isinstance(result.get("data"), dict) else {}
         data.setdefault("intent_action", action)

@@ -16,6 +16,8 @@ class AppReportConfig(models.Model):
     _description = 'Application Report Configuration'
     _rec_name = 'model'
     _order = 'model'
+    SOURCE_KIND = "odoo_native_report_projection"
+    SOURCE_AUTHORITIES = ("ir.actions.report", "ir.model.fields", "res.groups")
 
     # ===== 基础 =====
     model = fields.Char('Model', required=True, index=True)
@@ -36,6 +38,16 @@ class AppReportConfig(models.Model):
     _sql_constraints = [
         ('uniq_model', 'unique(model)', '每个模型仅允许一条报表配置。'),
     ]
+
+    @api.model
+    def _source_contract(self, model_name):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "model": str(model_name or ""),
+            "projection_only": True,
+            "rebuildable": True,
+        }
 
     # ================== 生成（聚合报表） ==================
 
@@ -58,6 +70,7 @@ class AppReportConfig(models.Model):
             vals = {
                 "model": model_name,
                 "reports_def": entries,
+                "meta_info": {"source": self._source_contract(model_name)},
                 "config_hash": new_hash,
                 "last_generated": fields.Datetime.now(),
             }

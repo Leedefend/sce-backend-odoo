@@ -7,6 +7,8 @@ class AppViewFragment(models.Model, ContractSchemaMixin):
     _name = 'app.view.fragment'
     _description = 'Reusable View Fragment (Contract Blocks)'
     _order = 'category, priority desc, id desc'
+    SOURCE_KIND = "ui_contract_fragment_overlay"
+    SOURCE_AUTHORITIES = ("app.view.config", "ir.ui.view")
 
     name = fields.Char(required=True)
     category = fields.Selection([

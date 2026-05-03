@@ -5,6 +5,8 @@ from odoo.exceptions import UserError
 class LoadMetadataHandler(BaseIntentHandler):
     INTENT_TYPE = "load_metadata"
     DESCRIPTION = "加载模型字段定义"
+    SOURCE_KIND = "odoo_fields_get_projection"
+    SOURCE_AUTHORITIES = ("ir.model.fields", "odoo.orm")
 
     def _resolve_model(self, payload=None):
         params = {}

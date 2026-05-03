@@ -11,9 +11,21 @@ class SearchFavoriteSetHandler(BaseIntentHandler):
     DESCRIPTION = "保存当前搜索为用户收藏筛选"
     VERSION = "1.0.0"
     REQUIRED_GROUPS = ["base.group_user"]
+    SOURCE_KIND = "odoo_filter_write_proxy"
+    SOURCE_AUTHORITIES = ("ir.filters", "app.search.config", "ir.model.access")
 
     def _err(self, code, message):
-        return {"ok": False, "error": {"code": code, "message": message}}
+        return {
+            "ok": False,
+            "error": {"code": code, "message": message},
+            "meta": self._source_meta(),
+        }
+
+    def _source_meta(self):
+        return {
+            "source_kind": self.SOURCE_KIND,
+            "source_authorities": list(self.SOURCE_AUTHORITIES),
+        }
 
     def _params(self, payload):
         if isinstance(payload, dict) and isinstance(payload.get("params"), dict):
@@ -95,5 +107,5 @@ class SearchFavoriteSetHandler(BaseIntentHandler):
                 "action_id": action_id or False,
                 "search_version": getattr(cfg, "version", None),
             },
-            "meta": {"intent": self.INTENT_TYPE, "version": self.VERSION},
+            "meta": {"intent": self.INTENT_TYPE, "version": self.VERSION, **self._source_meta()},
         }

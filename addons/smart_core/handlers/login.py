@@ -108,6 +108,8 @@ class LoginHandler(BaseIntentHandler):
     DESCRIPTION  = "用户登录处理器"
     VERSION      = "2.2.0"
     ETAG_ENABLED = False
+    SOURCE_KIND = "odoo_auth_session_proxy"
+    SOURCE_AUTHORITIES = ("res.users", "res.groups", "res.company")
 
     def handle(self):
         # 1) 取参（支持 db / database / company_id 可选）
@@ -221,7 +223,10 @@ class LoginHandler(BaseIntentHandler):
                 "groups": profile["groups"],
                 "intents": _list_available_intents(),
             }
-        return data, {}
+        return data, {
+            "source_kind": self.SOURCE_KIND,
+            "source_authorities": list(self.SOURCE_AUTHORITIES),
+        }
 
 
 class LogoutHandler(BaseIntentHandler):
@@ -234,6 +239,8 @@ class LogoutHandler(BaseIntentHandler):
     DESCRIPTION  = "用户登出处理器（幂等）"
     VERSION      = "1.0.0"
     ETAG_ENABLED = False
+    SOURCE_KIND = "odoo_auth_session_proxy"
+    SOURCE_AUTHORITIES = ("res.users",)
 
     def handle(self):
         try:
@@ -253,7 +260,10 @@ class LogoutHandler(BaseIntentHandler):
             pass
 
         # 如需“拉黑 token”（有 jti/redis 黑名单机制），可在此记录
-        return {"message": "logged out"}, {}
+        return {"message": "logged out"}, {
+            "source_kind": self.SOURCE_KIND,
+            "source_authorities": list(self.SOURCE_AUTHORITIES),
+        }
 
 
 def _list_available_intents() -> list[Dict[str, str]]:

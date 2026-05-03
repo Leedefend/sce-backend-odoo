@@ -47,6 +47,20 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         "following": "我关注的",
     }
     SECTION_KEYS = ("todo", "owned", "mentions", "following")
+    PRIMARY_TODO_AUTHORITY = "mail.activity"
+    SECTION_AUTHORITIES = {
+        "todo": ["mail.activity", "tier.review", "project.task", "project.project"],
+        "owned": ["project.project"],
+        "mentions": ["mail.message"],
+        "following": ["mail.followers"],
+    }
+    LEGACY_TODO_AUTHORITIES = ["sc.workflow.workitem"]
+    SECTION_SEMANTICS = {
+        "todo": "actionable_work",
+        "owned": "responsibility_scope",
+        "mentions": "collaboration_signal",
+        "following": "subscription_signal",
+    }
     STATUS_READY = "READY"
     STATUS_EMPTY = "EMPTY"
     STATUS_FILTER_EMPTY = "FILTER_EMPTY"
@@ -346,6 +360,14 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             "reason_code": REASON_OK,
             "message": "",
             "hint": "",
+        }
+
+    def _source_authority_contract(self):
+        return {
+            "primary_todo": self.PRIMARY_TODO_AUTHORITY,
+            "section_authorities": dict(self.SECTION_AUTHORITIES),
+            "legacy_todo_authorities": list(self.LEGACY_TODO_AUTHORITIES),
+            "section_semantics": dict(self.SECTION_SEMANTICS),
         }
 
     def _apply_filters(self, items, *, section, source, reason_code, search):
@@ -834,9 +856,11 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                 filtered_count=filtered_count,
             ),
             "visibility": visibility,
+            "source_authority": self._source_authority_contract(),
         }
         meta = {
             "intent": self.INTENT_TYPE,
+            "source_authority": self._source_authority_contract(),
             "project_scope": {
                 "enabled": bool(self._current_project_id()),
                 "project_id": self._current_project_id() or None,

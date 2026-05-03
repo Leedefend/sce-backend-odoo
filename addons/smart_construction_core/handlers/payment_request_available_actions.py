@@ -67,6 +67,20 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
         "reject": "draft",
         "done": "done",
     }
+
+    SOURCE_AUTHORITY = {
+        "kind": "payment_request_action_availability_projection",
+        "authorities": [
+            "payment.request",
+            "tier.review",
+            "res.groups",
+            "ir.model.access",
+            "ir.rule",
+            "odoo.orm",
+        ],
+        "projection_only": True,
+        "runtime_carrier": "payment_request_available_actions_contract",
+    }
     _ACTION_ROLE_HINTS = {
         "submit": {
             "required_role_key": "finance",
@@ -172,7 +186,7 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
                 **failure_meta_for_reason(reason_code),
             },
             "code": int(code),
-            "meta": {"intent": self.INTENT_TYPE, "trace_id": trace_id},
+            "meta": {"intent": self.INTENT_TYPE, "trace_id": trace_id, "source_authority": self.SOURCE_AUTHORITY},
         }
 
     def _action_entry(self, record, spec: dict, *, user_group_xmlids: set[str] | None = None) -> dict:
@@ -305,5 +319,5 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
                 "actions": actions,
                 "primary_action_key": primary_action_key,
             },
-            "meta": {"intent": self.INTENT_TYPE, "trace_id": trace_id},
+            "meta": {"intent": self.INTENT_TYPE, "trace_id": trace_id, "source_authority": self.SOURCE_AUTHORITY},
         }

@@ -16,12 +16,14 @@ class DashboardCompanyEnterHandler(BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
-        contract = DashboardContractBuilder(self.env).build()
+        builder = DashboardContractBuilder(self.env)
+        contract = builder.build()
         return {
             "ok": True,
             "data": contract,
             "meta": {
                 "intent": self.INTENT_TYPE,
                 "elapsed_ms": int((time.time() - ts0) * 1000),
+                "source_authority": builder.source_authority_contract(),
             },
         }

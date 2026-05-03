@@ -10,6 +10,15 @@ from odoo.addons.smart_construction_core.services.project_execution_builders imp
 class ProjectExecutionService:
     """Provide business-truth-backed execution data for orchestration carriers."""
 
+    SOURCE_KIND = "project_execution_business_fact_projection"
+    SOURCE_AUTHORITIES = (
+        "project.project",
+        "project.task",
+        "project.milestone",
+        "mail.activity",
+        "odoo.orm",
+        "odoo.read_group",
+    )
     RUNTIME_BLOCK_MAP = {
         "execution_tasks": "block.project.execution_tasks",
         "pilot_precheck": "block.project.execution_pilot_precheck",
@@ -139,8 +148,17 @@ class ProjectExecutionService:
             "today": str(fields.Date.today()),
         }
 
-    @staticmethod
-    def error_block(block_key, code):
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "runtime_carrier": "scene_entry_and_block_contract",
+        }
+
+    @classmethod
+    def error_block(cls, block_key, code):
         return {
             "block_key": block_key,
             "block_type": "unknown",
@@ -149,4 +167,5 @@ class ProjectExecutionService:
             "visibility": {"allowed": True, "reason_code": "OK", "reason": ""},
             "data": {},
             "error": {"code": code, "message": code},
+            "source_authority": cls.source_authority_contract(),
         }

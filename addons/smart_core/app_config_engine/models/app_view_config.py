@@ -30,6 +30,8 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
     _description = 'Application View Configuration'
     _rec_name = 'name'
     _order = 'model, view_type'
+    SOURCE_KIND = "odoo_native_view_projection"
+    SOURCE_AUTHORITIES = ("ir.ui.view", "ir.model.fields", "ir.actions.act_window")
 
     # ========= 基础信息 =========
     name = fields.Char('Name', required=True)
@@ -74,6 +76,17 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
     _sql_constraints = [
         ('uniq_model_viewtype', 'unique(model, view_type)', '每个模型每种视图类型仅允许一条解析配置。'),
     ]
+
+    @api.model
+    def _source_contract(self, model_name, view_type):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "model": str(model_name or ""),
+            "view_type": str(view_type or ""),
+            "projection_only": True,
+            "rebuildable": True,
+        }
 
     # ========= 契约键白名单（类级常量） =========
     _ALLOWED_BY_VT = {

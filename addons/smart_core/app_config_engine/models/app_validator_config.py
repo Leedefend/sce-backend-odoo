@@ -17,6 +17,8 @@ class AppValidatorConfig(models.Model):
     _description = 'Application Validator Configuration'
     _rec_name = 'model'
     _order = 'model'
+    SOURCE_KIND = "odoo_model_constraint_projection"
+    SOURCE_AUTHORITIES = ("ir.model.fields", "odoo.sql_constraints", "odoo.orm")
 
     # ===== 基础 =====
     model = fields.Char('Model', required=True, index=True)
@@ -36,6 +38,16 @@ class AppValidatorConfig(models.Model):
     _sql_constraints = [
         ('uniq_model', 'unique(model)', '每个模型仅允许一条校验配置。'),
     ]
+
+    @api.model
+    def _source_contract(self, model_name):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "model": str(model_name or ""),
+            "projection_only": True,
+            "rebuildable": True,
+        }
 
     # ================== 生成（聚合校验规则） ==================
 
@@ -76,6 +88,7 @@ class AppValidatorConfig(models.Model):
             vals = {
                 "model": model_name,
                 "validators_def": validators_def,
+                "meta_info": {"source": self._source_contract(model_name)},
                 "config_hash": new_hash,
                 "last_generated": fields.Datetime.now(),
             }

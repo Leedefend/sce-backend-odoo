@@ -43,6 +43,8 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
     ACL_MODE = "explicit_check"
+    SOURCE_KIND = "odoo_orm_unlink_proxy"
+    SOURCE_AUTHORITIES = ("odoo.orm", "ir.model.access", "ir.rule", "ir.model.fields")
     IDEMPOTENCY_WINDOW_SECONDS = 120
     IDEMPOTENCY_EVENT_CODE = "API_DATA_UNLINK"
 
@@ -61,6 +63,15 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
                 **failure_meta_for_reason(reason_code),
             },
             "code": code,
+        }
+
+    def _source_authority_contract(self, model: str) -> Dict[str, Any]:
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "model": str(model or ""),
+            "op": "unlink",
+            "proxy_only": True,
         }
 
     def _idempotency_window_seconds(self):
@@ -229,7 +240,7 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
                     trace_id=trace_id,
                     deduplicated=True,
                 )
-                meta = {"trace_id": trace_id, "write_mode": "unlink", "source": "portal-shell"}
+                meta = {"trace_id": trace_id, "write_mode": "unlink", "source": "portal-shell", "source_authority": self._source_authority_contract(model)}
                 return {"ok": True, "data": data, "meta": meta}
 
         recs = env_model.browse(ids).exists()
@@ -265,5 +276,5 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
             idem_fingerprint=idempotency_fingerprint,
             result=data,
         )
-        meta = {"trace_id": trace_id, "write_mode": "unlink", "source": "portal-shell", "project_scope": project_scope_meta}
+        meta = {"trace_id": trace_id, "write_mode": "unlink", "source": "portal-shell", "source_authority": self._source_authority_contract(model), "project_scope": project_scope_meta}
         return {"ok": True, "data": data, "meta": meta}

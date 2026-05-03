@@ -66,6 +66,8 @@ class ProjectPlanBootstrapEnterHandler(BaseIntentHandler):
             params = params.get("params") or {}
         ctx = ctx or {}
         project_id = self._resolve_project_id(params, ctx)
+        orchestrator = ProjectPlanBootstrapSceneOrchestrator(self.env)
+        source_authority = orchestrator.source_authority_contract()
         if project_id <= 0:
             return {
                 "ok": False,
@@ -88,10 +90,10 @@ class ProjectPlanBootstrapEnterHandler(BaseIntentHandler):
                     "intent": self.INTENT_TYPE,
                     "elapsed_ms": int((time.time() - ts0) * 1000),
                     "trace_id": str((self.context or {}).get("trace_id") or ""),
+                    "source_authority": source_authority,
                 },
             }
 
-        orchestrator = ProjectPlanBootstrapSceneOrchestrator(self.env)
         data = orchestrator.build_entry(project_id=project_id, context=ctx)
         target = resolve_project_management_entry_target(self.env)
         data = attach_release_surface_scene_contract(
@@ -127,6 +129,7 @@ class ProjectPlanBootstrapEnterHandler(BaseIntentHandler):
                     "intent": self.INTENT_TYPE,
                     "elapsed_ms": int((time.time() - ts0) * 1000),
                     "trace_id": str((self.context or {}).get("trace_id") or ""),
+                    "source_authority": source_authority,
                 },
             }
 
@@ -137,5 +140,6 @@ class ProjectPlanBootstrapEnterHandler(BaseIntentHandler):
                 "intent": self.INTENT_TYPE,
                 "elapsed_ms": int((time.time() - ts0) * 1000),
                 "trace_id": str((self.context or {}).get("trace_id") or ""),
+                "source_authority": source_authority,
             },
         }

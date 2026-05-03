@@ -39,7 +39,6 @@
 | payment.request.reject | domain | merge_or_delete |
 | payment.request.submit | domain | merge_or_delete |
 | permission.check | core | keep |
-| sample.enhanced | domain | merge_or_delete |
 | scene.governance.export_contract | governance | keep |
 | scene.governance.pin_stable | governance | keep |
 | scene.governance.rollback | governance | keep |
@@ -53,8 +52,6 @@
 | session.bootstrap | domain | merge_or_delete |
 | system.init | core | keep |
 | system.ping.construction | domain | merge_or_delete |
-| ui.contract.enhanced | domain | merge_or_delete |
-| ui.contract.model.view | domain | merge_or_delete |
 | usage.export.csv | domain | internal_only |
 | usage.report | domain | internal_only |
 | usage.track | domain | internal_only |

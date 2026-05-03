@@ -40,7 +40,6 @@
 | payment.request.reject | domain | 0 | - | N | Y | Y | Y | Y | N | addons/smart_construction_core/handlers/payment_request_approval.py |
 | payment.request.submit | domain | 2 | - | N | Y | Y | Y | Y | N | addons/smart_construction_core/handlers/payment_request_approval.py |
 | permission.check | core | 0 | - | N | Y | N | N | Y | Y | addons/smart_core/handlers/permission_check.py |
-| sample.enhanced | domain | 0 | - | N | Y | N | N | N | N | addons/smart_core/handlers/enhanced_sample_handler.py |
 | scene.governance.export_contract | governance | 0 | - | N | Y | Y | N | N | N | addons/smart_core/handlers/scene_governance.py |
 | scene.governance.pin_stable | governance | 0 | - | N | Y | Y | Y | N | N | addons/smart_core/handlers/scene_governance.py |
 | scene.governance.rollback | governance | 0 | - | N | Y | Y | Y | N | N | addons/smart_core/handlers/scene_governance.py |
@@ -56,8 +55,6 @@
 | system.ping.construction | domain | 1 | record_rule | N | Y | N | Y | N | N | addons/smart_construction_core/handlers/system_ping_construction.py |
 | telemetry.track | domain | 0 | explicit_check | N | Y | N | Y | N | N | addons/smart_construction_core/handlers/telemetry_track.py |
 | ui.contract | core | 0 | - | Y | Y | N | N | Y | N | addons/smart_core/handlers/ui_contract.py |
-| ui.contract.enhanced | domain | 0 | - | N | Y | N | N | N | N | addons/smart_core/handlers/enhanced_ui_contract.py |
-| ui.contract.model.view | domain | 0 | - | N | Y | N | N | N | N | addons/smart_core/handlers/enhanced_ui_contract.py |
 | usage.export.csv | domain | 1 | - | N | Y | N | N | Y | Y | addons/smart_construction_core/handlers/usage_export_csv.py |
 | usage.report | domain | 0 | - | N | Y | N | N | Y | Y | addons/smart_construction_core/handlers/usage_report.py |
 | usage.track | domain | 1 | explicit_check | N | Y | N | Y | N | Y | addons/smart_construction_core/handlers/usage_track.py |
@@ -91,14 +88,11 @@
 - `payment.request.available_actions` (addons/smart_construction_core/handlers/payment_request_available_actions.py)
 - `payment.request.execute` (addons/smart_construction_core/handlers/payment_request_execute.py)
 - `permission.check` (addons/smart_core/handlers/permission_check.py)
-- `sample.enhanced` (addons/smart_core/handlers/enhanced_sample_handler.py)
 - `scene.packages.installed` (addons/smart_core/handlers/scene_packages_installed.py)
 - `session.bootstrap` (addons/smart_core/handlers/session_bootstrap.py)
 - `system.ping.construction` (addons/smart_construction_core/handlers/system_ping_construction.py)
 - `telemetry.track` (addons/smart_construction_core/handlers/telemetry_track.py)
 - `ui.contract` (addons/smart_core/handlers/ui_contract.py)
-- `ui.contract.enhanced` (addons/smart_core/handlers/enhanced_ui_contract.py)
-- `ui.contract.model.view` (addons/smart_core/handlers/enhanced_ui_contract.py)
 - `usage.export.csv` (addons/smart_construction_core/handlers/usage_export_csv.py)
 - `usage.report` (addons/smart_construction_core/handlers/usage_report.py)
 - `usage.track` (addons/smart_construction_core/handlers/usage_track.py)

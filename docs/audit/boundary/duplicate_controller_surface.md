@@ -37,12 +37,8 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
   - `/api/capabilities/export` -> `smart_construction_core:addons/smart_construction_core/controllers/capability_catalog_controller.py:14`
   - `/api/capabilities/search` -> `smart_construction_core:addons/smart_construction_core/controllers/capability_catalog_controller.py:29`
   - `/api/capabilities/lint` -> `smart_construction_core:addons/smart_construction_core/controllers/capability_catalog_controller.py:80`
-- `/api/v1/intent`: routes=`2`, modules=`smart_core`
-  - `/api/v1/intent_enhanced` -> `smart_core:addons/smart_core/controllers/enhanced_intent_dispatcher.py:8`
+- `/api/v1/intent`: routes=`1`, modules=`smart_core`
   - `/api/v1/intent` -> `smart_core:addons/smart_core/controllers/intent_dispatcher.py:214`
-- `/api/v2/intent`: routes=`1`, modules=`smart_core`
-  - `/api/v2/intent` -> `smart_core:addons/smart_core/controllers/enhanced_intent_dispatcher.py:24`
-
 ## Scan Notes
 
 - This artifact reports exact duplicate and family-level co-location evidence only.

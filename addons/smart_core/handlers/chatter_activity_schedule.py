@@ -27,6 +27,7 @@ class ChatterActivityScheduleHandler(BaseIntentHandler):
     REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
     ACL_MODE = "explicit_check"
     NON_IDEMPOTENT_ALLOWED = "Scheduling an activity creates a collaboration todo"
+    SOURCE_AUTHORITY = "mail.activity"
 
     def handle(self, payload=None, ctx=None):
         params = self.params if isinstance(self.params, dict) else {}
@@ -89,7 +90,7 @@ class ChatterActivityScheduleHandler(BaseIntentHandler):
                         "message": "Activity scheduled",
                     }
                 },
-                "meta": {"trace_id": trace_id},
+                "meta": {"trace_id": trace_id, "source_authority": self.SOURCE_AUTHORITY},
             }
         except AccessError:
             return self._failure(REASON_PERMISSION_DENIED, "无权限安排活动", 403, trace_id)

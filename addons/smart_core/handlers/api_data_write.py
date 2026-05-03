@@ -52,6 +52,8 @@ class ApiDataWriteHandler(BaseIntentHandler):
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
     ACL_MODE = "explicit_check"
+    SOURCE_KIND = "odoo_orm_write_proxy"
+    SOURCE_AUTHORITIES = ("odoo.orm", "ir.model.access", "ir.rule", "ir.model.fields")
     IDEMPOTENCY_WINDOW_SECONDS = 120
     IDEMPOTENCY_EVENT_CODE = "API_DATA_WRITE"
 
@@ -87,6 +89,15 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 **failure_meta_for_reason(reason_code),
             },
             "code": code,
+        }
+
+    def _source_authority_contract(self, model: str, op: str) -> Dict[str, Any]:
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "model": str(model or ""),
+            "op": str(op or ""),
+            "proxy_only": True,
         }
 
     def _idempotency_window_seconds(self):
@@ -315,7 +326,7 @@ class ApiDataWriteHandler(BaseIntentHandler):
                         trace_id=trace_id,
                         deduplicated=True,
                     )
-                    meta = {"trace_id": trace_id, "write_mode": "update", "source": "portal-shell", "project_scope": scope_meta}
+                    meta = {"trace_id": trace_id, "write_mode": "update", "source": "portal-shell", "source_authority": self._source_authority_contract(model, "write"), "project_scope": scope_meta}
                     return {"ok": True, "data": data, "meta": meta}
 
             try:
@@ -359,7 +370,7 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 idem_fingerprint=idempotency_fingerprint,
                 result=data,
             )
-            meta = {"trace_id": trace_id, "write_mode": "update", "source": "portal-shell", "project_scope": scope_meta}
+            meta = {"trace_id": trace_id, "write_mode": "update", "source": "portal-shell", "source_authority": self._source_authority_contract(model, "write"), "project_scope": scope_meta}
             return {"ok": True, "data": data, "meta": meta}
 
         if intent == "api.data.create":
@@ -416,7 +427,7 @@ class ApiDataWriteHandler(BaseIntentHandler):
                         trace_id=trace_id,
                         deduplicated=True,
                     )
-                    meta = {"trace_id": trace_id, "write_mode": "create", "source": "portal-shell", "project_scope": scope_meta}
+                    meta = {"trace_id": trace_id, "write_mode": "create", "source": "portal-shell", "source_authority": self._source_authority_contract(model, "create"), "project_scope": scope_meta}
                     return {"ok": True, "data": data, "meta": meta}
 
             try:
@@ -453,7 +464,7 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 idem_fingerprint=idempotency_fingerprint,
                 result=data,
             )
-            meta = {"trace_id": trace_id, "write_mode": "create", "source": "portal-shell", "project_scope": scope_meta}
+            meta = {"trace_id": trace_id, "write_mode": "create", "source": "portal-shell", "source_authority": self._source_authority_contract(model, "create"), "project_scope": scope_meta}
             return {"ok": True, "data": data, "meta": meta}
 
         return self._err(400, f"未知写入意图: {intent}", REASON_UNSUPPORTED_SOURCE)

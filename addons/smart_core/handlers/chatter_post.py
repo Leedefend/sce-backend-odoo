@@ -29,6 +29,7 @@ class ChatterPostHandler(BaseIntentHandler):
     REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
     ACL_MODE = "explicit_check"
     NON_IDEMPOTENT_ALLOWED = "message_post appends chatter history and should not replay"
+    SOURCE_AUTHORITY = "mail.message"
 
     def handle(self, payload=None, ctx=None):
         params = self.params if isinstance(self.params, dict) else {}
@@ -92,7 +93,7 @@ class ChatterPostHandler(BaseIntentHandler):
                         "mentioned_partner_ids": mention_partner_ids,
                     }
                 },
-                "meta": {"trace_id": trace_id},
+                "meta": {"trace_id": trace_id, "source_authority": self.SOURCE_AUTHORITY},
             }
         except AccessError:
             return self._failure(REASON_PERMISSION_DENIED, "无权限发布评论", 403, trace_id)

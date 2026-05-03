@@ -392,6 +392,17 @@ class SystemInitHandler(BaseIntentHandler):
     ETAG_ENABLED = True
     ALIASES = ["app.init", "bootstrap"]
     REQUIRED_GROUPS = []  # 登录用户可用
+    SOURCE_KIND = "odoo_native_startup_surface_projection"
+    SOURCE_AUTHORITIES = (
+        "res.users",
+        "res.groups",
+        "ir.ui.menu",
+        "ir.actions",
+        "sc.scene",
+        "sc.capability",
+        "ui_base_contract_asset",
+        "ir.module.module",
+    )
 
     def handle(self, payload=None, ctx=None):
         payload = payload or {}
@@ -908,6 +919,9 @@ class SystemInitHandler(BaseIntentHandler):
             nav_fp=nav_fp,
             startup_profile=startup_profile,
         )
+        meta_with_etag = dict(meta_with_etag or {})
+        meta_with_etag.setdefault("source_kind", self.SOURCE_KIND)
+        meta_with_etag.setdefault("source_authorities", list(self.SOURCE_AUTHORITIES))
         if contract_mode == "hud":
             hud_trace = data.get("hud") if isinstance(data.get("hud"), dict) else {}
             for trace_key in ("scene_source", "scene_contract_ref", "channel_selector", "channel_source_ref"):

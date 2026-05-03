@@ -11,6 +11,8 @@ class UiBaseContractAsset(models.Model):
     _name = "sc.ui.base.contract.asset"
     _description = "Scene UI Base Contract Asset"
     _order = "write_date desc, id desc"
+    SOURCE_KIND = "ui_base_contract_asset_cache"
+    SOURCE_AUTHORITIES = ("load_contract", "scene_registry_projection", "ir.ui.view", "ir.actions", "ir.ui.menu")
 
     name = fields.Char(string="Name", required=True)
     contract_kind = fields.Selection(
@@ -58,6 +60,16 @@ class UiBaseContractAsset(models.Model):
             "A UI base contract asset already exists for this scene scope and version.",
         ),
     ]
+
+    @api.model
+    def source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "cache_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": True,
+        }
 
     @api.constrains("status", "contract_kind", "scene_key", "role_code", "company_id")
     def _check_single_active_per_scope(self):

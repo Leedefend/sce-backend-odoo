@@ -48,6 +48,8 @@ class ApiDataHandler(BaseIntentHandler):
     ETAG_ENABLED = False  # 列表不缓存，避免错判
     GROUP_WINDOW_IDENTITY_VERSION = "v1"
     GROUP_WINDOW_IDENTITY_ALGO = "sha1"
+    SOURCE_KIND = "odoo_orm_proxy"
+    SOURCE_AUTHORITIES = ("odoo.orm", "ir.model.access", "ir.rule", "ir.model.fields")
 
     # ----------------- 通用取参 -----------------
 
@@ -56,6 +58,15 @@ class ApiDataHandler(BaseIntentHandler):
         if reason_code:
             error["reason_code"] = reason_code
         return {"ok": False, "error": error}
+
+    def _source_authority_contract(self, model: str, op: str) -> Dict[str, Any]:
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "model": str(model or ""),
+            "op": str(op or ""),
+            "proxy_only": True,
+        }
 
     def _read_if_none_match(self, p: Dict[str, Any]) -> str:
         if_none_match = str(self._dig(p, "if_none_match", "") or "").strip().strip('"')
@@ -1112,6 +1123,7 @@ class ApiDataHandler(BaseIntentHandler):
         meta = {
             "op": "list",
             "model": model,
+            "source_authority": self._source_authority_contract(model, "list"),
             "limit": limit,
             "offset": offset,
             "order": order,
@@ -1166,7 +1178,14 @@ class ApiDataHandler(BaseIntentHandler):
 
         data = {"records": rows}
         _, project_scope_meta = self._apply_project_scope(env_model, [], p, ctx)
-        meta = {"op": "read", "model": model, "count": len(rows), "fields": fields_safe, "project_scope": project_scope_meta}
+        meta = {
+            "op": "read",
+            "model": model,
+            "source_authority": self._source_authority_contract(model, "read"),
+            "count": len(rows),
+            "fields": fields_safe,
+            "project_scope": project_scope_meta,
+        }
         return data, meta
 
     def _op_count(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
@@ -1178,7 +1197,12 @@ class ApiDataHandler(BaseIntentHandler):
 
         total = env_model.search_count(domain or [])
         data = {"total": int(total or 0)}
-        meta = {"op": "count", "model": model, "project_scope": project_scope_meta}
+        meta = {
+            "op": "count",
+            "model": model,
+            "source_authority": self._source_authority_contract(model, "count"),
+            "project_scope": project_scope_meta,
+        }
         return data, meta
 
     def _op_create(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
@@ -1237,7 +1261,13 @@ class ApiDataHandler(BaseIntentHandler):
                 return self._err(500, self._friendly_create_error(e))
 
         data = {"id": rec.id}
-        meta = {"op": "create", "model": model, "id": rec.id, "project_scope": project_scope_meta}
+        meta = {
+            "op": "create",
+            "model": model,
+            "source_authority": self._source_authority_contract(model, "create"),
+            "id": rec.id,
+            "project_scope": project_scope_meta,
+        }
         return data, meta
 
     def _op_write(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
@@ -1297,7 +1327,13 @@ class ApiDataHandler(BaseIntentHandler):
         data = {"ids": recs.ids}
         if len(recs) == 1 and "write_date" in env_model._fields:
             data["record_version"] = self._format_write_date(recs.write_date)
-        meta = {"op": "write", "model": model, "count": len(recs), "project_scope": project_scope_meta}
+        meta = {
+            "op": "write",
+            "model": model,
+            "source_authority": self._source_authority_contract(model, "write"),
+            "count": len(recs),
+            "project_scope": project_scope_meta,
+        }
         return data, meta
 
     def _format_csv_value(self, value: Any) -> str:
@@ -1359,7 +1395,13 @@ class ApiDataHandler(BaseIntentHandler):
                 "count": 0,
                 "fields": fields_safe,
             }
-            meta = {"op": "export_csv", "model": model, "count": 0, "project_scope": project_scope_meta}
+            meta = {
+                "op": "export_csv",
+                "model": model,
+                "source_authority": self._source_authority_contract(model, "export_csv"),
+                "count": 0,
+                "project_scope": project_scope_meta,
+            }
             return data, meta
 
         try:
@@ -1386,5 +1428,12 @@ class ApiDataHandler(BaseIntentHandler):
             "count": len(rows),
             "fields": fields_safe,
         }
-        meta = {"op": "export_csv", "model": model, "count": len(rows), "limit": limit, "project_scope": project_scope_meta}
+        meta = {
+            "op": "export_csv",
+            "model": model,
+            "source_authority": self._source_authority_contract(model, "export_csv"),
+            "count": len(rows),
+            "limit": limit,
+            "project_scope": project_scope_meta,
+        }
         return data, meta
