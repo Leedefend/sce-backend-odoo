@@ -18,9 +18,9 @@ Reason:
 All-terminal coverage needs a truthful matrix. Web PC already has browser
 acceptance gates. UniApp mini program and Harmony H5 have semantic contract
 parity, renderer input pilot gates, UI renderer pilot gates, page integration
-pilot gates, runtime mount pilot gates, and real compile gates. wx_mini also has
-compiled runtime artifact acceptance. Device or browser runtime acceptance is
-still pending.
+pilot gates, runtime mount pilot gates, and real compile gates. wx_mini has
+compiled runtime artifact acceptance. harmony_h5 has browser runtime acceptance.
+Device acceptance is still pending.
 
 ## 2. Current Matrix
 
@@ -28,13 +28,13 @@ still pending.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `web_pc` | pass | available | available | available | available | available | covered browser anchor |
 | `wx_mini` | pass | available | available | available | available | available | runtime-artifact-acceptance-ready, device-acceptance-pending |
-| `harmony_h5` | pass | available | available | available | available | available | compile-gate-ready, terminal-acceptance-pending |
+| `harmony_h5` | pass | available | available | available | available | available | runtime-browser-acceptance-ready, device-acceptance-pending |
 
 `web_pc` is the current browser acceptance anchor.
 
 `wx_mini` has runtime artifact acceptance but device acceptance is pending.
 
-`harmony_h5` has a compile gate but terminal acceptance is pending.
+`harmony_h5` has runtime browser acceptance but device acceptance is pending.
 
 They must not be reported as fully covered until their guarded compile pilot
 gates exist and pass.
@@ -68,7 +68,8 @@ It verifies:
 - mini program runtime artifact acceptance pilot gate remains present
 - mini program is explicitly marked device-acceptance-pending
 - Harmony H5 compile pilot gate remains present
-- Harmony H5 is explicitly marked terminal-acceptance-pending
+- Harmony H5 runtime acceptance pilot gate remains present
+- Harmony H5 is explicitly marked device-acceptance-pending
 - future pilot gates are named as next required gates
 
 ## 4. Non-Goals
@@ -99,6 +100,7 @@ make verify.unified_page_contract.lite.wx_mini_runtime_acceptance_pilot.host
 make verify.unified_page_contract.lite.wx_mini_device_acceptance_pilot.host
 make verify.unified_page_contract.lite.harmony_h5_compile_pilot.host
 make verify.unified_page_contract.lite.harmony_h5_runtime_acceptance_pilot.host
+make verify.unified_page_contract.lite.harmony_h5_device_acceptance_pilot.host
 ```
 
 Those gates must prove terminal rendering and interaction, not just contract

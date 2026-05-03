@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-03T15:50:00+08:00
+- blocker_key: `unified_page_contract_lite_harmony_h5_runtime_acceptance_pilot_batch_79`
+- layer_target: `Frontend Mobile Runtime Artifact Acceptance`
+- module: `frontend/apps/mobile + scripts/verify + docs/architecture/unified_page_contract_lite + Makefile`
+- reason: `harmony_h5 真实编译已通过，但还缺少浏览器运行时验收，不能把 build:h5 通过等同于 H5 运行时可加载。`
+- completed_step: `新增 unified_page_contract_lite_harmony_h5_runtime_acceptance_pilot.js 与 verify.unified_page_contract.lite.harmony_h5_runtime_acceptance_pilot.host；目标依赖 H5 编译，启动本地静态服务，用 Playwright 打开 dist/build/h5/index.html，断言页面渲染 Contract Runtime 且无 console/page error。`
+- verification: `node --check scripts/verify/unified_page_contract_lite_harmony_h5_runtime_acceptance_pilot.js PASS；python3 -m py_compile scripts/verify/unified_page_contract_lite_terminal_coverage_matrix_guard.py PASS；git diff --check PASS；make verify.unified_page_contract.lite.harmony_h5_runtime_acceptance_pilot.host PASS，decision=harmony_h5_runtime_browser_acceptance_pilot_passed；make verify.unified_page_contract.lite.terminal_coverage_matrix PASS，decision=terminal_matrix_runtime_acceptance_ready_device_pending；pnpm -C frontend/apps/mobile typecheck PASS；make verify.unified_page_contract.lite PASS；make verify.docs.all PASS。`
+- active_commit: `029dbba8`
+- next_step: `提交 Batch-79；下一批进入 wx_mini_device_acceptance_pilot.host 或 harmony_h5_device_acceptance_pilot.host。`
+
 ### 2026-05-03T15:30:00+08:00
 - blocker_key: `unified_page_contract_lite_wx_mini_runtime_acceptance_pilot_batch_78`
 - layer_target: `Frontend Mobile Runtime Artifact Acceptance`
