@@ -21,9 +21,19 @@ class ApiOnchangeHandler(BaseIntentHandler):
     VERSION = "1.1.0"
     REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
     ACL_MODE = "explicit_check"
+    SOURCE_KIND = "odoo_onchange_proxy"
+    SOURCE_AUTHORITIES = ("odoo.onchange", "ir.model.fields")
 
     def _err(self, code: int, message: str):
         return {"ok": False, "error": {"code": code, "message": message}, "code": code}
+
+    def _source_authority_contract(self, model: str) -> Dict[str, Any]:
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "model": str(model or ""),
+            "proxy_only": True,
+        }
 
     def _collect_params(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         params: Dict[str, Any] = {}
@@ -288,7 +298,7 @@ class ApiOnchangeHandler(BaseIntentHandler):
                     "warnings": [],
                     "applied_fields": [],
                 },
-                "meta": {"model": model, "intent": self.INTENT_TYPE, "version": self.VERSION},
+                "meta": {"model": model, "intent": self.INTENT_TYPE, "version": self.VERSION, "source_authority": self._source_authority_contract(model)},
             }
             return with_lite_preview_if_requested(response, params, "api_onchange")
 
@@ -324,6 +334,6 @@ class ApiOnchangeHandler(BaseIntentHandler):
                 "warnings": warnings,
                 "applied_fields": changed_fields,
             },
-            "meta": {"model": model, "intent": self.INTENT_TYPE, "version": self.VERSION},
+            "meta": {"model": model, "intent": self.INTENT_TYPE, "version": self.VERSION, "source_authority": self._source_authority_contract(model)},
         }
         return with_lite_preview_if_requested(response, params, "api_onchange")

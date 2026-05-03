@@ -19,6 +19,13 @@ class ProjectConnectionTransitionHandler(BaseIntentHandler):
     VERSION = "1.0.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["base.group_user"]
+    SOURCE_AUTHORITY = {
+        "kind": "project_lifecycle_odoo_model_transition_proxy",
+        "authorities": ["project.project", "mail.message", "ir.model.access", "ir.rule", "odoo.orm"],
+        "projection_only": False,
+        "runtime_authority": "project.project.action_set_lifecycle_state",
+        "write_authority": "project.project",
+    }
 
     TRANSITIONS = {
         "start_execution": {"target_state": "in_progress", "reason_code": REASON_PROJECT_START_EXECUTION},
@@ -92,6 +99,7 @@ class ProjectConnectionTransitionHandler(BaseIntentHandler):
                     "intent": self.INTENT_TYPE,
                     "elapsed_ms": int((time.time() - ts0) * 1000),
                     "trace_id": trace_id,
+                    "source_authority": self.SOURCE_AUTHORITY,
                 },
             }
         project = self.env["project.project"].browse(project_id).exists()
@@ -110,6 +118,7 @@ class ProjectConnectionTransitionHandler(BaseIntentHandler):
                     "intent": self.INTENT_TYPE,
                     "elapsed_ms": int((time.time() - ts0) * 1000),
                     "trace_id": trace_id,
+                    "source_authority": self.SOURCE_AUTHORITY,
                 },
             }
         from_state = str(getattr(project, "lifecycle_state", "") or "")
@@ -139,5 +148,6 @@ class ProjectConnectionTransitionHandler(BaseIntentHandler):
                 "intent": self.INTENT_TYPE,
                 "elapsed_ms": int((time.time() - ts0) * 1000),
                 "trace_id": trace_id,
+                "source_authority": self.SOURCE_AUTHORITY,
             },
         }

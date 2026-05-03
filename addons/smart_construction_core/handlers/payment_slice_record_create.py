@@ -47,6 +47,7 @@ class PaymentSliceRecordCreateHandler(BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
+        source_authority = PaymentSliceService.write_source_authority_contract()
         params = payload or self.params or {}
         if isinstance(params, dict) and isinstance(params.get("params"), dict):
             params = params.get("params") or {}
@@ -72,7 +73,7 @@ class PaymentSliceRecordCreateHandler(BaseIntentHandler):
                     "message": "缺少 project_id，无法创建付款记录",
                     "suggested_action": "fix_input",
                 },
-                "meta": {"intent": self.INTENT_TYPE, "elapsed_ms": int((time.time() - ts0) * 1000), "trace_id": trace_id},
+                "meta": {"intent": self.INTENT_TYPE, "elapsed_ms": int((time.time() - ts0) * 1000), "trace_id": trace_id, "source_authority": source_authority},
             }
 
         service = PaymentSliceService(self.env)
@@ -85,7 +86,7 @@ class PaymentSliceRecordCreateHandler(BaseIntentHandler):
                     "message": "项目不存在或当前账号不可访问",
                     "suggested_action": "fix_input",
                 },
-                "meta": {"intent": self.INTENT_TYPE, "elapsed_ms": int((time.time() - ts0) * 1000), "trace_id": trace_id},
+                "meta": {"intent": self.INTENT_TYPE, "elapsed_ms": int((time.time() - ts0) * 1000), "trace_id": trace_id, "source_authority": source_authority},
             }
 
         try:
@@ -98,11 +99,11 @@ class PaymentSliceRecordCreateHandler(BaseIntentHandler):
                     "message": str(exc),
                     "suggested_action": "fix_input",
                 },
-                "meta": {"intent": self.INTENT_TYPE, "elapsed_ms": int((time.time() - ts0) * 1000), "trace_id": trace_id},
+                "meta": {"intent": self.INTENT_TYPE, "elapsed_ms": int((time.time() - ts0) * 1000), "trace_id": trace_id, "source_authority": source_authority},
             }
 
         return {
             "ok": True,
             "data": result,
-            "meta": {"intent": self.INTENT_TYPE, "elapsed_ms": int((time.time() - ts0) * 1000), "trace_id": trace_id},
+            "meta": {"intent": self.INTENT_TYPE, "elapsed_ms": int((time.time() - ts0) * 1000), "trace_id": trace_id, "source_authority": source_authority},
         }

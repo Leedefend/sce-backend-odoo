@@ -58,6 +58,22 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
     # Semantic guard compatibility anchor after response-builder extraction:
     # "result": "blocked"
 
+    SOURCE_AUTHORITY = {
+        "kind": "project_execution_odoo_model_transition_proxy",
+        "authorities": [
+            "project.project",
+            "project.task",
+            "mail.message",
+            "mail.activity",
+            "ir.model.access",
+            "ir.rule",
+            "odoo.orm",
+        ],
+        "projection_only": False,
+        "runtime_authority": "project.execution.state_transition",
+        "write_authority": "project.project/project.task model methods",
+    }
+
     @staticmethod
     def _log_exception(event: str, **context: Any) -> None:
         _logger.exception("project.execution.advance.%s context=%s", str(event or "unknown"), context)
@@ -113,6 +129,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
             },
             lifecycle_hints=self._build_lifecycle_hints(project_id, reason_code),
             extra_data=extra_data,
+            source_authority=self.SOURCE_AUTHORITY,
         )
 
     def _apply_real_task_transition(
@@ -161,6 +178,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                         },
                     },
                 },
+                source_authority=self.SOURCE_AUTHORITY,
             )
 
         project = self._project_lookup_service().resolve_project(project_id=project_id, trace_id=trace_id)
@@ -184,6 +202,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                     },
                 },
                 lifecycle_hints=self._build_lifecycle_hints(project_id, reason_code),
+                source_authority=self.SOURCE_AUTHORITY,
             )
 
         from_state = ProjectExecutionStateMachine.normalize_state(getattr(project, "sc_execution_state", "ready"))
@@ -259,4 +278,5 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
                 "lifecycle_hints": self._build_lifecycle_hints(int(project.id), reason_code),
                 **dict(task_telemetry or {}),
             },
+            source_authority=self.SOURCE_AUTHORITY,
         )

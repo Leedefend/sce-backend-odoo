@@ -8,6 +8,21 @@ from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 
 _logger = logging.getLogger(__name__)
 
+APP_DELIVERY_SOURCE_AUTHORITY = {
+    "kind": "app_delivery_catalog_projection",
+    "authorities": [
+        "ir.ui.menu",
+        "ir.actions",
+        "ir.module.module",
+        "res.groups",
+        "perm.aggregator",
+        "project.task",
+    ],
+    "projection_only": True,
+    "delivery_only": True,
+    "no_business_fact_authority": True,
+}
+
 # ====== 最小可跑：内置一个 App 定义（后续替换为 DB/YAML/服务加载） ======
 APP_DEFS: List[Dict[str, Any]] = [
     {
@@ -180,7 +195,7 @@ class AppCatalogHandler(BaseIntentHandler):
 
         fp = _apps_fingerprint(env, su_env, apps_out)
         data = {"apps": apps_out, "meta": {"fingerprint": fp, "scene": scene}}
-        meta = {"elapsed_ms": int((time.time()-ts0)*1000), "intent": self.INTENT_TYPE}
+        meta = {"elapsed_ms": int((time.time()-ts0)*1000), "intent": self.INTENT_TYPE, "source_authority": APP_DELIVERY_SOURCE_AUTHORITY}
         # 顶层 ETag：以 fingerprint 为主
         top_etag = _md5({"fp": fp, "uid": env.uid})
         return {"status":"success","data":data,"meta":{**meta,"etag":top_etag},"ok":True}

@@ -138,6 +138,7 @@ class ProjectDashboardEnterHandler(BaseIntentHandler):
                     "intent": self.INTENT_TYPE,
                     "elapsed_ms": int((time.time() - ts0) * 1000),
                     "trace_id": str((self.context or {}).get("trace_id") or ""),
+                    "source_authority": orchestrator._service.source_authority_contract(),
                 },
             }
 
@@ -148,5 +149,6 @@ class ProjectDashboardEnterHandler(BaseIntentHandler):
                 "intent": self.INTENT_TYPE,
                 "elapsed_ms": int((time.time() - ts0) * 1000),
                 "trace_id": str((self.context or {}).get("trace_id") or ""),
+                "source_authority": orchestrator._service.source_authority_contract(),
             },
         }

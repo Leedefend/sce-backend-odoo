@@ -10,6 +10,16 @@ from odoo.addons.smart_construction_core.services.payment_slice_native_adapter i
 class SettlementSliceService:
     """Prepared settlement slice service backed by cost/payment facts."""
 
+    SOURCE_KIND = "settlement_slice_business_fact_projection"
+    SOURCE_AUTHORITIES = (
+        "project.project",
+        "project.cost.ledger",
+        "payment.request",
+        "payment.ledger",
+        "construction.contract",
+        "odoo.orm",
+        "odoo.read_group",
+    )
     RUNTIME_BLOCK_MAP = {
         "settlement_summary": "block.settlement.slice_summary",
         "summary": "block.settlement.slice_summary",
@@ -170,8 +180,17 @@ class SettlementSliceService:
             "today": str(fields.Date.today()),
         }
 
-    @staticmethod
-    def error_block(block_key, code):
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "runtime_carrier": "scene_entry_and_block_contract",
+        }
+
+    @classmethod
+    def error_block(cls, block_key, code):
         return {
             "block_key": block_key,
             "block_type": "unknown",
@@ -180,4 +199,5 @@ class SettlementSliceService:
             "visibility": {"allowed": True, "reason_code": "OK", "reason": ""},
             "data": {},
             "error": {"code": code, "message": code},
+            "source_authority": cls.source_authority_contract(),
         }

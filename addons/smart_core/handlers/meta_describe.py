@@ -9,12 +9,18 @@ def _json(o): return json.dumps(o, ensure_ascii=False, default=str, separators=(
 class MetaDescribeHandler(BaseIntentHandler):
     INTENT_TYPE = "meta.describe_model"
     DESCRIPTION = "加载模型字段定义（可展开 selection/关系/约束），支持 ETag/304"
+    SOURCE_KIND = "odoo_fields_get_projection"
+    SOURCE_AUTHORITIES = ("ir.model.fields", "odoo.orm")
 
     def run(self, **_kwargs):
         p = self.params or {}
         model = p.get("model")
         if not model:
-            return {"ok": False, "error": {"code":400, "message":"缺少 model 参数"}}
+            return {
+                "ok": False,
+                "error": {"code":400, "message":"缺少 model 参数"},
+                "meta": self._source_meta(),
+            }
 
         # 上下文：lang/tz/company 可选
         ctx = (self.env.context or {}).copy()
@@ -56,7 +62,16 @@ class MetaDescribeHandler(BaseIntentHandler):
         etag = hashlib.sha1(etag_src.encode("utf-8")).hexdigest()
 
         if if_none_match and if_none_match == etag:
-            return {"ok": True, "data": None, "meta": {"intent":"meta.describe_model","etag":etag,"elapsed_ms":int((time.time()-t0)*1000)}, "code":304}
+            meta = {"intent":"meta.describe_model","etag":etag,"elapsed_ms":int((time.time()-t0)*1000)}
+            meta.update(self._source_meta())
+            return {"ok": True, "data": None, "meta": meta, "code":304}
 
         meta = {"intent":"meta.describe_model","etag":etag,"elapsed_ms":int((time.time()-t0)*1000)}
+        meta.update(self._source_meta())
         return {"ok": True, "data": data, "meta": meta}
+
+    def _source_meta(self):
+        return {
+            "source_kind": self.SOURCE_KIND,
+            "source_authorities": list(self.SOURCE_AUTHORITIES),
+        }

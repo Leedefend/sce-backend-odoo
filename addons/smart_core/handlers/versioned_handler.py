@@ -3,6 +3,8 @@
 
 class _BaseVersionedHandler:
     VERSION = None
+    SOURCE_KIND = "test_versioned_handler_projection"
+    SOURCE_AUTHORITIES = ("request.path_params",)
 
     def __init__(self, context, request=None):
         self.context = context
@@ -17,7 +19,10 @@ class _BaseVersionedHandler:
                 "version": self.VERSION,
                 "model": model_name,
             },
-            "meta": {},
+            "meta": {
+                "source_kind": self.SOURCE_KIND,
+                "source_authorities": list(self.SOURCE_AUTHORITIES),
+            },
         }
 
 

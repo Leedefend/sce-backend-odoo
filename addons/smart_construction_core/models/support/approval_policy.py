@@ -8,6 +8,7 @@ class ScApprovalPolicy(models.Model):
     _description = "业务审批规则"
     _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "sequence, id"
+    _runtime_authority = "base_tier_validation"
 
     BUSINESS_MODEL_SELECTION = [
         ("project.project", "项目立项"),
@@ -209,6 +210,10 @@ class ScApprovalPolicy(models.Model):
             "sc.treasury.reconciliation",
             "sc.settlement.adjustment",
         }
+
+    def runtime_authority(self):
+        """审批运行时以 base_tier_validation 为准，本模型只做业务配置入口和同步器。"""
+        return self._runtime_authority
 
     def _tier_server_actions(self):
         self.ensure_one()

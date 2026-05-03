@@ -7,6 +7,8 @@ class BaseProjectBlockBuilder:
     block_type = ""
     title = ""
     required_groups = ()
+    SOURCE_KIND = "business_fact_dashboard_block"
+    SOURCE_AUTHORITIES = ("odoo.orm", "odoo.read_group", "project.project", "business_projection_models")
 
     def __init__(self, env):
         self.env = env
@@ -89,11 +91,20 @@ class BaseProjectBlockBuilder:
                 }
         return {"allowed": True, "reason_code": "OK", "reason": ""}
 
+    def _source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "block_key": str(self.block_key or ""),
+            "projection_only": True,
+        }
+
     def _envelope(self, *, state, visibility, data, error_code="", error_message=""):
         return {
             "block_key": self.block_key,
             "block_type": self.block_type,
             "title": self.title,
+            "source_authority": self._source_authority_contract(),
             "state": state,
             "visibility": visibility,
             "data": data if isinstance(data, dict) else {},

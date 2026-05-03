@@ -50,11 +50,31 @@ class LoadContractHandler(BaseIntentHandler):
     INTENT_TYPE  = "load_contract"
     DESCRIPTION  = "拉取聚合契约（view/model/permission/action），用于前端自动页"
     REQUIRED_GROUPS = []  # 登录用户可用
+    SOURCE_KIND = "odoo_native_contract_projection"
+    SOURCE_AUTHORITIES = (
+        "ir.ui.view",
+        "ir.actions.act_window",
+        "ir.ui.menu",
+        "ir.model.fields",
+        "ir.model.access",
+        "ir.rule",
+    )
 
     # 旧别名
     @classmethod
     def aliases(cls):
         return ["load_view"]
+
+    def _source_authority_contract(self, model_name: str, view_type):
+        view_types = view_type if isinstance(view_type, list) else [view_type]
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "model": str(model_name or ""),
+            "view_types": [str(item or "").strip() for item in view_types if str(item or "").strip()],
+            "projection_only": True,
+            "rebuildable": True,
+        }
 
     # ✅ 与框架对齐：覆写 handle，而不是 run
     def handle(self, payload=None, ctx=None):
@@ -200,10 +220,13 @@ class LoadContractHandler(BaseIntentHandler):
         etag = hashlib.sha1(etag_source.encode("utf-8")).hexdigest()
 
         # ---------- 8) If-None-Match → 304 语义 ----------
+        source_authority = self._source_authority_contract(model_name, view_type_final)
         if if_none_match and if_none_match == etag and not force_refresh:
-            return {"status": "not_modified", "code": 304, "data": None, "meta": {"etag": etag}}
+            return {"status": "not_modified", "code": 304, "data": None, "meta": {"etag": etag, "source_authority": source_authority}}
 
-        meta_out = dict(meta); meta_out["etag"] = etag
+        meta_out = dict(meta)
+        meta_out["etag"] = etag
+        meta_out["source_authority"] = source_authority
         response = {"status": status, "code": 200, "data": data, "meta": meta_out}
         return with_lite_preview_if_requested(response, p, "load_contract", payload_type="lite_contract")
 

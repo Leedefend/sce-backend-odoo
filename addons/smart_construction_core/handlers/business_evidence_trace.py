@@ -13,6 +13,17 @@ class BusinessEvidenceTraceHandler(BaseIntentHandler):
     VERSION = "1.0.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["base.group_user"]
+    SOURCE_AUTHORITY = {
+        "kind": "business_evidence_trace_projection",
+        "authorities": [
+            "sc.evidence",
+            "sc.evidence.link",
+            "sc.evidence.timeline.service",
+            "odoo.orm",
+        ],
+        "projection_only": True,
+        "runtime_carrier": "evidence_trace_contract",
+    }
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
@@ -36,6 +47,7 @@ class BusinessEvidenceTraceHandler(BaseIntentHandler):
                     "intent": self.INTENT_TYPE,
                     "elapsed_ms": int((time.time() - ts0) * 1000),
                     "trace_id": str((self.context or {}).get("trace_id") or ""),
+                    "source_authority": self.SOURCE_AUTHORITY,
                 },
             }
 
@@ -65,5 +77,6 @@ class BusinessEvidenceTraceHandler(BaseIntentHandler):
                 "intent": self.INTENT_TYPE,
                 "elapsed_ms": int((time.time() - ts0) * 1000),
                 "trace_id": str((self.context or {}).get("trace_id") or ""),
+                "source_authority": self.SOURCE_AUTHORITY,
             },
         }

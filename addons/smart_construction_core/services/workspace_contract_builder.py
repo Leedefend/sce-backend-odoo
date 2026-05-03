@@ -5,8 +5,29 @@ from .scene_block_schema import action_target, build_contract, metric_card, nati
 
 
 class WorkspaceContractBuilder:
+    SOURCE_KIND = "workspace_home_odoo_native_capability_projection"
+    SOURCE_AUTHORITIES = (
+        "project.project",
+        "payment.request",
+        "sc.project.risk",
+        "ir.actions",
+        "ir.ui.menu",
+        "res.groups",
+        "odoo.orm",
+    )
+
     def __init__(self, env):
         self.env = env
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "no_business_fact_authority": True,
+            "runtime_carrier": "workspace_scene_contract",
+        }
 
     def _count(self, model_name, domain):
         if model_name not in self.env:
@@ -92,4 +113,6 @@ class WorkspaceContractBuilder:
                 summary="嵌入原生项目列表摘要，可继续打开完整列表/看板。",
             ),
         ]
-        return build_contract(scene_key="workspace.home", title="角色首页", subtitle="今日任务、快捷入口与业务摘要", blocks=blocks)
+        contract = build_contract(scene_key="workspace.home", title="角色首页", subtitle="今日任务、快捷入口与业务摘要", blocks=blocks)
+        contract["source_authority"] = self.source_authority_contract()
+        return contract

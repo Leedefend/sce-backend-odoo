@@ -5,6 +5,7 @@ from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.exceptions import AccessError
 
 from .usage_report import build_usage_report_data
+from .usage_report import UsageReportHandler
 
 
 class UsageExportCsvHandler(BaseIntentHandler):
@@ -33,7 +34,7 @@ class UsageExportCsvHandler(BaseIntentHandler):
         return {
             "ok": True,
             "data": {"filename": filename, "content": csv_text},
-            "meta": {"intent": self.INTENT_TYPE},
+            "meta": {"intent": self.INTENT_TYPE, "source_authority": UsageReportHandler.SOURCE_AUTHORITY},
         }
 
     def _assert_access(self):

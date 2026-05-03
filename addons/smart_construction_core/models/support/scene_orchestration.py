@@ -30,6 +30,8 @@ class ScCapability(models.Model):
     _name = "sc.capability"
     _description = "SC Capability Catalog"
     _order = "sequence, id"
+    SOURCE_KIND = "scene_delivery_capability_catalog"
+    SOURCE_AUTHORITIES = ("ir.ui.menu", "ir.actions", "res.groups", "smart_core.intent")
 
     active = fields.Boolean(default=True)
     sequence = fields.Integer(default=10)
@@ -57,6 +59,15 @@ class ScCapability(models.Model):
     _sql_constraints = [
         ("sc_capability_key_uniq", "unique(key)", "Capability key must be unique."),
     ]
+
+    @api.model
+    def source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "delivery_only": True,
+            "no_business_fact_authority": True,
+        }
 
     def _user_allowed(self, user):
         self.ensure_one()
@@ -283,6 +294,7 @@ class ScCapability(models.Model):
             "capability_state_reason": capability_state_reason,
             "reason_code": access.get("reason_code"),
             "reason": access.get("reason"),
+            "source_authority": self.source_authority_contract(),
         }
 
     @api.model
@@ -423,6 +435,8 @@ class ScScene(models.Model):
     _name = "sc.scene"
     _description = "SC Scene"
     _order = "sequence, id"
+    SOURCE_KIND = "scene_delivery_orchestration"
+    SOURCE_AUTHORITIES = ("sc.capability", "ir.ui.menu", "ir.actions", "res.groups")
 
     active = fields.Boolean(default=True)
     sequence = fields.Integer(default=10)
@@ -447,6 +461,15 @@ class ScScene(models.Model):
     _sql_constraints = [
         ("sc_scene_code_uniq", "unique(code)", "Scene code must be unique."),
     ]
+
+    @api.model
+    def source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "delivery_only": True,
+            "no_business_fact_authority": True,
+        }
 
     def _user_allowed(self, user):
         if not self.target_group_ids:
@@ -473,6 +496,7 @@ class ScScene(models.Model):
             "is_test": bool(self.is_test),
             "version": self.version,
             "tiles": tiles,
+            "source_authority": self.source_authority_contract(),
         }
 
     def _build_version_payload(self, user=None):
@@ -491,6 +515,7 @@ class ScScene(models.Model):
             "is_test": bool(self.is_test),
             "version": self.version,
             "tiles": tiles,
+            "source_authority": self.source_authority_contract(),
         }
 
     def _filter_payload_tiles(self, payload_tiles, user):

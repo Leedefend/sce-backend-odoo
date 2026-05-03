@@ -20,6 +20,8 @@ class AppModelConfig(models.Model):
     _description = 'Application Model Configuration'
     _rec_name = 'name'
     _order = 'model'
+    SOURCE_KIND = "odoo_model_fields_projection"
+    SOURCE_AUTHORITIES = ("ir.model", "ir.model.fields", "odoo.orm")
 
     # 基础
     name = fields.Char('Name', required=True)
@@ -37,6 +39,16 @@ class AppModelConfig(models.Model):
     _sql_constraints = [
         ('uniq_model', 'unique(model)', '每个模型仅允许一条模型配置（model 唯一）。'),
     ]
+
+    @api.model
+    def _source_contract(self, model_name):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "model": str(model_name or ""),
+            "projection_only": True,
+            "rebuildable": True,
+        }
 
     @api.model
     def _stable_hash(self, payload):
@@ -83,6 +95,7 @@ class AppModelConfig(models.Model):
             'name': f'{model_name} fields',
             'model': model_name,
             'fields_def': payload,
+            'meta_info': {'source': self._source_contract(model_name)},
             'config_hash': new_hash,
             'last_generated': fields.Datetime.now(),
         }

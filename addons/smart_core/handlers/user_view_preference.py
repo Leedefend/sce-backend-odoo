@@ -6,6 +6,8 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
     INTENT_TYPE = "user.view.preference.get"
     DESCRIPTION = "读取当前用户视图偏好"
     VERSION = "1.0.0"
+    SOURCE_KIND = "ui_only_user_preference"
+    SOURCE_AUTHORITIES = ("sc.user.view.preference", "res.users", "ir.actions.actions")
 
     def _params(self, payload):
         if isinstance(payload, dict) and isinstance(payload.get("params"), dict):
@@ -13,7 +15,20 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
         return payload or {}
 
     def _scope_key(self, params):
-        preference_key = str(params.get("preference_key") or "list_columns").strip() or "list_columns"
+        Preference = self.env["sc.user.view.preference"]
+        preference_key = Preference.normalize_preference_key(params.get("preference_key"))
+        view_type = str(params.get("view_type") or "list").strip() or "list"
+        action_id = self._positive_int(params.get("action_id"))
+        model_name = str(params.get("model") or params.get("model_name") or "").strip()
+        return Preference.build_scope_key(
+            preference_key=preference_key,
+            view_type=view_type,
+            action_id=action_id,
+            model_name=model_name,
+        )
+
+    def _legacy_scope_key(self, params):
+        preference_key = self.env["sc.user.view.preference"].normalize_preference_key(params.get("preference_key"))
         view_type = str(params.get("view_type") or "list").strip() or "list"
         action_id = self._positive_int(params.get("action_id"))
         model_name = str(params.get("model") or params.get("model_name") or "").strip()
@@ -27,13 +42,25 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
             result = 0
         return result if result > 0 else 0
 
+    def _source_meta(self):
+        return {
+            "source_kind": self.SOURCE_KIND,
+            "source_authorities": list(self.SOURCE_AUTHORITIES),
+        }
+
     def handle(self, payload=None, ctx=None):
         params = self._params(payload or self.payload)
         scope_key = self._scope_key(params)
+        legacy_scope_key = self._legacy_scope_key(params)
         record = self.env["sc.user.view.preference"].sudo().search([
             ("user_id", "=", self.env.uid),
             ("scope_key", "=", scope_key),
         ], limit=1)
+        if not record and legacy_scope_key != scope_key:
+            record = self.env["sc.user.view.preference"].sudo().search([
+                ("user_id", "=", self.env.uid),
+                ("scope_key", "=", legacy_scope_key),
+            ], limit=1)
         value = record.value_json if record else {}
         return {
             "ok": True,
@@ -41,7 +68,7 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
                 "scope_key": scope_key,
                 "preference": value if isinstance(value, dict) else {},
             },
-            "meta": {"intent": self.INTENT_TYPE, "version": self.VERSION},
+            "meta": {"intent": self.INTENT_TYPE, "version": self.VERSION, **self._source_meta()},
         }
 
 
@@ -54,7 +81,7 @@ class UserViewPreferenceSetHandler(UserViewPreferenceGetHandler):
     def handle(self, payload=None, ctx=None):
         params = self._params(payload or self.payload)
         scope_key = self._scope_key(params)
-        preference_key = str(params.get("preference_key") or "list_columns").strip() or "list_columns"
+        preference_key = self.env["sc.user.view.preference"].normalize_preference_key(params.get("preference_key"))
         view_type = str(params.get("view_type") or "list").strip() or "list"
         action_id = self._positive_int(params.get("action_id"))
         model_name = str(params.get("model") or params.get("model_name") or "").strip()
@@ -86,5 +113,5 @@ class UserViewPreferenceSetHandler(UserViewPreferenceGetHandler):
                 "scope_key": scope_key,
                 "preference": record.value_json if isinstance(record.value_json, dict) else {},
             },
-            "meta": {"intent": self.INTENT_TYPE, "version": self.VERSION},
+            "meta": {"intent": self.INTENT_TYPE, "version": self.VERSION, **self._source_meta()},
         }

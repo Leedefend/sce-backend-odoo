@@ -13,6 +13,8 @@ class MetaIntentCatalogHandler(BaseIntentHandler):
     VERSION = "1.0.0"
     ETAG_ENABLED = True
     REQUIRED_GROUPS = []
+    SOURCE_KIND = "intent_delivery_catalog_projection"
+    SOURCE_AUTHORITIES = ("handler_registry", "ir.model.access", "res.groups")
 
     def handle(self, payload=None, ctx=None):
         builder = IntentSurfaceBuilder()
@@ -24,4 +26,6 @@ class MetaIntentCatalogHandler(BaseIntentHandler):
             "intent_catalog": intent_catalog,
         }, {
             "schema_version": "1.0.0",
+            "source_kind": self.SOURCE_KIND,
+            "source_authorities": list(self.SOURCE_AUTHORITIES),
         }

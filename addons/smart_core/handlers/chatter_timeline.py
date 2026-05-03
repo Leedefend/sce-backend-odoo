@@ -15,6 +15,8 @@ from ..core.project_context import (
 class ChatterTimelineHandler(BaseIntentHandler):
     INTENT_TYPE = "chatter.timeline"
     DESCRIPTION = "Unified collaboration timeline for message/attachment/audit"
+    SOURCE_AUTHORITIES = ("mail.message", "ir.attachment", "mail.activity")
+    AUXILIARY_AUTHORITIES = ("sc.audit.log",)
 
     def handle(self, payload=None, ctx=None):
         params = self.params if isinstance(self.params, dict) else {}
@@ -61,7 +63,12 @@ class ChatterTimelineHandler(BaseIntentHandler):
                 "audit": len(audit_items),
                 "total": len(items),
             },
-        }, {}
+            "source_authorities": list(self.SOURCE_AUTHORITIES),
+            "auxiliary_authorities": list(self.AUXILIARY_AUTHORITIES) if include_audit else [],
+        }, {
+            "source_authorities": list(self.SOURCE_AUTHORITIES),
+            "auxiliary_authorities": list(self.AUXILIARY_AUTHORITIES) if include_audit else [],
+        }
 
     def _load_messages(self, model: str, res_id: int, limit: int) -> List[Dict[str, Any]]:
         Message = self.env["mail.message"]

@@ -11,6 +11,15 @@ from odoo.addons.smart_construction_core.services.payment_slice_native_adapter i
 class PaymentSliceService:
     """Prepared payment slice service backed by payment.request facts."""
 
+    SOURCE_KIND = "payment_slice_business_fact_projection"
+    SOURCE_AUTHORITIES = (
+        "project.project",
+        "payment.request",
+        "payment.ledger",
+        "construction.contract",
+        "odoo.orm",
+        "odoo.read_group",
+    )
     RUNTIME_BLOCK_MAP = {
         "payment_entry": "block.payment.slice_entry_form",
         "payment_list": "block.payment.slice_list",
@@ -154,8 +163,34 @@ class PaymentSliceService:
     def create_payment_entry(self, project=None, values=None, context=None):
         return self._entry_service.create(project=project, values=values, context=context)
 
-    @staticmethod
-    def error_block(block_key, code):
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "runtime_carrier": "scene_entry_and_block_contract",
+        }
+
+    @classmethod
+    def write_source_authority_contract(cls):
+        return {
+            "kind": "payment_slice_odoo_orm_write_proxy",
+            "authorities": [
+                "payment.request",
+                "project.project",
+                "res.partner",
+                "ir.model.access",
+                "ir.rule",
+                "odoo.orm",
+            ],
+            "projection_only": False,
+            "runtime_authority": "odoo.orm",
+            "write_authority": "payment.request.create",
+        }
+
+    @classmethod
+    def error_block(cls, block_key, code):
         return {
             "block_key": block_key,
             "block_type": "unknown",
@@ -164,4 +199,5 @@ class PaymentSliceService:
             "visibility": {"allowed": True, "reason_code": "OK", "reason": ""},
             "data": {},
             "error": {"code": code, "message": code},
+            "source_authority": cls.source_authority_contract(),
         }

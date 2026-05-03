@@ -12,6 +12,7 @@ class ProjectDashboardHandler(BaseIntentHandler):
     DESCRIPTION = "Project management dashboard contract"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
+    SOURCE_KIND = "project_dashboard_business_fact_projection"
 
     @staticmethod
     def _coerce_project_id(raw):
@@ -51,5 +52,6 @@ class ProjectDashboardHandler(BaseIntentHandler):
                 "intent": self.INTENT_TYPE,
                 "trace_id": trace_id,
                 "contract_version": "v1",
+                "source_authority": service.source_authority_contract(),
             },
         }

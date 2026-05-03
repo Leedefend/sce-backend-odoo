@@ -21,7 +21,6 @@ REQUIRED_HIGH_VALUE_INTENTS = [
     "capability.describe",
     "scene.health",
     "scene.packages.installed",
-    "sample.enhanced",
     "system.ping.construction",
     "meta.describe_model",
     "load_metadata",

@@ -83,6 +83,7 @@ class ProjectExecutionEnterHandler(BaseIntentHandler):
             )
         orchestrator = ProjectExecutionSceneOrchestrator(self.env)
         data = orchestrator.build_entry(project_id=project_id, context=ctx)
+        source_authority = orchestrator.source_authority_contract()
         project, _diag = orchestrator._service.resolve_project_with_diagnostics(project_id)
         data = attach_project_context_to_scene_payload(data, project)
         target = resolve_project_management_entry_target(self.env)
@@ -119,6 +120,7 @@ class ProjectExecutionEnterHandler(BaseIntentHandler):
                     "intent": self.INTENT_TYPE,
                     "elapsed_ms": int((time.time() - ts0) * 1000),
                     "trace_id": str((self.context or {}).get("trace_id") or ""),
+                    "source_authority": source_authority,
                 },
             }
 
@@ -129,5 +131,6 @@ class ProjectExecutionEnterHandler(BaseIntentHandler):
                 "intent": self.INTENT_TYPE,
                 "elapsed_ms": int((time.time() - ts0) * 1000),
                 "trace_id": str((self.context or {}).get("trace_id") or ""),
+                "source_authority": source_authority,
             },
         }

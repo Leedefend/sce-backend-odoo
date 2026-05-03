@@ -30,6 +30,7 @@ class FileDownloadHandler(BaseIntentHandler):
     ETAG_ENABLED = False
 
     ALLOWED_MODELS = {"res.partner"}
+    SOURCE_AUTHORITY = "ir.attachment"
 
     def _allowed_models(self):
         payload = call_extension_hook_first(self.env, "smart_core_file_download_allowed_models", self.env)
@@ -119,5 +120,5 @@ class FileDownloadHandler(BaseIntentHandler):
             "res_model": attachment.res_model,
             "res_id": attachment.res_id,
         }
-        meta = {"trace_id": trace_id, "source": "portal-shell"}
+        meta = {"trace_id": trace_id, "source": "portal-shell", "source_authority": self.SOURCE_AUTHORITY}
         return {"ok": True, "data": data, "meta": meta}

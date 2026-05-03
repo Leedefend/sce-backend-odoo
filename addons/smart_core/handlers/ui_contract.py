@@ -72,6 +72,15 @@ class UiContractHandler(BaseIntentHandler):
     DESCRIPTION = "统一契约读取（nav/menu/view/model/action_open），只读，支持 ETag/304"
     VERSION = "1.0.0"
     ETAG_ENABLED = True
+    SOURCE_KIND = "odoo_native_ui_contract_projection"
+    SOURCE_AUTHORITIES = (
+        "ir.ui.view",
+        "ir.actions.act_window",
+        "ir.ui.menu",
+        "ir.model.fields",
+        "ir.model.access",
+        "ir.rule",
+    )
 
     # ---------------- 参数挖掘器（兼容前端请求形状） ----------------
     @staticmethod
@@ -212,6 +221,8 @@ class UiContractHandler(BaseIntentHandler):
                     "schema_version": "1.0.0",
                     "contract_mode": contract_mode,
                     "contract_surface": contract_surface,
+                    "source_kind": self.SOURCE_KIND,
+                    "source_authorities": list(self.SOURCE_AUTHORITIES),
                 },
                 code=304,
             )
@@ -226,6 +237,8 @@ class UiContractHandler(BaseIntentHandler):
                          "schema_version": "1.0.0",
                          "contract_mode": contract_mode, "contract_surface": contract_surface})
         meta_out.setdefault("response_schema_version", "1.0.0")
+        meta_out.setdefault("source_kind", self.SOURCE_KIND)
+        meta_out.setdefault("source_authorities", list(self.SOURCE_AUTHORITIES))
         return IntentExecutionResult(ok=True, data=data or {}, meta=meta_out)
 
     def _should_block_frontend_native_op(self, *, op: str, source_mode: str, contract_surface: str) -> bool:
@@ -581,7 +594,14 @@ class UiContractHandler(BaseIntentHandler):
         return hashlib.sha1(etag_src.encode("utf-8")).hexdigest()
 
     def _err(self, code, msg):
-        return {"ok": False, "error": {"code": code, "message": msg}}
+        return {
+            "ok": False,
+            "error": {"code": code, "message": msg},
+            "meta": {
+                "source_kind": self.SOURCE_KIND,
+                "source_authorities": list(self.SOURCE_AUTHORITIES),
+            },
+        }
 
 def _safe_eval_or(val, default):
     try:

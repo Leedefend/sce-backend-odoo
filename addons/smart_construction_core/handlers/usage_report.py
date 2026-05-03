@@ -12,11 +12,18 @@ class UsageReportHandler(BaseIntentHandler):
     DESCRIPTION = "Usage analytics report for scene/capability"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
+    SOURCE_AUTHORITY = {
+        "kind": "usage_analytics_projection",
+        "authorities": ["sc.usage.counter", "sc.capability", "res.groups", "odoo.orm"],
+        "projection_only": True,
+        "observability_only": True,
+        "no_business_fact_authority": True,
+    }
 
     def handle(self, payload=None, ctx=None):
         params = payload or self.params or {}
         data = build_usage_report_data(self.env, params=params)
-        return {"ok": True, "data": data, "meta": {"intent": self.INTENT_TYPE}}
+        return {"ok": True, "data": data, "meta": {"intent": self.INTENT_TYPE, "source_authority": self.SOURCE_AUTHORITY}}
 
 def build_usage_report_data(env, params=None):
     params = params or {}

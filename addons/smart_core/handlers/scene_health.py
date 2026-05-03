@@ -12,6 +12,8 @@ class SceneHealthHandler(BaseIntentHandler):
     DESCRIPTION = "Scene health dashboard contract"
     VERSION = "1.0.0"
     REQUIRED_GROUPS = []
+    SOURCE_KIND = "scene_delivery_health_projection"
+    SOURCE_AUTHORITIES = ("system.init", "sc.scene", "sc.capability", "ui_base_contract_asset")
 
     def _safe_int(self, value, default):
         try:
@@ -116,5 +118,7 @@ class SceneHealthHandler(BaseIntentHandler):
             "meta": {
                 "intent": self.INTENT_TYPE,
                 "elapsed_ms": int((time.time() - ts0) * 1000),
+                "source_kind": self.SOURCE_KIND,
+                "source_authorities": list(self.SOURCE_AUTHORITIES),
             },
         }

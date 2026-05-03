@@ -17,6 +17,7 @@ class AppSearchConfig(models.Model):
     契约 2.0 · 搜索配置聚合
     - 来源：search 视图(<filter/…>) + ir.filters（收藏/共享）
     - 输出：标准化搜索块（前端零推理）
+    - 边界：本模型是可重建投影缓存，不是搜索事实主数据
     """
     _name = 'app.search.config'
     _description = 'Application Search Configuration'
@@ -42,6 +43,9 @@ class AppSearchConfig(models.Model):
     _sql_constraints = [
         ('uniq_model', 'unique(model)', '每个模型仅允许一条搜索配置。'),
     ]
+
+    SOURCE_KIND = "odoo_native_search_projection"
+    SOURCE_AUTHORITIES = ("ir.ui.view:search", "ir.filters", "ir.model.fields")
 
     # ======================= 生成（聚合） =======================
 
@@ -228,6 +232,7 @@ class AppSearchConfig(models.Model):
         )
 
         return {
+            "source": self._source_contract(model_name),
             "filters": filters_sorted,
             "saved_filters": saved_sorted,
             "group_by": group_sorted,
@@ -239,6 +244,14 @@ class AppSearchConfig(models.Model):
                 "favorites": {"save_enabled": False},
             },
             "defaults": defaults or {"limit": 20, "order": "id desc"}
+        }
+
+    def _source_contract(self, model_name):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "model": model_name,
+            "rebuildable": True,
         }
 
     # ======================= 视图解析 =======================

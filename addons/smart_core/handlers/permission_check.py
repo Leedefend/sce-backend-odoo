@@ -11,6 +11,15 @@ _logger = logging.getLogger(__name__)
 class PermissionCheckHandler(BaseIntentHandler):
     INTENT_TYPE = "permission.check"
     DESCRIPTION = "Check entitlement/permission for intent or capability"
+    SOURCE_KIND = "odoo_native_permission_projection"
+    SOURCE_AUTHORITIES = ("sc.entitlement", "sc.capability", "res.groups")
+
+    def _meta(self):
+        return {
+            "intent": self.INTENT_TYPE,
+            "source_kind": self.SOURCE_KIND,
+            "source_authorities": list(self.SOURCE_AUTHORITIES),
+        }
 
     def handle(self, payload, ctx):
         params = getattr(self, "params", {})
@@ -38,7 +47,7 @@ class PermissionCheckHandler(BaseIntentHandler):
                     "db": self.env.cr.dbname,
                     "model_present": model_present,
                 }
-            return {"ok": True, "data": data}
+            return {"ok": True, "data": data, "meta": self._meta()}
         ent = Entitlement.get_effective(self.env.user.company_id) if Entitlement else None
         flags = ent.effective_flags_json or {} if ent else {}
         cap = None
@@ -67,7 +76,7 @@ class PermissionCheckHandler(BaseIntentHandler):
                         "cap_found": bool(cap),
                         "db": self.env.cr.dbname,
                     }
-                return {"ok": True, "data": data}
+                return {"ok": True, "data": data, "meta": self._meta()}
         else:
             _logger.warning("[permission.check] cap_missing_or_no_flag cap=%s flags=%s", cap_key, flags)
         if debug:
@@ -82,5 +91,6 @@ class PermissionCheckHandler(BaseIntentHandler):
                         "db": self.env.cr.dbname,
                     },
                 },
+                "meta": self._meta(),
             }
-        return {"ok": True, "data": {"allow": True}}
+        return {"ok": True, "data": {"allow": True}, "meta": self._meta()}

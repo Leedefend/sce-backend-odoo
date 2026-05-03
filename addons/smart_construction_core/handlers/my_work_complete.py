@@ -39,6 +39,19 @@ class MyWorkCompleteHandler(BaseIntentHandler):
     REQUIRED_GROUPS = ["smart_core.group_smart_core_data_operator"]
     ACL_MODE = "explicit_check"
     NON_IDEMPOTENT_ALLOWED = "single complete keeps lightweight behavior while batch intent owns replay contract"
+    SOURCE_AUTHORITY = {
+        "kind": "my_work_mail_activity_completion_proxy",
+        "authorities": [
+            "mail.activity",
+            "mail.message",
+            "ir.model.access",
+            "ir.rule",
+            "odoo.orm",
+        ],
+        "projection_only": False,
+        "runtime_authority": "mail.activity.action_feedback",
+        "write_authority": "mail.activity",
+    }
 
     def handle(self, payload=None, ctx=None):
         params = payload or self.params or {}
@@ -82,7 +95,7 @@ class MyWorkCompleteHandler(BaseIntentHandler):
         return {
             "ok": True,
             "data": data,
-            "meta": {"intent": self.INTENT_TYPE},
+            "meta": {"intent": self.INTENT_TYPE, "source_authority": self.SOURCE_AUTHORITY},
         }
 
 
@@ -96,6 +109,21 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
     IDEMPOTENCY_WINDOW_SECONDS = 120
     AUDIT_MAX_PAYLOAD_BYTES = 16 * 1024
     AUDIT_IDS_SAMPLE_LIMIT = 20
+    SOURCE_AUTHORITY = {
+        "kind": "my_work_mail_activity_batch_completion_proxy",
+        "authorities": [
+            "mail.activity",
+            "mail.message",
+            "sc.audit.log",
+            "ir.model.access",
+            "ir.rule",
+            "odoo.orm",
+        ],
+        "projection_only": False,
+        "runtime_authority": "mail.activity.action_feedback",
+        "idempotency_authority": "sc.audit.log",
+        "write_authority": "mail.activity",
+    }
 
     def _idempotency_fingerprint(self, *, source, ids, note, idem_key):
         payload = {
@@ -117,13 +145,15 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
         )
 
     def _idempotency_conflict_response(self, *, request_id, idempotency_key, trace_id):
-        return build_idempotency_conflict_response(
+        payload = build_idempotency_conflict_response(
             intent_type=self.INTENT_TYPE,
             request_id=request_id,
             idempotency_key=idempotency_key,
             trace_id=trace_id,
             include_replay_evidence=True,
         )
+        payload.setdefault("meta", {})["source_authority"] = self.SOURCE_AUTHORITY
+        return payload
 
     def _ids_summary(self, rows):
         return ids_summary(rows, sample_limit=self.AUDIT_IDS_SAMPLE_LIMIT)
@@ -241,7 +271,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
                 replay_entry=replay_entry,
                 include_replay_evidence=True,
             )
-            return {"ok": True, "data": replay_data, "meta": {"intent": self.INTENT_TYPE}}
+            return {"ok": True, "data": replay_data, "meta": {"intent": self.INTENT_TYPE, "source_authority": self.SOURCE_AUTHORITY}}
 
         replay_window_expired = bool(decision.get("replay_window_expired"))
         completed = []
@@ -328,7 +358,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
             result=data,
             duration_ms=duration_ms,
         )
-        return {"ok": True, "data": data, "meta": {"intent": self.INTENT_TYPE}}
+        return {"ok": True, "data": data, "meta": {"intent": self.INTENT_TYPE, "source_authority": self.SOURCE_AUTHORITY}}
 
 
 def _coerce_activity_id(item_id):

@@ -16,6 +16,8 @@ class SessionBootstrapHandler(BaseIntentHandler):
     INTENT_TYPE = "session.bootstrap"
     DESCRIPTION = "Bootstrap a session token for tests (dev/test only)."
     REQUIRED_GROUPS = []
+    SOURCE_KIND = "dev_test_auth_bootstrap_proxy"
+    SOURCE_AUTHORITIES = ("res.users", "SC_BOOTSTRAP_SECRET")
 
     def handle(self, payload=None, ctx=None):
         env_flag = (os.getenv("ENV") or "").lower()
@@ -58,6 +60,10 @@ class SessionBootstrapHandler(BaseIntentHandler):
                 "token": token,
                 "token_type": "Bearer",
                 "user": {"id": user.id, "login": user.login, "name": user.name},
+            },
+            "meta": {
+                "source_kind": self.SOURCE_KIND,
+                "source_authorities": list(self.SOURCE_AUTHORITIES),
             },
         }
 

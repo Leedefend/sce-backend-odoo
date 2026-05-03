@@ -12,6 +12,16 @@ from odoo.addons.smart_construction_core.services.cost_tracking_native_adapter i
 class CostTrackingService:
     """Prepared cost tracking service backed by account.move facts."""
 
+    SOURCE_KIND = "cost_tracking_business_fact_projection"
+    SOURCE_AUTHORITIES = (
+        "project.project",
+        "project.cost.ledger",
+        "project.budget",
+        "account.move",
+        "construction.contract",
+        "odoo.orm",
+        "odoo.read_group",
+    )
     RUNTIME_BLOCK_MAP = {
         "cost_entry": "block.cost.tracking_entry_form",
         "cost_list": "block.cost.tracking_list",
@@ -197,8 +207,37 @@ class CostTrackingService:
     def create_cost_entry(self, project=None, values=None, context=None):
         return self._entry_service.create(project=project, values=values, context=context)
 
-    @staticmethod
-    def error_block(block_key, code):
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "runtime_carrier": "scene_entry_and_block_contract",
+        }
+
+    @classmethod
+    def write_source_authority_contract(cls):
+        return {
+            "kind": "cost_tracking_odoo_orm_write_proxy",
+            "authorities": [
+                "account.move",
+                "account.move.line",
+                "account.journal",
+                "account.account",
+                "project.project",
+                "project.cost.code",
+                "ir.model.access",
+                "ir.rule",
+                "odoo.orm",
+            ],
+            "projection_only": False,
+            "runtime_authority": "odoo.orm",
+            "write_authority": "account.move.create",
+        }
+
+    @classmethod
+    def error_block(cls, block_key, code):
         return {
             "block_key": block_key,
             "block_type": "unknown",
@@ -207,4 +246,5 @@ class CostTrackingService:
             "visibility": {"allowed": True, "reason_code": "OK", "reason": ""},
             "data": {},
             "error": {"code": code, "message": code},
+            "source_authority": cls.source_authority_contract(),
         }

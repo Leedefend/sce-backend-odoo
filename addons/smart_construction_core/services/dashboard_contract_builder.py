@@ -5,8 +5,25 @@ from .scene_block_schema import action_target, build_contract, metric_card, nati
 
 
 class DashboardContractBuilder:
+    SOURCE_KIND = "company_dashboard_business_fact_projection"
+    SOURCE_AUTHORITIES = (
+        "project.project",
+        "payment.request",
+        "project.budget",
+        "project.cost.ledger",
+        "odoo.orm",
+    )
+
     def __init__(self, env):
         self.env = env
+
+    def source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "no_frontend_synthetic_metrics": True,
+        }
 
     def _count(self, model_name, domain):
         if model_name not in self.env:
@@ -85,4 +102,6 @@ class DashboardContractBuilder:
                 summary="可打开原生项目看板作为明细承载，当前页面本身由场景契约渲染。",
             ),
         ]
-        return build_contract(scene_key="dashboard.company", title="公司驾驶舱", subtitle="公司级经营、资金与成本摘要", blocks=blocks)
+        contract = build_contract(scene_key="dashboard.company", title="公司驾驶舱", subtitle="公司级经营、资金与成本摘要", blocks=blocks)
+        contract["source_authority"] = self.source_authority_contract()
+        return contract

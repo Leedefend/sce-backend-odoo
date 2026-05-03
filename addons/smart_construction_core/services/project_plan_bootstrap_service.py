@@ -9,6 +9,15 @@ from odoo.addons.smart_construction_core.services.project_plan_bootstrap_builder
 
 class ProjectPlanBootstrapService:
     """Provide business-truth-backed plan data for orchestration carriers."""
+    SOURCE_KIND = "project_plan_bootstrap_business_fact_projection"
+    SOURCE_AUTHORITIES = (
+        "project.project",
+        "project.task",
+        "project.milestone",
+        "mail.activity",
+        "odoo.orm",
+        "odoo.read_group",
+    )
     ENTRY_BLOCKS = (
         ("plan_summary_detail", "计划摘要", "deferred"),
         ("plan_tasks", "计划任务", "deferred"),
@@ -222,8 +231,17 @@ class ProjectPlanBootstrapService:
             "today": str(fields.Date.today()),
         }
 
-    @staticmethod
-    def error_block(block_key, code):
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "runtime_carrier": "scene_entry_and_block_contract",
+        }
+
+    @classmethod
+    def error_block(cls, block_key, code):
         return {
             "block_key": block_key,
             "block_type": "unknown",
@@ -232,4 +250,5 @@ class ProjectPlanBootstrapService:
             "visibility": {"allowed": True, "reason_code": "OK", "reason": ""},
             "data": {},
             "error": {"code": code, "message": code},
+            "source_authority": cls.source_authority_contract(),
         }

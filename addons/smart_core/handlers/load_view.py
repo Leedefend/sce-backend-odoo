@@ -9,6 +9,8 @@ from .load_contract import LoadContractHandler
 class LoadModelViewHandler(BaseIntentHandler):
     INTENT_TYPE = "load_view"
     DESCRIPTION = "兼容入口：统一代理到 load_contract"
+    SOURCE_KIND = "load_contract_legacy_proxy"
+    SOURCE_AUTHORITY = "load_contract"
 
     def run(self, **_kwargs):
         params = dict(self.params or {})
@@ -54,6 +56,11 @@ class LoadModelViewHandler(BaseIntentHandler):
                 "meta": {
                     "intent": self.INTENT_TYPE,
                     "legacy_proxy": "load_contract",
+                    "source_authority": {
+                        "kind": self.SOURCE_KIND,
+                        "authority": self.SOURCE_AUTHORITY,
+                        "proxy_only": True,
+                    },
                 },
             }
 
