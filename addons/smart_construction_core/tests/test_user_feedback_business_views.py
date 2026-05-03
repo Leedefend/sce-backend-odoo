@@ -37,6 +37,71 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertEqual(inbound.line_ids.amount, 30)
         self.assertEqual(inbound.amount_total, 30)
 
+    def test_material_inbound_system_defaults_do_not_block_draft_creation(self):
+        inbound = self.env["sc.material.inbound"].create(
+            {
+                "line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "note": "system-default-smoke",
+                        },
+                    )
+                ],
+            }
+        )
+
+        self.assertTrue(inbound.project_id)
+        self.assertTrue(inbound.warehouse_id)
+        self.assertTrue(inbound.dest_location_id)
+        self.assertTrue(inbound.sc_has_system_default)
+        self.assertIn("project_id", inbound.sc_system_default_fields)
+        self.assertTrue(inbound.line_ids.product_id)
+        self.assertEqual(inbound.line_ids.qty, 1)
+        self.assertTrue(inbound.line_ids.sc_has_system_default)
+        self.assertIn("product_id", inbound.line_ids.sc_system_default_fields)
+
+    def test_material_required_child_defaults_are_strategy_based(self):
+        rfq = self.env["sc.material.rfq"].create(
+            {
+                "line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "note": "rfq-default-smoke",
+                        },
+                    )
+                ],
+            }
+        )
+        settlement = self.env["sc.material.settlement"].create(
+            {
+                "line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "note": "settlement-default-smoke",
+                        },
+                    )
+                ],
+            }
+        )
+
+        self.assertTrue(rfq.sc_has_system_default)
+        self.assertTrue(rfq.line_ids.supplier_id)
+        self.assertTrue(rfq.line_ids.product_id)
+        self.assertEqual(rfq.line_ids.qty, 1)
+        self.assertEqual(rfq.line_ids.unit_price, 0)
+        self.assertTrue(rfq.line_ids.sc_has_system_default)
+        self.assertTrue(settlement.project_id)
+        self.assertTrue(settlement.supplier_id)
+        self.assertTrue(settlement.line_ids.product_id)
+        self.assertEqual(settlement.line_ids.qty, 1)
+        self.assertEqual(settlement.line_ids.unit_price, 0)
+
     def test_supplier_business_fields_are_available(self):
         supplier = self.env["res.partner"].create(
             {

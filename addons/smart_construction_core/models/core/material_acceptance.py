@@ -3,10 +3,111 @@ from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
 
+class ScMaterialSystemDefaultMixin(models.AbstractModel):
+    _name = "sc.material.system.default.mixin"
+    _inherit = "sc.system.default.mixin"
+    _description = "物资模型系统默认兜底"
+
+    @api.model
+    def _sc_default_project_id(self):
+        project = self.env["project.project"].search([("name", "=", "系统默认项目（待完善）")], limit=1)
+        if not project:
+            project = self.env["project.project"].sudo().create(
+                {
+                    "name": "系统默认项目（待完善）",
+                    "company_id": self.env.company.id,
+                }
+            )
+        return project.id
+
+    @api.model
+    def _sc_default_supplier_id(self):
+        partner = self.env["res.partner"].search([("name", "=", "系统默认供应商（待完善）")], limit=1)
+        if not partner:
+            partner = self.env["res.partner"].sudo().create(
+                {
+                    "name": "系统默认供应商（待完善）",
+                    "supplier_rank": 1,
+                }
+            )
+        return partner.id
+
+    @api.model
+    def _sc_default_product_id(self):
+        product = self.env["product.product"].search([("default_code", "=", "SC-SYSTEM-DEFAULT-MATERIAL")], limit=1)
+        if not product:
+            product = self.env["product.product"].sudo().create(
+                {
+                    "name": "系统默认材料（待完善）",
+                    "default_code": "SC-SYSTEM-DEFAULT-MATERIAL",
+                    "type": "product",
+                }
+            )
+        return product.id
+
+    @api.model
+    def _sc_default_warehouse_id(self):
+        warehouse = self.env["stock.warehouse"].search(
+            [("company_id", "in", [self.env.company.id, False])],
+            limit=1,
+        )
+        if not warehouse:
+            warehouse = self.env["stock.warehouse"].sudo().create(
+                {
+                    "name": "系统默认仓库（待完善）",
+                    "code": "SDF",
+                    "company_id": self.env.company.id,
+                }
+            )
+        return warehouse.id
+
+    @api.model
+    def _sc_default_location_id(self, warehouse_id=False):
+        warehouse = self.env["stock.warehouse"].browse(warehouse_id or self._sc_default_warehouse_id())
+        return warehouse.lot_stock_id.id if warehouse and warehouse.lot_stock_id else False
+
+    @api.model
+    def _sc_apply_system_defaults(self, vals, default_getters):
+        defaulted_fields = []
+        for field_name, getter_name in default_getters.items():
+            if vals.get(field_name):
+                continue
+            value = getattr(self, getter_name)()
+            if value is not False and value is not None:
+                vals[field_name] = value
+                defaulted_fields.append(field_name)
+        self._sc_mark_system_defaults(vals, defaulted_fields)
+
+    @api.model
+    def _sc_apply_line_defaults(self, vals, *, require_supplier=False, require_unit_price=False):
+        defaulted_fields = []
+        if require_supplier and not vals.get("supplier_id"):
+            vals["supplier_id"] = self._sc_default_supplier_id()
+            defaulted_fields.append("supplier_id")
+        if not vals.get("product_id"):
+            vals["product_id"] = self._sc_default_product_id()
+            defaulted_fields.append("product_id")
+        if not vals.get("qty"):
+            vals["qty"] = 1.0
+            defaulted_fields.append("qty")
+        if require_unit_price and vals.get("unit_price") is None:
+            vals["unit_price"] = 0.0
+            defaulted_fields.append("unit_price")
+        product = self.env["product.product"].browse(vals.get("product_id"))
+        if product:
+            if not vals.get("product_uom_id"):
+                vals["product_uom_id"] = product.uom_id.id
+                defaulted_fields.append("product_uom_id")
+            if not vals.get("material_spec"):
+                vals["material_spec"] = product.default_code or product.display_name
+                defaulted_fields.append("material_spec")
+        self._sc_mark_system_defaults(vals, defaulted_fields)
+
+
 class ScMaterialPurchaseRequest(models.Model):
     _name = "sc.material.purchase.request"
     _description = "材料采购申请"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "sc.material.system.default.mixin"]
     _order = "request_date desc, id desc"
 
     name = fields.Char(string="申请单号", required=True, default="新建", tracking=True)
@@ -52,6 +153,7 @@ class ScMaterialPurchaseRequest(models.Model):
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            self._sc_apply_system_defaults(vals, {"project_id": "_sc_default_project_id"})
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.material.purchase.request") or _("材料采购申请")
         return super().create(vals_list)
@@ -82,6 +184,7 @@ class ScMaterialPurchaseRequest(models.Model):
 class ScMaterialPurchaseRequestLine(models.Model):
     _name = "sc.material.purchase.request.line"
     _description = "材料采购申请明细"
+    _inherit = "sc.material.system.default.mixin"
     _order = "request_id, sequence, id"
 
     request_id = fields.Many2one("sc.material.purchase.request", string="采购申请", required=True, ondelete="cascade", index=True)
@@ -101,6 +204,12 @@ class ScMaterialPurchaseRequestLine(models.Model):
         default=lambda self: self.env.company.currency_id.id,
     )
     note = fields.Char(string="备注")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._sc_apply_line_defaults(vals)
+        return super().create(vals_list)
 
     @api.depends("qty", "estimated_unit_price")
     def _compute_estimated_amount(self):
@@ -127,7 +236,7 @@ class ScMaterialPurchaseRequestLine(models.Model):
 class ScMaterialAcceptance(models.Model):
     _name = "sc.material.acceptance"
     _description = "材料进场验收"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "sc.material.system.default.mixin"]
     _order = "acceptance_date desc, id desc"
 
     name = fields.Char(string="验收单号", required=True, default="新建", tracking=True)
@@ -190,6 +299,7 @@ class ScMaterialAcceptance(models.Model):
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            self._sc_apply_system_defaults(vals, {"project_id": "_sc_default_project_id"})
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.material.acceptance") or _("材料进场验收")
         return super().create(vals_list)
@@ -226,6 +336,7 @@ class ScMaterialAcceptance(models.Model):
 class ScMaterialAcceptanceLine(models.Model):
     _name = "sc.material.acceptance.line"
     _description = "材料进场验收明细"
+    _inherit = "sc.material.system.default.mixin"
     _order = "acceptance_id, sequence, id"
 
     acceptance_id = fields.Many2one("sc.material.acceptance", string="验收单", required=True, ondelete="cascade", index=True)
@@ -244,6 +355,18 @@ class ScMaterialAcceptanceLine(models.Model):
     result = fields.Selection([("accepted", "合格"), ("partial", "部分合格"), ("rejected", "不合格")], string="验收结果", default="accepted", index=True)
     quality_status = fields.Selection([("unknown", "未判定"), ("qualified", "合格"), ("unqualified", "不合格")], string="质量状态", default="unknown", index=True)
     issue_note = fields.Text(string="问题说明")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._sc_apply_line_defaults(vals)
+            if vals.get("received_qty") is None:
+                vals["received_qty"] = vals.get("accepted_qty") or 1.0
+                self._sc_mark_system_defaults(vals, ["received_qty"])
+            if vals.get("accepted_qty") is None:
+                vals["accepted_qty"] = vals.get("received_qty") or 1.0
+                self._sc_mark_system_defaults(vals, ["accepted_qty"])
+        return super().create(vals_list)
 
     @api.onchange("product_id")
     def _onchange_product_id(self):
@@ -267,7 +390,7 @@ class ScMaterialAcceptanceLine(models.Model):
 class ScMaterialInbound(models.Model):
     _name = "sc.material.inbound"
     _description = "材料入库单"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "sc.material.system.default.mixin"]
     _order = "inbound_date desc, id desc"
 
     name = fields.Char(string="入库单号", required=True, default="新建", tracking=True)
@@ -326,16 +449,11 @@ class ScMaterialInbound(models.Model):
 
     @api.model
     def _default_warehouse_id(self):
-        warehouse = self.env["stock.warehouse"].search(
-            [("company_id", "in", [self.env.company.id, False])],
-            limit=1,
-        )
-        return warehouse.id or False
+        return self._sc_default_warehouse_id()
 
     @api.model
     def _default_dest_location_id(self):
-        warehouse = self.env["stock.warehouse"].browse(self._default_warehouse_id())
-        return warehouse.lot_stock_id.id if warehouse and warehouse.lot_stock_id else False
+        return self._sc_default_location_id(self._default_warehouse_id())
 
     @api.depends("line_ids.amount")
     def _compute_amount_total(self):
@@ -346,6 +464,16 @@ class ScMaterialInbound(models.Model):
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            self._sc_apply_system_defaults(
+                vals,
+                {
+                    "project_id": "_sc_default_project_id",
+                    "warehouse_id": "_sc_default_warehouse_id",
+                },
+            )
+            if not vals.get("dest_location_id"):
+                vals["dest_location_id"] = self._sc_default_location_id(vals.get("warehouse_id"))
+                self._sc_mark_system_defaults(vals, ["dest_location_id"])
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.material.inbound") or _("材料入库单")
         return super().create(vals_list)
@@ -415,6 +543,7 @@ class ScMaterialInbound(models.Model):
 class ScMaterialInboundLine(models.Model):
     _name = "sc.material.inbound.line"
     _description = "材料入库明细"
+    _inherit = "sc.material.system.default.mixin"
     _order = "inbound_id, sequence, id"
 
     inbound_id = fields.Many2one("sc.material.inbound", string="入库单", required=True, ondelete="cascade", index=True)
@@ -430,6 +559,12 @@ class ScMaterialInboundLine(models.Model):
     unit_price = fields.Monetary(string="单价", currency_field="currency_id")
     amount = fields.Monetary(string="金额", currency_field="currency_id", compute="_compute_amount", store=True)
     note = fields.Char(string="备注")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._sc_apply_line_defaults(vals)
+        return super().create(vals_list)
 
     @api.depends("qty", "unit_price")
     def _compute_amount(self):
@@ -454,14 +589,26 @@ class ScMaterialInboundLine(models.Model):
 class ScMaterialOutbound(models.Model):
     _name = "sc.material.outbound"
     _description = "材料出库单"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "sc.material.system.default.mixin"]
     _order = "outbound_date desc, id desc"
 
     name = fields.Char(string="出库单号", required=True, default="新建", tracking=True)
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True, tracking=True)
     outbound_date = fields.Date(string="出库日期", default=fields.Date.context_today, index=True, tracking=True)
-    warehouse_id = fields.Many2one("stock.warehouse", string="出库仓库", required=True, index=True)
-    source_location_id = fields.Many2one("stock.location", string="出库库位", required=True, index=True)
+    warehouse_id = fields.Many2one(
+        "stock.warehouse",
+        string="出库仓库",
+        required=True,
+        index=True,
+        default=lambda self: self._sc_default_warehouse_id(),
+    )
+    source_location_id = fields.Many2one(
+        "stock.location",
+        string="出库库位",
+        required=True,
+        index=True,
+        default=lambda self: self._sc_default_location_id(),
+    )
     receiver_id = fields.Many2one("res.partner", string="领用单位", index=True)
     receiver_user_id = fields.Many2one("res.users", string="领料人", index=True)
     keeper_id = fields.Many2one("res.users", string="仓管员", default=lambda self: self.env.user, index=True)
@@ -497,6 +644,16 @@ class ScMaterialOutbound(models.Model):
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            self._sc_apply_system_defaults(
+                vals,
+                {
+                    "project_id": "_sc_default_project_id",
+                    "warehouse_id": "_sc_default_warehouse_id",
+                },
+            )
+            if not vals.get("source_location_id"):
+                vals["source_location_id"] = self._sc_default_location_id(vals.get("warehouse_id"))
+                self._sc_mark_system_defaults(vals, ["source_location_id"])
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.material.outbound") or _("材料出库单")
         return super().create(vals_list)
@@ -527,6 +684,7 @@ class ScMaterialOutbound(models.Model):
 class ScMaterialOutboundLine(models.Model):
     _name = "sc.material.outbound.line"
     _description = "材料出库明细"
+    _inherit = "sc.material.system.default.mixin"
     _order = "outbound_id, sequence, id"
 
     outbound_id = fields.Many2one("sc.material.outbound", string="出库单", required=True, ondelete="cascade", index=True)
@@ -538,6 +696,12 @@ class ScMaterialOutboundLine(models.Model):
     product_uom_id = fields.Many2one("uom.uom", string="单位")
     qty = fields.Float(string="出库数量", required=True)
     note = fields.Char(string="备注")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._sc_apply_line_defaults(vals)
+        return super().create(vals_list)
 
     @api.onchange("product_id")
     def _onchange_product_id(self):
@@ -557,7 +721,7 @@ class ScMaterialOutboundLine(models.Model):
 class ScMaterialRfq(models.Model):
     _name = "sc.material.rfq"
     _description = "材料询比价"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "sc.material.system.default.mixin"]
     _order = "rfq_date desc, id desc"
 
     name = fields.Char(string="询价单号", required=True, default="新建", tracking=True)
@@ -591,6 +755,7 @@ class ScMaterialRfq(models.Model):
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            self._sc_apply_system_defaults(vals, {"project_id": "_sc_default_project_id"})
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.material.rfq") or _("材料询比价")
         return super().create(vals_list)
@@ -630,6 +795,7 @@ class ScMaterialRfq(models.Model):
 class ScMaterialRfqLine(models.Model):
     _name = "sc.material.rfq.line"
     _description = "材料询比价明细"
+    _inherit = "sc.material.system.default.mixin"
     _order = "rfq_id, sequence, id"
 
     rfq_id = fields.Many2one("sc.material.rfq", string="询价单", required=True, ondelete="cascade", index=True)
@@ -647,6 +813,12 @@ class ScMaterialRfqLine(models.Model):
     tax_rate = fields.Float(string="税率%")
     selected = fields.Boolean(string="选中")
     note = fields.Char(string="备注")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._sc_apply_line_defaults(vals, require_supplier=True, require_unit_price=True)
+        return super().create(vals_list)
 
     @api.depends("qty", "unit_price")
     def _compute_amount(self):
@@ -675,7 +847,7 @@ class ScMaterialRfqLine(models.Model):
 class ScMaterialSettlement(models.Model):
     _name = "sc.material.settlement"
     _description = "材料结算"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "sc.material.system.default.mixin"]
     _order = "settlement_date desc, id desc"
 
     name = fields.Char(string="结算单号", required=True, default="新建", tracking=True)
@@ -716,6 +888,13 @@ class ScMaterialSettlement(models.Model):
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            self._sc_apply_system_defaults(
+                vals,
+                {
+                    "project_id": "_sc_default_project_id",
+                    "supplier_id": "_sc_default_supplier_id",
+                },
+            )
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.material.settlement") or _("材料结算")
         return super().create(vals_list)
@@ -746,6 +925,7 @@ class ScMaterialSettlement(models.Model):
 class ScMaterialSettlementLine(models.Model):
     _name = "sc.material.settlement.line"
     _description = "材料结算明细"
+    _inherit = "sc.material.system.default.mixin"
     _order = "settlement_id, sequence, id"
 
     settlement_id = fields.Many2one("sc.material.settlement", string="结算单", required=True, ondelete="cascade", index=True)
@@ -763,6 +943,12 @@ class ScMaterialSettlementLine(models.Model):
     tax_amount = fields.Monetary(string="税额", currency_field="currency_id", compute="_compute_amounts", store=True)
     amount_total = fields.Monetary(string="含税金额", currency_field="currency_id", compute="_compute_amounts", store=True)
     note = fields.Char(string="备注")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._sc_apply_line_defaults(vals, require_unit_price=True)
+        return super().create(vals_list)
 
     @api.depends("qty", "unit_price", "tax_rate")
     def _compute_amounts(self):
