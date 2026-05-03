@@ -23,7 +23,7 @@
                 <tree string="资金计划申报" default_order="id desc">
                     <field name="project_id"/>
                     <field name="total_amount" sum="资金上限合计"/>
-                    <field name="currency_id"/>
+                    <field name="currency_id" invisible="1"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -38,7 +38,7 @@
                         <group>
                             <field name="project_id"/>
                             <field name="total_amount"/>
-                            <field name="currency_id" readonly="1"/>
+                            <field name="currency_id" readonly="1" invisible="1"/>
                             <field name="state"/>
                         </group>
                     </sheet>

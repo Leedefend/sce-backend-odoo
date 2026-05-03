@@ -101,7 +101,7 @@
                             <field name="deducted_invoice_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="deducted_tax_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="settlement_amount" readonly="state == 'legacy_confirmed'"/>
-                            <field name="currency_id"/>
+                            <field name="currency_id" invisible="1"/>
                         </group>
                         <group>
                             <field name="note"/>

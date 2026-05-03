@@ -128,6 +128,30 @@
         <field name="company_id" eval="False"/>
     </record>
 
+    <record id="seq_sc_material_rental_plan" model="ir.sequence">
+        <field name="name">周转材料租赁计划</field>
+        <field name="code">sc.material.rental.plan</field>
+        <field name="prefix">MRP%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_sc_material_rental_order" model="ir.sequence">
+        <field name="name">周转材料租赁单</field>
+        <field name="code">sc.material.rental.order</field>
+        <field name="prefix">MRO%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_sc_material_rental_settlement" model="ir.sequence">
+        <field name="name">周转材料租赁结算</field>
+        <field name="code">sc.material.rental.settlement</field>
+        <field name="prefix">MRS%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
     <record id="seq_sc_legacy_purchase_contract_fact" model="ir.sequence">
         <field name="name">历史采购/一般合同事实</field>
         <field name="code">sc.legacy.purchase.contract.fact</field>

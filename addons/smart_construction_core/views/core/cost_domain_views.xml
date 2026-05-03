@@ -267,7 +267,7 @@
                             <field name="wbs_id" readonly="1"/>
                         </group>
                         <group>
-                            <field name="currency_id" readonly="1"/>
+                            <field name="currency_id" readonly="1" invisible="1"/>
                         </group>
                     </group>
                     <group string="收入与成本">

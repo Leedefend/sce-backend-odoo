@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import re
+
 from odoo.tests import TransactionCase
 from odoo.tests.common import tagged
 
@@ -865,3 +867,139 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertIn('name="approved_amount" sum="审定金额合计"', tree)
         self.assertIn('name="requested_fund_amount" sum="申请资金金额合计"', tree)
         self.assertIn('name="engineering_address"', tree)
+
+    def test_currency_defaults_to_cny_and_is_hidden_from_business_views(self):
+        cny = self.env.ref("base.CNY")
+        self.assertEqual(self.env.company.currency_id, cny)
+
+        views = self.env["ir.ui.view"].search([("arch_db", "ilike", 'name="currency_id"')])
+        visible_hits = []
+        for view in views:
+            if view.xml_id and not view.xml_id.startswith("smart_construction_core."):
+                continue
+            for match in re.finditer(r'<field[^>]+name="currency_id"[^>]*/>', view.arch_db or ""):
+                if 'invisible="1"' not in match.group(0):
+                    visible_hits.append("%s: %s" % (view.xml_id or view.name, match.group(0)))
+        self.assertFalse(visible_hits, "\n".join(visible_hits))
+
+    def test_material_rental_models_cover_plan_contract_supplier_and_payment(self):
+        supplier = self.env["res.partner"].create({"name": "Rental Supplier", "supplier_rank": 1})
+        contract = self.env["construction.contract"].create(
+            {
+                "name": "Rental Contract",
+                "subject": "周转材料租赁合同",
+                "type": "in",
+                "project_id": self.project.id,
+                "partner_id": supplier.id,
+            }
+        )
+        plan = self.env["sc.material.rental.plan"].create(
+            {
+                "project_id": self.project.id,
+                "supplier_id": supplier.id,
+                "contract_id": contract.id,
+                "rent_purpose": "脚手架周转",
+                "line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "material_name": "钢管",
+                            "material_spec": "48mm",
+                            "unit_name": "米",
+                            "planned_qty": 10,
+                            "planned_days": 5,
+                            "daily_price": 2,
+                        },
+                    )
+                ],
+            }
+        )
+        order = self.env["sc.material.rental.order"].create(
+            {
+                "project_id": self.project.id,
+                "plan_id": plan.id,
+                "supplier_id": supplier.id,
+                "contract_id": contract.id,
+                "line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "material_name": "钢管",
+                            "qty": 10,
+                            "rental_days": 5,
+                            "daily_price": 2,
+                        },
+                    )
+                ],
+            }
+        )
+        payment = self.env["payment.request"].create(
+            {
+                "type": "pay",
+                "project_id": self.project.id,
+                "partner_id": supplier.id,
+                "contract_id": contract.id,
+                "amount": 100,
+            }
+        )
+        settlement = self.env["sc.material.rental.settlement"].create(
+            {
+                "project_id": self.project.id,
+                "rental_order_id": order.id,
+                "supplier_id": supplier.id,
+                "contract_id": contract.id,
+                "payment_request_id": payment.id,
+                "line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "material_name": "钢管",
+                            "qty": 10,
+                            "rental_days": 5,
+                            "daily_price": 2,
+                            "damage_amount": 8,
+                        },
+                    )
+                ],
+            }
+        )
+
+        self.assertEqual(plan.estimated_amount, 100)
+        self.assertEqual(order.amount_total, 100)
+        self.assertEqual(settlement.rent_amount, 100)
+        self.assertEqual(settlement.damage_amount, 8)
+        self.assertEqual(settlement.amount_total, 108)
+        self.assertEqual(settlement.payment_request_id, payment)
+
+        for xmlid in (
+            "smart_construction_core.view_sc_material_rental_plan_tree",
+            "smart_construction_core.view_sc_material_rental_order_tree",
+            "smart_construction_core.view_sc_material_rental_settlement_tree",
+        ):
+            arch = self.env.ref(xmlid).arch_db
+            self.assertIn('name="contract_id"', arch)
+            self.assertIn('name="supplier_id"', arch)
+            self.assertIn('name="currency_id" invisible="1"', arch)
+
+        self.assertEqual(self.env.ref("smart_construction_core.menu_sc_material_rental_group").name, "周转材料租赁")
+
+    def test_deposit_feedback_fields_and_contract_amount_label_are_business_ready(self):
+        tree = self.env.ref("smart_construction_core.view_sc_expense_claim_tree").arch_db
+        form = self.env.ref("smart_construction_core.view_sc_expense_claim_form").arch_db
+        contract_field = self.env["construction.contract"]._fields["line_amount_total"]
+
+        for field_name in (
+            "guarantee_project_name",
+            "guarantee_type",
+            "payment_method",
+            "payer_account",
+            "company_name_text",
+            "clearing_method",
+            "return_reason",
+            "is_returned",
+        ):
+            self.assertIn('name="%s"' % field_name, tree + form)
+        self.assertEqual(contract_field.string, "最终合同价")

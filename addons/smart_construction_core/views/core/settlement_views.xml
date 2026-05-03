@@ -150,7 +150,7 @@
                                 <field name="declared_date"/>
                                 <field name="final_approved_date"/>
                                 <field name="approved_date"/>
-                                <field name="currency_id" required="1"/>
+                                <field name="currency_id" required="1" invisible="1"/>
                                 <field name="company_id" readonly="1"/>
                             </group>
                         </group>
@@ -289,7 +289,7 @@
                             <group>
                                 <field name="amount" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
                                 <field name="signed_amount" readonly="1"/>
-                                <field name="currency_id" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
+                                <field name="currency_id" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']" invisible="1"/>
                                 <field name="active"/>
                             </group>
                         </group>

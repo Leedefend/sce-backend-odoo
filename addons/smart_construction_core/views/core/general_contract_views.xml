@@ -135,7 +135,7 @@
                             <field name="tax_rate" readonly="state == 'legacy_confirmed'"/>
                             <field name="change_amount_total" readonly="state == 'legacy_confirmed'"/>
                             <field name="change_rate" readonly="1"/>
-                            <field name="currency_id"/>
+                            <field name="currency_id" invisible="1"/>
                             <field name="payment_terms" readonly="state == 'legacy_confirmed'"/>
                             <field name="special_condition" readonly="state == 'legacy_confirmed'"/>
                         </group>

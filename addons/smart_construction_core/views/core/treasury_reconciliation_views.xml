@@ -88,7 +88,7 @@
                             <field name="system_difference" readonly="state == 'legacy_confirmed'"/>
                             <field name="daily_income" readonly="state == 'legacy_confirmed'"/>
                             <field name="daily_expense" readonly="state == 'legacy_confirmed'"/>
-                            <field name="currency_id"/>
+                            <field name="currency_id" invisible="1"/>
                         </group>
                         <group string="资金确认">
                             <field name="confirmation_amount" readonly="state == 'legacy_confirmed'"/>

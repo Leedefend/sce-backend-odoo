@@ -114,7 +114,7 @@
                             <field name="amount_no_tax" readonly="state == 'legacy_confirmed'"/>
                             <field name="tax_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="amount_total" readonly="state == 'legacy_confirmed'"/>
-                            <field name="currency_id"/>
+                            <field name="currency_id" invisible="1"/>
                         </group>
                         <group string="办理信息">
                             <field name="handler_name" readonly="state == 'legacy_confirmed'"/>

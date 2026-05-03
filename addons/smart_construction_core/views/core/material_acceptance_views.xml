@@ -149,7 +149,7 @@
                                     <field name="qty"/>
                                     <field name="estimated_unit_price"/>
                                     <field name="estimated_amount"/>
-                                    <field name="currency_id"/>
+                                    <field name="currency_id" invisible="1"/>
                                     <field name="note"/>
                                     <field name="sc_has_system_default"/>
                                 </tree>
@@ -621,7 +621,7 @@
                                     <field name="material_spec"/>
                                     <field name="product_uom_id"/>
                                     <field name="qty"/>
-                                    <field name="currency_id"/>
+                                    <field name="currency_id" invisible="1"/>
                                     <field name="unit_price"/>
                                     <field name="amount"/>
                                     <field name="tax_rate"/>
@@ -685,7 +685,7 @@
                 <field name="amount_untaxed" sum="未税金额合计"/>
                 <field name="tax_amount" sum="税额合计"/>
                 <field name="amount_total" sum="结算金额合计"/>
-                <field name="currency_id"/>
+                <field name="currency_id" invisible="1"/>
                 <field name="owner_id"/>
                 <field name="legacy_fact_type"/>
                 <field name="sc_has_system_default"/>
@@ -717,7 +717,7 @@
                         <group>
                             <field name="settlement_date"/>
                             <field name="owner_id"/>
-                            <field name="currency_id"/>
+                            <field name="currency_id" invisible="1"/>
                         </group>
                     </group>
                     <group>

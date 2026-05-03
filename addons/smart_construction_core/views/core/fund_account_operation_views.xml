@@ -63,7 +63,7 @@
                             <field name="active"/>
                         </group>
                         <group string="账户与金额">
-                            <field name="currency_id"/>
+                            <field name="currency_id" invisible="1"/>
                             <field name="source_account_id"/>
                             <field name="target_account_id"/>
                             <field name="amount" invisible="operation_type == 'balance_adjustment'"/>

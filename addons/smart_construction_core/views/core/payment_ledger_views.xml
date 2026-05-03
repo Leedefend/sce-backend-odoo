@@ -39,7 +39,7 @@
                     <field name="project_id"/>
                     <field name="partner_id"/>
                     <field name="amount"/>
-                    <field name="currency_id"/>
+                    <field name="currency_id" invisible="1"/>
                     <field name="paid_at"/>
                     <field name="ref"/>
                 </tree>
@@ -60,7 +60,7 @@
                             </group>
                             <group>
                                 <field name="amount"/>
-                                <field name="currency_id" readonly="1"/>
+                                <field name="currency_id" readonly="1" invisible="1"/>
                                 <field name="paid_at"/>
                                 <field name="ref"/>
                             </group>
