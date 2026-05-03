@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-03T10:56:21+08:00
+- blocker_key: `unified_page_contract_lite_all_tree_matrix_browser_smoke_batch_51`
+- layer_target: `Frontend Contract Rollout Gate / Lite all_tree Matrix`
+- module: `scripts/verify + Makefile + docs/architecture/unified_page_contract_lite`
+- reason: `all_tree 正负验收已有 506/642 单点样本；继续扩大前必须支持从当前后端 nav 自动发现 action，并以后端 ui.contract 真实 view_type 分类 Lite/legacy，避免只靠硬编码样本。`
+- completed_step: `新增 unified_page_contract_lite_all_tree_matrix_browser_smoke.js；新增 verify.unified_page_contract.lite.all_tree_matrix_browser.host；rollout guard 增加 Batch-51 文档、脚本和 Make target 静态门禁。`
+- verification: `node --check scripts/verify/unified_page_contract_lite_all_tree_matrix_browser_smoke.js PASS；make verify.unified_page_contract.lite.rollout_switch PASS；make verify.unified_page_contract.lite PASS；git diff --check PASS；DB_NAME=sc_demo E2E_LOGIN=cost1 E2E_PASSWORD=123456 FRONTEND_URL=http://127.0.0.1:5176 API_BASE_URL=http://127.0.0.1:8070 LITE_ALL_TREE_MATRIX_LIMIT=8 make verify.unified_page_contract.lite.all_tree_matrix_browser.host PASS，自动发现 506=tree/Lite、642=kanban/legacy，report=artifacts/playwright/lite_all_tree_matrix_rollout/20260503T025510/summary.json。`
+- active_commit: `f877e96d`
+- next_step: `执行 docs final gate 后提交 Batch-51；下一批可评估是否把 all_tree matrix browser 作为合并前验收项。`
+
 ### 2026-05-03T10:49:19+08:00
 - blocker_key: `unified_page_contract_lite_all_tree_legacy_fallback_batch_50`
 - layer_target: `Frontend Contract Consumer / Lite all_tree Fallback Guard`
