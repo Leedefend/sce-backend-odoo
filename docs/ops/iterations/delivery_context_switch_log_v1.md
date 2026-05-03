@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-03T10:35:11+08:00
+- blocker_key: `unified_page_contract_lite_all_tree_browser_smoke_batch_49`
+- layer_target: `Frontend Contract Consumer / Lite all_tree Validation`
+- module: `scripts/verify + Makefile + docs/architecture/unified_page_contract_lite`
+- reason: `rollout switch 已支持 VITE_LITE_CONTRACT_ROLLOUT=all_tree；进入更大范围树列表切换前，需要可重复浏览器 smoke 验证 selected action ids 通过 load_contract Lite preview 渲染且不在 action 阶段回落 ui.contract。`
+- completed_step: `新增 unified_page_contract_lite_all_tree_browser_smoke.js，支持 LITE_ALL_TREE_ACTION_IDS；新增 verify.unified_page_contract.lite.all_tree_browser.host；rollout_switch_guard 增加 Batch-49 文档、脚本和 Make target 静态门禁；默认仍 off，不改 login/system.init，不切 ui.contract 默认路径。`
+- verification: `make verify.unified_page_contract.lite.rollout_switch PASS；make verify.unified_page_contract.lite PASS；make verify.frontend.quick.gate PASS（vite chunk size warning only）；make verify.docs.all PASS；git diff --check PASS；DB_NAME=sc_demo E2E_LOGIN=cost1 E2E_PASSWORD=123456 FRONTEND_URL=http://127.0.0.1:5176 LITE_ALL_TREE_ACTION_IDS=506 make verify.unified_page_contract.lite.all_tree_browser.host PASS，report=artifacts/playwright/lite_all_tree_rollout/20260503T023730/summary.json。`
+- active_commit: `460ee25a`
+- next_step: `提交 Batch-49；下一批可扩大 LITE_ALL_TREE_ACTION_IDS 矩阵或增加非树视图 legacy fallback browser negative。`
+
 ### 2026-05-02T11:52:18+08:00
 - blocker_key: `unified_page_contract_lite_frontend_pilot_implementation_batch_45`
 - layer_target: `Frontend Contract Consumer / Lite v2.0 Pilot`
