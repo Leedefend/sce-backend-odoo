@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-03T14:45:00+08:00
+- blocker_key: `unified_page_contract_lite_wx_mini_real_compile_pass_batch_76`
+- layer_target: `Frontend Mobile Compile Verification`
+- module: `frontend/apps/mobile + frontend/pnpm-lock.yaml + scripts/verify + docs/architecture/unified_page_contract_lite + Makefile`
+- reason: `真实小程序编译门禁已存在，但 mobile package 使用不可解析的 DCloud ^3.0.0 版本线且缺少 Vite/UniApp 编译入口，必须补齐真实可编译 workspace 并把 wx_mini 从“依赖缺失”推进到“真实编译通过”。`
+- completed_step: `修正 mobile UniApp 依赖为 DCloud vue3 dist-tag 3.0.0-alpha-5000820260430001，补 @dcloudio/uni-mp-weixin、vite@5.2.8、index.html、vite.config.ts；pnpm -C frontend install 更新 pnpm-lock.yaml 并安装本地依赖；真实执行 wx_mini 编译生成 dist/build/mp-weixin。`
+- verification: `pnpm -C frontend install --lockfile-only PASS；pnpm -C frontend install PASS；python3 scripts/verify/unified_page_contract_lite_wx_mini_real_compile_pilot_guard.py --execute 在放行环境 PASS，decision=wx_mini_real_compile_pilot_passed；make verify.unified_page_contract.lite.wx_mini_real_compile_pilot.host PASS；make verify.unified_page_contract.lite.terminal_coverage_matrix PASS；pnpm -C frontend/apps/mobile typecheck PASS；make verify.unified_page_contract.lite PASS；make verify.docs.all PASS；python3 -m py_compile scripts/verify/unified_page_contract_lite_wx_mini_real_compile_pilot_guard.py scripts/verify/unified_page_contract_lite_terminal_coverage_matrix_guard.py PASS；git diff --check PASS。`
+- active_commit: `a89fda86`
+- next_step: `提交 Batch-76；下一批补 wx_mini_runtime_acceptance_pilot.host 或先推进 harmony_h5 compile pilot。`
+
 ### 2026-05-03T14:27:30+08:00
 - blocker_key: `unified_page_contract_lite_wx_mini_real_compile_pilot_batch_75`
 - layer_target: `Frontend Mobile Compile Verification`

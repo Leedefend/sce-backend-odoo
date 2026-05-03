@@ -18,20 +18,20 @@ Reason:
 All-terminal coverage needs a truthful matrix. Web PC already has browser
 acceptance gates. UniApp mini program and Harmony H5 have semantic contract
 parity, renderer input pilot gates, UI renderer pilot gates, and page integration
-pilot gates, and runtime mount pilot gates. wx_mini also has a compile preflight
-workspace; real terminal compilation is still pending.
+pilot gates, and runtime mount pilot gates. wx_mini also has a real compile gate;
+terminal runtime acceptance is still pending.
 
 ## 2. Current Matrix
 
 | Client | Contract parity | Renderer input pilot | UI renderer pilot | Page integration pilot | Runtime mount pilot | Compile preflight | Acceptance status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `web_pc` | pass | available | available | available | available | available | covered browser anchor |
-| `wx_mini` | pass | available | available | available | available | available | compile-preflight-ready, real-compile-pending |
+| `wx_mini` | pass | available | available | available | available | available | real-compile-gate-ready, terminal-acceptance-pending |
 | `harmony_h5` | pass | available | available | available | available | pending | runtime-mount-ready, compile-pending |
 
 `web_pc` is the current browser acceptance anchor.
 
-`wx_mini` is compile-preflight-ready but real-compile-pending.
+`wx_mini` has a real compile gate but terminal acceptance is pending.
 
 `harmony_h5` is runtime-mount-ready but compile-pending.
 
@@ -64,7 +64,7 @@ It verifies:
 - mini program and Harmony H5 runtime mount pilot gates remain present
 - mini program compile preflight gate remains present
 - mini program real compile pilot gate remains present
-- mini program is explicitly marked real-compile-pending
+- mini program is explicitly marked terminal-acceptance-pending
 - Harmony H5 is explicitly marked compile-pending
 - future pilot gates are named as next required gates
 
@@ -92,6 +92,7 @@ make verify.unified_page_contract.lite.wx_mini_runtime_mount_pilot.host
 make verify.unified_page_contract.lite.harmony_h5_runtime_mount_pilot.host
 make verify.unified_page_contract.lite.wx_mini_compile_pilot.host
 make verify.unified_page_contract.lite.wx_mini_real_compile_pilot.host
+make verify.unified_page_contract.lite.wx_mini_runtime_acceptance_pilot.host
 make verify.unified_page_contract.lite.harmony_h5_compile_pilot.host
 ```
 
