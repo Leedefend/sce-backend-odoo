@@ -11,6 +11,9 @@ type Dict = Record<string, unknown>;
 
 export const LITE_CONTRACT_PILOT_MODEL = 'project.project';
 export const LITE_CONTRACT_PILOT_VIEW = 'tree';
+export const LITE_CONTRACT_ROLLOUT_ENV = 'VITE_LITE_CONTRACT_ROLLOUT';
+
+type LiteContractRolloutMode = 'off' | 'pilot' | 'all_tree';
 
 function normalizeMode(raw: unknown): string {
   const value = String(raw || '').trim().toLowerCase();
@@ -25,15 +28,33 @@ function splitModes(raw: unknown): string[] {
 }
 
 export function isLiteContractPilotEnabled(): boolean {
-  return String(import.meta.env.VITE_LITE_CONTRACT_PILOT || '').trim() === '1';
+  return liteContractRolloutMode() !== 'off';
+}
+
+export function liteContractRolloutMode(): LiteContractRolloutMode {
+  const rollout = String(import.meta.env.VITE_LITE_CONTRACT_ROLLOUT || '').trim().toLowerCase();
+  if (rollout === 'all_tree') return 'all_tree';
+  if (rollout === 'pilot') return 'pilot';
+  return String(import.meta.env.VITE_LITE_CONTRACT_PILOT || '').trim() === '1' ? 'pilot' : 'off';
 }
 
 export function isLiteContractPilotCandidate(meta?: NavMeta | null): boolean {
-  if (!isLiteContractPilotEnabled()) return false;
+  const rollout = liteContractRolloutMode();
+  if (rollout === 'off') return false;
   const model = String(meta?.model || '').trim();
-  if (model !== LITE_CONTRACT_PILOT_MODEL) return false;
+  if (!model) return false;
   const modes = splitModes(meta?.view_modes || []);
-  return !modes.length || modes.includes(LITE_CONTRACT_PILOT_VIEW);
+  const isTree = !modes.length || modes.includes(LITE_CONTRACT_PILOT_VIEW);
+  if (!isTree) return false;
+  if (rollout === 'all_tree') return true;
+  return model === LITE_CONTRACT_PILOT_MODEL;
+}
+
+export function needsLiteContractAllTreeViewPreflight(meta?: NavMeta | null): boolean {
+  if (liteContractRolloutMode() !== 'all_tree') return false;
+  const model = String(meta?.model || '').trim();
+  if (!model) return false;
+  return splitModes(meta?.view_modes || []).length === 0;
 }
 
 function collectWidgets(containers: LiteContainer[]): LiteWidget[] {
