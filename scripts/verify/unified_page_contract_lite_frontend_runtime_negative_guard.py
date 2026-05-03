@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Guard that frontend runtime only consumes Lite preview through the pilot path."""
+"""Guard that frontend runtime only consumes Lite preview through approved paths."""
 
 from __future__ import annotations
 
@@ -39,6 +39,7 @@ FORBIDDEN_TOKENS = (
 ALLOWED_PILOT_FILES = {
     "frontend/apps/web/src/api/contract.ts",
     "frontend/apps/web/src/app/contracts/unifiedPageContractLite.ts",
+    "frontend/apps/web/src/app/contracts/unifiedPageContractLiteTerminal.ts",
     "frontend/apps/web/src/app/runtime/unifiedPageContractLitePilot.ts",
 }
 
@@ -83,7 +84,7 @@ def main() -> int:
     hits = find_hits()
     report = {
         "ok": not hits,
-        "policy": "frontend runtime may consume Lite preview only through the default-off project.project:tree pilot adapter",
+        "policy": "frontend runtime may consume Lite preview only through approved default-off pilot and shared terminal boundary files",
         "frontend_roots": [root.relative_to(ROOT).as_posix() for root in FRONTEND_ROOTS],
         "forbidden_tokens": list(FORBIDDEN_TOKENS),
         "allowed_pilot_files": sorted(ALLOWED_PILOT_FILES),
@@ -100,7 +101,7 @@ def main() -> int:
         return 1
 
     print("Unified Semantic Page Contract Lite frontend runtime negative guard passed")
-    print("- policy: default-off pilot files only")
+    print("- policy: default-off pilot and shared terminal boundary files only")
     print("- report: %s" % args.report)
     return 0
 
