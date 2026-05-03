@@ -18,20 +18,22 @@ Reason:
 All-terminal coverage needs a truthful matrix. Web PC already has browser
 acceptance gates. UniApp mini program and Harmony H5 have semantic contract
 parity, renderer input pilot gates, UI renderer pilot gates, and page integration
-pilot gates, and runtime mount pilot gates, but no compile pilot yet. The matrix
-must make that gap visible before terminal compilation begins.
+pilot gates, and runtime mount pilot gates. wx_mini also has a compile preflight
+workspace; real terminal compilation is still pending.
 
 ## 2. Current Matrix
 
-| Client | Contract parity | Renderer input pilot | UI renderer pilot | Page integration pilot | Runtime mount pilot | Acceptance status |
-| --- | --- | --- | --- | --- | --- | --- |
-| `web_pc` | pass | available | available | available | available | covered browser anchor |
-| `wx_mini` | pass | available | available | available | available | runtime-mount-ready, compile-pending |
-| `harmony_h5` | pass | available | available | available | available | runtime-mount-ready, compile-pending |
+| Client | Contract parity | Renderer input pilot | UI renderer pilot | Page integration pilot | Runtime mount pilot | Compile preflight | Acceptance status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `web_pc` | pass | available | available | available | available | available | covered browser anchor |
+| `wx_mini` | pass | available | available | available | available | available | compile-preflight-ready, real-compile-pending |
+| `harmony_h5` | pass | available | available | available | available | pending | runtime-mount-ready, compile-pending |
 
 `web_pc` is the current browser acceptance anchor.
 
-`wx_mini` and `harmony_h5` are runtime-mount-ready but compile-pending.
+`wx_mini` is compile-preflight-ready but real-compile-pending.
+
+`harmony_h5` is runtime-mount-ready but compile-pending.
 
 They must not be reported as fully covered until their guarded compile pilot
 gates exist and pass.
@@ -60,7 +62,9 @@ It verifies:
 - mini program and Harmony H5 UI renderer pilot gates remain present
 - mini program and Harmony H5 page integration pilot gates remain present
 - mini program and Harmony H5 runtime mount pilot gates remain present
-- mini program and Harmony H5 are explicitly marked compile-pending
+- mini program compile preflight gate remains present
+- mini program is explicitly marked real-compile-pending
+- Harmony H5 is explicitly marked compile-pending
 - future pilot gates are named as next required gates
 
 ## 4. Non-Goals
@@ -86,6 +90,7 @@ make verify.unified_page_contract.lite.harmony_h5_page_integration_pilot.host
 make verify.unified_page_contract.lite.wx_mini_runtime_mount_pilot.host
 make verify.unified_page_contract.lite.harmony_h5_runtime_mount_pilot.host
 make verify.unified_page_contract.lite.wx_mini_compile_pilot.host
+make verify.unified_page_contract.lite.wx_mini_real_compile_pilot.host
 make verify.unified_page_contract.lite.harmony_h5_compile_pilot.host
 ```
 

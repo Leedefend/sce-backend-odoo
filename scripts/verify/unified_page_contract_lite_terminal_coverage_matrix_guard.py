@@ -12,6 +12,8 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 CLIENTS = ("web_pc", "wx_mini", "harmony_h5")
+MOBILE_PACKAGE = ROOT / "frontend/apps/mobile/package.json"
+MOBILE_MANIFEST = ROOT / "frontend/apps/mobile/src/manifest.json"
 
 
 def read_text(path: Path) -> str:
@@ -41,6 +43,11 @@ def build_matrix(parity: dict[str, Any], makefile: str) -> list[dict[str, Any]]:
     signature_ok = parity.get("ok") is True
     reports = parity.get("contractReports") or []
     parity_count = len(reports)
+    wx_compile_preflight = (
+        has_target(makefile, "verify.unified_page_contract.lite.wx_mini_compile_pilot.host")
+        and MOBILE_PACKAGE.exists()
+        and MOBILE_MANIFEST.exists()
+    )
     web_browser_gate = all(
         token in makefile
         for token in (
@@ -85,13 +92,15 @@ def build_matrix(parity: dict[str, Any], makefile: str) -> list[dict[str, Any]]:
                 if has_target(makefile, "verify.unified_page_contract.lite.wx_mini_runtime_mount_pilot.host")
                 else "missing"
             ),
+            "compilePreflight": "available" if wx_compile_preflight else "missing",
             "compileGate": "pending",
             "browserAcceptanceGate": "pending",
-            "status": "runtime_mount_ready_compile_pending"
+            "status": "compile_preflight_ready_real_compile_pending"
             if signature_ok and has_target(makefile, "verify.unified_page_contract.lite.wx_mini_renderer_input_pilot.host")
             and has_target(makefile, "verify.unified_page_contract.lite.wx_mini_ui_renderer_pilot.host")
             and has_target(makefile, "verify.unified_page_contract.lite.wx_mini_page_integration_pilot.host")
             and has_target(makefile, "verify.unified_page_contract.lite.wx_mini_runtime_mount_pilot.host")
+            and wx_compile_preflight
             else "blocked",
         },
         {
@@ -120,6 +129,7 @@ def build_matrix(parity: dict[str, Any], makefile: str) -> list[dict[str, Any]]:
                 if has_target(makefile, "verify.unified_page_contract.lite.harmony_h5_runtime_mount_pilot.host")
                 else "missing"
             ),
+            "compilePreflight": "pending",
             "compileGate": "pending",
             "browserAcceptanceGate": "pending",
             "status": "runtime_mount_ready_compile_pending"
@@ -187,7 +197,8 @@ def main() -> int:
         (
             "Terminal Coverage Matrix",
             "`web_pc` is the current browser acceptance anchor",
-            "`wx_mini` and `harmony_h5` are runtime-mount-ready but compile-pending",
+            "`wx_mini` is compile-preflight-ready but real-compile-pending",
+            "`harmony_h5` is runtime-mount-ready but compile-pending",
             "must not be reported as fully covered",
         ),
         errors,
@@ -206,6 +217,7 @@ def main() -> int:
             "verify.unified_page_contract.lite.harmony_h5_page_integration_pilot.host",
             "verify.unified_page_contract.lite.wx_mini_runtime_mount_pilot.host",
             "verify.unified_page_contract.lite.harmony_h5_runtime_mount_pilot.host",
+            "verify.unified_page_contract.lite.wx_mini_compile_pilot.host",
             "verify.unified_page_contract.lite.all_tree_acceptance_browser.host",
             "unified_page_contract_lite_terminal_coverage_matrix_guard.py",
         ),
@@ -215,18 +227,20 @@ def main() -> int:
     matrix = build_matrix(parity, makefile)
     if not any(item["clientType"] == "web_pc" and item["status"] == "covered" for item in matrix):
         errors.append("web_pc must remain the covered browser anchor")
-    for client in ("wx_mini", "harmony_h5"):
-        item = next((row for row in matrix if row["clientType"] == client), None)
-        if not item or item["status"] != "runtime_mount_ready_compile_pending":
-            errors.append(f"{client} must be explicitly runtime-mount-ready and compile-pending")
+    wx_item = next((row for row in matrix if row["clientType"] == "wx_mini"), None)
+    if not wx_item or wx_item["status"] != "compile_preflight_ready_real_compile_pending":
+        errors.append("wx_mini must be explicitly compile-preflight-ready and real-compile-pending")
+    harmony_item = next((row for row in matrix if row["clientType"] == "harmony_h5"), None)
+    if not harmony_item or harmony_item["status"] != "runtime_mount_ready_compile_pending":
+        errors.append("harmony_h5 must be explicitly runtime-mount-ready and compile-pending")
 
     report = {
         "ok": not errors,
-        "decision": "terminal_matrix_runtime_mount_ready_compile_pending" if not errors else "blocked",
+        "decision": "terminal_matrix_wx_compile_preflight_ready_harmony_compile_pending" if not errors else "blocked",
         "clients": list(CLIENTS),
         "matrix": matrix,
         "nextRequiredGates": [
-            "verify.unified_page_contract.lite.wx_mini_compile_pilot.host",
+            "verify.unified_page_contract.lite.wx_mini_real_compile_pilot.host",
             "verify.unified_page_contract.lite.harmony_h5_compile_pilot.host",
         ],
         "errors": errors,
@@ -242,7 +256,7 @@ def main() -> int:
 
     print("Unified Semantic Page Contract Lite terminal coverage matrix guard passed")
     print("- web_pc: covered browser anchor")
-    print("- wx_mini: runtime mount ready, compile pending")
+    print("- wx_mini: compile preflight ready, real compile pending")
     print("- harmony_h5: runtime mount ready, compile pending")
     print(f"- report: {args.report}")
     return 0
