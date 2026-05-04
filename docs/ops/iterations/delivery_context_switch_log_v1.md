@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-05T04:49:57+08:00
+- blocker_key: `mobile_v2_global_status_sync_batch`
+- layer_target: `Frontend Mobile Contract Consumer`
+- module: `frontend/apps/mobile/src/pages/contract/index.vue + scripts/verify/unified_page_contract_v2_intent_guard.py`
+- reason: `web 端已消费 v2 globalStatus 作为页面级授权基线，移动端仍只消费 widgetStatus/buttonStatus，需同步 pageVisible/pageAuth 语义。`
+- completed_step: `移动端契约页新增 collectGlobalStatus、isPageReadable、isPageReadonly；loadContract 在 pageVisible=false 或 pageAuth=none 时停止业务数据加载并显示 reasonCode；actions 在 pageAuth=read 或不可读时禁用；v2 intent guard 增加 mobile globalStatus token 门禁。`
+- verification: `python3 scripts/verify/unified_page_contract_v2_intent_guard.py PASS；python3 -m py_compile scripts/verify/unified_page_contract_v2_intent_guard.py PASS；pnpm -C frontend/apps/mobile typecheck PASS；make verify.unified_page_contract.v2 PASS；git diff --check PASS。`
+- active_commit: `1f9310c4`
+- next_step: `提交 mobile_v2_global_status_sync_batch；下一批继续同步 web 端 containerStatus 或 refreshMode 到移动端。`
+
 ### 2026-05-05T04:46:28+08:00
 - blocker_key: `web_v2_action_refresh_mode_batch`
 - layer_target: `Frontend Contract Consumer`

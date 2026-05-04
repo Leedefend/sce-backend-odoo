@@ -174,6 +174,15 @@ const pageInfo = computed(() => asDict(contract.value?.pageInfo));
 const layoutContract = computed(() => asDict(contract.value?.layoutContract));
 const actionContract = computed(() => asDict(contract.value?.actionContract));
 const statusContract = computed(() => asDict(contract.value?.statusContract));
+const globalStatus = computed(() => collectGlobalStatus(statusContract.value));
+const isPageReadable = computed(() => {
+  const auth = asText(globalStatus.value.pageAuth).toLowerCase();
+  return globalStatus.value.pageVisible !== false && auth !== 'none';
+});
+const isPageReadonly = computed(() => {
+  const auth = asText(globalStatus.value.pageAuth).toLowerCase();
+  return auth === 'read';
+});
 const pageTitle = computed(() => asText(pageInfo.value.pageName, '契约运行'));
 const modelName = computed(() => asText(pageInfo.value.model, TARGET_MODEL));
 const viewTypeLabel = computed(() => asText(pageInfo.value.viewType, 'list'));
@@ -299,6 +308,16 @@ async function loadContract() {
       },
     });
     const nextContract = asDict(response.data);
+    const nextGlobalStatus = collectGlobalStatus(asDict(nextContract.statusContract));
+    if (nextGlobalStatus.pageVisible === false || asText(nextGlobalStatus.pageAuth).toLowerCase() === 'none') {
+      contract.value = nextContract;
+      records.value = [];
+      recordTotal.value = null;
+      nextOffset.value = 0;
+      dataError.value = '';
+      error.value = asText(nextGlobalStatus.reasonCode, '当前页面无访问权限');
+      return;
+    }
     contract.value = nextContract;
     await loadRecords(endpoint, token, nextContract, false);
   } catch (err) {
@@ -450,6 +469,10 @@ function collectWidgetStatus(status: Dict): Record<string, Dict> {
   }, {});
 }
 
+function collectGlobalStatus(status: Dict): Dict {
+  return asDict(status.globalStatus);
+}
+
 function applyUnifiedPagePatchV2(patchRaw: unknown) {
   const patch = asDict(patchRaw);
   if (!patch.updateType) return;
@@ -514,7 +537,7 @@ function collectActions(action: Dict, status: Dict): ContractAction[] {
         target: asDict(row.target),
         button: asDict(row.button),
         visible: state.visible !== false,
-        disabled: state.disabled === true,
+        disabled: state.disabled === true || isPageReadonly.value || !isPageReadable.value,
       };
     })
     .filter((item) => item.actionId && item.visible);
