@@ -28,13 +28,31 @@
     <view v-else-if="error" class="state state--error">
       <text>{{ error }}</text>
     </view>
+    <view v-else-if="isListSurface" class="section">
+      <view class="section__head">
+        <view class="section__title">业务数据</view>
+        <view class="section__count">{{ recordCountLabel }}</view>
+      </view>
+      <view v-if="dataLoading" class="empty">正在读取业务数据...</view>
+      <view v-else-if="dataError" class="empty empty--error">{{ dataError }}</view>
+      <view v-else-if="records.length" class="record-list">
+        <view v-for="record in records" :key="recordKey(record)" class="record-card">
+          <view v-for="field in displayFields" :key="field.fieldCode" class="record-row">
+            <text class="record-row__label">{{ field.label }}</text>
+            <text class="record-row__value">{{ formatValue(record[field.fieldCode]) }}</text>
+          </view>
+        </view>
+      </view>
+      <view v-else class="empty">当前没有可显示的数据</view>
+    </view>
+
     <view v-else class="section">
       <view class="section__head">
         <view class="section__title">字段组件</view>
         <view class="section__count">{{ widgets.length }} 项</view>
       </view>
-      <view v-if="widgets.length" class="field-list">
-        <view v-for="widget in widgets" :key="widget.widgetId" class="field-row">
+      <view v-if="displayFields.length" class="field-list">
+        <view v-for="widget in displayFields" :key="widget.widgetId" class="field-row">
           <view class="field-row__main">
             <text class="field-row__label">{{ widget.label }}</text>
             <text class="field-row__code">{{ widget.fieldCode }}</text>
@@ -85,6 +103,10 @@ const loading = ref(false);
 const error = ref('');
 const contract = ref<Dict | null>(null);
 const routeQuery = ref<Dict>({});
+const dataLoading = ref(false);
+const dataError = ref('');
+const records = ref<Dict[]>([]);
+const recordTotal = ref<number | null>(null);
 
 const pageInfo = computed(() => asDict(contract.value?.pageInfo));
 const layoutContract = computed(() => asDict(contract.value?.layoutContract));
@@ -96,7 +118,13 @@ const contractVersion = computed(() => asText(pageInfo.value.contractVersion));
 const clientType = computed(() => asText(pageInfo.value.clientType, CLIENT_TYPE));
 const adaptMode = computed(() => asText(layoutContract.value.adaptMode));
 const widgets = computed(() => collectWidgets(layoutContract.value));
+const displayFields = computed(() => widgets.value.filter(isBusinessDisplayField).slice(0, 8));
 const actions = computed(() => collectActions(actionContract.value));
+const isListSurface = computed(() => ['list', 'tree', 'kanban', 'table'].includes(viewTypeLabel.value));
+const recordCountLabel = computed(() => {
+  if (recordTotal.value !== null) return `${recordTotal.value} 条`;
+  return `${records.value.length} 条`;
+});
 
 function readStorage(key: string): string {
   try {
@@ -190,12 +218,60 @@ async function loadContract() {
         limit: 20,
       },
     });
-    contract.value = asDict(response.data);
+    const nextContract = asDict(response.data);
+    contract.value = nextContract;
+    await loadRecords(endpoint, token, nextContract);
   } catch (err) {
     error.value = normalizeError(err);
     contract.value = null;
+    records.value = [];
+    recordTotal.value = null;
   } finally {
     loading.value = false;
+  }
+}
+
+async function loadRecords(endpoint: string, token: string, nextContract: Dict) {
+  const info = asDict(nextContract.pageInfo);
+  const model = asText(info.model);
+  const viewType = asText(info.viewType);
+  if (!model || !['list', 'tree', 'kanban', 'table'].includes(viewType)) {
+    records.value = [];
+    recordTotal.value = null;
+    dataError.value = '';
+    return;
+  }
+  const fields = collectWidgets(asDict(nextContract.layoutContract))
+    .filter(isBusinessDisplayField)
+    .map((item) => item.fieldCode)
+    .filter((field, index, all) => field && all.indexOf(field) === index)
+    .slice(0, 12);
+  if (!fields.length) fields.push('display_name');
+  if (!fields.includes('id')) fields.unshift('id');
+  dataLoading.value = true;
+  dataError.value = '';
+  try {
+    const response = await requestIntent(endpoint, token, {
+      intent: 'api.data',
+      params: {
+        op: 'list',
+        model,
+        fields,
+        limit: 20,
+        offset: 0,
+        need_total: true,
+      },
+    });
+    const data = asDict(response.data);
+    records.value = asList(data.records).map((item) => asDict(item));
+    const total = Number(data.total);
+    recordTotal.value = Number.isFinite(total) ? total : null;
+  } catch (err) {
+    records.value = [];
+    recordTotal.value = null;
+    dataError.value = normalizeError(err);
+  } finally {
+    dataLoading.value = false;
   }
 }
 
@@ -250,8 +326,46 @@ function collectActions(action: Dict): ContractAction[] {
     .filter((item) => item.actionId);
 }
 
+function isBusinessDisplayField(widget: ContractWidget): boolean {
+  const field = widget.fieldCode;
+  if (!field || field === 'id' || field.startsWith('__')) return false;
+  const technicalPrefixes = [
+    'access_',
+    'activity_',
+    'message_',
+    'website_',
+  ];
+  if (technicalPrefixes.some((prefix) => field.startsWith(prefix))) return false;
+  const technicalFields = new Set([
+    'active',
+    'create_date',
+    'create_uid',
+    'display_name',
+    'write_date',
+    'write_uid',
+  ]);
+  return !technicalFields.has(field);
+}
+
 function selectAction(actionId: string) {
   uni.showToast({ title: actionId, icon: 'none' });
+}
+
+function recordKey(record: Dict): string {
+  return asText(record.id, JSON.stringify(record));
+}
+
+function formatValue(value: unknown): string {
+  if (Array.isArray(value)) {
+    if (value.length >= 2) return asText(value[1], asText(value[0], '-'));
+    return value.map((item) => asText(item)).filter(Boolean).join(', ') || '-';
+  }
+  if (value && typeof value === 'object') {
+    const row = asDict(value);
+    return asText(row.display_name || row.name || row.label || row.value, '-');
+  }
+  if (value === false || value === null || value === undefined || value === '') return '-';
+  return String(value);
 }
 
 onLoad((query) => {
@@ -442,6 +556,54 @@ onShow(loadContract);
 .empty {
   color: #667789;
   font-size: 24rpx;
+}
+
+.empty--error {
+  color: #9f2f2f;
+}
+
+.record-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.record-card {
+  padding: 18rpx 16rpx;
+  border: 1rpx solid #e6ebf1;
+  border-radius: 8rpx;
+  background: #fbfcfd;
+}
+
+.record-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 18rpx;
+  padding: 8rpx 0;
+}
+
+.record-row:first-child {
+  padding-top: 0;
+}
+
+.record-row:last-child {
+  padding-bottom: 0;
+}
+
+.record-row__label {
+  flex: 0 0 168rpx;
+  color: #667789;
+  font-size: 22rpx;
+  line-height: 1.35;
+}
+
+.record-row__value {
+  flex: 1;
+  min-width: 0;
+  color: #17202a;
+  font-size: 25rpx;
+  line-height: 1.35;
+  word-break: break-word;
 }
 
 .action-list {
