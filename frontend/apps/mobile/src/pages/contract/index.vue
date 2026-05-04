@@ -49,18 +49,27 @@
       <view v-else class="empty">当前没有可显示的数据</view>
     </view>
 
-    <view v-else-if="recordRows.length" class="section">
+    <view v-else-if="recordRows.length || relationBlocks.length" class="section">
       <view class="section__head">
         <view class="section__title">业务记录</view>
-        <view class="section__count">{{ recordRows.length }} 项</view>
+        <view class="section__count">{{ recordRows.length + relationBlocks.length }} 项</view>
       </view>
-      <view class="field-list">
+      <view v-if="recordRows.length" class="field-list">
         <view v-for="row in recordRows" :key="row.fieldCode" class="field-row field-row--value">
           <view class="field-row__main">
             <text class="field-row__label">{{ row.label }}</text>
             <text class="field-row__code">{{ row.fieldCode }}</text>
           </view>
           <view class="field-row__value">{{ row.value }}</view>
+        </view>
+      </view>
+      <view v-if="relationBlocks.length" class="relation-list">
+        <view v-for="block in relationBlocks" :key="block.widgetId" class="relation-block">
+          <view class="relation-block__head">
+            <text class="relation-block__title">{{ block.label }}</text>
+            <text class="relation-block__count">{{ block.rowCount }} 行</text>
+          </view>
+          <view v-for="row in block.rows" :key="row.key" class="relation-block__row">{{ row.summary }}</view>
         </view>
       </view>
     </view>
@@ -131,6 +140,7 @@ interface ContractWidget {
   fieldCode: string;
   label: string;
   componentKey: string;
+  dataKey: string;
   dictKey: string;
   blockType: string;
   visible: boolean;
@@ -157,6 +167,19 @@ interface RecordRow {
   value: string;
 }
 
+interface RelationBlock {
+  widgetId: string;
+  fieldCode: string;
+  label: string;
+  rowCount: number;
+  rows: RelationDisplayRow[];
+}
+
+interface RelationDisplayRow {
+  key: string;
+  summary: string;
+}
+
 const TARGET_MODEL = 'construction.contract';
 const TARGET_VIEW_TYPE = 'tree';
 const CLIENT_TYPE = 'harmony_h5';
@@ -175,6 +198,7 @@ const runningActionId = ref('');
 const pageInfo = computed(() => asDict(contract.value?.pageInfo));
 const layoutContract = computed(() => asDict(contract.value?.layoutContract));
 const actionContract = computed(() => asDict(contract.value?.actionContract));
+const dataContract = computed(() => asDict(contract.value?.dataContract));
 const statusContract = computed(() => asDict(contract.value?.statusContract));
 const globalStatus = computed(() => collectGlobalStatus(statusContract.value));
 const isPageReadable = computed(() => {
@@ -207,6 +231,7 @@ const recordRows = computed<RecordRow[]>(() => {
     value: formatFieldValue(field, record[field.fieldCode]),
   }));
 });
+const relationBlocks = computed<RelationBlock[]>(() => collectRelationBlocks(widgets.value, dataContract.value));
 const recordCountLabel = computed(() => {
   if (recordTotal.value !== null) return `${recordTotal.value} 条`;
   return `${records.value.length} 条`;
@@ -467,6 +492,7 @@ function collectWidgets(layout: Dict, status: Dict): ContractWidget[] {
           fieldCode: asText(widget.fieldCode),
           label: asText(widget.label, asText(widget.fieldCode, widgetId)),
           componentKey: asText(widget.componentKey),
+          dataKey: asText(asDict(widget.componentConfig).dataKey),
           dictKey: asText(asDict(widget.componentConfig).dictKey),
           blockType: asText(asDict(widget.componentConfig).blockType),
           visible: widgetState.visible !== false && nextState.visible !== false,
@@ -616,6 +642,44 @@ function collectActions(action: Dict, status: Dict): ContractAction[] {
       };
     })
     .filter((item) => item.actionId && item.visible);
+}
+
+function collectRelationBlocks(sourceWidgets: ContractWidget[], currentDataContract: Dict): RelationBlock[] {
+  const relationRows = asDict(currentDataContract.relationRows);
+  return sourceWidgets
+    .filter((widget) => widget.visible && isRelationWidget(widget))
+    .map((widget) => {
+      const dataKey = asText(widget.dataKey, widget.fieldCode);
+      const rows = asList(relationRows[dataKey]).map((item) => asDict(item)).filter((item) => Object.keys(item).length);
+      return {
+        widgetId: widget.widgetId,
+        fieldCode: widget.fieldCode,
+        label: widget.label,
+        rowCount: rows.length,
+        rows: rows.slice(0, 5).map((row, index) => ({
+          key: asText(row.id, `${widget.widgetId}.${index}`),
+          summary: formatRelationRow(row),
+        })),
+      };
+    })
+    .filter((block) => block.rowCount > 0);
+}
+
+function isRelationWidget(widget: ContractWidget): boolean {
+  const type = widget.widgetType.toLowerCase();
+  const component = widget.componentKey.toLowerCase();
+  return type === 'table' || type === 'relation' || component.includes('table') || component.includes('relation');
+}
+
+function formatRelationRow(row: Dict): string {
+  const preferred = asText(row.display_name || row.name || row.label);
+  if (preferred) return preferred;
+  const parts = Object.entries(row)
+    .filter(([key]) => key !== 'id' && !key.startsWith('__'))
+    .slice(0, 3)
+    .map(([key, value]) => `${key}: ${formatValue(value)}`)
+    .filter((item) => item.trim());
+  return parts.join(' · ') || asText(row.id, '-');
 }
 
 function resolvePrimaryDataSource(nextContract: Dict): Dict {
@@ -1058,6 +1122,55 @@ onShow(loadContract);
   display: flex;
   flex-direction: column;
   gap: 12rpx;
+}
+
+.relation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  margin-top: 14rpx;
+}
+
+.relation-block {
+  padding: 16rpx;
+  border: 1rpx solid #e1e8ee;
+  border-radius: 8rpx;
+  background: #f8fafb;
+}
+
+.relation-block__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 10rpx;
+}
+
+.relation-block__title,
+.relation-block__count,
+.relation-block__row {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.relation-block__title {
+  color: #17202a;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.relation-block__count {
+  flex: 0 0 auto;
+  color: #667789;
+  font-size: 21rpx;
+}
+
+.relation-block__row {
+  padding: 8rpx 0;
+  color: #344154;
+  font-size: 22rpx;
+  border-top: 1rpx solid #e8edf2;
 }
 
 .field-row {
