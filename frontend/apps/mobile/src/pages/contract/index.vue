@@ -39,7 +39,7 @@
         <view v-for="record in records" :key="recordKey(record)" class="record-card" @click="openRecord(record)">
           <view v-for="field in displayFields" :key="field.fieldCode" class="record-row">
             <text class="record-row__label">{{ field.label }}</text>
-            <text class="record-row__value">{{ formatValue(record[field.fieldCode]) }}</text>
+            <text class="record-row__value">{{ formatFieldValue(field, record[field.fieldCode]) }}</text>
           </view>
         </view>
         <button v-if="canLoadMore" class="load-more" :disabled="dataLoading" @click="loadMoreRecords">
@@ -131,6 +131,7 @@ interface ContractWidget {
   fieldCode: string;
   label: string;
   componentKey: string;
+  dictKey: string;
   blockType: string;
   visible: boolean;
   readonly: boolean;
@@ -203,7 +204,7 @@ const recordRows = computed<RecordRow[]>(() => {
   return displayFields.value.map((field) => ({
     fieldCode: field.fieldCode,
     label: field.label,
-    value: formatValue(record[field.fieldCode]),
+    value: formatFieldValue(field, record[field.fieldCode]),
   }));
 });
 const recordCountLabel = computed(() => {
@@ -466,6 +467,7 @@ function collectWidgets(layout: Dict, status: Dict): ContractWidget[] {
           fieldCode: asText(widget.fieldCode),
           label: asText(widget.label, asText(widget.fieldCode, widgetId)),
           componentKey: asText(widget.componentKey),
+          dictKey: asText(asDict(widget.componentConfig).dictKey),
           blockType: asText(asDict(widget.componentConfig).blockType),
           visible: widgetState.visible !== false && nextState.visible !== false,
           readonly: widgetState.readonly === true || nextState.disabled === true,
@@ -885,6 +887,26 @@ function openRecord(record: Dict) {
 
 function recordKey(record: Dict): string {
   return asText(record.id, JSON.stringify(record));
+}
+
+function formatFieldValue(field: ContractWidget, value: unknown): string {
+  const dictLabel = resolveDictLabel(field, value);
+  return dictLabel || formatValue(value);
+}
+
+function resolveDictLabel(field: ContractWidget, value: unknown): string {
+  const dictData = asDict(asDict(contract.value?.dataContract).dictData);
+  const dictKey = asText(field.dictKey, field.fieldCode);
+  const rows = asList(dictData[dictKey]);
+  const rawValue = Array.isArray(value) ? value[0] : value;
+  const rawText = asText(rawValue);
+  if (!rawText) return '';
+  for (const item of rows) {
+    const row = asDict(item);
+    const optionValue = asText(row.value || row.key || row.id);
+    if (optionValue === rawText) return asText(row.label || row.name || row.display_name);
+  }
+  return '';
 }
 
 function formatValue(value: unknown): string {

@@ -94,6 +94,9 @@ def main() -> int:
     for token in ("hydrateInlineRecords", "hasInlineData", "hasInlineRows", "firstInlineRows", "firstRecordList", "dataContract.mainData", "dataContract.tableRows", "dataContract.treeData"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must render v2 inline dataContract rows token: {token}")
+    for token in ("dictKey", "formatFieldValue", "resolveDictLabel", "dictData[dictKey]", "row.label || row.name || row.display_name"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must map v2 dictData labels token: {token}")
     for token in ("globalPatch", "containerPatchRows", "mergeStatusRows(asList(currentStatus.containerStatus), containerPatchRows, 'containerId')", "...asDict(currentStatus.globalStatus), ...globalPatch"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must merge v2 statusPatch token: {token}")
