@@ -1305,6 +1305,7 @@ function applyOnchangeDataPatch(response: Dict) {
     records.value = [{ ...records.value[0], ...patch }, ...records.value.slice(1)];
   }
   applyOnchangeModifiersPatch(data.modifiers_patch || data.modifiersPatch);
+  applyOnchangeLinePatches(data.line_patches || data.linePatches);
 }
 
 function applyOnchangeModifiersPatch(raw: unknown) {
@@ -1319,6 +1320,11 @@ function applyOnchangeModifiersPatch(raw: unknown) {
     })
     .filter((row) => Object.keys(row).length > 1);
   if (rows.length) applyUnifiedPagePatchV2({ statusPatch: { widgetStatus: rows } });
+}
+
+function applyOnchangeLinePatches(raw: unknown) {
+  const rows = asList(raw).map((item) => asDict(item)).filter((row) => Object.keys(row).length);
+  if (rows.length) applyUnifiedPagePatchV2({ dataPatch: { relationRows: { line_patches: rows } } });
 }
 
 function isExecutableCommandAction(action: ContractAction): boolean {

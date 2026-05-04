@@ -154,6 +154,9 @@ def main() -> int:
     for token in ("applyOnchangeModifiersPatch", "data.modifiers_patch || data.modifiersPatch", "Object.entries(asDict(raw))", "widgetId: `field.${fieldCode}`", "status.readonly = Boolean(row.readonly)", "status.required = Boolean(row.required)", "status.visible = !row.invisible", "applyUnifiedPagePatchV2({ statusPatch: { widgetStatus: rows } })"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must fallback onchange modifiers_patch token: {token}")
+    for token in ("applyOnchangeLinePatches", "data.line_patches || data.linePatches", "asList(raw).map((item) => asDict(item))", "applyUnifiedPagePatchV2({ dataPatch: { relationRows: { line_patches: rows } } })"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must fallback onchange line_patches token: {token}")
     for token in ("applyResponseUnifiedPagePatch", "response.unified_page_patch_v2", "data.unified_page_patch_v2 || data.unifiedPagePatchV2", "applyUnifiedPagePatchV2(patch)", "appliedPatch && normalizeRefreshMode(action.refreshMode) === 'none'"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must consume v2 action response patch token: {token}")
