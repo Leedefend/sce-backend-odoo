@@ -181,6 +181,9 @@ def main() -> int:
     for token in ("showActionResponseFeedback", "firstResponseWarning", "response.warnings", "data.warnings", "effect.message || result.message || data.message", "type === 'toast'", "uni.showToast({ title: message.slice(0, 48)"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must expose v2 action feedback token: {token}")
+    for token in ("warningMessages", "warningTimer", "warning-stack", "collectResponseWarnings", "pushWarningMessages", "clearWarningMessages", "warningMessages.value = next", "setTimeout(() => {", "warningMessages.value = []", "slice(0, 4)"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must keep durable v2 warning feedback token: {token}")
     for token in ("parseMaybeJsonRecord", "actionTargetModel", "actionExecutionContext", "target.target_model", "target.view_mode", "context,"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must preserve v2 action target/button metadata token: {token}")

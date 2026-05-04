@@ -32,6 +32,12 @@
       </view>
     </view>
 
+    <view v-if="warningMessages.length" class="warning-stack">
+      <view v-for="message in warningMessages" :key="message" class="warning-stack__item">
+        {{ message }}
+      </view>
+    </view>
+
     <view v-if="loading" class="state">正在读取契约...</view>
     <view v-else-if="error" class="state state--error">
       <text>{{ error }}</text>
@@ -291,7 +297,9 @@ const relationLoadingKey = ref('');
 const relationErrorKey = ref('');
 const relationError = ref('');
 const many2OneLoadingKey = ref('');
+const warningMessages = ref<string[]>([]);
 let fieldActionTimer: ReturnType<typeof setTimeout> | null = null;
+let warningTimer: ReturnType<typeof setTimeout> | null = null;
 
 const pageInfo = computed(() => asDict(contract.value?.pageInfo));
 const layoutContract = computed(() => asDict(contract.value?.layoutContract));
@@ -472,6 +480,7 @@ async function loadContract() {
 
   loading.value = true;
   error.value = '';
+  clearWarningMessages();
   try {
     const endpoint = `${baseUrl}/api/v1/intent?db=${encodeURIComponent(dbName)}`;
     const targetParams = buildTargetParams();
@@ -1783,25 +1792,52 @@ function showActionResponseFeedback(response: Dict) {
   const data = asDict(response.data);
   const result = asDict(data.result);
   const effect = asDict(data.effect);
+  const warnings = collectResponseWarnings(response);
+  if (warnings.length) pushWarningMessages(warnings);
   const warning = firstResponseWarning(response);
   const message = warning || asText(effect.message || result.message || data.message);
   if (message) uni.showToast({ title: message.slice(0, 48), icon: warning ? 'none' : 'success' });
 }
 
 function firstResponseWarning(response: Dict): string {
+  return collectResponseWarnings(response)[0] || '';
+}
+
+function collectResponseWarnings(response: Dict): string[] {
   const data = asDict(response.data);
   const rows = [
     ...asList(response.warnings),
     ...asList(data.warnings),
     ...asList(data.warning ? [data.warning] : []),
   ];
-  for (const item of rows) {
-    if (typeof item === 'string') return asText(item);
-    const row = asDict(item);
-    const message = asText(row.message || row.title || row.reason_code || row.reasonCode);
-    if (message) return message;
+  return rows
+    .map((item) => {
+      if (typeof item === 'string') return asText(item);
+      const row = asDict(item);
+      return asText(row.message || row.title || row.reason_code || row.reasonCode);
+    })
+    .filter((message, index, all) => message && all.indexOf(message) === index)
+    .slice(0, 3);
+}
+
+function pushWarningMessages(messages: string[]) {
+  const next = [...messages, ...warningMessages.value]
+    .filter((message, index, all) => message && all.indexOf(message) === index)
+    .slice(0, 4);
+  warningMessages.value = next;
+  if (warningTimer) clearTimeout(warningTimer);
+  warningTimer = setTimeout(() => {
+    warningMessages.value = [];
+    warningTimer = null;
+  }, 8000);
+}
+
+function clearWarningMessages() {
+  warningMessages.value = [];
+  if (warningTimer) {
+    clearTimeout(warningTimer);
+    warningTimer = null;
   }
-  return '';
 }
 
 function normalizeRefreshMode(value: unknown): string {
@@ -2064,6 +2100,23 @@ onShow(loadContract);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.warning-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  margin-bottom: 22rpx;
+}
+
+.warning-stack__item {
+  padding: 16rpx 18rpx;
+  border: 1rpx solid #f0d28a;
+  border-radius: 8rpx;
+  background: #fff8e6;
+  color: #7a4d05;
+  font-size: 23rpx;
+  line-height: 1.35;
 }
 
 .state {

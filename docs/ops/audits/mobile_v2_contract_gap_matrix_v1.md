@@ -44,6 +44,7 @@ option refresh, and real terminal acceptance.
 | layout/runtime patch preservation | Closed | `layoutPatch` and `runtimePatch` preserve top-level contract sections. |
 | action response patch | Closed | execute-button responses can apply `unified_page_patch_v2`. |
 | action feedback | Closed | warnings, result messages, effect messages, and toast effects are surfaced. |
+| durable warning feedback | Closed | response warnings are kept in a transient page-level warning stack near the header. |
 | action refreshMode | Closed | `none`, `partial`, and `full` refresh modes are honored. |
 | action target dependencies | Closed | `targetIds` and `dependencyGraph` can escalate partial refresh to full contract reload. |
 | meta/runtime observability | Closed | trace/request/etag/snapshot and runtime cache/retry policy are visible in the summary. |
@@ -70,7 +71,7 @@ option refresh, and real terminal acceptance.
 | M2-G02 | P1 | Partial | `boolean`, `selection`, local dict-backed `many2one`, remote option bootstrap, and domain-aware many2one refetch now have compact controls; dynamic typeahead search remains open. | Implement mobile many2one typeahead/search UI if needed for large datasets. |
 | M2-G03 | P1 | Open | `date` and `datetime` are accepted as editable widget types but still use text input because cross-terminal picker behavior is not wired. | Add terminal-safe date/datetime control wrappers. |
 | M2-G04 | P1 | Closed | standard v2 actions `form.save`, `form.validate`, and `record.delete` now have a bounded mobile intent dispatch path; full native-grade Odoo form semantics remain deferred. | Monitor backend intent compatibility and add terminal acceptance coverage. |
-| M2-G05 | P2 | Open | onchange warnings are surfaced via toast only; there is no durable page-level warning area. | Add transient warning stack near the form header. |
+| M2-G05 | P2 | Closed | warnings are surfaced via toast and retained in a transient page-level warning stack near the header. | Monitor terminal acceptance and tune duration/copy if needed. |
 | M2-G06 | P2 | Open | x2many row editing UI is not implemented; only rendering, pagination, remote loading, and patch application exist. | Add bounded relation row edit/add/remove controls. |
 | M2-G07 | P2 | Open | `targetScope=dataSource/runtime` has no specialized mobile policy beyond current full/partial refresh handling. | Add targetScope-specific refresh plan only after field controls stabilize. |
 | M2-G08 | P2 | Open | runtime cache/retry policy is visible but not used to drive client retry behavior. | Add retry policy executor around requestIntent. |
@@ -94,7 +95,7 @@ Recommended next sequence:
 1. `M2-G02`: decide whether many2one typeahead/search UI is needed for large datasets.
 2. `M2-G01`: close selection domain refresh if remote selection sources are declared.
 3. `M2-G09`: add real terminal acceptance evidence.
-4. `M2-G05/M2-G10`: improve durable warnings and visual proof.
+4. `M2-G10`: improve visual proof.
 5. `M2-G03/M2-G08`: add date/datetime controls or runtime retry policy.
 
 ## Verification Gates
