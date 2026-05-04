@@ -1,4 +1,5 @@
 import { computed, type Ref } from 'vue';
+import { resolveUnifiedPageContractV2SelectorStatus } from '../contracts/unifiedPageContractV2';
 
 type Dict = Record<string, unknown>;
 
@@ -55,7 +56,18 @@ function isGroupByFilter(row: Record<string, unknown>, context: Dict): boolean {
   return !domain.length && !domainRaw;
 }
 
+function selectorTokens(...items: unknown[]): string[] {
+  return items
+    .map((item) => String(item || '').trim())
+    .filter(Boolean);
+}
+
 export function useActionViewFilterComputedRuntime(options: UseActionViewFilterComputedRuntimeOptions) {
+  function isSelectorEnabled(selectors: string[]): boolean {
+    const status = resolveUnifiedPageContractV2SelectorStatus(options.actionContract.value, selectors);
+    return status?.visible !== false && status?.disabled !== true;
+  }
+
   const contractFilterChips = computed(() => {
     const rows = options.actionContract.value?.search?.filters;
     if (!Array.isArray(rows)) return [];
@@ -66,6 +78,7 @@ export function useActionViewFilterComputedRuntime(options: UseActionViewFilterC
         if (!key || !label) return null;
         if (options.isActionViewNumericToken(key) || options.isActionViewNumericToken(label)) return null;
         if (options.hasActionViewNoiseMarker(key, label, row?.domain_raw, row?.context_raw)) return null;
+        if (!isSelectorEnabled(selectorTokens(`filter.${key}`, key))) return null;
         const domain = Array.isArray(row?.domain) ? row.domain : [];
         const domainRaw = String(row?.domain_raw || '').trim();
         const contextRaw = String(row?.context_raw || '').trim();
@@ -102,6 +115,7 @@ export function useActionViewFilterComputedRuntime(options: UseActionViewFilterC
         if (!key || !label) return null;
         if (options.isActionViewNumericToken(key) || options.isActionViewNumericToken(label)) return null;
         if (options.hasActionViewNoiseMarker(key, label, raw.domain_raw, raw.context_raw)) return null;
+        if (!isSelectorEnabled(selectorTokens(`saved_filter.${key}`, key))) return null;
         const domain = Array.isArray(raw.domain) ? raw.domain : [];
         const domainRaw = String(raw.domain_raw || '').trim();
         const contextRaw = String(raw.context_raw || '').trim();
@@ -139,8 +153,9 @@ export function useActionViewFilterComputedRuntime(options: UseActionViewFilterC
         const label = String(raw.label || raw.string || raw.name || field).trim();
         if (!field || !label) return null;
         if (seen.has(field)) return null;
-        seen.add(field);
         if (options.isActionViewNumericToken(field) || options.isActionViewNumericToken(label)) return null;
+        if (!isSelectorEnabled(selectorTokens(`group.${field}`, field))) return null;
+        seen.add(field);
         const isDefault = raw.default === true || raw.is_default === true;
         return { key: field, field, label, context, contextRaw, isDefault };
       })
@@ -161,6 +176,7 @@ export function useActionViewFilterComputedRuntime(options: UseActionViewFilterC
         const type = String(raw.type || 'char').trim();
         if (!field || !label) return null;
         if (options.isActionViewNumericToken(field) || options.isActionViewNumericToken(label)) return null;
+        if (!isSelectorEnabled(selectorTokens(`custom_filter.${field}`, `filter.${field}`, field))) return null;
         const operators = Array.isArray(raw.operators) ? raw.operators : [];
         const choices = Array.isArray(raw.choices) ? raw.choices : [];
         return { field, label, type, operators, choices };
@@ -181,8 +197,9 @@ export function useActionViewFilterComputedRuntime(options: UseActionViewFilterC
         const field = String(raw.field || '').trim();
         const label = String(raw.label || field).trim();
         if (!field || !label || seen.has(field)) return null;
-        seen.add(field);
         if (options.isActionViewNumericToken(field) || options.isActionViewNumericToken(label)) return null;
+        if (!isSelectorEnabled(selectorTokens(`custom_group.${field}`, `group.${field}`, field))) return null;
+        seen.add(field);
         return { key: field, field, label, context: {}, contextRaw: '', isDefault: false, custom: true };
       })
       .filter(Boolean)

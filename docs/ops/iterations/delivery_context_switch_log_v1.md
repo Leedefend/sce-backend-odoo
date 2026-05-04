@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-04T23:04:25+08:00
+- blocker_key: `web_action_view_v2_selector_status_batch`
+- layer_target: `Frontend Contract Consumer`
+- module: `frontend/apps/web/src/app/contracts + frontend/apps/web/src/app/action_runtime/useActionViewFilterComputedRuntime.ts + scripts/verify`
+- reason: `web 已消费 v2 widgetStatus/buttonStatus，但搜索、筛选、收藏筛选、自定义筛选与分组控件仍未遵守后端 StatusContract.selectorStatus。`
+- completed_step: `新增 collectUnifiedPageContractV2SelectorStatus 与 resolveUnifiedPageContractV2SelectorStatus，支持 exact selector 与 prefix.* 匹配；ActionView filter runtime 对 filter/saved_filter/group/custom_filter/custom_group 控件应用 selectorStatus，visible=false 或 disabled=true 时不渲染；web v2 guard 增加 selectorStatus 消费门禁。`
+- verification: `python3 scripts/verify/web_unified_page_contract_v2_guard.py PASS；python3 -m py_compile scripts/verify/web_unified_page_contract_v2_guard.py PASS；pnpm --dir frontend/apps/web run typecheck PASS；make verify.unified_page_contract.v2 PASS；git diff --check PASS。`
+- active_commit: `e6a26028`
+- next_step: `提交 web_action_view_v2_selector_status_batch；下一批可继续补 v2 globalStatus/containerStatus 的 web 渲染约束或 actionRuleList 直接消费。`
+
 ### 2026-05-04T23:00:20+08:00
 - blocker_key: `web_action_view_v2_button_status_batch`
 - layer_target: `Frontend Contract Consumer`

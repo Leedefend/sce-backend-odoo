@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 WEB_CONTRACT_API = ROOT / "frontend/apps/web/src/api/contract.ts"
 WEB_CONTRACT_V2 = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractV2.ts"
 WEB_ACTION_SHAPE = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewContractShapeRuntime.ts"
+WEB_FILTER_COMPUTED = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewFilterComputedRuntime.ts"
 WEB_ACTION_NAV = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewNavigationRuntime.ts"
 WEB_ACTION_PREFLIGHT = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewLoadPreflightRuntime.ts"
 WEB_ACTION_LOAD_REQUEST = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewLoadRequestRuntime.ts"
@@ -29,6 +30,7 @@ def main() -> int:
         errors.append("frontend web contract API is missing")
     v2_source = WEB_CONTRACT_V2.read_text(encoding="utf-8") if WEB_CONTRACT_V2.exists() else ""
     shape_source = WEB_ACTION_SHAPE.read_text(encoding="utf-8") if WEB_ACTION_SHAPE.exists() else ""
+    filter_source = WEB_FILTER_COMPUTED.read_text(encoding="utf-8") if WEB_FILTER_COMPUTED.exists() else ""
     nav_source = WEB_ACTION_NAV.read_text(encoding="utf-8") if WEB_ACTION_NAV.exists() else ""
     preflight_source = WEB_ACTION_PREFLIGHT.read_text(encoding="utf-8") if WEB_ACTION_PREFLIGHT.exists() else ""
     load_request_source = WEB_ACTION_LOAD_REQUEST.read_text(encoding="utf-8") if WEB_ACTION_LOAD_REQUEST.exists() else ""
@@ -61,6 +63,8 @@ def main() -> int:
         "collectUnifiedPageContractV2FieldStatus",
         "collectUnifiedPageContractV2WidgetStatus",
         "collectUnifiedPageContractV2ButtonStatus",
+        "collectUnifiedPageContractV2SelectorStatus",
+        "resolveUnifiedPageContractV2SelectorStatus",
         "layoutContract",
         "dataContract",
         "resolveUnifiedPageContractV2PrimaryDataSource",
@@ -85,6 +89,8 @@ def main() -> int:
         errors.append("web record view must honor v2 button visible/disabled state after record runtime mapping")
     if "collectUnifiedPageContractV2FieldStatus" not in shape_source:
         errors.append("web list shape runtime must honor v2 widget status for default column visibility")
+    if "resolveUnifiedPageContractV2SelectorStatus" not in filter_source or "isSelectorEnabled" not in filter_source:
+        errors.append("web filter runtime must honor v2 selectorStatus for search/filter/group controls")
     if "pageInfo?.model" not in shape_source:
         errors.append("web model resolver must prefer v2 pageInfo.model before legacy model fallbacks")
     if "resolveUnifiedPageContractV2" not in surface_source:

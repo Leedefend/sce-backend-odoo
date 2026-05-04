@@ -50,6 +50,15 @@ export type UnifiedPageContractV2ButtonStatus = {
   reasonCode?: string;
 };
 
+export type UnifiedPageContractV2SelectorStatus = {
+  selector: string;
+  visible?: boolean;
+  readonly?: boolean;
+  required?: boolean;
+  disabled?: boolean;
+  reasonCode?: string;
+};
+
 export type UnifiedPageContractV2 = {
   pageInfo: {
     pageId: string;
@@ -191,6 +200,50 @@ export function collectUnifiedPageContractV2ButtonStatus(contract: unknown): Rec
     };
     return acc;
   }, {});
+}
+
+export function collectUnifiedPageContractV2SelectorStatus(contract: unknown): UnifiedPageContractV2SelectorStatus[] {
+  const v2 = resolveUnifiedPageContractV2(contract);
+  if (!v2) return [];
+  const status = asDict(v2.statusContract);
+  return asList(status.selectorStatus).reduce<UnifiedPageContractV2SelectorStatus[]>((acc, item) => {
+    const row = asDict(item);
+    const selector = asText(row.selector);
+    if (!selector) return acc;
+    acc.push({
+      selector,
+      visible: typeof row.visible === 'boolean' ? row.visible : undefined,
+      readonly: typeof row.readonly === 'boolean' ? row.readonly : undefined,
+      required: typeof row.required === 'boolean' ? row.required : undefined,
+      disabled: typeof row.disabled === 'boolean' ? row.disabled : undefined,
+      reasonCode: asText(row.reasonCode || row.reason_code) || undefined,
+    });
+    return acc;
+  }, []);
+}
+
+function matchesUnifiedPageContractV2Selector(pattern: string, selector: string): boolean {
+  if (!pattern || !selector) return false;
+  if (pattern === selector) return true;
+  if (pattern.endsWith('.*')) {
+    const prefix = pattern.slice(0, -1);
+    return selector.startsWith(prefix);
+  }
+  return false;
+}
+
+export function resolveUnifiedPageContractV2SelectorStatus(
+  contract: unknown,
+  selectors: string[],
+): UnifiedPageContractV2SelectorStatus | null {
+  const normalized = selectors.map((item) => asText(item)).filter(Boolean);
+  if (!normalized.length) return null;
+  for (const row of collectUnifiedPageContractV2SelectorStatus(contract)) {
+    if (normalized.some((selector) => matchesUnifiedPageContractV2Selector(row.selector, selector))) {
+      return row;
+    }
+  }
+  return null;
 }
 
 export function collectUnifiedPageContractV2FieldStatus(contract: unknown): Record<string, UnifiedPageContractV2WidgetStatus> {
