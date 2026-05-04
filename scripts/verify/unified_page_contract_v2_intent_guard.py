@@ -91,6 +91,9 @@ def main() -> int:
     for token in ("tableRowsPatch", "relationRowsPatch", "treeDataPatch", "ganttDataPatch", "dictDataPatch", "paginationPatch", "hasDataContractPatch", "dataContract: nextData"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must merge v2 dataPatch token: {token}")
+    for token in ("mergeRowsByDataKey", "extractPatchRows", "isReplaceDataPatch", "syncRecordsFromDataPatch(nextData)", "patch.updateType === 'full'", "rowOperation === 'replace'", "mergeRowsById(asList(baseRowsByKey[key])"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must preserve v2 row patch merge semantics token: {token}")
     for token in ("hydrateInlineRecords", "hasInlineData", "hasInlineRows", "firstInlineRows", "firstRecordList", "dataContract.mainData", "dataContract.tableRows", "dataContract.treeData"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must render v2 inline dataContract rows token: {token}")

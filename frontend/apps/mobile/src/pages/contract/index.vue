@@ -736,12 +736,13 @@ function applyUnifiedPagePatchV2(patchRaw: unknown) {
   const currentRuntime = asDict(current.runtimeContract);
   const currentStatus = asDict(current.statusContract);
   const nextLayout = hasLayoutPatch ? { ...currentLayout, ...layoutPatch } : currentLayout;
+  const replaceRows = isReplaceDataPatch(patch, dataPatch);
   const nextData = {
     ...currentData,
     mainData: { ...asDict(currentData.mainData), ...mainData },
-    tableRows: { ...asDict(currentData.tableRows), ...tableRowsPatch },
-    relationRows: { ...asDict(currentData.relationRows), ...relationRowsPatch },
-    treeData: { ...asDict(currentData.treeData), ...treeDataPatch },
+    tableRows: mergeRowsByDataKey(asDict(currentData.tableRows), tableRowsPatch, replaceRows),
+    relationRows: mergeRowsByDataKey(asDict(currentData.relationRows), relationRowsPatch, replaceRows),
+    treeData: mergeRowsByDataKey(asDict(currentData.treeData), treeDataPatch, replaceRows),
     ganttData: { ...asDict(currentData.ganttData), ...ganttDataPatch },
     dictData: { ...asDict(currentData.dictData), ...dictDataPatch },
     pagination: { ...asDict(currentData.pagination), ...paginationPatch },
@@ -763,6 +764,47 @@ function applyUnifiedPagePatchV2(patchRaw: unknown) {
     runtimeContract: nextRuntime,
     statusContract: nextStatus,
   };
+  syncRecordsFromDataPatch(nextData);
+}
+
+function isReplaceDataPatch(patch: Dict, dataPatch: Dict): boolean {
+  const operation = asText(dataPatch.patchOperation || dataPatch.operation || patch.patchOperation || patch.operation).toLowerCase();
+  return patch.updateType === 'full' || operation === 'replace';
+}
+
+function mergeRowsByDataKey(baseRowsByKey: Dict, patchRowsByKey: Dict, replaceRows: boolean): Dict {
+  const out = { ...baseRowsByKey };
+  Object.entries(patchRowsByKey).forEach(([key, patchValue]) => {
+    const patchRows = extractPatchRows(patchValue);
+    if (!patchRows) {
+      out[key] = patchValue;
+      return;
+    }
+    const rowOperation = asText(asDict(patchValue).operation || asDict(patchValue).patchOperation).toLowerCase();
+    out[key] = replaceRows || rowOperation === 'replace'
+      ? patchRows
+      : mergeRowsById(asList(baseRowsByKey[key]).map((item) => asDict(item)), patchRows);
+  });
+  return out;
+}
+
+function extractPatchRows(value: unknown): Dict[] | null {
+  if (Array.isArray(value)) {
+    return value.map((item) => asDict(item)).filter((item) => Object.keys(item).length);
+  }
+  const row = asDict(value);
+  const rows = row.rows || row.records || row.items;
+  if (!Array.isArray(rows)) return null;
+  return rows.map((item) => asDict(item)).filter((item) => Object.keys(item).length);
+}
+
+function syncRecordsFromDataPatch(nextData: Dict) {
+  const key = activeRecordDataKey.value;
+  if (!key || !isListSurface.value) return;
+  const tableRows = asList(asDict(nextData.tableRows)[key]).map((item) => asDict(item)).filter((item) => Object.keys(item).length);
+  const treeRows = asList(asDict(nextData.treeData)[key]).map((item) => asDict(item)).filter((item) => Object.keys(item).length);
+  const patchedRows = tableRows.length ? tableRows : treeRows;
+  if (patchedRows.length) records.value = patchedRows;
 }
 
 function mergeStatusRows(baseRows: unknown[], patchRows: Dict[], keyName: string): Dict[] {
