@@ -516,6 +516,8 @@ function applyUnifiedPagePatchV2(patchRaw: unknown) {
   }
   const tableRowsPatch = asDict(dataPatch.tableRows);
   const relationRowsPatch = asDict(dataPatch.relationRows);
+  const treeDataPatch = asDict(dataPatch.treeData);
+  const ganttDataPatch = asDict(dataPatch.ganttData);
   const dictDataPatch = asDict(dataPatch.dictData);
   const paginationPatch = asDict(dataPatch.pagination);
   const statusPatch = asDict(patch.statusPatch);
@@ -527,6 +529,8 @@ function applyUnifiedPagePatchV2(patchRaw: unknown) {
     Object.keys(mainData).length
     || Object.keys(tableRowsPatch).length
     || Object.keys(relationRowsPatch).length
+    || Object.keys(treeDataPatch).length
+    || Object.keys(ganttDataPatch).length
     || Object.keys(dictDataPatch).length
     || Object.keys(paginationPatch).length
   );
@@ -544,6 +548,8 @@ function applyUnifiedPagePatchV2(patchRaw: unknown) {
     mainData: { ...asDict(currentData.mainData), ...mainData },
     tableRows: { ...asDict(currentData.tableRows), ...tableRowsPatch },
     relationRows: { ...asDict(currentData.relationRows), ...relationRowsPatch },
+    treeData: { ...asDict(currentData.treeData), ...treeDataPatch },
+    ganttData: { ...asDict(currentData.ganttData), ...ganttDataPatch },
     dictData: { ...asDict(currentData.dictData), ...dictDataPatch },
     pagination: { ...asDict(currentData.pagination), ...paginationPatch },
   };
