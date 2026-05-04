@@ -493,6 +493,11 @@ import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
+import {
+  collectUnifiedPageContractV2FieldStatus,
+  collectUnifiedPageContractV2FieldWidgets,
+  resolveUnifiedPageContractV2,
+} from '../app/contracts/unifiedPageContractV2';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -2972,10 +2977,21 @@ const contractVisibleFields = computed<string[]>(() => {
 });
 const fieldModifierMap = computed<Record<string, Record<string, unknown>>>(() => {
   const formView = (contract.value?.views?.form || {}) as { field_modifiers?: Record<string, Record<string, unknown>> };
-  return formView.field_modifiers || {};
+  const out: Record<string, Record<string, unknown>> = { ...(formView.field_modifiers || {}) };
+  const v2FieldStatus = collectUnifiedPageContractV2FieldStatus(contract.value);
+  Object.entries(v2FieldStatus).forEach(([name, status]) => {
+    out[name] = {
+      ...(out[name] || {}),
+      ...(status.visible === false ? { invisible: true } : {}),
+      ...(status.readonly === true || status.disabled === true ? { readonly: true } : {}),
+      ...(status.required === true ? { required: true } : {}),
+    };
+  });
+  return out;
 });
 const runtimeFieldStates = computed(() => {
-  const names = Object.keys(contract.value?.fields || {});
+  const v2FieldNames = collectUnifiedPageContractV2FieldWidgets(contract.value).map((widget) => widget.fieldCode).filter(Boolean);
+  const names = Array.from(new Set([...Object.keys(contract.value?.fields || {}), ...v2FieldNames]));
   return buildRuntimeFieldStates({
     fieldNames: names,
     fieldModifiers: fieldModifierMap.value,
@@ -4130,11 +4146,16 @@ function analyzeFormContractReadiness(
     return names;
   };
 
+  const v2 = resolveUnifiedPageContractV2(row);
+  const v2FieldNames = collectUnifiedPageContractV2FieldWidgets(row)
+    .map((widget) => String(widget.fieldCode || '').trim())
+    .filter(Boolean);
+  const v2FieldNameSet = new Set(v2FieldNames);
   const fields = row.fields;
   const fieldMap = fields && typeof fields === 'object' && !Array.isArray(fields)
     ? fields as Record<string, unknown>
     : {};
-  const fieldNames = Object.keys(fieldMap);
+  const fieldNames = Array.from(new Set([...Object.keys(fieldMap), ...v2FieldNames]));
   if (!fieldNames.length) {
     issues.push('contract.fields is empty');
   }
@@ -4143,7 +4164,8 @@ function analyzeFormContractReadiness(
   const formView = views && typeof views === 'object' && !Array.isArray(views)
     ? (views as Record<string, unknown>).form
     : undefined;
-  if (!formView || typeof formView !== 'object' || Array.isArray(formView)) {
+  const hasV2Form = v2?.pageInfo?.viewType === 'form' && v2FieldNames.length > 0;
+  if (!hasV2Form && (!formView || typeof formView !== 'object' || Array.isArray(formView))) {
     issues.push('contract.views.form is missing');
   }
   const layout = formView && typeof formView === 'object' && !Array.isArray(formView)
@@ -4156,9 +4178,11 @@ function analyzeFormContractReadiness(
     ? String((head as Record<string, unknown>).view_type || '').trim().toLowerCase()
     : '';
   const viewType = String(row.view_type || '').trim().toLowerCase();
+  const v2ViewType = String(v2?.pageInfo?.viewType || '').trim().toLowerCase();
   if (requirePureFormViewType) {
     if (headViewType && headViewType !== 'form') issues.push(`head.view_type is ${headViewType}, expected form`);
     if (viewType && viewType !== 'form') issues.push(`view_type is ${viewType}, expected form`);
+    if (v2ViewType && v2ViewType !== 'form') issues.push(`v2.pageInfo.viewType is ${v2ViewType}, expected form`);
   }
 
   const visible = Array.isArray(row.visible_fields)
@@ -4176,11 +4200,12 @@ function analyzeFormContractReadiness(
       if (normalized) groupNames.add(normalized);
     });
   });
+  v2FieldNames.forEach((name) => layoutFieldNames.add(name));
   if (!layoutFieldNames.size && !groupNames.size && !visibleNameSet.size) {
     issues.push('contract.views.form.layout has no field nodes');
   }
   const visibleCandidates = fieldNames.filter((name) =>
-    visibleNameSet.has(name) || groupNames.has(name) || layoutFieldNames.has(name),
+    visibleNameSet.has(name) || groupNames.has(name) || layoutFieldNames.has(name) || v2FieldNameSet.has(name),
   );
   if (fieldNames.length && !visibleCandidates.length) {
     issues.push('no visible field candidate from visible_fields/field_groups/layout');

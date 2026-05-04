@@ -2,6 +2,7 @@ import type { ActionContract, ViewButton, ViewContract } from '@sc/schema';
 import { detectObjectMethodFromActionKey, normalizeActionKind, parseMaybeJsonRecord, toPositiveInt } from './contractRuntime';
 import {
   collectUnifiedPageContractV2FieldWidgets,
+  collectUnifiedPageContractV2FieldStatus,
   resolveUnifiedPageContractV2,
   type UnifiedPageContractV2Action,
 } from './contracts/unifiedPageContractV2';
@@ -146,13 +147,17 @@ function extractFieldOrder(contract: ActionContract): string[] {
 function buildV2Fields(contract: ActionContract): Record<string, unknown> {
   const legacy = contract.fields || {};
   const out: Record<string, unknown> = { ...legacy };
+  const fieldStatus = collectUnifiedPageContractV2FieldStatus(contract);
   collectUnifiedPageContractV2FieldWidgets(contract).forEach((widget) => {
     if (!widget.fieldCode || out[widget.fieldCode]) return;
+    const status = fieldStatus[widget.fieldCode];
     out[widget.fieldCode] = {
       name: widget.fieldCode,
       string: widget.label || widget.fieldCode,
       type: widget.widgetType,
       widget: widget.widgetType,
+      readonly: status?.readonly === true || status?.disabled === true,
+      required: status?.required === true,
     };
   });
   return out;

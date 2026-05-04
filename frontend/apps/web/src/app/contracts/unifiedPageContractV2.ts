@@ -35,6 +35,14 @@ export type UnifiedPageContractV2Action = {
   refreshMode: string;
 };
 
+export type UnifiedPageContractV2WidgetStatus = {
+  widgetId: string;
+  visible?: boolean;
+  readonly?: boolean;
+  required?: boolean;
+  disabled?: boolean;
+};
+
 export type UnifiedPageContractV2 = {
   pageInfo: {
     pageId: string;
@@ -139,6 +147,34 @@ export function collectUnifiedPageContractV2FieldWidgets(contract: unknown): Uni
       seen.add(widget.fieldCode);
       return true;
     });
+}
+
+export function collectUnifiedPageContractV2WidgetStatus(contract: unknown): Record<string, UnifiedPageContractV2WidgetStatus> {
+  const v2 = resolveUnifiedPageContractV2(contract);
+  if (!v2) return {};
+  const status = asDict(v2.statusContract);
+  return asList(status.widgetStatus).reduce<Record<string, UnifiedPageContractV2WidgetStatus>>((acc, item) => {
+    const row = asDict(item);
+    const widgetId = asText(row.widgetId);
+    if (!widgetId) return acc;
+    acc[widgetId] = {
+      widgetId,
+      visible: typeof row.visible === 'boolean' ? row.visible : undefined,
+      readonly: typeof row.readonly === 'boolean' ? row.readonly : undefined,
+      required: typeof row.required === 'boolean' ? row.required : undefined,
+      disabled: typeof row.disabled === 'boolean' ? row.disabled : undefined,
+    };
+    return acc;
+  }, {});
+}
+
+export function collectUnifiedPageContractV2FieldStatus(contract: unknown): Record<string, UnifiedPageContractV2WidgetStatus> {
+  const widgetStatus = collectUnifiedPageContractV2WidgetStatus(contract);
+  return collectUnifiedPageContractV2FieldWidgets(contract).reduce<Record<string, UnifiedPageContractV2WidgetStatus>>((acc, widget) => {
+    if (!widget.fieldCode) return acc;
+    acc[widget.fieldCode] = widgetStatus[widget.widgetId] || { widgetId: widget.widgetId };
+    return acc;
+  }, {});
 }
 
 export function resolveUnifiedPageContractV2PrimaryDataSource(contract: unknown): Record<string, unknown> {

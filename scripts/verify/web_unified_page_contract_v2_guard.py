@@ -53,6 +53,8 @@ def main() -> int:
         "UnifiedPageContractV2",
         "resolveUnifiedPageContractV2",
         "collectUnifiedPageContractV2FieldWidgets",
+        "collectUnifiedPageContractV2FieldStatus",
+        "collectUnifiedPageContractV2WidgetStatus",
         "layoutContract",
         "dataContract",
         "resolveUnifiedPageContractV2PrimaryDataSource",
@@ -69,10 +71,12 @@ def main() -> int:
         errors.append("web load request runtime must merge v2 primary dataSource domain/context into api.data payload")
     if "resolveUnifiedPageContractV2" not in meta_source or "resolveUnifiedPageContractV2" not in contract_runtime_source:
         errors.append("web view mode runtime must resolve view type from v2 pageInfo before legacy fallback")
-    if "collectUnifiedPageContractV2FieldWidgets" not in record_runtime_source or "mapV2ActionButton" not in record_runtime_source:
-        errors.append("web record runtime must build form fields and actions from v2 before legacy fallback")
+    if "collectUnifiedPageContractV2FieldWidgets" not in record_runtime_source or "collectUnifiedPageContractV2FieldStatus" not in record_runtime_source or "mapV2ActionButton" not in record_runtime_source:
+        errors.append("web record runtime must build form fields, states, and actions from v2 before legacy fallback")
     if "resolveUnifiedPageContractV2" not in surface_source:
         errors.append("web action surface contract must include v2 pageInfo view modes")
+    if "collectUnifiedPageContractV2FieldStatus" not in (ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue").read_text(encoding="utf-8"):
+        errors.append("web contract form page must merge v2 widget status into runtime field states")
 
     if errors:
         print("web unified page contract v2 guard failed:")
