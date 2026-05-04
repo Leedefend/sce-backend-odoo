@@ -1,5 +1,10 @@
 import type { ActionContract, ViewButton, ViewContract } from '@sc/schema';
 import { detectObjectMethodFromActionKey, normalizeActionKind, parseMaybeJsonRecord, toPositiveInt } from './contractRuntime';
+import {
+  collectUnifiedPageContractV2FieldWidgets,
+  resolveUnifiedPageContractV2,
+  type UnifiedPageContractV2Action,
+} from './contracts/unifiedPageContractV2';
 
 export type RecordRuntimeButton = ViewButton & {
   actionKind?: string;
@@ -104,6 +109,8 @@ function normalizeUniqueFields(items: string[]): string[] {
 }
 
 function extractFieldOrder(contract: ActionContract): string[] {
+  const v2Fields = collectUnifiedPageContractV2FieldWidgets(contract).map((widget) => normalizeFieldName(widget.fieldCode));
+  if (v2Fields.length) return normalizeUniqueFields(v2Fields);
   const direct = contract.views?.form?.layout || [];
   const ordered: string[] = [];
   for (const node of direct as RawFormLayoutNode[]) {
@@ -136,6 +143,52 @@ function extractFieldOrder(contract: ActionContract): string[] {
   return merged;
 }
 
+function buildV2Fields(contract: ActionContract): Record<string, unknown> {
+  const legacy = contract.fields || {};
+  const out: Record<string, unknown> = { ...legacy };
+  collectUnifiedPageContractV2FieldWidgets(contract).forEach((widget) => {
+    if (!widget.fieldCode || out[widget.fieldCode]) return;
+    out[widget.fieldCode] = {
+      name: widget.fieldCode,
+      string: widget.label || widget.fieldCode,
+      type: widget.widgetType,
+      widget: widget.widgetType,
+    };
+  });
+  return out;
+}
+
+function mapV2ActionButton(raw: UnifiedPageContractV2Action): RecordRuntimeButton | null {
+  const label = String(raw.label || raw.actionKey || raw.actionId || '').trim();
+  const intent = String(raw.intent || '').trim();
+  const button = raw.button || {};
+  const target = raw.target || {};
+  if (intent === 'ui.contract') {
+    const actionId = toPositiveInt(target.action_id) ?? toPositiveInt(target.actionId);
+    if (!actionId) return null;
+    return {
+      name: `__open__${String(actionId)}`,
+      string: label || String(actionId),
+      type: 'action_open',
+      actionKind: 'open',
+      actionId,
+      domainRaw: String(target.domain_raw || target.domainRaw || '').trim() || undefined,
+      buttonContext: parseMaybeJsonRecord(target.context_raw || target.contextRaw),
+      sourceLevel: 'toolbar',
+    };
+  }
+  if (intent !== 'execute_button') return null;
+  const name = String(button.name || raw.actionKey || '').trim();
+  if (!name) return null;
+  return {
+    name,
+    string: label || name,
+    type: button.type === 'server_action' ? 'server' : String(button.type || 'object'),
+    actionKind: button.type === 'server_action' ? 'server' : 'object',
+    sourceLevel: 'toolbar',
+  };
+}
+
 function buildLayout(contract: ActionContract, fieldNames: string[]): ViewContract['layout'] {
   const chatterRaw = contract.views?.form?.chatter;
   const chatterEnabled =
@@ -158,10 +211,12 @@ function buildLayout(contract: ActionContract, fieldNames: string[]): ViewContra
 }
 
 export function buildRecordRuntimeFromContract(contract: ActionContract): RecordRuntimeContract {
-  const fields = contract.fields || {};
+  const v2 = resolveUnifiedPageContractV2(contract);
+  const fields = buildV2Fields(contract);
+  const hasV2Form = v2?.pageInfo?.viewType === 'form' && collectUnifiedPageContractV2FieldWidgets(contract).length > 0;
   const hasFormLayout = Array.isArray(contract.views?.form?.layout) && (contract.views?.form?.layout?.length || 0) > 0;
   const hasFormFields = Array.isArray(contract.views?.form?.fields) && (contract.views?.form?.fields?.length || 0) > 0;
-  if (!hasFormLayout && !hasFormFields) {
+  if (!hasV2Form && !hasFormLayout && !hasFormFields) {
     return {
       view: null,
       fieldNames: [],
@@ -192,7 +247,8 @@ export function buildRecordRuntimeFromContract(contract: ActionContract): Record
   if (Array.isArray(contract.toolbar?.header)) mergedRows.push(...(contract.toolbar?.header as Array<Record<string, unknown>>));
   if (Array.isArray(contract.buttons)) mergedRows.push(...(contract.buttons as Array<Record<string, unknown>>));
 
-  const mapped = mergedRows.map(mapContractButton).filter((row): row is RecordRuntimeButton => Boolean(row));
+  const v2Actions = (v2?.actionContract?.actionRuleList || []).map(mapV2ActionButton).filter((row): row is RecordRuntimeButton => Boolean(row));
+  const mapped = v2Actions.length ? v2Actions : mergedRows.map(mapContractButton).filter((row): row is RecordRuntimeButton => Boolean(row));
   const headerButtons = mapped.filter((row) => row.sourceLevel === 'header' || row.sourceLevel === 'toolbar');
   const statButtons = mapped.filter((row) => row.sourceLevel === 'smart' || row.sourceLevel === 'row');
   view.layout.headerButtons = headerButtons;

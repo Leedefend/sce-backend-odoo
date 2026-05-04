@@ -36,7 +36,7 @@
       <view v-if="dataLoading" class="empty">正在读取业务数据...</view>
       <view v-else-if="dataError" class="empty empty--error">{{ dataError }}</view>
       <view v-else-if="records.length" class="record-list">
-        <view v-for="record in records" :key="recordKey(record)" class="record-card">
+        <view v-for="record in records" :key="recordKey(record)" class="record-card" @click="openRecord(record)">
           <view v-for="field in displayFields" :key="field.fieldCode" class="record-row">
             <text class="record-row__label">{{ field.label }}</text>
             <text class="record-row__value">{{ formatValue(record[field.fieldCode]) }}</text>
@@ -372,7 +372,7 @@ function buildTargetParams(): Dict {
   const query = routeQuery.value;
   const menuId = asText(query.menu_id || query.menuId || query.id);
   if (menuId) {
-    return { op: 'menu', menu_id: menuId };
+    return { op: 'menu', menu_id: menuId, ...contractRouteParams(query) };
   }
   const actionId = asText(query.action_id || query.actionId);
   if (actionId) {
@@ -380,12 +380,12 @@ function buildTargetParams(): Dict {
       op: 'action_open',
       action_id: actionId,
       view_type: asText(query.view_type || query.viewType, TARGET_VIEW_TYPE),
-      ...recordRouteParams(query),
+      ...contractRouteParams(query),
     };
   }
   const model = asText(query.model);
   if (model) {
-    return { op: 'model', model, view_type: asText(query.view_type || query.viewType, TARGET_VIEW_TYPE), ...recordRouteParams(query) };
+    return { op: 'model', model, view_type: asText(query.view_type || query.viewType, TARGET_VIEW_TYPE), ...contractRouteParams(query) };
   }
   const sceneKey = asText(query.scene_key || query.sceneKey);
   if (sceneKey) {
@@ -468,10 +468,15 @@ function buildFallbackDataSource(nextContract: Dict): Dict {
   };
 }
 
-function recordRouteParams(query: Dict): Dict {
+function contractRouteParams(query: Dict): Dict {
+  const params: Dict = {};
   const recordId = Number(asText(query.record_id || query.recordId || query.res_id || query.resId));
-  if (!Number.isFinite(recordId) || recordId <= 0) return {};
-  return { record_id: recordId };
+  if (Number.isFinite(recordId) && recordId > 0) params.record_id = recordId;
+  const domainRaw = asText(query.domain_raw || query.domainRaw);
+  if (domainRaw) params.domain_raw = domainRaw;
+  const contextRaw = asText(query.context_raw || query.contextRaw);
+  if (contextRaw) params.context_raw = contextRaw;
+  return params;
 }
 
 function normalizeIds(value: unknown): number[] {
@@ -594,11 +599,23 @@ function openContractTarget(target: Dict) {
   if (recordId) query.push(`record_id=${encodeURIComponent(recordId)}`);
   const sceneKey = asText(target.scene_key || target.sceneKey);
   if (sceneKey) query.push(`scene_key=${encodeURIComponent(sceneKey)}`);
+  const domainRaw = asText(target.domain_raw || target.domainRaw);
+  if (domainRaw) query.push(`domain_raw=${encodeURIComponent(domainRaw)}`);
+  const contextRaw = asText(target.context_raw || target.contextRaw);
+  if (contextRaw) query.push(`context_raw=${encodeURIComponent(contextRaw)}`);
   if (!query.length) {
     void loadContract();
     return;
   }
   uni.navigateTo({ url: `/pages/contract/index?${query.join('&')}` });
+}
+
+function openRecord(record: Dict) {
+  if (!isListSurface.value) return;
+  const recordId = asText(record.id);
+  const model = modelName.value;
+  if (!recordId || !model) return;
+  openContractTarget({ model, view_type: 'form', record_id: recordId });
 }
 
 function recordKey(record: Dict): string {

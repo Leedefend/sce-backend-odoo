@@ -1,3 +1,5 @@
+import { resolveUnifiedPageContractV2 } from './unifiedPageContractV2';
+
 type Dict = Record<string, unknown>;
 
 export type FocusNavAction = {
@@ -61,6 +63,9 @@ function collectContractViewModes(contract: Dict | null): string[] {
   const addModes = (raw: unknown) => {
     parseViewModes(raw).forEach((mode) => addMode(mode));
   };
+
+  const v2 = resolveUnifiedPageContractV2(contract);
+  addModes(v2?.pageInfo?.viewType);
 
   const head = asDict(contract.head);
   const uiContract = asDict(contract.ui_contract);

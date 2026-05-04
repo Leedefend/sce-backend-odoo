@@ -15,6 +15,8 @@ WEB_ACTION_NAV = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewN
 WEB_ACTION_PREFLIGHT = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewLoadPreflightRuntime.ts"
 WEB_ACTION_META = ROOT / "frontend/apps/web/src/app/runtime/actionViewMetaRuntime.ts"
 WEB_ACTION_CONTRACT_RUNTIME = ROOT / "frontend/apps/web/src/app/contractActionRuntime.ts"
+WEB_RECORD_RUNTIME = ROOT / "frontend/apps/web/src/app/contractRecordRuntime.ts"
+WEB_SURFACE_CONTRACT = ROOT / "frontend/apps/web/src/app/contracts/actionViewSurfaceContract.ts"
 
 
 def main() -> int:
@@ -28,6 +30,8 @@ def main() -> int:
     preflight_source = WEB_ACTION_PREFLIGHT.read_text(encoding="utf-8") if WEB_ACTION_PREFLIGHT.exists() else ""
     meta_source = WEB_ACTION_META.read_text(encoding="utf-8") if WEB_ACTION_META.exists() else ""
     contract_runtime_source = WEB_ACTION_CONTRACT_RUNTIME.read_text(encoding="utf-8") if WEB_ACTION_CONTRACT_RUNTIME.exists() else ""
+    record_runtime_source = WEB_RECORD_RUNTIME.read_text(encoding="utf-8") if WEB_RECORD_RUNTIME.exists() else ""
+    surface_source = WEB_SURFACE_CONTRACT.read_text(encoding="utf-8") if WEB_SURFACE_CONTRACT.exists() else ""
     if "intent: 'ui.contract.v2'" not in source and 'intent: "ui.contract.v2"' not in source:
         errors.append("web contract API must request ui.contract.v2")
     if "intent: 'ui.contract'," in source or 'intent: "ui.contract",' in source:
@@ -61,6 +65,10 @@ def main() -> int:
         errors.append("web load preflight runtime must consume v2 primary dataSource")
     if "resolveUnifiedPageContractV2" not in meta_source or "resolveUnifiedPageContractV2" not in contract_runtime_source:
         errors.append("web view mode runtime must resolve view type from v2 pageInfo before legacy fallback")
+    if "collectUnifiedPageContractV2FieldWidgets" not in record_runtime_source or "mapV2ActionButton" not in record_runtime_source:
+        errors.append("web record runtime must build form fields and actions from v2 before legacy fallback")
+    if "resolveUnifiedPageContractV2" not in surface_source:
+        errors.append("web action surface contract must include v2 pageInfo view modes")
 
     if errors:
         print("web unified page contract v2 guard failed:")

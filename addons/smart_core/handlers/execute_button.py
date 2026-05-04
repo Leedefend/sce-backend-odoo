@@ -67,7 +67,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                     status_code=400,
                 )
 
-            if button_type not in ("object", "action"):
+            if button_type not in ("object", "action", "server", "server_action"):
                 return _failure_result(
                     model=model,
                     res_id=res_ids[0],
