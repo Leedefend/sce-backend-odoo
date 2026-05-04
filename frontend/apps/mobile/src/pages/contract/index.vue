@@ -261,6 +261,7 @@ interface ContractAction {
   submitPolicy: Dict;
   tracePolicy: Dict;
   refreshMode: string;
+  targetScope: string;
   targetIds: string[];
   dependencyTargets: string[];
   target: Dict;
@@ -1113,6 +1114,7 @@ function collectActions(action: Dict, status: Dict): ContractAction[] {
         submitPolicy: asDict(row.submitPolicy || row.submit_policy),
         tracePolicy: asDict(row.tracePolicy || row.trace_policy),
         refreshMode: normalizeRefreshMode(row.refreshMode),
+        targetScope: normalizeActionTargetScope(row.targetScope || row.target_scope || asDict(row.target).targetScope || asDict(row.target).target_scope),
         targetIds,
         dependencyTargets,
         target: asDict(row.target),
@@ -2015,12 +2017,30 @@ async function applyActionRefreshMode(refreshMode: string, endpoint: string, tok
     await loadContract();
     return;
   }
+  const targetScope = action ? normalizeActionTargetScope(action.targetScope) : '';
+  if (targetScope === 'runtime' || targetScope === 'contract') {
+    await loadContract();
+    return;
+  }
+  if (targetScope === 'dataSource' || targetScope === 'data_source') {
+    await loadRecords(endpoint, token, contract.value, false);
+    return;
+  }
   const targets = action ? actionRefreshTargets(action) : [];
   if (targets.length && needsFullContractRefresh(targets)) {
     await loadContract();
     return;
   }
   await loadRecords(endpoint, token, contract.value, false);
+}
+
+function normalizeActionTargetScope(value: unknown): string {
+  const scope = asText(value).replace(/-/g, '_').toLowerCase();
+  if (scope === 'datasource') return 'dataSource';
+  if (scope === 'data_source') return 'data_source';
+  if (scope === 'runtime') return 'runtime';
+  if (scope === 'contract' || scope === 'page') return 'contract';
+  return scope;
 }
 
 function actionRefreshTargets(actionOrMode: ContractAction | string): string[] {

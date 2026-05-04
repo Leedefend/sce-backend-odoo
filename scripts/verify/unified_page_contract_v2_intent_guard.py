@@ -145,6 +145,9 @@ def main() -> int:
     for token in ("targetIds", "dependencyTargets", "collectActionDependencyTargets", "action.dependencyGraph", "actionRefreshTargets", "needsFullContractRefresh", "target.startsWith('relationrows.')", "applyActionRefreshMode(action.refreshMode, runtime.endpoint, runtime.token, action)", "applyActionRefreshMode(action.refreshMode, endpoint, token, action)"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must honor v2 action target dependencies token: {token}")
+    for token in ("targetScope", "normalizeActionTargetScope", "row.targetScope || row.target_scope", "targetScope === 'runtime' || targetScope === 'contract'", "targetScope === 'dataSource' || targetScope === 'data_source'", "await loadContract()", "await loadRecords(endpoint, token, contract.value, false)", "scope === 'datasource'"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must honor v2 targetScope refresh token: {token}")
     for token in ("commandActions", "isEditableField", "handleFieldInput", "scheduleFieldAction", "runFieldAction", "resolveFieldAction", "intent: 'api.onchange'", "include_v2_patch: true", "contract_version: contractVersion.value", "changed_fields: [field.fieldCode]", "applyOnchangeDataPatch", "fieldActionTimer", "submitPolicy", "resolveActionDebounceMs", "action.dispatchMode !== 'serverDebounced'", "action.submitPolicy.debounceMs || action.submitPolicy.debounce_ms"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must trigger v2 field onchange token: {token}")
