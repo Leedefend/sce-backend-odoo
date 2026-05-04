@@ -1,6 +1,18 @@
 {
   "pages": [
     {
+      "path": "pages/login/index",
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/home/index",
+      "style": {
+        "navigationBarTitleText": "我的工作"
+      }
+    },
+    {
       "path": "pages/contract/index",
       "style": {
         "navigationBarTitleText": "Contract"

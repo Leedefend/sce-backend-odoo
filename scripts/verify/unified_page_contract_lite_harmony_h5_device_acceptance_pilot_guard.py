@@ -101,6 +101,10 @@ def main() -> int:
         errors.append("missing compiled H5 index JavaScript asset")
     if not any(name.startswith("pages-contract-index.") and name.endswith(".js") for name in asset_files):
         errors.append("missing compiled H5 contract page JavaScript asset")
+    if not any(name.startswith("pages-login-index.") and name.endswith(".js") for name in asset_files):
+        errors.append("missing compiled H5 login page JavaScript asset")
+    if not any(name.startswith("pages-home-index.") and name.endswith(".js") for name in asset_files):
+        errors.append("missing compiled H5 home page JavaScript asset")
 
     runner = find_runner()
     runner_probe: dict[str, Any] | None = None

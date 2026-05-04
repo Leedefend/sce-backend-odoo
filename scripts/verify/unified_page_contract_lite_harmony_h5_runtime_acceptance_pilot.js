@@ -78,6 +78,12 @@ async function main() {
   if (!assetFiles.some((name) => /^assets\/pages-contract-index\..+\.js$/.test(name))) {
     errors.push('missing compiled H5 contract page JavaScript asset');
   }
+  if (!assetFiles.some((name) => /^assets\/pages-login-index\..+\.js$/.test(name))) {
+    errors.push('missing compiled H5 login page JavaScript asset');
+  }
+  if (!assetFiles.some((name) => /^assets\/pages-home-index\..+\.js$/.test(name))) {
+    errors.push('missing compiled H5 home page JavaScript asset');
+  }
   if (!assetFiles.some((name) => /^assets\/uni\..+\.css$/.test(name))) {
     errors.push('missing compiled H5 UniApp CSS asset');
   }
@@ -104,10 +110,10 @@ async function main() {
     });
     page.on('pageerror', (error) => pageErrors.push(error.message));
     await page.goto(url, { waitUntil: 'networkidle' });
-    await page.getByText('Contract Runtime').waitFor({ timeout: 10000 });
+    await page.getByText('智能工程项目管理系统').waitFor({ timeout: 10000 });
     renderedText = await page.locator('body').innerText({ timeout: 5000 });
-    if (!renderedText.includes('Contract Runtime')) {
-      errors.push('H5 page did not render Contract Runtime text');
+    if (!renderedText.includes('智能工程项目管理系统') || !renderedText.includes('服务地址')) {
+      errors.push('H5 page did not render mobile login text');
     }
     if (consoleErrors.length) errors.push('browser console errors detected');
     if (pageErrors.length) errors.push('browser page errors detected');

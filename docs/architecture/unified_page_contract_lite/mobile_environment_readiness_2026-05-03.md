@@ -54,6 +54,9 @@ The WeChat mini-program runner is available through a WSL wrapper:
 ~/.local/bin/wechat-devtools -> C:\Program Files (x86)\Tencent\微信web开发者工具\cli.bat
 ```
 
+The wrapper starts `cmd.exe` from `C:\Windows` so the Windows CLI does not use
+the WSL UNC repository path as its current directory.
+
 Current wx_mini decision:
 
 ```text
@@ -120,6 +123,150 @@ deveco-studio
 
 The wrappers allow the existing Makefile device probes to discover Windows-side
 tools from WSL.
+
+For WeChat DevTools, the first CLI call can still require one Windows-side
+setting:
+
+```text
+WeChat DevTools -> Settings -> Security Settings -> Service Port -> On
+```
+
+If the CLI reports `IDE service port disabled` or `wait IDE port timeout`, open
+the WeChat DevTools GUI once, enable the service port manually, then rerun:
+
+```bash
+pnpm -C frontend/apps/mobile build:mp-weixin
+wechat-devtools open --project "$(wslpath -w "$PWD/frontend/apps/mobile/dist/build/mp-weixin")" --disable-gpu
+```
+
+In this WSL environment, WeChat DevTools is more stable when the generated
+mini-program project is copied to a Windows-local directory before import:
+
+```bash
+pnpm -C frontend/apps/mobile build:mp-weixin:windows
+```
+
+Default Windows-local project directory:
+
+```text
+C:\Users\12472\sce-mobile-mp-weixin
+```
+
+Override the sync destination with `SC_MOBILE_WX_WINDOWS_DIR` when another
+Windows user profile or drive is used.
+
+For Harmony H5, build and copy the generated H5 runtime to a Windows-local
+directory with:
+
+```bash
+pnpm -C frontend/apps/mobile build:h5:harmony:windows
+```
+
+Default Windows-local Harmony H5 directory:
+
+```text
+C:\Users\12472\sce-mobile-harmony-h5
+```
+
+Override the sync destination with `SC_MOBILE_HARMONY_WINDOWS_DIR` when another
+Windows user profile or drive is used.
+
+Serve the Harmony H5 build for a physical device or DevEco browser container
+with:
+
+```bash
+pnpm -C frontend/apps/mobile serve:h5:harmony
+```
+
+Default local URL:
+
+```text
+http://127.0.0.1:8091
+```
+
+Use the printed LAN URL on a physical Harmony device. Override the server port
+with `SC_MOBILE_HARMONY_PORT` when needed.
+
+WSL localhost forwarding is enough for Windows-local browser checks, but it may
+not expose the H5 server or backend service to a physical Harmony device on the
+same LAN. Without administrator `netsh portproxy`, start the Windows-local
+gateway from PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File \\wsl.localhost\Ubuntu\home\odoo\workspace\sce-backend-odoo\scripts\ops\start_mobile_harmony_h5_windows_gateway.ps1
+```
+
+The gateway serves the synced H5 bundle on port `8092` and proxies the backend
+to port `8071`. On the Harmony device, open:
+
+```text
+http://<computer-lan-ip>:8092
+```
+
+Then set the login page service URL to:
+
+```text
+http://<computer-lan-ip>:8071
+```
+
+DevEco Studio cannot directly open the H5 output directory because
+`C:\Users\12472\sce-mobile-harmony-h5` is only a static web bundle. Prepare the
+DevEco importable Harmony shell project with:
+
+```bash
+pnpm -C frontend/apps/mobile prepare:harmony:windows
+```
+
+Open this Windows-local project directory in DevEco Studio:
+
+```text
+C:\Users\12472\sce-mobile-harmony-shell
+```
+
+The shell is a minimal ArkTS Stage project with a WebView that loads the H5
+gateway URL. Command-line builds require DevEco's bundled Node, SDK, and JBR in
+the current PowerShell session:
+
+```powershell
+$env:NODE_HOME="D:\Program Files\Huawei\DevEco Studio\tools\node"
+$env:DEVECO_SDK_HOME="D:\Program Files\Huawei\DevEco Studio\sdk"
+$env:JAVA_HOME="D:\Program Files\Huawei\DevEco Studio\jbr"
+$env:PATH="$env:JAVA_HOME\bin;$env:NODE_HOME;$env:PATH"
+cd C:\Users\12472\sce-mobile-harmony-shell
+& "D:\Program Files\Huawei\DevEco Studio\tools\hvigor\bin\hvigorw.bat" assembleHap --no-daemon
+```
+
+Current command-line HAP output:
+
+```text
+C:\Users\12472\sce-mobile-harmony-shell\entry\build\default\outputs\default\entry-default-unsigned.hap
+```
+
+The current mobile first page is:
+
+```text
+pages/login/index
+```
+
+The login page collects service URL, database, account, and password, then calls
+the unified `/api/v1/intent` `login` intent. For physical phone testing, the
+service URL must be the computer LAN address, not `127.0.0.1`.
+
+Current local simulated production service:
+
+```text
+http://127.0.0.1:8070
+db=sc_prod_sim
+```
+
+After login, the mobile runtime opens:
+
+```text
+pages/home/index
+```
+
+The page displays session facts from the login response and exposes the current
+contract runtime page as a secondary entry.
 
 ## Next Gate
 

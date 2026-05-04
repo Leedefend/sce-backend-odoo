@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "mobile harmony shell"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "mobile harmony shell"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "智能工程"
+    }
+  ]
+}

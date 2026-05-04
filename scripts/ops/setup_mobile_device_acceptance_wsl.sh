@@ -17,6 +17,7 @@ if [[ ! -f "\${TOOL}" ]]; then
   echo "${name} target not found: \${TOOL}" >&2
   exit 127
 fi
+cd /mnt/c/Windows
 exec cmd.exe /C "\$(wslpath -w "\${TOOL}")" "\$@"
 EOF
   chmod +x "${target}"
@@ -40,6 +41,7 @@ if [[ "\${1:-}" == "version" || "\${1:-}" == "--version" || "\${1:-}" == "-v" ]]
   echo "${name} wrapper: \${TOOL}"
   exit 0
 fi
+cd /mnt/c/Windows
 exec cmd.exe /C "\$(wslpath -w "\${TOOL}")" "\$@"
 EOF
   chmod +x "${target}"

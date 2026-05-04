@@ -1,0 +1,9 @@
+{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "Entry module for smart construction mobile Harmony acceptance shell.",
+  "main": "",
+  "author": "",
+  "license": "",
+  "dependencies": {}
+}
