@@ -108,6 +108,14 @@ def main() -> int:
         _fail(errors, "harmony_h5 client type must survive v2 assembly and trimming")
     if contract.get("layoutContract", {}).get("adaptMode") != "mobile":
         _fail(errors, "harmony_h5 must use mobile adapt mode")
+    primary_source = (((contract.get("dataContract") or {}).get("dataSource") or {}).get("primary") or {})
+    if primary_source.get("intent") != "api.data":
+        _fail(errors, "list/tree v2 contracts must declare primary api.data dataSource")
+    primary_params = primary_source.get("params") if isinstance(primary_source.get("params"), dict) else {}
+    if primary_params.get("model") != "construction.contract":
+        _fail(errors, "primary dataSource must carry model from contract source")
+    if "fields" not in primary_params:
+        _fail(errors, "primary dataSource must carry explicit fields")
     widgets = ((contract.get("layoutContract", {}).get("containerTree") or [{}])[0].get("widgetList") or [])
     if len(widgets) != 1:
         _fail(errors, "mobile_compact must trim delivered widgets")

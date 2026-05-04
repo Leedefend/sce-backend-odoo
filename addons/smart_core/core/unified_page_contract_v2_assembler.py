@@ -410,7 +410,7 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
         source_payload=source,
         request_id=request_id,
     )
-    fields = _field_rows(source, ui)
+    fields = _field_rows(source, ui, view_type=view_type)
     widgets = []
     component_keys = set()
     for field in fields[:60]:
@@ -433,14 +433,27 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     contract["layoutContract"]["componentRegistry"] = _component_registry(component_keys or {"sc.display.text"})
     contract["statusContract"]["containerStatus"].append({"containerId": container_id, "visible": True, "disabled": False})
     contract["dataContract"]["dataMeta"]["fieldCount"] = len(fields)
+    data_source = _ui_contract_data_source(model=model, view_type=view_type, fields=fields)
+    if data_source:
+        contract["dataContract"]["dataSource"]["primary"] = data_source
     return contract
 
 
-def _field_rows(source: dict[str, Any], ui: dict[str, Any]) -> list[dict[str, Any]]:
+def _field_rows(source: dict[str, Any], ui: dict[str, Any], *, view_type: str = "") -> list[dict[str, Any]]:
     rows = source.get("meta_fields")
     if isinstance(rows, list) and rows:
         return [row for row in rows if isinstance(row, dict)]
     fields = ui.get("fields") or source.get("fields")
+    if isinstance(fields, dict) and view_type in {"tree", "list", "kanban"}:
+        view_fields = _view_field_names(ui, view_type)
+        if view_fields:
+            out = []
+            for name in view_fields:
+                value = fields.get(name)
+                row = dict(value) if isinstance(value, dict) else {}
+                row.setdefault("name", name)
+                out.append(row)
+            return out
     if isinstance(fields, dict):
         out = []
         for key, value in fields.items():
@@ -449,6 +462,31 @@ def _field_rows(source: dict[str, Any], ui: dict[str, Any]) -> list[dict[str, An
             out.append(row)
         return out
     return []
+
+
+def _view_field_names(ui: dict[str, Any], view_type: str) -> list[str]:
+    views = _dict(ui.get("views"))
+    candidates = [view_type]
+    if view_type == "tree":
+        candidates.append("list")
+    if view_type == "list":
+        candidates.append("tree")
+    out: list[str] = []
+    for key in candidates:
+        view = _dict(views.get(key))
+        for raw_name in _list(view.get("columns") or view.get("fields")):
+            name = _text(raw_name)
+            if name and name not in out:
+                out.append(name)
+        for row in _list(view.get("columnsSchema") or view.get("columns_schema")):
+            if not isinstance(row, dict):
+                continue
+            name = _text(row.get("name") or row.get("field") or row.get("fieldCode"))
+            if name and name not in out:
+                out.append(name)
+        if out:
+            return out
+    return out
 
 
 def _field_widget(field: dict[str, Any], *, layout_type: str) -> dict[str, Any]:
@@ -468,6 +506,50 @@ def _field_widget(field: dict[str, Any], *, layout_type: str) -> dict[str, Any]:
         "capabilities": capabilities,
         "componentConfig": {},
     }
+
+
+def _ui_contract_data_source(*, model: str, view_type: str, fields: list[dict[str, Any]]) -> dict[str, Any]:
+    if not model or view_type not in {"tree", "list", "kanban"}:
+        return {}
+    field_names = _record_data_fields(fields)
+    if "id" not in field_names:
+        field_names.insert(0, "id")
+    return {
+        "query": "api.data",
+        "intent": "api.data",
+        "cachePolicy": "none",
+        "consistency": "strong",
+        "params": {
+            "op": "list",
+            "model": model,
+            "fields": field_names[:20],
+            "limit": 20,
+            "offset": 0,
+            "need_total": True,
+        },
+        "pagination": {
+            "mode": "offset",
+            "limit": 20,
+            "offsetParam": "offset",
+            "nextOffsetField": "next_offset",
+            "totalField": "total",
+        },
+    }
+
+
+def _record_data_fields(fields: list[dict[str, Any]]) -> list[str]:
+    out: list[str] = []
+    technical_prefixes = ("access_", "activity_", "message_", "website_")
+    technical_fields = {"active", "create_date", "create_uid", "display_name", "write_date", "write_uid"}
+    for field in fields:
+        name = _stable_id(field.get("name"), "")
+        if not name or name == "id" or name.startswith("__"):
+            continue
+        if name in technical_fields or any(name.startswith(prefix) for prefix in technical_prefixes):
+            continue
+        if name not in out:
+            out.append(name)
+    return out or ["display_name"]
 
 
 def _field_status(field: dict[str, Any], widget_id: str) -> dict[str, Any]:

@@ -244,30 +244,32 @@ async function loadRecords(endpoint: string, token: string, nextContract: Dict, 
   const info = asDict(nextContract.pageInfo);
   const model = asText(info.model);
   const viewType = asText(info.viewType);
-  if (!model || !['list', 'tree', 'kanban', 'table'].includes(viewType)) {
+  const source = resolvePrimaryDataSource(nextContract);
+  const sourceParams = asDict(source.params);
+  const sourceIntent = asText(source.intent || source.query, 'api.data');
+  if (!model || !sourceIntent || !['list', 'tree', 'kanban', 'table'].includes(viewType)) {
     records.value = [];
     recordTotal.value = null;
     nextOffset.value = 0;
     dataError.value = '';
     return;
   }
-  const fields = collectWidgets(asDict(nextContract.layoutContract))
-    .filter(isBusinessDisplayField)
-    .map((item) => item.fieldCode)
-    .filter((field, index, all) => field && all.indexOf(field) === index)
-    .slice(0, 12);
+  const fields = asList(sourceParams.fields)
+    .map((item) => asText(item))
+    .filter((field, index, all) => field && all.indexOf(field) === index);
   if (!fields.length) fields.push('display_name');
   if (!fields.includes('id')) fields.unshift('id');
   dataLoading.value = true;
   dataError.value = '';
   try {
     const response = await requestIntent(endpoint, token, {
-      intent: 'api.data',
+      intent: sourceIntent,
       params: {
+        ...sourceParams,
         op: 'list',
         model,
         fields,
-        limit: 20,
+        limit: Number(sourceParams.limit) || 20,
         offset: append ? nextOffset.value : 0,
         need_total: true,
       },
@@ -349,6 +351,35 @@ function collectActions(action: Dict): ContractAction[] {
   return asList(action.actionRuleList)
     .map((item) => ({ actionId: asText(asDict(item).actionId) }))
     .filter((item) => item.actionId);
+}
+
+function resolvePrimaryDataSource(nextContract: Dict): Dict {
+  const dataContract = asDict(nextContract.dataContract);
+  const dataSources = asDict(dataContract.dataSource);
+  const primary = asDict(dataSources.primary);
+  if (primary.intent || primary.query) return primary;
+  return buildFallbackDataSource(nextContract);
+}
+
+function buildFallbackDataSource(nextContract: Dict): Dict {
+  const info = asDict(nextContract.pageInfo);
+  const model = asText(info.model);
+  const fields = collectWidgets(asDict(nextContract.layoutContract))
+    .filter(isBusinessDisplayField)
+    .map((item) => item.fieldCode)
+    .filter((field, index, all) => field && all.indexOf(field) === index)
+    .slice(0, 12);
+  return {
+    intent: 'api.data',
+    params: {
+      op: 'list',
+      model,
+      fields,
+      limit: 20,
+      offset: 0,
+      need_total: true,
+    },
+  };
 }
 
 function isBusinessDisplayField(widget: ContractWidget): boolean {
