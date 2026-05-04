@@ -450,6 +450,45 @@ function collectWidgetStatus(status: Dict): Record<string, Dict> {
   }, {});
 }
 
+function applyUnifiedPagePatchV2(patchRaw: unknown) {
+  const patch = asDict(patchRaw);
+  if (!patch.updateType) return;
+  const dataPatch = asDict(patch.dataPatch);
+  const mainData = asDict(dataPatch.mainData);
+  if (Object.keys(mainData).length && records.value.length) {
+    records.value = records.value.map((record, index) => (index === 0 ? { ...record, ...mainData } : record));
+  }
+  const statusPatch = asDict(patch.statusPatch);
+  const widgetPatchRows = asList(statusPatch.widgetStatus).map((item) => asDict(item));
+  const buttonPatchRows = asList(statusPatch.buttonStatus).map((item) => asDict(item));
+  if (!widgetPatchRows.length && !buttonPatchRows.length) return;
+  const current = asDict(contract.value);
+  const currentStatus = asDict(current.statusContract);
+  const nextStatus = {
+    ...currentStatus,
+    widgetStatus: mergeStatusRows(asList(currentStatus.widgetStatus), widgetPatchRows, 'widgetId'),
+    buttonStatus: mergeStatusRows(asList(currentStatus.buttonStatus), buttonPatchRows, 'btnId'),
+  };
+  contract.value = {
+    ...current,
+    statusContract: nextStatus,
+  };
+}
+
+function mergeStatusRows(baseRows: unknown[], patchRows: Dict[], keyName: string): Dict[] {
+  const byKey = new Map<string, Dict>();
+  baseRows.map((item) => asDict(item)).forEach((row) => {
+    const key = asText(row[keyName]);
+    if (key) byKey.set(key, row);
+  });
+  patchRows.forEach((row) => {
+    const key = asText(row[keyName]);
+    if (!key) return;
+    byKey.set(key, { ...(byKey.get(key) || {}), ...row });
+  });
+  return Array.from(byKey.values());
+}
+
 function collectButtonStatus(status: Dict): Record<string, Dict> {
   return asList(status.buttonStatus).reduce<Record<string, Dict>>((acc, item) => {
     const row = asDict(item);
