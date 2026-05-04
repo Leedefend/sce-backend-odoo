@@ -1,5 +1,6 @@
 import type { ActionContract } from '@sc/schema';
 import { parseMaybeJsonRecord } from './contractRuntime';
+import { resolveUnifiedPageContractV2 } from './contracts/unifiedPageContractV2';
 
 export type ContractAccessPolicyMode = 'allow' | 'degrade' | 'block';
 
@@ -20,6 +21,9 @@ function pickNestedContract(contract: ActionContract | null): ActionContract | n
 }
 
 export function resolveContractViewMode(contract: ActionContract | null, fallback = '') {
+  const v2 = resolveUnifiedPageContractV2(contract);
+  const v2Mode = String(v2?.pageInfo?.viewType || '').trim();
+  if (v2Mode) return v2Mode === 'list' ? 'tree' : v2Mode;
   const normalized = pickNestedContract(contract);
   const headMode = String(normalized?.head?.view_type || '').trim();
   if (headMode) return headMode;

@@ -120,6 +120,8 @@ def main() -> int:
     actions = (contract.get("actionContract", {}) or {}).get("actionRuleList") or []
     if not actions or actions[0].get("label") != "确认" or actions[0].get("intent") != "execute_button":
         _fail(errors, "v2 action rules must carry renderable label and intent from source contract")
+    if (actions[0].get("button") or {}).get("name") != "action_confirm":
+        _fail(errors, "v2 execute_button action rules must carry original button name")
     widgets = ((contract.get("layoutContract", {}).get("containerTree") or [{}])[0].get("widgetList") or [])
     if len(widgets) != 1:
         _fail(errors, "mobile_compact must trim delivered widgets")
@@ -149,6 +151,42 @@ def main() -> int:
     form_params = form_primary.get("params") if isinstance(form_primary.get("params"), dict) else {}
     if form_params.get("op") != "read" or form_params.get("ids") != [42]:
         _fail(errors, "form v2 contracts with record_id must declare primary api.data read dataSource")
+    action_sample = {
+        "ui_contract": {
+            "title": "合同表单",
+            "model": "construction.contract",
+            "view_type": "form",
+            "fields": {"name": {"string": "名称", "type": "char"}},
+            "buttons": [
+                {
+                    "key": "module.action_contract",
+                    "kind": "open",
+                    "label": "打开合同",
+                    "intent": "open",
+                    "payload": {"action_id": 99, "view_mode": "tree,form"},
+                    "target_model": "construction.contract",
+                },
+                {
+                    "key": "module.server_action_contract",
+                    "kind": "server",
+                    "label": "服务端动作",
+                    "intent": "execute",
+                    "payload": {"server_action_id": 77, "xml_id": "module.server_action_contract"},
+                },
+            ],
+        },
+        "model": "construction.contract",
+        "view_type": "form",
+        "record_id": 42,
+    }
+    action_contract = assembler.assemble_unified_page_contract_v2(action_sample, source_type="ui.contract", client_type="harmony_h5")
+    action_rules = (action_contract.get("actionContract") or {}).get("actionRuleList") or []
+    open_rule = next((row for row in action_rules if row.get("label") == "打开合同"), {})
+    server_rule = next((row for row in action_rules if row.get("label") == "服务端动作"), {})
+    if open_rule.get("intent") != "ui.contract" or (open_rule.get("target") or {}).get("action_id") != 99:
+        _fail(errors, "v2 open actions must become ui.contract targets")
+    if (server_rule.get("button") or {}).get("type") != "server_action" or (server_rule.get("button") or {}).get("server_action_id") != 77:
+        _fail(errors, "v2 server actions must preserve server_action button metadata")
 
     if errors:
         print("Unified Page Contract v2 intent guard failed:")

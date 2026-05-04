@@ -3,6 +3,7 @@ import { pickContractNavQuery } from '../navigationContext';
 import { readWorkspaceContext } from '../workspaceContext';
 import { buildActionViewRowClickTarget } from '../runtime/actionViewInteractionRuntime';
 import { resolveRowClickPushState } from '../runtime/actionViewNavigationApplyRuntime';
+import { resolveUnifiedPageContractV2 } from '../contracts/unifiedPageContractV2';
 
 type Dict = Record<string, unknown>;
 
@@ -49,6 +50,11 @@ export function useActionViewNavigationRuntime(options: UseActionViewNavigationR
 
   function resolveRowOpenAction() {
     const contract = options.actionContract.value || {};
+    const v2 = resolveUnifiedPageContractV2(contract);
+    const v2ViewType = String(v2?.pageInfo?.viewType || '').trim();
+    if (v2 && ['list', 'tree', 'kanban'].includes(v2ViewType)) {
+      return { intent: 'open', level: 'row', trigger: 'row_click', payload: { view_mode: 'form' } };
+    }
     const views = ((contract.views || (contract.ui_contract as Dict | undefined)?.views || {}) as Dict);
     const tree = ((views.tree || views.list || {}) as Dict);
     const rows = Array.isArray(tree.row_actions) ? tree.row_actions : [];

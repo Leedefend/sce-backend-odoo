@@ -1,3 +1,5 @@
+import { resolveUnifiedPageContractV2PrimaryDataSource } from '../contracts/unifiedPageContractV2';
+
 type Dict = Record<string, unknown>;
 type SavedFilterChip = { key: string; isDefault: boolean };
 type GroupByChip = { field: string; isDefault: boolean };
@@ -221,6 +223,10 @@ export function useActionViewLoadPreflightRuntime() {
 
     let sortValue = options.currentSortRaw;
     if (!sortValue) {
+      const v2PrimarySource = resolveUnifiedPageContractV2PrimaryDataSource(contract);
+      const v2PrimaryParams = (v2PrimarySource.params && typeof v2PrimarySource.params === 'object' && !Array.isArray(v2PrimarySource.params))
+        ? v2PrimarySource.params as Dict
+        : {};
       const searchDefaults = (typedContract.search as Dict | undefined)?.defaults as Dict | undefined;
       const viewsTree = (typedContract.views as Dict | undefined)?.tree as Dict | undefined;
       const uiContractViews = (typedContract.ui_contract as Dict | undefined)?.views as Dict | undefined;
@@ -230,15 +236,19 @@ export function useActionViewLoadPreflightRuntime() {
         currentSortRaw: sortValue,
         sceneReadyDefaultSortRaw: options.sceneReadyDefaultSortRaw,
         sceneDefaultSortRaw: options.sceneDefaultSortRaw,
-        searchDefaultOrderRaw: searchDefaults?.order,
+        searchDefaultOrderRaw: v2PrimaryParams.order || searchDefaults?.order,
         viewOrderRaw: viewsTree?.order || uiContractTree?.order,
         metaOrderRaw: '',
         fallbackSortRaw: fallbackSort,
       });
     }
 
+    const v2PrimarySource = resolveUnifiedPageContractV2PrimaryDataSource(contract);
+    const v2PrimaryParams = (v2PrimarySource.params && typeof v2PrimarySource.params === 'object' && !Array.isArray(v2PrimarySource.params))
+      ? v2PrimarySource.params as Dict
+      : {};
     const searchDefaults = (typedContract.search as Dict | undefined)?.defaults as Dict | undefined;
-    const contractLimit = options.resolveLoadPreflightContractLimit({ searchDefaultLimitRaw: searchDefaults?.limit });
+    const contractLimit = options.resolveLoadPreflightContractLimit({ searchDefaultLimitRaw: v2PrimaryParams.limit || searchDefaults?.limit });
 
     const policy = options.evaluateCapabilityPolicy({ source: nextMeta, available: options.sessionCapabilities });
     const capabilityGuardPayload = options.resolveLoadCapabilityRedirectPayload({

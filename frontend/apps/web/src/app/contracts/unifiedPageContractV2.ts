@@ -23,6 +23,10 @@ export type UnifiedPageContractV2Action = {
   label?: string;
   intent?: string;
   target?: Record<string, unknown>;
+  button?: {
+    name?: string;
+    type?: string;
+  };
   triggerType: string;
   sourceWidgetId: string;
   targetIds: string[];
@@ -135,4 +139,10 @@ export function collectUnifiedPageContractV2FieldWidgets(contract: unknown): Uni
       seen.add(widget.fieldCode);
       return true;
     });
+}
+
+export function resolveUnifiedPageContractV2PrimaryDataSource(contract: unknown): Record<string, unknown> {
+  const v2 = resolveUnifiedPageContractV2(contract);
+  if (!v2) return {};
+  return asDict(asDict(v2.dataContract.dataSource).primary);
 }

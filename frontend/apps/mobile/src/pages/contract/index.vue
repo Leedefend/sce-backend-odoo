@@ -105,7 +105,7 @@
       </view>
       <view class="action-list">
         <button v-for="action in actions" :key="action.actionId" class="action" @click="selectAction(action)">
-          {{ action.label || action.actionId }}
+          {{ runningActionId === action.actionId ? '处理中...' : (action.label || action.actionId) }}
         </button>
       </view>
     </view>
@@ -133,6 +133,7 @@ interface ContractAction {
   label: string;
   intent: string;
   target: Dict;
+  button: Dict;
 }
 
 interface RecordRow {
@@ -154,6 +155,7 @@ const dataError = ref('');
 const records = ref<Dict[]>([]);
 const recordTotal = ref<number | null>(null);
 const nextOffset = ref(0);
+const runningActionId = ref('');
 
 const pageInfo = computed(() => asDict(contract.value?.pageInfo));
 const layoutContract = computed(() => asDict(contract.value?.layoutContract));
@@ -428,6 +430,7 @@ function collectActions(action: Dict): ContractAction[] {
         label: asText(row.label, actionId),
         intent: asText(row.intent, 'ui.contract'),
         target: asDict(row.target),
+        button: asDict(row.button),
       };
     })
     .filter((item) => item.actionId);
@@ -499,12 +502,103 @@ function isBusinessDisplayField(widget: ContractWidget): boolean {
   return !technicalFields.has(field);
 }
 
-function selectAction(action: ContractAction) {
+async function selectAction(action: ContractAction) {
+  if (runningActionId.value) return;
   if (action.intent === 'api.data') {
-    loadContract();
+    await loadContract();
     return;
   }
-  uni.showToast({ title: action.label || action.actionId, icon: 'none' });
+  if (action.intent === 'ui.contract') {
+    openContractTarget(action.target);
+    return;
+  }
+  if (action.intent !== 'execute_button') {
+    uni.showToast({ title: action.label || action.actionId, icon: 'none' });
+    return;
+  }
+  const baseUrl = normalizeBaseUrl(readStorage('sc_mobile_base_url'));
+  const dbName = readStorage('sc_mobile_db');
+  const token = readStorage('sc_mobile_token');
+  const model = modelName.value;
+  const resId = currentRecordId();
+  const buttonName = asText(action.button.name, action.actionKey);
+  if (!baseUrl || !dbName || !token || !model || !resId || !buttonName) {
+    uni.showToast({ title: '当前动作缺少执行参数', icon: 'none' });
+    return;
+  }
+  runningActionId.value = action.actionId;
+  try {
+    const endpoint = `${baseUrl}/api/v1/intent?db=${encodeURIComponent(dbName)}`;
+    const response = await requestIntent(endpoint, token, {
+      intent: 'execute_button',
+      params: {
+        model,
+        res_id: resId,
+        button: {
+          name: buttonName,
+          type: asText(action.button.type, 'object'),
+          server_action_id: action.button.server_action_id,
+          xml_id: action.button.xml_id,
+        },
+      },
+    });
+    await applyActionEffect(asDict(asDict(response.data).effect));
+  } catch {
+    uni.showToast({ title: '动作执行失败', icon: 'none' });
+  } finally {
+    runningActionId.value = '';
+  }
+}
+
+function currentRecordId(): number {
+  const fromRoute = Number(asText(routeQuery.value.record_id || routeQuery.value.recordId || routeQuery.value.res_id || routeQuery.value.resId));
+  if (Number.isFinite(fromRoute) && fromRoute > 0) return fromRoute;
+  if (isListSurface.value) return 0;
+  const fromRecord = Number(asText(records.value[0]?.id));
+  return Number.isFinite(fromRecord) && fromRecord > 0 ? fromRecord : 0;
+}
+
+async function applyActionEffect(effect: Dict) {
+  const type = asText(effect.type);
+  const target = asDict(effect.target);
+  if (type === 'navigate') {
+    const kind = asText(target.kind);
+    if (kind === 'action') {
+      const actionId = asText(target.action_id || target.actionId);
+      if (actionId) {
+        openContractTarget({ action_id: actionId });
+        return;
+      }
+    }
+    if (kind === 'record') {
+      const model = asText(target.model);
+      const recordId = asText(target.id || target.res_id || target.record_id);
+      if (model && recordId) {
+        openContractTarget({ model, view_type: 'form', record_id: recordId });
+        return;
+      }
+    }
+  }
+  await loadContract();
+}
+
+function openContractTarget(target: Dict) {
+  const query: string[] = [];
+  const actionId = asText(target.action_id || target.actionId);
+  if (actionId) query.push(`action_id=${encodeURIComponent(actionId)}`);
+  const model = asText(target.model || target.res_model || target.resModel);
+  if (model) query.push(`model=${encodeURIComponent(model)}`);
+  const viewType = asText(target.view_type || target.viewType);
+  if (viewType) query.push(`view_type=${encodeURIComponent(viewType)}`);
+  const recordId = asText(target.record_id || target.recordId || target.res_id || target.resId || target.id);
+  if (recordId) query.push(`record_id=${encodeURIComponent(recordId)}`);
+  const sceneKey = asText(target.scene_key || target.sceneKey);
+  if (sceneKey) query.push(`scene_key=${encodeURIComponent(sceneKey)}`);
+  if (!query.length) {
+    void loadContract();
+    return;
+  }
+  uni.navigateTo({ url: `/pages/contract/index?${query.join('&')}` });
 }
 
 function recordKey(record: Dict): string {

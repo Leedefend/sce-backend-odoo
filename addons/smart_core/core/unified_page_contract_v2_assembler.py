@@ -608,6 +608,7 @@ def _append_actions(contract: dict[str, Any], rows: Any, *, source_widget_id: st
                 "label": label,
                 "intent": intent,
                 "target": deepcopy(_dict(row.get("target"))),
+                "button": deepcopy(_dict(row.get("button"))),
                 "triggerType": "click",
                 "sourceWidgetId": source_widget_id,
                 "targetIds": [],
@@ -632,6 +633,7 @@ def _append_action_schema(contract: dict[str, Any], actions: dict[str, Any], *, 
                 "label": _text(source_row.get("label") or source_row.get("name") or source_row.get("title"), action_key),
                 "intent": _text(source_row.get("intent"), "ui.contract"),
                 "target": deepcopy(_dict(source_row.get("target"))),
+                "button": deepcopy(_dict(source_row.get("button"))),
                 "triggerType": "click",
                 "sourceWidgetId": source_widget_id,
                 "targetIds": [],
@@ -666,12 +668,42 @@ def _append_ui_contract_actions(contract: dict[str, Any], ui: dict[str, Any], *,
         if key in seen:
             continue
         seen.add(key)
+        kind = _text(row.get("kind") or row.get("type"))
+        payload = _dict(row.get("payload"))
+        intent = _text(row.get("intent"))
+        if kind == "open" or intent == "open":
+            action_intent = "ui.contract"
+            target = {
+                "action_id": payload.get("action_id"),
+                "model": row.get("target_model") or row.get("model"),
+                "view_type": _text(payload.get("view_mode"), "tree").split(",")[0],
+                "domain_raw": payload.get("domain_raw"),
+                "context_raw": payload.get("context_raw"),
+            }
+            button = {}
+        elif kind == "server" or payload.get("server_action_id"):
+            action_intent = "execute_button"
+            target = {}
+            button = {
+                "name": _text(row.get("name") or row.get("key"), key),
+                "type": "server_action",
+                "server_action_id": payload.get("server_action_id"),
+                "xml_id": payload.get("xml_id"),
+            }
+        else:
+            action_intent = _text(row.get("intent"), "execute_button")
+            target = deepcopy(_dict(row.get("target")))
+            button = {
+                "name": _text(row.get("name") or row.get("button_name") or row.get("method_name"), key),
+                "type": _text(row.get("type") or row.get("button_type"), "object"),
+            }
         normalized.append(
             {
                 "key": key,
                 "label": _text(row.get("label") or row.get("string") or row.get("name"), key),
-                "intent": _text(row.get("intent"), "execute_button"),
-                "target": deepcopy(_dict(row.get("target"))),
+                "intent": action_intent,
+                "target": target,
+                "button": button,
             }
         )
     _append_actions(contract, normalized, source_widget_id=source_widget_id)

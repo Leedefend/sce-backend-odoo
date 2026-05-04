@@ -1,3 +1,5 @@
+import { resolveUnifiedPageContractV2 } from '../contracts/unifiedPageContractV2';
+
 type ActionContractMetaShape = {
   head?: {
     view_type?: string;
@@ -12,6 +14,9 @@ type ActionContractMetaShape = {
 };
 
 export function resolveActionViewType(meta: unknown, contract: unknown): string {
+  const v2 = resolveUnifiedPageContractV2(contract);
+  const v2ViewType = String(v2?.pageInfo?.viewType || '').trim();
+  if (v2ViewType) return v2ViewType === 'list' ? 'tree' : v2ViewType;
   const typedContract = contract as ActionContractMetaShape;
   const nestedContract = (typedContract.ui_contract || {}) as ActionContractMetaShape;
   const fromHead = String(typedContract.head?.view_type || nestedContract.head?.view_type || '').trim();
