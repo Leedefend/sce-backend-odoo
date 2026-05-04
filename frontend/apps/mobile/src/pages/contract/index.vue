@@ -352,9 +352,7 @@ async function loadRecords(endpoint: string, token: string, nextContract: Dict, 
   const sourceIntent = asText(source.intent || source.query, 'api.data');
   const sourceOp = asText(sourceParams.op, ['list', 'tree', 'kanban', 'table'].includes(viewType) ? 'list' : 'read');
   if (!model || !sourceIntent || (sourceOp === 'list' && !['list', 'tree', 'kanban', 'table'].includes(viewType))) {
-    records.value = [];
-    recordTotal.value = null;
-    nextOffset.value = 0;
+    hydrateInlineRecords(nextContract);
     dataError.value = '';
     return;
   }
@@ -623,7 +621,39 @@ function resolvePrimaryDataSource(nextContract: Dict): Dict {
   const dataSources = asDict(dataContract.dataSource);
   const primary = asDict(dataSources.primary);
   if (primary.intent || primary.query) return primary;
+  if (hasInlineRows(dataContract)) return {};
   return buildFallbackDataSource(nextContract);
+}
+
+function hasInlineRows(dataContract: Dict): boolean {
+  return Boolean(firstInlineRows(dataContract).length);
+}
+
+function firstInlineRows(dataContract: Dict): Dict[] {
+  const tableRows = firstRecordList(asDict(dataContract.tableRows));
+  if (tableRows.length) return tableRows;
+  const treeRows = firstRecordList(asDict(dataContract.treeData));
+  if (treeRows.length) return treeRows;
+  return [];
+}
+
+function firstRecordList(rowsByKey: Dict): Dict[] {
+  for (const value of Object.values(rowsByKey)) {
+    const rows = asList(value).map((item) => asDict(item)).filter((item) => Object.keys(item).length);
+    if (rows.length) return rows;
+  }
+  return [];
+}
+
+function hydrateInlineRecords(nextContract: Dict) {
+  const dataContract = asDict(nextContract.dataContract);
+  const inlineRows = firstInlineRows(dataContract);
+  records.value = inlineRows;
+  const pagination = asDict(dataContract.pagination);
+  const firstPagination = Object.values(pagination).map((item) => asDict(item)).find((item) => Object.keys(item).length) || {};
+  const total = Number(firstPagination.total);
+  recordTotal.value = Number.isFinite(total) ? total : inlineRows.length;
+  nextOffset.value = inlineRows.length;
 }
 
 function buildFallbackDataSource(nextContract: Dict): Dict {
