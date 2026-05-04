@@ -70,6 +70,7 @@
             <text class="relation-block__count">{{ block.rowCount }} 行</text>
           </view>
           <view v-for="row in block.rows" :key="row.key" class="relation-block__row">{{ row.summary }}</view>
+          <view v-if="block.moreCount > 0" class="relation-block__more">还有 {{ block.moreCount }} 行</view>
         </view>
       </view>
     </view>
@@ -173,6 +174,8 @@ interface RelationBlock {
   fieldCode: string;
   label: string;
   rowCount: number;
+  total: number;
+  moreCount: number;
   rows: RelationDisplayRow[];
 }
 
@@ -649,6 +652,7 @@ function collectActions(action: Dict, status: Dict): ContractAction[] {
 
 function collectRelationBlocks(sourceWidgets: ContractWidget[], currentDataContract: Dict): RelationBlock[] {
   const relationRows = asDict(currentDataContract.relationRows);
+  const pagination = asDict(currentDataContract.pagination);
   const dataMeta = asDict(currentDataContract.dataMeta);
   return sourceWidgets
     .filter((widget) => widget.visible && isRelationWidget(widget))
@@ -656,12 +660,18 @@ function collectRelationBlocks(sourceWidgets: ContractWidget[], currentDataContr
       const dataKey = asText(widget.dataKey, widget.fieldCode);
       const rows = asList(relationRows[dataKey]).map((item) => asDict(item)).filter((item) => Object.keys(item).length);
       const summaryFields = resolveRelationSummaryFields(widget, dataKey, dataMeta);
+      const page = asDict(pagination[dataKey] || pagination[widget.fieldCode] || pagination[widget.widgetId]);
+      const totalRaw = Number(page.total);
+      const total = Number.isFinite(totalRaw) ? totalRaw : rows.length;
+      const visibleRows = rows.slice(0, 5);
       return {
         widgetId: widget.widgetId,
         fieldCode: widget.fieldCode,
         label: widget.label,
         rowCount: rows.length,
-        rows: rows.slice(0, 5).map((row, index) => ({
+        total,
+        moreCount: Math.max(0, total - visibleRows.length),
+        rows: visibleRows.map((row, index) => ({
           key: asText(row.id, `${widget.widgetId}.${index}`),
           summary: formatRelationRow(row, summaryFields),
         })),
@@ -1182,7 +1192,8 @@ onShow(loadContract);
 
 .relation-block__title,
 .relation-block__count,
-.relation-block__row {
+.relation-block__row,
+.relation-block__more {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1204,6 +1215,13 @@ onShow(loadContract);
   padding: 8rpx 0;
   color: #344154;
   font-size: 22rpx;
+  border-top: 1rpx solid #e8edf2;
+}
+
+.relation-block__more {
+  padding-top: 8rpx;
+  color: #667789;
+  font-size: 21rpx;
   border-top: 1rpx solid #e8edf2;
 }
 
