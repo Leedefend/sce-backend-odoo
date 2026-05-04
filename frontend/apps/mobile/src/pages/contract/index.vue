@@ -274,6 +274,7 @@ const TARGET_MODEL = 'construction.contract';
 const TARGET_VIEW_TYPE = 'tree';
 const CLIENT_TYPE = 'harmony_h5';
 const DEFAULT_ONCHANGE_DEBOUNCE_MS = 300;
+const STANDARD_FORM_ACTIONS = ['form.save', 'form.validate', 'record.delete'];
 
 const loading = ref(false);
 const error = ref('');
@@ -1583,9 +1584,14 @@ function applyOnchangeLinePatches(raw: unknown) {
 function isExecutableCommandAction(action: ContractAction): boolean {
   if (!['click', 'submit', 'confirm', 'delete', 'refresh', 'select'].includes(action.triggerType)) return false;
   if (action.intent === 'execute_button') return Boolean(asText(action.button.name || action.actionKey));
+  if (isStandardFormAction(action)) return !isListSurface.value && Boolean(asText(action.actionKey || action.intent));
   if (action.intent === 'api.data') return true;
   if (action.intent === 'ui.contract') return hasContractTarget(action.target);
   return false;
+}
+
+function isStandardFormAction(action: ContractAction): boolean {
+  return STANDARD_FORM_ACTIONS.includes(action.intent);
 }
 
 function hasContractTarget(target: Dict): boolean {
@@ -1636,6 +1642,10 @@ async function selectAction(action: ContractAction) {
     openContractTarget(action.target);
     return;
   }
+  if (isStandardFormAction(action)) {
+    await executeStandardFormAction(action);
+    return;
+  }
   if (action.intent !== 'execute_button') {
     uni.showToast({ title: action.label || action.actionId, icon: 'none' });
     return;
@@ -1681,6 +1691,68 @@ async function selectAction(action: ContractAction) {
   } finally {
     runningActionId.value = '';
   }
+}
+
+async function executeStandardFormAction(action: ContractAction) {
+  const runtime = resolveRuntimeEndpoint();
+  const model = actionTargetModel(action);
+  const resId = currentRecordId();
+  if (!runtime || !contract.value || !model) {
+    uni.showToast({ title: '当前动作缺少执行参数', icon: 'none' });
+    return;
+  }
+  if (action.intent === 'record.delete' && (!resId || !(await confirmDestructiveAction(action)))) return;
+  runningActionId.value = action.actionId;
+  try {
+    const response = await requestIntent(runtime.endpoint, runtime.token, {
+      intent: action.intent,
+      params: standardFormActionParams(action, model, resId),
+    });
+    const appliedPatch = applyResponseUnifiedPagePatch(response);
+    showActionResponseFeedback(response);
+    if (appliedPatch && normalizeRefreshMode(action.refreshMode) === 'none') return;
+    await applyActionEffect(asDict(asDict(response.data).effect), action, runtime.endpoint, runtime.token);
+  } catch (err) {
+    uni.showToast({ title: normalizeError(err, '动作执行失败').slice(0, 48), icon: 'none' });
+  } finally {
+    runningActionId.value = '';
+  }
+}
+
+function standardFormActionParams(action: ContractAction, model: string, resId: number): Dict {
+  const params: Dict = {
+    model,
+    action_key: asText(action.actionKey, action.intent),
+    context: {
+      ...actionExecutionContext(action),
+      ...contractTraceContext(contract.value),
+    },
+    ...contractTraceParams(contract.value),
+  };
+  if (resId) {
+    params.res_id = resId;
+    params.record_id = resId;
+  }
+  if (action.intent === 'form.save') {
+    params.values = currentRecordValues();
+  }
+  return params;
+}
+
+function currentRecordValues(): Dict {
+  return records.value.length ? { ...asDict(records.value[0]) } : {};
+}
+
+function confirmDestructiveAction(action: ContractAction): Promise<boolean> {
+  return new Promise((resolve) => {
+    uni.showModal({
+      title: '确认删除',
+      content: action.label || '删除后不可恢复',
+      confirmColor: '#d14343',
+      success: (result) => resolve(Boolean(result.confirm)),
+      fail: () => resolve(false),
+    });
+  });
 }
 
 function actionTargetModel(action: ContractAction): string {
