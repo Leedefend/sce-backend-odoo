@@ -88,6 +88,9 @@ def main() -> int:
     for token in ("refreshMode", "normalizeRefreshMode", "applyActionRefreshMode", "mode === 'none'", "mode === 'full'", "loadRecords(endpoint, token, contract.value, false)"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must honor v2 action refreshMode token: {token}")
+    for token in ("parseMaybeJsonRecord", "actionTargetModel", "actionExecutionContext", "target.target_model", "target.view_mode", "context,"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must preserve v2 action target/button metadata token: {token}")
 
     assembler = _load(ASSEMBLER_PATH, "upc_v2_intent_guard_assembler")
     client = _load(CLIENT_PATH, "upc_v2_intent_guard_client")

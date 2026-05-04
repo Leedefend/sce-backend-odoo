@@ -237,6 +237,18 @@ function asText(value: unknown, fallback = ''): string {
   return text || fallback;
 }
 
+function parseMaybeJsonRecord(value: unknown): Dict {
+  if (!value) return {};
+  if (value && typeof value === 'object' && !Array.isArray(value)) return value as Dict;
+  if (typeof value !== 'string') return {};
+  try {
+    const parsed = JSON.parse(value.trim());
+    return asDict(parsed);
+  } catch {
+    return {};
+  }
+}
+
 function normalizeBaseUrl(value: string): string {
   return value.trim().replace(/\/+$/, '');
 }
@@ -653,9 +665,10 @@ async function selectAction(action: ContractAction) {
   const baseUrl = normalizeBaseUrl(readStorage('sc_mobile_base_url'));
   const dbName = readStorage('sc_mobile_db');
   const token = readStorage('sc_mobile_token');
-  const model = modelName.value;
+  const model = actionTargetModel(action);
   const resId = currentRecordId();
   const buttonName = asText(action.button.name, action.actionKey);
+  const context = actionExecutionContext(action);
   if (!baseUrl || !dbName || !token || !model || !resId || !buttonName) {
     uni.showToast({ title: '当前动作缺少执行参数', icon: 'none' });
     return;
@@ -674,6 +687,7 @@ async function selectAction(action: ContractAction) {
           server_action_id: action.button.server_action_id,
           xml_id: action.button.xml_id,
         },
+        context,
       },
     });
     await applyActionEffect(asDict(asDict(response.data).effect), action, endpoint, token);
@@ -682,6 +696,22 @@ async function selectAction(action: ContractAction) {
   } finally {
     runningActionId.value = '';
   }
+}
+
+function actionTargetModel(action: ContractAction): string {
+  const target = action.target;
+  return asText(target.model || target.res_model || target.resModel || target.target_model || target.targetModel, modelName.value);
+}
+
+function actionExecutionContext(action: ContractAction): Dict {
+  const target = action.target;
+  const context = {
+    ...parseMaybeJsonRecord(target.context || target.contextRaw || target.context_raw),
+    ...parseMaybeJsonRecord(action.button.context || action.button.contextRaw || action.button.context_raw),
+  };
+  const contextRaw = asText(target.context_raw || target.contextRaw || action.button.context_raw || action.button.contextRaw);
+  if (contextRaw) context.context_raw = contextRaw;
+  return context;
 }
 
 function normalizeRefreshMode(value: unknown): string {
@@ -746,9 +776,10 @@ function openContractTarget(target: Dict) {
   const query: string[] = [];
   const actionId = asText(target.action_id || target.actionId);
   if (actionId) query.push(`action_id=${encodeURIComponent(actionId)}`);
-  const model = asText(target.model || target.res_model || target.resModel);
+  const model = asText(target.model || target.res_model || target.resModel || target.target_model || target.targetModel);
   if (model) query.push(`model=${encodeURIComponent(model)}`);
-  const viewType = asText(target.view_type || target.viewType);
+  const viewMode = asText(target.view_mode || target.viewMode);
+  const viewType = asText(target.view_type || target.viewType, viewMode.split(',').map((item) => item.trim()).find(Boolean) || '');
   if (viewType) query.push(`view_type=${encodeURIComponent(viewType)}`);
   const recordId = asText(target.record_id || target.recordId || target.res_id || target.resId || target.id);
   if (recordId) query.push(`record_id=${encodeURIComponent(recordId)}`);
