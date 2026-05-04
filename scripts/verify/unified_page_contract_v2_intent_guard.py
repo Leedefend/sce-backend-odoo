@@ -91,6 +91,9 @@ def main() -> int:
     for token in ("layoutPatch", "runtimePatch", "hasLayoutPatch", "hasRuntimePatch", "layoutContract: nextLayout", "runtimeContract: nextRuntime"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must preserve v2 layout/runtime patch token: {token}")
+    for token in ("runtimeContract", "contractMeta", "traceLabel", "runtimeLabel", "contractMeta.value.traceId || contractMeta.value.requestId || contractMeta.value.etag || contractMeta.value.snapshotId", "runtimeContract.value.cachePolicy", "retryPolicy.maxRetries"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must expose v2 meta/runtime observability token: {token}")
     for token in ("tableRowsPatch", "relationRowsPatch", "treeDataPatch", "ganttDataPatch", "dictDataPatch", "paginationPatch", "hasDataContractPatch", "dataContract: nextData"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must merge v2 dataPatch token: {token}")

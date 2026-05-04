@@ -22,6 +22,14 @@
         <text class="summary__label">布局模式</text>
         <text class="summary__value">{{ adaptMode || '-' }}</text>
       </view>
+      <view class="summary__item">
+        <text class="summary__label">追踪标识</text>
+        <text class="summary__value">{{ traceLabel || '-' }}</text>
+      </view>
+      <view class="summary__item">
+        <text class="summary__label">运行策略</text>
+        <text class="summary__value">{{ runtimeLabel || '-' }}</text>
+      </view>
     </view>
 
     <view v-if="loading" class="state">正在读取契约...</view>
@@ -225,6 +233,8 @@ const layoutContract = computed(() => asDict(contract.value?.layoutContract));
 const actionContract = computed(() => asDict(contract.value?.actionContract));
 const dataContract = computed(() => asDict(contract.value?.dataContract));
 const statusContract = computed(() => asDict(contract.value?.statusContract));
+const runtimeContract = computed(() => asDict(contract.value?.runtimeContract));
+const contractMeta = computed(() => asDict(contract.value?.meta));
 const globalStatus = computed(() => collectGlobalStatus(statusContract.value));
 const isPageReadable = computed(() => {
   const auth = asText(globalStatus.value.pageAuth).toLowerCase();
@@ -240,6 +250,13 @@ const viewTypeLabel = computed(() => asText(pageInfo.value.viewType, 'list'));
 const contractVersion = computed(() => asText(pageInfo.value.contractVersion));
 const clientType = computed(() => asText(pageInfo.value.clientType, CLIENT_TYPE));
 const adaptMode = computed(() => asText(layoutContract.value.adaptMode));
+const traceLabel = computed(() => asText(contractMeta.value.traceId || contractMeta.value.requestId || contractMeta.value.etag || contractMeta.value.snapshotId));
+const runtimeLabel = computed(() => {
+  const cachePolicy = asText(runtimeContract.value.cachePolicy);
+  const retryPolicy = asDict(runtimeContract.value.retryPolicy);
+  const maxRetries = asText(retryPolicy.maxRetries);
+  return [cachePolicy, maxRetries ? `retry:${maxRetries}` : ''].filter(Boolean).join(' · ');
+});
 const widgets = computed(() => collectWidgets(layoutContract.value, statusContract.value));
 const businessFields = computed(() => widgets.value.filter(isBusinessDisplayField));
 const listDisplayFields = computed(() => businessFields.value.slice(0, 8));
@@ -1422,18 +1439,25 @@ onShow(loadContract);
 
 .summary {
   display: flex;
+  flex-wrap: wrap;
   margin-bottom: 22rpx;
 }
 
 .summary__item {
-  flex: 1;
+  flex: 1 1 30%;
   min-width: 0;
   padding: 18rpx 14rpx;
   border-right: 1rpx solid #edf1f5;
+  border-bottom: 1rpx solid #edf1f5;
 }
 
+.summary__item:nth-child(3n),
 .summary__item:last-child {
   border-right: 0;
+}
+
+.summary__item:nth-last-child(-n + 2) {
+  border-bottom: 0;
 }
 
 .summary__label {
