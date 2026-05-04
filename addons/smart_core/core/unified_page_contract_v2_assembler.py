@@ -434,7 +434,7 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     contract["layoutContract"]["componentRegistry"] = _component_registry(component_keys or {"sc.display.text"})
     contract["statusContract"]["containerStatus"].append({"containerId": container_id, "visible": True, "disabled": False})
     contract["dataContract"]["dataMeta"]["fieldCount"] = len(fields)
-    data_source = _ui_contract_data_source(model=model, view_type=view_type, fields=fields, record_id=record_id)
+    data_source = _ui_contract_data_source(model=model, view_type=view_type, fields=fields, record_id=record_id, source=source, ui=ui)
     if data_source:
         contract["dataContract"]["dataSource"]["primary"] = data_source
     _append_ui_contract_actions(contract, ui, source_widget_id="page.root")
@@ -510,12 +510,21 @@ def _field_widget(field: dict[str, Any], *, layout_type: str) -> dict[str, Any]:
     }
 
 
-def _ui_contract_data_source(*, model: str, view_type: str, fields: list[dict[str, Any]], record_id: int = 0) -> dict[str, Any]:
+def _ui_contract_data_source(
+    *,
+    model: str,
+    view_type: str,
+    fields: list[dict[str, Any]],
+    record_id: int = 0,
+    source: dict[str, Any] | None = None,
+    ui: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     if not model:
         return {}
     field_names = _record_data_fields(fields)
     if "id" not in field_names:
         field_names.insert(0, "id")
+    extra_params = _ui_data_source_extra_params(_dict(source), _dict(ui))
     if view_type == "form":
         if record_id <= 0:
             return {}
@@ -529,6 +538,7 @@ def _ui_contract_data_source(*, model: str, view_type: str, fields: list[dict[st
                 "model": model,
                 "ids": [record_id],
                 "fields": field_names[:40],
+                **extra_params,
             },
         }
     if view_type not in {"tree", "list", "kanban"}:
@@ -545,6 +555,7 @@ def _ui_contract_data_source(*, model: str, view_type: str, fields: list[dict[st
             "limit": 20,
             "offset": 0,
             "need_total": True,
+            **extra_params,
         },
         "pagination": {
             "mode": "offset",
@@ -554,6 +565,38 @@ def _ui_contract_data_source(*, model: str, view_type: str, fields: list[dict[st
             "totalField": "total",
         },
     }
+
+
+def _ui_data_source_extra_params(source: dict[str, Any], ui: dict[str, Any]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    source_meta = _dict(source.get("source_meta"))
+    action = _dict(ui.get("action"))
+    search = _dict(ui.get("search"))
+    search_defaults = _dict(search.get("defaults"))
+    for key in ("domain_raw", "domainRaw"):
+        value = source.get(key) or source_meta.get(key) or ui.get(key) or action.get(key) or search_defaults.get(key)
+        if _text(value):
+            out["domain_raw"] = value
+            break
+    for key in ("context_raw", "contextRaw"):
+        value = source.get(key) or source_meta.get(key) or ui.get(key) or action.get(key) or search_defaults.get(key)
+        if _text(value):
+            out["context_raw"] = value
+            break
+    domain = source.get("domain") or source_meta.get("domain") or ui.get("domain") or action.get("domain")
+    if isinstance(domain, list):
+        out.setdefault("domain", deepcopy(domain))
+    context = source.get("context") or source_meta.get("context") or ui.get("context") or action.get("context")
+    if isinstance(context, dict):
+        out.setdefault("context", deepcopy(context))
+    order = source.get("order") or source_meta.get("order") or ui.get("order") or search_defaults.get("order")
+    if _text(order):
+        out["order"] = _text(order)
+    limit = source.get("limit") or source_meta.get("limit") or ui.get("limit") or search_defaults.get("limit")
+    parsed_limit = _positive_int(limit, 0)
+    if parsed_limit:
+        out["limit"] = parsed_limit
+    return out
 
 
 def _record_data_fields(fields: list[dict[str, Any]]) -> list[str]:

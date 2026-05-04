@@ -1,3 +1,5 @@
+import { resolveUnifiedPageContractV2PrimaryDataSource } from '../contracts/unifiedPageContractV2';
+
 type Dict = Record<string, unknown>;
 type StatusInput = { error: string; recordsLength: number };
 
@@ -189,6 +191,27 @@ export function useActionViewLoadRequestRuntime() {
       searchTerm: options.searchTerm,
       order: options.sortLabel,
     });
+    const v2PrimarySource = resolveUnifiedPageContractV2PrimaryDataSource(options.contract);
+    const v2PrimaryParams = (v2PrimarySource.params && typeof v2PrimarySource.params === 'object' && !Array.isArray(v2PrimarySource.params))
+      ? v2PrimarySource.params as Dict
+      : {};
+    const sourceDomainRaw = String(v2PrimaryParams.domain_raw || v2PrimaryParams.domainRaw || '').trim();
+    if (sourceDomainRaw && !String(requestPayload.domain_raw || '').trim()) {
+      requestPayload.domain_raw = sourceDomainRaw;
+    }
+    const sourceContextRaw = String(v2PrimaryParams.context_raw || v2PrimaryParams.contextRaw || '').trim();
+    if (sourceContextRaw && !String(requestPayload.context_raw || '').trim()) {
+      requestPayload.context_raw = sourceContextRaw;
+    }
+    if (Array.isArray(v2PrimaryParams.domain) && !(Array.isArray(requestPayload.domain) && requestPayload.domain.length)) {
+      requestPayload.domain = v2PrimaryParams.domain;
+    }
+    if (v2PrimaryParams.context && typeof v2PrimaryParams.context === 'object' && !Array.isArray(v2PrimaryParams.context)) {
+      requestPayload.context = {
+        ...(v2PrimaryParams.context as Dict),
+        ...((requestPayload.context && typeof requestPayload.context === 'object' && !Array.isArray(requestPayload.context)) ? requestPayload.context as Dict : {}),
+      };
+    }
     const result = await options.listRecordsRaw(requestPayload);
 
     return {

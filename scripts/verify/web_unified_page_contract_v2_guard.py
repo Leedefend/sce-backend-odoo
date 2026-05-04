@@ -13,6 +13,7 @@ WEB_CONTRACT_V2 = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContrac
 WEB_ACTION_SHAPE = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewContractShapeRuntime.ts"
 WEB_ACTION_NAV = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewNavigationRuntime.ts"
 WEB_ACTION_PREFLIGHT = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewLoadPreflightRuntime.ts"
+WEB_ACTION_LOAD_REQUEST = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewLoadRequestRuntime.ts"
 WEB_ACTION_META = ROOT / "frontend/apps/web/src/app/runtime/actionViewMetaRuntime.ts"
 WEB_ACTION_CONTRACT_RUNTIME = ROOT / "frontend/apps/web/src/app/contractActionRuntime.ts"
 WEB_RECORD_RUNTIME = ROOT / "frontend/apps/web/src/app/contractRecordRuntime.ts"
@@ -28,6 +29,7 @@ def main() -> int:
     shape_source = WEB_ACTION_SHAPE.read_text(encoding="utf-8") if WEB_ACTION_SHAPE.exists() else ""
     nav_source = WEB_ACTION_NAV.read_text(encoding="utf-8") if WEB_ACTION_NAV.exists() else ""
     preflight_source = WEB_ACTION_PREFLIGHT.read_text(encoding="utf-8") if WEB_ACTION_PREFLIGHT.exists() else ""
+    load_request_source = WEB_ACTION_LOAD_REQUEST.read_text(encoding="utf-8") if WEB_ACTION_LOAD_REQUEST.exists() else ""
     meta_source = WEB_ACTION_META.read_text(encoding="utf-8") if WEB_ACTION_META.exists() else ""
     contract_runtime_source = WEB_ACTION_CONTRACT_RUNTIME.read_text(encoding="utf-8") if WEB_ACTION_CONTRACT_RUNTIME.exists() else ""
     record_runtime_source = WEB_RECORD_RUNTIME.read_text(encoding="utf-8") if WEB_RECORD_RUNTIME.exists() else ""
@@ -63,6 +65,8 @@ def main() -> int:
         errors.append("web row navigation runtime must derive default row open behavior from v2 list contracts")
     if "resolveUnifiedPageContractV2PrimaryDataSource" not in preflight_source:
         errors.append("web load preflight runtime must consume v2 primary dataSource")
+    if "resolveUnifiedPageContractV2PrimaryDataSource" not in load_request_source or "domain_raw" not in load_request_source or "context_raw" not in load_request_source:
+        errors.append("web load request runtime must merge v2 primary dataSource domain/context into api.data payload")
     if "resolveUnifiedPageContractV2" not in meta_source or "resolveUnifiedPageContractV2" not in contract_runtime_source:
         errors.append("web view mode runtime must resolve view type from v2 pageInfo before legacy fallback")
     if "collectUnifiedPageContractV2FieldWidgets" not in record_runtime_source or "mapV2ActionButton" not in record_runtime_source:

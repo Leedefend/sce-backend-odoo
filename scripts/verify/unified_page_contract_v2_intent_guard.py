@@ -82,6 +82,8 @@ def main() -> int:
         },
         "model": "construction.contract",
         "view_type": "tree",
+        "domain_raw": "[('state','=','draft')]",
+        "context_raw": "{'search_default_my': 1}",
     }
     contract = assembler.assemble_unified_page_contract_v2(sample, source_type="ui.contract", client_type="harmony_h5")
     contract = client.trim_unified_page_contract_v2(
@@ -117,6 +119,10 @@ def main() -> int:
         _fail(errors, "primary dataSource must carry model from contract source")
     if "fields" not in primary_params:
         _fail(errors, "primary dataSource must carry explicit fields")
+    if primary_params.get("domain_raw") != "[('state','=','draft')]":
+        _fail(errors, "primary dataSource must inherit domain_raw from v2 source")
+    if primary_params.get("context_raw") != "{'search_default_my': 1}":
+        _fail(errors, "primary dataSource must inherit context_raw from v2 source")
     actions = (contract.get("actionContract", {}) or {}).get("actionRuleList") or []
     if not actions or actions[0].get("label") != "确认" or actions[0].get("intent") != "execute_button":
         _fail(errors, "v2 action rules must carry renderable label and intent from source contract")
