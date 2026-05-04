@@ -184,6 +184,7 @@ interface ContractAction {
   triggerType: string;
   sourceWidgetId: string;
   dispatchMode: string;
+  submitPolicy: Dict;
   refreshMode: string;
   targetIds: string[];
   dependencyTargets: string[];
@@ -977,6 +978,7 @@ function collectActions(action: Dict, status: Dict): ContractAction[] {
         triggerType: asText(row.triggerType || row.trigger_type, 'click'),
         sourceWidgetId,
         dispatchMode: asText(row.dispatchMode || row.dispatch_mode, 'server'),
+        submitPolicy: asDict(row.submitPolicy || row.submit_policy),
         refreshMode: normalizeRefreshMode(row.refreshMode),
         targetIds,
         dependencyTargets,
@@ -1233,11 +1235,18 @@ function scheduleFieldAction(field: ContractWidget, triggerType: string) {
   const action = resolveFieldAction(field, triggerType);
   if (!action) return;
   if (fieldActionTimer) clearTimeout(fieldActionTimer);
-  const delay = action.dispatchMode === 'serverDebounced' ? DEFAULT_ONCHANGE_DEBOUNCE_MS : 0;
+  const delay = resolveActionDebounceMs(action);
   fieldActionTimer = setTimeout(() => {
     fieldActionTimer = null;
     void runFieldAction(field, triggerType);
   }, delay);
+}
+
+function resolveActionDebounceMs(action: ContractAction): number {
+  if (action.dispatchMode !== 'serverDebounced') return 0;
+  const debounceMs = Number(action.submitPolicy.debounceMs || action.submitPolicy.debounce_ms);
+  if (!Number.isFinite(debounceMs)) return DEFAULT_ONCHANGE_DEBOUNCE_MS;
+  return Math.max(0, debounceMs);
 }
 
 async function runFieldAction(field: ContractWidget, triggerType: string) {
