@@ -42,6 +42,9 @@
             <text class="record-row__value">{{ formatValue(record[field.fieldCode]) }}</text>
           </view>
         </view>
+        <button v-if="canLoadMore" class="load-more" :disabled="dataLoading" @click="loadMoreRecords">
+          {{ dataLoading ? '加载中...' : '加载更多' }}
+        </button>
       </view>
       <view v-else class="empty">当前没有可显示的数据</view>
     </view>
@@ -107,6 +110,7 @@ const dataLoading = ref(false);
 const dataError = ref('');
 const records = ref<Dict[]>([]);
 const recordTotal = ref<number | null>(null);
+const nextOffset = ref(0);
 
 const pageInfo = computed(() => asDict(contract.value?.pageInfo));
 const layoutContract = computed(() => asDict(contract.value?.layoutContract));
@@ -124,6 +128,11 @@ const isListSurface = computed(() => ['list', 'tree', 'kanban', 'table'].include
 const recordCountLabel = computed(() => {
   if (recordTotal.value !== null) return `${recordTotal.value} 条`;
   return `${records.value.length} 条`;
+});
+const canLoadMore = computed(() => {
+  if (!isListSurface.value || dataLoading.value) return false;
+  if (recordTotal.value === null) return records.value.length > 0 && nextOffset.value > records.value.length;
+  return records.value.length < recordTotal.value;
 });
 
 function readStorage(key: string): string {
@@ -220,7 +229,7 @@ async function loadContract() {
     });
     const nextContract = asDict(response.data);
     contract.value = nextContract;
-    await loadRecords(endpoint, token, nextContract);
+    await loadRecords(endpoint, token, nextContract, false);
   } catch (err) {
     error.value = normalizeError(err);
     contract.value = null;
@@ -231,13 +240,14 @@ async function loadContract() {
   }
 }
 
-async function loadRecords(endpoint: string, token: string, nextContract: Dict) {
+async function loadRecords(endpoint: string, token: string, nextContract: Dict, append: boolean) {
   const info = asDict(nextContract.pageInfo);
   const model = asText(info.model);
   const viewType = asText(info.viewType);
   if (!model || !['list', 'tree', 'kanban', 'table'].includes(viewType)) {
     records.value = [];
     recordTotal.value = null;
+    nextOffset.value = 0;
     dataError.value = '';
     return;
   }
@@ -258,21 +268,36 @@ async function loadRecords(endpoint: string, token: string, nextContract: Dict) 
         model,
         fields,
         limit: 20,
-        offset: 0,
+        offset: append ? nextOffset.value : 0,
         need_total: true,
       },
     });
     const data = asDict(response.data);
-    records.value = asList(data.records).map((item) => asDict(item));
+    const nextRecords = asList(data.records).map((item) => asDict(item));
+    records.value = append ? records.value.concat(nextRecords) : nextRecords;
     const total = Number(data.total);
     recordTotal.value = Number.isFinite(total) ? total : null;
+    const offset = Number(data.next_offset);
+    nextOffset.value = Number.isFinite(offset) ? offset : records.value.length;
   } catch (err) {
-    records.value = [];
-    recordTotal.value = null;
+    if (!append) {
+      records.value = [];
+      recordTotal.value = null;
+      nextOffset.value = 0;
+    }
     dataError.value = normalizeError(err);
   } finally {
     dataLoading.value = false;
   }
+}
+
+async function loadMoreRecords() {
+  const baseUrl = normalizeBaseUrl(readStorage('sc_mobile_base_url'));
+  const dbName = readStorage('sc_mobile_db');
+  const token = readStorage('sc_mobile_token');
+  if (!baseUrl || !dbName || !token || !contract.value) return;
+  const endpoint = `${baseUrl}/api/v1/intent?db=${encodeURIComponent(dbName)}`;
+  await loadRecords(endpoint, token, contract.value, true);
 }
 
 function buildTargetParams(): Dict {
@@ -604,6 +629,17 @@ onShow(loadContract);
   font-size: 25rpx;
   line-height: 1.35;
   word-break: break-word;
+}
+
+.load-more {
+  height: 66rpx;
+  margin-top: 4rpx;
+  border-radius: 8rpx;
+  background: #ffffff;
+  color: #1f3a5f;
+  border: 1rpx solid #cbd6e2;
+  font-size: 24rpx;
+  line-height: 66rpx;
 }
 
 .action-list {
