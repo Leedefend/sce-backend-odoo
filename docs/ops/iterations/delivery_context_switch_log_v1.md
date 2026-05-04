@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-04T23:00:20+08:00
+- blocker_key: `web_action_view_v2_button_status_batch`
+- layer_target: `Frontend Contract Consumer`
+- module: `frontend/apps/web/src/views/ActionView.vue + scripts/verify`
+- reason: `Record/Form 已消费 v2 buttonStatus，但列表 ActionView 工具栏动作仍只按前端 selection/group 推断 enabled，未遵守后端 StatusContract.buttonStatus。`
+- completed_step: `ActionView 引入 collectUnifiedPageContractV2ButtonStatus；contract action button 映射出口应用 applyActionViewV2ButtonStatus，visible=false 丢弃、disabled=true 保留但禁用并展示 reasonCode；handleSelectionAction 阻止 disabled contract action 直接执行；web v2 guard 增加 ActionView buttonStatus 门禁。`
+- verification: `python3 scripts/verify/web_unified_page_contract_v2_guard.py PASS；python3 -m py_compile scripts/verify/web_unified_page_contract_v2_guard.py PASS；pnpm --dir frontend/apps/web run typecheck PASS；make verify.unified_page_contract.v2 PASS；git diff --check PASS。`
+- active_commit: `9de18fac`
+- next_step: `提交 web_action_view_v2_button_status_batch；下一批可继续补 v2 selectorStatus/search controls 或前端 v2 actionRuleList 直接消费路径。`
+
 ### 2026-05-04T22:56:54+08:00
 - blocker_key: `web_unified_page_contract_v2_button_status_batch`
 - layer_target: `Frontend Contract Consumer`

@@ -19,6 +19,7 @@ WEB_ACTION_CONTRACT_RUNTIME = ROOT / "frontend/apps/web/src/app/contractActionRu
 WEB_RECORD_RUNTIME = ROOT / "frontend/apps/web/src/app/contractRecordRuntime.ts"
 WEB_SURFACE_CONTRACT = ROOT / "frontend/apps/web/src/app/contracts/actionViewSurfaceContract.ts"
 WEB_RECORD_VIEW = ROOT / "frontend/apps/web/src/views/RecordView.vue"
+WEB_ACTION_VIEW = ROOT / "frontend/apps/web/src/views/ActionView.vue"
 
 
 def main() -> int:
@@ -36,6 +37,7 @@ def main() -> int:
     record_runtime_source = WEB_RECORD_RUNTIME.read_text(encoding="utf-8") if WEB_RECORD_RUNTIME.exists() else ""
     surface_source = WEB_SURFACE_CONTRACT.read_text(encoding="utf-8") if WEB_SURFACE_CONTRACT.exists() else ""
     record_view_source = WEB_RECORD_VIEW.read_text(encoding="utf-8") if WEB_RECORD_VIEW.exists() else ""
+    action_view_source = WEB_ACTION_VIEW.read_text(encoding="utf-8") if WEB_ACTION_VIEW.exists() else ""
     form_page_source = (ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue").read_text(encoding="utf-8")
     if "intent: 'ui.contract.v2'" not in source and 'intent: "ui.contract.v2"' not in source:
         errors.append("web contract API must request ui.contract.v2")
@@ -91,6 +93,8 @@ def main() -> int:
         errors.append("web contract form page must merge v2 widget status into runtime field states")
     if "collectUnifiedPageContractV2ButtonStatus" not in form_page_source or "resolveV2ButtonStatus" not in form_page_source:
         errors.append("web contract form page must merge v2 buttonStatus into contract actions")
+    if "collectUnifiedPageContractV2ButtonStatus" not in action_view_source or "applyActionViewV2ButtonStatus" not in action_view_source:
+        errors.append("web action view toolbar actions must merge v2 buttonStatus into contract actions")
 
     if errors:
         print("web unified page contract v2 guard failed:")

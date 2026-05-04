@@ -786,6 +786,10 @@ import {
   type SurfaceIntentContract,
 } from '../app/contracts/actionViewSurfaceContract';
 import {
+  collectUnifiedPageContractV2ButtonStatus,
+  type UnifiedPageContractV2ButtonStatus,
+} from '../app/contracts/unifiedPageContractV2';
+import {
   mapProjectionMetricItems,
   resolveActionViewSurfaceKind,
 } from '../app/contracts/actionViewProjectionContract';
@@ -1023,6 +1027,47 @@ type ContractActionGroupRaw = {
   overflow_actions?: Array<Record<string, unknown>>;
   overflow_count?: number;
 };
+
+function stableActionContractId(value: unknown, fallback: string) {
+  const raw = String(value || fallback || '').trim();
+  const normalized = raw
+    .split('')
+    .map((char) => {
+      if (/^[A-Za-z0-9_.:-]$/.test(char)) return char;
+      if (char === ' ' || char === '/') return '.';
+      return '';
+    })
+    .join('')
+    .replace(/^\.+|\.+$/g, '');
+  const safe = normalized || fallback || 'action';
+  return /^[A-Za-z]/.test(safe) ? safe : `id.${safe}`;
+}
+
+function resolveActionViewV2ButtonStatus(
+  key: string,
+  statusById: Record<string, UnifiedPageContractV2ButtonStatus>,
+): UnifiedPageContractV2ButtonStatus | null {
+  const stableKey = stableActionContractId(key, 'action');
+  const candidates = [`btn.${stableKey}`, key, stableKey].filter(Boolean);
+  for (const candidate of candidates) {
+    if (statusById[candidate]) return statusById[candidate];
+  }
+  return null;
+}
+
+function applyActionViewV2ButtonStatus<T extends ContractActionButton>(
+  action: T | null,
+  statusById: Record<string, UnifiedPageContractV2ButtonStatus>,
+): T | null {
+  if (!action) return null;
+  const status = resolveActionViewV2ButtonStatus(action.key, statusById);
+  if (status?.visible === false) return null;
+  if (status?.disabled === true) {
+    action.enabled = false;
+    action.hint = status.reasonCode || action.hint || 'disabled_by_status_contract';
+  }
+  return action;
+}
 const actionId = computed(() => {
   const fromParam = Number(route.params.actionId || 0);
   if (Number.isFinite(fromParam) && fromParam > 0) return fromParam;
@@ -1539,7 +1584,10 @@ const {
 } = useActionViewActionPresentationRuntime({
   actionContract,
   strictContractMode,
-  toContractActionButton: (row, dedup) => toContractActionButton(row, dedup) as ContractActionButton | null,
+  toContractActionButton: (row, dedup) => applyActionViewV2ButtonStatus(
+    toContractActionButton(row, dedup) as ContractActionButton | null,
+    collectUnifiedPageContractV2ButtonStatus(actionContract.value),
+  ),
   resolveContractActionPresentation,
   pageText,
 });
@@ -1564,7 +1612,7 @@ function handleSelectionAction(key: string) {
     return;
   }
   const target = contractActionButtons.value.find((action) => action.key === key);
-  if (!target) return;
+  if (!target || !target.enabled) return;
   void runContractAction(target as ContractActionButton);
 }
 
