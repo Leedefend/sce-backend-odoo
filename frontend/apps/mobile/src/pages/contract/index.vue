@@ -62,13 +62,21 @@
         <view class="section__title">业务记录</view>
         <view class="section__count">{{ recordRows.length + relationBlocks.length }} 项</view>
       </view>
-      <view v-if="recordRows.length" class="field-list">
-        <view v-for="row in recordRows" :key="row.fieldCode" class="field-row field-row--value">
+      <view v-if="displayFields.length && records.length" class="field-list">
+        <view v-for="field in displayFields" :key="field.widgetId" class="field-row field-row--value">
           <view class="field-row__main">
-            <text class="field-row__label">{{ row.label }}</text>
-            <text class="field-row__code">{{ row.fieldCode }}</text>
+            <text class="field-row__label">{{ field.label }}</text>
+            <text class="field-row__code">{{ field.fieldCode }}</text>
           </view>
-          <view class="field-row__value">{{ row.value }}</view>
+          <input
+            v-if="isEditableField(field)"
+            class="field-row__input"
+            :value="formatEditableValue(records[0][field.fieldCode])"
+            :disabled="field.disabled"
+            @input="handleFieldInput(field, $event)"
+            @blur="runFieldAction(field, 'blur')"
+          />
+          <view v-else class="field-row__value">{{ formatFieldValue(field, records[0][field.fieldCode]) }}</view>
         </view>
       </view>
       <view v-if="relationBlocks.length" class="relation-list">
@@ -125,14 +133,14 @@
       <view v-else class="empty">当前契约未返回可渲染字段</view>
     </view>
 
-    <view v-if="actions.length" class="section">
+    <view v-if="commandActions.length" class="section">
       <view class="section__head">
         <view class="section__title">可用动作</view>
-        <view class="section__count">{{ actions.length }} 项</view>
+        <view class="section__count">{{ commandActions.length }} 项</view>
       </view>
       <view class="action-list">
         <button
-          v-for="action in actions"
+          v-for="action in commandActions"
           :key="action.actionId"
           class="action"
           :class="{ 'action--disabled': action.disabled }"
@@ -173,6 +181,9 @@ interface ContractAction {
   actionKey: string;
   label: string;
   intent: string;
+  triggerType: string;
+  sourceWidgetId: string;
+  dispatchMode: string;
   refreshMode: string;
   targetIds: string[];
   dependencyTargets: string[];
@@ -214,6 +225,7 @@ interface InlineRecordSet {
 const TARGET_MODEL = 'construction.contract';
 const TARGET_VIEW_TYPE = 'tree';
 const CLIENT_TYPE = 'harmony_h5';
+const DEFAULT_ONCHANGE_DEBOUNCE_MS = 300;
 
 const loading = ref(false);
 const error = ref('');
@@ -229,6 +241,7 @@ const runningActionId = ref('');
 const relationLoadingKey = ref('');
 const relationErrorKey = ref('');
 const relationError = ref('');
+let fieldActionTimer: ReturnType<typeof setTimeout> | null = null;
 
 const pageInfo = computed(() => asDict(contract.value?.pageInfo));
 const layoutContract = computed(() => asDict(contract.value?.layoutContract));
@@ -265,6 +278,7 @@ const listDisplayFields = computed(() => businessFields.value.slice(0, 8));
 const displayFields = computed(() => (isListSurface.value ? listDisplayFields.value : businessFields.value));
 const sceneBlocks = computed(() => widgets.value.filter((item) => item.visible && item.widgetType === 'display' && item.fieldCode));
 const actions = computed(() => collectActions(actionContract.value, statusContract.value));
+const commandActions = computed(() => actions.value.filter((action) => ['click', 'submit', 'confirm', 'delete', 'refresh', 'select'].includes(action.triggerType)));
 const isListSurface = computed(() => ['list', 'tree', 'kanban', 'table'].includes(viewTypeLabel.value));
 const recordRows = computed<RecordRow[]>(() => {
   if (isListSurface.value || !records.value.length) return [];
@@ -960,6 +974,9 @@ function collectActions(action: Dict, status: Dict): ContractAction[] {
         actionKey,
         label: asText(row.label, actionId),
         intent: asText(row.intent, 'ui.contract'),
+        triggerType: asText(row.triggerType || row.trigger_type, 'click'),
+        sourceWidgetId,
+        dispatchMode: asText(row.dispatchMode || row.dispatch_mode, 'server'),
         refreshMode: normalizeRefreshMode(row.refreshMode),
         targetIds,
         dependencyTargets,
@@ -1183,6 +1200,87 @@ function contractTraceContext(sourceContract: Dict | null): Dict {
   if (params.trace_id) out.trace_id = params.trace_id;
   if (params.request_id) out.request_id = params.request_id;
   return out;
+}
+
+function isEditableField(field: ContractWidget): boolean {
+  if (isListSurface.value || isPageReadonly.value || field.readonly || field.disabled || !field.fieldCode) return false;
+  const type = field.widgetType.toLowerCase();
+  const component = field.componentKey.toLowerCase();
+  return type === 'input' || component.includes('input') || component.includes('textarea');
+}
+
+function formatEditableValue(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (Array.isArray(value)) return asText(value[1] || value[0]);
+  if (typeof value === 'object') return asText(asDict(value).display_name || asDict(value).name || asDict(value).label);
+  return String(value);
+}
+
+function handleFieldInput(field: ContractWidget, event: unknown) {
+  if (!records.value.length || !field.fieldCode) return;
+  const detail = asDict(asDict(event).detail);
+  records.value = [
+    {
+      ...records.value[0],
+      [field.fieldCode]: detail.value,
+    },
+    ...records.value.slice(1),
+  ];
+  scheduleFieldAction(field, 'change');
+}
+
+function scheduleFieldAction(field: ContractWidget, triggerType: string) {
+  const action = resolveFieldAction(field, triggerType);
+  if (!action) return;
+  if (fieldActionTimer) clearTimeout(fieldActionTimer);
+  const delay = action.dispatchMode === 'serverDebounced' ? DEFAULT_ONCHANGE_DEBOUNCE_MS : 0;
+  fieldActionTimer = setTimeout(() => {
+    fieldActionTimer = null;
+    void runFieldAction(field, triggerType);
+  }, delay);
+}
+
+async function runFieldAction(field: ContractWidget, triggerType: string) {
+  const action = resolveFieldAction(field, triggerType);
+  const runtime = resolveRuntimeEndpoint();
+  if (!action || !runtime || !records.value.length || !contract.value) return;
+  const currentRecord = records.value[0];
+  try {
+    const response = await requestIntent(runtime.endpoint, runtime.token, {
+      intent: 'api.onchange',
+      params: {
+        model: modelName.value,
+        res_id: currentRecordId() || undefined,
+        values: { ...currentRecord },
+        changed_fields: [field.fieldCode],
+        include_v2_patch: true,
+        contract_version: contractVersion.value,
+        request_id: asText(contractMeta.value.requestId || contractMeta.value.request_id),
+        context: contractTraceContext(contract.value),
+        ...contractTraceParams(contract.value),
+      },
+    });
+    applyResponseUnifiedPagePatch(response);
+    applyOnchangeDataPatch(response);
+    showActionResponseFeedback(response);
+    if (normalizeRefreshMode(action.refreshMode) === 'full' || needsFullContractRefresh(actionRefreshTargets(action))) {
+      await loadContract();
+    }
+  } catch (err) {
+    uni.showToast({ title: normalizeError(err, '字段联动失败').slice(0, 48), icon: 'none' });
+  }
+}
+
+function resolveFieldAction(field: ContractWidget, triggerType: string): ContractAction | null {
+  const candidates = [field.widgetId, field.fieldCode, `field.${field.fieldCode}`].filter(Boolean);
+  return actions.value.find((action) => action.triggerType === triggerType && candidates.includes(action.sourceWidgetId)) || null;
+}
+
+function applyOnchangeDataPatch(response: Dict) {
+  const data = asDict(response.data);
+  const patch = asDict(data.patch);
+  if (!Object.keys(patch).length || !records.value.length) return;
+  records.value = [{ ...records.value[0], ...patch }, ...records.value.slice(1)];
 }
 
 function isBusinessDisplayField(widget: ContractWidget): boolean {
@@ -1757,6 +1855,20 @@ onShow(loadContract);
   line-height: 1.35;
   text-align: right;
   word-break: break-word;
+}
+
+.field-row__input {
+  flex: 1;
+  min-width: 180rpx;
+  height: 56rpx;
+  padding: 0 14rpx;
+  border: 1rpx solid #cfd8e3;
+  border-radius: 8rpx;
+  background: #fff;
+  color: #17202a;
+  font-size: 24rpx;
+  line-height: 56rpx;
+  text-align: right;
 }
 
 .empty {
