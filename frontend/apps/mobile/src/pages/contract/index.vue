@@ -91,6 +91,14 @@
           >
             <view class="field-row__picker">{{ formatFieldValue(field, records[0][field.fieldCode]) || '请选择' }}</view>
           </picker>
+          <button
+            v-else-if="isRemoteSelectionField(field)"
+            class="field-row__load"
+            :disabled="many2OneLoadingKey === fieldOptionKey(field)"
+            @click="loadFieldOptions(field)"
+          >
+            {{ many2OneLoadingKey === fieldOptionKey(field) ? '加载中...' : '加载选项' }}
+          </button>
           <picker
             v-else-if="isMany2OneField(field)"
             mode="selector"
@@ -106,7 +114,7 @@
             v-else-if="isRemoteMany2OneField(field)"
             class="field-row__load"
             :disabled="many2OneLoadingKey === fieldOptionKey(field)"
-            @click="loadMany2OneOptions(field)"
+            @click="loadFieldOptions(field)"
           >
             {{ many2OneLoadingKey === fieldOptionKey(field) ? '加载中...' : '加载选项' }}
           </button>
@@ -1407,6 +1415,12 @@ function isSelectionField(field: ContractWidget): boolean {
   return Boolean(selectionOptions(field).length) && (type.includes('select') || type.includes('selection') || type.includes('radio'));
 }
 
+function isRemoteSelectionField(field: ContractWidget): boolean {
+  if (isListSurface.value || isPageReadonly.value || field.readonly || field.disabled || !field.fieldCode) return false;
+  const type = `${field.widgetType} ${field.componentKey} ${field.valueType}`.toLowerCase();
+  return !selectionOptions(field).length && Boolean(resolveFieldOptionDataSource(field)) && (type.includes('select') || type.includes('selection') || type.includes('radio'));
+}
+
 function isMany2OneField(field: ContractWidget): boolean {
   if (isListSurface.value || isPageReadonly.value || field.readonly || field.disabled || !field.fieldCode) return false;
   const type = `${field.widgetType} ${field.componentKey} ${field.valueType}`.toLowerCase();
@@ -1558,6 +1572,10 @@ function resolveFieldOptionDataSource(field: ContractWidget): Dict | null {
 }
 
 async function loadMany2OneOptions(field: ContractWidget) {
+  await loadFieldOptions(field);
+}
+
+async function loadFieldOptions(field: ContractWidget) {
   const runtime = resolveRuntimeEndpoint();
   const dataSource = resolveFieldOptionDataSource(field);
   const sourceIntent = asText(dataSource?.intent || dataSource?.query || dataSource?.provider, 'api.data');
@@ -1585,7 +1603,7 @@ async function loadMany2OneOptions(field: ContractWidget) {
         ...contractTraceParams(contract.value),
       },
     });
-    mergeMany2OneOptions(field, asDict(response.data));
+    mergeFieldOptions(field, asDict(response.data));
   } catch (err) {
     uni.showToast({ title: normalizeError(err, '选项加载失败').slice(0, 48), icon: 'none' });
   } finally {
@@ -1594,6 +1612,10 @@ async function loadMany2OneOptions(field: ContractWidget) {
 }
 
 function mergeMany2OneOptions(field: ContractWidget, data: Dict) {
+  mergeFieldOptions(field, data);
+}
+
+function mergeFieldOptions(field: ContractWidget, data: Dict) {
   const key = fieldOptionKey(field);
   const dictRows = asList(asDict(data.dictData)[key]);
   const sourceRows = dictRows.length ? dictRows : asList(data.records || data.rows || data.items);
@@ -1631,6 +1653,10 @@ function fieldOptionDomainParams(field: ContractWidget, sourceParams: Dict): Dic
 }
 
 function clearMany2OneOptionsByFieldCodes(fieldCodes: string[]) {
+  clearFieldOptionsByFieldCodes(fieldCodes);
+}
+
+function clearFieldOptionsByFieldCodes(fieldCodes: string[]) {
   if (!contract.value || !fieldCodes.length) return;
   const keys = widgets.value
     .filter((field) => fieldCodes.includes(field.fieldCode))
@@ -1748,7 +1774,7 @@ function applyOnchangeModifiersPatch(raw: unknown) {
     })
     .filter((row) => Object.keys(row).length > 1);
   if (rows.length) applyUnifiedPagePatchV2({ statusPatch: { widgetStatus: rows } });
-  clearMany2OneOptionsByFieldCodes(domainChangedFields);
+  clearFieldOptionsByFieldCodes(domainChangedFields);
 }
 
 function applyOnchangeLinePatches(raw: unknown) {
