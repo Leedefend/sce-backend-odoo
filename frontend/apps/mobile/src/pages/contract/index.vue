@@ -99,6 +99,36 @@
           >
             {{ many2OneLoadingKey === fieldOptionKey(field) ? '加载中...' : '加载选项' }}
           </button>
+          <view v-else-if="isRemoteSearchableMany2OneField(field)" class="field-row__remote">
+            <picker
+              v-if="many2OneOptions(field).length"
+              mode="selector"
+              :range="many2OneOptions(field)"
+              range-key="label"
+              :value="many2OneIndex(field, records[0][field.fieldCode])"
+              :disabled="field.disabled"
+              @change="handleMany2OneChange(field, $event)"
+            >
+              <view class="field-row__picker field-row__picker--remote">{{ formatFieldValue(field, records[0][field.fieldCode]) || '请选择' }}</view>
+            </picker>
+            <input
+              class="field-row__search"
+              type="text"
+              confirm-type="search"
+              :value="optionSearchValue(field)"
+              placeholder="搜索"
+              :disabled="field.disabled"
+              @input="handleOptionSearchInput(field, $event)"
+              @confirm="loadFieldOptions(field)"
+            />
+            <button
+              class="field-row__load"
+              :disabled="many2OneLoadingKey === fieldOptionKey(field)"
+              @click="loadFieldOptions(field)"
+            >
+              {{ many2OneLoadingKey === fieldOptionKey(field) ? '加载中...' : '加载' }}
+            </button>
+          </view>
           <picker
             v-else-if="isMany2OneField(field)"
             mode="selector"
@@ -110,14 +140,6 @@
           >
             <view class="field-row__picker">{{ formatFieldValue(field, records[0][field.fieldCode]) || '请选择' }}</view>
           </picker>
-          <button
-            v-else-if="isRemoteMany2OneField(field)"
-            class="field-row__load"
-            :disabled="many2OneLoadingKey === fieldOptionKey(field)"
-            @click="loadFieldOptions(field)"
-          >
-            {{ many2OneLoadingKey === fieldOptionKey(field) ? '加载中...' : '加载选项' }}
-          </button>
           <picker
             v-else-if="isDateField(field)"
             mode="date"
@@ -344,6 +366,7 @@ const relationLoadingKey = ref('');
 const relationErrorKey = ref('');
 const relationError = ref('');
 const many2OneLoadingKey = ref('');
+const optionSearchText = ref<Record<string, string>>({});
 const warningMessages = ref<string[]>([]);
 let fieldActionTimer: ReturnType<typeof setTimeout> | null = null;
 let warningTimer: ReturnType<typeof setTimeout> | null = null;
@@ -1427,6 +1450,12 @@ function isMany2OneField(field: ContractWidget): boolean {
   return Boolean(many2OneOptions(field).length) && (type.includes('many2one') || type.includes('select.remote'));
 }
 
+function isRemoteSearchableMany2OneField(field: ContractWidget): boolean {
+  if (isListSurface.value || isPageReadonly.value || field.readonly || field.disabled || !field.fieldCode) return false;
+  const type = `${field.widgetType} ${field.componentKey} ${field.valueType}`.toLowerCase();
+  return Boolean(resolveFieldOptionDataSource(field)) && (type.includes('many2one') || type.includes('select.remote'));
+}
+
 function isRemoteMany2OneField(field: ContractWidget): boolean {
   if (isListSurface.value || isPageReadonly.value || field.readonly || field.disabled || !field.fieldCode) return false;
   const type = `${field.widgetType} ${field.componentKey} ${field.valueType}`.toLowerCase();
@@ -1480,6 +1509,14 @@ function handleMany2OneChange(field: ContractWidget, event: unknown) {
   const option = many2OneOptions(field)[Number.isFinite(index) ? index : -1];
   if (!option) return;
   setEditableFieldValue(field, [option.value, option.label]);
+}
+
+function handleOptionSearchInput(field: ContractWidget, event: unknown) {
+  const detail = asDict(asDict(event).detail);
+  optionSearchText.value = {
+    ...optionSearchText.value,
+    [fieldOptionKey(field)]: asText(detail.value),
+  };
 }
 
 function handleDateChange(field: ContractWidget, event: unknown) {
@@ -1599,6 +1636,7 @@ async function loadFieldOptions(field: ContractWidget) {
         offset: 0,
         dataKey: key,
         data_key: key,
+        ...fieldOptionSearchParams(field),
         ...fieldOptionDomainParams(field, sourceParams),
         ...contractTraceParams(contract.value),
       },
@@ -1650,6 +1688,20 @@ function fieldOptionDomainParams(field: ContractWidget, sourceParams: Dict): Dic
   if (contextRaw) params.context_raw = contextRaw;
   if (!domainRaw && field.optionDomain !== undefined) params.domain = field.optionDomain;
   return params;
+}
+
+function optionSearchValue(field: ContractWidget): string {
+  return asText(optionSearchText.value[fieldOptionKey(field)]);
+}
+
+function fieldOptionSearchParams(field: ContractWidget): Dict {
+  const keyword = optionSearchValue(field);
+  if (!keyword || !isRemoteSearchableMany2OneField(field)) return {};
+  return {
+    search: keyword,
+    query: keyword,
+    name_search: keyword,
+  };
 }
 
 function clearMany2OneOptionsByFieldCodes(fieldCodes: string[]) {
@@ -2576,6 +2628,33 @@ onShow(loadContract);
   flex: 0 0 auto;
   gap: 8rpx;
   justify-content: flex-end;
+}
+
+.field-row__remote {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: 8rpx;
+  justify-content: flex-end;
+}
+
+.field-row__search {
+  flex: 1 1 120rpx;
+  min-width: 110rpx;
+  max-width: 180rpx;
+  height: 56rpx;
+  padding: 0 12rpx;
+  border: 1rpx solid #cfd8e3;
+  border-radius: 8rpx;
+  background: #fff;
+  color: #17202a;
+  font-size: 23rpx;
+  line-height: 56rpx;
+}
+
+.field-row__picker--remote {
+  min-width: 150rpx;
+  max-width: 190rpx;
 }
 
 .field-row__picker--datetime {

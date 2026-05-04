@@ -169,6 +169,9 @@ def main() -> int:
     for token in ("isMany2OneField", "handleMany2OneChange", "many2OneOptions", "many2OneIndex", "type.includes('many2one') || type.includes('select.remote')", "setEditableFieldValue(field, [option.value, option.label])"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must map v2 local many2one controls token: {token}")
+    for token in ("isRemoteSearchableMany2OneField", "optionSearchText", "handleOptionSearchInput", "optionSearchValue", "fieldOptionSearchParams", "name_search: keyword", "search: keyword", "query: keyword", "confirm-type=\"search\"", "@confirm=\"loadFieldOptions(field)\"", "field-row__remote", "field-row__search"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must provide v2 many2one remote search token: {token}")
     for token in ("isRemoteMany2OneField", "fieldOptionKey", "resolveFieldOptionDataSource", "loadMany2OneOptions", "mergeMany2OneOptions", "many2OneLoadingKey", "dataSources[key] || dataSources[field.fieldCode] || dataSources[field.widgetId]", "intent: sourceIntent", "dataKey: key", "asDict(data.dictData)[key]", "[key]: rows", "normalizeError(err, '选项加载失败').slice(0, 48)"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must load v2 remote many2one options token: {token}")

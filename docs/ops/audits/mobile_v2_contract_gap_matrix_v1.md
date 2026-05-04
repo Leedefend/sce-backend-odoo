@@ -64,6 +64,7 @@ option refresh, and real terminal acceptance.
 | remote selection option bootstrap | Closed | selection/radio fields can load contract-declared `dataSource` options into `dictData`. |
 | local many2one picker | Closed | many2one/select.remote fields render a dictData-backed picker when local options are delivered. |
 | remote many2one option bootstrap | Closed | many2one/select.remote fields can load contract-declared `dataSource` options into `dictData`. |
+| remote many2one search | Closed | remote many2one fields expose a compact search box and send `search/query/name_search` to the option dataSource. |
 | domain-aware field option refetch | Closed | onchange `modifiers_patch.domain/domain_raw` invalidates selection/many2one options and the next option request carries domain/context params. |
 | standard form command dispatch | Closed | `form.save`, `form.validate`, and `record.delete` can dispatch through the intent runtime with trace, feedback, patch, and refresh handling. |
 | non-executable action filtering | Closed | unsupported command actions are hidden instead of shown as broken buttons. |
@@ -73,7 +74,7 @@ option refresh, and real terminal acceptance.
 | Gap ID | Priority | Status | Description | Next Batch Candidate |
 | --- | --- | --- | --- | --- |
 | M2-G01 | P1 | Closed | `modifiers_patch.domain/domain_raw` can invalidate and refetch remote selection and many2one options through contract-declared option dataSources. | Monitor backend option dataSource coverage in terminal acceptance. |
-| M2-G02 | P1 | Partial | `boolean`, `selection`, local dict-backed `many2one`, remote option bootstrap, and domain-aware many2one refetch now have compact controls; dynamic typeahead search remains open. | Implement mobile many2one typeahead/search UI if needed for large datasets. |
+| M2-G02 | P1 | Closed | `boolean`, `selection`, local dict-backed `many2one`, remote option bootstrap, domain-aware refetch, and remote many2one search now have compact controls. | Monitor large-dataset terminal acceptance and tune search request shape if backend requires it. |
 | M2-G03 | P1 | Closed | `date` and `datetime` fields now use terminal-safe picker controls instead of plain text input. | Monitor terminal acceptance and add timezone-specific handling only if backend values require it. |
 | M2-G04 | P1 | Closed | standard v2 actions `form.save`, `form.validate`, and `record.delete` now have a bounded mobile intent dispatch path; full native-grade Odoo form semantics remain deferred. | Monitor backend intent compatibility and add terminal acceptance coverage. |
 | M2-G05 | P2 | Closed | warnings are surfaced via toast and retained in a transient page-level warning stack near the header. | Monitor terminal acceptance and tune duration/copy if needed. |
@@ -89,7 +90,7 @@ The following items are intentionally not claimed closed:
 
 - full native-grade Odoo form save/delete/validate semantics;
 - complete x2many inline add/edit forms;
-- typeahead many2one search UI for large remote datasets;
+- advanced typeahead ranking/highlighting for large remote datasets;
 - real device or mini-program runtime acceptance;
 - offline/cache semantics from `runtimeContract`.
 
@@ -97,11 +98,9 @@ The following items are intentionally not claimed closed:
 
 Recommended next sequence:
 
-1. `M2-G02`: decide whether many2one typeahead/search UI is needed for large datasets.
-2. `M2-G09`: add real terminal acceptance evidence.
-3. `M2-G10`: improve visual proof.
-4. `M2-G02`: decide whether many2one typeahead/search UI is required.
-5. `M2-G06`: decide whether full relation add/edit forms are required.
+1. `M2-G09`: add real terminal acceptance evidence.
+2. `M2-G10`: improve visual proof.
+3. `M2-G06`: decide whether full relation add/edit forms are required.
 
 ## Verification Gates
 
