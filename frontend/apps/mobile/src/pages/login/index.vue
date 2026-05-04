@@ -21,7 +21,7 @@
             v-model="baseUrl"
             class="field__input"
             :disabled="loading"
-            placeholder="http://服务器地址:8070"
+            placeholder="http://服务器地址:8071"
           />
         </label>
 
@@ -69,10 +69,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-const DEFAULT_BASE_URL = 'http://127.0.0.1:8070';
+const DEFAULT_BACKEND_PROXY_PORT = '8071';
 const DEFAULT_DB = 'sc_prod_sim';
 
-const baseUrl = ref(readStorage('sc_mobile_base_url') || DEFAULT_BASE_URL);
+const baseUrl = ref(readStorage('sc_mobile_base_url') || defaultBaseUrl());
 const dbName = ref(readStorage('sc_mobile_db') || DEFAULT_DB);
 const login = ref('');
 const password = ref('');
@@ -85,6 +85,16 @@ function readStorage(key: string): string {
   } catch {
     return '';
   }
+}
+
+function defaultBaseUrl(): string {
+  const locationLike = (globalThis as typeof globalThis & { location?: { protocol?: string; hostname?: string } }).location;
+  const protocol = String(locationLike?.protocol || 'http:').replace(/:$/, '') || 'http';
+  const hostname = String(locationLike?.hostname || '').trim();
+  if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
+    return `${protocol}://${hostname}:${DEFAULT_BACKEND_PROXY_PORT}`;
+  }
+  return `http://127.0.0.1:${DEFAULT_BACKEND_PROXY_PORT}`;
 }
 
 function normalizeBaseUrl(value: string): string {

@@ -3,7 +3,7 @@ param(
     [int]$H5Port = 8092,
     [int]$BackendProxyPort = 8071,
     [string]$BackendHost = "127.0.0.1",
-    [int]$BackendPort = 8070
+    [int]$BackendPort = 18069
 )
 
 $ErrorActionPreference = "Stop"
