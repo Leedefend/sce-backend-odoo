@@ -1,4 +1,4 @@
-import { intentRequest, intentRequestRaw } from './intents';
+import { intentRequestRaw, type IntentRawResult } from './intents';
 import { ApiError } from './client';
 import type { ActionContract } from '@sc/schema';
 import { extractLiteContractFromIntentBody } from '../app/runtime/unifiedPageContractLitePilot';
@@ -14,6 +14,66 @@ type LoadActionContractOptions = {
 type LoadModelContractOptions = LoadActionContractOptions & {
   viewType?: 'form' | 'tree' | 'kanban';
 };
+
+type Dict = Record<string, unknown>;
+type LegacyContractRawResult = IntentRawResult<ActionContract & Dict>;
+
+function asDict(value: unknown): Dict {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Dict : {};
+}
+
+function resolveCompatSource(v2Contract: unknown): Dict {
+  const root = asDict(v2Contract);
+  const meta = asDict(root.meta);
+  const compat = asDict(meta.compat);
+  return asDict(compat.ui_contract);
+}
+
+function adaptUnifiedPageContractV2Raw(result: IntentRawResult<Dict>): LegacyContractRawResult {
+  const v2Contract = asDict(result.data);
+  const source = resolveCompatSource(v2Contract);
+  const legacy = asDict(source.ui_contract);
+  const sourceMeta = asDict(source.source_meta);
+  const adaptedData = {
+    ...legacy,
+    __unified_page_contract_v2: v2Contract,
+  } as ActionContract & Dict;
+  return {
+    ...result,
+    data: adaptedData,
+    meta: {
+      ...result.meta,
+      ...sourceMeta,
+      unified_page_contract_version: asDict(v2Contract.pageInfo).contractVersion,
+      unified_page_contract_source: 'ui.contract.v2',
+    },
+    rawBody: {
+      ...(asDict(result.rawBody)),
+      data: adaptedData,
+      unified_page_contract_v2: v2Contract,
+    },
+  };
+}
+
+async function requestUnifiedPageContractV2Raw(params: Record<string, unknown>) {
+  const result = await intentRequestRaw<Dict>({
+    intent: 'ui.contract.v2',
+    params: {
+      client_type: 'web_pc',
+      delivery_profile: 'full',
+      ...params,
+    },
+  });
+  const adapted = adaptUnifiedPageContractV2Raw(result);
+  if (!Object.keys(adapted.data || {}).length) {
+    throw new ApiError('ui.contract.v2 missing legacy compatibility payload', 500, result.traceId, {
+      reasonCode: 'UNIFIED_PAGE_CONTRACT_V2_COMPAT_MISSING',
+      kind: 'contract',
+      retryable: false,
+    });
+  }
+  return adapted;
+}
 
 function rethrowContractError(err: unknown, context: { op: 'action_open' | 'model'; model?: string; actionId?: number }): never {
   if (!(err instanceof ApiError)) {
@@ -73,10 +133,8 @@ function buildActionContractParams(actionId: number, options?: LoadActionContrac
 
 export async function loadActionContract(actionId: number, options?: LoadActionContractOptions) {
   try {
-    return await intentRequest<ActionContract>({
-      intent: 'ui.contract',
-      params: buildActionContractParams(actionId, options),
-    });
+    const result = await requestUnifiedPageContractV2Raw(buildActionContractParams(actionId, options));
+    return result.data;
   } catch (err) {
     rethrowContractError(err, { op: 'action_open', actionId });
   }
@@ -84,10 +142,7 @@ export async function loadActionContract(actionId: number, options?: LoadActionC
 
 export async function loadActionContractRaw(actionId: number, options?: LoadActionContractOptions) {
   try {
-    return await intentRequestRaw<ActionContract & Record<string, unknown>>({
-      intent: 'ui.contract',
-      params: buildActionContractParams(actionId, options),
-    });
+    return await requestUnifiedPageContractV2Raw(buildActionContractParams(actionId, options));
   } catch (err) {
     rethrowContractError(err, { op: 'action_open', actionId });
   }
@@ -124,10 +179,7 @@ function buildModelContractParams(model: string, options?: LoadModelContractOpti
 
 export async function loadModelContractRaw(model: string, options?: LoadModelContractOptions) {
   try {
-    return await intentRequestRaw<ActionContract & Record<string, unknown>>({
-      intent: 'ui.contract',
-      params: buildModelContractParams(model, options),
-    });
+    return await requestUnifiedPageContractV2Raw(buildModelContractParams(model, options));
   } catch (err) {
     rethrowContractError(err, { op: 'model', model });
   }
