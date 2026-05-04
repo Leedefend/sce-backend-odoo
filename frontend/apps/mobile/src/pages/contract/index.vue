@@ -85,6 +85,17 @@
           >
             <view class="field-row__picker">{{ formatFieldValue(field, records[0][field.fieldCode]) || '请选择' }}</view>
           </picker>
+          <picker
+            v-else-if="isMany2OneField(field)"
+            mode="selector"
+            :range="many2OneOptions(field)"
+            range-key="label"
+            :value="many2OneIndex(field, records[0][field.fieldCode])"
+            :disabled="field.disabled"
+            @change="handleMany2OneChange(field, $event)"
+          >
+            <view class="field-row__picker">{{ formatFieldValue(field, records[0][field.fieldCode]) || '请选择' }}</view>
+          </picker>
           <input
             v-else-if="isEditableField(field)"
             class="field-row__input"
@@ -1250,6 +1261,12 @@ function isSelectionField(field: ContractWidget): boolean {
   return Boolean(selectionOptions(field).length) && (type.includes('select') || type.includes('selection') || type.includes('radio'));
 }
 
+function isMany2OneField(field: ContractWidget): boolean {
+  if (isListSurface.value || isPageReadonly.value || field.readonly || field.disabled || !field.fieldCode) return false;
+  const type = `${field.widgetType} ${field.componentKey} ${field.valueType}`.toLowerCase();
+  return Boolean(many2OneOptions(field).length) && (type.includes('many2one') || type.includes('select.remote'));
+}
+
 function editableInputType(field: ContractWidget): string {
   const type = `${field.widgetType} ${field.componentKey} ${field.valueType}`.toLowerCase();
   if (type.includes('number') || type.includes('integer') || type.includes('float') || type.includes('monetary')) return 'digit';
@@ -1278,6 +1295,13 @@ function handleSelectionChange(field: ContractWidget, event: unknown) {
   const option = selectionOptions(field)[Number.isFinite(index) ? index : -1];
   if (!option) return;
   setEditableFieldValue(field, option.value);
+}
+
+function handleMany2OneChange(field: ContractWidget, event: unknown) {
+  const index = Number(asDict(asDict(event).detail).value);
+  const option = many2OneOptions(field)[Number.isFinite(index) ? index : -1];
+  if (!option) return;
+  setEditableFieldValue(field, [option.value, option.label]);
 }
 
 function setEditableFieldValue(field: ContractWidget, value: unknown) {
@@ -1315,6 +1339,14 @@ function selectionIndex(field: ContractWidget, value: unknown): number {
   const rawText = asText(Array.isArray(value) ? value[0] : value);
   const index = selectionOptions(field).findIndex((item) => asText(item.value) === rawText);
   return index >= 0 ? index : 0;
+}
+
+function many2OneOptions(field: ContractWidget): SelectOption[] {
+  return selectionOptions(field);
+}
+
+function many2OneIndex(field: ContractWidget, value: unknown): number {
+  return selectionIndex(field, value);
 }
 
 function scheduleFieldAction(field: ContractWidget, triggerType: string) {
