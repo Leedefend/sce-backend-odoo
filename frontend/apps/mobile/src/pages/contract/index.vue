@@ -71,6 +71,7 @@
           <input
             v-if="isEditableField(field)"
             class="field-row__input"
+            :type="editableInputType(field)"
             :value="formatEditableValue(records[0][field.fieldCode])"
             :disabled="field.disabled"
             @input="handleFieldInput(field, $event)"
@@ -170,6 +171,7 @@ interface ContractWidget {
   dictKey: string;
   summaryFields: string[];
   blockType: string;
+  valueType: string;
   visible: boolean;
   readonly: boolean;
   required: boolean;
@@ -733,6 +735,7 @@ function collectWidgets(layout: Dict, status: Dict): ContractWidget[] {
           dictKey: asText(config.dictKey),
           summaryFields: collectSummaryFields(config),
           blockType: asText(config.blockType),
+          valueType: asText(config.valueType || config.type || widget.valueType || widget.value_type),
           visible: widgetState.visible !== false && nextState.visible !== false,
           readonly: widgetState.readonly === true || nextState.disabled === true,
           required: widgetState.required === true,
@@ -1210,7 +1213,13 @@ function isEditableField(field: ContractWidget): boolean {
   if (isListSurface.value || isPageReadonly.value || field.readonly || field.disabled || !field.fieldCode) return false;
   const type = field.widgetType.toLowerCase();
   const component = field.componentKey.toLowerCase();
-  return type === 'input' || component.includes('input') || component.includes('textarea');
+  return ['input', 'number', 'date', 'datetime'].includes(type) || component.includes('input') || component.includes('textarea');
+}
+
+function editableInputType(field: ContractWidget): string {
+  const type = `${field.widgetType} ${field.componentKey} ${field.valueType}`.toLowerCase();
+  if (type.includes('number') || type.includes('integer') || type.includes('float') || type.includes('monetary')) return 'digit';
+  return 'text';
 }
 
 function formatEditableValue(value: unknown): string {
@@ -1226,11 +1235,18 @@ function handleFieldInput(field: ContractWidget, event: unknown) {
   records.value = [
     {
       ...records.value[0],
-      [field.fieldCode]: detail.value,
+      [field.fieldCode]: normalizeEditableValue(field, detail.value),
     },
     ...records.value.slice(1),
   ];
   scheduleFieldAction(field, 'change');
+}
+
+function normalizeEditableValue(field: ContractWidget, value: unknown): unknown {
+  const type = `${field.widgetType} ${field.componentKey} ${field.valueType}`.toLowerCase();
+  if (!type.includes('number') && !type.includes('integer') && !type.includes('float') && !type.includes('monetary')) return value;
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : value;
 }
 
 function scheduleFieldAction(field: ContractWidget, triggerType: string) {

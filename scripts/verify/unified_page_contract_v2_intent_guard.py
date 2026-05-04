@@ -145,6 +145,9 @@ def main() -> int:
     for token in ("commandActions", "isEditableField", "handleFieldInput", "scheduleFieldAction", "runFieldAction", "resolveFieldAction", "intent: 'api.onchange'", "include_v2_patch: true", "contract_version: contractVersion.value", "changed_fields: [field.fieldCode]", "applyOnchangeDataPatch", "fieldActionTimer", "submitPolicy", "resolveActionDebounceMs", "action.dispatchMode !== 'serverDebounced'", "action.submitPolicy.debounceMs || action.submitPolicy.debounce_ms"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must trigger v2 field onchange token: {token}")
+    for token in ("valueType", "editableInputType", ":type=\"editableInputType(field)\"", "['input', 'number', 'date', 'datetime'].includes(type)", "type.includes('number') || type.includes('integer') || type.includes('float') || type.includes('monetary')", "normalizeEditableValue", "[field.fieldCode]: normalizeEditableValue(field, detail.value)", "Number.isFinite(numberValue) ? numberValue : value"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must preserve v2 editable value types token: {token}")
     for token in ("isExecutableCommandAction", "hasContractTarget", "action.intent === 'execute_button'", "action.intent === 'api.data'", "action.intent === 'ui.contract'", "Boolean(asText(action.button.name || action.actionKey))", "target.scene_key || target.sceneKey"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must filter executable v2 command actions token: {token}")
