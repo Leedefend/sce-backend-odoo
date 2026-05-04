@@ -513,13 +513,19 @@ function applyUnifiedPagePatchV2(patchRaw: unknown) {
     records.value = records.value.map((record, index) => (index === 0 ? { ...record, ...mainData } : record));
   }
   const statusPatch = asDict(patch.statusPatch);
+  const globalPatch = asDict(statusPatch.globalStatus);
+  const containerPatchRows = asList(statusPatch.containerStatus).map((item) => asDict(item));
   const widgetPatchRows = asList(statusPatch.widgetStatus).map((item) => asDict(item));
   const buttonPatchRows = asList(statusPatch.buttonStatus).map((item) => asDict(item));
-  if (!widgetPatchRows.length && !buttonPatchRows.length) return;
+  if (!Object.keys(globalPatch).length && !containerPatchRows.length && !widgetPatchRows.length && !buttonPatchRows.length) return;
   const current = asDict(contract.value);
   const currentStatus = asDict(current.statusContract);
   const nextStatus = {
     ...currentStatus,
+    globalStatus: Object.keys(globalPatch).length
+      ? { ...asDict(currentStatus.globalStatus), ...globalPatch }
+      : asDict(currentStatus.globalStatus),
+    containerStatus: mergeStatusRows(asList(currentStatus.containerStatus), containerPatchRows, 'containerId'),
     widgetStatus: mergeStatusRows(asList(currentStatus.widgetStatus), widgetPatchRows, 'widgetId'),
     buttonStatus: mergeStatusRows(asList(currentStatus.buttonStatus), buttonPatchRows, 'btnId'),
   };

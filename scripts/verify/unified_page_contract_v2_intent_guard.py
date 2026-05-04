@@ -85,6 +85,9 @@ def main() -> int:
     for token in ("applyUnifiedPagePatchV2", "dataPatch", "statusPatch", "mergeStatusRows"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must be able to apply v2 patch token: {token}")
+    for token in ("globalPatch", "containerPatchRows", "mergeStatusRows(asList(currentStatus.containerStatus), containerPatchRows, 'containerId')", "...asDict(currentStatus.globalStatus), ...globalPatch"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must merge v2 statusPatch token: {token}")
     for token in ("refreshMode", "normalizeRefreshMode", "applyActionRefreshMode", "mode === 'none'", "mode === 'full'", "loadRecords(endpoint, token, contract.value, false)"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must honor v2 action refreshMode token: {token}")
