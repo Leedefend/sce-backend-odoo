@@ -65,6 +65,13 @@ export type UnifiedPageContractV2GlobalStatus = {
   reasonCode?: string;
 };
 
+export type UnifiedPageContractV2ContainerStatus = {
+  containerId: string;
+  visible?: boolean;
+  disabled?: boolean;
+  reasonCode?: string;
+};
+
 export type UnifiedPageContractV2 = {
   pageInfo: {
     pageId: string;
@@ -262,6 +269,52 @@ export function resolveUnifiedPageContractV2GlobalStatus(contract: unknown): Uni
     pageAuth: asText(row.pageAuth) || undefined,
     reasonCode: asText(row.reasonCode || row.reason_code) || undefined,
   };
+}
+
+export function collectUnifiedPageContractV2ContainerStatus(contract: unknown): Record<string, UnifiedPageContractV2ContainerStatus> {
+  const v2 = resolveUnifiedPageContractV2(contract);
+  if (!v2) return {};
+  const status = asDict(v2.statusContract);
+  return asList(status.containerStatus).reduce<Record<string, UnifiedPageContractV2ContainerStatus>>((acc, item) => {
+    const row = asDict(item);
+    const containerId = asText(row.containerId);
+    if (!containerId) return acc;
+    acc[containerId] = {
+      containerId,
+      visible: typeof row.visible === 'boolean' ? row.visible : undefined,
+      disabled: typeof row.disabled === 'boolean' ? row.disabled : undefined,
+      reasonCode: asText(row.reasonCode || row.reason_code) || undefined,
+    };
+    return acc;
+  }, {});
+}
+
+export function collectUnifiedPageContractV2FieldContainerStatus(contract: unknown): Record<string, UnifiedPageContractV2ContainerStatus> {
+  const v2 = resolveUnifiedPageContractV2(contract);
+  if (!v2) return {};
+  const containerStatus = collectUnifiedPageContractV2ContainerStatus(contract);
+  const out: Record<string, UnifiedPageContractV2ContainerStatus> = {};
+  const visit = (rows: unknown[], inherited: UnifiedPageContractV2ContainerStatus) => {
+    rows.forEach((item) => {
+      const row = asDict(item);
+      const containerId = asText(row.containerId);
+      const current = containerStatus[containerId] || { containerId };
+      const merged: UnifiedPageContractV2ContainerStatus = {
+        containerId,
+        visible: inherited.visible === false || current.visible === false ? false : current.visible,
+        disabled: inherited.disabled === true || current.disabled === true ? true : current.disabled,
+        reasonCode: current.reasonCode || inherited.reasonCode,
+      };
+      asList(row.widgetList).forEach((widgetRaw) => {
+        const widget = asDict(widgetRaw);
+        const fieldCode = asText(widget.fieldCode);
+        if (fieldCode) out[fieldCode] = merged;
+      });
+      visit(asList(row.children), merged);
+    });
+  };
+  visit(v2.layoutContract.containerTree, { containerId: '', visible: true, disabled: false });
+  return out;
 }
 
 export function collectUnifiedPageContractV2FieldStatus(contract: unknown): Record<string, UnifiedPageContractV2WidgetStatus> {

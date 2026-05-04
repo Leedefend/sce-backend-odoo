@@ -495,6 +495,7 @@ import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
 import {
   collectUnifiedPageContractV2ButtonStatus,
+  collectUnifiedPageContractV2FieldContainerStatus,
   collectUnifiedPageContractV2FieldStatus,
   collectUnifiedPageContractV2FieldWidgets,
   resolveUnifiedPageContractV2,
@@ -3436,6 +3437,7 @@ const layoutNodes = computed<LayoutNode[]>(() => {
   const fieldMap = contract.value?.fields || {};
   const order = contract.value?.views?.form?.layout || [];
   const fieldGroups = contract.value?.permissions?.field_groups || {};
+  const v2FieldContainerStatus = collectUnifiedPageContractV2FieldContainerStatus(contract.value);
   const used = new Set<string>();
   const nodes: LayoutNode[] = [];
   const containerKeys = ['children', 'tabs', 'pages', 'nodes', 'items'];
@@ -3447,6 +3449,8 @@ const layoutNodes = computed<LayoutNode[]>(() => {
     if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) return;
     const descriptor = fieldMap[name];
     if (!descriptor) return;
+    const containerStatus = v2FieldContainerStatus[name];
+    if (containerStatus?.visible === false) return;
     const resolved = evaluateFieldPolicy(
       contract.value,
       name,
@@ -3464,7 +3468,7 @@ const layoutNodes = computed<LayoutNode[]>(() => {
       kind: 'field',
       name,
       label: String(descriptor?.string || name),
-      readonly: Boolean(resolved.readonly || state.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
+      readonly: Boolean(resolved.readonly || state.readonly || containerStatus?.disabled === true || (recordId.value ? !rights.value.write : !rights.value.create)),
       required: Boolean(resolved.required || state.required),
       descriptor,
     });

@@ -2,6 +2,7 @@ import type { ActionContract, ViewButton, ViewContract } from '@sc/schema';
 import { detectObjectMethodFromActionKey, normalizeActionKind, parseMaybeJsonRecord, toPositiveInt } from './contractRuntime';
 import {
   collectUnifiedPageContractV2ButtonStatus,
+  collectUnifiedPageContractV2FieldContainerStatus,
   collectUnifiedPageContractV2FieldWidgets,
   collectUnifiedPageContractV2FieldStatus,
   resolveUnifiedPageContractV2,
@@ -158,17 +159,23 @@ function buildV2Fields(contract: ActionContract): Record<string, unknown> {
   const legacy = contract.fields || {};
   const out: Record<string, unknown> = { ...legacy };
   const fieldStatus = collectUnifiedPageContractV2FieldStatus(contract);
+  const containerStatus = collectUnifiedPageContractV2FieldContainerStatus(contract);
   collectUnifiedPageContractV2FieldWidgets(contract).forEach((widget) => {
-    if (!widget.fieldCode || out[widget.fieldCode]) return;
+    if (!widget.fieldCode) return;
     const status = fieldStatus[widget.fieldCode];
-    out[widget.fieldCode] = {
+    const container = containerStatus[widget.fieldCode];
+    if (container?.visible === false) return;
+    const next = {
       name: widget.fieldCode,
       string: widget.label || widget.fieldCode,
       type: widget.widgetType,
       widget: widget.widgetType,
-      readonly: status?.readonly === true || status?.disabled === true,
+      readonly: status?.readonly === true || status?.disabled === true || container?.disabled === true,
       required: status?.required === true,
     };
+    out[widget.fieldCode] = out[widget.fieldCode]
+      ? { ...(out[widget.fieldCode] as Record<string, unknown>), ...next }
+      : next;
   });
   return out;
 }

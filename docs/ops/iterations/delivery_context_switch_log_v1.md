@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-04T23:11:19+08:00
+- blocker_key: `web_v2_container_status_form_layout_batch`
+- layer_target: `Frontend Contract Consumer`
+- module: `frontend/apps/web/src/app/contracts + frontend/apps/web/src/app/contractRecordRuntime.ts + frontend/apps/web/src/pages/ContractFormPage.vue + scripts/verify`
+- reason: `web 已消费 v2 global/widget/button/selector 状态，但表单布局字段仍未遵守后端 StatusContract.containerStatus，隐藏或禁用容器下的字段可能继续按普通字段渲染。`
+- completed_step: `新增 collectUnifiedPageContractV2ContainerStatus 与 collectUnifiedPageContractV2FieldContainerStatus，将 v2 containerTree/status 投影到 fieldCode；record runtime 构建 v2 form fields 时跳过 hidden container 字段并把 disabled container 字段置 readonly；ContractFormPage layoutNodes 同步应用 hidden/disabled container 状态；web v2 guard 增加 containerStatus 消费门禁。`
+- verification: `python3 scripts/verify/web_unified_page_contract_v2_guard.py PASS；python3 -m py_compile scripts/verify/web_unified_page_contract_v2_guard.py PASS；pnpm --dir frontend/apps/web run typecheck PASS；make verify.unified_page_contract.v2 PASS；git diff --check PASS。`
+- active_commit: `afb82dea`
+- next_step: `提交 web_v2_container_status_form_layout_batch；下一批可继续补 v2 actionRuleList 直接消费路径或扩展 containerStatus 到 ActionView section/page contract 层。`
+
 ### 2026-05-04T23:07:40+08:00
 - blocker_key: `web_v2_global_status_access_batch`
 - layer_target: `Frontend Contract Consumer`
