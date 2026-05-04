@@ -174,6 +174,8 @@ interface ContractAction {
   label: string;
   intent: string;
   refreshMode: string;
+  targetIds: string[];
+  dependencyTargets: string[];
   target: Dict;
   button: Dict;
   visible: boolean;
@@ -303,6 +305,10 @@ function asList(value: unknown): unknown[] {
 function asText(value: unknown, fallback = ''): string {
   const text = String(value || '').trim();
   return text || fallback;
+}
+
+function asTextList(value: unknown): string[] {
+  return asList(value).map((item) => asText(item)).filter(Boolean);
 }
 
 function parseMaybeJsonRecord(value: unknown): Dict {
@@ -939,11 +945,15 @@ function collectButtonStatus(status: Dict): Record<string, Dict> {
 
 function collectActions(action: Dict, status: Dict): ContractAction[] {
   const buttonStatus = collectButtonStatus(status);
+  const dependencyGraph = asDict(action.dependencyGraph);
   return asList(action.actionRuleList)
     .map((item) => {
       const row = asDict(item);
       const actionId = asText(row.actionId);
       const actionKey = asText(row.actionKey, actionId.replace(/^action\./, ''));
+      const sourceWidgetId = asText(row.sourceWidgetId || row.source_widget_id);
+      const targetIds = asTextList(row.targetIds || row.target_ids || row.targets);
+      const dependencyTargets = collectActionDependencyTargets(dependencyGraph, actionId, actionKey, sourceWidgetId, targetIds);
       const state = buttonStatus[`btn.${actionKey}`] || buttonStatus[actionId] || {};
       return {
         actionId,
@@ -951,6 +961,8 @@ function collectActions(action: Dict, status: Dict): ContractAction[] {
         label: asText(row.label, actionId),
         intent: asText(row.intent, 'ui.contract'),
         refreshMode: normalizeRefreshMode(row.refreshMode),
+        targetIds,
+        dependencyTargets,
         target: asDict(row.target),
         button: asDict(row.button),
         visible: state.visible !== false,
@@ -958,6 +970,16 @@ function collectActions(action: Dict, status: Dict): ContractAction[] {
       };
     })
     .filter((item) => item.actionId && item.visible);
+}
+
+function collectActionDependencyTargets(graph: Dict, actionId: string, actionKey: string, sourceWidgetId: string, targetIds: string[]): string[] {
+  const out = new Set(targetIds);
+  for (const key of [actionId, actionKey, sourceWidgetId]) {
+    for (const target of asTextList(graph[key])) {
+      out.add(target);
+    }
+  }
+  return Array.from(out);
 }
 
 function collectRelationBlocks(sourceWidgets: ContractWidget[], currentDataContract: Dict): RelationBlock[] {
@@ -1190,7 +1212,7 @@ async function selectAction(action: ContractAction) {
   if (runningActionId.value) return;
   const runtime = resolveRuntimeEndpoint();
   if (action.intent === 'api.data') {
-    if (runtime) await applyActionRefreshMode(action.refreshMode, runtime.endpoint, runtime.token);
+    if (runtime) await applyActionRefreshMode(action.refreshMode, runtime.endpoint, runtime.token, action);
     return;
   }
   if (action.intent === 'ui.contract') {
@@ -1343,17 +1365,41 @@ async function applyActionEffect(effect: Dict, action: ContractAction, endpoint:
     if (message) uni.showToast({ title: message.slice(0, 48), icon: 'none' });
     return;
   }
-  await applyActionRefreshMode(action.refreshMode, endpoint, token);
+  await applyActionRefreshMode(action.refreshMode, endpoint, token, action);
 }
 
-async function applyActionRefreshMode(refreshMode: string, endpoint: string, token: string) {
+async function applyActionRefreshMode(refreshMode: string, endpoint: string, token: string, action?: ContractAction) {
   const mode = normalizeRefreshMode(refreshMode);
   if (mode === 'none') return;
   if (mode === 'full' || !contract.value) {
     await loadContract();
     return;
   }
+  const targets = action ? actionRefreshTargets(action) : [];
+  if (targets.length && needsFullContractRefresh(targets)) {
+    await loadContract();
+    return;
+  }
   await loadRecords(endpoint, token, contract.value, false);
+}
+
+function actionRefreshTargets(actionOrMode: ContractAction | string): string[] {
+  if (typeof actionOrMode === 'string') return [];
+  return Array.from(new Set([...actionOrMode.targetIds, ...actionOrMode.dependencyTargets]));
+}
+
+function needsFullContractRefresh(targets: string[]): boolean {
+  return targets.some((item) => {
+    const target = item.toLowerCase();
+    return target === 'page.root'
+      || target.startsWith('layout.')
+      || target.startsWith('status.')
+      || target.startsWith('container.')
+      || target.startsWith('btn.')
+      || target.startsWith('button.')
+      || target.startsWith('relationrows.')
+      || target.startsWith('relation_rows.');
+  });
 }
 
 function openContractTarget(target: Dict) {
