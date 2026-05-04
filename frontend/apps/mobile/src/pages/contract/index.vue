@@ -512,14 +512,34 @@ function applyUnifiedPagePatchV2(patchRaw: unknown) {
   if (Object.keys(mainData).length && records.value.length) {
     records.value = records.value.map((record, index) => (index === 0 ? { ...record, ...mainData } : record));
   }
+  const tableRowsPatch = asDict(dataPatch.tableRows);
+  const relationRowsPatch = asDict(dataPatch.relationRows);
+  const dictDataPatch = asDict(dataPatch.dictData);
+  const paginationPatch = asDict(dataPatch.pagination);
   const statusPatch = asDict(patch.statusPatch);
   const globalPatch = asDict(statusPatch.globalStatus);
   const containerPatchRows = asList(statusPatch.containerStatus).map((item) => asDict(item));
   const widgetPatchRows = asList(statusPatch.widgetStatus).map((item) => asDict(item));
   const buttonPatchRows = asList(statusPatch.buttonStatus).map((item) => asDict(item));
-  if (!Object.keys(globalPatch).length && !containerPatchRows.length && !widgetPatchRows.length && !buttonPatchRows.length) return;
+  const hasDataContractPatch = Boolean(
+    Object.keys(mainData).length
+    || Object.keys(tableRowsPatch).length
+    || Object.keys(relationRowsPatch).length
+    || Object.keys(dictDataPatch).length
+    || Object.keys(paginationPatch).length
+  );
+  if (!hasDataContractPatch && !Object.keys(globalPatch).length && !containerPatchRows.length && !widgetPatchRows.length && !buttonPatchRows.length) return;
   const current = asDict(contract.value);
+  const currentData = asDict(current.dataContract);
   const currentStatus = asDict(current.statusContract);
+  const nextData = {
+    ...currentData,
+    mainData: { ...asDict(currentData.mainData), ...mainData },
+    tableRows: { ...asDict(currentData.tableRows), ...tableRowsPatch },
+    relationRows: { ...asDict(currentData.relationRows), ...relationRowsPatch },
+    dictData: { ...asDict(currentData.dictData), ...dictDataPatch },
+    pagination: { ...asDict(currentData.pagination), ...paginationPatch },
+  };
   const nextStatus = {
     ...currentStatus,
     globalStatus: Object.keys(globalPatch).length
@@ -531,6 +551,7 @@ function applyUnifiedPagePatchV2(patchRaw: unknown) {
   };
   contract.value = {
     ...current,
+    dataContract: nextData,
     statusContract: nextStatus,
   };
 }
