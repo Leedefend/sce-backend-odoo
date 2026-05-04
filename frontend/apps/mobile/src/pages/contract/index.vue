@@ -1138,6 +1138,8 @@ async function selectAction(action: ContractAction) {
         context,
       },
     });
+    const appliedPatch = applyResponseUnifiedPagePatch(response);
+    if (appliedPatch && normalizeRefreshMode(action.refreshMode) === 'none') return;
     await applyActionEffect(asDict(asDict(response.data).effect), action, endpoint, token);
   } catch {
     uni.showToast({ title: '动作执行失败', icon: 'none' });
@@ -1160,6 +1162,14 @@ function actionExecutionContext(action: ContractAction): Dict {
   const contextRaw = asText(target.context_raw || target.contextRaw || action.button.context_raw || action.button.contextRaw);
   if (contextRaw) context.context_raw = contextRaw;
   return context;
+}
+
+function applyResponseUnifiedPagePatch(response: Dict): boolean {
+  const data = asDict(response.data);
+  const patch = asDict(response.unified_page_patch_v2 || data.unified_page_patch_v2 || data.unifiedPagePatchV2);
+  if (!Object.keys(patch).length) return false;
+  applyUnifiedPagePatchV2(patch);
+  return true;
 }
 
 function normalizeRefreshMode(value: unknown): string {
