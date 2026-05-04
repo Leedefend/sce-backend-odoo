@@ -70,7 +70,16 @@
             <text class="relation-block__count">{{ block.rowCount }} 行</text>
           </view>
           <view v-for="row in block.rows" :key="row.key" class="relation-block__row">{{ row.summary }}</view>
-          <view v-if="block.moreCount > 0" class="relation-block__more">还有 {{ block.moreCount }} 行</view>
+          <button
+            v-if="block.canLoadMore"
+            class="relation-block__more relation-block__more--button"
+            :disabled="relationLoadingKey === block.dataKey"
+            @click="loadMoreRelationRows(block)"
+          >
+            {{ relationLoadingKey === block.dataKey ? '加载中...' : `加载更多（还有 ${block.moreCount} 行）` }}
+          </button>
+          <view v-else-if="block.moreCount > 0" class="relation-block__more">还有 {{ block.moreCount }} 行</view>
+          <view v-if="relationErrorKey === block.dataKey && relationError" class="relation-block__error">{{ relationError }}</view>
         </view>
       </view>
     </view>
@@ -172,10 +181,12 @@ interface RecordRow {
 interface RelationBlock {
   widgetId: string;
   fieldCode: string;
+  dataKey: string;
   label: string;
   rowCount: number;
   total: number;
   moreCount: number;
+  canLoadMore: boolean;
   rows: RelationDisplayRow[];
 }
 
@@ -198,6 +209,9 @@ const records = ref<Dict[]>([]);
 const recordTotal = ref<number | null>(null);
 const nextOffset = ref(0);
 const runningActionId = ref('');
+const relationLoadingKey = ref('');
+const relationErrorKey = ref('');
+const relationError = ref('');
 
 const pageInfo = computed(() => asDict(contract.value?.pageInfo));
 const layoutContract = computed(() => asDict(contract.value?.layoutContract));
@@ -444,6 +458,108 @@ async function loadMoreRecords() {
   await loadRecords(endpoint, token, contract.value, true);
 }
 
+async function loadMoreRelationRows(block: RelationBlock) {
+  const runtime = resolveRuntimeEndpoint();
+  if (!runtime || !contract.value || relationLoadingKey.value) return;
+  const currentDataContract = asDict(contract.value.dataContract);
+  const dataSources = asDict(currentDataContract.dataSource);
+  const widget = widgets.value.find((item) => item.widgetId === block.widgetId || item.fieldCode === block.fieldCode);
+  const dataSource = widget ? resolveRelationDataSource(dataSources, widget, block.dataKey) : null;
+  const sourceIntent = asText(dataSource?.intent || dataSource?.query || dataSource?.provider);
+  if (!dataSource || !sourceIntent) return;
+  const pagination = asDict(currentDataContract.pagination);
+  const page = asDict(pagination[block.dataKey] || pagination[block.fieldCode] || pagination[block.widgetId]);
+  const sourceParams = asDict(dataSource.params);
+  const limit = Number(sourceParams.limit || page.pageSize || page.limit) || 20;
+  const offset = Number(page.next_offset || page.nextOffset || sourceParams.offset || block.rowCount);
+  const requestParams: Dict = {
+    ...sourceParams,
+    dataKey: block.dataKey,
+    data_key: block.dataKey,
+    fieldCode: block.fieldCode,
+    field_code: block.fieldCode,
+    limit,
+    offset: Number.isFinite(offset) ? offset : block.rowCount,
+  };
+  relationLoadingKey.value = block.dataKey;
+  relationErrorKey.value = '';
+  relationError.value = '';
+  try {
+    const response = await requestIntent(runtime.endpoint, runtime.token, {
+      intent: sourceIntent,
+      params: requestParams,
+    });
+    mergeRelationRowsResponse(block, asDict(response.data), limit);
+  } catch {
+    relationErrorKey.value = block.dataKey;
+    relationError.value = '子表加载失败';
+  } finally {
+    relationLoadingKey.value = '';
+  }
+}
+
+function mergeRelationRowsResponse(block: RelationBlock, data: Dict, requestedLimit: number) {
+  const current = asDict(contract.value);
+  const currentData = asDict(current.dataContract);
+  const relationRows = asDict(currentData.relationRows);
+  const pagination = asDict(currentData.pagination);
+  const currentRows = asList(relationRows[block.dataKey]).map((item) => asDict(item)).filter((item) => Object.keys(item).length);
+  const nextRows = extractRelationResponseRows(data, block.dataKey);
+  const mergedRows = mergeRowsById(currentRows, nextRows);
+  const nextOffsetRaw = Number(data.next_offset || data.nextOffset);
+  const totalRaw = Number(data.total);
+  const pagePatch = asDict(asDict(data.pagination)[block.dataKey] || data.pagination);
+  contract.value = {
+    ...current,
+    dataContract: {
+      ...currentData,
+      relationRows: {
+        ...relationRows,
+        [block.dataKey]: mergedRows,
+      },
+      pagination: {
+        ...pagination,
+        [block.dataKey]: {
+          ...asDict(pagination[block.dataKey]),
+          ...pagePatch,
+          limit: requestedLimit,
+          pageSize: Number(pagePatch.pageSize || pagePatch.limit) || requestedLimit,
+          next_offset: Number.isFinite(nextOffsetRaw) ? nextOffsetRaw : mergedRows.length,
+          total: Number.isFinite(totalRaw) ? totalRaw : Number(asDict(pagination[block.dataKey]).total) || mergedRows.length,
+        },
+      },
+    },
+  };
+}
+
+function extractRelationResponseRows(data: Dict, dataKey: string): Dict[] {
+  const relationRows = asDict(data.relationRows);
+  const tableRows = asDict(data.tableRows);
+  const keyedRows = asList(relationRows[dataKey]).length ? relationRows[dataKey] : tableRows[dataKey];
+  const rows = asList(keyedRows).length ? keyedRows : (data.records || data.rows || data.items);
+  return asList(rows).map((item) => asDict(item)).filter((item) => Object.keys(item).length);
+}
+
+function mergeRowsById(baseRows: Dict[], patchRows: Dict[]): Dict[] {
+  const out = [...baseRows];
+  const indexById = new Map<string, number>();
+  out.forEach((row, index) => {
+    const id = asText(row.id);
+    if (id) indexById.set(id, index);
+  });
+  patchRows.forEach((row) => {
+    const id = asText(row.id);
+    const index = id ? indexById.get(id) : undefined;
+    if (index === undefined) {
+      if (id) indexById.set(id, out.length);
+      out.push(row);
+    } else {
+      out[index] = { ...out[index], ...row };
+    }
+  });
+  return out;
+}
+
 function buildTargetParams(): Dict {
   const query = routeQuery.value;
   const menuId = asText(query.menu_id || query.menuId || query.id);
@@ -654,6 +770,7 @@ function collectRelationBlocks(sourceWidgets: ContractWidget[], currentDataContr
   const relationRows = asDict(currentDataContract.relationRows);
   const pagination = asDict(currentDataContract.pagination);
   const dataMeta = asDict(currentDataContract.dataMeta);
+  const dataSources = asDict(currentDataContract.dataSource);
   return sourceWidgets
     .filter((widget) => widget.visible && isRelationWidget(widget))
     .map((widget) => {
@@ -663,14 +780,17 @@ function collectRelationBlocks(sourceWidgets: ContractWidget[], currentDataContr
       const page = asDict(pagination[dataKey] || pagination[widget.fieldCode] || pagination[widget.widgetId]);
       const totalRaw = Number(page.total);
       const total = Number.isFinite(totalRaw) ? totalRaw : rows.length;
-      const visibleRows = rows.slice(0, 5);
+      const visibleRows = rows.slice(0, rows.length);
+      const dataSource = resolveRelationDataSource(dataSources, widget, dataKey);
       return {
         widgetId: widget.widgetId,
         fieldCode: widget.fieldCode,
+        dataKey,
         label: widget.label,
         rowCount: rows.length,
         total,
         moreCount: Math.max(0, total - visibleRows.length),
+        canLoadMore: Boolean(dataSource && total > rows.length),
         rows: visibleRows.map((row, index) => ({
           key: asText(row.id, `${widget.widgetId}.${index}`),
           summary: formatRelationRow(row, summaryFields),
@@ -678,6 +798,11 @@ function collectRelationBlocks(sourceWidgets: ContractWidget[], currentDataContr
       };
     })
     .filter((block) => block.rowCount > 0);
+}
+
+function resolveRelationDataSource(dataSources: Dict, widget: ContractWidget, dataKey: string): Dict | null {
+  const source = asDict(dataSources[dataKey] || dataSources[widget.fieldCode] || dataSources[widget.widgetId]);
+  return Object.keys(source).length ? source : null;
 }
 
 function isRelationWidget(widget: ContractWidget): boolean {
@@ -1193,7 +1318,8 @@ onShow(loadContract);
 .relation-block__title,
 .relation-block__count,
 .relation-block__row,
-.relation-block__more {
+.relation-block__more,
+.relation-block__error {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1223,6 +1349,30 @@ onShow(loadContract);
   color: #667789;
   font-size: 21rpx;
   border-top: 1rpx solid #e8edf2;
+}
+
+.relation-block__more--button {
+  width: 100%;
+  margin: 0;
+  padding: 8rpx 0 0;
+  border: 0;
+  border-top: 1rpx solid #e8edf2;
+  border-radius: 0;
+  background: transparent;
+  color: #1f5f99;
+  font-size: 21rpx;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.relation-block__more--button[disabled] {
+  color: #8b9aac;
+}
+
+.relation-block__error {
+  padding-top: 8rpx;
+  color: #b42318;
+  font-size: 21rpx;
 }
 
 .field-row {

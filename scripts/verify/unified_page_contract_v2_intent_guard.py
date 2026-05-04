@@ -106,6 +106,9 @@ def main() -> int:
     for token in ("currentDataContract.pagination", "moreCount", "Math.max(0, total - visibleRows.length)", "relation-block__more"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must expose v2 relation pagination token: {token}")
+    for token in ("resolveRelationDataSource", "block.canLoadMore", "loadMoreRelationRows", "mergeRelationRowsResponse", "extractRelationResponseRows", "mergeRowsById", "dataSources[dataKey] || dataSources[widget.fieldCode] || dataSources[widget.widgetId]", "relationRows: {"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must load v2 relationRows from dataSource token: {token}")
     for token in ("globalPatch", "containerPatchRows", "mergeStatusRows(asList(currentStatus.containerStatus), containerPatchRows, 'containerId')", "...asDict(currentStatus.globalStatus), ...globalPatch"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must merge v2 statusPatch token: {token}")
