@@ -68,8 +68,25 @@
             <text class="field-row__label">{{ field.label }}</text>
             <text class="field-row__code">{{ field.fieldCode }}</text>
           </view>
+          <switch
+            v-if="isBooleanField(field)"
+            :checked="Boolean(records[0][field.fieldCode])"
+            :disabled="field.disabled"
+            @change="handleBooleanChange(field, $event)"
+          />
+          <picker
+            v-else-if="isSelectionField(field)"
+            mode="selector"
+            :range="selectionOptions(field)"
+            range-key="label"
+            :value="selectionIndex(field, records[0][field.fieldCode])"
+            :disabled="field.disabled"
+            @change="handleSelectionChange(field, $event)"
+          >
+            <view class="field-row__picker">{{ formatFieldValue(field, records[0][field.fieldCode]) || '请选择' }}</view>
+          </picker>
           <input
-            v-if="isEditableField(field)"
+            v-else-if="isEditableField(field)"
             class="field-row__input"
             :type="editableInputType(field)"
             :value="formatEditableValue(records[0][field.fieldCode])"
@@ -218,6 +235,11 @@ interface RelationBlock {
 interface RelationDisplayRow {
   key: string;
   summary: string;
+}
+
+interface SelectOption {
+  value: unknown;
+  label: string;
 }
 
 interface InlineRecordSet {
@@ -1216,6 +1238,18 @@ function isEditableField(field: ContractWidget): boolean {
   return ['input', 'number', 'date', 'datetime'].includes(type) || component.includes('input') || component.includes('textarea');
 }
 
+function isBooleanField(field: ContractWidget): boolean {
+  if (isListSurface.value || isPageReadonly.value || field.readonly || field.disabled || !field.fieldCode) return false;
+  const type = `${field.widgetType} ${field.componentKey} ${field.valueType}`.toLowerCase();
+  return type.includes('boolean') || type.includes('switch') || type.includes('checkbox');
+}
+
+function isSelectionField(field: ContractWidget): boolean {
+  if (isListSurface.value || isPageReadonly.value || field.readonly || field.disabled || !field.fieldCode) return false;
+  const type = `${field.widgetType} ${field.componentKey} ${field.valueType}`.toLowerCase();
+  return Boolean(selectionOptions(field).length) && (type.includes('select') || type.includes('selection') || type.includes('radio'));
+}
+
 function editableInputType(field: ContractWidget): string {
   const type = `${field.widgetType} ${field.componentKey} ${field.valueType}`.toLowerCase();
   if (type.includes('number') || type.includes('integer') || type.includes('float') || type.includes('monetary')) return 'digit';
@@ -1232,10 +1266,26 @@ function formatEditableValue(value: unknown): string {
 function handleFieldInput(field: ContractWidget, event: unknown) {
   if (!records.value.length || !field.fieldCode) return;
   const detail = asDict(asDict(event).detail);
+  setEditableFieldValue(field, normalizeEditableValue(field, detail.value));
+}
+
+function handleBooleanChange(field: ContractWidget, event: unknown) {
+  setEditableFieldValue(field, Boolean(asDict(asDict(event).detail).value));
+}
+
+function handleSelectionChange(field: ContractWidget, event: unknown) {
+  const index = Number(asDict(asDict(event).detail).value);
+  const option = selectionOptions(field)[Number.isFinite(index) ? index : -1];
+  if (!option) return;
+  setEditableFieldValue(field, option.value);
+}
+
+function setEditableFieldValue(field: ContractWidget, value: unknown) {
+  if (!records.value.length || !field.fieldCode) return;
   records.value = [
     {
       ...records.value[0],
-      [field.fieldCode]: normalizeEditableValue(field, detail.value),
+      [field.fieldCode]: value,
     },
     ...records.value.slice(1),
   ];
@@ -1247,6 +1297,24 @@ function normalizeEditableValue(field: ContractWidget, value: unknown): unknown 
   if (!type.includes('number') && !type.includes('integer') && !type.includes('float') && !type.includes('monetary')) return value;
   const numberValue = Number(value);
   return Number.isFinite(numberValue) ? numberValue : value;
+}
+
+function selectionOptions(field: ContractWidget): SelectOption[] {
+  const dictData = asDict(asDict(contract.value?.dataContract).dictData);
+  const dictKey = asText(field.dictKey, field.fieldCode);
+  return asList(dictData[dictKey]).map((item) => {
+    const row = asDict(item);
+    return {
+      value: row.value ?? row.key ?? row.id,
+      label: asText(row.label || row.name || row.display_name || row.value || row.key || row.id),
+    };
+  }).filter((item) => item.label);
+}
+
+function selectionIndex(field: ContractWidget, value: unknown): number {
+  const rawText = asText(Array.isArray(value) ? value[0] : value);
+  const index = selectionOptions(field).findIndex((item) => asText(item.value) === rawText);
+  return index >= 0 ? index : 0;
 }
 
 function scheduleFieldAction(field: ContractWidget, triggerType: string) {
@@ -1951,6 +2019,23 @@ onShow(loadContract);
   font-size: 24rpx;
   line-height: 56rpx;
   text-align: right;
+}
+
+.field-row__picker {
+  min-width: 180rpx;
+  max-width: 320rpx;
+  height: 56rpx;
+  padding: 0 14rpx;
+  border: 1rpx solid #cfd8e3;
+  border-radius: 8rpx;
+  background: #fff;
+  color: #17202a;
+  font-size: 24rpx;
+  line-height: 56rpx;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .empty {

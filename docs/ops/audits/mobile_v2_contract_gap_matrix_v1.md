@@ -55,6 +55,7 @@ option refresh, and real terminal acceptance.
 | modifiers fallback | Closed | compatibility `data.modifiers_patch` maps to `statusPatch.widgetStatus`. |
 | line_patches fallback | Closed | compatibility `data.line_patches` maps to `dataPatch.relationRows.line_patches`. |
 | editable value type | Closed | number-like editable fields use numeric input and preserve numeric onchange values. |
+| compact boolean/selection controls | Closed | boolean fields render switch controls; selection fields render dictData-backed pickers. |
 | non-executable action filtering | Closed | unsupported command actions are hidden instead of shown as broken buttons. |
 
 ## Remaining Gap Matrix
@@ -62,7 +63,7 @@ option refresh, and real terminal acceptance.
 | Gap ID | Priority | Status | Description | Next Batch Candidate |
 | --- | --- | --- | --- | --- |
 | M2-G01 | P1 | Open | `modifiers_patch.domain` is retained as status metadata but mobile does not refresh option datasets from domain constraints. | Add domain-aware option refresh for selection/many2one controls after those controls exist. |
-| M2-G02 | P1 | Open | `many2one`, `selection`, and `boolean` still render through input/text-level behavior instead of native pickers/switches. | Implement compact field-control mapping from `widgetType/componentKey/valueType/dictData`. |
+| M2-G02 | P1 | Partial | `boolean` and `selection` now have compact controls; `many2one` still lacks remote option/search behavior. | Implement many2one option/search mapping with dataSource/domain support. |
 | M2-G03 | P1 | Open | `date` and `datetime` are accepted as editable widget types but still use text input because cross-terminal picker behavior is not wired. | Add terminal-safe date/datetime control wrappers. |
 | M2-G04 | P1 | Open | standard v2 actions such as `form.save`, `form.validate`, and `record.delete` are filtered because mobile has no safe execution path yet. | Define and implement standard form command intent mapping or keep filtered with documented deferral. |
 | M2-G05 | P2 | Open | onchange warnings are surfaced via toast only; there is no durable page-level warning area. | Add transient warning stack near the form header. |
@@ -86,8 +87,8 @@ The following items are intentionally not claimed closed:
 
 Recommended next sequence:
 
-1. `M2-G02`: implement compact field control mapping for boolean/selection/many2one read/write surfaces.
-2. `M2-G01`: use `modifiers_patch.domain` once option controls exist.
+1. `M2-G02`: implement many2one option/search mapping after boolean/selection controls.
+2. `M2-G01`: use `modifiers_patch.domain` once many2one option controls exist.
 3. `M2-G04`: define standard form command execution boundary.
 4. `M2-G09`: add real terminal acceptance evidence.
 5. `M2-G05/M2-G10`: improve durable warnings and visual proof.
@@ -107,4 +108,3 @@ make verify.docs.all
 
 Documentation-only batches may skip mobile typecheck when no frontend file is
 changed, but should still run `git diff --check` and `make verify.docs.all`.
-
