@@ -5,6 +5,7 @@ import {
   collectUnifiedPageContractV2FieldWidgets,
   collectUnifiedPageContractV2FieldStatus,
   resolveUnifiedPageContractV2,
+  resolveUnifiedPageContractV2GlobalStatus,
   type UnifiedPageContractV2Action,
   type UnifiedPageContractV2ButtonStatus,
 } from './contracts/unifiedPageContractV2';
@@ -55,6 +56,11 @@ type RawFormLayoutNode = {
 };
 
 function resolveRights(contract: ActionContract) {
+  const globalStatus = resolveUnifiedPageContractV2GlobalStatus(contract);
+  const pageAuth = String(globalStatus?.pageAuth || '').trim().toLowerCase();
+  if (globalStatus?.pageVisible === false || pageAuth === 'none') {
+    return { read: false, write: false, create: false, unlink: false };
+  }
   const head = contract.head?.permissions;
   const effective = contract.permissions?.effective?.rights;
   const resolve = (key: 'read' | 'write' | 'create' | 'unlink') => {
@@ -66,9 +72,9 @@ function resolveRights(contract: ActionContract) {
   };
   return {
     read: resolve('read'),
-    write: resolve('write'),
-    create: resolve('create'),
-    unlink: resolve('unlink'),
+    write: pageAuth === 'read' ? false : resolve('write'),
+    create: pageAuth === 'read' ? false : resolve('create'),
+    unlink: pageAuth === 'read' ? false : resolve('unlink'),
   };
 }
 

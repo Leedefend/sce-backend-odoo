@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-04T23:07:40+08:00
+- blocker_key: `web_v2_global_status_access_batch`
+- layer_target: `Frontend Contract Consumer`
+- module: `frontend/apps/web/src/app/contracts + frontend/apps/web/src/app/contractActionRuntime.ts + frontend/apps/web/src/app/contractRecordRuntime.ts + frontend/apps/web/src/pages/ContractFormPage.vue + scripts/verify`
+- reason: `web 已消费 v2 widget/button/selector 状态，但页面级 globalStatus.pageVisible/pageAuth 仍未进入 access/read guard 与表单 rights。`
+- completed_step: `新增 resolveUnifiedPageContractV2GlobalStatus；contractActionRuntime 在 v2 pageVisible=false 或 pageAuth=none 时 block access/read；contractRecordRuntime 与 ContractFormPage 将 v2 globalStatus 合并进 read/write/create/unlink rights，pageAuth=read 时禁止写、建、删；web v2 guard 增加 globalStatus 消费门禁。`
+- verification: `python3 scripts/verify/web_unified_page_contract_v2_guard.py PASS；python3 -m py_compile scripts/verify/web_unified_page_contract_v2_guard.py PASS；pnpm --dir frontend/apps/web run typecheck PASS；make verify.unified_page_contract.v2 PASS；git diff --check PASS。`
+- active_commit: `9a6adb73`
+- next_step: `提交 web_v2_global_status_access_batch；下一批可继续补 v2 containerStatus 的 web layout/section 约束或 actionRuleList 直接消费。`
+
 ### 2026-05-04T23:04:25+08:00
 - blocker_key: `web_action_view_v2_selector_status_batch`
 - layer_target: `Frontend Contract Consumer`

@@ -498,6 +498,7 @@ import {
   collectUnifiedPageContractV2FieldStatus,
   collectUnifiedPageContractV2FieldWidgets,
   resolveUnifiedPageContractV2,
+  resolveUnifiedPageContractV2GlobalStatus,
   type UnifiedPageContractV2ButtonStatus,
 } from '../app/contracts/unifiedPageContractV2';
 
@@ -829,6 +830,11 @@ const renderProfile = computed<'create' | 'edit' | 'readonly'>(() => {
 });
 
 const rights = computed(() => {
+  const globalStatus = resolveUnifiedPageContractV2GlobalStatus(contract.value);
+  const pageAuth = String(globalStatus?.pageAuth || '').trim().toLowerCase();
+  if (globalStatus?.pageVisible === false || pageAuth === 'none') {
+    return { read: false, write: false, create: false, unlink: false };
+  }
   const head = contract.value?.head?.permissions;
   const effective = contract.value?.permissions?.effective?.rights;
   const resolve = (key: 'read' | 'write' | 'create' | 'unlink') => {
@@ -840,9 +846,9 @@ const rights = computed(() => {
   };
   return {
     read: resolve('read'),
-    write: resolve('write'),
-    create: resolve('create'),
-    unlink: resolve('unlink'),
+    write: pageAuth === 'read' ? false : resolve('write'),
+    create: pageAuth === 'read' ? false : resolve('create'),
+    unlink: pageAuth === 'read' ? false : resolve('unlink'),
   };
 });
 

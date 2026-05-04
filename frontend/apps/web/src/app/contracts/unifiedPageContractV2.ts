@@ -59,6 +59,12 @@ export type UnifiedPageContractV2SelectorStatus = {
   reasonCode?: string;
 };
 
+export type UnifiedPageContractV2GlobalStatus = {
+  pageVisible?: boolean;
+  pageAuth?: string;
+  reasonCode?: string;
+};
+
 export type UnifiedPageContractV2 = {
   pageInfo: {
     pageId: string;
@@ -244,6 +250,18 @@ export function resolveUnifiedPageContractV2SelectorStatus(
     }
   }
   return null;
+}
+
+export function resolveUnifiedPageContractV2GlobalStatus(contract: unknown): UnifiedPageContractV2GlobalStatus | null {
+  const v2 = resolveUnifiedPageContractV2(contract);
+  if (!v2) return null;
+  const row = asDict(asDict(v2.statusContract).globalStatus);
+  if (!Object.keys(row).length) return null;
+  return {
+    pageVisible: typeof row.pageVisible === 'boolean' ? row.pageVisible : undefined,
+    pageAuth: asText(row.pageAuth) || undefined,
+    reasonCode: asText(row.reasonCode || row.reason_code) || undefined,
+  };
 }
 
 export function collectUnifiedPageContractV2FieldStatus(contract: unknown): Record<string, UnifiedPageContractV2WidgetStatus> {

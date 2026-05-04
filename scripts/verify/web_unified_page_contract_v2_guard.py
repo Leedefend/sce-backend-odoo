@@ -65,6 +65,7 @@ def main() -> int:
         "collectUnifiedPageContractV2ButtonStatus",
         "collectUnifiedPageContractV2SelectorStatus",
         "resolveUnifiedPageContractV2SelectorStatus",
+        "resolveUnifiedPageContractV2GlobalStatus",
         "layoutContract",
         "dataContract",
         "resolveUnifiedPageContractV2PrimaryDataSource",
@@ -81,8 +82,12 @@ def main() -> int:
         errors.append("web load request runtime must merge v2 primary dataSource domain/context into api.data payload")
     if "resolveUnifiedPageContractV2" not in meta_source or "resolveUnifiedPageContractV2" not in contract_runtime_source:
         errors.append("web view mode runtime must resolve view type from v2 pageInfo before legacy fallback")
+    if "resolveUnifiedPageContractV2GlobalStatus" not in contract_runtime_source or "UNIFIED_PAGE_CONTRACT_V2_PAGE_FORBIDDEN" not in contract_runtime_source:
+        errors.append("web contract action runtime must honor v2 globalStatus for page access/read guards")
     if "collectUnifiedPageContractV2FieldWidgets" not in record_runtime_source or "collectUnifiedPageContractV2FieldStatus" not in record_runtime_source or "mapV2ActionButton" not in record_runtime_source:
         errors.append("web record runtime must build form fields, states, and actions from v2 before legacy fallback")
+    if "resolveUnifiedPageContractV2GlobalStatus" not in record_runtime_source or "pageAuth === 'read'" not in record_runtime_source:
+        errors.append("web record runtime must merge v2 globalStatus into form rights")
     if "collectUnifiedPageContractV2ButtonStatus" not in record_runtime_source or "resolveV2ActionButtonStatus" not in record_runtime_source:
         errors.append("web record runtime must apply v2 buttonStatus to form action buttons")
     if "raw.disabled === true" not in record_view_source or "visible !== false" not in record_view_source:
@@ -97,6 +102,8 @@ def main() -> int:
         errors.append("web action surface contract must include v2 pageInfo view modes")
     if "collectUnifiedPageContractV2FieldStatus" not in form_page_source:
         errors.append("web contract form page must merge v2 widget status into runtime field states")
+    if "resolveUnifiedPageContractV2GlobalStatus" not in form_page_source or "pageAuth === 'read'" not in form_page_source:
+        errors.append("web contract form page must merge v2 globalStatus into form rights")
     if "collectUnifiedPageContractV2ButtonStatus" not in form_page_source or "resolveV2ButtonStatus" not in form_page_source:
         errors.append("web contract form page must merge v2 buttonStatus into contract actions")
     if "collectUnifiedPageContractV2ButtonStatus" not in action_view_source or "applyActionViewV2ButtonStatus" not in action_view_source:

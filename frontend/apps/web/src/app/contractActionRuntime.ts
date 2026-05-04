@@ -1,6 +1,9 @@
 import type { ActionContract } from '@sc/schema';
 import { parseMaybeJsonRecord } from './contractRuntime';
-import { resolveUnifiedPageContractV2 } from './contracts/unifiedPageContractV2';
+import {
+  resolveUnifiedPageContractV2,
+  resolveUnifiedPageContractV2GlobalStatus,
+} from './contracts/unifiedPageContractV2';
 
 export type ContractAccessPolicyMode = 'allow' | 'degrade' | 'block';
 
@@ -33,6 +36,14 @@ export function resolveContractViewMode(contract: ActionContract | null, fallbac
 }
 
 export function resolveContractAccessPolicy(contract: ActionContract | null): ContractAccessPolicySnapshot {
+  const globalStatus = resolveUnifiedPageContractV2GlobalStatus(contract);
+  const pageAuth = String(globalStatus?.pageAuth || '').trim().toLowerCase();
+  if (globalStatus?.pageVisible === false || pageAuth === 'none') {
+    return {
+      mode: 'block',
+      reasonCode: globalStatus?.reasonCode || 'UNIFIED_PAGE_CONTRACT_V2_PAGE_FORBIDDEN',
+    };
+  }
   const raw = (contract as unknown as Record<string, unknown> | null)?.access_policy;
   const row = raw && typeof raw === 'object' && !Array.isArray(raw)
     ? (raw as Record<string, unknown>)
@@ -46,6 +57,9 @@ export function resolveContractAccessPolicy(contract: ActionContract | null): Co
 export function resolveContractReadRight(contract: ActionContract | null) {
   const policy = resolveContractAccessPolicy(contract);
   if (policy.mode === 'block') return false;
+  const globalStatus = resolveUnifiedPageContractV2GlobalStatus(contract);
+  const pageAuth = String(globalStatus?.pageAuth || '').trim().toLowerCase();
+  if (globalStatus?.pageVisible === false || pageAuth === 'none') return false;
   const head = contract?.head?.permissions?.read;
   if (typeof head === 'boolean') return head;
   const effective = contract?.permissions?.effective?.rights?.read;
