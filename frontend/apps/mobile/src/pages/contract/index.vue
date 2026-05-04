@@ -110,6 +110,33 @@
           >
             {{ many2OneLoadingKey === fieldOptionKey(field) ? '加载中...' : '加载选项' }}
           </button>
+          <picker
+            v-else-if="isDateField(field)"
+            mode="date"
+            :value="datePickerValue(records[0][field.fieldCode])"
+            :disabled="field.disabled"
+            @change="handleDateChange(field, $event)"
+          >
+            <view class="field-row__picker">{{ datePickerValue(records[0][field.fieldCode]) || '请选择' }}</view>
+          </picker>
+          <view v-else-if="isDateTimeField(field)" class="field-row__datetime">
+            <picker
+              mode="date"
+              :value="datePickerValue(records[0][field.fieldCode])"
+              :disabled="field.disabled"
+              @change="handleDateTimeDateChange(field, $event)"
+            >
+              <view class="field-row__picker field-row__picker--datetime">{{ datePickerValue(records[0][field.fieldCode]) || '日期' }}</view>
+            </picker>
+            <picker
+              mode="time"
+              :value="timePickerValue(records[0][field.fieldCode])"
+              :disabled="field.disabled"
+              @change="handleDateTimeTimeChange(field, $event)"
+            >
+              <view class="field-row__picker field-row__picker--time">{{ timePickerValue(records[0][field.fieldCode]) || '时间' }}</view>
+            </picker>
+          </view>
           <input
             v-else-if="isEditableField(field)"
             class="field-row__input"
@@ -1298,6 +1325,18 @@ function isRemoteMany2OneField(field: ContractWidget): boolean {
   return !many2OneOptions(field).length && Boolean(resolveFieldOptionDataSource(field)) && (type.includes('many2one') || type.includes('select.remote'));
 }
 
+function isDateField(field: ContractWidget): boolean {
+  if (isListSurface.value || isPageReadonly.value || field.readonly || field.disabled || !field.fieldCode) return false;
+  const type = `${field.widgetType} ${field.componentKey} ${field.valueType}`.toLowerCase();
+  return type.includes('date') && !type.includes('datetime');
+}
+
+function isDateTimeField(field: ContractWidget): boolean {
+  if (isListSurface.value || isPageReadonly.value || field.readonly || field.disabled || !field.fieldCode) return false;
+  const type = `${field.widgetType} ${field.componentKey} ${field.valueType}`.toLowerCase();
+  return type.includes('datetime');
+}
+
 function editableInputType(field: ContractWidget): string {
   const type = `${field.widgetType} ${field.componentKey} ${field.valueType}`.toLowerCase();
   if (type.includes('number') || type.includes('integer') || type.includes('float') || type.includes('monetary')) return 'digit';
@@ -1335,6 +1374,21 @@ function handleMany2OneChange(field: ContractWidget, event: unknown) {
   setEditableFieldValue(field, [option.value, option.label]);
 }
 
+function handleDateChange(field: ContractWidget, event: unknown) {
+  const value = asText(asDict(asDict(event).detail).value);
+  if (value) setEditableFieldValue(field, value);
+}
+
+function handleDateTimeDateChange(field: ContractWidget, event: unknown) {
+  const value = asText(asDict(asDict(event).detail).value);
+  if (value) setEditableFieldValue(field, combineDateTimeValue(value, timePickerValue(records.value[0]?.[field.fieldCode])));
+}
+
+function handleDateTimeTimeChange(field: ContractWidget, event: unknown) {
+  const value = asText(asDict(asDict(event).detail).value);
+  if (value) setEditableFieldValue(field, combineDateTimeValue(datePickerValue(records.value[0]?.[field.fieldCode]), value));
+}
+
 function setEditableFieldValue(field: ContractWidget, value: unknown) {
   if (!records.value.length || !field.fieldCode) return;
   records.value = [
@@ -1352,6 +1406,24 @@ function normalizeEditableValue(field: ContractWidget, value: unknown): unknown 
   if (!type.includes('number') && !type.includes('integer') && !type.includes('float') && !type.includes('monetary')) return value;
   const numberValue = Number(value);
   return Number.isFinite(numberValue) ? numberValue : value;
+}
+
+function datePickerValue(value: unknown): string {
+  const text = formatEditableValue(value);
+  const match = text.match(/\d{4}-\d{2}-\d{2}/);
+  return match ? match[0] : '';
+}
+
+function timePickerValue(value: unknown): string {
+  const text = formatEditableValue(value);
+  const match = text.match(/\d{2}:\d{2}/);
+  return match ? match[0] : '00:00';
+}
+
+function combineDateTimeValue(dateValue: string, timeValue: string): string {
+  const datePart = dateValue || new Date().toISOString().slice(0, 10);
+  const timePart = timeValue || '00:00';
+  return `${datePart} ${timePart}:00`;
 }
 
 function selectionOptions(field: ContractWidget): SelectOption[] {
@@ -2330,6 +2402,23 @@ onShow(loadContract);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.field-row__datetime {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8rpx;
+  justify-content: flex-end;
+}
+
+.field-row__picker--datetime {
+  min-width: 170rpx;
+  max-width: 190rpx;
+}
+
+.field-row__picker--time {
+  min-width: 120rpx;
+  max-width: 130rpx;
 }
 
 .field-row__load {

@@ -56,6 +56,7 @@ option refresh, and real terminal acceptance.
 | modifiers fallback | Closed | compatibility `data.modifiers_patch` maps to `statusPatch.widgetStatus`. |
 | line_patches fallback | Closed | compatibility `data.line_patches` maps to `dataPatch.relationRows.line_patches`. |
 | editable value type | Closed | number-like editable fields use numeric input and preserve numeric onchange values. |
+| date/datetime controls | Closed | date fields use a date picker; datetime fields use paired date/time pickers and still trigger onchange. |
 | compact boolean/selection controls | Closed | boolean fields render switch controls; selection fields render dictData-backed pickers. |
 | local many2one picker | Closed | many2one/select.remote fields render a dictData-backed picker when local options are delivered. |
 | remote many2one option bootstrap | Closed | many2one/select.remote fields can load contract-declared `dataSource` options into `dictData`. |
@@ -69,7 +70,7 @@ option refresh, and real terminal acceptance.
 | --- | --- | --- | --- | --- |
 | M2-G01 | P1 | Partial | `modifiers_patch.domain/domain_raw` can now invalidate and refetch remote many2one options, but selection option refresh is still not wired. | Add domain-aware refresh for selection controls if the platform declares remote selection sources. |
 | M2-G02 | P1 | Partial | `boolean`, `selection`, local dict-backed `many2one`, remote option bootstrap, and domain-aware many2one refetch now have compact controls; dynamic typeahead search remains open. | Implement mobile many2one typeahead/search UI if needed for large datasets. |
-| M2-G03 | P1 | Open | `date` and `datetime` are accepted as editable widget types but still use text input because cross-terminal picker behavior is not wired. | Add terminal-safe date/datetime control wrappers. |
+| M2-G03 | P1 | Closed | `date` and `datetime` fields now use terminal-safe picker controls instead of plain text input. | Monitor terminal acceptance and add timezone-specific handling only if backend values require it. |
 | M2-G04 | P1 | Closed | standard v2 actions `form.save`, `form.validate`, and `record.delete` now have a bounded mobile intent dispatch path; full native-grade Odoo form semantics remain deferred. | Monitor backend intent compatibility and add terminal acceptance coverage. |
 | M2-G05 | P2 | Closed | warnings are surfaced via toast and retained in a transient page-level warning stack near the header. | Monitor terminal acceptance and tune duration/copy if needed. |
 | M2-G06 | P2 | Open | x2many row editing UI is not implemented; only rendering, pagination, remote loading, and patch application exist. | Add bounded relation row edit/add/remove controls. |
@@ -96,7 +97,7 @@ Recommended next sequence:
 2. `M2-G01`: close selection domain refresh if remote selection sources are declared.
 3. `M2-G09`: add real terminal acceptance evidence.
 4. `M2-G10`: improve visual proof.
-5. `M2-G03/M2-G08`: add date/datetime controls or runtime retry policy.
+5. `M2-G08`: add runtime retry policy.
 
 ## Verification Gates
 

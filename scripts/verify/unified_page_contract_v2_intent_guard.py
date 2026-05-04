@@ -148,6 +148,9 @@ def main() -> int:
     for token in ("valueType", "editableInputType", ":type=\"editableInputType(field)\"", "['input', 'number', 'date', 'datetime'].includes(type)", "type.includes('number') || type.includes('integer') || type.includes('float') || type.includes('monetary')", "normalizeEditableValue", "setEditableFieldValue(field, normalizeEditableValue(field, detail.value))", "Number.isFinite(numberValue) ? numberValue : value"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must preserve v2 editable value types token: {token}")
+    for token in ("isDateField", "isDateTimeField", "mode=\"date\"", "mode=\"time\"", "handleDateChange", "handleDateTimeDateChange", "handleDateTimeTimeChange", "datePickerValue", "timePickerValue", "combineDateTimeValue", "field-row__datetime", "`${datePart} ${timePart}:00`"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must map v2 date/datetime controls token: {token}")
     for token in ("isBooleanField", "isSelectionField", "handleBooleanChange", "handleSelectionChange", "setEditableFieldValue", "selectionOptions", "selectionIndex", "<switch", "<picker", "range-key=\"label\"", "dictData[dictKey]", "row.value ?? row.key ?? row.id"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must map v2 compact field controls token: {token}")
