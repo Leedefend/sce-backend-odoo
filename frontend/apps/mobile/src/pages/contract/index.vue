@@ -507,6 +507,8 @@ function collectGlobalStatus(status: Dict): Dict {
 function applyUnifiedPagePatchV2(patchRaw: unknown) {
   const patch = asDict(patchRaw);
   if (!patch.updateType) return;
+  const layoutPatch = asDict(patch.layoutPatch);
+  const runtimePatch = asDict(patch.runtimePatch);
   const dataPatch = asDict(patch.dataPatch);
   const mainData = asDict(dataPatch.mainData);
   if (Object.keys(mainData).length && records.value.length) {
@@ -528,10 +530,15 @@ function applyUnifiedPagePatchV2(patchRaw: unknown) {
     || Object.keys(dictDataPatch).length
     || Object.keys(paginationPatch).length
   );
-  if (!hasDataContractPatch && !Object.keys(globalPatch).length && !containerPatchRows.length && !widgetPatchRows.length && !buttonPatchRows.length) return;
+  const hasLayoutPatch = Object.keys(layoutPatch).length > 0;
+  const hasRuntimePatch = Object.keys(runtimePatch).length > 0;
+  if (!hasLayoutPatch && !hasRuntimePatch && !hasDataContractPatch && !Object.keys(globalPatch).length && !containerPatchRows.length && !widgetPatchRows.length && !buttonPatchRows.length) return;
   const current = asDict(contract.value);
+  const currentLayout = asDict(current.layoutContract);
   const currentData = asDict(current.dataContract);
+  const currentRuntime = asDict(current.runtimeContract);
   const currentStatus = asDict(current.statusContract);
+  const nextLayout = hasLayoutPatch ? { ...currentLayout, ...layoutPatch } : currentLayout;
   const nextData = {
     ...currentData,
     mainData: { ...asDict(currentData.mainData), ...mainData },
@@ -549,9 +556,12 @@ function applyUnifiedPagePatchV2(patchRaw: unknown) {
     widgetStatus: mergeStatusRows(asList(currentStatus.widgetStatus), widgetPatchRows, 'widgetId'),
     buttonStatus: mergeStatusRows(asList(currentStatus.buttonStatus), buttonPatchRows, 'btnId'),
   };
+  const nextRuntime = hasRuntimePatch ? { ...currentRuntime, ...runtimePatch } : currentRuntime;
   contract.value = {
     ...current,
+    layoutContract: nextLayout,
     dataContract: nextData,
+    runtimeContract: nextRuntime,
     statusContract: nextStatus,
   };
 }
