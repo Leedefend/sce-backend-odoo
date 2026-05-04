@@ -2,6 +2,7 @@ import { computed, type Ref } from 'vue';
 import { uniqueFields } from '../runtime/actionViewRequestRuntime';
 import {
   collectUnifiedPageContractV2FieldWidgets,
+  collectUnifiedPageContractV2FieldStatus,
   resolveUnifiedPageContractV2,
 } from '../contracts/unifiedPageContractV2';
 
@@ -44,9 +45,6 @@ type ListColumnOption = {
 export function useActionViewContractShapeRuntime(options: UseActionViewContractShapeRuntimeOptions) {
   const contractColumnLabels = computed<Record<string, string>>(() => {
     const contract = options.actionContract.value || {};
-    collectUnifiedPageContractV2FieldWidgets(contract).forEach((widget) => {
-      if (widget.fieldCode && widget.label) labels[widget.fieldCode] = widget.label;
-    });
     const rows = contract.fields || {};
     const labels = Object.entries(rows).reduce<Record<string, string>>((acc, [name, descriptor]) => {
       const descriptorRow = (descriptor || {}) as Dict;
@@ -54,6 +52,9 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       if (label) acc[name] = label;
       return acc;
     }, {});
+    collectUnifiedPageContractV2FieldWidgets(contract).forEach((widget) => {
+      if (widget.fieldCode && widget.label) labels[widget.fieldCode] = widget.label;
+    });
     const listProfile = (contract.list_profile || {}) as Dict;
     Object.entries((listProfile.column_labels || {}) as Dict).forEach(([name, labelRaw]) => {
       const label = String(labelRaw || '').trim();
@@ -131,6 +132,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
     const fieldsMap = (typed.fields && typeof typed.fields === 'object') ? typed.fields as Record<string, Dict> : {};
     const preferred = Array.isArray(profile?.columns) ? profile?.columns || [] : [];
     const hidden = new Set(Array.isArray(profile?.hidden_columns) ? profile?.hidden_columns || [] : []);
+    const v2FieldStatus = collectUnifiedPageContractV2FieldStatus(contract);
     const schemaRows = extractColumnSchemaFromContract(contract);
     const schemaByName = schemaRows.reduce<Record<string, Dict>>((acc, row) => {
       const name = String(row.name || '').trim();
@@ -146,8 +148,9 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       .map((name) => {
         const schema = schemaByName[name] || {};
         const field = fieldsMap[name] || {};
+        const status = v2FieldStatus[name];
         const optional = String(schema.optional || '').trim();
-        const invisible = schema.invisible === true || schema.column_invisible === true;
+        const invisible = schema.invisible === true || schema.column_invisible === true || status?.visible === false;
         const type = String(schema.type || field.type || '').trim();
         const widget = String(schema.widget || field.widget || field.type || '').trim();
         const rawSelection = Array.isArray(schema.selection) ? schema.selection : field.selection;

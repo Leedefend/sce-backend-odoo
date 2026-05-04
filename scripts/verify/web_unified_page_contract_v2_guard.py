@@ -73,6 +73,8 @@ def main() -> int:
         errors.append("web view mode runtime must resolve view type from v2 pageInfo before legacy fallback")
     if "collectUnifiedPageContractV2FieldWidgets" not in record_runtime_source or "collectUnifiedPageContractV2FieldStatus" not in record_runtime_source or "mapV2ActionButton" not in record_runtime_source:
         errors.append("web record runtime must build form fields, states, and actions from v2 before legacy fallback")
+    if "collectUnifiedPageContractV2FieldStatus" not in shape_source:
+        errors.append("web list shape runtime must honor v2 widget status for default column visibility")
     if "resolveUnifiedPageContractV2" not in surface_source:
         errors.append("web action surface contract must include v2 pageInfo view modes")
     if "collectUnifiedPageContractV2FieldStatus" not in (ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue").read_text(encoding="utf-8"):
