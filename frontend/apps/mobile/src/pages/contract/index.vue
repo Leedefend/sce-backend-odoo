@@ -208,6 +208,9 @@ interface ContractWidget {
   summaryFields: string[];
   blockType: string;
   valueType: string;
+  optionDomain: unknown;
+  optionDomainRaw: string;
+  optionContextRaw: string;
   visible: boolean;
   readonly: boolean;
   required: boolean;
@@ -778,6 +781,9 @@ function collectWidgets(layout: Dict, status: Dict): ContractWidget[] {
           summaryFields: collectSummaryFields(config),
           blockType: asText(config.blockType),
           valueType: asText(config.valueType || config.type || widget.valueType || widget.value_type),
+          optionDomain: widgetState.domain || widgetState.domain_raw || config.domain || config.domain_raw || widget.domain || widget.domain_raw,
+          optionDomainRaw: asText(widgetState.domain_raw || widgetState.domainRaw || config.domain_raw || config.domainRaw || widget.domain_raw || widget.domainRaw),
+          optionContextRaw: asText(widgetState.context_raw || widgetState.contextRaw || config.context_raw || config.contextRaw || widget.context_raw || widget.contextRaw),
           visible: widgetState.visible !== false && nextState.visible !== false,
           readonly: widgetState.readonly === true || nextState.disabled === true,
           required: widgetState.required === true,
@@ -1399,6 +1405,7 @@ async function loadMany2OneOptions(field: ContractWidget) {
         offset: 0,
         dataKey: key,
         data_key: key,
+        ...fieldOptionDomainParams(field, sourceParams),
         ...contractTraceParams(contract.value),
       },
     });
@@ -1433,6 +1440,38 @@ function mergeMany2OneOptions(field: ContractWidget, data: Dict) {
         ...dictData,
         [key]: rows,
       },
+    },
+  };
+}
+
+function fieldOptionDomainParams(field: ContractWidget, sourceParams: Dict): Dict {
+  const params: Dict = {};
+  const domainRaw = asText(field.optionDomainRaw || sourceParams.domain_raw || sourceParams.domainRaw);
+  const contextRaw = asText(field.optionContextRaw || sourceParams.context_raw || sourceParams.contextRaw);
+  if (domainRaw) params.domain_raw = domainRaw;
+  if (contextRaw) params.context_raw = contextRaw;
+  if (!domainRaw && field.optionDomain !== undefined) params.domain = field.optionDomain;
+  return params;
+}
+
+function clearMany2OneOptionsByFieldCodes(fieldCodes: string[]) {
+  if (!contract.value || !fieldCodes.length) return;
+  const keys = widgets.value
+    .filter((field) => fieldCodes.includes(field.fieldCode))
+    .map((field) => fieldOptionKey(field))
+    .filter((key, index, all) => key && all.indexOf(key) === index);
+  if (!keys.length) return;
+  const current = asDict(contract.value);
+  const currentData = asDict(current.dataContract);
+  const dictData = { ...asDict(currentData.dictData) };
+  keys.forEach((key) => {
+    delete dictData[key];
+  });
+  contract.value = {
+    ...current,
+    dataContract: {
+      ...currentData,
+      dictData,
     },
   };
 }
@@ -1513,6 +1552,7 @@ function applyOnchangeDataPatch(response: Dict) {
 }
 
 function applyOnchangeModifiersPatch(raw: unknown) {
+  const domainChangedFields: string[] = [];
   const rows = Object.entries(asDict(raw))
     .map(([fieldCode, modifiers]) => {
       const row = asDict(modifiers);
@@ -1520,10 +1560,19 @@ function applyOnchangeModifiersPatch(raw: unknown) {
       if ('readonly' in row) status.readonly = Boolean(row.readonly);
       if ('required' in row) status.required = Boolean(row.required);
       if ('invisible' in row) status.visible = !row.invisible;
+      if ('domain' in row) {
+        status.domain = row.domain;
+        domainChangedFields.push(fieldCode);
+      }
+      if ('domain_raw' in row || 'domainRaw' in row) {
+        status.domain_raw = row.domain_raw || row.domainRaw;
+        domainChangedFields.push(fieldCode);
+      }
       return status;
     })
     .filter((row) => Object.keys(row).length > 1);
   if (rows.length) applyUnifiedPagePatchV2({ statusPatch: { widgetStatus: rows } });
+  clearMany2OneOptionsByFieldCodes(domainChangedFields);
 }
 
 function applyOnchangeLinePatches(raw: unknown) {

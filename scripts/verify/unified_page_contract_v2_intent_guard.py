@@ -157,6 +157,9 @@ def main() -> int:
     for token in ("isRemoteMany2OneField", "fieldOptionKey", "resolveFieldOptionDataSource", "loadMany2OneOptions", "mergeMany2OneOptions", "many2OneLoadingKey", "dataSources[key] || dataSources[field.fieldCode] || dataSources[field.widgetId]", "intent: sourceIntent", "dataKey: key", "asDict(data.dictData)[key]", "[key]: rows", "normalizeError(err, '选项加载失败').slice(0, 48)"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must load v2 remote many2one options token: {token}")
+    for token in ("optionDomain", "optionDomainRaw", "optionContextRaw", "fieldOptionDomainParams", "params.domain_raw = domainRaw", "params.context_raw = contextRaw", "params.domain = field.optionDomain", "clearMany2OneOptionsByFieldCodes", "delete dictData[key]", "domainChangedFields", "status.domain = row.domain", "status.domain_raw = row.domain_raw || row.domainRaw"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must refetch v2 many2one options with domain token: {token}")
     for token in ("isExecutableCommandAction", "hasContractTarget", "action.intent === 'execute_button'", "action.intent === 'api.data'", "action.intent === 'ui.contract'", "Boolean(asText(action.button.name || action.actionKey))", "target.scene_key || target.sceneKey"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must filter executable v2 command actions token: {token}")

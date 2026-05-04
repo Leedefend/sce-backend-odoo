@@ -58,14 +58,15 @@ option refresh, and real terminal acceptance.
 | compact boolean/selection controls | Closed | boolean fields render switch controls; selection fields render dictData-backed pickers. |
 | local many2one picker | Closed | many2one/select.remote fields render a dictData-backed picker when local options are delivered. |
 | remote many2one option bootstrap | Closed | many2one/select.remote fields can load contract-declared `dataSource` options into `dictData`. |
+| domain-aware many2one refetch | Closed | onchange `modifiers_patch.domain/domain_raw` invalidates many2one options and the next option request carries domain/context params. |
 | non-executable action filtering | Closed | unsupported command actions are hidden instead of shown as broken buttons. |
 
 ## Remaining Gap Matrix
 
 | Gap ID | Priority | Status | Description | Next Batch Candidate |
 | --- | --- | --- | --- | --- |
-| M2-G01 | P1 | Open | `modifiers_patch.domain` is retained as status metadata but mobile does not refresh option datasets from domain constraints. | Add domain-aware option refresh for selection/many2one controls after those controls exist. |
-| M2-G02 | P1 | Partial | `boolean`, `selection`, local dict-backed `many2one`, and contract-declared remote option bootstrap now have compact controls; dynamic search and domain-filtered remote many2one refresh remain open. | Implement domain-aware many2one search/refetch. |
+| M2-G01 | P1 | Partial | `modifiers_patch.domain/domain_raw` can now invalidate and refetch remote many2one options, but selection option refresh is still not wired. | Add domain-aware refresh for selection controls if the platform declares remote selection sources. |
+| M2-G02 | P1 | Partial | `boolean`, `selection`, local dict-backed `many2one`, remote option bootstrap, and domain-aware many2one refetch now have compact controls; dynamic typeahead search remains open. | Implement mobile many2one typeahead/search UI if needed for large datasets. |
 | M2-G03 | P1 | Open | `date` and `datetime` are accepted as editable widget types but still use text input because cross-terminal picker behavior is not wired. | Add terminal-safe date/datetime control wrappers. |
 | M2-G04 | P1 | Open | standard v2 actions such as `form.save`, `form.validate`, and `record.delete` are filtered because mobile has no safe execution path yet. | Define and implement standard form command intent mapping or keep filtered with documented deferral. |
 | M2-G05 | P2 | Open | onchange warnings are surfaced via toast only; there is no durable page-level warning area. | Add transient warning stack near the form header. |
@@ -81,7 +82,7 @@ The following items are intentionally not claimed closed:
 
 - full native-grade Odoo form save/delete/validate semantics;
 - complete x2many inline editing;
-- domain-driven many2one search/refetch;
+- typeahead many2one search UI for large remote datasets;
 - real device or mini-program runtime acceptance;
 - offline/cache retry semantics from `runtimeContract`.
 
@@ -89,8 +90,8 @@ The following items are intentionally not claimed closed:
 
 Recommended next sequence:
 
-1. `M2-G02`: implement domain-aware many2one search/refetch after remote option bootstrap.
-2. `M2-G01`: use `modifiers_patch.domain` once remote many2one option controls exist.
+1. `M2-G02`: decide whether many2one typeahead/search UI is needed for large datasets.
+2. `M2-G01`: close selection domain refresh if remote selection sources are declared.
 3. `M2-G04`: define standard form command execution boundary.
 4. `M2-G09`: add real terminal acceptance evidence.
 5. `M2-G05/M2-G10`: improve durable warnings and visual proof.
