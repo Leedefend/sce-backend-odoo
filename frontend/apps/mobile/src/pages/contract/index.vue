@@ -155,7 +155,16 @@
             <text class="relation-block__title">{{ block.label }}</text>
             <text class="relation-block__count">{{ block.rowCount }} 行</text>
           </view>
-          <view v-for="row in block.rows" :key="row.key" class="relation-block__row">{{ row.summary }}</view>
+          <view v-for="row in block.rows" :key="row.key" class="relation-block__row">
+            <text class="relation-block__summary">{{ row.summary }}</text>
+            <button
+              v-if="!isPageReadonly"
+              class="relation-block__remove"
+              @click="removeRelationRow(block, row)"
+            >
+              移除
+            </button>
+          </view>
           <button
             v-if="block.canLoadMore"
             class="relation-block__more relation-block__more--button"
@@ -290,6 +299,8 @@ interface RelationBlock {
 
 interface RelationDisplayRow {
   key: string;
+  rowId: string;
+  rowKey: string;
   summary: string;
 }
 
@@ -1162,7 +1173,9 @@ function collectRelationBlocks(sourceWidgets: ContractWidget[], currentDataContr
         moreCount: Math.max(0, total - visibleRows.length),
         canLoadMore: Boolean(dataSource && total > rows.length),
         rows: visibleRows.map((row, index) => ({
-          key: asText(row.id, `${widget.widgetId}.${index}`),
+          key: relationRowKey(row, widget.widgetId, index),
+          rowId: asText(row.id),
+          rowKey: asText(row.row_key || row.key || row.virtual_id || row.__row_key),
           summary: formatRelationRow(row, summaryFields),
         })),
       };
@@ -1219,6 +1232,42 @@ function formatRelationRow(row: Dict, summaryFields: string[]): string {
     .map(([key, value]) => `${key}: ${formatValue(value)}`)
     .filter((item) => item.trim());
   return parts.join(' · ') || asText(row.id, '-');
+}
+
+function relationRowKey(row: Dict, widgetId: string, index: number): string {
+  return asText(row.id || row.row_key || row.key || row.virtual_id || row.__row_key, `${widgetId}.${index}`);
+}
+
+async function removeRelationRow(block: RelationBlock, row: RelationDisplayRow) {
+  const confirmed = await confirmRelationRowRemove(block);
+  if (!confirmed) return;
+  applyUnifiedPagePatchV2({
+    dataPatch: {
+      relationRows: {
+        line_patches: [{
+          field: block.fieldCode,
+          dataKey: block.dataKey,
+          row_id: row.rowId || undefined,
+          row_key: row.rowKey || row.key,
+          row_state: 'delete',
+          command_hint: ['unlink'],
+        }],
+      },
+    },
+  });
+  pushWarningMessages([`${block.label} 行已标记移除，保存后生效`]);
+}
+
+function confirmRelationRowRemove(block: RelationBlock): Promise<boolean> {
+  return new Promise((resolve) => {
+    uni.showModal({
+      title: '确认移除',
+      content: `移除 ${block.label} 中的该行？`,
+      confirmColor: '#d14343',
+      success: (result) => resolve(Boolean(result.confirm)),
+      fail: () => resolve(false),
+    });
+  });
 }
 
 function resolvePrimaryDataSource(nextContract: Dict): Dict {
@@ -1861,12 +1910,18 @@ function standardFormActionParams(action: ContractAction, model: string, resId: 
   }
   if (action.intent === 'form.save') {
     params.values = currentRecordValues();
+    params.relationRows = currentRelationRows();
+    params.relation_rows = currentRelationRows();
   }
   return params;
 }
 
 function currentRecordValues(): Dict {
   return records.value.length ? { ...asDict(records.value[0]) } : {};
+}
+
+function currentRelationRows(): Dict {
+  return asDict(dataContract.value.relationRows);
 }
 
 function confirmDestructiveAction(action: ContractAction): Promise<boolean> {
@@ -2317,7 +2372,6 @@ onShow(loadContract);
 
 .relation-block__title,
 .relation-block__count,
-.relation-block__row,
 .relation-block__more,
 .relation-block__error {
   overflow: hidden;
@@ -2338,10 +2392,34 @@ onShow(loadContract);
 }
 
 .relation-block__row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
   padding: 8rpx 0;
   color: #344154;
   font-size: 22rpx;
   border-top: 1rpx solid #e8edf2;
+}
+
+.relation-block__summary {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.relation-block__remove {
+  flex: 0 0 auto;
+  width: 92rpx;
+  height: 48rpx;
+  margin: 0;
+  border: 1rpx solid #efc6c6;
+  border-radius: 8rpx;
+  background: #fff7f7;
+  color: #a33a3a;
+  font-size: 21rpx;
+  line-height: 48rpx;
 }
 
 .relation-block__more {

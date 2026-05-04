@@ -39,6 +39,7 @@ option refresh, and real terminal acceptance.
 | relationRows display | Closed | relation widgets render rows, summary fields, and row counts. |
 | relationRows pagination | Closed | relation pagination hints and remote loading are supported. |
 | relation line patches | Closed | `relationRows.line_patches` support create/update/remove-style row merge. |
+| bounded relation row removal | Closed | relation rows can be marked for removal through `line_patches`, and form save carries current relationRows. |
 | dictData labels | Closed | `dictData` can map stored values to display labels. |
 | statusPatch merge | Closed | global/container/widget/button/selector patch rows merge into current contract. |
 | layout/runtime patch preservation | Closed | `layoutPatch` and `runtimePatch` preserve top-level contract sections. |
@@ -75,7 +76,7 @@ option refresh, and real terminal acceptance.
 | M2-G03 | P1 | Closed | `date` and `datetime` fields now use terminal-safe picker controls instead of plain text input. | Monitor terminal acceptance and add timezone-specific handling only if backend values require it. |
 | M2-G04 | P1 | Closed | standard v2 actions `form.save`, `form.validate`, and `record.delete` now have a bounded mobile intent dispatch path; full native-grade Odoo form semantics remain deferred. | Monitor backend intent compatibility and add terminal acceptance coverage. |
 | M2-G05 | P2 | Closed | warnings are surfaced via toast and retained in a transient page-level warning stack near the header. | Monitor terminal acceptance and tune duration/copy if needed. |
-| M2-G06 | P2 | Open | x2many row editing UI is not implemented; only rendering, pagination, remote loading, and patch application exist. | Add bounded relation row edit/add/remove controls. |
+| M2-G06 | P2 | Partial | bounded relation row removal is available; full x2many add/edit inline forms remain deferred. | Add relation add/edit only when product workflows require native x2many editing. |
 | M2-G07 | P2 | Closed | `targetScope=dataSource/runtime/contract` now has specialized mobile refresh behavior in addition to refreshMode and target dependency handling. | Monitor backend targetScope usage in terminal acceptance. |
 | M2-G08 | P2 | Closed | runtime retry policy is now executed by the mobile intent request layer; offline/cache semantics remain deferred. | Monitor terminal acceptance and add offline/cache behavior only when product scope requires it. |
 | M2-G09 | P0 before release | Open | real terminal acceptance is not complete; current proof is static guards and typecheck. | Add H5/wx mobile screenshot or device runner acceptance. |
@@ -86,7 +87,7 @@ option refresh, and real terminal acceptance.
 The following items are intentionally not claimed closed:
 
 - full native-grade Odoo form save/delete/validate semantics;
-- complete x2many inline editing;
+- complete x2many inline add/edit forms;
 - typeahead many2one search UI for large remote datasets;
 - real device or mini-program runtime acceptance;
 - offline/cache semantics from `runtimeContract`.
@@ -99,7 +100,7 @@ Recommended next sequence:
 2. `M2-G01`: close selection domain refresh if remote selection sources are declared.
 3. `M2-G09`: add real terminal acceptance evidence.
 4. `M2-G10`: improve visual proof.
-5. `M2-G06`: add bounded relation editing.
+5. `M2-G06`: decide whether full relation add/edit forms are required.
 
 ## Verification Gates
 

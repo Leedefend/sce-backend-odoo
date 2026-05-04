@@ -112,6 +112,9 @@ def main() -> int:
     for token in ("key === 'line_patches'", "applyLinePatches", "applyLinePatchRows", "linePatch.field || linePatch.relation_field || linePatch.fieldCode || linePatch.dataKey", "row_state || linePatch.state", "command_hint || linePatch.command", "baseRows.filter((row) => !matches(row))"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must apply v2 relation line_patches token: {token}")
+    for token in ("removeRelationRow", "confirmRelationRowRemove", "relation-block__remove", "row_state: 'delete'", "command_hint: ['unlink']", "pushWarningMessages([`${block.label} 行已标记移除，保存后生效`])", "currentRelationRows", "params.relationRows = currentRelationRows()", "params.relation_rows = currentRelationRows()", "relationRowKey"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must provide bounded v2 relation row removal token: {token}")
     for token in ("hydrateInlineRecords", "hasInlineData", "hasInlineRows", "firstInlineRows", "firstRecordList", "dataContract.mainData", "dataContract.tableRows", "dataContract.treeData"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must render v2 inline dataContract rows token: {token}")
