@@ -100,6 +100,9 @@ def main() -> int:
     for token in ("RelationBlock", "relationBlocks", "collectRelationBlocks", "isRelationWidget", "formatRelationRow", "currentDataContract.relationRows", "widget.dataKey"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must render v2 relationRows token: {token}")
+    for token in ("summaryFields", "collectSummaryFields", "resolveRelationSummaryFields", "fieldNamesFromList", "currentDataContract.dataMeta", "meta.summaryFields || meta.summary_fields"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must use v2 relation summary metadata token: {token}")
     for token in ("globalPatch", "containerPatchRows", "mergeStatusRows(asList(currentStatus.containerStatus), containerPatchRows, 'containerId')", "...asDict(currentStatus.globalStatus), ...globalPatch"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must merge v2 statusPatch token: {token}")

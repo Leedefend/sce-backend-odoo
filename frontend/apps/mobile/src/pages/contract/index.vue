@@ -142,6 +142,7 @@ interface ContractWidget {
   componentKey: string;
   dataKey: string;
   dictKey: string;
+  summaryFields: string[];
   blockType: string;
   visible: boolean;
   readonly: boolean;
@@ -486,15 +487,17 @@ function collectWidgets(layout: Dict, status: Dict): ContractWidget[] {
         const widgetId = asText(widget.widgetId);
         if (!widgetId) return;
         const widgetState = widgetStatus[widgetId] || {};
+        const config = asDict(widget.componentConfig);
         rows.push({
           widgetId,
           widgetType: asText(widget.widgetType),
           fieldCode: asText(widget.fieldCode),
           label: asText(widget.label, asText(widget.fieldCode, widgetId)),
           componentKey: asText(widget.componentKey),
-          dataKey: asText(asDict(widget.componentConfig).dataKey),
-          dictKey: asText(asDict(widget.componentConfig).dictKey),
-          blockType: asText(asDict(widget.componentConfig).blockType),
+          dataKey: asText(config.dataKey),
+          dictKey: asText(config.dictKey),
+          summaryFields: collectSummaryFields(config),
+          blockType: asText(config.blockType),
           visible: widgetState.visible !== false && nextState.visible !== false,
           readonly: widgetState.readonly === true || nextState.disabled === true,
           required: widgetState.required === true,
@@ -646,11 +649,13 @@ function collectActions(action: Dict, status: Dict): ContractAction[] {
 
 function collectRelationBlocks(sourceWidgets: ContractWidget[], currentDataContract: Dict): RelationBlock[] {
   const relationRows = asDict(currentDataContract.relationRows);
+  const dataMeta = asDict(currentDataContract.dataMeta);
   return sourceWidgets
     .filter((widget) => widget.visible && isRelationWidget(widget))
     .map((widget) => {
       const dataKey = asText(widget.dataKey, widget.fieldCode);
       const rows = asList(relationRows[dataKey]).map((item) => asDict(item)).filter((item) => Object.keys(item).length);
+      const summaryFields = resolveRelationSummaryFields(widget, dataKey, dataMeta);
       return {
         widgetId: widget.widgetId,
         fieldCode: widget.fieldCode,
@@ -658,7 +663,7 @@ function collectRelationBlocks(sourceWidgets: ContractWidget[], currentDataContr
         rowCount: rows.length,
         rows: rows.slice(0, 5).map((row, index) => ({
           key: asText(row.id, `${widget.widgetId}.${index}`),
-          summary: formatRelationRow(row),
+          summary: formatRelationRow(row, summaryFields),
         })),
       };
     })
@@ -671,12 +676,41 @@ function isRelationWidget(widget: ContractWidget): boolean {
   return type === 'table' || type === 'relation' || component.includes('table') || component.includes('relation');
 }
 
-function formatRelationRow(row: Dict): string {
+function collectSummaryFields(config: Dict): string[] {
+  return [
+    ...fieldNamesFromList(config.summaryFields || config.summary_fields),
+    ...fieldNamesFromList(config.displayFields || config.display_fields),
+    ...fieldNamesFromList(config.columns),
+  ].filter((field, index, all) => field && all.indexOf(field) === index);
+}
+
+function resolveRelationSummaryFields(widget: ContractWidget, dataKey: string, dataMeta: Dict): string[] {
+  const meta = asDict(dataMeta[dataKey] || dataMeta[widget.fieldCode] || dataMeta[widget.widgetId]);
+  return [
+    ...widget.summaryFields,
+    ...fieldNamesFromList(meta.summaryFields || meta.summary_fields),
+    ...fieldNamesFromList(meta.displayFields || meta.display_fields),
+    ...fieldNamesFromList(meta.columns || meta.fields),
+  ].filter((field, index, all) => field && all.indexOf(field) === index);
+}
+
+function fieldNamesFromList(value: unknown): string[] {
+  return asList(value)
+    .map((item) => {
+      if (typeof item === 'string') return asText(item);
+      const row = asDict(item);
+      return asText(row.fieldCode || row.field || row.name || row.key);
+    })
+    .filter(Boolean);
+}
+
+function formatRelationRow(row: Dict, summaryFields: string[]): string {
   const preferred = asText(row.display_name || row.name || row.label);
   if (preferred) return preferred;
-  const parts = Object.entries(row)
-    .filter(([key]) => key !== 'id' && !key.startsWith('__'))
-    .slice(0, 3)
+  const entries = summaryFields.length
+    ? summaryFields.map((field) => [field, row[field]] as [string, unknown]).filter(([, value]) => value !== undefined)
+    : Object.entries(row).filter(([key]) => key !== 'id' && !key.startsWith('__')).slice(0, 3);
+  const parts = entries
     .map(([key, value]) => `${key}: ${formatValue(value)}`)
     .filter((item) => item.trim());
   return parts.join(' · ') || asText(row.id, '-');
