@@ -280,7 +280,7 @@ const listDisplayFields = computed(() => businessFields.value.slice(0, 8));
 const displayFields = computed(() => (isListSurface.value ? listDisplayFields.value : businessFields.value));
 const sceneBlocks = computed(() => widgets.value.filter((item) => item.visible && item.widgetType === 'display' && item.fieldCode));
 const actions = computed(() => collectActions(actionContract.value, statusContract.value));
-const commandActions = computed(() => actions.value.filter((action) => ['click', 'submit', 'confirm', 'delete', 'refresh', 'select'].includes(action.triggerType)));
+const commandActions = computed(() => actions.value.filter(isExecutableCommandAction));
 const isListSurface = computed(() => ['list', 'tree', 'kanban', 'table'].includes(viewTypeLabel.value));
 const recordRows = computed<RecordRow[]>(() => {
   if (isListSurface.value || !records.value.length) return [];
@@ -1303,6 +1303,28 @@ function applyOnchangeDataPatch(response: Dict) {
   const patch = asDict(data.patch);
   if (!Object.keys(patch).length || !records.value.length) return;
   records.value = [{ ...records.value[0], ...patch }, ...records.value.slice(1)];
+}
+
+function isExecutableCommandAction(action: ContractAction): boolean {
+  if (!['click', 'submit', 'confirm', 'delete', 'refresh', 'select'].includes(action.triggerType)) return false;
+  if (action.intent === 'execute_button') return Boolean(asText(action.button.name || action.actionKey));
+  if (action.intent === 'api.data') return true;
+  if (action.intent === 'ui.contract') return hasContractTarget(action.target);
+  return false;
+}
+
+function hasContractTarget(target: Dict): boolean {
+  return Boolean(asText(
+    target.action_id
+      || target.actionId
+      || target.model
+      || target.res_model
+      || target.resModel
+      || target.target_model
+      || target.targetModel
+      || target.scene_key
+      || target.sceneKey,
+  ));
 }
 
 function isBusinessDisplayField(widget: ContractWidget): boolean {

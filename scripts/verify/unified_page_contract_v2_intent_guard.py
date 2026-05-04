@@ -145,6 +145,9 @@ def main() -> int:
     for token in ("commandActions", "isEditableField", "handleFieldInput", "scheduleFieldAction", "runFieldAction", "resolveFieldAction", "intent: 'api.onchange'", "include_v2_patch: true", "contract_version: contractVersion.value", "changed_fields: [field.fieldCode]", "applyOnchangeDataPatch", "fieldActionTimer", "submitPolicy", "resolveActionDebounceMs", "action.dispatchMode !== 'serverDebounced'", "action.submitPolicy.debounceMs || action.submitPolicy.debounce_ms"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must trigger v2 field onchange token: {token}")
+    for token in ("isExecutableCommandAction", "hasContractTarget", "action.intent === 'execute_button'", "action.intent === 'api.data'", "action.intent === 'ui.contract'", "Boolean(asText(action.button.name || action.actionKey))", "target.scene_key || target.sceneKey"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must filter executable v2 command actions token: {token}")
     for token in ("tracePolicy", "onchangeRequestId", "action.tracePolicy.required === true", "`mobile.${action.actionId}.${Date.now()}`", "action_id: action.actionId", "source_widget_id: action.sourceWidgetId", "trigger_type: action.triggerType", "request_id: requestId"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must honor v2 onchange tracePolicy token: {token}")
