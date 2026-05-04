@@ -104,7 +104,14 @@
         <view class="section__count">{{ actions.length }} 项</view>
       </view>
       <view class="action-list">
-        <button v-for="action in actions" :key="action.actionId" class="action" @click="selectAction(action)">
+        <button
+          v-for="action in actions"
+          :key="action.actionId"
+          class="action"
+          :class="{ 'action--disabled': action.disabled }"
+          :disabled="action.disabled || Boolean(runningActionId)"
+          @click="selectAction(action)"
+        >
           {{ runningActionId === action.actionId ? '处理中...' : (action.label || action.actionId) }}
         </button>
       </view>
@@ -125,6 +132,10 @@ interface ContractWidget {
   label: string;
   componentKey: string;
   blockType: string;
+  visible: boolean;
+  readonly: boolean;
+  required: boolean;
+  disabled: boolean;
 }
 
 interface ContractAction {
@@ -134,6 +145,8 @@ interface ContractAction {
   intent: string;
   target: Dict;
   button: Dict;
+  visible: boolean;
+  disabled: boolean;
 }
 
 interface RecordRow {
@@ -160,18 +173,19 @@ const runningActionId = ref('');
 const pageInfo = computed(() => asDict(contract.value?.pageInfo));
 const layoutContract = computed(() => asDict(contract.value?.layoutContract));
 const actionContract = computed(() => asDict(contract.value?.actionContract));
+const statusContract = computed(() => asDict(contract.value?.statusContract));
 const pageTitle = computed(() => asText(pageInfo.value.pageName, '契约运行'));
 const modelName = computed(() => asText(pageInfo.value.model, TARGET_MODEL));
 const viewTypeLabel = computed(() => asText(pageInfo.value.viewType, 'list'));
 const contractVersion = computed(() => asText(pageInfo.value.contractVersion));
 const clientType = computed(() => asText(pageInfo.value.clientType, CLIENT_TYPE));
 const adaptMode = computed(() => asText(layoutContract.value.adaptMode));
-const widgets = computed(() => collectWidgets(layoutContract.value));
+const widgets = computed(() => collectWidgets(layoutContract.value, statusContract.value));
 const businessFields = computed(() => widgets.value.filter(isBusinessDisplayField));
 const listDisplayFields = computed(() => businessFields.value.slice(0, 8));
 const displayFields = computed(() => (isListSurface.value ? listDisplayFields.value : businessFields.value));
-const sceneBlocks = computed(() => widgets.value.filter((item) => item.widgetType === 'display' && item.fieldCode));
-const actions = computed(() => collectActions(actionContract.value));
+const sceneBlocks = computed(() => widgets.value.filter((item) => item.visible && item.widgetType === 'display' && item.fieldCode));
+const actions = computed(() => collectActions(actionContract.value, statusContract.value));
 const isListSurface = computed(() => ['list', 'tree', 'kanban', 'table'].includes(viewTypeLabel.value));
 const recordRows = computed<RecordRow[]>(() => {
   if (isListSurface.value || !records.value.length) return [];
@@ -396,8 +410,9 @@ function buildTargetParams(): Dict {
   return { source_type: 'ui.contract', op: 'model', model: TARGET_MODEL, view_type: TARGET_VIEW_TYPE };
 }
 
-function collectWidgets(layout: Dict): ContractWidget[] {
+function collectWidgets(layout: Dict, status: Dict): ContractWidget[] {
   const rows: ContractWidget[] = [];
+  const widgetStatus = collectWidgetStatus(status);
   function walkContainers(containers: unknown[]) {
     containers.forEach((container) => {
       const row = asDict(container);
@@ -405,6 +420,7 @@ function collectWidgets(layout: Dict): ContractWidget[] {
         const widget = asDict(item);
         const widgetId = asText(widget.widgetId);
         if (!widgetId) return;
+        const state = widgetStatus[widgetId] || {};
         rows.push({
           widgetId,
           widgetType: asText(widget.widgetType),
@@ -412,6 +428,10 @@ function collectWidgets(layout: Dict): ContractWidget[] {
           label: asText(widget.label, asText(widget.fieldCode, widgetId)),
           componentKey: asText(widget.componentKey),
           blockType: asText(asDict(widget.componentConfig).blockType),
+          visible: state.visible !== false,
+          readonly: state.readonly === true,
+          required: state.required === true,
+          disabled: state.disabled === true,
         });
       });
       walkContainers(asList(row.children));
@@ -421,21 +441,44 @@ function collectWidgets(layout: Dict): ContractWidget[] {
   return rows;
 }
 
-function collectActions(action: Dict): ContractAction[] {
+function collectWidgetStatus(status: Dict): Record<string, Dict> {
+  return asList(status.widgetStatus).reduce<Record<string, Dict>>((acc, item) => {
+    const row = asDict(item);
+    const widgetId = asText(row.widgetId);
+    if (widgetId) acc[widgetId] = row;
+    return acc;
+  }, {});
+}
+
+function collectButtonStatus(status: Dict): Record<string, Dict> {
+  return asList(status.buttonStatus).reduce<Record<string, Dict>>((acc, item) => {
+    const row = asDict(item);
+    const btnId = asText(row.btnId || row.buttonId || row.actionId);
+    if (btnId) acc[btnId] = row;
+    return acc;
+  }, {});
+}
+
+function collectActions(action: Dict, status: Dict): ContractAction[] {
+  const buttonStatus = collectButtonStatus(status);
   return asList(action.actionRuleList)
     .map((item) => {
       const row = asDict(item);
       const actionId = asText(row.actionId);
+      const actionKey = asText(row.actionKey, actionId.replace(/^action\./, ''));
+      const state = buttonStatus[`btn.${actionKey}`] || buttonStatus[actionId] || {};
       return {
         actionId,
-        actionKey: asText(row.actionKey, actionId.replace(/^action\./, '')),
+        actionKey,
         label: asText(row.label, actionId),
         intent: asText(row.intent, 'ui.contract'),
         target: asDict(row.target),
         button: asDict(row.button),
+        visible: state.visible !== false,
+        disabled: state.disabled === true,
       };
     })
-    .filter((item) => item.actionId);
+    .filter((item) => item.actionId && item.visible);
 }
 
 function resolvePrimaryDataSource(nextContract: Dict): Dict {
@@ -451,7 +494,7 @@ function buildFallbackDataSource(nextContract: Dict): Dict {
   const model = asText(info.model);
   const viewType = asText(info.viewType);
   const recordId = asText(routeQuery.value.record_id || routeQuery.value.recordId || routeQuery.value.res_id || routeQuery.value.resId);
-  const fields = collectWidgets(asDict(nextContract.layoutContract))
+  const fields = collectWidgets(asDict(nextContract.layoutContract), asDict(nextContract.statusContract))
     .filter(isBusinessDisplayField)
     .map((item) => item.fieldCode)
     .filter((field, index, all) => field && all.indexOf(field) === index)
@@ -488,6 +531,7 @@ function normalizeIds(value: unknown): number[] {
 }
 
 function isBusinessDisplayField(widget: ContractWidget): boolean {
+  if (!widget.visible) return false;
   const field = widget.fieldCode;
   if (widget.widgetType === 'display') return false;
   if (!field || field === 'id' || field.startsWith('__')) return false;
@@ -916,5 +960,10 @@ onShow(loadContract);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.action--disabled {
+  background: #8a98a8;
+  color: #eef2f6;
 }
 </style>

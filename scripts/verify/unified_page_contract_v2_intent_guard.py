@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 HANDLER_PATH = ROOT / "addons/smart_core/handlers/ui_contract_v2.py"
 ASSEMBLER_PATH = ROOT / "addons/smart_core/core/unified_page_contract_v2_assembler.py"
 CLIENT_PATH = ROOT / "addons/smart_core/core/unified_page_contract_v2_client.py"
+MOBILE_CONTRACT_PAGE = ROOT / "frontend/apps/mobile/src/pages/contract/index.vue"
 FORBIDDEN_INDUSTRY_PATH = ROOT / "addons/smart_construction_core/handlers/mobile_contract.py"
 
 
@@ -49,6 +50,7 @@ def main() -> int:
         _fail(errors, "mobile contract protocol must not live in smart_construction_core")
 
     source = HANDLER_PATH.read_text(encoding="utf-8") if HANDLER_PATH.exists() else ""
+    mobile_source = MOBILE_CONTRACT_PAGE.read_text(encoding="utf-8") if MOBILE_CONTRACT_PAGE.exists() else ""
     tree = ast.parse(source or "\n")
     assignments = _literal_assignments(tree)
     if assignments.get("INTENT_TYPE") != "ui.contract.v2":
@@ -66,6 +68,9 @@ def main() -> int:
     for forbidden in ("mobile_contract", "mobileContract", "deviceContract", "construction.contract.mobile"):
         if forbidden in source:
             _fail(errors, f"handler must not introduce mobile private schema: {forbidden}")
+    for token in ("statusContract", "widgetStatus", "buttonStatus", "collectWidgetStatus", "collectButtonStatus"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must consume v2 status contract token: {token}")
 
     assembler = _load(ASSEMBLER_PATH, "upc_v2_intent_guard_assembler")
     client = _load(CLIENT_PATH, "upc_v2_intent_guard_client")
