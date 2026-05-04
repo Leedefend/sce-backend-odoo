@@ -143,6 +143,7 @@ interface ContractAction {
   actionKey: string;
   label: string;
   intent: string;
+  refreshMode: string;
   target: Dict;
   button: Dict;
   visible: boolean;
@@ -552,6 +553,7 @@ function collectActions(action: Dict, status: Dict): ContractAction[] {
         actionKey,
         label: asText(row.label, actionId),
         intent: asText(row.intent, 'ui.contract'),
+        refreshMode: normalizeRefreshMode(row.refreshMode),
         target: asDict(row.target),
         button: asDict(row.button),
         visible: state.visible !== false,
@@ -635,8 +637,9 @@ function isBusinessDisplayField(widget: ContractWidget): boolean {
 
 async function selectAction(action: ContractAction) {
   if (runningActionId.value) return;
+  const runtime = resolveRuntimeEndpoint();
   if (action.intent === 'api.data') {
-    await loadContract();
+    if (runtime) await applyActionRefreshMode(action.refreshMode, runtime.endpoint, runtime.token);
     return;
   }
   if (action.intent === 'ui.contract') {
@@ -673,12 +676,28 @@ async function selectAction(action: ContractAction) {
         },
       },
     });
-    await applyActionEffect(asDict(asDict(response.data).effect));
+    await applyActionEffect(asDict(asDict(response.data).effect), action, endpoint, token);
   } catch {
     uni.showToast({ title: '动作执行失败', icon: 'none' });
   } finally {
     runningActionId.value = '';
   }
+}
+
+function normalizeRefreshMode(value: unknown): string {
+  const mode = asText(value, 'partial').toLowerCase();
+  return ['none', 'partial', 'full'].includes(mode) ? mode : 'partial';
+}
+
+function resolveRuntimeEndpoint(): { endpoint: string; token: string } | null {
+  const baseUrl = normalizeBaseUrl(readStorage('sc_mobile_base_url'));
+  const dbName = readStorage('sc_mobile_db');
+  const token = readStorage('sc_mobile_token');
+  if (!baseUrl || !dbName || !token) return null;
+  return {
+    endpoint: `${baseUrl}/api/v1/intent?db=${encodeURIComponent(dbName)}`,
+    token,
+  };
 }
 
 function currentRecordId(): number {
@@ -689,7 +708,7 @@ function currentRecordId(): number {
   return Number.isFinite(fromRecord) && fromRecord > 0 ? fromRecord : 0;
 }
 
-async function applyActionEffect(effect: Dict) {
+async function applyActionEffect(effect: Dict, action: ContractAction, endpoint: string, token: string) {
   const type = asText(effect.type);
   const target = asDict(effect.target);
   if (type === 'navigate') {
@@ -710,7 +729,17 @@ async function applyActionEffect(effect: Dict) {
       }
     }
   }
-  await loadContract();
+  await applyActionRefreshMode(action.refreshMode, endpoint, token);
+}
+
+async function applyActionRefreshMode(refreshMode: string, endpoint: string, token: string) {
+  const mode = normalizeRefreshMode(refreshMode);
+  if (mode === 'none') return;
+  if (mode === 'full' || !contract.value) {
+    await loadContract();
+    return;
+  }
+  await loadRecords(endpoint, token, contract.value, false);
 }
 
 function openContractTarget(target: Dict) {
