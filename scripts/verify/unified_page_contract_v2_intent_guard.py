@@ -127,6 +127,9 @@ def main() -> int:
     for token in ("applyResponseUnifiedPagePatch", "response.unified_page_patch_v2", "data.unified_page_patch_v2 || data.unifiedPagePatchV2", "applyUnifiedPagePatchV2(patch)", "appliedPatch && normalizeRefreshMode(action.refreshMode) === 'none'"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must consume v2 action response patch token: {token}")
+    for token in ("showActionResponseFeedback", "firstResponseWarning", "response.warnings", "data.warnings", "effect.message || result.message || data.message", "type === 'toast'", "uni.showToast({ title: message.slice(0, 48)"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must expose v2 action feedback token: {token}")
     for token in ("parseMaybeJsonRecord", "actionTargetModel", "actionExecutionContext", "target.target_model", "target.view_mode", "context,"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must preserve v2 action target/button metadata token: {token}")

@@ -1139,6 +1139,7 @@ async function selectAction(action: ContractAction) {
       },
     });
     const appliedPatch = applyResponseUnifiedPagePatch(response);
+    showActionResponseFeedback(response);
     if (appliedPatch && normalizeRefreshMode(action.refreshMode) === 'none') return;
     await applyActionEffect(asDict(asDict(response.data).effect), action, endpoint, token);
   } catch {
@@ -1170,6 +1171,31 @@ function applyResponseUnifiedPagePatch(response: Dict): boolean {
   if (!Object.keys(patch).length) return false;
   applyUnifiedPagePatchV2(patch);
   return true;
+}
+
+function showActionResponseFeedback(response: Dict) {
+  const data = asDict(response.data);
+  const result = asDict(data.result);
+  const effect = asDict(data.effect);
+  const warning = firstResponseWarning(response);
+  const message = warning || asText(effect.message || result.message || data.message);
+  if (message) uni.showToast({ title: message.slice(0, 48), icon: warning ? 'none' : 'success' });
+}
+
+function firstResponseWarning(response: Dict): string {
+  const data = asDict(response.data);
+  const rows = [
+    ...asList(response.warnings),
+    ...asList(data.warnings),
+    ...asList(data.warning ? [data.warning] : []),
+  ];
+  for (const item of rows) {
+    if (typeof item === 'string') return asText(item);
+    const row = asDict(item);
+    const message = asText(row.message || row.title || row.reason_code || row.reasonCode);
+    if (message) return message;
+  }
+  return '';
 }
 
 function normalizeRefreshMode(value: unknown): string {
@@ -1216,6 +1242,11 @@ async function applyActionEffect(effect: Dict, action: ContractAction, endpoint:
         return;
       }
     }
+  }
+  if (type === 'toast') {
+    const message = asText(effect.message);
+    if (message) uni.showToast({ title: message.slice(0, 48), icon: 'none' });
+    return;
   }
   await applyActionRefreshMode(action.refreshMode, endpoint, token);
 }
