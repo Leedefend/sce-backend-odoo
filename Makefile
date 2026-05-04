@@ -4127,6 +4127,10 @@ verify.unified_page_contract.v2.client: guard.prod.forbid
 verify.unified_page_contract.v2.harmony_h5_compile_acceptance.host: guard.prod.forbid
 	@python3 scripts/verify/unified_page_contract_v2_harmony_h5_compile_acceptance_guard.py --report artifacts/backend/unified_page_contract_v2_harmony_h5_compile_acceptance.json --execute
 
+.PHONY: verify.unified_page_contract.v2.web_consumer
+verify.unified_page_contract.v2.web_consumer: guard.prod.forbid
+	@python3 scripts/verify/unified_page_contract_v2_web_consumer_guard.py
+
 .PHONY: verify.unified_page_contract.v2
 verify.unified_page_contract.v2: verify.unified_page_contract.v2.schema verify.unified_page_contract.v2.assembler verify.unified_page_contract.v2.status verify.unified_page_contract.v2.action verify.unified_page_contract.v2.data verify.unified_page_contract.v2.runtime verify.unified_page_contract.v2.client
 
