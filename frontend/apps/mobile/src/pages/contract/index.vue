@@ -621,8 +621,12 @@ function resolvePrimaryDataSource(nextContract: Dict): Dict {
   const dataSources = asDict(dataContract.dataSource);
   const primary = asDict(dataSources.primary);
   if (primary.intent || primary.query) return primary;
-  if (hasInlineRows(dataContract)) return {};
+  if (hasInlineData(dataContract)) return {};
   return buildFallbackDataSource(nextContract);
+}
+
+function hasInlineData(dataContract: Dict): boolean {
+  return Boolean(Object.keys(asDict(dataContract.mainData)).length || firstInlineRows(dataContract).length);
 }
 
 function hasInlineRows(dataContract: Dict): boolean {
@@ -647,13 +651,15 @@ function firstRecordList(rowsByKey: Dict): Dict[] {
 
 function hydrateInlineRecords(nextContract: Dict) {
   const dataContract = asDict(nextContract.dataContract);
+  const mainData = asDict(dataContract.mainData);
   const inlineRows = firstInlineRows(dataContract);
-  records.value = inlineRows;
+  const inlineRecords = inlineRows.length ? inlineRows : (Object.keys(mainData).length ? [mainData] : []);
+  records.value = inlineRecords;
   const pagination = asDict(dataContract.pagination);
   const firstPagination = Object.values(pagination).map((item) => asDict(item)).find((item) => Object.keys(item).length) || {};
   const total = Number(firstPagination.total);
-  recordTotal.value = Number.isFinite(total) ? total : inlineRows.length;
-  nextOffset.value = inlineRows.length;
+  recordTotal.value = Number.isFinite(total) ? total : inlineRecords.length;
+  nextOffset.value = inlineRecords.length;
 }
 
 function buildFallbackDataSource(nextContract: Dict): Dict {
