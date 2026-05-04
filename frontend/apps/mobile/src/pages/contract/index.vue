@@ -195,6 +195,12 @@ interface RelationDisplayRow {
   summary: string;
 }
 
+interface InlineRecordSet {
+  key: string;
+  rows: Dict[];
+  section: 'tableRows' | 'treeData';
+}
+
 const TARGET_MODEL = 'construction.contract';
 const TARGET_VIEW_TYPE = 'tree';
 const CLIENT_TYPE = 'harmony_h5';
@@ -208,6 +214,7 @@ const dataError = ref('');
 const records = ref<Dict[]>([]);
 const recordTotal = ref<number | null>(null);
 const nextOffset = ref(0);
+const activeRecordDataKey = ref('');
 const runningActionId = ref('');
 const relationLoadingKey = ref('');
 const relationErrorKey = ref('');
@@ -393,7 +400,8 @@ async function loadRecords(endpoint: string, token: string, nextContract: Dict, 
   const viewType = asText(info.viewType);
   const source = resolvePrimaryDataSource(nextContract);
   const sourceParams = asDict(source.params);
-  const sourceIntent = asText(source.intent || source.query, 'api.data');
+  const recordDataKey = asText(source.dataKey || source.data_key || firstInlineRecordSet(asDict(nextContract.dataContract)).key || 'primary');
+  const sourceIntent = asText(source.intent || source.query || source.provider);
   const sourceOp = asText(sourceParams.op, ['list', 'tree', 'kanban', 'table'].includes(viewType) ? 'list' : 'read');
   if (!model || !sourceIntent || (sourceOp === 'list' && !['list', 'tree', 'kanban', 'table'].includes(viewType))) {
     hydrateInlineRecords(nextContract);
@@ -420,6 +428,8 @@ async function loadRecords(endpoint: string, token: string, nextContract: Dict, 
       requestParams.limit = Number(sourceParams.limit) || 20;
       requestParams.offset = append ? nextOffset.value : 0;
       requestParams.need_total = true;
+      requestParams.dataKey = recordDataKey;
+      requestParams.data_key = recordDataKey;
     }
     const response = await requestIntent(endpoint, token, {
       intent: sourceIntent,
@@ -428,6 +438,7 @@ async function loadRecords(endpoint: string, token: string, nextContract: Dict, 
     const data = asDict(response.data);
     const nextRecords = asList(data.records).map((item) => asDict(item));
     records.value = append ? records.value.concat(nextRecords) : nextRecords;
+    activeRecordDataKey.value = recordDataKey;
     if (sourceOp === 'read') {
       recordTotal.value = nextRecords.length;
       nextOffset.value = nextRecords.length;
@@ -437,6 +448,11 @@ async function loadRecords(endpoint: string, token: string, nextContract: Dict, 
       const offset = Number(data.next_offset);
       nextOffset.value = Number.isFinite(offset) ? offset : records.value.length;
     }
+    syncRecordDataContractRows(nextContract, recordDataKey, viewType, records.value, {
+      total: recordTotal.value,
+      nextOffset: nextOffset.value,
+      limit: Number(requestParams.limit) || records.value.length,
+    });
   } catch (err) {
     if (!append) {
       records.value = [];
@@ -558,6 +574,35 @@ function mergeRowsById(baseRows: Dict[], patchRows: Dict[]): Dict[] {
     }
   });
   return out;
+}
+
+function syncRecordDataContractRows(nextContract: Dict, dataKey: string, viewType: string, nextRows: Dict[], page: { total: number | null; nextOffset: number; limit: number }) {
+  const current = asDict(contract.value || nextContract);
+  const currentData = asDict(current.dataContract);
+  const rowSection = viewType === 'tree' ? 'treeData' : 'tableRows';
+  const rowsByKey = asDict(currentData[rowSection]);
+  const pagination = asDict(currentData.pagination);
+  const key = dataKey || firstInlineRecordSet(currentData).key || 'primary';
+  contract.value = {
+    ...current,
+    dataContract: {
+      ...currentData,
+      [rowSection]: {
+        ...rowsByKey,
+        [key]: nextRows,
+      },
+      pagination: {
+        ...pagination,
+        [key]: {
+          ...asDict(pagination[key]),
+          limit: page.limit,
+          pageSize: page.limit,
+          next_offset: page.nextOffset,
+          total: page.total === null ? nextRows.length : page.total,
+        },
+      },
+    },
+  };
 }
 
 function buildTargetParams(): Dict {
@@ -855,7 +900,12 @@ function resolvePrimaryDataSource(nextContract: Dict): Dict {
   const dataContract = asDict(nextContract.dataContract);
   const dataSources = asDict(dataContract.dataSource);
   const primary = asDict(dataSources.primary);
-  if (primary.intent || primary.query) return primary;
+  const inlineSet = firstInlineRecordSet(dataContract);
+  if (primary.intent || primary.query) return { ...primary, dataKey: asText(primary.dataKey || primary.data_key, inlineSet.key || 'primary') };
+  if (inlineSet.key) {
+    const keyedSource = asDict(dataSources[inlineSet.key]);
+    if (keyedSource.intent || keyedSource.query || keyedSource.provider) return { ...keyedSource, dataKey: inlineSet.key };
+  }
   if (hasInlineData(dataContract)) return {};
   return buildFallbackDataSource(nextContract);
 }
@@ -869,30 +919,36 @@ function hasInlineRows(dataContract: Dict): boolean {
 }
 
 function firstInlineRows(dataContract: Dict): Dict[] {
-  const tableRows = firstRecordList(asDict(dataContract.tableRows));
-  if (tableRows.length) return tableRows;
-  const treeRows = firstRecordList(asDict(dataContract.treeData));
-  if (treeRows.length) return treeRows;
-  return [];
+  return firstInlineRecordSet(dataContract).rows;
 }
 
-function firstRecordList(rowsByKey: Dict): Dict[] {
-  for (const value of Object.values(rowsByKey)) {
+function firstInlineRecordSet(dataContract: Dict): InlineRecordSet {
+  const tableRows = firstRecordList(asDict(dataContract.tableRows), 'tableRows');
+  if (tableRows.rows.length) return tableRows;
+  const treeRows = firstRecordList(asDict(dataContract.treeData), 'treeData');
+  if (treeRows.rows.length) return treeRows;
+  return { key: '', rows: [], section: 'tableRows' };
+}
+
+function firstRecordList(rowsByKey: Dict, section: 'tableRows' | 'treeData'): InlineRecordSet {
+  for (const [key, value] of Object.entries(rowsByKey)) {
     const rows = asList(value).map((item) => asDict(item)).filter((item) => Object.keys(item).length);
-    if (rows.length) return rows;
+    if (rows.length) return { key, rows, section };
   }
-  return [];
+  return { key: '', rows: [], section };
 }
 
 function hydrateInlineRecords(nextContract: Dict) {
   const dataContract = asDict(nextContract.dataContract);
   const mainData = asDict(dataContract.mainData);
-  const inlineRows = firstInlineRows(dataContract);
-  const inlineRecords = inlineRows.length ? inlineRows : (Object.keys(mainData).length ? [mainData] : []);
+  const inlineSet = firstInlineRecordSet(dataContract);
+  const inlineRecords = inlineSet.rows.length ? inlineSet.rows : (Object.keys(mainData).length ? [mainData] : []);
   records.value = inlineRecords;
+  activeRecordDataKey.value = inlineSet.key;
   const pagination = asDict(dataContract.pagination);
-  const firstPagination = Object.values(pagination).map((item) => asDict(item)).find((item) => Object.keys(item).length) || {};
-  const total = Number(firstPagination.total);
+  const matchedPagination = asDict(pagination[inlineSet.key]);
+  const fallbackPagination = Object.values(pagination).map((item) => asDict(item)).find((item) => Object.keys(item).length) || {};
+  const total = Number((Object.keys(matchedPagination).length ? matchedPagination : fallbackPagination).total);
   recordTotal.value = Number.isFinite(total) ? total : inlineRecords.length;
   nextOffset.value = inlineRecords.length;
 }
