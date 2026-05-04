@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-05T04:43:44+08:00
+- blocker_key: `web_action_view_v2_action_rule_list_batch`
+- layer_target: `Frontend Contract Consumer`
+- module: `frontend/apps/web/src/app/action_runtime/useActionViewActionPresentationRuntime.ts + scripts/verify`
+- reason: `Record form 已直接映射 v2 actionRuleList，但 ActionView 工具栏动作仍只合并 compat buttons/actions/toolbar，缺少 v2 actionRuleList 直接消费路径。`
+- completed_step: `Action presentation runtime 新增 normalizeV2ActionRows，将 v2 actionContract.actionRuleList 转为现有 ContractActionButton 输入行，并在 compat buttons/actions/toolbar 后合并，复用现有 dedup、buttonStatus 与执行器；web v2 guard 增加 actionRuleList 消费门禁。`
+- verification: `python3 scripts/verify/web_unified_page_contract_v2_guard.py PASS；python3 -m py_compile scripts/verify/web_unified_page_contract_v2_guard.py PASS；pnpm --dir frontend/apps/web run typecheck PASS；make verify.unified_page_contract.v2 PASS；git diff --check PASS。`
+- active_commit: `6958faf1`
+- next_step: `提交 web_action_view_v2_action_rule_list_batch；下一批可继续把 v2 action metadata refreshMode/targetIds/dependencyGraph 接入前端刷新策略，或进入 PR 推送前最终聚合验证。`
+
 ### 2026-05-04T23:11:19+08:00
 - blocker_key: `web_v2_container_status_form_layout_batch`
 - layer_target: `Frontend Contract Consumer`

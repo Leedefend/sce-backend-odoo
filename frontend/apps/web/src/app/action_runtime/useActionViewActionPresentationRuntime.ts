@@ -1,4 +1,5 @@
 import { computed, type Ref } from 'vue';
+import { resolveUnifiedPageContractV2 } from '../contracts/unifiedPageContractV2';
 
 type Dict = Record<string, unknown>;
 
@@ -49,6 +50,39 @@ type UseActionViewActionPresentationRuntimeOptions = {
   pageText: (key: string, fallback: string) => string;
 };
 
+function normalizeV2ActionRows(contract: Dict | null): Array<Record<string, unknown>> {
+  const v2 = resolveUnifiedPageContractV2(contract);
+  if (!v2) return [];
+  return (v2.actionContract.actionRuleList || []).reduce<Array<Record<string, unknown>>>((acc, action) => {
+      const key = String(action.actionKey || action.actionId || '').trim();
+      if (!key) return acc;
+      const intent = String(action.intent || '').trim();
+      const target = action.target || {};
+      const button = action.button || {};
+      const isOpen = intent === 'ui.contract';
+      acc.push({
+        key,
+        label: String(action.label || key).trim() || key,
+        intent,
+        kind: isOpen ? 'open' : String(button.type || 'object'),
+        level: 'toolbar',
+        target,
+        payload: isOpen
+          ? target
+          : {
+              method: button.name || key,
+              type: button.type || 'object',
+            },
+        target_model: String(target.model || '').trim(),
+        selection: 'none',
+        unified_page_contract_v2_action_id: action.actionId,
+        unified_page_contract_v2_source_widget_id: action.sourceWidgetId,
+        unified_page_contract_v2_refresh_mode: action.refreshMode,
+      });
+      return acc;
+    }, []);
+}
+
 export function useActionViewActionPresentationRuntime(options: UseActionViewActionPresentationRuntimeOptions) {
   const contractActionButtons = computed<ContractActionButton[]>(() => {
     const contract = options.actionContract.value;
@@ -64,6 +98,7 @@ export function useActionViewActionPresentationRuntime(options: UseActionViewAct
       if (Array.isArray(toolbar.sidebar)) merged.push(...(toolbar.sidebar as Array<Record<string, unknown>>));
       if (Array.isArray(toolbar.footer)) merged.push(...(toolbar.footer as Array<Record<string, unknown>>));
     }
+    merged.push(...normalizeV2ActionRows(contract));
     const dedup = new Set<string>();
     return merged
       .map((row) => options.toContractActionButton(row, dedup))
