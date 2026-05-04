@@ -775,6 +775,10 @@ function isReplaceDataPatch(patch: Dict, dataPatch: Dict): boolean {
 function mergeRowsByDataKey(baseRowsByKey: Dict, patchRowsByKey: Dict, replaceRows: boolean): Dict {
   const out = { ...baseRowsByKey };
   Object.entries(patchRowsByKey).forEach(([key, patchValue]) => {
+    if (key === 'line_patches') {
+      applyLinePatches(out, patchValue);
+      return;
+    }
     const patchRows = extractPatchRows(patchValue);
     if (!patchRows) {
       out[key] = patchValue;
@@ -786,6 +790,38 @@ function mergeRowsByDataKey(baseRowsByKey: Dict, patchRowsByKey: Dict, replaceRo
       : mergeRowsById(asList(baseRowsByKey[key]).map((item) => asDict(item)), patchRows);
   });
   return out;
+}
+
+function applyLinePatches(rowsByKey: Dict, patchValue: unknown) {
+  asList(patchValue).map((item) => asDict(item)).forEach((linePatch) => {
+    const fieldName = asText(linePatch.field || linePatch.relation_field || linePatch.fieldCode || linePatch.dataKey);
+    if (!fieldName) return;
+    const baseRows = asList(rowsByKey[fieldName]).map((item) => asDict(item)).filter((item) => Object.keys(item).length);
+    rowsByKey[fieldName] = applyLinePatchRows(baseRows, linePatch);
+  });
+}
+
+function applyLinePatchRows(baseRows: Dict[], linePatch: Dict): Dict[] {
+  const rowState = asText(linePatch.row_state || linePatch.state).toLowerCase();
+  const command = asList(linePatch.command_hint || linePatch.command).map((item) => asText(item).toLowerCase());
+  const removeRow = rowState === 'delete' || rowState === 'deleted' || command.includes('unlink') || command.includes('delete') || command.includes('remove');
+  const rowKey = asText(linePatch.row_key || linePatch.key || linePatch.virtual_id);
+  const rowId = asText(linePatch.row_id || linePatch.id);
+  const patch = asDict(linePatch.patch || linePatch.values || linePatch.value);
+  const matches = (row: Dict) => Boolean(
+    (rowId && asText(row.id) === rowId)
+    || (rowKey && asText(row.row_key || row.key || row.virtual_id || row.__row_key) === rowKey)
+  );
+  if (removeRow) return baseRows.filter((row) => !matches(row));
+  const index = baseRows.findIndex(matches);
+  if (index >= 0) {
+    return baseRows.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row));
+  }
+  return baseRows.concat({
+    ...(rowId ? { id: Number(rowId) || rowId } : {}),
+    ...(rowKey ? { row_key: rowKey } : {}),
+    ...patch,
+  });
 }
 
 function extractPatchRows(value: unknown): Dict[] | null {
