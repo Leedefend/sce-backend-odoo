@@ -76,6 +76,7 @@ class UiContractV2Handler(BaseIntentHandler):
             "ui_contract": ui_data,
             "model": model,
             "view_type": view_type,
+            "record_id": params.get("record_id") or params.get("recordId") or ui_params.get("record_id") or ui_params.get("recordId"),
             "source_meta": ui_meta,
         }
         contract_v2 = assemble_unified_page_contract_v2(

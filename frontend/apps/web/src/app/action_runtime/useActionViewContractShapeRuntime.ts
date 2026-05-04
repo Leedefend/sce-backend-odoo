@@ -1,5 +1,9 @@
 import { computed, type Ref } from 'vue';
 import { uniqueFields } from '../runtime/actionViewRequestRuntime';
+import {
+  collectUnifiedPageContractV2FieldWidgets,
+  resolveUnifiedPageContractV2,
+} from '../contracts/unifiedPageContractV2';
 
 type Dict = Record<string, unknown>;
 
@@ -40,6 +44,9 @@ type ListColumnOption = {
 export function useActionViewContractShapeRuntime(options: UseActionViewContractShapeRuntimeOptions) {
   const contractColumnLabels = computed<Record<string, string>>(() => {
     const contract = options.actionContract.value || {};
+    collectUnifiedPageContractV2FieldWidgets(contract).forEach((widget) => {
+      if (widget.fieldCode && widget.label) labels[widget.fieldCode] = widget.label;
+    });
     const rows = contract.fields || {};
     const labels = Object.entries(rows).reduce<Record<string, string>>((acc, [name, descriptor]) => {
       const descriptorRow = (descriptor || {}) as Dict;
@@ -68,6 +75,8 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       return sceneColumns;
     }
     const typed = (contract || {}) as Dict;
+    const v2Fields = collectUnifiedPageContractV2FieldWidgets(typed).map((widget) => widget.fieldCode).filter(Boolean);
+    if (v2Fields.length) return v2Fields;
     const uiContract = ((typed.ui_contract || {}) as Dict);
     const directViews = (typed.views || uiContract.views) as Dict | undefined;
     if (directViews) {
@@ -99,6 +108,17 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
 
   function extractColumnSchemaFromContract(contract: unknown): Dict[] {
     const typed = (contract || {}) as Dict;
+    const v2 = resolveUnifiedPageContractV2(typed);
+    if (v2) {
+      return collectUnifiedPageContractV2FieldWidgets(typed).map((widget) => ({
+        name: widget.fieldCode,
+        label: widget.label,
+        string: widget.label,
+        widget: widget.widgetType,
+        componentKey: widget.componentKey,
+        ...(widget.componentConfig || {}),
+      }));
+    }
     const uiContract = ((typed.ui_contract || {}) as Dict);
     const directViews = (typed.views || uiContract.views) as Dict | undefined;
     const treeBlock = directViews ? (directViews.tree || directViews.list || {}) as Dict : {};

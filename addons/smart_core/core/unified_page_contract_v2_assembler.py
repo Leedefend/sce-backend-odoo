@@ -396,6 +396,7 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     ui = _dict(source.get("ui_contract")) or _dict(source.get("ui_contract_raw"))
     model = _text(source.get("model") or ui.get("model"))
     view_type = _text(source.get("view_type") or ui.get("view_type"), "form")
+    record_id = _positive_int(source.get("record_id") or source.get("recordId") or ui.get("record_id") or ui.get("recordId"), 0)
     layout_type = "table" if view_type in {"tree", "list"} else view_type if view_type in {"form", "kanban", "gantt"} else "form"
     page_id = _stable_id(f"{model}.{view_type}" if model else f"ui.{view_type}", "ui.contract")
     contract = _base_contract(
@@ -433,9 +434,10 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     contract["layoutContract"]["componentRegistry"] = _component_registry(component_keys or {"sc.display.text"})
     contract["statusContract"]["containerStatus"].append({"containerId": container_id, "visible": True, "disabled": False})
     contract["dataContract"]["dataMeta"]["fieldCount"] = len(fields)
-    data_source = _ui_contract_data_source(model=model, view_type=view_type, fields=fields)
+    data_source = _ui_contract_data_source(model=model, view_type=view_type, fields=fields, record_id=record_id)
     if data_source:
         contract["dataContract"]["dataSource"]["primary"] = data_source
+    _append_ui_contract_actions(contract, ui, source_widget_id="page.root")
     return contract
 
 
@@ -508,12 +510,29 @@ def _field_widget(field: dict[str, Any], *, layout_type: str) -> dict[str, Any]:
     }
 
 
-def _ui_contract_data_source(*, model: str, view_type: str, fields: list[dict[str, Any]]) -> dict[str, Any]:
-    if not model or view_type not in {"tree", "list", "kanban"}:
+def _ui_contract_data_source(*, model: str, view_type: str, fields: list[dict[str, Any]], record_id: int = 0) -> dict[str, Any]:
+    if not model:
         return {}
     field_names = _record_data_fields(fields)
     if "id" not in field_names:
         field_names.insert(0, "id")
+    if view_type == "form":
+        if record_id <= 0:
+            return {}
+        return {
+            "query": "api.data",
+            "intent": "api.data",
+            "cachePolicy": "none",
+            "consistency": "strong",
+            "params": {
+                "op": "read",
+                "model": model,
+                "ids": [record_id],
+                "fields": field_names[:40],
+            },
+        }
+    if view_type not in {"tree", "list", "kanban"}:
+        return {}
     return {
         "query": "api.data",
         "intent": "api.data",
@@ -552,6 +571,16 @@ def _record_data_fields(fields: list[dict[str, Any]]) -> list[str]:
     return out or ["display_name"]
 
 
+def _positive_int(value: Any, fallback: int = 0) -> int:
+    try:
+        parsed = int(value)
+        if parsed > 0:
+            return parsed
+    except Exception:
+        pass
+    return fallback
+
+
 def _field_status(field: dict[str, Any], widget_id: str) -> dict[str, Any]:
     readonly = bool(field.get("readonly") is True)
     return {
@@ -570,9 +599,15 @@ def _append_actions(contract: dict[str, Any], rows: Any, *, source_widget_id: st
             continue
         key = _stable_id(row.get("key") or row.get("intent"), "action")
         action_id = f"action.{key}"
+        label = _text(row.get("label") or row.get("name") or row.get("title"), key)
+        intent = _text(row.get("intent"), "ui.contract")
         contract["actionContract"]["actionRuleList"].append(
             {
                 "actionId": action_id,
+                "actionKey": key,
+                "label": label,
+                "intent": intent,
+                "target": deepcopy(_dict(row.get("target"))),
                 "triggerType": "click",
                 "sourceWidgetId": source_widget_id,
                 "targetIds": [],
@@ -589,9 +624,14 @@ def _append_action_schema(contract: dict[str, Any], actions: dict[str, Any], *, 
     for key, row in actions.items():
         action_key = _stable_id(key, "action")
         action_id = f"action.{action_key}"
+        source_row = _dict(row)
         contract["actionContract"]["actionRuleList"].append(
             {
                 "actionId": action_id,
+                "actionKey": action_key,
+                "label": _text(source_row.get("label") or source_row.get("name") or source_row.get("title"), action_key),
+                "intent": _text(source_row.get("intent"), "ui.contract"),
+                "target": deepcopy(_dict(source_row.get("target"))),
                 "triggerType": "click",
                 "sourceWidgetId": source_widget_id,
                 "targetIds": [],
@@ -601,6 +641,40 @@ def _append_action_schema(contract: dict[str, Any], actions: dict[str, Any], *, 
             }
         )
         contract["statusContract"]["buttonStatus"].append({"btnId": f"btn.{action_key}", "visible": True, "disabled": False})
+
+
+def _append_ui_contract_actions(contract: dict[str, Any], ui: dict[str, Any], *, source_widget_id: str) -> None:
+    rows: list[dict[str, Any]] = []
+    for key in ("buttons", "business_actions"):
+        for row in _list(ui.get(key)):
+            if isinstance(row, dict):
+                rows.append(row)
+    toolbar = _dict(ui.get("toolbar"))
+    for key in ("header", "sidebar", "footer"):
+        for row in _list(toolbar.get(key)):
+            if isinstance(row, dict):
+                rows.append(row)
+    for group in _list(ui.get("action_groups")):
+        group_row = _dict(group)
+        for row in _list(group_row.get("actions")):
+            if isinstance(row, dict):
+                rows.append(row)
+    seen: set[str] = set()
+    normalized: list[dict[str, Any]] = []
+    for row in rows:
+        key = _stable_id(row.get("key") or row.get("name") or row.get("type") or row.get("string"), "action")
+        if key in seen:
+            continue
+        seen.add(key)
+        normalized.append(
+            {
+                "key": key,
+                "label": _text(row.get("label") or row.get("string") or row.get("name"), key),
+                "intent": _text(row.get("intent"), "execute_button"),
+                "target": deepcopy(_dict(row.get("target"))),
+            }
+        )
+    _append_actions(contract, normalized, source_widget_id=source_widget_id)
 
 
 def _assemble_unknown(source: dict[str, Any], *, client_type: str, request_id: str) -> dict[str, Any]:

@@ -49,6 +49,38 @@
       <view v-else class="empty">当前没有可显示的数据</view>
     </view>
 
+    <view v-else-if="recordRows.length" class="section">
+      <view class="section__head">
+        <view class="section__title">业务记录</view>
+        <view class="section__count">{{ recordRows.length }} 项</view>
+      </view>
+      <view class="field-list">
+        <view v-for="row in recordRows" :key="row.fieldCode" class="field-row field-row--value">
+          <view class="field-row__main">
+            <text class="field-row__label">{{ row.label }}</text>
+            <text class="field-row__code">{{ row.fieldCode }}</text>
+          </view>
+          <view class="field-row__value">{{ row.value }}</view>
+        </view>
+      </view>
+    </view>
+
+    <view v-else-if="sceneBlocks.length" class="section">
+      <view class="section__head">
+        <view class="section__title">页面内容</view>
+        <view class="section__count">{{ sceneBlocks.length }} 项</view>
+      </view>
+      <view class="field-list">
+        <view v-for="block in sceneBlocks" :key="block.widgetId" class="field-row">
+          <view class="field-row__main">
+            <text class="field-row__label">{{ block.label }}</text>
+            <text class="field-row__code">{{ block.blockType || block.fieldCode }}</text>
+          </view>
+          <view class="field-row__meta">{{ block.componentKey || block.widgetType }}</view>
+        </view>
+      </view>
+    </view>
+
     <view v-else class="section">
       <view class="section__head">
         <view class="section__title">字段组件</view>
@@ -72,8 +104,8 @@
         <view class="section__count">{{ actions.length }} 项</view>
       </view>
       <view class="action-list">
-        <button v-for="action in actions" :key="action.actionId" class="action" @click="selectAction(action.actionId)">
-          {{ action.actionId }}
+        <button v-for="action in actions" :key="action.actionId" class="action" @click="selectAction(action)">
+          {{ action.label || action.actionId }}
         </button>
       </view>
     </view>
@@ -92,10 +124,21 @@ interface ContractWidget {
   fieldCode: string;
   label: string;
   componentKey: string;
+  blockType: string;
 }
 
 interface ContractAction {
   actionId: string;
+  actionKey: string;
+  label: string;
+  intent: string;
+  target: Dict;
+}
+
+interface RecordRow {
+  fieldCode: string;
+  label: string;
+  value: string;
 }
 
 const TARGET_MODEL = 'construction.contract';
@@ -123,8 +166,18 @@ const clientType = computed(() => asText(pageInfo.value.clientType, CLIENT_TYPE)
 const adaptMode = computed(() => asText(layoutContract.value.adaptMode));
 const widgets = computed(() => collectWidgets(layoutContract.value));
 const displayFields = computed(() => widgets.value.filter(isBusinessDisplayField).slice(0, 8));
+const sceneBlocks = computed(() => widgets.value.filter((item) => item.widgetType === 'display' && item.fieldCode));
 const actions = computed(() => collectActions(actionContract.value));
 const isListSurface = computed(() => ['list', 'tree', 'kanban', 'table'].includes(viewTypeLabel.value));
+const recordRows = computed<RecordRow[]>(() => {
+  if (isListSurface.value || !records.value.length) return [];
+  const record = records.value[0];
+  return displayFields.value.map((field) => ({
+    fieldCode: field.fieldCode,
+    label: field.label,
+    value: formatValue(record[field.fieldCode]),
+  }));
+});
 const recordCountLabel = computed(() => {
   if (recordTotal.value !== null) return `${recordTotal.value} 条`;
   return `${records.value.length} 条`;
@@ -247,7 +300,8 @@ async function loadRecords(endpoint: string, token: string, nextContract: Dict, 
   const source = resolvePrimaryDataSource(nextContract);
   const sourceParams = asDict(source.params);
   const sourceIntent = asText(source.intent || source.query, 'api.data');
-  if (!model || !sourceIntent || !['list', 'tree', 'kanban', 'table'].includes(viewType)) {
+  const sourceOp = asText(sourceParams.op, ['list', 'tree', 'kanban', 'table'].includes(viewType) ? 'list' : 'read');
+  if (!model || !sourceIntent || (sourceOp === 'list' && !['list', 'tree', 'kanban', 'table'].includes(viewType))) {
     records.value = [];
     recordTotal.value = null;
     nextOffset.value = 0;
@@ -262,25 +316,35 @@ async function loadRecords(endpoint: string, token: string, nextContract: Dict, 
   dataLoading.value = true;
   dataError.value = '';
   try {
+    const requestParams: Dict = {
+      ...sourceParams,
+      op: sourceOp,
+      model,
+      fields,
+    };
+    if (sourceOp === 'read') {
+      requestParams.ids = normalizeIds(sourceParams.ids);
+    } else {
+      requestParams.limit = Number(sourceParams.limit) || 20;
+      requestParams.offset = append ? nextOffset.value : 0;
+      requestParams.need_total = true;
+    }
     const response = await requestIntent(endpoint, token, {
       intent: sourceIntent,
-      params: {
-        ...sourceParams,
-        op: 'list',
-        model,
-        fields,
-        limit: Number(sourceParams.limit) || 20,
-        offset: append ? nextOffset.value : 0,
-        need_total: true,
-      },
+      params: requestParams,
     });
     const data = asDict(response.data);
     const nextRecords = asList(data.records).map((item) => asDict(item));
     records.value = append ? records.value.concat(nextRecords) : nextRecords;
-    const total = Number(data.total);
-    recordTotal.value = Number.isFinite(total) ? total : null;
-    const offset = Number(data.next_offset);
-    nextOffset.value = Number.isFinite(offset) ? offset : records.value.length;
+    if (sourceOp === 'read') {
+      recordTotal.value = nextRecords.length;
+      nextOffset.value = nextRecords.length;
+    } else {
+      const total = Number(data.total);
+      recordTotal.value = Number.isFinite(total) ? total : null;
+      const offset = Number(data.next_offset);
+      nextOffset.value = Number.isFinite(offset) ? offset : records.value.length;
+    }
   } catch (err) {
     if (!append) {
       records.value = [];
@@ -310,11 +374,16 @@ function buildTargetParams(): Dict {
   }
   const actionId = asText(query.action_id || query.actionId);
   if (actionId) {
-    return { op: 'action_open', action_id: actionId, view_type: asText(query.view_type || query.viewType, TARGET_VIEW_TYPE) };
+    return {
+      op: 'action_open',
+      action_id: actionId,
+      view_type: asText(query.view_type || query.viewType, TARGET_VIEW_TYPE),
+      ...recordRouteParams(query),
+    };
   }
   const model = asText(query.model);
   if (model) {
-    return { op: 'model', model, view_type: asText(query.view_type || query.viewType, TARGET_VIEW_TYPE) };
+    return { op: 'model', model, view_type: asText(query.view_type || query.viewType, TARGET_VIEW_TYPE), ...recordRouteParams(query) };
   }
   const sceneKey = asText(query.scene_key || query.sceneKey);
   if (sceneKey) {
@@ -338,6 +407,7 @@ function collectWidgets(layout: Dict): ContractWidget[] {
           fieldCode: asText(widget.fieldCode),
           label: asText(widget.label, asText(widget.fieldCode, widgetId)),
           componentKey: asText(widget.componentKey),
+          blockType: asText(asDict(widget.componentConfig).blockType),
         });
       });
       walkContainers(asList(row.children));
@@ -349,7 +419,17 @@ function collectWidgets(layout: Dict): ContractWidget[] {
 
 function collectActions(action: Dict): ContractAction[] {
   return asList(action.actionRuleList)
-    .map((item) => ({ actionId: asText(asDict(item).actionId) }))
+    .map((item) => {
+      const row = asDict(item);
+      const actionId = asText(row.actionId);
+      return {
+        actionId,
+        actionKey: asText(row.actionKey, actionId.replace(/^action\./, '')),
+        label: asText(row.label, actionId),
+        intent: asText(row.intent, 'ui.contract'),
+        target: asDict(row.target),
+      };
+    })
     .filter((item) => item.actionId);
 }
 
@@ -364,6 +444,8 @@ function resolvePrimaryDataSource(nextContract: Dict): Dict {
 function buildFallbackDataSource(nextContract: Dict): Dict {
   const info = asDict(nextContract.pageInfo);
   const model = asText(info.model);
+  const viewType = asText(info.viewType);
+  const recordId = asText(routeQuery.value.record_id || routeQuery.value.recordId || routeQuery.value.res_id || routeQuery.value.resId);
   const fields = collectWidgets(asDict(nextContract.layoutContract))
     .filter(isBusinessDisplayField)
     .map((item) => item.fieldCode)
@@ -372,8 +454,9 @@ function buildFallbackDataSource(nextContract: Dict): Dict {
   return {
     intent: 'api.data',
     params: {
-      op: 'list',
+      op: recordId && viewType === 'form' ? 'read' : 'list',
       model,
+      ...(recordId && viewType === 'form' ? { ids: [Number(recordId)] } : {}),
       fields,
       limit: 20,
       offset: 0,
@@ -382,8 +465,21 @@ function buildFallbackDataSource(nextContract: Dict): Dict {
   };
 }
 
+function recordRouteParams(query: Dict): Dict {
+  const recordId = Number(asText(query.record_id || query.recordId || query.res_id || query.resId));
+  if (!Number.isFinite(recordId) || recordId <= 0) return {};
+  return { record_id: recordId };
+}
+
+function normalizeIds(value: unknown): number[] {
+  return asList(value)
+    .map((item) => Number(item))
+    .filter((item) => Number.isFinite(item) && item > 0);
+}
+
 function isBusinessDisplayField(widget: ContractWidget): boolean {
   const field = widget.fieldCode;
+  if (widget.widgetType === 'display') return false;
   if (!field || field === 'id' || field.startsWith('__')) return false;
   const technicalPrefixes = [
     'access_',
@@ -403,8 +499,12 @@ function isBusinessDisplayField(widget: ContractWidget): boolean {
   return !technicalFields.has(field);
 }
 
-function selectAction(actionId: string) {
-  uni.showToast({ title: actionId, icon: 'none' });
+function selectAction(action: ContractAction) {
+  if (action.intent === 'api.data') {
+    loadContract();
+    return;
+  }
+  uni.showToast({ title: action.label || action.actionId, icon: 'none' });
 }
 
 function recordKey(record: Dict): string {
@@ -607,6 +707,20 @@ onShow(loadContract);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.field-row--value {
+  align-items: flex-start;
+}
+
+.field-row__value {
+  flex: 1;
+  min-width: 0;
+  color: #17202a;
+  font-size: 24rpx;
+  line-height: 1.35;
+  text-align: right;
+  word-break: break-word;
 }
 
 .empty {

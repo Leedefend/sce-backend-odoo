@@ -78,6 +78,7 @@ def main() -> int:
                 "name": {"string": "名称", "type": "char"},
                 "partner_id": {"string": "供应商", "type": "many2one"},
             },
+            "buttons": [{"name": "action_confirm", "string": "确认", "type": "object"}],
         },
         "model": "construction.contract",
         "view_type": "tree",
@@ -116,6 +117,9 @@ def main() -> int:
         _fail(errors, "primary dataSource must carry model from contract source")
     if "fields" not in primary_params:
         _fail(errors, "primary dataSource must carry explicit fields")
+    actions = (contract.get("actionContract", {}) or {}).get("actionRuleList") or []
+    if not actions or actions[0].get("label") != "确认" or actions[0].get("intent") != "execute_button":
+        _fail(errors, "v2 action rules must carry renderable label and intent from source contract")
     widgets = ((contract.get("layoutContract", {}).get("containerTree") or [{}])[0].get("widgetList") or [])
     if len(widgets) != 1:
         _fail(errors, "mobile_compact must trim delivered widgets")
@@ -125,6 +129,26 @@ def main() -> int:
     delivery_trim = contract.get("meta", {}).get("deliveryTrim") or {}
     if delivery_trim.get("omitted", {}).get("widgets", 0) < 1:
         _fail(errors, "mobile_compact must report omitted widgets")
+
+    form_sample = {
+        "ui_contract": {
+            "title": "合同表单",
+            "model": "construction.contract",
+            "view_type": "form",
+            "fields": {
+                "name": {"string": "名称", "type": "char"},
+                "amount_final": {"string": "金额", "type": "monetary"},
+            },
+        },
+        "model": "construction.contract",
+        "view_type": "form",
+        "record_id": 42,
+    }
+    form_contract = assembler.assemble_unified_page_contract_v2(form_sample, source_type="ui.contract", client_type="harmony_h5")
+    form_primary = (((form_contract.get("dataContract") or {}).get("dataSource") or {}).get("primary") or {})
+    form_params = form_primary.get("params") if isinstance(form_primary.get("params"), dict) else {}
+    if form_params.get("op") != "read" or form_params.get("ids") != [42]:
+        _fail(errors, "form v2 contracts with record_id must declare primary api.data read dataSource")
 
     if errors:
         print("Unified Page Contract v2 intent guard failed:")

@@ -3,6 +3,7 @@ import { ApiError } from './client';
 import type { ActionContract } from '@sc/schema';
 import { extractLiteContractFromIntentBody } from '../app/runtime/unifiedPageContractLitePilot';
 import type { UnifiedPageContractLite } from '../app/contracts/unifiedPageContractLite';
+import type { UnifiedPageContractV2 } from '../app/contracts/unifiedPageContractV2';
 
 type LoadActionContractOptions = {
   recordId?: number | null;
@@ -73,6 +74,11 @@ async function requestUnifiedPageContractV2Raw(params: Record<string, unknown>) 
     });
   }
   return adapted;
+}
+
+export async function loadActionUnifiedPageContractV2(actionId: number, options?: LoadActionContractOptions): Promise<UnifiedPageContractV2> {
+  const result = await requestUnifiedPageContractV2Raw(buildActionContractParams(actionId, options));
+  return asDict(result.data.__unified_page_contract_v2) as UnifiedPageContractV2;
 }
 
 function rethrowContractError(err: unknown, context: { op: 'action_open' | 'model'; model?: string; actionId?: number }): never {
@@ -183,6 +189,11 @@ export async function loadModelContractRaw(model: string, options?: LoadModelCon
   } catch (err) {
     rethrowContractError(err, { op: 'model', model });
   }
+}
+
+export async function loadModelUnifiedPageContractV2(model: string, options?: LoadModelContractOptions): Promise<UnifiedPageContractV2> {
+  const result = await requestUnifiedPageContractV2Raw(buildModelContractParams(model, options));
+  return asDict(result.data.__unified_page_contract_v2) as UnifiedPageContractV2;
 }
 
 export async function loadModelLitePreviewContract(model: string, options?: LoadModelContractOptions): Promise<UnifiedPageContractLite | null> {
