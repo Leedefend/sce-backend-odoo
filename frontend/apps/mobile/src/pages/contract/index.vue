@@ -432,14 +432,23 @@ function buildTargetParams(): Dict {
 function collectWidgets(layout: Dict, status: Dict): ContractWidget[] {
   const rows: ContractWidget[] = [];
   const widgetStatus = collectWidgetStatus(status);
-  function walkContainers(containers: unknown[]) {
+  const containerStatus = collectContainerStatus(status);
+  function walkContainers(containers: unknown[], inherited: Dict = {}) {
     containers.forEach((container) => {
       const row = asDict(container);
+      const containerId = asText(row.containerId);
+      const state = containerStatus[containerId] || {};
+      const containerVisible = inherited.visible === false || state.visible === false ? false : state.visible;
+      const containerDisabled = inherited.disabled === true || state.disabled === true ? true : state.disabled;
+      const nextState: Dict = {
+        visible: containerVisible,
+        disabled: containerDisabled,
+      };
       asList(row.widgetList).forEach((item) => {
         const widget = asDict(item);
         const widgetId = asText(widget.widgetId);
         if (!widgetId) return;
-        const state = widgetStatus[widgetId] || {};
+        const widgetState = widgetStatus[widgetId] || {};
         rows.push({
           widgetId,
           widgetType: asText(widget.widgetType),
@@ -447,17 +456,26 @@ function collectWidgets(layout: Dict, status: Dict): ContractWidget[] {
           label: asText(widget.label, asText(widget.fieldCode, widgetId)),
           componentKey: asText(widget.componentKey),
           blockType: asText(asDict(widget.componentConfig).blockType),
-          visible: state.visible !== false,
-          readonly: state.readonly === true,
-          required: state.required === true,
-          disabled: state.disabled === true,
+          visible: widgetState.visible !== false && nextState.visible !== false,
+          readonly: widgetState.readonly === true || nextState.disabled === true,
+          required: widgetState.required === true,
+          disabled: widgetState.disabled === true || nextState.disabled === true,
         });
       });
-      walkContainers(asList(row.children));
+      walkContainers(asList(row.children), nextState);
     });
   }
   walkContainers(asList(layout.containerTree));
   return rows;
+}
+
+function collectContainerStatus(status: Dict): Record<string, Dict> {
+  return asList(status.containerStatus).reduce<Record<string, Dict>>((acc, item) => {
+    const row = asDict(item);
+    const containerId = asText(row.containerId);
+    if (containerId) acc[containerId] = row;
+    return acc;
+  }, {});
 }
 
 function collectWidgetStatus(status: Dict): Record<string, Dict> {

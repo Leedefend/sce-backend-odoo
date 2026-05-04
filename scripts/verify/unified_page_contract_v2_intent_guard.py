@@ -70,12 +70,15 @@ def main() -> int:
     for forbidden in ("mobile_contract", "mobileContract", "deviceContract", "construction.contract.mobile"):
         if forbidden in source:
             _fail(errors, f"handler must not introduce mobile private schema: {forbidden}")
-    for token in ("statusContract", "globalStatus", "widgetStatus", "buttonStatus", "collectGlobalStatus", "collectWidgetStatus", "collectButtonStatus"):
+    for token in ("statusContract", "globalStatus", "containerStatus", "widgetStatus", "buttonStatus", "collectGlobalStatus", "collectContainerStatus", "collectWidgetStatus", "collectButtonStatus"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must consume v2 status contract token: {token}")
     for token in ("isPageReadable", "isPageReadonly", "pageAuth", "pageVisible"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must honor v2 globalStatus token: {token}")
+    for token in ("containerVisible", "containerDisabled", "walkContainers(asList(row.children), nextState)"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must inherit v2 containerStatus token: {token}")
     for token in ("assemble_unified_page_patch_v2", "unified_page_patch_v2", "include_v2_patch"):
         if token not in onchange_source:
             _fail(errors, f"api.onchange must expose opt-in v2 patch token: {token}")
