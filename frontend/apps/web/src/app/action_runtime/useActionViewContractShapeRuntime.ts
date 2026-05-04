@@ -341,6 +341,11 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
 
   function resolveModelFromContract(contract: unknown) {
     const typed = (contract || {}) as Dict;
+    const v2 = resolveUnifiedPageContractV2(typed);
+    const v2Model = String(v2?.pageInfo?.model || '').trim();
+    if (v2Model) {
+      return v2Model;
+    }
     const nested = ((typed.ui_contract || {}) as Dict);
     const direct = typed.model;
     if (typeof direct === 'string' && direct.trim()) {
