@@ -73,6 +73,9 @@ def main() -> int:
     for token in ("statusContract", "globalStatus", "containerStatus", "widgetStatus", "buttonStatus", "collectGlobalStatus", "collectContainerStatus", "collectWidgetStatus", "collectButtonStatus"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must consume v2 status contract token: {token}")
+    for token in ("selectorStatus", "collectSelectorStatus", "resolveSelectorStatus", "matchesSelector", "pattern.endsWith('.*')", "selector.startsWith(pattern.slice(0, -1))"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must consume v2 selectorStatus token: {token}")
     for token in ("isPageReadable", "isPageReadonly", "pageAuth", "pageVisible"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must honor v2 globalStatus token: {token}")
@@ -121,6 +124,9 @@ def main() -> int:
     for token in ("globalPatch", "containerPatchRows", "mergeStatusRows(asList(currentStatus.containerStatus), containerPatchRows, 'containerId')", "...asDict(currentStatus.globalStatus), ...globalPatch"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must merge v2 statusPatch token: {token}")
+    for token in ("selectorPatchRows", "mergeStatusRows(asList(currentStatus.selectorStatus), selectorPatchRows, 'selector')"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must merge v2 selectorStatus patch token: {token}")
     for token in ("refreshMode", "normalizeRefreshMode", "applyActionRefreshMode", "mode === 'none'", "mode === 'full'", "loadRecords(endpoint, token, contract.value, false)"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must honor v2 action refreshMode token: {token}")

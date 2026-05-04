@@ -635,11 +635,13 @@ function collectWidgets(layout: Dict, status: Dict): ContractWidget[] {
   const rows: ContractWidget[] = [];
   const widgetStatus = collectWidgetStatus(status);
   const containerStatus = collectContainerStatus(status);
+  const selectorStatus = collectSelectorStatus(status);
   function walkContainers(containers: unknown[], inherited: Dict = {}) {
     containers.forEach((container) => {
       const row = asDict(container);
       const containerId = asText(row.containerId);
-      const state = containerStatus[containerId] || {};
+      const containerSelectorState = resolveSelectorStatus(selectorStatus, [containerId]);
+      const state = { ...containerSelectorState, ...asDict(containerStatus[containerId]) };
       const containerVisible = inherited.visible === false || state.visible === false ? false : state.visible;
       const containerDisabled = inherited.disabled === true || state.disabled === true ? true : state.disabled;
       const nextState: Dict = {
@@ -650,13 +652,15 @@ function collectWidgets(layout: Dict, status: Dict): ContractWidget[] {
         const widget = asDict(item);
         const widgetId = asText(widget.widgetId);
         if (!widgetId) return;
-        const widgetState = widgetStatus[widgetId] || {};
+        const fieldCode = asText(widget.fieldCode);
+        const widgetSelectorState = resolveSelectorStatus(selectorStatus, [widgetId, fieldCode, `${containerId}.${fieldCode}`, `${containerId}.${widgetId}`]);
+        const widgetState = { ...widgetSelectorState, ...asDict(widgetStatus[widgetId]) };
         const config = asDict(widget.componentConfig);
         rows.push({
           widgetId,
           widgetType: asText(widget.widgetType),
-          fieldCode: asText(widget.fieldCode),
-          label: asText(widget.label, asText(widget.fieldCode, widgetId)),
+          fieldCode,
+          label: asText(widget.label, asText(fieldCode, widgetId)),
           componentKey: asText(widget.componentKey),
           dataKey: asText(config.dataKey),
           dictKey: asText(config.dictKey),
@@ -693,6 +697,26 @@ function collectWidgetStatus(status: Dict): Record<string, Dict> {
   }, {});
 }
 
+function collectSelectorStatus(status: Dict): Dict[] {
+  return asList(status.selectorStatus).map((item) => asDict(item)).filter((row) => asText(row.selector));
+}
+
+function resolveSelectorStatus(rows: Dict[], selectors: string[]): Dict {
+  const normalized = selectors.map((item) => asText(item)).filter(Boolean);
+  for (const row of rows) {
+    const pattern = asText(row.selector);
+    if (normalized.some((selector) => matchesSelector(pattern, selector))) return row;
+  }
+  return {};
+}
+
+function matchesSelector(pattern: string, selector: string): boolean {
+  if (!pattern || !selector) return false;
+  if (pattern === selector) return true;
+  if (pattern.endsWith('.*')) return selector.startsWith(pattern.slice(0, -1));
+  return false;
+}
+
 function collectGlobalStatus(status: Dict): Dict {
   return asDict(status.globalStatus);
 }
@@ -716,6 +740,7 @@ function applyUnifiedPagePatchV2(patchRaw: unknown) {
   const statusPatch = asDict(patch.statusPatch);
   const globalPatch = asDict(statusPatch.globalStatus);
   const containerPatchRows = asList(statusPatch.containerStatus).map((item) => asDict(item));
+  const selectorPatchRows = asList(statusPatch.selectorStatus).map((item) => asDict(item));
   const widgetPatchRows = asList(statusPatch.widgetStatus).map((item) => asDict(item));
   const buttonPatchRows = asList(statusPatch.buttonStatus).map((item) => asDict(item));
   const hasDataContractPatch = Boolean(
@@ -729,7 +754,7 @@ function applyUnifiedPagePatchV2(patchRaw: unknown) {
   );
   const hasLayoutPatch = Object.keys(layoutPatch).length > 0;
   const hasRuntimePatch = Object.keys(runtimePatch).length > 0;
-  if (!hasLayoutPatch && !hasRuntimePatch && !hasDataContractPatch && !Object.keys(globalPatch).length && !containerPatchRows.length && !widgetPatchRows.length && !buttonPatchRows.length) return;
+  if (!hasLayoutPatch && !hasRuntimePatch && !hasDataContractPatch && !Object.keys(globalPatch).length && !containerPatchRows.length && !selectorPatchRows.length && !widgetPatchRows.length && !buttonPatchRows.length) return;
   const current = asDict(contract.value);
   const currentLayout = asDict(current.layoutContract);
   const currentData = asDict(current.dataContract);
@@ -753,6 +778,7 @@ function applyUnifiedPagePatchV2(patchRaw: unknown) {
       ? { ...asDict(currentStatus.globalStatus), ...globalPatch }
       : asDict(currentStatus.globalStatus),
     containerStatus: mergeStatusRows(asList(currentStatus.containerStatus), containerPatchRows, 'containerId'),
+    selectorStatus: mergeStatusRows(asList(currentStatus.selectorStatus), selectorPatchRows, 'selector'),
     widgetStatus: mergeStatusRows(asList(currentStatus.widgetStatus), widgetPatchRows, 'widgetId'),
     buttonStatus: mergeStatusRows(asList(currentStatus.buttonStatus), buttonPatchRows, 'btnId'),
   };
