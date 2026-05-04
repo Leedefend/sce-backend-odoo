@@ -51,6 +51,7 @@ option refresh, and real terminal acceptance.
 | action targetScope refresh | Closed | `targetScope=dataSource` refreshes records and `targetScope=runtime/contract` refreshes the full contract. |
 | meta/runtime observability | Closed | trace/request/etag/snapshot and runtime cache/retry policy are visible in the summary. |
 | runtime retry policy | Closed | intent requests honor `runtimeContract.retryPolicy` for bounded retries on network, timeout, 408, 429, and 5xx failures. |
+| H5 compile acceptance | Closed | `verify.unified_page_contract.v2.harmony_h5_compile_acceptance.host` builds the mobile H5 target and records artifacts. |
 | trace propagation | Closed | data, relation, and execute-button follow-up requests carry trace/request/etag/snapshot context. |
 | diagnostic errors | Closed | failures preserve `reason_code` and `trace_id` in visible error/toast text. |
 | field onchange trigger | Closed | editable fields can trigger `api.onchange` with `include_v2_patch`. |
@@ -81,7 +82,7 @@ option refresh, and real terminal acceptance.
 | M2-G06 | P2 | Partial | bounded relation row removal is available; full x2many add/edit inline forms remain deferred. | Add relation add/edit only when product workflows require native x2many editing. |
 | M2-G07 | P2 | Closed | `targetScope=dataSource/runtime/contract` now has specialized mobile refresh behavior in addition to refreshMode and target dependency handling. | Monitor backend targetScope usage in terminal acceptance. |
 | M2-G08 | P2 | Closed | runtime retry policy is now executed by the mobile intent request layer; offline/cache semantics remain deferred. | Monitor terminal acceptance and add offline/cache behavior only when product scope requires it. |
-| M2-G09 | P0 before release | Open | real terminal acceptance is not complete; current proof is static guards and typecheck. | Add H5/wx mobile screenshot or device runner acceptance. |
+| M2-G09 | P0 before release | Partial | H5 compile acceptance is now executable and artifacted; real device or mini-program runtime acceptance is still pending. | Add real device, mini-program, or browser runtime screenshot acceptance before release. |
 | M2-G10 | P2 | Open | accessibility and dense mobile layout behavior have not had visual regression coverage. | Add Playwright/mobile screenshot checks for representative contracts. |
 
 ## Deferred Scope
@@ -91,14 +92,14 @@ The following items are intentionally not claimed closed:
 - full native-grade Odoo form save/delete/validate semantics;
 - complete x2many inline add/edit forms;
 - advanced typeahead ranking/highlighting for large remote datasets;
-- real device or mini-program runtime acceptance;
+- real device, mini-program, or browser runtime screenshot acceptance;
 - offline/cache semantics from `runtimeContract`.
 
 ## Iteration Order
 
 Recommended next sequence:
 
-1. `M2-G09`: add real terminal acceptance evidence.
+1. `M2-G09`: add real device, mini-program, or browser runtime screenshot acceptance.
 2. `M2-G10`: improve visual proof.
 3. `M2-G06`: decide whether full relation add/edit forms are required.
 

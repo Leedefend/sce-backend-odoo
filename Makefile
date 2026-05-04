@@ -4123,6 +4123,10 @@ verify.unified_page_contract.v2.client: guard.prod.forbid
 	@python3 -m py_compile addons/smart_core/core/unified_page_contract_v2_client.py scripts/verify/unified_page_contract_v2_client_guard.py
 	@python3 scripts/verify/unified_page_contract_v2_client_guard.py --fixture docs/architecture/unified_page_contract_v2/examples/form_project.json --snapshot docs/architecture/unified_page_contract_v2/snapshots/client_trimming_snapshot_v1.json --enum-registry docs/architecture/unified_page_contract_v2/enum_registry.json
 
+.PHONY: verify.unified_page_contract.v2.harmony_h5_compile_acceptance.host
+verify.unified_page_contract.v2.harmony_h5_compile_acceptance.host: guard.prod.forbid
+	@python3 scripts/verify/unified_page_contract_v2_harmony_h5_compile_acceptance_guard.py --report artifacts/backend/unified_page_contract_v2_harmony_h5_compile_acceptance.json --execute
+
 .PHONY: verify.unified_page_contract.v2
 verify.unified_page_contract.v2: verify.unified_page_contract.v2.schema verify.unified_page_contract.v2.assembler verify.unified_page_contract.v2.status verify.unified_page_contract.v2.action verify.unified_page_contract.v2.data verify.unified_page_contract.v2.runtime verify.unified_page_contract.v2.client
 
