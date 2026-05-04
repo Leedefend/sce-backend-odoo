@@ -1301,8 +1301,24 @@ function resolveFieldAction(field: ContractWidget, triggerType: string): Contrac
 function applyOnchangeDataPatch(response: Dict) {
   const data = asDict(response.data);
   const patch = asDict(data.patch);
-  if (!Object.keys(patch).length || !records.value.length) return;
-  records.value = [{ ...records.value[0], ...patch }, ...records.value.slice(1)];
+  if (Object.keys(patch).length && records.value.length) {
+    records.value = [{ ...records.value[0], ...patch }, ...records.value.slice(1)];
+  }
+  applyOnchangeModifiersPatch(data.modifiers_patch || data.modifiersPatch);
+}
+
+function applyOnchangeModifiersPatch(raw: unknown) {
+  const rows = Object.entries(asDict(raw))
+    .map(([fieldCode, modifiers]) => {
+      const row = asDict(modifiers);
+      const status: Dict = { widgetId: `field.${fieldCode}` };
+      if ('readonly' in row) status.readonly = Boolean(row.readonly);
+      if ('required' in row) status.required = Boolean(row.required);
+      if ('invisible' in row) status.visible = !row.invisible;
+      return status;
+    })
+    .filter((row) => Object.keys(row).length > 1);
+  if (rows.length) applyUnifiedPagePatchV2({ statusPatch: { widgetStatus: rows } });
 }
 
 function isExecutableCommandAction(action: ContractAction): boolean {

@@ -151,6 +151,9 @@ def main() -> int:
     for token in ("tracePolicy", "onchangeRequestId", "action.tracePolicy.required === true", "`mobile.${action.actionId}.${Date.now()}`", "action_id: action.actionId", "source_widget_id: action.sourceWidgetId", "trigger_type: action.triggerType", "request_id: requestId"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must honor v2 onchange tracePolicy token: {token}")
+    for token in ("applyOnchangeModifiersPatch", "data.modifiers_patch || data.modifiersPatch", "Object.entries(asDict(raw))", "widgetId: `field.${fieldCode}`", "status.readonly = Boolean(row.readonly)", "status.required = Boolean(row.required)", "status.visible = !row.invisible", "applyUnifiedPagePatchV2({ statusPatch: { widgetStatus: rows } })"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must fallback onchange modifiers_patch token: {token}")
     for token in ("applyResponseUnifiedPagePatch", "response.unified_page_patch_v2", "data.unified_page_patch_v2 || data.unifiedPagePatchV2", "applyUnifiedPagePatchV2(patch)", "appliedPatch && normalizeRefreshMode(action.refreshMode) === 'none'"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must consume v2 action response patch token: {token}")
