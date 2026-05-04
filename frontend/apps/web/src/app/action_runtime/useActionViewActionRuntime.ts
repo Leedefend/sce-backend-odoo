@@ -240,7 +240,7 @@ export function useActionViewActionRuntime(options: UseActionViewActionRuntimeOp
       }
       options.batchMessage.value = options.resolveDoneMessage({ successCount, failureCount, text: options.pageText });
       if (successCount > 0) {
-        await options.load();
+        await applyActionRefreshPolicy(action.refreshPolicy);
       }
     } finally {
       options.batchBusy.value = false;

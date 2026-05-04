@@ -13,6 +13,7 @@ WEB_CONTRACT_V2 = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContrac
 WEB_ACTION_SHAPE = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewContractShapeRuntime.ts"
 WEB_FILTER_COMPUTED = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewFilterComputedRuntime.ts"
 WEB_ACTION_PRESENTATION = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewActionPresentationRuntime.ts"
+WEB_ACTION_RUNTIME = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewActionRuntime.ts"
 WEB_ACTION_NAV = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewNavigationRuntime.ts"
 WEB_ACTION_PREFLIGHT = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewLoadPreflightRuntime.ts"
 WEB_ACTION_LOAD_REQUEST = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewLoadRequestRuntime.ts"
@@ -33,6 +34,7 @@ def main() -> int:
     shape_source = WEB_ACTION_SHAPE.read_text(encoding="utf-8") if WEB_ACTION_SHAPE.exists() else ""
     filter_source = WEB_FILTER_COMPUTED.read_text(encoding="utf-8") if WEB_FILTER_COMPUTED.exists() else ""
     action_presentation_source = WEB_ACTION_PRESENTATION.read_text(encoding="utf-8") if WEB_ACTION_PRESENTATION.exists() else ""
+    action_runtime_source = WEB_ACTION_RUNTIME.read_text(encoding="utf-8") if WEB_ACTION_RUNTIME.exists() else ""
     nav_source = WEB_ACTION_NAV.read_text(encoding="utf-8") if WEB_ACTION_NAV.exists() else ""
     preflight_source = WEB_ACTION_PREFLIGHT.read_text(encoding="utf-8") if WEB_ACTION_PREFLIGHT.exists() else ""
     load_request_source = WEB_ACTION_LOAD_REQUEST.read_text(encoding="utf-8") if WEB_ACTION_LOAD_REQUEST.exists() else ""
@@ -118,6 +120,10 @@ def main() -> int:
         errors.append("web action view toolbar actions must merge v2 buttonStatus into contract actions")
     if "normalizeV2ActionRows" not in action_presentation_source or "actionContract.actionRuleList" not in action_presentation_source:
         errors.append("web action presentation runtime must merge v2 actionRuleList into toolbar actions")
+    if "resolveV2RefreshPolicy" not in action_presentation_source or "action.refreshMode" not in action_presentation_source:
+        errors.append("web action presentation runtime must map v2 refreshMode into refreshPolicy")
+    if "applyActionRefreshPolicy(action.refreshPolicy)" not in action_runtime_source:
+        errors.append("web action runtime must apply action refreshPolicy after successful button execution")
 
     if errors:
         print("web unified page contract v2 guard failed:")

@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-05T04:46:28+08:00
+- blocker_key: `web_v2_action_refresh_mode_batch`
+- layer_target: `Frontend Contract Consumer`
+- module: `frontend/apps/web/src/app/action_runtime/useActionViewActionPresentationRuntime.ts + frontend/apps/web/src/app/action_runtime/useActionViewActionRuntime.ts + scripts/verify`
+- reason: `ActionView 已消费 v2 actionRuleList，但 v2 refreshMode 未进入现有 refreshPolicy，普通按钮执行成功后仍固定 load。`
+- completed_step: `Action presentation runtime 新增 resolveV2RefreshPolicy，将 v2 refreshMode 映射为现有 refreshPolicy；普通 button execution 成功后改为 applyActionRefreshPolicy(action.refreshPolicy)，与 mutation 路径共用刷新策略；web v2 guard 增加 refreshMode/refreshPolicy 门禁。`
+- verification: `python3 scripts/verify/web_unified_page_contract_v2_guard.py PASS；python3 -m py_compile scripts/verify/web_unified_page_contract_v2_guard.py PASS；pnpm --dir frontend/apps/web run typecheck PASS；make verify.unified_page_contract.v2 PASS；git diff --check PASS。`
+- active_commit: `e34d3a6c`
+- next_step: `提交 web_v2_action_refresh_mode_batch；下一批可继续接 targetIds/dependencyGraph 到刷新/trace 证据，或进入推送前聚合验证。`
+
 ### 2026-05-05T04:43:44+08:00
 - blocker_key: `web_action_view_v2_action_rule_list_batch`
 - layer_target: `Frontend Contract Consumer`

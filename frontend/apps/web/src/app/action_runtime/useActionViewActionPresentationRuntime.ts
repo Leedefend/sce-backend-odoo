@@ -50,6 +50,23 @@ type UseActionViewActionPresentationRuntimeOptions = {
   pageText: (key: string, fallback: string) => string;
 };
 
+function resolveV2RefreshPolicy(refreshMode: string): Dict | undefined {
+  const mode = String(refreshMode || '').trim().toLowerCase();
+  if (mode === 'none') return undefined;
+  if (mode === 'full') {
+    return {
+      on_success: ['scene_projection', 'workbench_projection'],
+      mode: 'full',
+      scope: 'page',
+    };
+  }
+  return {
+    on_success: ['scene_projection'],
+    mode: mode || 'partial',
+    scope: 'page',
+  };
+}
+
 function normalizeV2ActionRows(contract: Dict | null): Array<Record<string, unknown>> {
   const v2 = resolveUnifiedPageContractV2(contract);
   if (!v2) return [];
@@ -73,6 +90,7 @@ function normalizeV2ActionRows(contract: Dict | null): Array<Record<string, unkn
               method: button.name || key,
               type: button.type || 'object',
             },
+        refresh_policy: resolveV2RefreshPolicy(action.refreshMode),
         target_model: String(target.model || '').trim(),
         selection: 'none',
         unified_page_contract_v2_action_id: action.actionId,
