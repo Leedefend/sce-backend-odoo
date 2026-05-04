@@ -96,6 +96,14 @@
           >
             <view class="field-row__picker">{{ formatFieldValue(field, records[0][field.fieldCode]) || '请选择' }}</view>
           </picker>
+          <button
+            v-else-if="isRemoteMany2OneField(field)"
+            class="field-row__load"
+            :disabled="many2OneLoadingKey === fieldOptionKey(field)"
+            @click="loadMany2OneOptions(field)"
+          >
+            {{ many2OneLoadingKey === fieldOptionKey(field) ? '加载中...' : '加载选项' }}
+          </button>
           <input
             v-else-if="isEditableField(field)"
             class="field-row__input"
@@ -278,6 +286,7 @@ const runningActionId = ref('');
 const relationLoadingKey = ref('');
 const relationErrorKey = ref('');
 const relationError = ref('');
+const many2OneLoadingKey = ref('');
 let fieldActionTimer: ReturnType<typeof setTimeout> | null = null;
 
 const pageInfo = computed(() => asDict(contract.value?.pageInfo));
@@ -1267,6 +1276,12 @@ function isMany2OneField(field: ContractWidget): boolean {
   return Boolean(many2OneOptions(field).length) && (type.includes('many2one') || type.includes('select.remote'));
 }
 
+function isRemoteMany2OneField(field: ContractWidget): boolean {
+  if (isListSurface.value || isPageReadonly.value || field.readonly || field.disabled || !field.fieldCode) return false;
+  const type = `${field.widgetType} ${field.componentKey} ${field.valueType}`.toLowerCase();
+  return !many2OneOptions(field).length && Boolean(resolveFieldOptionDataSource(field)) && (type.includes('many2one') || type.includes('select.remote'));
+}
+
 function editableInputType(field: ContractWidget): string {
   const type = `${field.widgetType} ${field.componentKey} ${field.valueType}`.toLowerCase();
   if (type.includes('number') || type.includes('integer') || type.includes('float') || type.includes('monetary')) return 'digit';
@@ -1347,6 +1362,79 @@ function many2OneOptions(field: ContractWidget): SelectOption[] {
 
 function many2OneIndex(field: ContractWidget, value: unknown): number {
   return selectionIndex(field, value);
+}
+
+function fieldOptionKey(field: ContractWidget): string {
+  return asText(field.dictKey, field.fieldCode || field.widgetId);
+}
+
+function resolveFieldOptionDataSource(field: ContractWidget): Dict | null {
+  const dataSources = asDict(asDict(contract.value?.dataContract).dataSource);
+  const key = fieldOptionKey(field);
+  const source = asDict(dataSources[key] || dataSources[field.fieldCode] || dataSources[field.widgetId]);
+  return Object.keys(source).length ? source : null;
+}
+
+async function loadMany2OneOptions(field: ContractWidget) {
+  const runtime = resolveRuntimeEndpoint();
+  const dataSource = resolveFieldOptionDataSource(field);
+  const sourceIntent = asText(dataSource?.intent || dataSource?.query || dataSource?.provider, 'api.data');
+  const sourceParams = asDict(dataSource?.params);
+  const model = asText(sourceParams.model);
+  if (!runtime || !contract.value || !model) {
+    uni.showToast({ title: '当前字段缺少选项数据源', icon: 'none' });
+    return;
+  }
+  const key = fieldOptionKey(field);
+  many2OneLoadingKey.value = key;
+  try {
+    const response = await requestIntent(runtime.endpoint, runtime.token, {
+      intent: sourceIntent,
+      params: {
+        ...sourceParams,
+        op: asText(sourceParams.op, 'list'),
+        model,
+        fields: asList(sourceParams.fields).length ? sourceParams.fields : ['id', 'display_name', 'name'],
+        limit: Number(sourceParams.limit) || 20,
+        offset: 0,
+        dataKey: key,
+        data_key: key,
+        ...contractTraceParams(contract.value),
+      },
+    });
+    mergeMany2OneOptions(field, asDict(response.data));
+  } catch (err) {
+    uni.showToast({ title: normalizeError(err, '选项加载失败').slice(0, 48), icon: 'none' });
+  } finally {
+    many2OneLoadingKey.value = '';
+  }
+}
+
+function mergeMany2OneOptions(field: ContractWidget, data: Dict) {
+  const key = fieldOptionKey(field);
+  const dictRows = asList(asDict(data.dictData)[key]);
+  const sourceRows = dictRows.length ? dictRows : asList(data.records || data.rows || data.items);
+  const rows = sourceRows
+    .map((item) => asDict(item))
+    .map((row) => ({
+      value: row.value ?? row.key ?? row.id,
+      label: asText(row.label || row.display_name || row.name || row.value || row.key || row.id),
+    }))
+    .filter((row) => row.value !== undefined && row.label);
+  if (!rows.length || !contract.value) return;
+  const current = asDict(contract.value);
+  const currentData = asDict(current.dataContract);
+  const dictData = asDict(currentData.dictData);
+  contract.value = {
+    ...current,
+    dataContract: {
+      ...currentData,
+      dictData: {
+        ...dictData,
+        [key]: rows,
+      },
+    },
+  };
 }
 
 function scheduleFieldAction(field: ContractWidget, triggerType: string) {
@@ -2068,6 +2156,19 @@ onShow(loadContract);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.field-row__load {
+  flex: 0 0 auto;
+  min-width: 150rpx;
+  height: 56rpx;
+  padding: 0 16rpx;
+  border: 1rpx solid #cfd8e3;
+  border-radius: 8rpx;
+  background: #fff;
+  color: #245f9e;
+  font-size: 23rpx;
+  line-height: 56rpx;
 }
 
 .empty {
