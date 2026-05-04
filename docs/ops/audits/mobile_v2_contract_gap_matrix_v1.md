@@ -48,6 +48,7 @@ option refresh, and real terminal acceptance.
 | action refreshMode | Closed | `none`, `partial`, and `full` refresh modes are honored. |
 | action target dependencies | Closed | `targetIds` and `dependencyGraph` can escalate partial refresh to full contract reload. |
 | meta/runtime observability | Closed | trace/request/etag/snapshot and runtime cache/retry policy are visible in the summary. |
+| runtime retry policy | Closed | intent requests honor `runtimeContract.retryPolicy` for bounded retries on network, timeout, 408, 429, and 5xx failures. |
 | trace propagation | Closed | data, relation, and execute-button follow-up requests carry trace/request/etag/snapshot context. |
 | diagnostic errors | Closed | failures preserve `reason_code` and `trace_id` in visible error/toast text. |
 | field onchange trigger | Closed | editable fields can trigger `api.onchange` with `include_v2_patch`. |
@@ -75,7 +76,7 @@ option refresh, and real terminal acceptance.
 | M2-G05 | P2 | Closed | warnings are surfaced via toast and retained in a transient page-level warning stack near the header. | Monitor terminal acceptance and tune duration/copy if needed. |
 | M2-G06 | P2 | Open | x2many row editing UI is not implemented; only rendering, pagination, remote loading, and patch application exist. | Add bounded relation row edit/add/remove controls. |
 | M2-G07 | P2 | Open | `targetScope=dataSource/runtime` has no specialized mobile policy beyond current full/partial refresh handling. | Add targetScope-specific refresh plan only after field controls stabilize. |
-| M2-G08 | P2 | Open | runtime cache/retry policy is visible but not used to drive client retry behavior. | Add retry policy executor around requestIntent. |
+| M2-G08 | P2 | Closed | runtime retry policy is now executed by the mobile intent request layer; offline/cache semantics remain deferred. | Monitor terminal acceptance and add offline/cache behavior only when product scope requires it. |
 | M2-G09 | P0 before release | Open | real terminal acceptance is not complete; current proof is static guards and typecheck. | Add H5/wx mobile screenshot or device runner acceptance. |
 | M2-G10 | P2 | Open | accessibility and dense mobile layout behavior have not had visual regression coverage. | Add Playwright/mobile screenshot checks for representative contracts. |
 
@@ -87,7 +88,7 @@ The following items are intentionally not claimed closed:
 - complete x2many inline editing;
 - typeahead many2one search UI for large remote datasets;
 - real device or mini-program runtime acceptance;
-- offline/cache retry semantics from `runtimeContract`.
+- offline/cache semantics from `runtimeContract`.
 
 ## Iteration Order
 
@@ -97,7 +98,7 @@ Recommended next sequence:
 2. `M2-G01`: close selection domain refresh if remote selection sources are declared.
 3. `M2-G09`: add real terminal acceptance evidence.
 4. `M2-G10`: improve visual proof.
-5. `M2-G08`: add runtime retry policy.
+5. `M2-G06/M2-G07`: add bounded relation editing or targetScope-specific refresh policy.
 
 ## Verification Gates
 

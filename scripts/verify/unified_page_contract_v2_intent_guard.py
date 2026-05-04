@@ -94,6 +94,9 @@ def main() -> int:
     for token in ("runtimeContract", "contractMeta", "traceLabel", "runtimeLabel", "contractMeta.value.traceId || contractMeta.value.requestId || contractMeta.value.etag || contractMeta.value.snapshotId", "runtimeContract.value.cachePolicy", "retryPolicy.maxRetries"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must expose v2 meta/runtime observability token: {token}")
+    for token in ("requestIntentWithRetry", "requestIntentOnce", "currentRuntimeRetryPolicy", "shouldRetryIntentError", "retryDelayMs", "function delay", "retryPolicy.maxRetries || retryPolicy.max_retries", "retryPolicy.timeoutMs || retryPolicy.timeout_ms || retryPolicy.requestTimeoutMs || retryPolicy.request_timeout_ms", "code === 408 || code === 429 || code >= 500", "message.includes('network') || message.includes('timeout')", "setTimeout(resolve, ms)"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must execute v2 runtime retry policy token: {token}")
     for token in ("contractTraceParams", "contractTraceContext", "...contractTraceParams(nextContract)", "...contractTraceParams(contract.value)", "...contractTraceContext(contract.value)", "out.trace_id = traceId", "out.request_id = requestId", "out.contract_etag = meta.etag", "out.snapshot_id = meta.snapshotId || meta.snapshot_id"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must propagate v2 trace context token: {token}")

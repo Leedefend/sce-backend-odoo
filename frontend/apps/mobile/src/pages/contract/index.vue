@@ -457,12 +457,30 @@ function intentError(message: string, details: Dict): Error {
 }
 
 function requestIntent(endpoint: string, token: string, payload: Dict): Promise<Dict> {
+  return requestIntentWithRetry(endpoint, token, payload, currentRuntimeRetryPolicy());
+}
+
+async function requestIntentWithRetry(endpoint: string, token: string, payload: Dict, retryPolicy: Dict): Promise<Dict> {
+  const maxRetries = Math.max(0, Math.min(3, Number(retryPolicy.maxRetries || retryPolicy.max_retries) || 0));
+  const timeoutMs = Math.max(3000, Number(retryPolicy.timeoutMs || retryPolicy.timeout_ms || retryPolicy.requestTimeoutMs || retryPolicy.request_timeout_ms) || 15000);
+  for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+    try {
+      return await requestIntentOnce(endpoint, token, payload, timeoutMs);
+    } catch (err) {
+      if (!shouldRetryIntentError(err) || attempt >= maxRetries) throw err;
+      await delay(retryDelayMs(retryPolicy, attempt));
+    }
+  }
+  return requestIntentOnce(endpoint, token, payload, timeoutMs);
+}
+
+function requestIntentOnce(endpoint: string, token: string, payload: Dict, timeoutMs: number): Promise<Dict> {
   return new Promise((resolve, reject) => {
     uni.request({
       url: endpoint,
       method: 'POST',
       data: payload,
-      timeout: 15000,
+      timeout: timeoutMs,
       header: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
@@ -493,6 +511,31 @@ function requestIntent(endpoint: string, token: string, payload: Dict): Promise<
       },
       fail: (requestError) => reject(new Error(requestError.errMsg || 'request failed')),
     });
+  });
+}
+
+function currentRuntimeRetryPolicy(): Dict {
+  return asDict(asDict(contract.value?.runtimeContract).retryPolicy);
+}
+
+function shouldRetryIntentError(err: unknown): boolean {
+  const row = asDict(err);
+  const code = Number(row.code);
+  if (code === 408 || code === 429 || code >= 500) return true;
+  if (code === 401 || code === 403) return false;
+  const message = err instanceof Error ? err.message.toLowerCase() : asText(row.message).toLowerCase();
+  return message.includes('network') || message.includes('timeout') || message.includes('request failed') || message.includes('request:fail');
+}
+
+function retryDelayMs(retryPolicy: Dict, attempt: number): number {
+  const baseDelay = Number(retryPolicy.backoffMs || retryPolicy.backoff_ms || retryPolicy.retryDelayMs || retryPolicy.retry_delay_ms) || 300;
+  const multiplier = Math.max(1, Number(retryPolicy.backoffMultiplier || retryPolicy.backoff_multiplier) || 2);
+  return Math.min(3000, Math.round(baseDelay * (multiplier ** attempt)));
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
   });
 }
 
