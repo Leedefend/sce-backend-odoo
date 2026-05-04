@@ -43,6 +43,13 @@ export type UnifiedPageContractV2WidgetStatus = {
   disabled?: boolean;
 };
 
+export type UnifiedPageContractV2ButtonStatus = {
+  btnId: string;
+  visible?: boolean;
+  disabled?: boolean;
+  reasonCode?: string;
+};
+
 export type UnifiedPageContractV2 = {
   pageInfo: {
     pageId: string;
@@ -163,6 +170,24 @@ export function collectUnifiedPageContractV2WidgetStatus(contract: unknown): Rec
       readonly: typeof row.readonly === 'boolean' ? row.readonly : undefined,
       required: typeof row.required === 'boolean' ? row.required : undefined,
       disabled: typeof row.disabled === 'boolean' ? row.disabled : undefined,
+    };
+    return acc;
+  }, {});
+}
+
+export function collectUnifiedPageContractV2ButtonStatus(contract: unknown): Record<string, UnifiedPageContractV2ButtonStatus> {
+  const v2 = resolveUnifiedPageContractV2(contract);
+  if (!v2) return {};
+  const status = asDict(v2.statusContract);
+  return asList(status.buttonStatus).reduce<Record<string, UnifiedPageContractV2ButtonStatus>>((acc, item) => {
+    const row = asDict(item);
+    const btnId = asText(row.btnId);
+    if (!btnId) return acc;
+    acc[btnId] = {
+      btnId,
+      visible: typeof row.visible === 'boolean' ? row.visible : undefined,
+      disabled: typeof row.disabled === 'boolean' ? row.disabled : undefined,
+      reasonCode: asText(row.reasonCode || row.reason_code) || undefined,
     };
     return acc;
   }, {});

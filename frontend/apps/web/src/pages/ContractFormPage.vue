@@ -494,9 +494,11 @@ import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
 import {
+  collectUnifiedPageContractV2ButtonStatus,
   collectUnifiedPageContractV2FieldStatus,
   collectUnifiedPageContractV2FieldWidgets,
   resolveUnifiedPageContractV2,
+  type UnifiedPageContractV2ButtonStatus,
 } from '../app/contracts/unifiedPageContractV2';
 
 type UiStatus = 'loading' | 'ok' | 'error';
@@ -563,6 +565,33 @@ function normalizeRequiredParams(value: unknown): string[] {
   return value
     .map((item) => String(item || '').trim())
     .filter(Boolean);
+}
+
+function stableContractId(value: unknown, fallback: string) {
+  const raw = String(value || fallback || '').trim();
+  const normalized = raw
+    .split('')
+    .map((char) => {
+      if (/^[A-Za-z0-9_.:-]$/.test(char)) return char;
+      if (char === ' ' || char === '/') return '.';
+      return '';
+    })
+    .join('')
+    .replace(/^\.+|\.+$/g, '');
+  const safe = normalized || fallback || 'action';
+  return /^[A-Za-z]/.test(safe) ? safe : `id.${safe}`;
+}
+
+function resolveV2ButtonStatus(
+  key: string,
+  statusById: Record<string, UnifiedPageContractV2ButtonStatus>,
+): UnifiedPageContractV2ButtonStatus | null {
+  const stableKey = stableContractId(key, 'action');
+  const candidates = [`btn.${stableKey}`, key, stableKey].filter(Boolean);
+  for (const candidate of candidates) {
+    if (statusById[candidate]) return statusById[candidate];
+  }
+  return null;
 }
 
 function collectActionParams(action: ContractAction): Record<string, unknown> | null {
@@ -2446,6 +2475,7 @@ const contractActions = computed<ContractAction[]>(() => {
   const sceneReadyActions = useSceneFormAugmentations.value && Array.isArray(sceneReadyFormSurface.value.actions)
     ? sceneReadyFormSurface.value.actions as Array<Record<string, unknown>>
     : [];
+  const v2ButtonStatus = collectUnifiedPageContractV2ButtonStatus(contract.value);
   const merged: Array<Record<string, unknown>> = [];
   const nativeFormContract = contract.value?.views?.form as Record<string, unknown> | undefined;
   if (Array.isArray(nativeFormContract?.header_buttons)) {
@@ -2471,6 +2501,12 @@ const contractActions = computed<ContractAction[]>(() => {
     if (sceneReadyActions.length && !String(row.key || '').trim()) {
       const mapped = mapSceneReadyAction(row);
       if (!mapped || dedup.has(mapped.key)) continue;
+      const status = resolveV2ButtonStatus(mapped.key, v2ButtonStatus);
+      if (status?.visible === false) continue;
+      if (status?.disabled === true) {
+        mapped.enabled = false;
+        mapped.hint = status.reasonCode || mapped.hint || 'disabled_by_status_contract';
+      }
       dedup.add(mapped.key);
       out.push(mapped);
       continue;
@@ -2478,6 +2514,12 @@ const contractActions = computed<ContractAction[]>(() => {
     if (sceneReadyActions.includes(row)) {
       const mapped = mapSceneReadyAction(row);
       if (!mapped || dedup.has(mapped.key)) continue;
+      const status = resolveV2ButtonStatus(mapped.key, v2ButtonStatus);
+      if (status?.visible === false) continue;
+      if (status?.disabled === true) {
+        mapped.enabled = false;
+        mapped.hint = status.reasonCode || mapped.hint || 'disabled_by_status_contract';
+      }
       dedup.add(mapped.key);
       out.push(mapped);
       continue;
@@ -2516,12 +2558,14 @@ const contractActions = computed<ContractAction[]>(() => {
     const policy = evaluateActionPolicy(contract.value, key, policyContext.value);
     if (!policy.visible) continue;
     if (!evaluateNativeActionVisibility(row)) continue;
+    const status = resolveV2ButtonStatus(key, v2ButtonStatus);
+    if (status?.visible === false) continue;
     const byGroup = hasGroupAccess(groups);
     const contractAllowed = typeof row.allowed === 'boolean' ? Boolean(row.allowed) : true;
     const needRecord = effectiveKind === 'object' || effectiveKind === 'server' || effectiveKind === 'mutation' || level === 'row' || level === 'smart';
     const blockedMessage = String(row.blocked_message || row.reason || row.reason_code || '').trim();
     const warningMessage = String(row.warning_message || '').trim();
-    const enabled = contractAllowed && policy.enabled && byGroup && (!needRecord || Boolean(recordId.value));
+    const enabled = contractAllowed && policy.enabled && byGroup && (!needRecord || Boolean(recordId.value)) && status?.disabled !== true;
     out.push({
       key,
       label: String(row.label || key),
@@ -2537,7 +2581,9 @@ const contractActions = computed<ContractAction[]>(() => {
       url: String(payload.url || '').trim(),
       enabled,
       hint: byGroup
-        ? (needRecord && !recordId.value ? 'requires record id' : (contractAllowed ? (warningMessage || policy.reason) : blockedMessage))
+        ? (status?.disabled === true
+          ? status.reasonCode || 'disabled_by_status_contract'
+          : (needRecord && !recordId.value ? 'requires record id' : (contractAllowed ? (warningMessage || policy.reason) : blockedMessage)))
         : 'permission denied',
       semantic: policy.semantic,
       visibleProfiles,

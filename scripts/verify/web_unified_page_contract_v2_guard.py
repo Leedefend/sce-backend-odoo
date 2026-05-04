@@ -18,6 +18,7 @@ WEB_ACTION_META = ROOT / "frontend/apps/web/src/app/runtime/actionViewMetaRuntim
 WEB_ACTION_CONTRACT_RUNTIME = ROOT / "frontend/apps/web/src/app/contractActionRuntime.ts"
 WEB_RECORD_RUNTIME = ROOT / "frontend/apps/web/src/app/contractRecordRuntime.ts"
 WEB_SURFACE_CONTRACT = ROOT / "frontend/apps/web/src/app/contracts/actionViewSurfaceContract.ts"
+WEB_RECORD_VIEW = ROOT / "frontend/apps/web/src/views/RecordView.vue"
 
 
 def main() -> int:
@@ -34,6 +35,8 @@ def main() -> int:
     contract_runtime_source = WEB_ACTION_CONTRACT_RUNTIME.read_text(encoding="utf-8") if WEB_ACTION_CONTRACT_RUNTIME.exists() else ""
     record_runtime_source = WEB_RECORD_RUNTIME.read_text(encoding="utf-8") if WEB_RECORD_RUNTIME.exists() else ""
     surface_source = WEB_SURFACE_CONTRACT.read_text(encoding="utf-8") if WEB_SURFACE_CONTRACT.exists() else ""
+    record_view_source = WEB_RECORD_VIEW.read_text(encoding="utf-8") if WEB_RECORD_VIEW.exists() else ""
+    form_page_source = (ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue").read_text(encoding="utf-8")
     if "intent: 'ui.contract.v2'" not in source and 'intent: "ui.contract.v2"' not in source:
         errors.append("web contract API must request ui.contract.v2")
     if "intent: 'ui.contract'," in source or 'intent: "ui.contract",' in source:
@@ -55,6 +58,7 @@ def main() -> int:
         "collectUnifiedPageContractV2FieldWidgets",
         "collectUnifiedPageContractV2FieldStatus",
         "collectUnifiedPageContractV2WidgetStatus",
+        "collectUnifiedPageContractV2ButtonStatus",
         "layoutContract",
         "dataContract",
         "resolveUnifiedPageContractV2PrimaryDataSource",
@@ -73,14 +77,20 @@ def main() -> int:
         errors.append("web view mode runtime must resolve view type from v2 pageInfo before legacy fallback")
     if "collectUnifiedPageContractV2FieldWidgets" not in record_runtime_source or "collectUnifiedPageContractV2FieldStatus" not in record_runtime_source or "mapV2ActionButton" not in record_runtime_source:
         errors.append("web record runtime must build form fields, states, and actions from v2 before legacy fallback")
+    if "collectUnifiedPageContractV2ButtonStatus" not in record_runtime_source or "resolveV2ActionButtonStatus" not in record_runtime_source:
+        errors.append("web record runtime must apply v2 buttonStatus to form action buttons")
+    if "raw.disabled === true" not in record_view_source or "visible !== false" not in record_view_source:
+        errors.append("web record view must honor v2 button visible/disabled state after record runtime mapping")
     if "collectUnifiedPageContractV2FieldStatus" not in shape_source:
         errors.append("web list shape runtime must honor v2 widget status for default column visibility")
     if "pageInfo?.model" not in shape_source:
         errors.append("web model resolver must prefer v2 pageInfo.model before legacy model fallbacks")
     if "resolveUnifiedPageContractV2" not in surface_source:
         errors.append("web action surface contract must include v2 pageInfo view modes")
-    if "collectUnifiedPageContractV2FieldStatus" not in (ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue").read_text(encoding="utf-8"):
+    if "collectUnifiedPageContractV2FieldStatus" not in form_page_source:
         errors.append("web contract form page must merge v2 widget status into runtime field states")
+    if "collectUnifiedPageContractV2ButtonStatus" not in form_page_source or "resolveV2ButtonStatus" not in form_page_source:
+        errors.append("web contract form page must merge v2 buttonStatus into contract actions")
 
     if errors:
         print("web unified page contract v2 guard failed:")

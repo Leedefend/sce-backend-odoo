@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-04T22:56:54+08:00
+- blocker_key: `web_unified_page_contract_v2_button_status_batch`
+- layer_target: `Frontend Contract Consumer`
+- module: `frontend/apps/web/src/app/contracts + frontend/apps/web/src/app/contractRecordRuntime.ts + frontend/apps/web/src/pages/ContractFormPage.vue + frontend/apps/web/src/views/RecordView.vue + scripts/verify`
+- reason: `web 已优先消费 v2 字段/列状态，但表单动作仍未遵守后端 StatusContract.buttonStatus，存在按钮可见/禁用语义回落到前端推断的缺口。`
+- completed_step: `新增 collectUnifiedPageContractV2ButtonStatus；Record runtime 将 v2 actionRuleList 映射为按钮时应用 buttonStatus visible/disabled/reasonCode；ContractFormPage 的 contractActions 合并 v2 buttonStatus；RecordView 过滤 visible=false 并禁用 disabled=true 的按钮；web v2 guard 增加 buttonStatus 消费门禁。`
+- verification: `python3 scripts/verify/web_unified_page_contract_v2_guard.py PASS；python3 -m py_compile scripts/verify/web_unified_page_contract_v2_guard.py PASS；pnpm --dir frontend/apps/web run typecheck PASS；make verify.unified_page_contract.v2 PASS；git diff --check PASS。`
+- active_commit: `61387cda`
+- next_step: `提交 web_unified_page_contract_v2_button_status_batch；下一批可继续补 web action/list runtime 对 v2 buttonStatus 或 selectorStatus 的消费矩阵。`
+
 ### 2026-05-03T16:30:00+08:00
 - blocker_key: `unified_page_contract_lite_harmony_h5_device_acceptance_pilot_batch_81`
 - layer_target: `Frontend Mobile Device Acceptance Governance`
