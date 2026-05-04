@@ -97,6 +97,9 @@ def main() -> int:
     for token in ("contractTraceParams", "contractTraceContext", "...contractTraceParams(nextContract)", "...contractTraceParams(contract.value)", "...contractTraceContext(contract.value)", "out.trace_id = traceId", "out.request_id = requestId", "out.contract_etag = meta.etag", "out.snapshot_id = meta.snapshotId || meta.snapshot_id"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must propagate v2 trace context token: {token}")
+    for token in ("intentError", "errorDiagnosticLabel", "appendErrorDiagnostic", "bodyError.reason_code || bodyError.reasonCode || bodyError.code", "bodyError.trace_id || bodyError.traceId || asDict(body.meta).trace_id", "normalizeError(err, '业务数据读取失败')", "normalizeError(err, '子表加载失败')", "normalizeError(err, '动作执行失败').slice(0, 48)"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must surface v2 diagnostic errors token: {token}")
     for token in ("tableRowsPatch", "relationRowsPatch", "treeDataPatch", "ganttDataPatch", "dictDataPatch", "paginationPatch", "hasDataContractPatch", "dataContract: nextData"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must merge v2 dataPatch token: {token}")

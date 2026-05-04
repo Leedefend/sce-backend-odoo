@@ -321,17 +321,34 @@ function normalizeBaseUrl(value: string): string {
   return value.trim().replace(/\/+$/, '');
 }
 
-function normalizeError(err: unknown): string {
+function normalizeError(err: unknown, fallback = '契约读取失败'): string {
+  const detail = errorDiagnosticLabel(err);
   if (err instanceof Error && err.message) {
     const message = err.message.toLowerCase();
     if (message.includes('401') || message.includes('403') || message.includes('token')) {
-      return '登录已失效，请重新登录';
+      return appendErrorDiagnostic('登录已失效，请重新登录', detail);
     }
     if (message.includes('network') || message.includes('request') || message.includes('timeout')) {
-      return '服务暂不可用，请检查服务地址';
+      return appendErrorDiagnostic('服务暂不可用，请检查服务地址', detail);
     }
+    return appendErrorDiagnostic(err.message, detail);
   }
-  return '契约读取失败';
+  return appendErrorDiagnostic(fallback, detail);
+}
+
+function appendErrorDiagnostic(message: string, detail: string): string {
+  return detail ? `${message}（${detail}）` : message;
+}
+
+function errorDiagnosticLabel(err: unknown): string {
+  const row = asDict(err);
+  const reasonCode = asText(row.reason_code || row.reasonCode || row.code);
+  const traceId = asText(row.trace_id || row.traceId);
+  return [reasonCode, traceId].filter(Boolean).join(' · ');
+}
+
+function intentError(message: string, details: Dict): Error {
+  return Object.assign(new Error(message), details);
 }
 
 function requestIntent(endpoint: string, token: string, payload: Dict): Promise<Dict> {
@@ -350,12 +367,21 @@ function requestIntent(endpoint: string, token: string, payload: Dict): Promise<
         const statusCode = Number(response.statusCode || 0);
         const body = asDict(response.data);
         if (statusCode < 200 || statusCode >= 300) {
-          reject(new Error(`request failed: ${statusCode}`));
+          const bodyError = asDict(body.error);
+          reject(intentError(asText(bodyError.message || body.message, `request failed: ${statusCode}`), {
+            code: statusCode,
+            reason_code: bodyError.reason_code || bodyError.reasonCode || bodyError.code,
+            trace_id: bodyError.trace_id || bodyError.traceId || asDict(body.meta).trace_id,
+          }));
           return;
         }
         if (body.ok === false) {
           const bodyError = asDict(body.error);
-          reject(new Error(asText(bodyError.message || body.error, 'intent failed')));
+          reject(intentError(asText(bodyError.message || body.error, 'intent failed'), {
+            code: bodyError.code,
+            reason_code: bodyError.reason_code || bodyError.reasonCode || bodyError.code,
+            trace_id: bodyError.trace_id || bodyError.traceId || asDict(body.meta).trace_id,
+          }));
           return;
         }
         resolve(body);
@@ -477,7 +503,7 @@ async function loadRecords(endpoint: string, token: string, nextContract: Dict, 
       recordTotal.value = null;
       nextOffset.value = 0;
     }
-    dataError.value = normalizeError(err);
+    dataError.value = normalizeError(err, '业务数据读取失败');
   } finally {
     dataLoading.value = false;
   }
@@ -525,9 +551,9 @@ async function loadMoreRelationRows(block: RelationBlock) {
       params: requestParams,
     });
     mergeRelationRowsResponse(block, asDict(response.data), limit);
-  } catch {
+  } catch (err) {
     relationErrorKey.value = block.dataKey;
-    relationError.value = '子表加载失败';
+    relationError.value = normalizeError(err, '子表加载失败');
   } finally {
     relationLoadingKey.value = '';
   }
@@ -1211,8 +1237,8 @@ async function selectAction(action: ContractAction) {
     showActionResponseFeedback(response);
     if (appliedPatch && normalizeRefreshMode(action.refreshMode) === 'none') return;
     await applyActionEffect(asDict(asDict(response.data).effect), action, endpoint, token);
-  } catch {
-    uni.showToast({ title: '动作执行失败', icon: 'none' });
+  } catch (err) {
+    uni.showToast({ title: normalizeError(err, '动作执行失败').slice(0, 48), icon: 'none' });
   } finally {
     runningActionId.value = '';
   }
