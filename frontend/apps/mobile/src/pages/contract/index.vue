@@ -438,6 +438,7 @@ async function loadRecords(endpoint: string, token: string, nextContract: Dict, 
       op: sourceOp,
       model,
       fields,
+      ...contractTraceParams(nextContract),
     };
     if (sourceOp === 'read') {
       requestParams.ids = normalizeIds(sourceParams.ids);
@@ -507,6 +508,7 @@ async function loadMoreRelationRows(block: RelationBlock) {
   const offset = Number(page.next_offset || page.nextOffset || sourceParams.offset || block.rowCount);
   const requestParams: Dict = {
     ...sourceParams,
+    ...contractTraceParams(contract.value),
     dataKey: block.dataKey,
     data_key: block.dataKey,
     fieldCode: block.fieldCode,
@@ -1115,6 +1117,26 @@ function normalizeIds(value: unknown): number[] {
     .filter((item) => Number.isFinite(item) && item > 0);
 }
 
+function contractTraceParams(sourceContract: Dict | null): Dict {
+  const meta = asDict(sourceContract?.meta);
+  const traceId = asText(meta.traceId || meta.trace_id);
+  const requestId = asText(meta.requestId || meta.request_id);
+  const out: Dict = {};
+  if (traceId) out.trace_id = traceId;
+  if (requestId) out.request_id = requestId;
+  if (meta.etag) out.contract_etag = meta.etag;
+  if (meta.snapshotId || meta.snapshot_id) out.snapshot_id = meta.snapshotId || meta.snapshot_id;
+  return out;
+}
+
+function contractTraceContext(sourceContract: Dict | null): Dict {
+  const params = contractTraceParams(sourceContract);
+  const out: Dict = {};
+  if (params.trace_id) out.trace_id = params.trace_id;
+  if (params.request_id) out.request_id = params.request_id;
+  return out;
+}
+
 function isBusinessDisplayField(widget: ContractWidget): boolean {
   if (!widget.visible) return false;
   const field = widget.fieldCode;
@@ -1178,7 +1200,11 @@ async function selectAction(action: ContractAction) {
           server_action_id: action.button.server_action_id,
           xml_id: action.button.xml_id,
         },
-        context,
+        context: {
+          ...context,
+          ...contractTraceContext(contract.value),
+        },
+        ...contractTraceParams(contract.value),
       },
     });
     const appliedPatch = applyResponseUnifiedPagePatch(response);
