@@ -185,6 +185,7 @@ interface ContractAction {
   sourceWidgetId: string;
   dispatchMode: string;
   submitPolicy: Dict;
+  tracePolicy: Dict;
   refreshMode: string;
   targetIds: string[];
   dependencyTargets: string[];
@@ -979,6 +980,7 @@ function collectActions(action: Dict, status: Dict): ContractAction[] {
         sourceWidgetId,
         dispatchMode: asText(row.dispatchMode || row.dispatch_mode, 'server'),
         submitPolicy: asDict(row.submitPolicy || row.submit_policy),
+        tracePolicy: asDict(row.tracePolicy || row.trace_policy),
         refreshMode: normalizeRefreshMode(row.refreshMode),
         targetIds,
         dependencyTargets,
@@ -1254,17 +1256,21 @@ async function runFieldAction(field: ContractWidget, triggerType: string) {
   const runtime = resolveRuntimeEndpoint();
   if (!action || !runtime || !records.value.length || !contract.value) return;
   const currentRecord = records.value[0];
+  const requestId = onchangeRequestId(action);
   try {
     const response = await requestIntent(runtime.endpoint, runtime.token, {
       intent: 'api.onchange',
       params: {
+        action_id: action.actionId,
+        source_widget_id: action.sourceWidgetId,
+        trigger_type: action.triggerType,
         model: modelName.value,
         res_id: currentRecordId() || undefined,
         values: { ...currentRecord },
         changed_fields: [field.fieldCode],
         include_v2_patch: true,
         contract_version: contractVersion.value,
-        request_id: asText(contractMeta.value.requestId || contractMeta.value.request_id),
+        request_id: requestId,
         context: contractTraceContext(contract.value),
         ...contractTraceParams(contract.value),
       },
@@ -1278,6 +1284,13 @@ async function runFieldAction(field: ContractWidget, triggerType: string) {
   } catch (err) {
     uni.showToast({ title: normalizeError(err, '字段联动失败').slice(0, 48), icon: 'none' });
   }
+}
+
+function onchangeRequestId(action: ContractAction): string {
+  const existing = asText(contractMeta.value.requestId || contractMeta.value.request_id);
+  if (existing) return existing;
+  if (action.tracePolicy.required === true) return `mobile.${action.actionId}.${Date.now()}`;
+  return '';
 }
 
 function resolveFieldAction(field: ContractWidget, triggerType: string): ContractAction | null {
