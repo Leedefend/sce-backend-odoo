@@ -905,11 +905,8 @@ function syncRecordDataContractRows(nextContract: Dict, dataKey: string, viewTyp
 
 function buildTargetParams(): Dict {
   const query = routeQuery.value;
-  const menuId = asText(query.menu_id || query.menuId || query.id);
-  if (menuId) {
-    return { op: 'menu', menu_id: menuId, ...contractRouteParams(query) };
-  }
-  const actionId = asText(query.action_id || query.actionId);
+  const subject = asText(query.subject).toLowerCase();
+  const actionId = asText(query.action_id || query.actionId || (subject === 'action' ? query.id : ''));
   if (actionId) {
     return {
       op: 'action_open',
@@ -917,6 +914,10 @@ function buildTargetParams(): Dict {
       view_type: asText(query.view_type || query.viewType, TARGET_VIEW_TYPE),
       ...contractRouteParams(query),
     };
+  }
+  const menuId = asText(query.menu_id || query.menuId || (subject === 'menu' ? query.id : ''));
+  if (menuId) {
+    return { op: 'menu', menu_id: menuId, ...contractRouteParams(query) };
   }
   const model = asText(query.model);
   if (model) {

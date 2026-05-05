@@ -279,9 +279,9 @@ async function openNavEntry(entry: NavEntry) {
     const query: string[] = [];
     const subject = asText(data.subject);
     if (subject) query.push(`subject=${encodeURIComponent(subject)}`);
-    const menuId = asText(data.id || data.menu_id);
+    const menuId = asText(data.menu_id || (subject === 'menu' ? data.id : ''));
     if (menuId) query.push(`menu_id=${encodeURIComponent(menuId)}`);
-    const actionId = asText(data.action_id);
+    const actionId = asText(data.action_id || (subject === 'action' ? data.id : ''));
     if (actionId) query.push(`action_id=${encodeURIComponent(actionId)}`);
     const model = asText(data.model);
     if (model) query.push(`model=${encodeURIComponent(model)}`);
