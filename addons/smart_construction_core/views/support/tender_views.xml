@@ -254,6 +254,7 @@
                 <field name="bid_id"/>
                 <field name="type"/>
                 <field name="amount" sum="保证金合计"/>
+                <field name="receipt_bank_account_id"/>
                 <field name="bank_account_id"/>
                 <field name="remark"/>
             </tree>
@@ -273,14 +274,18 @@
                             <field name="type"/>
                         </group>
                         <group>
-                            <field name="date"/>
+                            <field name="date" required="1"/>
                             <field name="amount"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
                     </group>
-                    <group>
+                    <group string="账户信息">
+                        <field name="receipt_bank_account_id"/>
                         <field name="bank_account_id"/>
+                    </group>
+                    <group string="备注与附件">
                         <field name="remark"/>
+                        <field name="attachment_ids" widget="many2many_binary"/>
                     </group>
                 </sheet>
             </form>

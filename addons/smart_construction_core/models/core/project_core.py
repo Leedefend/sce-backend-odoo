@@ -583,6 +583,7 @@ class ProjectProject(models.Model):
     doc_manager_id = fields.Many2one('res.users', string='资料负责人')
     location = fields.Char('项目地点')
     contract_no = fields.Char('主合同编号')
+    initiation_date = fields.Date('单据日期', default=fields.Date.context_today, tracking=True)
     sc_demo_showcase = fields.Boolean(
         '演示项目池',
         default=False,

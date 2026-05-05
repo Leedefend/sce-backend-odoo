@@ -4933,6 +4933,21 @@ async function cancelIntake() {
   await router.replace({ path: target, query: resolveWorkspaceContextQuery() });
 }
 
+async function returnToProjectIntakeList(createdId: number | string) {
+  const queryActionId = Number(route.query.action_id || actionId.value || 0) || 0;
+  if (queryActionId > 0) {
+    await router.replace({
+      path: `/a/${queryActionId}`,
+      query: pickContractNavQuery(route.query as Record<string, unknown>, {
+        project_id: String(createdId),
+        view_mode: 'tree',
+      }),
+    });
+    return true;
+  }
+  return false;
+}
+
 async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
   if (!canSave.value || !model.value) return;
   submissionFeedback.value = null;
@@ -5041,6 +5056,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
       const resolvedNextRoute = nextSceneRoute || (nextSceneKey ? `/s/${nextSceneKey}` : '');
       if (isProjectQuickIntakeMode.value && model.value === 'project.project') {
         await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection', 'workbench_projection'] });
+        if (await returnToProjectIntakeList(created.id)) return;
         const routePath = resolvedNextRoute || '/s/project.management';
         await router.replace({
           path: routePath,
@@ -5053,6 +5069,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
       }
       if (isProjectStandardIntakeMode.value && resolvedNextRoute) {
         await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection', 'workbench_projection'] });
+        if (await returnToProjectIntakeList(created.id)) return;
         await router.replace({
           path: resolvedNextRoute,
           query: {
@@ -5061,6 +5078,10 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
           },
         });
         return;
+      }
+      if (isProjectStandardIntakeMode.value && model.value === 'project.project') {
+        await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection', 'workbench_projection'] });
+        if (await returnToProjectIntakeList(created.id)) return;
       }
       await router.replace({
         name: 'model-form',

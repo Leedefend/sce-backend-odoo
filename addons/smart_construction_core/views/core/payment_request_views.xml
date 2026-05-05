@@ -10,6 +10,7 @@
                     <field name="name"/>
                     <field name="type"/>
                     <field name="project_id"/>
+                    <field name="operation_strategy"/>
                     <field name="contract_id"/>
                     <field name="settlement_id"/>
                     <field name="settlement_amount_payable"/>
@@ -34,6 +35,7 @@
                         <button name="action_approve" type="object" string="批准" class="btn-secondary" invisible="state != 'submit' or validation_status != 'validated'" groups="smart_construction_core.group_sc_cap_finance_manager"/>
                         <button name="action_set_approved" type="object" string="批准" class="btn-secondary" invisible="state != 'approve'" groups="smart_construction_core.group_sc_cap_finance_manager"/>
                         <button name="action_done" type="object" string="完成" class="btn-secondary" invisible="state not in ['approve', 'approved']" groups="smart_construction_core.group_sc_cap_finance_manager"/>
+                        <button name="action_create_payment_execution" type="object" string="生成付款登记" class="btn-secondary" invisible="type != 'pay'"/>
                         <button name="action_cancel" type="object" string="取消" class="btn-secondary" invisible="state in ['done', 'cancel']" groups="smart_construction_core.group_sc_cap_finance_manager"/>
                         <field name="validation_status" invisible="1"/>
                         <field name="can_review" invisible="1"/>
@@ -53,6 +55,7 @@
                                 <field name="name" readonly="1"/>
                                 <field name="type"/>
                                 <field name="project_id" options="{'no_create': True}"/>
+                                <field name="operation_strategy" readonly="1"/>
                                 <field name="contract_id" domain="[('project_id', '=', project_id)]"/>
                                 <field name="settlement_id" domain="[('project_id', '=', project_id)]"/>
                             </group>
@@ -60,7 +63,7 @@
                                 <field name="partner_id"/>
                                 <field name="amount"/>
                                 <field name="currency_id" invisible="1"/>
-                                <field name="date_request"/>
+                                <field name="date_request" required="1"/>
                                 <field name="paid_amount_total" readonly="1"/>
                                 <field name="unpaid_amount" readonly="1"/>
                                 <field name="is_fully_paid" readonly="1"/>
@@ -106,6 +109,7 @@
                         </group>
                         <group>
                             <field name="note"/>
+                            <field name="attachment_ids" widget="many2many_binary"/>
                         </group>
                         <group string="付款申请明细">
                             <field name="outflow_line_ids" nolabel="1">
@@ -156,11 +160,14 @@
                 <search string="付款/收款申请">
                     <field name="name"/>
                     <field name="project_id"/>
+                    <field name="operation_strategy"/>
                     <field name="partner_id"/>
                     <field name="contract_id"/>
                     <field name="settlement_id"/>
                     <filter string="付款" name="type_pay" domain="[('type', '=', 'pay')]"/>
                     <filter string="收款" name="type_receive" domain="[('type', '=', 'receive')]"/>
+                    <filter string="公司直营" name="operation_direct" domain="[('operation_strategy', '=', 'direct')]"/>
+                    <filter string="联营项目" name="operation_joint" domain="[('operation_strategy', '=', 'joint')]"/>
                     <separator/>
                     <filter string="草稿" name="state_draft" domain="[('state', '=', 'draft')]"/>
                     <filter string="已提交" name="state_submit" domain="[('state', '=', 'submit')]"/>
@@ -168,6 +175,7 @@
                     <filter string="已完成" name="state_done" domain="[('state', '=', 'done')]"/>
                     <separator/>
                     <filter string="按项目" name="group_by_project_id" context="{'group_by': 'project_id'}"/>
+                    <filter string="按经营策略" name="group_by_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
                     <filter string="按单位" name="group_by_partner_id" context="{'group_by': 'partner_id'}"/>
                     <filter string="按类型" name="group_by_type" context="{'group_by': 'type'}"/>
                     <filter string="按状态" name="group_by_state" context="{'group_by': 'state'}"/>

@@ -49,6 +49,13 @@ class PaymentRequest(models.Model):
         readonly=True,
         index=True,
     )
+    operation_strategy = fields.Selection(
+        related="project_id.operation_strategy",
+        string="经营策略",
+        store=True,
+        readonly=True,
+        index=True,
+    )
     contract_id = fields.Many2one(
         "construction.contract",
         string="合同",
@@ -148,10 +155,17 @@ class PaymentRequest(models.Model):
         tracking=True,
     )
     date_request = fields.Date(
-        string="申请日期",
+        string="单据日期",
         default=fields.Date.context_today,
     )
     note = fields.Text(string="备注")
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "payment_request_attachment_rel",
+        "request_id",
+        "attachment_id",
+        string="附件",
+    )
     ledger_line_ids = fields.One2many(
         "payment.ledger",
         "payment_request_id",
@@ -173,6 +187,7 @@ class PaymentRequest(models.Model):
         compute="_compute_payment_totals",
         store=False,
     )
+
     unpaid_amount = fields.Monetary(
         string="未付款金额",
         currency_field="currency_id",
@@ -192,6 +207,22 @@ class PaymentRequest(models.Model):
         tracking=True,
     )
 
+    @api.model
+    def _context_project_id(self):
+        project_id = self.env.context.get("default_project_id") or self.env.context.get("current_project_id")
+        try:
+            return int(project_id) if project_id else False
+        except (TypeError, ValueError):
+            return False
+
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        project_id = res.get("project_id") or self._context_project_id()
+        if project_id and "project_id" in fields_list:
+            res["project_id"] = project_id
+        return res
+
     def _message_post_non_blocking(self, body):
         for rec in self:
             try:
@@ -202,6 +233,24 @@ class PaymentRequest(models.Model):
                     rec.display_name,
                     exc,
                 )
+
+    def action_create_payment_execution(self):
+        self.ensure_one()
+        action = self.env.ref("smart_construction_core.action_sc_payment_execution").read()[0]
+        action["view_mode"] = "form"
+        action["views"] = [(False, "form")]
+        action["context"] = {
+            **dict(self.env.context or {}),
+            "default_payment_request_id": self.id,
+            "default_project_id": self.project_id.id,
+            "default_partner_id": self.partner_id.id,
+            "default_contract_id": self.contract_id.id,
+            "default_document_no": self.name,
+            "default_planned_amount": self.amount or 0.0,
+            "default_paid_amount": self.amount or 0.0,
+            "default_currency_id": self.currency_id.id,
+        }
+        return action
 
     def _get_active_funding_baseline(self, project):
         baseline = self.env["project.funding.baseline"].sudo().search(
@@ -315,6 +364,9 @@ class PaymentRequest(models.Model):
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            project_id = self._context_project_id()
+            if project_id:
+                vals.setdefault("project_id", project_id)
             if not vals.get("name") or vals.get("name") == "New":
                 vals["name"] = seq.next_by_code("payment.request") or _("Payment Request")
         records = super().create(vals_list)
