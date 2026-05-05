@@ -411,6 +411,7 @@ help:
 	@echo "  make up/down/restart/logs/ps/odoo-shell"
 	@echo "  make env.matrix.check   # 校验 dev/test/prod 三环境必需变量与 DB 参数优先级"
 	@echo "  make deploy.prod.sim.oneclick ENV=test ENV_FILE=.env.prod.sim"
+	@echo "  make prod.sim.fresh.replay ENV=test ENV_FILE=.env.prod.sim PROD_SIM_FRESH_REPLAY=1   # prod-sim 从零重建+完整重放+验收"
 	@echo "  make verify.prod.sim.isolation   # prod-sim 一键隔离验证"
 	@echo "  make verify.prod.sim.isolation.quick   # prod-sim 快速隔离验证（不reset）"
 	@echo "  make db.reset DB=<name> | demo.reset DB=<name> | gate.demo"
@@ -458,7 +459,7 @@ help:
 # ======================================================
 # ==================== Dev =============================
 # ======================================================
-.PHONY: up down restart logs ps odoo-shell prod.restart.safe prod.restart.full deploy.prod.sim.oneclick frontend.dev frontend.stop frontend.restart frontend.logs
+.PHONY: up down restart logs ps odoo-shell prod.restart.safe prod.restart.full deploy.prod.sim.oneclick prod.sim.fresh.replay frontend.dev frontend.stop frontend.restart frontend.logs
 up: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/up.sh
 down: check-compose-project check-compose-env
@@ -523,6 +524,9 @@ prod.restart.full: guard.prod.danger check-compose-project check-compose-env
 
 deploy.prod.sim.oneclick: guard.prod.forbid check-compose-project check-compose-env gate.compose.config
 	@$(RUN_ENV) COMPOSE_FILES="-f $(COMPOSE_FILE_BASE) -f docker-compose.prod-sim.yml" bash scripts/deploy/prod_sim_oneclick.sh
+
+prod.sim.fresh.replay: guard.prod.forbid check-compose-project check-compose-env gate.compose.config
+	@$(RUN_ENV) ENV=test ENV_FILE=.env.prod.sim COMPOSE_FILES="-f $(COMPOSE_FILE_BASE) -f docker-compose.prod-sim.yml" bash scripts/deploy/prod_sim_fresh_replay.sh
 
 .PHONY: dev.rebuild
 dev.rebuild: guard.codex.fast.noheavy guard.prod.forbid check-compose-project check-compose-env gate.compose.config
