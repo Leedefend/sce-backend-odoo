@@ -36,6 +36,7 @@ run_shell partner_fact_bootstrap scripts/migration/scbs_partner_fact_bootstrap.p
 run_shell fact_staging_bind_targets scripts/migration/scbs_fact_staging_import.py -e SCBS_FACT_STAGING_IMPORT_MODE=write
 run_shell base_system_project_links scripts/migration/scbs_base_system_project_link_import.py -e APPLY=1
 run_shell operation_strategy_policy scripts/migration/scbs_operation_strategy_policy_refresh.py -e APPLY=1
+run_shell project_operation_strategy_backfill scripts/migration/scbs_project_operation_strategy_backfill.py -e APPLY=1
 run_shell material_map_import scripts/migration/scbs_stock_in_material_map_import.py -e SCBS_MATERIAL_MAPPING_CSV="${ASSET_ROOT}/artifacts/migration/scbs_stock_in_material_mapping_workbook_v1.csv"
 run_shell material_catalog_bootstrap scripts/migration/scbs_material_catalog_bootstrap.py -e SCBS_MATERIAL_BOOTSTRAP_APPLY=1 -e SCBS_MATERIAL_BOOTSTRAP_LINK_EXACT=1 -e SCBS_MATERIAL_BOOTSTRAP_CREATE_MISSING=1
 run_shell material_conflict_accept scripts/migration/scbs_material_conflict_catalog_accept.py -e APPLY=1
