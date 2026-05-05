@@ -1893,11 +1893,11 @@ function formUiLabel(key: string) {
 function relationCreateMode(_fieldName: string, descriptor?: FieldDescriptor): 'page' | 'quick' | 'none' {
   const entry = relationEntry(descriptor);
   if (!entry) return 'none';
-  if (entry.model === 'sc.dictionary' && entry.canCreate) {
-    return 'quick';
-  }
   if (entry.createMode === 'page' && entry.actionId) return 'page';
   if (entry.createMode === 'quick' && entry.canCreate) return 'quick';
+  if (entry.model === 'sc.dictionary' && entry.canCreate && Object.keys(entry.defaultVals || {}).length) {
+    return 'quick';
+  }
   return 'none';
 }
 
