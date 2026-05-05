@@ -58,14 +58,14 @@ class PageAssembler:
         return ['tree', 'form']
 
     @staticmethod
-    def _normalize_action_domain(action):
+    def _normalize_action_domain(action, eval_context=None):
         if not isinstance(action, dict):
             return [], ""
         raw = action.get("domain")
         if raw in (None, False, ""):
             return [], ""
         raw_text = raw if isinstance(raw, str) else ""
-        parsed = safe_eval(raw) if isinstance(raw, str) else raw
+        parsed = safe_eval(raw, eval_context or {}) if isinstance(raw, str) else raw
         if isinstance(parsed, tuple):
             parsed = list(parsed)
         if not isinstance(parsed, list):
@@ -73,14 +73,14 @@ class PageAssembler:
         return parsed, raw_text
 
     @staticmethod
-    def _normalize_action_context(action):
+    def _normalize_action_context(action, eval_context=None):
         if not isinstance(action, dict):
             return {}, ""
         raw = action.get("context")
         if raw in (None, False, ""):
             return {}, ""
         raw_text = raw if isinstance(raw, str) else ""
-        parsed = safe_eval(raw) if isinstance(raw, str) else raw
+        parsed = safe_eval(raw, eval_context or {}) if isinstance(raw, str) else raw
         if not isinstance(parsed, dict):
             return {}, raw_text
         return parsed, raw_text
@@ -103,8 +103,17 @@ class PageAssembler:
         env = self.env
         su = self.su_env
         action = action or self._resolve_action_from_payload(p, model)
-        action_domain, action_domain_raw = self._normalize_action_domain(action)
-        action_context, action_context_raw = self._normalize_action_context(action)
+        action_eval_context = {
+            "uid": env.uid,
+            "user": env.user,
+            "active_id": p.get("record_id") or p.get("recordId") or p.get("res_id") or p.get("resId"),
+            "active_ids": [p.get("record_id") or p.get("recordId") or p.get("res_id") or p.get("resId")]
+            if (p.get("record_id") or p.get("recordId") or p.get("res_id") or p.get("resId"))
+            else [],
+            "active_model": model,
+        }
+        action_domain, action_domain_raw = self._normalize_action_domain(action, action_eval_context)
+        action_context, action_context_raw = self._normalize_action_context(action, action_eval_context)
         if action_domain and not p.get("domain"):
             p["domain"] = action_domain
 

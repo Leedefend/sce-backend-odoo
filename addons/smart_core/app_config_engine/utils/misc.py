@@ -4,13 +4,13 @@
 import json, hashlib
 from odoo.tools.safe_eval import safe_eval as _safe_eval
 
-def safe_eval(expr):
+def safe_eval(expr, globals_dict=None):
     """
     仅用于解析 Odoo context/domain 这类静态表达式；
     - 失败返回 None，避免抛异常中断主链路。
     """
     if not expr or not isinstance(expr, str): return None
-    try: return _safe_eval(expr, {})
+    try: return _safe_eval(expr, globals_dict or {})
     except Exception: return None
 
 def stable_etag(data):
