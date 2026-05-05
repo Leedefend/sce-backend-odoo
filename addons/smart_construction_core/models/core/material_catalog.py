@@ -11,6 +11,14 @@ class ScMaterialCatalog(models.Model):
     name = fields.Char(string="材料名称", required=True, index=True)
     code = fields.Char(string="材料编码", index=True)
     category_id = fields.Many2one("product.category", string="材料分类", index=True, ondelete="set null")
+    company_id = fields.Many2one(
+        "res.company",
+        string="公司",
+        required=True,
+        default=lambda self: self.env.company,
+        index=True,
+        ondelete="restrict",
+    )
     project_id = fields.Many2one("project.project", string="项目", index=True, ondelete="set null")
     spec_model = fields.Char(string="规格型号", index=True)
     uom_text = fields.Char(string="单位", index=True)
@@ -39,14 +47,14 @@ class ScMaterialCatalog(models.Model):
     legacy_category_id = fields.Char(string="历史分类ID", index=True, readonly=True)
     promoted_product_tmpl_id = fields.Many2one(
         "product.template",
-        string="已提升产品模板",
+        string="历史技术产品模板",
         index=True,
         readonly=True,
         ondelete="set null",
     )
     promoted_product_id = fields.Many2one(
         "product.product",
-        string="已提升产品",
+        string="历史技术产品",
         index=True,
         readonly=True,
         ondelete="set null",
@@ -61,6 +69,12 @@ class ScMaterialCatalog(models.Model):
         ),
     ]
 
+    @api.constrains("company_id", "project_id")
+    def _check_project_company(self):
+        for record in self:
+            if record.project_id and record.project_id.company_id != record.company_id:
+                raise ValidationError(_("材料档案所属项目必须属于同一公司。"))
+
 
 class ScMaterialPrice(models.Model):
     _name = "sc.material.price"
@@ -70,7 +84,8 @@ class ScMaterialPrice(models.Model):
 
     name = fields.Char(string="价格名称", compute="_compute_name", store=True)
     material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", required=True, index=True, tracking=True)
-    product_id = fields.Many2one("product.product", string="产品", index=True)
+    company_id = fields.Many2one("res.company", string="公司", related="material_catalog_id.company_id", store=True, index=True)
+    product_id = fields.Many2one("product.product", string="技术产品占位", index=True)
     supplier_id = fields.Many2one("res.partner", string="供应商", index=True, tracking=True)
     project_id = fields.Many2one("project.project", string="项目", index=True)
     price_type = fields.Selection(
@@ -124,3 +139,9 @@ class ScMaterialPrice(models.Model):
                 raise ValidationError(_("税率不能为负数。"))
             if record.effective_date and record.expiry_date and record.effective_date > record.expiry_date:
                 raise ValidationError(_("生效日期不能晚于失效日期。"))
+
+    @api.constrains("material_catalog_id", "project_id")
+    def _check_project_company(self):
+        for record in self:
+            if record.project_id and record.material_catalog_id.company_id != record.project_id.company_id:
+                raise ValidationError(_("材料价格所属项目必须与材料档案属于同一公司。"))

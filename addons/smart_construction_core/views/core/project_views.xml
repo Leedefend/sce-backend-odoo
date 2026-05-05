@@ -49,6 +49,7 @@
                         <group>
                             <field name="name" placeholder="请输入项目名称" required="1"/>
                             <field name="manager_id" required="1"/>
+                            <field name="operation_strategy"/>
                             <field name="owner_id"/>
                         </group>
                     </group>
@@ -84,6 +85,7 @@
                         <group>
                             <field name="name" placeholder="请输入项目名称" required="1"/>
                             <field name="manager_id" required="1"/>
+                            <field name="operation_strategy"/>
                             <field name="owner_id"/>
                         </group>
                     </group>
@@ -192,6 +194,7 @@
                         <field name="project_code" readonly="1" invisible="id == False"/>
                         <field name="project_type_id"/>
                         <field name="project_category_id"/>
+                        <field name="operation_strategy"/>
                         <field name="lifecycle_state"/>
                         <field name="phase_key" invisible="1"/>
                         <field name="owner_contact"/>

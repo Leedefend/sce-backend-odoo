@@ -92,9 +92,14 @@ class MaterialPlanToRfqWizard(models.TransientModel):
                 "line_ids": [],
             }
             for line in lines:
+                material_catalog = getattr(line, "material_catalog_id", False)
+                if not material_catalog:
+                    raise UserError(_("物资计划缺少材料档案，请补全材料档案后再生成询比价。"))
                 product = getattr(line, "product_id", None)
                 if not product:
-                    raise UserError(_("物资计划缺少物料，请补全物料信息后再生成询比价。"))
+                    product = self.env["product.product"].search([("default_code", "=", "SC-SYSTEM-DEFAULT-MATERIAL")], limit=1)
+                if not product:
+                    raise UserError(_("缺少系统默认材料技术占位，请联系管理员。"))
                 qty = (
                     getattr(line, "qty", None)
                     or getattr(line, "product_qty", None)
@@ -107,12 +112,6 @@ class MaterialPlanToRfqWizard(models.TransientModel):
                     uom = product.uom_po_id or product.uom_id
                 if not uom:
                     raise UserError(_("计划行缺少计量单位，请补全后再生成询比价。"))
-                base_uom = product.uom_po_id or product.uom_id
-                if uom.category_id != base_uom.category_id:
-                    raise UserError(
-                        _("物料 %s 的计量单位 %s 与产品默认采购单位 %s 不属于同一类别，请调整产品或计划行。")
-                        % (product.display_name, uom.display_name, base_uom.display_name)
-                    )
                 for supplier in suppliers:
                     rfq_vals["line_ids"].append(
                         (
@@ -124,10 +123,11 @@ class MaterialPlanToRfqWizard(models.TransientModel):
                                 else False,
                                 "supplier_id": supplier.id,
                                 "product_id": product.id,
+                                "material_catalog_id": material_catalog.id,
                                 "material_spec": getattr(line, "spec_model", False)
                                 or getattr(line, "spec", False)
-                                or product.default_code,
-                                "product_uom_id": (product.uom_po_id or uom).id,
+                                or material_catalog.spec_model,
+                                "product_uom_id": uom.id,
                                 "qty": qty,
                                 "unit_price": getattr(line, "price_unit", None) or getattr(line, "price", None) or 0.0,
                                 "note": getattr(line, "note", False),

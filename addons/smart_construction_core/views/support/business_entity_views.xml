@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_business_entity_search" model="ir.ui.view">
+            <field name="name">sc.business.entity.search</field>
+            <field name="model">sc.business.entity</field>
+            <field name="arch" type="xml">
+                <search string="业务核算主体">
+                    <field name="name"/>
+                    <field name="legacy_xmid"/>
+                    <field name="legacy_xmmc"/>
+                    <field name="partner_id"/>
+                    <filter string="候选" name="state_candidate" domain="[('mapping_state', '=', 'candidate')]"/>
+                    <filter string="已确认" name="state_confirmed" domain="[('mapping_state', '=', 'confirmed')]"/>
+                    <filter string="冲突" name="state_conflict" domain="[('mapping_state', '=', 'conflict')]"/>
+                    <filter string="平台主体" name="type_platform" domain="[('entity_type', '=', 'platform')]"/>
+                    <filter string="按隔离公司" name="group_company" context="{'group_by': 'company_id'}"/>
+                    <filter string="按类型" name="group_type" context="{'group_by': 'entity_type'}"/>
+                    <filter string="按状态" name="group_state" context="{'group_by': 'mapping_state'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_business_entity_tree" model="ir.ui.view">
+            <field name="name">sc.business.entity.tree</field>
+            <field name="model">sc.business.entity</field>
+            <field name="arch" type="xml">
+                <tree string="业务核算主体">
+                    <field name="sequence" widget="handle"/>
+                    <field name="name"/>
+                    <field name="company_id"/>
+                    <field name="entity_type"/>
+                    <field name="mapping_state"/>
+                    <field name="partner_id"/>
+                    <field name="legacy_xmid"/>
+                    <field name="legacy_xmmc"/>
+                    <field name="map_count"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_business_entity_form" model="ir.ui.view">
+            <field name="name">sc.business.entity.form</field>
+            <field name="model">sc.business.entity</field>
+            <field name="arch" type="xml">
+                <form string="业务核算主体">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="company_id"/>
+                                <field name="partner_id"/>
+                                <field name="active"/>
+                            </group>
+                            <group>
+                                <field name="entity_type"/>
+                                <field name="mapping_state"/>
+                                <field name="sequence"/>
+                                <field name="map_count" readonly="1"/>
+                            </group>
+                        </group>
+                        <group string="旧库来源">
+                            <group>
+                                <field name="legacy_xmid"/>
+                                <field name="legacy_xmmc"/>
+                            </group>
+                            <group>
+                                <field name="legacy_company_id"/>
+                                <field name="legacy_company_name"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="映射">
+                                <field name="map_ids" readonly="1">
+                                    <tree>
+                                        <field name="mapping_state"/>
+                                        <field name="source_table"/>
+                                        <field name="legacy_xmid"/>
+                                        <field name="legacy_xmmc"/>
+                                        <field name="source_count"/>
+                                        <field name="rows_total"/>
+                                        <field name="amount_total"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="备注">
+                                <field name="note"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_business_entity" model="ir.actions.act_window">
+            <field name="name">业务核算主体</field>
+            <field name="res_model">sc.business.entity</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_business_entity_search"/>
+            <field name="context">{'search_default_state_candidate': 1, 'search_default_group_state': 1}</field>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        </record>
+
+        <record id="view_sc_legacy_business_entity_map_search" model="ir.ui.view">
+            <field name="name">sc.legacy.business.entity.map.search</field>
+            <field name="model">sc.legacy.business.entity.map</field>
+            <field name="arch" type="xml">
+                <search string="旧库业务主体映射">
+                    <field name="legacy_xmid"/>
+                    <field name="legacy_xmmc"/>
+                    <field name="business_entity_id"/>
+                    <field name="partner_id"/>
+                    <filter string="候选" name="state_candidate" domain="[('mapping_state', '=', 'candidate')]"/>
+                    <filter string="已确认" name="state_confirmed" domain="[('mapping_state', '=', 'confirmed')]"/>
+                    <filter string="冲突" name="state_conflict" domain="[('mapping_state', '=', 'conflict')]"/>
+                    <filter string="忽略" name="state_ignored" domain="[('mapping_state', '=', 'ignored')]"/>
+                    <filter string="按来源表" name="group_source_table" context="{'group_by': 'source_table'}"/>
+                    <filter string="按状态" name="group_state" context="{'group_by': 'mapping_state'}"/>
+                    <filter string="按目标主体" name="group_entity" context="{'group_by': 'business_entity_id'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_business_entity_map_tree" model="ir.ui.view">
+            <field name="name">sc.legacy.business.entity.map.tree</field>
+            <field name="model">sc.legacy.business.entity.map</field>
+            <field name="arch" type="xml">
+                <tree string="旧库业务主体映射">
+                    <field name="mapping_state"/>
+                    <field name="source_table"/>
+                    <field name="legacy_xmid"/>
+                    <field name="legacy_xmmc"/>
+                    <field name="company_id"/>
+                    <field name="business_entity_id"/>
+                    <field name="partner_id"/>
+                    <field name="source_count"/>
+                    <field name="rows_total"/>
+                    <field name="amount_total"/>
+                    <field name="confidence"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_business_entity_map_form" model="ir.ui.view">
+            <field name="name">sc.legacy.business.entity.map.form</field>
+            <field name="model">sc.legacy.business.entity.map</field>
+            <field name="arch" type="xml">
+                <form string="旧库业务主体映射">
+                    <header>
+                        <button name="action_confirm" string="确认映射" type="object" class="oe_highlight" invisible="mapping_state == 'confirmed'"/>
+                        <button name="action_mark_conflict" string="标记冲突" type="object" invisible="mapping_state == 'conflict'"/>
+                        <button name="action_ignore" string="忽略" type="object" invisible="mapping_state == 'ignored'"/>
+                        <field name="mapping_state" widget="statusbar" statusbar_visible="candidate,confirmed,conflict,ignored"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="source_table"/>
+                                <field name="source_domain"/>
+                                <field name="legacy_xmid"/>
+                                <field name="legacy_xmmc"/>
+                            </group>
+                            <group>
+                                <field name="company_id"/>
+                                <field name="business_entity_id"/>
+                                <field name="partner_id"/>
+                                <field name="suggested_entity_type"/>
+                            </group>
+                        </group>
+                        <group string="旧公司字段">
+                            <field name="legacy_company_id"/>
+                            <field name="legacy_company_name"/>
+                        </group>
+                        <group string="证据">
+                            <group>
+                                <field name="source_count"/>
+                                <field name="rows_total"/>
+                                <field name="amount_total"/>
+                                <field name="confidence"/>
+                            </group>
+                            <group>
+                                <field name="reviewer_id" readonly="1"/>
+                                <field name="reviewed_at" readonly="1"/>
+                                <field name="active"/>
+                            </group>
+                            <field name="evidence"/>
+                            <field name="note"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_legacy_business_entity_map" model="ir.actions.act_window">
+            <field name="name">旧库业务主体映射</field>
+            <field name="res_model">sc.legacy.business.entity.map</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_legacy_business_entity_map_search"/>
+            <field name="context">{'search_default_state_candidate': 1, 'search_default_group_state': 1}</field>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        </record>
+
+        <record id="view_sc_legacy_project_map_search" model="ir.ui.view">
+            <field name="name">sc.legacy.project.map.search</field>
+            <field name="model">sc.legacy.project.map</field>
+            <field name="arch" type="xml">
+                <search string="旧库项目映射">
+                    <field name="legacy_gcmc"/>
+                    <field name="project_id"/>
+                    <filter string="候选" name="state_candidate" domain="[('mapping_state', '=', 'candidate')]"/>
+                    <filter string="已确认" name="state_confirmed" domain="[('mapping_state', '=', 'confirmed')]"/>
+                    <filter string="冲突" name="state_conflict" domain="[('mapping_state', '=', 'conflict')]"/>
+                    <filter string="忽略" name="state_ignored" domain="[('mapping_state', '=', 'ignored')]"/>
+                    <filter string="真实项目候选" name="suggest_project" domain="[('suggested_state', '=', 'project_candidate')]"/>
+                    <filter string="单来源候选" name="suggest_single_source" domain="[('suggested_state', '=', 'single_source_project_candidate')]"/>
+                    <filter string="非真实项目复核" name="suggest_not_real" domain="[('suggested_state', '=', 'not_real_project_review')]"/>
+                    <filter string="按状态" name="group_state" context="{'group_by': 'mapping_state'}"/>
+                    <filter string="按建议状态" name="group_suggested_state" context="{'group_by': 'suggested_state'}"/>
+                    <filter string="按匹配方式" name="group_match_method" context="{'group_by': 'match_method'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_project_map_tree" model="ir.ui.view">
+            <field name="name">sc.legacy.project.map.tree</field>
+            <field name="model">sc.legacy.project.map</field>
+            <field name="arch" type="xml">
+                <tree string="旧库项目映射">
+                    <field name="mapping_state"/>
+                    <field name="suggested_state"/>
+                    <field name="legacy_gcmc"/>
+                    <field name="company_id"/>
+                    <field name="project_id"/>
+                    <field name="match_method"/>
+                    <field name="confidence"/>
+                    <field name="source_count"/>
+                    <field name="rows_total"/>
+                    <field name="amount_total"/>
+                    <field name="min_date"/>
+                    <field name="max_date"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_project_map_form" model="ir.ui.view">
+            <field name="name">sc.legacy.project.map.form</field>
+            <field name="model">sc.legacy.project.map</field>
+            <field name="arch" type="xml">
+                <form string="旧库项目映射">
+                    <header>
+                        <button name="action_confirm" string="确认映射" type="object" class="oe_highlight" invisible="mapping_state == 'confirmed'"/>
+                        <button name="action_mark_conflict" string="标记冲突" type="object" invisible="mapping_state == 'conflict'"/>
+                        <button name="action_ignore" string="忽略" type="object" invisible="mapping_state == 'ignored'"/>
+                        <field name="mapping_state" widget="statusbar" statusbar_visible="candidate,confirmed,conflict,ignored"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="source_table"/>
+                                <field name="source_domain"/>
+                                <field name="legacy_gcmc"/>
+                                <field name="suggested_state"/>
+                            </group>
+                            <group>
+                                <field name="company_id"/>
+                                <field name="project_id"/>
+                                <field name="match_method"/>
+                                <field name="confidence"/>
+                            </group>
+                        </group>
+                        <group string="事实信号">
+                            <group>
+                                <field name="source_count"/>
+                                <field name="rows_total"/>
+                                <field name="amount_total"/>
+                                <field name="min_date"/>
+                                <field name="max_date"/>
+                            </group>
+                            <group>
+                                <field name="payment_rows"/>
+                                <field name="payment_amount"/>
+                                <field name="contract_rows"/>
+                                <field name="contract_amount"/>
+                                <field name="stock_rows"/>
+                                <field name="stock_amount"/>
+                            </group>
+                        </group>
+                        <group string="审阅">
+                            <group>
+                                <field name="reviewer_id" readonly="1"/>
+                                <field name="reviewed_at" readonly="1"/>
+                                <field name="active"/>
+                            </group>
+                            <field name="evidence"/>
+                            <field name="note"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_legacy_project_map" model="ir.actions.act_window">
+            <field name="name">旧库项目映射</field>
+            <field name="res_model">sc.legacy.project.map</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_legacy_project_map_search"/>
+            <field name="context">{'search_default_state_candidate': 1, 'search_default_group_state': 1}</field>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        </record>
+
+        <record id="view_sc_legacy_partner_map_search" model="ir.ui.view">
+            <field name="name">sc.legacy.partner.map.search</field>
+            <field name="model">sc.legacy.partner.map</field>
+            <field name="arch" type="xml">
+                <search string="旧库往来单位映射">
+                    <field name="legacy_partner_name"/>
+                    <field name="legacy_tax_code"/>
+                    <field name="partner_id"/>
+                    <field name="sample_carrier"/>
+                    <field name="max_carrier"/>
+                    <filter string="候选" name="state_candidate" domain="[('mapping_state', '=', 'candidate')]"/>
+                    <filter string="已确认" name="state_confirmed" domain="[('mapping_state', '=', 'confirmed')]"/>
+                    <filter string="冲突" name="state_conflict" domain="[('mapping_state', '=', 'conflict')]"/>
+                    <filter string="忽略" name="state_ignored" domain="[('mapping_state', '=', 'ignored')]"/>
+                    <filter string="税号冲突" name="suggest_tax_conflict" domain="[('suggested_state', '=', 'tax_code_conflict')]"/>
+                    <filter string="跨主体重复" name="suggest_across_carriers" domain="[('suggested_state', '=', 'duplicate_across_carriers')]"/>
+                    <filter string="事实往来候选" name="suggest_fact_partner" domain="[('suggested_state', '=', 'fact_partner_candidate')]"/>
+                    <filter string="按状态" name="group_state" context="{'group_by': 'mapping_state'}"/>
+                    <filter string="按建议状态" name="group_suggested_state" context="{'group_by': 'suggested_state'}"/>
+                    <filter string="按匹配方式" name="group_match_method" context="{'group_by': 'match_method'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_partner_map_tree" model="ir.ui.view">
+            <field name="name">sc.legacy.partner.map.tree</field>
+            <field name="model">sc.legacy.partner.map</field>
+            <field name="arch" type="xml">
+                <tree string="旧库往来单位映射">
+                    <field name="mapping_state"/>
+                    <field name="suggested_state"/>
+                    <field name="legacy_partner_name"/>
+                    <field name="legacy_tax_code"/>
+                    <field name="company_id"/>
+                    <field name="partner_id"/>
+                    <field name="match_method"/>
+                    <field name="target_partner_count"/>
+                    <field name="legacy_rows"/>
+                    <field name="active_rows"/>
+                    <field name="tax_code_count"/>
+                    <field name="carrier_count"/>
+                    <field name="sample_carrier"/>
+                    <field name="max_carrier"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_partner_map_form" model="ir.ui.view">
+            <field name="name">sc.legacy.partner.map.form</field>
+            <field name="model">sc.legacy.partner.map</field>
+            <field name="arch" type="xml">
+                <form string="旧库往来单位映射">
+                    <header>
+                        <button name="action_confirm" string="确认映射" type="object" class="oe_highlight" invisible="mapping_state == 'confirmed'"/>
+                        <button name="action_mark_conflict" string="标记冲突" type="object" invisible="mapping_state == 'conflict'"/>
+                        <button name="action_ignore" string="忽略" type="object" invisible="mapping_state == 'ignored'"/>
+                        <field name="mapping_state" widget="statusbar" statusbar_visible="candidate,confirmed,conflict,ignored"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="source_table"/>
+                                <field name="source_domain"/>
+                                <field name="legacy_key"/>
+                                <field name="legacy_partner_name"/>
+                                <field name="legacy_tax_code"/>
+                                <field name="suggested_state"/>
+                            </group>
+                            <group>
+                                <field name="company_id"/>
+                                <field name="partner_id"/>
+                                <field name="match_method"/>
+                                <field name="confidence"/>
+                                <field name="target_partner_count"/>
+                            </group>
+                        </group>
+                        <group string="重复信号">
+                            <group>
+                                <field name="legacy_rows"/>
+                                <field name="active_rows"/>
+                                <field name="tax_code_count"/>
+                                <field name="carrier_count"/>
+                            </group>
+                            <group>
+                                <field name="sample_carrier"/>
+                                <field name="max_carrier"/>
+                            </group>
+                        </group>
+                        <group string="审阅">
+                            <group>
+                                <field name="reviewer_id" readonly="1"/>
+                                <field name="reviewed_at" readonly="1"/>
+                                <field name="active"/>
+                            </group>
+                            <field name="evidence"/>
+                            <field name="note"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_legacy_partner_map" model="ir.actions.act_window">
+            <field name="name">旧库往来单位映射</field>
+            <field name="res_model">sc.legacy.partner.map</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_legacy_partner_map_search"/>
+            <field name="context">{'search_default_state_candidate': 1, 'search_default_group_state': 1}</field>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        </record>
+
+        <menuitem id="menu_sc_business_entity"
+                  name="业务核算主体"
+                  parent="smart_construction_core.menu_sc_data_center"
+                  action="action_sc_business_entity"
+                  sequence="11"
+                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+        <menuitem id="menu_sc_legacy_business_entity_map"
+                  name="旧库业务主体映射"
+                  parent="smart_construction_core.menu_sc_data_center"
+                  action="action_sc_legacy_business_entity_map"
+                  sequence="12"
+                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+        <menuitem id="menu_sc_legacy_project_map"
+                  name="旧库项目映射"
+                  parent="smart_construction_core.menu_sc_data_center"
+                  action="action_sc_legacy_project_map"
+                  sequence="13"
+                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+        <menuitem id="menu_sc_legacy_partner_map"
+                  name="旧库往来单位映射"
+                  parent="smart_construction_core.menu_sc_data_center"
+                  action="action_sc_legacy_partner_map"
+                  sequence="14"
+                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+    </data>
+</odoo>

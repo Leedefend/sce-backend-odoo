@@ -4,11 +4,21 @@ from __future__ import annotations
 from odoo.addons.smart_construction_core.services.project_state_explain_service import lifecycle_state_label
 
 
+def operation_strategy_label(value):
+    labels = {
+        "direct": "公司直营",
+        "joint": "联营项目",
+    }
+    return labels.get(str(value or "").strip(), "")
+
+
 def build_project_context(project):
     if not project:
         return {
             "project_id": 0,
             "project_name": "",
+            "operation_strategy": "",
+            "operation_strategy_label": "",
             "execution_stage": "",
             "execution_stage_label": "",
             "stage": "",
@@ -19,6 +29,7 @@ def build_project_context(project):
             "status": "",
         }
     execution_stage = str(getattr(project, "lifecycle_state", "") or "").strip()
+    operation_strategy = str(getattr(project, "operation_strategy", "") or "").strip()
     execution_stage_label = lifecycle_state_label(execution_stage, default="")
     milestone = str(getattr(project, "sc_execution_state", "") or "").strip()
     milestone_label = str(getattr(project, "sc_execution_state_label", "") or "").strip()
@@ -26,6 +37,8 @@ def build_project_context(project):
     return {
         "project_id": int(getattr(project, "id", 0) or 0),
         "project_name": str(getattr(project, "display_name", "") or getattr(project, "name", "") or "").strip(),
+        "operation_strategy": operation_strategy,
+        "operation_strategy_label": operation_strategy_label(operation_strategy) or operation_strategy,
         "execution_stage": execution_stage,
         "execution_stage_label": execution_stage_label or execution_stage,
         "stage": execution_stage,

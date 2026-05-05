@@ -42,6 +42,13 @@ class ScGeneralContract(models.Model):
         readonly=True,
         index=True,
     )
+    operation_strategy = fields.Selection(
+        related="project_id.operation_strategy",
+        string="经营策略",
+        store=True,
+        readonly=True,
+        index=True,
+    )
     partner_id = fields.Many2one("res.partner", string="往来单位", index=True)
     partner_name_text = fields.Char(string="合同方文本", index=True)
     credit_code = fields.Char(string="统一信用代码", index=True)

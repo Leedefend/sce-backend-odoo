@@ -78,7 +78,8 @@ class ScMaterialRentalPlanLine(models.Model):
     plan_id = fields.Many2one("sc.material.rental.plan", string="租赁计划", required=True, ondelete="cascade", index=True)
     sequence = fields.Integer(default=10)
     project_id = fields.Many2one("project.project", string="项目", related="plan_id.project_id", store=True, index=True)
-    product_id = fields.Many2one("product.product", string="周转材料", index=True)
+    material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
+    product_id = fields.Many2one("product.product", string="技术材料占位", index=True)
     material_name = fields.Char(string="材料名称", required=True)
     material_spec = fields.Char(string="规格型号")
     unit_name = fields.Char(string="单位")
@@ -93,6 +94,40 @@ class ScMaterialRentalPlanLine(models.Model):
     def _compute_amount(self):
         for line in self:
             line.estimated_amount = (line.planned_qty or 0.0) * (line.planned_days or 0.0) * (line.daily_price or 0.0)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._apply_material_catalog_defaults(vals)
+        return super().create(vals_list)
+
+    @api.model
+    def _apply_material_catalog_defaults(self, vals):
+        catalog = self.env["sc.material.catalog"].browse(vals.get("material_catalog_id")) if vals.get("material_catalog_id") else False
+        if not catalog:
+            return vals
+        vals.setdefault("material_name", catalog.display_name)
+        vals.setdefault("material_spec", catalog.spec_model or False)
+        vals.setdefault("unit_name", catalog.uom_text or False)
+        return vals
+
+    @api.onchange("material_catalog_id")
+    def _onchange_material_catalog_id(self):
+        for line in self:
+            catalog = line.material_catalog_id
+            if not catalog:
+                continue
+            line.material_name = catalog.display_name
+            line.material_spec = catalog.spec_model or line.material_spec
+            line.unit_name = catalog.uom_text or line.unit_name
+
+    @api.onchange("product_id")
+    def _onchange_product_id(self):
+        for line in self:
+            if line.product_id and not line.material_catalog_id:
+                line.material_name = line.product_id.display_name
+                line.material_spec = line.product_id.default_code or line.material_spec
+                line.unit_name = line.product_id.uom_id.name or line.unit_name
 
 
 class ScMaterialRentalOrder(models.Model):
@@ -162,7 +197,8 @@ class ScMaterialRentalOrderLine(models.Model):
 
     order_id = fields.Many2one("sc.material.rental.order", string="租赁单", required=True, ondelete="cascade", index=True)
     sequence = fields.Integer(default=10)
-    product_id = fields.Many2one("product.product", string="周转材料", index=True)
+    material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
+    product_id = fields.Many2one("product.product", string="技术材料占位", index=True)
     material_name = fields.Char(string="材料名称", required=True)
     material_spec = fields.Char(string="规格型号")
     unit_name = fields.Char(string="单位")
@@ -179,6 +215,40 @@ class ScMaterialRentalOrderLine(models.Model):
     def _compute_amount_total(self):
         for line in self:
             line.amount_total = (line.qty or 0.0) * (line.rental_days or 0.0) * (line.daily_price or 0.0)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._apply_material_catalog_defaults(vals)
+        return super().create(vals_list)
+
+    @api.model
+    def _apply_material_catalog_defaults(self, vals):
+        catalog = self.env["sc.material.catalog"].browse(vals.get("material_catalog_id")) if vals.get("material_catalog_id") else False
+        if not catalog:
+            return vals
+        vals.setdefault("material_name", catalog.display_name)
+        vals.setdefault("material_spec", catalog.spec_model or False)
+        vals.setdefault("unit_name", catalog.uom_text or False)
+        return vals
+
+    @api.onchange("material_catalog_id")
+    def _onchange_material_catalog_id(self):
+        for line in self:
+            catalog = line.material_catalog_id
+            if not catalog:
+                continue
+            line.material_name = catalog.display_name
+            line.material_spec = catalog.spec_model or line.material_spec
+            line.unit_name = catalog.uom_text or line.unit_name
+
+    @api.onchange("product_id")
+    def _onchange_product_id(self):
+        for line in self:
+            if line.product_id and not line.material_catalog_id:
+                line.material_name = line.product_id.display_name
+                line.material_spec = line.product_id.default_code or line.material_spec
+                line.unit_name = line.product_id.uom_id.name or line.unit_name
 
 
 class ScMaterialRentalSettlement(models.Model):
@@ -252,7 +322,8 @@ class ScMaterialRentalSettlementLine(models.Model):
 
     settlement_id = fields.Many2one("sc.material.rental.settlement", string="租赁结算", required=True, ondelete="cascade", index=True)
     sequence = fields.Integer(default=10)
-    product_id = fields.Many2one("product.product", string="周转材料", index=True)
+    material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
+    product_id = fields.Many2one("product.product", string="技术材料占位", index=True)
     material_name = fields.Char(string="材料名称", required=True)
     material_spec = fields.Char(string="规格型号")
     unit_name = fields.Char(string="单位")
@@ -268,3 +339,37 @@ class ScMaterialRentalSettlementLine(models.Model):
     def _compute_rent_amount(self):
         for line in self:
             line.rent_amount = (line.qty or 0.0) * (line.rental_days or 0.0) * (line.daily_price or 0.0)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._apply_material_catalog_defaults(vals)
+        return super().create(vals_list)
+
+    @api.model
+    def _apply_material_catalog_defaults(self, vals):
+        catalog = self.env["sc.material.catalog"].browse(vals.get("material_catalog_id")) if vals.get("material_catalog_id") else False
+        if not catalog:
+            return vals
+        vals.setdefault("material_name", catalog.display_name)
+        vals.setdefault("material_spec", catalog.spec_model or False)
+        vals.setdefault("unit_name", catalog.uom_text or False)
+        return vals
+
+    @api.onchange("material_catalog_id")
+    def _onchange_material_catalog_id(self):
+        for line in self:
+            catalog = line.material_catalog_id
+            if not catalog:
+                continue
+            line.material_name = catalog.display_name
+            line.material_spec = catalog.spec_model or line.material_spec
+            line.unit_name = catalog.uom_text or line.unit_name
+
+    @api.onchange("product_id")
+    def _onchange_product_id(self):
+        for line in self:
+            if line.product_id and not line.material_catalog_id:
+                line.material_name = line.product_id.display_name
+                line.material_spec = line.product_id.default_code or line.material_spec
+                line.unit_name = line.product_id.uom_id.name or line.unit_name

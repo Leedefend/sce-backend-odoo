@@ -78,6 +78,7 @@ class ProjectMaterialPlan(models.Model):
         "line_ids.spec",
         "line_ids.spec_model",
         "line_ids.uom_id",
+        "line_ids.material_uom_text",
         "line_ids.note",
         "line_ids.attachment_ids",
     )
@@ -87,7 +88,9 @@ class ProjectMaterialPlan(models.Model):
             rec.material_spec_summary = rec._summarize_line_text(
                 line.spec_model or line.spec for line in rec.line_ids
             )
-            rec.material_uom_summary = rec._summarize_line_text(rec.line_ids.mapped("uom_id.name"))
+            rec.material_uom_summary = rec._summarize_line_text(
+                line.material_uom_text or line.uom_id.name for line in rec.line_ids
+            )
             rec.line_note_summary = rec._summarize_line_text(rec.line_ids.mapped("note"))
             rec.line_attachment_count = sum(len(line.attachment_ids) for line in rec.line_ids)
 
@@ -127,15 +130,13 @@ class ProjectMaterialPlan(models.Model):
         return self.env.user
 
     def _normalize_lines_uom(self):
-        """确保明细的计量单位与产品采购单位同类别，不合法时自动纠正为采购单位。"""
+        """Validate material identity without forcing product-management semantics."""
         for line in self.line_ids:
-            if not line.product_id:
-                raise UserError(_("计划行缺少物料，请补全后再提交。"))
-            base_uom = line.product_id.uom_po_id or line.product_id.uom_id
-            if not base_uom:
-                raise UserError(_("物料 %s 缺少默认计量单位，请先完善产品信息。") % line.product_id.display_name)
-            if not line.uom_id or line.uom_id.category_id != base_uom.category_id:
-                line.uom_id = base_uom
+            if not line.material_catalog_id:
+                raise UserError(_("计划行缺少材料档案，请补全后再提交。"))
+            line._ensure_technical_product()
+            if not line.material_uom_text and line.uom_id:
+                line.material_uom_text = line.uom_id.name
 
     def action_submit(self):
         seq = self.env["ir.sequence"]
@@ -303,7 +304,8 @@ class ProjectMaterialPlanLine(models.Model):
         ondelete="cascade",
         index=True,
     )
-    product_id = fields.Many2one("product.product", string="物料", required=True)
+    material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
+    product_id = fields.Many2one("product.product", string="技术材料占位", required=True)
     material_name = fields.Char(string="材料名称", compute="_compute_material_text", store=True)
     spec = fields.Char("规格")
     spec_model = fields.Char(string="规格型号", compute="_compute_material_text", store=True)
@@ -311,6 +313,7 @@ class ProjectMaterialPlanLine(models.Model):
     bill_qty = fields.Float(string="清单数量")
     unplanned_qty = fields.Float(string="未计划数量", compute="_compute_unplanned_qty", store=True)
     uom_id = fields.Many2one("uom.uom", string="单位")
+    material_uom_text = fields.Char(string="单位文本")
     vendor_id = fields.Many2one(
         "res.partner",
         string="建议供应商",
@@ -325,11 +328,25 @@ class ProjectMaterialPlanLine(models.Model):
         string="附件",
     )
 
-    @api.depends("product_id", "spec")
+    @api.model
+    def _default_technical_product_id(self):
+        product = self.env["product.product"].search([("default_code", "=", "SC-SYSTEM-DEFAULT-MATERIAL")], limit=1)
+        if not product:
+            product = self.env["product.product"].sudo().create(
+                {
+                    "name": "系统默认材料（技术占位）",
+                    "default_code": "SC-SYSTEM-DEFAULT-MATERIAL",
+                    "type": "product",
+                }
+            )
+        return product.id
+
+    @api.depends("material_catalog_id", "product_id", "spec")
     def _compute_material_text(self):
         for line in self:
-            line.material_name = line.product_id.display_name if line.product_id else False
-            line.spec_model = line.spec
+            catalog = line.material_catalog_id
+            line.material_name = catalog.name if catalog else (line.product_id.display_name if line.product_id else False)
+            line.spec_model = line.spec or catalog.spec_model
 
     @api.depends("quantity", "bill_qty")
     def _compute_unplanned_qty(self):
@@ -340,28 +357,53 @@ class ProjectMaterialPlanLine(models.Model):
     def create(self, vals_list):
         Product = self.env["product.product"]
         for vals in vals_list:
+            catalog = self.env["sc.material.catalog"].browse(vals.get("material_catalog_id")) if vals.get("material_catalog_id") else False
+            if catalog:
+                vals.setdefault("spec", catalog.spec_model or False)
+                vals.setdefault("material_uom_text", catalog.uom_text or False)
+            if not vals.get("product_id"):
+                vals["product_id"] = self._default_technical_product_id()
             if not vals.get("uom_id") and vals.get("product_id"):
                 product = Product.browse(vals["product_id"])
                 vals["uom_id"] = (product.uom_po_id or product.uom_id).id
         return super().create(vals_list)
 
+    @api.onchange("material_catalog_id")
+    def _onchange_material_catalog_id(self):
+        for line in self:
+            catalog = line.material_catalog_id
+            if not catalog:
+                continue
+            if not line.spec:
+                line.spec = catalog.spec_model
+            line.material_uom_text = catalog.uom_text
+            line._ensure_technical_product()
+
     @api.onchange("product_id")
     def _onchange_product_id_set_uom(self):
         for line in self:
-            if line.product_id:
+            if line.product_id and not line.material_catalog_id:
                 line.uom_id = line.product_id.uom_po_id or line.product_id.uom_id
+                line.material_uom_text = line.uom_id.name
 
     @api.constrains("product_id", "uom_id")
     def _check_uom_category(self):
         for line in self:
+            if line.material_catalog_id:
+                continue
             if line.product_id and line.uom_id:
                 base_uom = line.product_id.uom_po_id or line.product_id.uom_id
                 if line.uom_id.category_id != base_uom.category_id:
-                    raise ValidationError(_("计划行单位必须与产品采购单位同类别"))
+                    raise ValidationError(_("计划行单位必须与技术材料占位单位同类别"))
+
+    def _ensure_technical_product(self):
+        for line in self:
+            if not line.product_id:
+                line.product_id = line._default_technical_product_id()
 
     # 硬约束：非草稿状态禁止修改/删除明细
     def write(self, vals):
-        lock_fields = {"product_id", "spec", "quantity", "uom_id", "vendor_id", "note"}
+        lock_fields = {"material_catalog_id", "spec", "quantity", "uom_id", "material_uom_text", "vendor_id", "note"}
         for line in self:
             if line.plan_id and line.plan_id.state != "draft" and lock_fields.intersection(vals):
                 raise UserError(_("已确认/完成的物资计划不允许修改明细。"))

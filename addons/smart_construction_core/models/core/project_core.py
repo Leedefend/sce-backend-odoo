@@ -557,6 +557,18 @@ class ProjectProject(models.Model):
         'sc.dictionary', string='项目类别',
         domain=[('type', '=', 'project_category')]
     )
+    operation_strategy = fields.Selection(
+        [
+            ("direct", "公司直营"),
+            ("joint", "联营项目"),
+        ],
+        string="经营策略",
+        default="direct",
+        required=True,
+        tracking=True,
+        index=True,
+        help="公司隔离之后的项目级全局经营策略维度，用于直营/联营业务事实切换、筛选和统计。",
+    )
     stage_id = fields.Many2one(
         'project.project.stage',
         string='阶段',

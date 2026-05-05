@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_legacy_scbs_fact_staging_search" model="ir.ui.view">
+            <field name="name">sc.legacy.scbs.fact.staging.search</field>
+            <field name="model">sc.legacy.scbs.fact.staging</field>
+            <field name="arch" type="xml">
+                <search string="SCBS旧库事实暂存">
+                    <field name="source_table"/>
+                    <field name="legacy_record_id"/>
+                    <field name="document_no"/>
+                    <field name="legacy_xmmc"/>
+                    <field name="legacy_gcmc"/>
+                    <field name="legacy_partner_name"/>
+                    <filter string="缺映射" name="gate_blocked" domain="[('mapping_gate_state', '=', 'blocked')]"/>
+                    <filter string="映射冲突" name="gate_conflict" domain="[('mapping_gate_state', '=', 'conflict')]"/>
+                    <filter string="仅可暂存" name="gate_staging_ready" domain="[('mapping_gate_state', '=', 'staging_ready')]"/>
+                    <filter string="可正式投影" name="gate_projection_ready" domain="[('mapping_gate_state', '=', 'projection_ready')]"/>
+                    <filter string="按闸口" name="group_gate" context="{'group_by': 'mapping_gate_state'}"/>
+                    <filter string="按事实族" name="group_family" context="{'group_by': 'fact_family'}"/>
+                    <filter string="按来源表" name="group_source_table" context="{'group_by': 'source_table'}"/>
+                    <filter string="按业务主体状态" name="group_entity_state" context="{'group_by': 'business_entity_mapping_state'}"/>
+                    <filter string="按项目状态" name="group_project_state" context="{'group_by': 'project_mapping_state'}"/>
+                    <filter string="按往来状态" name="group_partner_state" context="{'group_by': 'partner_mapping_state'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_scbs_fact_staging_tree" model="ir.ui.view">
+            <field name="name">sc.legacy.scbs.fact.staging.tree</field>
+            <field name="model">sc.legacy.scbs.fact.staging</field>
+            <field name="arch" type="xml">
+                <tree string="SCBS旧库事实暂存" create="0" edit="0" delete="0">
+                    <field name="mapping_gate_state"/>
+                    <field name="fact_family"/>
+                    <field name="source_table"/>
+                    <field name="legacy_record_id"/>
+                    <field name="document_date"/>
+                    <field name="document_no"/>
+                    <field name="amount_total"/>
+                    <field name="legacy_xmmc"/>
+                    <field name="business_entity_mapping_state"/>
+                    <field name="legacy_gcmc"/>
+                    <field name="project_mapping_state"/>
+                    <field name="legacy_partner_name"/>
+                    <field name="partner_mapping_state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_scbs_fact_staging_form" model="ir.ui.view">
+            <field name="name">sc.legacy.scbs.fact.staging.form</field>
+            <field name="model">sc.legacy.scbs.fact.staging</field>
+            <field name="arch" type="xml">
+                <form string="SCBS旧库事实暂存" create="0" edit="0" delete="0">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="mapping_gate_state"/>
+                                <field name="fact_family"/>
+                                <field name="source_table"/>
+                                <field name="legacy_record_id"/>
+                                <field name="legacy_pid"/>
+                                <field name="import_batch"/>
+                            </group>
+                            <group>
+                                <field name="document_no"/>
+                                <field name="document_date"/>
+                                <field name="document_state"/>
+                                <field name="deleted_flag"/>
+                                <field name="amount_total"/>
+                                <field name="active"/>
+                            </group>
+                        </group>
+                        <group string="业务主体映射">
+                            <group>
+                                <field name="legacy_xmid"/>
+                                <field name="legacy_xmmc"/>
+                            </group>
+                            <group>
+                                <field name="business_entity_map_id"/>
+                                <field name="business_entity_id"/>
+                                <field name="business_entity_mapping_state"/>
+                            </group>
+                        </group>
+                        <group string="项目映射">
+                            <group>
+                                <field name="legacy_gcmc"/>
+                            </group>
+                            <group>
+                                <field name="project_map_id"/>
+                                <field name="project_id"/>
+                                <field name="project_mapping_state"/>
+                            </group>
+                        </group>
+                        <group string="往来单位映射">
+                            <group>
+                                <field name="legacy_partner_id"/>
+                                <field name="legacy_partner_name"/>
+                                <field name="legacy_partner_tax_code"/>
+                            </group>
+                            <group>
+                                <field name="partner_map_id"/>
+                                <field name="partner_id"/>
+                                <field name="partner_mapping_state"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="note"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_legacy_scbs_fact_staging" model="ir.actions.act_window">
+            <field name="name">SCBS旧库事实暂存</field>
+            <field name="res_model">sc.legacy.scbs.fact.staging</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_legacy_scbs_fact_staging_search"/>
+            <field name="context">{'search_default_group_gate': 1, 'create': False, 'edit': False, 'delete': False}</field>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        </record>
+
+        <menuitem id="menu_sc_legacy_scbs_fact_staging"
+                  name="SCBS旧库事实暂存"
+                  parent="smart_construction_core.menu_sc_data_center"
+                  action="action_sc_legacy_scbs_fact_staging"
+                  sequence="15"
+                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+    </data>
+</odoo>

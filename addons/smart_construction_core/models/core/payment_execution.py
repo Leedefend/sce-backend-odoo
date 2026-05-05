@@ -49,6 +49,13 @@ class ScPaymentExecution(models.Model):
         readonly=True,
         index=True,
     )
+    operation_strategy = fields.Selection(
+        related="project_id.operation_strategy",
+        string="经营策略",
+        store=True,
+        readonly=True,
+        index=True,
+    )
     partner_id = fields.Many2one("res.partner", string="往来单位", index=True)
     contract_id = fields.Many2one("construction.contract", string="合同", index=True)
     payment_request_id = fields.Many2one("payment.request", string="付款申请", index=True, ondelete="set null")

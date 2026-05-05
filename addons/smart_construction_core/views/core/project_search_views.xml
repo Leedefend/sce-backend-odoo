@@ -10,9 +10,16 @@
                 <field name="owner_id"/>
                 <field name="manager_id"/>
                 <field name="user_id"/>
+                <field name="operation_strategy"/>
                 <filter name="filter_my_projects"
                         string="我的项目"
                         domain="['|', ('manager_id', '=', uid), '|', ('owner_id', '=', uid), ('user_id', '=', uid)]"/>
+                <filter name="filter_operation_direct"
+                        string="公司直营"
+                        domain="[('operation_strategy', '=', 'direct')]"/>
+                <filter name="filter_operation_joint"
+                        string="联营项目"
+                        domain="[('operation_strategy', '=', 'joint')]"/>
                 <filter name="filter_draft"
                         string="草稿"
                         domain="[('lifecycle_state', '=', 'draft')]"/>
@@ -39,6 +46,7 @@
                     <filter name="group_user" string="按项目管理员" context="{'group_by': 'user_id'}"/>
                     <filter name="group_owner" string="按业主单位" context="{'group_by': 'owner_id'}"/>
                     <filter name="group_partner" string="按客户" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_operation_strategy" string="按经营策略" context="{'group_by': 'operation_strategy'}"/>
                     <filter name="group_state" string="按项目状态" context="{'group_by': 'lifecycle_state'}"/>
                     <filter name="group_stage" string="按阶段" context="{'group_by': 'stage_id'}"/>
                     <filter name="group_company" string="按公司" context="{'group_by': 'company_id'}"/>
@@ -58,6 +66,12 @@
                 <filter name="filter_my_projects"
                         string="我的项目"
                         domain="['|', ('manager_id', '=', uid), '|', ('owner_id', '=', uid), ('user_id', '=', uid)]"/>
+                <filter name="filter_operation_direct"
+                        string="公司直营"
+                        domain="[('operation_strategy', '=', 'direct')]"/>
+                <filter name="filter_operation_joint"
+                        string="联营项目"
+                        domain="[('operation_strategy', '=', 'joint')]"/>
                 <filter name="filter_draft"
                         string="草稿"
                         domain="[('lifecycle_state', '=', 'draft')]"/>

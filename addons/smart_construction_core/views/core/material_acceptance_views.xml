@@ -49,10 +49,9 @@
             <search string="材料结算明细表">
                 <field name="settlement_id"/>
                 <field name="project_id"/>
-                <field name="product_id"/>
                 <field name="material_catalog_id"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
-                <filter string="按材料" name="group_product" context="{'group_by': 'product_id'}"/>
+                <filter string="按材料" name="group_material_catalog" context="{'group_by': 'material_catalog_id'}"/>
                 <filter string="按结算单" name="group_settlement" context="{'group_by': 'settlement_id'}"/>
             </search>
         </field>
@@ -65,8 +64,8 @@
             <tree string="材料结算明细表">
                 <field name="settlement_id"/>
                 <field name="project_id"/>
-                <field name="product_id"/>
                 <field name="material_catalog_id"/>
+                <field name="product_id" invisible="1"/>
                 <field name="material_spec"/>
                 <field name="product_uom_id"/>
                 <field name="qty" sum="结算数量合计"/>
@@ -142,8 +141,8 @@
                             <field name="line_ids">
                                 <tree editable="bottom">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="product_id"/>
-                                    <field name="material_catalog_id"/>
+                                    <field name="material_catalog_id" required="1"/>
+                                    <field name="product_id" invisible="1"/>
                                     <field name="material_spec"/>
                                     <field name="product_uom_id"/>
                                     <field name="qty"/>
@@ -260,8 +259,8 @@
                                     <field name="sequence" widget="handle"/>
                                     <field name="purchase_request_line_id"/>
                                     <field name="purchase_order_line_id"/>
-                                    <field name="product_id"/>
-                                    <field name="material_catalog_id"/>
+                                    <field name="material_catalog_id" required="1"/>
+                                    <field name="product_id" invisible="1"/>
                                     <field name="material_spec"/>
                                     <field name="product_uom_id"/>
                                     <field name="planned_qty"/>
@@ -331,6 +330,7 @@
             <tree string="入库单" default_order="inbound_date desc">
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="operation_strategy"/>
                 <field name="inbound_date"/>
                 <field name="material_name_summary"/>
                 <field name="material_spec_summary"/>
@@ -368,6 +368,7 @@
                         <group>
                             <field name="name"/>
                             <field name="project_id"/>
+                            <field name="operation_strategy" readonly="1"/>
                             <field name="inbound_date"/>
                             <field name="acceptance_id"/>
                             <button name="action_load_acceptance_lines" string="带入验收明细" type="object" class="btn-secondary"/>
@@ -392,8 +393,8 @@
                                 <tree editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="acceptance_line_id"/>
-                                    <field name="product_id"/>
-                                    <field name="material_catalog_id"/>
+                                    <field name="material_catalog_id" required="1"/>
+                                    <field name="product_id" invisible="1"/>
                                     <field name="material_spec"/>
                                     <field name="product_uom_id"/>
                                     <field name="qty"/>
@@ -428,13 +429,17 @@
             <search string="入库单">
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="operation_strategy"/>
                 <field name="acceptance_id"/>
                 <field name="supplier_id"/>
                 <field name="warehouse_id"/>
                 <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="待入库" name="submitted" domain="[('state', '=', 'submitted')]"/>
                 <filter string="已入库" name="received" domain="[('state', '=', 'received')]"/>
+                <filter string="公司直营" name="operation_direct" domain="[('operation_strategy', '=', 'direct')]"/>
+                <filter string="联营项目" name="operation_joint" domain="[('operation_strategy', '=', 'joint')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按经营策略" name="group_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
                 <filter string="按仓库" name="group_warehouse" context="{'group_by': 'warehouse_id'}"/>
                 <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
             </search>
@@ -501,8 +506,8 @@
                             <field name="line_ids">
                                 <tree editable="bottom">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="product_id"/>
-                                    <field name="material_catalog_id"/>
+                                    <field name="material_catalog_id" required="1"/>
+                                    <field name="product_id" invisible="1"/>
                                     <field name="material_spec"/>
                                     <field name="product_uom_id"/>
                                     <field name="qty"/>
@@ -616,8 +621,8 @@
                                     <field name="supplier_contact_name"/>
                                     <field name="supplier_contact_phone"/>
                                     <field name="quote_status"/>
-                                    <field name="product_id"/>
-                                    <field name="material_catalog_id"/>
+                                    <field name="material_catalog_id" required="1"/>
+                                    <field name="product_id" invisible="1"/>
                                     <field name="material_spec"/>
                                     <field name="product_uom_id"/>
                                     <field name="qty"/>
@@ -735,8 +740,8 @@
                             <field name="line_ids">
                                 <tree editable="bottom">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="product_id"/>
-                                    <field name="material_catalog_id"/>
+                                    <field name="material_catalog_id" required="1"/>
+                                    <field name="product_id" invisible="1"/>
                                     <field name="material_spec"/>
                                     <field name="product_uom_id"/>
                                     <field name="qty"/>

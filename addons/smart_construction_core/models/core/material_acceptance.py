@@ -84,6 +84,11 @@ class ScMaterialSystemDefaultMixin(models.AbstractModel):
         if require_supplier and not vals.get("supplier_id"):
             vals["supplier_id"] = self._sc_default_supplier_id()
             defaulted_fields.append("supplier_id")
+        catalog = self.env["sc.material.catalog"].browse(vals.get("material_catalog_id")) if vals.get("material_catalog_id") else False
+        if catalog:
+            if not vals.get("material_spec"):
+                vals["material_spec"] = catalog.spec_model or ""
+                defaulted_fields.append("material_spec")
         if not vals.get("product_id"):
             vals["product_id"] = self._sc_default_product_id()
             defaulted_fields.append("product_id")
@@ -98,7 +103,7 @@ class ScMaterialSystemDefaultMixin(models.AbstractModel):
             if not vals.get("product_uom_id"):
                 vals["product_uom_id"] = product.uom_id.id
                 defaulted_fields.append("product_uom_id")
-            if not vals.get("material_spec"):
+            if not vals.get("material_spec") and not catalog:
                 vals["material_spec"] = product.default_code or product.display_name
                 defaulted_fields.append("material_spec")
         self._sc_mark_system_defaults(vals, defaulted_fields)
@@ -237,7 +242,7 @@ class ScMaterialPurchaseRequestLine(models.Model):
     request_id = fields.Many2one("sc.material.purchase.request", string="采购申请", required=True, ondelete="cascade", index=True)
     sequence = fields.Integer(default=10)
     project_id = fields.Many2one("project.project", string="项目", related="request_id.project_id", store=True, index=True)
-    product_id = fields.Many2one("product.product", string="材料", required=True, index=True)
+    product_id = fields.Many2one("product.product", string="技术材料占位", required=True, index=True)
     material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
     material_spec = fields.Char(string="规格型号")
     product_uom_id = fields.Many2one("uom.uom", string="单位")
@@ -266,10 +271,18 @@ class ScMaterialPurchaseRequestLine(models.Model):
     @api.onchange("product_id")
     def _onchange_product_id(self):
         for record in self:
-            if record.product_id:
+            if record.product_id and not record.material_catalog_id:
                 record.product_uom_id = record.product_id.uom_id
                 if not record.material_spec:
                     record.material_spec = record.product_id.default_code or ""
+
+    @api.onchange("material_catalog_id")
+    def _onchange_material_catalog_id(self):
+        for record in self:
+            catalog = record.material_catalog_id
+            if not catalog:
+                continue
+            record.material_spec = catalog.spec_model or record.material_spec
 
     @api.constrains("qty", "estimated_unit_price")
     def _check_qty(self):
@@ -464,7 +477,7 @@ class ScMaterialAcceptanceLine(models.Model):
     project_id = fields.Many2one("project.project", string="项目", related="acceptance_id.project_id", store=True, index=True)
     purchase_request_line_id = fields.Many2one("sc.material.purchase.request.line", string="来源申请明细", index=True)
     purchase_order_line_id = fields.Many2one("purchase.order.line", string="来源采购明细", index=True)
-    product_id = fields.Many2one("product.product", string="材料", required=True, index=True)
+    product_id = fields.Many2one("product.product", string="技术材料占位", required=True, index=True)
     material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
     material_spec = fields.Char(string="规格型号")
     product_uom_id = fields.Many2one("uom.uom", string="单位")
@@ -495,10 +508,18 @@ class ScMaterialAcceptanceLine(models.Model):
     @api.onchange("product_id")
     def _onchange_product_id(self):
         for record in self:
-            if record.product_id:
+            if record.product_id and not record.material_catalog_id:
                 record.product_uom_id = record.product_id.uom_id
                 if not record.material_spec:
                     record.material_spec = record.product_id.default_code or ""
+
+    @api.onchange("material_catalog_id")
+    def _onchange_material_catalog_id(self):
+        for record in self:
+            catalog = record.material_catalog_id
+            if not catalog:
+                continue
+            record.material_spec = catalog.spec_model or record.material_spec
 
     @api.constrains("received_qty", "accepted_qty", "rejected_qty", "sampled_qty", "returned_qty")
     def _check_quantities(self):
@@ -544,6 +565,13 @@ class ScMaterialInbound(models.Model):
     keeper_id = fields.Many2one("res.users", string="仓管员", default=lambda self: self.env.user, index=True)
     stock_picking_id = fields.Many2one("stock.picking", string="库存入库单", readonly=True, copy=False, index=True)
     currency_id = fields.Many2one("res.currency", string="币种", related="project_id.company_id.currency_id", store=True)
+    operation_strategy = fields.Selection(
+        related="project_id.operation_strategy",
+        string="经营策略",
+        store=True,
+        readonly=True,
+        index=True,
+    )
     amount_total = fields.Monetary(string="金额合计", currency_field="currency_id", compute="_compute_amount_total", store=True)
     material_name_summary = fields.Char(string="材料名称", compute="_compute_inbound_line_summaries", store=True)
     material_spec_summary = fields.Char(string="规格型号", compute="_compute_inbound_line_summaries", store=True)
@@ -592,6 +620,7 @@ class ScMaterialInbound(models.Model):
 
     @api.depends(
         "line_ids.product_id",
+        "line_ids.material_catalog_id",
         "line_ids.material_spec",
         "line_ids.product_uom_id",
         "line_ids.qty",
@@ -601,7 +630,8 @@ class ScMaterialInbound(models.Model):
     def _compute_inbound_line_summaries(self):
         for record in self:
             record.material_name_summary = record._summarize_inbound_line_text(
-                record.line_ids.mapped("product_id.display_name")
+                line.material_catalog_id.display_name or line.product_id.display_name
+                for line in record.line_ids
             )
             record.material_spec_summary = record._summarize_inbound_line_text(
                 record.line_ids.mapped("material_spec")
@@ -724,8 +754,15 @@ class ScMaterialInboundLine(models.Model):
     inbound_id = fields.Many2one("sc.material.inbound", string="入库单", required=True, ondelete="cascade", index=True)
     sequence = fields.Integer(default=10)
     project_id = fields.Many2one("project.project", string="项目", related="inbound_id.project_id", store=True, index=True)
+    operation_strategy = fields.Selection(
+        related="inbound_id.operation_strategy",
+        string="经营策略",
+        store=True,
+        readonly=True,
+        index=True,
+    )
     acceptance_line_id = fields.Many2one("sc.material.acceptance.line", string="来源验收明细", index=True)
-    product_id = fields.Many2one("product.product", string="材料", required=True, index=True)
+    product_id = fields.Many2one("product.product", string="技术材料占位", required=True, index=True)
     material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
     material_spec = fields.Char(string="规格型号")
     product_uom_id = fields.Many2one("uom.uom", string="单位")
@@ -749,10 +786,18 @@ class ScMaterialInboundLine(models.Model):
     @api.onchange("product_id")
     def _onchange_product_id(self):
         for record in self:
-            if record.product_id:
+            if record.product_id and not record.material_catalog_id:
                 record.product_uom_id = record.product_id.uom_id
                 if not record.material_spec:
                     record.material_spec = record.product_id.default_code or ""
+
+    @api.onchange("material_catalog_id")
+    def _onchange_material_catalog_id(self):
+        for record in self:
+            catalog = record.material_catalog_id
+            if not catalog:
+                continue
+            record.material_spec = catalog.spec_model or record.material_spec
 
     @api.constrains("qty")
     def _check_qty(self):
@@ -867,7 +912,7 @@ class ScMaterialOutboundLine(models.Model):
     outbound_id = fields.Many2one("sc.material.outbound", string="出库单", required=True, ondelete="cascade", index=True)
     sequence = fields.Integer(default=10)
     project_id = fields.Many2one("project.project", string="项目", related="outbound_id.project_id", store=True, index=True)
-    product_id = fields.Many2one("product.product", string="材料", required=True, index=True)
+    product_id = fields.Many2one("product.product", string="技术材料占位", required=True, index=True)
     material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
     material_spec = fields.Char(string="规格型号")
     product_uom_id = fields.Many2one("uom.uom", string="单位")
@@ -883,10 +928,18 @@ class ScMaterialOutboundLine(models.Model):
     @api.onchange("product_id")
     def _onchange_product_id(self):
         for record in self:
-            if record.product_id:
+            if record.product_id and not record.material_catalog_id:
                 record.product_uom_id = record.product_id.uom_id
                 if not record.material_spec:
                     record.material_spec = record.product_id.default_code or ""
+
+    @api.onchange("material_catalog_id")
+    def _onchange_material_catalog_id(self):
+        for record in self:
+            catalog = record.material_catalog_id
+            if not catalog:
+                continue
+            record.material_spec = catalog.spec_model or record.material_spec
 
     @api.constrains("qty")
     def _check_qty(self):
@@ -983,7 +1036,8 @@ class ScMaterialRfq(models.Model):
         return self.line_ids.filtered(lambda line: line.quote_status != "abandoned")
 
     def _prepare_purchase_order_line_vals(self, line):
-        name = line.product_id.display_name
+        material_name = line.material_catalog_id.display_name if line.material_catalog_id else line.product_id.display_name
+        name = material_name
         if line.material_spec:
             name = "%s / %s" % (name, line.material_spec)
         if line.note:
@@ -1060,7 +1114,7 @@ class ScMaterialRfqLine(models.Model):
         required=True,
         index=True,
     )
-    product_id = fields.Many2one("product.product", string="材料", required=True, index=True)
+    product_id = fields.Many2one("product.product", string="技术材料占位", required=True, index=True)
     material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
     material_spec = fields.Char(string="规格型号")
     product_uom_id = fields.Many2one("uom.uom", string="单位")
@@ -1099,10 +1153,17 @@ class ScMaterialRfqLine(models.Model):
     @api.onchange("product_id")
     def _onchange_product_id(self):
         for record in self:
-            if record.product_id:
+            if record.product_id and not record.material_catalog_id:
                 record.product_uom_id = record.product_id.uom_id
                 if not record.material_spec:
                     record.material_spec = record.product_id.default_code or ""
+
+    @api.onchange("material_catalog_id")
+    def _onchange_material_catalog_id(self):
+        for record in self:
+            catalog = record.material_catalog_id
+            if catalog and not record.material_spec:
+                record.material_spec = catalog.spec_model or ""
 
     @api.onchange("supplier_id")
     def _onchange_supplier_id(self):
@@ -1213,7 +1274,7 @@ class ScMaterialSettlementLine(models.Model):
     settlement_id = fields.Many2one("sc.material.settlement", string="结算单", required=True, ondelete="cascade", index=True)
     sequence = fields.Integer(default=10)
     project_id = fields.Many2one("project.project", string="项目", related="settlement_id.project_id", store=True, index=True)
-    product_id = fields.Many2one("product.product", string="材料", required=True, index=True)
+    product_id = fields.Many2one("product.product", string="技术材料占位", required=True, index=True)
     material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
     material_spec = fields.Char(string="规格型号")
     product_uom_id = fields.Many2one("uom.uom", string="单位")
@@ -1244,10 +1305,18 @@ class ScMaterialSettlementLine(models.Model):
     @api.onchange("product_id")
     def _onchange_product_id(self):
         for record in self:
-            if record.product_id:
+            if record.product_id and not record.material_catalog_id:
                 record.product_uom_id = record.product_id.uom_id
                 if not record.material_spec:
                     record.material_spec = record.product_id.default_code or ""
+
+    @api.onchange("material_catalog_id")
+    def _onchange_material_catalog_id(self):
+        for record in self:
+            catalog = record.material_catalog_id
+            if not catalog:
+                continue
+            record.material_spec = catalog.spec_model or record.material_spec
 
     @api.constrains("qty", "unit_price", "tax_rate")
     def _check_values(self):

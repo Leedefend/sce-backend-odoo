@@ -4,10 +4,10 @@
         <field name="name">sc.legacy.fund.daily.snapshot.fact.tree</field>
         <field name="model">sc.legacy.fund.daily.snapshot.fact</field>
         <field name="arch" type="xml">
-            <tree string="资金日报" create="0" edit="0" delete="0">
+            <tree string="企业资金日报" create="0" edit="0" delete="0">
                 <field name="snapshot_date"/>
+                <field name="business_entity_id"/>
                 <field name="subject"/>
-                <field name="project_id"/>
                 <field name="account_balance_total"/>
                 <field name="bank_balance_total"/>
                 <field name="bank_system_difference"/>
@@ -21,11 +21,14 @@
         <field name="name">sc.legacy.fund.daily.snapshot.fact.form</field>
         <field name="model">sc.legacy.fund.daily.snapshot.fact</field>
         <field name="arch" type="xml">
-            <form string="资金日报" create="0" edit="0" delete="0">
+            <form string="企业资金日报" create="0" edit="0" delete="0">
                 <sheet>
                     <group>
                         <group>
                             <field name="snapshot_date"/>
+                            <field name="business_entity_id"/>
+                            <field name="company_id"/>
+                            <field name="document_scope"/>
                             <field name="subject"/>
                             <field name="project_id"/>
                             <field name="document_no"/>
@@ -36,6 +39,18 @@
                             <field name="bank_balance_total"/>
                             <field name="bank_system_difference"/>
                             <field name="note"/>
+                        </group>
+                    </group>
+                    <group string="旧库来源">
+                        <group>
+                            <field name="legacy_source_table"/>
+                            <field name="legacy_record_id"/>
+                            <field name="legacy_pid"/>
+                        </group>
+                        <group>
+                            <field name="legacy_business_entity_id"/>
+                            <field name="legacy_business_entity_name"/>
+                            <field name="legacy_project_name"/>
                         </group>
                     </group>
                 </sheet>
