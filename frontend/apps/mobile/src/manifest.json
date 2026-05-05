@@ -1,0 +1,18 @@
+{
+  "name": "SCE Mobile",
+  "appid": "__UNI__SCE",
+  "description": "Smart Construction mobile contract runtime shell",
+  "versionName": "0.1.0",
+  "versionCode": "1",
+  "mp-weixin": {
+    "appid": "",
+    "setting": {
+      "urlCheck": false
+    }
+  },
+  "h5": {
+    "router": {
+      "mode": "hash"
+    }
+  }
+}

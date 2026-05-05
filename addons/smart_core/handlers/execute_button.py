@@ -67,7 +67,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                     status_code=400,
                 )
 
-            if button_type not in ("object", "action"):
+            if button_type not in ("object", "action", "server", "server_action"):
                 return _failure_result(
                     model=model,
                     res_id=res_ids[0],
@@ -99,6 +99,9 @@ class ExecuteButtonHandler(BaseIntentHandler):
 
             method = getattr(recordset.with_context(self.context), method_name, None)
             if not callable(method):
+                server_action_result = self._run_server_action(button, model=model, res_ids=res_ids)
+                if server_action_result is not None:
+                    return server_action_result
                 return _failure_result(
                     model=model,
                     res_id=res_ids[0],
@@ -220,6 +223,64 @@ class ExecuteButtonHandler(BaseIntentHandler):
     # 兼容旧调用
     def run(self, **_kwargs):
         return self.handle()
+
+    def _run_server_action(self, button: dict, *, model: str, res_ids: List[int]):
+        server_action_id = button.get("server_action_id") or button.get("serverActionId")
+        xml_id = str(button.get("xml_id") or button.get("xmlId") or button.get("name") or "").strip()
+        action = None
+        if server_action_id:
+            try:
+                action = self.env["ir.actions.server"].sudo().browse(int(server_action_id)).exists()
+            except Exception:
+                action = None
+        if not action and xml_id:
+            try:
+                resolved = self.env.ref(xml_id, raise_if_not_found=False)
+                if resolved and resolved._name == "ir.actions.server":
+                    action = resolved.sudo()
+            except Exception:
+                action = None
+        if not action:
+            return None
+        result = action.with_context(
+            dict(
+                self.context if isinstance(self.context, dict) else {},
+                active_model=model,
+                active_id=res_ids[0] if res_ids else False,
+                active_ids=res_ids,
+            )
+        ).run()
+        payload = {
+            "type": "refresh",
+            "status": "success",
+            "success": True,
+            "reason_code": REASON_OK,
+            "message": "后端已执行服务端动作",
+            "res_model": model,
+            "res_id": res_ids[0] if res_ids else None,
+            "server_action_id": int(action.id),
+        }
+        effect = {
+            "type": "reload_record",
+            "target": {"kind": "record", "model": model, "id": res_ids[0] if res_ids else None},
+        }
+        if isinstance(result, dict):
+            payload["raw_action"] = result
+            action_id = result.get("id")
+            action_model = result.get("res_model")
+            action_res_id = result.get("res_id")
+            if action_model and action_res_id:
+                effect = {"type": "navigate", "target": {"kind": "record", "model": action_model, "id": action_res_id}}
+            elif action_id:
+                effect = {"type": "navigate", "target": {"kind": "action", "action_id": action_id}}
+        return {
+            "ok": True,
+            "data": {"result": payload, "effect": effect},
+            "meta": {
+                "trace_id": self.context.get("trace_id") if isinstance(self.context, dict) else "",
+                "source_authority": self._source_authority_contract(model, str(action.id), "server_action"),
+            },
+        }
 
     def _maybe_create_followup(self, recordset, method_name: str, payload: dict):
         if not _should_generate_todo(method_name):

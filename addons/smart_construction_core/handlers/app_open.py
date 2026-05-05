@@ -16,6 +16,17 @@ def _md5(d: Any) -> str:
     return hashlib.md5(json.dumps(d, ensure_ascii=False, sort_keys=True, default=str).encode()).hexdigest()
 
 
+def _params(payload: Any) -> Dict[str, Any]:
+    if not isinstance(payload, dict):
+        return {}
+    nested = payload.get("params")
+    if isinstance(nested, dict):
+        merged = dict(payload)
+        merged.update(nested)
+        return merged
+    return dict(payload)
+
+
 def _is_feature_openable(env, su_env, app_id: str, feature: Dict[str, Any], perms: set[str]) -> bool:
     if not isinstance(feature, dict):
         return False
@@ -50,6 +61,19 @@ def _workspace_fallback_payload(reason: str = "") -> Dict[str, Any]:
         payload["fallback_reason"] = str(reason)
     return payload
 
+
+def _action_target_payload(su_env, action_xmlid: str) -> Dict[str, Any]:
+    action = su_env.ref(action_xmlid, raise_if_not_found=False)
+    if not action:
+        return {}
+    return {
+        "subject": "action",
+        "id": int(action.id),
+        "action_id": int(action.id),
+        "model": str(getattr(action, "res_model", "") or ""),
+        "view_type": str(getattr(action, "view_mode", "") or "tree,form").split(",", 1)[0],
+    }
+
 class AppOpenHandler(BaseIntentHandler):
     """
     意图：app.open
@@ -73,7 +97,7 @@ class AppOpenHandler(BaseIntentHandler):
         }
 
     def handle(self, payload=None, ctx=None):
-        payload = payload or {}
+        payload = _params(payload)
         ts0 = time.time()
         env = self.env
         su_env = self.su_env or api.Environment(env.cr, SUPERUSER_ID, dict(env.context or {}))
@@ -131,6 +155,10 @@ class AppOpenHandler(BaseIntentHandler):
 
         # 2) 动作：这里演示“直接执行并回传契约（无数据）”，也可只返回目标让前端再调
         if o.get("odoo_action_xmlid"):
+            if str(payload.get("client_type") or payload.get("clientType") or "").strip() in {"wx_mini", "harmony_h5"}:
+                data = _action_target_payload(su_env, o["odoo_action_xmlid"])
+                if data:
+                    return {"status":"success","data":data,"meta":self._meta(ts0),"ok":True}
             aid = _xmlid_to_id(su_env, o["odoo_action_xmlid"])
             p = {"subject": "action", "action_id": int(aid), "with_data": False}
             ad = ActionDispatcher(env, su_env)

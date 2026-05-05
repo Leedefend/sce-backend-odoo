@@ -8,6 +8,11 @@ from typing import Any, Dict, List
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.core.scene_provider import load_scenes_from_db_or_fallback
+from odoo.addons.smart_core.core.unified_page_contract_v2_client import (
+    resolve_client_type,
+    resolve_delivery_profile,
+    trim_navigation_contract_for_client,
+)
 
 
 def _md5(payload: Any) -> str:
@@ -47,6 +52,28 @@ def _scene_route(scene: Dict[str, Any]) -> str:
         return route
     key = _scene_key(scene)
     return f"/s/{key}" if key else "/"
+
+
+def _headers(request) -> dict[str, Any]:
+    try:
+        http_request = getattr(request, "httprequest", None)
+        headers = getattr(http_request, "headers", None)
+        if headers:
+            return dict(headers)
+    except Exception:
+        pass
+    return {}
+
+
+def _params(payload: Any) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        return {}
+    nested = payload.get("params")
+    if isinstance(nested, dict):
+        merged = dict(payload)
+        merged.update(nested)
+        return merged
+    return dict(payload)
 
 
 class AppCatalogHandler(BaseIntentHandler):
@@ -105,7 +132,9 @@ class AppNavHandler(BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
-        payload = payload or {}
+        payload = _params(payload)
+        client_type = resolve_client_type(_headers(self.request), payload)
+        delivery_profile = resolve_delivery_profile(client_type, payload)
         app_id = _text(payload.get("app") or "workspace")
         scenes = [scene for scene in _scene_list(self.env) if _scene_app_id(_scene_key(scene)) == app_id]
 
@@ -130,14 +159,23 @@ class AppNavHandler(BaseIntentHandler):
             sections.append({"key": f"section:{app_id}:work", "label": "工作", "children": children, "meta": {"section": "work"}})
 
         fp = _md5({"uid": self.env.uid, "app": app_id, "sections": [row.get("key") for row in sections]})
+        data = trim_navigation_contract_for_client(
+            {"sections": sections, "meta": {"fingerprint": fp}},
+            client_type=client_type,
+            delivery_profile=delivery_profile,
+            max_items=payload.get("max_items") or payload.get("maxItems"),
+            max_depth=payload.get("max_depth") or payload.get("maxDepth"),
+        )
         return {
             "status": "success",
             "ok": True,
-            "data": {"sections": sections, "meta": {"fingerprint": fp}},
+            "data": data,
             "meta": {
                 "intent": self.INTENT_TYPE,
                 "elapsed_ms": int((time.time() - ts0) * 1000),
                 "etag": fp,
+                "client_type": client_type,
+                "delivery_profile": delivery_profile,
                 "source_kind": self.SOURCE_KIND,
                 "source_authorities": list(self.SOURCE_AUTHORITIES),
             },

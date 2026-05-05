@@ -1,5 +1,10 @@
 import { computed, type Ref } from 'vue';
 import { uniqueFields } from '../runtime/actionViewRequestRuntime';
+import {
+  collectUnifiedPageContractV2FieldWidgets,
+  collectUnifiedPageContractV2FieldStatus,
+  resolveUnifiedPageContractV2,
+} from '../contracts/unifiedPageContractV2';
 
 type Dict = Record<string, unknown>;
 
@@ -47,6 +52,9 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       if (label) acc[name] = label;
       return acc;
     }, {});
+    collectUnifiedPageContractV2FieldWidgets(contract).forEach((widget) => {
+      if (widget.fieldCode && widget.label) labels[widget.fieldCode] = widget.label;
+    });
     const listProfile = (contract.list_profile || {}) as Dict;
     Object.entries((listProfile.column_labels || {}) as Dict).forEach(([name, labelRaw]) => {
       const label = String(labelRaw || '').trim();
@@ -68,6 +76,8 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       return sceneColumns;
     }
     const typed = (contract || {}) as Dict;
+    const v2Fields = collectUnifiedPageContractV2FieldWidgets(typed).map((widget) => widget.fieldCode).filter(Boolean);
+    if (v2Fields.length) return v2Fields;
     const uiContract = ((typed.ui_contract || {}) as Dict);
     const directViews = (typed.views || uiContract.views) as Dict | undefined;
     if (directViews) {
@@ -99,6 +109,17 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
 
   function extractColumnSchemaFromContract(contract: unknown): Dict[] {
     const typed = (contract || {}) as Dict;
+    const v2 = resolveUnifiedPageContractV2(typed);
+    if (v2) {
+      return collectUnifiedPageContractV2FieldWidgets(typed).map((widget) => ({
+        name: widget.fieldCode,
+        label: widget.label,
+        string: widget.label,
+        widget: widget.widgetType,
+        componentKey: widget.componentKey,
+        ...(widget.componentConfig || {}),
+      }));
+    }
     const uiContract = ((typed.ui_contract || {}) as Dict);
     const directViews = (typed.views || uiContract.views) as Dict | undefined;
     const treeBlock = directViews ? (directViews.tree || directViews.list || {}) as Dict : {};
@@ -111,6 +132,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
     const fieldsMap = (typed.fields && typeof typed.fields === 'object') ? typed.fields as Record<string, Dict> : {};
     const preferred = Array.isArray(profile?.columns) ? profile?.columns || [] : [];
     const hidden = new Set(Array.isArray(profile?.hidden_columns) ? profile?.hidden_columns || [] : []);
+    const v2FieldStatus = collectUnifiedPageContractV2FieldStatus(contract);
     const schemaRows = extractColumnSchemaFromContract(contract);
     const schemaByName = schemaRows.reduce<Record<string, Dict>>((acc, row) => {
       const name = String(row.name || '').trim();
@@ -126,8 +148,9 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       .map((name) => {
         const schema = schemaByName[name] || {};
         const field = fieldsMap[name] || {};
+        const status = v2FieldStatus[name];
         const optional = String(schema.optional || '').trim();
-        const invisible = schema.invisible === true || schema.column_invisible === true;
+        const invisible = schema.invisible === true || schema.column_invisible === true || status?.visible === false;
         const type = String(schema.type || field.type || '').trim();
         const widget = String(schema.widget || field.widget || field.type || '').trim();
         const rawSelection = Array.isArray(schema.selection) ? schema.selection : field.selection;
@@ -318,6 +341,11 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
 
   function resolveModelFromContract(contract: unknown) {
     const typed = (contract || {}) as Dict;
+    const v2 = resolveUnifiedPageContractV2(typed);
+    const v2Model = String(v2?.pageInfo?.model || '').trim();
+    if (v2Model) {
+      return v2Model;
+    }
     const nested = ((typed.ui_contract || {}) as Dict);
     const direct = typed.model;
     if (typeof direct === 'string' && direct.trim()) {

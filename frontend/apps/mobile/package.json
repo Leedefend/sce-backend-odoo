@@ -1,0 +1,29 @@
+{
+  "name": "@sc/mobile",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:mp-weixin": "uni build -p mp-weixin && node scripts/patch-mp-weixin-project-config.mjs",
+    "build:mp-weixin:windows": "pnpm build:mp-weixin && node scripts/sync-mp-weixin-to-windows.mjs",
+    "build:h5": "uni build -p h5",
+    "build:h5:harmony:windows": "pnpm build:h5 && node scripts/sync-harmony-h5-to-windows.mjs",
+    "sync:harmony-shell:windows": "node scripts/sync-harmony-shell-to-windows.mjs",
+    "prepare:harmony:windows": "pnpm build:h5:harmony:windows && pnpm sync:harmony-shell:windows",
+    "serve:h5:harmony": "node scripts/serve-harmony-h5.mjs",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "3.0.0-alpha-5000820260430001",
+    "@dcloudio/uni-components": "3.0.0-alpha-5000820260430001",
+    "@dcloudio/uni-h5": "3.0.0-alpha-5000820260430001",
+    "@dcloudio/uni-mp-weixin": "3.0.0-alpha-5000820260430001",
+    "vue": "^3.5.6"
+  },
+  "devDependencies": {
+    "@dcloudio/types": "3.4.31",
+    "@dcloudio/vite-plugin-uni": "3.0.0-alpha-5000820260430001",
+    "typescript": "^5.6.3",
+    "vite": "5.2.8",
+    "vue-tsc": "^2.1.6"
+  }
+}

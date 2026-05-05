@@ -428,6 +428,10 @@ function openProjectAction(path: string, query?: Record<string, string>) {
 }
 
 function buttonState(btn: ViewButton) {
+  const raw = btn as ViewButton & { disabled?: boolean };
+  if (raw.disabled === true) {
+    return { state: 'disabled_permission' as const, missing: [] };
+  }
   return evaluateCapabilityPolicy({
     source: btn,
     available: session.capabilities,
@@ -737,7 +741,10 @@ function normalizeButtons(raw: unknown): ViewButton[] {
   if (!Array.isArray(raw)) {
     return [];
   }
-  return raw.filter((btn) => btn && typeof btn === 'object') as ViewButton[];
+  return raw.filter((btn) => {
+    if (!btn || typeof btn !== 'object') return false;
+    return (btn as { visible?: unknown }).visible !== false;
+  }) as ViewButton[];
 }
 
 function buttonLabel(btn: ViewButton) {

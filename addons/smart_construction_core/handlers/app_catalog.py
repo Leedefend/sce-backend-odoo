@@ -31,7 +31,7 @@ APP_DEFS: List[Dict[str, Any]] = [
         "icon": "project,static/description/icon.png",
         "scene": "web",
         "category": "运营",
-        "requires": ["project", "documents"],
+        "requires": ["project"],
         "plans": ["base", "pro", "enterprise"],
         "flags": [],  # 例如 ["ai_enabled"]
         "features": [
@@ -39,50 +39,85 @@ APP_DEFS: List[Dict[str, Any]] = [
                 "key": "project_initiation",
                 "label": "项目立项",
                 "kind": "work",
-                "open": {"odoo_menu_xmlid": "smart_construction_core.menu_sc_project_initiation"},
-                "required_permissions": ["project.create"],
+                "open": {"odoo_action_xmlid": "smart_construction_core.action_project_initiation"},
             },
             {
-                "key": "project_overview",
-                "label": "项目总览",
+                "key": "my_projects",
+                "label": "我的项目",
                 "kind": "work",
-                "open": {"odoo_action_xmlid": "project.action_project_project"},
-                "required_permissions": ["project.view_all"],
+                "open": {"odoo_action_xmlid": "smart_construction_core.action_sc_project_my_list"},
+            },
+            {
+                "key": "project_ledger",
+                "label": "项目台账",
+                "kind": "work",
+                "open": {"odoo_action_xmlid": "smart_construction_core.action_sc_project_list"},
             },
             {
                 "key": "project_dashboard",
                 "label": "项目驾驶舱",
                 "kind": "work",
-                "open": {"odoo_menu_xmlid": "smart_construction_core.menu_sc_project_dashboard"},
-                "required_permissions": ["project.view_all"],
+                "open": {"odoo_action_xmlid": "smart_construction_core.action_project_dashboard"},
             },
             {
-                "key": "task_board",
-                "label": "任务看板",
+                "key": "contract_overview",
+                "label": "合同汇总",
                 "kind": "work",
-                "open": {"odoo_action_xmlid": "project.action_view_task_kanban"},
-                "required_permissions": ["project.view_all"],
+                "open": {"odoo_action_xmlid": "smart_construction_core.action_project_contract_overview"},
             },
             {
-                "key": "report_task_analysis",
-                "label": "任务分析报表",
+                "key": "project_cost_ledger",
+                "label": "成本台账",
                 "kind": "reporting",
-                "open": {"odoo_action_xmlid": "project.action_project_task_report"},
-                "required_permissions": ["project.report_task"],
+                "open": {"odoo_action_xmlid": "smart_construction_core.action_project_cost_ledger_my"},
             },
             {
-                "key": "config_stage",
-                "label": "阶段模板配置",
-                "kind": "config",
-                "open": {"odoo_menu_xmlid": "project.menu_project_config_project"},
-                "required_permissions": ["project.manage_stage"],
+                "key": "project_documents",
+                "label": "项目资料",
+                "kind": "work",
+                "open": {"odoo_action_xmlid": "smart_construction_core.action_sc_project_document"},
+            },
+        ],
+    },
+    {
+        "id": "contract_management",
+        "label": "合同管理",
+        "icon": None,
+        "scene": "web",
+        "category": "运营",
+        "requires": ["smart_construction_core"],
+        "plans": ["base", "pro", "enterprise"],
+        "flags": [],
+        "features": [
+            {
+                "key": "my_contracts",
+                "label": "我的合同",
+                "kind": "work",
+                "open": {"odoo_action_xmlid": "smart_construction_core.action_construction_contract_my"},
             },
             {
-                "key": "ai_risk_summary",
-                "label": "AI 风险摘要",
-                "kind": "ai",
-                "open": {"internal_route": "/ai/project/risk_summary"},
-                "required_permissions": ["ai.analysis"],
+                "key": "income_contracts",
+                "label": "收入合同",
+                "kind": "work",
+                "open": {"odoo_action_xmlid": "smart_construction_core.action_construction_contract_income"},
+            },
+            {
+                "key": "expense_contracts",
+                "label": "支出合同",
+                "kind": "work",
+                "open": {"odoo_action_xmlid": "smart_construction_core.action_construction_contract_expense"},
+            },
+            {
+                "key": "general_contracts",
+                "label": "一般合同",
+                "kind": "work",
+                "open": {"odoo_action_xmlid": "smart_construction_core.action_sc_general_contract"},
+            },
+            {
+                "key": "my_contract_reviews",
+                "label": "待我审批",
+                "kind": "work",
+                "open": {"odoo_action_xmlid": "smart_construction_core.action_sc_tier_review_my_construction_contract"},
             },
         ],
     },
@@ -90,6 +125,16 @@ APP_DEFS: List[Dict[str, Any]] = [
 
 def _md5(d: Any) -> str:
     return hashlib.md5(json.dumps(d, ensure_ascii=False, sort_keys=True, default=str).encode()).hexdigest()
+
+def _params(payload: Any) -> Dict[str, Any]:
+    if not isinstance(payload, dict):
+        return {}
+    nested = payload.get("params")
+    if isinstance(nested, dict):
+        merged = dict(payload)
+        merged.update(nested)
+        return merged
+    return dict(payload)
 
 def _xmlid_to_id(su_env, xmlid: str | None) -> int | None:
     if not xmlid: return None
@@ -111,9 +156,41 @@ def _current_perms(env) -> Set[str]:
     except Exception:
         return set()
 
+def _is_system_admin(env) -> bool:
+    try:
+        return bool(env.user.has_group("base.group_system"))
+    except Exception:
+        return False
+
+def _current_plan(env) -> str:
+    try:
+        model = env["tenant.context"]
+    except Exception:
+        return "base"
+    try:
+        plan_fn = getattr(model, "plan", None)
+        if callable(plan_fn):
+            return str(plan_fn() or "base")
+    except Exception:
+        pass
+    return "base"
+
+def _feature_flags_for_user(env) -> Set[str]:
+    try:
+        model = env["feature.flag"]
+    except Exception:
+        return set()
+    try:
+        flags_for = getattr(model, "flags_for", None)
+        if callable(flags_for):
+            return set(flags_for(env.user) or [])
+    except Exception:
+        pass
+    return set()
+
 def _feature_visible(env, su_env, f: Dict[str,Any], visible_mids: Set[int], perms: Set[str]) -> bool:
     need = set(f.get("required_permissions") or [])
-    if need and not need.issubset(perms):
+    if need and not need.issubset(perms) and not _is_system_admin(env):
         return False
     o = f.get("open") or {}
     mid = _xmlid_to_id(su_env, o.get("odoo_menu_xmlid"))
@@ -128,13 +205,13 @@ def _app_allowed(env, su_env, app: Dict[str,Any], scene: str) -> bool:
     installed = _installed_modules(su_env)
     if not set(app.get("requires") or []).issubset(installed):
         return False
-    plan = getattr(env["tenant.context"], "plan", lambda: "base")()
+    plan = _current_plan(env)
     plans = set(app.get("plans") or [])
     if plans and plan not in plans:
         return False
     flags_need = set(app.get("flags") or [])
-    user_flags = set(getattr(env["feature.flag"], "flags_for", lambda u: [])(env.user))
-    if flags_need and not flags_need.issubset(user_flags):
+    user_flags = _feature_flags_for_user(env)
+    if flags_need and not flags_need.issubset(user_flags) and not _is_system_admin(env):
         return False
     visible_mids = _visible_menu_ids(env)
     perms = _current_perms(env)
@@ -167,7 +244,7 @@ class AppCatalogHandler(BaseIntentHandler):
     REQUIRED_GROUPS = []  # 登录用户皆可
 
     def handle(self, payload=None, ctx=None):
-        payload = payload or {}
+        payload = _params(payload)
         ts0 = time.time()
         env = self.env
         su_env = self.su_env or api.Environment(env.cr, SUPERUSER_ID, dict(env.context or {}))

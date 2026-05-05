@@ -493,6 +493,15 @@ import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
+import {
+  collectUnifiedPageContractV2ButtonStatus,
+  collectUnifiedPageContractV2FieldContainerStatus,
+  collectUnifiedPageContractV2FieldStatus,
+  collectUnifiedPageContractV2FieldWidgets,
+  resolveUnifiedPageContractV2,
+  resolveUnifiedPageContractV2GlobalStatus,
+  type UnifiedPageContractV2ButtonStatus,
+} from '../app/contracts/unifiedPageContractV2';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -558,6 +567,33 @@ function normalizeRequiredParams(value: unknown): string[] {
   return value
     .map((item) => String(item || '').trim())
     .filter(Boolean);
+}
+
+function stableContractId(value: unknown, fallback: string) {
+  const raw = String(value || fallback || '').trim();
+  const normalized = raw
+    .split('')
+    .map((char) => {
+      if (/^[A-Za-z0-9_.:-]$/.test(char)) return char;
+      if (char === ' ' || char === '/') return '.';
+      return '';
+    })
+    .join('')
+    .replace(/^\.+|\.+$/g, '');
+  const safe = normalized || fallback || 'action';
+  return /^[A-Za-z]/.test(safe) ? safe : `id.${safe}`;
+}
+
+function resolveV2ButtonStatus(
+  key: string,
+  statusById: Record<string, UnifiedPageContractV2ButtonStatus>,
+): UnifiedPageContractV2ButtonStatus | null {
+  const stableKey = stableContractId(key, 'action');
+  const candidates = [`btn.${stableKey}`, key, stableKey].filter(Boolean);
+  for (const candidate of candidates) {
+    if (statusById[candidate]) return statusById[candidate];
+  }
+  return null;
 }
 
 function collectActionParams(action: ContractAction): Record<string, unknown> | null {
@@ -795,6 +831,11 @@ const renderProfile = computed<'create' | 'edit' | 'readonly'>(() => {
 });
 
 const rights = computed(() => {
+  const globalStatus = resolveUnifiedPageContractV2GlobalStatus(contract.value);
+  const pageAuth = String(globalStatus?.pageAuth || '').trim().toLowerCase();
+  if (globalStatus?.pageVisible === false || pageAuth === 'none') {
+    return { read: false, write: false, create: false, unlink: false };
+  }
   const head = contract.value?.head?.permissions;
   const effective = contract.value?.permissions?.effective?.rights;
   const resolve = (key: 'read' | 'write' | 'create' | 'unlink') => {
@@ -806,9 +847,9 @@ const rights = computed(() => {
   };
   return {
     read: resolve('read'),
-    write: resolve('write'),
-    create: resolve('create'),
-    unlink: resolve('unlink'),
+    write: pageAuth === 'read' ? false : resolve('write'),
+    create: pageAuth === 'read' ? false : resolve('create'),
+    unlink: pageAuth === 'read' ? false : resolve('unlink'),
   };
 });
 
@@ -2441,6 +2482,7 @@ const contractActions = computed<ContractAction[]>(() => {
   const sceneReadyActions = useSceneFormAugmentations.value && Array.isArray(sceneReadyFormSurface.value.actions)
     ? sceneReadyFormSurface.value.actions as Array<Record<string, unknown>>
     : [];
+  const v2ButtonStatus = collectUnifiedPageContractV2ButtonStatus(contract.value);
   const merged: Array<Record<string, unknown>> = [];
   const nativeFormContract = contract.value?.views?.form as Record<string, unknown> | undefined;
   if (Array.isArray(nativeFormContract?.header_buttons)) {
@@ -2466,6 +2508,12 @@ const contractActions = computed<ContractAction[]>(() => {
     if (sceneReadyActions.length && !String(row.key || '').trim()) {
       const mapped = mapSceneReadyAction(row);
       if (!mapped || dedup.has(mapped.key)) continue;
+      const status = resolveV2ButtonStatus(mapped.key, v2ButtonStatus);
+      if (status?.visible === false) continue;
+      if (status?.disabled === true) {
+        mapped.enabled = false;
+        mapped.hint = status.reasonCode || mapped.hint || 'disabled_by_status_contract';
+      }
       dedup.add(mapped.key);
       out.push(mapped);
       continue;
@@ -2473,6 +2521,12 @@ const contractActions = computed<ContractAction[]>(() => {
     if (sceneReadyActions.includes(row)) {
       const mapped = mapSceneReadyAction(row);
       if (!mapped || dedup.has(mapped.key)) continue;
+      const status = resolveV2ButtonStatus(mapped.key, v2ButtonStatus);
+      if (status?.visible === false) continue;
+      if (status?.disabled === true) {
+        mapped.enabled = false;
+        mapped.hint = status.reasonCode || mapped.hint || 'disabled_by_status_contract';
+      }
       dedup.add(mapped.key);
       out.push(mapped);
       continue;
@@ -2511,12 +2565,14 @@ const contractActions = computed<ContractAction[]>(() => {
     const policy = evaluateActionPolicy(contract.value, key, policyContext.value);
     if (!policy.visible) continue;
     if (!evaluateNativeActionVisibility(row)) continue;
+    const status = resolveV2ButtonStatus(key, v2ButtonStatus);
+    if (status?.visible === false) continue;
     const byGroup = hasGroupAccess(groups);
     const contractAllowed = typeof row.allowed === 'boolean' ? Boolean(row.allowed) : true;
     const needRecord = effectiveKind === 'object' || effectiveKind === 'server' || effectiveKind === 'mutation' || level === 'row' || level === 'smart';
     const blockedMessage = String(row.blocked_message || row.reason || row.reason_code || '').trim();
     const warningMessage = String(row.warning_message || '').trim();
-    const enabled = contractAllowed && policy.enabled && byGroup && (!needRecord || Boolean(recordId.value));
+    const enabled = contractAllowed && policy.enabled && byGroup && (!needRecord || Boolean(recordId.value)) && status?.disabled !== true;
     out.push({
       key,
       label: String(row.label || key),
@@ -2532,7 +2588,9 @@ const contractActions = computed<ContractAction[]>(() => {
       url: String(payload.url || '').trim(),
       enabled,
       hint: byGroup
-        ? (needRecord && !recordId.value ? 'requires record id' : (contractAllowed ? (warningMessage || policy.reason) : blockedMessage))
+        ? (status?.disabled === true
+          ? status.reasonCode || 'disabled_by_status_contract'
+          : (needRecord && !recordId.value ? 'requires record id' : (contractAllowed ? (warningMessage || policy.reason) : blockedMessage)))
         : 'permission denied',
       semantic: policy.semantic,
       visibleProfiles,
@@ -2972,10 +3030,21 @@ const contractVisibleFields = computed<string[]>(() => {
 });
 const fieldModifierMap = computed<Record<string, Record<string, unknown>>>(() => {
   const formView = (contract.value?.views?.form || {}) as { field_modifiers?: Record<string, Record<string, unknown>> };
-  return formView.field_modifiers || {};
+  const out: Record<string, Record<string, unknown>> = { ...(formView.field_modifiers || {}) };
+  const v2FieldStatus = collectUnifiedPageContractV2FieldStatus(contract.value);
+  Object.entries(v2FieldStatus).forEach(([name, status]) => {
+    out[name] = {
+      ...(out[name] || {}),
+      ...(status.visible === false ? { invisible: true } : {}),
+      ...(status.readonly === true || status.disabled === true ? { readonly: true } : {}),
+      ...(status.required === true ? { required: true } : {}),
+    };
+  });
+  return out;
 });
 const runtimeFieldStates = computed(() => {
-  const names = Object.keys(contract.value?.fields || {});
+  const v2FieldNames = collectUnifiedPageContractV2FieldWidgets(contract.value).map((widget) => widget.fieldCode).filter(Boolean);
+  const names = Array.from(new Set([...Object.keys(contract.value?.fields || {}), ...v2FieldNames]));
   return buildRuntimeFieldStates({
     fieldNames: names,
     fieldModifiers: fieldModifierMap.value,
@@ -3368,6 +3437,7 @@ const layoutNodes = computed<LayoutNode[]>(() => {
   const fieldMap = contract.value?.fields || {};
   const order = contract.value?.views?.form?.layout || [];
   const fieldGroups = contract.value?.permissions?.field_groups || {};
+  const v2FieldContainerStatus = collectUnifiedPageContractV2FieldContainerStatus(contract.value);
   const used = new Set<string>();
   const nodes: LayoutNode[] = [];
   const containerKeys = ['children', 'tabs', 'pages', 'nodes', 'items'];
@@ -3379,6 +3449,8 @@ const layoutNodes = computed<LayoutNode[]>(() => {
     if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) return;
     const descriptor = fieldMap[name];
     if (!descriptor) return;
+    const containerStatus = v2FieldContainerStatus[name];
+    if (containerStatus?.visible === false) return;
     const resolved = evaluateFieldPolicy(
       contract.value,
       name,
@@ -3396,7 +3468,7 @@ const layoutNodes = computed<LayoutNode[]>(() => {
       kind: 'field',
       name,
       label: String(descriptor?.string || name),
-      readonly: Boolean(resolved.readonly || state.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
+      readonly: Boolean(resolved.readonly || state.readonly || containerStatus?.disabled === true || (recordId.value ? !rights.value.write : !rights.value.create)),
       required: Boolean(resolved.required || state.required),
       descriptor,
     });
@@ -4130,11 +4202,16 @@ function analyzeFormContractReadiness(
     return names;
   };
 
+  const v2 = resolveUnifiedPageContractV2(row);
+  const v2FieldNames = collectUnifiedPageContractV2FieldWidgets(row)
+    .map((widget) => String(widget.fieldCode || '').trim())
+    .filter(Boolean);
+  const v2FieldNameSet = new Set(v2FieldNames);
   const fields = row.fields;
   const fieldMap = fields && typeof fields === 'object' && !Array.isArray(fields)
     ? fields as Record<string, unknown>
     : {};
-  const fieldNames = Object.keys(fieldMap);
+  const fieldNames = Array.from(new Set([...Object.keys(fieldMap), ...v2FieldNames]));
   if (!fieldNames.length) {
     issues.push('contract.fields is empty');
   }
@@ -4143,7 +4220,8 @@ function analyzeFormContractReadiness(
   const formView = views && typeof views === 'object' && !Array.isArray(views)
     ? (views as Record<string, unknown>).form
     : undefined;
-  if (!formView || typeof formView !== 'object' || Array.isArray(formView)) {
+  const hasV2Form = v2?.pageInfo?.viewType === 'form' && v2FieldNames.length > 0;
+  if (!hasV2Form && (!formView || typeof formView !== 'object' || Array.isArray(formView))) {
     issues.push('contract.views.form is missing');
   }
   const layout = formView && typeof formView === 'object' && !Array.isArray(formView)
@@ -4156,9 +4234,11 @@ function analyzeFormContractReadiness(
     ? String((head as Record<string, unknown>).view_type || '').trim().toLowerCase()
     : '';
   const viewType = String(row.view_type || '').trim().toLowerCase();
+  const v2ViewType = String(v2?.pageInfo?.viewType || '').trim().toLowerCase();
   if (requirePureFormViewType) {
     if (headViewType && headViewType !== 'form') issues.push(`head.view_type is ${headViewType}, expected form`);
     if (viewType && viewType !== 'form') issues.push(`view_type is ${viewType}, expected form`);
+    if (v2ViewType && v2ViewType !== 'form') issues.push(`v2.pageInfo.viewType is ${v2ViewType}, expected form`);
   }
 
   const visible = Array.isArray(row.visible_fields)
@@ -4176,11 +4256,12 @@ function analyzeFormContractReadiness(
       if (normalized) groupNames.add(normalized);
     });
   });
+  v2FieldNames.forEach((name) => layoutFieldNames.add(name));
   if (!layoutFieldNames.size && !groupNames.size && !visibleNameSet.size) {
     issues.push('contract.views.form.layout has no field nodes');
   }
   const visibleCandidates = fieldNames.filter((name) =>
-    visibleNameSet.has(name) || groupNames.has(name) || layoutFieldNames.has(name),
+    visibleNameSet.has(name) || groupNames.has(name) || layoutFieldNames.has(name) || v2FieldNameSet.has(name),
   );
   if (fieldNames.length && !visibleCandidates.length) {
     issues.push('no visible field candidate from visible_fields/field_groups/layout');

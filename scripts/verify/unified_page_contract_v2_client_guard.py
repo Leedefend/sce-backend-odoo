@@ -58,7 +58,7 @@ def main() -> int:
 
     matrix = {}
     for client in stable:
-        matrix[client] = target.trim_unified_page_contract_v2(source, client_type=client)
+        matrix[client] = target.trim_unified_page_contract_v2(source, client_type=client, delivery_profile="full")
         expected = snapshot.get("expected", {}).get(client) or {}
         layout = matrix[client].get("layoutContract") or {}
         hints = layout.get("layoutHints") or {}
@@ -78,6 +78,27 @@ def main() -> int:
     drift = target.find_client_semantic_drift(matrix)
     for issue in drift:
         fail(errors, issue)
+
+    compact = target.trim_unified_page_contract_v2(
+        source,
+        client_type="harmony_h5",
+        delivery_profile="mobile_compact",
+        max_widgets=1,
+        max_actions=1,
+        include_source_compat=False,
+    )
+    compact_layout = compact.get("layoutContract") or {}
+    compact_widgets = ((compact_layout.get("containerTree") or [{}])[0].get("widgetList") or [])
+    if len(compact_widgets) != 1:
+        fail(errors, "mobile_compact must trim widget delivery")
+    compact_trim = compact.get("meta", {}).get("deliveryTrim") or {}
+    if compact_trim.get("deliveryProfile") != "mobile_compact":
+        fail(errors, "mobile_compact must report delivery profile")
+    if compact_trim.get("omitted", {}).get("widgets", 0) < 1:
+        fail(errors, "mobile_compact must report omitted widgets")
+    compat = compact.get("meta", {}).get("compat") or {}
+    if any(isinstance(value, dict) and value.get("delivery") != "omitted_for_mobile_compact" for value in compat.values()):
+        fail(errors, "mobile_compact source compat must be fingerprint-only")
 
     if errors:
         print("Unified Page Contract v2+ client guard failed:")

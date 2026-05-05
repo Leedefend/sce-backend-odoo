@@ -1,0 +1,12 @@
+{
+  "color": [
+    {
+      "name": "app_icon_background",
+      "value": "#0F172A"
+    },
+    {
+      "name": "app_icon_foreground",
+      "value": "#FFFFFF"
+    }
+  ]
+}

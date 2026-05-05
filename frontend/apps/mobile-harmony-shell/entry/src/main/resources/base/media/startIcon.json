@@ -1,0 +1,6 @@
+{
+  "layered-image": {
+    "background": "$color:start_window_background",
+    "foreground": "$color:start_window_background"
+  }
+}

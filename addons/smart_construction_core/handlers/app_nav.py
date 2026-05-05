@@ -4,21 +4,17 @@ import json, hashlib, logging, time
 from typing import Any, Dict, List, Set
 from odoo import api, SUPERUSER_ID
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
-from .app_catalog import APP_DEFS, APP_DELIVERY_SOURCE_AUTHORITY, _xmlid_to_id, _visible_menu_ids, _current_perms, _installed_modules
+from odoo.addons.smart_core.core.unified_page_contract_v2_client import (
+    resolve_client_type,
+    resolve_delivery_profile,
+    trim_navigation_contract_for_client,
+)
+from .app_catalog import APP_DEFS, APP_DELIVERY_SOURCE_AUTHORITY, _feature_visible, _visible_menu_ids, _current_perms
 
 _logger = logging.getLogger(__name__)
 
 def _md5(d: Any) -> str:
     return hashlib.md5(json.dumps(d, ensure_ascii=False, sort_keys=True, default=str).encode()).hexdigest()
-
-def _feature_visible(env, su_env, f: Dict[str,Any], visible_mids: Set[int], perms: Set[str]) -> bool:
-    need = set(f.get("required_permissions") or [])
-    if need and not need.issubset(perms):
-        return False
-    o = f.get("open") or {}
-    mid = _xmlid_to_id(su_env, o.get("odoo_menu_xmlid"))
-    aid = _xmlid_to_id(su_env, o.get("odoo_action_xmlid"))
-    return (mid and mid in visible_mids) or (aid is not None) or o.get("internal_route") or o.get("workflow_id")
 
 def _feature_to_node(app_id: str, f: Dict[str,Any]) -> Dict[str,Any]:
     return {
@@ -27,6 +23,26 @@ def _feature_to_node(app_id: str, f: Dict[str,Any]) -> Dict[str,Any]:
         "children": [],
         "meta": {"app": app_id, "feature": f["key"], "kind": f.get("kind","work"), "open": f.get("open")},
     }
+
+def _params(payload: Any) -> Dict[str, Any]:
+    if not isinstance(payload, dict):
+        return {}
+    nested = payload.get("params")
+    if isinstance(nested, dict):
+        merged = dict(payload)
+        merged.update(nested)
+        return merged
+    return dict(payload)
+
+def _headers(request) -> Dict[str, Any]:
+    try:
+        http_request = getattr(request, "httprequest", None)
+        headers = getattr(http_request, "headers", None)
+        if headers:
+            return dict(headers)
+    except Exception:
+        pass
+    return {}
 
 class AppNavHandler(BaseIntentHandler):
     """
@@ -40,10 +56,12 @@ class AppNavHandler(BaseIntentHandler):
     REQUIRED_GROUPS = []  # 登录用户皆可
 
     def handle(self, payload=None, ctx=None):
-        payload = payload or {}
+        payload = _params(payload)
         ts0 = time.time()
         env = self.env
         su_env = self.su_env or api.Environment(env.cr, SUPERUSER_ID, dict(env.context or {}))
+        client_type = resolve_client_type(_headers(self.request), payload)
+        delivery_profile = resolve_delivery_profile(client_type, payload)
 
         app_id = payload.get("app")
         if not app_id:
@@ -62,7 +80,14 @@ class AppNavHandler(BaseIntentHandler):
                 ],
                 "meta": {"fingerprint": _md5({"app": app_id, "fallback": True})},
             }
-            meta = {"elapsed_ms": int((time.time()-ts0)*1000), "intent": self.INTENT_TYPE, "source_authority": APP_DELIVERY_SOURCE_AUTHORITY}
+            data = trim_navigation_contract_for_client(
+                data,
+                client_type=client_type,
+                delivery_profile=delivery_profile,
+                max_items=payload.get("max_items") or payload.get("maxItems"),
+                max_depth=payload.get("max_depth") or payload.get("maxDepth"),
+            )
+            meta = {"elapsed_ms": int((time.time()-ts0)*1000), "intent": self.INTENT_TYPE, "client_type": client_type, "delivery_profile": delivery_profile, "source_authority": APP_DELIVERY_SOURCE_AUTHORITY}
             top_etag = _md5({"fp": data["meta"]["fingerprint"], "uid": env.uid})
             return {"status":"success","data":data,"meta":{**meta,"etag":top_etag},"ok":True}
 
@@ -85,7 +110,13 @@ class AppNavHandler(BaseIntentHandler):
                 })
 
         fp = _md5({"app": app_id, "ver": _md5(app), "uid": env.uid, "sec": sections})
-        data = {"sections": sections, "meta": {"fingerprint": fp}}
-        meta = {"elapsed_ms": int((time.time()-ts0)*1000), "intent": self.INTENT_TYPE, "source_authority": APP_DELIVERY_SOURCE_AUTHORITY}
+        data = trim_navigation_contract_for_client(
+            {"sections": sections, "meta": {"fingerprint": fp}},
+            client_type=client_type,
+            delivery_profile=delivery_profile,
+            max_items=payload.get("max_items") or payload.get("maxItems"),
+            max_depth=payload.get("max_depth") or payload.get("maxDepth"),
+        )
+        meta = {"elapsed_ms": int((time.time()-ts0)*1000), "intent": self.INTENT_TYPE, "client_type": client_type, "delivery_profile": delivery_profile, "source_authority": APP_DELIVERY_SOURCE_AUTHORITY}
         top_etag = _md5({"fp": fp, "uid": env.uid})
         return {"status":"success","data":data,"meta":{**meta,"etag":top_etag},"ok":True}
