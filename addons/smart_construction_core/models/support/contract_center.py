@@ -59,7 +59,7 @@ class ConstructionContract(models.Model):
     )
     operation_strategy = fields.Selection(
         related="project_id.operation_strategy",
-        string="经营策略",
+        string="经营方式",
         store=True,
         readonly=True,
         index=True,

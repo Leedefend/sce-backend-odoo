@@ -47,7 +47,7 @@ class ScLegacyEnterpriseBusinessFact(models.Model):
             ("direct", "公司直营"),
             ("joint", "联营项目"),
         ],
-        string="经营策略",
+        string="经营方式",
         required=True,
         default="direct",
         index=True,

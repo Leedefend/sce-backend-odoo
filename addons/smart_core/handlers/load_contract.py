@@ -204,6 +204,7 @@ class LoadContractHandler(BaseIntentHandler):
         # ---------- 6.x) 统一语义契约补充（非破坏式） ----------
         # 保留现有 head/views/fields/search/... 结构，新增 native_view + semantic_page。
         self._ensure_form_auxiliary_slots(data, model_name)
+        self._ensure_native_view_field_descriptors(data, model_name)
         self._inject_semantic_contract(data)
 
         # ---------- 7) 计算聚合 ETag ----------
@@ -267,6 +268,35 @@ class LoadContractHandler(BaseIntentHandler):
             "data": data or {},
             "meta": meta or {},
         }
+
+    def _ensure_native_view_field_descriptors(self, data: dict, model_name: str):
+        """Keep native layout nodes renderable when the upstream contract omits descriptors."""
+        if not isinstance(data, dict) or not model_name or model_name not in self.env:
+            return
+        fields = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+        referenced: set[str] = set()
+
+        def visit(value):
+            if isinstance(value, dict):
+                name = value.get("name")
+                if isinstance(name, str) and name in self.env[model_name]._fields:
+                    referenced.add(name)
+                for child in value.values():
+                    visit(child)
+            elif isinstance(value, list):
+                for child in value:
+                    visit(child)
+
+        for key in ("views", "layout", "native_view", "parser_contract"):
+            visit(data.get(key))
+
+        missing = sorted(name for name in referenced if name not in fields)
+        if missing:
+            try:
+                fields.update(self.env[model_name].fields_get(missing))
+            except Exception:
+                _logger.exception("Failed to enrich native view field descriptors for %s", model_name)
+        data["fields"] = fields
 
     def _ensure_form_auxiliary_slots(self, data: dict, model_name: str):
         """Expose stable form auxiliary slots so clients do not infer them."""

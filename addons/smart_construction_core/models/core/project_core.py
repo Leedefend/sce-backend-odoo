@@ -562,7 +562,7 @@ class ProjectProject(models.Model):
             ("direct", "公司直营"),
             ("joint", "联营项目"),
         ],
-        string="经营策略",
+        string="经营方式",
         default="direct",
         required=True,
         tracking=True,
