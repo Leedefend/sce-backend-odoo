@@ -286,7 +286,9 @@ function showMany2oneInlineCreate(field: FormSectionFieldSchema) {
   const text = many2oneTextValue(field);
   if (!text || !field.relationInlineCreate?.enabled || !field.relationInlineCreate.createOnNoMatch) return false;
   const options = field.relationOptions || [];
-  if (options.length) return false;
+  const normalized = text.trim().toLowerCase();
+  const exact = options.some((item) => String(item.label || '').trim().toLowerCase() === normalized);
+  if (exact) return false;
   return true;
 }
 

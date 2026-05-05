@@ -58,6 +58,7 @@ export type FormSectionFieldSchema = {
     enabled: boolean;
     createOnNoMatch: boolean;
     nameField: string;
+    match?: string;
   };
   many2oneCreateToken?: string;
   many2oneSearchToken?: string;

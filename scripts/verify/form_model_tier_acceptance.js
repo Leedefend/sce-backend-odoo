@@ -139,6 +139,7 @@ async function domSummary(page) {
     return {
       title: clean(document.querySelector('.template-page-title, h1, .title')?.textContent || ''),
       input_count: document.querySelectorAll('.template-layout-shell input, .template-layout-shell textarea, .template-layout-shell select').length,
+      field_count: document.querySelectorAll('.template-layout-shell .field').length,
       readonly_count: document.querySelectorAll('.readonly-value, .readonly-field, .form-readonly, .native-readonly').length,
       tabs: Array.from(document.querySelectorAll('button.native-tab')).map((node) => clean(node.textContent)).filter(Boolean),
       statusbar_count: document.querySelectorAll('.native-statusbar-step').length,
@@ -163,6 +164,7 @@ async function inspectSpecimen(page, specimen) {
   await openForm(page, specimen);
   const domInfo = await domSummary(page);
   const hasRenderableSurface = domInfo.input_count > 0
+    || domInfo.field_count > 0
     || domInfo.readonly_count > 0
     || domInfo.tabs.length > 0
     || domInfo.statusbar_count > 0

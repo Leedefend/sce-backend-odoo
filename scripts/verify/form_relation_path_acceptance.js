@@ -140,6 +140,13 @@ async function relationValue(page, index) {
 async function openSearchMore(page, index) {
   await relationBox(page, index).locator('button').filter({ hasText: '搜索更多' }).first().click();
   await page.locator('.relation-dialog').waitFor({ timeout: 10000 });
+  await page.waitForFunction(() => {
+    const dialog = document.querySelector('.relation-dialog');
+    if (!dialog) return false;
+    const rows = dialog.querySelectorAll('tbody tr').length;
+    const empty = String(dialog.textContent || '').includes('没有匹配记录');
+    return rows > 0 || empty;
+  }, null, { timeout: 10000 });
 }
 
 async function dialogSnapshot(page) {
@@ -163,7 +170,7 @@ async function exerciseSearchMoreCancel(page) {
   const before = await relationValue(page, 1);
   await openSearchMore(page, 1);
   const snapshot = await dialogSnapshot(page);
-  await page.locator('.relation-dialog button').filter({ hasText: '取消' }).click();
+  await page.locator('.relation-dialog-footer button').filter({ hasText: /^取消$/ }).first().click();
   await page.locator('.relation-dialog').waitFor({ state: 'detached', timeout: 10000 });
   const after = await relationValue(page, 1);
   return {
@@ -184,9 +191,9 @@ async function exerciseSearchMoreCancel(page) {
 
 async function exerciseSearchMoreSelect(page) {
   await openSearchMore(page, 1);
-  const firstRow = page.locator('.relation-dialog tbody tr').first();
-  const rowText = normalize(await firstRow.innerText());
-  await firstRow.click();
+  const targetRow = page.locator('.relation-dialog tbody tr').filter({ hasText: 'Demo Project User' }).first();
+  const rowText = normalize(await targetRow.innerText());
+  await targetRow.locator('input[type="radio"]').check();
   const selectButton = page.locator('.relation-dialog button.primary').filter({ hasText: '选择' }).first();
   const selectEnabled = !(await selectButton.isDisabled());
   await selectButton.click();
@@ -230,7 +237,7 @@ async function exerciseDeferredNoMatchCreate(page) {
   const saveEnabled = !(await page.locator('.template-page-header-actions button.primary').first().isDisabled());
   await openSearchMore(page, 0);
   const snapshot = await dialogSnapshot(page);
-  await page.locator('.relation-dialog button').filter({ hasText: '取消' }).click();
+  await page.locator('.relation-dialog-footer button').filter({ hasText: /^取消$/ }).first().click();
   await page.locator('.relation-dialog').waitFor({ state: 'detached', timeout: 10000 });
   await input.fill('');
   await input.blur();
@@ -243,7 +250,7 @@ async function exerciseDeferredNoMatchCreate(page) {
       && saveEnabled
       && snapshot.title === '客户：搜索更多'
       && snapshot.keyword === label
-      && snapshot.rows.length === 0
+      && !snapshot.rows.some((row) => normalize(row) === label)
       ? 'pass'
       : 'fail',
     typed_label: label,

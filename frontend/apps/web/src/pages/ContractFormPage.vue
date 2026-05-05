@@ -3625,6 +3625,7 @@ const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
       enabled: inline.enabled,
       createOnNoMatch: inline.createOnNoMatch,
       nameField: inline.nameField,
+      match: inline.match,
     };
   },
   resolveRelationTextValue: relationKeyword,
@@ -4387,6 +4388,15 @@ function validateSurfaceMarkers(
   return { ok: issues.length === 0, issues };
 }
 
+function contractModelName(data: unknown) {
+  if (!data || typeof data !== 'object') return '';
+  const row = data as Record<string, unknown>;
+  const head = row.head && typeof row.head === 'object' && !Array.isArray(row.head)
+    ? row.head as Record<string, unknown>
+    : {};
+  return String(head.model || row.model || '').trim();
+}
+
 async function loadContract() {
   const profile = recordId.value ? 'edit' : 'create';
   const currentModel = String(model.value || '').trim();
@@ -4400,7 +4410,8 @@ async function loadContract() {
         sourceMode: requestedSourceMode.value,
       });
       const actionReadiness = analyzeFormContractReadiness(response?.data, { requirePureFormViewType: true });
-      if (!actionReadiness.usable) {
+      const actionModel = contractModelName(response?.data);
+      if (!actionReadiness.usable || (currentModel && actionModel && actionModel !== currentModel)) {
         response = null;
       }
     } catch {
