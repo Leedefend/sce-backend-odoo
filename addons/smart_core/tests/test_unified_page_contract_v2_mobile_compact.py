@@ -88,6 +88,73 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
         self.assertEqual(data_contract["mainData"]["phase_key"], "initiation")
         self.assertEqual(trimmed["statusContract"]["globalStatus"]["pageAuth"], "edit")
 
+    def test_ui_contract_v2_edit_form_page_auth_follows_write_permission(self):
+        source = {
+            "ui_contract": {
+                "model": "project.project",
+                "view_type": "form",
+                "head": {
+                    "render_profile": "edit",
+                    "permissions": {
+                        "read": True,
+                        "write": True,
+                        "create": True,
+                        "unlink": False,
+                    },
+                },
+                "fields": {
+                    "name": {"name": "name", "type": "char", "readonly": False},
+                    "partner_id": {"name": "partner_id", "type": "many2one", "readonly": False},
+                },
+            },
+            "model": "project.project",
+            "view_type": "form",
+            "record_id": 771,
+            "render_profile": "edit",
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.edit.auth",
+        )
+
+        self.assertEqual(full["statusContract"]["globalStatus"]["pageAuth"], "edit")
+
+    def test_ui_contract_v2_readonly_form_page_auth_stays_read(self):
+        source = {
+            "ui_contract": {
+                "model": "project.project",
+                "view_type": "form",
+                "head": {
+                    "render_profile": "readonly",
+                    "permissions": {
+                        "read": True,
+                        "write": True,
+                        "create": True,
+                        "unlink": False,
+                    },
+                },
+                "fields": {
+                    "name": {"name": "name", "type": "char", "readonly": False},
+                },
+            },
+            "model": "project.project",
+            "view_type": "form",
+            "record_id": 771,
+            "render_profile": "readonly",
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.readonly.auth",
+        )
+
+        self.assertEqual(full["statusContract"]["globalStatus"]["pageAuth"], "read")
+
 
 if __name__ == "__main__":
     unittest.main()

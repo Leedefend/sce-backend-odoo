@@ -3117,6 +3117,39 @@ const nativeVisibleFieldNames = computed(() => {
   return names;
 });
 
+function collectNativeLayoutFieldNames(nodes: NativeFormLayoutNode[], out: Set<string>) {
+  nodes.forEach((node) => {
+    const type = String(node?.type || '').trim().toLowerCase();
+    const name = String(node?.name || '').trim();
+    if (type === 'field' && name && contract.value?.fields?.[name]) {
+      out.add(name);
+    }
+    (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+      const children = node?.[key];
+      if (Array.isArray(children)) collectNativeLayoutFieldNames(children as NativeFormLayoutNode[], out);
+    });
+  });
+}
+
+function formDataFieldNames() {
+  const fieldMap = contract.value?.fields || {};
+  const names = new Set<string>();
+  collectNativeLayoutFieldNames(nativeFormLayoutNodes.value, names);
+  layoutNodes.value.forEach((node) => {
+    if (node.kind === 'field' && fieldMap[node.name]) names.add(node.name);
+  });
+  contractVisibleFields.value.forEach((name) => {
+    if (fieldMap[name]) names.add(name);
+  });
+  const statusField = nativeStatusbar.value.field;
+  if (statusField && fieldMap[statusField]) names.add(statusField);
+  if (fieldMap.active) names.add('active');
+  if (!names.size) {
+    Object.keys(fieldMap).slice(0, 40).forEach((name) => names.add(name));
+  }
+  return Array.from(names);
+}
+
 const nativeFavoriteFieldNames = computed(() => {
   const names = new Set<string>();
   collectNativeFavoriteFieldNames(nativeFormLayoutNodes.value, names);
@@ -4411,7 +4444,7 @@ async function loadContract() {
 
 async function loadRecord() {
   const versionPolicy = recordVersionPolicy();
-  const fieldNames = Object.keys(contract.value?.fields || {});
+  const fieldNames = formDataFieldNames();
   if (versionPolicy?.tokenField && !fieldNames.includes(versionPolicy.tokenField)) {
     fieldNames.push(versionPolicy.tokenField);
   }

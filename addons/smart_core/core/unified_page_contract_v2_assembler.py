@@ -438,11 +438,17 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     if source_context:
         contract["dataContract"]["dataMeta"]["sourceContext"] = deepcopy(source_context)
         contract["runtimeContract"]["sourceContext"] = deepcopy(source_context)
+        render_profile = _text(source_context.get("renderProfile")).lower()
+        contract["statusContract"]["globalStatus"]["pageAuth"] = _ui_contract_page_auth(
+            _dict(source),
+            _dict(ui),
+            render_profile,
+            view_type,
+        )
         if source_context.get("renderProfile") == "create":
             defaults = _default_values_from_context(_dict(source_context.get("context")))
             if defaults:
                 contract["dataContract"]["mainData"].update(defaults)
-            contract["statusContract"]["globalStatus"]["pageAuth"] = "edit"
     data_source = _ui_contract_data_source(model=model, view_type=view_type, fields=fields, record_id=record_id, source=source, ui=ui)
     if data_source:
         contract["dataContract"]["dataSource"]["primary"] = data_source
@@ -636,6 +642,29 @@ def _ui_source_context(source: dict[str, Any], ui: dict[str, Any]) -> dict[str, 
     if isinstance(domain, list):
         out.setdefault("domain", deepcopy(domain))
     return out
+
+
+def _ui_contract_page_auth(source: dict[str, Any], ui: dict[str, Any], render_profile: str, view_type: str) -> str:
+    if render_profile == "readonly":
+        return "read"
+    permission_sources = [
+        _dict(_dict(ui.get("head")).get("permissions")),
+        _dict(_dict(source.get("head")).get("permissions")),
+        _dict(ui.get("permissions")),
+        _dict(source.get("permissions")),
+        _dict(_dict(source.get("permission_surface")).get("rights")),
+        _dict(_dict(_dict(source.get("permission_surface")).get("effective")).get("rights")),
+    ]
+    rights: dict[str, Any] = {}
+    for row in permission_sources:
+        if row:
+            rights = row
+            break
+    if rights:
+        return "edit" if rights.get("write") is True or rights.get("create") is True else "read"
+    if render_profile in {"create", "edit"}:
+        return "edit"
+    return "read" if view_type in {"tree", "list", "kanban"} else "edit"
 
 
 def _default_values_from_context(context: dict[str, Any]) -> dict[str, Any]:

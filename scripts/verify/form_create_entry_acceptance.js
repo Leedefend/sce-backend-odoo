@@ -77,6 +77,14 @@ async function openProjectForm(page) {
   await waitForFormReady(page);
 }
 
+async function openProjectCreateForm(page) {
+  await page.goto(`${FRONTEND_URL}/f/project.project/new?menu_id=${MENU_ID}&action_id=${ACTION_ID}`, {
+    waitUntil: 'domcontentloaded',
+    timeout: 45000,
+  });
+  await waitForFormReady(page);
+}
+
 async function formSurface(page) {
   return page.evaluate(() => {
     const clean = (value) => String(value || '').replace(/\s+/g, ' ').trim();
@@ -126,8 +134,14 @@ async function exerciseListCreateEntry(page) {
 
 async function exerciseRelationCreateEntry(page) {
   await openProjectForm(page);
-  const customerBox = page.locator('.many2one-combobox').nth(0);
-  await customerBox.locator('button').filter({ hasText: '新建并维护' }).first().click();
+  let customerField = page.locator('.field').filter({ has: page.locator('.label', { hasText: /^客户\*?$/ }) }).first();
+  let maintainButton = customerField.locator('.many2one-combobox button').filter({ hasText: '新建并维护' }).first();
+  if (!await maintainButton.count()) {
+    await openProjectCreateForm(page);
+    customerField = page.locator('.field').filter({ has: page.locator('.label', { hasText: /^客户\*?$/ }) }).first();
+    maintainButton = customerField.locator('.many2one-combobox button').filter({ hasText: '新建并维护' }).first();
+  }
+  await maintainButton.click();
   await page.waitForURL((url) => url.pathname === '/f/res.partner/new', { timeout: 15000 });
   await waitForFormReady(page);
   const surface = await formSurface(page);
