@@ -183,10 +183,26 @@
         <view v-for="block in relationBlocks" :key="block.widgetId" class="relation-block">
           <view class="relation-block__head">
             <text class="relation-block__title">{{ block.label }}</text>
-            <text class="relation-block__count">{{ block.rowCount }} 行</text>
+            <view class="relation-block__head-actions">
+              <text class="relation-block__count">{{ block.rowCount }} 行</text>
+              <button
+                v-if="!isPageReadonly"
+                class="relation-block__add"
+                @click="openCreateRelationRow(block)"
+              >
+                新增
+              </button>
+            </view>
           </view>
           <view v-for="row in block.rows" :key="row.key" class="relation-block__row">
             <text class="relation-block__summary">{{ row.summary }}</text>
+            <button
+              v-if="!isPageReadonly"
+              class="relation-block__edit"
+              @click="editRelationRow(block, row)"
+            >
+              编辑
+            </button>
             <button
               v-if="!isPageReadonly"
               class="relation-block__remove"
@@ -205,6 +221,27 @@
           </button>
           <view v-else-if="block.moreCount > 0" class="relation-block__more">还有 {{ block.moreCount }} 行</view>
           <view v-if="relationErrorKey === block.dataKey && relationError" class="relation-block__error">{{ relationError }}</view>
+        </view>
+      </view>
+      <view v-if="relationEditor.visible" class="relation-editor">
+        <view class="relation-editor__head">
+          <text class="relation-editor__title">{{ relationEditor.mode === 'create' ? '新增明细' : '编辑明细' }}</text>
+          <button class="relation-editor__close" @click="closeRelationEditor">关闭</button>
+        </view>
+        <view class="relation-editor__body">
+          <view v-for="field in relationEditorFields" :key="field" class="relation-editor__field">
+            <text class="relation-editor__label">{{ field }}</text>
+            <input
+              class="relation-editor__input"
+              type="text"
+              :value="formatEditableValue(relationEditor.values[field])"
+              @input="handleRelationEditorInput(field, $event)"
+            />
+          </view>
+        </view>
+        <view class="relation-editor__actions">
+          <button class="relation-editor__cancel" @click="closeRelationEditor">取消</button>
+          <button class="relation-editor__save" @click="saveRelationEditor">保存明细</button>
         </view>
       </view>
     </view>
@@ -278,6 +315,7 @@ interface ContractWidget {
   dataKey: string;
   dictKey: string;
   summaryFields: string[];
+  editFields: string[];
   blockType: string;
   valueType: string;
   optionDomain: unknown;
@@ -324,6 +362,7 @@ interface RelationBlock {
   total: number;
   moreCount: number;
   canLoadMore: boolean;
+  editFields: string[];
   rows: RelationDisplayRow[];
 }
 
@@ -332,6 +371,15 @@ interface RelationDisplayRow {
   rowId: string;
   rowKey: string;
   summary: string;
+  raw: Dict;
+}
+
+interface RelationEditorState {
+  visible: boolean;
+  mode: 'create' | 'edit';
+  block: RelationBlock | null;
+  row: RelationDisplayRow | null;
+  values: Dict;
 }
 
 interface SelectOption {
@@ -368,6 +416,13 @@ const relationError = ref('');
 const many2OneLoadingKey = ref('');
 const optionSearchText = ref<Record<string, string>>({});
 const warningMessages = ref<string[]>([]);
+const relationEditor = ref<RelationEditorState>({
+  visible: false,
+  mode: 'create',
+  block: null,
+  row: null,
+  values: {},
+});
 let fieldActionTimer: ReturnType<typeof setTimeout> | null = null;
 let warningTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -418,6 +473,12 @@ const recordRows = computed<RecordRow[]>(() => {
   }));
 });
 const relationBlocks = computed<RelationBlock[]>(() => collectRelationBlocks(widgets.value, dataContract.value));
+const relationEditorFields = computed(() => {
+  const block = relationEditor.value.block;
+  if (!block) return [];
+  const fields = block.editFields.length ? block.editFields : Object.keys(relationEditor.value.values);
+  return fields.filter((field) => field && !field.startsWith('__') && !['id', 'row_key', 'key', 'virtual_id'].includes(field));
+});
 const recordCountLabel = computed(() => {
   if (recordTotal.value !== null) return `${recordTotal.value} 条`;
   return `${records.value.length} 条`;
@@ -902,6 +963,7 @@ function collectWidgets(layout: Dict, status: Dict): ContractWidget[] {
           dataKey: asText(config.dataKey),
           dictKey: asText(config.dictKey),
           summaryFields: collectSummaryFields(config),
+          editFields: collectRelationEditFields(config),
           blockType: asText(config.blockType),
           valueType: asText(config.valueType || config.type || widget.valueType || widget.value_type),
           optionDomain: widgetState.domain || widgetState.domain_raw || config.domain || config.domain_raw || widget.domain || widget.domain_raw,
@@ -964,7 +1026,6 @@ function collectGlobalStatus(status: Dict): Dict {
 
 function applyUnifiedPagePatchV2(patchRaw: unknown) {
   const patch = asDict(patchRaw);
-  if (!patch.updateType) return;
   const layoutPatch = asDict(patch.layoutPatch);
   const runtimePatch = asDict(patch.runtimePatch);
   const dataPatch = asDict(patch.dataPatch);
@@ -1061,7 +1122,7 @@ function mergeRowsByDataKey(baseRowsByKey: Dict, patchRowsByKey: Dict, replaceRo
 
 function applyLinePatches(rowsByKey: Dict, patchValue: unknown) {
   asList(patchValue).map((item) => asDict(item)).forEach((linePatch) => {
-    const fieldName = asText(linePatch.field || linePatch.relation_field || linePatch.fieldCode || linePatch.dataKey);
+    const fieldName = asText(linePatch.dataKey || linePatch.data_key || linePatch.field || linePatch.relation_field || linePatch.fieldCode);
     if (!fieldName) return;
     const baseRows = asList(rowsByKey[fieldName]).map((item) => asDict(item)).filter((item) => Object.keys(item).length);
     rowsByKey[fieldName] = applyLinePatchRows(baseRows, linePatch);
@@ -1194,6 +1255,7 @@ function collectRelationBlocks(sourceWidgets: ContractWidget[], currentDataContr
       const total = Number.isFinite(totalRaw) ? totalRaw : rows.length;
       const visibleRows = rows.slice(0, rows.length);
       const dataSource = resolveRelationDataSource(dataSources, widget, dataKey);
+      const editFields = resolveRelationEditFields(widget, dataKey, dataMeta, rows);
       return {
         widgetId: widget.widgetId,
         fieldCode: widget.fieldCode,
@@ -1203,15 +1265,17 @@ function collectRelationBlocks(sourceWidgets: ContractWidget[], currentDataContr
         total,
         moreCount: Math.max(0, total - visibleRows.length),
         canLoadMore: Boolean(dataSource && total > rows.length),
+        editFields,
         rows: visibleRows.map((row, index) => ({
           key: relationRowKey(row, widget.widgetId, index),
           rowId: asText(row.id),
           rowKey: asText(row.row_key || row.key || row.virtual_id || row.__row_key),
           summary: formatRelationRow(row, summaryFields),
+          raw: row,
         })),
       };
     })
-    .filter((block) => block.rowCount > 0);
+    .filter((block) => block.rowCount > 0 || block.editFields.length > 0 || !isPageReadonly.value);
 }
 
 function resolveRelationDataSource(dataSources: Dict, widget: ContractWidget, dataKey: string): Dict | null {
@@ -1233,6 +1297,15 @@ function collectSummaryFields(config: Dict): string[] {
   ].filter((field, index, all) => field && all.indexOf(field) === index);
 }
 
+function collectRelationEditFields(config: Dict): string[] {
+  return [
+    ...fieldNamesFromList(config.editFields || config.edit_fields),
+    ...fieldNamesFromList(config.formFields || config.form_fields),
+    ...fieldNamesFromList(config.inlineFields || config.inline_fields),
+    ...fieldNamesFromList(config.columns),
+  ].filter((field, index, all) => field && all.indexOf(field) === index);
+}
+
 function resolveRelationSummaryFields(widget: ContractWidget, dataKey: string, dataMeta: Dict): string[] {
   const meta = asDict(dataMeta[dataKey] || dataMeta[widget.fieldCode] || dataMeta[widget.widgetId]);
   return [
@@ -1241,6 +1314,23 @@ function resolveRelationSummaryFields(widget: ContractWidget, dataKey: string, d
     ...fieldNamesFromList(meta.displayFields || meta.display_fields),
     ...fieldNamesFromList(meta.columns || meta.fields),
   ].filter((field, index, all) => field && all.indexOf(field) === index);
+}
+
+function resolveRelationEditFields(widget: ContractWidget, dataKey: string, dataMeta: Dict, rows: Dict[]): string[] {
+  const meta = asDict(dataMeta[dataKey] || dataMeta[widget.fieldCode] || dataMeta[widget.widgetId]);
+  const fromMeta = [
+    ...fieldNamesFromList(meta.editFields || meta.edit_fields),
+    ...fieldNamesFromList(meta.formFields || meta.form_fields),
+    ...fieldNamesFromList(meta.columns || meta.fields),
+  ];
+  const fromRows = rows.flatMap((row) => Object.keys(row))
+    .filter((field) => field && !field.startsWith('__') && !['id', 'row_key', 'key', 'virtual_id'].includes(field));
+  return [
+    ...widget.editFields,
+    ...fromMeta,
+    ...widget.summaryFields,
+    ...fromRows,
+  ].filter((field, index, all) => field && all.indexOf(field) === index).slice(0, 8);
 }
 
 function fieldNamesFromList(value: unknown): string[] {
@@ -1273,6 +1363,7 @@ async function removeRelationRow(block: RelationBlock, row: RelationDisplayRow) 
   const confirmed = await confirmRelationRowRemove(block);
   if (!confirmed) return;
   applyUnifiedPagePatchV2({
+    updateType: 'partial',
     dataPatch: {
       relationRows: {
         line_patches: [{
@@ -1287,6 +1378,88 @@ async function removeRelationRow(block: RelationBlock, row: RelationDisplayRow) 
     },
   });
   pushWarningMessages([`${block.label} 行已标记移除，保存后生效`]);
+}
+
+function openCreateRelationRow(block: RelationBlock) {
+  const values = relationEditorInitialValues(block, null);
+  relationEditor.value = {
+    visible: true,
+    mode: 'create',
+    block,
+    row: null,
+    values,
+  };
+}
+
+function editRelationRow(block: RelationBlock, row: RelationDisplayRow) {
+  const values = relationEditorInitialValues(block, row);
+  relationEditor.value = {
+    visible: true,
+    mode: 'edit',
+    block,
+    row,
+    values,
+  };
+}
+
+function closeRelationEditor() {
+  relationEditor.value = {
+    visible: false,
+    mode: 'create',
+    block: null,
+    row: null,
+    values: {},
+  };
+}
+
+function relationEditorInitialValues(block: RelationBlock, row: RelationDisplayRow | null): Dict {
+  const raw = row ? asDict(row.raw) : {};
+  const fields = (block.editFields.length ? block.editFields : Object.keys(raw)).length
+    ? (block.editFields.length ? block.editFields : Object.keys(raw))
+    : ['name'];
+  return fields
+    .filter((field) => field && !field.startsWith('__') && !['id', 'row_key', 'key', 'virtual_id'].includes(field))
+    .reduce<Dict>((acc, field) => {
+      acc[field] = raw[field] ?? '';
+      return acc;
+    }, {});
+}
+
+function handleRelationEditorInput(field: string, event: unknown) {
+  const detail = asDict(asDict(event).detail);
+  relationEditor.value = {
+    ...relationEditor.value,
+    values: {
+      ...relationEditor.value.values,
+      [field]: detail.value,
+    },
+  };
+}
+
+function saveRelationEditor() {
+  const block = relationEditor.value.block;
+  if (!block) return;
+  const row = relationEditor.value.row;
+  const mode = relationEditor.value.mode;
+  const rowKey = row?.rowKey || row?.key || `mobile-new-${Date.now()}`;
+  applyUnifiedPagePatchV2({
+    updateType: 'partial',
+    dataPatch: {
+      relationRows: {
+        line_patches: [{
+          field: block.fieldCode,
+          dataKey: block.dataKey,
+          row_id: mode === 'edit' ? row?.rowId || undefined : undefined,
+          row_key: rowKey,
+          row_state: mode === 'create' ? 'create' : 'update',
+          command_hint: [mode === 'create' ? 'create' : 'update'],
+          patch: { ...relationEditor.value.values },
+        }],
+      },
+    },
+  });
+  pushWarningMessages([`${block.label} 行已${mode === 'create' ? '新增' : '更新'}，保存后生效`]);
+  closeRelationEditor();
 }
 
 function confirmRelationRowRemove(block: RelationBlock): Promise<boolean> {
@@ -2448,6 +2621,13 @@ onShow(loadContract);
   margin-bottom: 10rpx;
 }
 
+.relation-block__head-actions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 10rpx;
+}
+
 .relation-block__title,
 .relation-block__count,
 .relation-block__more,
@@ -2467,6 +2647,27 @@ onShow(loadContract);
   flex: 0 0 auto;
   color: #667789;
   font-size: 21rpx;
+}
+
+.relation-block__add,
+.relation-block__edit {
+  flex: 0 0 auto;
+  height: 48rpx;
+  margin: 0;
+  border: 1rpx solid #bdd4ec;
+  border-radius: 8rpx;
+  background: #f2f8ff;
+  color: #1f5f99;
+  font-size: 21rpx;
+  line-height: 48rpx;
+}
+
+.relation-block__add {
+  width: 92rpx;
+}
+
+.relation-block__edit {
+  width: 86rpx;
 }
 
 .relation-block__row {
@@ -2498,6 +2699,89 @@ onShow(loadContract);
   color: #a33a3a;
   font-size: 21rpx;
   line-height: 48rpx;
+}
+
+.relation-editor {
+  margin-top: 16rpx;
+  padding: 16rpx;
+  border: 1rpx solid #cdd8e4;
+  border-radius: 8rpx;
+  background: #ffffff;
+}
+
+.relation-editor__head,
+.relation-editor__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.relation-editor__title {
+  color: #17202a;
+  font-size: 25rpx;
+  font-weight: 700;
+}
+
+.relation-editor__close,
+.relation-editor__cancel,
+.relation-editor__save {
+  height: 52rpx;
+  margin: 0;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  line-height: 52rpx;
+}
+
+.relation-editor__close,
+.relation-editor__cancel {
+  width: 104rpx;
+  border: 1rpx solid #d8e0e8;
+  background: #ffffff;
+  color: #344154;
+}
+
+.relation-editor__save {
+  width: 148rpx;
+  border: 1rpx solid #1f5f99;
+  background: #1f5f99;
+  color: #ffffff;
+}
+
+.relation-editor__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin: 16rpx 0;
+}
+
+.relation-editor__field {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+
+.relation-editor__label {
+  flex: 0 0 170rpx;
+  min-width: 0;
+  color: #5d7188;
+  font-size: 22rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.relation-editor__input {
+  flex: 1;
+  min-width: 0;
+  height: 58rpx;
+  box-sizing: border-box;
+  padding: 0 14rpx;
+  border: 1rpx solid #d8e0e8;
+  border-radius: 8rpx;
+  background: #ffffff;
+  color: #17202a;
+  font-size: 23rpx;
 }
 
 .relation-block__more {

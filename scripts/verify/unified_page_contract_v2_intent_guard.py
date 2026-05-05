@@ -109,12 +109,15 @@ def main() -> int:
     for token in ("mergeRowsByDataKey", "extractPatchRows", "isReplaceDataPatch", "syncRecordsFromDataPatch(nextData)", "patch.updateType === 'full'", "rowOperation === 'replace'", "mergeRowsById(asList(baseRowsByKey[key])"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must preserve v2 row patch merge semantics token: {token}")
-    for token in ("key === 'line_patches'", "applyLinePatches", "applyLinePatchRows", "linePatch.field || linePatch.relation_field || linePatch.fieldCode || linePatch.dataKey", "row_state || linePatch.state", "command_hint || linePatch.command", "baseRows.filter((row) => !matches(row))"):
+    for token in ("key === 'line_patches'", "applyLinePatches", "applyLinePatchRows", "linePatch.dataKey || linePatch.data_key || linePatch.field", "row_state || linePatch.state", "command_hint || linePatch.command", "baseRows.filter((row) => !matches(row))"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must apply v2 relation line_patches token: {token}")
     for token in ("removeRelationRow", "confirmRelationRowRemove", "relation-block__remove", "row_state: 'delete'", "command_hint: ['unlink']", "pushWarningMessages([`${block.label} 行已标记移除，保存后生效`])", "currentRelationRows", "params.relationRows = currentRelationRows()", "params.relation_rows = currentRelationRows()", "relationRowKey"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must provide bounded v2 relation row removal token: {token}")
+    for token in ("RelationEditorState", "relationEditor", "relationEditorFields", "relation-block__add", "relation-block__edit", "openCreateRelationRow", "editRelationRow", "saveRelationEditor", "relationEditorInitialValues", "handleRelationEditorInput", "row_state: mode === 'create' ? 'create' : 'update'", "command_hint: [mode === 'create' ? 'create' : 'update']", "patch: { ...relationEditor.value.values }", "pushWarningMessages([`${block.label} 行已${mode === 'create' ? '新增' : '更新'}，保存后生效`])"):
+        if token not in mobile_source:
+            _fail(errors, f"mobile terminal renderer must provide bounded v2 relation row add/edit token: {token}")
     for token in ("hydrateInlineRecords", "hasInlineData", "hasInlineRows", "firstInlineRows", "firstRecordList", "dataContract.mainData", "dataContract.tableRows", "dataContract.treeData"):
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must render v2 inline dataContract rows token: {token}")
