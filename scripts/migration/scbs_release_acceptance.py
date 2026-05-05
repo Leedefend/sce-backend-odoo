@@ -91,6 +91,15 @@ def duplicate_count(table: str, where: str, keys: str) -> int:
     return int(fetch_one(sql)["count"] or 0)
 
 
+def scbs_project_domain_sql(alias: str = "p") -> str:
+    return (
+        "(%s.other_system_code = 'SCBS' "
+        "OR %s.other_system_id LIKE 'SCBS:%%' "
+        "OR %s.legacy_project_id LIKE 'SCBS_BUCKET:%%' "
+        "OR %s.project_environment = 'legacy_scbs_project_fact')"
+    ) % (alias, alias, alias, alias)
+
+
 def model_installed_checks() -> dict[str, bool]:
     models = [
         "sc.legacy.scbs.fact.staging",
@@ -215,6 +224,24 @@ def strict_acceptance() -> tuple[dict[str, bool], dict[str, object]]:
     expected_stock = expected_staging["stock_in"]
     expected_fund = expected_staging["fund_daily"]
     expected_inactive = baseline["staging"]["inactive"]
+    project_strategy = {
+        "scbs_direct": fetch_one(
+            "SELECT COUNT(*) FROM project_project p WHERE %s AND p.operation_strategy = 'direct'"
+            % scbs_project_domain_sql("p")
+        )["count"],
+        "scbs_non_direct": fetch_one(
+            "SELECT COUNT(*) FROM project_project p WHERE %s AND p.operation_strategy IS DISTINCT FROM 'direct'"
+            % scbs_project_domain_sql("p")
+        )["count"],
+        "non_scbs_joint": fetch_one(
+            "SELECT COUNT(*) FROM project_project p WHERE NOT %s AND p.operation_strategy = 'joint'"
+            % scbs_project_domain_sql("p")
+        )["count"],
+        "non_scbs_not_joint": fetch_one(
+            "SELECT COUNT(*) FROM project_project p WHERE NOT %s AND p.operation_strategy IS DISTINCT FROM 'joint'"
+            % scbs_project_domain_sql("p")
+        )["count"],
+    }
 
     checks.update(
         {
@@ -241,6 +268,10 @@ def strict_acceptance() -> tuple[dict[str, bool], dict[str, object]]:
             "inactive_residual_registered": int(residual["rows"] or 0) == int(expected_inactive["rows"])
             and near(residual["amount"], expected_inactive["amount"]),
             "stock_zero_residual_policy": stock_zero_residual == 3,
+            "scbs_projects_are_direct": int(project_strategy["scbs_direct"] or 0) > 0
+            and int(project_strategy["scbs_non_direct"] or 0) == 0,
+            "existing_projects_are_joint": int(project_strategy["non_scbs_joint"] or 0) > 0
+            and int(project_strategy["non_scbs_not_joint"] or 0) == 0,
             "no_non_direct_payment_execution": fetch_one(
                 "SELECT COUNT(*) FROM sc_payment_execution WHERE legacy_source_model = '%s' AND operation_strategy <> 'direct'"
                 % SOURCE_MODEL
@@ -342,6 +373,7 @@ def strict_acceptance() -> tuple[dict[str, bool], dict[str, object]]:
             "inactive_rows": int(residual["rows"] or 0),
             "inactive_amount": float(residual["amount"] or 0),
         },
+        "project_operation_strategy": project_strategy,
     }
     return checks, observations
 
