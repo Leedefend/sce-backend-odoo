@@ -30,13 +30,57 @@ function resolveCompatSource(v2Contract: unknown): Dict {
   return asDict(compat.ui_contract);
 }
 
+function resolveV2SourceContext(v2Contract: unknown): Dict {
+  const root = asDict(v2Contract);
+  const dataContract = asDict(root.dataContract);
+  const dataMeta = asDict(dataContract.dataMeta);
+  const runtime = asDict(root.runtimeContract);
+  return asDict(dataMeta.sourceContext || runtime.sourceContext);
+}
+
+function synthesizeLegacyFromV2(v2Contract: Dict): Dict {
+  const pageInfo = asDict(v2Contract.pageInfo);
+  const dataContract = asDict(v2Contract.dataContract);
+  const sourceContext = resolveV2SourceContext(v2Contract);
+  const renderProfile = String(sourceContext.renderProfile || sourceContext.render_profile || '').trim();
+  const context = asDict(sourceContext.context);
+  const head: Dict = {
+    model: pageInfo.model,
+    view_type: pageInfo.viewType,
+    title: pageInfo.pageName,
+    ...(renderProfile ? { render_profile: renderProfile } : {}),
+    ...(Object.keys(context).length ? { context } : {}),
+  };
+  return {
+    model: pageInfo.model,
+    view_type: pageInfo.viewType,
+    render_profile: renderProfile || undefined,
+    head,
+    fields: {},
+    views: {},
+    __v2_main_data: asDict(dataContract.mainData),
+  };
+}
+
 function adaptUnifiedPageContractV2Raw(result: IntentRawResult<Dict>): LegacyContractRawResult {
   const v2Contract = asDict(result.data);
   const source = resolveCompatSource(v2Contract);
-  const legacy = asDict(source.ui_contract);
+  const legacy = Object.keys(source).length ? asDict(source.ui_contract) : synthesizeLegacyFromV2(v2Contract);
   const sourceMeta = asDict(source.source_meta);
+  const sourceContext = resolveV2SourceContext(v2Contract);
+  const sourceContextRaw = asDict(sourceContext.context);
+  const v2RenderProfile = String(sourceContext.renderProfile || sourceContext.render_profile || '').trim();
+  const legacyHead = asDict(legacy.head);
+  const adaptedHead: Dict = {
+    ...legacyHead,
+    ...(!legacyHead.context && Object.keys(sourceContextRaw).length ? { context: sourceContextRaw } : {}),
+    ...(!legacyHead.render_profile && v2RenderProfile ? { render_profile: v2RenderProfile } : {}),
+  };
   const adaptedData = {
     ...legacy,
+    ...(Object.keys(adaptedHead).length ? { head: adaptedHead } : {}),
+    ...(!legacy.render_profile && v2RenderProfile ? { render_profile: v2RenderProfile } : {}),
+    __v2_main_data: asDict(asDict(v2Contract.dataContract).mainData),
     __unified_page_contract_v2: v2Contract,
   } as ActionContract & Dict;
   return {

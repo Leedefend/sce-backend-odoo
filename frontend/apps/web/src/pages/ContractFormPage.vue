@@ -498,8 +498,10 @@ import {
   collectUnifiedPageContractV2FieldContainerStatus,
   collectUnifiedPageContractV2FieldStatus,
   collectUnifiedPageContractV2FieldWidgets,
+  resolveUnifiedPageContractV2MainData,
   resolveUnifiedPageContractV2,
   resolveUnifiedPageContractV2GlobalStatus,
+  resolveUnifiedPageContractV2SourceContext,
   type UnifiedPageContractV2ButtonStatus,
 } from '../app/contracts/unifiedPageContractV2';
 
@@ -822,7 +824,9 @@ function recordVersionPolicy() {
 }
 
 const renderProfile = computed<'create' | 'edit' | 'readonly'>(() => {
-  const profile = String(contract.value?.render_profile || '').trim().toLowerCase();
+  const sourceContext = resolveUnifiedPageContractV2SourceContext(contract.value);
+  const head = (contract.value?.head || {}) as Record<string, unknown>;
+  const profile = String(sourceContext.renderProfile || contract.value?.render_profile || head.render_profile || '').trim().toLowerCase();
   if (profile === 'readonly') return 'readonly';
   if (profile === 'edit') return 'edit';
   if (profile === 'create') return 'create';
@@ -4066,10 +4070,41 @@ function collectWritableValues() {
 }
 
 function formCreateContext() {
-  const context = contract.value?.head?.context;
-  return context && typeof context === 'object' && !Array.isArray(context)
-    ? { ...(context as Record<string, unknown>) }
-    : {};
+  const sourceContext = resolveUnifiedPageContractV2SourceContext(contract.value).context || {};
+  const legacyContext = contract.value?.head?.context;
+  return {
+    ...(legacyContext && typeof legacyContext === 'object' && !Array.isArray(legacyContext)
+      ? legacyContext as Record<string, unknown>
+      : {}),
+    ...sourceContext,
+  };
+}
+
+function resolveCreateDefaults() {
+  const defaults: Record<string, unknown> = {
+    ...resolveUnifiedPageContractV2MainData(contract.value),
+  };
+  Object.entries(route.query as Record<string, unknown>).forEach(([key, value]) => {
+    if (key.startsWith('default_')) {
+      defaults[key.replace(/^default_/, '')] = normalizeRouteDefault(value);
+    }
+  });
+  const context = formCreateContext();
+  Object.entries(context).forEach(([key, value]) => {
+    if (key.startsWith('default_') && !(key.replace(/^default_/, '') in defaults)) {
+      defaults[key.replace(/^default_/, '')] = value;
+    }
+  });
+  const validator = contract.value?.validator as Record<string, unknown> | undefined;
+  const defaultsSample = validator?.defaults_sample;
+  if (defaultsSample && typeof defaultsSample === 'object' && !Array.isArray(defaultsSample)) {
+    Object.entries(defaultsSample as Record<string, unknown>).forEach(([key, value]) => {
+      if (!(key in defaults)) {
+        defaults[key] = value === 'dynamic' ? '' : value;
+      }
+    });
+  }
+  return defaults;
 }
 
 function fieldInputType(ttype?: string) {
@@ -4403,29 +4438,7 @@ async function loadRecord() {
     onchangeTimer = null;
   }
   if (!recordId.value) {
-    const context = contract.value?.head?.context;
-    const defaults: Record<string, unknown> = {};
-    Object.entries(route.query as Record<string, unknown>).forEach(([key, value]) => {
-      if (key.startsWith('default_')) {
-        defaults[key.replace(/^default_/, '')] = normalizeRouteDefault(value);
-      }
-    });
-    if (context && typeof context === 'object' && !Array.isArray(context)) {
-      Object.entries(context).forEach(([key, value]) => {
-        if (key.startsWith('default_') && !(key.replace(/^default_/, '') in defaults)) {
-          defaults[key.replace(/^default_/, '')] = value;
-        }
-      });
-    }
-    const validator = contract.value?.validator as Record<string, unknown> | undefined;
-    const defaultsSample = validator?.defaults_sample;
-    if (defaultsSample && typeof defaultsSample === 'object' && !Array.isArray(defaultsSample)) {
-      Object.entries(defaultsSample as Record<string, unknown>).forEach(([key, value]) => {
-        if (!(key in defaults)) {
-          defaults[key] = value === 'dynamic' ? '' : value;
-        }
-      });
-    }
+    const defaults = resolveCreateDefaults();
     fieldNames.forEach((name) => {
       const descriptor = contract.value?.fields?.[name];
       const ttype = fieldType(descriptor);

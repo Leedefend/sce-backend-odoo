@@ -104,6 +104,14 @@ export type UnifiedPageContractV2 = {
 
 type Dict = Record<string, unknown>;
 
+export type UnifiedPageContractV2SourceContext = {
+  context?: Dict;
+  domain?: unknown[];
+  contextRaw?: string;
+  domainRaw?: string;
+  renderProfile?: string;
+};
+
 function asDict(value: unknown): Dict {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Dict : {};
 }
@@ -269,6 +277,33 @@ export function resolveUnifiedPageContractV2GlobalStatus(contract: unknown): Uni
     pageAuth: asText(row.pageAuth) || undefined,
     reasonCode: asText(row.reasonCode || row.reason_code) || undefined,
   };
+}
+
+export function resolveUnifiedPageContractV2SourceContext(contract: unknown): UnifiedPageContractV2SourceContext {
+  const v2 = resolveUnifiedPageContractV2(contract);
+  if (!v2) return {};
+  const dataMeta = asDict(v2.dataContract.dataMeta);
+  const runtime = asDict(v2.runtimeContract);
+  const source = asDict(dataMeta.sourceContext || runtime.sourceContext);
+  if (!Object.keys(source).length) return {};
+  const context = asDict(source.context);
+  const domain = asList(source.domain);
+  const contextRaw = asText(source.context_raw || source.contextRaw);
+  const domainRaw = asText(source.domain_raw || source.domainRaw);
+  const renderProfile = asText(source.renderProfile || source.render_profile).toLowerCase();
+  return {
+    ...(Object.keys(context).length ? { context } : {}),
+    ...(domain.length ? { domain } : {}),
+    ...(contextRaw ? { contextRaw } : {}),
+    ...(domainRaw ? { domainRaw } : {}),
+    ...(renderProfile ? { renderProfile } : {}),
+  };
+}
+
+export function resolveUnifiedPageContractV2MainData(contract: unknown): Dict {
+  const v2 = resolveUnifiedPageContractV2(contract);
+  if (!v2) return {};
+  return asDict(asDict(v2.dataContract).mainData);
 }
 
 export function collectUnifiedPageContractV2ContainerStatus(contract: unknown): Record<string, UnifiedPageContractV2ContainerStatus> {
