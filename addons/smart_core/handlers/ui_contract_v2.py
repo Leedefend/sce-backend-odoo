@@ -72,6 +72,7 @@ class UiContractV2Handler(BaseIntentHandler):
             or f"ui.contract.v2.{model or 'unknown'}.{view_type or 'form'}"
         )
 
+        ui_nested_data = ui_data.get("data") if isinstance(ui_data.get("data"), dict) else {}
         source_contract = {
             "ui_contract": ui_data,
             "model": model,
@@ -80,6 +81,18 @@ class UiContractV2Handler(BaseIntentHandler):
             "render_profile": params.get("render_profile") or params.get("renderProfile") or ui_params.get("render_profile") or ui_params.get("renderProfile"),
             "domain_raw": params.get("domain_raw") or params.get("domainRaw") or ui_params.get("domain_raw") or ui_params.get("domainRaw"),
             "context_raw": params.get("context_raw") or params.get("contextRaw") or ui_params.get("context_raw") or ui_params.get("contextRaw"),
+            "context": (
+                ui_data.get("context")
+                or ((ui_data.get("head") or {}).get("context") if isinstance(ui_data.get("head"), dict) else {})
+                or ui_params.get("context")
+                or params.get("context")
+                or {}
+            ),
+            "record": (
+                ui_data.get("record")
+                if isinstance(ui_data.get("record"), dict)
+                else (ui_nested_data.get("record") if isinstance(ui_nested_data.get("record"), dict) else {})
+            ),
             "source_meta": ui_meta,
         }
         contract_v2 = assemble_unified_page_contract_v2(

@@ -94,9 +94,12 @@ function resolveIntakeActionTarget() {
 
 function openQuickCreate() {
   const workspaceContext = resolveWorkspaceContextQuery();
+  const target = resolveIntakeActionTarget();
   void router.replace({
     path: '/f/project.project/new',
     query: {
+      action_id: target?.actionId || undefined,
+      menu_id: target?.menuId || undefined,
       scene_key: 'projects.intake',
       scene_label: '项目立项',
       intake_mode: 'quick',

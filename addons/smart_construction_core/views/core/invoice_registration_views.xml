@@ -11,6 +11,7 @@
                     <field name="invoice_no"/>
                     <field name="invoice_code"/>
                     <field name="project_id"/>
+                    <field name="operation_strategy"/>
                     <field name="partner_id"/>
                     <field name="contract_id"/>
                     <field name="invoice_type"/>
@@ -20,7 +21,10 @@
                     <filter string="预缴税" name="source_kind_prepaid_tax" domain="[('source_kind', '=', 'prepaid_tax')]"/>
                     <filter string="已确认" name="state_confirmed" domain="[('state', 'in', ['confirmed', 'legacy_confirmed'])]"/>
                     <filter string="已登记" name="state_registered" domain="[('state', '=', 'registered')]"/>
+                    <filter string="公司直营" name="operation_direct" domain="[('operation_strategy', '=', 'direct')]"/>
+                    <filter string="联营项目" name="operation_joint" domain="[('operation_strategy', '=', 'joint')]"/>
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按经营策略" name="group_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
                     <filter string="按单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
                     <filter string="按方向" name="group_direction" context="{'group_by': 'direction'}"/>
                     <filter string="按类型" name="group_source_kind" context="{'group_by': 'source_kind'}"/>
@@ -40,6 +44,7 @@
                     <field name="document_no"/>
                     <field name="document_date"/>
                     <field name="project_id"/>
+                    <field name="operation_strategy"/>
                     <field name="partner_id"/>
                     <field name="contract_id"/>
                     <field name="settlement_id"/>
@@ -91,10 +96,11 @@
                                 <field name="source_kind" readonly="state == 'legacy_confirmed'"/>
                                 <field name="direction" readonly="state == 'legacy_confirmed'"/>
                                 <field name="document_no" readonly="state == 'legacy_confirmed'"/>
-                                <field name="document_date" readonly="state == 'legacy_confirmed'"/>
+                                <field name="document_date" required="1" readonly="state == 'legacy_confirmed'"/>
                             </group>
                             <group>
                                 <field name="project_id" readonly="state == 'legacy_confirmed'"/>
+                                <field name="operation_strategy" readonly="1"/>
                                 <field name="partner_id"/>
                                 <field name="contract_id"/>
                                 <field name="settlement_id"/>
@@ -124,6 +130,7 @@
                         </group>
                         <group>
                             <field name="note"/>
+                            <field name="attachment_ids" widget="many2many_binary"/>
                             <field name="active"/>
                         </group>
                     </sheet>

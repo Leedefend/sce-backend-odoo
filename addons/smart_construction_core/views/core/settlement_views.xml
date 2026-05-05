@@ -13,6 +13,7 @@
                     <field name="settlement_type"/>
                     <field name="settlement_stage"/>
                     <field name="project_id"/>
+                    <field name="operation_strategy"/>
                     <field name="contract_id"/>
                     <field name="contract_subject"/>
                     <field name="contract_total_amount" sum="合同总额合计"/>
@@ -44,6 +45,7 @@
                     <field name="name"/>
                     <field name="title"/>
                     <field name="project_id"/>
+                    <field name="operation_strategy"/>
                     <field name="contract_id"/>
                     <field name="partner_id"/>
                     <field name="settlement_unit_id"/>
@@ -55,10 +57,13 @@
                     <filter name="state_cancel" string="已取消" domain="[('state', '=', 'cancel')]"/>
                     <filter name="type_out" string="支出结算" domain="[('settlement_type', '=', 'out')]"/>
                     <filter name="type_in" string="收入结算" domain="[('settlement_type', '=', 'in')]"/>
+                    <filter name="operation_direct" string="公司直营" domain="[('operation_strategy', '=', 'direct')]"/>
+                    <filter name="operation_joint" string="联营项目" domain="[('operation_strategy', '=', 'joint')]"/>
                     <filter name="with_contract" string="有关联合同" domain="[('contract_id', '!=', False)]"/>
                     <filter name="stage_final" string="结算定案" domain="[('settlement_stage', '=', 'final')]"/>
                     <group expand="0" string="分组">
                         <filter name="group_project" string="按项目" context="{'group_by': 'project_id'}"/>
+                        <filter name="group_operation_strategy" string="按经营策略" context="{'group_by': 'operation_strategy'}"/>
                         <filter name="group_contract" string="按合同" context="{'group_by': 'contract_id'}"/>
                         <filter name="group_partner" string="按往来单位" context="{'group_by': 'partner_id'}"/>
                         <filter name="group_type" string="按结算类型" context="{'group_by': 'settlement_type'}"/>
@@ -132,6 +137,7 @@
                                 <field name="name" readonly="1"/>
                                 <field name="title"/>
                                 <field name="project_id" options="{'no_create': True}" required="1"/>
+                                <field name="operation_strategy" readonly="1"/>
                                 <field name="settlement_type" required="1"/>
                                 <field name="settlement_stage"/>
                                 <field name="contract_id"

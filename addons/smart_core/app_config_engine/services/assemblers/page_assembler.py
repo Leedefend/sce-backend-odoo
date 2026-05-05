@@ -114,6 +114,22 @@ class PageAssembler:
         }
         action_domain, action_domain_raw = self._normalize_action_domain(action, action_eval_context)
         action_context, action_context_raw = self._normalize_action_context(action, action_eval_context)
+        request_context = p.get("context") if isinstance(p.get("context"), dict) else {}
+        effective_context = dict(action_context or {})
+        env_context = self.env.context if isinstance(self.env.context, dict) else {}
+        for key in ("current_project_id", "default_project_id", "allowed_company_ids", "lang", "tz"):
+            if env_context.get(key) and key not in effective_context:
+                effective_context[key] = env_context.get(key)
+        if request_context:
+            effective_context.update(request_context)
+        current_project_id = p.get("current_project_id") or effective_context.get("current_project_id")
+        if current_project_id:
+            try:
+                project_id_int = int(current_project_id)
+                effective_context["current_project_id"] = project_id_int
+                effective_context.setdefault("default_project_id", project_id_int)
+            except Exception:
+                pass
         if action_domain and not p.get("domain"):
             p["domain"] = action_domain
 
@@ -335,7 +351,7 @@ class PageAssembler:
             "action_id": action.get('id') if isinstance(action, dict) else None,
             "domain": action_domain,
             "domain_raw": action_domain_raw,
-            "context": action_context,
+            "context": effective_context,
             "context_raw": action_context_raw,
             "permissions": {
                 "read": env[model].check_access_rights('read', raise_exception=False),
@@ -351,8 +367,13 @@ class PageAssembler:
             data["head"]["render_profile"] = requested_render_profile
         data["domain"] = action_domain
         data["domain_raw"] = action_domain_raw
-        data["context"] = action_context
+        data["context"] = effective_context
         data["context_raw"] = action_context_raw
+        self._inject_create_defaults(
+            data,
+            model_name=model,
+            render_profile=requested_render_profile,
+        )
         self._inject_record_version_contract(
             data,
             model_name=model,
@@ -382,6 +403,36 @@ class PageAssembler:
         if warnings:
             data["warnings"] = warnings
         return data, versions
+
+    def _inject_create_defaults(self, data, model_name="", render_profile=""):
+        if str(render_profile or "").strip().lower() != "create":
+            return
+        model = str(model_name or "").strip()
+        if not model or model not in self.env:
+            return
+        try:
+            Model = self.env[model].with_context(**(data.get("context") or {}))
+            fields_map = Model.fields_get()
+            field_names = [name for name in fields_map.keys() if name not in {"id", "display_name"}]
+            defaults = Model.default_get(field_names) if field_names else {}
+        except Exception:
+            _logger.exception("inject create defaults failed for model=%s", model)
+            return
+        if not isinstance(defaults, dict) or not defaults:
+            return
+        normalized = {}
+        for name, value in defaults.items():
+            meta = fields_map.get(name) or {}
+            if meta.get("type") == "many2one" and value:
+                try:
+                    relation = str(meta.get("relation") or "").strip()
+                    record = self.env[relation].browse(int(value)).exists() if relation and relation in self.env else None
+                    normalized[name] = [int(value), record.display_name if record else "#%s" % value]
+                except Exception:
+                    normalized[name] = value
+            else:
+                normalized[name] = value
+        data["record"] = {**(data.get("record") or {}), **normalized}
 
     def _resolve_action_from_payload(self, p, model):
         raw_action_id = p.get("action_id") or p.get("actionId")

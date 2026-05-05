@@ -11,10 +11,12 @@
                 <field name="state"/>
                 <field name="subject"/>
                 <field name="project_id"/>
+                <field name="operation_strategy"/>
                 <field name="type"/>
                 <field name="partner_id"/>
                 <field name="category_id"/>
                 <field name="date_contract"/>
+                <field name="amount_tax" sum="税额合计"/>
                 <field name="amount_final" sum="最终合同价合计"/>
                 <field name="settlement_amount" sum="结算金额合计"/>
                 <field name="invoice_amount" sum="开票金额合计"/>
@@ -92,6 +94,7 @@
                             <field name="subject"/>
                             <field name="type" required="1"/>
                             <field name="project_id" required="1"/>
+                            <field name="operation_strategy" readonly="1"/>
                             <field name="partner_id" required="1"/>
                             <field name="category_id"/>
                             <field name="contract_type_id"/>
@@ -173,6 +176,7 @@
                 <field name="name"/>
                 <field name="subject"/>
                 <field name="project_id"/>
+                <field name="operation_strategy"/>
                 <field name="partner_id"/>
                 <field name="category_id"/>
                 <field name="contract_type_id"/>
@@ -183,10 +187,13 @@
                 <filter name="state_cancel" string="已取消" domain="[('state', '=', 'cancel')]"/>
                 <filter name="income_contract" string="收入合同" domain="[('type', '=', 'out')]"/>
                 <filter name="expense_contract" string="支出合同" domain="[('type', '=', 'in')]"/>
+                <filter name="operation_direct" string="公司直营" domain="[('operation_strategy', '=', 'direct')]"/>
+                <filter name="operation_joint" string="联营项目" domain="[('operation_strategy', '=', 'joint')]"/>
                 <filter name="with_project" string="有项目" domain="[('project_id', '!=', False)]"/>
                 <filter name="with_partner" string="有合同方" domain="[('partner_id', '!=', False)]"/>
                 <group expand="0" string="分组">
                     <filter name="group_project" string="按项目" context="{'group_by': 'project_id'}"/>
+                    <filter name="group_operation_strategy" string="按经营策略" context="{'group_by': 'operation_strategy'}"/>
                     <filter name="group_partner" string="按合同方" context="{'group_by': 'partner_id'}"/>
                     <filter name="group_type" string="按收支类型" context="{'group_by': 'type'}"/>
                     <filter name="group_category" string="按合同类别" context="{'group_by': 'category_id'}"/>

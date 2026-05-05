@@ -20,6 +20,13 @@ class ScSettlementOrder(models.Model):
         required=True,
         index=True,
     )
+    operation_strategy = fields.Selection(
+        related="project_id.operation_strategy",
+        string="经营方式",
+        store=True,
+        readonly=True,
+        index=True,
+    )
     contract_id = fields.Many2one(
         "construction.contract",
         string="合同",
@@ -367,6 +374,13 @@ class ScSettlementOrder(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            project_id = self.env.context.get("default_project_id") or self.env.context.get("current_project_id")
+            try:
+                project_id = int(project_id) if project_id else False
+            except (TypeError, ValueError):
+                project_id = False
+            if project_id:
+                vals.setdefault("project_id", project_id)
             if vals.get("name", "新建") in (False, "新建"):
                 seq = self.env["ir.sequence"].next_by_code("sc.settlement.order")
                 vals["name"] = seq or _("Settlement")
@@ -510,9 +524,28 @@ class ScSettlementOrder(models.Model):
             if getattr(c, "type", False) and not rec.settlement_type:
                 rec.settlement_type = "in" if c.type == "out" else "out"
 
+    @api.model
+    def _context_project_id(self):
+        project_id = self.env.context.get("default_project_id") or self.env.context.get("current_project_id")
+        try:
+            return int(project_id) if project_id else False
+        except (TypeError, ValueError):
+            return False
+
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        project_id = res.get("project_id") or self._context_project_id()
+        if project_id and "project_id" in fields_list:
+            res["project_id"] = project_id
+        return res
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            project_id = self._context_project_id()
+            if project_id:
+                vals.setdefault("project_id", project_id)
             if vals.get("name", "新建") in (False, "新建"):
                 seq = self.env["ir.sequence"].next_by_code("sc.settlement.order")
                 vals["name"] = seq or _("Settlement")

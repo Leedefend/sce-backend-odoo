@@ -6,6 +6,7 @@
         <field name="arch" type="xml">
             <tree string="投标管理" default_order="project_id, id desc">
                 <field name="project_id"/>
+                <field name="operation_strategy"/>
                 <field name="tender_name"/>
                 <field name="tender_round"/>
                 <field name="owner_id"/>
@@ -45,6 +46,7 @@
                     <group>
                         <group>
                             <field name="project_id" required="1"/>
+                            <field name="operation_strategy" readonly="1"/>
                             <field name="tender_name" required="1"/>
                             <field name="tender_round"/>
                             <field name="owner_id"/>
@@ -254,6 +256,7 @@
                 <field name="bid_id"/>
                 <field name="type"/>
                 <field name="amount" sum="保证金合计"/>
+                <field name="receipt_bank_account_id"/>
                 <field name="bank_account_id"/>
                 <field name="remark"/>
             </tree>
@@ -273,14 +276,18 @@
                             <field name="type"/>
                         </group>
                         <group>
-                            <field name="date"/>
+                            <field name="date" required="1"/>
                             <field name="amount"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
                     </group>
-                    <group>
+                    <group string="账户信息">
+                        <field name="receipt_bank_account_id"/>
                         <field name="bank_account_id"/>
+                    </group>
+                    <group string="备注与附件">
                         <field name="remark"/>
+                        <field name="attachment_ids" widget="many2many_binary"/>
                     </group>
                 </sheet>
             </form>

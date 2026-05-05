@@ -10,6 +10,7 @@
                     <field name="request_id"/>
                     <field name="sequence"/>
                     <field name="project_id"/>
+                    <field name="operation_strategy"/>
                     <field name="partner_id"/>
                     <field name="contract_id"/>
                     <field name="source_document_no"/>
@@ -46,6 +47,7 @@
                                 <field name="request_id" readonly="1"/>
                                 <field name="sequence"/>
                                 <field name="project_id" readonly="1"/>
+                                <field name="operation_strategy" readonly="1"/>
                                 <field name="partner_id" readonly="1"/>
                                 <field name="contract_id" readonly="1"/>
                                 <field name="source_document_no"/>
@@ -86,6 +88,7 @@
                 <search string="收款发票台账">
                     <field name="request_id"/>
                     <field name="project_id"/>
+                    <field name="operation_strategy"/>
                     <field name="partner_id"/>
                     <field name="contract_id"/>
                     <field name="invoice_no"/>
@@ -94,6 +97,7 @@
                     <group expand="0" string="分组">
                         <filter string="收款申请" name="group_by_request_id" context="{'group_by': 'request_id'}"/>
                         <filter string="项目" name="group_by_project_id" context="{'group_by': 'project_id'}"/>
+                        <filter string="经营策略" name="group_by_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
                         <filter string="往来单位" name="group_by_partner_id" context="{'group_by': 'partner_id'}"/>
                         <filter string="合同" name="group_by_contract_id" context="{'group_by': 'contract_id'}"/>
                     </group>

@@ -51,7 +51,7 @@ class ScPaymentExecution(models.Model):
     )
     operation_strategy = fields.Selection(
         related="project_id.operation_strategy",
-        string="经营策略",
+        string="经营方式",
         store=True,
         readonly=True,
         index=True,
@@ -59,11 +59,17 @@ class ScPaymentExecution(models.Model):
     partner_id = fields.Many2one("res.partner", string="往来单位", index=True)
     contract_id = fields.Many2one("construction.contract", string="合同", index=True)
     payment_request_id = fields.Many2one("payment.request", string="付款申请", index=True, ondelete="set null")
-    date_payment = fields.Date(string="付款日期", default=fields.Date.context_today, index=True)
+    date_payment = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
     document_no = fields.Char(string="来源单号", index=True)
     payment_family = fields.Char(string="付款族", index=True)
     payment_method = fields.Char(string="付款方式", index=True)
     bank_account = fields.Char(string="付款账户", index=True)
+    payment_account_name = fields.Char(string="付款账户名称", index=True)
+    payment_account_no = fields.Char(string="付款账号", index=True)
+    payment_bank_name = fields.Char(string="付款开户行", index=True)
+    receipt_account_name = fields.Char(string="收款账户名称", index=True)
+    receipt_account_no = fields.Char(string="收款账号", index=True)
+    receipt_bank_name = fields.Char(string="收款开户行", index=True)
     handler_name = fields.Char(string="经办人", index=True)
     planned_amount = fields.Monetary(string="申请/计划金额", currency_field="currency_id")
     paid_amount = fields.Monetary(string="实付金额", currency_field="currency_id")
@@ -82,6 +88,13 @@ class ScPaymentExecution(models.Model):
     legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
     note = fields.Text(string="备注")
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "sc_payment_execution_attachment_rel",
+        "execution_id",
+        "attachment_id",
+        string="附件",
+    )
     active = fields.Boolean(string="有效", default=True, index=True)
 
     _sql_constraints = [
@@ -95,10 +108,55 @@ class ScPaymentExecution(models.Model):
         ("invoice_amount_nonnegative", "CHECK(invoice_amount >= 0)", "Invoice amount must be non-negative."),
     ]
 
+    @api.model
+    def _context_project_id(self):
+        project_id = self.env.context.get("default_project_id") or self.env.context.get("current_project_id")
+        try:
+            return int(project_id) if project_id else False
+        except (TypeError, ValueError):
+            return False
+
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        project_id = res.get("project_id") or self._context_project_id()
+        if project_id and "project_id" in fields_list:
+            res["project_id"] = project_id
+        return res
+
+    def _payment_request_values(self, request):
+        if not request:
+            return {}
+        return {
+            "project_id": request.project_id.id,
+            "partner_id": request.partner_id.id,
+            "contract_id": request.contract_id.id,
+            "payment_request_id": request.id,
+            "document_no": request.name,
+            "planned_amount": request.amount or 0.0,
+            "paid_amount": request.amount or 0.0,
+            "currency_id": request.currency_id.id,
+        }
+
+    @api.onchange("payment_request_id")
+    def _onchange_payment_request_id(self):
+        if not self.payment_request_id:
+            return
+        for field_name, value in self._payment_request_values(self.payment_request_id).items():
+            setattr(self, field_name, value)
+
     @api.model_create_multi
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            project_id = self._context_project_id()
+            if project_id:
+                vals.setdefault("project_id", project_id)
+            request_id = vals.get("payment_request_id")
+            if request_id:
+                request = self.env["payment.request"].browse(request_id).exists()
+                for field_name, value in self._payment_request_values(request).items():
+                    vals.setdefault(field_name, value)
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.payment.execution") or _("Payment Execution")
         return super().create(vals_list)

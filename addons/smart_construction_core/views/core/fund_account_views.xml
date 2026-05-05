@@ -9,11 +9,15 @@
                 <field name="account_no"/>
                 <field name="bank_name"/>
                 <field name="project_id"/>
+                <field name="operation_strategy"/>
                 <field name="account_type"/>
                 <filter string="启用" name="state_active" domain="[('state', '=', 'active')]"/>
                 <filter string="默认账户" name="is_default" domain="[('is_default', '=', True)]"/>
                 <filter string="历史迁移" name="source_legacy" domain="[('source_origin', '=', 'legacy')]"/>
+                <filter string="公司直营" name="operation_direct" domain="[('operation_strategy', '=', 'direct')]"/>
+                <filter string="联营项目" name="operation_joint" domain="[('operation_strategy', '=', 'joint')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按经营策略" name="group_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
                 <filter string="按账户类型" name="group_account_type" context="{'group_by': 'account_type'}"/>
                 <filter string="按开户行" name="group_bank" context="{'group_by': 'bank_name'}"/>
             </search>
@@ -27,6 +31,7 @@
             <tree string="资金账户" default_order="account_type,name,id">
                 <field name="display_name"/>
                 <field name="project_id"/>
+                <field name="operation_strategy"/>
                 <field name="account_type"/>
                 <field name="bank_name"/>
                 <field name="account_no"/>
@@ -56,6 +61,7 @@
                             <field name="account_type"/>
                             <field name="bank_name"/>
                             <field name="project_id"/>
+                            <field name="operation_strategy" readonly="1"/>
                             <field name="source_origin" readonly="1"/>
                             <field name="company_id"/>
                         </group>

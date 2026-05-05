@@ -18,6 +18,12 @@ class TenderBid(models.Model):
         index=True,
         tracking=True,
     )
+    operation_strategy = fields.Selection(
+        related="project_id.operation_strategy",
+        string="经营方式",
+        store=True,
+        readonly=True,
+    )
     tender_round = fields.Integer("投标轮次", default=1)
     owner_id = fields.Many2one("res.partner", string="招标人/业主")
     bid_amount = fields.Monetary("投标报价", currency_field="currency_id", tracking=True)
@@ -81,6 +87,54 @@ class TenderBid(models.Model):
     )
 
     contract_id = fields.Many2one("construction.contract", string="关联合同", readonly=True)
+
+    @api.model
+    def _context_project_id(self):
+        project_id = self.env.context.get("default_project_id") or self.env.context.get("current_project_id")
+        try:
+            return int(project_id) if project_id else False
+        except (TypeError, ValueError):
+            return False
+
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        project_id = res.get("project_id") or self._context_project_id()
+        if project_id and "project_id" in fields_list:
+            res["project_id"] = project_id
+        if project_id and "owner_id" in fields_list and not res.get("owner_id"):
+            project = self.env["project.project"].browse(project_id).exists()
+            if project and project.owner_id:
+                res["owner_id"] = project.owner_id.id
+        if project_id and "operation_strategy" in fields_list and not res.get("operation_strategy"):
+            project = self.env["project.project"].browse(project_id).exists()
+            if project:
+                res["operation_strategy"] = project.operation_strategy
+        return res
+
+    @api.onchange("project_id")
+    def _onchange_project_id_owner(self):
+        if self.project_id and not self.owner_id and self.project_id.owner_id:
+            self.owner_id = self.project_id.owner_id
+
+    @api.model
+    def _normalize_line_commands(self, commands):
+        normalized = []
+        for command in commands or []:
+            if not isinstance(command, (list, tuple)) or len(command) < 3 or command[0] != 0:
+                normalized.append(command)
+                continue
+            line_vals = dict(command[2] or {})
+            has_payload = any(
+                line_vals.get(field_name)
+                for field_name in ("code", "name", "spec", "uom_id", "quantity", "price")
+            )
+            if not has_payload:
+                continue
+            if not line_vals.get("name"):
+                line_vals["name"] = line_vals.get("code") or line_vals.get("spec") or "未命名清单"
+            normalized.append((command[0], command[1], line_vals))
+        return normalized
 
     @api.depends("line_ids.amount")
     def _compute_amounts(self):
@@ -150,8 +204,25 @@ class TenderBid(models.Model):
                     bid.contract_id = contract.id
         return self._reload() if res else res
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            project_id = vals.get("project_id") or self._context_project_id()
+            if project_id:
+                vals.setdefault("project_id", project_id)
+                if not vals.get("owner_id"):
+                    project = self.env["project.project"].browse(project_id).exists()
+                    if project and project.owner_id:
+                        vals["owner_id"] = project.owner_id.id
+            if "line_ids" in vals:
+                vals["line_ids"] = self._normalize_line_commands(vals.get("line_ids"))
+        return super().create(vals_list)
+
     def write(self, vals):
         # 合同创建逻辑集中在 _set_state("won")，避免重复/非法类型
+        if "line_ids" in vals:
+            vals = dict(vals)
+            vals["line_ids"] = self._normalize_line_commands(vals.get("line_ids"))
         return super().write(vals)
 
 
@@ -277,10 +348,33 @@ class TenderGuarantee(models.Model):
     bid_id = fields.Many2one("tender.bid", string="投标", required=True, ondelete="cascade")
     project_id = fields.Many2one(related="bid_id.project_id", store=True, readonly=True)
     type = fields.Selection([("out", "支出"), ("return", "退回")], string="类型", required=True, default="out")
-    date = fields.Date("日期", default=fields.Date.context_today)
+    date = fields.Date("单据日期", default=fields.Date.context_today)
     amount = fields.Monetary("金额", currency_field="currency_id")
-    bank_account_id = fields.Many2one("res.partner.bank", string="账户")
+    receipt_bank_account_id = fields.Many2one("res.partner.bank", string="收款账户")
+    bank_account_id = fields.Many2one("res.partner.bank", string="付款账户")
     remark = fields.Char("备注")
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "tender_guarantee_attachment_rel",
+        "guarantee_id",
+        "attachment_id",
+        string="附件",
+    )
     currency_id = fields.Many2one(
         "res.currency", related="bid_id.currency_id", store=True, readonly=True
     )
+
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        if "bid_id" in fields_list and not res.get("bid_id"):
+            project_id = self.env.context.get("default_project_id") or self.env.context.get("current_project_id")
+            try:
+                project_id = int(project_id) if project_id else False
+            except (TypeError, ValueError):
+                project_id = False
+            if project_id:
+                bid = self.env["tender.bid"].search([("project_id", "=", project_id)], order="id desc", limit=1)
+                if bid:
+                    res["bid_id"] = bid.id
+        return res

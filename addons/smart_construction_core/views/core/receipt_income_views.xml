@@ -9,6 +9,7 @@
                     <field name="name"/>
                     <field name="document_no"/>
                     <field name="project_id"/>
+                    <field name="operation_strategy"/>
                     <field name="partner_id"/>
                     <field name="contract_id"/>
                     <field name="income_category"/>
@@ -17,7 +18,10 @@
                     <filter string="残余收款" name="source_kind_residual_receipt" domain="[('source_kind', '=', 'residual_receipt')]"/>
                     <filter string="已确认" name="state_confirmed" domain="[('state', 'in', ['confirmed', 'legacy_confirmed'])]"/>
                     <filter string="已收款" name="state_received" domain="[('state', '=', 'received')]"/>
+                    <filter string="公司直营" name="operation_direct" domain="[('operation_strategy', '=', 'direct')]"/>
+                    <filter string="联营项目" name="operation_joint" domain="[('operation_strategy', '=', 'joint')]"/>
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按经营策略" name="group_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
                     <filter string="按单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
                     <filter string="按类别" name="group_income_category" context="{'group_by': 'income_category'}"/>
                     <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
@@ -34,6 +38,7 @@
                     <field name="name"/>
                     <field name="date_receipt"/>
                     <field name="project_id"/>
+                    <field name="operation_strategy"/>
                     <field name="partner_id"/>
                     <field name="contract_id"/>
                     <field name="document_no"/>
@@ -41,6 +46,9 @@
                     <field name="receipt_type"/>
                     <field name="payment_method"/>
                     <field name="receiving_account"/>
+                    <field name="receiving_account_name"/>
+                    <field name="receiving_account_no"/>
+                    <field name="receiving_bank_name"/>
                     <field name="bill_no"/>
                     <field name="invoice_ref"/>
                     <field name="amount" sum="收款金额"/>
@@ -82,6 +90,7 @@
                             </group>
                             <group>
                                 <field name="project_id" readonly="state == 'legacy_confirmed'"/>
+                                <field name="operation_strategy" readonly="1"/>
                                 <field name="partner_id"/>
                                 <field name="contract_id"/>
                                 <field name="payment_request_id"/>
@@ -96,6 +105,11 @@
                             <field name="bill_no" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_ref" readonly="state == 'legacy_confirmed'"/>
                         </group>
+                        <group string="收款账户信息">
+                            <field name="receiving_account_name" readonly="state == 'legacy_confirmed'"/>
+                            <field name="receiving_account_no" readonly="state == 'legacy_confirmed'"/>
+                            <field name="receiving_bank_name" readonly="state == 'legacy_confirmed'"/>
+                        </group>
                         <group string="金额">
                             <field name="amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="deducted_invoice_amount" readonly="state == 'legacy_confirmed'"/>
@@ -105,6 +119,7 @@
                         </group>
                         <group>
                             <field name="note"/>
+                            <field name="attachment_ids" widget="many2many_binary"/>
                             <field name="active"/>
                         </group>
                     </sheet>

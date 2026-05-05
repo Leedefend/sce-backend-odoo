@@ -567,7 +567,7 @@ class ScMaterialInbound(models.Model):
     currency_id = fields.Many2one("res.currency", string="币种", related="project_id.company_id.currency_id", store=True)
     operation_strategy = fields.Selection(
         related="project_id.operation_strategy",
-        string="经营策略",
+        string="经营方式",
         store=True,
         readonly=True,
         index=True,
@@ -756,7 +756,7 @@ class ScMaterialInboundLine(models.Model):
     project_id = fields.Many2one("project.project", string="项目", related="inbound_id.project_id", store=True, index=True)
     operation_strategy = fields.Selection(
         related="inbound_id.operation_strategy",
-        string="经营策略",
+        string="经营方式",
         store=True,
         readonly=True,
         index=True,

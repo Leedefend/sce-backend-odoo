@@ -57,6 +57,13 @@ class ConstructionContract(models.Model):
         index=True,
         tracking=True,
     )
+    operation_strategy = fields.Selection(
+        related="project_id.operation_strategy",
+        string="经营方式",
+        store=True,
+        readonly=True,
+        index=True,
+    )
     partner_id = fields.Many2one(
         "res.partner",
         string="合同相对方",
@@ -307,8 +314,23 @@ class ConstructionContract(models.Model):
         )
 
     @api.model
+    def _context_project_id(self):
+        project_id = self.env.context.get("default_project_id") or self.env.context.get("current_project_id")
+        try:
+            return int(project_id) if project_id else False
+        except (TypeError, ValueError):
+            return False
+
+    @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
+        project_id = res.get("project_id") or self._context_project_id()
+        if project_id and "project_id" in fields_list:
+            res["project_id"] = project_id
+        if project_id and "operation_strategy" in fields_list and not res.get("operation_strategy"):
+            project = self.env["project.project"].browse(project_id).exists()
+            if project:
+                res["operation_strategy"] = project.operation_strategy
         contract_type = res.get("type") or "out"
         if "tax_id" in fields_list and not res.get("tax_id"):
             default_tax = self._get_default_tax(contract_type)
@@ -493,6 +515,9 @@ class ConstructionContract(models.Model):
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            project_id = self._context_project_id()
+            if project_id:
+                vals.setdefault("project_id", project_id)
             if not vals.get("type"):
                 vals["type"] = "out"
             tax = self.env["account.tax"].browse(vals.get("tax_id")).exists() if vals.get("tax_id") else False

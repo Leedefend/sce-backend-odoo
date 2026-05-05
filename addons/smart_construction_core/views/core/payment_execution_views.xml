@@ -46,6 +46,12 @@
                     <field name="payment_family"/>
                     <field name="payment_method"/>
                     <field name="bank_account"/>
+                    <field name="payment_account_name"/>
+                    <field name="payment_account_no"/>
+                    <field name="payment_bank_name"/>
+                    <field name="receipt_account_name"/>
+                    <field name="receipt_account_no"/>
+                    <field name="receipt_bank_name"/>
                     <field name="handler_name"/>
                     <field name="planned_amount" sum="申请/计划金额"/>
                     <field name="paid_amount" sum="实付金额"/>
@@ -85,18 +91,28 @@
                                 <field name="document_no" readonly="state == 'legacy_confirmed'"/>
                             </group>
                             <group>
-                                <field name="project_id" readonly="state == 'legacy_confirmed'"/>
-                                <field name="operation_strategy" readonly="1"/>
-                                <field name="partner_id"/>
-                                <field name="contract_id"/>
-                                <field name="payment_request_id"/>
-                            </group>
+                            <field name="project_id" readonly="state == 'legacy_confirmed'"/>
+                            <field name="operation_strategy" readonly="1"/>
+                            <field name="partner_id"/>
+                            <field name="contract_id"/>
+                            <field name="payment_request_id" domain="[('type', '=', 'pay'), ('project_id', '=', project_id)]"/>
                         </group>
+                    </group>
                         <group string="付款信息">
                             <field name="payment_family" readonly="state == 'legacy_confirmed'"/>
                             <field name="payment_method" readonly="state == 'legacy_confirmed'"/>
                             <field name="bank_account" readonly="state == 'legacy_confirmed'"/>
                             <field name="handler_name" readonly="state == 'legacy_confirmed'"/>
+                        </group>
+                        <group string="付款账户信息">
+                            <field name="payment_account_name" readonly="state == 'legacy_confirmed'"/>
+                            <field name="payment_account_no" readonly="state == 'legacy_confirmed'"/>
+                            <field name="payment_bank_name" readonly="state == 'legacy_confirmed'"/>
+                        </group>
+                        <group string="收款账户信息">
+                            <field name="receipt_account_name" readonly="state == 'legacy_confirmed'"/>
+                            <field name="receipt_account_no" readonly="state == 'legacy_confirmed'"/>
+                            <field name="receipt_bank_name" readonly="state == 'legacy_confirmed'"/>
                         </group>
                         <group string="金额">
                             <field name="planned_amount" readonly="state == 'legacy_confirmed'"/>
@@ -106,6 +122,7 @@
                         </group>
                         <group>
                             <field name="note"/>
+                            <field name="attachment_ids" widget="many2many_binary"/>
                             <field name="active"/>
                         </group>
                     </sheet>

@@ -9,13 +9,17 @@
                     <field name="name"/>
                     <field name="document_no"/>
                     <field name="project_id"/>
+                    <field name="operation_strategy"/>
                     <field name="partner_id"/>
                     <field name="purpose"/>
                     <filter string="贷款登记" name="loan_registration" domain="[('loan_type', '=', 'loan_registration')]"/>
                     <filter string="借款申请" name="borrowing_request" domain="[('loan_type', '=', 'borrowing_request')]"/>
                     <filter string="已确认" name="state_confirmed" domain="[('state', 'in', ['confirmed', 'legacy_confirmed'])]"/>
                     <filter string="已完成" name="state_done" domain="[('state', '=', 'done')]"/>
+                    <filter string="公司直营" name="operation_direct" domain="[('operation_strategy', '=', 'direct')]"/>
+                    <filter string="联营项目" name="operation_joint" domain="[('operation_strategy', '=', 'joint')]"/>
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按经营策略" name="group_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
                     <filter string="按单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
                     <filter string="按类型" name="group_type" context="{'group_by': 'loan_type'}"/>
                     <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
@@ -35,6 +39,7 @@
                     <field name="loan_type"/>
                     <field name="direction"/>
                     <field name="project_id"/>
+                    <field name="operation_strategy"/>
                     <field name="partner_id"/>
                     <field name="amount" sum="金额"/>
                     <field name="due_date"/>
@@ -75,11 +80,12 @@
                                 <field name="loan_type" readonly="state == 'legacy_confirmed'"/>
                                 <field name="direction" readonly="state == 'legacy_confirmed'"/>
                                 <field name="document_no" readonly="state == 'legacy_confirmed'"/>
-                                <field name="document_date" readonly="state == 'legacy_confirmed'"/>
+                                <field name="document_date" required="1" readonly="state == 'legacy_confirmed'"/>
                                 <field name="due_date" readonly="state == 'legacy_confirmed'"/>
                             </group>
                             <group>
                                 <field name="project_id" readonly="state == 'legacy_confirmed'"/>
+                                <field name="operation_strategy" readonly="1"/>
                                 <field name="partner_id"/>
                                 <field name="amount" readonly="state == 'legacy_confirmed'"/>
                                 <field name="currency_id" invisible="1"/>
@@ -93,6 +99,7 @@
                         </group>
                         <group>
                             <field name="note"/>
+                            <field name="attachment_ids" widget="many2many_binary"/>
                             <field name="active"/>
                         </group>
                     </sheet>

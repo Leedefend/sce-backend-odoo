@@ -59,6 +59,13 @@ class ScExpenseClaim(models.Model):
         readonly=True,
         index=True,
     )
+    operation_strategy = fields.Selection(
+        related="project_id.operation_strategy",
+        string="经营方式",
+        store=True,
+        readonly=True,
+        index=True,
+    )
     partner_id = fields.Many2one("res.partner", string="往来单位", index=True)
     applicant_name = fields.Char(string="申请人", index=True)
     company_name_text = fields.Char(string="所属公司")
@@ -75,8 +82,10 @@ class ScExpenseClaim(models.Model):
     is_returned = fields.Boolean(string="是否清退退回")
     fill_date = fields.Date(string="填写日期", default=fields.Date.context_today)
     payee = fields.Char(string="收款人", index=True)
+    receipt_account_name = fields.Char(string="收款账户名称", index=True)
     payee_account = fields.Char(string="收款账号")
     payee_bank = fields.Char(string="开户行")
+    payment_account_name = fields.Char(string="付款账户名称", index=True)
     payer_account = fields.Char(string="支付账户")
     payer_bank = fields.Char(string="支付账户开户行")
     date_claim = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
@@ -98,6 +107,13 @@ class ScExpenseClaim(models.Model):
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
     note = fields.Text(string="备注")
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "sc_expense_claim_attachment_rel",
+        "claim_id",
+        "attachment_id",
+        string="附件",
+    )
     active = fields.Boolean("有效", default=True, index=True)
 
     _sql_constraints = [
@@ -120,10 +136,29 @@ class ScExpenseClaim(models.Model):
             if not rec.approved_amount:
                 rec.approved_amount = rec.amount
 
+    @api.model
+    def _context_project_id(self):
+        project_id = self.env.context.get("default_project_id") or self.env.context.get("current_project_id")
+        try:
+            return int(project_id) if project_id else False
+        except (TypeError, ValueError):
+            return False
+
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        project_id = res.get("project_id") or self._context_project_id()
+        if project_id and "project_id" in fields_list:
+            res["project_id"] = project_id
+        return res
+
     @api.model_create_multi
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            project_id = self._context_project_id()
+            if project_id:
+                vals.setdefault("project_id", project_id)
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.expense.claim") or _("Expense Claim")
             vals.setdefault("approved_amount", vals.get("amount", 0.0))

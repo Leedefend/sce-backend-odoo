@@ -43,12 +43,34 @@ def format_project_option(record) -> dict:
     name = str(getattr(record, "display_name", "") or _field_text(record, "name") or "").strip()
     code = _field_text(record, "code") or _field_text(record, "project_code") or _field_text(record, "x_code")
     stage = _field_text(record, "stage_id")
+    owner_id = 0
+    owner_name = ""
+    if "owner_id" in getattr(record, "_fields", {}):
+        try:
+            owner = record.owner_id
+            owner_id = int(owner.id or 0)
+            owner_name = str(owner.display_name or "").strip()
+        except Exception:
+            owner_id = 0
+            owner_name = ""
+    operation_strategy = _field_text(record, "operation_strategy")
+    operation_strategy_label = operation_strategy
+    field = getattr(record, "_fields", {}).get("operation_strategy")
+    if field and getattr(field, "selection", None):
+        try:
+            operation_strategy_label = dict(field.selection).get(operation_strategy, operation_strategy)
+        except Exception:
+            operation_strategy_label = operation_strategy
     return {
         "id": int(record.id),
         "name": name,
         "display_name": name,
         "code": code,
         "stage": stage,
+        "owner_id": owner_id,
+        "owner_name": owner_name,
+        "operation_strategy": operation_strategy,
+        "operation_strategy_label": operation_strategy_label,
         "active": bool(getattr(record, "active", True)),
     }
 

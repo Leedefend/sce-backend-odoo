@@ -23,7 +23,7 @@ class ScFundAccountOperation(models.Model):
         index=True,
     )
     operation_date = fields.Date(
-        string="业务日期",
+        string="单据日期",
         required=True,
         default=fields.Date.context_today,
         tracking=True,
@@ -31,19 +31,26 @@ class ScFundAccountOperation(models.Model):
     )
     source_account_id = fields.Many2one(
         "sc.fund.account",
-        string="转出账户",
+        string="付款账户",
         index=True,
         ondelete="restrict",
         tracking=True,
     )
     target_account_id = fields.Many2one(
         "sc.fund.account",
-        string="转入账户",
+        string="收款账户",
         index=True,
         ondelete="restrict",
         tracking=True,
     )
     project_id = fields.Many2one("project.project", string="项目", index=True, ondelete="set null")
+    operation_strategy = fields.Selection(
+        related="project_id.operation_strategy",
+        string="经营方式",
+        store=True,
+        readonly=True,
+        index=True,
+    )
     company_id = fields.Many2one(
         "res.company",
         string="公司",
@@ -75,6 +82,13 @@ class ScFundAccountOperation(models.Model):
         index=True,
     )
     note = fields.Text(string="备注")
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "sc_fund_account_operation_attachment_rel",
+        "operation_id",
+        "attachment_id",
+        string="附件",
+    )
     legacy_source_model = fields.Char(string="历史来源模型", readonly=True, index=True)
     legacy_record_id = fields.Char(string="历史记录ID", readonly=True, index=True)
     legacy_document_state = fields.Char(string="历史单据状态", readonly=True, index=True)
@@ -87,6 +101,22 @@ class ScFundAccountOperation(models.Model):
             "同一历史资金操作只能迁移一次。",
         ),
     ]
+
+    @api.model
+    def _context_project_id(self):
+        project_id = self.env.context.get("default_project_id") or self.env.context.get("current_project_id")
+        try:
+            return int(project_id) if project_id else False
+        except (TypeError, ValueError):
+            return False
+
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        project_id = res.get("project_id") or self._context_project_id()
+        if project_id and "project_id" in fields_list:
+            res["project_id"] = project_id
+        return res
 
     @api.constrains("operation_type", "source_account_id", "target_account_id", "amount", "before_balance", "after_balance")
     def _check_operation_values(self):
@@ -106,6 +136,9 @@ class ScFundAccountOperation(models.Model):
     def create(self, vals_list):
         seq = self.env["ir.sequence"].sudo()
         for vals in vals_list:
+            project_id = self._context_project_id()
+            if project_id:
+                vals.setdefault("project_id", project_id)
             if vals.get("name", "/") == "/":
                 vals["name"] = seq.next_by_code("sc.fund.account.operation") or _("资金账户操作单")
         return super().create(vals_list)
