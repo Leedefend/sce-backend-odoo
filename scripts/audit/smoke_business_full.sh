@@ -208,6 +208,32 @@ else:
     product_data = exec_kw(uid, PWD, "product.product", "read", [[product_id]], {"fields": ["uom_id"]})
     uom_id = product_data[0]["uom_id"][0]
 
+step("find/create material catalog")
+catalog_ids = exec_kw(
+    uid,
+    PWD,
+    "sc.material.catalog",
+    "search",
+    [[("active", "=", True)]],
+    {"limit": 1},
+)
+if catalog_ids:
+    material_catalog_id = catalog_ids[0]
+else:
+    material_catalog_id = exec_kw(
+        uid,
+        PWD,
+        "sc.material.catalog",
+        "create",
+        [{
+            "name": "BF Smoke Material",
+            "code": "BF-SMOKE-MATERIAL",
+            "spec_model": "SMOKE",
+            "uom_text": "Unit",
+            "source_origin": "manual",
+        }],
+    )
+
 step("create material plan")
 plan_id = exec_kw(
     uid,
@@ -227,6 +253,7 @@ exec_kw(
     "create",
     [{
         "plan_id": plan_id,
+        "material_catalog_id": material_catalog_id,
         "product_id": product_id,
         "quantity": 1.0,
         "uom_id": uom_id,

@@ -21,7 +21,7 @@ run_shell() {
 }
 
 echo "### reset_run_artifacts"
-docker exec -i "${CONTAINER}" sh -lc "rm -rf '${RUN_ARTIFACT_ROOT}' && mkdir -p '${RUN_ARTIFACT_ROOT}'"
+docker exec -i -u 0 "${CONTAINER}" sh -lc "rm -rf '${RUN_ARTIFACT_ROOT}' && mkdir -p '${RUN_ARTIFACT_ROOT}' && chown -R odoo:odoo '${RUN_ARTIFACT_ROOT}'"
 
 run_shell business_entity_candidate scripts/migration/scbs_business_entity_candidate_import.py -e SCBS_BUSINESS_ENTITY_IMPORT_MODE=write
 run_shell project_candidate scripts/migration/scbs_project_candidate_import.py -e SCBS_PROJECT_CANDIDATE_IMPORT_MODE=write

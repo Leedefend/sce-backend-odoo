@@ -16,6 +16,16 @@ from pathlib import Path
 SOURCE_MODEL = "sc.legacy.scbs.fact.staging"
 
 
+def repo_root() -> Path:
+    env_root = os.getenv("MIGRATION_REPO_ROOT")
+    candidates = [Path(env_root)] if env_root else []
+    candidates.extend([Path("/mnt/artifacts/migration/scbs_replay_asset_v1"), Path("/mnt"), Path.cwd()])
+    for candidate in candidates:
+        if (candidate / "artifacts/migration/scbs_replay_expected_baseline_v1.json").exists():
+            return candidate
+    return Path.cwd()
+
+
 def artifact_root() -> Path:
     env_root = os.getenv("MIGRATION_ARTIFACT_ROOT")
     candidates = [Path(env_root)] if env_root else []
@@ -56,6 +66,15 @@ def sum_field(model: str, domain, field_name: str) -> float:
 
 def near(left: object, right: object) -> bool:
     return abs(float(left or 0) - float(right or 0)) < 0.01
+
+
+def by_key(rows: list[dict[str, object]], key: str) -> dict[str, dict[str, object]]:
+    return {str(row[key]): row for row in rows}
+
+
+def expected_baseline() -> dict[str, object]:
+    baseline_path = repo_root() / "artifacts/migration/scbs_replay_expected_baseline_v1.json"
+    return json.loads(baseline_path.read_text(encoding="utf-8"))
 
 
 def duplicate_count(table: str, where: str, keys: str) -> int:
@@ -118,6 +137,8 @@ def empty_acceptance() -> tuple[dict[str, bool], dict[str, object]]:
 
 def strict_acceptance() -> tuple[dict[str, bool], dict[str, object]]:
     checks = model_installed_checks()
+    baseline = expected_baseline()
+    expected_staging = by_key(baseline["staging"]["active_projection_ready_by_family"], "fact_family")
     staging = fetch_rows(
         """
         SELECT fact_family,
@@ -189,24 +210,36 @@ def strict_acceptance() -> tuple[dict[str, bool], dict[str, object]]:
         """
     )
     stock_zero_residual = 3
+    expected_payment = expected_staging["payment"]
+    expected_contract = expected_staging["supplier_contract"]
+    expected_stock = expected_staging["stock_in"]
+    expected_fund = expected_staging["fund_daily"]
+    expected_inactive = baseline["staging"]["inactive"]
 
     checks.update(
         {
-            "staging_payment_expected": int(staging_by_family["payment"]["rows"]) == 9107
-            and near(staging_by_family["payment"]["amount"], 359251657.39),
-            "staging_contract_expected": int(staging_by_family["supplier_contract"]["rows"]) == 1585
-            and near(staging_by_family["supplier_contract"]["amount"], 273565406.25),
-            "staging_stock_expected": int(staging_by_family["stock_in"]["rows"]) == 700
-            and near(staging_by_family["stock_in"]["amount"], 88592370.17),
-            "staging_fund_expected": int(staging_by_family["fund_daily"]["rows"]) == 3798
-            and near(staging_by_family["fund_daily"]["amount"], 1290762428.64),
-            "payment_closed": payment_execution_rows + payment_adjustment_rows + enterprise_payment_rows == 9107
-            and near(payment_execution_amount + payment_adjustment_amount + enterprise_payment_amount, 359251657.39),
-            "contract_closed": contract_rows + enterprise_contract_rows == 1585
-            and near(contract_amount + enterprise_contract_amount, 273565406.25),
-            "stock_policy_closed": stock_rows == 697 and near(stock_amount, 88601224.17),
-            "fund_daily_closed": fund_rows == 3798 and near(fund_amount, 1290762428.64),
-            "inactive_residual_registered": int(residual["rows"] or 0) == 33 and near(residual["amount"], 8139399.00),
+            "staging_payment_expected": int(staging_by_family["payment"]["rows"]) == int(expected_payment["rows"])
+            and near(staging_by_family["payment"]["amount"], expected_payment["amount"]),
+            "staging_contract_expected": int(staging_by_family["supplier_contract"]["rows"])
+            == int(expected_contract["rows"])
+            and near(staging_by_family["supplier_contract"]["amount"], expected_contract["amount"]),
+            "staging_stock_expected": int(staging_by_family["stock_in"]["rows"]) == int(expected_stock["rows"])
+            and near(staging_by_family["stock_in"]["amount"], expected_stock["amount"]),
+            "staging_fund_expected": int(staging_by_family["fund_daily"]["rows"]) == int(expected_fund["rows"])
+            and near(staging_by_family["fund_daily"]["amount"], expected_fund["amount"]),
+            "payment_closed": payment_execution_rows + payment_adjustment_rows + enterprise_payment_rows
+            == int(expected_payment["rows"])
+            and near(
+                payment_execution_amount + payment_adjustment_amount + enterprise_payment_amount,
+                expected_payment["amount"],
+            ),
+            "contract_closed": contract_rows + enterprise_contract_rows == int(expected_contract["rows"])
+            and near(contract_amount + enterprise_contract_amount, expected_contract["amount"]),
+            "stock_policy_closed": stock_rows == int(expected_stock["rows"]) - stock_zero_residual
+            and near(stock_amount, baseline["formal"]["stock_in"]["amount"]),
+            "fund_daily_closed": fund_rows == int(expected_fund["rows"]) and near(fund_amount, expected_fund["amount"]),
+            "inactive_residual_registered": int(residual["rows"] or 0) == int(expected_inactive["rows"])
+            and near(residual["amount"], expected_inactive["amount"]),
             "stock_zero_residual_policy": stock_zero_residual == 3,
             "no_non_direct_payment_execution": fetch_one(
                 "SELECT COUNT(*) FROM sc_payment_execution WHERE legacy_source_model = '%s' AND operation_strategy <> 'direct'"
@@ -293,6 +326,7 @@ def strict_acceptance() -> tuple[dict[str, bool], dict[str, object]]:
     )
     observations = {
         "mode": "strict",
+        "baseline": baseline,
         "staging": staging_by_family,
         "formal": {
             "payment_execution": {"rows": payment_execution_rows, "amount": payment_execution_amount},
