@@ -434,6 +434,15 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     contract["layoutContract"]["componentRegistry"] = _component_registry(component_keys or {"sc.display.text"})
     contract["statusContract"]["containerStatus"].append({"containerId": container_id, "visible": True, "disabled": False})
     contract["dataContract"]["dataMeta"]["fieldCount"] = len(fields)
+    source_context = _ui_source_context(_dict(source), _dict(ui))
+    if source_context:
+        contract["dataContract"]["dataMeta"]["sourceContext"] = deepcopy(source_context)
+        contract["runtimeContract"]["sourceContext"] = deepcopy(source_context)
+        if source_context.get("renderProfile") == "create":
+            defaults = _default_values_from_context(_dict(source_context.get("context")))
+            if defaults:
+                contract["dataContract"]["mainData"].update(defaults)
+            contract["statusContract"]["globalStatus"]["pageAuth"] = "edit"
     data_source = _ui_contract_data_source(model=model, view_type=view_type, fields=fields, record_id=record_id, source=source, ui=ui)
     if data_source:
         contract["dataContract"]["dataSource"]["primary"] = data_source
@@ -596,6 +605,47 @@ def _ui_data_source_extra_params(source: dict[str, Any], ui: dict[str, Any]) -> 
     parsed_limit = _positive_int(limit, 0)
     if parsed_limit:
         out["limit"] = parsed_limit
+    return out
+
+
+def _ui_source_context(source: dict[str, Any], ui: dict[str, Any]) -> dict[str, Any]:
+    out = _ui_data_source_extra_params(source, ui)
+    source_meta = _dict(source.get("source_meta"))
+    action = _dict(ui.get("action"))
+    head = _dict(ui.get("head"))
+    render_profile = _text(
+        source.get("render_profile")
+        or source.get("renderProfile")
+        or source_meta.get("render_profile")
+        or source_meta.get("renderProfile")
+        or ui.get("render_profile")
+        or ui.get("renderProfile")
+        or head.get("render_profile")
+        or head.get("renderProfile")
+        or action.get("render_profile")
+        or action.get("renderProfile")
+    ).lower()
+    if render_profile in {"read", "view"}:
+        render_profile = "readonly"
+    if render_profile in {"create", "edit", "readonly"}:
+        out["renderProfile"] = render_profile
+    context = source.get("context") or source_meta.get("context") or ui.get("context") or head.get("context") or action.get("context")
+    if isinstance(context, dict):
+        out.setdefault("context", deepcopy(context))
+    domain = source.get("domain") or source_meta.get("domain") or ui.get("domain") or head.get("domain") or action.get("domain")
+    if isinstance(domain, list):
+        out.setdefault("domain", deepcopy(domain))
+    return out
+
+
+def _default_values_from_context(context: dict[str, Any]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for key, value in context.items():
+        if not isinstance(key, str) or not key.startswith("default_"):
+            continue
+        field_name = _stable_id(key[len("default_") :], "")
+        if field_name:
+            out[field_name] = deepcopy(value)
     return out
 
 

@@ -77,6 +77,7 @@ class UiContractV2Handler(BaseIntentHandler):
             "model": model,
             "view_type": view_type,
             "record_id": params.get("record_id") or params.get("recordId") or ui_params.get("record_id") or ui_params.get("recordId"),
+            "render_profile": params.get("render_profile") or params.get("renderProfile") or ui_params.get("render_profile") or ui_params.get("renderProfile"),
             "domain_raw": params.get("domain_raw") or params.get("domainRaw") or ui_params.get("domain_raw") or ui_params.get("domainRaw"),
             "context_raw": params.get("context_raw") or params.get("contextRaw") or ui_params.get("context_raw") or ui_params.get("contextRaw"),
             "source_meta": ui_meta,
