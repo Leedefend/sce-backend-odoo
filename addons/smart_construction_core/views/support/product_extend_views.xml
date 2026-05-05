@@ -9,11 +9,12 @@
                 <field name="spec_model"/>
                 <field name="uom_text"/>
                 <field name="category_id"/>
+                <field name="company_id"/>
                 <field name="project_id"/>
                 <filter string="历史迁移" name="legacy" domain="[('source_origin', '=', 'legacy')]"/>
                 <filter string="新系统登记" name="manual" domain="[('source_origin', '=', 'manual')]"/>
-                <filter string="已提升产品" name="promoted" domain="[('promoted_product_tmpl_id', '!=', False)]"/>
                 <filter string="按分类" name="group_category" context="{'group_by': 'category_id'}"/>
+                <filter string="按公司" name="group_company" context="{'group_by': 'company_id'}"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 <filter string="按单位" name="group_uom" context="{'group_by': 'uom_text'}"/>
                 <filter string="按来源" name="group_source" context="{'group_by': 'source_origin'}"/>
@@ -45,11 +46,11 @@
                 <field name="planned_price"/>
                 <field name="internal_price"/>
                 <field name="category_id"/>
+                <field name="company_id"/>
                 <field name="project_id"/>
                 <field name="depth"/>
                 <field name="short_pinyin"/>
                 <field name="source_origin"/>
-                <field name="promoted_product_id"/>
                 <field name="active"/>
             </tree>
         </field>
@@ -71,6 +72,7 @@
         <field name="arch" type="xml">
             <tree string="材料价格库" default_order="effective_date desc, id desc">
                 <field name="material_catalog_id"/>
+                <field name="company_id"/>
                 <field name="spec_model"/>
                 <field name="uom_text"/>
                 <field name="supplier_id"/>
@@ -96,7 +98,7 @@
                     <group>
                         <group>
                             <field name="material_catalog_id"/>
-                            <field name="product_id"/>
+                            <field name="company_id" readonly="1"/>
                             <field name="supplier_id"/>
                             <field name="project_id"/>
                             <field name="price_type"/>
@@ -141,12 +143,14 @@
                 <field name="material_catalog_id"/>
                 <field name="supplier_id"/>
                 <field name="project_id"/>
+                <field name="company_id"/>
                 <field name="price_type"/>
                 <field name="spec_model"/>
                 <filter string="有效" name="active" domain="[('active', '=', True)]"/>
                 <filter string="报价" name="quote" domain="[('price_type', '=', 'quote')]"/>
                 <filter string="合同价" name="contract" domain="[('price_type', '=', 'contract')]"/>
                 <filter string="按材料" name="group_material" context="{'group_by': 'material_catalog_id'}"/>
+                <filter string="按公司" name="group_company" context="{'group_by': 'company_id'}"/>
                 <filter string="按供应商" name="group_supplier" context="{'group_by': 'supplier_id'}"/>
                 <filter string="按类型" name="group_type" context="{'group_by': 'price_type'}"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
@@ -166,6 +170,7 @@
                             <field name="name"/>
                             <field name="spec_model"/>
                             <field name="category_id"/>
+                            <field name="company_id"/>
                         </group>
                         <group>
                             <field name="project_id"/>
@@ -188,10 +193,6 @@
                         <field name="legacy_material_detail_id"/>
                         <field name="legacy_material_id"/>
                         <field name="legacy_category_id"/>
-                    </group>
-                    <group string="产品提升">
-                        <field name="promoted_product_tmpl_id"/>
-                        <field name="promoted_product_id"/>
                     </group>
                     <group>
                         <field name="remark"/>

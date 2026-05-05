@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_legacy_scbs_material_map_search" model="ir.ui.view">
+            <field name="name">sc.legacy.scbs.material.map.search</field>
+            <field name="model">sc.legacy.scbs.material.map</field>
+            <field name="arch" type="xml">
+                <search string="SCBS旧库材料映射">
+                    <field name="material_name"/>
+                    <field name="spec_model"/>
+                    <field name="uom_text"/>
+                    <field name="legacy_material_id"/>
+                    <field name="material_catalog_id"/>
+                    <filter string="候选" name="state_candidate" domain="[('mapping_state', '=', 'candidate')]"/>
+                    <filter string="已确认" name="state_confirmed" domain="[('mapping_state', '=', 'confirmed')]"/>
+                    <filter string="需新建" name="state_create_required" domain="[('mapping_state', '=', 'create_required')]"/>
+                    <filter string="冲突" name="state_conflict" domain="[('mapping_state', '=', 'conflict')]"/>
+                    <filter string="忽略" name="state_ignored" domain="[('mapping_state', '=', 'ignored')]"/>
+                    <filter string="高金额" name="high_amount" domain="[('amount_total', '&gt;=', 100000)]"/>
+                    <filter string="按状态" name="group_state" context="{'group_by': 'mapping_state'}"/>
+                    <filter string="按覆盖状态" name="group_coverage_state" context="{'group_by': 'coverage_state'}"/>
+                    <filter string="按建议动作" name="group_suggested_action" context="{'group_by': 'suggested_action'}"/>
+                    <filter string="按优先级" name="group_priority" context="{'group_by': 'review_priority'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_scbs_material_map_tree" model="ir.ui.view">
+            <field name="name">sc.legacy.scbs.material.map.tree</field>
+            <field name="model">sc.legacy.scbs.material.map</field>
+            <field name="arch" type="xml">
+                <tree string="SCBS旧库材料映射" decoration-danger="mapping_state == 'conflict'" decoration-muted="mapping_state == 'ignored'" decoration-success="mapping_state == 'confirmed'">
+                    <field name="mapping_state"/>
+                    <field name="review_priority"/>
+                    <field name="coverage_state"/>
+                    <field name="suggested_action"/>
+                    <field name="material_name"/>
+                    <field name="spec_model"/>
+                    <field name="uom_text"/>
+                    <field name="legacy_material_id"/>
+                    <field name="material_catalog_id"/>
+                    <field name="exact_text_match_count"/>
+                    <field name="name_spec_match_count"/>
+                    <field name="line_rows"/>
+                    <field name="header_rows"/>
+                    <field name="qty_total"/>
+                    <field name="amount_total"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_scbs_material_map_form" model="ir.ui.view">
+            <field name="name">sc.legacy.scbs.material.map.form</field>
+            <field name="model">sc.legacy.scbs.material.map</field>
+            <field name="arch" type="xml">
+                <form string="SCBS旧库材料映射">
+                    <header>
+                        <button name="action_confirm" string="确认映射" type="object" class="oe_highlight" invisible="mapping_state == 'confirmed'"/>
+                        <button name="action_mark_create_required" string="标记需新建" type="object" invisible="mapping_state == 'create_required'"/>
+                        <button name="action_mark_conflict" string="标记冲突" type="object" invisible="mapping_state == 'conflict'"/>
+                        <button name="action_ignore" string="忽略" type="object" invisible="mapping_state == 'ignored'"/>
+                        <field name="mapping_state" widget="statusbar" statusbar_visible="candidate,confirmed,create_required,conflict,ignored"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="source_table"/>
+                                <field name="source_domain"/>
+                                <field name="material_key"/>
+                                <field name="legacy_material_id"/>
+                            </group>
+                            <group>
+                                <field name="company_id"/>
+                                <field name="review_priority"/>
+                                <field name="coverage_state"/>
+                                <field name="suggested_action"/>
+                            </group>
+                        </group>
+                        <group string="SCBS材料事实">
+                            <group>
+                                <field name="material_name"/>
+                                <field name="spec_model"/>
+                                <field name="uom_text"/>
+                            </group>
+                            <group>
+                                <field name="line_rows"/>
+                                <field name="header_rows"/>
+                                <field name="qty_total"/>
+                                <field name="amount_total"/>
+                            </group>
+                        </group>
+                        <group string="目标材料档案">
+                            <group>
+                                <field name="material_catalog_id"/>
+                                <field name="exact_text_catalog_id" readonly="1"/>
+                                <field name="exact_text_match_count" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="name_spec_catalog_id" readonly="1"/>
+                                <field name="name_spec_match_count" readonly="1"/>
+                            </group>
+                        </group>
+                        <group string="审阅">
+                            <group>
+                                <field name="reviewer_id" readonly="1"/>
+                                <field name="reviewed_at" readonly="1"/>
+                                <field name="active"/>
+                            </group>
+                            <field name="evidence"/>
+                            <field name="note"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_legacy_scbs_material_map" model="ir.actions.act_window">
+            <field name="name">SCBS旧库材料映射</field>
+            <field name="res_model">sc.legacy.scbs.material.map</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_legacy_scbs_material_map_search"/>
+            <field name="context">{'search_default_state_candidate': 1, 'search_default_group_priority': 1}</field>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        </record>
+
+        <menuitem id="menu_sc_legacy_scbs_material_map"
+                  name="SCBS旧库材料映射"
+                  parent="smart_construction_core.menu_sc_data_center"
+                  action="action_sc_legacy_scbs_material_map"
+                  sequence="15"
+                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+    </data>
+</odoo>

@@ -496,10 +496,43 @@
             <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
         </record>
 
+        <record id="rule_sc_material_read_catalog_company" model="ir.rule">
+            <field name="name">SC Material Read - sc.material.catalog by allowed companies</field>
+            <field name="model_id" ref="model_sc_material_catalog"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read'))]"/>
+        </record>
+
+        <record id="rule_sc_material_user_catalog_company" model="ir.rule">
+            <field name="name">SC Material User - sc.material.catalog by allowed companies</field>
+            <field name="model_id" ref="model_sc_material_catalog"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_material_user'))]"/>
+        </record>
+
+        <record id="rule_sc_material_manager_catalog_company" model="ir.rule">
+            <field name="name">SC Material Manager - sc.material.catalog by allowed companies</field>
+            <field name="model_id" ref="model_sc_material_catalog"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
+        </record>
+
         <record id="rule_sc_material_read_price" model="ir.rule">
             <field name="name">SC Material Read - sc.material.price global or project member</field>
             <field name="model_id" ref="model_sc_material_price"/>
-            <field name="domain_force">['|', ('project_id', '=', False), '|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="domain_force">['&amp;', ('company_id', 'in', company_ids), '|', ('project_id', '=', False), '|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="False"/>
             <field name="perm_create" eval="False"/>
@@ -510,7 +543,7 @@
         <record id="rule_sc_material_user_price" model="ir.rule">
             <field name="name">SC Material User - sc.material.price own, global or project member</field>
             <field name="model_id" ref="model_sc_material_price"/>
-            <field name="domain_force">['|','|', ('create_uid', '=', user.id), ('project_id', '=', False), '|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="domain_force">['&amp;', ('company_id', 'in', company_ids), '|','|', ('create_uid', '=', user.id), ('project_id', '=', False), '|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
@@ -519,9 +552,9 @@
         </record>
 
         <record id="rule_sc_material_manager_price" model="ir.rule">
-            <field name="name">SC Material Manager - sc.material.price ALL</field>
+            <field name="name">SC Material Manager - sc.material.price by allowed companies</field>
             <field name="model_id" ref="model_sc_material_price"/>
-            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>

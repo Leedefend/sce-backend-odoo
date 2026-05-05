@@ -6,6 +6,7 @@
         <field name="arch" type="xml">
             <tree string="我的项目">
                 <field name="name"/>
+                <field name="operation_strategy"/>
                 <field name="manager_id"/>
                 <field name="owner_id"/>
                 <field name="lifecycle_state"/>

@@ -93,7 +93,8 @@
                             <field name="line_ids" context="{}"
                                    modifiers='{"readonly": [["state","!=","draft"]]}'>
                                 <tree editable="bottom" create="1" delete="1">
-                                    <field name="product_id"/>
+                                    <field name="material_catalog_id" required="1"/>
+                                    <field name="product_id" invisible="1"/>
                                     <field name="material_name"/>
                                     <field name="spec"/>
                                     <field name="spec_model"/>
@@ -101,13 +102,15 @@
                                     <field name="bill_qty"/>
                                     <field name="unplanned_qty"/>
                                     <field name="uom_id"/>
+                                    <field name="material_uom_text"/>
                                     <field name="vendor_id"/>
                                     <field name="note"/>
                                     <field name="attachment_ids" widget="many2many_binary"/>
                                 </tree>
                                 <form string="明细">
                                     <group>
-                                        <field name="product_id"/>
+                                        <field name="material_catalog_id" required="1"/>
+                                        <field name="product_id" invisible="1"/>
                                         <field name="material_name" readonly="1"/>
                                         <field name="spec"/>
                                         <field name="spec_model" readonly="1"/>
@@ -115,6 +118,7 @@
                                         <field name="bill_qty"/>
                                         <field name="unplanned_qty" readonly="1"/>
                                         <field name="uom_id"/>
+                                        <field name="material_uom_text"/>
                                         <field name="vendor_id"/>
                                         <field name="note"/>
                                         <field name="attachment_ids" widget="many2many_binary"/>

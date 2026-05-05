@@ -282,6 +282,8 @@ class ProjectEntryContextService:
                 {
                     "project_id": project_id,
                     "project_name": str(context.get("project_name") or ""),
+                    "operation_strategy": str(context.get("operation_strategy") or ""),
+                    "operation_strategy_label": str(context.get("operation_strategy_label") or ""),
                     "stage_label": str(context.get("stage_label") or ""),
                     "milestone_label": str(context.get("milestone_label") or ""),
                     "status": str(context.get("status") or ""),

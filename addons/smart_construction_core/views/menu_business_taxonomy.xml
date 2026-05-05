@@ -984,7 +984,7 @@
               sequence="47"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <record id="menu_sc_fund_daily" model="ir.ui.menu">
-        <field name="name">资金日报表</field>
+        <field name="name">企业资金日报</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
         <field name="action" ref="smart_construction_core.action_sc_fund_daily_summary"/>
         <field name="sequence">50</field>

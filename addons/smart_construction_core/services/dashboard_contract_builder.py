@@ -88,7 +88,7 @@ class DashboardContractBuilder:
                 [
                     {"key": "finance", "label": "财务中心", "subtitle": "收付款申请与审批", "target": action_target(action_xmlid="smart_construction_core.action_payment_request_my")},
                     {"key": "cost", "label": "成本台账", "subtitle": "项目成本明细", "target": action_target(action_xmlid="smart_construction_core.action_project_cost_ledger")},
-                    {"key": "fund", "label": "资金日报", "subtitle": "资金收支日报", "target": action_target(action_xmlid="smart_construction_core.action_sc_fund_daily_summary")},
+                    {"key": "fund", "label": "企业资金日报", "subtitle": "按业务主体汇总", "target": action_target(action_xmlid="smart_construction_core.action_sc_fund_daily_summary")},
                     {"key": "operate", "label": "经营指标", "subtitle": "项目经营分析", "target": action_target(action_xmlid="smart_construction_core.action_sc_operating_metrics_project")},
                 ],
             ),

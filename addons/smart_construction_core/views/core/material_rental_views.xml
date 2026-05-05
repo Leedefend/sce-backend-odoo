@@ -78,7 +78,8 @@
                             <field name="line_ids">
                                 <tree editable="bottom">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="product_id"/>
+                                    <field name="material_catalog_id" required="1"/>
+                                    <field name="product_id" invisible="1"/>
                                     <field name="material_name"/>
                                     <field name="material_spec"/>
                                     <field name="unit_name"/>
@@ -180,7 +181,8 @@
                             <field name="line_ids">
                                 <tree editable="bottom">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="product_id"/>
+                                    <field name="material_catalog_id" required="1"/>
+                                    <field name="product_id" invisible="1"/>
                                     <field name="material_name"/>
                                     <field name="material_spec"/>
                                     <field name="unit_name"/>
@@ -288,7 +290,8 @@
                             <field name="line_ids">
                                 <tree editable="bottom">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="product_id"/>
+                                    <field name="material_catalog_id" required="1"/>
+                                    <field name="product_id" invisible="1"/>
                                     <field name="material_name"/>
                                     <field name="material_spec"/>
                                     <field name="unit_name"/>

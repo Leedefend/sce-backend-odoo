@@ -454,6 +454,11 @@ class ProjectDashboardService:
             "id": int(project.id),
             "name": _safe_text(_safe_field(project, "name")),
             "project_code": _safe_text(_safe_field(project, "project_code")),
+            "operation_strategy": _safe_text(_safe_field(project, "operation_strategy")),
+            "operation_strategy_label": dict(project._fields["operation_strategy"].selection).get(
+                _safe_text(_safe_field(project, "operation_strategy")),
+                _safe_text(_safe_field(project, "operation_strategy")),
+            ) if "operation_strategy" in project._fields else "",
             "partner_name": _safe_rel_name(project, "partner_id"),
             "manager_name": _safe_rel_name(project, "user_id"),
             "stage_name": lifecycle_state_label(project),
