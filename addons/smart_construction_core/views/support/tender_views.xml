@@ -6,6 +6,7 @@
         <field name="arch" type="xml">
             <tree string="投标管理" default_order="project_id, id desc">
                 <field name="project_id"/>
+                <field name="operation_strategy"/>
                 <field name="tender_name"/>
                 <field name="tender_round"/>
                 <field name="owner_id"/>
@@ -45,6 +46,7 @@
                     <group>
                         <group>
                             <field name="project_id" required="1"/>
+                            <field name="operation_strategy" readonly="1"/>
                             <field name="tender_name" required="1"/>
                             <field name="tender_round"/>
                             <field name="owner_id"/>

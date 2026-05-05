@@ -18,6 +18,12 @@ class TenderBid(models.Model):
         index=True,
         tracking=True,
     )
+    operation_strategy = fields.Selection(
+        related="project_id.operation_strategy",
+        string="经营方式",
+        store=True,
+        readonly=True,
+    )
     tender_round = fields.Integer("投标轮次", default=1)
     owner_id = fields.Many2one("res.partner", string="招标人/业主")
     bid_amount = fields.Monetary("投标报价", currency_field="currency_id", tracking=True)
@@ -100,6 +106,10 @@ class TenderBid(models.Model):
             project = self.env["project.project"].browse(project_id).exists()
             if project and project.owner_id:
                 res["owner_id"] = project.owner_id.id
+        if project_id and "operation_strategy" in fields_list and not res.get("operation_strategy"):
+            project = self.env["project.project"].browse(project_id).exists()
+            if project:
+                res["operation_strategy"] = project.operation_strategy
         return res
 
     @api.onchange("project_id")

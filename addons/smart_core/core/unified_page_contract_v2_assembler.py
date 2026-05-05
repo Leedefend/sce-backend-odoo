@@ -449,6 +449,9 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
             defaults = _default_values_from_context(_dict(source_context.get("context")))
             if defaults:
                 contract["dataContract"]["mainData"].update(defaults)
+    source_record = _dict(source.get("record"))
+    if source_record:
+        contract["dataContract"]["mainData"].update(deepcopy(source_record))
     data_source = _ui_contract_data_source(model=model, view_type=view_type, fields=fields, record_id=record_id, source=source, ui=ui)
     if data_source:
         contract["dataContract"]["dataSource"]["primary"] = data_source

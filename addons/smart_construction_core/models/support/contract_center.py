@@ -327,6 +327,10 @@ class ConstructionContract(models.Model):
         project_id = res.get("project_id") or self._context_project_id()
         if project_id and "project_id" in fields_list:
             res["project_id"] = project_id
+        if project_id and "operation_strategy" in fields_list and not res.get("operation_strategy"):
+            project = self.env["project.project"].browse(project_id).exists()
+            if project:
+                res["operation_strategy"] = project.operation_strategy
         contract_type = res.get("type") or "out"
         if "tax_id" in fields_list and not res.get("tax_id"):
             default_tax = self._get_default_tax(contract_type)

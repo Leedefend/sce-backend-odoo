@@ -1037,7 +1037,7 @@ const showDiscardAction = computed(() => !isProjectIntakeCreateMode.value && Boo
 const headerActionsVisible = computed(() => {
   if (isProjectIntakeCreateMode.value) return [];
   if (useNativeFormTree.value) {
-    return headerActions.value.filter((item) => item.kind === 'mutation');
+    return headerActions.value.filter((item) => item.kind === 'mutation' || item.kind === 'object' || item.kind === 'server');
   }
   return headerActions.value;
 });
@@ -2605,6 +2605,33 @@ const contractActions = computed<ContractAction[]>(() => {
       refreshPolicy: protocol?.refresh_policy,
     });
   }
+  if (
+    model.value === 'payment.request'
+    && recordId.value
+    && String(formData.type || 'pay').trim() === 'pay'
+    && !out.some((item) => item.methodName === 'action_create_payment_execution')
+  ) {
+    out.push({
+      key: 'action_create_payment_execution',
+      label: '生成付款登记',
+      kind: 'object',
+      level: 'header',
+      selection: 'none',
+      actionId: null,
+      methodName: 'action_create_payment_execution',
+      targetModel: 'payment.request',
+      context: {},
+      domainRaw: '',
+      target: '',
+      url: '',
+      enabled: true,
+      hint: '',
+      semantic: 'secondary_action',
+      visibleProfiles: ['edit', 'readonly'],
+      requiredParams: [],
+      requiresReason: false,
+    });
+  }
   return out.sort((a, b) => {
     const levelDelta = a.level.localeCompare(b.level);
     if (levelDelta !== 0) return levelDelta;
@@ -4137,6 +4164,37 @@ function resolveCreateDefaults() {
         defaults[key] = value === 'dynamic' ? '' : value;
       }
     });
+  }
+  const selectedProject = session.projectContext?.selected;
+  const selectedProjectId = Number(selectedProject?.id || 0);
+  if (
+    selectedProjectId > 0
+    && contract.value?.fields?.project_id
+    && normalizeRelationIds(defaults.project_id).length === 0
+  ) {
+    defaults.project_id = [
+      selectedProjectId,
+      selectedProject?.display_name || selectedProject?.name || `项目 ${selectedProjectId}`,
+    ];
+  }
+  const selectedStrategy = String(selectedProject?.operation_strategy || '').trim();
+  if (
+    selectedStrategy
+    && contract.value?.fields?.operation_strategy
+    && !String(defaults.operation_strategy || '').trim()
+  ) {
+    defaults.operation_strategy = selectedStrategy;
+  }
+  const selectedOwnerId = Number(selectedProject?.owner_id || 0);
+  if (
+    selectedOwnerId > 0
+    && contract.value?.fields?.owner_id
+    && normalizeRelationIds(defaults.owner_id).length === 0
+  ) {
+    defaults.owner_id = [
+      selectedOwnerId,
+      selectedProject?.owner_name || `业主 ${selectedOwnerId}`,
+    ];
   }
   return defaults;
 }

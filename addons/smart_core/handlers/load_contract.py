@@ -165,6 +165,17 @@ class LoadContractHandler(BaseIntentHandler):
 
         # ---------- 5) 上下文透传（lang/tz/company） ----------
         ctx_user = dict(self.env.context or {})
+        request_context = p.get("context") if isinstance(p.get("context"), dict) else {}
+        if request_context:
+            ctx_user.update(request_context)
+        current_project_id = p.get("current_project_id") or request_context.get("current_project_id")
+        if current_project_id:
+            try:
+                project_id_int = int(current_project_id)
+                ctx_user["current_project_id"] = project_id_int
+                ctx_user.setdefault("default_project_id", project_id_int)
+            except Exception:
+                pass
         user_lang = (getattr(self.env.user, "lang", None) or "").strip()
         if p.get("lang"):
             ctx_user["lang"] = p["lang"]

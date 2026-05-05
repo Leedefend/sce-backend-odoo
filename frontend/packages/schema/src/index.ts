@@ -232,6 +232,10 @@ export interface ProjectContextOption {
   display_name?: string;
   code?: string;
   stage?: string;
+  owner_id?: number;
+  owner_name?: string;
+  operation_strategy?: string;
+  operation_strategy_label?: string;
   active?: boolean;
 }
 

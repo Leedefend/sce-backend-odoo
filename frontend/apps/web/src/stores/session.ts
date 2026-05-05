@@ -403,6 +403,10 @@ function normalizeProjectOption(raw: unknown): ProjectContextOption | null {
     display_name: asText(row.display_name) || asText(row.name),
     code: asText(row.code),
     stage: asText(row.stage),
+    owner_id: Number(row.owner_id || 0) || undefined,
+    owner_name: asText(row.owner_name),
+    operation_strategy: asText(row.operation_strategy),
+    operation_strategy_label: asText(row.operation_strategy_label),
     active: row.active === undefined ? undefined : Boolean(row.active),
   };
 }
