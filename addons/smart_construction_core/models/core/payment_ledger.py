@@ -31,6 +31,13 @@ class PaymentLedger(models.Model):
         store=True,
         readonly=True,
     )
+    operation_strategy = fields.Selection(
+        related="project_id.operation_strategy",
+        string="经营策略",
+        store=True,
+        readonly=True,
+        index=True,
+    )
     partner_id = fields.Many2one(
         "res.partner",
         string="往来单位",

@@ -56,9 +56,16 @@ class ScFinancingLoan(models.Model):
         readonly=True,
         index=True,
     )
+    operation_strategy = fields.Selection(
+        related="project_id.operation_strategy",
+        string="经营策略",
+        store=True,
+        readonly=True,
+        index=True,
+    )
     partner_id = fields.Many2one("res.partner", string="往来单位", index=True)
     document_no = fields.Char(string="来源单号", index=True)
-    document_date = fields.Date(string="业务日期", default=fields.Date.context_today, index=True)
+    document_date = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
     due_date = fields.Date(string="到期日", index=True)
     amount = fields.Monetary(string="金额", currency_field="currency_id", required=True)
     currency_id = fields.Many2one(
@@ -80,6 +87,13 @@ class ScFinancingLoan(models.Model):
     legacy_amount_field = fields.Char(string="历史金额字段", index=True, readonly=True)
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
     note = fields.Text(string="备注")
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "sc_financing_loan_attachment_rel",
+        "loan_id",
+        "attachment_id",
+        string="附件",
+    )
     active = fields.Boolean("有效", default=True, index=True)
 
     _sql_constraints = [
@@ -91,10 +105,29 @@ class ScFinancingLoan(models.Model):
         ("amount_nonnegative", "CHECK(amount >= 0)", "Financing loan amount must be non-negative."),
     ]
 
+    @api.model
+    def _context_project_id(self):
+        project_id = self.env.context.get("default_project_id") or self.env.context.get("current_project_id")
+        try:
+            return int(project_id) if project_id else False
+        except (TypeError, ValueError):
+            return False
+
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        project_id = res.get("project_id") or self._context_project_id()
+        if project_id and "project_id" in fields_list:
+            res["project_id"] = project_id
+        return res
+
     @api.model_create_multi
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            project_id = self._context_project_id()
+            if project_id:
+                vals.setdefault("project_id", project_id)
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.financing.loan") or _("Financing Loan")
         return super().create(vals_list)

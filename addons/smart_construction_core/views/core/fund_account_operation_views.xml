@@ -10,12 +10,16 @@
                 <field name="source_account_id"/>
                 <field name="target_account_id"/>
                 <field name="project_id"/>
+                <field name="operation_strategy"/>
                 <filter string="资金划拨" name="type_transfer_out" domain="[('operation_type', '=', 'transfer_out')]"/>
                 <filter string="资金调拨" name="type_transfer_between" domain="[('operation_type', '=', 'transfer_between')]"/>
                 <filter string="余额调整" name="type_balance_adjustment" domain="[('operation_type', '=', 'balance_adjustment')]"/>
                 <filter string="已完成" name="state_done" domain="[('state', '=', 'done')]"/>
+                <filter string="公司直营" name="operation_direct" domain="[('operation_strategy', '=', 'direct')]"/>
+                <filter string="联营项目" name="operation_joint" domain="[('operation_strategy', '=', 'joint')]"/>
                 <filter string="按业务类型" name="group_operation_type" context="{'group_by': 'operation_type'}"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按经营策略" name="group_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
                 <filter string="按日期" name="group_operation_date" context="{'group_by': 'operation_date'}"/>
             </search>
         </field>
@@ -30,6 +34,7 @@
                 <field name="operation_type"/>
                 <field name="operation_date"/>
                 <field name="project_id"/>
+                <field name="operation_strategy"/>
                 <field name="source_account_id"/>
                 <field name="target_account_id"/>
                 <field name="amount" sum="金额合计"/>
@@ -57,8 +62,9 @@
                         <group string="基础信息">
                             <field name="name" readonly="1"/>
                             <field name="operation_type"/>
-                            <field name="operation_date"/>
+                            <field name="operation_date" required="1"/>
                             <field name="project_id"/>
+                            <field name="operation_strategy" readonly="1"/>
                             <field name="company_id"/>
                             <field name="active"/>
                         </group>
@@ -74,6 +80,7 @@
                     <group string="说明">
                         <field name="operation_reason"/>
                         <field name="note"/>
+                        <field name="attachment_ids" widget="many2many_binary"/>
                     </group>
                     <notebook>
                         <page string="历史来源" groups="smart_construction_core.group_sc_cap_config_admin">
