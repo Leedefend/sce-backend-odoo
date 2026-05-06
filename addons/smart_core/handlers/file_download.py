@@ -88,6 +88,10 @@ class FileDownloadHandler(BaseIntentHandler):
             # is created in a prior step and only model/res_id/name are known.
             if not model or not res_id:
                 return self._err(400, "缺少参数 id")
+            if model not in self._allowed_models():
+                return self._err(403, "附件不可访问")
+            if model not in self.env:
+                return self._err(404, "附件业务模型不存在")
             try:
                 res_id = int(res_id)
             except Exception:
