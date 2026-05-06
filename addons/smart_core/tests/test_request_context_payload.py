@@ -110,6 +110,17 @@ class TestRequestContextPayload(unittest.TestCase):
         self.assertIsNone(ctx.uid)
         self.assertEqual(auth_calls, [])
 
+    def test_from_payload_does_not_authenticate_permission_check(self):
+        auth_calls = []
+        fake_request = _FakeRequest()
+        context_mod = _load_context(fake_request, auth_calls)
+
+        ctx = context_mod.RequestContext.from_payload({"intent": "permission.check", "params": {"capability_key": "x"}})
+
+        self.assertIsNone(ctx.user)
+        self.assertIsNone(ctx.uid)
+        self.assertEqual(auth_calls, [])
+
     def test_from_http_request_delegates_to_payload_constructor(self):
         auth_calls = []
         fake_request = _FakeRequest()

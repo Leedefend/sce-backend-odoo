@@ -26,6 +26,10 @@ class TestIntentAccessPolicy(unittest.TestCase):
         self.assertTrue(self.policy.is_public_context_intent("bootstrap"))
         self.assertFalse(self.policy.is_anonymous_allowed_intent("bootstrap"))
 
+    def test_permission_check_keeps_public_context_gate_behavior(self):
+        self.assertTrue(self.policy.is_public_context_intent("permission.check"))
+        self.assertFalse(self.policy.is_anonymous_allowed_intent("permission.check"))
+
 
 if __name__ == "__main__":
     unittest.main()

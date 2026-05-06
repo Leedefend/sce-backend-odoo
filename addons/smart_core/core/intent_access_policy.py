@@ -2,7 +2,7 @@
 
 
 ANONYMOUS_INTENTS = frozenset({"login", "auth.login", "sys.intents", "session.bootstrap"})
-PUBLIC_CONTEXT_INTENTS = ANONYMOUS_INTENTS | frozenset({"bootstrap"})
+PUBLIC_CONTEXT_INTENTS = ANONYMOUS_INTENTS | frozenset({"bootstrap", "permission.check"})
 
 
 def normalize_intent_name(intent_name: str) -> str:
