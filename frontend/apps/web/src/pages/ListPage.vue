@@ -2351,15 +2351,17 @@ tfoot tr:nth-child(2) td {
   color: #0f172a;
   font-size: 12px;
   line-height: 1.2;
-  white-space: normal;
+  min-width: 88px;
+  width: 88px;
+  white-space: nowrap;
+  overflow-wrap: normal;
 }
 
 .footer-number {
-  min-width: 150px;
-  text-align: left;
+  text-align: right;
   font-variant-numeric: tabular-nums;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow-wrap: normal;
 }
 
 .cell-sortable {

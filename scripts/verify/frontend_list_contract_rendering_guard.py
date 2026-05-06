@@ -40,6 +40,17 @@ def _extract_function(source: str, name: str) -> str:
     return source[start:min(next_markers)]
 
 
+def _extract_css_block(source: str, selector: str) -> str:
+    marker = f"{selector} {{"
+    start = source.find(marker)
+    if start < 0:
+        raise AssertionError(f"missing CSS selector {selector}")
+    end = source.find("\n}", start)
+    if end < 0:
+        return source[start:]
+    return source[start : end + 2]
+
+
 def main() -> int:
     list_page = _read(LIST_PAGE)
     action_view = _read(ACTION_VIEW)
@@ -70,6 +81,16 @@ def main() -> int:
         errors.append("footer rows must label summable rows as current-page total and total")
     if "本页：" in footer_row_label or "{count} 条" in footer_row_label:
         errors.append("footer row labels must describe aggregate scope, not duplicate row-count pagination text")
+    footer_row_label_css = _extract_css_block(list_page, ".footer-row-label")
+    if "white-space: nowrap" not in footer_row_label_css:
+        errors.append("footer row labels must stay on one line")
+    footer_number_css = _extract_css_block(list_page, ".footer-number")
+    if "text-align: right" not in footer_number_css:
+        errors.append("footer numeric cells must right-align with their source column")
+    if "min-width:" in footer_number_css:
+        errors.append("footer numeric cells must not add independent min-width that breaks column alignment")
+    if "white-space: nowrap" not in footer_number_css:
+        errors.append("footer numeric cells must stay on one line")
     column_width_style = _extract_function(list_page, "columnWidthStyle")
     if "Math.min(width" in column_width_style or "maxTextWidth" in column_width_style:
         errors.append("explicit column widths must render as saved; do not clamp name/text columns after resize")
