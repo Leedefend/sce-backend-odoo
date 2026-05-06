@@ -57,11 +57,15 @@ class ChatterActivityScheduleHandler(BaseIntentHandler):
 
         if not model or not res_id or not summary:
             return self._failure(REASON_MISSING_PARAMS, "缺少参数 model/res_id/summary", 400, trace_id)
+        try:
+            res_id = int(res_id)
+        except Exception:
+            return self._failure(REASON_USER_ERROR, "res_id 无效", 400, trace_id)
 
         try:
             if model not in self.env:
                 return self._failure(REASON_NOT_FOUND, "模型不存在", 404, trace_id)
-            record = self.env[model].browse(int(res_id)).exists()
+            record = self.env[model].browse(res_id).exists()
             if not record:
                 return self._failure(REASON_NOT_FOUND, "记录不存在", 404, trace_id)
             current_project_id = selected_project_id_from_context(params, self.context if isinstance(self.context, dict) else {})
