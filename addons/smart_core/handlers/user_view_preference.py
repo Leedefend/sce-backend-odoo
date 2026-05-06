@@ -65,12 +65,13 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
         params = self._params(payload or self.payload)
         scope_key = self._scope_key(params)
         legacy_scope_key = self._legacy_scope_key(params)
-        record = self.env["sc.user.view.preference"].sudo().search([
+        Preference = self.env["sc.user.view.preference"]
+        record = Preference.search([
             ("user_id", "=", self.env.uid),
             ("scope_key", "=", scope_key),
         ], limit=1)
         if not record and legacy_scope_key != scope_key:
-            record = self.env["sc.user.view.preference"].sudo().search([
+            record = Preference.search([
                 ("user_id", "=", self.env.uid),
                 ("scope_key", "=", legacy_scope_key),
             ], limit=1)
@@ -101,7 +102,7 @@ class UserViewPreferenceSetHandler(UserViewPreferenceGetHandler):
         value = params.get("preference")
         if not isinstance(value, dict):
             value = {}
-        Preference = self.env["sc.user.view.preference"].sudo()
+        Preference = self.env["sc.user.view.preference"]
         record = Preference.search([
             ("user_id", "=", self.env.uid),
             ("scope_key", "=", scope_key),
