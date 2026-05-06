@@ -26,14 +26,33 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
             return payload.get("params") or {}
         return payload or {}
 
+    def _text_param(self, params, keys, *, default=""):
+        if isinstance(keys, str):
+            keys = (keys,)
+        raw = None
+        for key in keys:
+            if key in params:
+                raw = params.get(key)
+                break
+        if raw is None or raw == "":
+            return default, None
+        if isinstance(raw, bool) or not isinstance(raw, (str, int, float)):
+            return "", self._err(400, f"{keys[0]} 无效")
+        text = str(raw).strip()
+        return text or default, None
+
     def _scope_key(self, params):
         Preference = self.env["sc.user.view.preference"]
         preference_key = Preference.normalize_preference_key(params.get("preference_key"))
-        view_type = str(params.get("view_type") or "list").strip() or "list"
+        view_type, view_type_error = self._text_param(params, "view_type", default="list")
+        if view_type_error:
+            return "", view_type_error
         action_id, action_error = self._read_positive_int(params.get("action_id"), "action_id")
         if action_error:
             return "", action_error
-        model_name = str(params.get("model") or params.get("model_name") or "").strip()
+        model_name, model_error = self._text_param(params, ("model", "model_name"))
+        if model_error:
+            return "", model_error
         return Preference.build_scope_key(
             preference_key=preference_key,
             view_type=view_type,
@@ -43,11 +62,15 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
 
     def _legacy_scope_key(self, params):
         preference_key = self.env["sc.user.view.preference"].normalize_preference_key(params.get("preference_key"))
-        view_type = str(params.get("view_type") or "list").strip() or "list"
+        view_type, view_type_error = self._text_param(params, "view_type", default="list")
+        if view_type_error:
+            return "", view_type_error
         action_id, action_error = self._read_positive_int(params.get("action_id"), "action_id")
         if action_error:
             return "", action_error
-        model_name = str(params.get("model") or params.get("model_name") or "").strip()
+        model_name, model_error = self._text_param(params, ("model", "model_name"))
+        if model_error:
+            return "", model_error
         target = f"action:{action_id}" if action_id else f"model:{model_name or 'unknown'}"
         return f"{preference_key}:{view_type}:{target}", None
 
@@ -78,6 +101,8 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         params = self._params(payload or self.payload)
+        if not isinstance(params, dict):
+            return self._err(400, "params 无效")
         scope_key, scope_error = self._scope_key(params)
         if scope_error:
             return scope_error
@@ -113,15 +138,21 @@ class UserViewPreferenceSetHandler(UserViewPreferenceGetHandler):
 
     def handle(self, payload=None, ctx=None):
         params = self._params(payload or self.payload)
+        if not isinstance(params, dict):
+            return self._err(400, "params 无效")
         scope_key, scope_error = self._scope_key(params)
         if scope_error:
             return scope_error
         preference_key = self.env["sc.user.view.preference"].normalize_preference_key(params.get("preference_key"))
-        view_type = str(params.get("view_type") or "list").strip() or "list"
+        view_type, view_type_error = self._text_param(params, "view_type", default="list")
+        if view_type_error:
+            return view_type_error
         action_id, action_error = self._read_positive_int(params.get("action_id"), "action_id")
         if action_error:
             return action_error
-        model_name = str(params.get("model") or params.get("model_name") or "").strip()
+        model_name, model_error = self._text_param(params, ("model", "model_name"))
+        if model_error:
+            return model_error
         value = params.get("preference")
         if not isinstance(value, dict):
             value = {}

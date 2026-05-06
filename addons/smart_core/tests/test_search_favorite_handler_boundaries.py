@@ -130,6 +130,45 @@ class TestSearchFavoriteHandlerBoundaries(unittest.TestCase):
         self.assertEqual(result["error"]["message"], "action_id 无效")
         self.assertEqual(filters.search_domains, [])
 
+    def test_invalid_params_shape_returns_bad_request(self):
+        module = _load_handler()
+        filters = _FilterModel()
+        env = _Env({"x.model": _Model(), "ir.filters": filters})
+        handler = module.SearchFavoriteSetHandler(env=env, payload=["model", "x.model"])
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"]["message"], "params 无效")
+        self.assertEqual(filters.search_domains, [])
+
+    def test_invalid_name_returns_bad_request_before_filter_lookup(self):
+        module = _load_handler()
+        filters = _FilterModel()
+        env = _Env({"x.model": _Model(), "ir.filters": filters})
+        handler = module.SearchFavoriteSetHandler(env=env, payload={"model": "x.model", "name": ["Mine"]})
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"]["message"], "name 无效")
+        self.assertEqual(filters.search_domains, [])
+
+    def test_invalid_sort_returns_bad_request_before_filter_lookup(self):
+        module = _load_handler()
+        filters = _FilterModel()
+        env = _Env({"x.model": _Model(), "ir.filters": filters})
+        handler = module.SearchFavoriteSetHandler(
+            env=env,
+            payload={"model": "x.model", "name": "Mine", "sort": ["name"]},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"]["message"], "sort 无效")
+        self.assertEqual(filters.search_domains, [])
+
 
 if __name__ == "__main__":
     unittest.main()

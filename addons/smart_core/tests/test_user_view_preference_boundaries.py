@@ -140,6 +140,45 @@ class TestUserViewPreferenceBoundaries(unittest.TestCase):
         self.assertEqual(result["error"]["message"], "action_id 无效")
         self.assertIsNone(Preference.created_vals)
 
+    def test_get_rejects_invalid_params_shape(self):
+        module = _load_handler()
+        Preference = _PreferenceModel()
+        env = _Env({"sc.user.view.preference": Preference})
+        handler = module.UserViewPreferenceGetHandler(env=env, payload=["model", "x.model"])
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "params 无效")
+        self.assertEqual(Preference.search_domains, [])
+
+    def test_get_rejects_invalid_view_type(self):
+        module = _load_handler()
+        Preference = _PreferenceModel()
+        env = _Env({"sc.user.view.preference": Preference})
+        handler = module.UserViewPreferenceGetHandler(env=env, payload={"model": "x.model", "view_type": ["list"]})
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "view_type 无效")
+        self.assertEqual(Preference.search_domains, [])
+
+    def test_set_rejects_invalid_model(self):
+        module = _load_handler()
+        Preference = _PreferenceModel()
+        env = _Env({"sc.user.view.preference": Preference})
+        handler = module.UserViewPreferenceSetHandler(env=env, payload={"model": ["x.model"], "preference": {}})
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "model 无效")
+        self.assertIsNone(Preference.created_vals)
+
 
 if __name__ == "__main__":
     unittest.main()
