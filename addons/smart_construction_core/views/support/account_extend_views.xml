@@ -33,6 +33,7 @@
         <field name="arch" type="xml">
             <tree string="供应商" default_order="name">
                 <field name="name" string="名称"/>
+                <field name="is_company" string="企业/组织"/>
                 <field name="sc_supplier_type"/>
                 <field name="phone" string="电话"/>
                 <field name="mobile" string="手机"/>
@@ -45,8 +46,6 @@
                 <field name="legacy_partner_id"/>
                 <field name="legacy_partner_source"/>
                 <field name="legacy_partner_name"/>
-                <field name="legacy_deleted_flag"/>
-                <field name="active" string="活动"/>
             </tree>
         </field>
     </record>
@@ -60,7 +59,7 @@
                     <group>
                         <group string="基本信息">
                             <field name="name" string="名称"/>
-                            <field name="is_company" string="公司"/>
+                            <field name="is_company" string="企业/组织"/>
                             <field name="sc_supplier_type"/>
                             <field name="vat" string="统一社会信用代码"/>
                             <field name="sc_region"/>
@@ -69,8 +68,6 @@
                             <field name="legacy_partner_name"/>
                             <field name="legacy_credit_code"/>
                             <field name="legacy_tax_no"/>
-                            <field name="legacy_deleted_flag"/>
-                            <field name="active" string="活动"/>
                         </group>
                         <group string="联系方式">
                             <field name="phone" string="电话"/>
@@ -117,10 +114,11 @@
                 <field name="legacy_partner_id"/>
                 <field name="legacy_partner_name"/>
                 <field name="legacy_partner_source"/>
-                <field name="legacy_deleted_flag"/>
-                <filter string="活动" name="active_supplier" domain="[('active', '=', True)]"/>
                 <filter string="含历史来源" name="legacy_supplier" domain="[('legacy_partner_id', '!=', False)]"/>
-                <filter string="历史删除标识" name="legacy_deleted" domain="[('legacy_deleted_flag', 'not in', [False, '', '0'])]"/>
+                <filter string="企业/组织" name="supplier_company" domain="[('is_company', '=', True)]"/>
+                <filter string="个人" name="supplier_person" domain="[('is_company', '=', False)]"/>
+                <separator/>
+                <filter string="按企业组织/个人" name="group_is_company" context="{'group_by': 'is_company'}"/>
                 <filter string="按供应商类型" name="group_supplier_type" context="{'group_by': 'sc_supplier_type'}"/>
                 <filter string="按地区" name="group_region" context="{'group_by': 'sc_region'}"/>
                 <filter string="按历史来源" name="group_legacy_source" context="{'group_by': 'legacy_partner_source'}"/>
