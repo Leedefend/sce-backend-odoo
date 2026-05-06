@@ -7,6 +7,7 @@ import time
 from typing import Any, Dict, List
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_core.core.request_params import parse_positive_int
 from odoo.addons.smart_core.core.scene_provider import load_scenes_from_db_or_fallback
 from odoo.addons.smart_core.core.unified_page_contract_v2_client import (
     resolve_client_type,
@@ -102,6 +103,16 @@ class _SceneDeliveryAppShellMixin:
             meta.update(extra)
         return meta
 
+    def _err(self, code: int, message: str, *, ts0: float):
+        return {
+            "status": "error",
+            "ok": False,
+            "code": code,
+            "error": {"code": code, "message": message},
+            "data": None,
+            "meta": self._source_meta(ts0=ts0),
+        }
+
 
 class AppCatalogHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
     INTENT_TYPE = "app.catalog"
@@ -156,6 +167,12 @@ class AppNavHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
         payload = _params(payload)
         client_type = resolve_client_type(_headers(self.request), payload)
         delivery_profile = resolve_delivery_profile(client_type, payload)
+        max_items, max_items_error = _read_optional_positive(payload, "max_items", "maxItems")
+        if max_items_error:
+            return self._err(400, "max_items 无效", ts0=ts0)
+        max_depth, max_depth_error = _read_optional_positive(payload, "max_depth", "maxDepth")
+        if max_depth_error:
+            return self._err(400, "max_depth 无效", ts0=ts0)
         app_id = _text(payload.get("app") or "workspace")
         scenes = [scene for scene in _scene_list(self.env) if _scene_app_id(_scene_key(scene)) == app_id]
 
@@ -184,8 +201,8 @@ class AppNavHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
             {"sections": sections, "meta": {"fingerprint": fp}},
             client_type=client_type,
             delivery_profile=delivery_profile,
-            max_items=payload.get("max_items") or payload.get("maxItems"),
-            max_depth=payload.get("max_depth") or payload.get("maxDepth"),
+            max_items=max_items,
+            max_depth=max_depth,
         )
         return {
             "status": "success",
@@ -200,6 +217,14 @@ class AppNavHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
                 },
             ),
         }
+
+
+def _read_optional_positive(payload: dict[str, Any], *keys: str):
+    for key in keys:
+        if key in payload:
+            value, error = parse_positive_int(payload.get(key), allow_empty=True)
+            return value, error
+    return None, None
 
 
 class AppOpenHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
