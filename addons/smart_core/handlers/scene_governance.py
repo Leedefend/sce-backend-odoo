@@ -40,6 +40,25 @@ class _BaseSceneGovernanceHandler(BaseIntentHandler):
             raise ValueError("reason is required")
         return reason
 
+    def _err(self, code: int, message: str):
+        return {
+            "ok": False,
+            "error": {"code": code, "message": message},
+            "code": code,
+            "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract()},
+        }
+
+    def _positive_int(self, value, field_name: str):
+        if value in (None, False, ""):
+            return 0, None
+        try:
+            parsed = int(value)
+        except Exception:
+            return 0, self._err(400, f"{field_name} 无效")
+        if parsed <= 0:
+            return 0, self._err(400, f"{field_name} 无效")
+        return parsed, None
+
     def _response(self, ts0: float, data: dict):
         return {
             "status": "success",
@@ -75,7 +94,9 @@ class SceneGovernanceSetChannelHandler(_BaseSceneGovernanceHandler):
         reason = self._require_reason(params)
         channel = (params.get("channel") or "").strip().lower()
         company_id = params.get("company_id") or self.env.user.company_id.id
-        company_id = int(company_id)
+        company_id, company_error = self._positive_int(company_id, "company_id")
+        if company_error:
+            return company_error
         result = _service(self.env, self.env.user).set_company_channel(
             company_id, channel, reason, trace_id=_trace_id_from_context(self.context)
         )
