@@ -24,6 +24,32 @@ class _Model:
         return True
 
 
+class _Field:
+    def __init__(self, field_type="", comodel_name=""):
+        self.type = field_type
+        self.comodel_name = comodel_name
+
+
+class _OnchangeModel(_Model):
+    _fields = {"line_ids": _Field("one2many", "x.line")}
+    _onchange_methods = {"line_ids": True}
+
+    def onchange(self, values, changed_fields, field_onchange):
+        return {
+            "line_patches": [
+                {
+                    "field": "line_ids",
+                    "row_id": "bad",
+                    "patch": {"name": "A"},
+                }
+            ]
+        }
+
+
+class _LineModel(_Model):
+    _fields = {"name": _Field("char")}
+
+
 class _Env(dict):
     pass
 
@@ -113,6 +139,21 @@ class TestApiOnchangeRecordIdBoundaries(unittest.TestCase):
 
         self.assertTrue(result["ok"])
         self.assertNotIn("unified_page_patch_v2", result)
+
+    def test_invalid_backend_line_row_id_does_not_break_normalization(self):
+        env = _Env({"x.model": _OnchangeModel(), "x.line": _LineModel()})
+        handler = self.module.ApiOnchangeHandler(
+            env=env,
+            params={"model": "x.model", "changed_fields": ["line_ids"]},
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        line_patch = result["data"]["line_patches"][0]
+        self.assertEqual(line_patch["row_id"], 0)
+        self.assertEqual(line_patch["row_state"], "create")
+        self.assertEqual(line_patch["command_hint"], [0])
 
 
 if __name__ == "__main__":

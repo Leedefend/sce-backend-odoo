@@ -194,7 +194,7 @@ class ApiOnchangeHandler(BaseIntentHandler):
             normalized: Dict[str, Any] = {
                 "field": field,
                 "row_key": str(item.get("row_key") or "").strip(),
-                "row_id": int(item.get("row_id") or 0) if str(item.get("row_id") or "").strip() else 0,
+                "row_id": self._safe_row_id(item.get("row_id")),
                 "patch": row_patch,
                 "modifiers_patch": row_modifiers,
                 "warnings": warnings,
@@ -275,8 +275,7 @@ class ApiOnchangeHandler(BaseIntentHandler):
         raw = str(item.get("row_state") or "").strip().lower()
         if raw in ("create", "update", "remove", "keep"):
             return raw
-        row_id_raw = item.get("row_id")
-        row_id = int(row_id_raw or 0) if str(row_id_raw or "").strip() else 0
+        row_id = self._safe_row_id(item.get("row_id"))
         if row_id <= 0 and row_patch:
             return "create"
         if row_id > 0 and row_patch:
@@ -284,6 +283,15 @@ class ApiOnchangeHandler(BaseIntentHandler):
         if row_id > 0 and not row_patch and not warnings:
             return "remove"
         return "keep"
+
+    def _safe_row_id(self, value: Any) -> int:
+        if not str(value or "").strip():
+            return 0
+        try:
+            row_id = int(value)
+        except Exception:
+            return 0
+        return row_id if row_id > 0 else 0
 
     def _command_hint_for_row_state(self, row_state: str) -> List[int]:
         # x2many command heads in Odoo semantics:
