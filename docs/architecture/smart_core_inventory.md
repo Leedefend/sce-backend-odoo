@@ -42,7 +42,7 @@ This document inventories smart_core assets and where contract dependencies (`ap
   - `addons/smart_core/app_config_engine/services/resolvers/action_resolver.py`
 
 ## Models
-App config engine models:
+App config engine projection models:
 - `addons/smart_core/app_config_engine/models/app_model_config.py` (`app.model.config`)
 - `addons/smart_core/app_config_engine/models/app_view_config.py` (`app.view.config`)
 - `addons/smart_core/app_config_engine/models/app_action_config.py` (`app.action.config`)
@@ -51,11 +51,13 @@ App config engine models:
 - `addons/smart_core/app_config_engine/models/app_report_config.py` (`app.report.config`)
 - `addons/smart_core/app_config_engine/models/app_workflow_config.py` (`app.workflow.config`)
 - `addons/smart_core/app_config_engine/models/app_validator_config.py` (`app.validator.config`)
-- Other configs:
-  - `addons/smart_core/app_config_engine/models/app.rule.config.py`
-  - `addons/smart_core/app_config_engine/models/app.ui.config.py`
-  - `addons/smart_core/app_config_engine/models/app.nav.config.py`
-  - `addons/smart_core/app_config_engine/models/app.kpi.config.py`
+- `addons/smart_core/app_config_engine/models/app_nav_config.py` (`app.nav.config`)
+
+Removed placeholders:
+- `app.contract.cache.py`
+- `app.ui.config.py`
+- `app.rule.config.py`
+- `app.kpi.config.py`
 
 Misc models:
 - `addons/smart_core/models/dashboard.py`

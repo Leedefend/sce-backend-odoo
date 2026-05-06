@@ -445,11 +445,7 @@
 
 - 合并或废弃 `/api/contract/get` 旧链路。
 - 明确 `load_contract/load_view/ui.contract/ui.contract.v2` 的主次关系。
-- 清理 0 行空壳文件：
-  - `app.contract.cache.py`
-  - `app.ui.config.py`
-  - `app.rule.config.py`
-  - `app.kpi.config.py`
+- 继续清理未加载空壳文件和重复 metadata 生成样板。
 - 给 `app_config_engine/docs/app_config_engine.md` 更新真实架构，不再描述不存在的 `contract/` 子目录。
 - 对 `system.init`、scene ready contract、ui base contract asset 做单一事实路径说明。
 - 对 `api.data` 系列补齐 Odoo 原生语义对齐测试：domain、context、record rule、active_test、多公司、read_group。
@@ -1561,3 +1557,261 @@ prod-sim 验证结果：
 - 子表创建时复制 `company_id`、`currency_id`、`partner_id` 是为了避免前端推断隐藏必填字段；该动作只保留父记录事实，不产生新业务语义。
 - UI base contract fallback 中的 `res.partner` 只是保证最小 UI 契约可构造的占位模型，不是客户/供应商事实来源。
 - `contract_governance` 中的 `partner_id`、合同、付款等文本只用于列选择、字段标签、布局治理和 legacy 页面文案，不能作为业务事实分类依据。
+
+### 2026-05-06 P1 内核冗余第一轮落地
+
+已执行：
+
+- 新增 `addons/smart_core/core/source_authority.py`，统一构造 `source_authority_contract` 的基础形状。
+- 先收敛 8 个 semantic bridge 模块的重复 metadata 构造逻辑：
+  - `page_contract_parser_semantic_bridge.py`
+  - `page_contract_semantic_orchestration_bridge.py`
+  - `runtime_page_parser_semantic_bridge.py`
+  - `runtime_page_semantic_orchestration_bridge.py`
+  - `scene_ready_parser_semantic_bridge.py`
+  - `scene_ready_semantic_orchestration_bridge.py`
+  - `scene_contract_parser_semantic_bridge.py`
+  - `scene_contract_semantic_orchestration_bridge.py`
+- 删除 4 个未被 `models/__init__.py` 加载、无模型定义、0 字节的占位文件：
+  - `app.contract.cache.py`
+  - `app.ui.config.py`
+  - `app.rule.config.py`
+  - `app.kpi.config.py`
+
+下一轮建议：
+
+- 扩展 `source_authority.py` 到 `system_init_*`、`unified_page_contract_*` 和 delivery 小服务。
+- 继续拆分 “桥接模块重复 helper” 与 “业务切片 orchestration adapter” 两类冗余，避免一次性大迁移。
+
+### 2026-05-06 P1 内核冗余第二轮落地
+
+已执行：
+
+- 继续复用 `addons/smart_core/core/source_authority.py`，收敛 Unified Page Contract 相关模块的重复 source authority 构造逻辑：
+  - `unified_page_contract_lite_adapter.py`
+  - `unified_page_contract_lite_patch_normalizer.py`
+  - `unified_page_contract_lite_preview.py`
+  - `unified_page_contract_lite_source_normalizer.py`
+  - `unified_page_contract_v2_action.py`
+  - `unified_page_contract_v2_assembler.py`
+  - `unified_page_contract_v2_client.py`
+  - `unified_page_contract_v2_data.py`
+  - `unified_page_contract_v2_runtime.py`
+  - `unified_page_contract_v2_status.py`
+- 收敛两个函数式 system init 模块的重复 source authority 构造逻辑：
+  - `system_init_dictionary_data_helper.py`
+  - `system_init_scene_runtime_semantic_bridge.py`
+
+边界结论：
+
+- 本轮只统一 metadata 生成入口，不改变 source kind、authorities、runtime carrier 或契约输出结构。
+- `unified_page_contract_*` 仍然只承担 v2/lite 契约投影、裁剪、patch normalization 和 runtime schema 投影，不承载业务事实权威。
+- `system_init_dictionary_data_helper` 只投影 `sc.dictionary` 的启动字典数据。
+- `system_init_scene_runtime_semantic_bridge` 只把 scene ready / semantic runtime surface 投影到 system init runtime surface。
+
+下一轮建议：
+
+- 对 class-based `system_init_*` builder/context/helper 做同样收敛，但保留各自的额外标志位。
+- 将 `delivery/*` 中重复的 source authority 构造改为统一 helper，优先处理无额外 legacy contract 的小服务。
+
+### 2026-05-06 P1 内核冗余第三轮落地
+
+已执行：
+
+- 继续复用 `addons/smart_core/core/source_authority.py`，收敛 class-based `system_init_*` builder/context/helper 的重复 source authority 构造逻辑：
+  - `system_init_components_factory.py`
+  - `system_init_diagnostics_helper.py`
+  - `system_init_identity_payload.py`
+  - `system_init_nav_request_builder.py`
+  - `system_init_preload_builder.py`
+  - `system_init_response_meta_builder.py`
+  - `system_init_runtime_context.py`
+  - `system_init_scene_runtime_surface_builder.py`
+  - `system_init_scene_runtime_surface_context.py`
+  - `system_init_surface_builder.py`
+  - `system_init_surface_context.py`
+- 收敛 `system_init_extension_fact_merger.py` 的重复 source authority 构造逻辑，并保留 `delegates_business_fact_authority=True`。
+- 暂不改 `system_init_payload_builder.py`，因为其 source authority 现有输出没有 `rebuildable` 字段；后续若统一，应先确认是否允许补齐该字段。
+
+边界结论：
+
+- 本轮保留各模块原有额外标志位，如 `identity_surface_only`、`request_projection_only`、`startup_preload_only`、`response_envelope_only`、`startup_surface_only`、`scene_runtime_surface_only`。
+- `system_init_*` 模块仍只承担启动 payload、runtime context、surface、diagnostics、preload 和 extension fact merger 的投影/载体职责。
+- extension fact merger 只合并扩展贡献并显式声明业务事实权威被委托给 extension hook，不在 `smart_core` 内解释业务事实。
+
+下一轮建议：
+
+- 处理 `delivery/*` 中无复杂 legacy source contract 的小服务。
+- 单独评估 `system_init_payload_builder.py` 是否补齐 `rebuildable=True`，避免在同一轮混入契约形状变化。
+
+### 2026-05-06 P1 内核冗余第四轮落地
+
+已执行：
+
+- 继续复用 `addons/smart_core/core/source_authority.py`，收敛 delivery 层无复杂 legacy 子契约的小服务 source authority 构造逻辑：
+  - `capability_service.py`
+  - `delivery_engine.py`
+  - `menu_fact_service.py`
+  - `menu_service.py`
+  - `release_audit_trail_service.py`
+  - `release_operator_contract_registry.py`
+  - `release_operator_contract_versions.py`
+  - `release_operator_read_model_service.py`
+  - `release_operator_surface_service.py`
+  - `scene_snapshot_service.py`
+- 保留各模块原有额外字段：
+  - `fact_authority`
+  - `contract_metadata_only`
+  - `write_proxy`
+  - `runtime_carrier`
+
+边界结论：
+
+- 本轮只统一 metadata 生成入口，不改变 delivery engine、menu projection、release operator surface、scene snapshot cache 的业务行为。
+- `menu_fact_service` 仍只投影 Odoo 原生 `ir.ui.menu`、action、group 和 xmlid 事实。
+- `scene_snapshot_service` 的 `write_proxy=True` 明确保留，表示它可写场景快照缓存，但不承担业务事实权威。
+- `release_operator_*` 仍只承担发布操作台读模型、surface 和契约版本 registry 投影。
+
+下一轮建议：
+
+- 对 `product_identity.py`、`edition_release_snapshot_service.py`、`release_approval_policy_service.py`、`product_policy_service.py` 等带 legacy/default 子契约的模块单独整理。
+- `scene_service.py` 当前 source authority 没有 `rebuildable` 字段，是否补齐需要单独确认契约形状。
+
+### 2026-05-06 P1 内核冗余第五轮落地
+
+已执行：
+
+- 扩展 `addons/smart_core/core/source_authority.py`，允许 `rebuildable=None` 时省略该字段，用于保留 legacy/default 模块既有 source authority 输出形状。
+- 收敛带 legacy/default 子契约或原先缺少 `rebuildable` 字段的 delivery 模块：
+  - `product_identity.py`
+  - `edition_release_snapshot_promotion_service.py`
+  - `edition_release_snapshot_service.py`
+  - `release_approval_policy_service.py`
+  - `product_policy_service.py`
+  - `scene_service.py`
+- 保留各模块原有字段形状：
+  - `fallback_base_product_key`
+  - `legacy_default_base_source`
+  - `legacy_default_role_source`
+  - `legacy_role_resolver`
+  - `fallback_policy_provider`
+  - `legacy_policy_node_source`
+  - `legacy_compatibility`
+  - `legacy_default`
+  - `write_proxy`
+
+边界结论：
+
+- `product_identity` 仍只解析 request/default product identity；legacy default base 只是兼容默认值，不是业务事实权威。
+- `edition_release_snapshot_promotion_service` 是写代理，保留 `projection_only=False` 与 `write_proxy=True`。
+- `edition_release_snapshot_service` 仍只投影发布快照和 delivery engine 输出；legacy role fallback 只用于兼容默认角色。
+- `release_approval_policy_service` 仍只投影 release action policy / group / extension role resolver，不在 core 内定义业务角色事实。
+- `product_policy_service` 的 default policy 和 policy node source 仍明确标记 legacy/default projection。
+- `scene_service` 继续只把 policy、scene snapshot 和 scene contract 投影成 delivery scene entries；本轮未补 `rebuildable` 字段，避免改变契约形状。
+
+下一轮建议：
+
+- 重新扫描剩余未接入 `build_source_authority_contract` 的非测试 Python 模块，按“输出形状不变”原则分批收敛。
+- 对 `system_init_payload_builder.py` 是否补 `rebuildable=True` 单独做兼容性判断。
+
+### 2026-05-06 P1 内核冗余第六轮落地
+
+已执行：
+
+- 继续复用 `addons/smart_core/core/source_authority.py`，收敛 core 基础小模块的 source authority 构造逻辑：
+  - `action_target_schema.py`
+  - `extension_loader.py`
+  - `command_registry.py`
+  - `trace.py`
+  - `hash_utils.py`
+  - `exceptions.py`
+  - `scene_registry_provider.py`
+  - `orchestration_semantics.py`
+  - `ui_base_contract_asset_event_queue.py`
+  - `delivery_capability_entry_defaults.py`
+  - `delivery_menu_defaults.py`
+- 保留各模块原有额外字段：
+  - `legacy_compatibility`
+  - `write_proxy`
+  - `capability_entry_default_only`
+  - `synthetic_navigation_only`
+  - `runtime_carrier`
+- `scene_registry_provider.py` 原本无 `rebuildable` 字段，本轮继续通过 `rebuildable=None` 保持输出形状。
+
+边界结论：
+
+- 本轮模块均为 core 基础工具、静态 schema、兼容 registry、trace/hash/error envelope、scene registry 投影或 delivery 默认节点构造，不承担业务事实权威。
+- `ui_base_contract_asset_event_queue` 保留 `write_proxy=True`，表示它只写 UI base contract asset 刷新队列。
+- `delivery_menu_defaults` 与 `delivery_capability_entry_defaults` 只生成 synthetic/default UI 节点，不作为菜单、能力或业务模型事实来源。
+
+下一轮建议：
+
+- 继续收敛 builder/provider 类模块，如 `page_contracts_builder.py`、`runtime_page_contract_builder.py`、`scene_contract_builder.py`、`scene_ready_contract_builder.py`。
+- 对含 legacy copy source 的 builder 保留对应 legacy source 字段，不改变契约输出形状。
+
+### 2026-05-06 P1 内核冗余第七轮落地
+
+已执行：
+
+- 继续复用 `addons/smart_core/core/source_authority.py`，收敛主要 contract builder / provider 模块的 source authority 构造逻辑：
+  - `page_contracts_builder.py`
+  - `runtime_page_contract_builder.py`
+  - `scene_contract_builder.py`
+  - `scene_ready_contract_builder.py`
+  - `workspace_home_contract_builder.py`
+  - `workspace_home_data_provider.py`
+- 保留 legacy/source 额外字段：
+  - `legacy_page_copy_source`
+  - `legacy_product_title_source`
+  - `scene_runtime_contract_only`
+  - `legacy_workspace_keyword_policy`
+  - `delegated_source_authority`
+  - `adapter_layer`
+  - `provider_module`
+- `workspace_home_contract_builder.py` 和 `workspace_home_data_provider.py` 原本无 `rebuildable` 字段，本轮继续通过 `rebuildable=None` 保持输出形状。
+
+边界结论：
+
+- page/runtime/scene/scene-ready builder 仍只做契约投影和 runtime surface 装配，不承担业务事实权威。
+- legacy page copy、legacy product title 和 workspace keyword policy 仍明确标记为 legacy projection。
+- workspace home provider 仍是行业内容 provider adapter，实际行业事实权威只能来自 delegated provider，不在 `smart_core` 内部定义。
+
+下一轮建议：
+
+- 继续处理 `scene_provider.py`、`scene_runtime_orchestrator.py`、`scene_delivery_policy.py`、`release_navigation_contract_builder.py` 等场景交付链路。
+- 对带多个 legacy/default source contract 的模块继续保持“小步替换 + 输出形状检查”。
+
+### 2026-05-06 P1 内核冗余第八轮落地
+
+已执行：
+
+- 继续复用 `addons/smart_core/core/source_authority.py`，收敛场景交付链路 source authority 构造逻辑：
+  - `scene_provider.py`
+  - `scene_runtime_orchestrator.py`
+  - `scene_delivery_policy.py`
+  - `release_navigation_contract_builder.py`
+  - `scene_nav_contract_builder.py`
+  - `scene_channel_policy.py`
+  - `scene_merge_resolver.py`
+  - `scene_governance_payload_builder.py`
+  - `scene_diagnostics_builder.py`
+  - `scene_dsl_compiler.py`
+- 保留 legacy / delegated 字段：
+  - `delegated_source_authority`
+  - `legacy_surface_aliases`
+  - `legacy_surface_alias_source`
+  - `legacy_fallback`
+  - `legacy_compatibility`
+  - `runtime_carrier`
+- `release_navigation_contract_builder.py` 原本无 `rebuildable` 字段，本轮继续通过 `rebuildable=None` 保持输出形状。
+
+边界结论：
+
+- 场景 provider、runtime orchestrator、delivery policy、nav contract、merge resolver、diagnostics 和 DSL compiler 均只承担场景契约投影、运行时编排或治理 payload 组装。
+- legacy surface alias 与 release navigation fallback 仍明确标记为 legacy projection。
+- scene provider 的 delegated scene registry source 保留嵌套，不把 `sc.scene` / `sc.capability` / menu/action/group 事实权威混入 provider 自身。
+
+下一轮建议：
+
+- 收敛 intent/runtime 基础模块：`base_handler.py`、`intent_router.py`、`intent_execution_result.py`、`context.py`、`middlewares.py`、`handler_registry.py`。
+- 继续保持 write proxy、runtime registry、request context 等额外字段不变。
