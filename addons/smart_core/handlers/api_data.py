@@ -1339,11 +1339,11 @@ class ApiDataHandler(BaseIntentHandler):
         return data, meta
 
     def _op_write(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
-        ids = self._get_list(p, "ids", [])
+        ids, ids_error = self._read_ids_param(p)
+        if ids_error:
+            return ids_error
         vals = self._dig(p, "vals") or self._dig(p, "values") or {}
         if_match = self._read_if_match(p)
-        if not ids:
-            return self._err(400, "缺少参数 ids")
         if not isinstance(vals, dict) or not vals:
             return self._err(400, "缺少参数 vals")
 
@@ -1426,14 +1426,20 @@ class ApiDataHandler(BaseIntentHandler):
         return str(value)
 
     def _op_export_csv(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
-        limit = self._get_int(p, "limit", 2000)
-        if limit <= 0:
-            limit = 2000
+        limit, limit_error = self._read_positive_param(p, "limit", 2000)
+        if limit_error:
+            return limit_error
         limit = min(limit, 10000)
 
         order = self._get_str(p, "order", "")
         domain = self._normalize_domain(self._dig(p, "domain"))
-        ids = self._get_list(p, "ids", [])
+        raw_ids = self._dig(p, "ids", None)
+        if raw_ids is None or (isinstance(raw_ids, str) and not raw_ids.strip()):
+            ids = []
+        else:
+            ids, ids_error = self._read_ids_param(p)
+            if ids_error:
+                return ids_error
         fields = self._get_list(p, "fields", [])
 
         env_model = self.env[model].with_context(ctx)

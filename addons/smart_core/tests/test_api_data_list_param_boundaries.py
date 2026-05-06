@@ -143,6 +143,27 @@ class TestApiDataListParamBoundaries(unittest.TestCase):
                 self.assertEqual(result["error"]["code"], 400)
                 self.assertEqual(result["error"]["message"], "ids 无效")
 
+    def test_write_rejects_invalid_ids(self):
+        result = self.handler._op_write("x.model", {"ids": [1, "bad"], "vals": {"name": "A"}}, {}, False)
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"]["code"], 400)
+        self.assertEqual(result["error"]["message"], "ids 无效")
+
+    def test_export_rejects_invalid_limit(self):
+        result = self.handler._op_export_csv("x.model", {"limit": "bad"}, {}, False)
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"]["code"], 400)
+        self.assertEqual(result["error"]["message"], "limit 无效")
+
+    def test_export_rejects_invalid_ids(self):
+        result = self.handler._op_export_csv("x.model", {"ids": [1, "bad"]}, {}, False)
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"]["code"], 400)
+        self.assertEqual(result["error"]["message"], "ids 无效")
+
 
 if __name__ == "__main__":
     unittest.main()
