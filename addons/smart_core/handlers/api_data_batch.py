@@ -139,20 +139,20 @@ class ApiDataBatchHandler(BaseIntentHandler):
             return 0, self._err(400, f"{key} 无效")
         return default if value is None else value, None
 
-    def _normalize_if_match_map(self, params: Dict[str, Any]) -> Dict[int, str]:
+    def _normalize_if_match_map(self, params: Dict[str, Any]):
         raw = params.get("if_match_map") or {}
         if not isinstance(raw, dict):
-            return {}
+            return {}, self._err(400, "if_match_map 无效")
         normalized: Dict[int, str] = {}
         for key, value in raw.items():
-            try:
-                rid = int(key)
-            except Exception:
-                continue
+            rid, rid_error = parse_positive_int(key)
+            if rid_error:
+                return {}, self._err(400, "if_match_map 无效")
             val = str(value or "").strip()
-            if rid > 0 and val:
-                normalized[rid] = val
-        return normalized
+            if not val:
+                return {}, self._err(400, "if_match_map 无效")
+            normalized[rid] = val
+        return normalized, None
 
     def _idempotency_fingerprint(self, *, model: str, action: str, ids: List[int], vals: Dict[str, Any], idem_key: str) -> str:
         payload = {
@@ -307,7 +307,9 @@ class ApiDataBatchHandler(BaseIntentHandler):
             return vals_error
         request_id = normalize_request_id(params.get("request_id"), prefix="adb_req")
         idempotency_key = str(params.get("idempotency_key") or "").strip() or request_id
-        if_match_map = self._normalize_if_match_map(params)
+        if_match_map, if_match_map_error = self._normalize_if_match_map(params)
+        if if_match_map_error:
+            return if_match_map_error
         preview_limit, preview_limit_error = self._read_positive_param(params, "failed_preview_limit", 10)
         if preview_limit_error:
             return preview_limit_error

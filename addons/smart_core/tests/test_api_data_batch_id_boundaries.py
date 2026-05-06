@@ -136,6 +136,25 @@ class TestApiDataBatchIdBoundaries(unittest.TestCase):
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["error"]["message"], "failed_offset 无效")
 
+    def test_invalid_if_match_map_returns_bad_request(self):
+        cases = [
+            "bad",
+            {"bad": "etag"},
+            {"1": ""},
+            {"0": "etag"},
+        ]
+        for value in cases:
+            with self.subTest(value=value):
+                handler = self.module.ApiDataBatchHandler(
+                    params={"model": "x.model", "ids": [1], "vals": {"name": "A"}, "if_match_map": value}
+                )
+
+                result = handler.handle()
+
+                self.assertFalse(result["ok"])
+                self.assertEqual(result["code"], 400)
+                self.assertEqual(result["error"]["message"], "if_match_map 无效")
+
 
 if __name__ == "__main__":
     unittest.main()
