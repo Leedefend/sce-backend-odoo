@@ -142,6 +142,13 @@ def _error_response(
     return resp
 
 
+def _rollback_request_env(intent_name: str | None, trace_id: str | None):
+    try:
+        request.env.cr.rollback()
+    except Exception:
+        _logger.exception("intent rollback failed: intent=%s trace=%s", intent_name, trace_id)
+
+
 def _permission_error_details(intent_name: str, params: Dict[str, Any], message: str) -> dict:
     intent = str(intent_name or "").strip().lower()
     business_params = nested_params(params)
@@ -483,8 +490,10 @@ class IntentDispatcher(http.Controller):
 
             return request.make_json_response(result, status=status, headers=headers)
         except AccessDenied:
+            _rollback_request_env(intent_name, trace_id)
             return _error_response(AUTH_REQUIRED, "认证失败或 token 无效", 401, trace_id)
         except AccessError as e:
+            _rollback_request_env(intent_name, trace_id)
             msg = str(e)
             if msg.startswith("FEATURE_DISABLED"):
                 return _error_response("FEATURE_DISABLED", msg, 403, trace_id)
@@ -502,13 +511,17 @@ class IntentDispatcher(http.Controller):
                 },
             )
         except MissingError as e:
+            _rollback_request_env(intent_name, trace_id)
             return _error_response(INTENT_NOT_FOUND, str(e), 404, trace_id)
         except (BadRequest, Unauthorized, Forbidden, NotFound) as e:
+            _rollback_request_env(intent_name, trace_id)
             status = getattr(e, "code", 400) or 400
             code = map_http_status_to_code(status)
             return _error_response(code, str(e), status, trace_id)
         except Exception as e:
             if isinstance(e, AccessDenied) or e.__class__.__name__ == "AccessDenied":
+                _rollback_request_env(intent_name, trace_id)
                 return _error_response(AUTH_REQUIRED, "认证失败或 token 无效", 401, trace_id)
+            _rollback_request_env(intent_name, trace_id)
             _logger.exception("intent dispatcher failed: %s", e)
             return _error_response(INTERNAL_ERROR, "内部错误", 500, trace_id)
