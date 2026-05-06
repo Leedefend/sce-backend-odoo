@@ -31,6 +31,14 @@ class MetaDescribeHandler(BaseIntentHandler):
             return {
                 "ok": False,
                 "error": {"code":400, "message":"缺少 model 参数"},
+                "code": 400,
+                "meta": self._source_meta(),
+            }
+        if model not in self.env:
+            return {
+                "ok": False,
+                "error": {"code": 404, "message": f"未知模型: {model}"},
+                "code": 404,
                 "meta": self._source_meta(),
             }
 

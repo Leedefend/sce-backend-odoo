@@ -1,6 +1,5 @@
 # 📁 smart_core/handlers/load_metadata.py
 from ..core.base_handler import BaseIntentHandler
-from odoo.exceptions import UserError
 
 class LoadMetadataHandler(BaseIntentHandler):
     INTENT_TYPE = "load_metadata"
@@ -34,8 +33,25 @@ class LoadMetadataHandler(BaseIntentHandler):
     def handle(self, payload=None, ctx=None):
         model = self._resolve_model(payload)
         if not model:
-            raise UserError("缺少 model 参数")
+            return self._err(400, "缺少 model 参数")
+        if model not in self.env:
+            return self._err(404, f"未知模型: {model}")
         return self.env[model].fields_get(), {
+            "source_kind": self.SOURCE_KIND,
+            "source_authorities": list(self.SOURCE_AUTHORITIES),
+            "source_authority": self.source_authority_contract(),
+        }
+
+    def _err(self, code: int, message: str):
+        return {
+            "ok": False,
+            "error": {"code": code, "message": message},
+            "code": code,
+            "meta": self._source_meta(),
+        }
+
+    def _source_meta(self):
+        return {
             "source_kind": self.SOURCE_KIND,
             "source_authorities": list(self.SOURCE_AUTHORITIES),
             "source_authority": self.source_authority_contract(),
