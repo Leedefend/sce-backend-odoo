@@ -122,6 +122,16 @@ class ExecuteButtonHandler(BaseIntentHandler):
                 server_action_result = self._run_server_action(button, model=model, res_ids=res_ids)
                 if server_action_result is not None:
                     return server_action_result
+                server_action_id = button.get("server_action_id") or button.get("serverActionId")
+                if server_action_id and not _positive_int(server_action_id):
+                    return _failure_result(
+                        model=model,
+                        res_id=res_ids[0],
+                        reason_code=REASON_MISSING_PARAMS,
+                        message="server_action_id 无效",
+                        trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
+                        status_code=400,
+                    )
                 return _failure_result(
                     model=model,
                     res_id=res_ids[0],
@@ -399,6 +409,14 @@ def _server_action_matches_model(action, model: str) -> bool:
     if not action_model:
         return False
     return action_model == str(model or "").strip()
+
+
+def _positive_int(value) -> int:
+    try:
+        parsed = int(value)
+    except Exception:
+        return 0
+    return parsed if parsed > 0 else 0
 
 
 def _failure_result(

@@ -50,6 +50,30 @@ class _Env(dict):
     pass
 
 
+class _Recordset:
+    id = 3
+
+    def exists(self):
+        return self
+
+    def __iter__(self):
+        return iter([types.SimpleNamespace(id=3)])
+
+    def check_access_rule(self, mode):
+        return True
+
+    def with_context(self, context):
+        return self
+
+
+class _ButtonModel:
+    def check_access_rights(self, mode):
+        return True
+
+    def browse(self, ids):
+        return _Recordset()
+
+
 def _load_handler():
     root = Path(__file__).resolve().parents[1]
     odoo_mod = types.ModuleType("odoo")
@@ -142,6 +166,24 @@ class TestExecuteButtonServerActionBoundaries(unittest.TestCase):
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["error"]["message"], "record_id 无效")
         self.assertEqual(result["meta"]["trace_id"], "trace")
+
+    def test_invalid_server_action_id_returns_bad_request(self):
+        module = _load_handler()
+        handler = module.ExecuteButtonHandler(
+            env=_Env({"x.model": _ButtonModel()}),
+            params={
+                "model": "x.model",
+                "record_id": 3,
+                "button": {"name": "missing_method", "server_action_id": "bad"},
+            },
+            context={"trace_id": "trace"},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "server_action_id 无效")
 
 
 if __name__ == "__main__":
