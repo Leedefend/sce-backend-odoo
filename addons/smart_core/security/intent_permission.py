@@ -128,6 +128,14 @@ def _resolve_action(env, action_id, action_type=None):
     return None
 
 
+def _effective_flags(Entitlement, company):
+    ent = Entitlement.get_effective(company)
+    if not ent:
+        return {}
+    flags = getattr(ent, "effective_flags_json", None)
+    return flags if isinstance(flags, dict) else {}
+
+
 def _sync_authenticated_identity(ctx, user):
     user_id = getattr(user, "id", user)
     request.env = request.env(user=user_id)
@@ -230,8 +238,7 @@ def check_intent_permission(ctx):
         if Entitlement:
             cap_key = _capability_key(ctx_params)
             cap = _find_capability(env, cap_key)
-            ent = Entitlement.get_effective(env.user.company_id)
-            flags = ent.effective_flags_json or {}
+            flags = _effective_flags(Entitlement, env.user.company_id)
             if cap and cap.required_flag:
                 if not Entitlement._flag_enabled(flags, cap.required_flag):
                     raise AccessError(f"FEATURE_DISABLED: {{'required_flag': '{cap.required_flag}', 'capability_key': '{cap.key}'}}")

@@ -84,6 +84,32 @@ class _FakeMenuModel:
         return _FakeMenu(exists=menu_id == 41, visible=True)
 
 
+class _FakeCapability:
+    key = "cap.x"
+    required_flag = "feature.x"
+
+
+class _FakeCapabilityModel:
+    def sudo(self):
+        return self
+
+    def search(self, domain, limit=1):
+        del domain, limit
+        return _FakeCapability()
+
+
+class _FakeEntitlementModel:
+    def __init__(self, effective=None):
+        self.effective = effective
+
+    def get_effective(self, company):
+        del company
+        return self.effective
+
+    def _flag_enabled(self, flags, required_flag):
+        return bool((flags or {}).get(required_flag))
+
+
 class _FakeModel:
     def __init__(self):
         self.access_modes = []
@@ -105,6 +131,8 @@ class _FakeEnv:
         self.generic_action_model = _FakeActionModel(self.action)
         self.client_action_model = _FakeActionModel(self.action)
         self.menu_model = _FakeMenuModel()
+        self.entitlement_model = None
+        self.capability_model = _FakeCapabilityModel()
         self.user = _FakeUser()
 
     def __call__(self, user=None):
@@ -120,6 +148,10 @@ class _FakeEnv:
             return self.client_action_model
         if name == "ir.ui.menu":
             return self.menu_model
+        if name == "sc.entitlement" and self.entitlement_model:
+            return self.entitlement_model
+        if name == "sc.capability":
+            return self.capability_model
         raise KeyError(name)
 
 
@@ -304,6 +336,15 @@ class TestIntentPermissionOperationPolicy(unittest.TestCase):
             self.permission._capability_key({"params": {"capability": "nested"}}),
             "nested",
         )
+
+    def test_missing_effective_entitlement_denies_required_capability_without_attribute_error(self):
+        self.env.entitlement_model = _FakeEntitlementModel(effective=None)
+        ctx = _Ctx({"intent": "ui.contract", "params": {"capability_key": "cap.x"}})
+
+        with self.assertRaises(AccessError) as raised:
+            self.permission.check_intent_permission(ctx)
+
+        self.assertIn("FEATURE_DISABLED", str(raised.exception))
 
 
 if __name__ == "__main__":
