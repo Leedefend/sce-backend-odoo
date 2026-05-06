@@ -264,41 +264,38 @@ class ApiDataHandler(BaseIntentHandler):
                 value_part = str(value)
         return f"{field_part}:{value_part}"
 
-    def _normalize_group_page_offsets(self, val) -> Dict[str, int]:
+    def _normalize_group_page_offsets(self, val):
         out: Dict[str, int] = {}
+        if val in (None, ""):
+            return out, None
         if isinstance(val, dict):
             for raw_key, raw_offset in val.items():
                 key = str(raw_key or "").strip()
                 if not key:
-                    continue
-                try:
-                    offset = int(raw_offset)
-                except Exception:
-                    continue
-                if offset < 0:
-                    continue
+                    return {}, self._err(400, "group_page_offsets 无效")
+                offset, offset_error = parse_non_negative_int(raw_offset)
+                if offset_error:
+                    return {}, self._err(400, "group_page_offsets 无效")
                 out[key] = offset
-            return out
+            return out, None
         if isinstance(val, str):
             text = val.strip()
             if not text:
-                return out
+                return out, None
             # 兼容 route 风格: k1:0;k2:3（key 可能经过 encodeURIComponent）
             for pair in text.split(";"):
                 if ":" not in pair:
-                    continue
+                    return {}, self._err(400, "group_page_offsets 无效")
                 raw_key, raw_offset = pair.split(":", 1)
                 key = unquote(str(raw_key or "").strip())
                 if not key:
-                    continue
-                try:
-                    offset = int(raw_offset)
-                except Exception:
-                    continue
-                if offset < 0:
-                    continue
+                    return {}, self._err(400, "group_page_offsets 无效")
+                offset, offset_error = parse_non_negative_int(raw_offset)
+                if offset_error:
+                    return {}, self._err(400, "group_page_offsets 无效")
                 out[key] = offset
-        return out
+            return out, None
+        return {}, self._err(400, "group_page_offsets 无效")
 
     def _primary_group_by_field(self, group_by) -> str:
         if isinstance(group_by, str):
@@ -987,7 +984,9 @@ class ApiDataHandler(BaseIntentHandler):
         domain_raw = self._get_str(p, "domain_raw", "").strip()
         context_raw = self._get_str(p, "context_raw", "").strip()
         group_by = self._normalize_group_by(self._dig(p, "group_by"))
-        group_page_offsets = self._normalize_group_page_offsets(self._dig(p, "group_page_offsets"))
+        group_page_offsets, group_page_offsets_error = self._normalize_group_page_offsets(self._dig(p, "group_page_offsets"))
+        if group_page_offsets_error:
+            return group_page_offsets_error
         group_offset, group_offset_error = self._read_non_negative_param(p, "group_offset", 0)
         if group_offset_error:
             return group_offset_error

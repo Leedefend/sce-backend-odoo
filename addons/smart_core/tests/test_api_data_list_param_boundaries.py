@@ -114,6 +114,21 @@ class TestApiDataListParamBoundaries(unittest.TestCase):
                 self.assertEqual(result["error"]["code"], 400)
                 self.assertEqual(result["error"]["message"], f"{field} 无效")
 
+    def test_invalid_group_page_offsets_returns_bad_request(self):
+        cases = [
+            {"group:1": "bad"},
+            {"": 0},
+            "group%3A1:bad",
+            "malformed",
+            ["group:1", 0],
+        ]
+        for value in cases:
+            with self.subTest(value=value):
+                result = self.handler._op_list("x.model", {"group_page_offsets": value}, {}, False)
+                self.assertFalse(result["ok"])
+                self.assertEqual(result["error"]["code"], 400)
+                self.assertEqual(result["error"]["message"], "group_page_offsets 无效")
+
 
 if __name__ == "__main__":
     unittest.main()
