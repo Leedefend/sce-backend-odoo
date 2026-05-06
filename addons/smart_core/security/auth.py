@@ -129,6 +129,16 @@ def _token_user_id(payload):
     return user_id
 
 
+def _session_user_id(session_uid):
+    try:
+        user_id = int(session_uid or 0)
+    except Exception:
+        user_id = 0
+    if user_id <= 0:
+        raise AccessDenied("系统 Session 缺少有效 user_id")
+    return user_id
+
+
 def get_user_from_token():
     """
     从请求中提取 Token 并解析用户对象。兼容系统原生登录与自定义 Token 登录。
@@ -165,7 +175,7 @@ def get_user_from_token():
         return request_user
 
     elif session_uid:
-        user = request.env["res.users"].browse(session_uid)
+        user = request.env["res.users"].browse(_session_user_id(session_uid))
         if not user.exists():
             raise AccessDenied("系统 Session 中的用户无效")
         return user

@@ -87,6 +87,13 @@ class TestAuthTokenBoundaries(unittest.TestCase):
         with self.assertRaises(_AccessDenied):
             self.auth._token_user_id({"user_id": 0})
 
+    def test_session_user_id_must_be_positive_integer(self):
+        self.assertEqual(self.auth._session_user_id("9"), 9)
+        with self.assertRaises(_AccessDenied):
+            self.auth._session_user_id("bad")
+        with self.assertRaises(_AccessDenied):
+            self.auth._session_user_id(0)
+
     def test_token_db_must_match_request_db_when_both_are_known(self):
         self.auth._ensure_token_db_matches_request("db_a")
         with self.assertRaises(_AccessDenied):
