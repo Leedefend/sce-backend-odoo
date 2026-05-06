@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 from ..core.base_handler import BaseIntentHandler
 from ..core.handler_registry import HANDLER_REGISTRY
 from ..core.intent_execution_result import IntentExecutionResult
+from ..core.request_params import parse_positive_int
 from ..core.unified_page_contract_v2_assembler import CONTRACT_VERSION
 from ..core.unified_page_contract_v2_client import resolve_client_type, resolve_delivery_profile
 
@@ -36,6 +37,12 @@ class TerminalShellV2Handler(BaseIntentHandler):
         client_type = resolve_client_type(self._headers(), params)
         delivery_profile = resolve_delivery_profile(client_type, params)
         selected_app = str(params.get("app") or params.get("app_id") or params.get("appId") or "").strip()
+        max_items, max_items_error = self._read_optional_positive(params, "max_items", "maxItems")
+        if max_items_error:
+            return self._error(400, "max_items 无效", ts0=ts0, client_type=client_type, delivery_profile=delivery_profile)
+        max_depth, max_depth_error = self._read_optional_positive(params, "max_depth", "maxDepth")
+        if max_depth_error:
+            return self._error(400, "max_depth 无效", ts0=ts0, client_type=client_type, delivery_profile=delivery_profile)
 
         catalog = self._call("app.catalog", {
             "client_type": client_type,
@@ -49,8 +56,8 @@ class TerminalShellV2Handler(BaseIntentHandler):
             "app": default_app,
             "client_type": client_type,
             "delivery_profile": delivery_profile,
-            "max_items": params.get("max_items") or params.get("maxItems") or 8,
-            "max_depth": params.get("max_depth") or params.get("maxDepth") or 2,
+            "max_items": max_items or 8,
+            "max_depth": max_depth or 2,
         }, ctx) if default_app else {"ok": True, "data": {"sections": [], "meta": {}}}
 
         default_entry = self._default_entry(default_app, nav.get("data"))
@@ -118,6 +125,32 @@ class TerminalShellV2Handler(BaseIntentHandler):
                 "source_authority": self.source_authority_contract(),
             },
         )
+
+    def _error(self, code: int, message: str, *, ts0: float, client_type: str, delivery_profile: str):
+        return IntentExecutionResult(
+            ok=False,
+            data=None,
+            error={"code": code, "message": message},
+            code=code,
+            meta={
+                "intent": self.INTENT_TYPE,
+                "version": self.VERSION,
+                "contract_version": CONTRACT_VERSION,
+                "client_type": client_type,
+                "delivery_profile": delivery_profile,
+                "elapsed_ms": int((time.time() - ts0) * 1000),
+                "source_kind": self.SOURCE_KIND,
+                "source_authorities": list(self.SOURCE_AUTHORITIES),
+                "source_authority": self.source_authority_contract(),
+            },
+        )
+
+    def _read_optional_positive(self, params: dict[str, Any], *keys: str):
+        for key in keys:
+            if key in params:
+                value, error = parse_positive_int(params.get(key), allow_empty=True)
+                return value, error
+        return None, None
 
     def _call(self, intent: str, params: dict[str, Any], ctx: Optional[Dict[str, Any]]) -> dict[str, Any]:
         handler_cls = HANDLER_REGISTRY.get(intent)
