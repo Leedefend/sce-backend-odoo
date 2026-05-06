@@ -77,6 +77,16 @@ class ExecuteButtonHandler(BaseIntentHandler):
                     status_code=400,
                 )
 
+            if model not in self.env:
+                return _failure_result(
+                    model=model,
+                    res_id=res_ids[0],
+                    reason_code=REASON_NOT_FOUND,
+                    message="后端目标模型不存在",
+                    trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
+                    status_code=404,
+                )
+
             self.env[model].check_access_rights("write")
 
             recordset = self.env[model].browse(res_ids)

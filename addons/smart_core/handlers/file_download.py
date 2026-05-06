@@ -111,6 +111,8 @@ class FileDownloadHandler(BaseIntentHandler):
             attachment_model = attachment.res_model
             if attachment_model not in self._allowed_models():
                 return self._err(403, "附件不可访问")
+            if attachment_model not in self.env:
+                return self._err(404, "附件业务模型不存在")
             self.env[attachment_model].check_access_rights("read")
             record = self.env[attachment_model].browse(attachment.res_id).exists()
             if not record:

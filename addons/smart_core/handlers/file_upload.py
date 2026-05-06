@@ -86,6 +86,8 @@ class FileUploadHandler(BaseIntentHandler):
             return self._err(400, "缺少参数 model")
         if model not in self._allowed_models():
             return self._err(403, f"模型不允许上传: {model}")
+        if model not in self.env:
+            return self._err(404, f"未知模型: {model}")
         if not res_id:
             return self._err(400, "缺少参数 res_id")
 
