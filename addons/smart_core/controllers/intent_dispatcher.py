@@ -12,6 +12,7 @@ from odoo.exceptions import AccessError, MissingError, AccessDenied
 
 from ..core.intent_router import route_intent_payload
 from ..core.context import RequestContext
+from ..core.http_result_policy import result_http_status
 from ..core.intent_access_policy import ANONYMOUS_INTENTS, is_anonymous_allowed_intent
 from ..core.intent_operation_policy import is_write_intent, nested_params, normalize_intent_operation
 from ..security.intent_permission import check_intent_permission
@@ -423,7 +424,7 @@ class IntentDispatcher(http.Controller):
             headers["X-Trace-Id"] = trace_id
 
             if isinstance(result, dict):
-                status = int(result.get("code", 200)) if isinstance(result.get("code"), (int, str)) else 200
+                status = result_http_status(result)
                 etag = (result.get("meta") or {}).get("etag")
                 if etag:
                     headers["ETag"] = f'"{etag}"'
