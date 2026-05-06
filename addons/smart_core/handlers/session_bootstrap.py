@@ -58,7 +58,9 @@ class SessionBootstrapHandler(BaseIntentHandler):
             self._audit("invalid_secret", ctx)
             return self.err(401, "invalid bootstrap secret")
 
-        login = (params.get("login") or os.getenv("SC_BOOTSTRAP_LOGIN") or "svc_project_ro").strip()
+        login, login_error = self._login_param(params)
+        if login_error:
+            return login_error
         user = self.env["res.users"].sudo().search([("login", "=", login)], limit=1)
         if not user:
             self._audit("user_not_found", ctx, login=login)
@@ -96,3 +98,14 @@ class SessionBootstrapHandler(BaseIntentHandler):
             _logger.info("[session.bootstrap] %s", info)
         except Exception:
             pass
+
+    def _login_param(self, params: dict):
+        raw = params.get("login") if isinstance(params, dict) and "login" in params else None
+        if raw is None or raw == "":
+            raw = os.getenv("SC_BOOTSTRAP_LOGIN") or "svc_project_ro"
+        if isinstance(raw, bool) or not isinstance(raw, (str, int, float)):
+            return "", self.err(400, "login 无效")
+        login = str(raw).strip()
+        if not login:
+            return "", self.err(400, "login 无效")
+        return login, None
