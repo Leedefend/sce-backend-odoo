@@ -15,8 +15,32 @@ class _BaseIntentHandler:
 
 
 class _Model:
+    _fields = {"name": object()}
+
     def with_context(self, context):
-        raise AssertionError("should not reach model operation for invalid id")
+        return self
+
+    def browse(self, record_id):
+        return _Record(record_id)
+
+    def check_access_rights(self, mode):
+        return True
+
+
+class _Record:
+    write_calls = []
+
+    def __init__(self, record_id):
+        self.id = record_id
+
+    def exists(self):
+        return self
+
+    def write(self, vals):
+        self.write_calls.append(vals)
+
+    def check_access_rule(self, mode):
+        return True
 
 
 def _install_module(name, **attrs):
@@ -104,6 +128,19 @@ class TestApiDataWriteIdBoundaries(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["error"]["reason_code"], "INVALID_ID")
+
+    def test_string_false_dry_run_still_writes(self):
+        _Record.write_calls = []
+        handler = self.module.ApiDataWriteHandler(
+            env={"res.partner": _Model()},
+            params={"model": "res.partner", "id": 9, "vals": {"name": "A"}, "dry_run": "false"},
+        )
+
+        result = handler.handle(payload={"intent": "api.data.write"})
+
+        self.assertTrue(result["ok"])
+        self.assertFalse(result["data"]["dry_run"])
+        self.assertEqual(_Record.write_calls, [{"name": "A"}])
 
 
 if __name__ == "__main__":

@@ -14,6 +14,7 @@ from ..core.project_context import (
     record_in_project_scope,
     selected_project_id_from_context,
 )
+from ..core.request_params import parse_bool
 from ..utils.idempotency import (
     apply_idempotency_identity,
     build_idempotency_conflict_response,
@@ -255,7 +256,7 @@ class ApiDataWriteHandler(BaseIntentHandler):
             return self._err(404, f"未知模型: {model}", REASON_NOT_FOUND)
 
         vals = self._get_vals(params)
-        dry_run = bool(params.get("dry_run"))
+        dry_run = parse_bool(params.get("dry_run"), False)
         if not vals:
             return self._err(400, "缺少参数 vals", REASON_MISSING_PARAMS)
 

@@ -13,6 +13,7 @@ from ..core.project_context import (
     project_scope_denied_response,
     selected_project_id_from_context,
 )
+from ..core.request_params import parse_bool
 from ..utils.idempotency import (
     apply_idempotency_identity,
     build_idempotency_conflict_response,
@@ -207,7 +208,7 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
         ids, ids_error = self._read_ids(params)
         if ids_error:
             return ids_error
-        dry_run = bool(params.get("dry_run"))
+        dry_run = parse_bool(params.get("dry_run"), False)
         if not ids:
             return self._err(400, "缺少参数 ids", REASON_MISSING_PARAMS)
 

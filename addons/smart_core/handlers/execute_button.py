@@ -7,6 +7,7 @@ from ..core.project_context import (
     record_in_project_scope,
     selected_project_id_from_context,
 )
+from ..core.request_params import parse_bool
 from odoo.exceptions import AccessError, UserError
 from odoo import fields
 import logging
@@ -51,7 +52,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
 
         button_type = button.get("type") or button.get("buttonType") or params.get("button_type") or "object"
         method_name = button.get("name") or params.get("method_name") or params.get("button_name")
-        dry_run = bool(params.get("dry_run"))
+        dry_run = parse_bool(params.get("dry_run"), False)
 
         res_id = params.get("res_id") or params.get("record_id") or self.context.get("record_id")
         res_ids = _coerce_ids(res_id)

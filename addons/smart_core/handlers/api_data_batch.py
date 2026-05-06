@@ -13,6 +13,7 @@ from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
 from ..core.project_context import apply_project_scope_domain, selected_project_id_from_context
+from ..core.request_params import parse_bool
 from .reason_codes import (
     REASON_CONFLICT,
     REASON_REPLAY_WINDOW_EXPIRED,
@@ -308,7 +309,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
         page_limit = max(1, min(page_limit, 200))
         page_offset = self._get_int(params, "failed_offset", 0)
         page_offset = max(0, page_offset)
-        export_failed_csv = bool(params.get("export_failed_csv"))
+        export_failed_csv = parse_bool(params.get("export_failed_csv"), False)
         context = params.get("context") if isinstance(params.get("context"), dict) else {}
 
         if not model:
