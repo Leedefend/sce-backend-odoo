@@ -98,6 +98,20 @@ def _is_internal_user(profile: Dict[str, Any]) -> bool:
     return "base.group_user" in groups
 
 
+def _resolve_requested_company_id(raw_value, allowed_company_ids):
+    if raw_value in (None, False, ""):
+        return None, None
+    try:
+        company_id = int(raw_value)
+    except Exception:
+        return None, (400, "company_id 无效")
+    if company_id <= 0:
+        return None, (400, "company_id 无效")
+    if company_id not in (allowed_company_ids or []):
+        return None, (403, "公司不在当前用户允许范围内")
+    return company_id, None
+
+
 class LoginHandler(BaseIntentHandler):
     """
     用户登录处理器
@@ -165,16 +179,10 @@ class LoginHandler(BaseIntentHandler):
         token_type = "Bearer"
         expires_at = int(time.time()) + get_token_exp_seconds()
 
-        # 可选：切换公司（若传入）
-        if want_company_id:
-            try:
-                want_company_id = int(want_company_id)
-                if want_company_id in (profile.get("allowed_company_ids") or []):
-                    # 注意：这里只返回信息，不在服务器端持久化切公司，
-                    # 具体上下文切换应由前端后续请求带上下文或单独意图处理
-                    pass
-            except Exception:
-                pass
+        want_company_id, company_error = _resolve_requested_company_id(want_company_id, profile.get("allowed_company_ids") or [])
+        if company_error:
+            status_code, message = company_error
+            return self.err(status_code, message)
 
         user_data = {
             "id": profile["id"],
@@ -182,7 +190,7 @@ class LoginHandler(BaseIntentHandler):
             "login": profile["login"],
             "lang": profile["lang"],
             "tz": profile["tz"],
-            "company_id": profile["company_id"],
+            "company_id": want_company_id or profile["company_id"],
             "company_name": profile.get("company_name") or "",
             "company": profile.get("company"),
             "allowed_company_ids": profile["allowed_company_ids"],
