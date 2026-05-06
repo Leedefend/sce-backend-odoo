@@ -143,7 +143,7 @@ def _dispatch(intent: str, params: dict, context: dict):
                 if dispatch_succeeded:
                     _logger.info("[intent_router] commit extra cursor intent=%s db=%s", intent, env.cr.dbname)
                     extra_cr.commit()
-                elif dispatch_result is not None:
+                else:
                     _logger.info("[intent_router] rollback extra cursor intent=%s db=%s", intent, env.cr.dbname)
                     extra_cr.rollback()
                 extra_cr.close()

@@ -179,6 +179,31 @@ class TestIntentRouterPayloadEnvelope(unittest.TestCase):
         self.assertEqual(tracking_cr.rollbacks, 1)
         self.assertEqual(tracking_cr.closed, 1)
 
+    def test_extra_cursor_rolls_back_when_handler_raises(self):
+        class Handler:
+            def __init__(self, **kwargs):
+                self.registry = None
+                self.cr = None
+                self.uid = None
+
+            def run(self, payload=None, ctx=None):
+                del payload, ctx
+                raise RuntimeError("boom")
+
+        router = _load_router(_FakeRequest(), Handler)
+        tracking_cr = _TrackingCursor()
+        env = _FakeEnv()
+        env.cr = tracking_cr
+        env.registry = object()
+        router._build_envs = lambda params, context: (env, object(), tracking_cr)
+
+        with self.assertRaises(RuntimeError):
+            router._dispatch("demo.intent", {"x": 1}, {})
+
+        self.assertEqual(tracking_cr.commits, 0)
+        self.assertEqual(tracking_cr.rollbacks, 1)
+        self.assertEqual(tracking_cr.closed, 1)
+
     def test_extra_cursor_commits_when_handler_returns_success_result(self):
         class Handler:
             def __init__(self, **kwargs):
