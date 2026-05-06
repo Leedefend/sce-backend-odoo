@@ -15,7 +15,7 @@ class _BaseIntentHandler:
 
 
 class _Model:
-    _fields = {"name": object()}
+    _fields = {"name": object(), "project_id": object()}
 
     def with_context(self, context):
         return self
@@ -141,6 +141,40 @@ class TestApiDataWriteIdBoundaries(unittest.TestCase):
         self.assertTrue(result["ok"])
         self.assertFalse(result["data"]["dry_run"])
         self.assertEqual(_Record.write_calls, [{"name": "A"}])
+
+    def test_write_rejects_invalid_project_id(self):
+        self.module.selected_project_id_from_context = lambda params, context: 3
+        self.module.ApiDataWriteHandler.ALLOWED_MODELS = {"res.partner": {"name", "project_id"}}
+        handler = self.module.ApiDataWriteHandler(
+            env={"res.partner": _Model()},
+            params={"model": "res.partner", "id": 9, "vals": {"project_id": "bad"}},
+        )
+
+        result = handler.handle(payload={"intent": "api.data.write"})
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
+        self.assertEqual(result["error"]["message"], "project_id 无效")
+
+    def test_create_rejects_invalid_project_id(self):
+        self.module.selected_project_id_from_context = lambda params, context: 3
+        self.module.apply_project_scope_domain = lambda env_model, domain, project_id: (
+            domain,
+            {"applied": True, "project_id": project_id},
+        )
+        self.module.ApiDataWriteHandler.ALLOWED_MODELS = {"res.partner": {"name", "project_id"}}
+        handler = self.module.ApiDataWriteHandler(
+            env={"res.partner": _Model()},
+            params={"model": "res.partner", "vals": {"name": "A", "project_id": "bad"}},
+        )
+
+        result = handler.handle(payload={"intent": "api.data.create"})
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
+        self.assertEqual(result["error"]["message"], "project_id 无效")
 
 
 if __name__ == "__main__":

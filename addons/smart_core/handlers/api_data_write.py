@@ -14,7 +14,7 @@ from ..core.project_context import (
     record_in_project_scope,
     selected_project_id_from_context,
 )
-from ..core.request_params import parse_bool
+from ..core.request_params import parse_bool, parse_positive_int
 from ..utils.idempotency import (
     apply_idempotency_identity,
     build_idempotency_conflict_response,
@@ -294,10 +294,12 @@ class ApiDataWriteHandler(BaseIntentHandler):
             if not in_scope:
                 return self._scope_denied(scope_meta)
             if current_project_id and "project_id" in safe_vals and "project_id" in env_model._fields:
-                try:
-                    target_project_id = int(safe_vals.get("project_id") or 0)
-                except Exception:
-                    target_project_id = 0
+                target_project_id, target_project_id_error = parse_positive_int(
+                    safe_vals.get("project_id"),
+                    allow_empty=True,
+                )
+                if target_project_id_error:
+                    return self._err(400, "project_id 无效", REASON_USER_ERROR)
                 if target_project_id and target_project_id != int(current_project_id):
                     return self._scope_denied(scope_meta)
 
@@ -415,10 +417,12 @@ class ApiDataWriteHandler(BaseIntentHandler):
         if intent == "api.data.create":
             _scoped_domain, scope_meta = apply_project_scope_domain(env_model, [], current_project_id)
             if current_project_id and scope_meta.get("applied") and "project_id" in env_model._fields:
-                try:
-                    target_project_id = int(safe_vals.get("project_id") or 0)
-                except Exception:
-                    target_project_id = 0
+                target_project_id, target_project_id_error = parse_positive_int(
+                    safe_vals.get("project_id"),
+                    allow_empty=True,
+                )
+                if target_project_id_error:
+                    return self._err(400, "project_id 无效", REASON_USER_ERROR)
                 if target_project_id and target_project_id != int(current_project_id):
                     return self._scope_denied(scope_meta)
                 if not target_project_id and "project_id" in allowed_fields:
