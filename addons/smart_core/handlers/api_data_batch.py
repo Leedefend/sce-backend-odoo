@@ -88,19 +88,29 @@ class ApiDataBatchHandler(BaseIntentHandler):
         return params
 
     def _get_ids(self, params: Dict[str, Any]) -> List[int]:
+        ids, _error = self._read_ids(params)
+        return ids
+
+    def _read_ids(self, params: Dict[str, Any]):
         ids = params.get("ids") or []
         if isinstance(ids, list):
             values = []
             for raw in ids:
                 try:
-                    values.append(int(raw))
+                    value = int(raw)
                 except Exception:
-                    continue
-            return values
+                    return [], self._err(400, "ids 无效")
+                if value <= 0:
+                    return [], self._err(400, "ids 无效")
+                values.append(value)
+            return values, None
         try:
-            return [int(ids)]
+            value = int(ids)
         except Exception:
-            return []
+            return [], self._err(400, "ids 无效")
+        if value <= 0:
+            return [], self._err(400, "ids 无效")
+        return [value], None
 
     def _resolve_vals(self, params: Dict[str, Any]):
         action = str(params.get("action") or "").strip().lower()
@@ -286,7 +296,9 @@ class ApiDataBatchHandler(BaseIntentHandler):
         payload = payload or {}
         params = self._collect_params(payload)
         model = str(params.get("model") or "").strip()
-        ids = self._get_ids(params)
+        ids, ids_error = self._read_ids(params)
+        if ids_error:
+            return ids_error
         action, vals = self._resolve_vals(params)
         request_id = normalize_request_id(params.get("request_id"), prefix="adb_req")
         idempotency_key = str(params.get("idempotency_key") or "").strip() or request_id
