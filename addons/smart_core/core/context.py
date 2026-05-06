@@ -1,6 +1,7 @@
 # smart_core/core/context.py
 from odoo.http import request
 from ..security.auth import get_user_from_token
+from odoo.exceptions import AccessDenied
 from .intent_access_policy import is_public_context_intent
 from .request_identity import identity_id
 from .trace import get_trace_id
@@ -48,7 +49,9 @@ class RequestContext:
         else:
             user = get_user_from_token()
             user_id = identity_id(user)
-            env = req.env(user=user_id) if user_id else req.env
+            if not user_id:
+                raise AccessDenied("Token 无效或缺少 user_id")
+            env = req.env(user=user_id)
 
         ctx = cls(env, user, params, req)
         try:

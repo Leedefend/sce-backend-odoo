@@ -33,13 +33,15 @@ class _FakeRequest:
         self.params = {}
 
 
-def _load_context(fake_request, auth_calls):
+def _load_context(fake_request, auth_calls, user_provider=None):
     root = Path(__file__).resolve().parents[1]
     module_path = root / "core" / "context.py"
 
     odoo_mod = types.ModuleType("odoo")
     http_mod = types.ModuleType("odoo.http")
     http_mod.request = fake_request
+    exc_mod = types.ModuleType("odoo.exceptions")
+    exc_mod.AccessDenied = Exception
 
     addons_mod = types.ModuleType("odoo.addons")
     smart_core_mod = types.ModuleType("odoo.addons.smart_core")
@@ -50,6 +52,8 @@ def _load_context(fake_request, auth_calls):
 
     def _get_user_from_token():
         auth_calls.append("called")
+        if user_provider:
+            return user_provider()
         return _FakeUser()
 
     auth_mod.get_user_from_token = _get_user_from_token
@@ -64,6 +68,7 @@ def _load_context(fake_request, auth_calls):
         {
             "odoo": odoo_mod,
             "odoo.http": http_mod,
+            "odoo.exceptions": exc_mod,
             "odoo.addons": addons_mod,
             "odoo.addons.smart_core": smart_core_mod,
             "odoo.addons.smart_core.core": core_mod,
@@ -130,6 +135,16 @@ class TestRequestContextPayload(unittest.TestCase):
 
         self.assertEqual(ctx.params["intent"], "raw.intent")
         self.assertEqual(ctx.uid, 42)
+
+    def test_from_payload_rejects_missing_user_identity(self):
+        auth_calls = []
+        fake_request = _FakeRequest()
+        context_mod = _load_context(fake_request, auth_calls, user_provider=lambda: None)
+
+        with self.assertRaises(Exception):
+            context_mod.RequestContext.from_payload({"intent": "api.data", "params": {"model": "x.model"}})
+
+        self.assertEqual(auth_calls, ["called"])
 
 
 if __name__ == "__main__":
