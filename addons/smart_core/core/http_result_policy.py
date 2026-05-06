@@ -41,7 +41,8 @@ def result_http_status(result: Dict[str, Any] | None, default: int = 200) -> int
     raw = payload.get("code", None)
     if raw is None:
         error = payload.get("error") if isinstance(payload.get("error"), dict) else {}
-        raw = error.get("code", default)
+        error_code = error.get("code", default)
+        raw = error_code if isinstance(error_code, int) else default
     try:
         status = int(raw)
     except Exception:
