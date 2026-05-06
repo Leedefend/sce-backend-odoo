@@ -61,6 +61,29 @@ class _FakeActionModel:
         return _FakeAction(action_id=action_id, exists=False)
 
 
+class _FakeMenu:
+    name = "Fake Menu"
+
+    def __init__(self, exists=True, visible=True):
+        self._exists = exists
+        self._visible = visible
+
+    def exists(self):
+        return self if self._exists else False
+
+    def _is_visible(self):
+        return self._visible
+
+
+class _FakeMenuModel:
+    def __init__(self):
+        self.browsed_ids = []
+
+    def browse(self, menu_id):
+        self.browsed_ids.append(menu_id)
+        return _FakeMenu(exists=menu_id == 41, visible=True)
+
+
 class _FakeModel:
     def __init__(self):
         self.access_modes = []
@@ -81,6 +104,7 @@ class _FakeEnv:
         self.action = _FakeAction()
         self.generic_action_model = _FakeActionModel(self.action)
         self.client_action_model = _FakeActionModel(self.action)
+        self.menu_model = _FakeMenuModel()
         self.user = _FakeUser()
 
     def __call__(self, user=None):
@@ -94,6 +118,8 @@ class _FakeEnv:
             return self.generic_action_model
         if name == "ir.actions.client":
             return self.client_action_model
+        if name == "ir.ui.menu":
+            return self.menu_model
         raise KeyError(name)
 
 
@@ -233,6 +259,21 @@ class TestIntentPermissionOperationPolicy(unittest.TestCase):
 
         self.assertEqual(self.env.client_action_model.browsed_ids, [31])
         self.assertEqual(self.env.generic_action_model.browsed_ids, [])
+
+    def test_invalid_menu_id_raises_missing_error_instead_of_value_error(self):
+        ctx = _Ctx({"intent": "ui.contract", "params": {"menu_id": "not-a-number"}})
+
+        with self.assertRaises(MissingError):
+            self.permission.check_intent_permission(ctx)
+
+        self.assertEqual(self.env.menu_model.browsed_ids, [])
+
+    def test_menu_permission_normalizes_numeric_id(self):
+        ctx = _Ctx({"intent": "ui.contract", "params": {"menu_id": "41"}})
+
+        self.permission.check_intent_permission(ctx)
+
+        self.assertEqual(self.env.menu_model.browsed_ids, [41])
 
     def test_capability_key_can_be_top_level_or_nested(self):
         self.assertEqual(

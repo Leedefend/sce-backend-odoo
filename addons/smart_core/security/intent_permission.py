@@ -198,7 +198,10 @@ def check_intent_permission(ctx):
 
     # ✅ 校验菜单权限（如果传入 menu_id）
     if menu_id:
-        menu = env["ir.ui.menu"].browse(int(menu_id))
+        normalized_menu_id = _to_int(menu_id)
+        if normalized_menu_id <= 0:
+            raise MissingError(f"菜单 {menu_id} 不存在")
+        menu = env["ir.ui.menu"].browse(normalized_menu_id)
         if not menu.exists():
             raise MissingError(f"菜单 {menu_id} 不存在")
         if not menu._is_visible():
