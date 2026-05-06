@@ -3,6 +3,7 @@
 # 以收敛契约出口并避免 legacy 解析栈继续分叉。
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.request_params import parse_positive_int
 from .load_contract import LoadContractHandler
 
 
@@ -31,8 +32,10 @@ class LoadModelViewHandler(BaseIntentHandler):
             }
         }
         # 兼容传入 view_id：转为 context 线索，供主链路在后续扩展使用。
-        view_id = params.get("view_id")
-        if view_id not in (None, "", False):
+        view_id, view_id_error = parse_positive_int(params.get("view_id"), allow_empty=True)
+        if view_id_error:
+            return self._err(400, "view_id 无效")
+        if view_id:
             payload["params"]["context"] = {"requested_view_id": view_id}
 
         proxied = LoadContractHandler(
@@ -73,4 +76,23 @@ class LoadModelViewHandler(BaseIntentHandler):
                 "legacy_proxy": "load_contract",
             },
             "code": code,
+        }
+
+    def _err(self, code, message):
+        return {
+            "ok": False,
+            "error": {
+                "code": code,
+                "message": message,
+            },
+            "code": code,
+            "meta": {
+                "intent": self.INTENT_TYPE,
+                "legacy_proxy": "load_contract",
+                "source_authority": {
+                    "kind": self.SOURCE_KIND,
+                    "authority": self.SOURCE_AUTHORITY,
+                    "proxy_only": True,
+                },
+            },
         }
