@@ -1642,6 +1642,8 @@ onBeforeUnmount(() => {
 }
 
 .list-toolbar {
+  position: relative;
+  z-index: 35;
   display: grid;
   grid-template-columns: minmax(132px, 180px) minmax(0, 600px) max-content;
   align-items: center;
