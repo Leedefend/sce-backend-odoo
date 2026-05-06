@@ -215,6 +215,70 @@ class ApiDataHandler(BaseIntentHandler):
                     return list(default or [])
         return list(default or [])
 
+    def _read_fields_param(self, p: Dict[str, Any], default: Optional[List] = None):
+        raw = self._dig(p, "fields", None)
+        if raw is None or (isinstance(raw, str) and not raw.strip()):
+            return list(default or []), None
+        if raw == "*":
+            return ["*"], None
+        if isinstance(raw, list):
+            fields = [str(item).strip() for item in raw if str(item).strip()]
+            return fields, None
+        if isinstance(raw, str):
+            text = raw.strip()
+            if text == "*":
+                return ["*"], None
+            if "," in text and not text.startswith("["):
+                return [item.strip() for item in text.split(",") if item.strip()], None
+            if text.startswith("["):
+                try:
+                    parsed = literal_eval(text)
+                except Exception:
+                    return [], self._err(400, "fields 无效")
+                if not isinstance(parsed, list):
+                    return [], self._err(400, "fields 无效")
+                return [str(item).strip() for item in parsed if str(item).strip()], None
+        return [], self._err(400, "fields 无效")
+
+    def _read_domain_param(self, p: Dict[str, Any]):
+        raw = self._dig(p, "domain", None)
+        if raw is None or (isinstance(raw, str) and not raw.strip()):
+            return [], None
+        if isinstance(raw, list):
+            return raw, None
+        if isinstance(raw, str):
+            text = raw.strip()
+            if not text.startswith("["):
+                return [], self._err(400, "domain 无效")
+            try:
+                parsed = literal_eval(text)
+            except Exception:
+                try:
+                    parsed = safe_eval(text, {})
+                except Exception:
+                    return [], self._err(400, "domain 无效")
+            if not isinstance(parsed, list):
+                return [], self._err(400, "domain 无效")
+            return parsed, None
+        return [], self._err(400, "domain 无效")
+
+    def _read_group_by_param(self, p: Dict[str, Any], key: str = "group_by"):
+        raw = self._dig(p, key, None)
+        if raw is None or (isinstance(raw, str) and not raw.strip()):
+            return None, None
+        if isinstance(raw, str):
+            text = raw.strip()
+            if "," in text:
+                items = [part.strip() for part in text.split(",") if part.strip()]
+                return (items or None), None
+            return text, None
+        if isinstance(raw, (tuple, list)):
+            items = [str(part).strip() for part in raw if str(part).strip()]
+            if not items:
+                return None, None
+            return (items if len(items) > 1 else items[0]), None
+        return None, self._err(400, f"{key} 无效")
+
     def _read_ids_param(self, p: Dict[str, Any], key: str = "ids"):
         raw = self._dig(p, key, None)
         if raw is None or (isinstance(raw, str) and not raw.strip()):
@@ -1004,7 +1068,9 @@ class ApiDataHandler(BaseIntentHandler):
     # ----------------- 操作实现 -----------------
 
     def _op_list(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
-        fields = self._get_list(p, "fields", [])
+        fields, fields_error = self._read_fields_param(p, [])
+        if fields_error:
+            return fields_error
         limit, limit_error = self._read_positive_param(p, "limit", 40)
         if limit_error:
             return limit_error
@@ -1012,10 +1078,14 @@ class ApiDataHandler(BaseIntentHandler):
         if offset_error:
             return offset_error
         order = self._get_str(p, "order", "")
-        domain = self._normalize_domain(self._dig(p, "domain"))
+        domain, domain_error = self._read_domain_param(p)
+        if domain_error:
+            return domain_error
         domain_raw = self._get_str(p, "domain_raw", "").strip()
         context_raw = self._get_str(p, "context_raw", "").strip()
-        group_by = self._normalize_group_by(self._dig(p, "group_by"))
+        group_by, group_by_error = self._read_group_by_param(p)
+        if group_by_error:
+            return group_by_error
         group_page_offsets, group_page_offsets_error = self._normalize_group_page_offsets(self._dig(p, "group_page_offsets"))
         if group_page_offsets_error:
             return group_page_offsets_error
@@ -1226,7 +1296,9 @@ class ApiDataHandler(BaseIntentHandler):
         ids, ids_error = self._read_ids_param(p)
         if ids_error:
             return ids_error
-        fields = self._get_list(p, "fields", ["id", "name"])
+        fields, fields_error = self._read_fields_param(p, ["id", "name"])
+        if fields_error:
+            return fields_error
 
         env_model = self.env[model].with_context(ctx)
         if sudo:
@@ -1257,7 +1329,9 @@ class ApiDataHandler(BaseIntentHandler):
         return data, meta
 
     def _op_count(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
-        domain = self._normalize_domain(self._dig(p, "domain"))
+        domain, domain_error = self._read_domain_param(p)
+        if domain_error:
+            return domain_error
         env_model = self.env[model].with_context(ctx)
         if sudo:
             env_model = env_model.sudo()
@@ -1434,7 +1508,9 @@ class ApiDataHandler(BaseIntentHandler):
         limit = min(limit, 10000)
 
         order = self._get_str(p, "order", "")
-        domain = self._normalize_domain(self._dig(p, "domain"))
+        domain, domain_error = self._read_domain_param(p)
+        if domain_error:
+            return domain_error
         raw_ids = self._dig(p, "ids", None)
         if raw_ids is None or (isinstance(raw_ids, str) and not raw_ids.strip()):
             ids = []
@@ -1442,7 +1518,9 @@ class ApiDataHandler(BaseIntentHandler):
             ids, ids_error = self._read_ids_param(p)
             if ids_error:
                 return ids_error
-        fields = self._get_list(p, "fields", [])
+        fields, fields_error = self._read_fields_param(p, [])
+        if fields_error:
+            return fields_error
 
         env_model = self.env[model].with_context(ctx)
         if sudo:

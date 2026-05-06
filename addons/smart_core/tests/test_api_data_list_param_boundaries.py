@@ -178,6 +178,47 @@ class TestApiDataListParamBoundaries(unittest.TestCase):
         self.assertEqual(result["error"]["code"], 400)
         self.assertEqual(result["error"]["message"], "context_raw 无效")
 
+    def test_list_rejects_invalid_fields_domain_and_group_by(self):
+        cases = [
+            ({"fields": 7}, "fields 无效"),
+            ({"fields": "['name'"}, "fields 无效"),
+            ({"domain": "bad"}, "domain 无效"),
+            ({"domain": "{'bad': True}"}, "domain 无效"),
+            ({"group_by": {"field": "state"}}, "group_by 无效"),
+        ]
+        for params, message in cases:
+            with self.subTest(params=params):
+                result = self.handler._op_list("x.model", params, {}, False)
+                self.assertFalse(result["ok"])
+                self.assertEqual(result["error"]["code"], 400)
+                self.assertEqual(result["error"]["message"], message)
+
+    def test_read_rejects_invalid_fields(self):
+        result = self.handler._op_read("x.model", {"ids": [1], "fields": 7}, {}, False)
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"]["code"], 400)
+        self.assertEqual(result["error"]["message"], "fields 无效")
+
+    def test_count_rejects_invalid_domain(self):
+        result = self.handler._op_count("x.model", {"domain": "bad"}, {}, False)
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"]["code"], 400)
+        self.assertEqual(result["error"]["message"], "domain 无效")
+
+    def test_export_rejects_invalid_fields_and_domain(self):
+        cases = [
+            ({"fields": 7}, "fields 无效"),
+            ({"domain": "bad"}, "domain 无效"),
+        ]
+        for params, message in cases:
+            with self.subTest(params=params):
+                result = self.handler._op_export_csv("x.model", params, {}, False)
+                self.assertFalse(result["ok"])
+                self.assertEqual(result["error"]["code"], 400)
+                self.assertEqual(result["error"]["message"], message)
+
 
 if __name__ == "__main__":
     unittest.main()
