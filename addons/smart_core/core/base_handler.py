@@ -154,9 +154,6 @@ class BaseIntentHandler:
             except TypeError:
                 return self.handle()
 
-        # 提取参数名（去掉 self）
-        param_names = [p.name for p in sig.parameters.values() if p.name != "self"]
-
         # 统一映射表（命名别名全部支持）
         mapped_payload = self.payload
         mapped_params  = self.params
@@ -172,8 +169,18 @@ class BaseIntentHandler:
             "request": self.request,
         }
 
-        # 仅传入对方签名里声明的参数，避免“unexpected keyword argument”
-        kwargs = {name: mapping[name] for name in param_names if name in mapping}
+        # 仅传入对方签名里声明的参数；若 handler 接收 **kwargs，则显式提供完整运行上下文。
+        kwargs = {}
+        for param in sig.parameters.values():
+            if param.name == "self":
+                continue
+            if param.kind == inspect.Parameter.VAR_KEYWORD:
+                kwargs.update(mapping)
+                continue
+            if param.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.VAR_POSITIONAL):
+                continue
+            if param.name in mapping:
+                kwargs[param.name] = mapping[param.name]
 
         return self.handle(**kwargs)
 

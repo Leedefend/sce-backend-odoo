@@ -116,6 +116,25 @@ class TestBaseHandlerTypeError(unittest.TestCase):
 
         self.assertTrue(handler.is_write())
 
+    def test_var_keyword_handler_receives_runtime_mapping(self):
+        base_cls = self.base.BaseIntentHandler
+
+        class Handler(base_cls):
+            INTENT_TYPE = "read.intent"
+
+            def handle(self, **kwargs):
+                return kwargs
+
+        handler = Handler(env=_FakeEnv(), request="request-obj")
+
+        result = handler.run(payload={"intent": "read.intent", "params": {"x": 1}}, ctx={"trace": "t"})
+
+        self.assertEqual(result["payload"], {"intent": "read.intent", "params": {"x": 1}})
+        self.assertEqual(result["params"], {"x": 1})
+        self.assertEqual(result["ctx"], {"trace": "t"})
+        self.assertIs(result["env"], handler.env)
+        self.assertEqual(result["request"], "request-obj")
+
 
 if __name__ == "__main__":
     unittest.main()
