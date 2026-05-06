@@ -22,6 +22,7 @@ from odoo.exceptions import AccessError
 from odoo.http import request
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.api_data_execution_policy import client_requested_sudo, resolve_api_data_sudo
 from ..core.project_context import apply_project_scope_domain, selected_project_id_from_context
 from ..utils.extension_hooks import call_extension_hook_first
 from ..utils.reason_codes import (
@@ -926,7 +927,9 @@ class ApiDataHandler(BaseIntentHandler):
             context["active_test"] = self._get_bool(p, "active_test", True)
         if_none_match = self._read_if_none_match(p)
 
-        use_sudo = self._get_bool(p, "sudo", False)
+        use_sudo = resolve_api_data_sudo(p)
+        if client_requested_sudo(p):
+            _logger.warning("api.data ignored client sudo request model=%s op=%s", model, op)
 
         if op == "list":
             return self._with_etag_if_match(self._op_list(model, p, context, use_sudo), model, op, context, if_none_match)
