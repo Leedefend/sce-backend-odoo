@@ -1,6 +1,7 @@
 # smart_core/core/context.py
 from odoo.http import request
 from ..security.auth import get_user_from_token
+from .intent_access_policy import is_public_context_intent
 from .trace import get_trace_id
 
 SOURCE_KIND = "http_request_context_projection"
@@ -40,7 +41,7 @@ class RequestContext:
         intent_name = (params.get("intent") or "").strip()
         req = request_obj or request
 
-        if intent_name in {"login", "auth.login", "sys.intents", "session.bootstrap", "bootstrap"}:
+        if is_public_context_intent(intent_name):
             user = None
             env = req.env
         else:

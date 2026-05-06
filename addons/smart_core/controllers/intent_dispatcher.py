@@ -12,6 +12,7 @@ from odoo.exceptions import AccessError, MissingError, AccessDenied
 
 from ..core.intent_router import route_intent_payload
 from ..core.context import RequestContext
+from ..core.intent_access_policy import ANONYMOUS_INTENTS, is_anonymous_allowed_intent
 from ..core.intent_operation_policy import is_write_intent, nested_params, normalize_intent_operation
 from ..security.intent_permission import check_intent_permission
 from ..core.trace import get_trace_id
@@ -43,7 +44,7 @@ def source_authority_contract() -> Dict[str, Any]:
     }
 
 # ✅ 匿名白名单（仅在“匿名请求”识别为真时生效；见 _is_anon_req）
-ANON_ALLOWLIST = {"login", "auth.login", "sys.intents", "session.bootstrap"}
+ANON_ALLOWLIST = set(ANONYMOUS_INTENTS)
 
 # ✅ 意图别名：统一规范后再做白名单与分发
 INTENT_ALIASES = {
@@ -388,7 +389,7 @@ class IntentDispatcher(http.Controller):
             )
 
             # ---------- 权限校验 ----------
-            skip_auth = is_anon and intent_name in ANON_ALLOWLIST
+            skip_auth = is_anon and is_anonymous_allowed_intent(intent_name)
             if intent_name == "session.bootstrap":
                 skip_auth = True
             if not skip_auth:
