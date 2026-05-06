@@ -23,6 +23,7 @@ from ..utils.idempotency import (
 )
 from ..utils.reason_codes import (
     REASON_DELETE_POLICY_DENIED,
+    REASON_INVALID_ID,
     REASON_MISSING_PARAMS,
     REASON_NOT_FOUND,
     REASON_PERMISSION_DENIED,
@@ -163,13 +164,29 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
         return str(model).strip()
 
     def _get_ids(self, params: Dict[str, Any]) -> List[int]:
+        ids, _error = self._read_ids(params)
+        return ids
+
+    def _read_ids(self, params: Dict[str, Any]):
         ids = params.get("ids") or params.get("record_ids") or []
         if isinstance(ids, list):
-            return [int(v) for v in ids if v is not None]
+            values = []
+            for raw in ids:
+                try:
+                    value = int(raw)
+                except Exception:
+                    return [], self._err(400, "ids 无效", REASON_INVALID_ID)
+                if value <= 0:
+                    return [], self._err(400, "ids 无效", REASON_INVALID_ID)
+                values.append(value)
+            return values, None
         try:
-            return [int(ids)]
+            value = int(ids)
         except Exception:
-            return []
+            return [], self._err(400, "ids 无效", REASON_INVALID_ID)
+        if value <= 0:
+            return [], self._err(400, "ids 无效", REASON_INVALID_ID)
+        return [value], None
 
     def handle(self, payload=None, ctx=None):
         payload = payload or {}
@@ -187,7 +204,9 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
         if model not in self.env:
             return self._err(404, f"未知模型: {model}", REASON_NOT_FOUND)
 
-        ids = self._get_ids(params)
+        ids, ids_error = self._read_ids(params)
+        if ids_error:
+            return ids_error
         dry_run = bool(params.get("dry_run"))
         if not ids:
             return self._err(400, "缺少参数 ids", REASON_MISSING_PARAMS)
