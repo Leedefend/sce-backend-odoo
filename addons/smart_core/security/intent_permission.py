@@ -1,11 +1,17 @@
 # smart_core/security/intent_permission.py
+import re
+
 from odoo.http import request
 from odoo.exceptions import AccessError, MissingError
-from .auth import get_user_from_token,decode_token
+from .auth import get_user_from_token
 
 SOURCE_KIND = "odoo_native_permission_projection"
 SOURCE_AUTHORITIES = ("odoo.access", "ir.rule", "ir.ui.menu", "ir.actions", "sc.entitlement", "sc.capability")
 NO_BUSINESS_FACT_AUTHORITY = True
+_WRITE_INTENT_RE = re.compile(
+    r"(write|update|set|execute|upload|cancel|approve|reject|submit|done|import|rollback|pin)",
+    re.IGNORECASE,
+)
 
 
 def source_authority_contract() -> dict:
@@ -33,6 +39,101 @@ def _find_capability(env, cap_key):
         return None
 
 
+def _nested_params(ctx_params):
+    params = ctx_params if isinstance(ctx_params, dict) else {}
+    nested = params.get("params")
+    if isinstance(nested, dict):
+        return nested
+    payload = params.get("payload")
+    if isinstance(payload, dict):
+        return payload
+    return params
+
+
+def _param_value(ctx_params, key, default=None):
+    params = ctx_params if isinstance(ctx_params, dict) else {}
+    if key in params:
+        return params.get(key)
+    nested = _nested_params(params)
+    if isinstance(nested, dict):
+        return nested.get(key, default)
+    return default
+
+
+def _intent_operation(intent_name, ctx_params):
+    intent = str(intent_name or "").strip().lower()
+    params = _nested_params(ctx_params)
+    op = str((params or {}).get("op") or "").strip().lower()
+    action = str((params or {}).get("action") or "").strip().lower()
+
+    if intent == "api.data":
+        return op or "read"
+    if intent == "api.data.batch":
+        if action:
+            return action
+        if op:
+            return op
+        if isinstance(params, dict) and (params.get("vals") or params.get("values")):
+            return "write"
+        return "batch"
+    if intent.startswith("api.data."):
+        suffix = intent.split(".", 2)[-1].strip().lower()
+        return suffix or op or "read"
+    if op:
+        return op
+    if "create" in intent:
+        return "create"
+    if "unlink" in intent or "delete" in intent:
+        return "unlink"
+    if _WRITE_INTENT_RE.search(intent):
+        return "write"
+    return "read"
+
+
+def _access_mode_for_operation(operation):
+    op = str(operation or "").strip().lower()
+    if op in {"create", "new"}:
+        return "create"
+    if op in {"write", "update", "set", "archive", "activate", "assign", "unarchive", "batch.write", "batch.update"}:
+        return "write"
+    if op in {"unlink", "delete", "remove", "batch.unlink", "batch.delete"}:
+        return "unlink"
+    return "read"
+
+
+def _record_ids(ctx_params):
+    record_id = _param_value(ctx_params, "record_id") or _param_value(ctx_params, "id")
+    ids = _param_value(ctx_params, "ids")
+    out = []
+    if record_id:
+        out.append(record_id)
+    if isinstance(ids, (list, tuple, set)):
+        out.extend(ids)
+    elif ids:
+        out.append(ids)
+    normalized = []
+    for value in out:
+        try:
+            rid = int(value)
+        except Exception:
+            continue
+        if rid and rid not in normalized:
+            normalized.append(rid)
+    return normalized
+
+
+def _capability_key(ctx_params):
+    params = ctx_params if isinstance(ctx_params, dict) else {}
+    nested = _nested_params(params)
+    for source in (nested, params):
+        if not isinstance(source, dict):
+            continue
+        cap_key = source.get("capability_key") or source.get("capability") or source.get("key")
+        if cap_key:
+            return cap_key
+    return None
+
+
 def check_intent_permission(ctx):
     """
     核心权限校验入口：模型、记录、字段、菜单、动作
@@ -42,7 +143,8 @@ def check_intent_permission(ctx):
     """
     
 
-    intent_name = (ctx.params.get("intent") or "").strip()
+    ctx_params = ctx.params if isinstance(ctx.params, dict) else {}
+    intent_name = (ctx_params.get("intent") or "").strip()
     if intent_name == "session.bootstrap":
         return True
     if intent_name == "permission.check":
@@ -56,28 +158,35 @@ def check_intent_permission(ctx):
     env = request.env
 
     # 3. 正常的权限检查逻辑
-    model = ctx.params.get("model")
-    record_id = ctx.params.get("record_id")
-    menu_id = ctx.params.get("menu_id")
-    action_id = ctx.params.get("action_id")
+    model = _param_value(ctx_params, "model")
+    menu_id = _param_value(ctx_params, "menu_id")
+    action_id = _param_value(ctx_params, "action_id")
+    operation = _intent_operation(intent_name, ctx_params)
+    access_mode = _access_mode_for_operation(operation)
 
 
     # ✅ 校验模型访问权限
     if model:
         try:
-            env[model].check_access_rights("read")
+            env[model].check_access_rights(access_mode)
         except AccessError:
-            raise AccessError(f"用户无权访问模型 {model}")
+            raise AccessError(f"用户无权以 {access_mode} 访问模型 {model}")
 
-    # ✅ 校验记录访问权限（如果传入 record_id）
-    if model and record_id:
-        rec = env[model].browse(int(record_id))
-        if not rec.exists():
-            raise MissingError(f"记录 {record_id} 不存在")
+    # ✅ 校验记录访问权限（如果传入 record_id/id/ids；create 无既有记录可校验）
+    record_ids = _record_ids(ctx_params)
+    if model and record_ids and access_mode != "create":
+        rec = env[model].browse(record_ids)
+        existing = rec.exists()
         try:
-            rec.check_access_rule("read")
+            has_missing = len(existing) != len(record_ids)
+        except Exception:
+            has_missing = not bool(existing)
+        if not existing or has_missing:
+            raise MissingError(f"记录 {record_ids} 不存在")
+        try:
+            existing.check_access_rule(access_mode)
         except AccessError:
-            raise AccessError(f"用户无权读取记录 {record_id}")
+            raise AccessError(f"用户无权以 {access_mode} 访问记录 {record_ids}")
 
     # ✅ 校验菜单权限（如果传入 menu_id）
     if menu_id:
@@ -105,8 +214,7 @@ def check_intent_permission(ctx):
         except Exception:
             Entitlement = None
         if Entitlement:
-            params = ctx.params.get("params") or {}
-            cap_key = params.get("capability_key") or params.get("capability") or params.get("key")
+            cap_key = _capability_key(ctx_params)
             cap = _find_capability(env, cap_key)
             ent = Entitlement.get_effective(env.user.company_id)
             flags = ent.effective_flags_json or {}
@@ -114,8 +222,7 @@ def check_intent_permission(ctx):
                 if not Entitlement._flag_enabled(flags, cap.required_flag):
                     raise AccessError(f"FEATURE_DISABLED: {{'required_flag': '{cap.required_flag}', 'capability_key': '{cap.key}'}}")
         else:
-            params = ctx.params.get("params") or {}
-            cap_key = params.get("capability_key") or params.get("capability") or params.get("key")
+            cap_key = _capability_key(ctx_params)
             cap = _find_capability(env, cap_key)
             if cap and cap.required_flag:
                 raise AccessError(f"FEATURE_DISABLED: {{'required_flag': '{cap.required_flag}', 'capability_key': '{cap.key}', 'reason': 'ENTITLEMENT_UNAVAILABLE'}}")
