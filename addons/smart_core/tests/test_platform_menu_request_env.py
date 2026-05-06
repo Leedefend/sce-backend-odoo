@@ -13,6 +13,8 @@ class _FakeUser:
 class _FakeEnv:
     def __init__(self):
         self.uid = None
+        self.cr = types.SimpleNamespace(rollbacks=0)
+        self.cr.rollback = lambda: setattr(self.cr, "rollbacks", self.cr.rollbacks + 1)
 
     def __call__(self, user=None):
         env = _FakeEnv()
@@ -60,6 +62,7 @@ def _load_controller(fake_request):
         "odoo.addons.smart_core.core.exceptions",
         AUTH_REQUIRED="AUTH_REQUIRED",
         BAD_REQUEST="BAD_REQUEST",
+        INTERNAL_ERROR="INTERNAL_ERROR",
         DEFAULT_API_VERSION="v1",
         DEFAULT_CONTRACT_VERSION="1.0",
         build_error_envelope=lambda **kwargs: kwargs,
@@ -99,6 +102,15 @@ class TestPlatformMenuRequestEnv(unittest.TestCase):
         self.assertIs(fake_request.env, env)
         self.assertEqual(fake_request.uid, 23)
         self.assertEqual(env.uid, 23)
+
+    def test_rollback_request_env_rolls_back_current_cursor(self):
+        fake_request = _FakeRequest()
+        controller = _load_controller(fake_request)
+        env = controller._resolve_request_env()
+
+        controller._rollback_request_env()
+
+        self.assertEqual(env.cr.rollbacks, 1)
 
 
 if __name__ == "__main__":

@@ -15,6 +15,7 @@ from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_fir
 from odoo.addons.smart_core.core.exceptions import (
     AUTH_REQUIRED,
     BAD_REQUEST,
+    INTERNAL_ERROR,
     DEFAULT_API_VERSION,
     DEFAULT_CONTRACT_VERSION,
     build_error_envelope,
@@ -69,6 +70,13 @@ def _json_response(payload: dict, status: int = 200):
         headers=[('Content-Type', 'application/json; charset=utf-8')],
         status=status,
     )
+
+
+def _rollback_request_env():
+    try:
+        request.env.cr.rollback()
+    except Exception:
+        pass
 
 
 def _resolve_request_env():
@@ -242,39 +250,44 @@ class PlatformMenuAPI(http.Controller):
         trace_id = get_trace_id(request.httprequest.headers)
         try:
             env = _resolve_request_env()
+            facts = MenuFactService(env).export_visible_menu_facts()
+            if not facts.flat:
+                _rollback_request_env()
+                return _json_response(_error_resp(BAD_REQUEST, '未找到平台菜单根节点。', trace_id), status=400)
+            nav_fact = {
+                "flat": [_flat_fact_node(node) for node in facts.flat],
+                "tree": [_fact_node(node) for node in facts.tree],
+            }
+            nav_explained = MenuTargetInterpreterService(env).interpret(
+                nav_fact,
+                scene_map=_resolve_navigation_scene_map(env),
+                policy={},
+            )
+            nav_fact_filtered, _, convergence = MenuDeliveryConvergenceService().apply(
+                nav_fact,
+                nav_explained,
+                is_admin=_is_admin_user(env),
+                is_business_config_admin=_is_business_config_user(env),
+            )
+            return _json_response({
+                'ok': True,
+                'nav_fact': nav_fact_filtered,
+                'meta': {
+                    **_meta(trace_id),
+                    'source_authority': source_authority_contract(),
+                    'menu_fact_source_authority': facts.source_authority,
+                    'delivery_convergence': convergence,
+                },
+            })
         except AccessDenied as exc:
+            _rollback_request_env()
             return _json_response(
                 _error_resp(AUTH_REQUIRED, str(exc) or '登录态无效，请重新登录。', trace_id),
                 status=401,
             )
-        facts = MenuFactService(env).export_visible_menu_facts()
-        if not facts.flat:
-            return _json_response(_error_resp(BAD_REQUEST, '未找到平台菜单根节点。', trace_id), status=400)
-        nav_fact = {
-            "flat": [_flat_fact_node(node) for node in facts.flat],
-            "tree": [_fact_node(node) for node in facts.tree],
-        }
-        nav_explained = MenuTargetInterpreterService(env).interpret(
-            nav_fact,
-            scene_map=_resolve_navigation_scene_map(env),
-            policy={},
-        )
-        nav_fact_filtered, _, convergence = MenuDeliveryConvergenceService().apply(
-            nav_fact,
-            nav_explained,
-            is_admin=_is_admin_user(env),
-            is_business_config_admin=_is_business_config_user(env),
-        )
-        return _json_response({
-            'ok': True,
-            'nav_fact': nav_fact_filtered,
-            'meta': {
-                **_meta(trace_id),
-                'source_authority': source_authority_contract(),
-                'menu_fact_source_authority': facts.source_authority,
-                'delivery_convergence': convergence,
-            },
-        })
+        except Exception:
+            _rollback_request_env()
+            return _json_response(_error_resp(INTERNAL_ERROR, '内部错误', trace_id), status=500)
 
     @http.route('/api/user_menus', type='http', auth='public', csrf=False, cors='*', methods=['POST'])
     def api_user_menus(self, **kwargs):
@@ -289,45 +302,50 @@ class PlatformMenuAPI(http.Controller):
         trace_id = get_trace_id(request.httprequest.headers)
         try:
             env = _resolve_request_env()
+            facts = MenuFactService(env).export_visible_menu_facts()
+            if not facts.flat:
+                _rollback_request_env()
+                return _json_response(_error_resp(BAD_REQUEST, '未找到平台菜单根节点。', trace_id), status=400)
+
+            nav_fact = {
+                "flat": [_flat_fact_node(node) for node in facts.flat],
+                "tree": [_fact_node(node) for node in facts.tree],
+            }
+            scene_map = _resolve_navigation_scene_map(
+                env,
+                payload.get("scene_map") if isinstance(payload.get("scene_map"), dict) else {},
+            )
+            policy = payload.get("policy") if isinstance(payload.get("policy"), dict) else {}
+            nav_explained = MenuTargetInterpreterService(env).interpret(
+                nav_fact,
+                scene_map=scene_map,
+                policy=policy,
+            )
+            nav_fact_filtered, nav_explained_filtered, convergence = MenuDeliveryConvergenceService().apply(
+                nav_fact,
+                nav_explained,
+                is_admin=_is_admin_user(env),
+                is_business_config_admin=_is_business_config_user(env),
+            )
+            return _json_response(
+                {
+                    'ok': True,
+                    'nav_fact': nav_fact_filtered,
+                    'nav_explained': nav_explained_filtered,
+                    'meta': {
+                        **_meta(trace_id),
+                        'source_authority': source_authority_contract(),
+                        'menu_fact_source_authority': facts.source_authority,
+                        'delivery_convergence': convergence,
+                    },
+                }
+            )
         except AccessDenied as exc:
+            _rollback_request_env()
             return _json_response(
                 _error_resp(AUTH_REQUIRED, str(exc) or '登录态无效，请重新登录。', trace_id),
                 status=401,
             )
-        facts = MenuFactService(env).export_visible_menu_facts()
-        if not facts.flat:
-            return _json_response(_error_resp(BAD_REQUEST, '未找到平台菜单根节点。', trace_id), status=400)
-
-        nav_fact = {
-            "flat": [_flat_fact_node(node) for node in facts.flat],
-            "tree": [_fact_node(node) for node in facts.tree],
-        }
-        scene_map = _resolve_navigation_scene_map(
-            env,
-            payload.get("scene_map") if isinstance(payload.get("scene_map"), dict) else {},
-        )
-        policy = payload.get("policy") if isinstance(payload.get("policy"), dict) else {}
-        nav_explained = MenuTargetInterpreterService(env).interpret(
-            nav_fact,
-            scene_map=scene_map,
-            policy=policy,
-        )
-        nav_fact_filtered, nav_explained_filtered, convergence = MenuDeliveryConvergenceService().apply(
-            nav_fact,
-            nav_explained,
-            is_admin=_is_admin_user(env),
-            is_business_config_admin=_is_business_config_user(env),
-        )
-        return _json_response(
-            {
-                'ok': True,
-                'nav_fact': nav_fact_filtered,
-                'nav_explained': nav_explained_filtered,
-                'meta': {
-                    **_meta(trace_id),
-                    'source_authority': source_authority_contract(),
-                    'menu_fact_source_authority': facts.source_authority,
-                    'delivery_convergence': convergence,
-                },
-            }
-        )
+        except Exception:
+            _rollback_request_env()
+            return _json_response(_error_resp(INTERNAL_ERROR, '内部错误', trace_id), status=500)
