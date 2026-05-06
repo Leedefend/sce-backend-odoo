@@ -45,6 +45,18 @@ class TestRequestParams(unittest.TestCase):
         self.assertTrue(self.module.parse_bool("unknown", True))
         self.assertFalse(self.module.parse_bool("unknown", False))
 
+    def test_parse_positive_int_accepts_positive_values(self):
+        self.assertEqual(self.module.parse_positive_int("7"), (7, None))
+
+    def test_parse_positive_int_rejects_invalid_values(self):
+        self.assertEqual(self.module.parse_positive_int("bad"), (None, "invalid"))
+        self.assertEqual(self.module.parse_positive_int(0), (None, "invalid"))
+        self.assertEqual(self.module.parse_positive_int(False), (None, "invalid"))
+
+    def test_parse_positive_int_can_allow_empty_values(self):
+        self.assertEqual(self.module.parse_positive_int("", allow_empty=True), (None, None))
+        self.assertEqual(self.module.parse_positive_int("  ", allow_empty=True), (None, None))
+
 
 if __name__ == "__main__":
     unittest.main()

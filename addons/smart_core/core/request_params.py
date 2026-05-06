@@ -18,3 +18,23 @@ def parse_bool(value: Any, default: bool = False) -> bool:
         if text in ("0", "false", "no", "n", "off", ""):
             return False
     return default
+
+
+def parse_positive_int(value: Any, *, allow_empty: bool = False):
+    if value is None:
+        if allow_empty:
+            return None, None
+        return None, "missing"
+    if isinstance(value, str) and not value.strip():
+        if allow_empty:
+            return None, None
+        return None, "missing"
+    if isinstance(value, bool):
+        return None, "invalid"
+    try:
+        parsed = int(value)
+    except Exception:
+        return None, "invalid"
+    if parsed <= 0:
+        return None, "invalid"
+    return parsed, None
