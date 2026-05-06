@@ -59,6 +59,20 @@ class TestHttpResultPolicy(unittest.TestCase):
         )
         self.assertEqual(
             self.policy.result_http_status({"ok": False, "error": {"code": "PERMISSION_DENIED", "message": "denied"}}),
+            403,
+        )
+
+    def test_known_symbolic_error_codes_map_to_http_status(self):
+        self.assertEqual(
+            self.policy.result_http_status({"ok": False, "error": {"code": "AUTH_REQUIRED", "message": "auth"}}),
+            401,
+        )
+        self.assertEqual(
+            self.policy.result_http_status({"ok": False, "error": {"code": "LIMIT_EXCEEDED", "message": "limit"}}),
+            429,
+        )
+        self.assertEqual(
+            self.policy.result_http_status({"ok": False, "error": {"code": "unknown_symbol", "message": "unknown"}}),
             500,
         )
 

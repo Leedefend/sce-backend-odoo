@@ -3,6 +3,17 @@ from typing import Any, Dict
 
 from .intent_operation_policy import is_write_intent
 
+SYMBOLIC_ERROR_STATUS = {
+    "BAD_REQUEST": 400,
+    "AUTH_REQUIRED": 401,
+    "PERMISSION_DENIED": 403,
+    "FEATURE_DISABLED": 403,
+    "INTENT_NOT_FOUND": 404,
+    "VALIDATION_ERROR": 422,
+    "LIMIT_EXCEEDED": 429,
+    "INTERNAL_ERROR": 500,
+}
+
 
 def result_is_success(result: Dict[str, Any] | None) -> bool:
     if not isinstance(result, dict):
@@ -42,7 +53,12 @@ def result_http_status(result: Dict[str, Any] | None, default: int = 200) -> int
     if raw is None:
         error = payload.get("error") if isinstance(payload.get("error"), dict) else {}
         error_code = error.get("code") if "code" in error else None
-        raw = error_code if isinstance(error_code, int) else (500 if not result_is_success(payload) else default)
+        if isinstance(error_code, int):
+            raw = error_code
+        elif isinstance(error_code, str) and error_code.strip().upper() in SYMBOLIC_ERROR_STATUS:
+            raw = SYMBOLIC_ERROR_STATUS[error_code.strip().upper()]
+        else:
+            raw = 500 if not result_is_success(payload) else default
     try:
         status = int(raw)
     except Exception:
