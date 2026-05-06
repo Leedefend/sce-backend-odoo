@@ -30,29 +30,44 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
         Preference = self.env["sc.user.view.preference"]
         preference_key = Preference.normalize_preference_key(params.get("preference_key"))
         view_type = str(params.get("view_type") or "list").strip() or "list"
-        action_id = self._positive_int(params.get("action_id"))
+        action_id, action_error = self._read_positive_int(params.get("action_id"), "action_id")
+        if action_error:
+            return "", action_error
         model_name = str(params.get("model") or params.get("model_name") or "").strip()
         return Preference.build_scope_key(
             preference_key=preference_key,
             view_type=view_type,
             action_id=action_id,
             model_name=model_name,
-        )
+        ), None
 
     def _legacy_scope_key(self, params):
         preference_key = self.env["sc.user.view.preference"].normalize_preference_key(params.get("preference_key"))
         view_type = str(params.get("view_type") or "list").strip() or "list"
-        action_id = self._positive_int(params.get("action_id"))
+        action_id, action_error = self._read_positive_int(params.get("action_id"), "action_id")
+        if action_error:
+            return "", action_error
         model_name = str(params.get("model") or params.get("model_name") or "").strip()
         target = f"action:{action_id}" if action_id else f"model:{model_name or 'unknown'}"
-        return f"{preference_key}:{view_type}:{target}"
+        return f"{preference_key}:{view_type}:{target}", None
 
     def _positive_int(self, value):
+        result, _error = self._read_positive_int(value, "value")
+        return result
+
+    def _read_positive_int(self, value, field_name):
+        if value in (None, False, ""):
+            return 0, None
         try:
-            result = int(value or 0)
+            result = int(value)
         except (TypeError, ValueError):
-            result = 0
-        return result if result > 0 else 0
+            return 0, self._err(400, f"{field_name} 无效")
+        if result < 0:
+            return 0, self._err(400, f"{field_name} 无效")
+        return result, None
+
+    def _err(self, code, message):
+        return {"ok": False, "error": {"code": code, "message": message}, "code": code, "meta": self._source_meta()}
 
     def _source_meta(self):
         return {
@@ -63,8 +78,12 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         params = self._params(payload or self.payload)
-        scope_key = self._scope_key(params)
-        legacy_scope_key = self._legacy_scope_key(params)
+        scope_key, scope_error = self._scope_key(params)
+        if scope_error:
+            return scope_error
+        legacy_scope_key, legacy_error = self._legacy_scope_key(params)
+        if legacy_error:
+            return legacy_error
         Preference = self.env["sc.user.view.preference"]
         record = Preference.search([
             ("user_id", "=", self.env.uid),
@@ -94,10 +113,14 @@ class UserViewPreferenceSetHandler(UserViewPreferenceGetHandler):
 
     def handle(self, payload=None, ctx=None):
         params = self._params(payload or self.payload)
-        scope_key = self._scope_key(params)
+        scope_key, scope_error = self._scope_key(params)
+        if scope_error:
+            return scope_error
         preference_key = self.env["sc.user.view.preference"].normalize_preference_key(params.get("preference_key"))
         view_type = str(params.get("view_type") or "list").strip() or "list"
-        action_id = self._positive_int(params.get("action_id"))
+        action_id, action_error = self._read_positive_int(params.get("action_id"), "action_id")
+        if action_error:
+            return action_error
         model_name = str(params.get("model") or params.get("model_name") or "").strip()
         value = params.get("preference")
         if not isinstance(value, dict):

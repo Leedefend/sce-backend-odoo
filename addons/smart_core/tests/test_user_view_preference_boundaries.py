@@ -114,6 +114,32 @@ class TestUserViewPreferenceBoundaries(unittest.TestCase):
         self.assertEqual(Preference.sudo_calls, 0)
         self.assertEqual(Preference.created_vals["user_id"], 42)
 
+    def test_get_rejects_invalid_action_id(self):
+        module = _load_handler()
+        Preference = _PreferenceModel()
+        env = _Env({"sc.user.view.preference": Preference})
+        handler = module.UserViewPreferenceGetHandler(env=env, payload={"action_id": "bad"})
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "action_id 无效")
+        self.assertEqual(Preference.search_domains, [])
+
+    def test_set_rejects_invalid_action_id(self):
+        module = _load_handler()
+        Preference = _PreferenceModel()
+        env = _Env({"sc.user.view.preference": Preference})
+        handler = module.UserViewPreferenceSetHandler(env=env, payload={"action_id": "bad", "preference": {}})
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "action_id 无效")
+        self.assertIsNone(Preference.created_vals)
+
 
 if __name__ == "__main__":
     unittest.main()
