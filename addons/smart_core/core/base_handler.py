@@ -174,15 +174,7 @@ class BaseIntentHandler:
         # 仅传入对方签名里声明的参数，避免“unexpected keyword argument”
         kwargs = {name: mapping[name] for name in param_names if name in mapping}
 
-        try:
-            return self.handle(**kwargs)
-        except TypeError as e:
-            # 再退化一次：尝试按 (params, context) 位置参数调用
-            try:
-                return self.handle(mapped_params, mapped_ctx)
-            except TypeError:
-                # 最后退化：无参
-                return self.handle()
+        return self.handle(**kwargs)
 
     # ---- 轻量工具方法（供测试/增强 handler 使用）----
     def err(self, code: int, message: str):
