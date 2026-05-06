@@ -73,9 +73,12 @@ class _FakeRequest:
 class _Ctx:
     def __init__(self, params):
         self.params = params
+        self.user = None
+        self.uid = None
+        self.env = None
 
 
-def _load_module(fake_request):
+def _load_module(fake_request, user_provider=None):
     root = Path(__file__).resolve().parents[1]
     module_path = root / "security" / "intent_permission.py"
 
@@ -90,7 +93,7 @@ def _load_module(fake_request):
     smart_core_mod = types.ModuleType("odoo.addons.smart_core")
     security_mod = types.ModuleType("odoo.addons.smart_core.security")
     auth_mod = types.ModuleType("odoo.addons.smart_core.security.auth")
-    auth_mod.get_user_from_token = lambda: 7
+    auth_mod.get_user_from_token = user_provider or (lambda: 7)
 
     security_mod.__path__ = [str(root / "security")]
     smart_core_mod.__path__ = [str(root)]
@@ -134,6 +137,19 @@ class TestIntentPermissionOperationPolicy(unittest.TestCase):
         self.assertEqual(self.permission.request.uid, 7)
         self.assertIs(ctx.env, self.env)
         self.assertIs(ctx.user, self.env.user)
+        self.assertEqual(ctx.uid, 7)
+
+    def test_existing_context_user_is_reused_without_redecoding_token(self):
+        def _unexpected_auth():
+            raise AssertionError("token should not be decoded twice")
+
+        self.permission = _load_module(_FakeRequest(self.env), user_provider=_unexpected_auth)
+        ctx = _Ctx({"intent": "api.data.write", "params": {"model": "x.model", "id": 12}})
+        ctx.user = _FakeUser()
+
+        self.permission.check_intent_permission(ctx)
+
+        self.assertEqual(self.model.access_modes, ["write"])
         self.assertEqual(ctx.uid, 7)
 
     def test_api_data_create_uses_create_access_without_record_rule(self):

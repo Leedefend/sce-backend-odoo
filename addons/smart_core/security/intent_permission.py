@@ -114,7 +114,7 @@ def check_intent_permission(ctx):
     if intent_name == "permission.check":
         return True
 
-    user = get_user_from_token()
+    user = getattr(ctx, "user", None) or get_user_from_token()
     if not user:
         raise AccessError("Token 无效或缺少 user_id")
     # 2. 切换并同步 request/ctx 身份，避免后续跨库分发读取到 public uid。
