@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 
 from intent_smoke_utils import require_ok
-from python_http_smoke_utils import get_base_url, http_post_json
+from python_http_smoke_utils import extract_login_token, get_base_url, http_post_json, live_login_failure_hint
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -59,16 +59,16 @@ def _load_prod_like_logins() -> list[str]:
     return out
 
 
-def _login(intent_url: str, db_name: str, login: str, password: str) -> str:
+def _login(intent_url: str, db_name: str, login: str, password: str) -> tuple[str, int, dict]:
     status, resp = http_post_json(
         intent_url,
         {"intent": "login", "params": {"db": db_name, "login": login, "password": password}},
         headers={"X-Anonymous-Intent": "1"},
     )
     if status != 200:
-        return ""
-    data = resp.get("data") if isinstance(resp.get("data"), dict) else {}
-    return str(data.get("token") or "").strip()
+        return "", status, resp if isinstance(resp, dict) else {}
+    token = extract_login_token(resp)
+    return token, status, resp if isinstance(resp, dict) else {}
 
 
 def _system_init_hud(intent_url: str, token: str) -> list[dict]:
@@ -118,6 +118,8 @@ def main() -> int:
 
     role_samples: dict[str, dict] = {}
     login_failures: list[str] = []
+    login_failure_details: list[str] = []
+    role_probe_failures: list[str] = []
     for login in login_candidates:
         if login == "admin" or login == admin_login:
             pwd = admin_password
@@ -125,18 +127,70 @@ def main() -> int:
             pwd = prod_like_password
         else:
             pwd = demo_password
-        token = _login(intent_url, db_name, login, pwd)
+        token, login_status, login_resp = _login(intent_url, db_name, login, pwd)
         if not token:
             login_failures.append(login)
+            login_failure_details.append(
+                live_login_failure_hint(
+                    status=login_status,
+                    payload=login_resp,
+                    base_url=base_url,
+                    db_name=db_name,
+                    login=login,
+                )
+            )
             continue
         try:
             scenes = _system_init_hud(intent_url, token)
             role_samples[login] = {"scene_count": len(scenes), "scenes": scenes}
-        except Exception:
+        except Exception as exc:
             login_failures.append(login)
+            role_probe_failures.append(f"ENV_UNAVAILABLE: role probe failed login={login}: {exc}")
 
     if not role_samples:
-        raise RuntimeError("all role-matrix logins failed")
+        env_errors = sorted(login_failure_details + role_probe_failures) or ["ENV_UNAVAILABLE: all role-matrix logins failed"]
+        report = {
+            "ok": False,
+            "status": "ENV_UNAVAILABLE",
+            "baseline": baseline,
+            "summary": {
+                "probe_login": "",
+                "probe_source": probe_source,
+                "scene_count": 0,
+                "warning_count": 0,
+                "error_count": len(env_errors),
+                "role_sample_count": 0,
+                "v2_enforced_scene_count": 0,
+                "v2_coverage_ratio": 0.0,
+            },
+            "role_samples": {},
+            "login_failures": sorted(login_failures),
+            "warnings": [],
+            "errors": env_errors,
+        }
+        artifacts_root = _resolve_artifacts_dir()
+        artifact_json = artifacts_root / "backend" / "scene_contract_semantic_v2_guard.json"
+        artifact_md = artifacts_root / "backend" / "scene_contract_semantic_v2_guard.md"
+        artifact_json.parent.mkdir(parents=True, exist_ok=True)
+        artifact_json.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        lines = [
+            "# Scene Contract Semantic V2 Guard",
+            "",
+            "- status: ENV_UNAVAILABLE",
+            f"- probe_source: {probe_source}",
+            "- role_sample_count: 0",
+            "- scene_count: 0",
+            f"- error_count: {report['summary']['error_count']}",
+            "",
+            "## Errors",
+            "",
+        ]
+        lines.extend(f"- {item}" for item in report["errors"][:200])
+        artifact_md.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        print(str(artifact_json))
+        print(str(artifact_md))
+        print("[scene_contract_semantic_v2_guard] ENV_UNAVAILABLE")
+        return 1
 
     probe_login = sorted(
         role_samples.keys(),
