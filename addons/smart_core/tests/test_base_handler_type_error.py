@@ -54,7 +54,12 @@ class _FakeEnv:
     cr = object()
     uid = 5
     context = {}
-    user = None
+
+    class _User:
+        def has_group(self, xmlid):
+            return xmlid == "allowed.group"
+
+    user = _User()
 
 
 class TestBaseHandlerTypeError(unittest.TestCase):
@@ -95,6 +100,21 @@ class TestBaseHandlerTypeError(unittest.TestCase):
 
         self.assertEqual(result["params"], {"x": 1})
         self.assertEqual(result["context"], {"trace": "t"})
+
+    def test_write_detection_uses_runtime_payload_intent_alias(self):
+        base_cls = self.base.BaseIntentHandler
+
+        class Handler(base_cls):
+            INTENT_TYPE = "api.data"
+            REQUIRED_GROUPS = ["allowed.group"]
+
+            def handle(self):
+                return {"ok": True}
+
+        handler = Handler(env=_FakeEnv())
+        handler.run(payload={"intent": "api.data.write", "params": {"model": "x.model"}})
+
+        self.assertTrue(handler.is_write())
 
 
 if __name__ == "__main__":

@@ -86,9 +86,10 @@ class BaseIntentHandler:
         return True
 
     def is_write(self) -> bool:
-        intent = str(getattr(self, "INTENT_TYPE", "") or "")
         non_idempotent = bool(str(getattr(self, "NON_IDEMPOTENT_ALLOWED", "") or "").strip())
         params = self.params if isinstance(self.params, dict) else {}
+        payload = self.payload if isinstance(self.payload, dict) else {}
+        intent = str(payload.get("intent") or getattr(self, "INTENT_TYPE", "") or "")
         return is_write_intent(intent, params, non_idempotent=non_idempotent)
 
     def enforce_required_groups(self):
