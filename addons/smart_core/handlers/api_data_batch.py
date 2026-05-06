@@ -13,7 +13,7 @@ from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
 from ..core.project_context import apply_project_scope_domain, selected_project_id_from_context
-from ..core.request_params import parse_bool
+from ..core.request_params import parse_bool, parse_positive_int
 from .reason_codes import (
     REASON_CONFLICT,
     REASON_REPLAY_WINDOW_EXPIRED,
@@ -116,20 +116,16 @@ class ApiDataBatchHandler(BaseIntentHandler):
     def _resolve_vals(self, params: Dict[str, Any]):
         action = str(params.get("action") or "").strip().lower()
         if action in self.ACTION_MAP:
-            return action, dict(self.ACTION_MAP[action])
+            return action, dict(self.ACTION_MAP[action]), None
         if action == "assign":
-            assignee_id = params.get("assignee_id")
-            try:
-                uid = int(assignee_id)
-            except Exception:
-                uid = 0
-            if uid <= 0:
-                return action, {}
-            return action, {"user_id": uid}
+            uid, uid_error = parse_positive_int(params.get("assignee_id"))
+            if uid_error:
+                return action, {}, self._err(400, "assignee_id 无效")
+            return action, {"user_id": uid}, None
         vals = params.get("vals") or params.get("values") or {}
         if isinstance(vals, dict) and vals:
-            return action or "write", vals
-        return action, {}
+            return action or "write", vals, None
+        return action, {}, None
 
     def _get_int(self, params: Dict[str, Any], key: str, default: int):
         try:
@@ -300,7 +296,9 @@ class ApiDataBatchHandler(BaseIntentHandler):
         ids, ids_error = self._read_ids(params)
         if ids_error:
             return ids_error
-        action, vals = self._resolve_vals(params)
+        action, vals, vals_error = self._resolve_vals(params)
+        if vals_error:
+            return vals_error
         request_id = normalize_request_id(params.get("request_id"), prefix="adb_req")
         idempotency_key = str(params.get("idempotency_key") or "").strip() or request_id
         if_match_map = self._normalize_if_match_map(params)

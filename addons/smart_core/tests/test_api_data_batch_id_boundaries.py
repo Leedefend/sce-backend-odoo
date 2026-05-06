@@ -92,6 +92,28 @@ class TestApiDataBatchIdBoundaries(unittest.TestCase):
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["error"]["message"], "ids 无效")
 
+    def test_assign_rejects_invalid_assignee_id(self):
+        handler = self.module.ApiDataBatchHandler(
+            params={"model": "x.model", "ids": [1], "action": "assign", "assignee_id": "bad"}
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "assignee_id 无效")
+
+    def test_assign_rejects_missing_assignee_id(self):
+        handler = self.module.ApiDataBatchHandler(
+            params={"model": "x.model", "ids": [1], "action": "assign"}
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "assignee_id 无效")
+
 
 if __name__ == "__main__":
     unittest.main()
