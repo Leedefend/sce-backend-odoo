@@ -17,6 +17,26 @@ class _Env(dict):
     context = {}
 
 
+class _User:
+    id = 42
+
+
+class _FieldModel:
+    def with_context(self, context):
+        return self
+
+    def fields_get(self):
+        return {
+            "partner_id": {"type": "many2one", "relation": "res.partner"},
+            "state": {"type": "selection", "required": 0, "readonly": 0},
+        }
+
+
+class _MetaEnv(_Env):
+    context = {}
+    user = _User()
+
+
 def _install_base_modules(root):
     odoo_mod = types.ModuleType("odoo")
     http_mod = types.ModuleType("odoo.http")
@@ -95,6 +115,30 @@ class TestMetadataHandlerBoundaries(unittest.TestCase):
 
         self.assertFalse(result["ok"])
         self.assertEqual(result["code"], 404)
+
+    def test_meta_describe_string_false_expand_relation_is_respected(self):
+        module = _load_module("meta_describe.py")
+        handler = module.MetaDescribeHandler(
+            env=_MetaEnv({"x.model": _FieldModel()}),
+            params={"model": "x.model", "expand_relation": "false"},
+        )
+
+        result = handler.run()
+
+        self.assertTrue(result["ok"])
+        self.assertNotIn("relation_model", result["data"]["fields"]["partner_id"])
+
+    def test_meta_describe_string_true_expand_relation_is_respected(self):
+        module = _load_module("meta_describe.py")
+        handler = module.MetaDescribeHandler(
+            env=_MetaEnv({"x.model": _FieldModel()}),
+            params={"model": "x.model", "expand_relation": "true"},
+        )
+
+        result = handler.run()
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["fields"]["partner_id"]["relation_model"], "res.partner")
 
 
 if __name__ == "__main__":

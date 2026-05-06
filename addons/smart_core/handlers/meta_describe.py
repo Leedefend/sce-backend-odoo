@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # 统一元数据描述（只读意图）：返回字段定义 + 可选展开
 from ..core.base_handler import BaseIntentHandler
+from ..core.request_params import parse_bool
 from odoo.http import request
 import hashlib, json, time
 
@@ -61,8 +62,8 @@ class MetaDescribeHandler(BaseIntentHandler):
         fields = env.fields_get()  # 原始字段定义
 
         # 可选展开
-        expand_selection = bool(p.get("expand_selection", True))
-        expand_relation  = bool(p.get("expand_relation", True))
+        expand_selection = parse_bool(p.get("expand_selection"), True)
+        expand_relation = parse_bool(p.get("expand_relation"), True)
         for fname, f in fields.items():
             # 统一布尔化
             f["required"] = bool(f.get("required"))
