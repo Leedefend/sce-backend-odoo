@@ -256,6 +256,20 @@ class ApiOnchangeHandler(BaseIntentHandler):
                 out[name] = normalized
         return out
 
+    def _read_record_id(self, params: Dict[str, Any]):
+        for key in ("id", "res_id", "record_id"):
+            raw = params.get(key)
+            if raw in (None, False, ""):
+                continue
+            try:
+                record_id = int(raw)
+            except Exception:
+                return None, self._err(400, f"{key} invalid")
+            if record_id < 0:
+                return None, self._err(400, f"{key} invalid")
+            return record_id, None
+        return 0, None
+
     def _normalize_row_state(self, item: Dict[str, Any], row_patch: Dict[str, Any], warnings: List[Dict[str, str]]) -> str:
         raw = str(item.get("row_state") or "").strip().lower()
         if raw in ("create", "update", "remove", "keep"):
@@ -293,14 +307,9 @@ class ApiOnchangeHandler(BaseIntentHandler):
 
         context = params.get("context") if isinstance(params.get("context"), dict) else {}
         env_model = self.env[model].with_context(context)
-        record_id = 0
-        for key in ("id", "res_id", "record_id"):
-            try:
-                record_id = int(params.get(key) or 0)
-            except Exception:
-                record_id = 0
-            if record_id > 0:
-                break
+        record_id, record_id_error = self._read_record_id(params)
+        if record_id_error:
+            return record_id_error
         current_project_id = selected_project_id_from_context(params, context)
         if record_id > 0:
             in_scope, scope_meta = record_in_project_scope(env_model, record_id, current_project_id)
