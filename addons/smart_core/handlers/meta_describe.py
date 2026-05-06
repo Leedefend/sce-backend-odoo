@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # 统一元数据描述（只读意图）：返回字段定义 + 可选展开
 from ..core.base_handler import BaseIntentHandler
-from ..core.request_params import parse_bool
+from ..core.request_params import parse_bool, parse_positive_int
 from odoo.http import request
 import hashlib, json, time
 
@@ -27,33 +27,30 @@ class MetaDescribeHandler(BaseIntentHandler):
 
     def run(self, **_kwargs):
         p = self.params or {}
-        model = p.get("model")
+        if not isinstance(p, dict):
+            return self._err(400, "params 无效")
+        model, model_error = self._text_param(p, "model")
+        if model_error:
+            return model_error
         if not model:
-            return {
-                "ok": False,
-                "error": {"code":400, "message":"缺少 model 参数"},
-                "code": 400,
-                "meta": self._source_meta(),
-            }
+            return self._err(400, "缺少 model 参数")
         if model not in self.env:
-            return {
-                "ok": False,
-                "error": {"code": 404, "message": f"未知模型: {model}"},
-                "code": 404,
-                "meta": self._source_meta(),
-            }
+            return self._err(404, f"未知模型: {model}")
 
         # 上下文：lang/tz/company 可选
         ctx = (self.env.context or {}).copy()
-        if p.get("lang"): ctx["lang"] = p["lang"]
-        if p.get("tz"):   ctx["tz"] = p["tz"]
-        if p.get("company_id"):
-            try:
-                company_id = int(p["company_id"])
-            except Exception:
-                return {"ok": False, "error": {"code": 400, "message": "company_id 无效"}, "code": 400, "meta": self._source_meta()}
-            if company_id <= 0:
-                return {"ok": False, "error": {"code": 400, "message": "company_id 无效"}, "code": 400, "meta": self._source_meta()}
+        lang, lang_error = self._text_param(p, "lang", allow_empty=True)
+        if lang_error:
+            return lang_error
+        tz, tz_error = self._text_param(p, "tz", allow_empty=True)
+        if tz_error:
+            return tz_error
+        if lang: ctx["lang"] = lang
+        if tz:   ctx["tz"] = tz
+        company_id, company_error = parse_positive_int(p.get("company_id"), allow_empty=True)
+        if company_error:
+            return self._err(400, "company_id 无效")
+        if company_id:
             ctx["allowed_company_ids"] = [company_id]
         t0 = time.time()
 
@@ -61,7 +58,10 @@ class MetaDescribeHandler(BaseIntentHandler):
             hdr_if_none_match = (request.httprequest.headers.get("If-None-Match") or "").strip().strip('"')
         except Exception:
             hdr_if_none_match = ""
-        if_none_match = (p.get("if_none_match") or "").strip().strip('"') or hdr_if_none_match
+        if_none_match, if_none_match_error = self._text_param(p, "if_none_match", allow_empty=True)
+        if if_none_match_error:
+            return if_none_match_error
+        if_none_match = if_none_match.strip('"') or hdr_if_none_match
 
         env = self.env[model].with_context(ctx)
         fields = env.fields_get()  # 原始字段定义
@@ -95,6 +95,25 @@ class MetaDescribeHandler(BaseIntentHandler):
         meta = {"intent":"meta.describe_model","etag":etag,"elapsed_ms":int((time.time()-t0)*1000)}
         meta.update(self._source_meta())
         return {"ok": True, "data": data, "meta": meta}
+
+    def _text_param(self, params, key, *, allow_empty: bool = False):
+        raw = params.get(key)
+        if raw is None or raw == "":
+            return "", None
+        if isinstance(raw, bool) or not isinstance(raw, (str, int, float)):
+            return "", self._err(400, f"{key} 无效")
+        text = str(raw).strip()
+        if not text and not allow_empty:
+            return "", None
+        return text, None
+
+    def _err(self, code, message):
+        return {
+            "ok": False,
+            "error": {"code": code, "message": message},
+            "code": code,
+            "meta": self._source_meta(),
+        }
 
     def _source_meta(self):
         return {

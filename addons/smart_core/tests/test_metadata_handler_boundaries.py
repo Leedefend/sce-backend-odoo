@@ -116,6 +116,26 @@ class TestMetadataHandlerBoundaries(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertEqual(result["code"], 404)
 
+    def test_meta_describe_invalid_params_shape_returns_bad_request(self):
+        module = _load_module("meta_describe.py")
+        handler = module.MetaDescribeHandler(env=_Env(), params=["model", "x.model"])
+
+        result = handler.run()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "params 无效")
+
+    def test_meta_describe_invalid_model_param_returns_bad_request(self):
+        module = _load_module("meta_describe.py")
+        handler = module.MetaDescribeHandler(env=_Env(), params={"model": ["x.model"]})
+
+        result = handler.run()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "model 无效")
+
     def test_meta_describe_string_false_expand_relation_is_respected(self):
         module = _load_module("meta_describe.py")
         handler = module.MetaDescribeHandler(
@@ -152,6 +172,19 @@ class TestMetadataHandlerBoundaries(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["error"]["message"], "company_id 无效")
+
+    def test_meta_describe_invalid_if_none_match_returns_bad_request(self):
+        module = _load_module("meta_describe.py")
+        handler = module.MetaDescribeHandler(
+            env=_MetaEnv({"x.model": _FieldModel()}),
+            params={"model": "x.model", "if_none_match": ["etag"]},
+        )
+
+        result = handler.run()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "if_none_match 无效")
 
 
 if __name__ == "__main__":
