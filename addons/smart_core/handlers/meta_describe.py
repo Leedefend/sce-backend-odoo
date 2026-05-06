@@ -48,8 +48,13 @@ class MetaDescribeHandler(BaseIntentHandler):
         if p.get("lang"): ctx["lang"] = p["lang"]
         if p.get("tz"):   ctx["tz"] = p["tz"]
         if p.get("company_id"):
-            try: ctx["allowed_company_ids"] = [int(p["company_id"])]
-            except: pass
+            try:
+                company_id = int(p["company_id"])
+            except Exception:
+                return {"ok": False, "error": {"code": 400, "message": "company_id 无效"}, "code": 400, "meta": self._source_meta()}
+            if company_id <= 0:
+                return {"ok": False, "error": {"code": 400, "message": "company_id 无效"}, "code": 400, "meta": self._source_meta()}
+            ctx["allowed_company_ids"] = [company_id]
         t0 = time.time()
 
         try:

@@ -140,6 +140,19 @@ class TestMetadataHandlerBoundaries(unittest.TestCase):
         self.assertTrue(result["ok"])
         self.assertEqual(result["data"]["fields"]["partner_id"]["relation_model"], "res.partner")
 
+    def test_meta_describe_invalid_company_id_returns_bad_request(self):
+        module = _load_module("meta_describe.py")
+        handler = module.MetaDescribeHandler(
+            env=_MetaEnv({"x.model": _FieldModel()}),
+            params={"model": "x.model", "company_id": "bad"},
+        )
+
+        result = handler.run()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "company_id 无效")
+
 
 if __name__ == "__main__":
     unittest.main()
