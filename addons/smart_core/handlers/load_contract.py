@@ -77,15 +77,33 @@ class LoadContractHandler(BaseIntentHandler):
             "rebuildable": True,
         }
 
+    def _optional_text_param(self, params: dict, key: str):
+        if key not in params:
+            return "", None
+        raw = params.get(key)
+        if raw is None or raw == "":
+            return "", None
+        if isinstance(raw, bool) or not isinstance(raw, (str, int, float)):
+            return "", self._err(400, f"{key} 无效")
+        return str(raw).strip(), None
+
     # ✅ 与框架对齐：覆写 handle，而不是 run
     def handle(self, payload=None, ctx=None):
         payload = payload or {}
         # 兼容两种形态：payload={"params":{...}} 或 payload 直接就是 params
         p = payload.get("params") if isinstance(payload, dict) and "params" in payload else payload
         p = p or {}
+        if not isinstance(p, dict):
+            return self._err(400, "params 无效")
 
         # ---------- 1) 解析模型 ----------
-        raw_model = (p.get("model") or p.get("model_code") or "").strip()
+        raw_model, model_error = self._optional_text_param(p, "model")
+        if model_error:
+            return model_error
+        if not raw_model:
+            raw_model, model_code_error = self._optional_text_param(p, "model_code")
+            if model_code_error:
+                return model_code_error
         menu_id, menu_id_error = parse_positive_int(p.get("menu_id"), allow_empty=True)
         if menu_id_error:
             return self._err(400, "menu_id 无效")
@@ -165,8 +183,13 @@ class LoadContractHandler(BaseIntentHandler):
 
         # ---------- 4) 其它参数 ----------
         force_refresh   = str(p.get("force_refresh","")).lower() in ("1","true","yes")
-        client_version  = (p.get("version") or "").strip()
-        if_none_match   = (p.get("if_none_match") or "").strip().strip('"')
+        client_version, client_version_error = self._optional_text_param(p, "version")
+        if client_version_error:
+            return client_version_error
+        if_none_match, if_none_match_error = self._optional_text_param(p, "if_none_match")
+        if if_none_match_error:
+            return if_none_match_error
+        if_none_match = if_none_match.strip('"')
 
         # ---------- 5) 上下文透传（lang/tz/company） ----------
         ctx_user = dict(self.env.context or {})

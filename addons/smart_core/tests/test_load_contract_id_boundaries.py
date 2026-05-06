@@ -93,6 +93,27 @@ class TestLoadContractIdBoundaries(unittest.TestCase):
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["message"], "action_id 无效")
 
+    def test_invalid_params_shape_returns_bad_request(self):
+        result = self.handler.handle({"params": ["model", "x.model"]})
+
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["message"], "params 无效")
+
+    def test_invalid_model_param_returns_bad_request(self):
+        result = self.handler.handle({"params": {"model": ["x.model"]}})
+
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["message"], "model 无效")
+
+    def test_invalid_model_code_param_returns_bad_request(self):
+        result = self.handler.handle({"params": {"model_code": {"code": "x_model"}}})
+
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["message"], "model_code 无效")
+
     def test_invalid_context_ids_return_bad_request(self):
         cases = [
             ("company_id", "company_id 无效"),
@@ -101,6 +122,18 @@ class TestLoadContractIdBoundaries(unittest.TestCase):
         for field, message in cases:
             with self.subTest(field=field):
                 result = self.handler.handle({"params": {"model": "x.model", field: "bad"}})
+                self.assertEqual(result["status"], "error")
+                self.assertEqual(result["code"], 400)
+                self.assertEqual(result["message"], message)
+
+    def test_invalid_cache_params_return_bad_request(self):
+        cases = [
+            ("version", "version 无效"),
+            ("if_none_match", "if_none_match 无效"),
+        ]
+        for field, message in cases:
+            with self.subTest(field=field):
+                result = self.handler.handle({"params": {"model": "x.model", field: ["bad"]}})
                 self.assertEqual(result["status"], "error")
                 self.assertEqual(result["code"], 400)
                 self.assertEqual(result["message"], message)
