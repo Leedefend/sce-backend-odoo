@@ -12,7 +12,7 @@ from odoo.exceptions import AccessError, MissingError, AccessDenied
 
 from ..core.intent_router import route_intent_payload
 from ..core.context import RequestContext
-from ..core.http_result_policy import result_http_status
+from ..core.http_result_policy import result_http_status, result_is_success
 from ..core.intent_access_policy import ANONYMOUS_INTENTS, is_anonymous_allowed_intent
 from ..core.intent_operation_policy import is_write_intent, nested_params, normalize_intent_operation
 from ..security.intent_permission import check_intent_permission
@@ -438,7 +438,7 @@ class IntentDispatcher(http.Controller):
                 meta.setdefault("schema_version", SCHEMA_VERSION)
 
                 # 标准化错误结构
-                if result.get("ok") is False:
+                if not result_is_success(result):
                     err = result.get("error") if isinstance(result.get("error"), dict) else {}
                     if "code" not in err or "message" not in err:
                         result = build_error_envelope(
@@ -461,7 +461,7 @@ class IntentDispatcher(http.Controller):
                 return resp
 
             # type='http' 路由不会自动提交事务；写请求成功时必须显式 commit。
-            if isinstance(result, dict) and status < 400 and result.get("ok", True) and _is_write_request(intent_name, params):
+            if isinstance(result, dict) and status < 400 and result_is_success(result) and _is_write_request(intent_name, params):
                 try:
                     request.env.cr.commit()
                 except Exception:

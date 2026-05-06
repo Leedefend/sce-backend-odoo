@@ -29,6 +29,16 @@ class TestHttpResultPolicy(unittest.TestCase):
         self.assertEqual(self.policy.result_http_status({"ok": False, "code": "bad"}), 500)
         self.assertEqual(self.policy.result_http_status({"ok": False, "code": 0}), 500)
 
+    def test_success_flag_normalizes_common_false_values(self):
+        self.assertFalse(self.policy.result_is_success({"ok": "false"}))
+        self.assertFalse(self.policy.result_is_success({"ok": "0"}))
+        self.assertFalse(self.policy.result_is_success({"ok": 0}))
+        self.assertTrue(self.policy.result_is_success({"ok": "true"}))
+        self.assertTrue(self.policy.result_is_success({}))
+
+    def test_invalid_string_false_status_becomes_internal_error(self):
+        self.assertEqual(self.policy.result_http_status({"ok": "false", "code": "bad"}), 500)
+
 
 if __name__ == "__main__":
     unittest.main()

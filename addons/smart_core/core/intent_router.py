@@ -8,6 +8,7 @@ import odoo
 from .base_handler import BaseIntentHandler
 from .handler_registry import HANDLER_REGISTRY  # import 时已完成注册
 from .extension_loader import load_extensions
+from .http_result_policy import result_is_success
 from .request_identity import request_uid
 
 _logger = logging.getLogger(__name__)
@@ -133,7 +134,7 @@ def _dispatch(intent: str, params: dict, context: dict):
             ctx=context or {},
         )
         dispatch_result = result
-        dispatch_succeeded = not (isinstance(result, dict) and result.get("ok") is False)
+        dispatch_succeeded = result_is_success(result)
         return result
     finally:
         # 若新开了 cursor：成功请求要提交，否则关闭时会隐式回滚。
