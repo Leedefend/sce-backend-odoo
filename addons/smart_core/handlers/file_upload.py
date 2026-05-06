@@ -14,6 +14,7 @@ from ..core.project_context import (
     record_in_project_scope,
     selected_project_id_from_context,
 )
+from ..core.request_params import parse_positive_int
 from ..utils.extension_hooks import call_extension_hook_first
 
 _logger = logging.getLogger(__name__)
@@ -77,7 +78,7 @@ class FileUploadHandler(BaseIntentHandler):
         params = self._collect_params(payload)
 
         model = str(params.get("model") or params.get("res_model") or "").strip()
-        res_id = params.get("res_id") or params.get("record_id")
+        res_id = params.get("res_id") if "res_id" in params else params.get("record_id")
         name = params.get("name") or "upload.bin"
         mimetype = params.get("mimetype") or "application/octet-stream"
         data = params.get("data") or ""
@@ -88,12 +89,11 @@ class FileUploadHandler(BaseIntentHandler):
             return self._err(403, f"模型不允许上传: {model}")
         if model not in self.env:
             return self._err(404, f"未知模型: {model}")
-        if not res_id:
+        if _is_empty_param(res_id):
             return self._err(400, "缺少参数 res_id")
 
-        try:
-            res_id = int(res_id)
-        except Exception:
+        res_id, res_id_error = parse_positive_int(res_id)
+        if res_id_error:
             return self._err(400, "res_id 无效")
 
         if not data or not isinstance(data, str):
@@ -148,3 +148,7 @@ class FileUploadHandler(BaseIntentHandler):
             "record_scope": scope_meta,
         }
         return {"ok": True, "data": data, "meta": meta}
+
+
+def _is_empty_param(value: Any) -> bool:
+    return value is None or (isinstance(value, str) and not value.strip())

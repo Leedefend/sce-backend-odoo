@@ -89,6 +89,28 @@ class TestFileDownloadLocatorPolicy(unittest.TestCase):
         self.assertEqual(result["code"], 403)
         self.assertEqual(env.attachment_lookup_count, 0)
 
+    def test_non_positive_attachment_id_returns_bad_request(self):
+        module = _load_handler()
+        handler = module.FileDownloadHandler(env=_Env(), params={"id": 0})
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "id 无效")
+
+    def test_fallback_locator_rejects_non_positive_res_id(self):
+        module = _load_handler()
+        env = _Env()
+        env["res.partner"] = object()
+        handler = module.FileDownloadHandler(env=env, params={"model": "res.partner", "res_id": 0})
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "res_id 无效")
+
 
 if __name__ == "__main__":
     unittest.main()

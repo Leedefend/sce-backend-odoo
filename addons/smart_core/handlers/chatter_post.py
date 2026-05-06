@@ -12,6 +12,7 @@ from ..core.project_context import (
     record_in_project_scope,
     selected_project_id_from_context,
 )
+from ..core.request_params import parse_positive_int
 from ..utils.reason_codes import (
     REASON_MISSING_PARAMS,
     REASON_METHOD_NOT_CALLABLE,
@@ -49,19 +50,18 @@ class ChatterPostHandler(BaseIntentHandler):
     def handle(self, payload=None, ctx=None):
         params = self.params if isinstance(self.params, dict) else {}
         model = params.get("model")
-        res_id = params.get("res_id") or params.get("record_id")
+        res_id = params.get("res_id") if "res_id" in params else params.get("record_id")
         body = params.get("body")
         subject = params.get("subject")
         mode = str(params.get("mode") or "message").strip().lower()
         trace_id = self.context.get("trace_id") if isinstance(self.context, dict) else ""
 
-        if not model or not res_id or not body:
+        if not model or _is_empty_param(res_id) or not body:
             return self._failure(REASON_MISSING_PARAMS, "缺少参数 model/res_id/body", 400, trace_id)
         if model not in self.env:
             return self._failure(REASON_NOT_FOUND, "模型不存在", 404, trace_id)
-        try:
-            res_id = int(res_id)
-        except Exception:
+        res_id, res_id_error = parse_positive_int(res_id)
+        if res_id_error:
             return self._failure(REASON_USER_ERROR, "res_id 无效", 400, trace_id)
 
         try:
@@ -157,3 +157,7 @@ def _resolve_email_from(user) -> str:
     login = re.sub(r"[^A-Za-z0-9_.-]+", ".", str(user.login or "user").strip()).strip(".") or "user"
     display = str(user.display_name or user.login or "User").strip() or "User"
     return formataddr((display, f"{login}@example.invalid"))
+
+
+def _is_empty_param(value) -> bool:
+    return value is None or (isinstance(value, str) and not value.strip())
