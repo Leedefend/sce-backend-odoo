@@ -250,7 +250,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                     action = resolved.sudo()
             except Exception:
                 action = None
-        if not action:
+        if not action or not _server_action_matches_model(action, model):
             return None
         result = action.with_context(
             dict(
@@ -363,6 +363,13 @@ def _coerce_ids(value: Any) -> List[int]:
         return [int(value)]
     except Exception:
         return []
+
+
+def _server_action_matches_model(action, model: str) -> bool:
+    action_model = str(getattr(getattr(action, "model_id", None), "model", "") or "").strip()
+    if not action_model:
+        return False
+    return action_model == str(model or "").strip()
 
 
 def _failure_result(
