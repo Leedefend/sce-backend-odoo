@@ -375,7 +375,7 @@ class IntentDispatcher(http.Controller):
             }
 
             # ---------- 统一上下文 ----------
-            ctx = RequestContext.from_http_request()
+            ctx = RequestContext.from_payload(payload)
             setattr(ctx, "trace_id", trace_id)
             setattr(ctx, "is_anonymous", is_anon)
             setattr(ctx, "db", params.get("db"))

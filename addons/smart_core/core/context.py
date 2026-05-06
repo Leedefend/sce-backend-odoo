@@ -35,23 +35,29 @@ class RequestContext:
         self.request = request_obj  # 新增
 
     @classmethod
-    def from_http_request(cls):
-        params =  request.httprequest.get_json(force=True, silent=True) or dict(request.params)
+    def from_payload(cls, payload, request_obj=None):
+        params = payload if isinstance(payload, dict) else {}
         intent_name = (params.get("intent") or "").strip()
+        req = request_obj or request
 
         if intent_name in {"login", "auth.login", "sys.intents", "session.bootstrap", "bootstrap"}:
             user = None
-            env = request.env
+            env = req.env
         else:
             user = get_user_from_token()
-            env = request.env(user=user) if user else request.env
+            env = req.env(user=user) if user else req.env
 
-        ctx = cls(env, user, params, request)
+        ctx = cls(env, user, params, req)
         try:
-            ctx.trace_id = get_trace_id(request.httprequest.headers)
+            ctx.trace_id = get_trace_id(req.httprequest.headers)
         except Exception:
             ctx.trace_id = None
         return ctx
+
+    @classmethod
+    def from_http_request(cls):
+        params =  request.httprequest.get_json(force=True, silent=True) or dict(request.params)
+        return cls.from_payload(params, request)
 
 
     def has_param(self, key):
