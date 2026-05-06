@@ -114,6 +114,28 @@ class TestApiDataBatchIdBoundaries(unittest.TestCase):
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["error"]["message"], "assignee_id 无效")
 
+    def test_invalid_failed_limit_returns_bad_request(self):
+        handler = self.module.ApiDataBatchHandler(
+            params={"model": "x.model", "ids": [1], "vals": {"name": "A"}, "failed_limit": "bad"}
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "failed_limit 无效")
+
+    def test_negative_failed_offset_returns_bad_request(self):
+        handler = self.module.ApiDataBatchHandler(
+            params={"model": "x.model", "ids": [1], "vals": {"name": "A"}, "failed_offset": -1}
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "failed_offset 无效")
+
 
 if __name__ == "__main__":
     unittest.main()

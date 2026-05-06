@@ -13,7 +13,7 @@ from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
 from ..core.project_context import apply_project_scope_domain, selected_project_id_from_context
-from ..core.request_params import parse_bool, parse_positive_int
+from ..core.request_params import parse_bool, parse_non_negative_int, parse_positive_int
 from .reason_codes import (
     REASON_CONFLICT,
     REASON_REPLAY_WINDOW_EXPIRED,
@@ -127,11 +127,17 @@ class ApiDataBatchHandler(BaseIntentHandler):
             return action or "write", vals, None
         return action, {}, None
 
-    def _get_int(self, params: Dict[str, Any], key: str, default: int):
-        try:
-            return int(params.get(key))
-        except Exception:
-            return default
+    def _read_positive_param(self, params: Dict[str, Any], key: str, default: int):
+        value, error = parse_positive_int(params.get(key), allow_empty=True)
+        if error:
+            return 0, self._err(400, f"{key} 无效")
+        return value or default, None
+
+    def _read_non_negative_param(self, params: Dict[str, Any], key: str, default: int):
+        value, error = parse_non_negative_int(params.get(key), allow_empty=True)
+        if error:
+            return 0, self._err(400, f"{key} 无效")
+        return default if value is None else value, None
 
     def _normalize_if_match_map(self, params: Dict[str, Any]) -> Dict[int, str]:
         raw = params.get("if_match_map") or {}
@@ -302,11 +308,16 @@ class ApiDataBatchHandler(BaseIntentHandler):
         request_id = normalize_request_id(params.get("request_id"), prefix="adb_req")
         idempotency_key = str(params.get("idempotency_key") or "").strip() or request_id
         if_match_map = self._normalize_if_match_map(params)
-        preview_limit = self._get_int(params, "failed_preview_limit", 10)
-        page_limit = self._get_int(params, "failed_limit", preview_limit)
+        preview_limit, preview_limit_error = self._read_positive_param(params, "failed_preview_limit", 10)
+        if preview_limit_error:
+            return preview_limit_error
+        page_limit, page_limit_error = self._read_positive_param(params, "failed_limit", preview_limit)
+        if page_limit_error:
+            return page_limit_error
         page_limit = max(1, min(page_limit, 200))
-        page_offset = self._get_int(params, "failed_offset", 0)
-        page_offset = max(0, page_offset)
+        page_offset, page_offset_error = self._read_non_negative_param(params, "failed_offset", 0)
+        if page_offset_error:
+            return page_offset_error
         export_failed_csv = parse_bool(params.get("export_failed_csv"), False)
         context = params.get("context") if isinstance(params.get("context"), dict) else {}
 
