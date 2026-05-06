@@ -103,7 +103,7 @@ def _load_handler():
 class TestUiContractIdBoundaries(unittest.TestCase):
     def setUp(self):
         module = _load_handler()
-        env = types.SimpleNamespace(context={})
+        env = types.SimpleNamespace(context={}, user=types.SimpleNamespace(lang=""))
         self.handler = module.UiContractHandler(env=env, context={})
 
     def test_action_open_rejects_invalid_action_id(self):
@@ -129,6 +129,13 @@ class TestUiContractIdBoundaries(unittest.TestCase):
                 self.assertFalse(result["ok"])
                 self.assertEqual(result["error"]["code"], 400)
                 self.assertIn(field, result["error"]["message"])
+
+    def test_handle_rejects_invalid_company_id(self):
+        result = self.handler.handle({"params": {"op": "model", "model": "x.model", "company_id": "bad"}})
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"]["code"], 400)
+        self.assertEqual(result["error"]["message"], "company_id 无效")
 
 
 if __name__ == "__main__":

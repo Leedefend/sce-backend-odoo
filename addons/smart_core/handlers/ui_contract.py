@@ -163,9 +163,11 @@ class UiContractHandler(BaseIntentHandler):
             ctx["lang"] = user_lang
         if tz:   ctx["tz"] = tz
         company_id = self._get_param(p, "company_id", "companyId")
+        company_id, company_error = parse_positive_int(company_id, allow_empty=True)
+        if company_error:
+            return self._err(400, "company_id 无效")
         if company_id:
-            try: ctx["allowed_company_ids"] = [int(company_id)]
-            except Exception: pass
+            ctx["allowed_company_ids"] = [company_id]
 
         if_none_match = self._read_if_none_match(p)
         force_refresh = str(self._get_param(p, "force_refresh") or "").lower() in ("1","true","yes")
