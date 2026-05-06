@@ -97,6 +97,38 @@ def decode_token(token):
     except jwt.InvalidTokenError:
         raise AccessDenied("无效的 Token")
 
+
+def _extract_bearer_token(auth_header):
+    parts = str(auth_header or "").strip().split()
+    if len(parts) != 2 or parts[0].lower() != "bearer" or not parts[1].strip():
+        raise AccessDenied("Authorization 头格式无效")
+    return parts[1].strip()
+
+
+def _request_db_name():
+    try:
+        return str(getattr(getattr(request.env, "cr", None), "dbname", "") or "").strip()
+    except Exception:
+        return ""
+
+
+def _ensure_token_db_matches_request(token_db):
+    expected = str(token_db or "").strip()
+    current = _request_db_name()
+    if expected and current and expected != current:
+        raise AccessDenied("Token 数据库与当前请求数据库不一致")
+
+
+def _token_user_id(payload):
+    try:
+        user_id = int((payload or {}).get("user_id") or 0)
+    except Exception:
+        user_id = 0
+    if user_id <= 0:
+        raise AccessDenied("Token 缺少有效 user_id")
+    return user_id
+
+
 def get_user_from_token():
     """
     从请求中提取 Token 并解析用户对象。兼容系统原生登录与自定义 Token 登录。
@@ -106,13 +138,15 @@ def get_user_from_token():
     session_uid = getattr(session, "uid", None)
 
     if auth_header:
-        token = auth_header.split(" ")[-1]
+        token = _extract_bearer_token(auth_header)
         payload = decode_token(token)
-        user_id = payload.get("user_id")
+        user_id = _token_user_id(payload)
         token_db = str(payload.get("db") or "").strip()
         db_name = token_db or getattr(getattr(request, "session", None), "db", None) or getattr(request, "db", None)
         if not db_name:
             raise AccessDenied("Token 缺少数据库信息")
+        if token_db:
+            _ensure_token_db_matches_request(token_db)
         registry = Registry(db_name)
         with registry.cursor() as cr:
             env = api.Environment(cr, SUPERUSER_ID, {})
