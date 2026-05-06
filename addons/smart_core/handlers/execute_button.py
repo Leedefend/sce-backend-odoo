@@ -55,7 +55,16 @@ class ExecuteButtonHandler(BaseIntentHandler):
         dry_run = parse_bool(params.get("dry_run"), False)
 
         res_id = params.get("res_id") or params.get("record_id") or self.context.get("record_id")
-        res_ids = _coerce_ids(res_id)
+        res_ids, res_ids_error = _read_ids(res_id)
+        if res_ids_error:
+            return _failure_result(
+                model=model,
+                res_id=None,
+                reason_code=REASON_MISSING_PARAMS,
+                message="record_id 无效",
+                trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
+                status_code=400,
+            )
 
         try:
             if not model or not method_name or not res_ids:
@@ -356,14 +365,33 @@ class ExecuteButtonHandler(BaseIntentHandler):
 
 
 def _coerce_ids(value: Any) -> List[int]:
+    ids, _error = _read_ids(value)
+    return ids
+
+
+def _read_ids(value: Any):
     if value is None:
-        return []
+        return [], None
     if isinstance(value, (list, tuple)):
-        return [int(v) for v in value if v is not None]
+        out = []
+        for raw in value:
+            if raw is None:
+                continue
+            try:
+                item = int(raw)
+            except Exception:
+                return [], "invalid"
+            if item <= 0:
+                return [], "invalid"
+            out.append(item)
+        return out, None
     try:
-        return [int(value)]
+        item = int(value)
     except Exception:
-        return []
+        return [], "invalid"
+    if item <= 0:
+        return [], "invalid"
+    return [item], None
 
 
 def _server_action_matches_model(action, model: str) -> bool:

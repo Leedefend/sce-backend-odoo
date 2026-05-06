@@ -128,6 +128,21 @@ class TestExecuteButtonServerActionBoundaries(unittest.TestCase):
         self.assertTrue(result["ok"])
         self.assertEqual(action.run_calls, 1)
 
+    def test_invalid_record_id_returns_bad_request(self):
+        module = _load_handler()
+        handler = module.ExecuteButtonHandler(
+            env=_Env({}),
+            params={"model": "x.model", "record_id": ["bad"], "button": {"name": "action_confirm"}},
+            context={"trace_id": "trace"},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "record_id 无效")
+        self.assertEqual(result["meta"]["trace_id"], "trace")
+
 
 if __name__ == "__main__":
     unittest.main()
