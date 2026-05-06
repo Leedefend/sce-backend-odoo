@@ -115,6 +115,21 @@ class TestSearchFavoriteHandlerBoundaries(unittest.TestCase):
         self.assertEqual(filters.created_vals["user_id"], 42)
         self.assertIn(("user_id", "=", 42), filters.search_domains[0])
 
+    def test_invalid_action_id_returns_bad_request_before_filter_lookup(self):
+        module = _load_handler()
+        filters = _FilterModel()
+        env = _Env({"x.model": _Model(), "ir.filters": filters})
+        handler = module.SearchFavoriteSetHandler(
+            env=env,
+            payload={"model": "x.model", "name": "Mine", "action_id": "bad"},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"]["message"], "action_id 无效")
+        self.assertEqual(filters.search_domains, [])
+
 
 if __name__ == "__main__":
     unittest.main()

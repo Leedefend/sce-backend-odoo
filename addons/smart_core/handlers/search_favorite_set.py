@@ -49,6 +49,17 @@ class SearchFavoriteSetHandler(BaseIntentHandler):
             return payload.get("params") or {}
         return payload or {}
 
+    def _positive_int(self, value, field_name):
+        if value in (None, False, ""):
+            return 0, None
+        try:
+            result = int(value)
+        except Exception:
+            return 0, self._err(400, f"{field_name} 无效")
+        if result < 0:
+            return 0, self._err(400, f"{field_name} 无效")
+        return result, None
+
     def handle(self, payload=None, ctx=None):
         params = self._params(payload or self.payload)
         model = str(params.get("model") or "").strip()
@@ -77,7 +88,9 @@ class SearchFavoriteSetHandler(BaseIntentHandler):
         if client_requested_shared_favorite(params):
             _logger.warning("search.favorite.set ignored client shared favorite request model=%s", model)
         is_default = bool(params.get("is_default") is True)
-        action_id = int(params.get("action_id") or 0)
+        action_id, action_id_error = self._positive_int(params.get("action_id"), "action_id")
+        if action_id_error:
+            return action_id_error
 
         Filter = self.env["ir.filters"].sudo()
         vals = {
