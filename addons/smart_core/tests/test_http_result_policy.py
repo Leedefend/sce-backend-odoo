@@ -59,7 +59,13 @@ class TestHttpResultPolicy(unittest.TestCase):
         )
         self.assertEqual(
             self.policy.result_http_status({"ok": False, "error": {"code": "PERMISSION_DENIED", "message": "denied"}}),
-            200,
+            500,
+        )
+
+    def test_error_without_numeric_status_defaults_to_internal_error(self):
+        self.assertEqual(
+            self.policy.result_http_status({"ok": False, "error": {"message": "bad"}}),
+            500,
         )
 
     def test_success_flag_normalizes_common_false_values(self):

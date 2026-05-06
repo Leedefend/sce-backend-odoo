@@ -41,8 +41,8 @@ def result_http_status(result: Dict[str, Any] | None, default: int = 200) -> int
     raw = payload.get("code", None)
     if raw is None:
         error = payload.get("error") if isinstance(payload.get("error"), dict) else {}
-        error_code = error.get("code", default)
-        raw = error_code if isinstance(error_code, int) else default
+        error_code = error.get("code") if "code" in error else None
+        raw = error_code if isinstance(error_code, int) else (500 if not result_is_success(payload) else default)
     try:
         status = int(raw)
     except Exception:
