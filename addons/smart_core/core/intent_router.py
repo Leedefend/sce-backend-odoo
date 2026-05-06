@@ -109,12 +109,13 @@ def _dispatch(intent: str, params: dict, context: dict):
     env, su_env, extra_cr = _build_envs(params or {}, context or {})
     dispatch_succeeded = False
     try:
+        payload_envelope = {"intent": intent, "params": params or {}, "context": context or {}}
         # 2) 实例化 handler，注入 env/su_env/context/params
-        handler = handler_cls(env=env, su_env=su_env, request=request, context=context or {}, payload=params or {})
+        handler = handler_cls(env=env, su_env=su_env, request=request, context=context or {}, payload=payload_envelope)
         # 兼容旧字段
         try:
             setattr(handler, "params", params or {})
-            setattr(handler, "payload", params or {})  # 兼容早期字段名
+            setattr(handler, "payload", payload_envelope)
         except Exception:
             pass
         # 兼容：部分旧代码会直接访问 registry/cr/uid
@@ -127,7 +128,7 @@ def _dispatch(intent: str, params: dict, context: dict):
 
         # 3) 统一把参数传给 run（BaseIntentHandler.run 会转调 handle(payload, ctx)）
         result = handler.run(
-            payload={"intent": intent, "params": params or {}, "context": context or {}},
+            payload=payload_envelope,
             ctx=context or {},
         )
         dispatch_succeeded = True
