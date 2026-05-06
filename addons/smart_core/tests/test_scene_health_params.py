@@ -89,6 +89,36 @@ class TestSceneHealthParams(unittest.TestCase):
         self.assertTrue(result["ok"])
         self.assertIn("details", result["data"])
 
+    def test_invalid_company_id_returns_bad_request(self):
+        module = _load_handler()
+        handler = module.SceneHealthHandler(context={"trace_id": "trace"})
+
+        result = handler.handle(payload={"params": {"company_id": "bad"}})
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "company_id 无效")
+
+    def test_invalid_limit_returns_bad_request(self):
+        module = _load_handler()
+        handler = module.SceneHealthHandler(context={"trace_id": "trace"})
+
+        result = handler.handle(payload={"params": {"limit": "bad"}})
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "limit 无效")
+
+    def test_negative_offset_returns_bad_request(self):
+        module = _load_handler()
+        handler = module.SceneHealthHandler(context={"trace_id": "trace"})
+
+        result = handler.handle(payload={"params": {"offset": -1}})
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "offset 无效")
+
 
 if __name__ == "__main__":
     unittest.main()
