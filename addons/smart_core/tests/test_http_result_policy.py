@@ -1,14 +1,37 @@
 # -*- coding: utf-8 -*-
 import importlib.util
+import sys
+import types
 import unittest
 from pathlib import Path
 
 
 def _load_policy():
     root = Path(__file__).resolve().parents[1]
-    module_path = root / "core" / "http_result_policy.py"
-    spec = importlib.util.spec_from_file_location("http_result_policy_test_module", module_path)
+    addons_mod = types.ModuleType("odoo.addons")
+    smart_core_mod = types.ModuleType("odoo.addons.smart_core")
+    core_mod = types.ModuleType("odoo.addons.smart_core.core")
+    smart_core_mod.__path__ = [str(root)]
+    core_mod.__path__ = [str(root / "core")]
+    sys.modules.update(
+        {
+            "odoo.addons": addons_mod,
+            "odoo.addons.smart_core": smart_core_mod,
+            "odoo.addons.smart_core.core": core_mod,
+        }
+    )
+    policy_name = "odoo.addons.smart_core.core.intent_operation_policy"
+    sys.modules.pop(policy_name, None)
+    policy_spec = importlib.util.spec_from_file_location(policy_name, root / "core" / "intent_operation_policy.py")
+    policy_module = importlib.util.module_from_spec(policy_spec)
+    sys.modules[policy_name] = policy_module
+    policy_spec.loader.exec_module(policy_module)
+
+    module_name = "odoo.addons.smart_core.core.http_result_policy"
+    sys.modules.pop(module_name, None)
+    spec = importlib.util.spec_from_file_location(module_name, root / "core" / "http_result_policy.py")
     module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -47,6 +70,26 @@ class TestHttpResultPolicy(unittest.TestCase):
         payload = {"ok": "true"}
         self.policy.normalize_result_ok(payload)
         self.assertIs(payload["ok"], True)
+
+    def test_write_transaction_action_commits_only_successful_writes(self):
+        self.assertEqual(
+            self.policy.result_transaction_action("api.data.write", {"model": "x.model"}, {"ok": True}, 200),
+            "commit",
+        )
+        self.assertEqual(
+            self.policy.result_transaction_action("api.data.write", {"model": "x.model"}, {"ok": False}, 400),
+            "rollback",
+        )
+        self.assertEqual(
+            self.policy.result_transaction_action("api.data.write", {"model": "x.model"}, {"ok": "false"}, 200),
+            "rollback",
+        )
+
+    def test_read_transaction_action_does_not_touch_cursor(self):
+        self.assertEqual(
+            self.policy.result_transaction_action("api.data", {"op": "list", "model": "x.model"}, {"ok": True}, 200),
+            "none",
+        )
 
 
 if __name__ == "__main__":

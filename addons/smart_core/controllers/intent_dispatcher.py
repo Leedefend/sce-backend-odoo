@@ -12,7 +12,12 @@ from odoo.exceptions import AccessError, MissingError, AccessDenied
 
 from ..core.intent_router import route_intent_payload
 from ..core.context import RequestContext
-from ..core.http_result_policy import normalize_result_ok, result_http_status, result_is_success
+from ..core.http_result_policy import (
+    normalize_result_ok,
+    result_http_status,
+    result_is_success,
+    result_transaction_action,
+)
 from ..core.intent_access_policy import ANONYMOUS_INTENTS, is_anonymous_allowed_intent
 from ..core.intent_operation_policy import is_write_intent, nested_params, normalize_intent_operation
 from ..security.intent_permission import check_intent_permission
@@ -461,12 +466,19 @@ class IntentDispatcher(http.Controller):
                 resp.headers.update(headers)
                 return resp
 
-            # type='http' 路由不会自动提交事务；写请求成功时必须显式 commit。
-            if isinstance(result, dict) and status < 400 and result_is_success(result) and _is_write_request(intent_name, params):
+            # type='http' 路由不会自动提交事务；写请求成功才提交，失败写请求显式回滚。
+            tx_action = result_transaction_action(intent_name, params, result if isinstance(result, dict) else None, status)
+            if tx_action == "commit":
                 try:
                     request.env.cr.commit()
                 except Exception:
                     _logger.exception("intent commit failed: intent=%s trace=%s", intent_name, trace_id)
+                    return _error_response(INTERNAL_ERROR, "内部错误", 500, trace_id)
+            elif tx_action == "rollback":
+                try:
+                    request.env.cr.rollback()
+                except Exception:
+                    _logger.exception("intent rollback failed: intent=%s trace=%s", intent_name, trace_id)
                     return _error_response(INTERNAL_ERROR, "内部错误", 500, trace_id)
 
             return request.make_json_response(result, status=status, headers=headers)
