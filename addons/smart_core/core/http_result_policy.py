@@ -15,6 +15,12 @@ def result_is_success(result: Dict[str, Any] | None) -> bool:
     return bool(ok)
 
 
+def normalize_result_ok(result: Dict[str, Any] | None) -> Dict[str, Any] | None:
+    if isinstance(result, dict) and "ok" in result:
+        result["ok"] = result_is_success(result)
+    return result
+
+
 def result_http_status(result: Dict[str, Any] | None, default: int = 200) -> int:
     payload = result if isinstance(result, dict) else {}
     raw = payload.get("code", default)

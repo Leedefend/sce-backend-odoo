@@ -39,6 +39,15 @@ class TestHttpResultPolicy(unittest.TestCase):
     def test_invalid_string_false_status_becomes_internal_error(self):
         self.assertEqual(self.policy.result_http_status({"ok": "false", "code": "bad"}), 500)
 
+    def test_normalize_result_ok_rewrites_string_flags_to_booleans(self):
+        payload = {"ok": "false"}
+        self.policy.normalize_result_ok(payload)
+        self.assertIs(payload["ok"], False)
+
+        payload = {"ok": "true"}
+        self.policy.normalize_result_ok(payload)
+        self.assertIs(payload["ok"], True)
+
 
 if __name__ == "__main__":
     unittest.main()

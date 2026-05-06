@@ -12,7 +12,7 @@ from odoo.exceptions import AccessError, MissingError, AccessDenied
 
 from ..core.intent_router import route_intent_payload
 from ..core.context import RequestContext
-from ..core.http_result_policy import result_http_status, result_is_success
+from ..core.http_result_policy import normalize_result_ok, result_http_status, result_is_success
 from ..core.intent_access_policy import ANONYMOUS_INTENTS, is_anonymous_allowed_intent
 from ..core.intent_operation_policy import is_write_intent, nested_params, normalize_intent_operation
 from ..security.intent_permission import check_intent_permission
@@ -406,6 +406,7 @@ class IntentDispatcher(http.Controller):
                 return resp
 
             result = _normalize_result_shape(raw_result)
+            normalize_result_ok(result)
 
             # Backward-compat: legacy load_view handlers may return view payload at top-level
             if intent_name == "load_view" and isinstance(result, dict):
