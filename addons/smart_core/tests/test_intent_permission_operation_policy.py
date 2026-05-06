@@ -281,6 +281,14 @@ class TestIntentPermissionOperationPolicy(unittest.TestCase):
         self.assertEqual(self.model.browsed_ids, [])
         self.assertEqual(self.model.rule_modes, [])
 
+    def test_unknown_model_raises_missing_error_instead_of_key_error(self):
+        ctx = _Ctx({"intent": "api.data", "params": {"model": "missing.model"}})
+
+        with self.assertRaises(MissingError) as raised:
+            self.permission.check_intent_permission(ctx)
+
+        self.assertIn("missing.model", str(raised.exception))
+
     def test_batch_archive_is_write_policy(self):
         ctx = _Ctx({"intent": "api.data.batch", "params": {"model": "x.model", "action": "archive", "ids": [9]}})
 

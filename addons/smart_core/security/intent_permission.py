@@ -83,6 +83,16 @@ def _capability_key(ctx_params):
     return None
 
 
+def _resolve_model(env, model):
+    model_name = str(model or "").strip()
+    if not model_name:
+        return None
+    try:
+        return env[model_name]
+    except Exception:
+        raise MissingError(f"模型 {model_name} 不存在")
+
+
 def _to_int(value):
     try:
         return int(value)
@@ -184,16 +194,17 @@ def check_intent_permission(ctx):
 
 
     # ✅ 校验模型访问权限
+    model_obj = _resolve_model(env, model) if model else None
     if model:
         try:
-            env[model].check_access_rights(access_mode)
+            model_obj.check_access_rights(access_mode)
         except AccessError:
             raise AccessError(f"用户无权以 {access_mode} 访问模型 {model}")
 
     # ✅ 校验记录访问权限（如果传入 record_id/id/ids；create 无既有记录可校验）
     record_ids = _record_ids(ctx_params)
     if model and record_ids and access_mode != "create":
-        rec = env[model].browse(record_ids)
+        rec = model_obj.browse(record_ids)
         existing = rec.exists()
         try:
             has_missing = len(existing) != len(record_ids)
