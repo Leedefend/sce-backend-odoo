@@ -18,6 +18,19 @@ class SessionBootstrapHandler(BaseIntentHandler):
     REQUIRED_GROUPS = []
     SOURCE_KIND = "dev_test_auth_bootstrap_proxy"
     SOURCE_AUTHORITIES = ("res.users", "SC_BOOTSTRAP_SECRET")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+            "dev_test_only": True,
+        }
 
     def handle(self, payload=None, ctx=None):
         env_flag = (os.getenv("ENV") or "").lower()
@@ -64,6 +77,7 @@ class SessionBootstrapHandler(BaseIntentHandler):
             "meta": {
                 "source_kind": self.SOURCE_KIND,
                 "source_authorities": list(self.SOURCE_AUTHORITIES),
+                "source_authority": self.source_authority_contract(),
             },
         }
 

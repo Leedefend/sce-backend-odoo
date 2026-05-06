@@ -49,6 +49,10 @@ _load_module(
     "addons/smart_core/delivery/release_operator_contract_versions.py",
 )
 _load_module(
+    "odoo.addons.smart_core.delivery.product_identity",
+    "addons/smart_core/delivery/product_identity.py",
+)
+_load_module(
     "odoo.addons.smart_core.delivery.release_operator_contract_registry",
     "addons/smart_core/delivery/release_operator_contract_registry.py",
 )
@@ -76,6 +80,13 @@ class _ApprovalPolicyService:
 
     def resolve_actor_role_codes(self, user):
         return ["release_manager"]
+
+    def resolve_actor_role_context(self, user):
+        return {
+            "actor_role_codes": ["release_manager"],
+            "role_source": "test",
+            "source_authority": {"kind": "release_approval_policy_projection"},
+        }
 
     def roles_match(self, actor_roles, allowed_roles):
         return bool(set(actor_roles or []).intersection(set(allowed_roles or [])))
@@ -137,6 +148,20 @@ class _Env(dict):
         super().__init__()
         self.user = object()
         self["sc.release.action"] = _RecordSet([_ReleaseActionRow()])
+        self["ir.config_parameter"] = _ConfigParameter("")
+
+
+class _ConfigParameter:
+    def __init__(self, default_base):
+        self.default_base = default_base
+
+    def sudo(self):
+        return self
+
+    def get_param(self, key, default=""):
+        if key == "smart_core.release_operator.default_base_product_key":
+            return self.default_base
+        return default
 
 
 class TestReleaseOperatorSurfaceCopyBackend(unittest.TestCase):
@@ -147,6 +172,8 @@ class TestReleaseOperatorSurfaceCopyBackend(unittest.TestCase):
 
         payload = service.build_surface(product_key="construction.standard", action_limit=5)
 
+        self.assertEqual((payload.get("source_authority") or {}).get("kind"), "release_operator_surface_projection")
+        self.assertEqual((((payload.get("read_model_v1") or {}).get("source_authority") or {}).get("kind")), "release_operator_read_model_projection")
         self.assertEqual((payload.get("copy") or {}).get("title"), "发布控制台")
         self.assertIn("候选快照", (payload.get("copy") or {}).get("hint_candidate", ""))
         self.assertEqual((((payload.get("read_model_v1") or {}).get("copy") or {}).get("section_pending")), "待审批动作")
@@ -160,6 +187,32 @@ class TestReleaseOperatorSurfaceCopyBackend(unittest.TestCase):
         payload = service.build_surface(product_key="construction.preview", action_limit=5)
 
         self.assertIn("预览版", (payload.get("copy") or {}).get("description", ""))
+
+    def test_operator_products_follow_requested_base_product(self):
+        service = TARGET.ReleaseOperatorSurfaceService(_Env())
+        service.read_model_service.audit_service = _AuditTrailService()
+        service.read_model_service.approval_policy_service = _ApprovalPolicyService()
+
+        payload = service.build_surface(product_key="platform.preview", action_limit=5)
+        read_model = payload.get("read_model_v1") or {}
+        products = read_model.get("products") or []
+
+        self.assertEqual((read_model.get("identity") or {}).get("product_key"), "platform.preview")
+        self.assertEqual([row.get("product_key") for row in products], ["platform.standard", "platform.preview"])
+        self.assertEqual((((read_model.get("identity") or {}).get("source_authority") or {}).get("kind")), "delivery_product_identity_resolver")
+
+    def test_operator_default_base_product_is_configurable(self):
+        env = _Env()
+        env["ir.config_parameter"] = _ConfigParameter("platform")
+        service = TARGET.ReleaseOperatorSurfaceService(env)
+        service.read_model_service.audit_service = _AuditTrailService()
+        service.read_model_service.approval_policy_service = _ApprovalPolicyService()
+
+        payload = service.build_surface(product_key="", action_limit=5)
+        read_model = payload.get("read_model_v1") or {}
+
+        self.assertEqual((read_model.get("identity") or {}).get("product_key"), "platform.standard")
+        self.assertEqual((read_model.get("identity") or {}).get("default_base_source"), "config")
 
 
 if __name__ == "__main__":

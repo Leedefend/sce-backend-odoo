@@ -8,10 +8,15 @@ from dataclasses import dataclass
 class MenuFactSnapshot:
     flat: list[dict]
     tree: list[dict]
+    source_authority: dict
 
 
 class MenuFactService:
     """Facts-only scanner for ir.ui.menu."""
+
+    SOURCE_KIND = "odoo_menu_fact_projection"
+    SOURCE_AUTHORITIES = ("ir.ui.menu", "ir.actions", "res.groups", "ir.model.data")
+    NO_BUSINESS_FACT_AUTHORITY = True
 
     ACTION_MODELS = {
         "ir.actions.act_window",
@@ -23,11 +28,23 @@ class MenuFactService:
     def __init__(self, env):
         self.env = env
 
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "fact_authority": "odoo_native_menu_registry",
+            "runtime_carrier": "ir.ui.menu",
+        }
+
     def export_visible_menu_facts(self) -> MenuFactSnapshot:
         menu_model = self.env["ir.ui.menu"]
         visible_ids = self._visible_menu_ids(menu_model)
         if not visible_ids:
-            return MenuFactSnapshot(flat=[], tree=[])
+            return MenuFactSnapshot(flat=[], tree=[], source_authority=self.source_authority_contract())
 
         menus = menu_model.browse(sorted(visible_ids)).exists()
         raw_action_map = self._read_action_raw_map(visible_ids)
@@ -79,7 +96,7 @@ class MenuFactService:
             ),
         )
         tree = self._build_tree(by_id)
-        return MenuFactSnapshot(flat=flat, tree=tree)
+        return MenuFactSnapshot(flat=flat, tree=tree, source_authority=self.source_authority_contract())
 
     def _visible_menu_ids(self, menu_model) -> set[int]:
         try:
@@ -331,6 +348,7 @@ class MenuFactService:
         )
 
         return {
+            "source_authority": self.source_authority_contract(),
             "summary": {
                 "menu_total": len(rows),
                 "directory_menu_count": directory_menu_count,

@@ -43,6 +43,7 @@ class AppWorkflowConfig(models.Model):
             "projection_only": True,
             "rebuildable": True,
             "runtime_authority": "odoo_model_methods_and_mail_activity",
+            "no_business_fact_authority": True,
         }
 
     # ======================= 生成入口 =======================

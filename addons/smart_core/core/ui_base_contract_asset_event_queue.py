@@ -9,6 +9,20 @@ from typing import Any
 QUEUE_KEY = "sc.ui_base_contract.asset.refresh.queue"
 QUEUE_META_KEY = "sc.ui_base_contract.asset.refresh.queue.meta"
 DEFAULT_MAX_QUEUE_SIZE = 500
+SOURCE_KIND = "ui_base_contract_asset_event_queue"
+SOURCE_AUTHORITIES = ("ir.config_parameter", "ui_base_contract_asset")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "write_proxy": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "ui_base_contract_asset_event_queue",
+    }
 
 
 def _text(value: Any) -> str:
@@ -107,6 +121,7 @@ def enqueue_scene_keys(
     }
     config.set_param(QUEUE_META_KEY, json.dumps(meta, ensure_ascii=False, separators=(",", ":")))
     return {
+        "source_authority": source_authority_contract(),
         "queue_size": len(current),
         "added_count": int(added),
         "reason": meta["reason"],
@@ -134,6 +149,7 @@ def pop_scene_keys(env, *, limit: int = 50) -> dict:
     )
     config.set_param(QUEUE_META_KEY, json.dumps(meta, ensure_ascii=False, separators=(",", ":")))
     return {
+        "source_authority": source_authority_contract(),
         "scene_keys": list(selected),
         "popped_count": len(selected),
         "remaining_count": len(remain),
@@ -157,6 +173,7 @@ def get_queue_metrics(env) -> dict:
         )
         config.set_param(QUEUE_META_KEY, json.dumps(meta, ensure_ascii=False, separators=(",", ":")))
     return {
+        "source_authority": source_authority_contract(),
         "queue_size": len(queue),
         "updated_at": _text(meta.get("updated_at")),
         "reason": _text(meta.get("reason")),

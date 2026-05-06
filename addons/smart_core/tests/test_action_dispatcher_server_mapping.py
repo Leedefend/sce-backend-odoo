@@ -139,6 +139,8 @@ class TestActionDispatcherServerMapping(TransactionCase):
                 "lifecycle_state",
                 "date_start",
                 "date",
+                "create_uid",
+                "create_date",
             ],
         )
         self.assertEqual((list_profile.get("column_labels") or {}).get("name"), "名称")
@@ -186,6 +188,8 @@ class TestActionDispatcherServerMapping(TransactionCase):
                 "amount",
                 "state",
                 "date_request",
+                "create_uid",
+                "create_date",
             ],
         )
         self.assertEqual((list_profile.get("column_labels") or {}).get("name"), "申请单号")
@@ -221,7 +225,7 @@ class TestActionDispatcherServerMapping(TransactionCase):
         list_profile = data.get("list_profile") if isinstance(data.get("list_profile"), dict) else {}
         self.assertEqual(
             list_profile.get("columns") or [],
-            ["name", "project_id", "date_plan", "state"],
+            ["name", "project_id", "date_plan", "state", "create_uid", "create_date"],
         )
         self.assertEqual((list_profile.get("column_labels") or {}).get("name"), "单号")
         self.assertEqual((list_profile.get("column_labels") or {}).get("date_plan"), "需用日期")

@@ -5,6 +5,10 @@ from typing import Any
 
 from odoo import fields
 
+SOURCE_KIND = "edition_release_snapshot_promotion_proxy"
+SOURCE_AUTHORITIES = ("sc.edition.release.snapshot", "release_snapshot_state_machine")
+NO_BUSINESS_FACT_AUTHORITY = True
+
 
 def _text(value: Any) -> str:
     return str(value or "").strip()
@@ -20,6 +24,17 @@ class EditionReleaseSnapshotPromotionService:
 
     def __init__(self, env):
         self.env = env
+
+    @classmethod
+    def source_authority_contract(cls) -> dict[str, Any]:
+        return {
+            "kind": SOURCE_KIND,
+            "authorities": list(SOURCE_AUTHORITIES),
+            "projection_only": False,
+            "write_proxy": True,
+            "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "edition_release_snapshot_state_transition",
+        }
 
     def _model(self):
         return self.env["sc.edition.release.snapshot"].sudo()
@@ -73,7 +88,9 @@ class EditionReleaseSnapshotPromotionService:
                     "promoted_from_snapshot_id": int(rec.id),
                 }
             )
-            return rec.to_runtime_dict()
+            payload = rec.to_runtime_dict()
+            payload["promotion_source_authority"] = self.source_authority_contract()
+            return payload
         if target == "released":
             conflicts = self._active_released_conflicts(rec)
             if conflicts and not replace_active:
@@ -101,7 +118,9 @@ class EditionReleaseSnapshotPromotionService:
                     "promoted_from_snapshot_id": int(rec.id),
                 }
             )
-            return rec.to_runtime_dict()
+            payload = rec.to_runtime_dict()
+            payload["promotion_source_authority"] = self.source_authority_contract()
+            return payload
         if target == "superseded":
             rec.write(
                 {
@@ -113,7 +132,9 @@ class EditionReleaseSnapshotPromotionService:
                     "promoted_from_snapshot_id": int(rec.id),
                 }
             )
-            return rec.to_runtime_dict()
+            payload = rec.to_runtime_dict()
+            payload["promotion_source_authority"] = self.source_authority_contract()
+            return payload
         raise ValueError(f"UNSUPPORTED_RELEASE_SNAPSHOT_TARGET:{target}")
 
     def promote_to_approved(self, snapshot_id: int, **kwargs) -> dict[str, Any]:

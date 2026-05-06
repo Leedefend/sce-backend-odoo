@@ -13,6 +13,29 @@ from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_fir
 _logger = logging.getLogger(__name__)
 
 class ActionResolver:
+    SOURCE_KIND = "odoo_action_resolution_projection"
+    SOURCE_AUTHORITIES = (
+        "ir.actions.actions",
+        "ir.actions.act_window",
+        "ir.actions.server",
+        "ir.actions.client",
+        "ir.actions.report",
+        "ir.actions.act_url",
+        "ir.ui.menu",
+    )
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "app_config_engine.action_resolver",
+        }
+
     def __init__(self, env):
         self.env = env
 

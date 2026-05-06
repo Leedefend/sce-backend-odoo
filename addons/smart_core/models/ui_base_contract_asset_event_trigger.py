@@ -62,6 +62,18 @@ class IrActionsActWindowAssetTrigger(models.Model):
     _inherit = "ir.actions.act_window"
     SOURCE_KIND = "ui_base_contract_asset_invalidation_trigger"
     SOURCE_AUTHORITIES = ("ir.actions.act_window", "ui_base_contract_asset")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @api.model
+    def source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": self.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": self._name,
+        }
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -101,6 +113,18 @@ class IrUiViewAssetTrigger(models.Model):
     _inherit = "ir.ui.view"
     SOURCE_KIND = "ui_base_contract_asset_invalidation_trigger"
     SOURCE_AUTHORITIES = ("ir.ui.view", "ui_base_contract_asset")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @api.model
+    def source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": self.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": self._name,
+        }
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -136,6 +160,18 @@ class ResGroupsAssetTrigger(models.Model):
     _inherit = "res.groups"
     SOURCE_KIND = "ui_base_contract_asset_invalidation_trigger"
     SOURCE_AUTHORITIES = ("res.groups", "ui_base_contract_asset")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @api.model
+    def source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": self.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": self._name,
+        }
 
     @api.model_create_multi
     def create(self, vals_list):

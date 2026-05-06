@@ -4,6 +4,21 @@ from __future__ import annotations
 import zlib
 from typing import Any, Dict
 
+SOURCE_KIND = "delivery_menu_default_projection"
+SOURCE_AUTHORITIES = ("delivery_engine_v1", "release_surface_menu_payload")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "synthetic_navigation_only": True,
+    }
+
 
 def synthetic_menu_id(key: str, base: int = 900_000_000, span: int = 50_000_000) -> int:
     raw = zlib.crc32(str(key or "").encode("utf-8")) & 0xFFFFFFFF
@@ -28,6 +43,7 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
         "product_key": str(menu.get("product_key") or "").strip(),
         "capability_key": str(menu.get("capability_key") or "").strip(),
         "source": "delivery_engine_v1",
+        "default_source_authority": source_authority_contract(),
     }
     if route:
         meta["route"] = route
@@ -57,6 +73,9 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
     delivery_bucket = str(menu.get("delivery_bucket") or "").strip()
     if delivery_bucket:
         meta["delivery_bucket"] = delivery_bucket
+    source_authority = menu.get("source_authority")
+    if isinstance(source_authority, dict) and source_authority:
+        meta["source_authority"] = source_authority
     return {
         "key": key,
         "label": label,
@@ -68,7 +87,11 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
 
 
 def build_delivery_menu_group(group_key: str, group_label: str, children: list[dict]) -> Dict[str, Any]:
-    meta = {"group_key": group_key, "source": "delivery_engine_v1"}
+    meta = {
+        "group_key": group_key,
+        "source": "delivery_engine_v1",
+        "default_source_authority": source_authority_contract(),
+    }
     if children and any(((child.get("meta") or {}).get("release_state") == "preview") for child in children if isinstance(child, dict)):
         meta["release_state"] = "preview"
     return {
@@ -88,5 +111,9 @@ def build_delivery_menu_root(group_nodes: list[dict], role_code: str) -> Dict[st
         "title": "产品发布面",
         "menu_id": synthetic_menu_id("root:delivery_engine", base=880_000_000, span=10_000_000),
         "children": group_nodes,
-        "meta": {"source": "delivery_engine_v1", "role_code": role_code},
+        "meta": {
+            "source": "delivery_engine_v1",
+            "role_code": role_code,
+            "default_source_authority": source_authority_contract(),
+        },
     }

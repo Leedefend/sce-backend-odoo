@@ -9,6 +9,21 @@ from odoo.addons.smart_core.utils.contract_governance import is_truthy
 
 
 class SceneChannelPolicy:
+    SOURCE_KIND = "scene_channel_policy_projection"
+    SOURCE_AUTHORITIES = ("request.params", "ir.config_parameter", "environment")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "system.init.scene_channel_policy",
+        }
+
     def resolve(self, env: api.Environment, params: dict, scene_channel: str) -> tuple[str, bool]:
         pinned_param = params.get("scene_use_pinned") if isinstance(params, dict) else None
         rollback_param = params.get("scene_rollback") if isinstance(params, dict) else None

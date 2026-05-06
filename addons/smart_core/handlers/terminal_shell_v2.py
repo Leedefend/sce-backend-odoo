@@ -17,6 +17,18 @@ class TerminalShellV2Handler(BaseIntentHandler):
     VERSION = CONTRACT_VERSION
     SOURCE_KIND = "terminal_shell_contract_v2"
     SOURCE_AUTHORITIES = ("app.catalog", "app.nav", "app.open", "ui.contract.v2")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def handle(self, payload: Optional[Dict[str, Any]] = None, ctx: Optional[Dict[str, Any]] = None):
         ts0 = time.time()
@@ -103,6 +115,7 @@ class TerminalShellV2Handler(BaseIntentHandler):
                 "elapsed_ms": int((time.time() - ts0) * 1000),
                 "source_kind": self.SOURCE_KIND,
                 "source_authorities": list(self.SOURCE_AUTHORITIES),
+                "source_authority": self.source_authority_contract(),
             },
         )
 

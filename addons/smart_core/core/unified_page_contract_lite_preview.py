@@ -15,6 +15,21 @@ from .unified_page_contract_lite_source_normalizer import normalize_lite_contrac
 
 
 SUPPORTED_LITE_PREVIEW_CLIENT_TYPES = ("web_pc", "wx_mini", "harmony_h5")
+SOURCE_KIND = "unified_page_contract_lite_preview_projection"
+SOURCE_AUTHORITIES = ("legacy_response", "lite_contract_projection", "lite_patch_projection")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "unified_page_contract_lite_preview",
+    }
+
 LITE_PREVIEW_CONTRACT_MODE = "lite_preview"
 LITE_PREVIEW_CONTRACT_VERSION = "2.0.0"
 LITE_PREVIEW_FALLBACK_MODE = "legacy_default"

@@ -8,12 +8,35 @@ from odoo.exceptions import AccessError
 import  inspect
 
 _logger = logging.getLogger(__name__)
+SOURCE_KIND = "intent_handler_runtime_base"
+SOURCE_AUTHORITIES = ("handler_payload", "odoo.env", "ir.model.access", "res.groups")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "write_proxy": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "base_intent_handler",
+    }
+
 _WRITE_INTENT_PATTERN = re.compile(
     r"(create|write|unlink|delete|batch|execute|upload|cancel|approve|reject|submit|done|import|rollback|pin|set)",
     re.IGNORECASE,
 )
 
 class BaseIntentHandler:
+    SOURCE_KIND = SOURCE_KIND
+    SOURCE_AUTHORITIES = SOURCE_AUTHORITIES
+    NO_BUSINESS_FACT_AUTHORITY = NO_BUSINESS_FACT_AUTHORITY
+
+    @classmethod
+    def source_authority_contract(cls) -> Dict[str, Any]:
+        return source_authority_contract()
+
     """
     统一的意图处理基类
     - 通过 __init__ 注入 env/su_env/request/context/payload

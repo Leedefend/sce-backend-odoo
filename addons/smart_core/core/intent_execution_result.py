@@ -6,9 +6,32 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict
 
+SOURCE_KIND = "intent_execution_result_envelope"
+SOURCE_AUTHORITIES = ("handler_result",)
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "intent_execution_result",
+    }
+
 
 @dataclass
 class IntentExecutionResult:
+    SOURCE_KIND = SOURCE_KIND
+    SOURCE_AUTHORITIES = SOURCE_AUTHORITIES
+    NO_BUSINESS_FACT_AUTHORITY = NO_BUSINESS_FACT_AUTHORITY
+
+    @classmethod
+    def source_authority_contract(cls) -> Dict[str, Any]:
+        return source_authority_contract()
+
     ok: bool = True
     data: Any = field(default_factory=dict)
     error: Dict[str, Any] | None = None

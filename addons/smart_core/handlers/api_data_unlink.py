@@ -8,7 +8,11 @@ from typing import Any, Dict, List
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
-from ..core.project_context import apply_project_scope_domain, selected_project_id_from_context
+from ..core.project_context import (
+    apply_project_scope_domain,
+    project_scope_denied_response,
+    selected_project_id_from_context,
+)
 from ..utils.idempotency import (
     apply_idempotency_identity,
     build_idempotency_conflict_response,
@@ -195,7 +199,7 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
         if project_scope_meta.get("applied"):
             allowed_count = env_model.search_count(scoped_domain)
             if int(allowed_count or 0) != len(set(ids)):
-                return self._err(403, "当前项目上下文不允许删除其他项目的数据", "PROJECT_SCOPE_DENIED")
+                return project_scope_denied_response(project_scope_meta, message="当前项目上下文不允许删除其他项目的数据")
         trace_id = ""
         if isinstance(self.context, dict):
             trace_id = self.context.get("trace_id") or ""
@@ -231,7 +235,12 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
                     "ids": ids,
                     "model": model,
                     "dry_run": dry_run,
+                    "project_scope": project_scope_meta,
+                    "record_scope": project_scope_meta,
                 }
+                if isinstance(base_data, dict):
+                    base_data.setdefault("project_scope", project_scope_meta)
+                    base_data.setdefault("record_scope", project_scope_meta)
                 data = self._with_idempotency_contract(
                     base_data,
                     request_id=request_id,
@@ -240,7 +249,14 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
                     trace_id=trace_id,
                     deduplicated=True,
                 )
-                meta = {"trace_id": trace_id, "write_mode": "unlink", "source": "portal-shell", "source_authority": self._source_authority_contract(model)}
+                meta = {
+                    "trace_id": trace_id,
+                    "write_mode": "unlink",
+                    "source": "portal-shell",
+                    "source_authority": self._source_authority_contract(model),
+                    "project_scope": project_scope_meta,
+                    "record_scope": project_scope_meta,
+                }
                 return {"ok": True, "data": data, "meta": meta}
 
         recs = env_model.browse(ids).exists()
@@ -259,7 +275,14 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
             _logger.exception("api.data.unlink failed on %s", model)
             return self._err(500, str(e), REASON_SYSTEM_ERROR)
 
-        data = {"ids": ids, "model": model, "dry_run": dry_run, "delete_policy": delete_policy, "project_scope": project_scope_meta}
+        data = {
+            "ids": ids,
+            "model": model,
+            "dry_run": dry_run,
+            "delete_policy": delete_policy,
+            "project_scope": project_scope_meta,
+            "record_scope": project_scope_meta,
+        }
         data = self._with_idempotency_contract(
             data,
             request_id=request_id,
@@ -276,5 +299,12 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
             idem_fingerprint=idempotency_fingerprint,
             result=data,
         )
-        meta = {"trace_id": trace_id, "write_mode": "unlink", "source": "portal-shell", "source_authority": self._source_authority_contract(model), "project_scope": project_scope_meta}
+        meta = {
+            "trace_id": trace_id,
+            "write_mode": "unlink",
+            "source": "portal-shell",
+            "source_authority": self._source_authority_contract(model),
+            "project_scope": project_scope_meta,
+            "record_scope": project_scope_meta,
+        }
         return {"ok": True, "data": data, "meta": meta}

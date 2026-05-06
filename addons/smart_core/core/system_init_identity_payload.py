@@ -3,6 +3,21 @@ from __future__ import annotations
 
 
 class SystemInitIdentityPayload:
+    SOURCE_KIND = "system_init_identity_payload_projection"
+    SOURCE_AUTHORITIES = ("res.users", "res.company", "res.groups")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "identity_surface_only": True,
+        }
+
     @staticmethod
     def build(user, user_groups_xmlids: list) -> dict:
         company = user.company_id if user.company_id else None

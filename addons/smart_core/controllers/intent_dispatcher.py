@@ -27,6 +27,20 @@ from ..core.exceptions import (
 from ..utils.reason_codes import REASON_PERMISSION_DENIED, failure_meta_for_reason
 
 _logger = logging.getLogger(__name__)
+SOURCE_KIND = "http_intent_dispatch_controller"
+SOURCE_AUTHORITIES = ("odoo.http.request", "intent_router", "intent_permission", "handler_registry")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "write_proxy": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "controllers.intent_dispatcher",
+    }
 
 # ✅ 匿名白名单（仅在“匿名请求”识别为真时生效；见 _is_anon_req）
 ANON_ALLOWLIST = {"login", "auth.login", "sys.intents", "session.bootstrap"}
@@ -242,6 +256,13 @@ def _normalize_result_shape(res: Any) -> Dict[str, Any]:
 # ===================== 控制器 =====================
 
 class IntentDispatcher(http.Controller):
+    SOURCE_KIND = SOURCE_KIND
+    SOURCE_AUTHORITIES = SOURCE_AUTHORITIES
+    NO_BUSINESS_FACT_AUTHORITY = NO_BUSINESS_FACT_AUTHORITY
+
+    @classmethod
+    def source_authority_contract(cls) -> Dict[str, Any]:
+        return source_authority_contract()
 
     @http.route('/api/v1/intent', type='http', auth='public', methods=['POST', 'OPTIONS'], csrf=False)
     def handle_intent(self, **kwargs):

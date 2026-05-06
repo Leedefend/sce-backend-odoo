@@ -13,13 +13,39 @@ class PermissionCheckHandler(BaseIntentHandler):
     DESCRIPTION = "Check entitlement/permission for intent or capability"
     SOURCE_KIND = "odoo_native_permission_projection"
     SOURCE_AUTHORITIES = ("sc.entitlement", "sc.capability", "res.groups")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def _meta(self):
         return {
             "intent": self.INTENT_TYPE,
             "source_kind": self.SOURCE_KIND,
             "source_authorities": list(self.SOURCE_AUTHORITIES),
+            "source_authority": self.source_authority_contract(),
         }
+
+    def _find_capability(self, cap_key):
+        key = str(cap_key or "").strip()
+        if not key:
+            return None
+        try:
+            Capability = self.env["sc.capability"].sudo()
+        except Exception:
+            return None
+        try:
+            return Capability.search([("key", "=", key)], limit=1)
+        except Exception:
+            return None
 
     def handle(self, payload, ctx):
         params = getattr(self, "params", {})
@@ -50,9 +76,7 @@ class PermissionCheckHandler(BaseIntentHandler):
             return {"ok": True, "data": data, "meta": self._meta()}
         ent = Entitlement.get_effective(self.env.user.company_id) if Entitlement else None
         flags = ent.effective_flags_json or {} if ent else {}
-        cap = None
-        if cap_key:
-            cap = self.env["sc.capability"].sudo().search([("key", "=", cap_key)], limit=1)
+        cap = self._find_capability(cap_key)
         required_flag = (cap.required_flag if cap else None) or required_flag
         if required_flag:
             allow = Entitlement._flag_enabled(flags, required_flag)

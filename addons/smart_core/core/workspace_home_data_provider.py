@@ -6,6 +6,24 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
 _PROVIDER = None
+SOURCE_KIND = "workspace_home_industry_content_provider_adapter"
+SOURCE_AUTHORITIES = ("workspace_home_scene_content", "smart_core.provider_loader")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    provider = _load_industry_provider()
+    provider_name = ""
+    if provider is not None:
+        provider_name = str(getattr(provider, "__name__", "") or "")
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "adapter_layer": "workspace_home_content_provider",
+        "provider_module": provider_name,
+    }
 
 
 def _to_text(value: Any) -> str:

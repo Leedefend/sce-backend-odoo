@@ -3,6 +3,21 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+SOURCE_KIND = "released_scene_semantic_surface_bridge"
+SOURCE_AUTHORITIES = ("released_scene_contract", "parser_semantic_surface", "page_surface")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "released_scene_semantic_surface_bridge",
+    }
+
 
 def _text(value: Any) -> str:
     return str(value or "").strip()

@@ -4,6 +4,21 @@ from __future__ import annotations
 import importlib
 from typing import Any, List
 
+SOURCE_KIND = "smart_core_extension_hook_resolver"
+SOURCE_AUTHORITIES = ("ir.config_parameter", "odoo.addons", "extension_hook")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "extension_hooks",
+    }
+
 
 def _parse_extension_modules(raw: str) -> List[str]:
     if not raw:

@@ -36,6 +36,18 @@ class UiContractV2Handler(BaseIntentHandler):
         "ir.model.access",
         "ir.rule",
     )
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def handle(self, payload: Optional[Dict[str, Any]] = None, ctx: Optional[Dict[str, Any]] = None):
         params = self._params(payload)
@@ -124,6 +136,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 "source_intent": ui_meta.get("intent") or "ui.contract",
                 "source_kind": self.SOURCE_KIND,
                 "source_authorities": list(self.SOURCE_AUTHORITIES),
+                "source_authority": self.source_authority_contract(),
             },
         )
 
@@ -159,6 +172,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 "source_type": "scene_contract_v1",
                 "source_kind": self.SOURCE_KIND,
                 "source_authorities": list(self.SOURCE_AUTHORITIES),
+                "source_authority": self.source_authority_contract(),
             },
         )
 
@@ -322,6 +336,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 "intent": self.INTENT_TYPE,
                 "version": self.VERSION,
                 "contract_version": CONTRACT_VERSION,
+                "source_authority": self.source_authority_contract(),
             },
             code=code,
         )

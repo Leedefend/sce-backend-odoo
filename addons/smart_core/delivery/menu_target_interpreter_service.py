@@ -133,6 +133,21 @@ UNAVAILABLE_REASON_CODES = {
 class MenuTargetInterpreterService:
     """Interpreter layer: menu_fact -> navigation target (facts remain unchanged)."""
 
+    SOURCE_KIND = "menu_target_interpreter_projection"
+    SOURCE_AUTHORITIES = ("odoo_menu_fact_projection", "scene_registry", "ir.model.data", "ir.actions")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "facts_remain_unchanged": True,
+        }
+
     def __init__(self, env=None):
         self.env = env
 

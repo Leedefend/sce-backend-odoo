@@ -6,6 +6,21 @@ from typing import Any
 
 
 AUTH_LEVELS = {"none", "read", "edit", "admin"}
+SOURCE_KIND = "unified_page_contract_v2_status_projection"
+SOURCE_AUTHORITIES = ("permission_surface", "access_policy", "field_modifiers", "button_status")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "unified_page_contract_v2_status",
+    }
+
 DENY_STATES = {"deny", "denied", "blocked", "forbidden", "unauthorized"}
 READONLY_STATES = {"readonly", "read_only", "read"}
 

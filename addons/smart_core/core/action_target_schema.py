@@ -3,6 +3,21 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+SOURCE_KIND = "ui_action_target_schema_projection"
+SOURCE_AUTHORITIES = ("static_action_target_schema", "scene_key", "route_path")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "action_target_schema",
+    }
+
 
 def scene_target(scene_key: str) -> Dict[str, Any]:
     return {"kind": "scene.key", "scene_key": str(scene_key or "").strip()}

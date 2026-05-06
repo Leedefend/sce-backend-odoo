@@ -12,6 +12,27 @@ from odoo.addons.smart_core.core.scene_ready_semantic_orchestration_bridge impor
 )
 from odoo.addons.smart_core.core.ui_base_contract_adapter import adapt_ui_base_contract
 
+SOURCE_KIND = "scene_ready_contract_projection"
+SOURCE_AUTHORITIES = (
+    "scene_registry",
+    "scene_dsl_contract_compiler",
+    "ui_base_contract",
+    "scene_provider_registry",
+    "scene_ready_semantic_bridges",
+)
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "scene_runtime_contract_only": True,
+    }
+
 
 def _text(value: Any) -> str:
     return str(value or "").strip()
@@ -922,6 +943,7 @@ def build_scene_ready_contract_v1(
         "scenes": entries,
         "meta": {
             "generated_by": "smart_core.scene_ready_contract_builder",
+            "source_authority": source_authority_contract(),
             "scene_count": len(entries),
             "mode": "dual_track",
             "base_contract_bound_scene_count": base_bound_scene_count,

@@ -4,6 +4,21 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
+SOURCE_KIND = "scene_contract_merge_resolver_projection"
+SOURCE_AUTHORITIES = ("scene_profile", "scene_policy", "scene_provider", "permission_gate")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "scene_merge_resolver",
+    }
+
 
 def _text(value: Any) -> str:
     return str(value or "").strip()

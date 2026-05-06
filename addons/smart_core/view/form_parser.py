@@ -4,6 +4,22 @@ import ast
 
 
 class FormViewParser(BaseViewParser):
+    SOURCE_KIND = "legacy_form_view_parser_projection"
+    SOURCE_AUTHORITIES = ("ir.ui.view:form", "ir.model.fields")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "smart_core.view.form_parser",
+            "legacy_compatibility": True,
+        }
+
     def parse(self):
         view_info = self.get_view_info(fallback_view_type="form")
         arch = view_info["arch"]

@@ -10,6 +10,21 @@ from .release_operator_contract_versions import (
     RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION,
 )
 
+SOURCE_KIND = "release_operator_contract_registry_projection"
+SOURCE_AUTHORITIES = ("static_release_operator_contract_versions",)
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "contract_metadata_only": True,
+    }
+
 
 def build_release_operator_contract_registry() -> dict:
     contracts = {

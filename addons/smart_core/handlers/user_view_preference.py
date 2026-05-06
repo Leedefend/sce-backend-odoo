@@ -8,6 +8,18 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
     VERSION = "1.0.0"
     SOURCE_KIND = "ui_only_user_preference"
     SOURCE_AUTHORITIES = ("sc.user.view.preference", "res.users", "ir.actions.actions")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": cls.INTENT_TYPE.endswith(".set"),
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def _params(self, payload):
         if isinstance(payload, dict) and isinstance(payload.get("params"), dict):
@@ -46,6 +58,7 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
         return {
             "source_kind": self.SOURCE_KIND,
             "source_authorities": list(self.SOURCE_AUTHORITIES),
+            "source_authority": self.source_authority_contract(),
         }
 
     def handle(self, payload=None, ctx=None):

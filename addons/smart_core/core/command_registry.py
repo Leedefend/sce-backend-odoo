@@ -1,6 +1,21 @@
 # smart_core/core/command_registry.py
 COMMANDS = {}
 
+SOURCE_KIND = "legacy_command_registry_projection"
+SOURCE_AUTHORITIES = ("smart_core.commands",)
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "legacy_compatibility": True,
+    }
+
 try:
     from ..commands.login import LoginCommand
     from ..commands.load_view import LoadViewCommand

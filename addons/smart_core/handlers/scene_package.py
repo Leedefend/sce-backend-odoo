@@ -25,6 +25,7 @@ class _BaseScenePackageHandler(BaseIntentHandler):
     ACL_MODE = "explicit_check"
     SOURCE_KIND = "scene_delivery_governance"
     SOURCE_AUTHORITIES = ("sc.scene", "sc.capability", "ir.ui.menu", "ir.actions", "res.groups")
+    NO_BUSINESS_FACT_AUTHORITY = True
 
     def _params(self, payload):
         params = (payload or {}).get("params") if isinstance(payload, dict) else payload
@@ -50,8 +51,9 @@ class _BaseScenePackageHandler(BaseIntentHandler):
         return {
             "kind": self.SOURCE_KIND,
             "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": True,
             "delivery_only": True,
-            "no_business_fact_authority": True,
+            "no_business_fact_authority": self.NO_BUSINESS_FACT_AUTHORITY,
         }
 
 

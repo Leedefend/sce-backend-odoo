@@ -16,6 +16,14 @@ from odoo.addons.smart_core.core.scene_contract_semantic_orchestration_bridge im
 
 
 SCENE_CONTRACT_STANDARD_VERSION = "scene_contract_standard_v1"
+SOURCE_KIND = "release_surface_scene_contract_projection"
+SOURCE_AUTHORITIES = (
+    "delivery_engine_v1.scenes",
+    "scene_ready_contract_v1",
+    "page_orchestration_v1",
+)
+NO_BUSINESS_FACT_AUTHORITY = True
+LEGACY_PRODUCT_TITLE_SOURCE_KIND = "legacy_release_product_title_projection"
 
 _PRODUCT_TITLE_BY_KEY = {
     "fr1": "FR-1 项目立项",
@@ -25,6 +33,7 @@ _PRODUCT_TITLE_BY_KEY = {
     "fr5": "FR-5 结算结果",
     "my_work": "我的工作",
 }
+_LEGACY_PRODUCT_TITLE_KEYS = {"fr1", "fr2", "fr3", "fr4", "fr5"}
 
 _ROUTE_ONLY_ACTIONS = {
     "projects.intake": {
@@ -62,12 +71,68 @@ def _clone_list(rows: Any) -> list[dict[str, Any]]:
     return [deepcopy(row) for row in _list(rows) if isinstance(row, dict)]
 
 
+def source_authority_contract() -> dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "rebuildable": True,
+    }
+
+
+def legacy_product_title_source_authority_contract() -> dict[str, Any]:
+    return {
+        "kind": LEGACY_PRODUCT_TITLE_SOURCE_KIND,
+        "authorities": ["legacy_released_product_keys"],
+        "projection_only": True,
+        "no_business_fact_authority": True,
+        "legacy_compatibility": True,
+    }
+
+
+def _resolve_product_title_with_source(product_key: str) -> tuple[str, dict[str, Any]]:
+    key = _text(product_key)
+    title = _PRODUCT_TITLE_BY_KEY.get(key)
+    if title:
+        source = legacy_product_title_source_authority_contract() if key in _LEGACY_PRODUCT_TITLE_KEYS else {}
+        return title, source
+    return _text(product_key) or "Released Scene", {}
+
+
 def _resolve_product_title(product_key: str) -> str:
-    return _PRODUCT_TITLE_BY_KEY.get(_text(product_key), _text(product_key) or "Released Scene")
+    title, _source = _resolve_product_title_with_source(product_key)
+    return title
 
 
 def _resolve_contract_title(*, title: str, scene_label: str, product_key: str, scene_key: str) -> str:
     return title or scene_label or _resolve_product_title(product_key) or scene_key
+
+
+def _resolve_contract_title_with_source(
+    *,
+    title: str,
+    scene_label: str,
+    product_key: str,
+    scene_key: str,
+) -> tuple[str, dict[str, Any]]:
+    explicit_title = _text(title)
+    if explicit_title:
+        return explicit_title, {}
+    explicit_scene_label = _text(scene_label)
+    if explicit_scene_label:
+        return explicit_scene_label, {}
+    product_title, source = _resolve_product_title_with_source(product_key)
+    return product_title or _text(scene_key), source
+
+
+def _attach_legacy_product_title_source(contract: dict[str, Any], source: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(contract, dict) or not isinstance(source, dict) or not source:
+        return contract
+    governance = _dict(contract.get("governance"))
+    governance["legacy_product_title_source_authority"] = source
+    contract["governance"] = governance
+    return contract
 
 
 def _normalize_block_rows(blocks: Any, *, zone_key: str = "primary") -> list[dict[str, Any]]:
@@ -214,6 +279,8 @@ def build_release_surface_scene_contract(
             "policy_match": bool(policy_match),
             "released": bool(released),
             "diagnostics_ref": _text(diagnostics_ref) or "released_scene_contract",
+            "source_authority": source_authority_contract(),
+            "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
         },
     }
 
@@ -224,7 +291,12 @@ def build_release_surface_scene_contract_from_delivery_entry(entry: dict[str, An
     route = _text(row.get("route"))
     product_key = _text(row.get("product_key"))
     capability = _text(row.get("capability_key"))
-    label = _text(row.get("label")) or _resolve_product_title(product_key)
+    label, title_source = _resolve_contract_title_with_source(
+        title=_text(row.get("label")),
+        scene_label="",
+        product_key=product_key,
+        scene_key=scene_key,
+    )
     route_actions = _ROUTE_ONLY_ACTIONS.get(scene_key, {})
     requires_project_context = bool(row.get("requires_project_context", False))
     message = "当前发布入口已冻结到产品面" if not requires_project_context else "当前发布入口需要项目上下文后继续"
@@ -256,6 +328,7 @@ def build_release_surface_scene_contract_from_delivery_entry(entry: dict[str, An
         identity["scope"] = _text(row.get("scope"))
     if identity:
         contract["identity"] = identity
+    contract = _attach_legacy_product_title_source(contract, title_source)
     return contract
 
 
@@ -269,7 +342,7 @@ def build_release_surface_scene_contract_from_runtime_entry(
     trace_id: str = "",
 ) -> dict[str, Any]:
     row = _dict(payload)
-    title = _resolve_contract_title(
+    title, title_source = _resolve_contract_title_with_source(
         title=_text(row.get("title")),
         scene_label=_text(row.get("scene_label")),
         product_key=product_key,
@@ -303,6 +376,7 @@ def build_release_surface_scene_contract_from_runtime_entry(
         identity["scope"] = _text(row.get("scope"))
     if identity:
         contract["identity"] = identity
+    contract = _attach_legacy_product_title_source(contract, title_source)
     contract = apply_scene_contract_parser_semantic_bridge(contract, row)
     return apply_scene_contract_semantic_orchestration_bridge(contract)
 
@@ -353,7 +427,7 @@ def build_release_surface_scene_contract_from_page_contract(
                     "source": "page_contract",
                 }
             )
-    normalized_title = _resolve_contract_title(
+    normalized_title, title_source = _resolve_contract_title_with_source(
         title=_text(page_meta.get("title")) or title,
         scene_label=title,
         product_key=product_key,
@@ -379,6 +453,7 @@ def build_release_surface_scene_contract_from_page_contract(
         released=True,
         diagnostics_ref=diagnostics_ref,
     )
+    contract = _attach_legacy_product_title_source(contract, title_source)
     surface_source = _dict(orchestration.get("meta")).get("parser_semantic_surface")
     source_payload = surface_source if isinstance(surface_source, dict) else page_row
     contract = apply_scene_contract_parser_semantic_bridge(contract, source_payload)

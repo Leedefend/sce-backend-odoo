@@ -47,6 +47,7 @@ class AppValidatorConfig(models.Model):
             "model": str(model_name or ""),
             "projection_only": True,
             "rebuildable": True,
+            "no_business_fact_authority": True,
         }
 
     # ================== 生成（聚合校验规则） ==================

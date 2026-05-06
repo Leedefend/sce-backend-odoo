@@ -3,6 +3,11 @@ from __future__ import annotations
 
 
 class MenuDeliveryConvergenceService:
+    SOURCE_KIND = "menu_delivery_convergence_projection"
+    SOURCE_AUTHORITIES = ("odoo_menu_projection", "legacy_construction_menu_token_policy")
+    NO_BUSINESS_FACT_AUTHORITY = True
+    LEGACY_TOKEN_POLICY_SOURCE_KIND = "legacy_construction_menu_token_policy"
+
     DEMO_TOKENS = (
         "演示",
         "demo",
@@ -100,6 +105,31 @@ class MenuDeliveryConvergenceService:
         "项目台账（试点）": "项目台账",
     }
 
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "legacy_token_policy": cls.LEGACY_TOKEN_POLICY_SOURCE_KIND,
+        }
+
+    @classmethod
+    def legacy_token_policy_source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.LEGACY_TOKEN_POLICY_SOURCE_KIND,
+            "authorities": [
+                "USER_ALLOWED_PATH_TOKENS",
+                "ADMIN_ALLOWED_PATH_TOKENS",
+                "BUSINESS_CONFIG_TOKENS",
+                "SYSTEM_CONFIG_TOKENS",
+            ],
+            "projection_only": True,
+            "no_business_fact_authority": True,
+            "legacy_compatibility": True,
+        }
+
     def apply(
         self,
         nav_fact: dict,
@@ -110,6 +140,8 @@ class MenuDeliveryConvergenceService:
     ) -> tuple[dict, dict, dict]:
         report = {
             "profile": "delivery_admin" if is_admin else "delivery_user",
+            "source_authority": self.source_authority_contract(),
+            "legacy_token_policy_source_authority": self.legacy_token_policy_source_authority_contract(),
             "is_business_config_admin": bool(is_business_config_admin),
             "hidden": [],
             "kept": [],

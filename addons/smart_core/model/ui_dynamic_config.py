@@ -4,6 +4,20 @@ class UIDynamicConfig(models.Model):
     _name = "ui.dynamic.config"
     _description = "UI Dynamic Configuration"
 
+    SOURCE_KIND = "ui_dynamic_config_overlay"
+    SOURCE_AUTHORITIES = ("ui.dynamic.config", "ir.ui.view", "res.users", "res.company")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    def source_authority_contract(self) -> dict:
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": self.NO_BUSINESS_FACT_AUTHORITY,
+            "ui_overlay_only": True,
+        }
+
     model = fields.Char(required=True)         # 如 project.project
     view_id = fields.Many2one('ir.ui.view')    # 绑定视图，可选
     path = fields.Char(required=True)          # 节点唯一路径标识

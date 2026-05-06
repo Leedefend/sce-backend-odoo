@@ -28,6 +28,21 @@ class ChatterActivityScheduleHandler(BaseIntentHandler):
     ACL_MODE = "explicit_check"
     NON_IDEMPOTENT_ALLOWED = "Scheduling an activity creates a collaboration todo"
     SOURCE_AUTHORITY = "mail.activity"
+    SOURCE_KIND = "odoo_collaboration_activity_write_proxy"
+    SOURCE_AUTHORITIES = ("mail.activity", "mail.activity.type", "ir.model", "odoo.orm", "ir.rule", "record_context_model")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authority": cls.SOURCE_AUTHORITY,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def handle(self, payload=None, ctx=None):
         params = self.params if isinstance(self.params, dict) else {}
@@ -90,7 +105,11 @@ class ChatterActivityScheduleHandler(BaseIntentHandler):
                         "message": "Activity scheduled",
                     }
                 },
-                "meta": {"trace_id": trace_id, "source_authority": self.SOURCE_AUTHORITY},
+                "meta": {
+                    "trace_id": trace_id,
+                    "source_authority": self.source_authority_contract(),
+                    "legacy_source_authority": self.SOURCE_AUTHORITY,
+                },
             }
         except AccessError:
             return self._failure(REASON_PERMISSION_DENIED, "无权限安排活动", 403, trace_id)
@@ -110,7 +129,7 @@ class ChatterActivityScheduleHandler(BaseIntentHandler):
             },
             "data": {"result": {"success": False, "reason_code": reason_code, "message": message}},
             "code": status_code,
-            "meta": {"trace_id": trace_id},
+            "meta": {"trace_id": trace_id, "source_authority": self.source_authority_contract()},
         }
 
 

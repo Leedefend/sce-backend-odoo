@@ -33,6 +33,25 @@ target = _load_module(
 
 
 class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
+    def test_startup_payload_builder_declares_projection_source(self):
+        source = target.SystemInitPayloadBuilder.source_authority_contract()
+        payload = target.SystemInitPayloadBuilder.build_startup_surface(
+            {
+                "user": {"id": 1},
+                "nav": [],
+                "nav_meta": {},
+                "default_route": {},
+                "intents": [],
+                "feature_flags": {},
+                "role_surface": {},
+            }
+        )
+
+        self.assertEqual(source.get("kind"), "system_init_startup_payload_projection")
+        self.assertTrue(source.get("projection_only"))
+        self.assertTrue(source.get("no_business_fact_authority"))
+        self.assertEqual(((payload.get("init_meta") or {}).get("source_authority") or {}).get("kind"), source.get("kind"))
+
     def test_build_startup_surface_keeps_workspace_home_ref(self):
         payload = target.SystemInitPayloadBuilder.build_startup_surface(
             {

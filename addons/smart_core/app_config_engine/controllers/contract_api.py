@@ -18,7 +18,31 @@ from odoo.addons.smart_core.core.exceptions import (
 BUILD_TAG = "contract-ctlr-2025-08-30-02"  # 版本定位标签，便于日志定位
 _logger = logging.getLogger(__name__)
 
+SOURCE_KIND = "app_config_contract_http_controller"
+SOURCE_AUTHORITIES = ("http.request", "contract_service", "request_trace_id")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": False,
+        "write_proxy": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "http_controller_only": True,
+    }
+
+
 class SmartCoreContractController(http.Controller):
+    SOURCE_KIND = SOURCE_KIND
+    SOURCE_AUTHORITIES = SOURCE_AUTHORITIES
+    NO_BUSINESS_FACT_AUTHORITY = NO_BUSINESS_FACT_AUTHORITY
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return source_authority_contract()
 
     @http.route('/api/contract/get', type='http', auth='user', methods=['POST'], csrf=False)
     def contract_get(self, **kwargs):

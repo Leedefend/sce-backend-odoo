@@ -3,15 +3,15 @@
 
 from ..core.base_handler import BaseIntentHandler
 from ..core.intent_execution_result import IntentExecutionResult
-from ..core.project_context import build_project_context_contract
+from ..core.project_context import build_project_context_contract, source_authority_contract
 
 
 class ProjectContextSearchHandler(BaseIntentHandler):
     INTENT_TYPE = "project.context.search"
-    DESCRIPTION = "Search selectable projects for current project context"
+    DESCRIPTION = "Search selectable records for current context"
     VERSION = "1.0.0"
-    SOURCE_KIND = "odoo_project_context_projection"
-    SOURCE_AUTHORITIES = ("project.project", "ir.rule", "ir.model.access")
+    SOURCE_KIND = "record_context_projection"
+    SOURCE_AUTHORITIES = ("odoo.orm", "ir.rule", "ir.model.access", "record_context_model")
 
     def handle(self, payload=None, ctx=None):
         params = {}
@@ -35,5 +35,6 @@ class ProjectContextSearchHandler(BaseIntentHandler):
                 "version": self.VERSION,
                 "source_kind": self.SOURCE_KIND,
                 "source_authorities": list(self.SOURCE_AUTHORITIES),
+                "source_authority": source_authority_contract(),
             },
         )

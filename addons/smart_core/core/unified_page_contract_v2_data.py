@@ -6,6 +6,21 @@ from typing import Any
 
 
 ALLOWED_CACHE_POLICIES = {"none", "etag", "snapshot"}
+SOURCE_KIND = "unified_page_contract_v2_data_projection"
+SOURCE_AUTHORITIES = ("record_payload", "list_payload", "relation_payload", "data_source_schema")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "unified_page_contract_v2_data",
+    }
+
 ALLOWED_CONSISTENCY = {"strong", "eventual"}
 FORBIDDEN_DATASOURCE_KEYS = {
     "sql",

@@ -10,6 +10,18 @@ class ScUserViewPreference(models.Model):
     SUPPORTED_PREFERENCE_KEYS = {"list_columns"}
     SOURCE_KIND = "ui_only_user_preference"
     SOURCE_AUTHORITIES = ("res.users", "ir.actions.actions")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @api.model
+    def source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": self.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": self._name,
+        }
 
     user_id = fields.Many2one("res.users", required=True, index=True, ondelete="cascade")
     scope_key = fields.Char(required=True, index=True)

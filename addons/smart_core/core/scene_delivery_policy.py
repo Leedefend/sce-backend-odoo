@@ -37,16 +37,30 @@ DELIVERY_MODE_INTERNAL = "internal"
 DELIVERY_MODE_DEMO = "demo"
 DELIVERY_MODE_DEEP_LINK_ONLY = "deep_link_only"
 
-SURFACE_POLICY_CONSTRUCTION_PM_V1 = "workspace_default_v1"
+SOURCE_KIND = "scene_delivery_policy_projection"
+SOURCE_AUTHORITIES = (
+    "scene_delivery_policy_file",
+    "extension_hook:smart_core_surface_policy_default_name",
+    "extension_hook:smart_core_surface_nav_allowlist",
+    "builtin_workspace_surface_policy",
+)
+NO_BUSINESS_FACT_AUTHORITY = True
+LEGACY_SURFACE_ALIAS_SOURCE_KIND = "legacy_scene_surface_alias_projection"
+
+SURFACE_POLICY_WORKSPACE_DEFAULT_V1 = "workspace_default_v1"
+SURFACE_POLICY_CONSTRUCTION_PM_V1 = SURFACE_POLICY_WORKSPACE_DEFAULT_V1
+LEGACY_SURFACE_ALIASES = {
+    "construction_pm_v1": SURFACE_POLICY_WORKSPACE_DEFAULT_V1,
+}
 BUILTIN_SURFACE_NAV_ALLOWLIST = {
-    SURFACE_POLICY_CONSTRUCTION_PM_V1: {
+    SURFACE_POLICY_WORKSPACE_DEFAULT_V1: {
         "workspace.home",
         "workspace.list",
         "workspace.management",
     },
 }
 BUILTIN_SURFACE_DEEP_LINK_ALLOWLIST = {
-    SURFACE_POLICY_CONSTRUCTION_PM_V1: (
+    SURFACE_POLICY_WORKSPACE_DEFAULT_V1: (
         "workspace.risk",
         "workspace.finance",
         "workspace.tasks",
@@ -56,6 +70,28 @@ BUILTIN_SURFACE_DEEP_LINK_ALLOWLIST = {
 }
 SURFACE_POLICY_FILE_DEFAULT = "docs/product/delivery/v1/workspace_default_v1_scene_surface_policy.json"
 _SURFACE_POLICY_CACHE: dict[str, Any] = {"path": "", "mtime": -1.0, "payload": {}}
+
+
+def source_authority_contract() -> dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "legacy_surface_aliases": dict(LEGACY_SURFACE_ALIASES),
+        "legacy_surface_alias_source": LEGACY_SURFACE_ALIAS_SOURCE_KIND,
+    }
+
+
+def legacy_surface_alias_source_authority_contract() -> dict[str, Any]:
+    return {
+        "kind": LEGACY_SURFACE_ALIAS_SOURCE_KIND,
+        "authorities": ["legacy_surface_aliases"],
+        "projection_only": True,
+        "no_business_fact_authority": True,
+        "legacy_compatibility": True,
+    }
 
 
 def _builtin_surface_nav_allowlist(env=None) -> dict:
@@ -98,7 +134,20 @@ def _to_bool(value: Any, default: bool = False) -> bool:
 
 def _normalize_surface(value: Any) -> str:
     text = str(value or "").strip().lower()
-    return text or "default"
+    normalized = text or "default"
+    return LEGACY_SURFACE_ALIASES.get(normalized, normalized)
+
+
+def _legacy_surface_alias_meta(value: Any) -> dict[str, Any]:
+    text = str(value or "").strip().lower()
+    normalized = _normalize_surface(text)
+    if not text or text == normalized or text not in LEGACY_SURFACE_ALIASES:
+        return {}
+    return {
+        "requested_surface": text,
+        "normalized_surface": normalized,
+        "source_authority": legacy_surface_alias_source_authority_contract(),
+    }
 
 
 def _coerce_surface_input(value: Any) -> str:
@@ -299,9 +348,12 @@ def resolve_delivery_policy_runtime(env, params: dict | None) -> dict:
         surface = file_default or (_surface_policy_default_name(env) if bool(enabled) else "default")
 
     runtime_env = str(os.environ.get("ENV") or "dev").strip().lower() or "dev"
+    alias_meta = _legacy_surface_alias_meta(surface)
     return {
         "enabled": bool(enabled),
         "surface": _normalize_surface(surface),
+        "requested_surface": str(surface or "").strip().lower(),
+        "legacy_surface_alias": alias_meta,
         "runtime_env": runtime_env,
     }
 
@@ -322,6 +374,7 @@ def filter_delivery_scenes(
     excluded = []
     reason_counts = {}
     normalized_surface = _normalize_surface(surface)
+    alias_meta = _legacy_surface_alias_meta(surface)
     surface_policy = _select_surface_policy(normalized_surface, env=env)
 
     def _exclude(scene_code: str, reason_code: str):
@@ -354,6 +407,8 @@ def filter_delivery_scenes(
             "meta": {
                 "enabled": False,
                 "surface": normalized_surface,
+                "requested_surface": str(surface or "").strip().lower(),
+                "legacy_surface_alias": alias_meta,
                 "contract_mode": str(contract_mode or "user"),
                 "runtime_env": str(runtime_env or "dev"),
                 "policy_version": "v1.1",
@@ -448,6 +503,8 @@ def filter_delivery_scenes(
         "meta": {
             "enabled": True,
             "surface": normalized_surface,
+            "requested_surface": str(surface or "").strip().lower(),
+            "legacy_surface_alias": alias_meta,
             "contract_mode": str(contract_mode or "user"),
             "runtime_env": str(runtime_env or "dev"),
             "policy_version": "v1.1",

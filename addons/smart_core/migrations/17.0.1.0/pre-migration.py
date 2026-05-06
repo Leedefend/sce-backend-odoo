@@ -2,6 +2,23 @@
 # 在加载新模型定义之前执行：加新列、填默认值、删除旧约束、做数据备份等
 from odoo import SUPERUSER_ID, api
 
+SOURCE_KIND = "smart_core_schema_pre_migration"
+SOURCE_AUTHORITIES = ("postgres_schema", "app_menu_config", "app_view_config")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": False,
+        "rebuildable": False,
+        "write_proxy": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "schema_migration_only": True,
+    }
+
+
 def migrate(cr, version):
     # 示例：加列（若存在则忽略）
     cr.execute("""ALTER TABLE app_menu_config ADD COLUMN IF NOT EXISTS scene varchar;""")
@@ -9,6 +26,9 @@ def migrate(cr, version):
     cr.execute("""ALTER TABLE app_menu_config ADD COLUMN IF NOT EXISTS lang varchar;""")
     cr.execute("""ALTER TABLE app_menu_config ADD COLUMN IF NOT EXISTS action_index jsonb;""")
     cr.execute("""ALTER TABLE app_menu_config ADD COLUMN IF NOT EXISTS etag varchar;""")
+    cr.execute("""ALTER TABLE app_view_config ADD COLUMN IF NOT EXISTS action_id integer;""")
+    cr.execute("""ALTER TABLE app_view_config ADD COLUMN IF NOT EXISTS source_view_id integer;""")
+    cr.execute("""ALTER TABLE app_view_config ADD COLUMN IF NOT EXISTS projection_scope varchar;""")
 
     # 默认值
     cr.execute("""UPDATE app_menu_config SET scene='web' WHERE scene IS NULL;""")
@@ -45,5 +65,28 @@ def migrate(cr, version):
       ) THEN
         ALTER TABLE app_menu_config DROP CONSTRAINT uniq_target_model;
       END IF;
+    END $$;
+    """)
+
+    cr.execute("""
+    UPDATE app_view_config
+       SET projection_scope = CONCAT('generic:', model, ':', view_type)
+     WHERE projection_scope IS NULL OR projection_scope = '';
+    """)
+
+    cr.execute("""
+    DO $$
+    DECLARE
+      cname text;
+    BEGIN
+      FOR cname IN
+        SELECT constraint_name
+          FROM information_schema.table_constraints
+         WHERE table_name = 'app_view_config'
+           AND constraint_type = 'UNIQUE'
+           AND constraint_name IN ('uniq_model_viewtype', 'app_view_config_uniq_model_viewtype')
+      LOOP
+        EXECUTE format('ALTER TABLE app_view_config DROP CONSTRAINT %I', cname);
+      END LOOP;
     END $$;
     """)

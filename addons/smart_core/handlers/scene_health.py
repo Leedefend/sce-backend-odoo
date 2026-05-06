@@ -14,6 +14,18 @@ class SceneHealthHandler(BaseIntentHandler):
     REQUIRED_GROUPS = []
     SOURCE_KIND = "scene_delivery_health_projection"
     SOURCE_AUTHORITIES = ("system.init", "sc.scene", "sc.capability", "ui_base_contract_asset")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def _safe_int(self, value, default):
         try:
@@ -120,5 +132,6 @@ class SceneHealthHandler(BaseIntentHandler):
                 "elapsed_ms": int((time.time() - ts0) * 1000),
                 "source_kind": self.SOURCE_KIND,
                 "source_authorities": list(self.SOURCE_AUTHORITIES),
+                "source_authority": self.source_authority_contract(),
             },
         }

@@ -15,6 +15,18 @@ class MetaIntentCatalogHandler(BaseIntentHandler):
     REQUIRED_GROUPS = []
     SOURCE_KIND = "intent_delivery_catalog_projection"
     SOURCE_AUTHORITIES = ("handler_registry", "ir.model.access", "res.groups")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def handle(self, payload=None, ctx=None):
         builder = IntentSurfaceBuilder()
@@ -28,4 +40,5 @@ class MetaIntentCatalogHandler(BaseIntentHandler):
             "schema_version": "1.0.0",
             "source_kind": self.SOURCE_KIND,
             "source_authorities": list(self.SOURCE_AUTHORITIES),
+            "source_authority": self.source_authority_contract(),
         }

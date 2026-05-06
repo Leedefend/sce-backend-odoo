@@ -10,6 +10,21 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any, Dict, List
 
+SOURCE_KIND = "unified_page_contract_lite_patch_normalizer"
+SOURCE_AUTHORITIES = ("onchange_payload", "x2many_patch_payload", "lite_patch_schema")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "unified_page_contract_lite_patch_normalizer",
+    }
+
 
 def _dict(value: Any) -> Dict[str, Any]:
     return value if isinstance(value, dict) else {}

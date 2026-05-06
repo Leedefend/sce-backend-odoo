@@ -8,6 +8,19 @@ from .extension_hooks import call_extension_hook_first
 
 DELETE_POLICY_ALLOWED = "DELETE_POLICY_ALLOWED"
 DELETE_POLICY_DENIED = "DELETE_POLICY_DENIED"
+SOURCE_KIND = "unlink_policy_projection"
+SOURCE_AUTHORITIES = ("extension_unlink_policy", "handler_default_allowlist", "odoo_access_control")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "default_behavior": "deny_unless_extension_or_handler_default_allows",
+    }
 
 
 def _as_model_set(values: Iterable[Any] | None) -> set[str]:
@@ -36,6 +49,7 @@ def _normalize_policy(model: str, raw: Any, *, source: str) -> Dict[str, Any]:
         "reason_code": reason_code,
         "message": message,
         "source": str(row.get("source") or source or "delete_policy").strip(),
+        "source_authority": source_authority_contract(),
         "requires_acl": bool(row.get("requires_acl", True)),
         "requires_record_rule": bool(row.get("requires_record_rule", True)),
         "dry_run_supported": True,

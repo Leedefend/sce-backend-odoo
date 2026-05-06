@@ -9,6 +9,21 @@ from odoo.addons.smart_core.runtime.auto_degrade_engine import AutoDegradeEngine
 
 
 class SystemInitComponentsFactory:
+    SOURCE_KIND = "system_init_runtime_components_factory"
+    SOURCE_AUTHORITIES = ("scene_normalizer", "scene_drift_engine", "auto_degrade_engine", "capability_surface_engine", "contract_assembler")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "system_init_components_factory",
+        }
+
     @staticmethod
     def create() -> dict:
         return {

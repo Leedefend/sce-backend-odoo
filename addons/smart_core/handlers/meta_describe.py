@@ -11,6 +11,18 @@ class MetaDescribeHandler(BaseIntentHandler):
     DESCRIPTION = "加载模型字段定义（可展开 selection/关系/约束），支持 ETag/304"
     SOURCE_KIND = "odoo_fields_get_projection"
     SOURCE_AUTHORITIES = ("ir.model.fields", "odoo.orm")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def run(self, **_kwargs):
         p = self.params or {}
@@ -74,4 +86,5 @@ class MetaDescribeHandler(BaseIntentHandler):
         return {
             "source_kind": self.SOURCE_KIND,
             "source_authorities": list(self.SOURCE_AUTHORITIES),
+            "source_authority": self.source_authority_contract(),
         }

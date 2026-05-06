@@ -17,6 +17,31 @@ _logger = logging.getLogger(__name__)
 
 
 class PageAssembler:
+    SOURCE_KIND = "app_config_page_contract_projection"
+    SOURCE_AUTHORITIES = (
+        "app.model.config",
+        "app.view.config",
+        "app.search.config",
+        "app.permission.config",
+        "app.action.config",
+        "app.report.config",
+        "app.workflow.config",
+        "app.validator.config",
+        "odoo.orm",
+    )
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "app_config_engine.page_assembler",
+        }
+
     _SYSTEM_RELATION_DEGRADE_MODELS = {
         "ir.ui.view",
         "ir.model",
@@ -223,6 +248,7 @@ class PageAssembler:
         view_context = {}
         if isinstance(action, dict) and action.get("id"):
             view_context["contract_action_id"] = action.get("id")
+        view_context["contract_projection_readonly"] = True
         for vt in view_types:
             try:
                 view_config_model = env['app.view.config'].with_context(**view_context) if view_context else env['app.view.config']
@@ -402,6 +428,7 @@ class PageAssembler:
             data["missing_models"] = missing_models
         if warnings:
             data["warnings"] = warnings
+        data["source_authority"] = self.source_authority_contract()
         return data, versions
 
     def _inject_create_defaults(self, data, model_name="", render_profile=""):
@@ -1107,8 +1134,7 @@ class PageAssembler:
 
             try:
                 # 从 assembled 中优先读取 view 契约里的 columns/default_order
-                vcfg = self.su_env["app.view.config"].sudo().search([("model", "=", model), ("view_type", "=", list_vt)], limit=1)
-                arch = (vcfg.arch_parsed or {})
+                arch = {}
                 view_cols_cfg = list(assembled["views"].get(list_vt, {}).get("columns") or []) \
                                 or list(arch.get("columns") or [])
                 view_order_cfg = assembled["views"].get(list_vt, {}).get("default_order") or arch.get("order")

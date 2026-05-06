@@ -17,6 +17,22 @@ ALGORITHM = "HS256"
 DEFAULT_EXP_SECONDS = 8 * 60 * 60  # 8h
 _warned_missing_secret = False
 
+SOURCE_KIND = "jwt_auth_session_proxy"
+SOURCE_AUTHORITIES = ("res.users", "ir.config_parameter", "http.authorization", "odoo.session")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": False,
+        "write_proxy": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "identity_surface_only": True,
+    }
+
 
 def _get_secret_key():
     global _warned_missing_secret

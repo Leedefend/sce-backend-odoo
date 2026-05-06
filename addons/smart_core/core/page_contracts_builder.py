@@ -32,6 +32,36 @@ PROGRESS_STATES = _SEM.get("PROGRESS_STATES") or ("overdue", "blocked", "pending
 SUPPORTED_ROLE_CODES = {"pm", "finance", "owner"}
 _ACTION_TARGET_RESOLVER = None
 _DATA_PROVIDER_MODULE = None
+SOURCE_KIND = "page_contract_projection"
+SOURCE_AUTHORITIES = (
+    "page_contracts_builder",
+    "page_profile_overrides",
+    "page_orchestration_data_provider",
+    "legacy_industry_page_copy",
+)
+NO_BUSINESS_FACT_AUTHORITY = True
+LEGACY_PAGE_COPY_SOURCE_KIND = "legacy_industry_page_copy_projection"
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "rebuildable": True,
+        "legacy_page_copy_source": LEGACY_PAGE_COPY_SOURCE_KIND,
+    }
+
+
+def legacy_page_copy_source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": LEGACY_PAGE_COPY_SOURCE_KIND,
+        "authorities": ["builtin_page_texts", "compatibility_page_profiles"],
+        "projection_only": True,
+        "no_business_fact_authority": True,
+        "legacy_compatibility": True,
+    }
 
 
 def _resolve_page_profile_overrides(data: Dict[str, Any]) -> Dict[str, Any]:
@@ -722,6 +752,11 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
     role_code = _normalize_role_code(safe_data)
     payload = {
         "schema_version": "v1",
+        "source_authority": source_authority_contract(),
+        "diagnostics": {
+            "legacy_page_copy_source_authority": legacy_page_copy_source_authority_contract(),
+            "page_profile_overrides_present": bool(profile_overrides),
+        },
         "pages": {
             "home": {
                 "schema_version": "v1",

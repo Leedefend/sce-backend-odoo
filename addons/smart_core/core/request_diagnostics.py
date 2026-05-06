@@ -5,6 +5,21 @@ import os
 
 
 class RequestDiagnosticsCollector:
+    SOURCE_KIND = "request_diagnostics_projection"
+    SOURCE_AUTHORITIES = ("http.headers", "system_init_params", "odoo_env", "res.users")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "diagnostics_only": True,
+        }
+
     @staticmethod
     def diagnostics_enabled(env) -> bool:
         env_flag = (os.environ.get("ENV") or "").lower()

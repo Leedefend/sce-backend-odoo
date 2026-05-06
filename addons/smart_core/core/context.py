@@ -3,7 +3,30 @@ from odoo.http import request
 from ..security.auth import get_user_from_token
 from .trace import get_trace_id
 
+SOURCE_KIND = "http_request_context_projection"
+SOURCE_AUTHORITIES = ("odoo.http.request", "auth_token", "res.users")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "request_context",
+    }
+
 class RequestContext:
+    SOURCE_KIND = SOURCE_KIND
+    SOURCE_AUTHORITIES = SOURCE_AUTHORITIES
+    NO_BUSINESS_FACT_AUTHORITY = NO_BUSINESS_FACT_AUTHORITY
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return source_authority_contract()
+
     def __init__(self, env, user, params, request_obj=None):
         self.env = env
         self.user = user

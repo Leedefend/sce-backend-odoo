@@ -7,6 +7,21 @@ from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_fir
 
 
 class OdooNavAdapter:
+    SOURCE_KIND = "odoo_navigation_scene_projection_adapter"
+    SOURCE_AUTHORITIES = ("ir.ui.menu", "ir.actions", "res.groups", "extension_nav_scene_maps")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "odoo_nav_adapter",
+        }
+
     MENU_SCENE_MAP = {}
 
     ACTION_XMLID_SCENE_MAP = {}

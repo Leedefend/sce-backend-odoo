@@ -31,6 +31,21 @@ class FileDownloadHandler(BaseIntentHandler):
 
     ALLOWED_MODELS = {"res.partner"}
     SOURCE_AUTHORITY = "ir.attachment"
+    SOURCE_KIND = "odoo_attachment_download_projection"
+    SOURCE_AUTHORITIES = ("ir.attachment", "odoo.orm", "ir.rule", "ir.model.access", "record_context_model")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authority": cls.SOURCE_AUTHORITY,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def _allowed_models(self):
         payload = call_extension_hook_first(self.env, "smart_core_file_download_allowed_models", self.env)
@@ -120,5 +135,12 @@ class FileDownloadHandler(BaseIntentHandler):
             "res_model": attachment.res_model,
             "res_id": attachment.res_id,
         }
-        meta = {"trace_id": trace_id, "source": "portal-shell", "source_authority": self.SOURCE_AUTHORITY}
+        meta = {
+            "trace_id": trace_id,
+            "source": "portal-shell",
+            "source_authority": self.source_authority_contract(),
+            "legacy_source_authority": self.SOURCE_AUTHORITY,
+            "project_scope": scope_meta,
+            "record_scope": scope_meta,
+        }
         return {"ok": True, "data": data, "meta": meta}

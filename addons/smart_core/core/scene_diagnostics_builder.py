@@ -3,6 +3,21 @@ from __future__ import annotations
 
 
 class SceneDiagnosticsBuilder:
+    SOURCE_KIND = "scene_diagnostics_projection"
+    SOURCE_AUTHORITIES = ("scene_runtime", "contract_governance", "auto_degrade")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "scene_diagnostics_builder",
+        }
+
     @staticmethod
     def initial(data: dict, rollback_active: bool, channel_selector: str, channel_source_ref: str) -> dict:
         return {

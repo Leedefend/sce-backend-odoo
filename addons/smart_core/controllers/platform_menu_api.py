@@ -19,6 +19,29 @@ from odoo.addons.smart_core.core.exceptions import (
     build_error_envelope,
 )
 
+SOURCE_KIND = "platform_menu_delivery_projection"
+SOURCE_AUTHORITIES = (
+    "ir.ui.menu",
+    "ir.actions.act_window",
+    "res.groups",
+    "extension_business_config_role_resolver",
+    "legacy_construction_business_config_group",
+)
+NO_BUSINESS_FACT_AUTHORITY = True
+LEGACY_BUSINESS_CONFIG_ADMIN_GROUP_XMLIDS = (
+    "smart_construction_core.group_sc_cap_business_config_admin",
+)
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "legacy_business_config_admin_groups": list(LEGACY_BUSINESS_CONFIG_ADMIN_GROUP_XMLIDS),
+    }
+
 
 def _meta(trace_id: str) -> dict:
     return {
@@ -176,11 +199,32 @@ def _is_admin_user(env) -> bool:
         return False
 
 
-def _is_business_config_user(env) -> bool:
+def _configured_business_config_admin_group_xmlids(env) -> list[str]:
+    hook_groups = call_extension_hook_first(
+        env,
+        "smart_core_business_config_admin_group_xmlids",
+        env,
+    )
+    if isinstance(hook_groups, (list, tuple, set)):
+        groups = [str(item or "").strip() for item in hook_groups if str(item or "").strip()]
+        if groups:
+            return groups
     try:
-        return bool(env.user.has_group('smart_construction_core.group_sc_cap_business_config_admin'))
+        raw = env["ir.config_parameter"].sudo().get_param("smart_core.business_config_admin_group_xmlids", "")
     except Exception:
-        return False
+        raw = ""
+    groups = [item.strip() for item in str(raw or "").split(",") if item.strip()]
+    return groups or list(LEGACY_BUSINESS_CONFIG_ADMIN_GROUP_XMLIDS)
+
+
+def _is_business_config_user(env) -> bool:
+    for group_xmlid in _configured_business_config_admin_group_xmlids(env):
+        try:
+            if env.user.has_group(group_xmlid):
+                return True
+        except Exception:
+            continue
+    return False
 
 
 class PlatformMenuAPI(http.Controller):
@@ -213,7 +257,16 @@ class PlatformMenuAPI(http.Controller):
             is_admin=_is_admin_user(env),
             is_business_config_admin=_is_business_config_user(env),
         )
-        return _json_response({'ok': True, 'nav_fact': nav_fact_filtered, 'meta': {**_meta(trace_id), 'delivery_convergence': convergence}})
+        return _json_response({
+            'ok': True,
+            'nav_fact': nav_fact_filtered,
+            'meta': {
+                **_meta(trace_id),
+                'source_authority': source_authority_contract(),
+                'menu_fact_source_authority': facts.source_authority,
+                'delivery_convergence': convergence,
+            },
+        })
 
     @http.route('/api/user_menus', type='http', auth='public', csrf=False, cors='*', methods=['POST'])
     def api_user_menus(self, **kwargs):
@@ -262,6 +315,11 @@ class PlatformMenuAPI(http.Controller):
                 'ok': True,
                 'nav_fact': nav_fact_filtered,
                 'nav_explained': nav_explained_filtered,
-                'meta': {**_meta(trace_id), 'delivery_convergence': convergence},
+                'meta': {
+                    **_meta(trace_id),
+                    'source_authority': source_authority_contract(),
+                    'menu_fact_source_authority': facts.source_authority,
+                    'delivery_convergence': convergence,
+                },
             }
         )

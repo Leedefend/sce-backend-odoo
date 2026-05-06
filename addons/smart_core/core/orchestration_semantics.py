@@ -1,6 +1,21 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+SOURCE_KIND = "ui_orchestration_semantics_registry"
+SOURCE_AUTHORITIES = ("static_ui_orchestration_semantics",)
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "orchestration_semantics",
+    }
+
 BLOCK_TYPES = (
     "hero_metric",
     "metric_row",
@@ -40,4 +55,3 @@ BLOCK_PAYLOAD_KEYS = {
 
 COMMON_PAYLOAD_KEYS = {"tag", "enabled", "open"}
 FORBIDDEN_LAYOUT_KEYS = {"left", "top", "width", "height", "x", "y", "color", "background", "font_size"}
-

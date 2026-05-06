@@ -1,0 +1,1367 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_audit_fields_view_sc_treasury_ledger_tree" model="ir.ui.view">
+        <field name="name">sc.treasury.ledger.audit.fields.view_sc_treasury_ledger_tree</field>
+        <field name="model">sc.treasury.ledger</field>
+        <field name="inherit_id" ref="view_sc_treasury_ledger_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_fund_daily_line_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.fund.daily.line.audit.fields.view_sc_legacy_fund_daily_line_tree</field>
+        <field name="model">sc.legacy.fund.daily.line</field>
+        <field name="inherit_id" ref="view_sc_legacy_fund_daily_line_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_organization_department_tree" model="ir.ui.view">
+        <field name="name">hr.department.audit.fields.view_sc_organization_department_tree</field>
+        <field name="model">hr.department</field>
+        <field name="inherit_id" ref="view_sc_organization_department_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_receipt_income_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.receipt.income.fact.audit.fields.view_sc_legacy_receipt_income_fact_tree</field>
+        <field name="model">sc.legacy.receipt.income.fact</field>
+        <field name="inherit_id" ref="view_sc_legacy_receipt_income_fact_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_project_fund_balance_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.project.fund.balance.fact.audit.fields.view_sc_legacy_project_fund_balance_fact_tree</field>
+        <field name="model">sc.legacy.project.fund.balance.fact</field>
+        <field name="inherit_id" ref="view_sc_legacy_project_fund_balance_fact_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_work_breakdown_tree" model="ir.ui.view">
+        <field name="name">construction.work.breakdown.audit.fields.view_work_breakdown_tree</field>
+        <field name="model">construction.work.breakdown</field>
+        <field name="inherit_id" ref="view_work_breakdown_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_account_master_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.account.master.audit.fields.view_sc_legacy_account_master_tree</field>
+        <field name="model">sc.legacy.account.master</field>
+        <field name="inherit_id" ref="view_sc_legacy_account_master_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_invoice_tax_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.invoice.tax.fact.audit.fields.view_sc_legacy_invoice_tax_fact_tree</field>
+        <field name="model">sc.legacy.invoice.tax.fact</field>
+        <field name="inherit_id" ref="view_sc_legacy_invoice_tax_fact_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_scbs_fact_staging_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.scbs.fact.staging.audit.fields.view_sc_legacy_scbs_fact_staging_tree</field>
+        <field name="model">sc.legacy.scbs.fact.staging</field>
+        <field name="inherit_id" ref="view_sc_legacy_scbs_fact_staging_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_user_profile_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.user.profile.audit.fields.view_sc_legacy_user_profile_tree</field>
+        <field name="model">sc.legacy.user.profile</field>
+        <field name="inherit_id" ref="view_sc_legacy_user_profile_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_user_role_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.user.role.audit.fields.view_sc_legacy_user_role_tree</field>
+        <field name="model">sc.legacy.user.role</field>
+        <field name="inherit_id" ref="view_sc_legacy_user_role_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_user_project_scope_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.user.project.scope.audit.fields.view_sc_legacy_user_project_scope_tree</field>
+        <field name="model">sc.legacy.user.project.scope</field>
+        <field name="inherit_id" ref="view_sc_legacy_user_project_scope_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_business_entity_tree" model="ir.ui.view">
+        <field name="name">sc.business.entity.audit.fields.view_sc_business_entity_tree</field>
+        <field name="model">sc.business.entity</field>
+        <field name="inherit_id" ref="view_sc_business_entity_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_business_entity_map_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.business.entity.map.audit.fields.view_sc_legacy_business_entity_map_tree</field>
+        <field name="model">sc.legacy.business.entity.map</field>
+        <field name="inherit_id" ref="view_sc_legacy_business_entity_map_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_project_map_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.project.map.audit.fields.view_sc_legacy_project_map_tree</field>
+        <field name="model">sc.legacy.project.map</field>
+        <field name="inherit_id" ref="view_sc_legacy_project_map_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_partner_map_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.partner.map.audit.fields.view_sc_legacy_partner_map_tree</field>
+        <field name="model">sc.legacy.partner.map</field>
+        <field name="inherit_id" ref="view_sc_legacy_partner_map_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_file_index_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.file.index.audit.fields.view_sc_legacy_file_index_tree</field>
+        <field name="model">sc.legacy.file.index</field>
+        <field name="inherit_id" ref="view_sc_legacy_file_index_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_project_stage_requirement_item_tree" model="ir.ui.view">
+        <field name="name">sc.project.stage.requirement.item.audit.fields.view_sc_project_stage_requirement_item_tree</field>
+        <field name="model">sc.project.stage.requirement.item</field>
+        <field name="inherit_id" ref="view_sc_project_stage_requirement_item_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_tender_bid_tree" model="ir.ui.view">
+        <field name="name">tender.bid.audit.fields.view_tender_bid_tree</field>
+        <field name="model">tender.bid</field>
+        <field name="inherit_id" ref="view_tender_bid_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_tender_opening_tree" model="ir.ui.view">
+        <field name="name">tender.opening.audit.fields.view_tender_opening_tree</field>
+        <field name="model">tender.opening</field>
+        <field name="inherit_id" ref="view_tender_opening_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_tender_guarantee_tree" model="ir.ui.view">
+        <field name="name">tender.guarantee.audit.fields.view_tender_guarantee_tree</field>
+        <field name="model">tender.guarantee</field>
+        <field name="inherit_id" ref="view_tender_guarantee_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_fund_daily_snapshot_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.fund.daily.snapshot.fact.audit.fields.view_sc_legacy_fund_daily_snapshot_fact_tree</field>
+        <field name="model">sc.legacy.fund.daily.snapshot.fact</field>
+        <field name="inherit_id" ref="view_sc_legacy_fund_daily_snapshot_fact_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_material_detail_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.material.detail.audit.fields.view_sc_legacy_material_detail_tree</field>
+        <field name="model">sc.legacy.material.detail</field>
+        <field name="inherit_id" ref="view_sc_legacy_material_detail_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_material_category_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.material.category.audit.fields.view_sc_legacy_material_category_tree</field>
+        <field name="model">sc.legacy.material.category</field>
+        <field name="inherit_id" ref="view_sc_legacy_material_category_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_self_funding_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.self.funding.fact.audit.fields.view_sc_legacy_self_funding_fact_tree</field>
+        <field name="model">sc.legacy.self.funding.fact</field>
+        <field name="inherit_id" ref="view_sc_legacy_self_funding_fact_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_customer_partner_tree" model="ir.ui.view">
+        <field name="name">res.partner.audit.fields.view_sc_customer_partner_tree</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="view_sc_customer_partner_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_supplier_partner_tree" model="ir.ui.view">
+        <field name="name">res.partner.audit.fields.view_sc_supplier_partner_tree</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="view_sc_supplier_partner_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_report_inventory_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.report.inventory.audit.fields.view_sc_legacy_report_inventory_tree</field>
+        <field name="model">sc.legacy.report.inventory</field>
+        <field name="inherit_id" ref="view_sc_legacy_report_inventory_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_financing_loan_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.financing.loan.fact.audit.fields.view_sc_legacy_financing_loan_fact_tree</field>
+        <field name="model">sc.legacy.financing.loan.fact</field>
+        <field name="inherit_id" ref="view_sc_legacy_financing_loan_fact_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_tax_deduction_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.tax.deduction.fact.audit.fields.view_sc_legacy_tax_deduction_fact_tree</field>
+        <field name="model">sc.legacy.tax.deduction.fact</field>
+        <field name="inherit_id" ref="view_sc_legacy_tax_deduction_fact_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_invoice_surcharge_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.invoice.surcharge.fact.audit.fields.view_sc_legacy_invoice_surcharge_fact_tree</field>
+        <field name="model">sc.legacy.invoice.surcharge.fact</field>
+        <field name="inherit_id" ref="view_sc_legacy_invoice_surcharge_fact_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_expense_deposit_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.expense.deposit.fact.audit.fields.view_sc_legacy_expense_deposit_fact_tree</field>
+        <field name="model">sc.legacy.expense.deposit.fact</field>
+        <field name="inherit_id" ref="view_sc_legacy_expense_deposit_fact_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_expense_reimbursement_line_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.expense.reimbursement.line.audit.fields.view_sc_legacy_expense_reimbursement_line_tree</field>
+        <field name="model">sc.legacy.expense.reimbursement.line</field>
+        <field name="inherit_id" ref="view_sc_legacy_expense_reimbursement_line_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_account_transaction_line_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.account.transaction.line.audit.fields.view_sc_legacy_account_transaction_line_tree</field>
+        <field name="model">sc.legacy.account.transaction.line</field>
+        <field name="inherit_id" ref="view_sc_legacy_account_transaction_line_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_purchase_contract_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.purchase.contract.fact.audit.fields.view_sc_legacy_purchase_contract_fact_tree</field>
+        <field name="model">sc.legacy.purchase.contract.fact</field>
+        <field name="inherit_id" ref="view_sc_legacy_purchase_contract_fact_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_enterprise_business_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.enterprise.business.fact.audit.fields.view_sc_legacy_enterprise_business_fact_tree</field>
+        <field name="model">sc.legacy.enterprise.business.fact</field>
+        <field name="inherit_id" ref="view_sc_legacy_enterprise_business_fact_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_payment_adjustment_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.payment.adjustment.fact.audit.fields.view_sc_legacy_payment_adjustment_fact_tree</field>
+        <field name="model">sc.legacy.payment.adjustment.fact</field>
+        <field name="inherit_id" ref="view_sc_legacy_payment_adjustment_fact_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_scbs_material_map_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.scbs.material.map.audit.fields.view_sc_legacy_scbs_material_map_tree</field>
+        <field name="model">sc.legacy.scbs.material.map</field>
+        <field name="inherit_id" ref="view_sc_legacy_scbs_material_map_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_workflow_audit_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.workflow.audit.audit.fields.view_sc_legacy_workflow_audit_tree</field>
+        <field name="model">sc.legacy.workflow.audit</field>
+        <field name="inherit_id" ref="view_sc_legacy_workflow_audit_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_material_catalog_tree" model="ir.ui.view">
+        <field name="name">sc.material.catalog.audit.fields.view_sc_material_catalog_tree</field>
+        <field name="model">sc.material.catalog</field>
+        <field name="inherit_id" ref="view_sc_material_catalog_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_material_price_tree" model="ir.ui.view">
+        <field name="name">sc.material.price.audit.fields.view_sc_material_price_tree</field>
+        <field name="model">sc.material.price</field>
+        <field name="inherit_id" ref="view_sc_material_price_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_history_todo_tree" model="ir.ui.view">
+        <field name="name">sc.history.todo.audit.fields.view_sc_history_todo_tree</field>
+        <field name="model">sc.history.todo</field>
+        <field name="inherit_id" ref="view_sc_history_todo_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_invoice_registration_line_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.invoice.registration.line.audit.fields.view_sc_legacy_invoice_registration_line_tree</field>
+        <field name="model">sc.legacy.invoice.registration.line</field>
+        <field name="inherit_id" ref="view_sc_legacy_invoice_registration_line_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_deduction_adjustment_line_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.deduction.adjustment.line.audit.fields.view_sc_legacy_deduction_adjustment_line_tree</field>
+        <field name="model">sc.legacy.deduction.adjustment.line</field>
+        <field name="inherit_id" ref="view_sc_legacy_deduction_adjustment_line_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_fund_confirmation_line_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.fund.confirmation.line.audit.fields.view_sc_legacy_fund_confirmation_line_tree</field>
+        <field name="model">sc.legacy.fund.confirmation.line</field>
+        <field name="inherit_id" ref="view_sc_legacy_fund_confirmation_line_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_legacy_supplier_contract_pricing_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.supplier.contract.pricing.fact.audit.fields.view_sc_legacy_supplier_contract_pricing_fact_tree</field>
+        <field name="model">sc.legacy.supplier.contract.pricing.fact</field>
+        <field name="inherit_id" ref="view_sc_legacy_supplier_contract_pricing_fact_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_project_document_tree" model="ir.ui.view">
+        <field name="name">sc.project.document.audit.fields.view_sc_project_document_tree</field>
+        <field name="model">sc.project.document</field>
+        <field name="inherit_id" ref="view_sc_project_document_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_project_structure_tree" model="ir.ui.view">
+        <field name="name">sc.project.structure.audit.fields.view_sc_project_structure_tree</field>
+        <field name="model">sc.project.structure</field>
+        <field name="inherit_id" ref="view_sc_project_structure_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_project_budget_tree" model="ir.ui.view">
+        <field name="name">project.budget.audit.fields.view_project_budget_tree</field>
+        <field name="model">project.budget</field>
+        <field name="inherit_id" ref="view_project_budget_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_project_cost_code_tree" model="ir.ui.view">
+        <field name="name">project.cost.code.audit.fields.view_project_cost_code_tree</field>
+        <field name="model">project.cost.code</field>
+        <field name="inherit_id" ref="view_project_cost_code_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_project_cost_ledger_tree" model="ir.ui.view">
+        <field name="name">project.cost.ledger.audit.fields.view_project_cost_ledger_tree</field>
+        <field name="model">project.cost.ledger</field>
+        <field name="inherit_id" ref="view_project_cost_ledger_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_project_budget_cost_alloc_tree" model="ir.ui.view">
+        <field name="name">project.budget.cost.alloc.audit.fields.view_project_budget_cost_alloc_tree</field>
+        <field name="model">project.budget.cost.alloc</field>
+        <field name="inherit_id" ref="view_project_budget_cost_alloc_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_project_wbs_tree" model="ir.ui.view">
+        <field name="name">construction.work.breakdown.audit.fields.view_project_wbs_tree</field>
+        <field name="model">construction.work.breakdown</field>
+        <field name="inherit_id" ref="view_project_wbs_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_project_progress_entry_tree" model="ir.ui.view">
+        <field name="name">project.progress.entry.audit.fields.view_project_progress_entry_tree</field>
+        <field name="model">project.progress.entry</field>
+        <field name="inherit_id" ref="view_project_progress_entry_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_construction_contract_tree" model="ir.ui.view">
+        <field name="name">construction.contract.audit.fields.view_construction_contract_tree</field>
+        <field name="model">construction.contract</field>
+        <field name="inherit_id" ref="view_construction_contract_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_receipt_invoice_line_tree" model="ir.ui.view">
+        <field name="name">sc.receipt.invoice.line.audit.fields.view_receipt_invoice_line_tree</field>
+        <field name="model">sc.receipt.invoice.line</field>
+        <field name="inherit_id" ref="view_receipt_invoice_line_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_project_material_plan_tree" model="ir.ui.view">
+        <field name="name">project.material.plan.audit.fields.view_project_material_plan_tree</field>
+        <field name="model">project.material.plan</field>
+        <field name="inherit_id" ref="view_project_material_plan_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_treasury_reconciliation_tree" model="ir.ui.view">
+        <field name="name">sc.treasury.reconciliation.audit.fields.view_sc_treasury_reconciliation_tree</field>
+        <field name="model">sc.treasury.reconciliation</field>
+        <field name="inherit_id" ref="view_sc_treasury_reconciliation_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_dashboard_cockpit_fact_tree" model="ir.ui.view">
+        <field name="name">sc.dashboard.cockpit.fact.audit.fields.view_sc_dashboard_cockpit_fact_tree</field>
+        <field name="model">sc.dashboard.cockpit.fact</field>
+        <field name="inherit_id" ref="view_sc_dashboard_cockpit_fact_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_workbench_item_tree" model="ir.ui.view">
+        <field name="name">sc.workbench.item.audit.fields.view_sc_workbench_item_tree</field>
+        <field name="model">sc.workbench.item</field>
+        <field name="inherit_id" ref="view_sc_workbench_item_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_check_standard_tree" model="ir.ui.view">
+        <field name="name">sc.check.standard.audit.fields.view_sc_check_standard_tree</field>
+        <field name="model">sc.check.standard</field>
+        <field name="inherit_id" ref="view_sc_check_standard_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_check_standard_item_tree" model="ir.ui.view">
+        <field name="name">sc.check.standard.item.audit.fields.view_sc_check_standard_item_tree</field>
+        <field name="model">sc.check.standard.item</field>
+        <field name="inherit_id" ref="view_sc_check_standard_item_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_quality_issue_tree" model="ir.ui.view">
+        <field name="name">sc.quality.issue.audit.fields.view_sc_quality_issue_tree</field>
+        <field name="model">sc.quality.issue</field>
+        <field name="inherit_id" ref="view_sc_quality_issue_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_quality_rectification_tree" model="ir.ui.view">
+        <field name="name">sc.quality.rectification.audit.fields.view_sc_quality_rectification_tree</field>
+        <field name="model">sc.quality.rectification</field>
+        <field name="inherit_id" ref="view_sc_quality_rectification_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_quality_recheck_tree" model="ir.ui.view">
+        <field name="name">sc.quality.recheck.audit.fields.view_sc_quality_recheck_tree</field>
+        <field name="model">sc.quality.recheck</field>
+        <field name="inherit_id" ref="view_sc_quality_recheck_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_site_photo_batch_tree" model="ir.ui.view">
+        <field name="name">sc.site.photo.batch.audit.fields.view_sc_site_photo_batch_tree</field>
+        <field name="model">sc.site.photo.batch</field>
+        <field name="inherit_id" ref="view_sc_site_photo_batch_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_settlement_order_tree" model="ir.ui.view">
+        <field name="name">sc.settlement.order.audit.fields.view_sc_settlement_order_tree</field>
+        <field name="model">sc.settlement.order</field>
+        <field name="inherit_id" ref="view_sc_settlement_order_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_settlement_adjustment_tree" model="ir.ui.view">
+        <field name="name">sc.settlement.adjustment.audit.fields.view_sc_settlement_adjustment_tree</field>
+        <field name="model">sc.settlement.adjustment</field>
+        <field name="inherit_id" ref="view_sc_settlement_adjustment_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_general_contract_tree" model="ir.ui.view">
+        <field name="name">sc.general.contract.audit.fields.view_sc_general_contract_tree</field>
+        <field name="model">sc.general.contract</field>
+        <field name="inherit_id" ref="view_sc_general_contract_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_project_budget_tree" model="ir.ui.view">
+        <field name="name">project.budget.audit.fields.view_project_budget_tree</field>
+        <field name="model">project.budget</field>
+        <field name="inherit_id" ref="view_project_budget_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_safety_plan_tree" model="ir.ui.view">
+        <field name="name">sc.safety.plan.audit.fields.view_sc_safety_plan_tree</field>
+        <field name="model">sc.safety.plan</field>
+        <field name="inherit_id" ref="view_sc_safety_plan_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_safety_disclosure_tree" model="ir.ui.view">
+        <field name="name">sc.safety.disclosure.audit.fields.view_sc_safety_disclosure_tree</field>
+        <field name="model">sc.safety.disclosure</field>
+        <field name="inherit_id" ref="view_sc_safety_disclosure_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_risk_library_tree" model="ir.ui.view">
+        <field name="name">sc.risk.library.audit.fields.view_sc_risk_library_tree</field>
+        <field name="model">sc.risk.library</field>
+        <field name="inherit_id" ref="view_sc_risk_library_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_risk_item_tree" model="ir.ui.view">
+        <field name="name">sc.risk.item.audit.fields.view_sc_risk_item_tree</field>
+        <field name="model">sc.risk.item</field>
+        <field name="inherit_id" ref="view_sc_risk_item_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_hazard_source_tree" model="ir.ui.view">
+        <field name="name">sc.hazard.source.audit.fields.view_sc_hazard_source_tree</field>
+        <field name="model">sc.hazard.source</field>
+        <field name="inherit_id" ref="view_sc_hazard_source_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_safety_issue_tree" model="ir.ui.view">
+        <field name="name">sc.safety.issue.audit.fields.view_sc_safety_issue_tree</field>
+        <field name="model">sc.safety.issue</field>
+        <field name="inherit_id" ref="view_sc_safety_issue_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_safety_rectification_tree" model="ir.ui.view">
+        <field name="name">sc.safety.rectification.audit.fields.view_sc_safety_rectification_tree</field>
+        <field name="model">sc.safety.rectification</field>
+        <field name="inherit_id" ref="view_sc_safety_rectification_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_safety_recheck_tree" model="ir.ui.view">
+        <field name="name">sc.safety.recheck.audit.fields.view_sc_safety_recheck_tree</field>
+        <field name="model">sc.safety.recheck</field>
+        <field name="inherit_id" ref="view_sc_safety_recheck_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_safety_patrol_task_tree" model="ir.ui.view">
+        <field name="name">sc.safety.patrol.task.audit.fields.view_sc_safety_patrol_task_tree</field>
+        <field name="model">sc.safety.patrol.task</field>
+        <field name="inherit_id" ref="view_sc_safety_patrol_task_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_project_boq_line_tree" model="ir.ui.view">
+        <field name="name">project.boq.line.audit.fields.view_project_boq_line_tree</field>
+        <field name="model">project.boq.line</field>
+        <field name="inherit_id" ref="view_project_boq_line_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_invoice_registration_tree" model="ir.ui.view">
+        <field name="name">sc.invoice.registration.audit.fields.view_sc_invoice_registration_tree</field>
+        <field name="model">sc.invoice.registration</field>
+        <field name="inherit_id" ref="view_sc_invoice_registration_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_receipt_income_tree" model="ir.ui.view">
+        <field name="name">sc.receipt.income.audit.fields.view_sc_receipt_income_tree</field>
+        <field name="model">sc.receipt.income</field>
+        <field name="inherit_id" ref="view_sc_receipt_income_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_payment_request_tree" model="ir.ui.view">
+        <field name="name">payment.request.audit.fields.view_payment_request_tree</field>
+        <field name="model">payment.request</field>
+        <field name="inherit_id" ref="view_payment_request_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_exec_structure_wbs_tree" model="ir.ui.view">
+        <field name="name">construction.work.breakdown.audit.fields.view_exec_structure_wbs_tree</field>
+        <field name="model">construction.work.breakdown</field>
+        <field name="inherit_id" ref="view_exec_structure_wbs_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_exec_structure_structure_tree" model="ir.ui.view">
+        <field name="name">sc.project.structure.audit.fields.view_exec_structure_structure_tree</field>
+        <field name="model">sc.project.structure</field>
+        <field name="inherit_id" ref="view_exec_structure_structure_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_construction_diary_tree" model="ir.ui.view">
+        <field name="name">sc.construction.diary.audit.fields.view_sc_construction_diary_tree</field>
+        <field name="model">sc.construction.diary</field>
+        <field name="inherit_id" ref="view_sc_construction_diary_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_material_rental_plan_tree" model="ir.ui.view">
+        <field name="name">sc.material.rental.plan.audit.fields.view_sc_material_rental_plan_tree</field>
+        <field name="model">sc.material.rental.plan</field>
+        <field name="inherit_id" ref="view_sc_material_rental_plan_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_material_rental_order_tree" model="ir.ui.view">
+        <field name="name">sc.material.rental.order.audit.fields.view_sc_material_rental_order_tree</field>
+        <field name="model">sc.material.rental.order</field>
+        <field name="inherit_id" ref="view_sc_material_rental_order_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_material_rental_settlement_tree" model="ir.ui.view">
+        <field name="name">sc.material.rental.settlement.audit.fields.view_sc_material_rental_settlement_tree</field>
+        <field name="model">sc.material.rental.settlement</field>
+        <field name="inherit_id" ref="view_sc_material_rental_settlement_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_payment_execution_tree" model="ir.ui.view">
+        <field name="name">sc.payment.execution.audit.fields.view_sc_payment_execution_tree</field>
+        <field name="model">sc.payment.execution</field>
+        <field name="inherit_id" ref="view_sc_payment_execution_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_project_funding_baseline_tree" model="ir.ui.view">
+        <field name="name">project.funding.baseline.audit.fields.view_project_funding_baseline_tree</field>
+        <field name="model">project.funding.baseline</field>
+        <field name="inherit_id" ref="view_project_funding_baseline_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_attendance_checkin_tree" model="ir.ui.view">
+        <field name="name">sc.attendance.checkin.audit.fields.view_sc_attendance_checkin_tree</field>
+        <field name="model">sc.attendance.checkin</field>
+        <field name="inherit_id" ref="view_sc_attendance_checkin_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_labor_plan_tree" model="ir.ui.view">
+        <field name="name">sc.labor.plan.audit.fields.view_sc_labor_plan_tree</field>
+        <field name="model">sc.labor.plan</field>
+        <field name="inherit_id" ref="view_sc_labor_plan_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_labor_request_tree" model="ir.ui.view">
+        <field name="name">sc.labor.request.audit.fields.view_sc_labor_request_tree</field>
+        <field name="model">sc.labor.request</field>
+        <field name="inherit_id" ref="view_sc_labor_request_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_labor_usage_tree" model="ir.ui.view">
+        <field name="name">sc.labor.usage.audit.fields.view_sc_labor_usage_tree</field>
+        <field name="model">sc.labor.usage</field>
+        <field name="inherit_id" ref="view_sc_labor_usage_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_labor_settlement_tree" model="ir.ui.view">
+        <field name="name">sc.labor.settlement.audit.fields.view_sc_labor_settlement_tree</field>
+        <field name="model">sc.labor.settlement</field>
+        <field name="inherit_id" ref="view_sc_labor_settlement_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_labor_price_tree" model="ir.ui.view">
+        <field name="name">sc.labor.price.audit.fields.view_sc_labor_price_tree</field>
+        <field name="model">sc.labor.price</field>
+        <field name="inherit_id" ref="view_sc_labor_price_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_equipment_plan_tree" model="ir.ui.view">
+        <field name="name">sc.equipment.plan.audit.fields.view_sc_equipment_plan_tree</field>
+        <field name="model">sc.equipment.plan</field>
+        <field name="inherit_id" ref="view_sc_equipment_plan_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_equipment_request_tree" model="ir.ui.view">
+        <field name="name">sc.equipment.request.audit.fields.view_sc_equipment_request_tree</field>
+        <field name="model">sc.equipment.request</field>
+        <field name="inherit_id" ref="view_sc_equipment_request_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_equipment_usage_tree" model="ir.ui.view">
+        <field name="name">sc.equipment.usage.audit.fields.view_sc_equipment_usage_tree</field>
+        <field name="model">sc.equipment.usage</field>
+        <field name="inherit_id" ref="view_sc_equipment_usage_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_equipment_settlement_tree" model="ir.ui.view">
+        <field name="name">sc.equipment.settlement.audit.fields.view_sc_equipment_settlement_tree</field>
+        <field name="model">sc.equipment.settlement</field>
+        <field name="inherit_id" ref="view_sc_equipment_settlement_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_equipment_price_tree" model="ir.ui.view">
+        <field name="name">sc.equipment.price.audit.fields.view_sc_equipment_price_tree</field>
+        <field name="model">sc.equipment.price</field>
+        <field name="inherit_id" ref="view_sc_equipment_price_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_payment_ledger_tree" model="ir.ui.view">
+        <field name="name">payment.ledger.audit.fields.view_payment_ledger_tree</field>
+        <field name="model">payment.ledger</field>
+        <field name="inherit_id" ref="view_payment_ledger_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_project_my_list_tree" model="ir.ui.view">
+        <field name="name">project.project.audit.fields.view_project_my_list_tree</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="view_project_my_list_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_contract_event_tree" model="ir.ui.view">
+        <field name="name">sc.contract.event.audit.fields.view_sc_contract_event_tree</field>
+        <field name="model">sc.contract.event</field>
+        <field name="inherit_id" ref="view_sc_contract_event_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_fund_account_operation_tree" model="ir.ui.view">
+        <field name="name">sc.fund.account.operation.audit.fields.view_sc_fund_account_operation_tree</field>
+        <field name="model">sc.fund.account.operation</field>
+        <field name="inherit_id" ref="view_sc_fund_account_operation_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_fund_account_tree" model="ir.ui.view">
+        <field name="name">sc.fund.account.audit.fields.view_sc_fund_account_tree</field>
+        <field name="model">sc.fund.account</field>
+        <field name="inherit_id" ref="view_sc_fund_account_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_financing_loan_tree" model="ir.ui.view">
+        <field name="name">sc.financing.loan.audit.fields.view_sc_financing_loan_tree</field>
+        <field name="model">sc.financing.loan</field>
+        <field name="inherit_id" ref="view_sc_financing_loan_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_subcontract_plan_tree" model="ir.ui.view">
+        <field name="name">sc.subcontract.plan.audit.fields.view_sc_subcontract_plan_tree</field>
+        <field name="model">sc.subcontract.plan</field>
+        <field name="inherit_id" ref="view_sc_subcontract_plan_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_subcontract_request_tree" model="ir.ui.view">
+        <field name="name">sc.subcontract.request.audit.fields.view_sc_subcontract_request_tree</field>
+        <field name="model">sc.subcontract.request</field>
+        <field name="inherit_id" ref="view_sc_subcontract_request_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_subcontract_register_tree" model="ir.ui.view">
+        <field name="name">sc.subcontract.register.audit.fields.view_sc_subcontract_register_tree</field>
+        <field name="model">sc.subcontract.register</field>
+        <field name="inherit_id" ref="view_sc_subcontract_register_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_subcontract_settlement_tree" model="ir.ui.view">
+        <field name="name">sc.subcontract.settlement.audit.fields.view_sc_subcontract_settlement_tree</field>
+        <field name="model">sc.subcontract.settlement</field>
+        <field name="inherit_id" ref="view_sc_subcontract_settlement_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_subcontract_price_tree" model="ir.ui.view">
+        <field name="name">sc.subcontract.price.audit.fields.view_sc_subcontract_price_tree</field>
+        <field name="model">sc.subcontract.price</field>
+        <field name="inherit_id" ref="view_sc_subcontract_price_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_payment_request_line_tree" model="ir.ui.view">
+        <field name="name">payment.request.line.audit.fields.view_payment_request_line_tree</field>
+        <field name="model">payment.request.line</field>
+        <field name="inherit_id" ref="view_payment_request_line_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_plan_tree" model="ir.ui.view">
+        <field name="name">sc.plan.audit.fields.view_sc_plan_tree</field>
+        <field name="model">sc.plan</field>
+        <field name="inherit_id" ref="view_sc_plan_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_plan_report_tree" model="ir.ui.view">
+        <field name="name">sc.plan.report.audit.fields.view_sc_plan_report_tree</field>
+        <field name="model">sc.plan.report</field>
+        <field name="inherit_id" ref="view_sc_plan_report_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_material_settlement_line_tree" model="ir.ui.view">
+        <field name="name">sc.material.settlement.line.audit.fields.view_sc_material_settlement_line_tree</field>
+        <field name="model">sc.material.settlement.line</field>
+        <field name="inherit_id" ref="view_sc_material_settlement_line_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_material_purchase_request_tree" model="ir.ui.view">
+        <field name="name">sc.material.purchase.request.audit.fields.view_sc_material_purchase_request_tree</field>
+        <field name="model">sc.material.purchase.request</field>
+        <field name="inherit_id" ref="view_sc_material_purchase_request_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_material_acceptance_tree" model="ir.ui.view">
+        <field name="name">sc.material.acceptance.audit.fields.view_sc_material_acceptance_tree</field>
+        <field name="model">sc.material.acceptance</field>
+        <field name="inherit_id" ref="view_sc_material_acceptance_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_material_inbound_tree" model="ir.ui.view">
+        <field name="name">sc.material.inbound.audit.fields.view_sc_material_inbound_tree</field>
+        <field name="model">sc.material.inbound</field>
+        <field name="inherit_id" ref="view_sc_material_inbound_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_material_outbound_tree" model="ir.ui.view">
+        <field name="name">sc.material.outbound.audit.fields.view_sc_material_outbound_tree</field>
+        <field name="model">sc.material.outbound</field>
+        <field name="inherit_id" ref="view_sc_material_outbound_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_material_rfq_tree" model="ir.ui.view">
+        <field name="name">sc.material.rfq.audit.fields.view_sc_material_rfq_tree</field>
+        <field name="model">sc.material.rfq</field>
+        <field name="inherit_id" ref="view_sc_material_rfq_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_material_settlement_tree" model="ir.ui.view">
+        <field name="name">sc.material.settlement.audit.fields.view_sc_material_settlement_tree</field>
+        <field name="model">sc.material.settlement</field>
+        <field name="inherit_id" ref="view_sc_material_settlement_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_audit_fields_view_sc_expense_claim_tree" model="ir.ui.view">
+        <field name="name">sc.expense.claim.audit.fields.view_sc_expense_claim_tree</field>
+        <field name="model">sc.expense.claim</field>
+        <field name="inherit_id" ref="view_sc_expense_claim_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="create_uid" />
+                <field name="create_date" />
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -21,6 +21,33 @@ SCENE_CHANNELS = {"stable", "beta", "dev"}
 CRITICAL_SCENE_TARGET_OVERRIDES = {"workspace.home"}
 
 CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES = {}
+SOURCE_KIND = "scene_runtime_provider_projection"
+SOURCE_AUTHORITIES = (
+    "scene_registry_projection",
+    "scene_contract_export",
+    "ir.config_parameter",
+    "sc.capability",
+    "ir.ui.menu",
+    "ir.actions",
+)
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "system.init.scene_runtime",
+        "delegated_source_authority": {
+            "kind": "scene_registry_projection",
+            "authorities": ["sc.scene", "sc.capability", "ir.ui.menu", "ir.actions", "res.groups"],
+            "projection_only": True,
+            "no_business_fact_authority": True,
+        },
+    }
 
 
 def _critical_scene_target_overrides(env) -> set[str]:

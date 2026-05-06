@@ -18,6 +18,20 @@ PREFERRED_VIEW_ORDER = (
     "activity",
     "dashboard",
 )
+SOURCE_KIND = "native_view_primary_contract_projection"
+SOURCE_AUTHORITIES = ("odoo_native_view_contract", "parser_contract", "view_semantics")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "native_view_contract_projection",
+    }
 
 
 def resolve_primary_view_type(

@@ -3,6 +3,21 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+SOURCE_KIND = "scene_governance_payload_projection"
+SOURCE_AUTHORITIES = ("scene_diagnostics", "scene_ready_contract", "contract_governance")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "scene_governance_payload_builder",
+    }
+
 
 def _as_text(value: Any) -> str:
     return str(value or "").strip()

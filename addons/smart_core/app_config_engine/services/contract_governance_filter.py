@@ -11,6 +11,21 @@ import json
 
 
 class ContractGovernanceFilterService:
+    SOURCE_KIND = "ui_contract_runtime_governance_filter"
+    SOURCE_AUTHORITIES = ("res.groups", "ir.model.access", "parsed_ui_contract")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "app_config_engine.contract_governance_filter",
+        }
+
     """Apply runtime governance filtering to already parsed contracts."""
 
     def __init__(self, owner):
@@ -99,4 +114,3 @@ class ContractGovernanceFilterService:
             except Exception:
                 pass
         return vp
-

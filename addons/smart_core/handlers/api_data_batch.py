@@ -54,6 +54,19 @@ class ApiDataBatchHandler(BaseIntentHandler):
     def _err(self, code: int, message: str):
         return {"ok": False, "error": {"code": code, "message": message}, "code": code}
 
+    def _project_scope_denied(self, message: str, scope_meta: Dict[str, Any]):
+        return {
+            "ok": False,
+            "error": {
+                "code": 403,
+                "message": message,
+                "kind": "permission",
+                "project_scope": scope_meta,
+                "record_scope": scope_meta,
+            },
+            "code": 403,
+        }
+
     def _source_authority_contract(self, model: str, action: str) -> Dict[str, Any]:
         return {
             "kind": self.SOURCE_KIND,
@@ -301,7 +314,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
         if project_scope_meta.get("applied"):
             allowed_count = env_model.search_count(scoped_domain)
             if int(allowed_count or 0) != len(set(ids)):
-                return self._err(403, "当前项目上下文不允许批量修改其他项目的数据")
+                return self._project_scope_denied("当前项目上下文不允许批量修改其他项目的数据", project_scope_meta)
         trace_id = ""
         if isinstance(self.context, dict):
             trace_id = str(self.context.get("trace_id") or "")
@@ -360,6 +373,8 @@ class ApiDataBatchHandler(BaseIntentHandler):
                 replay_data["failed_csv_file_name"] = failed_csv.get("file_name")
                 replay_data["failed_csv_content_b64"] = failed_csv.get("content_b64")
                 replay_data["failed_csv_count"] = failed_csv.get("count")
+            replay_data.setdefault("project_scope", project_scope_meta)
+            replay_data.setdefault("record_scope", project_scope_meta)
             return {
                 "ok": True,
                 "data": replay_data,
@@ -369,6 +384,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
                     "source": "portal-shell",
                     "source_authority": self._source_authority_contract(model, action or "write"),
                     "project_scope": project_scope_meta,
+                    "record_scope": project_scope_meta,
                 },
         }
 
@@ -445,6 +461,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
                 "failed_reason_summary": self._failed_reason_summary(results),
                 "failed_retryable_summary": self._failed_retryable_summary(results),
                 "project_scope": project_scope_meta,
+                "record_scope": project_scope_meta,
             },
             request_id=request_id,
             idempotency_key=idempotency_key,
@@ -473,5 +490,12 @@ class ApiDataBatchHandler(BaseIntentHandler):
             idem_fingerprint=idempotency_fingerprint,
             result=data,
         )
-        meta = {"trace_id": trace_id, "write_mode": "batch", "source": "portal-shell", "source_authority": self._source_authority_contract(model, action or "write"), "project_scope": project_scope_meta}
+        meta = {
+            "trace_id": trace_id,
+            "write_mode": "batch",
+            "source": "portal-shell",
+            "source_authority": self._source_authority_contract(model, action or "write"),
+            "project_scope": project_scope_meta,
+            "record_scope": project_scope_meta,
+        }
         return {"ok": True, "data": data, "meta": meta}

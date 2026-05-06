@@ -10,6 +10,21 @@ _logger = logging.getLogger(__name__)
 
 
 class SystemInitPreloadBuilder:
+    SOURCE_KIND = "system_init_preload_contract_projection"
+    SOURCE_AUTHORITIES = ("ir.actions.act_window", "app_config_action_dispatcher", "ui_contract_service")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "startup_preload_only": True,
+        }
+
     def build(self, env, su_env, params: dict, default_home_action, contract_service):
         home_contract = None
         etags = {}

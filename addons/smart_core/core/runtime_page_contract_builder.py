@@ -34,6 +34,23 @@ _SEMANTIC_TITLE_BY_KEY = {
     "retry_panel": "失败处理",
     "list_main": "事项清单",
 }
+SOURCE_KIND = "runtime_page_contract_projection"
+SOURCE_AUTHORITIES = (
+    "page_contract_projection",
+    "runtime_page_parser_semantic_bridge",
+    "runtime_page_semantic_orchestration_bridge",
+)
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "rebuildable": True,
+    }
 
 
 def _resolve_role_source_code(data: dict[str, Any]) -> str:
@@ -113,6 +130,7 @@ def _sanitize_page_orchestration_titles(page: dict[str, Any]) -> dict[str, Any]:
 
 def build_runtime_page_contracts(data: dict[str, Any]) -> dict[str, Any]:
     payload = build_page_contracts(data)
+    payload["runtime_source_authority"] = source_authority_contract()
     role_code = _resolve_role_source_code(data)
     pages = payload.get("pages") if isinstance(payload.get("pages"), dict) else {}
     for page_key, page in list(pages.items()):
@@ -126,6 +144,7 @@ def build_runtime_page_contracts(data: dict[str, Any]) -> dict[str, Any]:
         page_payload["context"] = context
         orchestration["page"] = page_payload
         meta["role_source_code"] = role_code
+        meta["runtime_source_authority"] = source_authority_contract()
         orchestration["meta"] = meta
         page["page_orchestration_v1"] = orchestration
         page = apply_runtime_page_parser_semantic_bridge(page, page_key=page_key)

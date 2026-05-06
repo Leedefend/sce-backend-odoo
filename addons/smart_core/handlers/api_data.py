@@ -66,6 +66,8 @@ class ApiDataHandler(BaseIntentHandler):
             "model": str(model or ""),
             "op": str(op or ""),
             "proxy_only": True,
+            "no_business_fact_authority": True,
+            "field_value_passthrough_only": True,
         }
 
     def _read_if_none_match(self, p: Dict[str, Any]) -> str:
@@ -610,6 +612,7 @@ class ApiDataHandler(BaseIntentHandler):
                 "reason_code": REASON_PROJECT_SCOPE_DENIED,
                 "kind": "permission",
                 "project_scope": scope_meta,
+                "record_scope": scope_meta,
             },
             "code": 403,
         }
@@ -835,9 +838,9 @@ class ApiDataHandler(BaseIntentHandler):
         if inverse_name and inverse_name in child_model._fields and parent and parent.id and vals.get(inverse_name) in (None, False, ""):
             vals[inverse_name] = parent.id
 
-        # Parent-owned facts such as company/currency/partner are backend facts.
-        # When the child subview omits them, copy same-name values from the parent
-        # instead of making the frontend infer hidden required fields.
+        # Copy same-name backend-owned fields for child records when a subview
+        # omits hidden required values; this preserves ORM facts and does not
+        # classify partners or infer customer/supplier semantics.
         for name in ("company_id", "currency_id", "partner_id"):
             if name in child_model._fields and vals.get(name) in (None, False, ""):
                 parent_value = self._record_field_value_for_child(parent, name)
@@ -1150,6 +1153,7 @@ class ApiDataHandler(BaseIntentHandler):
             "group_limit": group_limit,
             "group_offset": group_offset,
             "project_scope": project_scope_meta,
+            "record_scope": project_scope_meta,
         }
         if group_total is not None:
             meta["group_total"] = int(group_total)
@@ -1185,6 +1189,7 @@ class ApiDataHandler(BaseIntentHandler):
             "count": len(rows),
             "fields": fields_safe,
             "project_scope": project_scope_meta,
+            "record_scope": project_scope_meta,
         }
         return data, meta
 
@@ -1202,6 +1207,7 @@ class ApiDataHandler(BaseIntentHandler):
             "model": model,
             "source_authority": self._source_authority_contract(model, "count"),
             "project_scope": project_scope_meta,
+            "record_scope": project_scope_meta,
         }
         return data, meta
 
@@ -1267,6 +1273,7 @@ class ApiDataHandler(BaseIntentHandler):
             "source_authority": self._source_authority_contract(model, "create"),
             "id": rec.id,
             "project_scope": project_scope_meta,
+            "record_scope": project_scope_meta,
         }
         return data, meta
 
@@ -1333,6 +1340,7 @@ class ApiDataHandler(BaseIntentHandler):
             "source_authority": self._source_authority_contract(model, "write"),
             "count": len(recs),
             "project_scope": project_scope_meta,
+            "record_scope": project_scope_meta,
         }
         return data, meta
 
@@ -1401,6 +1409,7 @@ class ApiDataHandler(BaseIntentHandler):
                 "source_authority": self._source_authority_contract(model, "export_csv"),
                 "count": 0,
                 "project_scope": project_scope_meta,
+                "record_scope": project_scope_meta,
             }
             return data, meta
 
@@ -1435,5 +1444,6 @@ class ApiDataHandler(BaseIntentHandler):
             "count": len(rows),
             "limit": limit,
             "project_scope": project_scope_meta,
+            "record_scope": project_scope_meta,
         }
         return data, meta

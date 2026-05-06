@@ -15,8 +15,22 @@ from ..core.project_context import (
 class ChatterTimelineHandler(BaseIntentHandler):
     INTENT_TYPE = "chatter.timeline"
     DESCRIPTION = "Unified collaboration timeline for message/attachment/audit"
+    SOURCE_KIND = "odoo_collaboration_timeline_projection"
     SOURCE_AUTHORITIES = ("mail.message", "ir.attachment", "mail.activity")
     AUXILIARY_AUTHORITIES = ("sc.audit.log",)
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "auxiliary_authorities": list(cls.AUXILIARY_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def handle(self, payload=None, ctx=None):
         params = self.params if isinstance(self.params, dict) else {}
@@ -65,9 +79,11 @@ class ChatterTimelineHandler(BaseIntentHandler):
             },
             "source_authorities": list(self.SOURCE_AUTHORITIES),
             "auxiliary_authorities": list(self.AUXILIARY_AUTHORITIES) if include_audit else [],
+            "source_authority": self.source_authority_contract(),
         }, {
             "source_authorities": list(self.SOURCE_AUTHORITIES),
             "auxiliary_authorities": list(self.AUXILIARY_AUTHORITIES) if include_audit else [],
+            "source_authority": self.source_authority_contract(),
         }
 
     def _load_messages(self, model: str, res_id: int, limit: int) -> List[Dict[str, Any]]:

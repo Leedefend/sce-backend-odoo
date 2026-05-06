@@ -12,6 +12,14 @@ from .product_policy_service import ProductPolicyService
 
 
 FREEZE_SURFACE_CONTRACT_VERSION = "edition_freeze_surface_v1"
+SOURCE_KIND = "edition_release_snapshot_projection"
+SOURCE_AUTHORITIES = (
+    "sc.edition.release.snapshot",
+    "delivery_engine_projection",
+    "delivery_product_policy_projection",
+)
+NO_BUSINESS_FACT_AUTHORITY = True
+LEGACY_DEFAULT_ROLE_SOURCE_KIND = "legacy_release_snapshot_default_role_projection"
 
 
 def _text(value: Any) -> str:
@@ -40,8 +48,37 @@ class EditionReleaseSnapshotService:
             return None
         return self.env["sc.edition.release.snapshot"].sudo()
 
+    def _model_registered(self, model_name: str) -> bool:
+        token = _text(model_name)
+        if not token:
+            return False
+        registry = getattr(self.env, "registry", None)
+        models = getattr(registry, "models", {}) if registry is not None else {}
+        return token in models
+
     def now(self):
         return fields.Datetime.now()
+
+    @classmethod
+    def source_authority_contract(cls) -> dict[str, Any]:
+        return {
+            "kind": SOURCE_KIND,
+            "authorities": list(SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "edition_release_snapshot",
+            "legacy_default_role_source": LEGACY_DEFAULT_ROLE_SOURCE_KIND,
+        }
+
+    @classmethod
+    def legacy_default_role_source_authority_contract(cls) -> dict[str, Any]:
+        return {
+            "kind": LEGACY_DEFAULT_ROLE_SOURCE_KIND,
+            "authorities": ["fallback_role_code:pm"],
+            "projection_only": True,
+            "no_business_fact_authority": True,
+            "legacy_compatibility": True,
+        }
 
     def _freeze_role_code(self, policy: dict[str, Any], explicit_role_code: str = "") -> str:
         if _text(explicit_role_code):
@@ -61,13 +98,33 @@ class EditionReleaseSnapshotService:
     ) -> str:
         if _text(explicit_role_code):
             return _text(explicit_role_code)
-        rec = self.env["sc.product.policy"].sudo().search([("product_key", "=", _text(requested_product_key)), ("active", "=", True)], limit=1)
+        rec = None
+        if self._model_registered("sc.product.policy"):
+            rec = self.env["sc.product.policy"].sudo().search([("product_key", "=", _text(requested_product_key)), ("active", "=", True)], limit=1)
         if rec and isinstance(rec.allowed_role_codes, list):
             for item in rec.allowed_role_codes:
                 value = _text(item)
                 if value:
                     return value
         return "pm"
+
+    def _default_requested_role_context(
+        self,
+        *,
+        requested_product_key: str,
+        explicit_role_code: str = "",
+    ) -> dict[str, Any]:
+        role_code = self._default_requested_role_code(
+            requested_product_key=requested_product_key,
+            explicit_role_code=explicit_role_code,
+        )
+        return {
+            "role_code": role_code,
+            "source": "explicit" if _text(explicit_role_code) else "product_policy_or_legacy_default",
+            "legacy_default_role_source_authority": (
+                self.legacy_default_role_source_authority_contract() if not _text(explicit_role_code) and role_code == "pm" else {}
+            ),
+        }
 
     def build_freeze_surface(
         self,
@@ -82,10 +139,11 @@ class EditionReleaseSnapshotService:
             edition_key=edition_key,
             base_product_key=base_product_key,
         )
-        requested_role_code = self._default_requested_role_code(
+        requested_role_context = self._default_requested_role_context(
             requested_product_key=requested_product_key,
             explicit_role_code=role_code,
         )
+        requested_role_code = _text(requested_role_context.get("role_code"))
         policy = self.policy_service.get_policy(
             product_key=requested_product_key,
             edition_key=requested_edition_key,
@@ -106,7 +164,9 @@ class EditionReleaseSnapshotService:
         effective_product_key = _text(resolved_delivery.get("product_key")) or _text(resolved_policy.get("product_key"))
         effective_base_product_key = _text(resolved_delivery.get("base_product_key")) or _text(resolved_policy.get("base_product_key"))
         effective_edition_key = _text(resolved_delivery.get("edition_key")) or _text(resolved_policy.get("edition_key"))
-        policy_rec = self.env["sc.product.policy"].sudo().search([("product_key", "=", effective_product_key), ("active", "=", True)], limit=1)
+        policy_rec = None
+        if self._model_registered("sc.product.policy"):
+            policy_rec = self.env["sc.product.policy"].sudo().search([("product_key", "=", effective_product_key), ("active", "=", True)], limit=1)
         declared_scene_bindings = (
             deepcopy(policy_rec.scene_version_bindings)
             if policy_rec and isinstance(policy_rec.scene_version_bindings, dict)
@@ -121,6 +181,7 @@ class EditionReleaseSnapshotService:
             "channel": "preview" if effective_edition_key == "preview" else "stable",
         }
         runtime_meta = {
+            "source_authority": self.source_authority_contract(),
             "requested": {
                 "product_key": requested_product_key,
                 "base_product_key": requested_base_product_key,
@@ -135,9 +196,11 @@ class EditionReleaseSnapshotService:
             },
             "edition_diagnostics": _dict(resolved_policy.get("edition_diagnostics")),
             "delivery_engine_meta": _dict(resolved_delivery.get("meta")),
+            "requested_role_context": requested_role_context,
         }
         snapshot = {
             "contract_version": FREEZE_SURFACE_CONTRACT_VERSION,
+            "source_authority": self.source_authority_contract(),
             "identity": identity,
             "policy": {
                 "product_key": effective_product_key,
@@ -201,7 +264,7 @@ class EditionReleaseSnapshotService:
         )
         identity = _dict(payload.get("identity"))
         resolved_product_key = _text(identity.get("product_key"))
-        resolved_base_product_key = _text(identity.get("base_product_key")) or "construction"
+        resolved_base_product_key = _text(identity.get("base_product_key"))
         resolved_edition_key = _text(identity.get("edition_key")) or "standard"
         resolved_version = _text(version) or _text(identity.get("version")) or "v1"
         channel = _text(identity.get("channel")) or ("preview" if resolved_edition_key == "preview" else "stable")
@@ -220,7 +283,9 @@ class EditionReleaseSnapshotService:
             limit=1,
         )
         rollback_target_id = int(current_active.id) if current_active and (not target or int(current_active.id) != int(target.id)) else False
-        policy_rec = self.env["sc.product.policy"].sudo().search([("product_key", "=", resolved_product_key), ("active", "=", True)], limit=1)
+        policy_rec = None
+        if self._model_registered("sc.product.policy"):
+            policy_rec = self.env["sc.product.policy"].sudo().search([("product_key", "=", resolved_product_key), ("active", "=", True)], limit=1)
         values = {
             "state": "candidate",
             "product_key": resolved_product_key,

@@ -1,6 +1,22 @@
 # -*- coding: utf-8 -*-
 # smart_core/app_config_engine/utils/payload.py
 # 【职责】请求体 payload 的规范化解析/兜底
+SOURCE_KIND = "contract_request_payload_normalizer"
+SOURCE_AUTHORITIES = ("http_json_payload", "contract_request_schema")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract():
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "app_config_engine.payload_utils",
+    }
+
+
 def _as_list(v):
     """将字符串/列表/单值统一为扁平的字符串列表"""
     if not v: return []

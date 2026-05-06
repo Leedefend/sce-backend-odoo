@@ -81,6 +81,7 @@ class AppPermissionConfig(models.Model):
             "target_ref": str(target_ref or ""),
             "projection_only": True,
             "rebuildable": True,
+            "no_business_fact_authority": True,
         }
 
     # ================== 生成契约 ==================

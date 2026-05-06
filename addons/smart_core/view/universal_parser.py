@@ -3,6 +3,22 @@ from odoo.exceptions import AccessError
 from .view_dispatcher import ViewDispatcher
 
 class UniversalViewSemanticParser:
+    SOURCE_KIND = "legacy_universal_view_semantic_projection"
+    SOURCE_AUTHORITIES = ("ir.ui.view", "ir.model.fields", "ir.model.access", "ir.ui.menu", "ir.actions.act_window")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "smart_core.view.universal_parser",
+            "legacy_compatibility": True,
+        }
+
     def __init__(self, env, model, view_type="form", view_id=None, context=None, permission_env=None):
         self.env = env
         self.permission_env = permission_env or env

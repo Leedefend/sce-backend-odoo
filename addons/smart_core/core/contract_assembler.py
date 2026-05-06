@@ -5,6 +5,21 @@ from odoo.addons.smart_core.app_config_engine.utils.misc import stable_etag
 
 
 class ContractAssembler:
+    SOURCE_KIND = "system_init_contract_meta_assembler"
+    SOURCE_AUTHORITIES = ("system_init_payload", "scene_diagnostics", "etag")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "contract_assembler",
+        }
+
     def build_scene_trace_meta(self, data: dict, scene_diagnostics: dict | None, elapsed_ms: int) -> dict:
         diagnostics = scene_diagnostics if isinstance(scene_diagnostics, dict) else {}
         governance = diagnostics.get("governance")

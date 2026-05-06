@@ -5,6 +5,14 @@ from urllib.parse import urlparse
 
 
 class SystemInitPayloadBuilder:
+    SOURCE_KIND = "system_init_startup_payload_projection"
+    SOURCE_AUTHORITIES = (
+        "system_init_runtime_payload",
+        "delivery_engine_v1",
+        "scene_ready_contract_v1",
+        "page_contracts",
+    )
+    NO_BUSINESS_FACT_AUTHORITY = True
     BUILD_MODE_BOOT = "boot"
     BUILD_MODE_PRELOAD = "preload"
     BUILD_MODE_DEBUG = "debug"
@@ -38,6 +46,16 @@ class SystemInitPayloadBuilder:
         "enterprise_enablement",
     }
     DEFAULT_STARTUP_PAGE_KEYS = ("home", "my_work", "workbench")
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "system_init",
+        }
 
     @staticmethod
     def _parse_with_tokens(value) -> set[str]:
@@ -212,6 +230,7 @@ class SystemInitPayloadBuilder:
 
         return {
             "contract_mode": str(row.get("contract_mode") or "default"),
+            "source_authority": cls.source_authority_contract(),
             "preload_requested": preload_requested,
             "scene_subset": scene_subset,
             "scene_subset_count": len(scene_subset),

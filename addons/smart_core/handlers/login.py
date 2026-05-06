@@ -110,6 +110,18 @@ class LoginHandler(BaseIntentHandler):
     ETAG_ENABLED = False
     SOURCE_KIND = "odoo_auth_session_proxy"
     SOURCE_AUTHORITIES = ("res.users", "res.groups", "res.company")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def handle(self):
         # 1) 取参（支持 db / database / company_id 可选）
@@ -226,6 +238,7 @@ class LoginHandler(BaseIntentHandler):
         return data, {
             "source_kind": self.SOURCE_KIND,
             "source_authorities": list(self.SOURCE_AUTHORITIES),
+            "source_authority": self.source_authority_contract(),
         }
 
 
@@ -241,6 +254,18 @@ class LogoutHandler(BaseIntentHandler):
     ETAG_ENABLED = False
     SOURCE_KIND = "odoo_auth_session_proxy"
     SOURCE_AUTHORITIES = ("res.users",)
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def handle(self):
         try:
@@ -263,6 +288,7 @@ class LogoutHandler(BaseIntentHandler):
         return {"message": "logged out"}, {
             "source_kind": self.SOURCE_KIND,
             "source_authorities": list(self.SOURCE_AUTHORITIES),
+            "source_authority": self.source_authority_contract(),
         }
 
 

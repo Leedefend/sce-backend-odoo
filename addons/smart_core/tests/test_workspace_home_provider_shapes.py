@@ -122,3 +122,9 @@ class TestWorkspaceHomeProviderShapes(unittest.TestCase):
         self.assertTrue(group_overview)
         self.assertEqual(group_overview[0].get("key"), "risk")
         self.assertEqual(group_overview[0].get("allow_count"), 1)
+
+        source = payload.get("source_authority") or {}
+        self.assertEqual(source.get("kind"), "workspace_home_startup_surface_projection")
+        self.assertTrue(source.get("projection_only"))
+        self.assertTrue(source.get("no_business_fact_authority"))
+        self.assertIn("workspace_home_data_provider", source.get("authorities") or [])

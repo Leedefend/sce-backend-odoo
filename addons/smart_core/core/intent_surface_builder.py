@@ -8,6 +8,21 @@ from odoo.addons.smart_core.identity.identity_resolver import IdentityResolver
 
 
 class IntentSurfaceBuilder:
+    SOURCE_KIND = "intent_surface_projection"
+    SOURCE_AUTHORITIES = ("handler_registry", "ir.model.data", "res.groups", "identity_resolver")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "intent_surface_builder",
+        }
+
     @staticmethod
     def _safe_aliases(handler_cls) -> list[str]:
         try:

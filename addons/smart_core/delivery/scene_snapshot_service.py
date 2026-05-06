@@ -12,6 +12,10 @@ from odoo.addons.smart_core.core.scene_contract_builder import (
 )
 from odoo.addons.smart_core.delivery.product_policy_service import ProductPolicyService
 
+SOURCE_KIND = "scene_snapshot_projection"
+SOURCE_AUTHORITIES = ("sc.scene.snapshot", "release_surface_scene_contract_projection", "delivery_product_policy_projection")
+NO_BUSINESS_FACT_AUTHORITY = True
+
 
 def _text(value: Any) -> str:
     return str(value or "").strip()
@@ -29,7 +33,28 @@ class SceneSnapshotService:
         self.env = env
         self.policy_service = ProductPolicyService(env)
 
+    @classmethod
+    def source_authority_contract(cls) -> dict[str, Any]:
+        return {
+            "kind": SOURCE_KIND,
+            "authorities": list(SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "scene_snapshot_contract_cache",
+        }
+
+    def _model_registered(self, model_name: str) -> bool:
+        token = _text(model_name)
+        if not token:
+            return False
+        registry = getattr(self.env, "registry", None)
+        models = getattr(registry, "models", {}) if registry is not None else {}
+        return token in models
+
     def _model(self):
+        if not self._model_registered("sc.scene.snapshot"):
+            return None
         return self.env["sc.scene.snapshot"].sudo()
 
     def _normalize_contract(self, contract: dict[str, Any], *, scene_key: str, product_key: str, capability_key: str) -> dict[str, Any]:
@@ -111,6 +136,8 @@ class SceneSnapshotService:
         cloned_from_snapshot_id: int | None = None,
     ) -> dict[str, Any]:
         model = self._model()
+        if model is None:
+            raise ValueError("SCENE_SNAPSHOT_MODEL_NOT_AVAILABLE")
         rec = model.search(
             [
                 ("scene_key", "=", scene_key),
@@ -149,12 +176,15 @@ class SceneSnapshotService:
         return target.to_runtime_dict()
 
     def list_snapshots(self, *, product_key: str | None = None, scene_key: str | None = None) -> list[dict[str, Any]]:
+        model = self._model()
+        if model is None:
+            return []
         domain = [("active", "=", True)]
         if _text(product_key):
             domain.append(("product_key", "=", _text(product_key)))
         if _text(scene_key):
             domain.append(("scene_key", "=", _text(scene_key)))
-        return [rec.to_runtime_dict() for rec in self._model().search(domain)]
+        return [rec.to_runtime_dict() for rec in model.search(domain)]
 
     def resolve_snapshot(
         self,
@@ -166,7 +196,10 @@ class SceneSnapshotService:
         bind = _dict(binding)
         version = _text(bind.get("version")) or "v1"
         channel = _text(bind.get("channel")) or "stable"
-        rec = self._model().search(
+        model = self._model()
+        if model is None:
+            return {}
+        rec = model.search(
             [
                 ("scene_key", "=", scene_key),
                 ("product_key", "=", product_key),
@@ -198,11 +231,16 @@ class SceneSnapshotService:
             "snapshot_state": "",
             "snapshot_id": 0,
             "snapshot_fallback_reason": "",
+            "source_authority": self.source_authority_contract(),
         }
         if not bind:
             diagnostics["snapshot_fallback_reason"] = "BINDING_MISSING"
             return {}, diagnostics
-        rec = self._model().search(
+        model = self._model()
+        if model is None:
+            diagnostics["snapshot_fallback_reason"] = "SNAPSHOT_MODEL_NOT_AVAILABLE"
+            return {}, diagnostics
+        rec = model.search(
             [
                 ("scene_key", "=", scene_key),
                 ("product_key", "=", product_key),
@@ -242,7 +280,10 @@ class SceneSnapshotService:
         target_route: str | None = None,
         note: str = "",
     ) -> dict[str, Any]:
-        rec = self._model().search(
+        model = self._model()
+        if model is None:
+            raise ValueError("SCENE_SNAPSHOT_MODEL_NOT_AVAILABLE")
+        rec = model.search(
             [
                 ("scene_key", "=", source_scene_key),
                 ("product_key", "=", source_product_key),
@@ -313,7 +354,10 @@ class SceneSnapshotService:
         return out
 
     def list_active_stable_snapshots(self, *, scene_key: str, product_key: str) -> list[dict[str, Any]]:
-        rows = self._model().search(
+        model = self._model()
+        if model is None:
+            return []
+        rows = model.search(
             [
                 ("scene_key", "=", scene_key),
                 ("product_key", "=", product_key),

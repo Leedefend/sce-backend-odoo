@@ -13,6 +13,18 @@ class SearchFavoriteSetHandler(BaseIntentHandler):
     REQUIRED_GROUPS = ["base.group_user"]
     SOURCE_KIND = "odoo_filter_write_proxy"
     SOURCE_AUTHORITIES = ("ir.filters", "app.search.config", "ir.model.access")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def _err(self, code, message):
         return {
@@ -25,6 +37,7 @@ class SearchFavoriteSetHandler(BaseIntentHandler):
         return {
             "source_kind": self.SOURCE_KIND,
             "source_authorities": list(self.SOURCE_AUTHORITIES),
+            "source_authority": self.source_authority_contract(),
         }
 
     def _params(self, payload):

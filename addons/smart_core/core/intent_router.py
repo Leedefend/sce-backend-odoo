@@ -10,6 +10,20 @@ from .handler_registry import HANDLER_REGISTRY  # import 时已完成注册
 from .extension_loader import load_extensions
 
 _logger = logging.getLogger(__name__)
+SOURCE_KIND = "intent_router_runtime_dispatch"
+SOURCE_AUTHORITIES = ("handler_registry", "extension_loader", "odoo.env", "odoo.registry")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "write_proxy": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "intent_router",
+    }
 
 # ---------- 工具：健壮解析 intent 名 ----------
 def _normalize_intent_key(s: str) -> str:

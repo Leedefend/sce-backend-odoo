@@ -81,6 +81,47 @@ class TestBackendSemanticCopySupply(unittest.TestCase):
         self.assertTrue(payment_scene.get("description"))
         self.assertTrue(payment_scene.get("scope"))
 
+    def test_legacy_default_product_policy_nodes_are_marked_as_projection(self):
+        class _Env:
+            registry = SimpleNamespace(models={})
+
+            def __getitem__(self, key):
+                raise KeyError(key)
+
+        service = PRODUCT_POLICY_SERVICE.ProductPolicyService(_Env())
+        policy = service.get_policy(product_key="construction.standard")
+        payment_scene = next((row for row in policy.get("scenes") or [] if row.get("scene_key") == "payment"), {})
+        first_menu = ((((policy.get("menu_groups") or [{}])[0]).get("menus") or [{}])[0])
+
+        self.assertEqual(
+            ((payment_scene.get("policy_node_source_authority") or {}).get("kind")),
+            "legacy_default_product_policy_node_projection",
+        )
+        self.assertEqual(
+            ((first_menu.get("policy_node_source_authority") or {}).get("kind")),
+            "legacy_default_product_policy_node_projection",
+        )
+
+    def test_default_product_policy_fallback_is_provider_scoped_and_parameterized(self):
+        class _Env:
+            registry = SimpleNamespace(models={})
+
+            def __getitem__(self, key):
+                raise KeyError(key)
+
+        service = PRODUCT_POLICY_SERVICE.ProductPolicyService(_Env())
+        source = service.default_policy_source_authority_contract()
+        policy = service.get_policy(product_key="platform.preview")
+
+        self.assertEqual(source.get("kind"), "legacy_default_product_policy_provider")
+        self.assertTrue(source.get("no_business_fact_authority"))
+        self.assertEqual(policy.get("product_key"), "platform.preview")
+        self.assertEqual(policy.get("base_product_key"), "platform")
+        self.assertEqual(policy.get("edition_key"), "preview")
+        self.assertEqual(policy.get("label"), "Platform Preview")
+        self.assertEqual(((policy.get("policy_source_authority") or {}).get("kind")), "minimal_default_product_policy_provider")
+        self.assertEqual(policy.get("scenes") or [], [])
+
     def test_enterprise_enablement_contract_supplies_status_label(self):
         user = SimpleNamespace(company_id=SimpleNamespace(id=3, name="Demo Co"))
         payload = CORE_EXTENSION._build_enterprise_enablement_contract(env=None, user=user)

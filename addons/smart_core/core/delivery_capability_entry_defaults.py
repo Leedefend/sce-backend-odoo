@@ -3,6 +3,21 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+SOURCE_KIND = "delivery_capability_entry_default_projection"
+SOURCE_AUTHORITIES = ("delivery_engine_v1", "runtime_capability_payload")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "capability_entry_default_only": True,
+    }
+
 
 def to_text(value: Any) -> str:
     return str(value or "").strip()
@@ -10,7 +25,7 @@ def to_text(value: Any) -> str:
 
 def build_delivery_capability_entry(row: Dict[str, Any], runtime: Dict[str, Any]) -> Dict[str, Any]:
     key = to_text(row.get("capability_key") or row.get("key"))
-    return {
+    payload = {
         "key": key,
         "label": to_text(row.get("label") or runtime.get("ui_label") or runtime.get("name") or key),
         "group_key": to_text(row.get("group_key") or runtime.get("group_key") or "delivery"),
@@ -23,4 +38,12 @@ def build_delivery_capability_entry(row: Dict[str, Any], runtime: Dict[str, Any]
         "runtime_state": to_text(runtime.get("state")) or "POLICY_READY",
         "runtime_reason_code": to_text(runtime.get("reason_code")),
         "source": "delivery_engine_v1",
+        "default_source_authority": source_authority_contract(),
     }
+    source_authority = row.get("source_authority")
+    if isinstance(source_authority, dict) and source_authority:
+        payload["source_authority"] = source_authority
+    runtime_source_authority = runtime.get("source_authority")
+    if isinstance(runtime_source_authority, dict) and runtime_source_authority:
+        payload["runtime_source_authority"] = runtime_source_authority
+    return payload

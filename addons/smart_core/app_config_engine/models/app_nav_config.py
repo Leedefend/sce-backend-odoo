@@ -71,6 +71,7 @@ class AppMenuConfig(models.Model):
             "scene": str(scene or "web"),
             "projection_only": True,
             "rebuildable": True,
+            "no_business_fact_authority": True,
         }
 
     

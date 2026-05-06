@@ -22,6 +22,21 @@ _logger = logging.getLogger(__name__)
 
 
 class _TreeFormParserMixin:
+    SOURCE_KIND = "odoo_tree_form_view_parser_mixin"
+    SOURCE_AUTHORITIES = ("ir.ui.view:tree", "ir.ui.view:form", "ir.model.fields")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "view_parser_mixin_only": True,
+        }
+
     _SIMPLE_MODIFIER_RE = re.compile(
         r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*(==|!=|>=|<=|>|<|=)\s*('([^']*)'|\"([^\"]*)\"|True|False|true|false|\d+(?:\.\d+)?)\s*$"
     )

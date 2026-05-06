@@ -15,6 +15,18 @@ class AppActionGateway(models.AbstractModel):
     _description = "Smart Core Operation Gateway"
     SOURCE_KIND = "odoo_runtime_action_gateway"
     SOURCE_AUTHORITIES = ("odoo.model.method", "odoo.onchange", "ir.model.access", "ir.rule")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @api.model
+    def source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": self.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": self._name,
+        }
 
     @api.model
     def _normalize_ids(self, record_ids: Any) -> List[int]:

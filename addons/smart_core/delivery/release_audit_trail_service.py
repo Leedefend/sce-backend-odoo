@@ -5,6 +5,7 @@ from copy import deepcopy
 from typing import Any
 
 from .edition_release_snapshot_service import EditionReleaseSnapshotService
+from .product_identity import resolve_product_identity
 
 
 RELEASE_AUDIT_TRAIL_CONTRACT_VERSION = "release_audit_trail_surface_v1"
@@ -23,9 +24,24 @@ def _list(value: Any) -> list[Any]:
 
 
 class ReleaseAuditTrailService:
+    SOURCE_KIND = "release_audit_trail_projection"
+    SOURCE_AUTHORITIES = ("sc.edition.release.snapshot", "sc.release.action", "edition_release_snapshot_service")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
     def __init__(self, env):
         self.env = env
         self.snapshot_service = EditionReleaseSnapshotService(env)
+
+    @classmethod
+    def source_authority_contract(cls) -> dict[str, Any]:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "release_audit_trail_surface",
+        }
 
     def _snapshot_model(self):
         registry = getattr(self.env, "registry", None)
@@ -42,16 +58,7 @@ class ReleaseAuditTrailService:
         return self.env["sc.release.action"].sudo()
 
     def _release_identity(self, *, product_key: str) -> dict[str, str]:
-        product = _text(product_key)
-        if "." in product:
-            base_product_key, edition_key = product.split(".", 1)
-        else:
-            base_product_key, edition_key = "construction", "standard"
-        return {
-            "product_key": product,
-            "base_product_key": _text(base_product_key) or "construction",
-            "edition_key": _text(edition_key) or "standard",
-        }
+        return resolve_product_identity(product_key=product_key)
 
     def _freeze_surface_summary(self, snapshot_json: dict[str, Any]) -> dict[str, Any]:
         identity = _dict(snapshot_json.get("identity"))

@@ -48,6 +48,25 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
         ('activity', 'Activity'),
         ('dashboard', 'Dashboard'),
     ], string='View Type', required=True, index=True)
+    action_id = fields.Many2one(
+        "ir.actions.act_window",
+        string="Action",
+        index=True,
+        ondelete="cascade",
+        help="Optional action scope for action-specific native view projections.",
+    )
+    source_view_id = fields.Many2one(
+        "ir.ui.view",
+        string="Source View",
+        index=True,
+        ondelete="set null",
+        help="Native Odoo view used to compose this projection, when action-bound.",
+    )
+    projection_scope = fields.Char(
+        "Projection Scope",
+        index=True,
+        help="Stable projection identity. Generic rows use model/view_type; action-bound rows include action/view identity.",
+    )
 
     description = fields.Text('Description')
 
@@ -74,7 +93,7 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
     meta_info = fields.Json('Meta Info')
 
     _sql_constraints = [
-        ('uniq_model_viewtype', 'unique(model, view_type)', '每个模型每种视图类型仅允许一条解析配置。'),
+        ('uniq_projection_scope', 'unique(projection_scope)', '每个视图投影身份仅允许一条解析配置。'),
     ]
 
     @api.model
@@ -86,6 +105,39 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             "view_type": str(view_type or ""),
             "projection_only": True,
             "rebuildable": True,
+            "no_business_fact_authority": True,
+        }
+
+    def _projection_identity(self, model_name, view_type):
+        context = dict(self.env.context or {})
+        action_id = context.get('contract_action_id')
+        action = None
+        source_view_id = False
+        try:
+            action_id = int(action_id or 0)
+        except Exception:
+            action_id = 0
+        if action_id:
+            action = self.env['ir.actions.act_window'].sudo().browse(action_id)
+            if action.exists() and getattr(action, 'res_model', None) == model_name:
+                for view_spec in (action.views or []):
+                    if view_spec and len(view_spec) >= 2 and view_spec[1] == view_type:
+                        source_view_id = int(view_spec[0] or 0) or False
+                        break
+                return {
+                    "action_id": action.id,
+                    "source_view_id": source_view_id,
+                    "projection_scope": "action:%s:%s:%s:view:%s" % (
+                        action.id,
+                        model_name,
+                        view_type,
+                        source_view_id or 0,
+                    ),
+                }
+        return {
+            "action_id": False,
+            "source_view_id": False,
+            "projection_scope": "generic:%s:%s" % (model_name, view_type),
         }
 
     # ========= 契约键白名单（类级常量） =========
@@ -241,6 +293,7 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
         - 仅当结构变化（稳定哈希）时才 +1 版本
         """
         try:
+            identity = self._projection_identity(model_name, view_type)
             # 1) 拿到合并后的最终视图
             view_data = self._safe_get_view_data(model_name, view_type)
             if not view_data:
@@ -311,27 +364,61 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             new_hash = self._stable_hash(parsed_json)
 
             # 6) 落库（只在变更时 +1 版本）
-            cfg = self.sudo().search([('model', '=', model_name), ('view_type', '=', view_type)], limit=1)
             vals = {
                 'name': f"{model_name} {view_type} view",
                 'model': model_name,
                 'view_type': view_type,
+                'action_id': identity.get('action_id') or False,
+                'source_view_id': identity.get('source_view_id') or False,
+                'projection_scope': identity.get('projection_scope'),
                 'arch_original': view_data.get('arch') or '',
                 'arch_parsed': parsed_json,
                 'config_hash': new_hash,
                 'last_generated': fields.Datetime.now(),
             }
+            if self.env.context.get('contract_projection_readonly'):
+                vals['version'] = 0
+                vals['meta_info'] = {
+                    'source': self._source_contract(model_name, view_type),
+                    'projection_identity': identity,
+                    'transient': True,
+                    'runtime_readonly': True,
+                }
+                return self.new(vals)
+
+            cfg = self.sudo().search([('projection_scope', '=', identity.get('projection_scope'))], limit=1)
+            if not cfg and not identity.get('action_id'):
+                cfg = self.sudo().search([('model', '=', model_name), ('view_type', '=', view_type)], limit=1)
+                if cfg and not cfg.projection_scope:
+                    vals['projection_scope'] = identity.get('projection_scope')
             if cfg:
                 if cfg.config_hash != new_hash:
                     vals['version'] = cfg.version + 1
                     cfg.write(vals)
-                    _logger.info("View config updated for %s.%s → version %s", model_name, view_type, cfg.version)
+                    _logger.info(
+                        "View config updated for %s.%s scope=%s → version %s",
+                        model_name,
+                        view_type,
+                        identity.get('projection_scope'),
+                        cfg.version,
+                    )
                 else:
-                    _logger.info("View config for %s.%s unchanged, keep version %s", model_name, view_type, cfg.version)
+                    _logger.info(
+                        "View config for %s.%s scope=%s unchanged, keep version %s",
+                        model_name,
+                        view_type,
+                        identity.get('projection_scope'),
+                        cfg.version,
+                    )
             else:
                 vals['version'] = 1
                 cfg = self.sudo().create(vals)
-                _logger.info("View config created for %s.%s → version 1", model_name, view_type)
+                _logger.info(
+                    "View config created for %s.%s scope=%s → version 1",
+                    model_name,
+                    view_type,
+                    identity.get('projection_scope'),
+                )
 
             return cfg
 
@@ -421,15 +508,8 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
         # a) 尝试跟随当前动作绑定的视图（优先精准 view_id）
         try:
             context = dict(self.env.context or {})
-            action_id = context.get('contract_action_id')
-            view_id = False
-            if action_id:
-                act = self.env['ir.actions.act_window'].sudo().browse(int(action_id))
-                if act.exists():
-                    for v in (act.views or []):
-                        if v and len(v) >= 2 and v[1] == view_type:
-                            view_id = v[0]
-                            break
+            identity = self._projection_identity(model_name, view_type)
+            view_id = identity.get('source_view_id') or False
             if view_id:
                 _logger.info("使用指定视图ID %s 加载 %s.%s 视图", view_id, model_name, view_type)
                 data = Model.with_context(load_all_views=True).get_view(view_id=view_id, view_type=view_type)

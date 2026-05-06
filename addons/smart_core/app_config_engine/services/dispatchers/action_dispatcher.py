@@ -12,6 +12,28 @@ from odoo.addons.smart_core.app_config_engine.services.assemblers.client_url_rep
 _logger = logging.getLogger(__name__)
 
 class ActionDispatcher:
+    SOURCE_KIND = "app_config_action_dispatch_proxy"
+    SOURCE_AUTHORITIES = (
+        "ir.actions.actions",
+        "ir.actions.act_window",
+        "ir.actions.server",
+        "ir.actions.client",
+        "app.action.gateway",
+        "app_config_page_assembler",
+    )
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "app_config_engine.action_dispatcher",
+        }
+
     def __init__(self, env, su_env):
         self.env = env
         self.su_env = su_env

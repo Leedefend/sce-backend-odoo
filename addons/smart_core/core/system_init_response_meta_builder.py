@@ -3,6 +3,21 @@ from __future__ import annotations
 
 
 class SystemInitResponseMetaBuilder:
+    SOURCE_KIND = "system_init_response_meta_projection"
+    SOURCE_AUTHORITIES = ("system_init_payload", "scene_diagnostics", "contract_assembler")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "response_envelope_only": True,
+        }
+
     @staticmethod
     def build(
         *,

@@ -3,6 +3,20 @@
 # 【职责】通用方法：safe_eval/ETag/版本串/Domain 合并
 import json, hashlib
 from odoo.tools.safe_eval import safe_eval as _safe_eval
+SOURCE_KIND = "contract_utility_projection"
+SOURCE_AUTHORITIES = ("contract_payload", "odoo.safe_eval")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract():
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "app_config_engine.misc_utils",
+    }
 
 def safe_eval(expr, globals_dict=None):
     """

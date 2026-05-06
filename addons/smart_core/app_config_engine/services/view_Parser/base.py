@@ -14,6 +14,20 @@ import logging
 import json
 
 _logger = logging.getLogger(__name__)
+SOURCE_KIND = "odoo_view_parser_base_projection"
+SOURCE_AUTHORITIES = ("ir.ui.view", "ir.model.fields", "odoo.get_view")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract():
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "app_config_engine.view_parser_base",
+    }
 
 
 class _BaseViewParserMixin:

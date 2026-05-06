@@ -98,6 +98,8 @@ class ApiDataWriteHandler(BaseIntentHandler):
             "model": str(model or ""),
             "op": str(op or ""),
             "proxy_only": True,
+            "no_business_fact_authority": True,
+            "field_value_passthrough_only": True,
         }
 
     def _idempotency_window_seconds(self):
@@ -317,7 +319,12 @@ class ApiDataWriteHandler(BaseIntentHandler):
                         "written_fields": sorted(safe_vals.keys()),
                         "values": safe_vals,
                         "dry_run": dry_run,
+                        "project_scope": scope_meta,
+                        "record_scope": scope_meta,
                     }
+                    if isinstance(base_data, dict):
+                        base_data.setdefault("project_scope", scope_meta)
+                        base_data.setdefault("record_scope", scope_meta)
                     data = self._with_idempotency_contract(
                         base_data,
                         request_id=request_id,
@@ -326,7 +333,14 @@ class ApiDataWriteHandler(BaseIntentHandler):
                         trace_id=trace_id,
                         deduplicated=True,
                     )
-                    meta = {"trace_id": trace_id, "write_mode": "update", "source": "portal-shell", "source_authority": self._source_authority_contract(model, "write"), "project_scope": scope_meta}
+                    meta = {
+                        "trace_id": trace_id,
+                        "write_mode": "update",
+                        "source": "portal-shell",
+                        "source_authority": self._source_authority_contract(model, "write"),
+                        "project_scope": scope_meta,
+                        "record_scope": scope_meta,
+                    }
                     return {"ok": True, "data": data, "meta": meta}
 
             try:
@@ -352,6 +366,8 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 "written_fields": sorted(safe_vals.keys()),
                 "values": safe_vals,
                 "dry_run": dry_run,
+                "project_scope": scope_meta,
+                "record_scope": scope_meta,
             }
             data = self._with_idempotency_contract(
                 data,
@@ -370,7 +386,14 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 idem_fingerprint=idempotency_fingerprint,
                 result=data,
             )
-            meta = {"trace_id": trace_id, "write_mode": "update", "source": "portal-shell", "source_authority": self._source_authority_contract(model, "write"), "project_scope": scope_meta}
+            meta = {
+                "trace_id": trace_id,
+                "write_mode": "update",
+                "source": "portal-shell",
+                "source_authority": self._source_authority_contract(model, "write"),
+                "project_scope": scope_meta,
+                "record_scope": scope_meta,
+            }
             return {"ok": True, "data": data, "meta": meta}
 
         if intent == "api.data.create":
@@ -418,7 +441,12 @@ class ApiDataWriteHandler(BaseIntentHandler):
                         "written_fields": sorted(safe_vals.keys()),
                         "values": safe_vals,
                         "dry_run": dry_run,
+                        "project_scope": scope_meta,
+                        "record_scope": scope_meta,
                     }
+                    if isinstance(base_data, dict):
+                        base_data.setdefault("project_scope", scope_meta)
+                        base_data.setdefault("record_scope", scope_meta)
                     data = self._with_idempotency_contract(
                         base_data,
                         request_id=request_id,
@@ -427,7 +455,14 @@ class ApiDataWriteHandler(BaseIntentHandler):
                         trace_id=trace_id,
                         deduplicated=True,
                     )
-                    meta = {"trace_id": trace_id, "write_mode": "create", "source": "portal-shell", "source_authority": self._source_authority_contract(model, "create"), "project_scope": scope_meta}
+                    meta = {
+                        "trace_id": trace_id,
+                        "write_mode": "create",
+                        "source": "portal-shell",
+                        "source_authority": self._source_authority_contract(model, "create"),
+                        "project_scope": scope_meta,
+                        "record_scope": scope_meta,
+                    }
                     return {"ok": True, "data": data, "meta": meta}
 
             try:
@@ -446,6 +481,8 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 "written_fields": sorted(safe_vals.keys()),
                 "values": safe_vals,
                 "dry_run": dry_run,
+                "project_scope": scope_meta,
+                "record_scope": scope_meta,
             }
             data = self._with_idempotency_contract(
                 data,
@@ -464,7 +501,14 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 idem_fingerprint=idempotency_fingerprint,
                 result=data,
             )
-            meta = {"trace_id": trace_id, "write_mode": "create", "source": "portal-shell", "source_authority": self._source_authority_contract(model, "create"), "project_scope": scope_meta}
+            meta = {
+                "trace_id": trace_id,
+                "write_mode": "create",
+                "source": "portal-shell",
+                "source_authority": self._source_authority_contract(model, "create"),
+                "project_scope": scope_meta,
+                "record_scope": scope_meta,
+            }
             return {"ok": True, "data": data, "meta": meta}
 
         return self._err(400, f"未知写入意图: {intent}", REASON_UNSUPPORTED_SOURCE)

@@ -3,6 +3,18 @@ from __future__ import annotations
 
 import copy
 
+try:
+    from .product_identity import LEGACY_DEFAULT_BASE_PRODUCT_KEY
+except Exception:
+    LEGACY_DEFAULT_BASE_PRODUCT_KEY = "construction"
+try:
+    from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
+except Exception:
+    call_extension_hook_first = None
+
+LEGACY_DEFAULT_POLICY_SOURCE_KIND = "legacy_default_product_policy_provider"
+LEGACY_DEFAULT_POLICY_NODE_SOURCE_KIND = "legacy_default_product_policy_node_projection"
+
 
 DEFAULT_PRODUCT_POLICY = {
     "product_key": "construction.standard",
@@ -208,15 +220,132 @@ DEFAULT_PRODUCT_POLICY = {
 }
 
 
+def _minimal_default_product_policy(*, base_product_key: str, edition_key: str) -> dict:
+    base_key = str(base_product_key or "").strip() or "platform"
+    edition = str(edition_key or "").strip() or "standard"
+    product_key = f"{base_key}.{edition}"
+    base_label = base_key.replace("_", " ").replace("-", " ").title() or "Platform"
+    edition_label = edition.replace("_", " ").replace("-", " ").title() or "Standard"
+    return {
+        "product_key": product_key,
+        "base_product_key": base_key,
+        "edition_key": edition,
+        "state": "stable",
+        "access_level": "public",
+        "allowed_role_codes": [],
+        "label": f"{base_label} {edition_label}",
+        "version": "v1",
+        "scene_version_bindings": {},
+        "menu_groups": [],
+        "scenes": [],
+        "capabilities": [],
+        "policy_source_authority": {
+            "kind": "minimal_default_product_policy_provider",
+            "authorities": ["requested_product_identity"],
+            "projection_only": True,
+            "no_business_fact_authority": True,
+        },
+    }
+
+
+def legacy_default_policy_node_source_authority_contract() -> dict:
+    return {
+        "kind": LEGACY_DEFAULT_POLICY_NODE_SOURCE_KIND,
+        "authorities": ["DEFAULT_PRODUCT_POLICY.menu_groups", "DEFAULT_PRODUCT_POLICY.scenes", "DEFAULT_PRODUCT_POLICY.capabilities"],
+        "projection_only": True,
+        "no_business_fact_authority": True,
+        "legacy_compatibility": True,
+    }
+
+
+def _mark_legacy_default_policy_nodes(payload: dict) -> dict:
+    if not isinstance(payload, dict):
+        return payload
+    source = legacy_default_policy_node_source_authority_contract()
+    for group in payload.get("menu_groups") or []:
+        if not isinstance(group, dict):
+            continue
+        group.setdefault("policy_node_source_authority", source)
+        for menu in group.get("menus") or []:
+            if isinstance(menu, dict):
+                menu.setdefault("policy_node_source_authority", source)
+    for bucket in ("scenes", "capabilities"):
+        for row in payload.get(bucket) or []:
+            if isinstance(row, dict):
+                row.setdefault("policy_node_source_authority", source)
+    return payload
+
+
 class ProductPolicyService:
+    SOURCE_KIND = "delivery_product_policy_projection"
+    SOURCE_AUTHORITIES = ("sc.product.policy", "sc.scene.snapshot", "default_product_policy_provider")
+    NO_BUSINESS_FACT_AUTHORITY = True
+    DEFAULT_POLICY_SOURCE_KIND = LEGACY_DEFAULT_POLICY_SOURCE_KIND
     RELEASEABLE_STATES = {"preview", "stable"}
 
     def __init__(self, env):
         self.env = env
 
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "fallback_policy_provider": cls.DEFAULT_POLICY_SOURCE_KIND,
+        }
+
+    @classmethod
+    def default_policy_source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.DEFAULT_POLICY_SOURCE_KIND,
+            "authorities": ["DEFAULT_PRODUCT_POLICY", "extension_hook:smart_core_build_default_product_policy"],
+            "projection_only": True,
+            "no_business_fact_authority": True,
+            "legacy_default": True,
+            "legacy_policy_node_source": LEGACY_DEFAULT_POLICY_NODE_SOURCE_KIND,
+        }
+
+    def _default_product_policy(self) -> dict:
+        if callable(call_extension_hook_first):
+            hook_payload = call_extension_hook_first(
+                self.env,
+                "smart_core_build_default_product_policy",
+                self.env,
+            )
+            if isinstance(hook_payload, dict) and str(hook_payload.get("product_key") or "").strip():
+                payload = copy.deepcopy(hook_payload)
+                payload.setdefault("policy_source_authority", {
+                    "kind": "extension_default_product_policy_provider",
+                    "authorities": ["extension_hook:smart_core_build_default_product_policy"],
+                    "projection_only": True,
+                    "no_business_fact_authority": True,
+                })
+                return payload
+        payload = copy.deepcopy(DEFAULT_PRODUCT_POLICY)
+        payload.setdefault("policy_source_authority", self.default_policy_source_authority_contract())
+        _mark_legacy_default_policy_nodes(payload)
+        return payload
+
+    def _default_policy_for_identity(self, *, base_product_key: str, edition_key: str) -> dict:
+        base_key = str(base_product_key or "").strip() or LEGACY_DEFAULT_BASE_PRODUCT_KEY
+        edition = str(edition_key or "").strip() or "standard"
+        if base_key == LEGACY_DEFAULT_BASE_PRODUCT_KEY:
+            payload = self._default_product_policy()
+            payload["product_key"] = f"{base_key}.{edition}"
+            payload["base_product_key"] = base_key
+            payload["edition_key"] = edition
+            if edition == "preview":
+                base_label = base_key.replace("_", " ").replace("-", " ").title()
+                payload["label"] = "%s Preview" % (base_label or "Product")
+            return payload
+        return _minimal_default_product_policy(base_product_key=base_key, edition_key=edition)
+
     def _stable_policy_domain(self, *, base_product_key: str):
         return [
-            ("base_product_key", "=", str(base_product_key or "").strip() or "construction"),
+            ("base_product_key", "=", str(base_product_key or "").strip() or LEGACY_DEFAULT_BASE_PRODUCT_KEY),
             ("state", "=", "stable"),
             ("access_level", "=", "public"),
             ("active", "=", True),
@@ -231,7 +360,7 @@ class ProductPolicyService:
     ) -> tuple[str, str, str]:
         explicit_product_key = str(product_key or "").strip()
         explicit_edition_key = str(edition_key or "").strip()
-        explicit_base_product_key = str(base_product_key or "").strip() or "construction"
+        explicit_base_product_key = str(base_product_key or "").strip() or LEGACY_DEFAULT_BASE_PRODUCT_KEY
         if explicit_product_key:
             parts = explicit_product_key.split(".", 1)
             if len(parts) == 2 and parts[0] and parts[1]:
@@ -327,10 +456,7 @@ class ProductPolicyService:
             rec = None
         if rec:
             return rec.to_runtime_dict()
-        fallback = copy.deepcopy(DEFAULT_PRODUCT_POLICY)
-        fallback["product_key"] = f"{base_product_key}.standard"
-        fallback["base_product_key"] = base_product_key
-        fallback["edition_key"] = "standard"
+        fallback = self._default_policy_for_identity(base_product_key=base_product_key, edition_key="standard")
         fallback["state"] = "stable"
         fallback["access_level"] = "public"
         fallback["allowed_role_codes"] = []
@@ -422,11 +548,13 @@ class ProductPolicyService:
                     fallback_reason=fallback_reason,
                     access_allowed=access_allowed,
                 )
-        fallback = copy.deepcopy(DEFAULT_PRODUCT_POLICY)
+        fallback = self._default_policy_for_identity(
+            base_product_key=resolved_base_product_key,
+            edition_key=resolved_edition_key,
+        )
         fallback["product_key"] = key
         fallback["base_product_key"] = resolved_base_product_key
         fallback["edition_key"] = resolved_edition_key
-        fallback["label"] = "Construction Preview" if resolved_edition_key == "preview" else fallback.get("label")
         if enforce_release or enforce_access:
             fallback = self._sanitize_scene_version_bindings(
                 self._fallback_stable_policy(base_product_key=resolved_base_product_key)

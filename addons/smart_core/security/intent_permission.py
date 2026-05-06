@@ -3,6 +3,35 @@ from odoo.http import request
 from odoo.exceptions import AccessError, MissingError
 from .auth import get_user_from_token,decode_token
 
+SOURCE_KIND = "odoo_native_permission_projection"
+SOURCE_AUTHORITIES = ("odoo.access", "ir.rule", "ir.ui.menu", "ir.actions", "sc.entitlement", "sc.capability")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "intent_permission",
+    }
+
+
+def _find_capability(env, cap_key):
+    key = str(cap_key or "").strip()
+    if not key:
+        return None
+    try:
+        Capability = env["sc.capability"].sudo()
+    except Exception:
+        return None
+    try:
+        return Capability.search([("key", "=", key)], limit=1)
+    except Exception:
+        return None
+
 
 def check_intent_permission(ctx):
     """
@@ -78,9 +107,7 @@ def check_intent_permission(ctx):
         if Entitlement:
             params = ctx.params.get("params") or {}
             cap_key = params.get("capability_key") or params.get("capability") or params.get("key")
-            cap = None
-            if cap_key:
-                cap = env["sc.capability"].sudo().search([("key", "=", cap_key)], limit=1)
+            cap = _find_capability(env, cap_key)
             ent = Entitlement.get_effective(env.user.company_id)
             flags = ent.effective_flags_json or {}
             if cap and cap.required_flag:
@@ -89,10 +116,9 @@ def check_intent_permission(ctx):
         else:
             params = ctx.params.get("params") or {}
             cap_key = params.get("capability_key") or params.get("capability") or params.get("key")
-            if cap_key:
-                cap = env["sc.capability"].sudo().search([("key", "=", cap_key)], limit=1)
-                if cap and cap.required_flag:
-                    raise AccessError(f"FEATURE_DISABLED: {{'required_flag': '{cap.required_flag}', 'capability_key': '{cap.key}', 'reason': 'ENTITLEMENT_UNAVAILABLE'}}")
+            cap = _find_capability(env, cap_key)
+            if cap and cap.required_flag:
+                raise AccessError(f"FEATURE_DISABLED: {{'required_flag': '{cap.required_flag}', 'capability_key': '{cap.key}', 'reason': 'ENTITLEMENT_UNAVAILABLE'}}")
     except Exception:
         raise
 

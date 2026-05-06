@@ -76,7 +76,34 @@ def _params(payload: Any) -> dict[str, Any]:
     return dict(payload)
 
 
-class AppCatalogHandler(BaseIntentHandler):
+class _SceneDeliveryAppShellMixin:
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
+
+    def _source_meta(self, *, ts0: float, extra: dict | None = None) -> dict:
+        meta = {
+            "intent": self.INTENT_TYPE,
+            "elapsed_ms": int((time.time() - ts0) * 1000),
+            "source_kind": self.SOURCE_KIND,
+            "source_authorities": list(self.SOURCE_AUTHORITIES),
+            "source_authority": self.source_authority_contract(),
+        }
+        if isinstance(extra, dict):
+            meta.update(extra)
+        return meta
+
+
+class AppCatalogHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
     INTENT_TYPE = "app.catalog"
     DESCRIPTION = "平台级应用目录（通用兜底）"
     VERSION = "1.0.0"
@@ -111,17 +138,11 @@ class AppCatalogHandler(BaseIntentHandler):
             "status": "success",
             "ok": True,
             "data": {"apps": apps, "meta": {"fingerprint": fp, "scene": "web"}},
-            "meta": {
-                "intent": self.INTENT_TYPE,
-                "elapsed_ms": int((time.time() - ts0) * 1000),
-                "etag": fp,
-                "source_kind": self.SOURCE_KIND,
-                "source_authorities": list(self.SOURCE_AUTHORITIES),
-            },
+            "meta": self._source_meta(ts0=ts0, extra={"etag": fp}),
         }
 
 
-class AppNavHandler(BaseIntentHandler):
+class AppNavHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
     INTENT_TYPE = "app.nav"
     DESCRIPTION = "平台级应用导航（通用兜底）"
     VERSION = "1.0.0"
@@ -170,19 +191,18 @@ class AppNavHandler(BaseIntentHandler):
             "status": "success",
             "ok": True,
             "data": data,
-            "meta": {
-                "intent": self.INTENT_TYPE,
-                "elapsed_ms": int((time.time() - ts0) * 1000),
-                "etag": fp,
-                "client_type": client_type,
-                "delivery_profile": delivery_profile,
-                "source_kind": self.SOURCE_KIND,
-                "source_authorities": list(self.SOURCE_AUTHORITIES),
-            },
+            "meta": self._source_meta(
+                ts0=ts0,
+                extra={
+                    "etag": fp,
+                    "client_type": client_type,
+                    "delivery_profile": delivery_profile,
+                },
+            ),
         }
 
 
-class AppOpenHandler(BaseIntentHandler):
+class AppOpenHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
     INTENT_TYPE = "app.open"
     DESCRIPTION = "平台级应用打开（通用兜底）"
     VERSION = "1.0.0"
@@ -210,10 +230,5 @@ class AppOpenHandler(BaseIntentHandler):
             "status": "success",
             "ok": True,
             "data": {"subject": "ui.contract", "scene_key": scene_key, "route": f"/s/{scene_key}"},
-            "meta": {
-                "intent": self.INTENT_TYPE,
-                "elapsed_ms": int((time.time() - ts0) * 1000),
-                "source_kind": self.SOURCE_KIND,
-                "source_authorities": list(self.SOURCE_AUTHORITIES),
-            },
+            "meta": self._source_meta(ts0=ts0),
         }

@@ -5,6 +5,12 @@ from __future__ import annotations
 class BaseSceneEntryOrchestrator:
     """Platform-side helper for minimal scene entry/runtime block carriers."""
 
+    SOURCE_KIND = "scene_entry_runtime_projection_adapter"
+    SOURCE_AUTHORITIES = ("scene_runtime_service", "odoo.orm")
+    ADAPTER_LAYER = "industry_orchestration_adapter"
+    NO_BUSINESS_FACT_AUTHORITY = True
+    LEGACY_SCENE_COPY_SOURCE_KIND = "legacy_scene_entry_copy_projection"
+
     scene_key = ""
     scene_label = ""
     state_fallback_text = ""
@@ -22,8 +28,44 @@ class BaseSceneEntryOrchestrator:
 
     def source_authority_contract(self):
         provider = getattr(self._service, "source_authority_contract", None)
+        delegated_source = None
         if callable(provider):
-            return provider()
+            delegated = provider()
+            delegated_source = delegated if isinstance(delegated, dict) else None
+        contract = {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "no_business_fact_authority": self.NO_BUSINESS_FACT_AUTHORITY,
+            "adapter_layer": self.ADAPTER_LAYER,
+            "runtime_carrier": "scene_entry_and_block_contract",
+            "legacy_scene_copy_source": self.LEGACY_SCENE_COPY_SOURCE_KIND,
+        }
+        if delegated_source:
+            contract["delegated_source_authority"] = delegated_source
+        return contract
+
+    def legacy_scene_copy_source_authority_contract(self):
+        return {
+            "kind": self.LEGACY_SCENE_COPY_SOURCE_KIND,
+            "authorities": [
+                "scene_label",
+                "state_fallback_text",
+                "title_empty",
+                "entry_blocks",
+                "resolve_title",
+            ],
+            "projection_only": True,
+            "no_business_fact_authority": True,
+            "legacy_compatibility": True,
+        }
+
+    def delegated_source_authority_contract(self):
+        provider = getattr(self._service, "source_authority_contract", None)
+        if callable(provider):
+            delegated = provider()
+            if isinstance(delegated, dict):
+                return delegated
         return {
             "kind": "scene_entry_business_fact_projection",
             "authorities": ["odoo.orm"],
@@ -37,6 +79,7 @@ class BaseSceneEntryOrchestrator:
         resolved_project_id = int(project_payload.get("id") or 0)
         blocks = [{"key": key, "title": title, "state": state} for key, title, state in self.entry_blocks]
         source_authority = self.source_authority_contract()
+        copy_source_authority = self.legacy_scene_copy_source_authority_contract()
         if resolved_project_id <= 0:
             return {
                 "project_id": 0,
@@ -54,6 +97,7 @@ class BaseSceneEntryOrchestrator:
                     stage="entry_missing_project",
                 ),
                 "source_authority": source_authority,
+                "legacy_scene_copy_source_authority": copy_source_authority,
             }
 
         runtime_fetch_hints = {
@@ -90,6 +134,7 @@ class BaseSceneEntryOrchestrator:
                 stage="entry_ready",
             ),
             "source_authority": source_authority,
+            "legacy_scene_copy_source_authority": copy_source_authority,
         }
 
     def build_runtime_block(self, block_key, project_id=None, context=None):
@@ -104,6 +149,7 @@ class BaseSceneEntryOrchestrator:
             "block": block if isinstance(block, dict) else self._service.error_block(normalized_key or "unknown", "INVALID_BLOCK_PAYLOAD"),
             "degraded": state != "ready",
             "source_authority": self.source_authority_contract(),
+            "legacy_scene_copy_source_authority": self.legacy_scene_copy_source_authority_contract(),
         }
 
     def resolve_first_action(self, runtime_fetch_hints):

@@ -64,6 +64,24 @@ class TestSceneContractBuilderSemantics(unittest.TestCase):
         self.assertEqual(((secondary.get("target") or {}).get("route")), "/s/projects.intake")
         self.assertEqual(((secondary.get("target") or {}).get("scene_key")), "projects.intake")
 
+    def test_delivery_entry_legacy_product_title_mapping_is_marked_as_projection(self):
+        payload = target.build_release_surface_scene_contract_from_delivery_entry(
+            {
+                "scene_key": "payment",
+                "route": "/release/fr4",
+                "product_key": "fr4",
+                "capability_key": "delivery.fr4.payment_tracking",
+            }
+        )
+
+        governance = payload.get("governance") or {}
+        self.assertEqual((governance.get("source_authority") or {}).get("kind"), "release_surface_scene_contract_projection")
+        self.assertTrue(governance.get("no_business_fact_authority"))
+        self.assertEqual(
+            (governance.get("legacy_product_title_source_authority") or {}).get("kind"),
+            "legacy_release_product_title_projection",
+        )
+
     def test_runtime_entry_projects_parser_semantics_into_scene_contract(self):
         payload = target.build_release_surface_scene_contract_from_runtime_entry(
             {
