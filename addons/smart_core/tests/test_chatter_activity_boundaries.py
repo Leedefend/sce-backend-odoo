@@ -89,6 +89,34 @@ class TestChatterActivityBoundaries(unittest.TestCase):
         self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
         self.assertEqual(result["error"]["message"], "res_id 无效")
 
+    def test_non_positive_res_id_returns_user_error(self):
+        module = _load_handler()
+        handler = module.ChatterActivityScheduleHandler(
+            env=_Env({"x.model": object()}),
+            params={"model": "x.model", "res_id": 0, "summary": "Follow up"},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
+        self.assertEqual(result["error"]["message"], "res_id 无效")
+
+    def test_invalid_user_id_returns_user_error(self):
+        module = _load_handler()
+        handler = module.ChatterActivityScheduleHandler(
+            env=_Env({"x.model": object()}),
+            params={"model": "x.model", "res_id": 3, "summary": "Follow up", "user_id": "bad"},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
+        self.assertEqual(result["error"]["message"], "user_id 无效")
+
 
 if __name__ == "__main__":
     unittest.main()

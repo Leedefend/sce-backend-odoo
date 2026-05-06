@@ -10,6 +10,7 @@ from ..core.project_context import (
     record_in_project_scope,
     selected_project_id_from_context,
 )
+from ..core.request_params import parse_positive_int
 from ..utils.reason_codes import (
     REASON_MISSING_PARAMS,
     REASON_NOT_FOUND,
@@ -47,19 +48,22 @@ class ChatterActivityScheduleHandler(BaseIntentHandler):
     def handle(self, payload=None, ctx=None):
         params = self.params if isinstance(self.params, dict) else {}
         model = params.get("model")
-        res_id = params.get("res_id") or params.get("record_id")
+        res_id = params.get("res_id") if "res_id" in params else params.get("record_id")
         summary = str(params.get("summary") or "").strip()
         note = str(params.get("note") or "").strip()
         deadline_raw = str(params.get("date_deadline") or "").strip()
-        user_id = _coerce_int(params.get("user_id")) or self.env.user.id
-        activity_type_xmlid = str(params.get("activity_type_xmlid") or "mail.mail_activity_data_todo").strip()
         trace_id = self.context.get("trace_id") if isinstance(self.context, dict) else ""
+        raw_user_id = params.get("user_id")
+        user_id, user_id_error = parse_positive_int(raw_user_id, allow_empty=True)
+        if user_id_error:
+            return self._failure(REASON_USER_ERROR, "user_id 无效", 400, trace_id)
+        user_id = user_id or self.env.user.id
+        activity_type_xmlid = str(params.get("activity_type_xmlid") or "mail.mail_activity_data_todo").strip()
 
-        if not model or not res_id or not summary:
+        if not model or _is_empty_param(res_id) or not summary:
             return self._failure(REASON_MISSING_PARAMS, "缺少参数 model/res_id/summary", 400, trace_id)
-        try:
-            res_id = int(res_id)
-        except Exception:
+        res_id, res_id_error = parse_positive_int(res_id)
+        if res_id_error:
             return self._failure(REASON_USER_ERROR, "res_id 无效", 400, trace_id)
 
         try:
@@ -137,14 +141,6 @@ class ChatterActivityScheduleHandler(BaseIntentHandler):
         }
 
 
-def _coerce_int(value):
-    try:
-        parsed = int(value)
-    except Exception:
-        return 0
-    return parsed if parsed > 0 else 0
-
-
 def _coerce_date(value, user):
     if not value:
         return fields.Date.context_today(user)
@@ -152,3 +148,7 @@ def _coerce_date(value, user):
         return datetime.strptime(value[:10], "%Y-%m-%d").date()
     except Exception:
         return fields.Date.context_today(user)
+
+
+def _is_empty_param(value):
+    return value is None or (isinstance(value, str) and not value.strip())
