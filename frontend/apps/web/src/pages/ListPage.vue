@@ -1619,10 +1619,10 @@ function groupFooterCellText(
 }
 
 function footerRowLabel(scope: 'page' | 'total', rowCount: number) {
-  const count = Math.max(0, Math.trunc(Number(rowCount || 0)));
+  void rowCount;
   return scope === 'page'
-    ? uiLabel('page_footer_current_count', '本页：{count} 条', { count })
-    : uiLabel('page_footer_total_count', '总计：{count} 条', { count });
+    ? uiLabel('page_footer_current_total', '当页总计')
+    : uiLabel('page_footer_total', '总计');
 }
 
 function handleColumnPickerPointerDown(event: PointerEvent) {

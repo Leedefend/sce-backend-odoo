@@ -65,6 +65,11 @@ def main() -> int:
         errors.append("ListPage must not emit sort requests for non-sortable columns")
     if "sort_column_disabled" not in list_page:
         errors.append("ListPage must expose disabled sort affordance text")
+    footer_row_label = _extract_function(list_page, "footerRowLabel")
+    if "当页总计" not in footer_row_label or "'总计'" not in footer_row_label:
+        errors.append("footer rows must label summable rows as current-page total and total")
+    if "本页：" in footer_row_label or "{count} 条" in footer_row_label:
+        errors.append("footer row labels must describe aggregate scope, not duplicate row-count pagination text")
     column_width_style = _extract_function(list_page, "columnWidthStyle")
     if "Math.min(width" in column_width_style or "maxTextWidth" in column_width_style:
         errors.append("explicit column widths must render as saved; do not clamp name/text columns after resize")
