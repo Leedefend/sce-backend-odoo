@@ -2670,7 +2670,6 @@ function buildListColumnPreference(visibility: Record<string, boolean>, columnOr
 
 async function handleListColumnVisibilityChange(payload: { visibility: Record<string, boolean> }): Promise<void> {
   const saveSeq = ++listColumnSaveSeq;
-  const previous = { ...listColumnVisibility.value };
   const next = payload.visibility || {};
   listColumnVisibility.value = { ...next };
   setListColumnSaveStatus('saving');
@@ -2681,7 +2680,6 @@ async function handleListColumnVisibilityChange(payload: { visibility: Record<st
     }
   } catch (err) {
     if (saveSeq === listColumnSaveSeq) {
-      listColumnVisibility.value = previous;
       setListColumnSaveStatus('error');
     }
     console.warn('[list-columns] failed to save preference', err);
@@ -2690,7 +2688,6 @@ async function handleListColumnVisibilityChange(payload: { visibility: Record<st
 
 async function handleListColumnOrderChange(payload: { columnOrder: string[] }): Promise<void> {
   const saveSeq = ++listColumnSaveSeq;
-  const previous = [...listColumnOrder.value];
   const next = Array.isArray(payload.columnOrder) ? payload.columnOrder.map((item) => String(item || '').trim()).filter(Boolean) : [];
   listColumnOrder.value = next;
   setListColumnSaveStatus('saving');
@@ -2701,7 +2698,6 @@ async function handleListColumnOrderChange(payload: { columnOrder: string[] }): 
     }
   } catch (err) {
     if (saveSeq === listColumnSaveSeq) {
-      listColumnOrder.value = previous;
       setListColumnSaveStatus('error');
     }
     console.warn('[list-columns] failed to save column order preference', err);
@@ -2710,7 +2706,6 @@ async function handleListColumnOrderChange(payload: { columnOrder: string[] }): 
 
 async function handleListColumnWidthsChange(payload: { columnWidths: Record<string, number> }): Promise<void> {
   const saveSeq = ++listColumnSaveSeq;
-  const previous = { ...listColumnWidths.value };
   const next = Object.entries(payload.columnWidths || {}).reduce<Record<string, number>>((acc, [name, width]) => {
     const normalizedName = String(name || '').trim();
     const normalizedWidth = normalizeListColumnWidth(width);
@@ -2729,7 +2724,6 @@ async function handleListColumnWidthsChange(payload: { columnWidths: Record<stri
     }
   } catch (err) {
     if (saveSeq === listColumnSaveSeq) {
-      listColumnWidths.value = previous;
       setListColumnSaveStatus('error');
     }
     console.warn('[list-columns] failed to save column width preference', err);

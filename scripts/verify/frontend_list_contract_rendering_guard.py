@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 LIST_PAGE = ROOT / "frontend" / "apps" / "web" / "src" / "pages" / "ListPage.vue"
+ACTION_VIEW = ROOT / "frontend" / "apps" / "web" / "src" / "views" / "ActionView.vue"
 SHAPE_RUNTIME = (
     ROOT
     / "frontend"
@@ -28,14 +29,20 @@ def _extract_function(source: str, name: str) -> str:
     start = source.find(marker)
     if start < 0:
         raise AssertionError(f"missing function {name}")
-    next_function = source.find("\nfunction ", start + len(marker))
-    if next_function < 0:
+    next_markers = [
+        index
+        for marker_text in ("\nfunction ", "\nasync function ")
+        for index in [source.find(marker_text, start + len(marker))]
+        if index >= 0
+    ]
+    if not next_markers:
         return source[start:]
-    return source[start:next_function]
+    return source[start:min(next_markers)]
 
 
 def main() -> int:
     list_page = _read(LIST_PAGE)
+    action_view = _read(ACTION_VIEW)
     shape_runtime = _read(SHAPE_RUNTIME)
     errors: list[str] = []
 
@@ -61,6 +68,14 @@ def main() -> int:
     column_width_style = _extract_function(list_page, "columnWidthStyle")
     if "Math.min(width" in column_width_style or "maxTextWidth" in column_width_style:
         errors.append("explicit column widths must render as saved; do not clamp name/text columns after resize")
+    for name in (
+        "handleListColumnVisibilityChange",
+        "handleListColumnOrderChange",
+        "handleListColumnWidthsChange",
+    ):
+        block = _extract_function(action_view, name)
+        if "previous =" in block or "= previous" in block:
+            errors.append(f"{name} must keep current-session list interactions applied when preference persistence fails")
 
     if errors:
         print("[frontend_list_contract_rendering_guard] FAIL")
