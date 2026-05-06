@@ -237,7 +237,7 @@ def _run_journey_intent(intent_url: str, token: str, intent: str) -> tuple[bool,
 def _system_init_capability_count(intent_url: str, token: str) -> int:
     status, resp = http_post_json(
         intent_url,
-        {"intent": "system.init", "params": {"contract_mode": "user"}},
+        {"intent": "system.init", "params": {"contract_mode": "user", "with": "capabilities"}},
         headers={"Authorization": f"Bearer {token}"},
     )
     require_ok(status, resp, "system.init user")

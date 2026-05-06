@@ -86,7 +86,13 @@ def main() -> int:
             errors.append(f"login: missing data.{key}")
 
     if token:
-        status, init_resp = _post(intent_url, token, "system.init", {"contract_mode": "user"}, db_name=db_name)
+        status, init_resp = _post(
+            intent_url,
+            token,
+            "system.init",
+            {"contract_mode": "user", "with": "capabilities"},
+            db_name=db_name,
+        )
         _assert_envelope(init_resp, "system.init", errors)
         if status >= 400 or init_resp.get("ok") is not True:
             errors.append(f"system.init failed: status={status}")

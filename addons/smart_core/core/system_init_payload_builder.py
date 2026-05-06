@@ -320,6 +320,8 @@ class SystemInitPayloadBuilder:
         resolved_build_mode = build_mode or cls.resolve_build_mode(params)
         with_tokens = cls._parse_with_tokens(params.get("with"))
         include_workspace_home = parse_bool(params.get("with_preload"), False) or "workspace_home" in with_tokens
+        include_capabilities = "capabilities" in with_tokens or "capability_groups" in with_tokens
+        include_scenes = "scenes" in with_tokens
 
         nav = cls._normalize_nav_tree(row.get("nav") if isinstance(row.get("nav"), list) else [])
         default_route = cls._normalize_default_route(row.get("default_route") if isinstance(row.get("default_route"), dict) else {})
@@ -394,6 +396,13 @@ class SystemInitPayloadBuilder:
                 minimal["scene_ready_contract_v1"] = cls._build_minimal_scene_ready_contract(
                     row.get("scene_ready_contract_v1")
                 )
+        if include_capabilities:
+            minimal["capabilities"] = row.get("capabilities") if isinstance(row.get("capabilities"), list) else []
+            minimal["capability_groups"] = (
+                row.get("capability_groups") if isinstance(row.get("capability_groups"), list) else []
+            )
+        if include_scenes:
+            minimal["scenes"] = row.get("scenes") if isinstance(row.get("scenes"), list) else []
         minimal_page_contracts = cls._build_minimal_page_contracts(row)
         if minimal_page_contracts:
             minimal["page_contracts"] = minimal_page_contracts

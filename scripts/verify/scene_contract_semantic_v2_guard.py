@@ -74,7 +74,7 @@ def _login(intent_url: str, db_name: str, login: str, password: str) -> tuple[st
 def _system_init_hud(intent_url: str, token: str) -> list[dict]:
     status, resp = http_post_json(
         intent_url,
-        {"intent": "system.init", "params": {"contract_mode": "hud"}},
+        {"intent": "system.init", "params": {"contract_mode": "hud", "with": "scenes"}},
         headers={"Authorization": f"Bearer {token}"},
     )
     require_ok(status, resp, "system.init hud")

@@ -141,6 +141,17 @@ class AppCatalogHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
             }
             for app_id, count in sorted(app_counts.items())
         ]
+        if "workspace" not in app_counts:
+            apps.insert(
+                0,
+                {
+                    "key": "app:workspace",
+                    "label": "workspace",
+                    "icon": None,
+                    "badges": {"count": 0},
+                    "meta": {"app_id": "workspace", "fallback": True},
+                },
+            )
         if not apps:
             apps = [{"key": "app:workspace", "label": "workspace", "icon": None, "badges": {"count": 0}, "meta": {"app_id": "workspace"}}]
 

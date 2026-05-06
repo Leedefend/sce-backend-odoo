@@ -100,6 +100,42 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
         self.assertEqual(workspace_home_ref.get("scene_key"), "workspace.home")
         self.assertFalse(bool(workspace_home_ref.get("loaded")))
 
+    def test_build_startup_surface_exposes_capabilities_by_explicit_with_token(self):
+        payload = target.SystemInitPayloadBuilder.build_startup_surface(
+            {
+                "user": {"id": 1},
+                "nav": [],
+                "nav_meta": {},
+                "default_route": {"scene_key": "workspace.home"},
+                "intents": [],
+                "feature_flags": {},
+                "role_surface": {"landing_scene_key": "workspace.home"},
+                "capabilities": [{"key": "project.board.open"}],
+                "capability_groups": [{"key": "projects", "capability_count": 1}],
+            },
+            params={"with": "capabilities"},
+        )
+
+        self.assertEqual(payload.get("capabilities"), [{"key": "project.board.open"}])
+        self.assertEqual(payload.get("capability_groups"), [{"key": "projects", "capability_count": 1}])
+
+    def test_build_startup_surface_exposes_scenes_by_explicit_with_token(self):
+        payload = target.SystemInitPayloadBuilder.build_startup_surface(
+            {
+                "user": {"id": 1},
+                "nav": [],
+                "nav_meta": {},
+                "default_route": {"scene_key": "workspace.home"},
+                "intents": [],
+                "feature_flags": {},
+                "role_surface": {"landing_scene_key": "workspace.home"},
+                "scenes": [{"key": "workspace.home"}],
+            },
+            params={"with": "scenes"},
+        )
+
+        self.assertEqual(payload.get("scenes"), [{"key": "workspace.home"}])
+
     def test_build_startup_surface_exposes_role_surface_map(self):
         payload = target.SystemInitPayloadBuilder.build_startup_surface(
             {
