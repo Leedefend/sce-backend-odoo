@@ -24,6 +24,7 @@ from odoo.http import request
 from ..core.base_handler import BaseIntentHandler
 from ..core.api_data_execution_policy import client_requested_sudo, resolve_api_data_sudo
 from ..core.project_context import apply_project_scope_domain, selected_project_id_from_context
+from ..core.request_params import parse_non_negative_int, parse_positive_int
 from ..utils.extension_hooks import call_extension_hook_first
 from ..utils.reason_codes import (
     REASON_OK,
@@ -178,6 +179,18 @@ class ApiDataHandler(BaseIntentHandler):
             return int(v)
         except Exception:
             return default
+
+    def _read_positive_param(self, p: Dict[str, Any], key: str, default: int):
+        value, error = parse_positive_int(self._dig(p, key, None), allow_empty=True)
+        if error:
+            return 0, self._err(400, f"{key} 无效")
+        return value or default, None
+
+    def _read_non_negative_param(self, p: Dict[str, Any], key: str, default: int):
+        value, error = parse_non_negative_int(self._dig(p, key, None), allow_empty=True)
+        if error:
+            return 0, self._err(400, f"{key} 无效")
+        return default if value is None else value, None
 
     def _get_list(self, p: Dict[str, Any], key: str, default: Optional[List] = None) -> List:
         v = self._dig(p, key, None)
@@ -963,20 +976,34 @@ class ApiDataHandler(BaseIntentHandler):
 
     def _op_list(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
         fields = self._get_list(p, "fields", [])
-        limit = self._get_int(p, "limit", 40)
-        offset = self._get_int(p, "offset", 0)
+        limit, limit_error = self._read_positive_param(p, "limit", 40)
+        if limit_error:
+            return limit_error
+        offset, offset_error = self._read_non_negative_param(p, "offset", 0)
+        if offset_error:
+            return offset_error
         order = self._get_str(p, "order", "")
         domain = self._normalize_domain(self._dig(p, "domain"))
         domain_raw = self._get_str(p, "domain_raw", "").strip()
         context_raw = self._get_str(p, "context_raw", "").strip()
         group_by = self._normalize_group_by(self._dig(p, "group_by"))
         group_page_offsets = self._normalize_group_page_offsets(self._dig(p, "group_page_offsets"))
-        group_offset = max(0, self._get_int(p, "group_offset", 0))
+        group_offset, group_offset_error = self._read_non_negative_param(p, "group_offset", 0)
+        if group_offset_error:
+            return group_offset_error
         need_group_total = self._get_bool(p, "need_group_total", False)
-        group_page_size = min(self._get_int(p, "group_page_size", 0), 8)
+        group_page_size, group_page_size_error = self._read_positive_param(p, "group_page_size", 0)
+        if group_page_size_error:
+            return group_page_size_error
+        group_page_size = min(group_page_size, 8)
         default_group_limit = min(limit or 20, 30)
-        group_limit = self._get_int(p, "group_limit", default_group_limit)
+        group_limit, group_limit_error = self._read_positive_param(p, "group_limit", default_group_limit)
+        if group_limit_error:
+            return group_limit_error
         group_limit = max(1, min(group_limit, 50))
+        group_sample_limit, group_sample_limit_error = self._read_positive_param(p, "group_sample_limit", 3)
+        if group_sample_limit_error:
+            return group_sample_limit_error
         search_term = self._get_str(p, "search_term", "").strip()
 
         if context_raw:
@@ -1056,8 +1083,8 @@ class ApiDataHandler(BaseIntentHandler):
         )
         group_window_digest = self._build_group_window_digest(group_window_id, group_summary)
         group_window_identity_key = self._build_group_window_identity_key(group_window_id, group_window_digest)
-        effective_page_size = min(self._get_int(p, "group_page_size", 0), 8)
-        effective_page_size = effective_page_size if effective_page_size > 0 else min(self._get_int(p, "group_sample_limit", 3), 8)
+        effective_page_size = min(group_page_size, 8)
+        effective_page_size = effective_page_size if effective_page_size > 0 else min(group_sample_limit, 8)
         effective_page_size = max(1, int(effective_page_size or 1))
         group_window_identity = {
             "model": model,
@@ -1089,7 +1116,7 @@ class ApiDataHandler(BaseIntentHandler):
             group_by,
             fields_safe,
             limit=group_limit,
-            sample_limit=min(self._get_int(p, "group_sample_limit", 3), 8),
+            sample_limit=min(group_sample_limit, 8),
             group_page_size=group_page_size if group_page_size > 0 else None,
             group_page_offsets=group_page_offsets,
             group_summary=group_summary,
