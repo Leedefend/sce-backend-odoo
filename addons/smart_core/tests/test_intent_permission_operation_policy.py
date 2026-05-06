@@ -229,6 +229,26 @@ class TestIntentPermissionOperationPolicy(unittest.TestCase):
         self.assertEqual(self.model.browsed_ids, [[2, 3]])
         self.assertEqual(self.model.rule_modes, ["unlink"])
 
+    def test_invalid_record_id_raises_missing_error_instead_of_skipping_rule_check(self):
+        ctx = _Ctx({"intent": "api.data.write", "params": {"model": "x.model", "id": "bad-id"}})
+
+        with self.assertRaises(MissingError):
+            self.permission.check_intent_permission(ctx)
+
+        self.assertEqual(self.model.access_modes, ["write"])
+        self.assertEqual(self.model.browsed_ids, [])
+        self.assertEqual(self.model.rule_modes, [])
+
+    def test_invalid_ids_entry_raises_missing_error_instead_of_partial_rule_check(self):
+        ctx = _Ctx({"intent": "api.data.unlink", "params": {"model": "x.model", "ids": [2, "bad-id"]}})
+
+        with self.assertRaises(MissingError):
+            self.permission.check_intent_permission(ctx)
+
+        self.assertEqual(self.model.access_modes, ["unlink"])
+        self.assertEqual(self.model.browsed_ids, [])
+        self.assertEqual(self.model.rule_modes, [])
+
     def test_batch_archive_is_write_policy(self):
         ctx = _Ctx({"intent": "api.data.batch", "params": {"model": "x.model", "action": "archive", "ids": [9]}})
 

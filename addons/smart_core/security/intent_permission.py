@@ -52,19 +52,21 @@ def _record_ids(ctx_params):
     record_id = _param_value(ctx_params, "record_id") or _param_value(ctx_params, "id")
     ids = _param_value(ctx_params, "ids")
     out = []
-    if record_id:
+    if record_id not in (None, "", False):
         out.append(record_id)
     if isinstance(ids, (list, tuple, set)):
         out.extend(ids)
-    elif ids:
+    elif ids not in (None, "", False):
         out.append(ids)
     normalized = []
     for value in out:
         try:
             rid = int(value)
         except Exception:
-            continue
-        if rid and rid not in normalized:
+            raise MissingError(f"记录 {value} 不存在")
+        if rid <= 0:
+            raise MissingError(f"记录 {value} 不存在")
+        if rid not in normalized:
             normalized.append(rid)
     return normalized
 
