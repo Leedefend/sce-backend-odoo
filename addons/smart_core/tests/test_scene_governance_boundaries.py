@@ -23,6 +23,10 @@ class _Service:
         self.calls.append((company_id, channel, reason, trace_id))
         return {"company_id": company_id, "channel": channel}
 
+    def export_contract(self, channel, reason, trace_id=""):
+        self.calls.append(("export", channel, reason, trace_id))
+        return {"channel": channel}
+
 
 class _Env:
     user = types.SimpleNamespace(company_id=types.SimpleNamespace(id=9))
@@ -84,6 +88,44 @@ class TestSceneGovernanceBoundaries(unittest.TestCase):
 
         self.assertTrue(result["ok"])
         self.assertEqual(_Service.calls, [(9, "stable", "promote", "trace")])
+
+    def test_invalid_channel_returns_bad_request(self):
+        handler = self.module.SceneGovernanceSetChannelHandler(env=_Env(), context={"trace_id": "trace"})
+
+        result = handler.handle(payload={"params": {"reason": "promote", "channel": "nightly"}})
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "channel 无效")
+        self.assertEqual(_Service.calls, [])
+
+    def test_non_text_channel_returns_bad_request(self):
+        handler = self.module.SceneGovernanceSetChannelHandler(env=_Env(), context={"trace_id": "trace"})
+
+        result = handler.handle(payload={"params": {"reason": "promote", "channel": ["stable"]}})
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "channel 无效")
+        self.assertEqual(_Service.calls, [])
+
+    def test_missing_reason_returns_bad_request(self):
+        handler = self.module.SceneGovernanceRollbackHandler(env=_Env(), context={"trace_id": "trace"})
+
+        result = handler.handle(payload={"params": {}})
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "reason 无效")
+        self.assertEqual(_Service.calls, [])
+
+    def test_export_contract_defaults_channel_to_stable(self):
+        handler = self.module.SceneGovernanceExportContractHandler(env=_Env(), context={"trace_id": "trace"})
+
+        result = handler.handle(payload={"params": {"reason": "snapshot"}})
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(_Service.calls, [("export", "stable", "snapshot", "trace")])
 
 
 if __name__ == "__main__":
