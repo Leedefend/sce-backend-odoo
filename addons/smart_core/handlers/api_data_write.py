@@ -24,6 +24,7 @@ from ..utils.idempotency import (
 )
 from ..utils.reason_codes import (
     REASON_CONFLICT,
+    REASON_INVALID_ID,
     REASON_MISSING_PARAMS,
     REASON_NOT_FOUND,
     REASON_PERMISSION_DENIED,
@@ -205,19 +206,29 @@ class ApiDataWriteHandler(BaseIntentHandler):
         return str(params.get("if_match") or params.get("ifMatch") or params.get("write_date") or "").strip()
 
     def _get_id(self, params: Dict[str, Any]) -> int:
+        record_id, _error = self._read_id(params)
+        return record_id
+
+    def _read_id(self, params: Dict[str, Any]):
         for key in ("id", "record_id"):
             if key in params:
                 try:
-                    return int(params.get(key))
+                    value = int(params.get(key))
                 except Exception:
-                    return 0
+                    return 0, self._err(400, "id 无效", REASON_INVALID_ID)
+                if value <= 0:
+                    return 0, self._err(400, "id 无效", REASON_INVALID_ID)
+                return value, None
         ids = params.get("ids")
         if isinstance(ids, list) and ids:
             try:
-                return int(ids[0])
+                value = int(ids[0])
             except Exception:
-                return 0
-        return 0
+                return 0, self._err(400, "id 无效", REASON_INVALID_ID)
+            if value <= 0:
+                return 0, self._err(400, "id 无效", REASON_INVALID_ID)
+            return value, None
+        return 0, None
 
     def _current_project_id(self, params: Dict[str, Any]) -> int:
         context = self._get_context(params)
@@ -256,6 +267,14 @@ class ApiDataWriteHandler(BaseIntentHandler):
         if not safe_vals:
             return self._err(400, "vals 中无可写字段", REASON_USER_ERROR)
 
+        record_id = 0
+        if intent == "api.data.write":
+            record_id, record_id_error = self._read_id(params)
+            if record_id_error:
+                return record_id_error
+            if not record_id:
+                return self._err(400, "缺少参数 id", REASON_MISSING_PARAMS)
+
         context = self._get_context(params)
         env_model = self.env[model].with_context(context)
         current_project_id = self._current_project_id(params)
@@ -267,10 +286,6 @@ class ApiDataWriteHandler(BaseIntentHandler):
         idempotency_key = str(params.get("idempotency_key") or "").strip() or request_id
 
         if intent == "api.data.write":
-            record_id = self._get_id(params)
-            if not record_id:
-                return self._err(400, "缺少参数 id", REASON_MISSING_PARAMS)
-
             rec = env_model.browse(record_id).exists()
             if not rec:
                 return self._err(404, "记录不存在", REASON_NOT_FOUND)
