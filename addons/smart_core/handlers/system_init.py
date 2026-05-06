@@ -53,6 +53,7 @@ from odoo.addons.smart_core.core.runtime_page_contract_builder import mirror_wor
 from odoo.addons.smart_core.core.scene_governance_payload_builder import build_scene_governance_payload_v1
 from odoo.addons.smart_core.core.ui_base_contract_asset_event_queue import get_queue_metrics
 from odoo.addons.smart_core.core.release_navigation_contract_builder import build_release_navigation_contract
+from odoo.addons.smart_core.core.request_params import parse_bool
 from odoo.addons.smart_core.core.scene_delivery_policy import (
     filter_delivery_scenes,
     resolve_delivery_policy_runtime,
@@ -748,7 +749,7 @@ class SystemInitHandler(BaseIntentHandler):
         data, scene_diagnostics = SystemInitSurfaceBuilder.apply(surface_ctx=surface_ctx)
         stage_ts = _mark("apply_surface", stage_ts)
         with_tokens = _parse_with_tokens(params.get("with"))
-        include_workspace_home = bool(params.get("with_preload", False)) or "workspace_home" in with_tokens
+        include_workspace_home = parse_bool(params.get("with_preload"), False) or "workspace_home" in with_tokens
         if include_workspace_home:
             data["workspace_home"] = build_workspace_home_contract(data)
         else:

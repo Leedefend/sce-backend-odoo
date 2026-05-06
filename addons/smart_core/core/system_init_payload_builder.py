@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from urllib.parse import urlparse
 
+from .request_params import parse_bool
+
 
 class SystemInitPayloadBuilder:
     SOURCE_KIND = "system_init_startup_payload_projection"
@@ -184,7 +186,7 @@ class SystemInitPayloadBuilder:
         ).strip().lower()
         if explicit in {cls.BUILD_MODE_BOOT, cls.BUILD_MODE_PRELOAD, cls.BUILD_MODE_DEBUG}:
             return explicit
-        if bool(params.get("with_preload", False)):
+        if parse_bool(params.get("with_preload"), False):
             return cls.BUILD_MODE_PRELOAD
         return cls.BUILD_MODE_BOOT
 
@@ -200,7 +202,7 @@ class SystemInitPayloadBuilder:
     @classmethod
     def _build_minimal_init_meta(cls, row: dict, *, params: dict | None = None) -> dict:
         params = params if isinstance(params, dict) else {}
-        preload_requested = bool(params.get("with_preload", False))
+        preload_requested = parse_bool(params.get("with_preload"), False)
         default_route = row.get("default_route") if isinstance(row.get("default_route"), dict) else {}
         role_surface = row.get("role_surface") if isinstance(row.get("role_surface"), dict) else {}
         role_entries = row.get("role_entries") if isinstance(row.get("role_entries"), list) else []
@@ -317,7 +319,7 @@ class SystemInitPayloadBuilder:
         params = params if isinstance(params, dict) else {}
         resolved_build_mode = build_mode or cls.resolve_build_mode(params)
         with_tokens = cls._parse_with_tokens(params.get("with"))
-        include_workspace_home = bool(params.get("with_preload", False)) or "workspace_home" in with_tokens
+        include_workspace_home = parse_bool(params.get("with_preload"), False) or "workspace_home" in with_tokens
 
         nav = cls._normalize_nav_tree(row.get("nav") if isinstance(row.get("nav"), list) else [])
         default_route = cls._normalize_default_route(row.get("default_route") if isinstance(row.get("default_route"), dict) else {})
@@ -386,7 +388,7 @@ class SystemInitPayloadBuilder:
                 row.get("released_scene_semantic_surface")
             )
         if isinstance(row.get("scene_ready_contract_v1"), dict):
-            if bool(params.get("with_preload", False)):
+            if parse_bool(params.get("with_preload"), False):
                 minimal["scene_ready_contract_v1"] = row.get("scene_ready_contract_v1")
             else:
                 minimal["scene_ready_contract_v1"] = cls._build_minimal_scene_ready_contract(

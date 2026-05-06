@@ -5,6 +5,7 @@ import logging
 
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
 from odoo.addons.smart_core.app_config_engine.utils.misc import format_versions, stable_etag
+from odoo.addons.smart_core.core.request_params import parse_bool
 from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 
 _logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ class SystemInitPreloadBuilder:
             except Exception as exc:
                 _logger.warning("system.init home preload failed: action=%s, err=%s", default_home_action, exc)
 
-        want_preload = bool(params.get("with_preload", True))
+        want_preload = parse_bool(params.get("with_preload"), True)
         preload_actions = params.get("preload_actions") or []
         if want_preload and preload_actions:
             for act in preload_actions:

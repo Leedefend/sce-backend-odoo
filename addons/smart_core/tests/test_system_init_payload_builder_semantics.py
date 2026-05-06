@@ -52,6 +52,28 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
         self.assertTrue(source.get("no_business_fact_authority"))
         self.assertEqual(((payload.get("init_meta") or {}).get("source_authority") or {}).get("kind"), source.get("kind"))
 
+    def test_with_preload_string_false_keeps_boot_mode(self):
+        mode = target.SystemInitPayloadBuilder.resolve_build_mode({"with_preload": "false"})
+
+        self.assertEqual(mode, target.SystemInitPayloadBuilder.BUILD_MODE_BOOT)
+
+    def test_with_preload_string_false_does_not_embed_workspace_home(self):
+        payload = target.SystemInitPayloadBuilder.build_startup_surface(
+            {
+                "user": {"id": 1},
+                "nav": [],
+                "nav_meta": {},
+                "default_route": {"scene_key": "workspace.home"},
+                "intents": [],
+                "feature_flags": {},
+                "role_surface": {"landing_scene_key": "workspace.home"},
+                "workspace_home": {"blocks": [{"key": "todo"}]},
+            },
+            params={"with_preload": "false"},
+        )
+
+        self.assertNotIn("workspace_home", payload)
+
     def test_build_startup_surface_keeps_workspace_home_ref(self):
         payload = target.SystemInitPayloadBuilder.build_startup_surface(
             {
