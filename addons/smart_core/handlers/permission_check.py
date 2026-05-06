@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from . import system_init  # ensure handlers package loaded
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_core.core.request_params import parse_bool
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -53,7 +54,7 @@ class PermissionCheckHandler(BaseIntentHandler):
             params = {}
         cap_key = params.get("capability_key") or params.get("capability") or params.get("key")
         required_flag = params.get("required_flag")
-        debug = bool(params.get("debug") or params.get("_debug"))
+        debug = parse_bool(params.get("debug"), False) or parse_bool(params.get("_debug"), False)
         registry = getattr(self.env, "registry", None)
         model_present = bool(registry and hasattr(registry, "models") and "sc.entitlement" in registry.models)
         try:
