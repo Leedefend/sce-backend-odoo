@@ -128,6 +128,29 @@ class TestChatterTimelineBoundaries(unittest.TestCase):
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
 
+    def test_non_positive_res_id_returns_user_error(self):
+        handler = self.module.ChatterTimelineHandler(env={"x.model": object()}, params={"model": "x.model", "res_id": 0})
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
+        self.assertEqual(result["error"]["message"], "res_id 无效")
+
+    def test_invalid_limit_returns_user_error(self):
+        handler = self.module.ChatterTimelineHandler(
+            env={"x.model": object()},
+            params={"model": "x.model", "res_id": 7, "limit": "bad"},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
+        self.assertEqual(result["error"]["message"], "limit 无效")
+
     def test_string_false_include_audit_skips_audit_authority(self):
         handler = self.module.ChatterTimelineHandler(
             env=_Env({"x.model": _Model(), "mail.message": _EmptySearchModel(), "ir.attachment": _EmptySearchModel()}),
