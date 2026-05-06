@@ -12,7 +12,7 @@ from odoo.exceptions import AccessError, MissingError, AccessDenied
 
 from ..core.intent_router import route_intent_payload
 from ..core.context import RequestContext
-from ..core.intent_operation_policy import is_write_intent
+from ..core.intent_operation_policy import is_write_intent, nested_params, normalize_intent_operation
 from ..security.intent_permission import check_intent_permission
 from ..core.trace import get_trace_id
 from ..core.exceptions import (
@@ -137,20 +137,19 @@ def _error_response(
 
 def _permission_error_details(intent_name: str, params: Dict[str, Any], message: str) -> dict:
     intent = str(intent_name or "").strip().lower()
+    business_params = nested_params(params)
     details: Dict[str, Any] = {
         "intent": str(intent_name or "").strip(),
         "reason_code": REASON_PERMISSION_DENIED,
     }
     if message:
         details["cause"] = str(message)
-    model = str((params or {}).get("model") or "").strip()
-    op = str((params or {}).get("op") or "").strip().lower()
-    if not op and intent.startswith("api.data."):
-        suffix = intent.split(".", 2)[-1].strip().lower()
-        if suffix:
-            op = suffix
+    model = str((business_params or {}).get("model") or "").strip()
+    op = str((business_params or {}).get("op") or "").strip().lower()
+    if not op:
+        op = normalize_intent_operation(intent, business_params)
     if intent == "api.data.batch":
-        batch_action = str((params or {}).get("action") or "").strip().lower()
+        batch_action = str((business_params or {}).get("action") or "").strip().lower()
         if batch_action:
             op = f"batch.{batch_action}"
     if intent == "api.data" or intent.startswith("api.data."):
