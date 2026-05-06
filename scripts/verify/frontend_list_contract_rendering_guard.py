@@ -58,6 +58,9 @@ def main() -> int:
         errors.append("ListPage must not emit sort requests for non-sortable columns")
     if "sort_column_disabled" not in list_page:
         errors.append("ListPage must expose disabled sort affordance text")
+    column_width_style = _extract_function(list_page, "columnWidthStyle")
+    if "Math.min(width" in column_width_style or "maxTextWidth" in column_width_style:
+        errors.append("explicit column widths must render as saved; do not clamp name/text columns after resize")
 
     if errors:
         print("[frontend_list_contract_rendering_guard] FAIL")

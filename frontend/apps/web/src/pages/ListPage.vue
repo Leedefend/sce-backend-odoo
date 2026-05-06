@@ -1417,9 +1417,7 @@ function effectiveColumnWidth(field: string) {
 function columnWidthStyle(field: string) {
   const width = effectiveColumnWidth(field);
   if (!width) return {};
-  const maxTextWidth = isNameLikeColumn(field) ? 220 : isLongTextColumn(field) ? 180 : 0;
-  const resolvedWidth = maxTextWidth ? Math.min(width, maxTextWidth) : width;
-  return { width: `${resolvedWidth}px`, minWidth: `${resolvedWidth}px`, maxWidth: `${resolvedWidth}px` };
+  return { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` };
 }
 
 function isLongTextColumn(field: string) {
