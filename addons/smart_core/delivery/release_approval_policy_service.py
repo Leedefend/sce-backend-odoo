@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from odoo import SUPERUSER_ID, fields
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 
 from .product_identity import resolve_product_identity
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
@@ -28,24 +29,24 @@ class ReleaseApprovalPolicyService:
 
     @classmethod
     def source_authority_contract(cls) -> dict[str, Any]:
-        return {
-            "kind": cls.SOURCE_KIND,
-            "authorities": list(cls.SOURCE_AUTHORITIES),
-            "projection_only": True,
-            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
-            "runtime_carrier": "release_operator_policy",
-            "legacy_role_resolver": cls.LEGACY_ROLE_SOURCE_KIND,
-        }
+        return build_source_authority_contract(
+            kind=cls.SOURCE_KIND,
+            authorities=cls.SOURCE_AUTHORITIES,
+            rebuildable=None,
+            no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
+            runtime_carrier="release_operator_policy",
+            legacy_role_resolver=cls.LEGACY_ROLE_SOURCE_KIND,
+        )
 
     @classmethod
     def legacy_role_source_authority_contract(cls) -> dict[str, Any]:
-        return {
-            "kind": cls.LEGACY_ROLE_SOURCE_KIND,
-            "authorities": ["smart_construction_core.groups", "base.group_system", "smart_core.group_smart_core_admin"],
-            "projection_only": True,
-            "no_business_fact_authority": True,
-            "legacy_compatibility": True,
-        }
+        return build_source_authority_contract(
+            kind=cls.LEGACY_ROLE_SOURCE_KIND,
+            authorities=("smart_construction_core.groups", "base.group_system", "smart_core.group_smart_core_admin"),
+            rebuildable=None,
+            no_business_fact_authority=True,
+            legacy_compatibility=True,
+        )
 
     def now(self):
         return fields.Datetime.now()

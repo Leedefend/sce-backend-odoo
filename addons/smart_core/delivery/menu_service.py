@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 from odoo.addons.smart_core.core.delivery_menu_defaults import (
     build_delivery_menu_child,
     build_delivery_menu_group,
@@ -17,14 +18,12 @@ class MenuService:
 
     @classmethod
     def source_authority_contract(cls) -> dict:
-        return {
-            "kind": cls.SOURCE_KIND,
-            "authorities": list(cls.SOURCE_AUTHORITIES),
-            "projection_only": True,
-            "rebuildable": True,
-            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
-            "runtime_carrier": "delivery_engine_v1.nav",
-        }
+        return build_source_authority_contract(
+            kind=cls.SOURCE_KIND,
+            authorities=cls.SOURCE_AUTHORITIES,
+            no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
+            runtime_carrier="delivery_engine_v1.nav",
+        )
 
     def _is_admin_role(self, role_code: str) -> bool:
         normalized = str(role_code or "").strip().lower()

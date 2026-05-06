@@ -5,6 +5,8 @@
 用于增强错误处理和异常管理机制
 """
 
+from .source_authority import build_source_authority_contract
+
 # Error codes (contract v0.1)
 BAD_REQUEST = "BAD_REQUEST"
 AUTH_REQUIRED = "AUTH_REQUIRED"
@@ -23,14 +25,12 @@ NO_BUSINESS_FACT_AUTHORITY = True
 
 
 def source_authority_contract() -> dict:
-    return {
-        "kind": SOURCE_KIND,
-        "authorities": list(SOURCE_AUTHORITIES),
-        "projection_only": True,
-        "rebuildable": True,
-        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
-        "runtime_carrier": "smart_core.exceptions",
-    }
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        runtime_carrier="smart_core.exceptions",
+    )
 
 _HTTP_STATUS_TO_CODE = {
     400: BAD_REQUEST,

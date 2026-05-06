@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 
 SOURCE_KIND = "delivery_product_identity_resolver"
 SOURCE_AUTHORITIES = ("request.product_key", "request.base_product_key", "request.edition_key", "legacy_default")
@@ -18,24 +19,24 @@ def _text(value: Any) -> str:
 
 
 def source_authority_contract() -> dict[str, Any]:
-    return {
-        "kind": SOURCE_KIND,
-        "authorities": list(SOURCE_AUTHORITIES),
-        "projection_only": True,
-        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
-        "fallback_base_product_key": LEGACY_DEFAULT_BASE_PRODUCT_KEY,
-        "legacy_default_base_source": LEGACY_DEFAULT_BASE_SOURCE_KIND,
-    }
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        rebuildable=None,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        fallback_base_product_key=LEGACY_DEFAULT_BASE_PRODUCT_KEY,
+        legacy_default_base_source=LEGACY_DEFAULT_BASE_SOURCE_KIND,
+    )
 
 
 def legacy_default_base_source_authority_contract() -> dict[str, Any]:
-    return {
-        "kind": LEGACY_DEFAULT_BASE_SOURCE_KIND,
-        "authorities": ["LEGACY_DEFAULT_BASE_PRODUCT_KEY"],
-        "projection_only": True,
-        "no_business_fact_authority": True,
-        "legacy_compatibility": True,
-    }
+    return build_source_authority_contract(
+        kind=LEGACY_DEFAULT_BASE_SOURCE_KIND,
+        authorities=("LEGACY_DEFAULT_BASE_PRODUCT_KEY",),
+        rebuildable=None,
+        no_business_fact_authority=True,
+        legacy_compatibility=True,
+    )
 
 
 def resolve_product_identity(

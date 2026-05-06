@@ -5,6 +5,7 @@ import os
 
 from odoo import api
 
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 from odoo.addons.smart_core.utils.contract_governance import is_truthy
 
 
@@ -15,14 +16,12 @@ class SceneChannelPolicy:
 
     @classmethod
     def source_authority_contract(cls) -> dict:
-        return {
-            "kind": cls.SOURCE_KIND,
-            "authorities": list(cls.SOURCE_AUTHORITIES),
-            "projection_only": True,
-            "rebuildable": True,
-            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
-            "runtime_carrier": "system.init.scene_channel_policy",
-        }
+        return build_source_authority_contract(
+            kind=cls.SOURCE_KIND,
+            authorities=cls.SOURCE_AUTHORITIES,
+            no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
+            runtime_carrier="system.init.scene_channel_policy",
+        )
 
     def resolve(self, env: api.Environment, params: dict, scene_channel: str) -> tuple[str, bool]:
         pinned_param = params.get("scene_use_pinned") if isinstance(params, dict) else None

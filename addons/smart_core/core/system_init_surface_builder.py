@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
+
 SOURCE_KIND = "system_init_surface_projection_builder"
 SOURCE_AUTHORITIES = (
     "system_init_payload",
@@ -13,14 +15,12 @@ NO_BUSINESS_FACT_AUTHORITY = True
 
 
 def source_authority_contract() -> dict:
-    return {
-        "kind": SOURCE_KIND,
-        "authorities": list(SOURCE_AUTHORITIES),
-        "projection_only": True,
-        "rebuildable": True,
-        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
-        "startup_surface_only": True,
-    }
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        startup_surface_only=True,
+    )
 
 
 def _as_text(value) -> str:

@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
+
 from .release_operator_read_model_service import ReleaseOperatorReadModelService
 from .release_operator_contract_versions import RELEASE_OPERATOR_SURFACE_CONTRACT_VERSION
 
@@ -19,14 +21,12 @@ class ReleaseOperatorSurfaceService:
 
     @classmethod
     def source_authority_contract(cls) -> dict[str, Any]:
-        return {
-            "kind": cls.SOURCE_KIND,
-            "authorities": list(cls.SOURCE_AUTHORITIES),
-            "projection_only": True,
-            "rebuildable": True,
-            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
-            "runtime_carrier": "release_operator_surface",
-        }
+        return build_source_authority_contract(
+            kind=cls.SOURCE_KIND,
+            authorities=cls.SOURCE_AUTHORITIES,
+            no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
+            runtime_carrier="release_operator_surface",
+        )
 
     def build_surface(self, *, product_key: str = "", action_limit: int = 20) -> dict[str, Any]:
         from .release_operator_contract_registry import build_release_operator_contract_registry

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
+
 
 class SystemInitResponseMetaBuilder:
     SOURCE_KIND = "system_init_response_meta_projection"
@@ -9,14 +11,12 @@ class SystemInitResponseMetaBuilder:
 
     @classmethod
     def source_authority_contract(cls) -> dict:
-        return {
-            "kind": cls.SOURCE_KIND,
-            "authorities": list(cls.SOURCE_AUTHORITIES),
-            "projection_only": True,
-            "rebuildable": True,
-            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
-            "response_envelope_only": True,
-        }
+        return build_source_authority_contract(
+            kind=cls.SOURCE_KIND,
+            authorities=cls.SOURCE_AUTHORITIES,
+            no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
+            response_envelope_only=True,
+        )
 
     @staticmethod
     def build(

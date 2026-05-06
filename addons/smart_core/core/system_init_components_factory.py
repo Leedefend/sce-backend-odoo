@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from odoo.addons.smart_core.core.contract_assembler import ContractAssembler
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 from odoo.addons.smart_core.governance.capability_surface_engine import CapabilitySurfaceEngine
 from odoo.addons.smart_core.governance.scene_drift_engine import SceneDriftEngine
 from odoo.addons.smart_core.governance.scene_normalizer import SceneNormalizer
@@ -15,14 +16,12 @@ class SystemInitComponentsFactory:
 
     @classmethod
     def source_authority_contract(cls) -> dict:
-        return {
-            "kind": cls.SOURCE_KIND,
-            "authorities": list(cls.SOURCE_AUTHORITIES),
-            "projection_only": True,
-            "rebuildable": True,
-            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
-            "runtime_carrier": "system_init_components_factory",
-        }
+        return build_source_authority_contract(
+            kind=cls.SOURCE_KIND,
+            authorities=cls.SOURCE_AUTHORITIES,
+            no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
+            runtime_carrier="system_init_components_factory",
+        )
 
     @staticmethod
     def create() -> dict:

@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import copy
 
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
+
 try:
     from .product_identity import LEGACY_DEFAULT_BASE_PRODUCT_KEY
 except Exception:
@@ -249,13 +251,13 @@ def _minimal_default_product_policy(*, base_product_key: str, edition_key: str) 
 
 
 def legacy_default_policy_node_source_authority_contract() -> dict:
-    return {
-        "kind": LEGACY_DEFAULT_POLICY_NODE_SOURCE_KIND,
-        "authorities": ["DEFAULT_PRODUCT_POLICY.menu_groups", "DEFAULT_PRODUCT_POLICY.scenes", "DEFAULT_PRODUCT_POLICY.capabilities"],
-        "projection_only": True,
-        "no_business_fact_authority": True,
-        "legacy_compatibility": True,
-    }
+    return build_source_authority_contract(
+        kind=LEGACY_DEFAULT_POLICY_NODE_SOURCE_KIND,
+        authorities=("DEFAULT_PRODUCT_POLICY.menu_groups", "DEFAULT_PRODUCT_POLICY.scenes", "DEFAULT_PRODUCT_POLICY.capabilities"),
+        rebuildable=None,
+        no_business_fact_authority=True,
+        legacy_compatibility=True,
+    )
 
 
 def _mark_legacy_default_policy_nodes(payload: dict) -> dict:
@@ -288,25 +290,23 @@ class ProductPolicyService:
 
     @classmethod
     def source_authority_contract(cls) -> dict:
-        return {
-            "kind": cls.SOURCE_KIND,
-            "authorities": list(cls.SOURCE_AUTHORITIES),
-            "projection_only": True,
-            "rebuildable": True,
-            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
-            "fallback_policy_provider": cls.DEFAULT_POLICY_SOURCE_KIND,
-        }
+        return build_source_authority_contract(
+            kind=cls.SOURCE_KIND,
+            authorities=cls.SOURCE_AUTHORITIES,
+            no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
+            fallback_policy_provider=cls.DEFAULT_POLICY_SOURCE_KIND,
+        )
 
     @classmethod
     def default_policy_source_authority_contract(cls) -> dict:
-        return {
-            "kind": cls.DEFAULT_POLICY_SOURCE_KIND,
-            "authorities": ["DEFAULT_PRODUCT_POLICY", "extension_hook:smart_core_build_default_product_policy"],
-            "projection_only": True,
-            "no_business_fact_authority": True,
-            "legacy_default": True,
-            "legacy_policy_node_source": LEGACY_DEFAULT_POLICY_NODE_SOURCE_KIND,
-        }
+        return build_source_authority_contract(
+            kind=cls.DEFAULT_POLICY_SOURCE_KIND,
+            authorities=("DEFAULT_PRODUCT_POLICY", "extension_hook:smart_core_build_default_product_policy"),
+            rebuildable=None,
+            no_business_fact_authority=True,
+            legacy_default=True,
+            legacy_policy_node_source=LEGACY_DEFAULT_POLICY_NODE_SOURCE_KIND,
+        )
 
     def _default_product_policy(self) -> dict:
         if callable(call_extension_hook_first):

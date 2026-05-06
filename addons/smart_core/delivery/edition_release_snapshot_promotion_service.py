@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from odoo import fields
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 
 SOURCE_KIND = "edition_release_snapshot_promotion_proxy"
 SOURCE_AUTHORITIES = ("sc.edition.release.snapshot", "release_snapshot_state_machine")
@@ -27,14 +28,15 @@ class EditionReleaseSnapshotPromotionService:
 
     @classmethod
     def source_authority_contract(cls) -> dict[str, Any]:
-        return {
-            "kind": SOURCE_KIND,
-            "authorities": list(SOURCE_AUTHORITIES),
-            "projection_only": False,
-            "write_proxy": True,
-            "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
-            "runtime_carrier": "edition_release_snapshot_state_transition",
-        }
+        return build_source_authority_contract(
+            kind=SOURCE_KIND,
+            authorities=SOURCE_AUTHORITIES,
+            projection_only=False,
+            rebuildable=None,
+            no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+            runtime_carrier="edition_release_snapshot_state_transition",
+            write_proxy=True,
+        )
 
     def _model(self):
         return self.env["sc.edition.release.snapshot"].sudo()

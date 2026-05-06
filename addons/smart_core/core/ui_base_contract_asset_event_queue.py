@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 from typing import Any
 
+from .source_authority import build_source_authority_contract
 
 QUEUE_KEY = "sc.ui_base_contract.asset.refresh.queue"
 QUEUE_META_KEY = "sc.ui_base_contract.asset.refresh.queue.meta"
@@ -15,14 +16,13 @@ NO_BUSINESS_FACT_AUTHORITY = True
 
 
 def source_authority_contract() -> dict:
-    return {
-        "kind": SOURCE_KIND,
-        "authorities": list(SOURCE_AUTHORITIES),
-        "projection_only": True,
-        "write_proxy": True,
-        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
-        "runtime_carrier": "ui_base_contract_asset_event_queue",
-    }
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        runtime_carrier="ui_base_contract_asset_event_queue",
+        write_proxy=True,
+    )
 
 
 def _text(value: Any) -> str:

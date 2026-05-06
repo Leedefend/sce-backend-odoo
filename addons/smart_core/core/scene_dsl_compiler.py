@@ -4,6 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Tuple
 
+from .source_authority import build_source_authority_contract
+
 try:
     from .scene_merge_resolver import (
         MergeContext,
@@ -40,14 +42,12 @@ NO_BUSINESS_FACT_AUTHORITY = True
 
 
 def source_authority_contract() -> Dict[str, Any]:
-    return {
-        "kind": SOURCE_KIND,
-        "authorities": list(SOURCE_AUTHORITIES),
-        "projection_only": True,
-        "rebuildable": True,
-        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
-        "runtime_carrier": "scene_dsl_compiler",
-    }
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        runtime_carrier="scene_dsl_compiler",
+    )
 
 
 @dataclass

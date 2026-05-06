@@ -5,6 +5,7 @@ import logging
 
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
 from odoo.addons.smart_core.app_config_engine.utils.misc import format_versions, stable_etag
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 
 _logger = logging.getLogger(__name__)
 
@@ -16,14 +17,12 @@ class SystemInitPreloadBuilder:
 
     @classmethod
     def source_authority_contract(cls) -> dict:
-        return {
-            "kind": cls.SOURCE_KIND,
-            "authorities": list(cls.SOURCE_AUTHORITIES),
-            "projection_only": True,
-            "rebuildable": True,
-            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
-            "startup_preload_only": True,
-        }
+        return build_source_authority_contract(
+            kind=cls.SOURCE_KIND,
+            authorities=cls.SOURCE_AUTHORITIES,
+            no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
+            startup_preload_only=True,
+        )
 
     def build(self, env, su_env, params: dict, default_home_action, contract_service):
         home_contract = None

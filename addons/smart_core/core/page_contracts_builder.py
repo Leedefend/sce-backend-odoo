@@ -5,6 +5,7 @@ from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import re
 from typing import Any, Dict
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 from odoo.addons.smart_core.core.page_contract_semantic_orchestration_bridge import (
     apply_page_contract_semantic_orchestration_bridge,
 )
@@ -44,24 +45,22 @@ LEGACY_PAGE_COPY_SOURCE_KIND = "legacy_industry_page_copy_projection"
 
 
 def source_authority_contract() -> Dict[str, Any]:
-    return {
-        "kind": SOURCE_KIND,
-        "authorities": list(SOURCE_AUTHORITIES),
-        "projection_only": True,
-        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
-        "rebuildable": True,
-        "legacy_page_copy_source": LEGACY_PAGE_COPY_SOURCE_KIND,
-    }
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        legacy_page_copy_source=LEGACY_PAGE_COPY_SOURCE_KIND,
+    )
 
 
 def legacy_page_copy_source_authority_contract() -> Dict[str, Any]:
-    return {
-        "kind": LEGACY_PAGE_COPY_SOURCE_KIND,
-        "authorities": ["builtin_page_texts", "compatibility_page_profiles"],
-        "projection_only": True,
-        "no_business_fact_authority": True,
-        "legacy_compatibility": True,
-    }
+    return build_source_authority_contract(
+        kind=LEGACY_PAGE_COPY_SOURCE_KIND,
+        authorities=("builtin_page_texts", "compatibility_page_profiles"),
+        rebuildable=None,
+        no_business_fact_authority=True,
+        legacy_compatibility=True,
+    )
 
 
 def _resolve_page_profile_overrides(data: Dict[str, Any]) -> Dict[str, Any]:

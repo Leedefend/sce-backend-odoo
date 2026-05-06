@@ -4,6 +4,8 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
+
 from .release_approval_policy_service import ReleaseApprovalPolicyService
 from .release_audit_trail_service import ReleaseAuditTrailService
 from .release_operator_contract_versions import (
@@ -43,14 +45,12 @@ class ReleaseOperatorReadModelService:
 
     @classmethod
     def source_authority_contract(cls) -> dict[str, Any]:
-        return {
-            "kind": cls.SOURCE_KIND,
-            "authorities": list(cls.SOURCE_AUTHORITIES),
-            "projection_only": True,
-            "rebuildable": True,
-            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
-            "runtime_carrier": "release_operator_surface",
-        }
+        return build_source_authority_contract(
+            kind=cls.SOURCE_KIND,
+            authorities=cls.SOURCE_AUTHORITIES,
+            no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
+            runtime_carrier="release_operator_surface",
+        )
 
     def _default_base_product_key(self) -> tuple[str, str]:
         try:

@@ -22,8 +22,10 @@ def _load_module(module_name: str, relative_path: str):
 def _ensure_stub_packages():
     sys.modules.setdefault("odoo", types.ModuleType("odoo"))
     sys.modules.setdefault("odoo.addons", types.ModuleType("odoo.addons"))
-    sys.modules.setdefault("odoo.addons.smart_core", types.ModuleType("odoo.addons.smart_core"))
-    sys.modules.setdefault("odoo.addons.smart_core.core", types.ModuleType("odoo.addons.smart_core.core"))
+    smart_core_pkg = sys.modules.setdefault("odoo.addons.smart_core", types.ModuleType("odoo.addons.smart_core"))
+    smart_core_pkg.__path__ = [str(ROOT / "addons/smart_core")]
+    core_pkg = sys.modules.setdefault("odoo.addons.smart_core.core", types.ModuleType("odoo.addons.smart_core.core"))
+    core_pkg.__path__ = [str(ROOT / "addons/smart_core/core")]
     sys.modules.setdefault("odoo.exceptions", types.ModuleType("odoo.exceptions"))
     sys.modules["odoo.exceptions"].AccessError = type("AccessError", (Exception,), {})
 

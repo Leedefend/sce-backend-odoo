@@ -5,6 +5,7 @@ from copy import deepcopy
 from typing import Any
 
 from odoo import fields
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 
 from .delivery_engine import DeliveryEngine
 from .edition_release_snapshot_promotion_service import EditionReleaseSnapshotPromotionService
@@ -61,24 +62,24 @@ class EditionReleaseSnapshotService:
 
     @classmethod
     def source_authority_contract(cls) -> dict[str, Any]:
-        return {
-            "kind": SOURCE_KIND,
-            "authorities": list(SOURCE_AUTHORITIES),
-            "projection_only": True,
-            "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
-            "runtime_carrier": "edition_release_snapshot",
-            "legacy_default_role_source": LEGACY_DEFAULT_ROLE_SOURCE_KIND,
-        }
+        return build_source_authority_contract(
+            kind=SOURCE_KIND,
+            authorities=SOURCE_AUTHORITIES,
+            rebuildable=None,
+            no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+            runtime_carrier="edition_release_snapshot",
+            legacy_default_role_source=LEGACY_DEFAULT_ROLE_SOURCE_KIND,
+        )
 
     @classmethod
     def legacy_default_role_source_authority_contract(cls) -> dict[str, Any]:
-        return {
-            "kind": LEGACY_DEFAULT_ROLE_SOURCE_KIND,
-            "authorities": ["fallback_role_code:pm"],
-            "projection_only": True,
-            "no_business_fact_authority": True,
-            "legacy_compatibility": True,
-        }
+        return build_source_authority_contract(
+            kind=LEGACY_DEFAULT_ROLE_SOURCE_KIND,
+            authorities=("fallback_role_code:pm",),
+            rebuildable=None,
+            no_business_fact_authority=True,
+            legacy_compatibility=True,
+        )
 
     def _freeze_role_code(self, policy: dict[str, Any], explicit_role_code: str = "") -> str:
         if _text(explicit_role_code):

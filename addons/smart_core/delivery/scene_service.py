@@ -4,6 +4,7 @@ from __future__ import annotations
 from odoo.addons.smart_core.core.scene_contract_builder import (
     build_release_surface_scene_contract_from_delivery_entry,
 )
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 from odoo.addons.smart_core.delivery.scene_snapshot_service import SceneSnapshotService
 
 
@@ -18,12 +19,12 @@ class SceneService:
 
     @classmethod
     def source_authority_contract(cls) -> dict:
-        return {
-            "kind": cls.SOURCE_KIND,
-            "authorities": list(cls.SOURCE_AUTHORITIES),
-            "projection_only": True,
-            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
-        }
+        return build_source_authority_contract(
+            kind=cls.SOURCE_KIND,
+            authorities=cls.SOURCE_AUTHORITIES,
+            rebuildable=None,
+            no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
+        )
 
     def build_entries(self, *, policy: dict, scenes: list[dict]) -> list[dict]:
         scene_index = {}

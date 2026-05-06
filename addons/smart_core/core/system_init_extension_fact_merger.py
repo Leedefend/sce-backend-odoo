@@ -4,6 +4,7 @@ from __future__ import annotations
 import importlib
 from typing import Any
 
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 from odoo.addons.smart_core.utils.extension_hooks import iter_extension_modules
 
 SOURCE_KIND = "system_init_extension_fact_contribution_merger"
@@ -12,15 +13,13 @@ NO_BUSINESS_FACT_AUTHORITY = True
 
 
 def source_authority_contract() -> dict[str, Any]:
-    return {
-        "kind": SOURCE_KIND,
-        "authorities": list(SOURCE_AUTHORITIES),
-        "projection_only": True,
-        "rebuildable": True,
-        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
-        "runtime_carrier": "system_init_extension_fact_merger",
-        "delegates_business_fact_authority": True,
-    }
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        runtime_carrier="system_init_extension_fact_merger",
+        delegates_business_fact_authority=True,
+    )
 
 
 def apply_extension_fact_contributions(

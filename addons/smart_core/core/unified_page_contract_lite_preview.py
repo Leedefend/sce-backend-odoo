@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+from .source_authority import build_source_authority_contract
 from .unified_page_contract_lite_adapter import build_lite_contract, build_lite_patch
 from .unified_page_contract_lite_patch_normalizer import normalize_lite_patch_source
 from .unified_page_contract_lite_source_normalizer import normalize_lite_contract_source
@@ -21,14 +22,12 @@ NO_BUSINESS_FACT_AUTHORITY = True
 
 
 def source_authority_contract() -> Dict[str, Any]:
-    return {
-        "kind": SOURCE_KIND,
-        "authorities": list(SOURCE_AUTHORITIES),
-        "projection_only": True,
-        "rebuildable": True,
-        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
-        "runtime_carrier": "unified_page_contract_lite_preview",
-    }
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        runtime_carrier="unified_page_contract_lite_preview",
+    )
 
 LITE_PREVIEW_CONTRACT_MODE = "lite_preview"
 LITE_PREVIEW_CONTRACT_VERSION = "2.0.0"

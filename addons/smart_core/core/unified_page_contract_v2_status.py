@@ -4,6 +4,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
+from .source_authority import build_source_authority_contract
 
 AUTH_LEVELS = {"none", "read", "edit", "admin"}
 SOURCE_KIND = "unified_page_contract_v2_status_projection"
@@ -12,14 +13,12 @@ NO_BUSINESS_FACT_AUTHORITY = True
 
 
 def source_authority_contract() -> dict[str, Any]:
-    return {
-        "kind": SOURCE_KIND,
-        "authorities": list(SOURCE_AUTHORITIES),
-        "projection_only": True,
-        "rebuildable": True,
-        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
-        "runtime_carrier": "unified_page_contract_v2_status",
-    }
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        runtime_carrier="unified_page_contract_v2_status",
+    )
 
 DENY_STATES = {"deny", "denied", "blocked", "forbidden", "unauthorized"}
 READONLY_STATES = {"readonly", "read_only", "read"}

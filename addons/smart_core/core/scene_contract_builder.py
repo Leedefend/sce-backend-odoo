@@ -4,6 +4,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 from odoo.addons.smart_core.core.scene_contract_parser_semantic_bridge import (
     apply_scene_contract_parser_semantic_bridge,
 )
@@ -72,23 +73,21 @@ def _clone_list(rows: Any) -> list[dict[str, Any]]:
 
 
 def source_authority_contract() -> dict[str, Any]:
-    return {
-        "kind": SOURCE_KIND,
-        "authorities": list(SOURCE_AUTHORITIES),
-        "projection_only": True,
-        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
-        "rebuildable": True,
-    }
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+    )
 
 
 def legacy_product_title_source_authority_contract() -> dict[str, Any]:
-    return {
-        "kind": LEGACY_PRODUCT_TITLE_SOURCE_KIND,
-        "authorities": ["legacy_released_product_keys"],
-        "projection_only": True,
-        "no_business_fact_authority": True,
-        "legacy_compatibility": True,
-    }
+    return build_source_authority_contract(
+        kind=LEGACY_PRODUCT_TITLE_SOURCE_KIND,
+        authorities=("legacy_released_product_keys",),
+        rebuildable=None,
+        no_business_fact_authority=True,
+        legacy_compatibility=True,
+    )
 
 
 def _resolve_product_title_with_source(product_key: str) -> tuple[str, dict[str, Any]]:

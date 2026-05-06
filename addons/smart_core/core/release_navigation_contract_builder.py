@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import zlib
 
+from .source_authority import build_source_authority_contract
+
 SOURCE_KIND = "release_navigation_projection"
 SOURCE_AUTHORITIES = ("delivery_engine_v1", "legacy_release_navigation_fallback")
 NO_BUSINESS_FACT_AUTHORITY = True
@@ -10,23 +12,23 @@ LEGACY_FALLBACK_SOURCE_KIND = "legacy_release_navigation_fallback"
 
 
 def source_authority_contract() -> dict:
-    return {
-        "kind": SOURCE_KIND,
-        "authorities": list(SOURCE_AUTHORITIES),
-        "projection_only": True,
-        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
-        "legacy_fallback": LEGACY_FALLBACK_SOURCE_KIND,
-    }
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        rebuildable=None,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        legacy_fallback=LEGACY_FALLBACK_SOURCE_KIND,
+    )
 
 
 def legacy_fallback_source_authority_contract() -> dict:
-    return {
-        "kind": LEGACY_FALLBACK_SOURCE_KIND,
-        "authorities": ["compatibility_release_navigation_defaults"],
-        "projection_only": True,
-        "no_business_fact_authority": True,
-        "legacy_compatibility": True,
-    }
+    return build_source_authority_contract(
+        kind=LEGACY_FALLBACK_SOURCE_KIND,
+        authorities=("compatibility_release_navigation_defaults",),
+        rebuildable=None,
+        no_business_fact_authority=True,
+        legacy_compatibility=True,
+    )
 
 
 def _synthetic_menu_id(key: str, base: int = 900_000_000, span: int = 50_000_000) -> int:

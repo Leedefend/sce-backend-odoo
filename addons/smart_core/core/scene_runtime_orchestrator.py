@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import time
 
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 from odoo.addons.smart_core.utils.contract_governance import is_truthy
 
 
@@ -13,14 +14,12 @@ class SceneRuntimeOrchestrator:
 
     @classmethod
     def source_authority_contract(cls) -> dict:
-        return {
-            "kind": cls.SOURCE_KIND,
-            "authorities": list(cls.SOURCE_AUTHORITIES),
-            "projection_only": True,
-            "rebuildable": True,
-            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
-            "runtime_carrier": "scene_runtime_orchestrator",
-        }
+        return build_source_authority_contract(
+            kind=cls.SOURCE_KIND,
+            authorities=cls.SOURCE_AUTHORITIES,
+            no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
+            runtime_carrier="scene_runtime_orchestrator",
+        )
 
     def __init__(self, logger):
         self._logger = logger

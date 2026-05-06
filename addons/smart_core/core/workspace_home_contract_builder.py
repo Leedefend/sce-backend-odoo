@@ -9,6 +9,7 @@ from typing import Any, Dict, Iterable, List, Tuple
 from urllib.parse import parse_qs, urlparse
 
 from odoo import fields
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 
 def _load_semantics_registry() -> Dict[str, Any]:
     registry_path = Path(__file__).with_name("orchestration_semantics.py")
@@ -67,31 +68,31 @@ def source_authority_contract() -> Dict[str, Any]:
                 delegated_source = delegated if isinstance(delegated, dict) else {}
             except Exception:
                 delegated_source = {}
-    contract = {
-        "kind": SOURCE_KIND,
-        "authorities": list(SOURCE_AUTHORITIES),
-        "projection_only": True,
-        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
-        "runtime_carrier": "system_init_workspace_home",
-        "legacy_workspace_keyword_policy": LEGACY_WORKSPACE_KEYWORD_POLICY_SOURCE_KIND,
-    }
+    contract = build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        rebuildable=None,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        runtime_carrier="system_init_workspace_home",
+        legacy_workspace_keyword_policy=LEGACY_WORKSPACE_KEYWORD_POLICY_SOURCE_KIND,
+    )
     if delegated_source:
         contract["delegated_source_authority"] = delegated_source
     return contract
 
 
 def legacy_workspace_keyword_policy_source_authority_contract() -> Dict[str, Any]:
-    return {
-        "kind": LEGACY_WORKSPACE_KEYWORD_POLICY_SOURCE_KIND,
-        "authorities": [
+    return build_source_authority_contract(
+        kind=LEGACY_WORKSPACE_KEYWORD_POLICY_SOURCE_KIND,
+        authorities=(
             "workspace_keyword_overrides",
             "workspace_home_data_provider",
             "legacy_keyword_heuristics",
-        ],
-        "projection_only": True,
-        "no_business_fact_authority": True,
-        "legacy_compatibility": True,
-    }
+        ),
+        rebuildable=None,
+        no_business_fact_authority=True,
+        legacy_compatibility=True,
+    )
 
 
 def _workspace_scene_aliases() -> Dict[str, str]:

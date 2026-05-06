@@ -8,6 +8,7 @@ from typing import Callable
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 from odoo.addons.smart_core.core.scene_registry_provider import (
     get_schema_version as registry_get_schema_version,
@@ -34,20 +35,18 @@ NO_BUSINESS_FACT_AUTHORITY = True
 
 
 def source_authority_contract() -> dict:
-    return {
-        "kind": SOURCE_KIND,
-        "authorities": list(SOURCE_AUTHORITIES),
-        "projection_only": True,
-        "rebuildable": True,
-        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
-        "runtime_carrier": "system.init.scene_runtime",
-        "delegated_source_authority": {
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        runtime_carrier="system.init.scene_runtime",
+        delegated_source_authority={
             "kind": "scene_registry_projection",
             "authorities": ["sc.scene", "sc.capability", "ir.ui.menu", "ir.actions", "res.groups"],
             "projection_only": True,
             "no_business_fact_authority": True,
         },
-    }
+    )
 
 
 def _critical_scene_target_overrides(env) -> set[str]:

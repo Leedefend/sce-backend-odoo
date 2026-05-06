@@ -5,6 +5,7 @@ import json
 import os
 from typing import Any
 
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 
 REASON_SCENE_INVALID = "SCENE_INVALID"
@@ -73,25 +74,23 @@ _SURFACE_POLICY_CACHE: dict[str, Any] = {"path": "", "mtime": -1.0, "payload": {
 
 
 def source_authority_contract() -> dict[str, Any]:
-    return {
-        "kind": SOURCE_KIND,
-        "authorities": list(SOURCE_AUTHORITIES),
-        "projection_only": True,
-        "rebuildable": True,
-        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
-        "legacy_surface_aliases": dict(LEGACY_SURFACE_ALIASES),
-        "legacy_surface_alias_source": LEGACY_SURFACE_ALIAS_SOURCE_KIND,
-    }
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        legacy_surface_aliases=dict(LEGACY_SURFACE_ALIASES),
+        legacy_surface_alias_source=LEGACY_SURFACE_ALIAS_SOURCE_KIND,
+    )
 
 
 def legacy_surface_alias_source_authority_contract() -> dict[str, Any]:
-    return {
-        "kind": LEGACY_SURFACE_ALIAS_SOURCE_KIND,
-        "authorities": ["legacy_surface_aliases"],
-        "projection_only": True,
-        "no_business_fact_authority": True,
-        "legacy_compatibility": True,
-    }
+    return build_source_authority_contract(
+        kind=LEGACY_SURFACE_ALIAS_SOURCE_KIND,
+        authorities=("legacy_surface_aliases",),
+        rebuildable=None,
+        no_business_fact_authority=True,
+        legacy_compatibility=True,
+    )
 
 
 def _builtin_surface_nav_allowlist(env=None) -> dict:
