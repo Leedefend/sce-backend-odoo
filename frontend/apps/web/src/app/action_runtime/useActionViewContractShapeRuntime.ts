@@ -34,6 +34,7 @@ type ListColumnOption = {
   label: string;
   optional: string;
   defaultVisible: boolean;
+  sortable?: boolean;
   type?: string;
   widget?: string;
   cellRole?: string;
@@ -151,6 +152,9 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
         const status = v2FieldStatus[name];
         const optional = String(schema.optional || '').trim();
         const invisible = schema.invisible === true || schema.column_invisible === true || status?.visible === false;
+        const sortableRaw = Object.prototype.hasOwnProperty.call(schema, 'sortable')
+          ? schema.sortable
+          : field.sortable;
         const type = String(schema.type || field.type || '').trim();
         const widget = String(schema.widget || field.widget || field.type || '').trim();
         const rawSelection = Array.isArray(schema.selection) ? schema.selection : field.selection;
@@ -159,6 +163,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
           label: String(labels[name] || schema.label || schema.string || field.string || name).trim() || name,
           optional,
           defaultVisible: !hidden.has(name) && optional !== 'hide' && !invisible,
+          sortable: sortableRaw === false ? false : undefined,
           type: type || undefined,
           widget: widget || undefined,
           cellRole: String(schema.cell_role || schema.cellRole || '').trim() || undefined,

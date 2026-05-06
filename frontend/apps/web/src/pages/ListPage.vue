@@ -263,7 +263,7 @@
                   v-for="col in displayedColumns"
                   :key="`group-col-${group.key}-${col}`"
                   class="cell-sortable"
-                  :class="[columnDensityClass(col), { 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col }]"
+                  :class="[columnDensityClass(col), { 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col, 'is-sort-disabled': !isColumnSortable(col) }]"
                   :data-column="col"
                   :style="columnWidthStyle(col)"
                   draggable="true"
@@ -276,6 +276,7 @@
                     type="button"
                     class="column-sort-btn"
                     :title="columnSortTitle(col)"
+                    :aria-disabled="!isColumnSortable(col)"
                     draggable="false"
                     @click.stop="toggleColumnSort(col)"
                   >
@@ -380,7 +381,7 @@
               v-for="col in displayedColumns"
               :key="col"
               class="cell-sortable"
-              :class="[columnDensityClass(col), { 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col }]"
+              :class="[columnDensityClass(col), { 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col, 'is-sort-disabled': !isColumnSortable(col) }]"
               :data-column="col"
               :style="columnWidthStyle(col)"
               draggable="true"
@@ -393,6 +394,7 @@
                 type="button"
                 class="column-sort-btn"
                 :title="columnSortTitle(col)"
+                :aria-disabled="!isColumnSortable(col)"
                 draggable="false"
                 @click.stop="toggleColumnSort(col)"
               >
@@ -529,6 +531,7 @@ type ColumnOption = {
   label: string;
   optional?: string;
   defaultVisible?: boolean;
+  sortable?: boolean;
   type?: string;
   widget?: string;
   cellRole?: string;
@@ -1336,6 +1339,9 @@ function columnSortIndicator(col: string) {
 
 function columnSortTitle(col: string) {
   const label = columnLabel(col);
+  if (!isColumnSortable(col)) {
+    return uiLabel('sort_column_disabled', '{column} 不支持排序', { column: label });
+  }
   if (isSortedColumn(col) && sortDirection(props.sortValue || '') === 'asc') {
     return uiLabel('sort_column_desc', '按 {column} 降序', { column: label });
   }
@@ -1343,6 +1349,7 @@ function columnSortTitle(col: string) {
 }
 
 function toggleColumnSort(col: string) {
+  if (!isColumnSortable(col)) return;
   const currentDirection = isSortedColumn(col) ? sortDirection(props.sortValue || '') : '';
   const nextDirection = currentDirection === 'asc' ? 'desc' : 'asc';
   props.onSort(`${col} ${nextDirection}`);
@@ -1483,6 +1490,10 @@ function columnOption(field: string) {
   return columnChoices.value.find((column) => column.name === field) || null;
 }
 
+function isColumnSortable(field: string) {
+  return columnOption(field)?.sortable !== false;
+}
+
 function isColumnVisible(name: string) {
   const visibility = props.columnVisibility || {};
   if (Object.prototype.hasOwnProperty.call(visibility, name)) {
@@ -1572,13 +1583,13 @@ function totalAggregateValue(field: string) {
 }
 
 function footerCellText(field: string, scope: 'page' | 'total', rowCount: number) {
+  void rowCount;
   if (!isNumericColumn(field)) return '';
-  const label = columnLabel(field);
   if (scope === 'page') {
-    return `${label}：${pageFooterStatsMap.value[field]?.sumText || '--'}`;
+    return pageFooterStatsMap.value[field]?.sumText || '--';
   }
   const value = totalAggregateValue(field);
-  return `${label}：${value === null ? '--' : formatFooterNumber(value, field)}`;
+  return value === null ? '--' : formatFooterNumber(value, field);
 }
 
 function rowsNumericSum(rows: Array<Record<string, unknown>>, field: string) {
@@ -1601,13 +1612,12 @@ function groupFooterCellText(
   scope: 'page' | 'total',
 ) {
   if (!isNumericColumn(field)) return '';
-  const label = columnLabel(field);
   if (scope === 'page') {
     const value = rowsNumericSum(group.sampleRows || [], field);
-    return `${label}：${value === null ? '--' : formatFooterNumber(value, field)}`;
+    return value === null ? '--' : formatFooterNumber(value, field);
   }
   const value = groupAggregateValue(group, field);
-  return value === null ? '' : `${label}：${formatFooterNumber(value, field)}`;
+  return value === null ? '--' : formatFooterNumber(value, field);
 }
 
 function footerRowLabel(scope: 'page' | 'total', rowCount: number) {
@@ -2364,6 +2374,11 @@ tfoot tr:nth-child(2) td {
   opacity: 0.55;
 }
 
+.cell-sortable.is-sort-disabled .column-sort-btn {
+  color: #475569;
+  cursor: default;
+}
+
 .column-sort-btn {
   display: inline-flex;
   align-items: center;
@@ -2411,6 +2426,10 @@ tfoot tr:nth-child(2) td {
 
 .column-sort-btn:hover {
   color: #1d4ed8;
+}
+
+.cell-sortable.is-sort-disabled .column-sort-btn:hover {
+  color: #475569;
 }
 
 .sort-indicator {
