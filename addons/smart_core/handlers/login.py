@@ -140,10 +140,17 @@ class LoginHandler(BaseIntentHandler):
     def handle(self):
         # 1) 取参（支持 db / database / company_id 可选）
         params: Dict[str, Any] = self.params or {}
-        login    = (params.get("login") or "").strip()
-        password = (params.get("password") or "").strip()
+        login, login_error = self._text_param(params, "login")
+        if login_error:
+            return login_error
+        password, password_error = self._text_param(params, "password")
+        if password_error:
+            return password_error
         # 可选：db/公司/语言/时区（按需扩展）
-        db = params.get("db") or params.get("database")
+        db_key = "db" if "db" in params else "database"
+        db, db_error = self._text_param(params, db_key, allow_empty=True)
+        if db_error:
+            return db_error
         want_company_id = params.get("company_id")
         contract_mode = _resolve_contract_mode(params)
         compat_requested = contract_mode == "compat"
@@ -248,6 +255,17 @@ class LoginHandler(BaseIntentHandler):
             "source_authorities": list(self.SOURCE_AUTHORITIES),
             "source_authority": self.source_authority_contract(),
         }
+
+    def _text_param(self, params: Dict[str, Any], key: str, *, allow_empty: bool = False):
+        raw = params.get(key)
+        if raw is None or raw == "":
+            return "", None
+        if isinstance(raw, bool) or not isinstance(raw, (str, int, float)):
+            return "", self.err(400, f"{key} 无效")
+        text = str(raw).strip()
+        if not text and not allow_empty:
+            return "", None
+        return text, None
 
 
 class LogoutHandler(BaseIntentHandler):

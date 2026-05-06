@@ -94,6 +94,36 @@ class TestLoginCompanyBoundary(unittest.TestCase):
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["error"]["message"], "company_id 无效")
 
+    def test_invalid_login_returns_bad_request(self):
+        module = _load_handler()
+        handler = module.LoginHandler(env=_Env(), params={"login": ["demo"], "password": "pw", "db": "test"})
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "login 无效")
+
+    def test_invalid_password_returns_bad_request(self):
+        module = _load_handler()
+        handler = module.LoginHandler(env=_Env(), params={"login": "demo", "password": ["pw"], "db": "test"})
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "password 无效")
+
+    def test_invalid_db_returns_bad_request(self):
+        module = _load_handler()
+        handler = module.LoginHandler(env=_Env(), params={"login": "demo", "password": "pw", "db": ["test"]})
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["message"], "db 无效")
+
     def test_disallowed_company_id_returns_forbidden(self):
         module = _load_handler()
         handler = module.LoginHandler(env=_Env(), params={"login": "demo", "password": "pw", "db": "test", "company_id": 99})
