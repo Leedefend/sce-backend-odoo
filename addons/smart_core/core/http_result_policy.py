@@ -38,7 +38,10 @@ def result_transaction_action(
 
 def result_http_status(result: Dict[str, Any] | None, default: int = 200) -> int:
     payload = result if isinstance(result, dict) else {}
-    raw = payload.get("code", default)
+    raw = payload.get("code", None)
+    if raw is None:
+        error = payload.get("error") if isinstance(payload.get("error"), dict) else {}
+        raw = error.get("code", default)
     try:
         status = int(raw)
     except Exception:
