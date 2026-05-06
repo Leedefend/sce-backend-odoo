@@ -6,6 +6,7 @@ from odoo.http import request
 from odoo.exceptions import AccessDenied
 
 from odoo.addons.smart_core.core.trace import get_trace_id
+from odoo.addons.smart_core.core.request_identity import identity_id
 from odoo.addons.smart_core.delivery.menu_fact_service import MenuFactService
 from odoo.addons.smart_core.delivery.menu_delivery_convergence_service import MenuDeliveryConvergenceService
 from odoo.addons.smart_core.delivery.menu_target_interpreter_service import MenuTargetInterpreterService
@@ -72,7 +73,7 @@ def _json_response(payload: dict, status: int = 200):
 
 def _resolve_request_env():
     user = get_user_from_token()
-    user_id = getattr(user, "id", user)
+    user_id = identity_id(user)
     env = request.env(user=user_id)
     request.env = env
     try:

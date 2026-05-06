@@ -2,6 +2,7 @@
 from odoo.http import request
 from odoo.exceptions import AccessError, MissingError
 from ..core.intent_operation_policy import access_mode_for_intent, nested_params
+from ..core.request_identity import identity_id
 from .auth import get_user_from_token
 
 SOURCE_KIND = "odoo_native_permission_projection"
@@ -147,7 +148,7 @@ def _effective_flags(Entitlement, company):
 
 
 def _sync_authenticated_identity(ctx, user):
-    user_id = getattr(user, "id", user)
+    user_id = identity_id(user)
     request.env = request.env(user=user_id)
     env = request.env
     try:

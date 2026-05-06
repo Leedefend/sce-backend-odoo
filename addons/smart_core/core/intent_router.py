@@ -8,6 +8,7 @@ import odoo
 from .base_handler import BaseIntentHandler
 from .handler_registry import HANDLER_REGISTRY  # import 时已完成注册
 from .extension_loader import load_extensions
+from .request_identity import request_uid
 
 _logger = logging.getLogger(__name__)
 SOURCE_KIND = "intent_router_runtime_dispatch"
@@ -82,7 +83,7 @@ def _build_envs(params: Dict[str, Any], add_ctx: Dict[str, Any]) -> Tuple[api.En
 
     cr = reg.cursor()
     try:
-        env = api.Environment(cr, request.uid, base_ctx)
+        env = api.Environment(cr, request_uid(request, default=getattr(request.env, "uid", None)), base_ctx)
         su_env = api.Environment(cr, SUPERUSER_ID, dict(env.context))
         return env, su_env, cr
     except Exception:

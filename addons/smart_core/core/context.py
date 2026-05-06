@@ -2,6 +2,7 @@
 from odoo.http import request
 from ..security.auth import get_user_from_token
 from .intent_access_policy import is_public_context_intent
+from .request_identity import identity_id
 from .trace import get_trace_id
 
 SOURCE_KIND = "http_request_context_projection"
@@ -46,7 +47,7 @@ class RequestContext:
             env = req.env
         else:
             user = get_user_from_token()
-            user_id = getattr(user, "id", user)
+            user_id = identity_id(user)
             env = req.env(user=user_id) if user_id else req.env
 
         ctx = cls(env, user, params, req)
