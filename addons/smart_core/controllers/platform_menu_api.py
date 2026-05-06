@@ -72,7 +72,8 @@ def _json_response(payload: dict, status: int = 200):
 
 def _resolve_request_env():
     user = get_user_from_token()
-    return request.env(user=user)
+    user_id = getattr(user, "id", user)
+    return request.env(user=user_id)
 
 
 def _merge_scene_entry(entries: list[dict], *, scene_key: str, model: str, view_mode: str) -> None:

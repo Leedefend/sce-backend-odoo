@@ -46,7 +46,8 @@ class RequestContext:
             env = req.env
         else:
             user = get_user_from_token()
-            env = req.env(user=user) if user else req.env
+            user_id = getattr(user, "id", user)
+            env = req.env(user=user_id) if user_id else req.env
 
         ctx = cls(env, user, params, req)
         try:
