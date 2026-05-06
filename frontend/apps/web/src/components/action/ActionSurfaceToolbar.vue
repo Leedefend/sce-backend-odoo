@@ -494,6 +494,8 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .action-toolbar {
+  position: relative;
+  z-index: 40;
   display: grid;
   grid-template-columns: max-content minmax(320px, 560px) max-content;
   justify-content: center;
@@ -652,17 +654,20 @@ onBeforeUnmount(() => {
   top: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
-  z-index: 20;
+  z-index: 80;
   display: grid;
   grid-template-columns: repeat(3, minmax(180px, 1fr));
   width: min(680px, calc(100vw - 32px));
-  max-height: 420px;
-  overflow: auto;
+  max-height: min(640px, calc(100vh - 120px));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   background: #fff;
   box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18);
-  padding: 8px 0;
+  padding: 8px 0 12px;
 }
 
 .search-dropdown-section {
@@ -905,6 +910,7 @@ onBeforeUnmount(() => {
     transform: none;
     grid-template-columns: 1fr;
     width: min(520px, 92vw);
+    max-height: min(560px, calc(100vh - 132px));
   }
 
   .search-dropdown-section + .search-dropdown-section {
