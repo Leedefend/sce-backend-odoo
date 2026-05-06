@@ -36,6 +36,46 @@ target = _load_module(
 
 
 class TestWorkspaceHomeContractBuilderSemantics(unittest.TestCase):
+    def test_workspace_home_builder_declares_startup_projection_source(self):
+        source = target.source_authority_contract()
+
+        self.assertEqual(source.get("kind"), "workspace_home_startup_surface_projection")
+        self.assertTrue(source.get("projection_only"))
+        self.assertTrue(source.get("no_business_fact_authority"))
+        self.assertIn("extension_fact_contributions", source.get("authorities") or [])
+        self.assertEqual(source.get("legacy_workspace_keyword_policy"), "legacy_workspace_keyword_policy_projection")
+
+    def test_workspace_home_keyword_policy_is_marked_as_legacy_projection(self):
+        payload = target.build_workspace_home_contract(
+            {
+                "capabilities": [],
+                "scenes": [],
+                "workspace_keyword_overrides": {"token_sets": {"build_urgent_keywords": ["urgent"]}},
+            }
+        )
+
+        keyword_policy = ((payload.get("diagnostics") or {}).get("keyword_policy") or {})
+        self.assertTrue(keyword_policy.get("overrides_present"))
+        self.assertEqual(
+            ((keyword_policy.get("source_authority") or {}).get("kind")),
+            "legacy_workspace_keyword_policy_projection",
+        )
+        self.assertTrue(((keyword_policy.get("source_authority") or {}).get("no_business_fact_authority")))
+
+    def test_business_scope_metric_uses_record_scope_key_with_legacy_alias(self):
+        business_metrics, _ = target._build_metric_sets(
+            ready_count=1,
+            locked_count=0,
+            preview_count=0,
+            scene_count=3,
+            today_action_count=0,
+            risk_action_count=0,
+        )
+
+        scope_metric = next((row for row in business_metrics if row.get("legacy_key") == "biz.project_scope"), {})
+        self.assertEqual(scope_metric.get("key"), "biz.record_scope")
+        self.assertEqual(scope_metric.get("legacy_key"), "biz.project_scope")
+
     def test_build_today_actions_normalizes_business_rows_for_block_ready_shape(self):
         rows = target._build_today_actions(
             {

@@ -27,6 +27,84 @@
         </field>
     </record>
 
+    <record id="view_sc_customer_partner_tree" model="ir.ui.view">
+        <field name="name">res.partner.sc.customer.tree</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <tree string="客户" default_order="name">
+                <field name="name" string="名称"/>
+                <field name="is_company" string="企业/组织"/>
+                <field name="phone" string="电话"/>
+                <field name="mobile" string="手机"/>
+                <field name="email" string="电子邮件"/>
+                <field name="vat" string="统一社会信用代码"/>
+                <field name="sc_region"/>
+                <field name="legacy_partner_id"/>
+                <field name="legacy_partner_source"/>
+                <field name="legacy_partner_name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_customer_partner_form" model="ir.ui.view">
+        <field name="name">res.partner.sc.customer.form</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <form string="客户">
+                <sheet>
+                    <group>
+                        <group string="基本信息">
+                            <field name="name" string="名称"/>
+                            <field name="is_company" string="企业/组织"/>
+                            <field name="vat" string="统一社会信用代码"/>
+                            <field name="sc_region"/>
+                        </group>
+                        <group string="联系方式">
+                            <field name="phone" string="电话"/>
+                            <field name="mobile" string="手机"/>
+                            <field name="email" string="电子邮件"/>
+                            <field name="street" string="地址"/>
+                            <field name="city" string="城市"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="来源追溯">
+                            <group>
+                                <field name="legacy_partner_id"/>
+                                <field name="legacy_partner_source"/>
+                                <field name="legacy_partner_name"/>
+                                <field name="legacy_credit_code"/>
+                                <field name="legacy_tax_no"/>
+                            </group>
+                            <field name="legacy_source_evidence" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_customer_partner_search" model="ir.ui.view">
+        <field name="name">res.partner.sc.customer.search</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <search string="客户">
+                <field name="name" string="名称"/>
+                <field name="vat" string="统一社会信用代码"/>
+                <field name="sc_region"/>
+                <field name="legacy_partner_id"/>
+                <field name="legacy_partner_name"/>
+                <field name="legacy_partner_source"/>
+                <filter string="企业/组织" name="customer_company" domain="[('is_company', '=', True)]"/>
+                <filter string="个人" name="customer_person" domain="[('is_company', '=', False)]"/>
+                <separator/>
+                <filter string="按企业组织/个人" name="group_is_company" context="{'group_by': 'is_company'}"/>
+                <filter string="按地区" name="group_region" context="{'group_by': 'sc_region'}"/>
+                <filter string="按历史来源" name="group_legacy_source" context="{'group_by': 'legacy_partner_source'}"/>
+            </search>
+        </field>
+    </record>
+
     <record id="view_sc_supplier_partner_tree" model="ir.ui.view">
         <field name="name">res.partner.sc.supplier.tree</field>
         <field name="model">res.partner</field>

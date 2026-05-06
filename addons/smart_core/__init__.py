@@ -21,6 +21,7 @@ try:
     from . import view
     from . import utils
     from . import models
+    from . import model
     from . import delivery
 
     # Ensure intent controllers are registered on module load

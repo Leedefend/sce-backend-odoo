@@ -7,14 +7,70 @@ import logging
 from typing import Any
 
 from odoo.exceptions import AccessError
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 _logger = logging.getLogger(__name__)
 
 PROJECT_MODEL = "project.project"
+SOURCE_KIND = "record_context_projection"
+SOURCE_AUTHORITIES = ("odoo.orm", "ir.rule", "ir.model.access", "record_context_model", "legacy_project_context_adapter")
+NO_BUSINESS_FACT_AUTHORITY = True
+LEGACY_PROJECT_SCOPE_ADAPTER_SOURCE_KIND = "legacy_project_scope_adapter"
 
 
-def _model_available(env) -> bool:
+def source_authority_contract() -> dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "legacy_default_model": PROJECT_MODEL,
+        "legacy_scope_adapter": LEGACY_PROJECT_SCOPE_ADAPTER_SOURCE_KIND,
+        "runtime_carrier": "system_init_record_context",
+    }
+
+
+def legacy_project_scope_source_authority_contract() -> dict[str, Any]:
+    return {
+        "kind": LEGACY_PROJECT_SCOPE_ADAPTER_SOURCE_KIND,
+        "authorities": ["record_context_projection", "odoo_field_metadata"],
+        "projection_only": True,
+        "no_business_fact_authority": True,
+        "legacy_compatibility": True,
+        "legacy_default_model": PROJECT_MODEL,
+    }
+
+
+def _resolve_record_context_config(env, params: dict | None = None) -> dict[str, str]:
+    raw_params = params if isinstance(params, dict) else {}
+    explicit_model = str(
+        raw_params.get("record_context_model")
+        or raw_params.get("context_model")
+        or raw_params.get("project_context_model")
+        or ""
+    ).strip()
+    hook_payload = None
+    if not explicit_model:
+        hook_result = call_extension_hook_first(env, "smart_core_resolve_record_context_config", env, raw_params)
+        hook_payload = hook_result if isinstance(hook_result, dict) else None
+    cfg_model = ""
     try:
-        return PROJECT_MODEL in env.registry.models
+        cfg_model = env["ir.config_parameter"].sudo().get_param("sc.record.context.model") if env is not None else ""
+    except Exception:
+        cfg_model = ""
+    model = explicit_model or str((hook_payload or {}).get("model") or cfg_model or PROJECT_MODEL).strip() or PROJECT_MODEL
+    is_project_legacy = model == PROJECT_MODEL
+    return {
+        "model": model,
+        "source": "params" if explicit_model else "extension_hook" if hook_payload else "config" if str(cfg_model or "").strip() else "legacy_default",
+        "label": str((hook_payload or {}).get("label") or ("当前项目" if is_project_legacy else "当前记录")).strip(),
+        "placeholder": str((hook_payload or {}).get("placeholder") or ("搜索项目名称" if is_project_legacy else "搜索记录")).strip(),
+        "selected_id_param": str((hook_payload or {}).get("selected_id_param") or ("selected_id")).strip(),
+    }
+
+
+def _model_available(env, model_name: str = PROJECT_MODEL) -> bool:
+    try:
+        return str(model_name or "").strip() in env.registry.models
     except Exception:
         return False
 
@@ -75,20 +131,24 @@ def format_project_option(record) -> dict:
     }
 
 
-def _project_domain(Project, search: str) -> list:
+def _record_context_domain(Model, search: str) -> list:
     term = str(search or "").strip()
     if not term:
         return []
     conditions = [
         (field_name, "ilike", term)
-        for field_name in ("name", "code", "project_code", "x_code")
-        if field_name in Project._fields
+        for field_name in ("name", "display_name", "code", "project_code", "x_code")
+        if field_name in Model._fields
     ]
     if not conditions:
         return [("id", "=", 0)]
     if len(conditions) == 1:
         return [conditions[0]]
     return ["|"] * (len(conditions) - 1) + conditions
+
+
+def _project_domain(Project, search: str) -> list:
+    return _record_context_domain(Project, search)
 
 
 def _selected_id_from_params(params: dict | None) -> int:
@@ -142,9 +202,12 @@ def apply_project_scope_domain(env_model, domain: list | None, project_id: int) 
     meta = {
         "enabled": bool(_as_int(project_id)),
         "project_id": _as_int(project_id) or None,
+        "record_context_id": _as_int(project_id) or None,
         "applied": bool(scope_domain),
         "domain": scope_domain,
         "model": str(getattr(env_model, "_name", "") or ""),
+        "legacy_project_scope": True,
+        "source_authority": legacy_project_scope_source_authority_contract(),
     }
     if not scope_domain:
         return base_domain, meta
@@ -173,6 +236,7 @@ def project_scope_denied_response(scope_meta: dict | None = None, *, message: st
             "reason_code": "PROJECT_SCOPE_DENIED",
             "kind": "permission",
             "project_scope": meta,
+            "record_scope": meta,
         },
         "code": 403,
     }
@@ -181,19 +245,25 @@ def project_scope_denied_response(scope_meta: dict | None = None, *, message: st
 def build_project_context_contract(env, params: dict | None = None, *, search: str = "", limit: int = 20) -> dict:
     safe_limit = min(max(_as_int(limit) or 20, 1), 50)
     selected_id = _selected_id_from_params(params)
+    context_config = _resolve_record_context_config(env, params)
+    context_model = context_config["model"]
     selector = {
         "intent": "project.context.search",
         "search_param": "search",
-        "selected_id_param": "selected_id",
+        "selected_id_param": context_config.get("selected_id_param") or "selected_id",
         "limit": safe_limit,
-        "label": "当前项目",
-        "placeholder": "搜索项目名称",
+        "label": context_config.get("label") or "当前记录",
+        "placeholder": context_config.get("placeholder") or "搜索记录",
     }
     base = {
         "contract_version": "v1",
         "enabled": False,
-        "source": "system.init.project_context",
-        "model": PROJECT_MODEL,
+        "source": "system.init.record_context",
+        "source_authority": source_authority_contract(),
+        "model": context_model,
+        "context_model": context_model,
+        "context_model_source": context_config.get("source") or "",
+        "legacy_project_context": context_model == PROJECT_MODEL,
         "selected": None,
         "options": [],
         "total": 0,
@@ -203,26 +273,26 @@ def build_project_context_contract(env, params: dict | None = None, *, search: s
             "server_preference": False,
         },
     }
-    if not _model_available(env):
+    if not _model_available(env, context_model):
         return {
             **base,
-            "reason_code": "PROJECT_MODEL_NOT_INSTALLED",
-            "message": "项目模型未安装",
+            "reason_code": "RECORD_CONTEXT_MODEL_NOT_INSTALLED",
+            "message": "上下文模型未安装",
         }
 
     try:
-        Project = env[PROJECT_MODEL].with_context(active_test=False)
-        domain = _project_domain(Project, search)
-        records = Project.search(domain, limit=safe_limit, order="write_date desc, id desc")
+        Model = env[context_model].with_context(active_test=False)
+        domain = _record_context_domain(Model, search)
+        records = Model.search(domain, limit=safe_limit, order="write_date desc, id desc")
         selected = None
         if selected_id:
-            selected_record = Project.browse(selected_id)
+            selected_record = Model.browse(selected_id)
             if selected_record.exists():
                 selected = format_project_option(selected_record)
         options = [format_project_option(record) for record in records]
         if selected and all(option.get("id") != selected.get("id") for option in options):
             options = [selected, *options]
-        total = Project.search_count(domain)
+        total = Model.search_count(domain)
         return {
             **base,
             "enabled": True,
@@ -237,14 +307,14 @@ def build_project_context_contract(env, params: dict | None = None, *, search: s
         return {
             **base,
             "enabled": True,
-            "reason_code": "PROJECT_CONTEXT_ACCESS_DENIED",
-            "message": "当前账号无权读取项目列表",
+            "reason_code": "RECORD_CONTEXT_ACCESS_DENIED",
+            "message": "当前账号无权读取上下文记录",
         }
     except Exception as exc:
-        _logger.exception("build project context contract failed")
+        _logger.exception("build record context contract failed")
         return {
             **base,
             "enabled": True,
-            "reason_code": "PROJECT_CONTEXT_ERROR",
+            "reason_code": "RECORD_CONTEXT_ERROR",
             "message": str(exc),
         }

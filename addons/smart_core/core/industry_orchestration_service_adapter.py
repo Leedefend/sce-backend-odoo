@@ -6,6 +6,27 @@ import importlib
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 
 
+SOURCE_KIND = "construction_industry_orchestration_adapter"
+SOURCE_AUTHORITIES = (
+    "smart_construction_core.core_extension",
+    "smart_core.extension_hooks",
+    "odoo.orm",
+)
+ADAPTER_LAYER = "industry_orchestration_adapter"
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract():
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "adapter_layer": ADAPTER_LAYER,
+        "runtime_carrier": "scene_runtime_service",
+    }
+
+
 def _require_service(hook_name: str, value):
     if value is None:
         raise RuntimeError(f"missing extension hook result: {hook_name}")
@@ -27,15 +48,45 @@ def _resolve_service_with_fallback(env, hook_name: str, fallback_builder_name: s
 
 
 class _FallbackCostTrackingService:
+    SOURCE_KIND = "cost_tracking_missing_extension_degraded_projection"
+    SOURCE_AUTHORITIES = ("extension_service_registry",)
+    NO_BUSINESS_FACT_AUTHORITY = True
+
     def __init__(self, env):
         self.env = env
 
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "degraded": True,
+            "reason_code": "MISSING_EXTENSION_SERVICE",
+            "runtime_carrier": "scene_entry_and_block_contract",
+        }
+
     def resolve_project_with_diagnostics(self, project_id):
         pid = int(project_id or 0)
-        project = self.env["project.project"].sudo().browse(pid).exists() if pid > 0 else self.env["project.project"]
+        project = {
+            "id": pid,
+            "name": "",
+            "project_code": "",
+        }
         return project, {"fallback": True, "reason": "MISSING_EXTENSION_SERVICE"}
 
     def project_payload(self, project):
+        if isinstance(project, dict):
+            return {
+                "id": int(project.get("id") or 0),
+                "name": str(project.get("name") or ""),
+                "project_code": str(project.get("project_code") or ""),
+                "manager_name": "",
+                "stage_name": "",
+                "cost_record_count": "",
+                "cost_total_amount": "",
+            }
         return {
             "id": int(getattr(project, "id", 0) or 0),
             "name": str(getattr(project, "name", "") or ""),

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import json
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
 
@@ -12,6 +13,7 @@ BASELINE_JSON = ROOT / "scripts" / "verify" / "baselines" / "platform_kernel_bas
 INTENT_ENRICHED_JSON = ROOT / "docs" / "contract" / "exports" / "intent_catalog_enriched.json"
 CAPABILITY_REGISTRY = ROOT / "addons" / "smart_construction_core" / "services" / "capability_registry.py"
 SCENE_REGISTRY = ROOT / "addons" / "smart_construction_scene" / "scene_registry.py"
+SCENE_REGISTRY_CONTENT = ROOT / "addons" / "smart_construction_scene" / "profiles" / "scene_registry_content.py"
 OUT_JSON = ROOT / "artifacts" / "backend" / "platform_kernel_baseline.json"
 
 
@@ -26,6 +28,9 @@ def _safe_json(path: Path) -> dict:
 
 
 def _extract_scene_count() -> int:
+    content_count = _extract_scene_content_count()
+    if content_count > 0:
+        return content_count
     if not SCENE_REGISTRY.is_file():
         return 0
     try:
@@ -42,6 +47,28 @@ def _extract_scene_count() -> int:
                     text = v.value.strip()
                     if text:
                         scene_codes.add(text)
+    return len(scene_codes)
+
+
+def _extract_scene_content_count() -> int:
+    if not SCENE_REGISTRY_CONTENT.is_file():
+        return 0
+    try:
+        spec = spec_from_file_location("platform_kernel_scene_registry_content", SCENE_REGISTRY_CONTENT)
+        if spec is None or spec.loader is None:
+            return 0
+        module = module_from_spec(spec)
+        spec.loader.exec_module(module)
+        rows = module.list_scene_entries() if hasattr(module, "list_scene_entries") else []
+    except Exception:
+        return 0
+    if not isinstance(rows, list):
+        return 0
+    scene_codes = {
+        str(row.get("code") or row.get("key") or "").strip()
+        for row in rows
+        if isinstance(row, dict) and str(row.get("code") or row.get("key") or "").strip()
+    }
     return len(scene_codes)
 
 

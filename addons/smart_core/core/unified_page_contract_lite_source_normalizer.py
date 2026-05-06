@@ -10,8 +10,22 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any, Dict
 
+from .source_authority import build_source_authority_contract
 
 SUPPORTED_CLIENT_TYPES = {"web_pc", "wx_mini", "harmony_h5"}
+SOURCE_KIND = "unified_page_contract_lite_source_normalizer"
+SOURCE_AUTHORITIES = ("legacy_ui_contract", "native_page_payload", "semantic_page")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        runtime_carrier=SOURCE_KIND,
+    )
+
 SUPPORTED_VIEW_TYPES = {"form", "tree", "list", "kanban", "search", "gantt", "popup", "combine"}
 SUPPORTED_RENDER_PROFILES = {"create", "edit", "readonly", "search", "list"}
 

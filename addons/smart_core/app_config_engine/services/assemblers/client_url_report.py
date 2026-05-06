@@ -4,6 +4,20 @@
 from odoo import _
 
 class ClientUrlReportAssembler:
+    SOURCE_KIND = "client_url_report_contract_projection"
+    SOURCE_AUTHORITIES = ("ir.actions.client", "ir.actions.act_url", "ir.actions.report")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "app_config_engine.client_url_report_assembler",
+        }
 
     def __init__(self, env):
         self.env = env

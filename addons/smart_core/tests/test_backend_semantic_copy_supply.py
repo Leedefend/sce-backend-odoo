@@ -22,8 +22,10 @@ def _load_module(module_name: str, relative_path: str):
 def _ensure_stub_packages():
     sys.modules.setdefault("odoo", types.ModuleType("odoo"))
     sys.modules.setdefault("odoo.addons", types.ModuleType("odoo.addons"))
-    sys.modules.setdefault("odoo.addons.smart_core", types.ModuleType("odoo.addons.smart_core"))
-    sys.modules.setdefault("odoo.addons.smart_core.core", types.ModuleType("odoo.addons.smart_core.core"))
+    smart_core_pkg = sys.modules.setdefault("odoo.addons.smart_core", types.ModuleType("odoo.addons.smart_core"))
+    smart_core_pkg.__path__ = [str(ROOT / "addons/smart_core")]
+    core_pkg = sys.modules.setdefault("odoo.addons.smart_core.core", types.ModuleType("odoo.addons.smart_core.core"))
+    core_pkg.__path__ = [str(ROOT / "addons/smart_core/core")]
     sys.modules.setdefault("odoo.exceptions", types.ModuleType("odoo.exceptions"))
     sys.modules["odoo.exceptions"].AccessError = type("AccessError", (Exception,), {})
 
@@ -80,6 +82,47 @@ class TestBackendSemanticCopySupply(unittest.TestCase):
         payment_scene = next((row for row in scenes if isinstance(row, dict) and row.get("scene_key") == "payment"), {})
         self.assertTrue(payment_scene.get("description"))
         self.assertTrue(payment_scene.get("scope"))
+
+    def test_legacy_default_product_policy_nodes_are_marked_as_projection(self):
+        class _Env:
+            registry = SimpleNamespace(models={})
+
+            def __getitem__(self, key):
+                raise KeyError(key)
+
+        service = PRODUCT_POLICY_SERVICE.ProductPolicyService(_Env())
+        policy = service.get_policy(product_key="construction.standard")
+        payment_scene = next((row for row in policy.get("scenes") or [] if row.get("scene_key") == "payment"), {})
+        first_menu = ((((policy.get("menu_groups") or [{}])[0]).get("menus") or [{}])[0])
+
+        self.assertEqual(
+            ((payment_scene.get("policy_node_source_authority") or {}).get("kind")),
+            "legacy_default_product_policy_node_projection",
+        )
+        self.assertEqual(
+            ((first_menu.get("policy_node_source_authority") or {}).get("kind")),
+            "legacy_default_product_policy_node_projection",
+        )
+
+    def test_default_product_policy_fallback_is_provider_scoped_and_parameterized(self):
+        class _Env:
+            registry = SimpleNamespace(models={})
+
+            def __getitem__(self, key):
+                raise KeyError(key)
+
+        service = PRODUCT_POLICY_SERVICE.ProductPolicyService(_Env())
+        source = service.default_policy_source_authority_contract()
+        policy = service.get_policy(product_key="platform.preview")
+
+        self.assertEqual(source.get("kind"), "legacy_default_product_policy_provider")
+        self.assertTrue(source.get("no_business_fact_authority"))
+        self.assertEqual(policy.get("product_key"), "platform.preview")
+        self.assertEqual(policy.get("base_product_key"), "platform")
+        self.assertEqual(policy.get("edition_key"), "preview")
+        self.assertEqual(policy.get("label"), "Platform Preview")
+        self.assertEqual(((policy.get("policy_source_authority") or {}).get("kind")), "minimal_default_product_policy_provider")
+        self.assertEqual(policy.get("scenes") or [], [])
 
     def test_enterprise_enablement_contract_supplies_status_label(self):
         user = SimpleNamespace(company_id=SimpleNamespace(id=3, name="Demo Co"))

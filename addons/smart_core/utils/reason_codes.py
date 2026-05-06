@@ -2,6 +2,11 @@
 from __future__ import annotations
 
 # Shared reason-code constants for Phase 10 interaction contracts.
+SOURCE_KIND = "reason_code_metadata_registry"
+SOURCE_AUTHORITIES = ("core_reason_codes", "legacy_business_reason_provider")
+NO_BUSINESS_FACT_AUTHORITY = True
+LEGACY_BUSINESS_REASON_SOURCE_KIND = "legacy_business_reason_metadata_provider"
+
 REASON_OK = "OK"
 REASON_DONE = "DONE"
 REASON_PARTIAL_FAILED = "PARTIAL_FAILED"
@@ -71,6 +76,67 @@ def normalize_onchange_reason_code(raw: str) -> str:
     return REASON_ONCHANGE_WARNING_UNKNOWN
 
 
+def source_authority_contract():
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "legacy_business_reason_provider": LEGACY_BUSINESS_REASON_SOURCE_KIND,
+    }
+
+
+def legacy_business_reason_source_authority_contract():
+    return {
+        "kind": LEGACY_BUSINESS_REASON_SOURCE_KIND,
+        "authorities": ["compatibility_constants", "industry_extension_reason_codes"],
+        "projection_only": True,
+        "no_business_fact_authority": True,
+        "legacy_compatibility": True,
+    }
+
+
+def legacy_business_reason_meta_mapping():
+    return {
+        REASON_PAYMENT_ATTACHMENTS_REQUIRED: {
+            "retryable": False,
+            "error_category": "validation",
+            "suggested_action": "upload_attachment",
+            "source_authority": legacy_business_reason_source_authority_contract(),
+        },
+        REASON_PAYMENT_SETTLEMENT_NOT_READY: {
+            "retryable": False,
+            "error_category": "business_state",
+            "suggested_action": "complete_settlement_approval",
+            "source_authority": legacy_business_reason_source_authority_contract(),
+        },
+        REASON_PAYMENT_FUNDING_NOT_READY: {
+            "retryable": False,
+            "error_category": "business_state",
+            "suggested_action": "setup_project_funding",
+            "source_authority": legacy_business_reason_source_authority_contract(),
+        },
+        REASON_PAYMENT_FUNDING_BASELINE_INVALID: {
+            "retryable": False,
+            "error_category": "business_state",
+            "suggested_action": "fix_project_funding_baseline",
+            "source_authority": legacy_business_reason_source_authority_contract(),
+        },
+        REASON_PAYMENT_FUNDING_CAP_EXCEEDED: {
+            "retryable": False,
+            "error_category": "business_state",
+            "suggested_action": "adjust_payment_amount_or_funding",
+            "source_authority": legacy_business_reason_source_authority_contract(),
+        },
+        REASON_PAYMENT_NOT_FULLY_PAID: {
+            "retryable": False,
+            "error_category": "business_state",
+            "suggested_action": "complete_payment_execution",
+            "source_authority": legacy_business_reason_source_authority_contract(),
+        },
+    }
+
+
 def failure_meta_for_reason(reason_code: str):
     code = str(reason_code or "").strip().upper()
     mapping = {
@@ -108,36 +174,6 @@ def failure_meta_for_reason(reason_code: str):
             "retryable": False,
             "error_category": "permission",
             "suggested_action": "open_readonly_record",
-        },
-        REASON_PAYMENT_ATTACHMENTS_REQUIRED: {
-            "retryable": False,
-            "error_category": "validation",
-            "suggested_action": "upload_attachment",
-        },
-        REASON_PAYMENT_SETTLEMENT_NOT_READY: {
-            "retryable": False,
-            "error_category": "business_state",
-            "suggested_action": "complete_settlement_approval",
-        },
-        REASON_PAYMENT_FUNDING_NOT_READY: {
-            "retryable": False,
-            "error_category": "business_state",
-            "suggested_action": "setup_project_funding",
-        },
-        REASON_PAYMENT_FUNDING_BASELINE_INVALID: {
-            "retryable": False,
-            "error_category": "business_state",
-            "suggested_action": "fix_project_funding_baseline",
-        },
-        REASON_PAYMENT_FUNDING_CAP_EXCEEDED: {
-            "retryable": False,
-            "error_category": "business_state",
-            "suggested_action": "adjust_payment_amount_or_funding",
-        },
-        REASON_PAYMENT_NOT_FULLY_PAID: {
-            "retryable": False,
-            "error_category": "business_state",
-            "suggested_action": "complete_payment_execution",
         },
         REASON_WRITE_FAILED: {
             "retryable": True,
@@ -205,7 +241,8 @@ def failure_meta_for_reason(reason_code: str):
             "suggested_action": "clear_filters",
         },
     }
-    return dict(mapping.get(code) or {"retryable": False, "error_category": "", "suggested_action": ""})
+    legacy_mapping = legacy_business_reason_meta_mapping()
+    return dict(mapping.get(code) or legacy_mapping.get(code) or {"retryable": False, "error_category": "", "suggested_action": ""})
 
 
 def capability_suggested_action(*, reason_code: str, state: str) -> str:

@@ -1,6 +1,27 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
+
+SOURCE_KIND = "system_init_surface_projection_builder"
+SOURCE_AUTHORITIES = (
+    "system_init_payload",
+    "contract_governance",
+    "capability_surface",
+    "role_identity_surface",
+    "navigation_tree",
+)
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        startup_surface_only=True,
+    )
+
 
 def _as_text(value) -> str:
     return str(value or "").strip()
@@ -128,6 +149,14 @@ def _pick_role_surface_provider(data: dict, scene_keys_latest: set) -> tuple[dic
     }
 
 class SystemInitSurfaceBuilder:
+    SOURCE_KIND = SOURCE_KIND
+    SOURCE_AUTHORITIES = SOURCE_AUTHORITIES
+    NO_BUSINESS_FACT_AUTHORITY = NO_BUSINESS_FACT_AUTHORITY
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return source_authority_contract()
+
     @staticmethod
     def apply(*, surface_ctx) -> tuple[dict, dict]:
         data = surface_ctx.data

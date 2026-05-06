@@ -14,6 +14,21 @@ DEFAULT_CAPABILITY_GROUPS = [
     {"key": "others", "label": "其他能力", "icon": "grid"},
 ]
 
+SOURCE_KIND = "capability_startup_surface_projection"
+SOURCE_AUTHORITIES = ("extension_capability_provider", "sc.capability", "res.groups")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "system.init.capabilities",
+    }
+
 
 def _default_group_meta(group_key: str) -> dict:
     for item in DEFAULT_CAPABILITY_GROUPS:
@@ -96,7 +111,16 @@ def build_capability_groups(capabilities: List[dict]) -> List[dict]:
 def load_capabilities_for_user(env, user) -> List[dict]:
     extension_caps = call_extension_hook_first(env, "smart_core_list_capabilities_for_user", env, user)
     if isinstance(extension_caps, list) and extension_caps:
-        return extension_caps
+        source = source_authority_contract()
+        out: List[dict] = []
+        for item in extension_caps:
+            if not isinstance(item, dict):
+                continue
+            payload = dict(item)
+            if not isinstance(payload.get("source_authority"), dict):
+                payload["source_authority"] = source
+            out.append(payload)
+        return out
 
     try:
         extension_groups = call_extension_hook_first(env, "smart_core_capability_groups", env)
@@ -118,7 +142,10 @@ def load_capabilities_for_user(env, user) -> List[dict]:
     for rec in caps:
         try:
             if rec._user_visible(user):
-                out.append(rec.to_public_dict(user))
+                payload = rec.to_public_dict(user)
+                if isinstance(payload, dict):
+                    payload.setdefault("source_authority", source_authority_contract())
+                    out.append(payload)
         except Exception:
             continue
     return out

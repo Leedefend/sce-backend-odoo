@@ -11,8 +11,31 @@ from odoo.addons.smart_core.utils.reason_codes import (
 )
 from odoo.addons.smart_core.governance.scene_drift_engine import append_resolve_error as drift_append_resolve_error
 
+SOURCE_KIND = "scene_registry_normalization_projection"
+SOURCE_AUTHORITIES = ("scene_registry", "navigation_tree", "capability_surface", "scene_drift_engine")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "scene_normalizer",
+    }
+
 
 class SceneNormalizer:
+    SOURCE_KIND = SOURCE_KIND
+    SOURCE_AUTHORITIES = SOURCE_AUTHORITIES
+    NO_BUSINESS_FACT_AUTHORITY = NO_BUSINESS_FACT_AUTHORITY
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return source_authority_contract()
+
     def append_act_url_deprecations(self, nodes, warnings: list):
         _append_act_url_deprecations(nodes, warnings)
 

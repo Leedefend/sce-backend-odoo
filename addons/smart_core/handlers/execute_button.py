@@ -7,6 +7,7 @@ from ..core.project_context import (
     record_in_project_scope,
     selected_project_id_from_context,
 )
+from ..core.request_params import parse_bool
 from odoo.exceptions import AccessError, UserError
 from odoo import fields
 import logging
@@ -51,10 +52,19 @@ class ExecuteButtonHandler(BaseIntentHandler):
 
         button_type = button.get("type") or button.get("buttonType") or params.get("button_type") or "object"
         method_name = button.get("name") or params.get("method_name") or params.get("button_name")
-        dry_run = bool(params.get("dry_run"))
+        dry_run = parse_bool(params.get("dry_run"), False)
 
         res_id = params.get("res_id") or params.get("record_id") or self.context.get("record_id")
-        res_ids = _coerce_ids(res_id)
+        res_ids, res_ids_error = _read_ids(res_id)
+        if res_ids_error:
+            return _failure_result(
+                model=model,
+                res_id=None,
+                reason_code=REASON_MISSING_PARAMS,
+                message="record_id 无效",
+                trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
+                status_code=400,
+            )
 
         try:
             if not model or not method_name or not res_ids:
@@ -75,6 +85,16 @@ class ExecuteButtonHandler(BaseIntentHandler):
                     message=f"后端不支持按钮类型: {button_type}",
                     trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
                     status_code=400,
+                )
+
+            if model not in self.env:
+                return _failure_result(
+                    model=model,
+                    res_id=res_ids[0],
+                    reason_code=REASON_NOT_FOUND,
+                    message="后端目标模型不存在",
+                    trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
+                    status_code=404,
                 )
 
             self.env[model].check_access_rights("write")
@@ -102,6 +122,16 @@ class ExecuteButtonHandler(BaseIntentHandler):
                 server_action_result = self._run_server_action(button, model=model, res_ids=res_ids)
                 if server_action_result is not None:
                     return server_action_result
+                server_action_id = button.get("server_action_id") or button.get("serverActionId")
+                if server_action_id and not _positive_int(server_action_id):
+                    return _failure_result(
+                        model=model,
+                        res_id=res_ids[0],
+                        reason_code=REASON_MISSING_PARAMS,
+                        message="server_action_id 无效",
+                        trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
+                        status_code=400,
+                    )
                 return _failure_result(
                     model=model,
                     res_id=res_ids[0],
@@ -240,7 +270,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                     action = resolved.sudo()
             except Exception:
                 action = None
-        if not action:
+        if not action or not _server_action_matches_model(action, model):
             return None
         result = action.with_context(
             dict(
@@ -345,14 +375,48 @@ class ExecuteButtonHandler(BaseIntentHandler):
 
 
 def _coerce_ids(value: Any) -> List[int]:
+    ids, _error = _read_ids(value)
+    return ids
+
+
+def _read_ids(value: Any):
     if value is None:
-        return []
+        return [], None
     if isinstance(value, (list, tuple)):
-        return [int(v) for v in value if v is not None]
+        out = []
+        for raw in value:
+            if raw is None:
+                continue
+            try:
+                item = int(raw)
+            except Exception:
+                return [], "invalid"
+            if item <= 0:
+                return [], "invalid"
+            out.append(item)
+        return out, None
     try:
-        return [int(value)]
+        item = int(value)
     except Exception:
-        return []
+        return [], "invalid"
+    if item <= 0:
+        return [], "invalid"
+    return [item], None
+
+
+def _server_action_matches_model(action, model: str) -> bool:
+    action_model = str(getattr(getattr(action, "model_id", None), "model", "") or "").strip()
+    if not action_model:
+        return False
+    return action_model == str(model or "").strip()
+
+
+def _positive_int(value) -> int:
+    try:
+        parsed = int(value)
+    except Exception:
+        return 0
+    return parsed if parsed > 0 else 0
 
 
 def _failure_result(

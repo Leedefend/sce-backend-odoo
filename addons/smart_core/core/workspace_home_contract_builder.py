@@ -9,6 +9,7 @@ from typing import Any, Dict, Iterable, List, Tuple
 from urllib.parse import parse_qs, urlparse
 
 from odoo import fields
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 
 def _load_semantics_registry() -> Dict[str, Any]:
     registry_path = Path(__file__).with_name("orchestration_semantics.py")
@@ -44,6 +45,54 @@ PROGRESS_STATES = _SEM.get("PROGRESS_STATES") or ("overdue", "blocked", "pending
 _ACTION_TARGET_RESOLVER = None
 _DATA_PROVIDER_MODULE = None
 _SCENE_ENGINE_MODULE = None
+SOURCE_KIND = "workspace_home_startup_surface_projection"
+SOURCE_AUTHORITIES = (
+    "sc.capability",
+    "sc.scene",
+    "scene_ready_contract_v1",
+    "extension_fact_contributions",
+    "workspace_home_data_provider",
+)
+NO_BUSINESS_FACT_AUTHORITY = True
+LEGACY_WORKSPACE_KEYWORD_POLICY_SOURCE_KIND = "legacy_workspace_keyword_policy_projection"
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    delegated_source = {}
+    provider = _load_data_provider()
+    if provider is not None:
+        provider_fn = getattr(provider, "source_authority_contract", None)
+        if callable(provider_fn):
+            try:
+                delegated = provider_fn()
+                delegated_source = delegated if isinstance(delegated, dict) else {}
+            except Exception:
+                delegated_source = {}
+    contract = build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        rebuildable=None,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        runtime_carrier="system_init_workspace_home",
+        legacy_workspace_keyword_policy=LEGACY_WORKSPACE_KEYWORD_POLICY_SOURCE_KIND,
+    )
+    if delegated_source:
+        contract["delegated_source_authority"] = delegated_source
+    return contract
+
+
+def legacy_workspace_keyword_policy_source_authority_contract() -> Dict[str, Any]:
+    return build_source_authority_contract(
+        kind=LEGACY_WORKSPACE_KEYWORD_POLICY_SOURCE_KIND,
+        authorities=(
+            "workspace_keyword_overrides",
+            "workspace_home_data_provider",
+            "legacy_keyword_heuristics",
+        ),
+        rebuildable=None,
+        no_business_fact_authority=True,
+        legacy_compatibility=True,
+    )
 
 
 def _workspace_scene_aliases() -> Dict[str, str]:
@@ -1749,7 +1798,8 @@ def _build_metric_sets(ready_count: int, locked_count: int, preview_count: int, 
             "hint": "需要优先处理的关键提醒与异常事项。",
         },
         {
-            "key": "biz.project_scope",
+            "key": "biz.record_scope",
+            "legacy_key": "biz.project_scope",
             "label": "可用业务场景数",
             "value": str(scene_count),
             "level": _metric_level(scene_count, 3, 12),
@@ -2667,6 +2717,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         "actions": scene_contract_core.get("actions") or {},
         "extensions": scene_contract_core.get("extensions") or {},
         "schema_version": "v1",
+        "source_authority": source_authority_contract(),
         "semantic_protocol": {
             "block_types": list(BLOCK_TYPES),
             "state_tones": list(STATE_TONES),
@@ -2846,6 +2897,11 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
                 "today_actions": "factual_record_only",
                 "risk_actions": "factual_record_only",
                 "metrics": "disabled_without_factual_metric_source",
+            },
+            "keyword_policy": {
+                "source_authority": legacy_workspace_keyword_policy_source_authority_contract(),
+                "overrides_present": bool(keyword_overrides),
+                "purpose": "workspace_projection_ranking_and_route_hint",
             },
             "strict_fact_surface": {
                 "enabled": True,

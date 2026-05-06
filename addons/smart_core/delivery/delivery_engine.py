@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
+
 from .capability_service import CapabilityService
 from .menu_service import MenuService
 from .product_policy_service import ProductPolicyService
@@ -8,12 +10,25 @@ from .scene_service import SceneService
 
 
 class DeliveryEngine:
+    SOURCE_KIND = "delivery_engine_projection"
+    SOURCE_AUTHORITIES = ("delivery_product_policy_projection", "delivery_menu_projection", "delivery_scene_projection")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
     def __init__(self, env):
         self.env = env
         self.menu_service = MenuService()
         self.scene_service = SceneService(env)
         self.capability_service = CapabilityService()
         self.product_policy_service = ProductPolicyService(env)
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return build_source_authority_contract(
+            kind=cls.SOURCE_KIND,
+            authorities=cls.SOURCE_AUTHORITIES,
+            no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
+            runtime_carrier="delivery_engine_v1",
+        )
 
     def build(
         self,
@@ -42,9 +57,14 @@ class DeliveryEngine:
         scenes = self.scene_service.build_entries(policy=policy, scenes=runtime.get("scenes") or [])
         capabilities = self.capability_service.build_entries(policy=policy, capabilities=runtime.get("capabilities") or [])
         nav_meta = self.menu_service.describe_nav(nav)
+        policy_source_authority = policy.get("policy_source_authority") if isinstance(policy.get("policy_source_authority"), dict) else {}
+        policy_source_kind = str(policy_source_authority.get("kind") or "").strip()
+        policy_empty = not (policy.get("menu_groups") or policy.get("scenes") or policy.get("capabilities"))
+        policy_empty_reason = "MINIMAL_DEFAULT_PRODUCT_POLICY" if policy_source_kind == "minimal_default_product_policy_provider" else ""
         return {
             "contract_version": "v1",
             "source": "delivery_engine_v1",
+            "source_authority": self.source_authority_contract(),
             "product_key": str(policy.get("product_key") or "").strip(),
             "base_product_key": str(policy.get("base_product_key") or "").strip(),
             "edition_key": str(policy.get("edition_key") or "").strip(),
@@ -58,6 +78,10 @@ class DeliveryEngine:
                 "edition_key": str(policy.get("edition_key") or "").strip(),
                 "label": str(policy.get("label") or "").strip(),
                 "version": str(policy.get("version") or "").strip(),
+                "policy_source_authority": policy_source_authority,
+                "policy_source_kind": policy_source_kind,
+                "policy_empty": bool(policy_empty),
+                "policy_empty_reason": policy_empty_reason,
                 "menu_keys": [
                     str(menu.get("menu_key") or "").strip()
                     for group in policy.get("menu_groups") or []
@@ -83,6 +107,8 @@ class DeliveryEngine:
                 "nav_root_count": len(nav),
                 "scene_count": len(scenes),
                 "capability_count": len(capabilities),
+                "nav_source_authority": nav_meta.get("source_authority") if isinstance(nav_meta.get("source_authority"), dict) else {},
+                "capability_source_authority": self.capability_service.source_authority_contract(),
                 "group_count": int(nav_meta.get("group_count") or 0),
                 "stable_group_count": int(nav_meta.get("stable_group_count") or 0),
                 "native_preview_group_count": int(nav_meta.get("native_preview_group_count") or 0),
@@ -91,5 +117,8 @@ class DeliveryEngine:
                 "native_preview_group_key": str(nav_meta.get("native_preview_group_key") or ""),
                 "nav_group_keys": nav_meta.get("group_keys") if isinstance(nav_meta.get("group_keys"), list) else [],
                 "edition_diagnostics": policy.get("edition_diagnostics") if isinstance(policy.get("edition_diagnostics"), dict) else {},
+                "policy_source_kind": policy_source_kind,
+                "policy_empty": bool(policy_empty),
+                "policy_empty_reason": policy_empty_reason,
             },
         }

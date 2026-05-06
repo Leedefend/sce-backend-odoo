@@ -3,6 +3,21 @@ from __future__ import annotations
 
 
 class CapabilitySurfaceEngine:
+    SOURCE_KIND = "capability_surface_summary_projection"
+    SOURCE_AUTHORITIES = ("capability_surface", "capability_groups")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "capability_surface_engine",
+        }
+
     def build_summary(self, capabilities, capability_groups) -> dict:
         summary = {
             "capability_count": 0,

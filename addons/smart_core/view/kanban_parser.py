@@ -8,6 +8,20 @@ from ...permission import PermissionService
 
 
 class KanbanViewParser(BaseViewParser):
+    SOURCE_KIND = "legacy_kanban_view_parser_projection"
+    SOURCE_AUTHORITIES = ("ir.ui.view:kanban", "ir.model.fields", "ir.rule")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "legacy_view_parser_only": True,
+        }
 
 
     def parse(self):

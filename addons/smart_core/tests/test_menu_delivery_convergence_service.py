@@ -31,6 +31,29 @@ class TestMenuDeliveryConvergenceService(TransactionCase):
             "delivery_business_config",
         )
 
+    def test_menu_convergence_declares_legacy_token_policy_boundary(self):
+        source = self.service.source_authority_contract()
+        legacy_source = self.service.legacy_token_policy_source_authority_contract()
+
+        self.assertEqual(source.get("kind"), "menu_delivery_convergence_projection")
+        self.assertTrue(source.get("no_business_fact_authority"))
+        self.assertEqual(source.get("legacy_token_policy"), "legacy_construction_menu_token_policy")
+        self.assertEqual(legacy_source.get("kind"), "legacy_construction_menu_token_policy")
+        self.assertTrue(legacy_source.get("legacy_compatibility"))
+
+    def test_apply_report_includes_source_authority(self):
+        _fact, _explained, report = self.service.apply(
+            {"tree": [], "flat": []},
+            {"tree": [], "flat": []},
+            is_admin=False,
+        )
+
+        self.assertEqual((report.get("source_authority") or {}).get("kind"), "menu_delivery_convergence_projection")
+        self.assertEqual(
+            ((report.get("legacy_token_policy_source_authority") or {}).get("kind")),
+            "legacy_construction_menu_token_policy",
+        )
+
     def test_system_config_visible_only_to_platform_admin(self):
         path = ["智能施工 2.0", "系统配置", "工作流"]
 

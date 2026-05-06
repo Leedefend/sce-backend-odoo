@@ -57,6 +57,7 @@ sys.modules["odoo.addons.smart_core.security.auth"] = auth_mod
 core_exceptions_mod = types.ModuleType("odoo.addons.smart_core.core.exceptions")
 core_exceptions_mod.AUTH_REQUIRED = "AUTH_REQUIRED"
 core_exceptions_mod.BAD_REQUEST = "BAD_REQUEST"
+core_exceptions_mod.INTERNAL_ERROR = "INTERNAL_ERROR"
 core_exceptions_mod.DEFAULT_API_VERSION = "v1"
 core_exceptions_mod.DEFAULT_CONTRACT_VERSION = "v1"
 core_exceptions_mod.build_error_envelope = lambda **kwargs: kwargs

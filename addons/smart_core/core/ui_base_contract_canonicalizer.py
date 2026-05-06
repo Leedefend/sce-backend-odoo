@@ -3,6 +3,21 @@ from __future__ import annotations
 
 from typing import Any
 
+SOURCE_KIND = "ui_base_contract_canonicalizer_projection"
+SOURCE_AUTHORITIES = ("ui_base_contract_payload",)
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "ui_base_contract_canonicalizer",
+    }
+
 
 def _text(value: Any) -> str:
     return str(value or "").strip()
@@ -166,4 +181,3 @@ def canonicalize_ui_base_contract(payload: dict | None) -> dict:
     }
     canonical["base_fact_coverage"] = coverage
     return canonical
-

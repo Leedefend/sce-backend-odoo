@@ -35,6 +35,20 @@ class OdooViewParser(_BaseViewParserMixin,
     """对外唯一模型入口。"""
     _name = 'app.view.parser'
     _description = 'Lossless Odoo View Parser (Contract 2.0)'
+    SOURCE_KIND = "odoo_view_contract_parser_projection"
+    SOURCE_AUTHORITIES = ("ir.ui.view", "ir.model.fields", "odoo.get_view")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @api.model
+    def source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": self.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "app.view.parser",
+        }
 
     # ---------------- 公共入口 ----------------
     @api.model

@@ -8,6 +8,7 @@ from odoo.tools.safe_eval import safe_eval
 from ..core.base_handler import BaseIntentHandler
 from ..core.intent_execution_result import IntentExecutionResult
 from ..core.native_view_contract_projection import inject_primary_view_projection
+from ..core.request_params import parse_positive_int
 
 # ✅ 直接用你的统一服务与分发器
 from odoo.addons.smart_core.app_config_engine.services.contract_service import ContractService
@@ -162,9 +163,11 @@ class UiContractHandler(BaseIntentHandler):
             ctx["lang"] = user_lang
         if tz:   ctx["tz"] = tz
         company_id = self._get_param(p, "company_id", "companyId")
+        company_id, company_error = parse_positive_int(company_id, allow_empty=True)
+        if company_error:
+            return self._err(400, "company_id 无效")
         if company_id:
-            try: ctx["allowed_company_ids"] = [int(company_id)]
-            except Exception: pass
+            ctx["allowed_company_ids"] = [company_id]
 
         if_none_match = self._read_if_none_match(p)
         force_refresh = str(self._get_param(p, "force_refresh") or "").lower() in ("1","true","yes")
@@ -339,9 +342,8 @@ class UiContractHandler(BaseIntentHandler):
 
     def _op_menu(self, p, ctx):
         raw_menu = self._get_param(p, "menu_id", "menuId", "id")
-        try:
-            menu_id = int(raw_menu)
-        except Exception:
+        menu_id, menu_error = parse_positive_int(raw_menu)
+        if menu_error:
             return self._err(400, "缺少或非法的 menu_id")
 
         # 菜单/动作元数据读取使用 sudo，避免 ir.actions.* ACL 对普通交付角色造成误拦截。
@@ -417,18 +419,15 @@ class UiContractHandler(BaseIntentHandler):
             render_profile = "readonly"
         if render_profile not in {"create", "edit", "readonly"}:
             render_profile = ""
-        try:
-            action_id = int(raw_action) if raw_action not in (None, "") else None
-        except Exception:
-            action_id = None
-        try:
-            menu_id = int(raw_menu) if raw_menu not in (None, "") else None
-        except Exception:
-            menu_id = None
-        try:
-            record_id = int(raw_record) if raw_record not in (None, "") else None
-        except Exception:
-            record_id = None
+        action_id, action_error = parse_positive_int(raw_action, allow_empty=True)
+        if action_error:
+            return self._err(400, "非法的 action_id")
+        menu_id, menu_error = parse_positive_int(raw_menu, allow_empty=True)
+        if menu_error:
+            return self._err(400, "非法的 menu_id")
+        record_id, record_error = parse_positive_int(raw_record, allow_empty=True)
+        if record_error:
+            return self._err(400, "非法的 record_id")
 
         data, versions = self._dispatch_model_contract(
             model=model,
@@ -491,18 +490,14 @@ class UiContractHandler(BaseIntentHandler):
 
     def _op_action_open(self, p, ctx):
         raw_act = self._get_param(p, "action_id", "actionId")
-        try:
-            action_id = int(raw_act)
-        except Exception:
+        action_id, action_error = parse_positive_int(raw_act)
+        if action_error:
             return self._err(400, "缺少或非法的 action_id")
 
         raw_record = self._get_param(p, "record_id", "recordId", "res_id", "resId")
-        record_id = None
-        try:
-            if raw_record is not None and str(raw_record).strip():
-                record_id = int(raw_record)
-        except Exception:
-            record_id = None
+        record_id, record_error = parse_positive_int(raw_record, allow_empty=True)
+        if record_error:
+            return self._err(400, "非法的 record_id")
         requested_view_type = (self._get_param(p, "view_type", "viewType") or "").strip().lower()
         render_profile = str(
             self._get_param(p, "render_profile", "renderProfile", "profile", "mode") or ""

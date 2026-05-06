@@ -4,6 +4,8 @@ import time
 from ..core.base_handler import BaseIntentHandler
 from ..utils.extension_hooks import call_extension_hook_first
 
+ALLOWED_SCENE_CHANNELS = {"stable", "beta", "dev"}
+
 
 def _trace_id_from_context(ctx) -> str:
     try:
@@ -24,6 +26,7 @@ class _BaseSceneGovernanceHandler(BaseIntentHandler):
     ACL_MODE = "explicit_check"
     SOURCE_KIND = "scene_delivery_governance"
     SOURCE_AUTHORITIES = ("sc.scene", "sc.scene.version", "ir.ui.menu", "ir.actions", "res.groups")
+    NO_BUSINESS_FACT_AUTHORITY = True
 
     def _params(self, payload):
         params = (payload or {}).get("params") if isinstance(payload, dict) else payload
@@ -33,11 +36,50 @@ class _BaseSceneGovernanceHandler(BaseIntentHandler):
             return payload
         return {}
 
-    def _require_reason(self, params: dict) -> str:
-        reason = str((params or {}).get("reason") or "").strip()
+    def _text_param(self, params: dict, field_name: str, *, default=None):
+        raw = (params or {}).get(field_name, default)
+        if raw is None or isinstance(raw, bool) or not isinstance(raw, (str, int, float)):
+            return "", self._err(400, f"{field_name} 无效")
+        text = str(raw).strip()
+        if not text:
+            return "", self._err(400, f"{field_name} 无效")
+        return text, None
+
+    def _require_reason(self, params: dict):
+        reason, error = self._text_param(params, "reason")
+        if error:
+            return "", error
         if not reason:
-            raise ValueError("reason is required")
-        return reason
+            return "", self._err(400, "reason 无效")
+        return reason, None
+
+    def _scene_channel(self, params: dict, *, default=None):
+        channel, error = self._text_param(params, "channel", default=default)
+        if error:
+            return "", error
+        channel = channel.lower()
+        if channel not in ALLOWED_SCENE_CHANNELS:
+            return "", self._err(400, "channel 无效")
+        return channel, None
+
+    def _err(self, code: int, message: str):
+        return {
+            "ok": False,
+            "error": {"code": code, "message": message},
+            "code": code,
+            "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract()},
+        }
+
+    def _positive_int(self, value, field_name: str):
+        if value in (None, False, ""):
+            return 0, None
+        try:
+            parsed = int(value)
+        except Exception:
+            return 0, self._err(400, f"{field_name} 无效")
+        if parsed <= 0:
+            return 0, self._err(400, f"{field_name} 无效")
+        return parsed, None
 
     def _response(self, ts0: float, data: dict):
         return {
@@ -55,8 +97,10 @@ class _BaseSceneGovernanceHandler(BaseIntentHandler):
         return {
             "kind": self.SOURCE_KIND,
             "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
             "delivery_only": True,
-            "no_business_fact_authority": True,
+            "no_business_fact_authority": self.NO_BUSINESS_FACT_AUTHORITY,
         }
 
 
@@ -69,10 +113,16 @@ class SceneGovernanceSetChannelHandler(_BaseSceneGovernanceHandler):
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
         params = self._params(payload)
-        reason = self._require_reason(params)
-        channel = (params.get("channel") or "").strip().lower()
+        reason, reason_error = self._require_reason(params)
+        if reason_error:
+            return reason_error
+        channel, channel_error = self._scene_channel(params)
+        if channel_error:
+            return channel_error
         company_id = params.get("company_id") or self.env.user.company_id.id
-        company_id = int(company_id)
+        company_id, company_error = self._positive_int(company_id, "company_id")
+        if company_error:
+            return company_error
         result = _service(self.env, self.env.user).set_company_channel(
             company_id, channel, reason, trace_id=_trace_id_from_context(self.context)
         )
@@ -88,7 +138,9 @@ class SceneGovernanceRollbackHandler(_BaseSceneGovernanceHandler):
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
         params = self._params(payload)
-        reason = self._require_reason(params)
+        reason, reason_error = self._require_reason(params)
+        if reason_error:
+            return reason_error
         result = _service(self.env, self.env.user).rollback_stable(
             reason, trace_id=_trace_id_from_context(self.context)
         )
@@ -104,7 +156,9 @@ class SceneGovernancePinStableHandler(_BaseSceneGovernanceHandler):
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
         params = self._params(payload)
-        reason = self._require_reason(params)
+        reason, reason_error = self._require_reason(params)
+        if reason_error:
+            return reason_error
         result = _service(self.env, self.env.user).pin_stable(
             reason, trace_id=_trace_id_from_context(self.context)
         )
@@ -119,8 +173,12 @@ class SceneGovernanceExportContractHandler(_BaseSceneGovernanceHandler):
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
         params = self._params(payload)
-        reason = self._require_reason(params)
-        channel = (params.get("channel") or "stable").strip().lower()
+        reason, reason_error = self._require_reason(params)
+        if reason_error:
+            return reason_error
+        channel, channel_error = self._scene_channel(params, default="stable")
+        if channel_error:
+            return channel_error
         result = _service(self.env, self.env.user).export_contract(
             channel, reason, trace_id=_trace_id_from_context(self.context)
         )

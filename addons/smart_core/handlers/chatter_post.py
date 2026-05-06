@@ -12,6 +12,7 @@ from ..core.project_context import (
     record_in_project_scope,
     selected_project_id_from_context,
 )
+from ..core.request_params import parse_positive_int
 from ..utils.reason_codes import (
     REASON_MISSING_PARAMS,
     REASON_METHOD_NOT_CALLABLE,
@@ -30,22 +31,42 @@ class ChatterPostHandler(BaseIntentHandler):
     ACL_MODE = "explicit_check"
     NON_IDEMPOTENT_ALLOWED = "message_post appends chatter history and should not replay"
     SOURCE_AUTHORITY = "mail.message"
+    SOURCE_KIND = "odoo_collaboration_message_write_proxy"
+    SOURCE_AUTHORITIES = ("mail.message", "mail.thread", "res.partner", "odoo.orm", "ir.rule", "record_context_model")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authority": cls.SOURCE_AUTHORITY,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def handle(self, payload=None, ctx=None):
         params = self.params if isinstance(self.params, dict) else {}
         model = params.get("model")
-        res_id = params.get("res_id") or params.get("record_id")
+        res_id = params.get("res_id") if "res_id" in params else params.get("record_id")
         body = params.get("body")
         subject = params.get("subject")
         mode = str(params.get("mode") or "message").strip().lower()
         trace_id = self.context.get("trace_id") if isinstance(self.context, dict) else ""
 
-        if not model or not res_id or not body:
+        if not model or _is_empty_param(res_id) or not body:
             return self._failure(REASON_MISSING_PARAMS, "缺少参数 model/res_id/body", 400, trace_id)
+        if model not in self.env:
+            return self._failure(REASON_NOT_FOUND, "模型不存在", 404, trace_id)
+        res_id, res_id_error = parse_positive_int(res_id)
+        if res_id_error:
+            return self._failure(REASON_USER_ERROR, "res_id 无效", 400, trace_id)
 
         try:
             self.env[model].check_access_rights("write")
-            record = self.env[model].browse(int(res_id))
+            record = self.env[model].browse(res_id)
             if not record.exists():
                 return self._failure(REASON_NOT_FOUND, "记录不存在", 404, trace_id)
             current_project_id = selected_project_id_from_context(params, self.context if isinstance(self.context, dict) else {})
@@ -93,7 +114,11 @@ class ChatterPostHandler(BaseIntentHandler):
                         "mentioned_partner_ids": mention_partner_ids,
                     }
                 },
-                "meta": {"trace_id": trace_id, "source_authority": self.SOURCE_AUTHORITY},
+                "meta": {
+                    "trace_id": trace_id,
+                    "source_authority": self.source_authority_contract(),
+                    "legacy_source_authority": self.SOURCE_AUTHORITY,
+                },
             }
         except AccessError:
             return self._failure(REASON_PERMISSION_DENIED, "无权限发布评论", 403, trace_id)
@@ -121,7 +146,7 @@ class ChatterPostHandler(BaseIntentHandler):
             },
             "data": {"result": {"success": False, "reason_code": reason_code, "message": message}},
             "code": status_code,
-            "meta": {"trace_id": trace_id},
+            "meta": {"trace_id": trace_id, "source_authority": self.source_authority_contract()},
         }
 
 
@@ -132,3 +157,7 @@ def _resolve_email_from(user) -> str:
     login = re.sub(r"[^A-Za-z0-9_.-]+", ".", str(user.login or "user").strip()).strip(".") or "user"
     display = str(user.display_name or user.login or "User").strip() or "User"
     return formataddr((display, f"{login}@example.invalid"))
+
+
+def _is_empty_param(value) -> bool:
+    return value is None or (isinstance(value, str) and not value.strip())

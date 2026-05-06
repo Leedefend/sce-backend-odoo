@@ -98,6 +98,20 @@ def _is_internal_user(profile: Dict[str, Any]) -> bool:
     return "base.group_user" in groups
 
 
+def _resolve_requested_company_id(raw_value, allowed_company_ids):
+    if raw_value in (None, False, ""):
+        return None, None
+    try:
+        company_id = int(raw_value)
+    except Exception:
+        return None, (400, "company_id 无效")
+    if company_id <= 0:
+        return None, (400, "company_id 无效")
+    if company_id not in (allowed_company_ids or []):
+        return None, (403, "公司不在当前用户允许范围内")
+    return company_id, None
+
+
 class LoginHandler(BaseIntentHandler):
     """
     用户登录处理器
@@ -110,14 +124,33 @@ class LoginHandler(BaseIntentHandler):
     ETAG_ENABLED = False
     SOURCE_KIND = "odoo_auth_session_proxy"
     SOURCE_AUTHORITIES = ("res.users", "res.groups", "res.company")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def handle(self):
         # 1) 取参（支持 db / database / company_id 可选）
         params: Dict[str, Any] = self.params or {}
-        login    = (params.get("login") or "").strip()
-        password = (params.get("password") or "").strip()
+        login, login_error = self._text_param(params, "login")
+        if login_error:
+            return login_error
+        password, password_error = self._text_param(params, "password")
+        if password_error:
+            return password_error
         # 可选：db/公司/语言/时区（按需扩展）
-        db = params.get("db") or params.get("database")
+        db_key = "db" if "db" in params else "database"
+        db, db_error = self._text_param(params, db_key, allow_empty=True)
+        if db_error:
+            return db_error
         want_company_id = params.get("company_id")
         contract_mode = _resolve_contract_mode(params)
         compat_requested = contract_mode == "compat"
@@ -153,16 +186,10 @@ class LoginHandler(BaseIntentHandler):
         token_type = "Bearer"
         expires_at = int(time.time()) + get_token_exp_seconds()
 
-        # 可选：切换公司（若传入）
-        if want_company_id:
-            try:
-                want_company_id = int(want_company_id)
-                if want_company_id in (profile.get("allowed_company_ids") or []):
-                    # 注意：这里只返回信息，不在服务器端持久化切公司，
-                    # 具体上下文切换应由前端后续请求带上下文或单独意图处理
-                    pass
-            except Exception:
-                pass
+        want_company_id, company_error = _resolve_requested_company_id(want_company_id, profile.get("allowed_company_ids") or [])
+        if company_error:
+            status_code, message = company_error
+            return self.err(status_code, message)
 
         user_data = {
             "id": profile["id"],
@@ -170,7 +197,7 @@ class LoginHandler(BaseIntentHandler):
             "login": profile["login"],
             "lang": profile["lang"],
             "tz": profile["tz"],
-            "company_id": profile["company_id"],
+            "company_id": want_company_id or profile["company_id"],
             "company_name": profile.get("company_name") or "",
             "company": profile.get("company"),
             "allowed_company_ids": profile["allowed_company_ids"],
@@ -226,7 +253,19 @@ class LoginHandler(BaseIntentHandler):
         return data, {
             "source_kind": self.SOURCE_KIND,
             "source_authorities": list(self.SOURCE_AUTHORITIES),
+            "source_authority": self.source_authority_contract(),
         }
+
+    def _text_param(self, params: Dict[str, Any], key: str, *, allow_empty: bool = False):
+        raw = params.get(key)
+        if raw is None or raw == "":
+            return "", None
+        if isinstance(raw, bool) or not isinstance(raw, (str, int, float)):
+            return "", self.err(400, f"{key} 无效")
+        text = str(raw).strip()
+        if not text and not allow_empty:
+            return "", None
+        return text, None
 
 
 class LogoutHandler(BaseIntentHandler):
@@ -241,6 +280,18 @@ class LogoutHandler(BaseIntentHandler):
     ETAG_ENABLED = False
     SOURCE_KIND = "odoo_auth_session_proxy"
     SOURCE_AUTHORITIES = ("res.users",)
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def handle(self):
         try:
@@ -263,6 +314,7 @@ class LogoutHandler(BaseIntentHandler):
         return {"message": "logged out"}, {
             "source_kind": self.SOURCE_KIND,
             "source_authorities": list(self.SOURCE_AUTHORITIES),
+            "source_authority": self.source_authority_contract(),
         }
 
 

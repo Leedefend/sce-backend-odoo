@@ -14,6 +14,7 @@ from ..core.project_context import (
     record_in_project_scope,
     selected_project_id_from_context,
 )
+from ..core.request_params import parse_positive_int
 from ..utils.extension_hooks import call_extension_hook_first
 
 _logger = logging.getLogger(__name__)
@@ -36,6 +37,21 @@ class FileUploadHandler(BaseIntentHandler):
     ALLOWED_MODELS = {"res.partner"}
     MAX_BYTES = 5 * 1024 * 1024
     SOURCE_AUTHORITY = "ir.attachment"
+    SOURCE_KIND = "odoo_attachment_upload_proxy"
+    SOURCE_AUTHORITIES = ("ir.attachment", "odoo.orm", "ir.rule", "ir.model.access", "record_context_model")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authority": cls.SOURCE_AUTHORITY,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def _allowed_models(self):
         payload = call_extension_hook_first(self.env, "smart_core_file_upload_allowed_models", self.env)
@@ -62,7 +78,7 @@ class FileUploadHandler(BaseIntentHandler):
         params = self._collect_params(payload)
 
         model = str(params.get("model") or params.get("res_model") or "").strip()
-        res_id = params.get("res_id") or params.get("record_id")
+        res_id = params.get("res_id") if "res_id" in params else params.get("record_id")
         name = params.get("name") or "upload.bin"
         mimetype = params.get("mimetype") or "application/octet-stream"
         data = params.get("data") or ""
@@ -71,12 +87,13 @@ class FileUploadHandler(BaseIntentHandler):
             return self._err(400, "缺少参数 model")
         if model not in self._allowed_models():
             return self._err(403, f"模型不允许上传: {model}")
-        if not res_id:
+        if model not in self.env:
+            return self._err(404, f"未知模型: {model}")
+        if _is_empty_param(res_id):
             return self._err(400, "缺少参数 res_id")
 
-        try:
-            res_id = int(res_id)
-        except Exception:
+        res_id, res_id_error = parse_positive_int(res_id)
+        if res_id_error:
             return self._err(400, "res_id 无效")
 
         if not data or not isinstance(data, str):
@@ -125,6 +142,13 @@ class FileUploadHandler(BaseIntentHandler):
             "trace_id": trace_id,
             "write_mode": "upload",
             "source": "portal-shell",
-            "source_authority": self.SOURCE_AUTHORITY,
+            "source_authority": self.source_authority_contract(),
+            "legacy_source_authority": self.SOURCE_AUTHORITY,
+            "project_scope": scope_meta,
+            "record_scope": scope_meta,
         }
         return {"ok": True, "data": data, "meta": meta}
+
+
+def _is_empty_param(value: Any) -> bool:
+    return value is None or (isinstance(value, str) and not value.strip())

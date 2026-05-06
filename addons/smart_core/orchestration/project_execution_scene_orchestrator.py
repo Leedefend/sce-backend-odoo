@@ -10,6 +10,10 @@ from odoo.addons.smart_core.orchestration.base_scene_entry_orchestrator import (
 
 
 class ProjectExecutionSceneOrchestrator(BaseSceneEntryOrchestrator):
+    SOURCE_KIND = BaseSceneEntryOrchestrator.SOURCE_KIND
+    NO_BUSINESS_FACT_AUTHORITY = BaseSceneEntryOrchestrator.NO_BUSINESS_FACT_AUTHORITY
+    ADAPTER_LAYER = BaseSceneEntryOrchestrator.ADAPTER_LAYER
+
     scene_key = "project.execution"
     scene_label = "项目执行"
     state_fallback_text = "后端未提供项目执行状态摘要"

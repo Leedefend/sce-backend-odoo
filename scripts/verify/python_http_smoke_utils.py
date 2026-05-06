@@ -7,6 +7,7 @@ import json
 import os
 import time
 from http.client import RemoteDisconnected
+from typing import Any
 from urllib import request as urlrequest
 from urllib.error import HTTPError, URLError
 
@@ -39,6 +40,34 @@ def get_base_url() -> str:
     if not port:
         port = "8070"
     return f"http://localhost:{port}"
+
+
+def extract_login_token(payload: dict[str, Any]) -> str:
+    data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+    session = data.get("session") if isinstance(data.get("session"), dict) else {}
+    return str(session.get("token") or data.get("token") or "").strip()
+
+
+def live_login_failure_hint(
+    *,
+    status: int,
+    payload: dict[str, Any],
+    base_url: str,
+    db_name: str,
+    login: str,
+) -> str:
+    message = ""
+    if isinstance(payload.get("error"), dict):
+        message = str(payload["error"].get("message") or payload["error"].get("data") or "").strip()
+    elif payload.get("message"):
+        message = str(payload.get("message") or "").strip()
+    detail = f"ENV_UNAVAILABLE: login failed status={status} base_url={base_url} db={db_name or '<empty>'} login={login or '<empty>'}"
+    if message:
+        detail = f"{detail} message={message}"
+    return (
+        f"{detail}; set E2E_BASE_URL/E2E_DB/E2E_LOGIN/E2E_PASSWORD "
+        "or run against a seeded database with valid smoke credentials"
+    )
 
 
 def _request_json(

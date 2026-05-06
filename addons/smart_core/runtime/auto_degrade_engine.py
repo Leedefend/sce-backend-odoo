@@ -10,6 +10,27 @@ from odoo.addons.smart_core.utils.contract_governance import is_truthy
 
 
 class AutoDegradeEngine:
+    SOURCE_KIND = "scene_auto_degrade_governance_proxy"
+    SOURCE_AUTHORITIES = (
+        "scene_diagnostics",
+        "ir.config_parameter",
+        "sc.scene.governance.log",
+        "sc.audit.log",
+        "mail.mail",
+    )
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "system.init.auto_degrade",
+        }
+
     def _get_policy(self, env) -> dict:
         defaults = {
             "enabled": True,
@@ -197,6 +218,7 @@ class AutoDegradeEngine:
         policy = self._get_policy(env)
         result = {
             "triggered": False,
+            "source_authority": self.source_authority_contract(),
             "reason_codes": [],
             "action_taken": "none",
             "notifications": {"sent": False, "channels": []},

@@ -4,9 +4,36 @@ from __future__ import annotations
 from odoo.addons.smart_core.core.system_init_scene_runtime_semantic_bridge import (
     apply_system_init_scene_runtime_semantic_bridge,
 )
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
+
+SOURCE_KIND = "system_init_scene_runtime_surface_projection_builder"
+SOURCE_AUTHORITIES = (
+    "delivery_policy_runtime",
+    "scene_ready_contract",
+    "scene_navigation_contract",
+    "ui_base_contract_asset_binding",
+)
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        scene_runtime_surface_only=True,
+    )
 
 
 class SystemInitSceneRuntimeSurfaceBuilder:
+    SOURCE_KIND = SOURCE_KIND
+    SOURCE_AUTHORITIES = SOURCE_AUTHORITIES
+    NO_BUSINESS_FACT_AUTHORITY = NO_BUSINESS_FACT_AUTHORITY
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return source_authority_contract()
+
     @staticmethod
     def apply(*, surface_ctx):
         env = surface_ctx.env

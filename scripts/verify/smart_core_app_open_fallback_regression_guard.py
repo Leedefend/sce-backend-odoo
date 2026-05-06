@@ -5,7 +5,11 @@ from __future__ import annotations
 import os
 import sys
 
-from python_http_smoke_utils import get_base_url, http_post_json
+from python_http_smoke_utils import extract_login_token, get_base_url, http_post_json, live_login_failure_hint
+
+
+class LoginUnavailable(RuntimeError):
+    pass
 
 
 def _post(
@@ -23,13 +27,13 @@ def _post(
     return status, payload if isinstance(payload, dict) else {}
 
 
-def _login(intent_url: str, db_name: str, login: str, password: str) -> str:
+def _login(intent_url: str, db_name: str, login: str, password: str, *, base_url: str) -> str:
     status, payload = _post(intent_url, None, "login", {"db": db_name, "login": login, "password": password}, db_name=db_name)
     if status >= 400 or payload.get("ok") is not True:
-        raise RuntimeError(f"login failed: status={status}")
-    data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
-    token = ((data.get("session") or {}).get("token") if isinstance(data.get("session"), dict) else None) or data.get("token")
-    token = str(token or "").strip()
+        raise LoginUnavailable(
+            live_login_failure_hint(status=status, payload=payload, base_url=base_url, db_name=db_name, login=login)
+        )
+    token = extract_login_token(payload)
     if not token:
         raise RuntimeError("login token missing")
     return token
@@ -67,11 +71,16 @@ def main() -> int:
     admin_login = str(os.getenv("E2E_LOGIN") or "admin").strip()
     admin_password = str(os.getenv("E2E_PASSWORD") or os.getenv("ADMIN_PASSWD") or "admin").strip()
 
-    admin_token = _login(intent_url, db_name, admin_login, admin_password)
+    try:
+        admin_token = _login(intent_url, db_name, admin_login, admin_password, base_url=base_url)
+    except LoginUnavailable as exc:
+        print("[smart_core_app_open_fallback_regression_guard] ENV_UNAVAILABLE")
+        print(f" - {exc}")
+        return 1
     owner_token = ""
     owner_login_available = True
     try:
-        owner_token = _login(intent_url, db_name, owner_login, owner_password)
+        owner_token = _login(intent_url, db_name, owner_login, owner_password, base_url=base_url)
     except Exception:
         owner_login_available = False
 

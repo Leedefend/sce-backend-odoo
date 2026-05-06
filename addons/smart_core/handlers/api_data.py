@@ -22,7 +22,9 @@ from odoo.exceptions import AccessError
 from odoo.http import request
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.api_data_execution_policy import client_requested_sudo, resolve_api_data_sudo
 from ..core.project_context import apply_project_scope_domain, selected_project_id_from_context
+from ..core.request_params import parse_non_negative_int, parse_positive_int
 from ..utils.extension_hooks import call_extension_hook_first
 from ..utils.reason_codes import (
     REASON_OK,
@@ -66,6 +68,8 @@ class ApiDataHandler(BaseIntentHandler):
             "model": str(model or ""),
             "op": str(op or ""),
             "proxy_only": True,
+            "no_business_fact_authority": True,
+            "field_value_passthrough_only": True,
         }
 
     def _read_if_none_match(self, p: Dict[str, Any]) -> str:
@@ -176,6 +180,18 @@ class ApiDataHandler(BaseIntentHandler):
         except Exception:
             return default
 
+    def _read_positive_param(self, p: Dict[str, Any], key: str, default: int):
+        value, error = parse_positive_int(self._dig(p, key, None), allow_empty=True)
+        if error:
+            return 0, self._err(400, f"{key} 无效")
+        return value or default, None
+
+    def _read_non_negative_param(self, p: Dict[str, Any], key: str, default: int):
+        value, error = parse_non_negative_int(self._dig(p, key, None), allow_empty=True)
+        if error:
+            return 0, self._err(400, f"{key} 无效")
+        return default if value is None else value, None
+
     def _get_list(self, p: Dict[str, Any], key: str, default: Optional[List] = None) -> List:
         v = self._dig(p, key, None)
         if v is None:
@@ -198,6 +214,102 @@ class ApiDataHandler(BaseIntentHandler):
                 except Exception:
                     return list(default or [])
         return list(default or [])
+
+    def _read_fields_param(self, p: Dict[str, Any], default: Optional[List] = None):
+        raw = self._dig(p, "fields", None)
+        if raw is None or (isinstance(raw, str) and not raw.strip()):
+            return list(default or []), None
+        if raw == "*":
+            return ["*"], None
+        if isinstance(raw, list):
+            fields = [str(item).strip() for item in raw if str(item).strip()]
+            return fields, None
+        if isinstance(raw, str):
+            text = raw.strip()
+            if text == "*":
+                return ["*"], None
+            if "," in text and not text.startswith("["):
+                return [item.strip() for item in text.split(",") if item.strip()], None
+            if text.startswith("["):
+                try:
+                    parsed = literal_eval(text)
+                except Exception:
+                    return [], self._err(400, "fields 无效")
+                if not isinstance(parsed, list):
+                    return [], self._err(400, "fields 无效")
+                return [str(item).strip() for item in parsed if str(item).strip()], None
+        return [], self._err(400, "fields 无效")
+
+    def _read_domain_param(self, p: Dict[str, Any]):
+        raw = self._dig(p, "domain", None)
+        if raw is None or (isinstance(raw, str) and not raw.strip()):
+            return [], None
+        if isinstance(raw, list):
+            return raw, None
+        if isinstance(raw, str):
+            text = raw.strip()
+            if not text.startswith("["):
+                return [], self._err(400, "domain 无效")
+            try:
+                parsed = literal_eval(text)
+            except Exception:
+                try:
+                    parsed = safe_eval(text, {})
+                except Exception:
+                    return [], self._err(400, "domain 无效")
+            if not isinstance(parsed, list):
+                return [], self._err(400, "domain 无效")
+            return parsed, None
+        return [], self._err(400, "domain 无效")
+
+    def _read_group_by_param(self, p: Dict[str, Any], key: str = "group_by"):
+        raw = self._dig(p, key, None)
+        if raw is None or (isinstance(raw, str) and not raw.strip()):
+            return None, None
+        if isinstance(raw, str):
+            text = raw.strip()
+            if "," in text:
+                items = [part.strip() for part in text.split(",") if part.strip()]
+                return (items or None), None
+            return text, None
+        if isinstance(raw, (tuple, list)):
+            items = [str(part).strip() for part in raw if str(part).strip()]
+            if not items:
+                return None, None
+            return (items if len(items) > 1 else items[0]), None
+        return None, self._err(400, f"{key} 无效")
+
+    def _read_ids_param(self, p: Dict[str, Any], key: str = "ids"):
+        raw = self._dig(p, key, None)
+        if raw is None or (isinstance(raw, str) and not raw.strip()):
+            return [], self._err(400, f"缺少参数 {key}")
+        if isinstance(raw, list):
+            values = raw
+        elif isinstance(raw, str):
+            text = raw.strip()
+            if text.startswith("["):
+                try:
+                    parsed = literal_eval(text)
+                except Exception:
+                    return [], self._err(400, f"{key} 无效")
+                if not isinstance(parsed, list):
+                    return [], self._err(400, f"{key} 无效")
+                values = parsed
+            elif "," in text:
+                values = [part.strip() for part in text.split(",")]
+            else:
+                values = [text]
+        else:
+            values = [raw]
+        out: List[int] = []
+        for value in values:
+            parsed, error = parse_positive_int(value)
+            if error:
+                return [], self._err(400, f"{key} 无效")
+            out.append(parsed)
+        if not out:
+            return [], self._err(400, f"缺少参数 {key}")
+        return out, None
 
     def _normalize_domain(self, val) -> List:
         if val is None:
@@ -248,41 +360,38 @@ class ApiDataHandler(BaseIntentHandler):
                 value_part = str(value)
         return f"{field_part}:{value_part}"
 
-    def _normalize_group_page_offsets(self, val) -> Dict[str, int]:
+    def _normalize_group_page_offsets(self, val):
         out: Dict[str, int] = {}
+        if val in (None, ""):
+            return out, None
         if isinstance(val, dict):
             for raw_key, raw_offset in val.items():
                 key = str(raw_key or "").strip()
                 if not key:
-                    continue
-                try:
-                    offset = int(raw_offset)
-                except Exception:
-                    continue
-                if offset < 0:
-                    continue
+                    return {}, self._err(400, "group_page_offsets 无效")
+                offset, offset_error = parse_non_negative_int(raw_offset)
+                if offset_error:
+                    return {}, self._err(400, "group_page_offsets 无效")
                 out[key] = offset
-            return out
+            return out, None
         if isinstance(val, str):
             text = val.strip()
             if not text:
-                return out
+                return out, None
             # 兼容 route 风格: k1:0;k2:3（key 可能经过 encodeURIComponent）
             for pair in text.split(";"):
                 if ":" not in pair:
-                    continue
+                    return {}, self._err(400, "group_page_offsets 无效")
                 raw_key, raw_offset = pair.split(":", 1)
                 key = unquote(str(raw_key or "").strip())
                 if not key:
-                    continue
-                try:
-                    offset = int(raw_offset)
-                except Exception:
-                    continue
-                if offset < 0:
-                    continue
+                    return {}, self._err(400, "group_page_offsets 无效")
+                offset, offset_error = parse_non_negative_int(raw_offset)
+                if offset_error:
+                    return {}, self._err(400, "group_page_offsets 无效")
                 out[key] = offset
-        return out
+            return out, None
+        return {}, self._err(400, "group_page_offsets 无效")
 
     def _primary_group_by_field(self, group_by) -> str:
         if isinstance(group_by, str):
@@ -530,7 +639,7 @@ class ApiDataHandler(BaseIntentHandler):
             return None
         runtime_env = {
             "uid": int(getattr(self.env, "uid", 0) or 0),
-            "user": self.env.user,
+            "user": getattr(self.env, "user", None),
             "context_today": lambda: datetime.now().date(),
             "datetime": datetime,
         }
@@ -610,6 +719,7 @@ class ApiDataHandler(BaseIntentHandler):
                 "reason_code": REASON_PROJECT_SCOPE_DENIED,
                 "kind": "permission",
                 "project_scope": scope_meta,
+                "record_scope": scope_meta,
             },
             "code": 403,
         }
@@ -835,9 +945,9 @@ class ApiDataHandler(BaseIntentHandler):
         if inverse_name and inverse_name in child_model._fields and parent and parent.id and vals.get(inverse_name) in (None, False, ""):
             vals[inverse_name] = parent.id
 
-        # Parent-owned facts such as company/currency/partner are backend facts.
-        # When the child subview omits them, copy same-name values from the parent
-        # instead of making the frontend infer hidden required fields.
+        # Copy same-name backend-owned fields for child records when a subview
+        # omits hidden required values; this preserves ORM facts and does not
+        # classify partners or infer customer/supplier semantics.
         for name in ("company_id", "currency_id", "partner_id"):
             if name in child_model._fields and vals.get(name) in (None, False, ""):
                 parent_value = self._record_field_value_for_child(parent, name)
@@ -923,7 +1033,9 @@ class ApiDataHandler(BaseIntentHandler):
             context["active_test"] = self._get_bool(p, "active_test", True)
         if_none_match = self._read_if_none_match(p)
 
-        use_sudo = self._get_bool(p, "sudo", False)
+        use_sudo = resolve_api_data_sudo(p)
+        if client_requested_sudo(p):
+            _logger.warning("api.data ignored client sudo request model=%s op=%s", model, op)
 
         if op == "list":
             return self._with_etag_if_match(self._op_list(model, p, context, use_sudo), model, op, context, if_none_match)
@@ -956,41 +1068,65 @@ class ApiDataHandler(BaseIntentHandler):
     # ----------------- 操作实现 -----------------
 
     def _op_list(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
-        fields = self._get_list(p, "fields", [])
-        limit = self._get_int(p, "limit", 40)
-        offset = self._get_int(p, "offset", 0)
+        fields, fields_error = self._read_fields_param(p, [])
+        if fields_error:
+            return fields_error
+        limit, limit_error = self._read_positive_param(p, "limit", 40)
+        if limit_error:
+            return limit_error
+        offset, offset_error = self._read_non_negative_param(p, "offset", 0)
+        if offset_error:
+            return offset_error
         order = self._get_str(p, "order", "")
-        domain = self._normalize_domain(self._dig(p, "domain"))
+        domain, domain_error = self._read_domain_param(p)
+        if domain_error:
+            return domain_error
         domain_raw = self._get_str(p, "domain_raw", "").strip()
         context_raw = self._get_str(p, "context_raw", "").strip()
-        group_by = self._normalize_group_by(self._dig(p, "group_by"))
-        group_page_offsets = self._normalize_group_page_offsets(self._dig(p, "group_page_offsets"))
-        group_offset = max(0, self._get_int(p, "group_offset", 0))
+        group_by, group_by_error = self._read_group_by_param(p)
+        if group_by_error:
+            return group_by_error
+        group_page_offsets, group_page_offsets_error = self._normalize_group_page_offsets(self._dig(p, "group_page_offsets"))
+        if group_page_offsets_error:
+            return group_page_offsets_error
+        group_offset, group_offset_error = self._read_non_negative_param(p, "group_offset", 0)
+        if group_offset_error:
+            return group_offset_error
         need_group_total = self._get_bool(p, "need_group_total", False)
-        group_page_size = min(self._get_int(p, "group_page_size", 0), 8)
+        group_page_size, group_page_size_error = self._read_positive_param(p, "group_page_size", 0)
+        if group_page_size_error:
+            return group_page_size_error
+        group_page_size = min(group_page_size, 8)
         default_group_limit = min(limit or 20, 30)
-        group_limit = self._get_int(p, "group_limit", default_group_limit)
+        group_limit, group_limit_error = self._read_positive_param(p, "group_limit", default_group_limit)
+        if group_limit_error:
+            return group_limit_error
         group_limit = max(1, min(group_limit, 50))
+        group_sample_limit, group_sample_limit_error = self._read_positive_param(p, "group_sample_limit", 3)
+        if group_sample_limit_error:
+            return group_sample_limit_error
         search_term = self._get_str(p, "search_term", "").strip()
 
         if context_raw:
             parsed_ctx = self._safe_eval_with_runtime(context_raw)
-            if isinstance(parsed_ctx, dict):
-                ctx = {**ctx, **parsed_ctx}
-                if group_by is None:
-                    group_by = self._normalize_group_by(parsed_ctx.get("group_by"))
+            if not isinstance(parsed_ctx, dict):
+                return self._err(400, "context_raw 无效")
+            ctx = {**ctx, **parsed_ctx}
+            if group_by is None:
+                group_by = self._normalize_group_by(parsed_ctx.get("group_by"))
 
         if group_by is not None:
             ctx = {**ctx, "group_by": group_by}
 
         if domain_raw:
             parsed_domain = self._safe_eval_with_runtime(domain_raw)
-            if isinstance(parsed_domain, list):
-                if not domain:
-                    domain = parsed_domain
-                elif parsed_domain:
-                    # 同时存在 domain 与 domain_raw 时，按 AND 语义合并，确保快捷筛选生效。
-                    domain = parsed_domain + domain
+            if not isinstance(parsed_domain, list):
+                return self._err(400, "domain_raw 无效")
+            if not domain:
+                domain = parsed_domain
+            elif parsed_domain:
+                # 同时存在 domain 与 domain_raw 时，按 AND 语义合并，确保快捷筛选生效。
+                domain = parsed_domain + domain
 
         env_model = self.env[model].with_context(ctx)
         if sudo:
@@ -1050,8 +1186,8 @@ class ApiDataHandler(BaseIntentHandler):
         )
         group_window_digest = self._build_group_window_digest(group_window_id, group_summary)
         group_window_identity_key = self._build_group_window_identity_key(group_window_id, group_window_digest)
-        effective_page_size = min(self._get_int(p, "group_page_size", 0), 8)
-        effective_page_size = effective_page_size if effective_page_size > 0 else min(self._get_int(p, "group_sample_limit", 3), 8)
+        effective_page_size = min(group_page_size, 8)
+        effective_page_size = effective_page_size if effective_page_size > 0 else min(group_sample_limit, 8)
         effective_page_size = max(1, int(effective_page_size or 1))
         group_window_identity = {
             "model": model,
@@ -1083,7 +1219,7 @@ class ApiDataHandler(BaseIntentHandler):
             group_by,
             fields_safe,
             limit=group_limit,
-            sample_limit=min(self._get_int(p, "group_sample_limit", 3), 8),
+            sample_limit=min(group_sample_limit, 8),
             group_page_size=group_page_size if group_page_size > 0 else None,
             group_page_offsets=group_page_offsets,
             group_summary=group_summary,
@@ -1150,16 +1286,19 @@ class ApiDataHandler(BaseIntentHandler):
             "group_limit": group_limit,
             "group_offset": group_offset,
             "project_scope": project_scope_meta,
+            "record_scope": project_scope_meta,
         }
         if group_total is not None:
             meta["group_total"] = int(group_total)
         return data, meta
 
     def _op_read(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
-        ids = self._get_list(p, "ids", [])
-        if not ids:
-            return self._err(400, "缺少参数 ids")
-        fields = self._get_list(p, "fields", ["id", "name"])
+        ids, ids_error = self._read_ids_param(p)
+        if ids_error:
+            return ids_error
+        fields, fields_error = self._read_fields_param(p, ["id", "name"])
+        if fields_error:
+            return fields_error
 
         env_model = self.env[model].with_context(ctx)
         if sudo:
@@ -1185,11 +1324,14 @@ class ApiDataHandler(BaseIntentHandler):
             "count": len(rows),
             "fields": fields_safe,
             "project_scope": project_scope_meta,
+            "record_scope": project_scope_meta,
         }
         return data, meta
 
     def _op_count(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
-        domain = self._normalize_domain(self._dig(p, "domain"))
+        domain, domain_error = self._read_domain_param(p)
+        if domain_error:
+            return domain_error
         env_model = self.env[model].with_context(ctx)
         if sudo:
             env_model = env_model.sudo()
@@ -1202,6 +1344,7 @@ class ApiDataHandler(BaseIntentHandler):
             "model": model,
             "source_authority": self._source_authority_contract(model, "count"),
             "project_scope": project_scope_meta,
+            "record_scope": project_scope_meta,
         }
         return data, meta
 
@@ -1267,15 +1410,16 @@ class ApiDataHandler(BaseIntentHandler):
             "source_authority": self._source_authority_contract(model, "create"),
             "id": rec.id,
             "project_scope": project_scope_meta,
+            "record_scope": project_scope_meta,
         }
         return data, meta
 
     def _op_write(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
-        ids = self._get_list(p, "ids", [])
+        ids, ids_error = self._read_ids_param(p)
+        if ids_error:
+            return ids_error
         vals = self._dig(p, "vals") or self._dig(p, "values") or {}
         if_match = self._read_if_match(p)
-        if not ids:
-            return self._err(400, "缺少参数 ids")
         if not isinstance(vals, dict) or not vals:
             return self._err(400, "缺少参数 vals")
 
@@ -1333,6 +1477,7 @@ class ApiDataHandler(BaseIntentHandler):
             "source_authority": self._source_authority_contract(model, "write"),
             "count": len(recs),
             "project_scope": project_scope_meta,
+            "record_scope": project_scope_meta,
         }
         return data, meta
 
@@ -1357,15 +1502,25 @@ class ApiDataHandler(BaseIntentHandler):
         return str(value)
 
     def _op_export_csv(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
-        limit = self._get_int(p, "limit", 2000)
-        if limit <= 0:
-            limit = 2000
+        limit, limit_error = self._read_positive_param(p, "limit", 2000)
+        if limit_error:
+            return limit_error
         limit = min(limit, 10000)
 
         order = self._get_str(p, "order", "")
-        domain = self._normalize_domain(self._dig(p, "domain"))
-        ids = self._get_list(p, "ids", [])
-        fields = self._get_list(p, "fields", [])
+        domain, domain_error = self._read_domain_param(p)
+        if domain_error:
+            return domain_error
+        raw_ids = self._dig(p, "ids", None)
+        if raw_ids is None or (isinstance(raw_ids, str) and not raw_ids.strip()):
+            ids = []
+        else:
+            ids, ids_error = self._read_ids_param(p)
+            if ids_error:
+                return ids_error
+        fields, fields_error = self._read_fields_param(p, [])
+        if fields_error:
+            return fields_error
 
         env_model = self.env[model].with_context(ctx)
         if sudo:
@@ -1401,6 +1556,7 @@ class ApiDataHandler(BaseIntentHandler):
                 "source_authority": self._source_authority_contract(model, "export_csv"),
                 "count": 0,
                 "project_scope": project_scope_meta,
+                "record_scope": project_scope_meta,
             }
             return data, meta
 
@@ -1435,5 +1591,6 @@ class ApiDataHandler(BaseIntentHandler):
             "count": len(rows),
             "limit": limit,
             "project_scope": project_scope_meta,
+            "record_scope": project_scope_meta,
         }
         return data, meta

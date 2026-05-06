@@ -3,6 +3,21 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+SOURCE_KIND = "page_orchestration_static_data_provider"
+SOURCE_AUTHORITIES = ("page_key", "section_key", "static_page_orchestration_defaults")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "page_orchestration_data_provider",
+    }
+
 
 def _to_text(value: Any) -> str:
     return str(value or "").strip()

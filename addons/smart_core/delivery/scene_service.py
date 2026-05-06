@@ -4,13 +4,27 @@ from __future__ import annotations
 from odoo.addons.smart_core.core.scene_contract_builder import (
     build_release_surface_scene_contract_from_delivery_entry,
 )
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 from odoo.addons.smart_core.delivery.scene_snapshot_service import SceneSnapshotService
 
 
 class SceneService:
+    SOURCE_KIND = "delivery_scene_projection"
+    SOURCE_AUTHORITIES = ("delivery_product_policy_projection", "scene_snapshot_projection", "release_surface_scene_contract_projection")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
     def __init__(self, env):
         self.env = env
         self.snapshot_service = SceneSnapshotService(env)
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return build_source_authority_contract(
+            kind=cls.SOURCE_KIND,
+            authorities=cls.SOURCE_AUTHORITIES,
+            rebuildable=None,
+            no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
+        )
 
     def build_entries(self, *, policy: dict, scenes: list[dict]) -> list[dict]:
         scene_index = {}
@@ -74,6 +88,7 @@ class SceneService:
                     "requires_project_context": bool(row.get("requires_project_context", False)),
                     "state": "present" if source else "policy_only",
                     "source": "delivery_engine_v1",
+                    "source_authority": self.source_authority_contract(),
                     "scene_contract_standard_v1": snapshot_contract or standard_contract,
                     "scene_asset_binding": {
                         "version": str(snapshot_binding.get("version") or "v1").strip() or "v1",

@@ -5,6 +5,8 @@ import time
 from ..core.base_handler import BaseIntentHandler
 from ..utils.extension_hooks import call_extension_hook_first
 
+ALLOWED_SCENE_CHANNELS = {"stable", "beta", "dev"}
+
 
 def _trace_id_from_context(ctx) -> str:
     try:
@@ -25,6 +27,7 @@ class _BaseScenePackageHandler(BaseIntentHandler):
     ACL_MODE = "explicit_check"
     SOURCE_KIND = "scene_delivery_governance"
     SOURCE_AUTHORITIES = ("sc.scene", "sc.capability", "ir.ui.menu", "ir.actions", "res.groups")
+    NO_BUSINESS_FACT_AUTHORITY = True
 
     def _params(self, payload):
         params = (payload or {}).get("params") if isinstance(payload, dict) else payload
@@ -33,6 +36,36 @@ class _BaseScenePackageHandler(BaseIntentHandler):
         if isinstance(payload, dict):
             return payload
         return {}
+
+    def _err(self, code, message):
+        return {
+            "ok": False,
+            "error": {"code": code, "message": message},
+            "code": code,
+            "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract()},
+        }
+
+    def _text_param(self, params, key, *, default=""):
+        raw = params.get(key, default)
+        if raw is None or raw == "":
+            return default, None
+        if isinstance(raw, bool) or not isinstance(raw, (str, int, float)):
+            return "", self._err(400, f"{key} 无效")
+        text = str(raw).strip()
+        return text or default, None
+
+    def _package_json_param(self, params):
+        package_json = params.get("package")
+        if package_json is None:
+            package_json = params.get("package_json")
+        if isinstance(package_json, str):
+            try:
+                package_json = json.loads(package_json)
+            except Exception:
+                return None, self._err(400, "package_json 无效")
+        if not isinstance(package_json, dict):
+            return None, self._err(400, "package_json 无效")
+        return package_json, None
 
     def _response(self, ts0, data):
         return {
@@ -50,8 +83,9 @@ class _BaseScenePackageHandler(BaseIntentHandler):
         return {
             "kind": self.SOURCE_KIND,
             "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": True,
             "delivery_only": True,
-            "no_business_fact_authority": True,
+            "no_business_fact_authority": self.NO_BUSINESS_FACT_AUTHORITY,
         }
 
 
@@ -74,10 +108,21 @@ class ScenePackageExportHandler(_BaseScenePackageHandler):
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
         params = self._params(payload)
-        package_name = str(params.get("package_name") or "").strip()
-        package_version = str(params.get("package_version") or "").strip()
-        scene_channel = str(params.get("scene_channel") or "stable").strip().lower()
-        reason = str(params.get("reason") or "scene package export").strip() or "scene package export"
+        package_name, package_name_error = self._text_param(params, "package_name")
+        if package_name_error:
+            return package_name_error
+        package_version, package_version_error = self._text_param(params, "package_version")
+        if package_version_error:
+            return package_version_error
+        scene_channel, scene_channel_error = self._text_param(params, "scene_channel", default="stable")
+        if scene_channel_error:
+            return scene_channel_error
+        scene_channel = scene_channel.lower()
+        if scene_channel not in ALLOWED_SCENE_CHANNELS:
+            return self._err(400, "scene_channel 无效")
+        reason, reason_error = self._text_param(params, "reason", default="scene package export")
+        if reason_error:
+            return reason_error
         result = _service(self.env, self.env.user).export_package(
             package_name=package_name,
             package_version=package_version,
@@ -96,14 +141,9 @@ class ScenePackageDryRunImportHandler(_BaseScenePackageHandler):
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
         params = self._params(payload)
-        package_json = params.get("package")
-        if package_json is None:
-            package_json = params.get("package_json")
-        if isinstance(package_json, str):
-            try:
-                package_json = json.loads(package_json)
-            except Exception as exc:
-                raise ValueError("package_json invalid") from exc
+        package_json, package_error = self._package_json_param(params)
+        if package_error:
+            return package_error
         result = _service(self.env, self.env.user).dry_run_import(package_json)
         return self._response(ts0, result)
 
@@ -116,16 +156,16 @@ class ScenePackageImportHandler(_BaseScenePackageHandler):
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
         params = self._params(payload)
-        package_json = params.get("package")
-        if package_json is None:
-            package_json = params.get("package_json")
-        if isinstance(package_json, str):
-            try:
-                package_json = json.loads(package_json)
-            except Exception as exc:
-                raise ValueError("package_json invalid") from exc
-        strategy = str(params.get("strategy") or "skip_existing").strip().lower()
-        reason = str(params.get("reason") or "").strip()
+        package_json, package_error = self._package_json_param(params)
+        if package_error:
+            return package_error
+        strategy, strategy_error = self._text_param(params, "strategy", default="skip_existing")
+        if strategy_error:
+            return strategy_error
+        strategy = strategy.lower()
+        reason, reason_error = self._text_param(params, "reason")
+        if reason_error:
+            return reason_error
         result = _service(self.env, self.env.user).import_package(
             package_json=package_json,
             strategy=strategy,

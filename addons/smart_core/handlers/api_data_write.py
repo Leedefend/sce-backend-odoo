@@ -14,6 +14,7 @@ from ..core.project_context import (
     record_in_project_scope,
     selected_project_id_from_context,
 )
+from ..core.request_params import parse_bool, parse_positive_int
 from ..utils.idempotency import (
     apply_idempotency_identity,
     build_idempotency_conflict_response,
@@ -24,6 +25,7 @@ from ..utils.idempotency import (
 )
 from ..utils.reason_codes import (
     REASON_CONFLICT,
+    REASON_INVALID_ID,
     REASON_MISSING_PARAMS,
     REASON_NOT_FOUND,
     REASON_PERMISSION_DENIED,
@@ -98,6 +100,8 @@ class ApiDataWriteHandler(BaseIntentHandler):
             "model": str(model or ""),
             "op": str(op or ""),
             "proxy_only": True,
+            "no_business_fact_authority": True,
+            "field_value_passthrough_only": True,
         }
 
     def _idempotency_window_seconds(self):
@@ -203,19 +207,29 @@ class ApiDataWriteHandler(BaseIntentHandler):
         return str(params.get("if_match") or params.get("ifMatch") or params.get("write_date") or "").strip()
 
     def _get_id(self, params: Dict[str, Any]) -> int:
+        record_id, _error = self._read_id(params)
+        return record_id
+
+    def _read_id(self, params: Dict[str, Any]):
         for key in ("id", "record_id"):
             if key in params:
                 try:
-                    return int(params.get(key))
+                    value = int(params.get(key))
                 except Exception:
-                    return 0
+                    return 0, self._err(400, "id 无效", REASON_INVALID_ID)
+                if value <= 0:
+                    return 0, self._err(400, "id 无效", REASON_INVALID_ID)
+                return value, None
         ids = params.get("ids")
         if isinstance(ids, list) and ids:
             try:
-                return int(ids[0])
+                value = int(ids[0])
             except Exception:
-                return 0
-        return 0
+                return 0, self._err(400, "id 无效", REASON_INVALID_ID)
+            if value <= 0:
+                return 0, self._err(400, "id 无效", REASON_INVALID_ID)
+            return value, None
+        return 0, None
 
     def _current_project_id(self, params: Dict[str, Any]) -> int:
         context = self._get_context(params)
@@ -242,7 +256,7 @@ class ApiDataWriteHandler(BaseIntentHandler):
             return self._err(404, f"未知模型: {model}", REASON_NOT_FOUND)
 
         vals = self._get_vals(params)
-        dry_run = bool(params.get("dry_run"))
+        dry_run = parse_bool(params.get("dry_run"), False)
         if not vals:
             return self._err(400, "缺少参数 vals", REASON_MISSING_PARAMS)
 
@@ -253,6 +267,14 @@ class ApiDataWriteHandler(BaseIntentHandler):
         safe_vals = {k: v for k, v in vals.items() if k in allowed_fields}
         if not safe_vals:
             return self._err(400, "vals 中无可写字段", REASON_USER_ERROR)
+
+        record_id = 0
+        if intent == "api.data.write":
+            record_id, record_id_error = self._read_id(params)
+            if record_id_error:
+                return record_id_error
+            if not record_id:
+                return self._err(400, "缺少参数 id", REASON_MISSING_PARAMS)
 
         context = self._get_context(params)
         env_model = self.env[model].with_context(context)
@@ -265,10 +287,6 @@ class ApiDataWriteHandler(BaseIntentHandler):
         idempotency_key = str(params.get("idempotency_key") or "").strip() or request_id
 
         if intent == "api.data.write":
-            record_id = self._get_id(params)
-            if not record_id:
-                return self._err(400, "缺少参数 id", REASON_MISSING_PARAMS)
-
             rec = env_model.browse(record_id).exists()
             if not rec:
                 return self._err(404, "记录不存在", REASON_NOT_FOUND)
@@ -276,10 +294,12 @@ class ApiDataWriteHandler(BaseIntentHandler):
             if not in_scope:
                 return self._scope_denied(scope_meta)
             if current_project_id and "project_id" in safe_vals and "project_id" in env_model._fields:
-                try:
-                    target_project_id = int(safe_vals.get("project_id") or 0)
-                except Exception:
-                    target_project_id = 0
+                target_project_id, target_project_id_error = parse_positive_int(
+                    safe_vals.get("project_id"),
+                    allow_empty=True,
+                )
+                if target_project_id_error:
+                    return self._err(400, "project_id 无效", REASON_USER_ERROR)
                 if target_project_id and target_project_id != int(current_project_id):
                     return self._scope_denied(scope_meta)
 
@@ -317,7 +337,12 @@ class ApiDataWriteHandler(BaseIntentHandler):
                         "written_fields": sorted(safe_vals.keys()),
                         "values": safe_vals,
                         "dry_run": dry_run,
+                        "project_scope": scope_meta,
+                        "record_scope": scope_meta,
                     }
+                    if isinstance(base_data, dict):
+                        base_data.setdefault("project_scope", scope_meta)
+                        base_data.setdefault("record_scope", scope_meta)
                     data = self._with_idempotency_contract(
                         base_data,
                         request_id=request_id,
@@ -326,7 +351,14 @@ class ApiDataWriteHandler(BaseIntentHandler):
                         trace_id=trace_id,
                         deduplicated=True,
                     )
-                    meta = {"trace_id": trace_id, "write_mode": "update", "source": "portal-shell", "source_authority": self._source_authority_contract(model, "write"), "project_scope": scope_meta}
+                    meta = {
+                        "trace_id": trace_id,
+                        "write_mode": "update",
+                        "source": "portal-shell",
+                        "source_authority": self._source_authority_contract(model, "write"),
+                        "project_scope": scope_meta,
+                        "record_scope": scope_meta,
+                    }
                     return {"ok": True, "data": data, "meta": meta}
 
             try:
@@ -352,6 +384,8 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 "written_fields": sorted(safe_vals.keys()),
                 "values": safe_vals,
                 "dry_run": dry_run,
+                "project_scope": scope_meta,
+                "record_scope": scope_meta,
             }
             data = self._with_idempotency_contract(
                 data,
@@ -370,16 +404,25 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 idem_fingerprint=idempotency_fingerprint,
                 result=data,
             )
-            meta = {"trace_id": trace_id, "write_mode": "update", "source": "portal-shell", "source_authority": self._source_authority_contract(model, "write"), "project_scope": scope_meta}
+            meta = {
+                "trace_id": trace_id,
+                "write_mode": "update",
+                "source": "portal-shell",
+                "source_authority": self._source_authority_contract(model, "write"),
+                "project_scope": scope_meta,
+                "record_scope": scope_meta,
+            }
             return {"ok": True, "data": data, "meta": meta}
 
         if intent == "api.data.create":
             _scoped_domain, scope_meta = apply_project_scope_domain(env_model, [], current_project_id)
             if current_project_id and scope_meta.get("applied") and "project_id" in env_model._fields:
-                try:
-                    target_project_id = int(safe_vals.get("project_id") or 0)
-                except Exception:
-                    target_project_id = 0
+                target_project_id, target_project_id_error = parse_positive_int(
+                    safe_vals.get("project_id"),
+                    allow_empty=True,
+                )
+                if target_project_id_error:
+                    return self._err(400, "project_id 无效", REASON_USER_ERROR)
                 if target_project_id and target_project_id != int(current_project_id):
                     return self._scope_denied(scope_meta)
                 if not target_project_id and "project_id" in allowed_fields:
@@ -418,7 +461,12 @@ class ApiDataWriteHandler(BaseIntentHandler):
                         "written_fields": sorted(safe_vals.keys()),
                         "values": safe_vals,
                         "dry_run": dry_run,
+                        "project_scope": scope_meta,
+                        "record_scope": scope_meta,
                     }
+                    if isinstance(base_data, dict):
+                        base_data.setdefault("project_scope", scope_meta)
+                        base_data.setdefault("record_scope", scope_meta)
                     data = self._with_idempotency_contract(
                         base_data,
                         request_id=request_id,
@@ -427,7 +475,14 @@ class ApiDataWriteHandler(BaseIntentHandler):
                         trace_id=trace_id,
                         deduplicated=True,
                     )
-                    meta = {"trace_id": trace_id, "write_mode": "create", "source": "portal-shell", "source_authority": self._source_authority_contract(model, "create"), "project_scope": scope_meta}
+                    meta = {
+                        "trace_id": trace_id,
+                        "write_mode": "create",
+                        "source": "portal-shell",
+                        "source_authority": self._source_authority_contract(model, "create"),
+                        "project_scope": scope_meta,
+                        "record_scope": scope_meta,
+                    }
                     return {"ok": True, "data": data, "meta": meta}
 
             try:
@@ -446,6 +501,8 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 "written_fields": sorted(safe_vals.keys()),
                 "values": safe_vals,
                 "dry_run": dry_run,
+                "project_scope": scope_meta,
+                "record_scope": scope_meta,
             }
             data = self._with_idempotency_contract(
                 data,
@@ -464,7 +521,14 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 idem_fingerprint=idempotency_fingerprint,
                 result=data,
             )
-            meta = {"trace_id": trace_id, "write_mode": "create", "source": "portal-shell", "source_authority": self._source_authority_contract(model, "create"), "project_scope": scope_meta}
+            meta = {
+                "trace_id": trace_id,
+                "write_mode": "create",
+                "source": "portal-shell",
+                "source_authority": self._source_authority_contract(model, "create"),
+                "project_scope": scope_meta,
+                "record_scope": scope_meta,
+            }
             return {"ok": True, "data": data, "meta": meta}
 
         return self._err(400, f"未知写入意图: {intent}", REASON_UNSUPPORTED_SOURCE)

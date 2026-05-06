@@ -164,7 +164,9 @@ class AppOpenHandler(BaseIntentHandler):
             ad = ActionDispatcher(env, su_env)
             data, versions = ad.dispatch(p)
             fixed = ContractService(su_env).finalize_contract({"ok": True, "data": data, "meta": {"subject":"action"}})
-            return {"status":"success","data":fixed.get("data"),"meta":self._meta(ts0),"ok":True}
+            fixed_data = fixed.get("data") if isinstance(fixed.get("data"), dict) else {}
+            fixed_data.setdefault("subject", "action")
+            return {"status":"success","data":fixed_data,"meta":self._meta(ts0),"ok":True}
 
         # 3) 内部路由：交给前端 ui.contract
         if o.get("internal_route"):

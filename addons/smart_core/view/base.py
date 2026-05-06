@@ -7,9 +7,32 @@ from odoo.tools.safe_eval import safe_eval
 import logging
 
 _logger = logging.getLogger(__name__)
+SOURCE_KIND = "legacy_view_parser_base_projection"
+SOURCE_AUTHORITIES = ("ir.ui.view", "odoo.get_view")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract():
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "smart_core.view.base",
+        "legacy_compatibility": True,
+    }
 
 
 class BaseViewParser(ABC):
+    SOURCE_KIND = SOURCE_KIND
+    SOURCE_AUTHORITIES = SOURCE_AUTHORITIES
+    NO_BUSINESS_FACT_AUTHORITY = NO_BUSINESS_FACT_AUTHORITY
+
+    @classmethod
+    def source_authority_contract(cls):
+        return source_authority_contract()
+
     def __init__(self, env, model=None, view_type=None, view_id=None, context=None):
         """
                 初始化视图解析器。

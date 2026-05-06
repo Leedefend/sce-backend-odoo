@@ -8,8 +8,24 @@ import odoo
 from .base_handler import BaseIntentHandler
 from .handler_registry import HANDLER_REGISTRY  # import 时已完成注册
 from .extension_loader import load_extensions
+from .http_result_policy import result_is_success
+from .request_identity import request_uid
 
 _logger = logging.getLogger(__name__)
+SOURCE_KIND = "intent_router_runtime_dispatch"
+SOURCE_AUTHORITIES = ("handler_registry", "extension_loader", "odoo.env", "odoo.registry")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "write_proxy": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "intent_router",
+    }
 
 # ---------- 工具：健壮解析 intent 名 ----------
 def _normalize_intent_key(s: str) -> str:
@@ -68,7 +84,7 @@ def _build_envs(params: Dict[str, Any], add_ctx: Dict[str, Any]) -> Tuple[api.En
 
     cr = reg.cursor()
     try:
-        env = api.Environment(cr, request.uid, base_ctx)
+        env = api.Environment(cr, request_uid(request, default=getattr(request.env, "uid", None)), base_ctx)
         su_env = api.Environment(cr, SUPERUSER_ID, dict(env.context))
         return env, su_env, cr
     except Exception:
@@ -93,13 +109,15 @@ def _dispatch(intent: str, params: dict, context: dict):
     # 1) 构造 env / su_env（必要时切库）
     env, su_env, extra_cr = _build_envs(params or {}, context or {})
     dispatch_succeeded = False
+    dispatch_result = None
     try:
+        payload_envelope = {"intent": intent, "params": params or {}, "context": context or {}}
         # 2) 实例化 handler，注入 env/su_env/context/params
-        handler = handler_cls(env=env, su_env=su_env, request=request, context=context or {}, payload=params or {})
+        handler = handler_cls(env=env, su_env=su_env, request=request, context=context or {}, payload=payload_envelope)
         # 兼容旧字段
         try:
             setattr(handler, "params", params or {})
-            setattr(handler, "payload", params or {})  # 兼容早期字段名
+            setattr(handler, "payload", payload_envelope)
         except Exception:
             pass
         # 兼容：部分旧代码会直接访问 registry/cr/uid
@@ -112,10 +130,11 @@ def _dispatch(intent: str, params: dict, context: dict):
 
         # 3) 统一把参数传给 run（BaseIntentHandler.run 会转调 handle(payload, ctx)）
         result = handler.run(
-            payload={"intent": intent, "params": params or {}, "context": context or {}},
+            payload=payload_envelope,
             ctx=context or {},
         )
-        dispatch_succeeded = True
+        dispatch_result = result
+        dispatch_succeeded = result_is_success(result)
         return result
     finally:
         # 若新开了 cursor：成功请求要提交，否则关闭时会隐式回滚。
@@ -124,6 +143,9 @@ def _dispatch(intent: str, params: dict, context: dict):
                 if dispatch_succeeded:
                     _logger.info("[intent_router] commit extra cursor intent=%s db=%s", intent, env.cr.dbname)
                     extra_cr.commit()
+                else:
+                    _logger.info("[intent_router] rollback extra cursor intent=%s db=%s", intent, env.cr.dbname)
+                    extra_cr.rollback()
                 extra_cr.close()
             except Exception:
                 _logger.exception("[intent] close cursor failed (db=%s)", env.cr.dbname)

@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 import json
+import logging
 
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.search_favorite_policy import client_requested_shared_favorite, resolve_search_favorite_shared
+
+_logger = logging.getLogger(__name__)
 
 
 class SearchFavoriteSetHandler(BaseIntentHandler):
@@ -13,6 +17,18 @@ class SearchFavoriteSetHandler(BaseIntentHandler):
     REQUIRED_GROUPS = ["base.group_user"]
     SOURCE_KIND = "odoo_filter_write_proxy"
     SOURCE_AUTHORITIES = ("ir.filters", "app.search.config", "ir.model.access")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def _err(self, code, message):
         return {
@@ -25,6 +41,7 @@ class SearchFavoriteSetHandler(BaseIntentHandler):
         return {
             "source_kind": self.SOURCE_KIND,
             "source_authorities": list(self.SOURCE_AUTHORITIES),
+            "source_authority": self.source_authority_contract(),
         }
 
     def _params(self, payload):
@@ -32,10 +49,40 @@ class SearchFavoriteSetHandler(BaseIntentHandler):
             return payload.get("params") or {}
         return payload or {}
 
+    def _text_param(self, params: dict, key: str, *, required: bool = False):
+        raw = params.get(key)
+        if raw is None or raw == "":
+            if required:
+                return "", self._err(400, f"{key} 无效")
+            return "", None
+        if isinstance(raw, bool) or not isinstance(raw, (str, int, float)):
+            return "", self._err(400, f"{key} 无效")
+        text = str(raw).strip()
+        if required and not text:
+            return "", self._err(400, f"{key} 无效")
+        return text, None
+
+    def _positive_int(self, value, field_name):
+        if value in (None, False, ""):
+            return 0, None
+        try:
+            result = int(value)
+        except Exception:
+            return 0, self._err(400, f"{field_name} 无效")
+        if result < 0:
+            return 0, self._err(400, f"{field_name} 无效")
+        return result, None
+
     def handle(self, payload=None, ctx=None):
         params = self._params(payload or self.payload)
-        model = str(params.get("model") or "").strip()
-        name = str(params.get("name") or "").strip()
+        if not isinstance(params, dict):
+            return self._err(400, "params 无效")
+        model, model_error = self._text_param(params, "model", required=True)
+        if model_error:
+            return model_error
+        name, name_error = self._text_param(params, "name", required=True)
+        if name_error:
+            return name_error
         if not model or model not in self.env:
             return self._err(400, "模型不存在或未指定")
         if not name:
@@ -55,10 +102,17 @@ class SearchFavoriteSetHandler(BaseIntentHandler):
         context = params.get("context")
         if not isinstance(context, dict):
             context = {}
-        order = str(params.get("sort") or params.get("order") or "").strip()
-        is_shared = bool(params.get("is_shared") is True)
+        order_key = "sort" if params.get("sort") not in (None, "") else "order"
+        order, order_error = self._text_param(params, order_key)
+        if order_error:
+            return order_error
+        is_shared = resolve_search_favorite_shared(params)
+        if client_requested_shared_favorite(params):
+            _logger.warning("search.favorite.set ignored client shared favorite request model=%s", model)
         is_default = bool(params.get("is_default") is True)
-        action_id = int(params.get("action_id") or 0)
+        action_id, action_id_error = self._positive_int(params.get("action_id"), "action_id")
+        if action_id_error:
+            return action_id_error
 
         Filter = self.env["ir.filters"].sudo()
         vals = {

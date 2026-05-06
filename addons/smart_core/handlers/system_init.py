@@ -53,6 +53,7 @@ from odoo.addons.smart_core.core.runtime_page_contract_builder import mirror_wor
 from odoo.addons.smart_core.core.scene_governance_payload_builder import build_scene_governance_payload_v1
 from odoo.addons.smart_core.core.ui_base_contract_asset_event_queue import get_queue_metrics
 from odoo.addons.smart_core.core.release_navigation_contract_builder import build_release_navigation_contract
+from odoo.addons.smart_core.core.request_params import parse_bool
 from odoo.addons.smart_core.core.scene_delivery_policy import (
     filter_delivery_scenes,
     resolve_delivery_policy_runtime,
@@ -63,6 +64,7 @@ from odoo.addons.smart_core.core.ui_base_contract_asset_repository import bind_s
 from odoo.addons.smart_core.delivery.delivery_engine import DeliveryEngine
 from odoo.addons.smart_core.delivery.edition_release_snapshot_service import EditionReleaseSnapshotService
 from odoo.addons.smart_core.delivery.release_audit_trail_service import ReleaseAuditTrailService
+from odoo.addons.smart_core.delivery.product_identity import LEGACY_DEFAULT_BASE_PRODUCT_KEY
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
 from odoo.addons.smart_core.governance.scene_drift_engine import append_resolve_error as drift_append_resolve_error
@@ -77,6 +79,7 @@ from odoo.addons.smart_core.utils.contract_governance import (
     normalize_capabilities,
     resolve_contract_mode,
 )
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 
 _logger = logging.getLogger(__name__)
 
@@ -90,6 +93,7 @@ _INDUSTRY_EXTENSION_MODULES = (
     "smart_construction_portal",
     "smart_construction_demo",
 )
+LEGACY_INDUSTRY_EXTENSION_MODULES = _INDUSTRY_EXTENSION_MODULES
 
 # ===================== 工具函数（权限 / 指纹 / 导航净化） =====================
 
@@ -119,8 +123,66 @@ def _is_any_module_installed(env, module_names: List[str]) -> bool:
         return False
 
 
+def _resolve_industry_extension_modules(env) -> list[str]:
+    hook_modules = call_extension_hook_first(
+        env,
+        "smart_core_industry_extension_module_names",
+        env,
+    )
+    if isinstance(hook_modules, (list, tuple, set)):
+        modules = [str(name or "").strip() for name in hook_modules if str(name or "").strip()]
+        if modules:
+            return modules
+    try:
+        raw = env["ir.config_parameter"].sudo().get_param("smart_core.industry_extension_modules", "")
+    except Exception:
+        raw = ""
+    modules = [item.strip() for item in str(raw or "").split(",") if item.strip()]
+    return modules or list(LEGACY_INDUSTRY_EXTENSION_MODULES)
+
+
+def _resolve_startup_delivery_identity(env, params: dict | None) -> dict:
+    raw_params = params if isinstance(params, dict) else {}
+    edition_key = str(
+        raw_params.get("delivery_edition_key")
+        or raw_params.get("edition_key")
+        or "standard"
+    ).strip() or "standard"
+    explicit_product_key = str(
+        raw_params.get("delivery_product_key")
+        or raw_params.get("product_key")
+        or ""
+    ).strip()
+    explicit_base_product_key = str(
+        raw_params.get("delivery_base_product_key")
+        or raw_params.get("base_product_key")
+        or ""
+    ).strip()
+    hook_payload = None
+    if not explicit_product_key and not explicit_base_product_key:
+        hook_result = call_extension_hook_first(env, "smart_core_resolve_startup_delivery_identity", env, raw_params)
+        hook_payload = hook_result if isinstance(hook_result, dict) else None
+    source = "params" if (explicit_product_key or explicit_base_product_key) else "extension_hook" if hook_payload else "legacy_default"
+    base_product_key = (
+        explicit_base_product_key
+        or str((hook_payload or {}).get("base_product_key") or LEGACY_DEFAULT_BASE_PRODUCT_KEY).strip()
+        or LEGACY_DEFAULT_BASE_PRODUCT_KEY
+    )
+    product_key = explicit_product_key or str((hook_payload or {}).get("product_key") or f"{base_product_key}.{edition_key}").strip()
+    if "." in product_key and not explicit_base_product_key:
+        base_product_key = product_key.split(".", 1)[0] or base_product_key
+    return {
+        "product_key": product_key,
+        "base_product_key": base_product_key,
+        "edition_key": edition_key,
+        "source": source,
+        "projection_only": True,
+        "no_business_fact_authority": True,
+    }
+
+
 def _is_platform_minimum_surface_mode(env) -> bool:
-    return not _is_any_module_installed(env, list(_INDUSTRY_EXTENSION_MODULES))
+    return not _is_any_module_installed(env, _resolve_industry_extension_modules(env))
 
 
 def _build_platform_minimum_nav_contract() -> dict:
@@ -687,7 +749,7 @@ class SystemInitHandler(BaseIntentHandler):
         data, scene_diagnostics = SystemInitSurfaceBuilder.apply(surface_ctx=surface_ctx)
         stage_ts = _mark("apply_surface", stage_ts)
         with_tokens = _parse_with_tokens(params.get("with"))
-        include_workspace_home = bool(params.get("with_preload", False)) or "workspace_home" in with_tokens
+        include_workspace_home = parse_bool(params.get("with_preload"), False) or "workspace_home" in with_tokens
         if include_workspace_home:
             data["workspace_home"] = build_workspace_home_contract(data)
         else:
@@ -747,28 +809,30 @@ class SystemInitHandler(BaseIntentHandler):
             nav_meta.setdefault("ui_base_contract_missing_scene_count", 0)
         data["nav_meta"] = nav_meta
         stage_ts = _mark("build_scene_runtime_surface", stage_ts)
-        legacy_release_navigation = build_release_navigation_contract(data if isinstance(data, dict) else {})
         delivery_engine = DeliveryEngine(env)
-        delivery_edition_key = str(((params or {}).get("edition_key") or "standard")).strip() or "standard"
+        delivery_identity = _resolve_startup_delivery_identity(env, params)
+        delivery_edition_key = str(delivery_identity.get("edition_key") or "standard").strip() or "standard"
+        requested_product_key = str(delivery_identity.get("product_key") or "").strip()
+        requested_base_product_key = str(delivery_identity.get("base_product_key") or "").strip()
         delivery_payload = delivery_engine.build(
             data=data if isinstance(data, dict) else {},
-            product_key=f"construction.{delivery_edition_key}",
+            product_key=requested_product_key,
             edition_key=delivery_edition_key,
-            base_product_key="construction",
+            base_product_key=requested_base_product_key,
             native_nav=nav_tree,
         )
         release_snapshot_service = EditionReleaseSnapshotService(env)
         release_audit_service = ReleaseAuditTrailService(env)
         data["delivery_engine_v1"] = delivery_payload
+        delivery_release_navigation = build_release_navigation_contract({"delivery_engine_v1": delivery_payload})
         edition_diagnostics = (
             delivery_payload.get("product_policy", {}).get("edition_diagnostics")
             if isinstance(delivery_payload.get("product_policy"), dict)
             else {}
         )
-        effective_base_product_key = str(delivery_payload.get("base_product_key") or "construction").strip() or "construction"
+        effective_base_product_key = str(delivery_payload.get("base_product_key") or requested_base_product_key).strip() or requested_base_product_key
         effective_edition_key = str(delivery_payload.get("edition_key") or "standard").strip() or "standard"
         effective_product_key = str(delivery_payload.get("product_key") or f"{effective_base_product_key}.{effective_edition_key}").strip()
-        requested_product_key = f"construction.{delivery_edition_key}"
         released_snapshot_lineage = release_snapshot_service.resolve_active_snapshot_lineage(product_key=effective_product_key)
         release_audit_trail_summary = release_audit_service.build_runtime_summary(product_key=effective_product_key)
         runtime_diagnostics = dict(edition_diagnostics) if isinstance(edition_diagnostics, dict) else {}
@@ -790,8 +854,9 @@ class SystemInitHandler(BaseIntentHandler):
             "contract_version": "v1",
             "requested": {
                 "product_key": requested_product_key,
-                "base_product_key": "construction",
+                "base_product_key": requested_base_product_key,
                 "edition_key": delivery_edition_key,
+                "identity_source": str(delivery_identity.get("source") or ""),
             },
             "effective": {
                 "product_key": effective_product_key,
@@ -809,7 +874,11 @@ class SystemInitHandler(BaseIntentHandler):
                 "product_key": str(delivery_payload.get("product_key") or ""),
                 "edition_key": str(delivery_payload.get("edition_key") or ""),
                 "delivery_engine_meta": delivery_payload.get("meta") if isinstance(delivery_payload.get("meta"), dict) else {},
-                "legacy_builder_contract_version": str(legacy_release_navigation.get("contract_version") or ""),
+                "builder_source": str(delivery_release_navigation.get("source") or ""),
+                "builder_contract_version": str(delivery_release_navigation.get("contract_version") or ""),
+                "builder_source_authority": delivery_release_navigation.get("source_authority")
+                if isinstance(delivery_release_navigation.get("source_authority"), dict)
+                else {},
             },
         }
 

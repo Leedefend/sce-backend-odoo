@@ -46,6 +46,26 @@ _logger = logging.getLogger(__name__)
 
 
 class ContractService:
+    SOURCE_KIND = "app_config_contract_service_projection"
+    SOURCE_AUTHORITIES = (
+        "app_config_payload",
+        "app_config_dispatchers",
+        "odoo_native_metadata",
+        "contract_governance",
+    )
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "app_config_engine.contract_service",
+        }
+
     def __init__(self, request_env):
         # 当前用户环境（保留权限语义）
         self.env = request_env
@@ -132,6 +152,7 @@ class ContractService:
         # 5) 拼装 meta，包含版本/耗时等
         elapsed = int((time.time() - ts0) * 1000)
         meta = {
+            "source_authority": self.source_authority_contract(),
             "subject": subject,
             "version": format_versions(versions),  # "model:12|view:34|..."
             "etag": etag,

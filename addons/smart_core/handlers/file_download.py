@@ -13,6 +13,7 @@ from ..core.project_context import (
     record_in_project_scope,
     selected_project_id_from_context,
 )
+from ..core.request_params import parse_positive_int
 from ..utils.extension_hooks import call_extension_hook_first
 
 _logger = logging.getLogger(__name__)
@@ -31,6 +32,21 @@ class FileDownloadHandler(BaseIntentHandler):
 
     ALLOWED_MODELS = {"res.partner"}
     SOURCE_AUTHORITY = "ir.attachment"
+    SOURCE_KIND = "odoo_attachment_download_projection"
+    SOURCE_AUTHORITIES = ("ir.attachment", "odoo.orm", "ir.rule", "ir.model.access", "record_context_model")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authority": cls.SOURCE_AUTHORITY,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def _allowed_models(self):
         payload = call_extension_hook_first(self.env, "smart_core_file_download_allowed_models", self.env)
@@ -56,26 +72,28 @@ class FileDownloadHandler(BaseIntentHandler):
         payload = payload or {}
         params = self._collect_params(payload)
 
-        attachment_id = params.get("id") or params.get("attachment_id")
+        attachment_id = params.get("id") if "id" in params else params.get("attachment_id")
         model = str(params.get("model") or params.get("res_model") or "").strip()
-        res_id = params.get("res_id") or params.get("record_id")
+        res_id = params.get("res_id") if "res_id" in params else params.get("record_id")
         name = str(params.get("name") or "").strip()
 
         attachment = None
 
-        if attachment_id:
-            try:
-                attachment_id = int(attachment_id)
-            except Exception:
+        if not _is_empty_param(attachment_id):
+            attachment_id, attachment_id_error = parse_positive_int(attachment_id)
+            if attachment_id_error:
                 return self._err(400, "id 无效")
         else:
             # Fallback locator for contract/export scenarios where attachment id
             # is created in a prior step and only model/res_id/name are known.
-            if not model or not res_id:
+            if not model or _is_empty_param(res_id):
                 return self._err(400, "缺少参数 id")
-            try:
-                res_id = int(res_id)
-            except Exception:
+            if model not in self._allowed_models():
+                return self._err(403, "附件不可访问")
+            if model not in self.env:
+                return self._err(404, "附件业务模型不存在")
+            res_id, res_id_error = parse_positive_int(res_id)
+            if res_id_error:
                 return self._err(400, "res_id 无效")
             domain = [("res_model", "=", model), ("res_id", "=", res_id)]
             if name:
@@ -96,6 +114,8 @@ class FileDownloadHandler(BaseIntentHandler):
             attachment_model = attachment.res_model
             if attachment_model not in self._allowed_models():
                 return self._err(403, "附件不可访问")
+            if attachment_model not in self.env:
+                return self._err(404, "附件业务模型不存在")
             self.env[attachment_model].check_access_rights("read")
             record = self.env[attachment_model].browse(attachment.res_id).exists()
             if not record:
@@ -120,5 +140,16 @@ class FileDownloadHandler(BaseIntentHandler):
             "res_model": attachment.res_model,
             "res_id": attachment.res_id,
         }
-        meta = {"trace_id": trace_id, "source": "portal-shell", "source_authority": self.SOURCE_AUTHORITY}
+        meta = {
+            "trace_id": trace_id,
+            "source": "portal-shell",
+            "source_authority": self.source_authority_contract(),
+            "legacy_source_authority": self.SOURCE_AUTHORITY,
+            "project_scope": scope_meta,
+            "record_scope": scope_meta,
+        }
         return {"ok": True, "data": data, "meta": meta}
+
+
+def _is_empty_param(value: Any) -> bool:
+    return value is None or (isinstance(value, str) and not value.strip())

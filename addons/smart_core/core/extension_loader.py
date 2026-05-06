@@ -2,10 +2,24 @@
 import importlib
 import logging
 
+from .source_authority import build_source_authority_contract
+
 _logger = logging.getLogger(__name__)
 
 _loaded = False
 _loaded_modules = set()
+SOURCE_KIND = "smart_core_extension_loader"
+SOURCE_AUTHORITIES = ("ir.config_parameter", "odoo.addons", "smart_core_register")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract():
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        runtime_carrier="extension_loader",
+    )
 
 
 def _parse_modules(raw: str):

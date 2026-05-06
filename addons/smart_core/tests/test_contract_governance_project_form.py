@@ -747,6 +747,15 @@ class TestProjectFormGovernance(unittest.TestCase):
             str(record_open_policy.get("carry_query_mode") or ""),
             {"preserve", "clear_scene_context", "whitelist"},
         )
+        diagnostics = out.get("governance_diagnostics") or {}
+        self.assertIn(
+            "project.project.record_open_context",
+            diagnostics.get("legacy_user_surface_model_policies") or [],
+        )
+        self.assertEqual(
+            ((diagnostics.get("legacy_user_surface_model_policy_source_authority") or {}).get("kind")),
+            "legacy_user_surface_model_policy",
+        )
         list_profile = out.get("list_profile") or {}
         list_semantics = ((out.get("semantic_page") or {}).get("list_semantics")) or {}
         self.assertEqual(list_semantics.get("owner_layer"), "scene_orchestration")
@@ -817,6 +826,53 @@ class TestProjectFormGovernance(unittest.TestCase):
         list_semantics = ((out.get("semantic_page") or {}).get("list_semantics")) or {}
         semantic_labels = {row.get("name"): row.get("label") for row in list_semantics.get("columns") or [] if isinstance(row, dict)}
         self.assertEqual(semantic_labels.get("is_favorite"), "我的收藏")
+
+    def test_standard_list_governance_preserves_native_view_columns(self):
+        data = {
+            "head": {"model": "payment.request", "view_type": "tree"},
+            "views": {
+                "tree": {
+                    "columns": ["name", "native_extra_amount", "create_uid", "create_date"],
+                    "columns_schema": [
+                        {"name": "name", "label": "申请单号"},
+                        {"name": "native_extra_amount", "label": "原生扩展金额", "type": "monetary"},
+                        {"name": "create_uid", "label": "创建人", "type": "many2one"},
+                        {"name": "create_date", "label": "创建时间", "type": "datetime"},
+                    ],
+                }
+            },
+            "fields": {
+                "name": {"string": "申请单号", "type": "char"},
+                "type": {"string": "类型", "type": "selection"},
+                "project_id": {"string": "项目", "type": "many2one"},
+                "contract_id": {"string": "合同", "type": "many2one"},
+                "settlement_id": {"string": "结算单", "type": "many2one"},
+                "settlement_amount_payable": {"string": "应付金额", "type": "monetary"},
+                "partner_id": {"string": "往来单位", "type": "many2one"},
+                "amount": {"string": "申请金额", "type": "monetary"},
+                "state": {"string": "状态", "type": "selection"},
+                "date_request": {"string": "申请日期", "type": "date"},
+                "native_extra_amount": {"string": "原生扩展金额", "type": "monetary"},
+                "create_uid": {"string": "创建人", "type": "many2one"},
+                "create_date": {"string": "创建时间", "type": "datetime"},
+            },
+            "permissions": {"effective": {"rights": {"write": False}}},
+        }
+
+        out = apply_contract_governance(data, "user")
+
+        columns = (((out.get("views") or {}).get("tree") or {}).get("columns")) or []
+        self.assertIn("native_extra_amount", columns)
+        self.assertIn("create_uid", columns)
+        self.assertIn("create_date", columns)
+        self.assertGreater(columns.index("native_extra_amount"), columns.index("date_request"))
+        self.assertIn("native_extra_amount", (out.get("list_profile") or {}).get("columns") or [])
+        diagnostics = out.get("governance_diagnostics") or {}
+        self.assertIn("payment.request.list", diagnostics.get("legacy_industry_profiles") or [])
+        self.assertEqual(
+            ((diagnostics.get("legacy_industry_source_authority") or {}).get("kind")),
+            "legacy_industry_governance_profile",
+        )
 
     def test_project_kanban_adds_profile_and_filters_fields(self):
         data = _sample_kanban_payload()

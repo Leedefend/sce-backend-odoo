@@ -251,7 +251,9 @@ class AppSearchConfig(models.Model):
             "kind": self.SOURCE_KIND,
             "authorities": list(self.SOURCE_AUTHORITIES),
             "model": model_name,
+            "projection_only": True,
             "rebuildable": True,
+            "no_business_fact_authority": True,
         }
 
     # ======================= 视图解析 =======================

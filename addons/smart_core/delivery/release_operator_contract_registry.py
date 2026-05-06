@@ -3,12 +3,27 @@ from __future__ import annotations
 
 from copy import deepcopy
 
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
+
 from .release_operator_contract_versions import (
     RELEASE_OPERATOR_CONTRACT_REGISTRY_VERSION,
     RELEASE_OPERATOR_READ_MODEL_CONTRACT_VERSION,
     RELEASE_OPERATOR_SURFACE_CONTRACT_VERSION,
     RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION,
 )
+
+SOURCE_KIND = "release_operator_contract_registry_projection"
+SOURCE_AUTHORITIES = ("static_release_operator_contract_versions",)
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        contract_metadata_only=True,
+    )
 
 
 def build_release_operator_contract_registry() -> dict:

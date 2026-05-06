@@ -179,6 +179,7 @@
         'security/menu_tech_hide_patch.xml',
         'actions/project_native_action_overrides.xml',
         'views/menu_business_taxonomy.xml',
+        'views/support/audit_list_fields_views.xml',
     ],
     'assets': {
         'web.assets_frontend_minimal': [

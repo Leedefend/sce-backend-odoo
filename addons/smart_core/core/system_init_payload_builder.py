@@ -3,8 +3,18 @@ from __future__ import annotations
 
 from urllib.parse import urlparse
 
+from .request_params import parse_bool
+
 
 class SystemInitPayloadBuilder:
+    SOURCE_KIND = "system_init_startup_payload_projection"
+    SOURCE_AUTHORITIES = (
+        "system_init_runtime_payload",
+        "delivery_engine_v1",
+        "scene_ready_contract_v1",
+        "page_contracts",
+    )
+    NO_BUSINESS_FACT_AUTHORITY = True
     BUILD_MODE_BOOT = "boot"
     BUILD_MODE_PRELOAD = "preload"
     BUILD_MODE_DEBUG = "debug"
@@ -38,6 +48,16 @@ class SystemInitPayloadBuilder:
         "enterprise_enablement",
     }
     DEFAULT_STARTUP_PAGE_KEYS = ("home", "my_work", "workbench")
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "system_init",
+        }
 
     @staticmethod
     def _parse_with_tokens(value) -> set[str]:
@@ -166,7 +186,7 @@ class SystemInitPayloadBuilder:
         ).strip().lower()
         if explicit in {cls.BUILD_MODE_BOOT, cls.BUILD_MODE_PRELOAD, cls.BUILD_MODE_DEBUG}:
             return explicit
-        if bool(params.get("with_preload", False)):
+        if parse_bool(params.get("with_preload"), False):
             return cls.BUILD_MODE_PRELOAD
         return cls.BUILD_MODE_BOOT
 
@@ -182,7 +202,7 @@ class SystemInitPayloadBuilder:
     @classmethod
     def _build_minimal_init_meta(cls, row: dict, *, params: dict | None = None) -> dict:
         params = params if isinstance(params, dict) else {}
-        preload_requested = bool(params.get("with_preload", False))
+        preload_requested = parse_bool(params.get("with_preload"), False)
         default_route = row.get("default_route") if isinstance(row.get("default_route"), dict) else {}
         role_surface = row.get("role_surface") if isinstance(row.get("role_surface"), dict) else {}
         role_entries = row.get("role_entries") if isinstance(row.get("role_entries"), list) else []
@@ -212,6 +232,7 @@ class SystemInitPayloadBuilder:
 
         return {
             "contract_mode": str(row.get("contract_mode") or "default"),
+            "source_authority": cls.source_authority_contract(),
             "preload_requested": preload_requested,
             "scene_subset": scene_subset,
             "scene_subset_count": len(scene_subset),
@@ -298,7 +319,9 @@ class SystemInitPayloadBuilder:
         params = params if isinstance(params, dict) else {}
         resolved_build_mode = build_mode or cls.resolve_build_mode(params)
         with_tokens = cls._parse_with_tokens(params.get("with"))
-        include_workspace_home = bool(params.get("with_preload", False)) or "workspace_home" in with_tokens
+        include_workspace_home = parse_bool(params.get("with_preload"), False) or "workspace_home" in with_tokens
+        include_capabilities = "capabilities" in with_tokens or "capability_groups" in with_tokens
+        include_scenes = "scenes" in with_tokens
 
         nav = cls._normalize_nav_tree(row.get("nav") if isinstance(row.get("nav"), list) else [])
         default_route = cls._normalize_default_route(row.get("default_route") if isinstance(row.get("default_route"), dict) else {})
@@ -367,12 +390,19 @@ class SystemInitPayloadBuilder:
                 row.get("released_scene_semantic_surface")
             )
         if isinstance(row.get("scene_ready_contract_v1"), dict):
-            if bool(params.get("with_preload", False)):
+            if parse_bool(params.get("with_preload"), False):
                 minimal["scene_ready_contract_v1"] = row.get("scene_ready_contract_v1")
             else:
                 minimal["scene_ready_contract_v1"] = cls._build_minimal_scene_ready_contract(
                     row.get("scene_ready_contract_v1")
                 )
+        if include_capabilities:
+            minimal["capabilities"] = row.get("capabilities") if isinstance(row.get("capabilities"), list) else []
+            minimal["capability_groups"] = (
+                row.get("capability_groups") if isinstance(row.get("capability_groups"), list) else []
+            )
+        if include_scenes:
+            minimal["scenes"] = row.get("scenes") if isinstance(row.get("scenes"), list) else []
         minimal_page_contracts = cls._build_minimal_page_contracts(row)
         if minimal_page_contracts:
             minimal["page_contracts"] = minimal_page_contracts

@@ -5,8 +5,22 @@ from copy import deepcopy
 from hashlib import sha1
 from typing import Any
 
+from .source_authority import build_source_authority_contract
 
 CONTRACT_VERSION = "2.1.0"
+SOURCE_KIND = "unified_page_contract_v2_assembler_projection"
+SOURCE_AUTHORITIES = ("ui_contract", "page_orchestration", "scene_contract", "unified_page_contract_v2_schema")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict[str, Any]:
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        runtime_carrier="unified_page_contract_v2_assembler",
+    )
+
 PATCH_VERSION = "2.1.0"
 STABLE_CLIENT_TYPES = {"web_pc", "wx_mini", "harmony_h5"}
 

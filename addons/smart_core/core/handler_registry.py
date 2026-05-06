@@ -7,6 +7,20 @@ from .base_handler import BaseIntentHandler
 
 _logger = logging.getLogger(__name__)
 HANDLER_REGISTRY: Dict[str, Type[BaseIntentHandler]] = {}
+SOURCE_KIND = "intent_handler_registry_projection"
+SOURCE_AUTHORITIES = ("smart_core.handlers", "intent_handler_runtime_base")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_registry_only": True,
+    }
 
 def _iter_modules_recursively(pkg):
     """递归遍历包及其子包"""

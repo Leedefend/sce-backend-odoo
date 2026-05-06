@@ -1,19 +1,37 @@
 # smart_core/core/base_handler.py
 # -*- coding: utf-8 -*-
 import logging
-import re
 from typing import Any, Dict, Optional
 from odoo import api, SUPERUSER_ID
 from odoo.exceptions import AccessError
 import  inspect
+from .intent_operation_policy import is_write_intent
 
 _logger = logging.getLogger(__name__)
-_WRITE_INTENT_PATTERN = re.compile(
-    r"(create|write|unlink|delete|batch|execute|upload|cancel|approve|reject|submit|done|import|rollback|pin|set)",
-    re.IGNORECASE,
-)
+SOURCE_KIND = "intent_handler_runtime_base"
+SOURCE_AUTHORITIES = ("handler_payload", "odoo.env", "ir.model.access", "res.groups")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "write_proxy": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "base_intent_handler",
+    }
 
 class BaseIntentHandler:
+    SOURCE_KIND = SOURCE_KIND
+    SOURCE_AUTHORITIES = SOURCE_AUTHORITIES
+    NO_BUSINESS_FACT_AUTHORITY = NO_BUSINESS_FACT_AUTHORITY
+
+    @classmethod
+    def source_authority_contract(cls) -> Dict[str, Any]:
+        return source_authority_contract()
+
     """
     统一的意图处理基类
     - 通过 __init__ 注入 env/su_env/request/context/payload
@@ -68,9 +86,11 @@ class BaseIntentHandler:
         return True
 
     def is_write(self) -> bool:
-        intent = str(getattr(self, "INTENT_TYPE", "") or "")
         non_idempotent = bool(str(getattr(self, "NON_IDEMPOTENT_ALLOWED", "") or "").strip())
-        return bool(_WRITE_INTENT_PATTERN.search(intent)) or non_idempotent
+        params = self.params if isinstance(self.params, dict) else {}
+        payload = self.payload if isinstance(self.payload, dict) else {}
+        intent = str(payload.get("intent") or getattr(self, "INTENT_TYPE", "") or "")
+        return is_write_intent(intent, params, non_idempotent=non_idempotent)
 
     def enforce_required_groups(self):
         required = getattr(self, "REQUIRED_GROUPS", []) or []
@@ -134,9 +154,6 @@ class BaseIntentHandler:
             except TypeError:
                 return self.handle()
 
-        # 提取参数名（去掉 self）
-        param_names = [p.name for p in sig.parameters.values() if p.name != "self"]
-
         # 统一映射表（命名别名全部支持）
         mapped_payload = self.payload
         mapped_params  = self.params
@@ -152,18 +169,20 @@ class BaseIntentHandler:
             "request": self.request,
         }
 
-        # 仅传入对方签名里声明的参数，避免“unexpected keyword argument”
-        kwargs = {name: mapping[name] for name in param_names if name in mapping}
+        # 仅传入对方签名里声明的参数；若 handler 接收 **kwargs，则显式提供完整运行上下文。
+        kwargs = {}
+        for param in sig.parameters.values():
+            if param.name == "self":
+                continue
+            if param.kind == inspect.Parameter.VAR_KEYWORD:
+                kwargs.update(mapping)
+                continue
+            if param.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.VAR_POSITIONAL):
+                continue
+            if param.name in mapping:
+                kwargs[param.name] = mapping[param.name]
 
-        try:
-            return self.handle(**kwargs)
-        except TypeError as e:
-            # 再退化一次：尝试按 (params, context) 位置参数调用
-            try:
-                return self.handle(mapped_params, mapped_ctx)
-            except TypeError:
-                # 最后退化：无参
-                return self.handle()
+        return self.handle(**kwargs)
 
     # ---- 轻量工具方法（供测试/增强 handler 使用）----
     def err(self, code: int, message: str):

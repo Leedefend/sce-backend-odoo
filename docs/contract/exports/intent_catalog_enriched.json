@@ -1,6 +1,6 @@
 {
   "source": "intent_capability_matrix_report",
-  "intent_count": 48,
+  "intent_count": 85,
   "intents": [
     {
       "intent_type": "api.data",
@@ -73,6 +73,45 @@
       "source": "addons/smart_core/handlers/api_data_unlink.py"
     },
     {
+      "intent_type": "api.onchange",
+      "class_name": "ApiOnchangeHandler",
+      "required_groups": [
+        "smart_core.group_smart_core_data_operator"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": true,
+      "smoke_make_targets": [
+        "verify.unified_page_contract.lite",
+        "verify.unified_page_contract.lite.api_onchange_intent.container",
+        "verify.unified_page_contract.lite.api_onchange_interface",
+        "verify.unified_page_contract.lite.api_onchange_live_scope.container"
+      ],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "explicit_check",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_core/handlers/api_onchange.py"
+    },
+    {
+      "intent_type": "app.catalog",
+      "class_name": "AppCatalogHandler",
+      "required_groups": [],
+      "etag_enabled": true,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_core/handlers/app_shell.py"
+    },
+    {
       "intent_type": "app.catalog",
       "class_name": "AppCatalogHandler",
       "required_groups": [],
@@ -86,7 +125,7 @@
       "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": false,
-      "source": "addons/smart_core/handlers/app_catalog.py"
+      "source": "addons/smart_construction_core/handlers/app_catalog.py"
     },
     {
       "intent_type": "app.nav",
@@ -102,12 +141,85 @@
       "layer": "domain",
       "orm_used": false,
       "may_trigger_sudo": false,
-      "source": "addons/smart_core/handlers/app_nav.py"
+      "source": "addons/smart_core/handlers/app_shell.py"
+    },
+    {
+      "intent_type": "app.nav",
+      "class_name": "AppNavHandler",
+      "required_groups": [],
+      "etag_enabled": true,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/app_nav.py"
     },
     {
       "intent_type": "app.open",
       "class_name": "AppOpenHandler",
       "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": true,
+      "smoke_make_targets": [
+        "verify.smart_core.minimum_surface.app_open_regression_guard"
+      ],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_core/handlers/app_shell.py"
+    },
+    {
+      "intent_type": "app.open",
+      "class_name": "AppOpenHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": true,
+      "smoke_make_targets": [
+        "verify.smart_core.minimum_surface.app_open_regression_guard"
+      ],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/app_open.py"
+    },
+    {
+      "intent_type": "auth.logout",
+      "class_name": "LogoutHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": true,
+      "smoke_make_targets": [
+        "verify.prod.sim.isolation",
+        "verify.prod.sim.isolation.quick"
+      ],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": true,
+      "source": "addons/smart_core/handlers/login.py"
+    },
+    {
+      "intent_type": "business.evidence.trace",
+      "class_name": "BusinessEvidenceTraceHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
       "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": false,
@@ -118,23 +230,7 @@
       "layer": "domain",
       "orm_used": false,
       "may_trigger_sudo": false,
-      "source": "addons/smart_core/handlers/app_open.py"
-    },
-    {
-      "intent_type": "auth.logout",
-      "class_name": "LogoutHandler",
-      "required_groups": [],
-      "etag_enabled": false,
-      "has_test_file": true,
-      "has_smoke_make_target": false,
-      "smoke_make_targets": [],
-      "is_write_operation": false,
-      "is_write": false,
-      "acl_mode": "",
-      "layer": "domain",
-      "orm_used": true,
-      "may_trigger_sudo": true,
-      "source": "addons/smart_core/handlers/login.py"
+      "source": "addons/smart_construction_core/handlers/business_evidence_trace.py"
     },
     {
       "intent_type": "capability.describe",
@@ -167,6 +263,24 @@
       "orm_used": true,
       "may_trigger_sudo": true,
       "source": "addons/smart_construction_core/handlers/capability_visibility_report.py"
+    },
+    {
+      "intent_type": "chatter.activity.schedule",
+      "class_name": "ChatterActivityScheduleHandler",
+      "required_groups": [
+        "smart_core.group_smart_core_data_operator"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "explicit_check",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": true,
+      "source": "addons/smart_core/handlers/chatter_activity_schedule.py"
     },
     {
       "intent_type": "chatter.post",
@@ -203,6 +317,78 @@
       "source": "addons/smart_core/handlers/chatter_timeline.py"
     },
     {
+      "intent_type": "cost.tracking.block.fetch",
+      "class_name": "CostTrackingBlockFetchHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/cost_tracking_block_fetch.py"
+    },
+    {
+      "intent_type": "cost.tracking.enter",
+      "class_name": "CostTrackingEnterHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/cost_tracking_enter.py"
+    },
+    {
+      "intent_type": "cost.tracking.record.create",
+      "class_name": "CostTrackingRecordCreateHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "explicit_check",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/cost_tracking_record_create.py"
+    },
+    {
+      "intent_type": "dashboard.company.enter",
+      "class_name": "DashboardCompanyEnterHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/dashboard_company_enter.py"
+    },
+    {
       "intent_type": "execute_button",
       "class_name": "ExecuteButtonHandler",
       "required_groups": [
@@ -213,7 +399,8 @@
       "has_smoke_make_target": true,
       "smoke_make_targets": [
         "verify.portal.execute_button",
-        "verify.portal.execute_button_smoke.container"
+        "verify.portal.execute_button_smoke.container",
+        "verify.product.delivery.execute_button_whitelist"
       ],
       "is_write_operation": true,
       "is_write": true,
@@ -265,8 +452,17 @@
       "required_groups": [],
       "etag_enabled": false,
       "has_test_file": true,
-      "has_smoke_make_target": false,
-      "smoke_make_targets": [],
+      "has_smoke_make_target": true,
+      "smoke_make_targets": [
+        "verify.unified_page_contract.lite",
+        "verify.unified_page_contract.lite.load_contract_live_scope.container",
+        "verify.unified_page_contract.lite.load_contract_negative.container",
+        "verify.unified_page_contract.lite.load_contract_preview_intent.container",
+        "verify.unified_page_contract.lite.load_contract_preview_interface",
+        "verify.unified_page_contract.lite.load_contract_preview_matrix.container",
+        "verify.unified_page_contract.lite.phase2_load_contract_gate",
+        "verify.unified_page_contract.lite.phase3_ui_contract_risk"
+      ],
       "is_write_operation": false,
       "is_write": false,
       "acl_mode": "",
@@ -306,7 +502,7 @@
       "is_write": false,
       "acl_mode": "",
       "layer": "domain",
-      "orm_used": true,
+      "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/load_view.py"
     },
@@ -316,8 +512,11 @@
       "required_groups": [],
       "etag_enabled": false,
       "has_test_file": true,
-      "has_smoke_make_target": false,
-      "smoke_make_targets": [],
+      "has_smoke_make_target": true,
+      "smoke_make_targets": [
+        "verify.prod.sim.isolation",
+        "verify.prod.sim.isolation.quick"
+      ],
       "is_write_operation": false,
       "is_write": false,
       "acl_mode": "",
@@ -341,6 +540,22 @@
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/meta_describe.py"
+    },
+    {
+      "intent_type": "meta.intent_catalog",
+      "class_name": "MetaIntentCatalogHandler",
+      "required_groups": [],
+      "etag_enabled": true,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_core/handlers/meta_intent_catalog.py"
     },
     {
       "intent_type": "my.work.complete",
@@ -391,8 +606,62 @@
       "acl_mode": "",
       "layer": "domain",
       "orm_used": true,
-      "may_trigger_sudo": false,
+      "may_trigger_sudo": true,
       "source": "addons/smart_construction_core/handlers/my_work_summary.py"
+    },
+    {
+      "intent_type": "payment.block.fetch",
+      "class_name": "PaymentSliceBlockFetchHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/payment_slice_block_fetch.py"
+    },
+    {
+      "intent_type": "payment.enter",
+      "class_name": "PaymentSliceEnterHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/payment_slice_enter.py"
+    },
+    {
+      "intent_type": "payment.record.create",
+      "class_name": "PaymentSliceRecordCreateHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "explicit_check",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/payment_slice_record_create.py"
     },
     {
       "intent_type": "payment.request.approve",
@@ -404,6 +673,7 @@
       "smoke_make_targets": [
         "verify.portal.payment_request_approval.prepare.container",
         "verify.portal.payment_request_approval_all_smoke.container",
+        "verify.portal.payment_request_approval_field_consumer_audit",
         "verify.portal.payment_request_approval_handoff_smoke.container",
         "verify.portal.payment_request_approval_smoke.container"
       ],
@@ -434,16 +704,14 @@
     {
       "intent_type": "payment.request.done",
       "class_name": "PaymentRequestDoneHandler",
-      "required_groups": [
-        "smart_construction_core.group_sc_cap_finance_manager",
-        "smart_core.group_smart_core_finance_approver"
-      ],
+      "required_groups": [],
       "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": true,
       "smoke_make_targets": [
         "verify.portal.payment_request_approval.prepare.container",
         "verify.portal.payment_request_approval_all_smoke.container",
+        "verify.portal.payment_request_approval_field_consumer_audit",
         "verify.portal.payment_request_approval_handoff_smoke.container",
         "verify.portal.payment_request_approval_smoke.container"
       ],
@@ -459,9 +727,7 @@
       "intent_type": "payment.request.execute",
       "class_name": "PaymentRequestExecuteHandler",
       "required_groups": [
-        "smart_construction_core.group_sc_cap_finance_user",
-        "smart_core.group_smart_core_finance_approver",
-        "smart_construction_core.group_sc_cap_finance_manager"
+        "base.group_user"
       ],
       "etag_enabled": false,
       "has_test_file": true,
@@ -485,6 +751,7 @@
       "smoke_make_targets": [
         "verify.portal.payment_request_approval.prepare.container",
         "verify.portal.payment_request_approval_all_smoke.container",
+        "verify.portal.payment_request_approval_field_consumer_audit",
         "verify.portal.payment_request_approval_handoff_smoke.container",
         "verify.portal.payment_request_approval_smoke.container"
       ],
@@ -500,7 +767,6 @@
       "intent_type": "payment.request.submit",
       "class_name": "PaymentRequestSubmitHandler",
       "required_groups": [
-        "smart_construction_core.group_sc_cap_finance_user",
         "smart_core.group_smart_core_finance_approver"
       ],
       "etag_enabled": false,
@@ -509,6 +775,7 @@
       "smoke_make_targets": [
         "verify.portal.payment_request_approval.prepare.container",
         "verify.portal.payment_request_approval_all_smoke.container",
+        "verify.portal.payment_request_approval_field_consumer_audit",
         "verify.portal.payment_request_approval_handoff_smoke.container",
         "verify.portal.payment_request_approval_smoke.container"
       ],
@@ -537,6 +804,277 @@
       "source": "addons/smart_core/handlers/permission_check.py"
     },
     {
+      "intent_type": "project.connection.transition",
+      "class_name": "ProjectConnectionTransitionHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/project_connection_transition.py"
+    },
+    {
+      "intent_type": "project.context.search",
+      "class_name": "ProjectContextSearchHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_core/handlers/project_context.py"
+    },
+    {
+      "intent_type": "project.dashboard",
+      "class_name": "ProjectDashboardHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": true,
+      "smoke_make_targets": [
+        "verify.project.dashboard.contract",
+        "verify.project.dashboard.evidence",
+        "verify.project.dashboard.role_runtime.guard",
+        "verify.project.dashboard.snapshot"
+      ],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/project_dashboard.py"
+    },
+    {
+      "intent_type": "project.dashboard.block.fetch",
+      "class_name": "ProjectDashboardBlockFetchHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/project_dashboard_block_fetch.py"
+    },
+    {
+      "intent_type": "project.dashboard.enter",
+      "class_name": "ProjectDashboardEnterHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": true,
+      "source": "addons/smart_construction_core/handlers/project_dashboard_enter.py"
+    },
+    {
+      "intent_type": "project.dashboard.open",
+      "class_name": "ProjectDashboardOpenHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/project_dashboard_open.py"
+    },
+    {
+      "intent_type": "project.entry.context.options",
+      "class_name": "ProjectEntryContextOptionsHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/project_entry_context_options.py"
+    },
+    {
+      "intent_type": "project.entry.context.resolve",
+      "class_name": "ProjectEntryContextResolveHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/project_entry_context_resolve.py"
+    },
+    {
+      "intent_type": "project.execution.advance",
+      "class_name": "ProjectExecutionAdvanceHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/project_execution_advance.py"
+    },
+    {
+      "intent_type": "project.execution.block.fetch",
+      "class_name": "ProjectExecutionBlockFetchHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/project_execution_block_fetch.py"
+    },
+    {
+      "intent_type": "project.execution.enter",
+      "class_name": "ProjectExecutionEnterHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/project_execution_enter.py"
+    },
+    {
+      "intent_type": "project.initiation.enter",
+      "class_name": "ProjectInitiationEnterHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/project_initiation_enter.py"
+    },
+    {
+      "intent_type": "project.plan_bootstrap.block.fetch",
+      "class_name": "ProjectPlanBootstrapBlockFetchHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/project_plan_bootstrap_block_fetch.py"
+    },
+    {
+      "intent_type": "project.plan_bootstrap.enter",
+      "class_name": "ProjectPlanBootstrapEnterHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/project_plan_bootstrap_enter.py"
+    },
+    {
+      "intent_type": "risk.action.execute",
+      "class_name": "RiskActionExecuteHandler",
+      "required_groups": [
+        "smart_core.group_smart_core_data_operator"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "explicit_check",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": true,
+      "source": "addons/smart_construction_core/handlers/risk_action_execute.py"
+    },
+    {
       "intent_type": "scene.governance.export_contract",
       "class_name": "SceneGovernanceExportContractHandler",
       "required_groups": [],
@@ -544,9 +1082,13 @@
       "has_test_file": true,
       "has_smoke_make_target": true,
       "smoke_make_targets": [
+        "verify.frontend.scene_governance_consumption.guard",
         "verify.portal.scene_governance_action_smoke.container",
         "verify.portal.scene_governance_action_strict.container",
-        "verify.scene.governance.smoke"
+        "verify.scene.governance.smoke",
+        "verify.scene.governance_history_archive.guard",
+        "verify.scene.governance_history_report.guard",
+        "verify.scene.governance_payload.guard"
       ],
       "is_write_operation": false,
       "is_write": false,
@@ -564,9 +1106,13 @@
       "has_test_file": true,
       "has_smoke_make_target": true,
       "smoke_make_targets": [
+        "verify.frontend.scene_governance_consumption.guard",
         "verify.portal.scene_governance_action_smoke.container",
         "verify.portal.scene_governance_action_strict.container",
-        "verify.scene.governance.smoke"
+        "verify.scene.governance.smoke",
+        "verify.scene.governance_history_archive.guard",
+        "verify.scene.governance_history_report.guard",
+        "verify.scene.governance_payload.guard"
       ],
       "is_write_operation": true,
       "is_write": true,
@@ -584,9 +1130,13 @@
       "has_test_file": true,
       "has_smoke_make_target": true,
       "smoke_make_targets": [
+        "verify.frontend.scene_governance_consumption.guard",
         "verify.portal.scene_governance_action_smoke.container",
         "verify.portal.scene_governance_action_strict.container",
-        "verify.scene.governance.smoke"
+        "verify.scene.governance.smoke",
+        "verify.scene.governance_history_archive.guard",
+        "verify.scene.governance_history_report.guard",
+        "verify.scene.governance_payload.guard"
       ],
       "is_write_operation": true,
       "is_write": true,
@@ -604,9 +1154,13 @@
       "has_test_file": true,
       "has_smoke_make_target": true,
       "smoke_make_targets": [
+        "verify.frontend.scene_governance_consumption.guard",
         "verify.portal.scene_governance_action_smoke.container",
         "verify.portal.scene_governance_action_strict.container",
-        "verify.scene.governance.smoke"
+        "verify.scene.governance.smoke",
+        "verify.scene.governance_history_archive.guard",
+        "verify.scene.governance_history_report.guard",
+        "verify.scene.governance_payload.guard"
       ],
       "is_write_operation": true,
       "is_write": true,
@@ -727,7 +1281,7 @@
       "intent_type": "scene.packages.installed",
       "class_name": "ScenePackagesInstalledHandler",
       "required_groups": [
-        "smart_construction_core.group_sc_cap_config_admin"
+        "smart_core.group_smart_core_scene_admin"
       ],
       "etag_enabled": false,
       "has_test_file": true,
@@ -740,6 +1294,24 @@
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/scene_packages_installed.py"
+    },
+    {
+      "intent_type": "search.favorite.set",
+      "class_name": "SearchFavoriteSetHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": true,
+      "source": "addons/smart_core/handlers/search_favorite_set.py"
     },
     {
       "intent_type": "session.bootstrap",
@@ -758,6 +1330,42 @@
       "source": "addons/smart_core/handlers/session_bootstrap.py"
     },
     {
+      "intent_type": "settlement.block.fetch",
+      "class_name": "SettlementSliceBlockFetchHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/settlement_slice_block_fetch.py"
+    },
+    {
+      "intent_type": "settlement.enter",
+      "class_name": "SettlementSliceEnterHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/settlement_slice_enter.py"
+    },
+    {
       "intent_type": "system.init",
       "class_name": "SystemInitHandler",
       "required_groups": [],
@@ -773,7 +1381,7 @@
       "acl_mode": "",
       "layer": "core",
       "orm_used": true,
-      "may_trigger_sudo": false,
+      "may_trigger_sudo": true,
       "source": "addons/smart_core/handlers/system_init.py"
     },
     {
@@ -797,7 +1405,9 @@
     {
       "intent_type": "telemetry.track",
       "class_name": "TelemetryTrackHandler",
-      "required_groups": [],
+      "required_groups": [
+        "base.group_user"
+      ],
       "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": false,
@@ -811,20 +1421,56 @@
       "source": "addons/smart_construction_core/handlers/telemetry_track.py"
     },
     {
-      "intent_type": "ui.contract",
-      "class_name": "UiContractHandler",
+      "intent_type": "terminal.shell.v2",
+      "class_name": "TerminalShellV2Handler",
       "required_groups": [],
-      "etag_enabled": true,
+      "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
       "is_write": false,
       "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_core/handlers/terminal_shell_v2.py"
+    },
+    {
+      "intent_type": "ui.contract",
+      "class_name": "UiContractHandler",
+      "required_groups": [],
+      "etag_enabled": true,
+      "has_test_file": true,
+      "has_smoke_make_target": true,
+      "smoke_make_targets": [
+        "verify.unified_page_contract.lite",
+        "verify.unified_page_contract.lite.frontend_pilot_readiness",
+        "verify.unified_page_contract.lite.phase3_ui_contract_risk"
+      ],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
       "layer": "core",
       "orm_used": true,
-      "may_trigger_sudo": false,
+      "may_trigger_sudo": true,
       "source": "addons/smart_core/handlers/ui_contract.py"
+    },
+    {
+      "intent_type": "ui.contract.v2",
+      "class_name": "UiContractV2Handler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_core/handlers/ui_contract_v2.py"
     },
     {
       "intent_type": "usage.export.csv",
@@ -864,12 +1510,14 @@
       "intent_type": "usage.track",
       "class_name": "UsageTrackHandler",
       "required_groups": [
-        "smart_core.group_smart_core_data_operator"
+        "base.group_user"
       ],
       "etag_enabled": false,
       "has_test_file": true,
-      "has_smoke_make_target": false,
-      "smoke_make_targets": [],
+      "has_smoke_make_target": true,
+      "smoke_make_targets": [
+        "verify.portal.usage_track_concurrency_smoke.container"
+      ],
       "is_write_operation": true,
       "is_write": true,
       "acl_mode": "explicit_check",
@@ -877,6 +1525,58 @@
       "orm_used": false,
       "may_trigger_sudo": true,
       "source": "addons/smart_construction_core/handlers/usage_track.py"
+    },
+    {
+      "intent_type": "user.view.preference.get",
+      "class_name": "UserViewPreferenceGetHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_core/handlers/user_view_preference.py"
+    },
+    {
+      "intent_type": "user.view.preference.set",
+      "class_name": "UserViewPreferenceSetHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_core/handlers/user_view_preference.py"
+    },
+    {
+      "intent_type": "workspace.home.enter",
+      "class_name": "WorkspaceHomeEnterHandler",
+      "required_groups": [
+        "base.group_user"
+      ],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/workspace_home_enter.py"
     }
   ]
 }

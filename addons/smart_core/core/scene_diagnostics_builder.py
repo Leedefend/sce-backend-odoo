@@ -1,8 +1,23 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
+
 
 class SceneDiagnosticsBuilder:
+    SOURCE_KIND = "scene_diagnostics_projection"
+    SOURCE_AUTHORITIES = ("scene_runtime", "contract_governance", "auto_degrade")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return build_source_authority_contract(
+            kind=cls.SOURCE_KIND,
+            authorities=cls.SOURCE_AUTHORITIES,
+            no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
+            runtime_carrier="scene_diagnostics_builder",
+        )
+
     @staticmethod
     def initial(data: dict, rollback_active: bool, channel_selector: str, channel_source_ref: str) -> dict:
         return {

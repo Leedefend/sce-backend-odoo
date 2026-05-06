@@ -261,6 +261,15 @@ class AppCatalogHandler(BaseIntentHandler):
                     "meta": {"app_id": app["id"], "category": app.get("category")},
                 })
 
+        if not any((app.get("meta") or {}).get("app_id") == "workspace" for app in apps_out):
+            apps_out.insert(0, {
+                "key": "app:workspace",
+                "label": "角色首页",
+                "icon": None,
+                "badges": {"todo": 0},
+                "meta": {"app_id": "workspace", "category": "platform", "fallback": True},
+            })
+
         if not apps_out:
             apps_out.append({
                 "key": "app:workspace",

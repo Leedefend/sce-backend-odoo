@@ -5,6 +5,18 @@ class _BaseVersionedHandler:
     VERSION = None
     SOURCE_KIND = "test_versioned_handler_projection"
     SOURCE_AUTHORITIES = ("request.path_params",)
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "versioned_handler",
+        }
 
     def __init__(self, context, request=None):
         self.context = context
@@ -22,6 +34,7 @@ class _BaseVersionedHandler:
             "meta": {
                 "source_kind": self.SOURCE_KIND,
                 "source_authorities": list(self.SOURCE_AUTHORITIES),
+                "source_authority": self.source_authority_contract(),
             },
         }
 

@@ -18,6 +18,21 @@ _logger = logging.getLogger(__name__)
 
 
 class NavDispatcher:
+    SOURCE_KIND = "app_config_nav_dispatch_projection"
+    SOURCE_AUTHORITIES = ("app.menu.config", "ir.ui.menu", "res.groups", "ir.model.data")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "app_config_engine.nav_dispatcher",
+        }
+
     """
     返回“契约·导航（subject:'nav'）”：
     - 仅提供前端注入所需的“最小充分信息”，不固化 path/route；
@@ -209,6 +224,7 @@ class NavDispatcher:
         # 10) 指纹（结合 cfg.version + scene + 当前用户 groups_xmlids）
         user_groups_xmlids = self._groups_to_xmlids(self.env.user.groups_id)
         meta = {
+            "source_authority": self.source_authority_contract(),
             "menu": int(getattr(cfg, "version", 1) or 1),
             "fingerprint": self._nav_fingerprint(cfg.version, scene, user_groups_xmlids),
             "root_xmlid": root_xmlid,

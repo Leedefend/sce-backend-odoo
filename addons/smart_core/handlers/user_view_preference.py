@@ -8,56 +8,114 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
     VERSION = "1.0.0"
     SOURCE_KIND = "ui_only_user_preference"
     SOURCE_AUTHORITIES = ("sc.user.view.preference", "res.users", "ir.actions.actions")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": cls.INTENT_TYPE.endswith(".set"),
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def _params(self, payload):
         if isinstance(payload, dict) and isinstance(payload.get("params"), dict):
             return payload.get("params") or {}
         return payload or {}
 
+    def _text_param(self, params, keys, *, default=""):
+        if isinstance(keys, str):
+            keys = (keys,)
+        raw = None
+        for key in keys:
+            if key in params:
+                raw = params.get(key)
+                break
+        if raw is None or raw == "":
+            return default, None
+        if isinstance(raw, bool) or not isinstance(raw, (str, int, float)):
+            return "", self._err(400, f"{keys[0]} 无效")
+        text = str(raw).strip()
+        return text or default, None
+
     def _scope_key(self, params):
         Preference = self.env["sc.user.view.preference"]
         preference_key = Preference.normalize_preference_key(params.get("preference_key"))
-        view_type = str(params.get("view_type") or "list").strip() or "list"
-        action_id = self._positive_int(params.get("action_id"))
-        model_name = str(params.get("model") or params.get("model_name") or "").strip()
+        view_type, view_type_error = self._text_param(params, "view_type", default="list")
+        if view_type_error:
+            return "", view_type_error
+        action_id, action_error = self._read_positive_int(params.get("action_id"), "action_id")
+        if action_error:
+            return "", action_error
+        model_name, model_error = self._text_param(params, ("model", "model_name"))
+        if model_error:
+            return "", model_error
         return Preference.build_scope_key(
             preference_key=preference_key,
             view_type=view_type,
             action_id=action_id,
             model_name=model_name,
-        )
+        ), None
 
     def _legacy_scope_key(self, params):
         preference_key = self.env["sc.user.view.preference"].normalize_preference_key(params.get("preference_key"))
-        view_type = str(params.get("view_type") or "list").strip() or "list"
-        action_id = self._positive_int(params.get("action_id"))
-        model_name = str(params.get("model") or params.get("model_name") or "").strip()
+        view_type, view_type_error = self._text_param(params, "view_type", default="list")
+        if view_type_error:
+            return "", view_type_error
+        action_id, action_error = self._read_positive_int(params.get("action_id"), "action_id")
+        if action_error:
+            return "", action_error
+        model_name, model_error = self._text_param(params, ("model", "model_name"))
+        if model_error:
+            return "", model_error
         target = f"action:{action_id}" if action_id else f"model:{model_name or 'unknown'}"
-        return f"{preference_key}:{view_type}:{target}"
+        return f"{preference_key}:{view_type}:{target}", None
 
     def _positive_int(self, value):
+        result, _error = self._read_positive_int(value, "value")
+        return result
+
+    def _read_positive_int(self, value, field_name):
+        if value in (None, False, ""):
+            return 0, None
         try:
-            result = int(value or 0)
+            result = int(value)
         except (TypeError, ValueError):
-            result = 0
-        return result if result > 0 else 0
+            return 0, self._err(400, f"{field_name} 无效")
+        if result < 0:
+            return 0, self._err(400, f"{field_name} 无效")
+        return result, None
+
+    def _err(self, code, message):
+        return {"ok": False, "error": {"code": code, "message": message}, "code": code, "meta": self._source_meta()}
 
     def _source_meta(self):
         return {
             "source_kind": self.SOURCE_KIND,
             "source_authorities": list(self.SOURCE_AUTHORITIES),
+            "source_authority": self.source_authority_contract(),
         }
 
     def handle(self, payload=None, ctx=None):
         params = self._params(payload or self.payload)
-        scope_key = self._scope_key(params)
-        legacy_scope_key = self._legacy_scope_key(params)
-        record = self.env["sc.user.view.preference"].sudo().search([
+        if not isinstance(params, dict):
+            return self._err(400, "params 无效")
+        scope_key, scope_error = self._scope_key(params)
+        if scope_error:
+            return scope_error
+        legacy_scope_key, legacy_error = self._legacy_scope_key(params)
+        if legacy_error:
+            return legacy_error
+        Preference = self.env["sc.user.view.preference"]
+        record = Preference.search([
             ("user_id", "=", self.env.uid),
             ("scope_key", "=", scope_key),
         ], limit=1)
         if not record and legacy_scope_key != scope_key:
-            record = self.env["sc.user.view.preference"].sudo().search([
+            record = Preference.search([
                 ("user_id", "=", self.env.uid),
                 ("scope_key", "=", legacy_scope_key),
             ], limit=1)
@@ -80,15 +138,25 @@ class UserViewPreferenceSetHandler(UserViewPreferenceGetHandler):
 
     def handle(self, payload=None, ctx=None):
         params = self._params(payload or self.payload)
-        scope_key = self._scope_key(params)
+        if not isinstance(params, dict):
+            return self._err(400, "params 无效")
+        scope_key, scope_error = self._scope_key(params)
+        if scope_error:
+            return scope_error
         preference_key = self.env["sc.user.view.preference"].normalize_preference_key(params.get("preference_key"))
-        view_type = str(params.get("view_type") or "list").strip() or "list"
-        action_id = self._positive_int(params.get("action_id"))
-        model_name = str(params.get("model") or params.get("model_name") or "").strip()
+        view_type, view_type_error = self._text_param(params, "view_type", default="list")
+        if view_type_error:
+            return view_type_error
+        action_id, action_error = self._read_positive_int(params.get("action_id"), "action_id")
+        if action_error:
+            return action_error
+        model_name, model_error = self._text_param(params, ("model", "model_name"))
+        if model_error:
+            return model_error
         value = params.get("preference")
         if not isinstance(value, dict):
             value = {}
-        Preference = self.env["sc.user.view.preference"].sudo()
+        Preference = self.env["sc.user.view.preference"]
         record = Preference.search([
             ("user_id", "=", self.env.uid),
             ("scope_key", "=", scope_key),

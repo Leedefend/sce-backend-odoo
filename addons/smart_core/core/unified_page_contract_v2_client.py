@@ -4,8 +4,22 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
+from .source_authority import build_source_authority_contract
 
 STABLE_CLIENT_TYPES = ("web_pc", "wx_mini", "harmony_h5")
+SOURCE_KIND = "unified_page_contract_v2_client_projection"
+SOURCE_AUTHORITIES = ("http.headers", "request_params", "unified_page_contract_v2")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict[str, Any]:
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        runtime_carrier="unified_page_contract_v2_client",
+    )
+
 RESERVED_CLIENT_TYPES = ("mobile_app",)
 MOBILE_CLIENT_TYPES = {"wx_mini", "harmony_h5"}
 COMPACT_DELIVERY_PROFILES = {"mobile_compact", "mobile_primary"}

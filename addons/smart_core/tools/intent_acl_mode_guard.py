@@ -8,6 +8,20 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[3]
+SOURCE_KIND = "intent_acl_mode_static_guard"
+SOURCE_AUTHORITIES = ("smart_core.handlers", "python_ast")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "static_guard_only": True,
+    }
 
 
 def _handler_dirs():

@@ -11,6 +11,22 @@ import logging
 _logger = logging.getLogger(__name__)
 
 class KanbanDynamicService:
+    SOURCE_KIND = "legacy_kanban_dynamic_runtime_proxy"
+    SOURCE_AUTHORITIES = ("odoo.orm", "ir.rule", "ir.actions", "legacy_permission_service")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "write_proxy": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "legacy_view_runtime_proxy": True,
+        }
+
     def __init__(self, env):
         self.env = env
         self.user = getattr(request, '_secure_user', None) or env.user

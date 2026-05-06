@@ -5,7 +5,6 @@ from odoo import http
 from odoo.http import request
 import logging, time
 import os
-import re
 from typing import Dict, Any
 
 from werkzeug.exceptions import Unauthorized, Forbidden, BadRequest, NotFound
@@ -13,6 +12,16 @@ from odoo.exceptions import AccessError, MissingError, AccessDenied
 
 from ..core.intent_router import route_intent_payload
 from ..core.context import RequestContext
+from ..core.http_result_policy import (
+    normalize_result_ok,
+    normalize_error_result,
+    result_http_status,
+    result_is_success,
+    result_transaction_action,
+)
+from ..core.intent_access_policy import ANONYMOUS_INTENTS, is_anonymous_allowed_intent
+from ..core.intent_operation_policy import is_write_intent, nested_params, normalize_intent_operation
+from ..core.request_transaction import rollback_request_env
 from ..security.intent_permission import check_intent_permission
 from ..core.trace import get_trace_id
 from ..core.exceptions import (
@@ -27,9 +36,23 @@ from ..core.exceptions import (
 from ..utils.reason_codes import REASON_PERMISSION_DENIED, failure_meta_for_reason
 
 _logger = logging.getLogger(__name__)
+SOURCE_KIND = "http_intent_dispatch_controller"
+SOURCE_AUTHORITIES = ("odoo.http.request", "intent_router", "intent_permission", "handler_registry")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "write_proxy": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "controllers.intent_dispatcher",
+    }
 
 # ✅ 匿名白名单（仅在“匿名请求”识别为真时生效；见 _is_anon_req）
-ANON_ALLOWLIST = {"login", "auth.login", "sys.intents", "session.bootstrap"}
+ANON_ALLOWLIST = set(ANONYMOUS_INTENTS)
 
 # ✅ 意图别名：统一规范后再做白名单与分发
 INTENT_ALIASES = {
@@ -42,10 +65,6 @@ INTENT_ALIASES = {
 API_VERSION = "v1"
 CONTRACT_VERSION = "1.0.0"
 SCHEMA_VERSION = "1.0.0"
-_WRITE_INTENT_RE = re.compile(
-    r"(create|write|unlink|delete|batch|execute|upload|cancel|approve|reject|submit|done|import|rollback|pin|set)",
-    re.IGNORECASE,
-)
 
 def _canon_intent(name: str) -> str:
     return INTENT_ALIASES.get(name or "", name or "")
@@ -125,22 +144,25 @@ def _error_response(
     return resp
 
 
+def _rollback_request_env(intent_name: str | None, trace_id: str | None):
+    rollback_request_env(_logger, reason=f"intent:{intent_name or ''}", trace_id=trace_id, request_obj=request)
+
+
 def _permission_error_details(intent_name: str, params: Dict[str, Any], message: str) -> dict:
     intent = str(intent_name or "").strip().lower()
+    business_params = nested_params(params)
     details: Dict[str, Any] = {
         "intent": str(intent_name or "").strip(),
         "reason_code": REASON_PERMISSION_DENIED,
     }
     if message:
         details["cause"] = str(message)
-    model = str((params or {}).get("model") or "").strip()
-    op = str((params or {}).get("op") or "").strip().lower()
-    if not op and intent.startswith("api.data."):
-        suffix = intent.split(".", 2)[-1].strip().lower()
-        if suffix:
-            op = suffix
+    model = str((business_params or {}).get("model") or "").strip()
+    op = str((business_params or {}).get("op") or "").strip().lower()
+    if not op:
+        op = normalize_intent_operation(intent, business_params)
     if intent == "api.data.batch":
-        batch_action = str((params or {}).get("action") or "").strip().lower()
+        batch_action = str((business_params or {}).get("action") or "").strip().lower()
         if batch_action:
             op = f"batch.{batch_action}"
     if intent == "api.data" or intent.startswith("api.data."):
@@ -152,15 +174,7 @@ def _permission_error_details(intent_name: str, params: Dict[str, Any], message:
 
 
 def _is_write_request(intent_name: str, params: Dict[str, Any]) -> bool:
-    intent = str(intent_name or "").strip().lower()
-    if not intent:
-        return False
-    if _WRITE_INTENT_RE.search(intent):
-        return True
-    if intent == "api.data":
-        op = str((params or {}).get("op") or "").strip().lower()
-        return op in {"create", "write", "unlink", "delete", "batch"}
-    return False
+    return is_write_intent(intent_name, params)
 
 # ===================== 结果归一化 =====================
 
@@ -242,6 +256,13 @@ def _normalize_result_shape(res: Any) -> Dict[str, Any]:
 # ===================== 控制器 =====================
 
 class IntentDispatcher(http.Controller):
+    SOURCE_KIND = SOURCE_KIND
+    SOURCE_AUTHORITIES = SOURCE_AUTHORITIES
+    NO_BUSINESS_FACT_AUTHORITY = NO_BUSINESS_FACT_AUTHORITY
+
+    @classmethod
+    def source_authority_contract(cls) -> Dict[str, Any]:
+        return source_authority_contract()
 
     @http.route('/api/v1/intent', type='http', auth='public', methods=['POST', 'OPTIONS'], csrf=False)
     def handle_intent(self, **kwargs):
@@ -366,7 +387,7 @@ class IntentDispatcher(http.Controller):
             }
 
             # ---------- 统一上下文 ----------
-            ctx = RequestContext.from_http_request()
+            ctx = RequestContext.from_payload(payload)
             setattr(ctx, "trace_id", trace_id)
             setattr(ctx, "is_anonymous", is_anon)
             setattr(ctx, "db", params.get("db"))
@@ -380,7 +401,7 @@ class IntentDispatcher(http.Controller):
             )
 
             # ---------- 权限校验 ----------
-            skip_auth = is_anon and intent_name in ANON_ALLOWLIST
+            skip_auth = is_anon and is_anonymous_allowed_intent(intent_name)
             if intent_name == "session.bootstrap":
                 skip_auth = True
             if not skip_auth:
@@ -396,6 +417,7 @@ class IntentDispatcher(http.Controller):
                 return resp
 
             result = _normalize_result_shape(raw_result)
+            normalize_result_ok(result)
 
             # Backward-compat: legacy load_view handlers may return view payload at top-level
             if intent_name == "load_view" and isinstance(result, dict):
@@ -414,7 +436,7 @@ class IntentDispatcher(http.Controller):
             headers["X-Trace-Id"] = trace_id
 
             if isinstance(result, dict):
-                status = int(result.get("code", 200)) if isinstance(result.get("code"), (int, str)) else 200
+                status = result_http_status(result)
                 etag = (result.get("meta") or {}).get("etag")
                 if etag:
                     headers["ETag"] = f'"{etag}"'
@@ -428,21 +450,18 @@ class IntentDispatcher(http.Controller):
                 meta.setdefault("schema_version", SCHEMA_VERSION)
 
                 # 标准化错误结构
-                if result.get("ok") is False:
-                    err = result.get("error") if isinstance(result.get("error"), dict) else {}
-                    if "code" not in err or "message" not in err:
-                        result = build_error_envelope(
-                            code=map_http_status_to_code(status),
-                            message=str(err or "请求失败"),
-                            trace_id=trace_id,
-                            api_version=API_VERSION,
-                            contract_version=CONTRACT_VERSION,
-                        )
+                if not result_is_success(result):
+                    result = normalize_error_result(
+                        result,
+                        status,
+                        status_code_mapper=map_http_status_to_code,
+                        error_envelope_builder=build_error_envelope,
+                        trace_id=trace_id,
+                        api_version=API_VERSION,
+                        contract_version=CONTRACT_VERSION,
+                    )
+                    if status < 400:
                         status = status if status and status >= 400 else 500
-                    else:
-                        if isinstance(err.get("code"), int):
-                            err["code"] = map_http_status_to_code(status)
-                            result["error"] = err
 
             if status == 304:
                 # 304 必须空体，但要带 ETag/CORS 头
@@ -450,18 +469,27 @@ class IntentDispatcher(http.Controller):
                 resp.headers.update(headers)
                 return resp
 
-            # type='http' 路由不会自动提交事务；写请求成功时必须显式 commit。
-            if isinstance(result, dict) and status < 400 and result.get("ok", True) and _is_write_request(intent_name, params):
+            # type='http' 路由不会自动提交事务；写请求成功才提交，失败写请求显式回滚。
+            tx_action = result_transaction_action(intent_name, params, result if isinstance(result, dict) else None, status)
+            if tx_action == "commit":
                 try:
                     request.env.cr.commit()
                 except Exception:
                     _logger.exception("intent commit failed: intent=%s trace=%s", intent_name, trace_id)
                     return _error_response(INTERNAL_ERROR, "内部错误", 500, trace_id)
+            elif tx_action == "rollback":
+                try:
+                    request.env.cr.rollback()
+                except Exception:
+                    _logger.exception("intent rollback failed: intent=%s trace=%s", intent_name, trace_id)
+                    return _error_response(INTERNAL_ERROR, "内部错误", 500, trace_id)
 
             return request.make_json_response(result, status=status, headers=headers)
         except AccessDenied:
+            _rollback_request_env(intent_name, trace_id)
             return _error_response(AUTH_REQUIRED, "认证失败或 token 无效", 401, trace_id)
         except AccessError as e:
+            _rollback_request_env(intent_name, trace_id)
             msg = str(e)
             if msg.startswith("FEATURE_DISABLED"):
                 return _error_response("FEATURE_DISABLED", msg, 403, trace_id)
@@ -479,13 +507,17 @@ class IntentDispatcher(http.Controller):
                 },
             )
         except MissingError as e:
+            _rollback_request_env(intent_name, trace_id)
             return _error_response(INTENT_NOT_FOUND, str(e), 404, trace_id)
         except (BadRequest, Unauthorized, Forbidden, NotFound) as e:
+            _rollback_request_env(intent_name, trace_id)
             status = getattr(e, "code", 400) or 400
             code = map_http_status_to_code(status)
             return _error_response(code, str(e), status, trace_id)
         except Exception as e:
             if isinstance(e, AccessDenied) or e.__class__.__name__ == "AccessDenied":
+                _rollback_request_env(intent_name, trace_id)
                 return _error_response(AUTH_REQUIRED, "认证失败或 token 无效", 401, trace_id)
+            _rollback_request_env(intent_name, trace_id)
             _logger.exception("intent dispatcher failed: %s", e)
             return _error_response(INTERNAL_ERROR, "内部错误", 500, trace_id)

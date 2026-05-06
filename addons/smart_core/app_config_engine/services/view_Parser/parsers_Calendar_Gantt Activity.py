@@ -11,6 +11,27 @@ _logger = logging.getLogger(__name__)
 
 
 class _CalendarGanttActivitySearchParserMixin:
+    SOURCE_KIND = "odoo_calendar_gantt_activity_search_view_parser_mixin"
+    SOURCE_AUTHORITIES = (
+        "ir.ui.view:calendar",
+        "ir.ui.view:gantt",
+        "ir.ui.view:activity",
+        "ir.ui.view:search",
+        "ir.model.fields",
+    )
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "view_parser_mixin_only": True,
+        }
+
     # ---------------- calendar 解析 ----------------
     def _parse_calendar_view(self, arch):
         out = {

@@ -3,6 +3,21 @@ from __future__ import annotations
 
 from odoo import fields
 
+SOURCE_KIND = "scene_drift_health_projection"
+SOURCE_AUTHORITIES = ("scene_diagnostics", "scene_ready_contract", "scene_runtime")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "scene_drift_engine",
+    }
+
 CRITICAL_SCENES = {
     "workspace.home",
     "workspace.list",
@@ -40,6 +55,14 @@ def append_resolve_error(resolve_errors, *, scene_key, kind, code, ref=None, mes
 
 
 class SceneDriftEngine:
+    SOURCE_KIND = SOURCE_KIND
+    SOURCE_AUTHORITIES = SOURCE_AUTHORITIES
+    NO_BUSINESS_FACT_AUTHORITY = NO_BUSINESS_FACT_AUTHORITY
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return source_authority_contract()
+
     def evaluate(self, scenes, diagnostics):
         if not isinstance(diagnostics, dict):
             return diagnostics

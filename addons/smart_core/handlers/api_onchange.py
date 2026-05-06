@@ -11,6 +11,7 @@ from ..core.project_context import (
     record_in_project_scope,
     selected_project_id_from_context,
 )
+from ..core.request_params import parse_bool
 from ..core.unified_page_contract_v2_assembler import assemble_unified_page_patch_v2
 from ..core.unified_page_contract_lite_preview import with_lite_preview_if_requested
 from ..utils.reason_codes import normalize_onchange_reason_code
@@ -35,7 +36,7 @@ class ApiOnchangeHandler(BaseIntentHandler):
             or params.get("patchContractVersion")
             or ""
         ).strip()
-        include_v2 = bool(params.get("include_v2_patch") or params.get("includeV2Patch"))
+        include_v2 = parse_bool(params.get("include_v2_patch"), False) or parse_bool(params.get("includeV2Patch"), False)
         if not include_v2 and not contract_version.startswith("2."):
             return response
         data = response.get("data") if isinstance(response.get("data"), dict) else {}
@@ -193,7 +194,7 @@ class ApiOnchangeHandler(BaseIntentHandler):
             normalized: Dict[str, Any] = {
                 "field": field,
                 "row_key": str(item.get("row_key") or "").strip(),
-                "row_id": int(item.get("row_id") or 0) if str(item.get("row_id") or "").strip() else 0,
+                "row_id": self._safe_row_id(item.get("row_id")),
                 "patch": row_patch,
                 "modifiers_patch": row_modifiers,
                 "warnings": warnings,
@@ -256,12 +257,25 @@ class ApiOnchangeHandler(BaseIntentHandler):
                 out[name] = normalized
         return out
 
+    def _read_record_id(self, params: Dict[str, Any]):
+        for key in ("id", "res_id", "record_id"):
+            raw = params.get(key)
+            if raw in (None, False, ""):
+                continue
+            try:
+                record_id = int(raw)
+            except Exception:
+                return None, self._err(400, f"{key} invalid")
+            if record_id < 0:
+                return None, self._err(400, f"{key} invalid")
+            return record_id, None
+        return 0, None
+
     def _normalize_row_state(self, item: Dict[str, Any], row_patch: Dict[str, Any], warnings: List[Dict[str, str]]) -> str:
         raw = str(item.get("row_state") or "").strip().lower()
         if raw in ("create", "update", "remove", "keep"):
             return raw
-        row_id_raw = item.get("row_id")
-        row_id = int(row_id_raw or 0) if str(row_id_raw or "").strip() else 0
+        row_id = self._safe_row_id(item.get("row_id"))
         if row_id <= 0 and row_patch:
             return "create"
         if row_id > 0 and row_patch:
@@ -269,6 +283,15 @@ class ApiOnchangeHandler(BaseIntentHandler):
         if row_id > 0 and not row_patch and not warnings:
             return "remove"
         return "keep"
+
+    def _safe_row_id(self, value: Any) -> int:
+        if not str(value or "").strip():
+            return 0
+        try:
+            row_id = int(value)
+        except Exception:
+            return 0
+        return row_id if row_id > 0 else 0
 
     def _command_hint_for_row_state(self, row_state: str) -> List[int]:
         # x2many command heads in Odoo semantics:
@@ -293,14 +316,9 @@ class ApiOnchangeHandler(BaseIntentHandler):
 
         context = params.get("context") if isinstance(params.get("context"), dict) else {}
         env_model = self.env[model].with_context(context)
-        record_id = 0
-        for key in ("id", "res_id", "record_id"):
-            try:
-                record_id = int(params.get(key) or 0)
-            except Exception:
-                record_id = 0
-            if record_id > 0:
-                break
+        record_id, record_id_error = self._read_record_id(params)
+        if record_id_error:
+            return record_id_error
         current_project_id = selected_project_id_from_context(params, context)
         if record_id > 0:
             in_scope, scope_meta = record_in_project_scope(env_model, record_id, current_project_id)

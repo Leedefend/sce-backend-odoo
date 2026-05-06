@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 from odoo.addons.smart_core.core.delivery_menu_defaults import (
     build_delivery_menu_child,
     build_delivery_menu_group,
@@ -9,8 +10,20 @@ from odoo.addons.smart_core.delivery.menu_delivery_convergence_service import Me
 
 
 class MenuService:
+    SOURCE_KIND = "delivery_menu_projection"
+    SOURCE_AUTHORITIES = ("odoo_menu_fact_projection", "menu_delivery_convergence_projection", "delivery_product_policy_projection")
+    NO_BUSINESS_FACT_AUTHORITY = True
     NATIVE_PREVIEW_GROUP_KEY = "native_preview"
     NATIVE_PREVIEW_GROUP_LABEL = "系统菜单"
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return build_source_authority_contract(
+            kind=cls.SOURCE_KIND,
+            authorities=cls.SOURCE_AUTHORITIES,
+            no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
+            runtime_carrier="delivery_engine_v1.nav",
+        )
 
     def _is_admin_role(self, role_code: str) -> bool:
         normalized = str(role_code or "").strip().lower()
@@ -38,6 +51,7 @@ class MenuService:
         if renamed:
             row["label"] = renamed
         row["delivery_bucket"] = category
+        row["source_authority"] = self.source_authority_contract()
         return row
 
     def _iter_leaf_nodes(self, nodes, ancestors=None):
@@ -282,6 +296,7 @@ class MenuService:
             "source": "delivery_engine_v1",
             "role_code": role_code,
             "strategy": "unified_system_menu",
+            "source_authority": self.source_authority_contract(),
         }
         return [root]
 
@@ -311,6 +326,7 @@ class MenuService:
             else:
                 stable_groups.append(group)
         return {
+            "source_authority": self.source_authority_contract(),
             "group_count": len(groups),
             "stable_group_count": len(groups),
             "native_preview_group_count": 0,

@@ -4,11 +4,19 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
+
 from .release_approval_policy_service import ReleaseApprovalPolicyService
 from .release_audit_trail_service import ReleaseAuditTrailService
 from .release_operator_contract_versions import (
     RELEASE_OPERATOR_READ_MODEL_CONTRACT_VERSION,
     RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION,
+)
+from .product_identity import (
+    LEGACY_DEFAULT_BASE_PRODUCT_KEY,
+    default_operator_product_keys,
+    resolve_product_identity,
+    source_authority_contract as product_identity_source_authority_contract,
 )
 
 
@@ -25,27 +33,58 @@ def _list(value: Any) -> list[Any]:
 
 
 class ReleaseOperatorReadModelService:
-    DEFAULT_PRODUCTS = ("construction.standard", "construction.preview")
+    SOURCE_KIND = "release_operator_read_model_projection"
+    SOURCE_AUTHORITIES = ("release_audit_trail_projection", "release_approval_policy_projection", "delivery_product_identity_resolver")
+    NO_BUSINESS_FACT_AUTHORITY = True
+    DEFAULT_EDITIONS = ("standard", "preview")
 
     def __init__(self, env):
         self.env = env
         self.audit_service = ReleaseAuditTrailService(env)
         self.approval_policy_service = ReleaseApprovalPolicyService(env)
 
+    @classmethod
+    def source_authority_contract(cls) -> dict[str, Any]:
+        return build_source_authority_contract(
+            kind=cls.SOURCE_KIND,
+            authorities=cls.SOURCE_AUTHORITIES,
+            no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
+            runtime_carrier="release_operator_surface",
+        )
+
+    def _default_base_product_key(self) -> tuple[str, str]:
+        try:
+            raw = self.env["ir.config_parameter"].sudo().get_param("smart_core.release_operator.default_base_product_key", "")
+        except Exception:
+            raw = ""
+        configured = _text(raw)
+        if configured:
+            return configured, "config"
+        return LEGACY_DEFAULT_BASE_PRODUCT_KEY, "legacy_default"
+
     def _resolve_product_key(self, product_key: str = "") -> str:
         requested = _text(product_key)
-        if requested in self.DEFAULT_PRODUCTS:
-            return requested
-        return "construction.standard"
+        if requested:
+            return resolve_product_identity(product_key=requested).get("product_key") or requested
+        default_base, _source = self._default_base_product_key()
+        return default_operator_product_keys(base_product_key=default_base)[0]
 
     def _resolve_identity(self, product_key: str = "") -> dict[str, str]:
         resolved = self._resolve_product_key(product_key=product_key)
-        return self.approval_policy_service._release_identity(product_key=resolved)
+        identity = resolve_product_identity(product_key=resolved)
+        requested = _text(product_key)
+        default_base, default_source = self._default_base_product_key()
+        identity["requested_product_key"] = requested
+        identity["default_base_product_key"] = default_base
+        identity["default_base_source"] = "request" if requested else default_source
+        identity["source_authority"] = product_identity_source_authority_contract()
+        return identity
 
     def _products(self, current_product_key: str) -> list[dict[str, Any]]:
         rows = []
-        for item in self.DEFAULT_PRODUCTS:
-            identity = self.approval_policy_service._release_identity(product_key=item)
+        current_identity = self._resolve_identity(product_key=current_product_key)
+        for item in default_operator_product_keys(base_product_key=current_identity.get("base_product_key")):
+            identity = resolve_product_identity(product_key=item)
             rows.append(
                 {
                     "product_key": item,
@@ -111,7 +150,8 @@ class ReleaseOperatorReadModelService:
 
     def _build_promote_actions(self, *, product_key: str, snapshots: list[dict[str, Any]]) -> list[dict[str, Any]]:
         policy = self.approval_policy_service.resolve_policy(action_type="promote_snapshot", product_key=product_key)
-        actor_roles = self.approval_policy_service.resolve_actor_role_codes(self.env.user)
+        role_context = self.approval_policy_service.resolve_actor_role_context(self.env.user)
+        actor_roles = list(role_context.get("actor_role_codes") or [])
         allowed = self.approval_policy_service.roles_match(actor_roles, list(_list(policy.get("allowed_executor_role_codes"))))
         actions: list[dict[str, Any]] = []
         for row in snapshots:
@@ -129,6 +169,7 @@ class ReleaseOperatorReadModelService:
                     "intent": "release.operator.promote",
                     "enabled": bool(allowed),
                     "reason_code": "OK" if allowed else "RELEASE_EXECUTOR_NOT_ALLOWED",
+                    "role_context": role_context,
                     "params": {
                         "product_key": product_key,
                         "snapshot_id": snapshot_id,
@@ -171,7 +212,8 @@ class ReleaseOperatorReadModelService:
 
     def _build_rollback_action(self, *, product_key: str, active_snapshot: dict[str, Any]) -> dict[str, Any]:
         policy = self.approval_policy_service.resolve_policy(action_type="rollback_snapshot", product_key=product_key)
-        actor_roles = self.approval_policy_service.resolve_actor_role_codes(self.env.user)
+        role_context = self.approval_policy_service.resolve_actor_role_context(self.env.user)
+        actor_roles = list(role_context.get("actor_role_codes") or [])
         allowed = self.approval_policy_service.roles_match(actor_roles, list(_list(policy.get("allowed_executor_role_codes"))))
         rollback_target_snapshot_id = int(active_snapshot.get("rollback_target_snapshot_id") or 0)
         enabled = bool(allowed and rollback_target_snapshot_id > 0)
@@ -183,6 +225,7 @@ class ReleaseOperatorReadModelService:
             "intent": "release.operator.rollback",
             "enabled": enabled,
             "reason_code": reason_code,
+            "role_context": role_context,
             "params": {
                 "product_key": product_key,
                 "target_snapshot_id": rollback_target_snapshot_id,
@@ -218,16 +261,24 @@ class ReleaseOperatorReadModelService:
             "rollback": self._build_rollback_action(product_key=identity["product_key"], active_snapshot=active_snapshot),
         }
         surface_copy = self._build_surface_copy(product_key=identity["product_key"])
+        role_context = self.approval_policy_service.resolve_actor_role_context(self.env.user)
         return {
             "contract_version": RELEASE_OPERATOR_READ_MODEL_CONTRACT_VERSION,
             "contract_registry": build_release_operator_contract_registry(),
+            "source_authority": self.source_authority_contract(),
             "copy": surface_copy,
             "identity": {
                 "product_key": identity["product_key"],
                 "base_product_key": identity["base_product_key"],
                 "edition_key": identity["edition_key"],
+                "source": identity.get("source") or "",
+                "requested_product_key": identity.get("requested_product_key") or "",
+                "default_base_product_key": identity.get("default_base_product_key") or "",
+                "default_base_source": identity.get("default_base_source") or "",
+                "source_authority": identity.get("source_authority") if isinstance(identity.get("source_authority"), dict) else {},
             },
             "products": self._products(identity["product_key"]),
+            "actor_role_context": role_context,
             "current_release_state": current_release_state,
             "pending_approval_queue": pending_approval_queue,
             "candidate_snapshots": candidate_snapshots,

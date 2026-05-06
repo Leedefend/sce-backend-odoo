@@ -13,6 +13,7 @@ from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
 from ..core.project_context import apply_project_scope_domain, selected_project_id_from_context
+from ..core.request_params import parse_bool, parse_non_negative_int, parse_positive_int
 from .reason_codes import (
     REASON_CONFLICT,
     REASON_REPLAY_WINDOW_EXPIRED,
@@ -54,6 +55,19 @@ class ApiDataBatchHandler(BaseIntentHandler):
     def _err(self, code: int, message: str):
         return {"ok": False, "error": {"code": code, "message": message}, "code": code}
 
+    def _project_scope_denied(self, message: str, scope_meta: Dict[str, Any]):
+        return {
+            "ok": False,
+            "error": {
+                "code": 403,
+                "message": message,
+                "kind": "permission",
+                "project_scope": scope_meta,
+                "record_scope": scope_meta,
+            },
+            "code": 403,
+        }
+
     def _source_authority_contract(self, model: str, action: str) -> Dict[str, Any]:
         return {
             "kind": self.SOURCE_KIND,
@@ -75,58 +89,70 @@ class ApiDataBatchHandler(BaseIntentHandler):
         return params
 
     def _get_ids(self, params: Dict[str, Any]) -> List[int]:
+        ids, _error = self._read_ids(params)
+        return ids
+
+    def _read_ids(self, params: Dict[str, Any]):
         ids = params.get("ids") or []
         if isinstance(ids, list):
             values = []
             for raw in ids:
                 try:
-                    values.append(int(raw))
+                    value = int(raw)
                 except Exception:
-                    continue
-            return values
+                    return [], self._err(400, "ids 无效")
+                if value <= 0:
+                    return [], self._err(400, "ids 无效")
+                values.append(value)
+            return values, None
         try:
-            return [int(ids)]
+            value = int(ids)
         except Exception:
-            return []
+            return [], self._err(400, "ids 无效")
+        if value <= 0:
+            return [], self._err(400, "ids 无效")
+        return [value], None
 
     def _resolve_vals(self, params: Dict[str, Any]):
         action = str(params.get("action") or "").strip().lower()
         if action in self.ACTION_MAP:
-            return action, dict(self.ACTION_MAP[action])
+            return action, dict(self.ACTION_MAP[action]), None
         if action == "assign":
-            assignee_id = params.get("assignee_id")
-            try:
-                uid = int(assignee_id)
-            except Exception:
-                uid = 0
-            if uid <= 0:
-                return action, {}
-            return action, {"user_id": uid}
+            uid, uid_error = parse_positive_int(params.get("assignee_id"))
+            if uid_error:
+                return action, {}, self._err(400, "assignee_id 无效")
+            return action, {"user_id": uid}, None
         vals = params.get("vals") or params.get("values") or {}
         if isinstance(vals, dict) and vals:
-            return action or "write", vals
-        return action, {}
+            return action or "write", vals, None
+        return action, {}, None
 
-    def _get_int(self, params: Dict[str, Any], key: str, default: int):
-        try:
-            return int(params.get(key))
-        except Exception:
-            return default
+    def _read_positive_param(self, params: Dict[str, Any], key: str, default: int):
+        value, error = parse_positive_int(params.get(key), allow_empty=True)
+        if error:
+            return 0, self._err(400, f"{key} 无效")
+        return value or default, None
 
-    def _normalize_if_match_map(self, params: Dict[str, Any]) -> Dict[int, str]:
+    def _read_non_negative_param(self, params: Dict[str, Any], key: str, default: int):
+        value, error = parse_non_negative_int(params.get(key), allow_empty=True)
+        if error:
+            return 0, self._err(400, f"{key} 无效")
+        return default if value is None else value, None
+
+    def _normalize_if_match_map(self, params: Dict[str, Any]):
         raw = params.get("if_match_map") or {}
         if not isinstance(raw, dict):
-            return {}
+            return {}, self._err(400, "if_match_map 无效")
         normalized: Dict[int, str] = {}
         for key, value in raw.items():
-            try:
-                rid = int(key)
-            except Exception:
-                continue
+            rid, rid_error = parse_positive_int(key)
+            if rid_error:
+                return {}, self._err(400, "if_match_map 无效")
             val = str(value or "").strip()
-            if rid > 0 and val:
-                normalized[rid] = val
-        return normalized
+            if not val:
+                return {}, self._err(400, "if_match_map 无效")
+            normalized[rid] = val
+        return normalized, None
 
     def _idempotency_fingerprint(self, *, model: str, action: str, ids: List[int], vals: Dict[str, Any], idem_key: str) -> str:
         payload = {
@@ -273,17 +299,28 @@ class ApiDataBatchHandler(BaseIntentHandler):
         payload = payload or {}
         params = self._collect_params(payload)
         model = str(params.get("model") or "").strip()
-        ids = self._get_ids(params)
-        action, vals = self._resolve_vals(params)
+        ids, ids_error = self._read_ids(params)
+        if ids_error:
+            return ids_error
+        action, vals, vals_error = self._resolve_vals(params)
+        if vals_error:
+            return vals_error
         request_id = normalize_request_id(params.get("request_id"), prefix="adb_req")
         idempotency_key = str(params.get("idempotency_key") or "").strip() or request_id
-        if_match_map = self._normalize_if_match_map(params)
-        preview_limit = self._get_int(params, "failed_preview_limit", 10)
-        page_limit = self._get_int(params, "failed_limit", preview_limit)
+        if_match_map, if_match_map_error = self._normalize_if_match_map(params)
+        if if_match_map_error:
+            return if_match_map_error
+        preview_limit, preview_limit_error = self._read_positive_param(params, "failed_preview_limit", 10)
+        if preview_limit_error:
+            return preview_limit_error
+        page_limit, page_limit_error = self._read_positive_param(params, "failed_limit", preview_limit)
+        if page_limit_error:
+            return page_limit_error
         page_limit = max(1, min(page_limit, 200))
-        page_offset = self._get_int(params, "failed_offset", 0)
-        page_offset = max(0, page_offset)
-        export_failed_csv = bool(params.get("export_failed_csv"))
+        page_offset, page_offset_error = self._read_non_negative_param(params, "failed_offset", 0)
+        if page_offset_error:
+            return page_offset_error
+        export_failed_csv = parse_bool(params.get("export_failed_csv"), False)
         context = params.get("context") if isinstance(params.get("context"), dict) else {}
 
         if not model:
@@ -301,7 +338,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
         if project_scope_meta.get("applied"):
             allowed_count = env_model.search_count(scoped_domain)
             if int(allowed_count or 0) != len(set(ids)):
-                return self._err(403, "当前项目上下文不允许批量修改其他项目的数据")
+                return self._project_scope_denied("当前项目上下文不允许批量修改其他项目的数据", project_scope_meta)
         trace_id = ""
         if isinstance(self.context, dict):
             trace_id = str(self.context.get("trace_id") or "")
@@ -360,6 +397,8 @@ class ApiDataBatchHandler(BaseIntentHandler):
                 replay_data["failed_csv_file_name"] = failed_csv.get("file_name")
                 replay_data["failed_csv_content_b64"] = failed_csv.get("content_b64")
                 replay_data["failed_csv_count"] = failed_csv.get("count")
+            replay_data.setdefault("project_scope", project_scope_meta)
+            replay_data.setdefault("record_scope", project_scope_meta)
             return {
                 "ok": True,
                 "data": replay_data,
@@ -369,6 +408,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
                     "source": "portal-shell",
                     "source_authority": self._source_authority_contract(model, action or "write"),
                     "project_scope": project_scope_meta,
+                    "record_scope": project_scope_meta,
                 },
         }
 
@@ -445,6 +485,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
                 "failed_reason_summary": self._failed_reason_summary(results),
                 "failed_retryable_summary": self._failed_retryable_summary(results),
                 "project_scope": project_scope_meta,
+                "record_scope": project_scope_meta,
             },
             request_id=request_id,
             idempotency_key=idempotency_key,
@@ -473,5 +514,12 @@ class ApiDataBatchHandler(BaseIntentHandler):
             idem_fingerprint=idempotency_fingerprint,
             result=data,
         )
-        meta = {"trace_id": trace_id, "write_mode": "batch", "source": "portal-shell", "source_authority": self._source_authority_contract(model, action or "write"), "project_scope": project_scope_meta}
+        meta = {
+            "trace_id": trace_id,
+            "write_mode": "batch",
+            "source": "portal-shell",
+            "source_authority": self._source_authority_contract(model, action or "write"),
+            "project_scope": project_scope_meta,
+            "record_scope": project_scope_meta,
+        }
         return {"ok": True, "data": data, "meta": meta}

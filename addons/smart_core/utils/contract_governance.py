@@ -3,6 +3,14 @@ from __future__ import annotations
 
 from typing import Any
 
+SOURCE_KIND = "ui_contract_governance_projection"
+SOURCE_AUTHORITIES = ("native_contract", "governance_rules", "legacy_industry_governance_profile")
+NO_BUSINESS_FACT_AUTHORITY = True
+LEGACY_INDUSTRY_GOVERNANCE_SOURCE_KIND = "legacy_industry_governance_profile"
+LEGACY_USER_SURFACE_MODEL_POLICY_SOURCE_KIND = "legacy_user_surface_model_policy"
+LEGACY_RECORD_CONTEXT_CLEAR_MODELS = {"project.project"}
+LEGACY_DELETE_ONLY_MODELS = {"project.task", "res.company", "hr.department", "res.users"}
+
 CONTRACT_MODES = {"user", "hud"}
 CONTRACT_SURFACES = {"user", "native", "hud"}
 _NON_HUD_STRIP_KEYS = {
@@ -380,6 +388,67 @@ _RENDER_PROFILES = {
     _RENDER_PROFILE_EDIT,
     _RENDER_PROFILE_READONLY,
 }
+
+
+def source_authority_contract() -> dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "legacy_industry_governance_profile": LEGACY_INDUSTRY_GOVERNANCE_SOURCE_KIND,
+        "legacy_user_surface_model_policy": LEGACY_USER_SURFACE_MODEL_POLICY_SOURCE_KIND,
+        "field_label_projection_only": True,
+        "no_partner_classification": True,
+    }
+
+
+def legacy_industry_governance_source_authority_contract() -> dict[str, Any]:
+    return {
+        "kind": LEGACY_INDUSTRY_GOVERNANCE_SOURCE_KIND,
+        "authorities": ["compatibility_governance_rules", "industry_extension_governance_profile"],
+        "projection_only": True,
+        "no_business_fact_authority": True,
+        "legacy_compatibility": True,
+    }
+
+
+def legacy_user_surface_model_policy_source_authority_contract() -> dict[str, Any]:
+    return {
+        "kind": LEGACY_USER_SURFACE_MODEL_POLICY_SOURCE_KIND,
+        "authorities": ["compatibility_ui_model_policy", "extension_governance_policy"],
+        "projection_only": True,
+        "no_business_fact_authority": True,
+        "legacy_compatibility": True,
+    }
+
+
+def _mark_legacy_industry_governance_profile(data: dict, profile_key: str) -> None:
+    if not isinstance(data, dict):
+        return
+    diagnostics = _as_dict(data.get("governance_diagnostics"))
+    profiles = diagnostics.get("legacy_industry_profiles")
+    if not isinstance(profiles, list):
+        profiles = []
+    if profile_key and profile_key not in profiles:
+        profiles.append(profile_key)
+    diagnostics["legacy_industry_profiles"] = profiles
+    diagnostics["legacy_industry_source_authority"] = legacy_industry_governance_source_authority_contract()
+    data["governance_diagnostics"] = diagnostics
+
+
+def _mark_legacy_user_surface_model_policy(data: dict, policy_key: str) -> None:
+    if not isinstance(data, dict):
+        return
+    diagnostics = _as_dict(data.get("governance_diagnostics"))
+    policies = diagnostics.get("legacy_user_surface_model_policies")
+    if not isinstance(policies, list):
+        policies = []
+    if policy_key and policy_key not in policies:
+        policies.append(policy_key)
+    diagnostics["legacy_user_surface_model_policies"] = policies
+    diagnostics["legacy_user_surface_model_policy_source_authority"] = legacy_user_surface_model_policy_source_authority_contract()
+    data["governance_diagnostics"] = diagnostics
 _FORM_CORE_FIELD_MAX = 8
 _FORM_ACTION_PRIMARY_KEYWORDS = (
     "提交",
@@ -951,12 +1020,16 @@ def _apply_user_surface_policies(data: dict) -> None:
         rights = _as_dict(effective.get("rights"))
         write_allowed = bool(rights.get("write"))
         unlink_allowed = bool(rights.get("unlink"))
-        delete_allowed = bool(write_allowed and unlink_allowed and model not in {"project.project"})
-        delete_only_mode = bool(delete_allowed and model in {"project.task", "res.company", "hr.department", "res.users"})
+        if model in LEGACY_RECORD_CONTEXT_CLEAR_MODELS:
+            _mark_legacy_user_surface_model_policy(data, f"{model}.record_open_context")
+        if model in LEGACY_DELETE_ONLY_MODELS:
+            _mark_legacy_user_surface_model_policy(data, f"{model}.delete_only")
+        delete_allowed = bool(write_allowed and unlink_allowed and model not in LEGACY_RECORD_CONTEXT_CLEAR_MODELS)
+        delete_only_mode = bool(delete_allowed and model in LEGACY_DELETE_ONLY_MODELS)
         available_actions = []
         if write_allowed:
             available_actions = ["delete"] if delete_only_mode else ["archive", "activate", "delete"]
-        if model in {"project.project"}:
+        if model in LEGACY_RECORD_CONTEXT_CLEAR_MODELS:
             record_open_policy = {
                 "carry_query_mode": "clear_scene_context",
             }
@@ -1755,6 +1828,22 @@ def _govern_standard_list_for_user(
         for row in native_schema_rows
         if isinstance(row, dict) and _safe_text(row.get("name"))
     }
+    native_columns = []
+    for row in tree.get("columns") or []:
+        if isinstance(row, dict):
+            name = _safe_text(row.get("name"))
+        else:
+            name = _safe_text(row)
+        if name and name not in native_columns:
+            native_columns.append(name)
+    for name in native_schema_by_name:
+        if name not in native_columns:
+            native_columns.append(name)
+    # Governance may order and enrich standard business columns, but it must
+    # not drop columns that came from the native view fact source.
+    for name in native_columns:
+        if name in fields_map and name not in selected:
+            selected.append(name)
 
     def _field_label(name: str) -> str:
         schema_label = _safe_text(native_schema_by_name.get(name, {}).get("label") or native_schema_by_name.get(name, {}).get("string"))
@@ -2021,6 +2110,7 @@ def _apply_standard_search_toolbar_labels(data: dict) -> None:
 def _govern_tier_review_list_for_user(data: dict) -> None:
     if not _is_model_tree_contract(data, "tier.review"):
         return
+    _mark_legacy_industry_governance_profile(data, "tier.review.list")
 
     def _keep_action(row: Any) -> bool:
         if not isinstance(row, dict):
@@ -3865,6 +3955,10 @@ def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
     if contract_mode == "user" and _is_project_task_form_contract(data):
         _govern_project_task_form_for_user(data)
     if contract_mode == "user":
+        if _is_model_tree_contract(data, "payment.request"):
+            _mark_legacy_industry_governance_profile(data, "payment.request.list")
+        if _is_model_tree_contract(data, "project.material.plan"):
+            _mark_legacy_industry_governance_profile(data, "project.material.plan.list")
         _govern_standard_list_for_user(
             data,
             model_name="project.project",
@@ -3910,6 +4004,13 @@ def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
         _govern_enterprise_user_form_for_user(data)
     if contract_mode == "user" and _is_project_kanban_contract(data):
         _govern_project_kanban_contract_for_user(data)
+
+
+register_contract_domain_override(
+    "smart_core_default_contract_domain_governance",
+    apply_project_form_domain_override,
+    priority=50,
+)
 
 
 def _apply_sanitize_governance(data: dict, contract_mode: str) -> None:

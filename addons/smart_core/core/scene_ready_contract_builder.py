@@ -4,6 +4,7 @@ from __future__ import annotations
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from typing import Any, Dict, List
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 from odoo.addons.smart_core.core.scene_dsl_compiler import scene_compile
 from odoo.addons.smart_core.core.scene_ready_entry_semantic_bridge import apply_scene_ready_entry_semantic_bridge
 from odoo.addons.smart_core.core.scene_ready_parser_semantic_bridge import apply_scene_ready_parser_semantic_bridge
@@ -11,6 +12,25 @@ from odoo.addons.smart_core.core.scene_ready_semantic_orchestration_bridge impor
     apply_scene_ready_semantic_orchestration_bridge,
 )
 from odoo.addons.smart_core.core.ui_base_contract_adapter import adapt_ui_base_contract
+
+SOURCE_KIND = "scene_ready_contract_projection"
+SOURCE_AUTHORITIES = (
+    "scene_registry",
+    "scene_dsl_contract_compiler",
+    "ui_base_contract",
+    "scene_provider_registry",
+    "scene_ready_semantic_bridges",
+)
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        scene_runtime_contract_only=True,
+    )
 
 
 def _text(value: Any) -> str:
@@ -224,6 +244,94 @@ def _normalize_optimization_composition(payload: Dict[str, Any]) -> Dict[str, An
 
 def _optimization_composition_nonempty(payload: Dict[str, Any]) -> bool:
     return bool(_as_dict(payload))
+
+
+def _derive_form_surface_from_base_contract(ui_base_contract: Dict[str, Any]) -> Dict[str, Any]:
+    contract = _as_dict(ui_base_contract)
+    views = _as_dict(contract.get("views"))
+    form_view = _as_dict(views.get("form"))
+    semantic_page = _as_dict(contract.get("semantic_page"))
+    form_semantics = _as_dict(semantic_page.get("form_semantics"))
+    out: Dict[str, Any] = {}
+
+    layout = _as_list(form_view.get("layout"))
+    if layout:
+        out["layout"] = layout
+    header_actions = _as_list(form_view.get("header_buttons"))
+    if header_actions:
+        out["header_actions"] = header_actions
+    stat_actions = []
+    for key in ("button_box", "stat_buttons"):
+        stat_actions.extend(_as_list(form_view.get(key)))
+    if stat_actions:
+        out["stat_actions"] = stat_actions
+    relation_fields = _as_list(form_semantics.get("relation_fields"))
+    if relation_fields:
+        out["relation_fields"] = relation_fields
+    field_behavior_map = _as_dict(form_semantics.get("field_behavior_map"))
+    if field_behavior_map:
+        out["field_behavior_map"] = field_behavior_map
+
+    flags = {}
+    for key in (
+        "layout_section_count",
+        "has_statusbar",
+        "has_notebook",
+        "has_chatter",
+        "has_attachments",
+    ):
+        if key in form_semantics:
+            flags[key] = form_semantics.get(key)
+    if flags:
+        out["flags"] = flags
+    return out
+
+
+def _derive_optimization_composition(payload: Dict[str, Any]) -> Dict[str, Any]:
+    search_surface = _as_dict(payload.get("search_surface"))
+    list_surface = _as_dict(payload.get("list_surface"))
+    if not (search_surface or list_surface):
+        return {}
+
+    toolbar_sections = []
+    if search_surface:
+        toolbar_sections.append({"key": "search", "kind": "search", "priority": 10, "visible": True})
+        toolbar_sections.append(
+            {"key": "active_conditions", "kind": "active_conditions", "priority": 20, "visible": True}
+        )
+    if list_surface.get("available_view_modes"):
+        toolbar_sections.append({"key": "view_switch", "kind": "view_switch", "priority": 30, "visible": True})
+    if list_surface.get("default_sort"):
+        toolbar_sections.append({"key": "sort", "kind": "sort", "priority": 40, "visible": True})
+
+    default_state = _as_dict(search_surface.get("default_state"))
+    default_filters = [row for row in _as_list(default_state.get("filters")) if isinstance(row, dict)]
+    filters = [row for row in _as_list(search_surface.get("filters")) if isinstance(row, dict)]
+    high_frequency_filters = default_filters or filters[:2]
+
+    out: Dict[str, Any] = {}
+    if toolbar_sections:
+        out["toolbar_sections"] = toolbar_sections
+    if search_surface:
+        out["active_conditions"] = {
+            "visible": True,
+            "include": ["route_preset", "search_term", "sort"],
+            "merge_rules": {"route_preset_overrides_search_term": True},
+        }
+    if high_frequency_filters:
+        out["high_frequency_filters"] = high_frequency_filters
+    if filters or _as_list(search_surface.get("group_by")) or _as_list(search_surface.get("searchpanel")):
+        out["advanced_filters"] = {
+            "visible": True,
+            "collapsible": True,
+            "default_open": False,
+            "source": {
+                "include_remaining_filters": True,
+                "include_searchpanel": bool(_as_list(search_surface.get("searchpanel"))),
+                "include_saved_filters": False,
+            },
+        }
+    return out
 
 
 def apply_scene_ready_search_semantic_bridge(payload: Dict[str, Any] | None) -> Dict[str, Any]:
@@ -855,12 +963,16 @@ def _scene_ready_entry(
         compiled["list_surface"] = seeded_list_surface
     compiled_form_surface = _normalize_form_surface(compiled)
     seeded_form_surface = _normalize_form_surface(scene_payload)
+    base_form_surface = _derive_form_surface_from_base_contract(ui_base_contract)
     merged_form_surface = _merge_form_surface(compiled_form_surface, seeded_form_surface)
+    merged_form_surface = _merge_form_surface(merged_form_surface, base_form_surface)
     if _form_surface_nonempty(merged_form_surface):
         compiled["form_surface"] = merged_form_surface
     elif _form_surface_nonempty(seeded_form_surface):
         compiled["form_surface"] = seeded_form_surface
     optimization_composition = _normalize_optimization_composition(compiled)
+    if not _optimization_composition_nonempty(optimization_composition):
+        optimization_composition = _derive_optimization_composition(compiled)
     if _optimization_composition_nonempty(optimization_composition):
         compiled["optimization_composition"] = optimization_composition
     compiled = _apply_pilot_strict_contract(scene_key, item, compiled)
@@ -922,6 +1034,7 @@ def build_scene_ready_contract_v1(
         "scenes": entries,
         "meta": {
             "generated_by": "smart_core.scene_ready_contract_builder",
+            "source_authority": source_authority_contract(),
             "scene_count": len(entries),
             "mode": "dual_track",
             "base_contract_bound_scene_count": base_bound_scene_count,

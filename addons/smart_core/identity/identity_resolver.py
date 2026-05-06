@@ -41,9 +41,27 @@ ROLE_GROUPS_CAPABILITY_FALLBACK = {
 }
 
 ROLE_PRECEDENCE = ("executive", "pm", "finance")
+SOURCE_KIND = "role_identity_surface_projection"
+SOURCE_AUTHORITIES = ("res.groups", "smart_core_identity_profile", "nav_scene_candidates")
+NO_BUSINESS_FACT_AUTHORITY = True
 
 
 class IdentityResolver:
+    SOURCE_KIND = SOURCE_KIND
+    SOURCE_AUTHORITIES = SOURCE_AUTHORITIES
+    NO_BUSINESS_FACT_AUTHORITY = NO_BUSINESS_FACT_AUTHORITY
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "identity_resolver",
+        }
+
     def __init__(self, env=None):
         self._env = env
         self._role_surface_map = ROLE_SURFACE_MAP

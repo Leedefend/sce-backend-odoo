@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from .source_authority import build_source_authority_contract
+
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 
 SOURCE_KIND = "scene_registry_projection"
@@ -8,12 +10,12 @@ SOURCE_AUTHORITIES = ("sc.scene", "sc.capability", "ir.ui.menu", "ir.actions", "
 
 
 def source_authority_contract():
-    return {
-        "kind": SOURCE_KIND,
-        "authorities": list(SOURCE_AUTHORITIES),
-        "projection_only": True,
-        "no_business_fact_authority": True,
-    }
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        rebuildable=None,
+        no_business_fact_authority=True,
+    )
 
 
 def load_scene_configs(env, *, drift=None):

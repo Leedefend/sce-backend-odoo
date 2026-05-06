@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from python_http_smoke_utils import get_base_url, http_post_json
+from python_http_smoke_utils import extract_login_token, get_base_url, http_post_json, live_login_failure_hint
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -66,8 +66,17 @@ def main() -> int:
     status, login_resp = _post(intent_url, None, "login", {"db": db_name, "login": login, "password": password}, db_name=db_name)
     _assert_envelope(login_resp, "login", errors)
     if status >= 400 or login_resp.get("ok") is not True:
-        errors.append(f"login failed: status={status}")
-    token = (((login_resp.get("data") or {}) if isinstance(login_resp.get("data"), dict) else {}).get("session") or {}).get("token")
+        errors.append(
+            live_login_failure_hint(status=status, payload=login_resp, base_url=base_url, db_name=db_name, login=login)
+        )
+        report["status"] = "ENV_UNAVAILABLE"
+        report["errors"] = errors
+        _write_json(OUT_JSON, report)
+        print("[smart_core_minimum_contract_surface_guard] ENV_UNAVAILABLE")
+        for item in errors:
+            print(f" - {item}")
+        return 1
+    token = extract_login_token(login_resp)
     if not str(token or "").strip():
         errors.append("login: data.session.token missing")
         token = ""
@@ -77,7 +86,13 @@ def main() -> int:
             errors.append(f"login: missing data.{key}")
 
     if token:
-        status, init_resp = _post(intent_url, token, "system.init", {"contract_mode": "user"}, db_name=db_name)
+        status, init_resp = _post(
+            intent_url,
+            token,
+            "system.init",
+            {"contract_mode": "user", "with": "capabilities"},
+            db_name=db_name,
+        )
         _assert_envelope(init_resp, "system.init", errors)
         if status >= 400 or init_resp.get("ok") is not True:
             errors.append(f"system.init failed: status={status}")

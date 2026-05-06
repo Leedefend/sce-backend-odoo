@@ -15,6 +15,21 @@ _logger = logging.getLogger(__name__)
 
 
 class ParseFallbackService:
+    SOURCE_KIND = "odoo_view_parse_fallback_coordinator"
+    SOURCE_AUTHORITIES = ("app.view.config", "ir.ui.view", "odoo.get_view")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "app_config_engine.parse_fallback_service",
+        }
+
     """Parser fallback coordinator."""
 
     def __init__(self, owner):
@@ -37,4 +52,3 @@ class ParseFallbackService:
             return self.owner._fallback_parse(model_name, view_type, view_data)
         _logger.info("VIEW_PARSE_DEBUG: using app.view.parser for %s.%s", model_name, view_type)
         return parsed_json if isinstance(parsed_json, dict) else {}
-

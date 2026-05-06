@@ -12,6 +12,20 @@ from odoo.addons.smart_core.core.ui_base_contract_canonicalizer import canonical
 ASSET_MODEL = "sc.ui.base.contract.asset"
 CONTRACT_KIND_UI_BASE = "ui_base"
 ASSET_TABLE = "sc_ui_base_contract_asset"
+SOURCE_KIND = "ui_base_contract_asset_repository"
+SOURCE_AUTHORITIES = ("sc.ui.base.contract.asset", "ir.config_parameter", "ui_base_contract_runtime_builder")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "write_proxy": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "ui_base_contract_asset_repository",
+    }
 
 
 def _text(value: Any) -> str:
@@ -476,6 +490,7 @@ def bind_scene_assets(
         )
 
     return {
+        "source_authority": source_authority_contract(),
         "scenes": enriched,
         "asset_scene_count": len(assets),
         "bound_scene_count": bound_count,

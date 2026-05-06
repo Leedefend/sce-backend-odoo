@@ -16,6 +16,22 @@ from odoo.addons.smart_core.core.scene_registry_provider import (
 from odoo.addons.smart_core.core.ui_base_contract_canonicalizer import canonicalize_ui_base_contract
 from odoo.addons.smart_core.core.ui_base_contract_asset_repository import upsert_asset
 
+SOURCE_KIND = "ui_base_contract_asset_producer_projection"
+SOURCE_AUTHORITIES = ("scene_registry_projection", "app_config_action_dispatch_proxy", "ui_base_contract_asset_repository")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> dict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "write_proxy": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "ui_base_contract_asset_producer",
+        "fallback_model_is_ui_placeholder": True,
+    }
+
 
 def _text(value: Any) -> str:
     return str(value or "").strip()

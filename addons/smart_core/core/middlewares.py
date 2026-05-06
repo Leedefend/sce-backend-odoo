@@ -11,8 +11,30 @@ from typing import Callable, Dict, Any, List
 from functools import wraps
 
 _logger = logging.getLogger(__name__)
+SOURCE_KIND = "intent_middleware_runtime_pipeline"
+SOURCE_AUTHORITIES = ("intent_request_context", "handler_result", "in_memory_runtime_cache")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "write_proxy": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "intent_middlewares",
+    }
 
 class BaseMiddleware:
+    SOURCE_KIND = SOURCE_KIND
+    SOURCE_AUTHORITIES = SOURCE_AUTHORITIES
+    NO_BUSINESS_FACT_AUTHORITY = NO_BUSINESS_FACT_AUTHORITY
+
+    @classmethod
+    def source_authority_contract(cls) -> Dict[str, Any]:
+        return source_authority_contract()
+
     """中间件基类"""
     
     def __init__(self, name: str = None):

@@ -15,6 +15,21 @@ _logger = logging.getLogger(__name__)
 
 
 class NativeParseService:
+    SOURCE_KIND = "odoo_native_view_parse_coordinator"
+    SOURCE_AUTHORITIES = ("app.view.parser", "ir.ui.view", "odoo.get_view")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": "app_config_engine.native_parse_service",
+        }
+
     """Parse path coordinator for parser-native output."""
 
     def __init__(self, owner):

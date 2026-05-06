@@ -7,6 +7,20 @@ import logging
 from lxml import etree
 
 _logger = logging.getLogger(__name__)
+SOURCE_KIND = "odoo_tree_view_column_projection"
+SOURCE_AUTHORITIES = ("ir.ui.view:tree", "ir.model.fields")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract():
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "app_config_engine.view_utils",
+    }
 
 # 在 list 视图里一般不直接渲染 one2many；防止 read 时返回大批量嵌套数据
 TREE_EXCLUDE_TYPES = {'one2many'}

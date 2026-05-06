@@ -3,6 +3,21 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
+from .source_authority import build_source_authority_contract
+
+SOURCE_KIND = "runtime_page_semantic_orchestration_bridge"
+SOURCE_AUTHORITIES = ("runtime_semantic_surface", "native_view:search", "page_orchestration")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, Any]:
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        runtime_carrier=SOURCE_KIND,
+    )
+
 
 def _text(value: Any) -> str:
     return str(value or "").strip()

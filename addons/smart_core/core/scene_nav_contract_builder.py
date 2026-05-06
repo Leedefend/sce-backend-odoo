@@ -5,9 +5,22 @@ import zlib
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 from odoo.addons.smart_scene.core.nav_policy_registry import resolve_nav_group_policy
 
 NAV_POLICY_KEY = "scene_nav_v1"
+SOURCE_KIND = "scene_navigation_contract_projection"
+SOURCE_AUTHORITIES = ("scene_contract", "scene_nav_policy", "role_surface")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> Dict[str, object]:
+    return build_source_authority_contract(
+        kind=SOURCE_KIND,
+        authorities=SOURCE_AUTHORITIES,
+        no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
+        runtime_carrier="scene_nav_contract_builder",
+    )
 
 EXCLUDED_REASON_NO_CODE = "no_code"
 EXCLUDED_REASON_IMPORTED_PKG = "imported_pkg_variant"

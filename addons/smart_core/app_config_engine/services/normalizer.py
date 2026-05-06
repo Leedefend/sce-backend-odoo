@@ -13,6 +13,20 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 JsonDict = Dict[str, Any]
 JsonList = List[Any]
+SOURCE_KIND = "ui_contract_shape_normalizer"
+SOURCE_AUTHORITIES = ("contract_payload", "contract_2_schema")
+NO_BUSINESS_FACT_AUTHORITY = True
+
+
+def source_authority_contract() -> JsonDict:
+    return {
+        "kind": SOURCE_KIND,
+        "authorities": list(SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "rebuildable": True,
+        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
+        "runtime_carrier": "app_config_engine.contract_normalizer",
+    }
 
 # =========================
 # ========== P0 ===========
@@ -117,6 +131,9 @@ class ContractNormalizer:
     MAX_RECORDS = int(os.getenv("CONTRACT_NORMALIZER_MAX_RECORDS", "200"))
     MAX_COLUMNS = int(os.getenv("CONTRACT_NORMALIZER_MAX_COLUMNS", "200"))
     ENABLED = _safe_bool(os.getenv("CONTRACT_NORMALIZER_ENABLED", "1"), True)
+    SOURCE_KIND = SOURCE_KIND
+    SOURCE_AUTHORITIES = SOURCE_AUTHORITIES
+    NO_BUSINESS_FACT_AUTHORITY = NO_BUSINESS_FACT_AUTHORITY
 
     TOP_KEYS = [
         "head", "permissions", "rules", "search", "views", "fields",
@@ -157,6 +174,10 @@ class ContractNormalizer:
         if warns:
             ret["meta"]["warn"] = list(set(ret["meta"].get("warn", []) + warns))
         return ret
+
+    @classmethod
+    def source_authority_contract(cls) -> JsonDict:
+        return source_authority_contract()
 
     # ---------- 子块清洗 ----------
 

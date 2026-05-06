@@ -5,11 +5,26 @@ import logging
 
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
 from odoo.addons.smart_core.app_config_engine.utils.misc import format_versions, stable_etag
+from odoo.addons.smart_core.core.request_params import parse_bool
+from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 
 _logger = logging.getLogger(__name__)
 
 
 class SystemInitPreloadBuilder:
+    SOURCE_KIND = "system_init_preload_contract_projection"
+    SOURCE_AUTHORITIES = ("ir.actions.act_window", "app_config_action_dispatcher", "ui_contract_service")
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return build_source_authority_contract(
+            kind=cls.SOURCE_KIND,
+            authorities=cls.SOURCE_AUTHORITIES,
+            no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
+            startup_preload_only=True,
+        )
+
     def build(self, env, su_env, params: dict, default_home_action, contract_service):
         home_contract = None
         etags = {}
@@ -33,7 +48,7 @@ class SystemInitPreloadBuilder:
             except Exception as exc:
                 _logger.warning("system.init home preload failed: action=%s, err=%s", default_home_action, exc)
 
-        want_preload = bool(params.get("with_preload", True))
+        want_preload = parse_bool(params.get("with_preload"), True)
         preload_actions = params.get("preload_actions") or []
         if want_preload and preload_actions:
             for act in preload_actions:

@@ -3,6 +3,7 @@ import time
 from datetime import datetime
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.request_params import parse_bool, parse_non_negative_int, parse_positive_int
 from ..governance.scene_drift_engine import build_scene_health_payload
 from .system_init import SystemInitHandler
 
@@ -14,12 +15,33 @@ class SceneHealthHandler(BaseIntentHandler):
     REQUIRED_GROUPS = []
     SOURCE_KIND = "scene_delivery_health_projection"
     SOURCE_AUTHORITIES = ("system.init", "sc.scene", "sc.capability", "ui_base_contract_asset")
+    NO_BUSINESS_FACT_AUTHORITY = True
 
-    def _safe_int(self, value, default):
-        try:
-            return int(value)
-        except Exception:
-            return default
+    @classmethod
+    def source_authority_contract(cls):
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
+
+    def _err(self, code, message):
+        return {
+            "status": "error",
+            "ok": False,
+            "code": code,
+            "error": {"code": code, "message": message},
+            "data": None,
+            "meta": {
+                "intent": self.INTENT_TYPE,
+                "source_kind": self.SOURCE_KIND,
+                "source_authorities": list(self.SOURCE_AUTHORITIES),
+                "source_authority": self.source_authority_contract(),
+            },
+        }
 
     def _parse_since(self, raw):
         if not raw:
@@ -73,14 +95,9 @@ class SceneHealthHandler(BaseIntentHandler):
         if not isinstance(init_data, dict):
             init_data = {}
 
-        company_id = params.get("company_id")
-        if company_id in ("", None):
-            company_id = None
-        else:
-            try:
-                company_id = int(company_id)
-            except Exception:
-                company_id = None
+        company_id, company_error = parse_positive_int(params.get("company_id"), allow_empty=True)
+        if company_error:
+            return self._err(400, "company_id 无效")
 
         trace_id = ""
         try:
@@ -91,8 +108,14 @@ class SceneHealthHandler(BaseIntentHandler):
         mode = str(params.get("mode") or "summary").strip().lower()
         if mode not in {"summary", "full"}:
             mode = "summary"
-        limit = self._safe_int(params.get("limit"), 50)
-        offset = self._safe_int(params.get("offset"), 0)
+        limit, limit_error = parse_positive_int(params.get("limit"), allow_empty=True)
+        if limit_error:
+            return self._err(400, "limit 无效")
+        limit = limit or 50
+        offset, offset_error = parse_non_negative_int(params.get("offset"), allow_empty=True)
+        if offset_error:
+            return self._err(400, "offset 无效")
+        offset = offset or 0
         since_dt = self._parse_since(params.get("since"))
 
         details = data.get("details") if isinstance(data.get("details"), dict) else {}
@@ -101,7 +124,7 @@ class SceneHealthHandler(BaseIntentHandler):
                 details[key] = self._apply_window_and_paging(details.get(key), since_dt, limit, offset)
         data["details"] = details
 
-        with_details = bool(params.get("with_details", True))
+        with_details = parse_bool(params.get("with_details"), True)
         if mode == "summary" or not with_details:
             data.pop("details", None)
         data["query"] = {
@@ -120,5 +143,6 @@ class SceneHealthHandler(BaseIntentHandler):
                 "elapsed_ms": int((time.time() - ts0) * 1000),
                 "source_kind": self.SOURCE_KIND,
                 "source_authorities": list(self.SOURCE_AUTHORITIES),
+                "source_authority": self.source_authority_contract(),
             },
         }

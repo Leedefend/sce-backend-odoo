@@ -17,6 +17,7 @@ from ..core.unified_page_contract_v2_client import (
     trim_unified_page_contract_v2,
 )
 from ..core.scene_provider import load_scenes_from_db_or_fallback
+from ..core.request_params import parse_positive_int
 from .ui_contract import UiContractHandler
 
 _logger = logging.getLogger(__name__)
@@ -36,6 +37,18 @@ class UiContractV2Handler(BaseIntentHandler):
         "ir.model.access",
         "ir.rule",
     )
+    NO_BUSINESS_FACT_AUTHORITY = True
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
 
     def handle(self, payload: Optional[Dict[str, Any]] = None, ctx: Optional[Dict[str, Any]] = None):
         params = self._params(payload)
@@ -46,6 +59,9 @@ class UiContractV2Handler(BaseIntentHandler):
             return self._handle_scene_contract(params, client_type=client_type, delivery_profile=delivery_profile)
         if source_type != "ui.contract":
             return self._err(400, f"unsupported v2 source_type: {source_type}")
+        limit_params, limit_error = self._trim_limit_params(params)
+        if limit_error:
+            return self._err(400, f"{limit_error} 无效")
 
         ui_params = self._ui_contract_params(params)
         source_result = UiContractHandler(
@@ -105,9 +121,7 @@ class UiContractV2Handler(BaseIntentHandler):
             contract_v2,
             client_type=client_type,
             delivery_profile=delivery_profile,
-            max_widgets=params.get("max_widgets") or params.get("maxWidgets"),
-            max_actions=params.get("max_actions") or params.get("maxActions"),
-            max_containers=params.get("max_containers") or params.get("maxContainers"),
+            **limit_params,
             include_source_compat=client_type not in MOBILE_CLIENT_TYPES,
         )
 
@@ -124,6 +138,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 "source_intent": ui_meta.get("intent") or "ui.contract",
                 "source_kind": self.SOURCE_KIND,
                 "source_authorities": list(self.SOURCE_AUTHORITIES),
+                "source_authority": self.source_authority_contract(),
             },
         )
 
@@ -131,6 +146,9 @@ class UiContractV2Handler(BaseIntentHandler):
         scene_key = str(params.get("scene_key") or params.get("sceneKey") or "").strip()
         if not scene_key:
             return self._err(400, "missing scene_key for scene_contract_v1")
+        limit_params, limit_error = self._trim_limit_params(params)
+        if limit_error:
+            return self._err(400, f"{limit_error} 无效")
         source_contract = self._scene_contract_source(scene_key)
         contract_v2 = assemble_unified_page_contract_v2(
             {"scene_contract_v1": source_contract},
@@ -142,9 +160,7 @@ class UiContractV2Handler(BaseIntentHandler):
             contract_v2,
             client_type=client_type,
             delivery_profile=delivery_profile,
-            max_widgets=params.get("max_widgets") or params.get("maxWidgets"),
-            max_actions=params.get("max_actions") or params.get("maxActions"),
-            max_containers=params.get("max_containers") or params.get("maxContainers"),
+            **limit_params,
             include_source_compat=client_type not in MOBILE_CLIENT_TYPES,
         )
         return IntentExecutionResult(
@@ -159,6 +175,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 "source_type": "scene_contract_v1",
                 "source_kind": self.SOURCE_KIND,
                 "source_authorities": list(self.SOURCE_AUTHORITIES),
+                "source_authority": self.source_authority_contract(),
             },
         )
 
@@ -237,6 +254,20 @@ class UiContractV2Handler(BaseIntentHandler):
         except Exception:
             _logger.debug("failed to read ui.contract.v2 request headers", exc_info=True)
         return {}
+
+    def _trim_limit_params(self, params: dict[str, Any]) -> tuple[dict[str, Optional[int]], Optional[str]]:
+        out: dict[str, Optional[int]] = {}
+        for output_key, snake_key, camel_key in (
+            ("max_widgets", "max_widgets", "maxWidgets"),
+            ("max_actions", "max_actions", "maxActions"),
+            ("max_containers", "max_containers", "maxContainers"),
+        ):
+            raw = params.get(snake_key) if snake_key in params else params.get(camel_key)
+            value, error = parse_positive_int(raw, allow_empty=True)
+            if error:
+                return {}, snake_key
+            out[output_key] = value
+        return out, None
 
     def _ui_contract_params(self, params: dict[str, Any]) -> dict[str, Any]:
         ui_params = dict(params)
@@ -322,6 +353,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 "intent": self.INTENT_TYPE,
                 "version": self.VERSION,
                 "contract_version": CONTRACT_VERSION,
+                "source_authority": self.source_authority_contract(),
             },
             code=code,
         )
