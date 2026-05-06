@@ -21,6 +21,7 @@ from ..core.http_result_policy import (
 )
 from ..core.intent_access_policy import ANONYMOUS_INTENTS, is_anonymous_allowed_intent
 from ..core.intent_operation_policy import is_write_intent, nested_params, normalize_intent_operation
+from ..core.request_transaction import rollback_request_env
 from ..security.intent_permission import check_intent_permission
 from ..core.trace import get_trace_id
 from ..core.exceptions import (
@@ -144,10 +145,7 @@ def _error_response(
 
 
 def _rollback_request_env(intent_name: str | None, trace_id: str | None):
-    try:
-        request.env.cr.rollback()
-    except Exception:
-        _logger.exception("intent rollback failed: intent=%s trace=%s", intent_name, trace_id)
+    rollback_request_env(_logger, reason=f"intent:{intent_name or ''}", trace_id=trace_id, request_obj=request)
 
 
 def _permission_error_details(intent_name: str, params: Dict[str, Any], message: str) -> dict:

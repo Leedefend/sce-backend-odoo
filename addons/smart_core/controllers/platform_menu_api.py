@@ -7,6 +7,7 @@ from odoo.exceptions import AccessDenied
 
 from odoo.addons.smart_core.core.trace import get_trace_id
 from odoo.addons.smart_core.core.request_identity import identity_id
+from odoo.addons.smart_core.core.request_transaction import rollback_request_env
 from odoo.addons.smart_core.delivery.menu_fact_service import MenuFactService
 from odoo.addons.smart_core.delivery.menu_delivery_convergence_service import MenuDeliveryConvergenceService
 from odoo.addons.smart_core.delivery.menu_target_interpreter_service import MenuTargetInterpreterService
@@ -73,10 +74,7 @@ def _json_response(payload: dict, status: int = 200):
 
 
 def _rollback_request_env():
-    try:
-        request.env.cr.rollback()
-    except Exception:
-        pass
+    rollback_request_env(request_obj=request)
 
 
 def _resolve_request_env():
