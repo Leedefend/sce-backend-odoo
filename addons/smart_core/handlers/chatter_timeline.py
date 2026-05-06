@@ -10,6 +10,7 @@ from ..core.project_context import (
     record_in_project_scope,
     selected_project_id_from_context,
 )
+from ..core.request_params import parse_bool
 from ..utils.reason_codes import (
     REASON_MISSING_PARAMS,
     REASON_NOT_FOUND,
@@ -45,7 +46,7 @@ class ChatterTimelineHandler(BaseIntentHandler):
         model = params.get("model")
         res_id = params.get("res_id") or params.get("record_id")
         limit = _coerce_limit(params.get("limit"), default=40, cap=120)
-        include_audit = bool(params.get("include_audit", True))
+        include_audit = parse_bool(params.get("include_audit"), True)
         trace_id = self.context.get("trace_id") if isinstance(self.context, dict) else ""
 
         if not model or not res_id:

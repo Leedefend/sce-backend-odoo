@@ -13,6 +13,33 @@ class _BaseIntentHandler:
         self.context = context or {}
 
 
+class _Record:
+    id = 7
+
+    def exists(self):
+        return self
+
+    def check_access_rule(self, mode):
+        return True
+
+
+class _Model:
+    def browse(self, record_id):
+        return _Record()
+
+    def check_access_rights(self, mode):
+        return True
+
+
+class _EmptySearchModel:
+    def search(self, *args, **kwargs):
+        return []
+
+
+class _Env(dict):
+    pass
+
+
 def _load_handler():
     root = Path(__file__).resolve().parents[1]
     odoo_mod = types.ModuleType("odoo")
@@ -100,6 +127,20 @@ class TestChatterTimelineBoundaries(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
+
+    def test_string_false_include_audit_skips_audit_authority(self):
+        handler = self.module.ChatterTimelineHandler(
+            env=_Env({"x.model": _Model(), "mail.message": _EmptySearchModel(), "ir.attachment": _EmptySearchModel()}),
+            params={"model": "x.model", "res_id": 7, "include_audit": "false"},
+        )
+
+        result = handler.handle()
+
+        self.assertIsInstance(result, tuple)
+        data, meta = result
+        self.assertEqual(data["counts"]["audit"], 0)
+        self.assertEqual(data["auxiliary_authorities"], [])
+        self.assertEqual(meta["auxiliary_authorities"], [])
 
 
 if __name__ == "__main__":
