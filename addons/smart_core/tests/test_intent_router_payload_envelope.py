@@ -30,6 +30,24 @@ class _FakeRequest:
         self.uid = 7
 
 
+class _TrackingCursor:
+    dbname = "other_db"
+
+    def __init__(self):
+        self.commits = 0
+        self.rollbacks = 0
+        self.closed = 0
+
+    def commit(self):
+        self.commits += 1
+
+    def rollback(self):
+        self.rollbacks += 1
+
+    def close(self):
+        self.closed += 1
+
+
 def _load_router(fake_request, handler_cls):
     root = Path(__file__).resolve().parents[1]
     module_path = root / "core" / "intent_router.py"
@@ -110,6 +128,56 @@ class TestIntentRouterPayloadEnvelope(unittest.TestCase):
         self.assertEqual(seen["init_payload"], expected)
         self.assertEqual(seen["run_payload"], expected)
         self.assertEqual(seen["ctx"], {"trace": "t"})
+
+    def test_extra_cursor_rolls_back_when_handler_returns_error_result(self):
+        class Handler:
+            def __init__(self, **kwargs):
+                self.registry = None
+                self.cr = None
+                self.uid = None
+
+            def run(self, payload=None, ctx=None):
+                del payload, ctx
+                return {"ok": False, "code": 400, "error": {"message": "bad"}}
+
+        router = _load_router(_FakeRequest(), Handler)
+        tracking_cr = _TrackingCursor()
+        env = _FakeEnv()
+        env.cr = tracking_cr
+        env.registry = object()
+        router._build_envs = lambda params, context: (env, object(), tracking_cr)
+
+        result = router._dispatch("demo.intent", {"x": 1}, {})
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(tracking_cr.commits, 0)
+        self.assertEqual(tracking_cr.rollbacks, 1)
+        self.assertEqual(tracking_cr.closed, 1)
+
+    def test_extra_cursor_commits_when_handler_returns_success_result(self):
+        class Handler:
+            def __init__(self, **kwargs):
+                self.registry = None
+                self.cr = None
+                self.uid = None
+
+            def run(self, payload=None, ctx=None):
+                del payload, ctx
+                return {"ok": True}
+
+        router = _load_router(_FakeRequest(), Handler)
+        tracking_cr = _TrackingCursor()
+        env = _FakeEnv()
+        env.cr = tracking_cr
+        env.registry = object()
+        router._build_envs = lambda params, context: (env, object(), tracking_cr)
+
+        result = router._dispatch("demo.intent", {"x": 1}, {})
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(tracking_cr.commits, 1)
+        self.assertEqual(tracking_cr.rollbacks, 0)
+        self.assertEqual(tracking_cr.closed, 1)
 
 
 if __name__ == "__main__":

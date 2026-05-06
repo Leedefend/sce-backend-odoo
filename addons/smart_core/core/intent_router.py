@@ -108,6 +108,7 @@ def _dispatch(intent: str, params: dict, context: dict):
     # 1) 构造 env / su_env（必要时切库）
     env, su_env, extra_cr = _build_envs(params or {}, context or {})
     dispatch_succeeded = False
+    dispatch_result = None
     try:
         payload_envelope = {"intent": intent, "params": params or {}, "context": context or {}}
         # 2) 实例化 handler，注入 env/su_env/context/params
@@ -131,7 +132,8 @@ def _dispatch(intent: str, params: dict, context: dict):
             payload=payload_envelope,
             ctx=context or {},
         )
-        dispatch_succeeded = True
+        dispatch_result = result
+        dispatch_succeeded = not (isinstance(result, dict) and result.get("ok") is False)
         return result
     finally:
         # 若新开了 cursor：成功请求要提交，否则关闭时会隐式回滚。
@@ -140,6 +142,9 @@ def _dispatch(intent: str, params: dict, context: dict):
                 if dispatch_succeeded:
                     _logger.info("[intent_router] commit extra cursor intent=%s db=%s", intent, env.cr.dbname)
                     extra_cr.commit()
+                elif dispatch_result is not None:
+                    _logger.info("[intent_router] rollback extra cursor intent=%s db=%s", intent, env.cr.dbname)
+                    extra_cr.rollback()
                 extra_cr.close()
             except Exception:
                 _logger.exception("[intent] close cursor failed (db=%s)", env.cr.dbname)
