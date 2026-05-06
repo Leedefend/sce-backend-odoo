@@ -575,7 +575,7 @@ class ApiDataHandler(BaseIntentHandler):
             return None
         runtime_env = {
             "uid": int(getattr(self.env, "uid", 0) or 0),
-            "user": self.env.user,
+            "user": getattr(self.env, "user", None),
             "context_today": lambda: datetime.now().date(),
             "datetime": datetime,
         }
@@ -1039,22 +1039,24 @@ class ApiDataHandler(BaseIntentHandler):
 
         if context_raw:
             parsed_ctx = self._safe_eval_with_runtime(context_raw)
-            if isinstance(parsed_ctx, dict):
-                ctx = {**ctx, **parsed_ctx}
-                if group_by is None:
-                    group_by = self._normalize_group_by(parsed_ctx.get("group_by"))
+            if not isinstance(parsed_ctx, dict):
+                return self._err(400, "context_raw 无效")
+            ctx = {**ctx, **parsed_ctx}
+            if group_by is None:
+                group_by = self._normalize_group_by(parsed_ctx.get("group_by"))
 
         if group_by is not None:
             ctx = {**ctx, "group_by": group_by}
 
         if domain_raw:
             parsed_domain = self._safe_eval_with_runtime(domain_raw)
-            if isinstance(parsed_domain, list):
-                if not domain:
-                    domain = parsed_domain
-                elif parsed_domain:
-                    # 同时存在 domain 与 domain_raw 时，按 AND 语义合并，确保快捷筛选生效。
-                    domain = parsed_domain + domain
+            if not isinstance(parsed_domain, list):
+                return self._err(400, "domain_raw 无效")
+            if not domain:
+                domain = parsed_domain
+            elif parsed_domain:
+                # 同时存在 domain 与 domain_raw 时，按 AND 语义合并，确保快捷筛选生效。
+                domain = parsed_domain + domain
 
         env_model = self.env[model].with_context(ctx)
         if sudo:

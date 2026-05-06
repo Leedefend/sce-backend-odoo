@@ -164,6 +164,20 @@ class TestApiDataListParamBoundaries(unittest.TestCase):
         self.assertEqual(result["error"]["code"], 400)
         self.assertEqual(result["error"]["message"], "ids 无效")
 
+    def test_list_rejects_invalid_domain_raw(self):
+        result = self.handler._op_list("x.model", {"domain_raw": "bad expression"}, {}, False)
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"]["code"], 400)
+        self.assertEqual(result["error"]["message"], "domain_raw 无效")
+
+    def test_list_rejects_invalid_context_raw(self):
+        result = self.handler._op_list("x.model", {"context_raw": "bad expression"}, {}, False)
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"]["code"], 400)
+        self.assertEqual(result["error"]["message"], "context_raw 无效")
+
 
 if __name__ == "__main__":
     unittest.main()
