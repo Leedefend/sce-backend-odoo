@@ -82,6 +82,8 @@ def _rollback_request_env():
 def _resolve_request_env():
     user = get_user_from_token()
     user_id = identity_id(user)
+    if not user_id:
+        raise AccessDenied("Token 无效或缺少 user_id")
     env = request.env(user=user_id)
     request.env = env
     try:

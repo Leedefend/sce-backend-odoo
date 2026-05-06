@@ -36,7 +36,7 @@ def _install_module(name, **attrs):
     return mod
 
 
-def _load_controller(fake_request):
+def _load_controller(fake_request, user_provider=None):
     root = Path(__file__).resolve().parents[1]
     module_path = root / "controllers" / "platform_menu_api.py"
 
@@ -69,7 +69,7 @@ def _load_controller(fake_request):
     )
     _install_module(
         "odoo.addons.smart_core.security.auth",
-        get_user_from_token=lambda: _FakeUser(),
+        get_user_from_token=user_provider or (lambda: _FakeUser()),
     )
     _install_module(
         "odoo.addons.smart_core.utils.extension_hooks",
@@ -111,6 +111,13 @@ class TestPlatformMenuRequestEnv(unittest.TestCase):
         controller._rollback_request_env()
 
         self.assertEqual(env.cr.rollbacks, 1)
+
+    def test_resolve_request_env_rejects_missing_user_identity(self):
+        fake_request = _FakeRequest()
+        controller = _load_controller(fake_request, user_provider=lambda: None)
+
+        with self.assertRaises(controller.AccessDenied):
+            controller._resolve_request_env()
 
 
 if __name__ == "__main__":
