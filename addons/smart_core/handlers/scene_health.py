@@ -3,6 +3,7 @@ import time
 from datetime import datetime
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.request_params import parse_bool
 from ..governance.scene_drift_engine import build_scene_health_payload
 from .system_init import SystemInitHandler
 
@@ -113,7 +114,7 @@ class SceneHealthHandler(BaseIntentHandler):
                 details[key] = self._apply_window_and_paging(details.get(key), since_dt, limit, offset)
         data["details"] = details
 
-        with_details = bool(params.get("with_details", True))
+        with_details = parse_bool(params.get("with_details"), True)
         if mode == "summary" or not with_details:
             data.pop("details", None)
         data["query"] = {
