@@ -35,6 +35,32 @@ class _FakeRecordset:
         self.model.rule_modes.append(mode)
 
 
+class _FakeAction:
+    def __init__(self, action_id=31, name="Fake Action", groups_id=None, exists=True):
+        self.id = action_id
+        self.name = name
+        self.groups_id = groups_id or set()
+        self._exists = exists
+
+    def exists(self):
+        return self if self._exists else False
+
+
+class _FakeActionModel:
+    def __init__(self, action):
+        self.action = action
+        self.browsed_ids = []
+
+    def sudo(self):
+        return self
+
+    def browse(self, action_id):
+        self.browsed_ids.append(action_id)
+        if int(action_id or 0) == self.action.id:
+            return self.action
+        return _FakeAction(action_id=action_id, exists=False)
+
+
 class _FakeModel:
     def __init__(self):
         self.access_modes = []
@@ -52,6 +78,9 @@ class _FakeModel:
 class _FakeEnv:
     def __init__(self, model):
         self.model = model
+        self.action = _FakeAction()
+        self.generic_action_model = _FakeActionModel(self.action)
+        self.client_action_model = _FakeActionModel(self.action)
         self.user = _FakeUser()
 
     def __call__(self, user=None):
@@ -61,6 +90,10 @@ class _FakeEnv:
     def __getitem__(self, name):
         if name == "x.model":
             return self.model
+        if name == "ir.actions.actions":
+            return self.generic_action_model
+        if name == "ir.actions.client":
+            return self.client_action_model
         raise KeyError(name)
 
 
@@ -185,6 +218,21 @@ class TestIntentPermissionOperationPolicy(unittest.TestCase):
 
         self.assertEqual(self.model.access_modes, ["write"])
         self.assertEqual(self.model.rule_modes, ["write"])
+
+    def test_action_permission_resolves_generic_action_model(self):
+        ctx = _Ctx({"intent": "ui.contract", "params": {"action_id": 31}})
+
+        self.permission.check_intent_permission(ctx)
+
+        self.assertEqual(self.env.generic_action_model.browsed_ids, [31])
+
+    def test_action_permission_honors_action_type_model_before_generic_fallback(self):
+        ctx = _Ctx({"intent": "ui.contract", "params": {"action_id": 31, "action_type": "ir.actions.client"}})
+
+        self.permission.check_intent_permission(ctx)
+
+        self.assertEqual(self.env.client_action_model.browsed_ids, [31])
+        self.assertEqual(self.env.generic_action_model.browsed_ids, [])
 
     def test_capability_key_can_be_top_level_or_nested(self):
         self.assertEqual(

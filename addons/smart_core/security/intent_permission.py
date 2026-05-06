@@ -81,6 +81,51 @@ def _capability_key(ctx_params):
     return None
 
 
+def _to_int(value):
+    try:
+        return int(value)
+    except Exception:
+        return 0
+
+
+def _action_model_for_type(action_type):
+    action_type = str(action_type or "").strip()
+    if action_type.startswith("ir.actions."):
+        return action_type
+    aliases = {
+        "window": "ir.actions.act_window",
+        "act_window": "ir.actions.act_window",
+        "client": "ir.actions.client",
+        "server": "ir.actions.server",
+        "url": "ir.actions.act_url",
+        "report": "ir.actions.report",
+    }
+    return aliases.get(action_type, "")
+
+
+def _resolve_action(env, action_id, action_type=None):
+    action_id = _to_int(action_id)
+    if action_id <= 0:
+        return None
+    models = []
+    action_model = _action_model_for_type(action_type)
+    if action_model:
+        models.append(action_model)
+    models.extend(["ir.actions.actions", "ir.actions.act_window"])
+    seen = set()
+    for model_name in models:
+        if model_name in seen:
+            continue
+        seen.add(model_name)
+        try:
+            action = env[model_name].sudo().browse(action_id)
+            if action.exists():
+                return action
+        except Exception:
+            continue
+    return None
+
+
 def _sync_authenticated_identity(ctx, user):
     user_id = getattr(user, "id", user)
     request.env = request.env(user=user_id)
@@ -124,6 +169,7 @@ def check_intent_permission(ctx):
     model = _param_value(ctx_params, "model")
     menu_id = _param_value(ctx_params, "menu_id")
     action_id = _param_value(ctx_params, "action_id")
+    action_type = _param_value(ctx_params, "action_type") or _param_value(ctx_params, "type")
     access_mode = access_mode_for_intent(intent_name, ctx_params)
 
 
@@ -162,12 +208,13 @@ def check_intent_permission(ctx):
     if action_id:
         # 动作元数据读取使用 sudo，避免被 ir.actions.* 模型 ACL 拦截。
         # 最终授权仍基于当前用户组与动作 groups_id 交集判断。
-        action = env["ir.actions.act_window"].sudo().browse(int(action_id))
-        if not action.exists():
+        action = _resolve_action(env, action_id, action_type=action_type)
+        if not action:
             raise MissingError(f"动作 {action_id} 不存在")
         # 集合交集判断
-        if action.groups_id and not (action.groups_id & env.user.groups_id):
-            raise AccessError(f"用户无权执行动作 {action.name}")
+        groups = getattr(action, "groups_id", None)
+        if groups and not (groups & env.user.groups_id):
+            raise AccessError(f"用户无权执行动作 {getattr(action, 'name', action_id)}")
 
     # ✅ 授权/功能开关检查（若启用）
     try:
