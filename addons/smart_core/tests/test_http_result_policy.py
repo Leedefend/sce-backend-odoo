@@ -76,6 +76,12 @@ class TestHttpResultPolicy(unittest.TestCase):
             500,
         )
 
+    def test_top_level_symbolic_error_code_maps_to_http_status(self):
+        self.assertEqual(
+            self.policy.result_http_status({"ok": False, "code": "PERMISSION_DENIED", "error": {"message": "denied"}}),
+            403,
+        )
+
     def test_error_without_numeric_status_defaults_to_internal_error(self):
         self.assertEqual(
             self.policy.result_http_status({"ok": False, "error": {"message": "bad"}}),

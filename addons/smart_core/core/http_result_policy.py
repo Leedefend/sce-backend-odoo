@@ -34,6 +34,18 @@ def normalize_result_ok(result: Dict[str, Any] | None) -> Dict[str, Any] | None:
     return result
 
 
+def _coerce_http_status(raw: Any, *, success: bool, default: int = 200) -> int:
+    if isinstance(raw, str) and raw.strip().upper() in SYMBOLIC_ERROR_STATUS:
+        return SYMBOLIC_ERROR_STATUS[raw.strip().upper()]
+    try:
+        status = int(raw)
+    except Exception:
+        return 500 if not success else default
+    if status < 100 or status > 599:
+        return 500 if not success else default
+    return status
+
+
 def result_transaction_action(
     intent_name: str,
     params: Dict[str, Any] | None,
@@ -79,6 +91,7 @@ def normalize_error_result(
 
 def result_http_status(result: Dict[str, Any] | None, default: int = 200) -> int:
     payload = result if isinstance(result, dict) else {}
+    success = result_is_success(payload)
     raw = payload.get("code", None)
     if raw is None:
         error = payload.get("error") if isinstance(payload.get("error"), dict) else {}
@@ -88,11 +101,5 @@ def result_http_status(result: Dict[str, Any] | None, default: int = 200) -> int
         elif isinstance(error_code, str) and error_code.strip().upper() in SYMBOLIC_ERROR_STATUS:
             raw = SYMBOLIC_ERROR_STATUS[error_code.strip().upper()]
         else:
-            raw = 500 if not result_is_success(payload) else default
-    try:
-        status = int(raw)
-    except Exception:
-        return 500 if not result_is_success(payload) else default
-    if status < 100 or status > 599:
-        return 500 if not result_is_success(payload) else default
-    return status
+            raw = 500 if not success else default
+    return _coerce_http_status(raw, success=success, default=default)
