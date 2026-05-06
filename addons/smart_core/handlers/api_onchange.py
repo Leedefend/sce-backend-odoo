@@ -11,6 +11,7 @@ from ..core.project_context import (
     record_in_project_scope,
     selected_project_id_from_context,
 )
+from ..core.request_params import parse_bool
 from ..core.unified_page_contract_v2_assembler import assemble_unified_page_patch_v2
 from ..core.unified_page_contract_lite_preview import with_lite_preview_if_requested
 from ..utils.reason_codes import normalize_onchange_reason_code
@@ -35,7 +36,7 @@ class ApiOnchangeHandler(BaseIntentHandler):
             or params.get("patchContractVersion")
             or ""
         ).strip()
-        include_v2 = bool(params.get("include_v2_patch") or params.get("includeV2Patch"))
+        include_v2 = parse_bool(params.get("include_v2_patch"), False) or parse_bool(params.get("includeV2Patch"), False)
         if not include_v2 and not contract_version.startswith("2."):
             return response
         data = response.get("data") if isinstance(response.get("data"), dict) else {}

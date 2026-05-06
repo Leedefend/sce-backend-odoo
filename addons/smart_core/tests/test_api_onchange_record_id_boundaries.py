@@ -103,6 +103,17 @@ class TestApiOnchangeRecordIdBoundaries(unittest.TestCase):
         self.assertTrue(result["ok"])
         self.assertEqual(result["data"]["applied_fields"], [])
 
+    def test_string_false_include_v2_patch_does_not_generate_v2_patch(self):
+        handler = self.module.ApiOnchangeHandler(
+            env=_Env({"x.model": _Model()}),
+            params={"model": "x.model", "include_v2_patch": "false"},
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertNotIn("unified_page_patch_v2", result)
+
 
 if __name__ == "__main__":
     unittest.main()
