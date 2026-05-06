@@ -7,6 +7,7 @@ import re
 from odoo import SUPERUSER_ID, api
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.request_params import parse_positive_int
 from ..core.unified_page_contract_lite_preview import with_lite_preview_if_requested
 from ..utils.extension_hooks import call_extension_hook_first
 from ..utils.reason_codes import REASON_OK, REASON_PERMISSION_DENIED
@@ -85,8 +86,12 @@ class LoadContractHandler(BaseIntentHandler):
 
         # ---------- 1) 解析模型 ----------
         raw_model = (p.get("model") or p.get("model_code") or "").strip()
-        menu_id   = p.get("menu_id")
-        action_id = p.get("action_id")
+        menu_id, menu_id_error = parse_positive_int(p.get("menu_id"), allow_empty=True)
+        if menu_id_error:
+            return self._err(400, "menu_id 无效")
+        action_id, action_id_error = parse_positive_int(p.get("action_id"), allow_empty=True)
+        if action_id_error:
+            return self._err(400, "action_id 无效")
 
         if not raw_model:
             # 尝试从 menu_id / action_id 推导
@@ -168,23 +173,28 @@ class LoadContractHandler(BaseIntentHandler):
         request_context = p.get("context") if isinstance(p.get("context"), dict) else {}
         if request_context:
             ctx_user.update(request_context)
-        current_project_id = p.get("current_project_id") or request_context.get("current_project_id")
-        if current_project_id:
-            try:
-                project_id_int = int(current_project_id)
-                ctx_user["current_project_id"] = project_id_int
-                ctx_user.setdefault("default_project_id", project_id_int)
-            except Exception:
-                pass
+        current_project_id = (
+            p.get("current_project_id")
+            if "current_project_id" in p
+            else request_context.get("current_project_id")
+        )
+        project_id_int, project_id_error = parse_positive_int(current_project_id, allow_empty=True)
+        if project_id_error:
+            return self._err(400, "current_project_id 无效")
+        if project_id_int:
+            ctx_user["current_project_id"] = project_id_int
+            ctx_user.setdefault("default_project_id", project_id_int)
         user_lang = (getattr(self.env.user, "lang", None) or "").strip()
         if p.get("lang"):
             ctx_user["lang"] = p["lang"]
         elif user_lang:
             ctx_user["lang"] = user_lang
         if p.get("tz"):   ctx_user["tz"]   = p["tz"]
-        if p.get("company_id"):
-            try: ctx_user["allowed_company_ids"] = [int(p["company_id"])]
-            except Exception: pass
+        company_id, company_id_error = parse_positive_int(p.get("company_id"), allow_empty=True)
+        if company_id_error:
+            return self._err(400, "company_id 无效")
+        if company_id:
+            ctx_user["allowed_company_ids"] = [company_id]
 
         # ---------- 6) 生成契约（按当前用户权限，不 sudo） ----------
         if "app.contract.service" in self.env:
