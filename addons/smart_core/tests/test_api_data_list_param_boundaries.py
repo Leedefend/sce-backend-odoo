@@ -129,6 +129,20 @@ class TestApiDataListParamBoundaries(unittest.TestCase):
                 self.assertEqual(result["error"]["code"], 400)
                 self.assertEqual(result["error"]["message"], "group_page_offsets 无效")
 
+    def test_read_rejects_invalid_ids(self):
+        cases = [
+            "bad",
+            "[1, 'bad']",
+            [1, "bad"],
+            [0],
+        ]
+        for value in cases:
+            with self.subTest(value=value):
+                result = self.handler._op_read("x.model", {"ids": value}, {}, False)
+                self.assertFalse(result["ok"])
+                self.assertEqual(result["error"]["code"], 400)
+                self.assertEqual(result["error"]["message"], "ids 无效")
+
 
 if __name__ == "__main__":
     unittest.main()

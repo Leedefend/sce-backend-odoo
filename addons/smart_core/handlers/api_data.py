@@ -215,6 +215,38 @@ class ApiDataHandler(BaseIntentHandler):
                     return list(default or [])
         return list(default or [])
 
+    def _read_ids_param(self, p: Dict[str, Any], key: str = "ids"):
+        raw = self._dig(p, key, None)
+        if raw is None or (isinstance(raw, str) and not raw.strip()):
+            return [], self._err(400, f"缺少参数 {key}")
+        if isinstance(raw, list):
+            values = raw
+        elif isinstance(raw, str):
+            text = raw.strip()
+            if text.startswith("["):
+                try:
+                    parsed = literal_eval(text)
+                except Exception:
+                    return [], self._err(400, f"{key} 无效")
+                if not isinstance(parsed, list):
+                    return [], self._err(400, f"{key} 无效")
+                values = parsed
+            elif "," in text:
+                values = [part.strip() for part in text.split(",")]
+            else:
+                values = [text]
+        else:
+            values = [raw]
+        out: List[int] = []
+        for value in values:
+            parsed, error = parse_positive_int(value)
+            if error:
+                return [], self._err(400, f"{key} 无效")
+            out.append(parsed)
+        if not out:
+            return [], self._err(400, f"缺少参数 {key}")
+        return out, None
+
     def _normalize_domain(self, val) -> List:
         if val is None:
             return []
@@ -1189,9 +1221,9 @@ class ApiDataHandler(BaseIntentHandler):
         return data, meta
 
     def _op_read(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
-        ids = self._get_list(p, "ids", [])
-        if not ids:
-            return self._err(400, "缺少参数 ids")
+        ids, ids_error = self._read_ids_param(p)
+        if ids_error:
+            return ids_error
         fields = self._get_list(p, "fields", ["id", "name"])
 
         env_model = self.env[model].with_context(ctx)
