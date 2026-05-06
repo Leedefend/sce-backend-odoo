@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 import json
+import logging
 
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.search_favorite_policy import client_requested_shared_favorite, resolve_search_favorite_shared
+
+_logger = logging.getLogger(__name__)
 
 
 class SearchFavoriteSetHandler(BaseIntentHandler):
@@ -69,7 +73,9 @@ class SearchFavoriteSetHandler(BaseIntentHandler):
         if not isinstance(context, dict):
             context = {}
         order = str(params.get("sort") or params.get("order") or "").strip()
-        is_shared = bool(params.get("is_shared") is True)
+        is_shared = resolve_search_favorite_shared(params)
+        if client_requested_shared_favorite(params):
+            _logger.warning("search.favorite.set ignored client shared favorite request model=%s", model)
         is_default = bool(params.get("is_default") is True)
         action_id = int(params.get("action_id") or 0)
 
