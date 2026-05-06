@@ -1,17 +1,12 @@
 # smart_core/security/intent_permission.py
-import re
-
 from odoo.http import request
 from odoo.exceptions import AccessError, MissingError
+from ..core.intent_operation_policy import access_mode_for_intent, nested_params
 from .auth import get_user_from_token
 
 SOURCE_KIND = "odoo_native_permission_projection"
 SOURCE_AUTHORITIES = ("odoo.access", "ir.rule", "ir.ui.menu", "ir.actions", "sc.entitlement", "sc.capability")
 NO_BUSINESS_FACT_AUTHORITY = True
-_WRITE_INTENT_RE = re.compile(
-    r"(write|update|set|execute|upload|cancel|approve|reject|submit|done|import|rollback|pin)",
-    re.IGNORECASE,
-)
 
 
 def source_authority_contract() -> dict:
@@ -40,14 +35,7 @@ def _find_capability(env, cap_key):
 
 
 def _nested_params(ctx_params):
-    params = ctx_params if isinstance(ctx_params, dict) else {}
-    nested = params.get("params")
-    if isinstance(nested, dict):
-        return nested
-    payload = params.get("payload")
-    if isinstance(payload, dict):
-        return payload
-    return params
+    return nested_params(ctx_params)
 
 
 def _param_value(ctx_params, key, default=None):
@@ -58,47 +46,6 @@ def _param_value(ctx_params, key, default=None):
     if isinstance(nested, dict):
         return nested.get(key, default)
     return default
-
-
-def _intent_operation(intent_name, ctx_params):
-    intent = str(intent_name or "").strip().lower()
-    params = _nested_params(ctx_params)
-    op = str((params or {}).get("op") or "").strip().lower()
-    action = str((params or {}).get("action") or "").strip().lower()
-
-    if intent == "api.data":
-        return op or "read"
-    if intent == "api.data.batch":
-        if action:
-            return action
-        if op:
-            return op
-        if isinstance(params, dict) and (params.get("vals") or params.get("values")):
-            return "write"
-        return "batch"
-    if intent.startswith("api.data."):
-        suffix = intent.split(".", 2)[-1].strip().lower()
-        return suffix or op or "read"
-    if op:
-        return op
-    if "create" in intent:
-        return "create"
-    if "unlink" in intent or "delete" in intent:
-        return "unlink"
-    if _WRITE_INTENT_RE.search(intent):
-        return "write"
-    return "read"
-
-
-def _access_mode_for_operation(operation):
-    op = str(operation or "").strip().lower()
-    if op in {"create", "new"}:
-        return "create"
-    if op in {"write", "update", "set", "archive", "activate", "assign", "unarchive", "batch.write", "batch.update"}:
-        return "write"
-    if op in {"unlink", "delete", "remove", "batch.unlink", "batch.delete"}:
-        return "unlink"
-    return "read"
 
 
 def _record_ids(ctx_params):
@@ -161,8 +108,7 @@ def check_intent_permission(ctx):
     model = _param_value(ctx_params, "model")
     menu_id = _param_value(ctx_params, "menu_id")
     action_id = _param_value(ctx_params, "action_id")
-    operation = _intent_operation(intent_name, ctx_params)
-    access_mode = _access_mode_for_operation(operation)
+    access_mode = access_mode_for_intent(intent_name, ctx_params)
 
 
     # ✅ 校验模型访问权限

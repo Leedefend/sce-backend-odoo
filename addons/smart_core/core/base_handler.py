@@ -1,11 +1,11 @@
 # smart_core/core/base_handler.py
 # -*- coding: utf-8 -*-
 import logging
-import re
 from typing import Any, Dict, Optional
 from odoo import api, SUPERUSER_ID
 from odoo.exceptions import AccessError
 import  inspect
+from .intent_operation_policy import is_write_intent
 
 _logger = logging.getLogger(__name__)
 SOURCE_KIND = "intent_handler_runtime_base"
@@ -22,11 +22,6 @@ def source_authority_contract() -> Dict[str, Any]:
         "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
         "runtime_carrier": "base_intent_handler",
     }
-
-_WRITE_INTENT_PATTERN = re.compile(
-    r"(create|write|unlink|delete|batch|execute|upload|cancel|approve|reject|submit|done|import|rollback|pin|set)",
-    re.IGNORECASE,
-)
 
 class BaseIntentHandler:
     SOURCE_KIND = SOURCE_KIND
@@ -93,7 +88,8 @@ class BaseIntentHandler:
     def is_write(self) -> bool:
         intent = str(getattr(self, "INTENT_TYPE", "") or "")
         non_idempotent = bool(str(getattr(self, "NON_IDEMPOTENT_ALLOWED", "") or "").strip())
-        return bool(_WRITE_INTENT_PATTERN.search(intent)) or non_idempotent
+        params = self.params if isinstance(self.params, dict) else {}
+        return is_write_intent(intent, params, non_idempotent=non_idempotent)
 
     def enforce_required_groups(self):
         required = getattr(self, "REQUIRED_GROUPS", []) or []

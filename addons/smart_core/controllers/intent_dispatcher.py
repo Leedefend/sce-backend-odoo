@@ -5,7 +5,6 @@ from odoo import http
 from odoo.http import request
 import logging, time
 import os
-import re
 from typing import Dict, Any
 
 from werkzeug.exceptions import Unauthorized, Forbidden, BadRequest, NotFound
@@ -13,6 +12,7 @@ from odoo.exceptions import AccessError, MissingError, AccessDenied
 
 from ..core.intent_router import route_intent_payload
 from ..core.context import RequestContext
+from ..core.intent_operation_policy import is_write_intent
 from ..security.intent_permission import check_intent_permission
 from ..core.trace import get_trace_id
 from ..core.exceptions import (
@@ -56,10 +56,6 @@ INTENT_ALIASES = {
 API_VERSION = "v1"
 CONTRACT_VERSION = "1.0.0"
 SCHEMA_VERSION = "1.0.0"
-_WRITE_INTENT_RE = re.compile(
-    r"(create|write|unlink|delete|batch|execute|upload|cancel|approve|reject|submit|done|import|rollback|pin|set)",
-    re.IGNORECASE,
-)
 
 def _canon_intent(name: str) -> str:
     return INTENT_ALIASES.get(name or "", name or "")
@@ -166,15 +162,7 @@ def _permission_error_details(intent_name: str, params: Dict[str, Any], message:
 
 
 def _is_write_request(intent_name: str, params: Dict[str, Any]) -> bool:
-    intent = str(intent_name or "").strip().lower()
-    if not intent:
-        return False
-    if _WRITE_INTENT_RE.search(intent):
-        return True
-    if intent == "api.data":
-        op = str((params or {}).get("op") or "").strip().lower()
-        return op in {"create", "write", "unlink", "delete", "batch"}
-    return False
+    return is_write_intent(intent_name, params)
 
 # ===================== 结果归一化 =====================
 
