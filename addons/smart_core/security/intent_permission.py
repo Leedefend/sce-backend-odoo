@@ -81,6 +81,23 @@ def _capability_key(ctx_params):
     return None
 
 
+def _sync_authenticated_identity(ctx, user):
+    user_id = getattr(user, "id", user)
+    request.env = request.env(user=user_id)
+    env = request.env
+    try:
+        request.uid = user_id
+    except Exception:
+        pass
+    try:
+        ctx.env = env
+        ctx.user = env.user
+        ctx.uid = getattr(env, "uid", user_id)
+    except Exception:
+        pass
+    return env
+
+
 def check_intent_permission(ctx):
     """
     核心权限校验入口：模型、记录、字段、菜单、动作
@@ -97,12 +114,11 @@ def check_intent_permission(ctx):
     if intent_name == "permission.check":
         return True
 
-    user_id = get_user_from_token()
-    if not user_id:
+    user = get_user_from_token()
+    if not user:
         raise AccessError("Token 无效或缺少 user_id")
-    # 2. 切换 request.env 用户
-    request.env = request.env(user=user_id)
-    env = request.env
+    # 2. 切换并同步 request/ctx 身份，避免后续跨库分发读取到 public uid。
+    env = _sync_authenticated_identity(ctx, user)
 
     # 3. 正常的权限检查逻辑
     model = _param_value(ctx_params, "model")

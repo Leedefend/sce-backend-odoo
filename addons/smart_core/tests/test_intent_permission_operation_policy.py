@@ -67,6 +67,7 @@ class _FakeEnv:
 class _FakeRequest:
     def __init__(self, env):
         self.env = env
+        self.uid = None
 
 
 class _Ctx:
@@ -130,6 +131,10 @@ class TestIntentPermissionOperationPolicy(unittest.TestCase):
         self.assertEqual(self.model.access_modes, ["write"])
         self.assertEqual(self.model.browsed_ids, [[11]])
         self.assertEqual(self.model.rule_modes, ["write"])
+        self.assertEqual(self.permission.request.uid, 7)
+        self.assertIs(ctx.env, self.env)
+        self.assertIs(ctx.user, self.env.user)
+        self.assertEqual(ctx.uid, 7)
 
     def test_api_data_create_uses_create_access_without_record_rule(self):
         ctx = _Ctx({"intent": "api.data.create", "params": {"model": "x.model", "vals": {"name": "A"}}})
