@@ -14,6 +14,7 @@ from ..core.intent_router import route_intent_payload
 from ..core.context import RequestContext
 from ..core.http_result_policy import (
     normalize_result_ok,
+    normalize_error_result,
     result_http_status,
     result_is_success,
     result_transaction_action,
@@ -452,20 +453,17 @@ class IntentDispatcher(http.Controller):
 
                 # 标准化错误结构
                 if not result_is_success(result):
-                    err = result.get("error") if isinstance(result.get("error"), dict) else {}
-                    if "code" not in err or "message" not in err:
-                        result = build_error_envelope(
-                            code=map_http_status_to_code(status),
-                            message=str(err or "请求失败"),
-                            trace_id=trace_id,
-                            api_version=API_VERSION,
-                            contract_version=CONTRACT_VERSION,
-                        )
+                    result = normalize_error_result(
+                        result,
+                        status,
+                        status_code_mapper=map_http_status_to_code,
+                        error_envelope_builder=build_error_envelope,
+                        trace_id=trace_id,
+                        api_version=API_VERSION,
+                        contract_version=CONTRACT_VERSION,
+                    )
+                    if status < 400:
                         status = status if status and status >= 400 else 500
-                    else:
-                        if isinstance(err.get("code"), int):
-                            err["code"] = map_http_status_to_code(status)
-                            result["error"] = err
 
             if status == 304:
                 # 304 必须空体，但要带 ETag/CORS 头

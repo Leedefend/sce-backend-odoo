@@ -121,6 +121,34 @@ class TestHttpResultPolicy(unittest.TestCase):
             "none",
         )
 
+    def test_normalize_error_result_builds_envelope_for_malformed_errors(self):
+        normalized = self.policy.normalize_error_result(
+            {"ok": False, "error": {"detail": "bad"}},
+            500,
+            status_code_mapper=lambda status: "INTERNAL_ERROR" if status == 500 else "OTHER",
+            error_envelope_builder=lambda **kwargs: {"ok": False, "error": {"code": kwargs["code"], "message": kwargs["message"]}},
+            trace_id="trace",
+            api_version="v1",
+            contract_version="1.0",
+        )
+
+        self.assertEqual(normalized["error"]["code"], "INTERNAL_ERROR")
+        self.assertIn("bad", normalized["error"]["message"])
+
+    def test_normalize_error_result_converts_numeric_http_error_code_to_symbolic_code(self):
+        normalized = self.policy.normalize_error_result(
+            {"ok": False, "error": {"code": 404, "message": "missing"}},
+            404,
+            status_code_mapper=lambda status: "INTENT_NOT_FOUND" if status == 404 else "OTHER",
+            error_envelope_builder=lambda **kwargs: kwargs,
+            trace_id="trace",
+            api_version="v1",
+            contract_version="1.0",
+        )
+
+        self.assertEqual(normalized["error"]["code"], "INTENT_NOT_FOUND")
+        self.assertEqual(normalized["error"]["message"], "missing")
+
 
 if __name__ == "__main__":
     unittest.main()

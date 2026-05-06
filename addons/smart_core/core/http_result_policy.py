@@ -47,6 +47,36 @@ def result_transaction_action(
     return "rollback"
 
 
+def normalize_error_result(
+    result: Dict[str, Any],
+    status: int,
+    *,
+    status_code_mapper,
+    error_envelope_builder,
+    trace_id: str | None,
+    api_version: str,
+    contract_version: str,
+) -> Dict[str, Any]:
+    if result_is_success(result):
+        return result
+    err = result.get("error") if isinstance(result.get("error"), dict) else {}
+    if "code" not in err or "message" not in err:
+        return error_envelope_builder(
+            code=status_code_mapper(status),
+            message=str(err or "请求失败"),
+            trace_id=trace_id,
+            api_version=api_version,
+            contract_version=contract_version,
+        )
+    if isinstance(err.get("code"), int):
+        next_result = dict(result)
+        next_error = dict(err)
+        next_error["code"] = status_code_mapper(status)
+        next_result["error"] = next_error
+        return next_result
+    return result
+
+
 def result_http_status(result: Dict[str, Any] | None, default: int = 200) -> int:
     payload = result if isinstance(result, dict) else {}
     raw = payload.get("code", None)
