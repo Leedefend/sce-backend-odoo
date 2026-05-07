@@ -64,3 +64,96 @@ class ResPartnerBank(models.Model):
             "历史账户外部键必须唯一。",
         ),
     ]
+
+
+class ScPartnerImportReview(models.Model):
+    _name = "sc.partner.import.review"
+    _description = "客户供应商导入复核"
+    _order = "review_state, review_reason, partner_name"
+    _rec_name = "partner_name"
+
+    import_batch = fields.Char(string="导入批次", required=True, default="partner_business_fit_v1", index=True)
+    legacy_partner_source = fields.Char(string="历史来源", required=True, index=True)
+    legacy_partner_id = fields.Char(string="历史身份键", required=True, index=True)
+    partner_name = fields.Char(string="往来单位名称", required=True, index=True)
+    company_type = fields.Selection([("company", "企业/组织"), ("person", "个人")], string="类型", default="company", index=True)
+    review_reason = fields.Selection(
+        [
+            ("unknown_business_role", "角色不明确"),
+            ("personal_fragment_review", "个人片段复核"),
+            ("invalid_bank_account_review", "银行账户异常"),
+            ("invalid_or_placeholder_credit", "信用代码异常"),
+            ("multiple_current_payload_matches", "多目标匹配"),
+            ("mixed_blocker", "多重阻断"),
+        ],
+        string="复核原因",
+        required=True,
+        default="mixed_blocker",
+        index=True,
+    )
+    review_state = fields.Selection(
+        [
+            ("candidate", "待复核"),
+            ("resolved", "已处理"),
+            ("ignored", "忽略"),
+        ],
+        string="复核状态",
+        required=True,
+        default="candidate",
+        index=True,
+    )
+    suggested_customer_rank = fields.Integer(string="建议客户标识")
+    suggested_supplier_rank = fields.Integer(string="建议供应商标识")
+    confirmed_customer_rank = fields.Integer(string="确认客户标识")
+    confirmed_supplier_rank = fields.Integer(string="确认供应商标识")
+    target_partner_id = fields.Many2one("res.partner", string="目标往来单位", index=True, ondelete="set null")
+    sc_supplier_type = fields.Char(string="供应商类型")
+    vat = fields.Char(string="统一社会信用代码", index=True)
+    sc_bank_name = fields.Char(string="开户银行")
+    sc_bank_account = fields.Char(string="账号")
+    source_project_name = fields.Text(string="来源项目")
+    source_files = fields.Text(string="来源文件")
+    review_flags = fields.Char(string="复核标记")
+    gate_reason = fields.Char(string="阻断原因")
+    evidence = fields.Text(string="证据")
+    reviewer_id = fields.Many2one("res.users", string="处理人", readonly=True, ondelete="set null")
+    reviewed_at = fields.Datetime(string="处理时间", readonly=True)
+    note = fields.Text(string="备注")
+    active = fields.Boolean(default=True, index=True)
+
+    _sql_constraints = [
+        (
+            "sc_partner_import_review_identity_unique",
+            "unique(import_batch, legacy_partner_source, legacy_partner_id)",
+            "同一导入批次的客户供应商复核身份必须唯一。",
+        ),
+    ]
+
+    def _mark_resolved(self, customer_rank: int, supplier_rank: int) -> None:
+        self.write(
+            {
+                "review_state": "resolved",
+                "confirmed_customer_rank": customer_rank,
+                "confirmed_supplier_rank": supplier_rank,
+                "reviewer_id": self.env.user.id,
+                "reviewed_at": fields.Datetime.now(),
+            }
+        )
+
+    def action_resolve_customer(self):
+        self._mark_resolved(1, 0)
+
+    def action_resolve_supplier(self):
+        self._mark_resolved(0, 1)
+
+    def action_resolve_customer_supplier(self):
+        self._mark_resolved(1, 1)
+
+    def action_ignore(self):
+        self.write(
+            {
+                "review_state": "ignored",
+                "reviewer_id": self.env.user.id,
+                "reviewed_at": fields.Datetime.now(),
+            }
+        )

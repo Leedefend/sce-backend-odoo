@@ -591,3 +591,5 @@ access_sc_safety_patrol_task_manager,sc.safety.patrol.task.manager,model_sc_safe
 access_sc_contract_event_read,sc.contract.event.read,model_sc_contract_event,smart_construction_core.group_sc_cap_contract_read,1,0,0,0
 access_sc_contract_event_user,sc.contract.event.user,model_sc_contract_event,smart_construction_core.group_sc_cap_contract_user,1,1,1,0
 access_sc_contract_event_manager,sc.contract.event.manager,model_sc_contract_event,smart_construction_core.group_sc_cap_contract_manager,1,1,1,1
+access_sc_partner_import_review_read,sc.partner.import.review.read,model_sc_partner_import_review,smart_construction_core.group_sc_cap_data_read,1,0,0,0
+access_sc_partner_import_review_admin,sc.partner.import.review.admin,model_sc_partner_import_review,smart_construction_core.group_sc_cap_config_admin,1,1,1,1

@@ -331,6 +331,38 @@ Tax rates are stored as both normalized percentage values and original source
 text. For example, `13%` and `0.1300` both normalize to `13`, while the original
 text remains available for audit.
 
+## Import Review Queue
+
+Blocked rows are no longer treated as disposable CSV leftovers. They now have a
+system model, `sc.partner.import.review`, so the unresolved business facts can
+be reviewed inside the application before being promoted to real partners.
+
+Generated with:
+
+```bash
+python3 scripts/migration/partner_import_review_asset_generator.py --check
+```
+
+Review queue result:
+
+| Item | Value |
+| --- | ---: |
+| review rows | 1,444 |
+| candidate rows | 1,444 |
+| unknown business role | 645 |
+| personal fragment review | 617 |
+| invalid bank account review | 84 |
+| invalid or placeholder credit | 70 |
+| multiple current payload matches | 28 |
+
+The fresh-db replay script for this queue is:
+
+```bash
+FRESH_DB_PARTNER_IMPORT_REVIEW_INPUT_CSV=artifacts/migration/partner_business_aligned_rebuild_v1/partner_import_review_queue_v1.csv \
+FRESH_DB_PARTNER_IMPORT_REVIEW_EXPECTED_ROWS=1444 \
+python3 scripts/migration/fresh_db_partner_import_review_replay_write.py
+```
+
 ## Unified Payload
 
 `partner_business_aligned_rebuild_adapter.py` keeps the existing fact-based
