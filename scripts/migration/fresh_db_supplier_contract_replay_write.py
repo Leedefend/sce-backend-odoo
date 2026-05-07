@@ -54,6 +54,7 @@ Partner = env["res.partner"].sudo()  # noqa: F821
 created = 0
 skipped = 0
 fallback_partner_hits = 0
+created_partner_anchors = 0
 for row in rows:
     existing = Contract.search([("legacy_contract_id", "=", row["legacy_contract_id"])], limit=1)
     if existing:
@@ -62,19 +63,34 @@ for row in rows:
     project = Project.search([("legacy_project_id", "=", row["legacy_project_id"])], limit=1)
     partner = Partner.search([("legacy_partner_id", "=", row["legacy_partner_id"])], limit=1)
     if not partner and row.get("legacy_counterparty_text"):
-        partner = Partner.search([("name", "=", row["legacy_counterparty_text"])], limit=1)
+        partner = Partner.search([("name", "=", row["legacy_counterparty_text"])], order="id")
+        if len(partner) > 1:
+            supplier_partner = partner.filtered(lambda rec: rec.supplier_rank > 0)
+            partner = (supplier_partner or partner).sorted(
+                key=lambda rec: (
+                    1 if rec.legacy_partner_source == "supplier_contract_counterparty_runtime" else 0,
+                    rec.id,
+                )
+            )[:1]
         if partner:
             fallback_partner_hits += 1
     if not project:
         raise RuntimeError({"missing_project_anchor": row["legacy_project_id"], "external_id": row["external_id"]})
     if not partner:
-        raise RuntimeError(
-            {
-                "missing_partner_anchor": row["legacy_partner_id"],
-                "counterparty_text": row.get("legacy_counterparty_text"),
-                "external_id": row["external_id"],
-            }
-        )
+        partner_name = row.get("legacy_counterparty_text") or row["legacy_partner_id"]
+        vals = {
+            "name": partner_name,
+            "company_type": "company",
+            "legacy_partner_id": row["legacy_partner_id"],
+            "legacy_partner_source": "supplier_contract_counterparty_runtime",
+            "legacy_partner_name": partner_name,
+            "legacy_source_evidence": f"fresh_db_supplier_contract:{row['legacy_contract_id']}",
+            "supplier_rank": 1,
+        }
+        if "is_company" in Partner._fields:
+            vals["is_company"] = True
+        partner = Partner.create(vals)
+        created_partner_anchors += 1
     vals = {
         "legacy_contract_id": row["legacy_contract_id"],
         "legacy_project_id": row["legacy_project_id"],
@@ -104,6 +120,7 @@ payload = {
     "created_rows": created,
     "skipped_existing": skipped,
     "fallback_partner_hits": fallback_partner_hits,
+    "created_partner_anchor_rows": created_partner_anchors,
     "db_writes": created,
     "decision": "supplier_contract_replay_write_complete" if status == "PASS" else "STOP_REVIEW_REQUIRED",
 }
