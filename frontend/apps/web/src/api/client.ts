@@ -129,6 +129,9 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
       isAnonymousIntent = false;
     }
   }
+  if (isAnonymousIntent) {
+    headers.set('X-Anonymous-Intent', '1');
+  }
   if (session.token && !isAnonymousIntent) {
     headers.set('Authorization', `Bearer ${session.token}`);
   }
