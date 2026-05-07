@@ -91,6 +91,18 @@ Write gate artifacts:
 - `artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_business_aligned_update_only_v1.csv`
 - `artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_business_aligned_blocked_review_v1.csv`
 
+Replay package generated with:
+
+```bash
+python3 scripts/migration/partner_business_aligned_replay_package_build.py
+```
+
+Replay package artifacts:
+
+- `artifacts/migration/partner_business_aligned_replay_package_v1/manifest.json`
+- `artifacts/migration/partner_business_aligned_replay_package_v1/package_build_result_v1.json`
+- `artifacts/migration/partner_business_aligned_replay_package_v1.tar.gz`
+
 ## Source Shape
 
 | Metric | Value |
@@ -281,3 +293,36 @@ information.
 
 Current environment note: local static generation and Python compilation passed.
 The Odoo dry-run command requires the compose `odoo` service to be running.
+
+## Replay Package
+
+The replay package is the handoff unit for the updated logical data page. It is
+not a new model design and does not fork the rebuild flow. It freezes the current
+business-aligned partner lane into a replayable package for the current model
+surface.
+
+Package result:
+
+| Item | Value |
+| --- | --- |
+| package root | `artifacts/migration/partner_business_aligned_replay_package_v1` |
+| tarball | `artifacts/migration/partner_business_aligned_replay_package_v1.tar.gz` |
+| tarball sha256 | `f530d77b87fe45759ba304735d04804074b140b0c33956865c5a8b6c8361171e` |
+| tarball bytes | `1,610,738` |
+| packaged file count | 17 |
+| package build DB writes | 0 |
+
+The package includes:
+
+- the business-aligned payload and gate queues;
+- the current-only and blocked review queues;
+- source audit summaries needed to explain why the payload differs from the
+  older fact-only lane;
+- replay scripts required to regenerate and apply the payload;
+- `manifest.json` with row counts, byte sizes, sha256 checksums, build commands,
+  dry-run command, and write command.
+
+This is the synchronized replacement for the older logical partner data page:
+it reflects the current `res.partner` extension fields
+`sc_supplier_type/sc_account_name/sc_bank_name/sc_bank_account` and the
+business source role evidence from `/home/odoo/workspace/partner_import_source`.
