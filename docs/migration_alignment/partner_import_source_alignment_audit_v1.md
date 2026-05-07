@@ -441,6 +441,20 @@ The probe outputs unique-match, not-found, and ambiguous counts without writing
 to the database. Rows that do not resolve to exactly one `res.partner` must stay
 outside write mode or be sent to the review path.
 
+After the probe has produced `partner_update_only_match_probe_v1.csv`, split the
+queue with:
+
+```bash
+python3 scripts/migration/partner_update_only_probe_split.py --check
+```
+
+The split produces:
+
+- `partner_update_only_matched_updates_v1.csv`: update-only rows with exactly
+  one target partner, safe to pass to the guarded writer.
+- `partner_update_only_probe_review_queue_v1.csv`: not-found or ambiguous rows,
+  shaped for `sc.partner.import.review` rather than silent skipping.
+
 The guarded Odoo shell writer is:
 
 ```bash

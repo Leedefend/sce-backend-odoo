@@ -84,6 +84,8 @@ class ScPartnerImportReview(models.Model):
             ("invalid_bank_account_review", "银行账户异常"),
             ("invalid_or_placeholder_credit", "信用代码异常"),
             ("multiple_current_payload_matches", "多目标匹配"),
+            ("update_only_not_found", "仅更新目标未命中"),
+            ("update_only_ambiguous", "仅更新目标歧义"),
             ("mixed_blocker", "多重阻断"),
         ],
         string="复核原因",
