@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_runtime_user_tree" model="ir.ui.view">
+        <field name="name">res.users.sc.runtime.tree</field>
+        <field name="model">res.users</field>
+        <field name="arch" type="xml">
+            <tree string="用户账号" create="1" edit="1" delete="0" default_order="active desc, login asc">
+                <field name="login" string="用户名"/>
+                <field name="name" string="姓名"/>
+                <field name="phone" string="手机号"/>
+                <field name="email" string="邮箱"/>
+                <field name="company_id" string="所属公司"/>
+                <field name="sc_user_role_group_ids" string="业务角色组" widget="many2many_tags"/>
+                <field name="active" string="启用"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_runtime_user_form" model="ir.ui.view">
+        <field name="name">res.users.sc.runtime.form</field>
+        <field name="model">res.users</field>
+        <field name="arch" type="xml">
+            <form string="用户账号与角色" create="1" edit="1" delete="0">
+                <sheet>
+                    <group>
+                        <group string="账号信息">
+                            <field name="login" string="用户名" required="1"/>
+                            <field name="name" string="姓名" required="1"/>
+                            <field name="active" string="启用"/>
+                            <field name="password" string="重置密码" password="True" placeholder="新建默认 123456；编辑时为空则不调整"/>
+                        </group>
+                        <group string="联系方式">
+                            <field name="phone" string="手机号"/>
+                            <field name="email" string="邮箱"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="组织归属">
+                            <field name="company_id" string="所属公司"/>
+                        </group>
+                        <group string="业务角色">
+                            <field name="sc_user_role_group_ids"
+                                   string="业务角色组"
+                                   widget="many2many_tags"
+                                   domain="[('sc_assignable_user_permission', '=', True)]"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_runtime_user_search" model="ir.ui.view">
+        <field name="name">res.users.sc.runtime.search</field>
+        <field name="model">res.users</field>
+        <field name="arch" type="xml">
+            <search string="用户账号">
+                <field name="login" string="用户名"/>
+                <field name="name" string="姓名"/>
+                <field name="phone" string="手机号"/>
+                <field name="email" string="邮箱"/>
+                <field name="company_id" string="所属公司"/>
+                <field name="sc_user_role_group_ids" string="业务角色组"/>
+                <filter string="启用" name="active_user" domain="[('active', '=', True)]"/>
+                <filter string="停用" name="inactive_user" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sc_runtime_user_management" model="ir.actions.act_window">
+        <field name="name">用户账号与权限</field>
+        <field name="res_model">res.users</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_sc_runtime_user_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_sc_runtime_user_form')})]"/>
+        <field name="search_view_id" ref="view_sc_runtime_user_search"/>
+        <field name="domain" eval="[
+            ('share', '=', False),
+            ('groups_id', 'not in', [
+                ref('base.group_system'),
+                ref('smart_construction_core.group_sc_cap_config_admin'),
+            ]),
+        ]"/>
+        <field name="context">{'active_test': False, 'sc_runtime_user_management': True, 'sc_default_initial_password': '123456'}</field>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+
+    <menuitem id="menu_sc_runtime_user_management"
+              name="用户账号与权限"
+              parent="menu_sc_legacy_user_context"
+              action="action_sc_runtime_user_management"
+              sequence="5"
+              groups="smart_construction_core.group_sc_cap_business_config_admin"/>
+
+    <record id="menu_sc_runtime_user_management" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+</odoo>
