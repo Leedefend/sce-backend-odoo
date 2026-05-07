@@ -1677,7 +1677,7 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 35;
   display: grid;
-  grid-template-columns: minmax(132px, 180px) minmax(0, 600px) max-content;
+  grid-template-columns: minmax(132px, 180px) minmax(0, 1fr) max-content;
   align-items: center;
   gap: 6px;
   border: 1px solid #e2e8f0;
@@ -1723,13 +1723,14 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: flex-start;
   min-width: 0;
+  width: 100%;
 }
 
 .list-header-toolbar :deep(.action-toolbar) {
-  grid-template-columns: max-content minmax(280px, 460px) max-content;
-  justify-content: start;
-  width: min(600px, 100%);
-  max-width: 600px;
+  grid-template-columns: max-content minmax(280px, 460px) minmax(max-content, 1fr);
+  justify-content: stretch;
+  width: 100%;
+  max-width: none;
   border: 0;
   box-shadow: none;
   padding: 0;
