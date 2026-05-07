@@ -47,6 +47,7 @@ def main() -> int:
     result: dict[str, object]
     try:
         asset_guard = run(["python3", "scripts/migration/partner_asset_business_fit_guard.py", "--check"])
+        display_guard = run(["python3", "scripts/migration/partner_display_surface_guard.py", "--check"])
         review_asset = run(["python3", "scripts/migration/partner_import_review_asset_generator.py", "--check"])
         package_build = run(["python3", "scripts/migration/partner_business_aligned_replay_package_build.py"])
 
@@ -79,6 +80,7 @@ def main() -> int:
             "package_file_count": package.get("file_count"),
             "package_tarball_sha256": package.get("tarball_sha256"),
             "asset_guard": asset_guard.strip(),
+            "display_guard": display_guard.strip(),
             "review_asset": review_asset.strip(),
             "package_build": package_build.strip(),
             "db_writes": 0,

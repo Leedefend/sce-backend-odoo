@@ -628,6 +628,45 @@ The adapter payload now carries:
 - `sc_bank_name`
 - `sc_bank_account`
 
+## Customer/Supplier Display Surface
+
+The business-fit lane is not considered usable just because replay payloads can
+be generated. The user-facing customer and supplier pages must also expose the
+facts needed for lookup, review, and operational use.
+
+Current display surfaces:
+
+| Surface | Business facts visible |
+| --- | --- |
+| Customer list | role markers, credit code, region, registered capital, default tax rate, account name, bank, account number, legacy identity |
+| Customer form | basic profile, contact details, compatibility account fields, `bank_ids`, business scope, legacy evidence |
+| Customer search | name, credit code, region, default tax rate, bank, account number, legacy identity, mixed customer/supplier filter |
+| Supplier list | role markers, supplier type, credit code, region, registered capital, default tax rate, account name, bank, account number, legacy identity |
+| Supplier form | supplier type, basic profile, contact details, compatibility account fields, `bank_ids`, notes, attachments, business scope, legacy evidence |
+| Supplier search | supplier type, credit code, region, default tax rate, bank, account number, legacy identity, mixed supplier/customer filter |
+| Import review queue | blocked/update-only rows with role suggestion, target partner, bank/tax/identity evidence, and resolve actions |
+
+Static display guard:
+
+```bash
+python3 scripts/migration/partner_display_surface_guard.py --check
+```
+
+Latest no-DB result:
+
+| Item | Value |
+| --- | ---: |
+| checked views | 9 |
+| checked search views | 3 |
+| checked action domains | 2 |
+| DB writes | 0 |
+
+This answers the current readiness question more directly: `res.partner` and
+`res.partner.bank` now carry the customer/supplier business facts, the customer
+and supplier menus are constrained by `customer_rank` / `supplier_rank`, and the
+primary list/form/search surfaces expose those facts instead of hiding them
+inside the replay package.
+
 `fresh_db_partner_l4_replay_write.py` consumes those explicit payload fields
 when present and only falls back to the legacy source-type role inference for
 old payloads. For the business-fit 6,348-row payload, run the write script with:
