@@ -13,8 +13,8 @@ database.
 ## Result
 
 - source write result files: `11`
-- created evidence rows: `6541`
-- replay payload rows: `6541`
+- created evidence rows: `6842`
+- replay payload rows: `6842`
 - duplicate replay identities: `0`
 - raw source misses: `0`
 - DB writes: `0`
@@ -23,8 +23,8 @@ database.
 
 ```json
 {
-  "company": 3899,
-  "company_supplier": 2642
+  "business_aligned": 5857,
+  "legacy_mssql_customer_business_fact": 985
 }
 ```
 

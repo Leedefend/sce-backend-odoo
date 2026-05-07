@@ -30,15 +30,38 @@ def ensure_allowed_db() -> None:
 
 REPO_ROOT = repo_root()
 ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(REPO_ROOT / "artifacts/migration")))
-INPUT_CSV = REPO_ROOT / "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv"
+INPUT_CSV = Path(os.getenv("FRESH_DB_PARTNER_L4_INPUT_CSV", str(REPO_ROOT / "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv")))
 OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_partner_l4_replay_write_result_v1.json"
 ROLLBACK_CSV = ARTIFACT_ROOT / "fresh_db_partner_l4_replay_rollback_targets_v1.csv"
-EXPECTED_ROWS = int(os.getenv("FRESH_DB_PARTNER_L4_EXPECTED_ROWS", "6541"))
+EXPECTED_ROWS_RAW = os.getenv("FRESH_DB_PARTNER_L4_EXPECTED_ROWS", "6541").strip().lower()
+EXPECTED_ROWS = None if EXPECTED_ROWS_RAW == "auto" else int(EXPECTED_ROWS_RAW)
 SAFE_FIELDS = [
     "name",
+    "vat",
     "company_type",
     "customer_rank",
     "supplier_rank",
+    "sc_supplier_type",
+    "sc_region",
+    "street",
+    "sc_registered_capital",
+    "sc_business_scope",
+    "sc_default_tax_rate",
+    "sc_default_tax_rate_text",
+    "sc_source_partner_code",
+    "sc_source_document_state",
+    "sc_source_push_result",
+    "sc_source_project_name",
+    "sc_source_cooperation_type",
+    "sc_source_fact_count",
+    "sc_source_fact_source",
+    "sc_source_receipt_amount",
+    "sc_source_payment_amount",
+    "sc_source_created_by",
+    "sc_source_created_at",
+    "sc_account_name",
+    "sc_bank_name",
+    "sc_bank_account",
     "legacy_partner_id",
     "legacy_partner_source",
     "legacy_partner_name",
@@ -71,17 +94,61 @@ def write_json(path: Path, payload: dict[str, object]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def parse_rank(value: str, fallback: int) -> int:
+    text = clean(value)
+    if text == "":
+        return fallback
+    try:
+        return 1 if int(float(text)) > 0 else 0
+    except ValueError:
+        return fallback
+
+
+def parse_float(value: str) -> float | str:
+    text = clean(value)
+    if not text:
+        return ""
+    try:
+        return float(text)
+    except ValueError:
+        return ""
+
+
 def build_vals(row: dict[str, str]) -> dict[str, object]:
     source = clean(row.get("legacy_partner_source"))
     source_type = clean(row.get("source_type"))
-    tax_no = clean(row.get("tax_no"))
+    tax_no = clean(row.get("vat")) or clean(row.get("tax_no"))
     is_supplier = source == "supplier" or source_type == "supplier"
     is_company_supplier = source == "company_supplier"
+    customer_rank = parse_rank(clean(row.get("customer_rank")), 1 if not is_supplier or is_company_supplier else 0)
+    supplier_rank = parse_rank(clean(row.get("supplier_rank")), 1 if is_supplier or is_company_supplier else 0)
     return {
         "name": clean(row.get("name")),
-        "company_type": "company",
-        "customer_rank": 1 if not is_supplier or is_company_supplier else 0,
-        "supplier_rank": 1 if is_supplier or is_company_supplier else 0,
+        "vat": tax_no,
+        "company_type": clean(row.get("company_type")) or "company",
+        "customer_rank": customer_rank,
+        "supplier_rank": supplier_rank,
+        "sc_supplier_type": clean(row.get("sc_supplier_type")),
+        "sc_region": clean(row.get("sc_region")),
+        "street": clean(row.get("street")),
+        "sc_registered_capital": clean(row.get("sc_registered_capital")),
+        "sc_business_scope": clean(row.get("sc_business_scope")),
+        "sc_default_tax_rate": parse_float(clean(row.get("sc_default_tax_rate"))),
+        "sc_default_tax_rate_text": clean(row.get("sc_default_tax_rate_text")),
+        "sc_source_partner_code": clean(row.get("sc_source_partner_code")),
+        "sc_source_document_state": clean(row.get("sc_source_document_state")),
+        "sc_source_push_result": clean(row.get("sc_source_push_result")),
+        "sc_source_project_name": clean(row.get("sc_source_project_name")),
+        "sc_source_cooperation_type": clean(row.get("sc_source_cooperation_type")),
+        "sc_source_fact_count": int(float(clean(row.get("sc_source_fact_count")) or "0")),
+        "sc_source_fact_source": clean(row.get("sc_source_fact_source")),
+        "sc_source_receipt_amount": parse_float(clean(row.get("sc_source_receipt_amount"))),
+        "sc_source_payment_amount": parse_float(clean(row.get("sc_source_payment_amount"))),
+        "sc_source_created_by": clean(row.get("sc_source_created_by")),
+        "sc_source_created_at": clean(row.get("sc_source_created_at")),
+        "sc_account_name": clean(row.get("sc_account_name")),
+        "sc_bank_name": clean(row.get("sc_bank_name")),
+        "sc_bank_account": clean(row.get("sc_bank_account")),
         "legacy_partner_id": clean(row.get("legacy_partner_id")),
         "legacy_partner_source": source,
         "legacy_partner_name": clean(row.get("name")),
@@ -101,7 +168,7 @@ if missing_fields:
 
 rows = read_csv(INPUT_CSV)
 errors: list[dict[str, object]] = []
-if len(rows) != EXPECTED_ROWS:
+if EXPECTED_ROWS is not None and len(rows) != EXPECTED_ROWS:
     errors.append({"error": "unexpected_row_count", "actual": len(rows), "expected": EXPECTED_ROWS})
 
 keys = [(clean(row.get("legacy_partner_source")), clean(row.get("legacy_partner_id"))) for row in rows]
@@ -153,6 +220,10 @@ try:
                 "legacy_partner_source": rec.legacy_partner_source or "",
                 "legacy_partner_id": rec.legacy_partner_id or "",
                 "name": rec.name or "",
+                "vat": rec.vat or "",
+                "customer_rank": rec.customer_rank or 0,
+                "supplier_rank": rec.supplier_rank or 0,
+                "sc_supplier_type": rec.sc_supplier_type or "",
             }
         )
     env.cr.commit()  # noqa: F821
@@ -165,12 +236,15 @@ for source, legacy_id in keys:
     post_count += Partner.search_count([("legacy_partner_source", "=", source), ("legacy_partner_id", "=", legacy_id)])
 
 status = "PASS" if len(created_rows) + len(updated_rows) == EXPECTED_ROWS and post_count == EXPECTED_ROWS else "FAIL"
+if EXPECTED_ROWS is None:
+    status = "PASS" if len(created_rows) + len(updated_rows) == len(rows) and post_count == len(rows) else "FAIL"
 result = {
     "status": status,
     "mode": "fresh_db_partner_l4_replay_write",
     "database": env.cr.dbname,  # noqa: F821
     "target_model": "res.partner",
     "input_rows": len(rows),
+    "expected_rows": EXPECTED_ROWS if EXPECTED_ROWS is not None else "auto",
     "created_rows": len(created_rows),
     "updated_rows": len(updated_rows),
     "post_write_identity_count": post_count,
@@ -184,7 +258,7 @@ result = {
 }
 write_csv(
     ROLLBACK_CSV,
-    ["id", "legacy_partner_source", "legacy_partner_id", "name"],
+    ["id", "legacy_partner_source", "legacy_partner_id", "name", "vat", "customer_rank", "supplier_rank", "sc_supplier_type"],
     created_rows,
 )
 write_json(OUTPUT_JSON, result)

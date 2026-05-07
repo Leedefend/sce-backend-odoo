@@ -881,6 +881,15 @@ class SystemInitHandler(BaseIntentHandler):
                 else {},
             },
         }
+        delivery_nav = delivery_payload.get("nav") if isinstance(delivery_payload.get("nav"), list) else []
+        if delivery_nav:
+            data["nav_role_surface"] = data.get("nav") if isinstance(data.get("nav"), list) else []
+            data["nav"] = delivery_nav
+            nav_meta = data.get("nav_meta") if isinstance(data.get("nav_meta"), dict) else {}
+            nav_meta["nav_source"] = "delivery_engine_v1"
+            nav_meta["primary_nav_promoted_from"] = "release_navigation_v1"
+            nav_meta["role_surface_nav_preserved"] = True
+            data["nav_meta"] = nav_meta
 
         default_route_payload = data.get("default_route") if isinstance(data.get("default_route"), dict) else {}
         landing_scene_key = str(default_route_payload.get("scene_key") or "").strip()

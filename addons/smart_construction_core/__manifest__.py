@@ -97,6 +97,7 @@
         'views/core/contract_line_search.xml',
         'views/core/purchase_extend_views.xml',
         'views/support/account_extend_views.xml',
+        'views/support/partner_import_review_views.xml',
         'views/support/product_extend_views.xml',
         'views/support/legacy_receipt_income_views.xml',
         'views/support/legacy_payment_adjustment_views.xml',
