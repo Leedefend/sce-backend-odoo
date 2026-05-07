@@ -667,6 +667,36 @@ and supplier menus are constrained by `customer_rank` / `supplier_rank`, and the
 primary list/form/search surfaces expose those facts instead of hiding them
 inside the replay package.
 
+Runtime probe after upgrading `smart_construction_core` in `sc_prod_sim`:
+
+```bash
+COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim \
+PROJECT=sc-backend-odoo-prod-sim \
+ENV=test \
+ENV_FILE=.env.prod.sim \
+DB_NAME=sc_prod_sim \
+COMPOSE_FILES='-f docker-compose.yml -f docker-compose.prod-sim.yml' \
+bash scripts/ops/odoo_shell_exec.sh \
+  < scripts/migration/partner_display_surface_runtime_probe.py
+```
+
+Latest runtime result after replaying the business-fit partner, partner-bank,
+and import-review payloads:
+
+| Runtime count | Value |
+| --- | ---: |
+| customers | 6,812 |
+| suppliers | 11,783 |
+| customer/supplier mixed identities | 2,701 |
+| partners with bank account surface | 9,321 |
+| structured partner-bank accounts with legacy key | 5,574 |
+| partners with default tax rate | 2,348 |
+| import review candidates | 1,444 |
+
+Runtime view/action checks also passed: all required customer, supplier, bank,
+and review fields were present in loaded Odoo views, and the customer/supplier
+actions kept their `customer_rank` / `supplier_rank` domains.
+
 `fresh_db_partner_l4_replay_write.py` consumes those explicit payload fields
 when present and only falls back to the legacy source-type role inference for
 old payloads. For the business-fit 6,348-row payload, run the write script with:
