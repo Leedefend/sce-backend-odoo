@@ -497,8 +497,8 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 40;
   display: grid;
-  grid-template-columns: max-content minmax(320px, 560px) max-content;
-  justify-content: center;
+  grid-template-columns: max-content minmax(320px, 560px) minmax(max-content, 1fr);
+  justify-content: stretch;
   align-items: center;
   gap: 8px;
   min-width: 0;
@@ -807,6 +807,8 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   gap: 8px;
   min-width: 0;
+  justify-self: end;
+  width: 100%;
 }
 
 .contract-label {
@@ -842,7 +844,7 @@ onBeforeUnmount(() => {
 
 @media (max-width: 1360px) {
   .action-toolbar {
-    grid-template-columns: max-content minmax(300px, 500px) max-content;
+    grid-template-columns: max-content minmax(300px, 500px) minmax(max-content, 1fr);
   }
 
   .native-search {

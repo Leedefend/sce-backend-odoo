@@ -26,7 +26,7 @@
       <section class="list-toolbar">
         <div class="list-title">
           <h2>{{ title }}</h2>
-          <p>{{ subtitle }}</p>
+          <p v-if="toolbarSubtitle">{{ toolbarSubtitle }}</p>
         </div>
         <div class="list-header-toolbar">
           <slot name="toolbar"></slot>
@@ -46,7 +46,7 @@
             {{ uiLabel('search_submit', '搜索') }}
           </button>
         </div>
-        <span v-else class="list-count">{{ uiLabel('record_count', '{count} 条记录', { count: records.length }) }}</span>
+        <span v-else-if="!showPagination" class="list-count">{{ uiLabel('record_count', '{count} 条记录', { count: records.length }) }}</span>
       </section>
       <section class="list-empty-state">
         <div class="list-empty-copy">
@@ -74,7 +74,7 @@
       <section class="list-toolbar">
         <div class="list-title">
           <h2>{{ title }}</h2>
-          <p>{{ subtitle }}</p>
+          <p v-if="toolbarSubtitle">{{ toolbarSubtitle }}</p>
         </div>
         <div class="list-header-toolbar">
           <slot name="toolbar"></slot>
@@ -94,61 +94,7 @@
             {{ uiLabel('search_submit', '搜索') }}
           </button>
         </div>
-        <div v-if="showPagination" class="pagination-actions pagination-actions--top">
-          <button
-            type="button"
-            class="pagination-btn"
-            :disabled="loading || !canPagePrev"
-            @click="pagePrev"
-          >
-            {{ uiLabel('pagination_prev', '上一页') }}
-          </button>
-          <span>{{ paginationPageText }}</span>
-          <button
-            type="button"
-            class="pagination-btn"
-            :disabled="loading || !canPageNext"
-            @click="pageNext"
-          >
-            {{ uiLabel('pagination_next', '下一页') }}
-          </button>
-          <input
-            class="pagination-input"
-            :value="pageJumpInput"
-            :disabled="loading || totalPages <= 1"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            @input="onPageJumpInput"
-            @keyup.enter="jumpPage"
-          />
-          <button
-            type="button"
-            class="pagination-btn"
-            :disabled="loading || totalPages <= 1"
-            @click="jumpPage"
-          >
-            {{ uiLabel('pagination_jump', '跳转') }}
-          </button>
-          <span class="pagination-size-label">{{ uiLabel('pagination_page_size', '每页') }}</span>
-          <input
-            class="pagination-input pagination-input--size"
-            :value="pageLimitInput"
-            :disabled="loading"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            @input="onPageLimitInput"
-            @keyup.enter="applyPageLimit"
-          />
-          <button
-            type="button"
-            class="pagination-btn"
-            :disabled="loading"
-            @click="applyPageLimit"
-          >
-            {{ uiLabel('pagination_apply_size', '应用') }}
-          </button>
-        </div>
-        <span v-else class="list-count">{{ uiLabel('record_count', '{count} 条记录', { count: records.length }) }}</span>
+        <span v-else-if="!showPagination" class="list-count">{{ uiLabel('record_count', '{count} 条记录', { count: records.length }) }}</span>
       </section>
 
       <section v-if="enableSummaryStrip && summaryItems.length" class="summary-strip">
@@ -263,7 +209,7 @@
                   v-for="col in displayedColumns"
                   :key="`group-col-${group.key}-${col}`"
                   class="cell-sortable"
-                  :class="[columnDensityClass(col), { 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col }]"
+                  :class="[columnDensityClass(col), { 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col, 'is-sort-disabled': !isColumnSortable(col) }]"
                   :data-column="col"
                   :style="columnWidthStyle(col)"
                   draggable="true"
@@ -276,6 +222,7 @@
                     type="button"
                     class="column-sort-btn"
                     :title="columnSortTitle(col)"
+                    :aria-disabled="!isColumnSortable(col)"
                     draggable="false"
                     @click.stop="toggleColumnSort(col)"
                   >
@@ -339,7 +286,8 @@
                   :style="columnWidthStyle(col)"
                   :class="[columnDensityClass(col), { 'footer-number': isNumericColumn(col) }]"
                 >
-                  {{ groupFooterCellText(col, group, 'page') }}
+                  <span v-if="isNumericColumn(col)" class="footer-number-value">{{ groupFooterCellText(col, group, 'page') }}</span>
+                  <template v-else>{{ groupFooterCellText(col, group, 'page') }}</template>
                 </td>
               </tr>
               <tr>
@@ -350,7 +298,8 @@
                   :style="columnWidthStyle(col)"
                   :class="[columnDensityClass(col), { 'footer-number': isNumericColumn(col) }]"
                 >
-                  {{ groupFooterCellText(col, group, 'total') }}
+                  <span v-if="isNumericColumn(col)" class="footer-number-value">{{ groupFooterCellText(col, group, 'total') }}</span>
+                  <template v-else>{{ groupFooterCellText(col, group, 'total') }}</template>
                 </td>
               </tr>
             </tfoot>
@@ -380,7 +329,7 @@
               v-for="col in displayedColumns"
               :key="col"
               class="cell-sortable"
-              :class="[columnDensityClass(col), { 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col }]"
+              :class="[columnDensityClass(col), { 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col, 'is-sort-disabled': !isColumnSortable(col) }]"
               :data-column="col"
               :style="columnWidthStyle(col)"
               draggable="true"
@@ -393,6 +342,7 @@
                 type="button"
                 class="column-sort-btn"
                 :title="columnSortTitle(col)"
+                :aria-disabled="!isColumnSortable(col)"
                 draggable="false"
                 @click.stop="toggleColumnSort(col)"
               >
@@ -485,7 +435,8 @@
               :style="columnWidthStyle(col)"
               :class="[columnDensityClass(col), { 'footer-number': isNumericColumn(col) }]"
             >
-              {{ footerCellText(col, 'page', pageVisibleRows.length) }}
+              <span v-if="isNumericColumn(col)" class="footer-number-value">{{ footerCellText(col, 'page', pageVisibleRows.length) }}</span>
+              <template v-else>{{ footerCellText(col, 'page', pageVisibleRows.length) }}</template>
             </td>
             <td v-if="columnChoices.length" class="cell-column-picker"></td>
           </tr>
@@ -498,13 +449,79 @@
               :style="columnWidthStyle(col)"
               :class="[columnDensityClass(col), { 'footer-number': isNumericColumn(col) }]"
             >
-              {{ footerCellText(col, 'total', listTotal || pageVisibleRows.length) }}
+              <span v-if="isNumericColumn(col)" class="footer-number-value">{{ footerCellText(col, 'total', listTotal || pageVisibleRows.length) }}</span>
+              <template v-else>{{ footerCellText(col, 'total', listTotal || pageVisibleRows.length) }}</template>
             </td>
             <td v-if="columnChoices.length" class="cell-column-picker"></td>
           </tr>
         </tfoot>
       </table>
     </section>
+
+      <section v-if="showPagination" class="pagination-footer">
+        <div class="pagination-actions pagination-actions--bottom">
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || !canPagePrev"
+            @click="pagePrev"
+          >
+            {{ uiLabel('pagination_prev', '上一页') }}
+          </button>
+          <span>{{ paginationPageText }}</span>
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || !canPageNext"
+            @click="pageNext"
+          >
+            {{ uiLabel('pagination_next', '下一页') }}
+          </button>
+          <input
+            class="pagination-input"
+            :value="pageJumpInput"
+            :disabled="loading || totalPages <= 1"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            @input="onPageJumpInput"
+            @keyup.enter="jumpPage"
+          />
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || totalPages <= 1"
+            @click="jumpPage"
+          >
+            {{ uiLabel('pagination_jump', '跳转') }}
+          </button>
+          <label class="pagination-size-control">
+            <span class="pagination-size-label">{{ uiLabel('pagination_page_size', '每页') }}</span>
+            <span class="pagination-size-combo">
+              <input
+                class="pagination-input pagination-input--size"
+                :value="pageLimitInput"
+                :disabled="loading"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                @input="onPageLimitInput"
+                @change="applyPageLimit"
+                @keyup.enter="applyPageLimit"
+              />
+              <select
+                class="pagination-size-select"
+                :value="pageLimitOptions.includes(listLimit) ? String(listLimit) : undefined"
+                :disabled="loading"
+                :aria-label="uiLabel('pagination_page_size_select', '选择每页条数')"
+                @change="onPageLimitSelectChange"
+              >
+                <option v-for="option in pageLimitOptions" :key="`page-limit-${option}`" :value="String(option)">
+                  {{ option }}
+                </option>
+              </select>
+            </span>
+          </label>
+        </div>
+      </section>
 
     </template>
   </section>
@@ -529,6 +546,7 @@ type ColumnOption = {
   label: string;
   optional?: string;
   defaultVisible?: boolean;
+  sortable?: boolean;
   type?: string;
   widget?: string;
   cellRole?: string;
@@ -1055,6 +1073,7 @@ const listLimit = computed(() => {
   const limit = Number(props.listLimit || 40);
   return Number.isFinite(limit) && limit > 0 ? Math.trunc(limit) : 40;
 });
+const pageLimitOptions = computed(() => [10, 20, 50]);
 const listTotal = computed(() => {
   if (props.listTotalCount === null || typeof props.listTotalCount === 'undefined') return null;
   const raw = Number(props.listTotalCount);
@@ -1082,6 +1101,12 @@ const rangeEnd = computed(() => {
   return Math.min(total, listOffset.value + props.records.length);
 });
 const showPagination = computed(() => listTotal.value !== null && props.status === 'ok' && !showGroupedRows.value);
+const toolbarSubtitle = computed(() => {
+  if (listTotal.value !== null) {
+    return uiLabel('record_count', '{count} 条记录', { count: listTotal.value });
+  }
+  return props.subtitle || '';
+});
 const canPagePrev = computed(() => listOffset.value > 0);
 const canPageNext = computed(() => {
   const total = listTotal.value || 0;
@@ -1157,18 +1182,25 @@ function jumpPage() {
   emitPageOffset((normalizedPage - 1) * listLimit.value);
 }
 
-function onPageLimitInput(event: Event) {
-  pageLimitInput.value = String((event.target as HTMLInputElement | null)?.value || '');
-}
-
-function applyPageLimit() {
-  const raw = Number(pageLimitInput.value || listLimit.value);
+function applyPageLimitValue(raw: number) {
   if (!Number.isFinite(raw)) return;
   const normalized = Math.min(Math.max(Math.trunc(raw), 1), 200);
   pageLimitInput.value = String(normalized);
   if (normalized === listLimit.value) return;
   observedListLimit.value = normalized;
   props.onPageLimitChange?.(normalized);
+}
+
+function onPageLimitInput(event: Event) {
+  pageLimitInput.value = String((event.target as HTMLInputElement | null)?.value || '');
+}
+
+function applyPageLimit() {
+  applyPageLimitValue(Number(pageLimitInput.value || listLimit.value));
+}
+
+function onPageLimitSelectChange(event: Event) {
+  applyPageLimitValue(Number((event.target as HTMLSelectElement | null)?.value || 0));
 }
 
 function onPlainSearchInput(event: Event) {
@@ -1336,6 +1368,9 @@ function columnSortIndicator(col: string) {
 
 function columnSortTitle(col: string) {
   const label = columnLabel(col);
+  if (!isColumnSortable(col)) {
+    return uiLabel('sort_column_disabled', '{column} 不支持排序', { column: label });
+  }
   if (isSortedColumn(col) && sortDirection(props.sortValue || '') === 'asc') {
     return uiLabel('sort_column_desc', '按 {column} 降序', { column: label });
   }
@@ -1343,6 +1378,7 @@ function columnSortTitle(col: string) {
 }
 
 function toggleColumnSort(col: string) {
+  if (!isColumnSortable(col)) return;
   const currentDirection = isSortedColumn(col) ? sortDirection(props.sortValue || '') : '';
   const nextDirection = currentDirection === 'asc' ? 'desc' : 'asc';
   props.onSort(`${col} ${nextDirection}`);
@@ -1410,9 +1446,7 @@ function effectiveColumnWidth(field: string) {
 function columnWidthStyle(field: string) {
   const width = effectiveColumnWidth(field);
   if (!width) return {};
-  const maxTextWidth = isNameLikeColumn(field) ? 220 : isLongTextColumn(field) ? 180 : 0;
-  const resolvedWidth = maxTextWidth ? Math.min(width, maxTextWidth) : width;
-  return { width: `${resolvedWidth}px`, minWidth: `${resolvedWidth}px`, maxWidth: `${resolvedWidth}px` };
+  return { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` };
 }
 
 function isLongTextColumn(field: string) {
@@ -1481,6 +1515,10 @@ function columnChoiceLabel(column: ColumnOption) {
 
 function columnOption(field: string) {
   return columnChoices.value.find((column) => column.name === field) || null;
+}
+
+function isColumnSortable(field: string) {
+  return columnOption(field)?.sortable !== false;
 }
 
 function isColumnVisible(name: string) {
@@ -1572,13 +1610,13 @@ function totalAggregateValue(field: string) {
 }
 
 function footerCellText(field: string, scope: 'page' | 'total', rowCount: number) {
+  void rowCount;
   if (!isNumericColumn(field)) return '';
-  const label = columnLabel(field);
   if (scope === 'page') {
-    return `${label}：${pageFooterStatsMap.value[field]?.sumText || '--'}`;
+    return pageFooterStatsMap.value[field]?.sumText || '--';
   }
   const value = totalAggregateValue(field);
-  return `${label}：${value === null ? '--' : formatFooterNumber(value, field)}`;
+  return value === null ? '--' : formatFooterNumber(value, field);
 }
 
 function rowsNumericSum(rows: Array<Record<string, unknown>>, field: string) {
@@ -1601,20 +1639,19 @@ function groupFooterCellText(
   scope: 'page' | 'total',
 ) {
   if (!isNumericColumn(field)) return '';
-  const label = columnLabel(field);
   if (scope === 'page') {
     const value = rowsNumericSum(group.sampleRows || [], field);
-    return `${label}：${value === null ? '--' : formatFooterNumber(value, field)}`;
+    return value === null ? '--' : formatFooterNumber(value, field);
   }
   const value = groupAggregateValue(group, field);
-  return value === null ? '' : `${label}：${formatFooterNumber(value, field)}`;
+  return value === null ? '--' : formatFooterNumber(value, field);
 }
 
 function footerRowLabel(scope: 'page' | 'total', rowCount: number) {
-  const count = Math.max(0, Math.trunc(Number(rowCount || 0)));
+  void rowCount;
   return scope === 'page'
-    ? uiLabel('page_footer_current_count', '本页：{count} 条', { count })
-    : uiLabel('page_footer_total_count', '总计：{count} 条', { count });
+    ? uiLabel('page_footer_current_total', '当页总计')
+    : uiLabel('page_footer_total', '总计');
 }
 
 function handleColumnPickerPointerDown(event: PointerEvent) {
@@ -1645,7 +1682,7 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 35;
   display: grid;
-  grid-template-columns: minmax(132px, 180px) minmax(0, 600px) max-content;
+  grid-template-columns: minmax(132px, 180px) minmax(0, 1fr) max-content;
   align-items: center;
   gap: 6px;
   border: 1px solid #e2e8f0;
@@ -1691,13 +1728,14 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: flex-start;
   min-width: 0;
+  width: 100%;
 }
 
 .list-header-toolbar :deep(.action-toolbar) {
-  grid-template-columns: max-content minmax(280px, 460px) max-content;
-  justify-content: start;
-  width: min(600px, 100%);
-  max-width: 600px;
+  grid-template-columns: max-content minmax(280px, 460px) minmax(max-content, 1fr);
+  justify-content: stretch;
+  width: 100%;
+  max-width: none;
   border: 0;
   box-shadow: none;
   padding: 0;
@@ -1775,7 +1813,7 @@ onBeforeUnmount(() => {
 .table {
   width: 100%;
   max-width: 100%;
-  max-height: max(500px, calc(100vh - 185px));
+  max-height: max(500px, calc(100vh - 145px));
   overflow-x: auto;
   overflow-y: auto;
   background: white;
@@ -2061,19 +2099,29 @@ onBeforeUnmount(() => {
   gap: 5px;
 }
 
-.pagination-size-label {
-  color: #64748b;
-  font-size: 12px;
+.pagination-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
 }
 
-.pagination-actions--top {
-  justify-self: end;
-  flex: 0 0 auto;
+.pagination-actions--bottom {
   justify-content: flex-end;
   flex-wrap: nowrap;
   color: #475569;
   font-size: 12px;
   white-space: nowrap;
+}
+
+.pagination-size-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pagination-size-label {
+  color: #64748b;
+  font-size: 12px;
 }
 
 .cell-column-picker {
@@ -2203,7 +2251,39 @@ onBeforeUnmount(() => {
 }
 
 .pagination-input--size {
-  width: 54px;
+  width: 64px;
+  padding-right: 28px;
+}
+
+.pagination-size-combo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.pagination-size-select {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  width: 26px;
+  border: 0;
+  border-left: 1px solid #bfdbfe;
+  border-radius: 0 5px 5px 0;
+  background: #eff6ff;
+  font-size: 0;
+  color: #1d4ed8;
+  cursor: pointer;
+}
+
+.pagination-size-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pagination-size-select option {
+  font-size: 12px;
+  color: #0f172a;
 }
 
 @media (max-width: 900px) {
@@ -2224,6 +2304,11 @@ onBeforeUnmount(() => {
 
   .pagination-actions {
     flex-wrap: wrap;
+  }
+
+  .pagination-actions--bottom {
+    justify-content: flex-start;
+    white-space: normal;
   }
 
   .list-plain-search {
@@ -2343,15 +2428,24 @@ tfoot tr:nth-child(2) td {
   color: #0f172a;
   font-size: 12px;
   line-height: 1.2;
-  white-space: normal;
+  min-width: 88px;
+  width: 88px;
+  white-space: nowrap;
+  overflow-wrap: normal;
 }
 
 .footer-number {
-  min-width: 150px;
-  text-align: left;
+  text-align: right;
   font-variant-numeric: tabular-nums;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+.footer-number-value {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  text-align: right;
 }
 
 .cell-sortable {
@@ -2362,6 +2456,11 @@ tfoot tr:nth-child(2) td {
 
 .cell-sortable.is-dragging {
   opacity: 0.55;
+}
+
+.cell-sortable.is-sort-disabled .column-sort-btn {
+  color: #475569;
+  cursor: default;
 }
 
 .column-sort-btn {
@@ -2411,6 +2510,10 @@ tfoot tr:nth-child(2) td {
 
 .column-sort-btn:hover {
   color: #1d4ed8;
+}
+
+.cell-sortable.is-sort-disabled .column-sort-btn:hover {
+  color: #475569;
 }
 
 .sort-indicator {
