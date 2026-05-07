@@ -28,6 +28,7 @@ export type RelationFallbackAdapter = {
   selectedRelationOptions: (name: string) => RelationFallbackOption[];
   filteredRelationOptions: (name: string) => RelationFallbackOption[];
   setRelationMultiField: (name: string, target: HTMLSelectElement) => void;
+  setRelationIds: (name: string, ids: number[]) => void;
   one2manyCanCreate: (name: string) => boolean;
   one2manyCreateLabel: (name: string) => string;
   addOne2manyRow: (name: string) => void;

@@ -1360,6 +1360,47 @@ function mergeRelationOptions(fieldName: string, options: RelationOption[]) {
   };
 }
 
+async function hydrateSelectedRelationOptions() {
+  const fields = contract.value?.fields || {};
+  await Promise.all(Object.entries(fields).map(async ([name, descriptor]) => {
+    const type = fieldType(descriptor);
+    if (!['many2one', 'many2many'].includes(type)) return;
+    const relation = relationModel(name);
+    if (!relation || deniedRelationModels.has(relation)) return;
+    const ids = relationIds(name);
+    if (!ids.length) return;
+    const existingIds = new Set((relationOptions.value[name] || []).map((option) => option.id));
+    const missingIds = ids.filter((id) => !existingIds.has(id));
+    if (!missingIds.length) return;
+    try {
+      const response = await readRecord({
+        model: relation,
+        ids: missingIds,
+        fields: ['id', 'name', 'display_name'],
+      });
+      const records = Array.isArray(response.records) ? response.records : [];
+      const options = records
+        .map((row) => {
+          const id = Number((row as Record<string, unknown>).id);
+          if (!Number.isFinite(id) || id <= 0) return null;
+          const label = String(
+            (row as Record<string, unknown>).display_name
+            || (row as Record<string, unknown>).name
+            || `#${id}`,
+          ).trim();
+          return { id: Math.trunc(id), label };
+        })
+        .filter((item): item is RelationOption => Boolean(item));
+      if (options.length) mergeRelationOptions(name, options);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        const denied = err.status === 403 || String(err.reasonCode || '').toUpperCase() === 'PERMISSION_DENIED';
+        if (denied) deniedRelationModels.add(relation);
+      }
+    }
+  }));
+}
+
 function relationKeyword(name: string) {
   return String(relationKeywords[name] || '');
 }
@@ -1586,6 +1627,7 @@ function one2manyColumnInputType(column: One2ManyColumn) {
 
 function one2manyColumnDisplayValue(column: One2ManyColumn, value: unknown) {
   const ttype = String(column.ttype || '').trim().toLowerCase();
+  if (value === false || value === null || value === undefined) return '';
   if (ttype === 'date') return toDateInputValue(value);
   if (ttype === 'datetime') return toDatetimeInputValue(value);
   return String(value ?? '');
@@ -1631,6 +1673,53 @@ function initOne2manyRows(name: string, source: unknown) {
       name: optionMap.get(id) || `#${id}`,
     },
   }));
+}
+
+async function hydrateOne2manyRows(name: string) {
+  const relation = one2manyRelationModel(name);
+  if (!relation) return;
+  const rows = ensureOne2manyRows(name).filter((row) => row.id && !row.isNew);
+  if (!rows.length) return;
+  const columns = one2manyColumns(name);
+  if (!columns.length) return;
+  const fields = Array.from(new Set(['id', 'display_name', 'name', ...columns.map((column) => column.name)]));
+  try {
+    const response = await readRecord({
+      model: relation,
+      ids: rows.map((row) => Number(row.id)).filter((id) => Number.isFinite(id) && id > 0),
+      fields,
+    });
+    const records = Array.isArray(response.records) ? response.records : [];
+    const byId = new Map<number, Record<string, unknown>>();
+    records.forEach((record) => {
+      const id = Number((record as Record<string, unknown>).id);
+      if (Number.isFinite(id) && id > 0) byId.set(Math.trunc(id), record as Record<string, unknown>);
+    });
+    rows.forEach((row) => {
+      if (!row.id || row.dirty) return;
+      const record = byId.get(Number(row.id));
+      if (!record) return;
+      row.values = columns.reduce<Record<string, unknown>>((acc, column) => {
+        acc[column.name] = record[column.name] ?? '';
+        return acc;
+      }, {
+        id: record.id,
+        display_name: record.display_name,
+        name: record.name ?? record.display_name ?? row.values?.name ?? `#${row.id}`,
+      });
+    });
+  } catch {
+    // Keep the id/display-name fallback when the child model is not readable.
+  }
+}
+
+async function hydrateVisibleOne2manyRows() {
+  const fields = contract.value?.fields || {};
+  const names = Object.entries(fields)
+    .filter(([, descriptor]) => fieldType(descriptor) === 'one2many')
+    .map(([name]) => name)
+    .filter((name) => isWritableFieldVisible(name) || one2manyFieldRows(name).length > 0);
+  await Promise.all(names.map((name) => hydrateOne2manyRows(name)));
 }
 
 function buildOne2manyCommandValue(name: string, mode: 'onchange' | 'write') {
@@ -1928,10 +2017,12 @@ function relationDomain(descriptor?: FieldDescriptor) {
 }
 
 function runtimeRelationDomain(name: string) {
-  const raw = (onchangeModifiersPatch.value?.[name] || {}) as Record<string, unknown>;
-  const domain = raw.domain;
-  if (!Array.isArray(domain)) return [];
-  return domain;
+  const out: unknown[] = [];
+  const base = (fieldModifierMap.value?.[name] || {}) as Record<string, unknown>;
+  if (Array.isArray(base.domain)) out.push(...base.domain);
+  const patch = (onchangeModifiersPatch.value?.[name] || {}) as Record<string, unknown>;
+  if (Array.isArray(patch.domain)) out.push(...patch.domain);
+  return out;
 }
 
 function mergedRelationDomain(name: string, descriptor?: FieldDescriptor) {
@@ -3712,6 +3803,7 @@ const relationFallbackAdapter = computed<RelationFallbackAdapter>(() => createRe
   selectedRelationOptions,
   filteredRelationOptions,
   setRelationMultiField,
+  setRelationIds,
   one2manyCanCreate,
   one2manyCreateLabel,
   addOne2manyRow,
@@ -3989,6 +4081,14 @@ function setRelationMultiField(name: string, target: HTMLSelectElement) {
     .filter((id) => Number.isFinite(id) && id > 0)
     .map((id) => Math.trunc(id));
   formData[name] = ids;
+  markFieldChanged(name);
+}
+
+function setRelationIds(name: string, ids: number[]) {
+  formData[name] = Array.from(new Set((ids || [])
+    .map((id) => Number(id))
+    .filter((id) => Number.isFinite(id) && id > 0)
+    .map((id) => Math.trunc(id))));
   markFieldChanged(name);
 }
 
@@ -4783,6 +4883,8 @@ async function reload() {
     await loadContract();
     await loadRecord();
     await loadRelationOptions();
+    await hydrateSelectedRelationOptions();
+    await hydrateVisibleOne2manyRows();
     status.value = 'ok';
   } catch (err) {
     if (err instanceof ContractAccessPolicyError) {

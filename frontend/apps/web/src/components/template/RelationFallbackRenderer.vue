@@ -1,36 +1,63 @@
 <template>
   <div v-if="field.type === 'many2many'" class="relation-editor">
-    <div v-if="isMany2manyTags(field) && adapter.selectedRelationOptions(field.name).length" class="relation-tag-list">
-      <span
-        v-for="option in adapter.selectedRelationOptions(field.name)"
-        :key="`${field.name}-tag-${option.id}`"
-        class="relation-tag"
-      >
-        {{ option.label }}
-      </span>
+    <div v-if="isMany2manyTags(field)" class="relation-tag-picker">
+      <div class="relation-selected-block">
+        <div class="relation-selected-title">已选{{ field.label }}</div>
+        <div v-if="adapter.selectedRelationOptions(field.name).length" class="relation-tag-list">
+          <span
+            v-for="option in adapter.selectedRelationOptions(field.name)"
+            :key="`${field.name}-tag-${option.id}`"
+            class="relation-tag"
+          >
+            {{ option.label }}
+          </span>
+        </div>
+        <div v-else class="relation-empty">未选择</div>
+      </div>
+      <details class="relation-choice-panel">
+        <summary>调整{{ field.label }}</summary>
+        <div class="relation-choice-list">
+          <label
+            v-for="option in adapter.filteredRelationOptions(field.name)"
+            :key="`${field.name}-choice-${option.id}`"
+            class="relation-choice"
+          >
+            <input
+              class="relation-choice-check"
+              type="checkbox"
+              :checked="relationIdSet(field.name).has(option.id)"
+              :disabled="adapter.busy"
+              @change="toggleRelationId(field.name, option.id, ($event.target as HTMLInputElement).checked)"
+            />
+            <span>{{ option.label }}</span>
+          </label>
+        </div>
+      </details>
     </div>
-    <input
-      class="input relation-search"
-      type="text"
-      :value="adapter.relationKeyword(field.name)"
-      :placeholder="field.inputPlaceholder || adapter.inputPlaceholder(field.label)"
-      @input="adapter.setRelationKeyword(field.name, ($event.target as HTMLInputElement).value)"
-    />
-    <select
-      class="input"
-      multiple
-      size="6"
-      :value="adapter.relationIds(field.name).map((id) => String(id))"
-      @change="adapter.setRelationMultiField(field.name, $event.target as HTMLSelectElement)"
-    >
-      <option
-        v-for="option in adapter.filteredRelationOptions(field.name)"
-        :key="`${field.name}-${option.id}`"
-        :value="String(option.id)"
+    <div v-else class="relation-select-editor">
+      <input
+        class="input relation-search"
+        type="text"
+        :value="adapter.relationKeyword(field.name)"
+        :placeholder="field.inputPlaceholder || adapter.inputPlaceholder(field.label)"
+        @input="adapter.setRelationKeyword(field.name, ($event.target as HTMLInputElement).value)"
+      />
+      <select
+        class="input"
+        multiple
+        size="6"
+        :value="adapter.relationIds(field.name).map((id) => String(id))"
+        @change="adapter.setRelationMultiField(field.name, $event.target as HTMLSelectElement)"
       >
-        {{ option.label }}
-      </option>
-    </select>
+        <option
+          v-for="option in adapter.filteredRelationOptions(field.name)"
+          :key="`${field.name}-${option.id}`"
+          :value="String(option.id)"
+        >
+          {{ option.label }}
+        </option>
+      </select>
+    </div>
   </div>
   <div v-else-if="field.type === 'one2many'" class="relation-editor">
     <div class="o2m-toolbar">
@@ -134,10 +161,24 @@
 import type { FormSectionFieldSchema } from './formSection.types';
 import type { RelationFallbackRendererProps } from './relationFallback.types';
 
-defineProps<RelationFallbackRendererProps>();
+const props = defineProps<RelationFallbackRendererProps>();
 
 function isMany2manyTags(field: FormSectionFieldSchema) {
   return String(field.widget || '').trim().toLowerCase() === 'many2many_tags';
+}
+
+function relationIdSet(name: string) {
+  return new Set(props.adapter.relationIds(name));
+}
+
+function toggleRelationId(name: string, id: number, checked: boolean) {
+  const current = relationIdSet(name);
+  if (checked) {
+    current.add(id);
+  } else {
+    current.delete(id);
+  }
+  props.adapter.setRelationIds(name, Array.from(current));
 }
 </script>
 
@@ -157,6 +198,75 @@ function isMany2manyTags(field: FormSectionFieldSchema) {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.relation-tag-picker,
+.relation-select-editor {
+  display: grid;
+  gap: 8px;
+}
+
+.relation-selected-block {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #d7deea;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.relation-selected-title {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.relation-empty {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.relation-choice-panel {
+  border: 1px solid #d7deea;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.relation-choice-panel > summary {
+  min-height: 32px;
+  padding: 7px 10px;
+  color: #334155;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.relation-choice-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 10px;
+  max-height: 220px;
+  overflow: auto;
+  padding: 0 8px 8px;
+}
+
+.relation-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  min-height: 28px;
+  padding: 5px 8px;
+  border: 1px solid #d7deea;
+  border-radius: 6px;
+  background: #fff;
+  color: #334155;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.relation-choice-check {
+  margin-top: 1px;
+  flex: 0 0 auto;
 }
 
 .relation-tag {
@@ -229,27 +339,34 @@ function isMany2manyTags(field: FormSectionFieldSchema) {
 
 .o2m-row {
   display: grid;
-  grid-template-columns: minmax(120px, 1fr) auto;
-  gap: 6px;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  gap: 8px;
   align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid #eef2f7;
 }
 
 .o2m-row-state {
-  grid-column: 1 / -1;
   margin: 0;
   font-size: 12px;
-  color: #475569;
+  color: #64748b;
+  white-space: nowrap;
 }
 
 .o2m-fields {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 6px;
+  min-width: 0;
 }
 
 .o2m-field {
   display: grid;
-  gap: 4px;
+  min-width: 0;
+}
+
+.o2m-field .meta {
+  display: none;
 }
 
 .o2m-removed {
@@ -313,7 +430,34 @@ select.input {
   background-position: calc(100% - 16px) calc(50% - 2px), calc(100% - 11px) calc(50% - 2px);
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
-  padding-right: 30px;
+  padding-right: 32px;
+}
+
+@media (max-width: 760px) {
+  .o2m-header {
+    display: none;
+  }
+
+  .o2m-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  .o2m-row-state {
+    grid-column: 1 / -1;
+  }
+
+  .o2m-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .o2m-field {
+    gap: 4px;
+  }
+
+  .o2m-field .meta {
+    display: block;
+  }
 }
 
 .ghost {
