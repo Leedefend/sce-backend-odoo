@@ -3,7 +3,8 @@
 Status: Business-fit iteration batch
 Branch: `feature/user-history-data-alignment`
 Source root: `/home/odoo/workspace/partner_import_source`
-Current payload: `artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv`
+Legacy fresh-db payload:
+`artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv`
 Current rebuild payload:
 `artifacts/migration/fact_based_partner_rebuild_2_fact_only_20260506T2055/fact_based_partner_rebuild_payload_v1.csv`
 
@@ -406,6 +407,63 @@ to:
 
 This is the first concrete step of iterating the original asset package rather
 than submitting a final complete package.
+
+## Fresh-DB Replay Bridge
+
+The fresh-db replay bridge now accepts the iterated business-fit partner asset
+surface instead of only the old L4 identity/tax payload. This keeps the
+historical replay flow usable while allowing the current `res.partner` model
+fields to pass through the same contract.
+
+No-DB adapter rehearsal:
+
+```bash
+python3 scripts/migration/partner_asset_generator.py \
+  --business-gate artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_business_aligned_gate_v1.csv \
+  --out .runtime_artifacts/migration_assets/partner_business_fit_sc_v1 \
+  --source partner_import_source \
+  --asset-version business_fit_v1 \
+  --check
+
+PARTNER_ASSET_XML=.runtime_artifacts/migration_assets/partner_business_fit_sc_v1/10_master/partner/partner_master_v1.xml \
+FRESH_DB_PARTNER_L4_OUTPUT_JSON=.runtime_artifacts/migration/fresh_db_partner_l4_business_fit_adapter_result_v1.json \
+FRESH_DB_PARTNER_L4_OUTPUT_CSV=.runtime_artifacts/migration/fresh_db_partner_l4_business_fit_payload_v1.csv \
+FRESH_DB_PARTNER_L4_OUTPUT_REPORT=.runtime_artifacts/migration/fresh_db_partner_l4_business_fit_adapter_report_v1.md \
+python3 scripts/migration/fresh_db_partner_l4_replay_adapter.py
+```
+
+Rehearsal result:
+
+| Item | Value |
+| --- | ---: |
+| adapter payload rows | 6,348 |
+| duplicate replay identities | 0 |
+| raw source misses | 0 |
+| DB writes | 0 |
+
+The adapter payload now carries:
+
+- `vat`
+- `company_type`
+- `customer_rank`
+- `supplier_rank`
+- `sc_supplier_type`
+- `sc_account_name`
+- `sc_bank_name`
+- `sc_bank_account`
+
+`fresh_db_partner_l4_replay_write.py` consumes those explicit payload fields
+when present and only falls back to the legacy source-type role inference for
+old payloads. For the business-fit 6,348-row payload, run the write script with:
+
+```bash
+FRESH_DB_PARTNER_L4_INPUT_CSV=.runtime_artifacts/migration/fresh_db_partner_l4_business_fit_payload_v1.csv \
+FRESH_DB_PARTNER_L4_EXPECTED_ROWS=6348 \
+python3 scripts/migration/fresh_db_partner_l4_replay_write.py
+```
+
+The write step still requires an allowed fresh replay database and was not
+executed in this local pass because the compose `odoo` service was unavailable.
 
 ## Replay Rehearsal Package
 

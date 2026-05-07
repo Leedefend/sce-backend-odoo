@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 from collections import Counter
 from pathlib import Path
 from xml.etree import ElementTree as ET
@@ -13,10 +14,25 @@ from xml.etree import ElementTree as ET
 REPO_ROOT = Path.cwd()
 COMPANY_CSV = REPO_ROOT / "tmp/raw/partner/company.csv"
 SUPPLIER_CSV = REPO_ROOT / "tmp/raw/partner/supplier.csv"
-OUTPUT_JSON = REPO_ROOT / "artifacts/migration/fresh_db_partner_l4_replay_adapter_result_v1.json"
-OUTPUT_CSV = REPO_ROOT / "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv"
-OUTPUT_REPORT = REPO_ROOT / "docs/migration_alignment/fresh_db_partner_l4_replay_adapter_report_v1.md"
-ASSET_XML = REPO_ROOT / "migration_assets/10_master/partner/partner_master_v1.xml"
+OUTPUT_JSON = Path(
+    os.getenv(
+        "FRESH_DB_PARTNER_L4_OUTPUT_JSON",
+        str(REPO_ROOT / "artifacts/migration/fresh_db_partner_l4_replay_adapter_result_v1.json"),
+    )
+)
+OUTPUT_CSV = Path(
+    os.getenv(
+        "FRESH_DB_PARTNER_L4_OUTPUT_CSV",
+        str(REPO_ROOT / "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv"),
+    )
+)
+OUTPUT_REPORT = Path(
+    os.getenv(
+        "FRESH_DB_PARTNER_L4_OUTPUT_REPORT",
+        str(REPO_ROOT / "docs/migration_alignment/fresh_db_partner_l4_replay_adapter_report_v1.md"),
+    )
+)
+ASSET_XML = Path(os.getenv("PARTNER_ASSET_XML", str(REPO_ROOT / "migration_assets/10_master/partner/partner_master_v1.xml")))
 
 WRITE_RESULTS = [
     "artifacts/migration/partner_l4_500_write_result_v1.json",
@@ -65,6 +81,14 @@ def source_indexes() -> dict[tuple[str, str], dict[str, str]]:
                 "legacy_partner_id": legacy_id,
                 "name": clean(row.get("DWMC")),
                 "tax_no": clean(row.get("TYSHXYDM")) or clean(row.get("SH")),
+                "vat": clean(row.get("TYSHXYDM")) or clean(row.get("SH")),
+                "company_type": "company",
+                "customer_rank": "1",
+                "supplier_rank": "0",
+                "sc_supplier_type": "",
+                "sc_account_name": "",
+                "sc_bank_name": "",
+                "sc_bank_account": "",
                 "deleted_flag": clean(row.get("DEL")),
                 "source_status": clean(row.get("DJZT")),
                 "source_code": clean(row.get("DJBH")),
@@ -77,6 +101,14 @@ def source_indexes() -> dict[tuple[str, str], dict[str, str]]:
                 "legacy_partner_id": legacy_id,
                 "name": clean(row.get("f_SupplierName")),
                 "tax_no": clean(row.get("SHXYDM")) or clean(row.get("NSRSBH")),
+                "vat": clean(row.get("SHXYDM")) or clean(row.get("NSRSBH")),
+                "company_type": "company",
+                "customer_rank": "0",
+                "supplier_rank": "1",
+                "sc_supplier_type": "supplier",
+                "sc_account_name": "",
+                "sc_bank_name": "",
+                "sc_bank_account": "",
                 "deleted_flag": clean(row.get("f_del")),
                 "source_status": clean(row.get("DJZT")) or clean(row.get("f_AuditState")),
                 "source_code": clean(row.get("f_SupplierCode")) or clean(row.get("DJBH")),
@@ -125,13 +157,23 @@ def load_asset_rows() -> list[dict[str, object]]:
         if not source or not legacy_id:
             continue
         source_type = "supplier" if source == "supplier" else ("company_supplier" if source == "company_supplier" else "company")
+        if source == "xlsx_business_aligned_partner":
+            source_type = "business_aligned"
         rows.append(
             {
-                "source_file": str(ASSET_XML.relative_to(REPO_ROOT)),
+                "source_file": str(ASSET_XML.relative_to(REPO_ROOT)) if ASSET_XML.is_relative_to(REPO_ROOT) else str(ASSET_XML),
                 "legacy_partner_source": source,
                 "legacy_partner_id": legacy_id,
                 "name": clean(values.get("name")) or clean(values.get("legacy_partner_name")),
                 "tax_no": clean(values.get("legacy_tax_no")) or clean(values.get("legacy_credit_code")) or clean(values.get("vat")),
+                "vat": clean(values.get("vat")) or clean(values.get("legacy_credit_code")) or clean(values.get("legacy_tax_no")),
+                "company_type": clean(values.get("company_type")) or ("person" if clean(values.get("is_company")) == "0" else "company"),
+                "customer_rank": clean(values.get("customer_rank")),
+                "supplier_rank": clean(values.get("supplier_rank")),
+                "sc_supplier_type": clean(values.get("sc_supplier_type")),
+                "sc_account_name": clean(values.get("sc_account_name")),
+                "sc_bank_name": clean(values.get("sc_bank_name")),
+                "sc_bank_account": clean(values.get("sc_bank_account")),
                 "source_type": source_type,
                 "deleted_flag": clean(values.get("legacy_deleted_flag")),
                 "source_status": "",
@@ -210,6 +252,14 @@ def main() -> int:
                 "source_type": clean(row.get("source_type")) or "unknown",
                 "name": clean(row["name"]),
                 "tax_no": clean(row.get("tax_no")),
+                "vat": clean(row.get("vat")) or clean(row.get("tax_no")),
+                "company_type": clean(row.get("company_type")),
+                "customer_rank": clean(row.get("customer_rank")),
+                "supplier_rank": clean(row.get("supplier_rank")),
+                "sc_supplier_type": clean(row.get("sc_supplier_type")),
+                "sc_account_name": clean(row.get("sc_account_name")),
+                "sc_bank_name": clean(row.get("sc_bank_name")),
+                "sc_bank_account": clean(row.get("sc_bank_account")),
                 "deleted_flag": clean(row.get("deleted_flag")),
                 "source_status": clean(row.get("source_status")),
                 "source_code": clean(row.get("source_code")),
@@ -220,6 +270,14 @@ def main() -> int:
             "legacy_partner_id": key[1],
             "name": source["name"] or clean(row["name"]),
             "tax_no": source["tax_no"],
+            "vat": clean(source.get("vat")) or source["tax_no"],
+            "company_type": clean(source.get("company_type")),
+            "customer_rank": clean(source.get("customer_rank")),
+            "supplier_rank": clean(source.get("supplier_rank")),
+            "sc_supplier_type": clean(source.get("sc_supplier_type")),
+            "sc_account_name": clean(source.get("sc_account_name")),
+            "sc_bank_name": clean(source.get("sc_bank_name")),
+            "sc_bank_account": clean(source.get("sc_bank_account")),
             "source_type": source["source_type"],
             "deleted_flag": source["deleted_flag"],
             "source_status": source["source_status"],
@@ -250,6 +308,16 @@ def main() -> int:
         "raw_source_miss_samples": raw_misses[:20],
         "source_type_counts": dict(sorted(source_type_counts.items())),
         "row_artifact": str(OUTPUT_CSV),
+        "payload_fields": [
+            "vat",
+            "company_type",
+            "customer_rank",
+            "supplier_rank",
+            "sc_supplier_type",
+            "sc_account_name",
+            "sc_bank_name",
+            "sc_bank_account",
+        ],
         "decision": "partner_l4_replay_payload_ready" if status == "PASS" else "STOP_REVIEW_REQUIRED",
         "next_step": "open partner L4 replay adapter write-dry-run against a fresh database after fresh database operation contract exists",
     }
@@ -260,6 +328,14 @@ def main() -> int:
             "legacy_partner_id",
             "name",
             "tax_no",
+            "vat",
+            "company_type",
+            "customer_rank",
+            "supplier_rank",
+            "sc_supplier_type",
+            "sc_account_name",
+            "sc_bank_name",
+            "sc_bank_account",
             "source_type",
             "deleted_flag",
             "source_status",
