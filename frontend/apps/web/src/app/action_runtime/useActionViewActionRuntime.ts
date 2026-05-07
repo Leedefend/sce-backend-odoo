@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Ref } from 'vue';
 
 type Dict = Record<string, unknown>;

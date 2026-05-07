@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { computed, type Ref } from 'vue';
 import { resolveUnifiedPageContractV2 } from '../contracts/unifiedPageContractV2';
 

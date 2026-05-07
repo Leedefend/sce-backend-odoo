@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 <template>
   <section class="page">
     <!-- Page intent: 在列表场景中先判断状态，再给出下一步可执行动作。 -->

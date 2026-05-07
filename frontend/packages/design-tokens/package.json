@@ -1,0 +1,11 @@
+{
+  "name": "@sc/design-tokens",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cross-platform contract-aligned design token package",
+  "scripts": {
+    "build": "python3 scripts/build_tokens.py",
+    "verify": "python3 scripts/verify_tokens.py",
+    "test": "python3 -m unittest tests_build_tokens.py"
+  }
+}
