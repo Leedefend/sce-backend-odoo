@@ -135,17 +135,17 @@ python3 scripts/migration/partner_business_fit_closure_guard.py --check
 ```
 
 The closure guard regenerates and verifies the partner asset, partner-bank
-asset, review queue, and rehearsal package. Current closure result: payload
-7,792 rows, gate split 2,123 write / 4,225 update-only / 1,444 review, package
-29 files, DB writes 0.
+asset, review queue, self-contained replay package, and package verifier.
+Current closure result: payload 8,777 rows, gate split 1,667 write / 5,175
+update-only / 1,935 review, package 41 files, DB writes 0.
 
-Replay rehearsal package generated with:
+Acceptance replay package generated with:
 
 ```bash
 python3 scripts/migration/partner_business_aligned_replay_package_build.py
 ```
 
-Replay rehearsal artifacts:
+Acceptance replay artifacts:
 
 - `artifacts/migration/partner_business_aligned_replay_package_v1/manifest.json`
 - `artifacts/migration/partner_business_aligned_replay_package_v1/package_build_result_v1.json`
@@ -302,8 +302,8 @@ partner lane has loaded.
 The corresponding write script is:
 
 ```bash
-FRESH_DB_PARTNER_BANK_INPUT_CSV=.runtime_artifacts/migration_assets/partner_bank_business_fit_v1/10_master/partner_bank/partner_bank_master_v1.csv \
-FRESH_DB_PARTNER_BANK_EXPECTED_ROWS=5574 \
+FRESH_DB_PARTNER_BANK_INPUT_CSV=artifacts/migration_assets/partner_bank_business_fit_v1/10_master/partner_bank/partner_bank_master_v1.csv \
+FRESH_DB_PARTNER_BANK_EXPECTED_ROWS=5640 \
 python3 scripts/migration/fresh_db_partner_bank_replay_write.py
 ```
 
@@ -372,7 +372,7 @@ The fresh-db replay script for this queue is:
 
 ```bash
 FRESH_DB_PARTNER_IMPORT_REVIEW_INPUT_CSV=artifacts/migration/partner_business_aligned_rebuild_v1/partner_import_review_queue_v1.csv \
-FRESH_DB_PARTNER_IMPORT_REVIEW_EXPECTED_ROWS=1444 \
+FRESH_DB_PARTNER_IMPORT_REVIEW_EXPECTED_ROWS=1935 \
 python3 scripts/migration/fresh_db_partner_import_review_replay_write.py
 ```
 
@@ -591,7 +591,7 @@ surface instead of only the old L4 identity/tax payload. This keeps the
 historical replay flow usable while allowing the current `res.partner` model
 fields to pass through the same contract.
 
-No-DB adapter rehearsal:
+No-DB adapter build:
 
 ```bash
 python3 scripts/migration/partner_asset_generator.py \
@@ -608,11 +608,11 @@ FRESH_DB_PARTNER_L4_OUTPUT_REPORT=.runtime_artifacts/migration/fresh_db_partner_
 python3 scripts/migration/fresh_db_partner_l4_replay_adapter.py
 ```
 
-Rehearsal result:
+Adapter result:
 
 | Item | Value |
 | --- | ---: |
-| adapter payload rows | 6,348 |
+| adapter payload rows | 6,842 |
 | duplicate replay identities | 0 |
 | raw source misses | 0 |
 | DB writes | 0 |
@@ -685,13 +685,13 @@ and import-review payloads:
 
 | Runtime count | Value |
 | --- | ---: |
-| customers | 6,812 |
-| suppliers | 11,783 |
-| customer/supplier mixed identities | 2,701 |
-| partners with bank account surface | 9,321 |
-| structured partner-bank accounts with legacy key | 5,574 |
-| partners with default tax rate | 2,348 |
-| import review candidates | 1,444 |
+| customers | 1,126 |
+| suppliers | 5,813 |
+| customer/supplier mixed identities | 97 |
+| partners with bank account surface | 5,641 |
+| structured partner-bank accounts with legacy key | 5,640 |
+| partners with default tax rate | 1,919 |
+| import review candidates | 1,935 |
 
 Runtime view/action checks also passed: all required customer, supplier, bank,
 and review fields were present in loaded Odoo views, and the customer/supplier
@@ -699,47 +699,69 @@ actions kept their `customer_rank` / `supplier_rank` domains.
 
 `fresh_db_partner_l4_replay_write.py` consumes those explicit payload fields
 when present and only falls back to the legacy source-type role inference for
-old payloads. For the business-fit 6,348-row payload, run the write script with:
+old payloads. For the accepted business-fit 6,842-row payload, run the write
+script with:
 
 ```bash
-FRESH_DB_PARTNER_L4_INPUT_CSV=.runtime_artifacts/migration/fresh_db_partner_l4_business_fit_payload_v1.csv \
-FRESH_DB_PARTNER_L4_EXPECTED_ROWS=6348 \
+FRESH_DB_PARTNER_L4_INPUT_CSV=artifacts/migration/fresh_db_partner_l4_business_fit_payload_v1.csv \
+FRESH_DB_PARTNER_L4_EXPECTED_ROWS=6842 \
 python3 scripts/migration/fresh_db_partner_l4_replay_write.py
 ```
 
-The write step still requires an allowed fresh replay database and was not
-executed in this local pass because the compose `odoo` service was unavailable.
+## Acceptance Replay Package
 
-## Replay Rehearsal Package
+The generated tarball is now the self-contained customer/supplier acceptance
+replay package for the current model surface. It captures the accepted replay
+payloads and no longer depends on `/home/odoo/workspace/partner_import_source`
+or `.runtime_artifacts` during replay.
 
-The generated tarball is a rehearsal artifact for checking package completeness.
-It is not the final package to submit. It helps verify which files a future
-complete replay package must include after the old partner asset lane has been
-iterated.
-
-Rehearsal result:
+Package result:
 
 | Item | Value |
 | --- | --- |
-| rehearsal root | `artifacts/migration/partner_business_aligned_replay_package_v1` |
+| package root | `artifacts/migration/partner_business_aligned_replay_package_v1` |
 | tarball | `artifacts/migration/partner_business_aligned_replay_package_v1.tar.gz` |
 | tarball sha256 | regenerated per package build |
 | tarball bytes | regenerated per package build |
-| packaged file count | includes required artifacts plus available optional probe/export artifacts |
+| packaged file count | includes accepted payloads, manifests, replay scripts, and package verifier |
 | package build DB writes | 0 |
 
-The rehearsal includes:
+The package includes:
 
-- the business-aligned payload and gate queues;
-- the current-only, blocked review, and application review queues;
-- scripts for partner bank replay, review replay, review resolution export,
-  update-only match probing, and update-only probe splitting;
+- accepted `res.partner` payload: `6842` rows;
+- accepted `res.partner.bank` payload: `5640` rows;
+- accepted `sc.partner.import.review` queue: `1935` rows;
+- scripts for partner replay, partner bank replay, review replay, runtime probe,
+  package verification, review resolution export, update-only match probing, and
+  update-only probe splitting;
 - source audit summaries needed to explain why the payload differs from the
   older fact-only lane;
-- replay scripts required to regenerate and apply the payload;
-- `manifest.json` with row counts, byte sizes, sha256 checksums, build commands,
-  post-probe commands, dry-run command, and write command.
+- `manifest.json` with row counts, byte sizes, sha256 checksums, accepted result
+  counts, and ordered `replay_commands`.
 
-This rehearsal must not be treated as final delivery. The next code iteration
-should refresh the original partner asset generator/manifest logic so the asset
-lane itself produces the business-fit payload and gates.
+Replay from an extracted package root:
+
+```bash
+python3 scripts/migration/partner_acceptance_replay_package_verify.py --package-root .
+
+MIGRATION_REPLAY_DB_ALLOWLIST=sc_migration_fresh \
+FRESH_DB_PARTNER_L4_INPUT_CSV=artifacts/migration/fresh_db_partner_l4_business_fit_payload_v1.csv \
+FRESH_DB_PARTNER_L4_EXPECTED_ROWS=6842 \
+DB_NAME=sc_migration_fresh \
+bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_partner_l4_replay_write.py
+
+MIGRATION_REPLAY_DB_ALLOWLIST=sc_migration_fresh \
+FRESH_DB_PARTNER_BANK_INPUT_CSV=artifacts/migration_assets/partner_bank_business_fit_v1/10_master/partner_bank/partner_bank_master_v1.csv \
+FRESH_DB_PARTNER_BANK_EXPECTED_ROWS=5640 \
+DB_NAME=sc_migration_fresh \
+bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_partner_bank_replay_write.py
+
+MIGRATION_REPLAY_DB_ALLOWLIST=sc_migration_fresh \
+FRESH_DB_PARTNER_IMPORT_REVIEW_INPUT_CSV=artifacts/migration/partner_business_aligned_rebuild_v1/partner_import_review_queue_v1.csv \
+FRESH_DB_PARTNER_IMPORT_REVIEW_EXPECTED_ROWS=1935 \
+DB_NAME=sc_migration_fresh \
+bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_partner_import_review_replay_write.py
+
+DB_NAME=sc_migration_fresh \
+bash scripts/ops/odoo_shell_exec.sh < scripts/migration/partner_display_surface_runtime_probe.py
+```

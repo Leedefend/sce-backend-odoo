@@ -20,6 +20,46 @@ DEFAULT_PACKAGE_ROOT = Path("artifacts/migration") / PACKAGE_NAME
 
 REQUIRED_FILES = [
     {
+        "source": Path("artifacts/migration/fresh_db_replay_manifest_v1.json"),
+        "target": "artifacts/migration/fresh_db_replay_manifest_v1.json",
+        "role": "fresh database replay root marker",
+    },
+    {
+        "source": Path("artifacts/migration/fresh_db_partner_l4_business_fit_payload_v1.csv"),
+        "target": "artifacts/migration/fresh_db_partner_l4_business_fit_payload_v1.csv",
+        "role": "accepted fresh replay payload for res.partner",
+    },
+    {
+        "source": Path("artifacts/migration/fresh_db_partner_l4_business_fit_adapter_result_v1.json"),
+        "target": "artifacts/migration/fresh_db_partner_l4_business_fit_adapter_result_v1.json",
+        "role": "accepted fresh replay partner adapter summary",
+    },
+    {
+        "source": Path("artifacts/migration/fresh_db_partner_l4_business_fit_adapter_report_v1.md"),
+        "target": "artifacts/migration/fresh_db_partner_l4_business_fit_adapter_report_v1.md",
+        "role": "accepted fresh replay partner adapter report",
+    },
+    {
+        "source": Path("artifacts/migration/runtime_partner_bank_business_fit_v1/10_master/partner_bank/partner_bank_master_v1.csv"),
+        "target": "artifacts/migration_assets/partner_bank_business_fit_v1/10_master/partner_bank/partner_bank_master_v1.csv",
+        "role": "accepted fresh replay payload for res.partner.bank",
+    },
+    {
+        "source": Path("artifacts/migration/runtime_partner_bank_business_fit_v1/manifest/partner_bank_asset_manifest_v1.json"),
+        "target": "artifacts/migration_assets/partner_bank_business_fit_v1/manifest/partner_bank_asset_manifest_v1.json",
+        "role": "partner bank asset manifest",
+    },
+    {
+        "source": Path("artifacts/migration/runtime_partner_business_fit_sc_v1/10_master/partner/partner_master_v1.csv"),
+        "target": "artifacts/migration_assets/partner_business_fit_sc_v1/10_master/partner/partner_master_v1.csv",
+        "role": "accepted generated partner asset mirror",
+    },
+    {
+        "source": Path("artifacts/migration/runtime_partner_business_fit_sc_v1/manifest/partner_asset_manifest_v1.json"),
+        "target": "artifacts/migration_assets/partner_business_fit_sc_v1/manifest/partner_asset_manifest_v1.json",
+        "role": "partner asset manifest",
+    },
+    {
         "source": DEFAULT_SOURCE_ROOT / "fact_based_partner_rebuild_business_aligned_result_v1.json",
         "target": "artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_business_aligned_result_v1.json",
         "role": "business aligned payload summary",
@@ -120,6 +160,7 @@ OPTIONAL_FILES = [
 ]
 
 SCRIPT_FILES = [
+    "scripts/migration/fresh_db_partner_l4_replay_write.py",
     "scripts/migration/partner_import_source_audit.py",
     "scripts/migration/partner_business_alignment_overlay.py",
     "scripts/migration/partner_business_aligned_rebuild_adapter.py",
@@ -134,7 +175,10 @@ SCRIPT_FILES = [
     "scripts/migration/fresh_db_partner_import_review_replay_write.py",
     "scripts/migration/fresh_db_partner_import_review_resolution_export.py",
     "scripts/migration/fresh_db_partner_update_only_match_probe.py",
+    "scripts/migration/partner_acceptance_replay_package_verify.py",
+    "scripts/migration/partner_display_surface_runtime_probe.py",
     "scripts/migration/partner_update_only_probe_split.py",
+    "scripts/ops/odoo_shell_exec.sh",
 ]
 
 
@@ -207,10 +251,19 @@ def main() -> None:
     manifest = {
         "package": PACKAGE_NAME,
         "created_at_utc": datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
-        "purpose": "Business-aligned partner replay package for the current model surface.",
+        "purpose": "Self-contained customer/supplier acceptance replay package for the current model surface.",
         "db_writes_in_package_build": 0,
-        "source_business_root": "/home/odoo/workspace/partner_import_source",
-        "target_model": "res.partner",
+        "source_business_root": "captured_in_package_artifacts",
+        "target_models": ["res.partner", "res.partner.bank", "sc.partner.import.review"],
+        "accepted_result_contract": {
+            "database": "sc_partner_acceptance",
+            "partner_rows": 6842,
+            "partner_bank_rows": 5640,
+            "partner_import_review_rows": 1935,
+            "customers": 1126,
+            "suppliers": 5813,
+            "customer_supplier_mixed": 97,
+        },
         "model_surface": {
             "partner_fields": [
                 "name",
@@ -259,18 +312,39 @@ def main() -> None:
             "python3 scripts/migration/partner_business_aligned_replay_package_build.py",
         ],
         "post_probe_commands": [
+            "python3 scripts/migration/partner_acceptance_replay_package_verify.py --package-root .",
             "PARTNER_UPDATE_ONLY_GATE_CSV=artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_business_aligned_gate_v1.csv python3 scripts/migration/fresh_db_partner_update_only_match_probe.py",
             "python3 scripts/migration/partner_update_only_probe_split.py --check",
             "PARTNER_IMPORT_REVIEW_BATCH=partner_business_fit_v1 python3 scripts/migration/fresh_db_partner_import_review_resolution_export.py",
         ],
         "dry_run_command": (
-            "ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_WRITE_MODE=dry-run "
-            "bash scripts/ops/odoo_shell_exec.sh < scripts/migration/partner_business_aligned_rebuild_write.py"
+            "MIGRATION_REPLAY_DB_ALLOWLIST=sc_migration_fresh,sc_partner_acceptance "
+            "FRESH_DB_PARTNER_L4_INPUT_CSV=artifacts/migration/fresh_db_partner_l4_business_fit_payload_v1.csv "
+            "FRESH_DB_PARTNER_L4_EXPECTED_ROWS=6842 "
+            "DB_NAME=sc_migration_fresh bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_partner_l4_replay_write.py"
         ),
-        "write_command": (
-            "ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_WRITE_MODE=write "
-            "bash scripts/ops/odoo_shell_exec.sh < scripts/migration/partner_business_aligned_rebuild_write.py"
-        ),
+        "replay_commands": [
+            (
+                "MIGRATION_REPLAY_DB_ALLOWLIST=sc_migration_fresh,sc_partner_acceptance "
+                "FRESH_DB_PARTNER_L4_INPUT_CSV=artifacts/migration/fresh_db_partner_l4_business_fit_payload_v1.csv "
+                "FRESH_DB_PARTNER_L4_EXPECTED_ROWS=6842 "
+                "DB_NAME=sc_migration_fresh bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_partner_l4_replay_write.py"
+            ),
+            (
+                "MIGRATION_REPLAY_DB_ALLOWLIST=sc_migration_fresh,sc_partner_acceptance "
+                "FRESH_DB_PARTNER_BANK_INPUT_CSV=artifacts/migration_assets/partner_bank_business_fit_v1/10_master/partner_bank/partner_bank_master_v1.csv "
+                "FRESH_DB_PARTNER_BANK_EXPECTED_ROWS=5640 "
+                "DB_NAME=sc_migration_fresh bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_partner_bank_replay_write.py"
+            ),
+            (
+                "MIGRATION_REPLAY_DB_ALLOWLIST=sc_migration_fresh,sc_partner_acceptance "
+                "FRESH_DB_PARTNER_IMPORT_REVIEW_INPUT_CSV=artifacts/migration/partner_business_aligned_rebuild_v1/partner_import_review_queue_v1.csv "
+                "FRESH_DB_PARTNER_IMPORT_REVIEW_EXPECTED_ROWS=1935 "
+                "DB_NAME=sc_migration_fresh bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_partner_import_review_replay_write.py"
+            ),
+            "DB_NAME=sc_migration_fresh bash scripts/ops/odoo_shell_exec.sh < scripts/migration/partner_display_surface_runtime_probe.py",
+        ],
+        "write_command": "run replay_commands in order",
         "files": files,
         "skipped_optional_files": skipped_optional_files,
     }
