@@ -13,6 +13,7 @@
                     <filter string="待复核" name="state_candidate" domain="[('review_state', '=', 'candidate')]"/>
                     <filter string="已处理" name="state_resolved" domain="[('review_state', '=', 'resolved')]"/>
                     <filter string="忽略" name="state_ignored" domain="[('review_state', '=', 'ignored')]"/>
+                    <filter string="后台留存" name="reason_background_only" domain="[('review_reason', '=', 'background_only_no_user_requested_business_fact')]"/>
                     <filter string="角色不明确" name="reason_unknown_role" domain="[('review_reason', '=', 'unknown_business_role')]"/>
                     <filter string="个人片段" name="reason_personal" domain="[('review_reason', '=', 'personal_fragment_review')]"/>
                     <filter string="按状态" name="group_state" context="{'group_by': 'review_state'}"/>

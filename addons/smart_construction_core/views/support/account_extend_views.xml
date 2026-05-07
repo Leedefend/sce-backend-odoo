@@ -32,23 +32,41 @@
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
             <tree string="客户" default_order="name">
-                <field name="name" string="名称"/>
-                <field name="is_company" string="企业/组织"/>
-                <field name="customer_rank" string="客户标识" optional="hide"/>
-                <field name="supplier_rank" string="兼供应商标识" optional="hide"/>
-                <field name="phone" string="电话"/>
-                <field name="mobile" string="手机"/>
-                <field name="email" string="电子邮件"/>
+                <field name="sc_source_document_state"/>
+                <field name="sc_source_push_result"/>
+                <field name="sc_source_project_name"/>
+                <field name="sc_source_partner_code"/>
+                <field name="sc_source_cooperation_type"/>
+                <field name="sc_supplier_type" optional="hide"/>
+                <field name="name" string="单位名称"/>
+                <field name="sc_source_receipt_amount" string="收款金额"/>
+                <field name="sc_source_payment_amount" string="付款金额"/>
+                <field name="sc_bank_name" string="开户银行"/>
+                <field name="sc_bank_account" string="账号"/>
                 <field name="vat" string="统一社会信用代码"/>
-                <field name="sc_region"/>
+                <field name="sc_default_tax_rate_text" string="主税率"/>
+                <field name="sc_source_created_by"/>
+                <field name="sc_source_created_at"/>
+                <field name="sc_business_role_label" optional="hide"/>
+                <field name="sc_business_fact_basis" optional="hide"/>
+                <field name="sc_region" optional="hide"/>
+                <field name="sc_default_tax_rate" optional="hide"/>
+                <field name="phone" string="电话" optional="hide"/>
+                <field name="mobile" string="手机" optional="hide"/>
+                <field name="email" string="电子邮件" optional="hide"/>
+                <field name="is_company" string="企业/组织" optional="hide"/>
                 <field name="sc_registered_capital" optional="hide"/>
-                <field name="sc_default_tax_rate"/>
                 <field name="sc_account_name" optional="hide"/>
-                <field name="sc_bank_name"/>
-                <field name="sc_bank_account"/>
-                <field name="legacy_partner_id"/>
-                <field name="legacy_partner_source"/>
-                <field name="legacy_partner_name"/>
+                <field name="sc_source_fact_count" optional="hide"/>
+                <field name="sc_source_fact_source" optional="hide"/>
+                <field name="street" string="地址" optional="hide"/>
+                <field name="sc_business_scope" optional="hide"/>
+                <field name="sc_legacy_source_label"/>
+                <field name="legacy_partner_name" optional="hide"/>
+                <field name="legacy_partner_id" optional="hide"/>
+                <field name="legacy_partner_source" optional="hide"/>
+                <field name="customer_rank" invisible="1"/>
+                <field name="supplier_rank" invisible="1"/>
             </tree>
         </field>
     </record>
@@ -113,13 +131,27 @@
                                 </form>
                             </field>
                         </page>
-                        <page string="来源追溯">
+                        <page string="内部来源">
                             <group>
+                                <field name="sc_business_role_label"/>
+                                <field name="sc_business_fact_basis"/>
+                                <field name="sc_legacy_source_label"/>
                                 <field name="legacy_partner_id"/>
                                 <field name="legacy_partner_source"/>
                                 <field name="legacy_partner_name"/>
                                 <field name="legacy_credit_code"/>
                                 <field name="legacy_tax_no"/>
+                                <field name="sc_source_partner_code"/>
+                                <field name="sc_source_document_state"/>
+                                <field name="sc_source_push_result"/>
+                                <field name="sc_source_project_name"/>
+                                <field name="sc_source_cooperation_type"/>
+                                <field name="sc_source_fact_count"/>
+                                <field name="sc_source_fact_source"/>
+                                <field name="sc_source_receipt_amount"/>
+                                <field name="sc_source_payment_amount"/>
+                                <field name="sc_source_created_by"/>
+                                <field name="sc_source_created_at"/>
                             </group>
                             <field name="legacy_source_evidence" nolabel="1"/>
                         </page>
@@ -140,9 +172,9 @@
                 <field name="sc_default_tax_rate"/>
                 <field name="sc_bank_name"/>
                 <field name="sc_bank_account"/>
-                <field name="legacy_partner_id"/>
-                <field name="legacy_partner_name"/>
-                <field name="legacy_partner_source"/>
+                <field name="phone"/>
+                <field name="mobile"/>
+                <field name="email"/>
                 <filter string="企业/组织" name="customer_company" domain="[('is_company', '=', True)]"/>
                 <filter string="个人" name="customer_person" domain="[('is_company', '=', False)]"/>
                 <filter string="客户兼供应商" name="customer_supplier_mixed" domain="[('supplier_rank', '&gt;', 0)]"/>
@@ -151,7 +183,6 @@
                 <filter string="按企业组织/个人" name="group_is_company" context="{'group_by': 'is_company'}"/>
                 <filter string="按地区" name="group_region" context="{'group_by': 'sc_region'}"/>
                 <filter string="按默认税率" name="group_default_tax_rate" context="{'group_by': 'sc_default_tax_rate'}"/>
-                <filter string="按历史来源" name="group_legacy_source" context="{'group_by': 'legacy_partner_source'}"/>
             </search>
         </field>
     </record>
@@ -161,24 +192,37 @@
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
             <tree string="供应商" default_order="name">
-                <field name="name" string="名称"/>
-                <field name="is_company" string="企业/组织"/>
-                <field name="supplier_rank" string="供应商标识" optional="hide"/>
-                <field name="customer_rank" string="兼客户标识" optional="hide"/>
-                <field name="sc_supplier_type"/>
-                <field name="phone" string="电话"/>
-                <field name="mobile" string="手机"/>
-                <field name="email" string="电子邮件"/>
+                <field name="sc_source_document_state"/>
+                <field name="sc_source_push_result"/>
+                <field name="sc_source_project_name"/>
+                <field name="sc_source_partner_code"/>
+                <field name="sc_source_cooperation_type"/>
+                <field name="sc_supplier_type" optional="hide"/>
+                <field name="name" string="单位名称"/>
+                <field name="sc_source_receipt_amount" string="收款金额"/>
+                <field name="sc_source_payment_amount" string="付款金额"/>
+                <field name="sc_bank_name" string="开户银行"/>
+                <field name="sc_bank_account" string="账号"/>
                 <field name="vat" string="统一社会信用代码"/>
-                <field name="sc_region"/>
+                <field name="sc_default_tax_rate_text" string="主税率"/>
+                <field name="sc_source_created_by"/>
+                <field name="sc_source_created_at"/>
+                <field name="sc_business_role_label" optional="hide"/>
+                <field name="sc_business_fact_basis" optional="hide"/>
+                <field name="sc_region" optional="hide"/>
+                <field name="sc_default_tax_rate" optional="hide"/>
+                <field name="phone" string="电话" optional="hide"/>
+                <field name="mobile" string="手机" optional="hide"/>
+                <field name="email" string="电子邮件" optional="hide"/>
+                <field name="is_company" string="企业/组织" optional="hide"/>
                 <field name="sc_registered_capital" optional="hide"/>
-                <field name="sc_default_tax_rate"/>
-                <field name="sc_account_name"/>
-                <field name="sc_bank_name"/>
-                <field name="sc_bank_account"/>
-                <field name="legacy_partner_id"/>
-                <field name="legacy_partner_source"/>
-                <field name="legacy_partner_name"/>
+                <field name="sc_account_name" optional="hide"/>
+                <field name="sc_legacy_source_label"/>
+                <field name="legacy_partner_name" optional="hide"/>
+                <field name="legacy_partner_id" optional="hide"/>
+                <field name="legacy_partner_source" optional="hide"/>
+                <field name="supplier_rank" invisible="1"/>
+                <field name="customer_rank" invisible="1"/>
             </tree>
         </field>
     </record>
@@ -200,6 +244,18 @@
                             <field name="sc_default_tax_rate"/>
                             <field name="sc_default_tax_rate_text"/>
                             <field name="sc_business_scope"/>
+                            <field name="sc_business_role_label"/>
+                            <field name="sc_business_fact_basis"/>
+                            <field name="sc_legacy_source_label"/>
+                            <field name="sc_source_partner_code"/>
+                            <field name="sc_source_document_state"/>
+                            <field name="sc_source_push_result"/>
+                            <field name="sc_source_project_name"/>
+                            <field name="sc_source_cooperation_type"/>
+                            <field name="sc_source_receipt_amount"/>
+                            <field name="sc_source_payment_amount"/>
+                            <field name="sc_source_created_by"/>
+                            <field name="sc_source_created_at"/>
                             <field name="legacy_partner_id"/>
                             <field name="legacy_partner_source"/>
                             <field name="legacy_partner_name"/>
@@ -279,17 +335,27 @@
                 <field name="legacy_partner_id"/>
                 <field name="legacy_partner_name"/>
                 <field name="legacy_partner_source"/>
+                <field name="sc_source_partner_code"/>
+                <field name="sc_source_document_state"/>
+                <field name="sc_source_push_result"/>
+                <field name="sc_source_project_name"/>
+                <field name="sc_source_created_by"/>
+                <field name="sc_business_role_label"/>
+                <field name="sc_business_fact_basis"/>
+                <field name="sc_legacy_source_label"/>
                 <filter string="含历史来源" name="legacy_supplier" domain="[('legacy_partner_id', '!=', False)]"/>
                 <filter string="企业/组织" name="supplier_company" domain="[('is_company', '=', True)]"/>
                 <filter string="个人" name="supplier_person" domain="[('is_company', '=', False)]"/>
                 <filter string="供应商兼客户" name="supplier_customer_mixed" domain="[('customer_rank', '&gt;', 0)]"/>
                 <filter string="含银行账户" name="supplier_with_bank_account" domain="[('sc_bank_account', '!=', False)]"/>
                 <separator/>
+                <filter string="按业务身份" name="group_business_role" context="{'group_by': 'sc_business_role_label'}"/>
+                <filter string="按业务依据" name="group_business_fact_basis" context="{'group_by': 'sc_business_fact_basis'}"/>
                 <filter string="按企业组织/个人" name="group_is_company" context="{'group_by': 'is_company'}"/>
                 <filter string="按供应商类型" name="group_supplier_type" context="{'group_by': 'sc_supplier_type'}"/>
                 <filter string="按地区" name="group_region" context="{'group_by': 'sc_region'}"/>
                 <filter string="按默认税率" name="group_default_tax_rate" context="{'group_by': 'sc_default_tax_rate'}"/>
-                <filter string="按历史来源" name="group_legacy_source" context="{'group_by': 'legacy_partner_source'}"/>
+                <filter string="按来源类型" name="group_legacy_source" context="{'group_by': 'sc_legacy_source_label'}"/>
             </search>
         </field>
     </record>

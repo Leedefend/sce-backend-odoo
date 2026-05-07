@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class ResPartner(models.Model):
@@ -26,7 +26,21 @@ class ResPartner(models.Model):
     sc_business_scope = fields.Text(string="经营范围")
     sc_default_tax_rate = fields.Float(string="默认税率%", digits=(16, 4))
     sc_default_tax_rate_text = fields.Char(string="历史税率文本")
+    sc_source_partner_code = fields.Char(string="单位编号", index=True)
+    sc_source_document_state = fields.Char(string="单据状态", index=True)
+    sc_source_push_result = fields.Char(string="推送结果", index=True)
+    sc_source_project_name = fields.Text(string="项目名称")
+    sc_source_cooperation_type = fields.Char(string="合作类型", index=True)
+    sc_source_fact_count = fields.Integer(string="业务事实数")
+    sc_source_fact_source = fields.Char(string="业务事实来源")
+    sc_source_receipt_amount = fields.Float(string="收款金额", digits=(16, 2))
+    sc_source_payment_amount = fields.Float(string="付款金额", digits=(16, 2))
+    sc_source_created_by = fields.Char(string="录入人")
+    sc_source_created_at = fields.Char(string="录入时间")
     sc_supplier_note = fields.Text(string="供应商备注")
+    sc_business_role_label = fields.Char(string="业务身份", compute="_compute_sc_business_display", store=True, readonly=True)
+    sc_business_fact_basis = fields.Char(string="业务依据", compute="_compute_sc_business_display", store=True, readonly=True)
+    sc_legacy_source_label = fields.Char(string="来源类型", compute="_compute_sc_business_display", store=True, readonly=True)
     sc_attachment_ids = fields.Many2many(
         "ir.attachment",
         "sc_res_partner_supplier_attachment_rel",
@@ -43,6 +57,39 @@ class ResPartner(models.Model):
     legacy_tax_no = fields.Char(string="历史税号", index=True)
     legacy_deleted_flag = fields.Char(string="历史删除标识")
     legacy_source_evidence = fields.Char(string="历史来源证据")
+
+    @api.depends("customer_rank", "supplier_rank", "legacy_partner_source")
+    def _compute_sc_business_display(self):
+        for partner in self:
+            customer = bool(partner.customer_rank)
+            supplier = bool(partner.supplier_rank)
+            if customer and supplier:
+                partner.sc_business_role_label = "客户/供应商"
+            elif customer:
+                partner.sc_business_role_label = "客户"
+            elif supplier:
+                partner.sc_business_role_label = "供应商"
+            else:
+                partner.sc_business_role_label = "后台留存"
+
+            source = partner.legacy_partner_source or ""
+            if customer and supplier:
+                partner.sc_business_fact_basis = "收款/收入与供应商业务事实"
+            elif customer:
+                partner.sc_business_fact_basis = "收款合同/收款/收入业务事实"
+            elif supplier:
+                partner.sc_business_fact_basis = "供应商合同/付款业务事实"
+            else:
+                partner.sc_business_fact_basis = "无用户要求展示业务事实"
+
+            if source == "legacy_mssql_customer_business_fact":
+                partner.sc_legacy_source_label = "旧业务库客户事实"
+            elif source == "xlsx_business_aligned_partner":
+                partner.sc_legacy_source_label = "客户供应商整理数据"
+            elif source:
+                partner.sc_legacy_source_label = source
+            else:
+                partner.sc_legacy_source_label = ""
 
 
 class ResPartnerBank(models.Model):
@@ -79,6 +126,7 @@ class ScPartnerImportReview(models.Model):
     company_type = fields.Selection([("company", "企业/组织"), ("person", "个人")], string="类型", default="company", index=True)
     review_reason = fields.Selection(
         [
+            ("background_only_no_user_requested_business_fact", "后台留存"),
             ("unknown_business_role", "角色不明确"),
             ("personal_fragment_review", "个人片段复核"),
             ("invalid_bank_account_review", "银行账户异常"),
