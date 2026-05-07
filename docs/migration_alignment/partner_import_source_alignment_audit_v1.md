@@ -245,6 +245,26 @@ write partner identity and role fields to `res.partner`, then write account
 holder, bank name, and account number to `res.partner.bank` linked to the same
 partner. It does not mean a separate business objective or a new rebuild process.
 
+Direction correction: if the existing model cannot carry the business facts,
+the model must be completed before data import. This iteration therefore extends
+`res.partner.bank` first, then aligns the bank-account asset and replay write to
+that model surface.
+
+The model-level bank account surface now includes:
+
+- `sc_legacy_external_id`
+- `sc_legacy_partner_source`
+- `sc_legacy_partner_id`
+- `sc_legacy_partner_name`
+- `sc_account_holder_name`
+- `sc_bank_name`
+- `sc_source_evidence`
+- `sc_import_batch`
+
+Customer and supplier forms now expose `bank_ids` as a child table so imported
+accounts are visible on the business partner instead of being hidden in a
+sidecar file or flattened text-only fields.
+
 The first no-DB bank-account split is now represented by
 `partner_bank_business_asset_generator.py`. It consumes the same business-fit
 partner gate and emits a replay-ready CSV contract for `res.partner.bank`:
@@ -267,6 +287,18 @@ Runtime result:
 The bank asset keeps `partner_external_id` equal to the business-fit partner
 external ID, so the child account replay can resolve its parent after the
 partner lane has loaded.
+
+The corresponding write script is:
+
+```bash
+FRESH_DB_PARTNER_BANK_INPUT_CSV=.runtime_artifacts/migration_assets/partner_bank_business_fit_v1/10_master/partner_bank/partner_bank_master_v1.csv \
+FRESH_DB_PARTNER_BANK_EXPECTED_ROWS=5574 \
+python3 scripts/migration/fresh_db_partner_bank_replay_write.py
+```
+
+The write script requires the completed `res.partner.bank` extension fields and
+resolves each account parent through `res.partner.legacy_partner_source` plus
+`res.partner.legacy_partner_id`.
 
 ## Unified Payload
 

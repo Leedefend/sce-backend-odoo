@@ -25,6 +25,14 @@ LOADABLE_FIELDS = [
     "acc_number",
     "acc_holder_name",
     "bank_name",
+    "sc_legacy_external_id",
+    "sc_legacy_partner_source",
+    "sc_legacy_partner_id",
+    "sc_legacy_partner_name",
+    "sc_account_holder_name",
+    "sc_bank_name",
+    "sc_source_evidence",
+    "sc_import_batch",
     "source_evidence",
     "gate_action",
     "review_flags",
@@ -166,6 +174,14 @@ def build_assets(rows: list[dict[str, str]]) -> tuple[list[dict[str, Any]], list
                 "acc_number": acc_number,
                 "acc_holder_name": clean(row.get("sc_account_name")) or partner_name,
                 "bank_name": bank_name,
+                "sc_legacy_external_id": stable_bank_external_id(partner_external_id, acc_number),
+                "sc_legacy_partner_source": partner_source,
+                "sc_legacy_partner_id": partner_legacy_id,
+                "sc_legacy_partner_name": partner_name,
+                "sc_account_holder_name": clean(row.get("sc_account_name")) or partner_name,
+                "sc_bank_name": bank_name,
+                "sc_source_evidence": clean(row.get("legacy_source_evidence")),
+                "sc_import_batch": "partner_bank_business_fit_v1",
                 "source_evidence": clean(row.get("legacy_source_evidence")),
                 "gate_action": gate_action,
                 "review_flags": review_flags,
@@ -198,6 +214,16 @@ def write_package(out: Path, records: list[dict[str, Any]], discard_rows: list[d
             "parent_model": "res.partner",
             "parent_lookup": "partner_external_id",
             "load_strategy": "csv_replay_write",
+            "required_model_fields": [
+                "sc_legacy_external_id",
+                "sc_legacy_partner_source",
+                "sc_legacy_partner_id",
+                "sc_legacy_partner_name",
+                "sc_account_holder_name",
+                "sc_bank_name",
+                "sc_source_evidence",
+                "sc_import_batch",
+            ],
         },
         "counts": {
             "loadable_records": len(records),
@@ -212,6 +238,7 @@ def write_package(out: Path, records: list[dict[str, Any]], discard_rows: list[d
             "external_id_unique",
             "duplicate_partner_bank_account_discarded",
             "blocked_partner_rows_discarded",
+            "res_partner_bank_business_fields_present",
         ],
         "assets": [
             {
@@ -242,8 +269,10 @@ def validate(records: list[dict[str, Any]]) -> None:
     for row in records:
         require(clean(row.get("external_id")).startswith("legacy_partner_bank_"), f"invalid bank external id: {row}")
         require(clean(row.get("partner_external_id")).startswith("legacy_partner_business_"), f"invalid partner external id: {row}")
+        require(clean(row.get("sc_legacy_external_id")) == clean(row.get("external_id")), f"bank external id mismatch: {row}")
         require(clean(row.get("acc_number")), f"missing bank account: {row}")
         require(clean(row.get("acc_holder_name")), f"missing account holder: {row}")
+        require(clean(row.get("sc_bank_name")), f"missing bank name: {row}")
 
 
 def main() -> int:

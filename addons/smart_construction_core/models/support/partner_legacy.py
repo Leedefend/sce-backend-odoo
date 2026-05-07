@@ -39,3 +39,24 @@ class ResPartner(models.Model):
     legacy_tax_no = fields.Char(string="历史税号", index=True)
     legacy_deleted_flag = fields.Char(string="历史删除标识")
     legacy_source_evidence = fields.Char(string="历史来源证据")
+
+
+class ResPartnerBank(models.Model):
+    _inherit = "res.partner.bank"
+
+    sc_legacy_external_id = fields.Char(string="历史账户外部键", index=True, copy=False)
+    sc_legacy_partner_id = fields.Char(string="历史往来单位编号", index=True)
+    sc_legacy_partner_source = fields.Char(string="历史往来单位来源", index=True)
+    sc_legacy_partner_name = fields.Char(string="历史往来单位名称")
+    sc_account_holder_name = fields.Char(string="账户名称")
+    sc_bank_name = fields.Char(string="开户银行", index=True)
+    sc_source_evidence = fields.Char(string="历史来源证据")
+    sc_import_batch = fields.Char(string="导入批次", index=True)
+
+    _sql_constraints = [
+        (
+            "sc_legacy_external_id_unique",
+            "unique(sc_legacy_external_id)",
+            "历史账户外部键必须唯一。",
+        ),
+    ]

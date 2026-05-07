@@ -68,6 +68,31 @@
                         </group>
                     </group>
                     <notebook>
+                        <page string="银行账户">
+                            <field name="bank_ids" nolabel="1">
+                                <tree editable="bottom">
+                                    <field name="acc_number"/>
+                                    <field name="sc_account_holder_name"/>
+                                    <field name="sc_bank_name"/>
+                                    <field name="sc_legacy_external_id"/>
+                                    <field name="sc_import_batch"/>
+                                </tree>
+                                <form>
+                                    <sheet>
+                                        <group>
+                                            <field name="acc_number"/>
+                                            <field name="sc_account_holder_name"/>
+                                            <field name="sc_bank_name"/>
+                                            <field name="sc_legacy_external_id"/>
+                                            <field name="sc_legacy_partner_source"/>
+                                            <field name="sc_legacy_partner_id"/>
+                                            <field name="sc_import_batch"/>
+                                            <field name="sc_source_evidence"/>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
                         <page string="来源追溯">
                             <group>
                                 <field name="legacy_partner_id"/>
@@ -165,6 +190,31 @@
                         </group>
                     </group>
                     <notebook>
+                        <page string="银行账户">
+                            <field name="bank_ids" nolabel="1">
+                                <tree editable="bottom">
+                                    <field name="acc_number"/>
+                                    <field name="sc_account_holder_name"/>
+                                    <field name="sc_bank_name"/>
+                                    <field name="sc_legacy_external_id"/>
+                                    <field name="sc_import_batch"/>
+                                </tree>
+                                <form>
+                                    <sheet>
+                                        <group>
+                                            <field name="acc_number"/>
+                                            <field name="sc_account_holder_name"/>
+                                            <field name="sc_bank_name"/>
+                                            <field name="sc_legacy_external_id"/>
+                                            <field name="sc_legacy_partner_source"/>
+                                            <field name="sc_legacy_partner_id"/>
+                                            <field name="sc_import_batch"/>
+                                            <field name="sc_source_evidence"/>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
                         <page string="备注">
                             <field name="sc_supplier_note" nolabel="1"/>
                         </page>
