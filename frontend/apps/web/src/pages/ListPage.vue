@@ -1101,7 +1101,12 @@ const rangeEnd = computed(() => {
   return Math.min(total, listOffset.value + props.records.length);
 });
 const showPagination = computed(() => listTotal.value !== null && props.status === 'ok' && !showGroupedRows.value);
-const toolbarSubtitle = computed(() => showPagination.value ? '' : props.subtitle || '');
+const toolbarSubtitle = computed(() => {
+  if (listTotal.value !== null) {
+    return uiLabel('record_count', '{count} 条记录', { count: listTotal.value });
+  }
+  return props.subtitle || '';
+});
 const canPagePrev = computed(() => listOffset.value > 0);
 const canPageNext = computed(() => {
   const total = listTotal.value || 0;
