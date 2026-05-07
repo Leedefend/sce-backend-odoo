@@ -82,6 +82,14 @@ class MenuDeliveryConvergenceService:
         "客户",
         "供应商",
         "业务配置",
+        "基础设置",
+        "组织架构",
+        "历史用户",
+        "历史用户权限",
+        "用户信息",
+        "用户信息与权限",
+        "历史角色",
+        "项目授权范围",
         "系统配置",
     )
     ADMIN_ALLOWED_PATH_TOKENS = (
@@ -106,6 +114,14 @@ class MenuDeliveryConvergenceService:
         "项目台账",
         "项目驾驶舱",
         "工程资料",
+        "基础设置",
+        "组织架构",
+        "历史用户",
+        "历史用户权限",
+        "用户信息",
+        "用户信息与权限",
+        "历史角色",
+        "项目授权范围",
         "系统管理",
     )
     HIDE_EXACT_LABELS = {

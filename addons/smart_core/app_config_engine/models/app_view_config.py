@@ -457,6 +457,7 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
         vt = self.view_type
         if vt == 'tree':
             block['columns'] = vp.get('columns', ['id'])
+            block['columns_schema'] = vp.get('columns_schema', [])
             block['row_actions'] = vp.get('row_actions', [{'name': 'open_form', 'label': _('Open'), 'intent': 'form.open'}])
             block['page_size'] = vp.get('page_size', 50)
             block['row_classes'] = vp.get('row_classes', [])

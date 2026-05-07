@@ -637,9 +637,18 @@ class ApiDataHandler(BaseIntentHandler):
         text = raw.strip()
         if not text:
             return None
+        context = getattr(self.env, "context", {}) or {}
+        if not isinstance(context, dict):
+            context = {}
+        allowed_company_ids = self._runtime_allowed_company_ids(context)
         runtime_env = {
             "uid": int(getattr(self.env, "uid", 0) or 0),
             "user": getattr(self.env, "user", None),
+            "allowed_company_ids": allowed_company_ids,
+            "company_id": allowed_company_ids[0] if allowed_company_ids else False,
+            "active_id": context.get("active_id"),
+            "active_ids": context.get("active_ids") or [],
+            "active_model": context.get("active_model"),
             "context_today": lambda: datetime.now().date(),
             "datetime": datetime,
         }
@@ -647,6 +656,44 @@ class ApiDataHandler(BaseIntentHandler):
             return safe_eval(text, runtime_env)
         except Exception:
             return None
+
+    def _runtime_allowed_company_ids(self, context: Dict[str, Any]) -> List[int]:
+        raw = context.get("allowed_company_ids") if isinstance(context, dict) else None
+        ids = self._normalize_runtime_ids(raw)
+        if ids:
+            return ids
+
+        companies = getattr(getattr(self.env, "user", None), "company_ids", None)
+        ids = self._normalize_runtime_ids(getattr(companies, "ids", None))
+        if ids:
+            return ids
+
+        env_companies = getattr(self.env, "companies", None)
+        ids = self._normalize_runtime_ids(getattr(env_companies, "ids", None))
+        if ids:
+            return ids
+
+        company = getattr(self.env, "company", None) or getattr(getattr(self.env, "user", None), "company_id", None)
+        company_id = int(getattr(company, "id", 0) or 0)
+        return [company_id] if company_id > 0 else []
+
+    @staticmethod
+    def _normalize_runtime_ids(raw) -> List[int]:
+        if raw is None:
+            return []
+        if isinstance(raw, int):
+            return [raw] if raw > 0 else []
+        if not isinstance(raw, (list, tuple, set)):
+            return []
+        ids = []
+        for item in raw:
+            try:
+                value = int(item or 0)
+            except (TypeError, ValueError):
+                continue
+            if value > 0 and value not in ids:
+                ids.append(value)
+        return ids
 
     def _pick_model(self, p: Dict[str, Any]) -> str:
         model = self._get_str(p, "model", "").strip()

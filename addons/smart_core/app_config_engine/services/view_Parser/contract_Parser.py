@@ -157,13 +157,17 @@ class OdooViewParser(_BaseViewParserMixin,
         subviews. Those fields still define native form structure, so the
         parser must use fields_get as the model-level source of truth.
         """
-        out = dict(fields_info or {})
+        out = {name: dict(meta) if isinstance(meta, dict) else meta for name, meta in (fields_info or {}).items()}
         missing = []
         if arch:
             try:
                 root = etree.fromstring(arch.encode('utf-8'))
                 for el in root.xpath(".//field[@name]"):
                     fname = (el.get("name") or "").strip()
+                    field_string = (el.get("string") or "").strip()
+                    if fname and field_string and isinstance(out.get(fname), dict):
+                        out[fname]["string"] = field_string
+                        out[fname]["label"] = field_string
                     if fname and fname not in out and fname not in missing:
                         missing.append(fname)
             except Exception:
