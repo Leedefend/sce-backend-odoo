@@ -643,20 +643,22 @@ Rehearsal result:
 | --- | --- |
 | rehearsal root | `artifacts/migration/partner_business_aligned_replay_package_v1` |
 | tarball | `artifacts/migration/partner_business_aligned_replay_package_v1.tar.gz` |
-| tarball sha256 | `f530d77b87fe45759ba304735d04804074b140b0c33956865c5a8b6c8361171e` |
-| tarball bytes | `1,610,738` |
-| packaged file count | 17 |
+| tarball sha256 | regenerated per package build |
+| tarball bytes | regenerated per package build |
+| packaged file count | includes required artifacts plus available optional probe/export artifacts |
 | package build DB writes | 0 |
 
 The rehearsal includes:
 
 - the business-aligned payload and gate queues;
-- the current-only and blocked review queues;
+- the current-only, blocked review, and application review queues;
+- scripts for partner bank replay, review replay, review resolution export,
+  update-only match probing, and update-only probe splitting;
 - source audit summaries needed to explain why the payload differs from the
   older fact-only lane;
 - replay scripts required to regenerate and apply the payload;
 - `manifest.json` with row counts, byte sizes, sha256 checksums, build commands,
-  dry-run command, and write command.
+  post-probe commands, dry-run command, and write command.
 
 This rehearsal must not be treated as final delivery. The next code iteration
 should refresh the original partner asset generator/manifest logic so the asset

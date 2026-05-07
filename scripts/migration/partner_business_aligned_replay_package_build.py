@@ -60,6 +60,16 @@ REQUIRED_FILES = [
         "role": "manual review queue",
     },
     {
+        "source": DEFAULT_SOURCE_ROOT / "partner_import_review_queue_v1.csv",
+        "target": "artifacts/migration/partner_business_aligned_rebuild_v1/partner_import_review_queue_v1.csv",
+        "role": "application review queue for blocked partner candidates",
+    },
+    {
+        "source": DEFAULT_SOURCE_ROOT / "partner_import_review_queue_result_v1.json",
+        "target": "artifacts/migration/partner_business_aligned_rebuild_v1/partner_import_review_queue_result_v1.json",
+        "role": "partner import review queue summary",
+    },
+    {
         "source": DEFAULT_AUDIT_ROOT / "summary_v1.json",
         "target": "artifacts/migration/partner_import_source_audit_v1/summary_v1.json",
         "role": "source audit summary",
@@ -76,12 +86,55 @@ REQUIRED_FILES = [
     },
 ]
 
+OPTIONAL_FILES = [
+    {
+        "source": DEFAULT_SOURCE_ROOT / "partner_update_only_match_probe_v1.csv",
+        "target": "artifacts/migration/partner_business_aligned_rebuild_v1/partner_update_only_match_probe_v1.csv",
+        "role": "target database match probe for update-only candidates",
+    },
+    {
+        "source": DEFAULT_SOURCE_ROOT / "partner_update_only_match_probe_result_v1.json",
+        "target": "artifacts/migration/partner_business_aligned_rebuild_v1/partner_update_only_match_probe_result_v1.json",
+        "role": "update-only match probe summary",
+    },
+    {
+        "source": DEFAULT_SOURCE_ROOT / "partner_update_only_matched_updates_v1.csv",
+        "target": "artifacts/migration/partner_business_aligned_rebuild_v1/partner_update_only_matched_updates_v1.csv",
+        "role": "update-only rows with unique target match",
+    },
+    {
+        "source": DEFAULT_SOURCE_ROOT / "partner_update_only_probe_review_queue_v1.csv",
+        "target": "artifacts/migration/partner_business_aligned_rebuild_v1/partner_update_only_probe_review_queue_v1.csv",
+        "role": "update-only rows requiring review after probe",
+    },
+    {
+        "source": DEFAULT_SOURCE_ROOT / "partner_import_review_resolved_promotions_v1.csv",
+        "target": "artifacts/migration/partner_business_aligned_rebuild_v1/partner_import_review_resolved_promotions_v1.csv",
+        "role": "resolved review rows exported back to partner write contract",
+    },
+    {
+        "source": DEFAULT_SOURCE_ROOT / "partner_import_review_ignored_v1.csv",
+        "target": "artifacts/migration/partner_business_aligned_rebuild_v1/partner_import_review_ignored_v1.csv",
+        "role": "ignored partner import review rows",
+    },
+]
+
 SCRIPT_FILES = [
     "scripts/migration/partner_import_source_audit.py",
     "scripts/migration/partner_business_alignment_overlay.py",
     "scripts/migration/partner_business_aligned_rebuild_adapter.py",
     "scripts/migration/partner_business_aligned_rebuild_gate.py",
     "scripts/migration/partner_business_aligned_rebuild_write.py",
+    "scripts/migration/partner_asset_generator.py",
+    "scripts/migration/partner_asset_verify.py",
+    "scripts/migration/partner_asset_business_fit_guard.py",
+    "scripts/migration/partner_bank_business_asset_generator.py",
+    "scripts/migration/fresh_db_partner_bank_replay_write.py",
+    "scripts/migration/partner_import_review_asset_generator.py",
+    "scripts/migration/fresh_db_partner_import_review_replay_write.py",
+    "scripts/migration/fresh_db_partner_import_review_resolution_export.py",
+    "scripts/migration/fresh_db_partner_update_only_match_probe.py",
+    "scripts/migration/partner_update_only_probe_split.py",
 ]
 
 
@@ -142,6 +195,12 @@ def main() -> None:
     files = []
     for item in REQUIRED_FILES:
         files.append(copy_file(item["source"], package_root, item["target"], item["role"]))
+    skipped_optional_files = []
+    for item in OPTIONAL_FILES:
+        if item["source"].exists():
+            files.append(copy_file(item["source"], package_root, item["target"], item["role"]))
+        else:
+            skipped_optional_files.append({"path": str(item["source"]), "role": item["role"]})
     for script in SCRIPT_FILES:
         files.append(copy_file(Path(script), package_root, script, "replay script"))
 
@@ -159,6 +218,12 @@ def main() -> None:
                 "customer_rank",
                 "supplier_rank",
                 "sc_supplier_type",
+                "sc_region",
+                "street",
+                "sc_registered_capital",
+                "sc_business_scope",
+                "sc_default_tax_rate",
+                "sc_default_tax_rate_text",
                 "sc_account_name",
                 "sc_bank_name",
                 "sc_bank_account",
@@ -170,14 +235,33 @@ def main() -> None:
                 "legacy_tax_no",
                 "legacy_source_evidence",
             ],
-            "bank_account_policy": "Use existing res.partner sc_account_name/sc_bank_name/sc_bank_account fields in this model version.",
+            "partner_bank_fields": [
+                "partner_id",
+                "acc_number",
+                "sc_legacy_external_id",
+                "sc_legacy_partner_source",
+                "sc_legacy_partner_id",
+                "sc_legacy_partner_name",
+                "sc_account_holder_name",
+                "sc_bank_name",
+                "sc_source_evidence",
+                "sc_import_batch",
+            ],
+            "review_model": "sc.partner.import.review",
+            "bank_account_policy": "Write bank accounts to res.partner.bank after partner rows are loaded; keep res.partner account fields as compatibility surface only.",
         },
         "build_commands": [
             "python3 scripts/migration/partner_import_source_audit.py",
             "python3 scripts/migration/partner_business_alignment_overlay.py",
             "python3 scripts/migration/partner_business_aligned_rebuild_adapter.py",
             "python3 scripts/migration/partner_business_aligned_rebuild_gate.py",
+            "python3 scripts/migration/partner_import_review_asset_generator.py --check",
             "python3 scripts/migration/partner_business_aligned_replay_package_build.py",
+        ],
+        "post_probe_commands": [
+            "PARTNER_UPDATE_ONLY_GATE_CSV=artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_business_aligned_gate_v1.csv python3 scripts/migration/fresh_db_partner_update_only_match_probe.py",
+            "python3 scripts/migration/partner_update_only_probe_split.py --check",
+            "PARTNER_IMPORT_REVIEW_BATCH=partner_business_fit_v1 python3 scripts/migration/fresh_db_partner_import_review_resolution_export.py",
         ],
         "dry_run_command": (
             "ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim MIGRATION_WRITE_MODE=dry-run "
@@ -188,6 +272,7 @@ def main() -> None:
             "bash scripts/ops/odoo_shell_exec.sh < scripts/migration/partner_business_aligned_rebuild_write.py"
         ),
         "files": files,
+        "skipped_optional_files": skipped_optional_files,
     }
     manifest_path = package_root / "manifest.json"
     write_json(manifest_path, manifest)
