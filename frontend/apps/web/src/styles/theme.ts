@@ -24,3 +24,15 @@ export function bootTheme(): void {
   }
   applyTheme(theme);
 }
+
+
+export function nextTheme(current: ScTheme): ScTheme {
+  if (current === 'system') return 'light';
+  if (current === 'light') return 'dark';
+  return 'system';
+}
+
+export function persistTheme(theme: ScTheme): void {
+  try { localStorage.setItem(THEME_KEY, theme); } catch { /* ignore storage failures */ }
+  applyTheme(theme);
+}
