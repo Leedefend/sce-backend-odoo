@@ -1813,7 +1813,7 @@ onBeforeUnmount(() => {
 .table {
   width: 100%;
   max-width: 100%;
-  max-height: max(500px, calc(100vh - 185px));
+  max-height: max(500px, calc(100vh - 145px));
   overflow-x: auto;
   overflow-y: auto;
   background: white;
@@ -2102,7 +2102,7 @@ onBeforeUnmount(() => {
 .pagination-footer {
   display: flex;
   justify-content: flex-end;
-  padding-top: 8px;
+  padding-top: 4px;
 }
 
 .pagination-actions--bottom {
