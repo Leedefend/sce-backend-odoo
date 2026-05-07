@@ -101,6 +101,26 @@ Business-fit audit artifact:
 
 - `artifacts/migration/partner_asset_business_fit_audit_v1.json`
 
+Business-fit partner asset lane generated with:
+
+```bash
+python3 scripts/migration/partner_asset_generator.py \
+  --business-gate artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_business_aligned_gate_v1.csv \
+  --out .runtime_artifacts/migration_assets/partner_business_fit_sc_v1 \
+  --source partner_import_source \
+  --asset-version business_fit_v1 \
+  --check
+```
+
+Verified with:
+
+```bash
+python3 scripts/migration/partner_asset_verify.py \
+  --asset-root .runtime_artifacts/migration_assets/partner_business_fit_sc_v1 \
+  --lane partner \
+  --check
+```
+
 Replay rehearsal package generated with:
 
 ```bash
@@ -337,6 +357,42 @@ The logical pages that need iteration are therefore:
 | review queue | Preserve missing-credit, personal-fragment, unknown-role, invalid-account cases for review. |
 
 This is the actual iteration target for the original asset package.
+
+## Partner Asset Lane Iteration
+
+`partner_asset_generator.py` now supports a business-fit input mode through
+`--business-gate`. This keeps the original `partner_sc_v1` lane and manifest
+shape, but swaps the old raw-company/supplier-only logic for the current
+business-aligned gate queue.
+
+Runtime verification result:
+
+| Item | Value |
+| --- | ---: |
+| asset package | `partner_sc_v1` |
+| runtime asset root | `.runtime_artifacts/migration_assets/partner_business_fit_sc_v1` |
+| loadable XML records | 6,348 |
+| review/discard rows | 1,444 |
+| DB writes | 0 |
+
+The generated XML now allows the current customer/supplier information surface:
+
+- `customer_rank`
+- `supplier_rank`
+- `sc_supplier_type`
+- `sc_account_name`
+- `sc_bank_name`
+- `sc_bank_account`
+
+The validation gate has also moved from the old `no_partner_rank_fields` logic
+to:
+
+- `partner_role_fields_allowed`
+- `partner_basic_info_fields_present`
+- `write_gate_queues_present`
+
+This is the first concrete step of iterating the original asset package rather
+than submitting a final complete package.
 
 ## Replay Rehearsal Package
 

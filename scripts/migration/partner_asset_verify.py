@@ -13,6 +13,14 @@ from typing import Any
 
 
 REQUIRED_XML_FIELDS = ("legacy_partner_id", "legacy_partner_source", "name")
+BUSINESS_FIT_XML_FIELDS = (
+    "customer_rank",
+    "supplier_rank",
+    "sc_supplier_type",
+    "sc_account_name",
+    "sc_bank_name",
+    "sc_bank_account",
+)
 FORBIDDEN_ASSET_TOKENS = ("payment", "settlement", "security", "record_rule", "__manifest__")
 
 
@@ -96,12 +104,15 @@ def verify_xml_records(records: list[dict[str, str]], expected_count: int) -> No
     duplicate_ids = [value for value, count in Counter(ids).items() if count > 1]
     require(not duplicate_ids, f"duplicate xml external ids: {duplicate_ids[:10]}")
     for row in records:
-        require(row["id"].startswith("legacy_partner_sc_"), f"invalid partner external id: {row['id']}")
+        require(
+            row["id"].startswith("legacy_partner_sc_") or row["id"].startswith("legacy_partner_business_"),
+            f"invalid partner external id: {row['id']}",
+        )
         require(row["model"] == "res.partner", f"invalid xml model for {row['id']}: {row['model']}")
         for field in REQUIRED_XML_FIELDS:
             require(bool(row.get(field)), f"missing required field {field} for {row['id']}")
-        require(row.get("company_type") == "company", f"partner must be company type: {row['id']}")
-        require(row.get("is_company") == "1", f"partner must be company: {row['id']}")
+        require(row.get("company_type") in {"company", "person"}, f"invalid partner company type: {row['id']}")
+        require(row.get("is_company") in {"0", "1"}, f"partner is_company must be explicit: {row['id']}")
 
 
 def verify_external_manifest(external_manifest: dict[str, Any], records: list[dict[str, str]]) -> None:
@@ -123,14 +134,36 @@ def verify_external_manifest(external_manifest: dict[str, Any], records: list[di
 def verify_validation_manifest(validation_manifest: dict[str, Any]) -> None:
     gates = validation_manifest.get("validation_gates", {})
     generate_time = set(gates.get("generate_time", []))
-    required_gates = {
-        "external_id_unique",
-        "garbage_rows_discarded",
-        "no_partner_rank_fields",
-        "no_high_risk_lane_leakage",
-    }
+    if "partner_role_fields_allowed" in generate_time:
+        required_gates = {
+            "external_id_unique",
+            "garbage_rows_discarded",
+            "partner_role_fields_allowed",
+            "partner_basic_info_fields_present",
+            "write_gate_queues_present",
+            "no_high_risk_lane_leakage",
+        }
+    else:
+        required_gates = {
+            "external_id_unique",
+            "garbage_rows_discarded",
+            "no_partner_rank_fields",
+            "no_high_risk_lane_leakage",
+        }
     missing = sorted(required_gates - generate_time)
     require(not missing, f"validation manifest missing gates: {missing}")
+
+
+def verify_business_fit_records(asset_manifest: dict[str, Any], records: list[dict[str, str]]) -> None:
+    business_fit = asset_manifest.get("business_fit") or {}
+    if not business_fit.get("enabled"):
+        return
+    present_fields = {field for row in records for field in row if row.get(field)}
+    missing_fields = [field for field in BUSINESS_FIT_XML_FIELDS if field not in present_fields]
+    require(not missing_fields, f"business-fit XML missing current fields: {missing_fields}")
+    counts = asset_manifest.get("counts", {})
+    require(counts.get("loadable_records") == len(records), "business-fit loadable count mismatch")
+    require(business_fit.get("blocked_review", 0) >= 0, "business-fit blocked review count missing")
 
 
 def verify(asset_root: Path, lane: str) -> dict[str, Any]:
@@ -142,6 +175,7 @@ def verify(asset_root: Path, lane: str) -> dict[str, Any]:
     verify_asset_manifest(asset_manifest, lane)
     verify_hashes(asset_root, asset_manifest)
     verify_xml_records(records, asset_manifest["counts"]["loadable_records"])
+    verify_business_fit_records(asset_manifest, records)
     verify_external_manifest(external_manifest, records)
     verify_validation_manifest(validation_manifest)
     return {

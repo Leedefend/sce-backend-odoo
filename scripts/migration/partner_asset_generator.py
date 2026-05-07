@@ -44,6 +44,11 @@ def safe_token(value: str) -> str:
     return token or "missing"
 
 
+def stable_business_external_id(value: str) -> str:
+    digest = hashlib.sha1(value.encode("utf-8")).hexdigest()[:20]
+    return f"legacy_partner_business_{digest}"
+
+
 def sha256_file(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as f:
@@ -201,6 +206,12 @@ def write_xml(path: Path, records: list[dict[str, Any]]) -> None:
         "name",
         "company_type",
         "is_company",
+        "customer_rank",
+        "supplier_rank",
+        "sc_supplier_type",
+        "sc_account_name",
+        "sc_bank_name",
+        "sc_bank_account",
         "vat",
         "phone",
         "email",
@@ -215,8 +226,14 @@ def write_xml(path: Path, records: list[dict[str, Any]]) -> None:
         element = ET.SubElement(data, "record", {"id": record["external_id"], "model": TARGET_MODEL})
         payload = {
             "name": clean(record.get("name")),
-            "company_type": "company",
-            "is_company": "1",
+            "company_type": clean(record.get("company_type")) or "company",
+            "is_company": "0" if clean(record.get("company_type")) == "person" else "1",
+            "customer_rank": clean(record.get("customer_rank")),
+            "supplier_rank": clean(record.get("supplier_rank")),
+            "sc_supplier_type": clean(record.get("sc_supplier_type")),
+            "sc_account_name": clean(record.get("sc_account_name")),
+            "sc_bank_name": clean(record.get("sc_bank_name")),
+            "sc_bank_account": clean(record.get("sc_bank_account")),
             "vat": clean(record.get("vat")),
             "phone": clean(record.get("phone")),
             "email": clean(record.get("email")),
@@ -228,6 +245,8 @@ def write_xml(path: Path, records: list[dict[str, Any]]) -> None:
             "legacy_source_evidence": clean(record.get("legacy_source_evidence")),
         }
         for field_name in xml_fields:
+            if field_name not in {"name", "company_type", "is_company", "legacy_partner_id", "legacy_partner_source"} and not payload[field_name]:
+                continue
             field = ET.SubElement(element, "field", {"name": field_name})
             field.text = payload[field_name]
     ET.indent(root, space="  ")
@@ -241,6 +260,8 @@ def manifest_payloads(
     source: str,
     asset_version: str,
     raw_source_rows: int,
+    business_fit: bool = False,
+    business_fit_counts: dict[str, int] | None = None,
 ) -> dict[str, Any]:
     asset_manifest_path = asset_root / "manifest" / "partner_asset_manifest_v1.json"
     external_manifest_path = asset_root / "manifest" / "partner_external_id_manifest_v1.json"
@@ -321,10 +342,16 @@ def manifest_payloads(
                 "partner_name_safe",
                 "external_id_unique",
                 "garbage_rows_discarded",
-                "no_partner_rank_fields",
+                "partner_role_fields_allowed" if business_fit else "no_partner_rank_fields",
+                "partner_basic_info_fields_present" if business_fit else "legacy_identity_fields_present",
+                "write_gate_queues_present" if business_fit else "baseline_create_only",
                 "no_high_risk_lane_leakage",
             ],
             "assets": assets,
+            "business_fit": {
+                "enabled": business_fit,
+                **(business_fit_counts or {}),
+            },
         },
         "paths": {
             "asset_manifest": asset_manifest_path,
@@ -350,6 +377,8 @@ def write_package(
     asset_version: str,
     raw_source_rows: int,
     write_sidecars: bool = True,
+    business_fit: bool = False,
+    business_fit_counts: dict[str, int] | None = None,
 ) -> dict[str, Any]:
     fieldnames = [
         "external_id",
@@ -357,6 +386,13 @@ def write_package(
         "legacy_partner_id",
         "legacy_partner_source",
         "name",
+        "company_type",
+        "customer_rank",
+        "supplier_rank",
+        "sc_supplier_type",
+        "sc_account_name",
+        "sc_bank_name",
+        "sc_bank_account",
         "vat",
         "phone",
         "email",
@@ -366,6 +402,9 @@ def write_package(
         "legacy_source_evidence",
         "source_row_count",
         "name_variant_count",
+        "review_flags",
+        "gate_action",
+        "gate_reason",
     ]
     xml_path = asset_root / LAYER / LANE / "partner_master_v1.xml"
     csv_path = asset_root / LAYER / LANE / "partner_master_v1.csv"
@@ -411,6 +450,8 @@ def write_package(
             "unsafe_partner_name": "discard_record",
             "external_id_duplicate": "block_package",
             "partner_rank_field_requested": "block_package",
+            "unsafe_business_role": "review_queue",
+            "unsafe_bank_account": "review_queue",
         },
         "validation_gates": {
             "generate_time": [
@@ -420,7 +461,9 @@ def write_package(
                 "partner_name_safe",
                 "external_id_unique",
                 "garbage_rows_discarded",
-                "no_partner_rank_fields",
+                "partner_role_fields_allowed" if business_fit else "no_partner_rank_fields",
+                "partner_basic_info_fields_present" if business_fit else "legacy_identity_fields_present",
+                "write_gate_queues_present" if business_fit else "baseline_create_only",
                 "no_high_risk_lane_leakage",
             ],
             "preload": ["asset_files_exist", "asset_hashes_match", "target_model_available"],
@@ -428,7 +471,16 @@ def write_package(
         },
     }
     write_json(validation_path, validation_manifest)
-    payloads = manifest_payloads(asset_root, records, discard_rows, source, asset_version, raw_source_rows)
+    payloads = manifest_payloads(
+        asset_root,
+        records,
+        discard_rows,
+        source,
+        asset_version,
+        raw_source_rows,
+        business_fit=business_fit,
+        business_fit_counts=business_fit_counts,
+    )
     write_json(payloads["paths"]["asset_manifest"], payloads["asset_manifest"])
     return payloads["asset_manifest"]
 
@@ -437,15 +489,74 @@ def validate_records(records: list[dict[str, Any]]) -> None:
     external_ids = [record["external_id"] for record in records]
     require(len(external_ids) == len(set(external_ids)), "duplicate external ids")
     for record in records:
-        require(record["external_id"].startswith("legacy_partner_sc_"), f"invalid external id: {record['external_id']}")
+        require(
+            record["external_id"].startswith("legacy_partner_sc_")
+            or record["external_id"].startswith("legacy_partner_business_"),
+            f"invalid external id: {record['external_id']}",
+        )
         require(clean(record.get("legacy_partner_id")), f"missing legacy partner id: {record}")
-        require(is_safe_enterprise_name(clean(record.get("name"))), f"unsafe partner name: {record}")
+        require(clean(record.get("name")), f"missing partner name: {record}")
+
+
+def business_asset_records(rows: list[dict[str, str]]) -> tuple[list[dict[str, Any]], list[dict[str, str]], dict[str, int]]:
+    records: list[dict[str, Any]] = []
+    discard_rows: list[dict[str, str]] = []
+    counts: Counter[str] = Counter()
+    seen_external_ids: set[str] = set()
+    for row in rows:
+        gate_action = clean(row.get("gate_action"))
+        counts[gate_action or "ungated"] += 1
+        if gate_action == "blocked_review":
+            discard_rows.append(
+                {
+                    "discard_reason": clean(row.get("gate_reason")) or "blocked_review",
+                    "legacy_partner_id": clean(row.get("legacy_partner_id")),
+                    "source": clean(row.get("legacy_partner_source")),
+                    "name": clean(row.get("name")),
+                }
+            )
+            continue
+        legacy_id = clean(row.get("legacy_partner_id"))
+        external_id = stable_business_external_id(legacy_id or clean(row.get("partner_key")) or clean(row.get("name")))
+        if external_id in seen_external_ids:
+            raise PartnerAssetError(f"duplicate business external id: {external_id}")
+        seen_external_ids.add(external_id)
+        records.append(
+            {
+                "external_id": external_id,
+                "legacy_identity_key": f"partner:business:{legacy_id}",
+                "legacy_partner_id": legacy_id,
+                "legacy_partner_source": clean(row.get("legacy_partner_source")) or "xlsx_business_aligned_partner",
+                "legacy_partner_name": clean(row.get("name")),
+                "name": clean(row.get("name")),
+                "company_type": clean(row.get("company_type")) or "company",
+                "customer_rank": clean(row.get("customer_rank")),
+                "supplier_rank": clean(row.get("supplier_rank")),
+                "sc_supplier_type": clean(row.get("sc_supplier_type")),
+                "sc_account_name": clean(row.get("sc_account_name")),
+                "sc_bank_name": clean(row.get("sc_bank_name")),
+                "sc_bank_account": clean(row.get("sc_bank_account")),
+                "vat": clean(row.get("vat")),
+                "phone": "",
+                "email": "",
+                "legacy_credit_code": clean(row.get("legacy_credit_code")),
+                "legacy_tax_no": clean(row.get("vat")),
+                "legacy_source_evidence": clean(row.get("legacy_source_evidence")),
+                "source_row_count": "",
+                "name_variant_count": "",
+                "review_flags": clean(row.get("review_flags")),
+                "gate_action": gate_action,
+                "gate_reason": clean(row.get("gate_reason")),
+            }
+        )
+    return records, discard_rows, dict(sorted(counts.items()))
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate partner XML migration asset package without DB access.")
     parser.add_argument("--company", default="tmp/raw/partner/company.csv", help="Legacy company CSV")
     parser.add_argument("--supplier", default="tmp/raw/partner/supplier.csv", help="Legacy supplier CSV")
+    parser.add_argument("--business-gate", help="Business-aligned gated partner CSV")
     parser.add_argument("--out", default=".runtime_artifacts/migration_assets/partner_sc_v1", help="Runtime output root")
     parser.add_argument("--baseline-out", help="Optional repository baseline asset root")
     parser.add_argument("--source", default="sc", help="Source system code")
@@ -454,15 +565,27 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        company_columns, company_rows = read_csv(Path(args.company))
-        supplier_columns, supplier_rows = read_csv(Path(args.supplier))
-        missing_company = sorted(COMPANY_REQUIRED_COLUMNS - set(company_columns))
-        missing_supplier = sorted(SUPPLIER_REQUIRED_COLUMNS - set(supplier_columns))
-        require(not missing_company, f"missing company columns: {missing_company}")
-        require(not missing_supplier, f"missing supplier columns: {missing_supplier}")
-        records, discard_rows = build_records(company_rows, supplier_rows)
+        business_fit = bool(args.business_gate)
+        business_fit_counts: dict[str, int] | None = None
+        if business_fit:
+            gate_columns, gate_rows = read_csv(Path(args.business_gate))
+            required_gate_columns = {"legacy_partner_id", "legacy_partner_source", "name", "gate_action"}
+            missing_gate = sorted(required_gate_columns - set(gate_columns))
+            require(not missing_gate, f"missing business gate columns: {missing_gate}")
+            records, discard_rows, business_fit_counts = business_asset_records(gate_rows)
+            company_rows = []
+            supplier_rows = []
+            raw_source_rows = len(gate_rows)
+        else:
+            company_columns, company_rows = read_csv(Path(args.company))
+            supplier_columns, supplier_rows = read_csv(Path(args.supplier))
+            missing_company = sorted(COMPANY_REQUIRED_COLUMNS - set(company_columns))
+            missing_supplier = sorted(SUPPLIER_REQUIRED_COLUMNS - set(supplier_columns))
+            require(not missing_company, f"missing company columns: {missing_company}")
+            require(not missing_supplier, f"missing supplier columns: {missing_supplier}")
+            records, discard_rows = build_records(company_rows, supplier_rows)
+            raw_source_rows = len(company_rows) + len(supplier_rows)
         validate_records(records)
-        raw_source_rows = len(company_rows) + len(supplier_rows)
         runtime_manifest = write_package(
             Path(args.out),
             records,
@@ -471,6 +594,8 @@ def main() -> int:
             args.asset_version,
             raw_source_rows,
             write_sidecars=True,
+            business_fit=business_fit,
+            business_fit_counts=business_fit_counts,
         )
         baseline_manifest = None
         if args.baseline_out:
@@ -482,6 +607,8 @@ def main() -> int:
                 args.asset_version,
                 raw_source_rows,
                 write_sidecars=False,
+                business_fit=business_fit,
+                business_fit_counts=business_fit_counts,
             )
     except (PartnerAssetError, OSError, csv.Error) as exc:
         payload = {"status": "FAIL", "error": str(exc), "db_writes": 0, "odoo_shell": False}
@@ -494,10 +621,12 @@ def main() -> int:
         "asset_package_id": ASSET_PACKAGE_ID,
         "runtime_out": args.out,
         "baseline_out": args.baseline_out or "",
-        "raw_rows": len(company_rows) + len(supplier_rows),
+        "raw_rows": raw_source_rows,
         "loadable_records": len(records),
         "discarded_records": len(discard_rows),
         "source_counts": dict(sorted(source_counts.items())),
+        "business_fit": bool(args.business_gate),
+        "business_fit_counts": business_fit_counts or {},
         "runtime_asset_manifest_hash": sha256_file(Path(args.out) / "manifest" / "partner_asset_manifest_v1.json"),
         "baseline_asset_manifest_hash": sha256_file(Path(args.baseline_out) / "manifest" / "partner_asset_manifest_v1.json") if args.baseline_out else "",
         "db_writes": 0,
