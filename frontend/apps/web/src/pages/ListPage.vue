@@ -340,7 +340,8 @@
                   :style="columnWidthStyle(col)"
                   :class="[columnDensityClass(col), { 'footer-number': isNumericColumn(col) }]"
                 >
-                  {{ groupFooterCellText(col, group, 'page') }}
+                  <span v-if="isNumericColumn(col)" class="footer-number-value">{{ groupFooterCellText(col, group, 'page') }}</span>
+                  <template v-else>{{ groupFooterCellText(col, group, 'page') }}</template>
                 </td>
               </tr>
               <tr>
@@ -351,7 +352,8 @@
                   :style="columnWidthStyle(col)"
                   :class="[columnDensityClass(col), { 'footer-number': isNumericColumn(col) }]"
                 >
-                  {{ groupFooterCellText(col, group, 'total') }}
+                  <span v-if="isNumericColumn(col)" class="footer-number-value">{{ groupFooterCellText(col, group, 'total') }}</span>
+                  <template v-else>{{ groupFooterCellText(col, group, 'total') }}</template>
                 </td>
               </tr>
             </tfoot>
@@ -487,7 +489,8 @@
               :style="columnWidthStyle(col)"
               :class="[columnDensityClass(col), { 'footer-number': isNumericColumn(col) }]"
             >
-              {{ footerCellText(col, 'page', pageVisibleRows.length) }}
+              <span v-if="isNumericColumn(col)" class="footer-number-value">{{ footerCellText(col, 'page', pageVisibleRows.length) }}</span>
+              <template v-else>{{ footerCellText(col, 'page', pageVisibleRows.length) }}</template>
             </td>
             <td v-if="columnChoices.length" class="cell-column-picker"></td>
           </tr>
@@ -500,7 +503,8 @@
               :style="columnWidthStyle(col)"
               :class="[columnDensityClass(col), { 'footer-number': isNumericColumn(col) }]"
             >
-              {{ footerCellText(col, 'total', listTotal || pageVisibleRows.length) }}
+              <span v-if="isNumericColumn(col)" class="footer-number-value">{{ footerCellText(col, 'total', listTotal || pageVisibleRows.length) }}</span>
+              <template v-else>{{ footerCellText(col, 'total', listTotal || pageVisibleRows.length) }}</template>
             </td>
             <td v-if="columnChoices.length" class="cell-column-picker"></td>
           </tr>
@@ -2358,10 +2362,17 @@ tfoot tr:nth-child(2) td {
 }
 
 .footer-number {
-  text-align: left;
+  text-align: left !important;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   overflow-wrap: normal;
+}
+
+.footer-number-value {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  text-align: left;
 }
 
 .cell-sortable {
