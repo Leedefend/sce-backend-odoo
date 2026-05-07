@@ -85,19 +85,19 @@ def main() -> int:
     if "white-space: nowrap" not in footer_row_label_css:
         errors.append("footer row labels must stay on one line")
     footer_number_css = _extract_css_block(list_page, ".footer-number")
-    if "text-align: left" not in footer_number_css:
-        errors.append("footer numeric cells must left-align as the fallback cue for their source column")
+    if "text-align: right" not in footer_number_css:
+        errors.append("footer numeric cells must right-align with body numeric values in their source column")
     if "min-width:" in footer_number_css:
         errors.append("footer numeric cells must not add independent min-width that breaks column alignment")
     if "white-space: nowrap" not in footer_number_css:
         errors.append("footer numeric cells must stay on one line")
     footer_number_value_css = _extract_css_block(list_page, ".footer-number-value")
     if "display: block" not in footer_number_value_css or "width: 100%" not in footer_number_value_css:
-        errors.append("footer aggregate values must use a block wrapper so the visual value starts at the column left edge")
-    if "text-align: left" not in footer_number_value_css:
-        errors.append("footer aggregate value wrapper must left-align independently of numeric column defaults")
+        errors.append("footer aggregate values must use a full-width block wrapper so the visual anchor matches body numeric values")
+    if "text-align: right" not in footer_number_value_css:
+        errors.append("footer aggregate value wrapper must right-align to match body numeric values")
     if "footer-number-value" not in list_page:
-        errors.append("footer numeric aggregate text must be wrapped for stable visual left alignment")
+        errors.append("footer numeric aggregate text must be wrapped for stable visual numeric alignment")
     column_width_style = _extract_function(list_page, "columnWidthStyle")
     if "Math.min(width" in column_width_style or "maxTextWidth" in column_width_style:
         errors.append("explicit column widths must render as saved; do not clamp name/text columns after resize")

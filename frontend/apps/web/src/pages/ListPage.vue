@@ -2362,7 +2362,7 @@ tfoot tr:nth-child(2) td {
 }
 
 .footer-number {
-  text-align: left !important;
+  text-align: right;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   overflow-wrap: normal;
@@ -2372,7 +2372,7 @@ tfoot tr:nth-child(2) td {
   display: block;
   width: 100%;
   min-width: 0;
-  text-align: left;
+  text-align: right;
 }
 
 .cell-sortable {
