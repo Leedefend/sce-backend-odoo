@@ -245,6 +245,29 @@ write partner identity and role fields to `res.partner`, then write account
 holder, bank name, and account number to `res.partner.bank` linked to the same
 partner. It does not mean a separate business objective or a new rebuild process.
 
+The first no-DB bank-account split is now represented by
+`partner_bank_business_asset_generator.py`. It consumes the same business-fit
+partner gate and emits a replay-ready CSV contract for `res.partner.bank`:
+
+```bash
+python3 scripts/migration/partner_bank_business_asset_generator.py --check
+```
+
+Runtime result:
+
+| Item | Value |
+| --- | ---: |
+| source gate rows | 7,792 |
+| loadable bank-account rows | 5,574 |
+| discarded rows | 2,218 |
+| blocked partner review rows | 1,444 |
+| missing bank-account rows | 774 |
+| DB writes | 0 |
+
+The bank asset keeps `partner_external_id` equal to the business-fit partner
+external ID, so the child account replay can resolve its parent after the
+partner lane has loaded.
+
 ## Unified Payload
 
 `partner_business_aligned_rebuild_adapter.py` keeps the existing fact-based

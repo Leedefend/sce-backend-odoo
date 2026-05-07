@@ -16,6 +16,7 @@ DEFAULT_GATE = Path(
     "fact_based_partner_rebuild_business_aligned_gate_v1.csv"
 )
 DEFAULT_RUNTIME_ROOT = Path(".runtime_artifacts/migration_assets/partner_business_fit_guard")
+DEFAULT_BANK_RUNTIME_ROOT = Path(".runtime_artifacts/migration_assets/partner_bank_business_fit_guard")
 REQUIRED_BUSINESS_FIELDS = {
     "customer_rank",
     "supplier_rank",
@@ -46,12 +47,16 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--gate", default=str(DEFAULT_GATE))
     parser.add_argument("--runtime-root", default=str(DEFAULT_RUNTIME_ROOT))
+    parser.add_argument("--bank-runtime-root", default=str(DEFAULT_BANK_RUNTIME_ROOT))
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
 
     runtime_root = Path(args.runtime_root)
     if runtime_root.exists():
         shutil.rmtree(runtime_root)
+    bank_runtime_root = Path(args.bank_runtime_root)
+    if bank_runtime_root.exists():
+        shutil.rmtree(bank_runtime_root)
 
     result: dict[str, object]
     try:
@@ -72,8 +77,20 @@ def main() -> int:
             ]
         )
         business_verify = run(["python3", "scripts/migration/partner_asset_verify.py", "--asset-root", str(runtime_root), "--lane", "partner", "--check"])
+        bank_generator_output = run(
+            [
+                "python3",
+                "scripts/migration/partner_bank_business_asset_generator.py",
+                "--business-gate",
+                args.gate,
+                "--out",
+                str(bank_runtime_root),
+                "--check",
+            ]
+        )
 
         manifest = load_json(runtime_root / "manifest/partner_asset_manifest_v1.json")
+        bank_manifest = load_json(bank_runtime_root / "manifest/partner_bank_asset_manifest_v1.json")
         validation = load_json(runtime_root / "manifest/partner_validation_manifest_v1.json")
         xml_fields = xml_field_names(runtime_root / "10_master/partner/partner_master_v1.xml")
         business_fit = manifest.get("business_fit") or {}
@@ -98,6 +115,13 @@ def main() -> int:
             errors.append({"unexpected_loadable_records": (manifest.get("counts") or {}).get("loadable_records")})
         if int((manifest.get("counts") or {}).get("discarded_records") or 0) != 1444:
             errors.append({"unexpected_discarded_records": (manifest.get("counts") or {}).get("discarded_records")})
+        bank_counts = bank_manifest.get("counts") or {}
+        if int(bank_counts.get("loadable_records") or 0) != 5574:
+            errors.append({"unexpected_bank_loadable_records": bank_counts.get("loadable_records")})
+        if int(bank_counts.get("discarded_records") or 0) != 2218:
+            errors.append({"unexpected_bank_discarded_records": bank_counts.get("discarded_records")})
+        if bank_manifest.get("target", {}).get("model") != "res.partner.bank":
+            errors.append({"unexpected_bank_target": bank_manifest.get("target")})
         if errors:
             raise RuntimeError({"partner_asset_business_fit_guard_failed": errors})
         result = {
@@ -105,9 +129,13 @@ def main() -> int:
             "old_verify": old_verify.strip(),
             "business_generator": generator_output.strip(),
             "business_verify": business_verify.strip(),
+            "bank_generator": bank_generator_output.strip(),
             "runtime_root": str(runtime_root),
+            "bank_runtime_root": str(bank_runtime_root),
             "loadable_records": (manifest.get("counts") or {}).get("loadable_records"),
             "discarded_records": (manifest.get("counts") or {}).get("discarded_records"),
+            "bank_loadable_records": bank_counts.get("loadable_records"),
+            "bank_discarded_records": bank_counts.get("discarded_records"),
             "business_fit": business_fit,
             "db_writes": 0,
         }
