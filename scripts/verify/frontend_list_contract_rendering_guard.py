@@ -85,8 +85,8 @@ def main() -> int:
     if "white-space: nowrap" not in footer_row_label_css:
         errors.append("footer row labels must stay on one line")
     footer_number_css = _extract_css_block(list_page, ".footer-number")
-    if "text-align: right" not in footer_number_css:
-        errors.append("footer numeric cells must right-align with their source column")
+    if "text-align: left" not in footer_number_css:
+        errors.append("footer numeric cells must left-align as the fallback cue for their source column")
     if "min-width:" in footer_number_css:
         errors.append("footer numeric cells must not add independent min-width that breaks column alignment")
     if "white-space: nowrap" not in footer_number_css:

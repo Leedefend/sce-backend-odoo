@@ -2358,7 +2358,7 @@ tfoot tr:nth-child(2) td {
 }
 
 .footer-number {
-  text-align: right;
+  text-align: left;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   overflow-wrap: normal;
